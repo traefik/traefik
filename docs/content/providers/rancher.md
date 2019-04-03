@@ -20,8 +20,8 @@ Attach labels to your services and let Traefik do the rest!
     Attaching labels to services
 
     ```yaml
-        labels:
-          - traefik.http.services.my-service.rule=Host(my-domain)
+    labels:
+      - traefik.http.services.my-service.rule=Host(my-domain)
     ```
 
 ## Provider Configuration Options
@@ -80,31 +80,43 @@ Attach labels to your services and let Traefik do the rest!
     Prefix = 15
     ```
 
-### ExposedByDefault (_Optional_, _Default=true_)
+### `ExposedByDefault`
+
+_Optional, Default=true_
 
 Expose Rancher services by default in Traefik.
 If set to false, services that don't have a `traefik.enable=true` label will be ignored from the resulting routing configuration.
 
-### DefaultRule (_Optional_)
+### `DefaultRule`
+
+_Optional_
 
 The default host rule for all services.
 
 This option can be overridden on a container basis with the `traefik.http.routers.Router1.rule` label.
 
-### EnableServiceHealthFilter (_Optional_, _Default=true_)
+### `EnableServiceHealthFilter`
+
+_Optional, Default=true_
 
 Filter services with unhealthy states and inactive states.
 
-### RefreshSeconds (_Optional_, _Default=15_)
+### `RefreshSeconds`
+
+_Optional, Default=15_
 
 Defines the polling interval (in seconds).
 
-### IntervalPoll (_Optional_, _Default=false_)
+### `IntervalPoll`
+
+_Optional, Default=false_
 
 Poll the Rancher metadata service for changes every `rancher.refreshSeconds`,
 which is less accurate than the default long polling technique which will provide near instantaneous updates to Traefik.
 
-### Prefix (_Optional_, _Default=/latest_)
+### `Prefix`
+
+_Optional, Default=/latest_
 
 Prefix used for accessing the Rancher metadata service
 
@@ -135,12 +147,12 @@ You can declare pieces of middleware using labels starting with `traefik.http.mi
 For example, to declare a middleware [`schemeredirect`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.schemeredirect.scheme: https`.
 
 ??? example "Declaring and Referencing a Middleware"
-
+    
     ```yaml
-           # ...
-           labels:
-             - traefik.http.middlewares.my-redirect.schemeredirect.scheme=https
-             - traefik.http.routers.middlewares=my-redirect
+    # ...
+    labels:
+     - traefik.http.middlewares.my-redirect.schemeredirect.scheme=https
+     - traefik.http.routers.middlewares=my-redirect
     ```
 
 !!! warning "Conflicts in Declaration"
@@ -149,13 +161,13 @@ For example, to declare a middleware [`schemeredirect`](../middlewares/redirects
 
 ### Specific Options
 
-#### traefik.enable
+#### `traefik.enable`
 
 You can tell Traefik to consider (or not) the container by setting `traefik.enable` to true or false.
 
 This option overrides the value of `exposedByDefault`.
 
-#### traefik.tags
+#### `traefik.tags`
 
 Sets the tags for [constraints filtering](./overview.md#constraints-configuration).
 
