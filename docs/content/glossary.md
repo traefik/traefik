@@ -21,9 +21,6 @@ Where Every Technical Word finds its Definition`
 - [ ] Traefiker
 - [ ] Traefik (How to pronounce)
 
-
-# WIP
-
 ### Traefik Configuration
 
 Traefik's configuration has two parts:
