@@ -1,0 +1,177 @@
+# ...
+[providers]
+
+################################################################
+# Docker Provider
+################################################################
+
+# Enable Docker Provider.
+[providers.docker]
+
+    # Docker server endpoint. Can be a tcp or a unix socket endpoint.
+    #
+    # Required
+    #
+    endpoint = "unix:///var/run/docker.sock"
+
+    # Default base domain used for the frontend rules.
+    # Can be overridden by setting the "traefik.domain" label on a container.
+    #
+    # Optional
+    #
+    domain = "docker.localhost"
+
+    # Enable watch docker changes.
+    #
+    # Optional
+    #
+    watch = true
+
+    # Override default configuration template.
+    # For advanced users :)
+    #
+    # Optional
+    #
+    # filename = "docker.tmpl"
+
+    # Override template version
+    # For advanced users :)
+    #
+    # Optional
+    # - "1": previous template version (must be used only with older custom templates, see "filename")
+    # - "2": current template version (must be used to force template version when "filename" is used)
+    #
+    # templateVersion = 2
+
+    # Expose containers by default in Traefik.
+    # If set to false, containers that don't have `traefik.enable=true` will be ignored.
+    #
+    # Optional
+    # Default: true
+    #
+    exposedByDefault = true
+
+    # Use the IP address from the bound port instead of the inner network one.
+    #
+    # In case no IP address is attached to the bound port (or in case
+    # there is no bind), the inner network one will be used as a fallback.
+    #
+    # Optional
+    # Default: false
+    #
+    usebindportip = true
+
+    # Use Swarm Mode services as data provider.
+    #
+    # Optional
+    # Default: false
+    #
+    swarmMode = false
+
+    # Polling interval (in seconds) for Swarm Mode.
+    #
+    # Optional
+    # Default: 15
+    #
+    swarmModeRefreshSeconds = 15
+
+    # Define a default docker network to use for connections to all containers.
+    # Can be overridden by the traefik.docker.network label.
+    #
+    # Optional
+    #
+    network = "web"
+
+    # Enable docker TLS connection.
+    #
+    # Optional
+    #
+    #  [docker.tls]
+    #  ca = "/etc/ssl/ca.crt"
+    #  cert = "/etc/ssl/docker.crt"
+    #  key = "/etc/ssl/docker.key"
+    #  insecureSkipVerify = true
+
+################################################################
+# File Provider
+################################################################
+
+# Enable File Provider.
+[providers.file]
+
+    # Define one separated configuration file.
+    #
+    # Optional
+    #
+    filename = "my-conf.toml"
+
+    # Define directory that contains a set of configuration files.
+    #
+    # Optional
+    #
+    directory = "/path/to/config"
+
+    # Enable watch file changes.
+    #
+    # Optional
+    #
+    watch = true
+
+################################################################
+# Kubernetes Provider
+################################################################
+
+# Enable Kubernetes CRD Provider.
+[providers.kubernetescrd]
+
+    # Kubernetes server endpoint.
+    #
+    # Optional for in-cluster configuration, required otherwise.
+    # Default: empty
+    #
+    # endpoint = "http://localhost:8080"
+
+    # Bearer token used for the Kubernetes client configuration.
+    #
+    # Optional
+    # Default: empty
+    #
+    # token = "my token"
+
+    # Path to the certificate authority file.
+    # Used for the Kubernetes client configuration.
+    #
+    # Optional
+    # Default: empty
+    #
+    # certAuthFilePath = "/my/ca.crt"
+
+    # Array of namespaces to watch.
+    #
+    # Optional
+    # Default: all namespaces (empty array).
+    #
+    # namespaces = ["default", "production"]
+
+    # Ingress label selector to filter Ingress objects that should be processed.
+    #
+    # Optional
+    # Default: empty (process all Ingresses)
+    #
+    # labelselector = "A and not B"
+
+    # Value of `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
+    # If the parameter is non-empty, only Ingresses containing an annotation with the same value are processed.
+    # Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
+    #
+    # Optional
+    # Default: empty
+    #
+    # ingressClass = "traefik-internal"
+
+    # Disable PassHost Headers.
+    #
+    # Optional
+    # Default: false
+    #
+    # disablePassHostHeaders = true
