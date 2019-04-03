@@ -2239,7 +2239,6 @@
     "github.com/prometheus/client_model/go",
     "github.com/rancher/go-rancher-metadata/metadata",
     "github.com/ryanuber/go-glob",
-    "github.com/satori/go.uuid",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
