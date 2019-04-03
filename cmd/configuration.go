@@ -180,6 +180,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultRancher.EnableServiceHealthFilter = true
 	defaultRancher.RefreshSeconds = 15
 	defaultRancher.DefaultRule = rancher.DefaultTemplateRule
+	defaultRancher.Prefix = "latest"
 
 	defaultProviders := static.Providers{
 		File:       &defaultFile,
@@ -187,6 +188,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Rest:       &defaultRest,
 		Marathon:   &defaultMarathon,
 		Kubernetes: &defaultKubernetes,
+		Rancher:    &defaultRancher,
 	}
 
 	return &TraefikConfiguration{

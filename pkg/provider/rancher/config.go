@@ -117,13 +117,13 @@ func (p *Provider) keepService(ctx context.Context, service rancherData) bool {
 	logger := log.FromContext(ctx)
 
 	if !service.ExtraConf.Enable {
-		logger.Debug("Filtering disabled service")
+		logger.Debug("Filtering disabled service %s", service.Name)
 		return false
 	}
 
 	if ok, failingConstraint := p.MatchConstraints(service.ExtraConf.Tags); !ok {
 		if failingConstraint != nil {
-			logger.Debugf("service pruned by %q constraint", failingConstraint.String())
+			logger.Debugf("service %s pruned by %q constraint", service.Name, failingConstraint.String())
 		}
 		return false
 	}
