@@ -159,6 +159,10 @@ required = [
   name = "github.com/ryanuber/go-glob"
 
 [[constraint]]
+  name = "github.com/Masterminds/sprig"
+  version = "2.19.0"
+
+[[constraint]]
   branch = "master"
   name = "github.com/stvp/go-udp-testing"
 

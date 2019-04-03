@@ -128,7 +128,7 @@ func Insert(dst, src string, index int) string {
 	return Slice(dst, 0, index) + src + Slice(dst, index, -1)
 }
 
-// Scrubs invalid utf8 bytes with repl string.
+// Scrub scrubs invalid utf8 bytes with repl string.
 // Adjacent invalid bytes are replaced only once.
 func Scrub(str, repl string) string {
 	var buf *bytes.Buffer
@@ -171,7 +171,7 @@ func Scrub(str, repl string) string {
 	return origin
 }
 
-// Splits a string into words. Returns a slice of words.
+// WordSplit splits a string into words. Returns a slice of words.
 // If there is no word in a string, return nil.
 //
 // Word is defined as a locale dependent string containing alphabetic characters,

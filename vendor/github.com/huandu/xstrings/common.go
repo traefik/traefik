@@ -7,7 +7,7 @@ import (
 	"bytes"
 )
 
-const _BUFFER_INIT_GROW_SIZE_MAX = 2048
+const bufferMaxInitGrowSize = 2048
 
 // Lazy initialize a buffer.
 func allocBuffer(orig, cur string) *bytes.Buffer {
@@ -15,8 +15,8 @@ func allocBuffer(orig, cur string) *bytes.Buffer {
 	maxSize := len(orig) * 4
 
 	// Avoid to reserve too much memory at once.
-	if maxSize > _BUFFER_INIT_GROW_SIZE_MAX {
-		maxSize = _BUFFER_INIT_GROW_SIZE_MAX
+	if maxSize > bufferMaxInitGrowSize {
+		maxSize = bufferMaxInitGrowSize
 	}
 
 	output.Grow(maxSize)

@@ -492,8 +492,9 @@ func Count(str, pattern string) int {
 // If pattern is not empty, only runes matching the pattern will be squeezed.
 //
 // Samples:
-//     Squeeze("hello", "")    => "helo"
-//     Squeeze("hello", "m-z") => "hello"
+//     Squeeze("hello", "")             => "helo"
+//     Squeeze("hello", "m-z")          => "hello"
+//     Squeeze("hello   world", " ")    => "hello world"
 func Squeeze(str, pattern string) string {
 	var last, r rune
 	var size int
@@ -532,6 +533,7 @@ func Squeeze(str, pattern string) string {
 			}
 
 			last = r
+			skipSqueeze = false
 		}
 
 		str = str[size:]
