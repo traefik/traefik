@@ -63,7 +63,7 @@ Attach labels to your containers and let Traefik do the rest!
 ## Provider Configuration Options
 
 !!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [Docker Reference](../reference/providers/docker.md).
+    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/providers/docker.md) configuration references.
 
 ### endpoint
 
