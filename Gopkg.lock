@@ -1508,7 +1508,7 @@
   revision = "1dc93a7db3567a5ccf865106afac88278ba940cf"
 
 [[projects]]
-  digest = "1:7d3a890e525da3b7014d26dd1d4a0e4d31a479995007cd11989ad31db132e66c"
+  digest = "1:dc5b63bdf6fd3b22c970e06ad4fb686f6d08104f50f414644d5ac5e267a7934a"
   name = "github.com/uber/jaeger-client-go"
   packages = [
     ".",
@@ -1531,16 +1531,18 @@
     "zipkin",
   ]
   pruneopts = "NUT"
-  revision = "1a782e2da844727691fef1757c72eb190c2909f0"
-  version = "v2.15.0"
+  revision = "2f47546e3facd43297739439600bcf43f44cce5d"
+  source = "github.com/jaegertracing/jaeger-client-go"
+  version = "v2.16.0"
 
 [[projects]]
-  digest = "1:0f09db8429e19d57c8346ad76fbbc679341fa86073d3b8fb5ac919f0357d8f4c"
+  digest = "1:c9d69a04f7fa171f50360bbcc32196b4de8ab8837ef772f6302d0140a1e3e7f6"
   name = "github.com/uber/jaeger-lib"
   packages = ["metrics"]
   pruneopts = "NUT"
-  revision = "ed3a127ec5fef7ae9ea95b01b542c47fbd999ce5"
-  version = "v1.5.0"
+  revision = "0e30338a695636fe5bcf7301e8030ce8dd2a8530"
+  source = "github.com/jaegertracing/jaeger-lib"
+  version = "v2.0.0"
 
 [[projects]]
   digest = "1:fb6d90081ae53fdb35d0fffa7d82a555df936bbc6db9a93126795655b2317604"

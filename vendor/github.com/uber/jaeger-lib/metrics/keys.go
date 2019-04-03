@@ -12,5 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package zipkin comprises Zipkin functionality for Zipkin compatibility.
-package zipkin
+package metrics
+
+import (
+	"sort"
+)
+
+// GetKey converts name+tags into a single string of the form
+// "name|tag1=value1|...|tagN=valueN", where tag names are
+// sorted alphabetically.
+func GetKey(name string, tags map[string]string, tagsSep string, tagKVSep string) string {
+	keys := make([]string, 0, len(tags))
+	for k := range tags {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	key := name
+	for _, k := range keys {
+		key = key + tagsSep + k + tagKVSep + tags[k]
+	}
+	return key
+}
