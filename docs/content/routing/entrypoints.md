@@ -43,21 +43,7 @@ You can define them using a toml file, CLI arguments, or a key-value store.
 
 See the complete reference for the list of available options:
 
-```ini tab="CLI"
-Name:foo
-Address::80
-Transport.LifeCycle.RequestAcceptGraceTimeout:42
-Transport.LifeCycle.GraceTimeOut:42
-Transport.RespondingTimeouts.ReadTimeout:42
-Transport.RespondingTimeouts.WriteTimeout:42
-Transport.RespondingTimeouts.IdleTimeout:42
-ProxyProtocol.Insecure:true
-ProxyProtocol.TrustedIPs:foobar,foobar
-ForwardedHeaders.Insecure:true
-ForwardedHeaders.TrustedIPs:foobar,foobar
-```
-
-```toml tab="File (static configuration)"
+```toml tab="File"
 [EntryPoints]
 
   [EntryPoints.EntryPoint0]
@@ -76,6 +62,20 @@ ForwardedHeaders.TrustedIPs:foobar,foobar
     [EntryPoints.EntryPoint0.ForwardedHeaders]
       Insecure = true
       TrustedIPs = ["foobar", "foobar"]
+```
+
+```ini tab="CLI"
+Name:EntryPoint0
+Address:foobar
+Transport.LifeCycle.RequestAcceptGraceTimeout:42
+Transport.LifeCycle.GraceTimeOut:42
+Transport.RespondingTimeouts.ReadTimeout:42
+Transport.RespondingTimeouts.WriteTimeout:42
+Transport.RespondingTimeouts.IdleTimeout:42
+ProxyProtocol.Insecure:true
+ProxyProtocol.TrustedIPs:foobar,foobar
+ForwardedHeaders.Insecure:true
+ForwardedHeaders.TrustedIPs:foobar,foobar
 ```
 
 ??? example "Using the CLI"
