@@ -56,8 +56,8 @@ You can write these configuration elements:
 ## Provider Configuration Options
 
 !!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [File Reference](../reference/providers/file.md).
-
+    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/providers/file.md) configuration references.
+    
 ### filename (_Optional_)
 
 Defines the path of the configuration file.
