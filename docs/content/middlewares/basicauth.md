@@ -12,15 +12,30 @@ The BasicAuth middleware is a quick way to restrict access to your services to k
 ```yaml tab="Docker"
 # Declaring the user list
 labels:
-  - "traefik.http.middlewares.declared-users-only.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+  - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+```
+
+```yaml tab="Kubernetes"
+# Declaring the user list
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  basicAuth:
+    users:
+    - test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/
+    - test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
 ```
 
 ```toml tab="File"
 # Declaring the user list
 [http.middlewares]
   [http.middlewares.test-auth.basicauth]
-  users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
-  "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+  users = [
+    "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
+    "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+  ]
 ```
 
 ## Configuration Options
@@ -33,7 +48,7 @@ Passwords must be encoded using MD5, SHA1, or BCrypt.
    
     Use `htpasswd` to generate the passwords.
 
-### users
+### `users`
 
 The `users` option is an array of authorized users. Each user will be declared using the `name:encoded-password` format.
 
@@ -41,7 +56,7 @@ The `users` option is an array of authorized users. Each user will be declared u
     
     If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
 
-### usersFile
+### `usersFile`
 
 The `usersFile` option is the path to an external file that contains the authorized users for the middleware.
 
@@ -58,22 +73,36 @@ The file content is a list of `name:encoded-password`.
     
     If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
 
-### realm
+### `realm`
 
 You can customize the realm for the authentication with the `realm` option. The default value is `traefik`. 
 
-### headerField
+### `headerField`
 
 You can customize the header field for the authenticated user using the `headerField`option.
 
-??? example "File -- Passing Authenticated Users to Services Via Headers"
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.my-auth.basicauth.headerField=X-WebAuth-User"
+```
 
-    ```toml
-      [http.middlewares.my-auth.basicauth]
-        usersFile = "path-to-file.ext"
-        headerField = "X-WebAuth-User" # header for the authenticated user
-    ```
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: my-auth
+spec:
+  basicAuth:
+    # ...
+    headerField: X-WebAuth-User
+```
 
-### removeHeader
+```toml tab="File"
+[http.middlewares.my-auth.basicauth]
+  # ...
+  headerField = "X-WebAuth-User"
+```
+
+### `removeHeader`
 
 Set the `removeHeader` option to `true` to remove the authorization header before forwarding the request to your service. (Default value is `false`.)

@@ -16,39 +16,50 @@ This can help services deal with large data (multipart/form-data for example), a
 ```yaml tab="Docker"
 # Sets the maximum request body to 2Mb
 labels:
-- "traefik.http.middlewares.2Mb-memory.buffering.maxRequestBodyBytes=250000"
+- "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=250000"
+```
+
+```yaml tab="Kubernetes"
+# Sets the maximum request body to 2Mb
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: limit
+spec:
+  buffering:
+    maxRequestBodyBytes: 250000
 ```
 
 ```toml tab="File"
 # Sets the maximum request body to 2Mb
 [http.middlewares]
-  [http.middlewares.2Mb-limit.buffering]
+  [http.middlewares.limit.buffering]
       maxRequestBodyBytes = 250000
 ```
 
 ## Configuration Options
 
-### maxRequestBodyBytes
+### `maxRequestBodyBytes`
 
 With the `maxRequestBodyBytes` option, you can configure the maximum allowed body size for the request (in Bytes).
 
 If the request exceeds the allowed size, the request is not forwarded to the service and the client gets a `413 (Request Entity Too Large) response.
 
-### memRequestBodyBytes
+### `memRequestBodyBytes`
 
 You can configure a thresold (in Bytes) from which the request will be buffered on disk instead of in memory with the `memRequestBodyBytes` option. 
 
-### maxResponseBodyBytes
+### `maxResponseBodyBytes`
 
 With the `maxReesponseBodyBytes` option, you can configure the maximum allowed response size from the service (in Bytes).
 
 If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `413 (Request Entity Too Large) response` instead.
 
-### memResponseBodyBytes
+### `memResponseBodyBytes`
 
 You can configure a thresold (in Bytes) from which the response will be buffered on disk instead of in memory with the `memResponseBodyBytes` option. 
 
-### retryExpression
+### `retryExpression`
 
 You can have the Buffering middleware replay the request with the help of the `retryExpression` option.
 
