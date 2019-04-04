@@ -37,6 +37,10 @@
   name = "github.com/BurntSushi/ty"
 
 [[constraint]]
+  name = "github.com/Masterminds/sprig"
+  version = "2.19.0"
+
+[[constraint]]
   branch = "master"
   name = "github.com/NYTimes/gziphandler"
 

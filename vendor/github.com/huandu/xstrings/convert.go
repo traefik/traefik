@@ -44,18 +44,25 @@ func ToCamelCase(str string) string {
 		return buf.String()
 	}
 
-	buf.WriteRune(unicode.ToUpper(r0))
-	r0, size = utf8.DecodeRuneInString(str)
-	str = str[size:]
+	r0 = unicode.ToUpper(r0)
 
 	for len(str) > 0 {
 		r1 = r0
 		r0, size = utf8.DecodeRuneInString(str)
 		str = str[size:]
 
-		if r1 == '_' && r0 != '_' {
+		if r1 == '_' && r0 == '_' {
+			buf.WriteRune(r1)
+			continue
+		}
+
+		if r1 == '_' {
 			r0 = unicode.ToUpper(r0)
 		} else {
+			r0 = unicode.ToLower(r0)
+		}
+
+		if r1 != '_' {
 			buf.WriteRune(r1)
 		}
 	}
@@ -65,7 +72,7 @@ func ToCamelCase(str string) string {
 }
 
 // ToSnakeCase can convert all upper case characters in a string to
-// underscore format.
+// snake case format.
 //
 // Some samples.
 //     "FirstName"  => "first_name"
@@ -74,7 +81,31 @@ func ToCamelCase(str string) string {
 //     "GO_PATH"    => "go_path"
 //     "GO PATH"    => "go_path"      // space is converted to underscore.
 //     "GO-PATH"    => "go_path"      // hyphen is converted to underscore.
+//     "HTTP2XX"    => "http_2xx"     // insert an underscore before a number and after an alphabet.
+//     "http2xx"    => "http_2xx"
+//     "HTTP20xOK"  => "http_20x_ok"
 func ToSnakeCase(str string) string {
+	return camelCaseToLowerCase(str, '_')
+}
+
+// ToKebabCase can convert all upper case characters in a string to
+// kebab case format.
+//
+// Some samples.
+//     "FirstName"  => "first-name"
+//     "HTTPServer" => "http-server"
+//     "NoHTTPS"    => "no-https"
+//     "GO_PATH"    => "go-path"
+//     "GO PATH"    => "go-path"      // space is converted to '-'.
+//     "GO-PATH"    => "go-path"      // hyphen is converted to '-'.
+//     "HTTP2XX"    => "http-2xx"     // insert a '-' before a number and after an alphabet.
+//     "http2xx"    => "http-2xx"
+//     "HTTP20xOK"  => "http-20x-ok"
+func ToKebabCase(str string) string {
+	return camelCaseToLowerCase(str, '-')
+}
+
+func camelCaseToLowerCase(str string, connector rune) string {
 	if len(str) == 0 {
 		return ""
 	}
@@ -83,7 +114,7 @@ func ToSnakeCase(str string) string {
 	var prev, r0, r1 rune
 	var size int
 
-	r0 = '_'
+	r0 = connector
 
 	for len(str) > 0 {
 		prev = r0
@@ -92,11 +123,11 @@ func ToSnakeCase(str string) string {
 
 		switch {
 		case r0 == utf8.RuneError:
-			buf.WriteByte(byte(str[0]))
+			buf.WriteRune(r0)
 
 		case unicode.IsUpper(r0):
-			if prev != '_' {
-				buf.WriteRune('_')
+			if prev != connector && !unicode.IsNumber(prev) {
+				buf.WriteRune(connector)
 			}
 
 			buf.WriteRune(unicode.ToLower(r0))
@@ -113,7 +144,7 @@ func ToSnakeCase(str string) string {
 				break
 			}
 
-			// find next non-upper-case character and insert `_` properly.
+			// find next non-upper-case character and insert connector properly.
 			// it's designed to convert `HTTPServer` to `http_server`.
 			// if there are more than 2 adjacent upper case characters in a word,
 			// treat them as an abbreviation plus a normal word.
@@ -124,17 +155,23 @@ func ToSnakeCase(str string) string {
 
 				if r0 == utf8.RuneError {
 					buf.WriteRune(unicode.ToLower(r1))
-					buf.WriteByte(byte(str[0]))
+					buf.WriteRune(r0)
 					break
 				}
 
 				if !unicode.IsUpper(r0) {
 					if r0 == '_' || r0 == ' ' || r0 == '-' {
-						r0 = '_'
+						r0 = connector
 
 						buf.WriteRune(unicode.ToLower(r1))
+					} else if unicode.IsNumber(r0) {
+						// treat a number as an upper case rune
+						// so that both `http2xx` and `HTTP2XX` can be converted to `http_2xx`.
+						buf.WriteRune(unicode.ToLower(r1))
+						buf.WriteRune(connector)
+						buf.WriteRune(r0)
 					} else {
-						buf.WriteRune('_')
+						buf.WriteRune(connector)
 						buf.WriteRune(unicode.ToLower(r1))
 						buf.WriteRune(r0)
 					}
@@ -145,14 +182,20 @@ func ToSnakeCase(str string) string {
 				buf.WriteRune(unicode.ToLower(r1))
 			}
 
-			if len(str) == 0 || r0 == '_' {
+			if len(str) == 0 || r0 == connector {
 				buf.WriteRune(unicode.ToLower(r0))
-				break
 			}
 
+		case unicode.IsNumber(r0):
+			if prev != connector && !unicode.IsNumber(prev) {
+				buf.WriteRune(connector)
+			}
+
+			buf.WriteRune(r0)
+
 		default:
-			if r0 == ' ' || r0 == '-' {
-				r0 = '_'
+			if r0 == ' ' || r0 == '-' || r0 == '_' {
+				r0 = connector
 			}
 
 			buf.WriteRune(r0)
