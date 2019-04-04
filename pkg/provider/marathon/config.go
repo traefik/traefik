@@ -39,6 +39,21 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 			continue
 		}
 
+		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
+			err := p.buildTCPServiceConfiguration(ctxApp, app, extraConf, confFromLabel.TCP)
+			if err != nil {
+				logger.Error(err)
+				continue
+			}
+			provider.BuildTCPRouterConfiguration(ctxApp, confFromLabel.TCP)
+			if len(confFromLabel.HTTP.Routers) == 0 &&
+				len(confFromLabel.HTTP.Middlewares) == 0 &&
+				len(confFromLabel.HTTP.Services) == 0 {
+				configurations[app.ID] = confFromLabel
+				continue
+			}
+		}
+
 		err = p.buildServiceConfiguration(ctxApp, app, extraConf, confFromLabel.HTTP)
 		if err != nil {
 			logger.Error(err)
@@ -109,6 +124,48 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.A
 	return nil
 }
 
+func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *config.TCPConfiguration) error {
+	appName := getServiceName(app)
+	appCtx := log.With(ctx, log.Str("ApplicationID", appName))
+
+	if len(conf.Services) == 0 {
+		conf.Services = make(map[string]*config.TCPService)
+		lb := &config.TCPLoadBalancerService{}
+		lb.SetDefaults()
+		conf.Services[appName] = &config.TCPService{
+			LoadBalancer: lb,
+		}
+	}
+
+	for serviceName, service := range conf.Services {
+		var servers []config.TCPServer
+
+		defaultServer := config.TCPServer{}
+		defaultServer.SetDefaults()
+
+		if len(service.LoadBalancer.Servers) > 0 {
+			defaultServer = service.LoadBalancer.Servers[0]
+		}
+
+		for _, task := range app.Tasks {
+			if p.taskFilter(ctx, *task, app) {
+				server, err := p.getTCPServer(app, *task, extraConf, defaultServer)
+				if err != nil {
+					log.FromContext(appCtx).Errorf("Skip task: %v", err)
+					continue
+				}
+				servers = append(servers, server)
+			}
+		}
+		if len(servers) == 0 {
+			return fmt.Errorf("no server for the service %s", serviceName)
+		}
+		service.LoadBalancer.Servers = servers
+	}
+
+	return nil
+}
+
 func (p *Provider) keepApplication(ctx context.Context, extraConf configuration) bool {
 	logger := log.FromContext(ctx)
 
@@ -140,6 +197,25 @@ func (p *Provider) taskFilter(ctx context.Context, task marathon.Task, applicati
 	}
 
 	return true
+}
+
+func (p *Provider) getTCPServer(app marathon.Application, task marathon.Task, extraConf configuration, defaultServer config.TCPServer) (config.TCPServer, error) {
+	host, err := p.getServerHost(task, app, extraConf)
+	if len(host) == 0 {
+		return config.TCPServer{}, err
+	}
+
+	port, err := getPort(task, app, defaultServer.Port)
+	if err != nil {
+		return config.TCPServer{}, err
+	}
+
+	server := config.TCPServer{
+		Address: net.JoinHostPort(host, port),
+		Weight:  1,
+	}
+
+	return server, nil
 }
 
 func (p *Provider) getServer(app marathon.Application, task marathon.Task, extraConf configuration, defaultServer config.Server) (config.Server, error) {
