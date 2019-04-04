@@ -260,3 +260,7 @@
 [[constraint]]
   name = "gopkg.in/DataDog/dd-trace-go.v1"
   version = "1.7.0"
+
+[[constraint]]
+  name = "github.com/google/uuid"
+  version = "0.2.0"

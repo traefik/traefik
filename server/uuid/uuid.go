@@ -1,11 +1,11 @@
 package uuid
 
-import guuid "github.com/satori/go.uuid"
+import guuid "github.com/google/uuid"
 
 var uuid string
 
 func init() {
-	uuid = guuid.NewV4().String()
+	uuid = guuid.New().String()
 }
 
 // Get the instance UUID
