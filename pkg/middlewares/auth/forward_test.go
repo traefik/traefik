@@ -50,6 +50,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Auth-User", "user@example.com")
 		w.Header().Set("X-Auth-Secret", "secret")
+		w.Header().Set("X-Auth-Token", "token")
 		fmt.Fprintln(w, "Success")
 	}))
 	defer server.Close()
@@ -61,8 +62,9 @@ func TestForwardAuthSuccess(t *testing.T) {
 	})
 
 	auth := config.ForwardAuth{
-		Address:             server.URL,
-		AuthResponseHeaders: []string{"X-Auth-User"},
+		Address:              server.URL,
+		AuthResponseHeaders:  []string{"X-Auth-User"},
+		AddHeadersToResponse: []string{"X-Auth-Token","X-Auth-User"},
 	}
 	middleware, err := NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
@@ -74,6 +76,9 @@ func TestForwardAuthSuccess(t *testing.T) {
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, "token", res.Header.Get("X-Auth-Token"))
+	assert.Equal(t, "user@example.com", res.Header.Get("X-Auth-User"))
+	assert.Empty(t, res.Header.Get("X-Auth-Secret"))
 
 	body, err := ioutil.ReadAll(res.Body)
 	require.NoError(t, err)

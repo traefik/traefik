@@ -113,10 +113,11 @@ type ErrorPage struct {
 
 // ForwardAuth holds the http forward authentication configuration.
 type ForwardAuth struct {
-	Address             string     `description:"Authentication server address" json:"address,omitempty"`
-	TLS                 *ClientTLS `description:"Enable TLS support" json:"tls,omitempty" export:"true"`
-	TrustForwardHeader  bool       `description:"Trust X-Forwarded-* headers" json:"trustForwardHeader,omitempty" export:"true"`
-	AuthResponseHeaders []string   `description:"Headers to be forwarded from auth response" json:"authResponseHeaders,omitempty"`
+	Address              string     `description:"Authentication server address" json:"address,omitempty"`
+	TLS                  *ClientTLS `description:"Enable TLS support" json:"tls,omitempty" export:"true"`
+	TrustForwardHeader   bool       `description:"Trust X-Forwarded-* headers" json:"trustForwardHeader,omitempty" export:"true"`
+	AuthResponseHeaders  []string   `description:"Headers to be forwarded from auth response" json:"authResponseHeaders,omitempty"`
+	AddHeadersToResponse []string   `description:"Headers to be added to response from auth response" json:"addHeadersToResponse,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

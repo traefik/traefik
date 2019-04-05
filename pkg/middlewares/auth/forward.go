@@ -24,12 +24,13 @@ const (
 )
 
 type forwardAuth struct {
-	address             string
-	authResponseHeaders []string
-	next                http.Handler
-	name                string
-	tlsConfig           *tls.Config
-	trustForwardHeader  bool
+	address              string
+	authResponseHeaders  []string
+	addHeadersToResponse []string
+	next                 http.Handler
+	name                 string
+	tlsConfig            *tls.Config
+	trustForwardHeader   bool
 }
 
 // NewForward creates a forward auth middleware.
@@ -37,11 +38,12 @@ func NewForward(ctx context.Context, next http.Handler, config config.ForwardAut
 	middlewares.GetLogger(ctx, name, forwardedTypeName).Debug("Creating middleware")
 
 	fa := &forwardAuth{
-		address:             config.Address,
-		authResponseHeaders: config.AuthResponseHeaders,
-		next:                next,
-		name:                name,
-		trustForwardHeader:  config.TrustForwardHeader,
+		address:              config.Address,
+		authResponseHeaders:  config.AuthResponseHeaders,
+		addHeadersToResponse: config.AddHeadersToResponse,
+		next:                 next,
+		name:                 name,
+		trustForwardHeader:   config.TrustForwardHeader,
 	}
 
 	if config.TLS != nil {
@@ -148,6 +150,10 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	for _, headerName := range fa.authResponseHeaders {
 		req.Header.Set(headerName, forwardResponse.Header.Get(headerName))
+	}
+
+	for _, headerName := range fa.addHeadersToResponse {
+		rw.Header().Set(headerName, forwardResponse.Header.Get(headerName))
 	}
 
 	req.RequestURI = req.URL.RequestURI()

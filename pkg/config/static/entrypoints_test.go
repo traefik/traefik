@@ -34,6 +34,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"Auth.HeaderField:X-WebAuth-User " +
 				"Auth.Forward.Address:https://authserver.com/auth " +
 				"Auth.Forward.AuthResponseHeaders:X-Auth,X-Test,X-Secret " +
+				"Auth.Forward.AddHeadersToResponse:X-Auth,X-Test " +
 				"Auth.Forward.TrustForwardHeader:true " +
 				"Auth.Forward.TLS.CA:path/to/local.crt " +
 				"Auth.Forward.TLS.CAOptional:true " +
@@ -54,6 +55,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"auth_digest_removeheader":            "true",
 				"auth_forward_address":                "https://authserver.com/auth",
 				"auth_forward_authresponseheaders":    "X-Auth,X-Test,X-Secret",
+				"auth_forward_addheaderstoresponse":   "X-Auth,X-Test",
 				"auth_forward_tls_ca":                 "path/to/local.crt",
 				"auth_forward_tls_caoptional":         "true",
 				"auth_forward_tls_cert":               "path/to/foo.cert",
