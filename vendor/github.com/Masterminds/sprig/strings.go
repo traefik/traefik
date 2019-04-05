@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	util "github.com/aokoli/goutils"
+	util "github.com/Masterminds/goutils"
 )
 
 func base64encode(v string) string {
@@ -57,22 +57,22 @@ func initials(s string) string {
 
 func randAlphaNumeric(count int) string {
 	// It is not possible, it appears, to actually generate an error here.
-	r, _ := util.RandomAlphaNumeric(count)
+	r, _ := util.CryptoRandomAlphaNumeric(count)
 	return r
 }
 
 func randAlpha(count int) string {
-	r, _ := util.RandomAlphabetic(count)
+	r, _ := util.CryptoRandomAlphabetic(count)
 	return r
 }
 
 func randAscii(count int) string {
-	r, _ := util.RandomAscii(count)
+	r, _ := util.CryptoRandomAscii(count)
 	return r
 }
 
 func randNumeric(count int) string {
-	r, _ := util.RandomNumeric(count)
+	r, _ := util.CryptoRandomNumeric(count)
 	return r
 }
 
@@ -81,22 +81,27 @@ func untitle(str string) string {
 }
 
 func quote(str ...interface{}) string {
-	out := make([]string, len(str))
-	for i, s := range str {
-		out[i] = fmt.Sprintf("%q", strval(s))
+	out := make([]string, 0, len(str))
+	for _, s := range str {
+		if s != nil {
+			out = append(out, fmt.Sprintf("%q", strval(s)))
+		}
 	}
 	return strings.Join(out, " ")
 }
 
 func squote(str ...interface{}) string {
-	out := make([]string, len(str))
-	for i, s := range str {
-		out[i] = fmt.Sprintf("'%v'", s)
+	out := make([]string, 0, len(str))
+	for _, s := range str {
+		if s != nil {
+			out = append(out, fmt.Sprintf("'%v'", s))
+		}
 	}
 	return strings.Join(out, " ")
 }
 
 func cat(v ...interface{}) string {
+	v = removeNilElements(v)
 	r := strings.TrimSpace(strings.Repeat("%v ", len(v)))
 	return fmt.Sprintf(r, v...)
 }
@@ -104,6 +109,10 @@ func cat(v ...interface{}) string {
 func indent(spaces int, v string) string {
 	pad := strings.Repeat(" ", spaces)
 	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
+}
+
+func nindent(spaces int, v string) string {
+	return "\n" + indent(spaces, v)
 }
 
 func replace(old, new, src string) string {
@@ -122,10 +131,11 @@ func strslice(v interface{}) []string {
 	case []string:
 		return v
 	case []interface{}:
-		l := len(v)
-		b := make([]string, l)
-		for i := 0; i < l; i++ {
-			b[i] = strval(v[i])
+		b := make([]string, 0, len(v))
+		for _, s := range v {
+			if s != nil {
+				b = append(b, strval(s))
+			}
 		}
 		return b
 	default:
@@ -133,15 +143,32 @@ func strslice(v interface{}) []string {
 		switch val.Kind() {
 		case reflect.Array, reflect.Slice:
 			l := val.Len()
-			b := make([]string, l)
+			b := make([]string, 0, l)
 			for i := 0; i < l; i++ {
-				b[i] = strval(val.Index(i).Interface())
+				value := val.Index(i).Interface()
+				if value != nil {
+					b = append(b, strval(value))
+				}
 			}
 			return b
 		default:
-			return []string{strval(v)}
+			if v == nil {
+				return []string{}
+			} else {
+				return []string{strval(v)}
+			}
 		}
 	}
+}
+
+func removeNilElements(v []interface{}) []interface{} {
+	newSlice := make([]interface{}, 0, len(v))
+	for _, i := range v {
+		if i != nil {
+			newSlice = append(newSlice, i)
+		}
+	}
+	return newSlice
 }
 
 func strval(v interface{}) string {
@@ -179,19 +206,28 @@ func split(sep, orig string) map[string]string {
 	return res
 }
 
+func splitn(sep string, n int, orig string) map[string]string {
+	parts := strings.SplitN(orig, sep, n)
+	res := make(map[string]string, len(parts))
+	for i, v := range parts {
+		res["_"+strconv.Itoa(i)] = v
+	}
+	return res
+}
+
 // substring creates a substring of the given string.
 //
-// If start is < 0, this calls string[:length].
+// If start is < 0, this calls string[:end].
 //
-// If start is >= 0 and length < 0, this calls string[start:]
+// If start is >= 0 and end < 0 or end bigger than s length, this calls string[start:]
 //
-// Otherwise, this calls string[start, length].
-func substring(start, length int, s string) string {
+// Otherwise, this calls string[start, end].
+func substring(start, end int, s string) string {
 	if start < 0 {
-		return s[:length]
+		return s[:end]
 	}
-	if length < 0 {
+	if end < 0 || end > len(s) {
 		return s[start:]
 	}
-	return s[start:length]
+	return s[start:end]
 }

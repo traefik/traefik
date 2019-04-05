@@ -62,6 +62,14 @@
   revision = "2fd0705ce648e602e6c9c57329a174270a4f6688"
 
 [[projects]]
+  digest = "1:25870183293a3fb61cc9afd060a61d63a486f091db72af01a8ea3449f5ca530d"
+  name = "github.com/Masterminds/goutils"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "41ac8693c5c10a92ea1ff5ac3a7f95646f6123b0"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:0ce2a409217f52078c6b8642993deb1025940cded6d5054047c1d5c7379f753c"
   name = "github.com/Masterminds/semver"
   packages = ["."]
@@ -70,11 +78,12 @@
   version = "v1.2.2"
 
 [[projects]]
-  digest = "1:a49472e7d73071005f436b7da85567220f24bb26fbfccbec45d2cd1359d4c67d"
+  digest = "1:876a1121171c083c4e3a4789683d02a40c0f644c8190da521d15b59799f556d6"
   name = "github.com/Masterminds/sprig"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "e039e20e500c2c025d9145be375e27cf42a94174"
+  revision = "9f8fceff796fb9f4e992cd2bece016be0121ab74"
+  version = "2.19.0"
 
 [[projects]]
   digest = "1:915c86626dfd65f8105c48b2972d29f34fd77ff16b31157147cb8ebbddeebbe3"
@@ -174,14 +183,6 @@
   pruneopts = "NUT"
   revision = "cad214d7d71fba7883fcf3b7e550ba782c15b400"
   version = "1.27.7"
-
-[[projects]]
-  digest = "1:975108e8d4f5dab096fc991326e96a5716ee8d02e5e7386bb4796171afc4ab9a"
-  name = "github.com/aokoli/goutils"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "3391d3790d23d03408670993e957e8f408993c34"
-  version = "v1.0.1"
 
 [[projects]]
   digest = "1:b39cf81d5f440b9c0757a25058432d33af867e5201109bf53621356d9dab4b73"
@@ -913,11 +914,12 @@
   revision = "0fb14efe8c47ae851c0034ed7a448854d3d34cf3"
 
 [[projects]]
-  digest = "1:45e66b20393507035c6a7d15bef5ffe8faf5b083621c1284d9824cc052776de5"
+  digest = "1:dc54242755f5b6721dd880843de6e45fe234838ea9149ec8249951880fd5802f"
   name = "github.com/huandu/xstrings"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "3959339b333561bf62a38b424fd41517c2c90f40"
+  revision = "f02667b379e2fb5916c3cda2cf31e0eb885d79f8"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -2239,7 +2241,6 @@
     "github.com/prometheus/client_model/go",
     "github.com/rancher/go-rancher-metadata/metadata",
     "github.com/ryanuber/go-glob",
-    "github.com/satori/go.uuid",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
