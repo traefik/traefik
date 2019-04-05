@@ -1,6 +1,9 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
 [log]
 logLevel = "DEBUG"
-
 
 [serversTransport]
 # Use certificate in net/internal/testcert.go

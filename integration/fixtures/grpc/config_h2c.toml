@@ -1,5 +1,9 @@
 [global]
-debug = true
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+logLevel = "DEBUG"
 
 [entrypoints]
   [entrypoints.web]

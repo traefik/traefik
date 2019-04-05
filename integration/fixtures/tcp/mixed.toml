@@ -1,3 +1,10 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+logLevel = "DEBUG"
+
 [entrypoints]
   [entrypoints.tcp]
     address = ":8093"

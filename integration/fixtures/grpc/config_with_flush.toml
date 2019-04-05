@@ -1,3 +1,9 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+logLevel = "DEBUG"
 
 [serversTransport]
 rootCAs = [ """{{ .CertContent }}""" ]

@@ -1,12 +1,15 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+logLevel = "DEBUG"
 
 [entrypoints]
   [entrypoints.web]
     address = ":8000"
 
 [api]
-
-[log]
-logLevel = "DEBUG"
 
 [providers]
    [providers.rest]

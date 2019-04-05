@@ -1,12 +1,13 @@
-################################################################
-# Global configuration
-################################################################
-[accessLog]
-filePath = "access.log"
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
 
 [log]
 filePath = "traefik.log"
 logLevel = "ERROR"
+
+[accessLog]
+filePath = "access.log"
 
 [entrypoints]
   [entrypoints.web]
@@ -14,17 +15,9 @@ logLevel = "ERROR"
   [entrypoints.api]
   address = ":7888"
 
-checkNewVersion = false
-
-################################################################
-# Api configuration backend
-################################################################
 [api]
 entryPoint = "api"
 
-################################################################
-# File configuration backend
-################################################################
 [providers]
    [providers.file]
 
