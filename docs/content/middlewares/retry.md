@@ -37,6 +37,6 @@ spec:
 
 ### `attempts` 
 
-(_mandatory_)
+_mandatory_
 
 The `attempts` option defines how many times to try sending the request.

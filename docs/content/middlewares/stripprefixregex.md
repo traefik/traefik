@@ -39,8 +39,8 @@ spec:
 
 The StripPrefixRegex middleware will:
 
-* strip the matching path prefix.
-* store the matching path prefix in a `X-Forwarded-Prefix` header.
+- strip the matching path prefix.
+- store the matching path prefix in a `X-Forwarded-Prefix` header.
 
 !!! tip
     
@@ -55,7 +55,11 @@ The `regex` option is the regular expression to match the path prefix from the r
     Regular expressions can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
 
 For instance, `/products` would match `/products` but also `/products/shoes` and `/products/shirts`.  
+
 Since the path is stripped prior to forwarding, your backend is expected to listen on `/`.  
+
 If your backend is serving assets (e.g., images or Javascript files), chances are it must return properly constructed relative URLs.  
+
 Continuing on the example, the backend should return `/products/shoes/image.png` (and not `/images.png` which Traefik would likely not be able to associate with the same backend).  
+
 The `X-Forwarded-Prefix` header can be queried to build such URLs dynamically.

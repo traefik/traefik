@@ -120,8 +120,8 @@ spec:
 
 PassTLSClientCert can add two headers to the request: 
 
-* `X-Forwarded-Tls-Client-Cert` that contains the escaped pem.
-* `X-Forwarded-Tls-Client-Cert-Info` that contains all the selected certificate information in an escaped string.
+- `X-Forwarded-Tls-Client-Cert` that contains the escaped pem.
+- `X-Forwarded-Tls-Client-Cert-Info` that contains all the selected certificate information in an escaped string.
 
 !!! note
     The headers are filled with escaped string so it can be safely placed inside a URL query.
@@ -235,6 +235,7 @@ In the following example, you can see a complete certificate. We will use each p
 ### `pem`
 
 The `pem` option sets the `X-Forwarded-Tls-Client-Cert` header with the escape certificate.
+
 In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` delimiters :
 
 ??? example "The data used by the pem option"
@@ -292,6 +293,7 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
 
 The `info` option select the specific client certificate details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header.
 The value of the header will be an escaped concatenation of all the selected certificate details.
+
 The following example shows an unescaped result that uses all the available fields: 
 
 ```text
@@ -305,6 +307,7 @@ Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TO
 #### `info.notafter`
 
 Set the `info.notafter` option to `true` to add the `Not After` information from the `Validity` part.
+
 The data are taken from the following certificate part:      
 
 ```text
@@ -338,6 +341,7 @@ NB=1544094616
 #### `info.sans`
 
 Set the `info.sans` option to `true` to add the `Subject Alternative Name` information from the `Subject Alternative Name` part.
+
 The data are taken from the following certificate part:
 
 ```text

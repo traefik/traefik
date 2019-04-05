@@ -42,8 +42,8 @@ spec:
 
 The ReplacePathRegex middleware will:
 
-* replace the matching path by the specified one.
-* store the original path in a `X-Replaced-Path` header.
+- replace the matching path by the specified one.
+- store the original path in a `X-Replaced-Path` header.
 
 ### `regex`
 

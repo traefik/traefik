@@ -39,8 +39,8 @@ spec:
 
 The ReplacePath middleware will:
 
-* replace the actual path by the specified one.
-* store the original path in a `X-Replaced-Path` header.
+- replace the actual path by the specified one.
+- store the original path in a `X-Replaced-Path` header.
 
 ### `path`
 
