@@ -51,3 +51,26 @@ func dateModify(fmt string, date time.Time) time.Time {
 	}
 	return date.Add(d)
 }
+
+func dateAgo(date interface{}) string {
+	var t time.Time
+
+	switch date := date.(type) {
+	default:
+		t = time.Now()
+	case time.Time:
+		t = date
+	case int64:
+		t = time.Unix(date, 0)
+	case int:
+		t = time.Unix(int64(date), 0)
+	}
+	// Drop resolution to seconds
+	duration := time.Since(t).Round(time.Second)
+	return duration.String()
+}
+
+func toDate(fmt, str string) time.Time {
+	t, _ := time.ParseInLocation(fmt, str, time.Local)
+	return t
+}

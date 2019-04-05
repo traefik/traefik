@@ -13,7 +13,7 @@ import (
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 // Metadata stores Object plus metadata
@@ -125,7 +125,7 @@ func (d *Datastore) reload() error {
 
 // Begin creates a transaction with the KV store.
 func (d *Datastore) Begin() (Transaction, Object, error) {
-	id := uuid.NewV4().String()
+	id := uuid.New().String()
 	log.Debugf("Transaction %s begins", id)
 	remoteLock, err := d.kv.NewLock(d.lockKey, &store.LockOptions{TTL: 20 * time.Second, Value: []byte(id)})
 	if err != nil {

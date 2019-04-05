@@ -49,7 +49,6 @@ func empty(given interface{}) bool {
 	case reflect.Struct:
 		return false
 	}
-	return true
 }
 
 // coalesce returns the first non-empty value.
@@ -72,4 +71,13 @@ func toJson(v interface{}) string {
 func toPrettyJson(v interface{}) string {
 	output, _ := json.MarshalIndent(v, "", "  ")
 	return string(output)
+}
+
+// ternary returns the first value if the last value is true, otherwise returns the second value.
+func ternary(vt interface{}, vf interface{}, v bool) interface{} {
+	if v {
+		return vt
+	}
+
+	return vf
 }
