@@ -162,7 +162,7 @@ func getSegmentBackendName(service rancherData) string {
 		return provider.Normalize(service.Name + "-" + value)
 	}
 
-	return provider.Normalize(service.Name + "-" + getDefaultBackendName(service) + "-" + service.SegmentName)
+	return provider.Normalize(service.Name + "-" + service.SegmentName)
 }
 
 func getDefaultBackendName(service rancherData) string {
