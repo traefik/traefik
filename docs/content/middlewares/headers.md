@@ -45,6 +45,7 @@ spec:
 
 `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` header removed from the request,
 and the `X-Custom-Response-Header` header removed from the response.
+
 Please note that is not possible to remove headers through the use of Docker labels for now.
 
 ```yaml tab="Kubernetes"
@@ -55,20 +56,20 @@ metadata:
 spec:
   headers:
     CustomRequestHeaders:
-      X-Script-Name: "test"
-      X-Custom-Request-Header: ""
+      X-Script-Name: "test" # Adds
+      X-Custom-Request-Header: "" # Removes
     CustomResponseHeaders:
-      X-Custom-Response-Header: ""
+      X-Custom-Response-Header: "" # Removes
 ```
 
 ```toml tab="File"    
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     [http.middlewares.testHeader.headers.CustomRequestHeaders]
-        X-Script-Name = "test"
-        X-Custom-Request-Header = ""
+        X-Script-Name = "test" # Adds
+        X-Custom-Request-Header = "" # Removes
     [http.middlewares.testHeader.headers.CustomResponseHeaders]
-        X-Custom-Response-Header = ""
+        X-Custom-Response-Header = "" # Removes
 ```
 
 ### Using Security Headers
