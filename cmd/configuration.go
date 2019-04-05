@@ -11,6 +11,7 @@ import (
 	"github.com/containous/traefik/pkg/provider/file"
 	"github.com/containous/traefik/pkg/provider/kubernetes/ingress"
 	"github.com/containous/traefik/pkg/provider/marathon"
+	"github.com/containous/traefik/pkg/provider/rancher"
 	"github.com/containous/traefik/pkg/provider/rest"
 	"github.com/containous/traefik/pkg/tracing/datadog"
 	"github.com/containous/traefik/pkg/tracing/instana"
@@ -172,12 +173,22 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// default Kubernetes
 	var defaultKubernetes ingress.Provider
 
+	// default Rancher
+	var defaultRancher rancher.Provider
+	defaultRancher.Watch = true
+	defaultRancher.ExposedByDefault = true
+	defaultRancher.EnableServiceHealthFilter = true
+	defaultRancher.RefreshSeconds = 15
+	defaultRancher.DefaultRule = rancher.DefaultTemplateRule
+	defaultRancher.Prefix = "latest"
+
 	defaultProviders := static.Providers{
 		File:       &defaultFile,
 		Docker:     &defaultDocker,
 		Rest:       &defaultRest,
 		Marathon:   &defaultMarathon,
 		Kubernetes: &defaultKubernetes,
+		Rancher:    &defaultRancher,
 	}
 
 	return &TraefikConfiguration{

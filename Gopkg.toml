@@ -149,10 +149,10 @@ required = [
   name = "github.com/opentracing/opentracing-go"
   version = "1.0.2"
 
-#[[constraint]]
-#  branch = "containous-fork"
-#  name = "github.com/rancher/go-rancher-metadata"
-#  source = "github.com/containous/go-rancher-metadata"
+[[constraint]]
+  branch = "containous-fork"
+  name = "github.com/rancher/go-rancher-metadata"
+  source = "github.com/containous/go-rancher-metadata"
 
 [[constraint]]
   branch = "master"

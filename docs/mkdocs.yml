@@ -74,9 +74,10 @@ nav:
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
-      - 'File': 'providers/file.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
-#      - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
+#     - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
+      - 'Rancher': 'providers/rancher.md'
+      - 'File': 'providers/file.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'Entrypoints': 'routing/entrypoints.md'
