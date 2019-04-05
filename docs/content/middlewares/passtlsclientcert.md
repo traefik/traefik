@@ -1,4 +1,4 @@
-# TODO - PassTLSClientCert
+# PassTLSClientCert
 
 Adding Client Certificates in a Header
 {: .subtitle }
@@ -282,6 +282,11 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
     
     The delimiters and `\n` will be removed.  
     If there are more than one certificate, they are separated by a "`;`".
+
+!!! note "`X-Forwarded-Tls-Client-Cert` value could exceed the web server header size limit"
+
+    The header size limit of web servers is commonly between 4kb and 8kb.  
+    You could change the server configuration to allow bigger header or use the `info` option with the needed field(s).
 
 ### `info`
 
