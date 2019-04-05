@@ -9,8 +9,8 @@ Where Every Technical Word finds its Definition`
 - [ ] Routers
 - [ ] Middleware
 - [ ] Service
-- [ ] Static Configuration
-- [ ] Dynamic Configuration
+- [ ] [Static configuration](getting-started/configuration-overview.md#the-static-configuration)
+- [ ] [Dynamic configuration](getting-started/configuration-overview.md#the-dynamic-configuration)
 - [ ] ACME
 - [ ] TraefikEE
 - [ ] Tracing

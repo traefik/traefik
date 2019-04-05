@@ -1,0 +1,196 @@
+--accesslog                                                 Access log settings                                                             (default "false")
+--accesslog.bufferingsize                                   Number of access log lines to process in a buffered way. Default 0.             (default "0")
+--accesslog.fields                                          AccessLogFields                                                                 (default "false")
+--accesslog.fields.defaultmode                              Default mode for fields: keep | drop                                            (default "keep")
+--accesslog.fields.headers                                  Headers to keep, drop or redact                                                 (default "false")
+--accesslog.fields.headers.defaultmode                      Default mode for fields: keep | drop | redact                                   (default "keep")
+--accesslog.fields.headers.names                            Override mode for headers                                                       (default "map[]")
+--accesslog.fields.names                                    Override mode for fields                                                        (default "map[]")
+--accesslog.filepath                                        Access log file path. Stdout is used when omitted or empty
+--accesslog.filters                                         Access log filters, used to keep only specific access logs                      (default "false")
+--accesslog.filters.minduration                             Keep access logs when request took longer than the specified duration           (default "0s")
+--accesslog.filters.retryattempts                           Keep access logs when at least one retry happened                               (default "false")
+--accesslog.filters.statuscodes                             Keep access logs with status codes in the specified range                       (default "[]")
+--accesslog.format                                          Access log format: json | common                                                (default "common")
+--acme                                                      Enable ACME (Let's Encrypt): automatic SSL                                      (default "false")
+--acme.acmelogging                                          Enable debug logging of ACME actions.                                           (default "false")
+--acme.caserver                                             CA server to use.
+--acme.dnschallenge                                         Activate DNS-01 Challenge                                                       (default "false")
+--acme.dnschallenge.delaybeforecheck                        Assume DNS propagates after a delay in seconds rather than finding and querying (default "0s")
+                                                            nameservers.
+--acme.dnschallenge.disablepropagationcheck                 Disable the DNS propagation checks before notifying ACME that the DNS challenge (default "false")
+                                                            is ready. [not recommended]
+--acme.dnschallenge.provider                                Use a DNS-01 based challenge provider rather than HTTPS.
+--acme.dnschallenge.resolvers                               Use following DNS servers to resolve the FQDN authority.
+--acme.domains                                              CN and SANs (alternative domains) to each main domain using format:             (default "[]")
+                                                            --acme.domains='main.com,san1.com,san2.com' --acme.domains='*.main.net'. No
+                                                            SANs for wildcards domain. Wildcard domains only accepted with DNSChallenge
+--acme.email                                                Email address used for registration
+--acme.entrypoint                                           EntryPoint to use.
+--acme.httpchallenge                                        Activate HTTP-01 Challenge                                                      (default "false")
+--acme.httpchallenge.entrypoint                             HTTP challenge EntryPoint
+--acme.keytype                                              KeyType used for generating certificate private key. Allow value 'EC256',
+                                                            'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'
+--acme.onhostrule                                           Enable certificate generation on frontends Host rules.                          (default "false")
+--acme.storage                                              Storage to use.
+--acme.tlschallenge                                         Activate TLS-ALPN-01 Challenge                                                  (default "false")
+--api                                                       Enable api/dashboard                                                            (default "false")
+--api.dashboard                                             Activate dashboard                                                              (default "true")
+--api.entrypoint                                            EntryPoint                                                                      (default "traefik")
+--api.middlewares                                           Middleware list
+--api.statistics                                            Enable more detailed statistics                                                 (default "true")
+--api.statistics.recenterrors                               Number of recent errors logged                                                  (default "10")
+-c, --configfile                                                Configuration file to use (TOML).
+--entrypoints                                               Entrypoints definition using format: --entryPoints='Name:http Address::8000     (default "map[]")
+                                                            Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442
+                                                            TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'
+--global                                                    Global configuration options                                                    (default "true")
+--global.checknewversion                                    Periodically check if a new version has been released                           (default "true")
+-d, --global.debug                                              Enable debug mode                                                               (default "false")
+--global.sendanonymoususage                                 send periodically anonymous usage statistics                                    (default "false")
+--hostresolver                                              Enable CNAME Flattening                                                         (default "false")
+--hostresolver.cnameflattening                              A flag to enable/disable CNAME flattening                                       (default "false")
+--hostresolver.resolvconfig                                 resolv.conf used for DNS resolving                                              (default "/etc/resolv.conf")
+--hostresolver.resolvdepth                                  The maximal depth of DNS recursive resolving                                    (default "5")
+--log                                                       Traefik log settings                                                            (default "false")
+--log.filepath                                              Traefik log file path. Stdout is used when omitted or empty
+--log.format                                                Traefik log format: json | common                                               (default "common")
+--log.loglevel                                              Log level set to traefik logs.
+--metrics                                                   Enable a metrics exporter                                                       (default "false")
+--metrics.datadog                                           DataDog metrics exporter type                                                   (default "false")
+--metrics.datadog.address                                   DataDog's address                                                               (default "localhost:8125")
+--metrics.datadog.pushinterval                              DataDog push interval                                                           (default "10s")
+--metrics.influxdb                                          InfluxDB metrics exporter type                                                  (default "false")
+--metrics.influxdb.address                                  InfluxDB address                                                                (default "localhost:8089")
+--metrics.influxdb.database                                 InfluxDB database used when protocol is http
+--metrics.influxdb.password                                 InfluxDB password (only with http)
+--metrics.influxdb.protocol                                 InfluxDB address protocol (udp or http)                                         (default "udp")
+--metrics.influxdb.pushinterval                             InfluxDB push interval                                                          (default "10s")
+--metrics.influxdb.retentionpolicy                          InfluxDB retention policy used when protocol is http
+--metrics.influxdb.username                                 InfluxDB username (only with http)
+--metrics.prometheus                                        Prometheus metrics exporter type                                                (default "false")
+--metrics.prometheus.buckets                                Buckets for latency metrics                                                     (default "[0.1 0.3 1.2 5]")
+--metrics.prometheus.entrypoint                             EntryPoint                                                                      (default "traefik")
+--metrics.prometheus.middlewares                            Middlewares
+--metrics.statsd                                            StatsD metrics exporter type                                                    (default "false")
+--metrics.statsd.address                                    StatsD address                                                                  (default "localhost:8125")
+--metrics.statsd.pushinterval                               StatsD push interval                                                            (default "10s")
+--ping                                                      Enable ping                                                                     (default "false")
+--ping.entrypoint                                           Ping entryPoint                                                                 (default "traefik")
+--ping.middlewares                                          Middleware list
+--providers                                                 Providers configuration                                                         (default "false")
+--providers.docker                                          Enable Docker backend with default settings                                     (default "false")
+--providers.docker.constraints                              Filter services by constraint, matching with Traefik tags.                      (default "[]")
+--providers.docker.defaultrule                              Default rule                                                                    (default "Host(`{{ normalize .Name }}`)")
+--providers.docker.endpoint                                 Docker server endpoint. Can be a tcp or a unix socket endpoint                  (default "unix:///var/run/docker.sock")
+--providers.docker.exposedbydefault                         Expose containers by default                                                    (default "true")
+--providers.docker.network                                  Default Docker network used
+--providers.docker.swarmmode                                Use Docker on Swarm Mode                                                        (default "false")
+--providers.docker.swarmmoderefreshseconds                  Polling interval for swarm mode (in seconds)                                    (default "15")
+--providers.docker.tls                                      Enable Docker TLS support                                                       (default "false")
+--providers.docker.tls.ca                                   TLS CA
+--providers.docker.tls.caoptional                           TLS CA.Optional                                                                 (default "false")
+--providers.docker.tls.cert                                 TLS cert
+--providers.docker.tls.insecureskipverify                   TLS insecure skip verify                                                        (default "false")
+--providers.docker.tls.key                                  TLS key
+--providers.docker.usebindportip                            Use the ip address from the bound port, rather than from the inner network      (default "false")
+--providers.docker.watch                                    Watch provider                                                                  (default "true")
+--providers.file                                            Enable File backend with default settings                                       (default "true")
+--providers.file.debugloggeneratedtemplate                  Enable debug logging of generated configuration template.                       (default "false")
+--providers.file.directory                                  Load configuration from one or more .toml files in a directory
+--providers.file.filename                                   Override default configuration template. For advanced users :)
+--providers.file.watch                                      Watch provider                                                                  (default "true")
+--providers.kubernetes                                      Enable Kubernetes backend with default settings                                 (default "true")
+--providers.kubernetes.certauthfilepath                     Kubernetes certificate authority file path (not needed for in-cluster client)
+--providers.kubernetes.disablepasshostheaders               Kubernetes disable PassHost Headers                                             (default "false")
+--providers.kubernetes.endpoint                             Kubernetes server endpoint (required for external cluster client)
+--providers.kubernetes.ingressclass                         Value of kubernetes.io/ingress.class annotation to watch for
+--providers.kubernetes.ingressendpoint                      Kubernetes Ingress Endpoint                                                     (default "false")
+--providers.kubernetes.ingressendpoint.hostname             Hostname used for Kubernetes Ingress endpoints
+--providers.kubernetes.ingressendpoint.ip                   IP used for Kubernetes Ingress endpoints
+--providers.kubernetes.ingressendpoint.publishedservice     Published Kubernetes Service to copy status from
+--providers.kubernetes.labelselector                        Kubernetes Ingress label selector to use
+--providers.kubernetes.namespaces                           Kubernetes namespaces                                                           (default "[]")
+--providers.kubernetes.token                                Kubernetes bearer token (not needed for in-cluster client)
+--providers.kubernetescrd                                   Enable Kubernetes backend with default settings                                 (default "false")
+--providers.kubernetescrd.certauthfilepath                  Kubernetes certificate authority file path (not needed for in-cluster client)
+--providers.kubernetescrd.disablepasshostheaders            Kubernetes disable PassHost Headers                                             (default "false")
+--providers.kubernetescrd.endpoint                          Kubernetes server endpoint (required for external cluster client)
+--providers.kubernetescrd.ingressclass                      Value of kubernetes.io/ingress.class annotation to watch for
+--providers.kubernetescrd.labelselector                     Kubernetes label selector to use
+--providers.kubernetescrd.namespaces                        Kubernetes namespaces                                                           (default "[]")
+--providers.kubernetescrd.token                             Kubernetes bearer token (not needed for in-cluster client)
+--providers.marathon                                        Enable Marathon backend with default settings                                   (default "false")
+--providers.marathon.basic                                  Enable basic authentication                                                     (default "false")
+--providers.marathon.basic.httpbasicauthuser                Basic authentication User
+--providers.marathon.basic.httpbasicpassword                Basic authentication Password
+--providers.marathon.constraints                            Filter services by constraint, matching with Traefik tags.                      (default "[]")
+--providers.marathon.dcostoken                              DCOSToken for DCOS environment, This will override the Authorization header
+--providers.marathon.defaultrule                            Default rule                                                                    (default "Host(`{{ normalize .Name }}`)")
+--providers.marathon.dialertimeout                          Set a dialer timeout for Marathon                                               (default "5s")
+--providers.marathon.endpoint                               Marathon server endpoint. You can also specify multiple endpoint for Marathon   (default "http://127.0.0.1:8080")
+--providers.marathon.exposedbydefault                       Expose Marathon apps by default                                                 (default "true")
+--providers.marathon.filtermarathonconstraints              Enable use of Marathon constraints in constraint filtering                      (default "false")
+--providers.marathon.forcetaskhostname                      Force to use the task's hostname.                                               (default "false")
+--providers.marathon.keepalive                              Set a TCP Keep Alive time in seconds                                            (default "10s")
+--providers.marathon.respectreadinesschecks                 Filter out tasks with non-successful readiness checks during deployments        (default "false")
+--providers.marathon.responseheadertimeout                  Set a response header timeout for Marathon                                      (default "1m0s")
+--providers.marathon.tls                                    Enable TLS support                                                              (default "false")
+--providers.marathon.tls.ca                                 TLS CA
+--providers.marathon.tls.caoptional                         TLS CA.Optional                                                                 (default "false")
+--providers.marathon.tls.cert                               TLS cert
+--providers.marathon.tls.insecureskipverify                 TLS insecure skip verify                                                        (default "false")
+--providers.marathon.tls.key                                TLS key
+--providers.marathon.tlshandshaketimeout                    Set a TLS handhsake timeout for Marathon                                        (default "5s")
+--providers.marathon.trace                                  Display additional provider logs.                                               (default "false")
+--providers.marathon.watch                                  Watch provider                                                                  (default "true")
+--providers.providersthrottleduration                       Backends throttle duration: minimum duration between 2 events from providers    (default "2s")
+                                                            before applying a new configuration. It avoids unnecessary reloads if multiples
+                                                            events are sent in a short amount of time.
+--providers.rest                                            Enable Rest backend with default settings                                       (default "true")
+--providers.rest.entrypoint                                 EntryPoint                                                                      (default "traefik")
+--serverstransport                                          Servers default transport                                                       (default "true")
+--serverstransport.forwardingtimeouts                       Timeouts for requests forwarded to the backend servers                          (default "true")
+--serverstransport.forwardingtimeouts.dialtimeout           The amount of time to wait until a connection to a backend server can be        (default "0s")
+                                                            established. Defaults to 30 seconds. If zero, no timeout exists
+--serverstransport.forwardingtimeouts.responseheadertimeout The amount of time to wait for a server's response headers after fully writing  (default "0s")
+                                                            the request (including its body, if any). If zero, no timeout exists
+--serverstransport.insecureskipverify                       Disable SSL certificate verification                                            (default "false")
+--serverstransport.maxidleconnsperhost                      If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, (default "200")
+                                                            DefaultMaxIdleConnsPerHost is used
+--serverstransport.rootcas                                  Add cert file for self-signed certificate
+--tracing                                                   OpenTracing configuration                                                       (default "false")
+--tracing.backend                                           Selects the tracking backend ('jaeger','zipkin','datadog','instana').           (default "jaeger")
+--tracing.datadog                                           Settings for DataDog                                                            (default "false")
+--tracing.datadog.bagageprefixheadername                    specifies the header name prefix that will be used to store baggage items in a
+                                                            map.
+--tracing.datadog.debug                                     Enable DataDog debug.                                                           (default "false")
+--tracing.datadog.globaltag                                 Key:Value tag to be set on all the spans.
+--tracing.datadog.localagenthostport                        Set datadog-agent's host:port that the reporter will used. Defaults to          (default "localhost:8126")
+                                                            localhost:8126
+--tracing.datadog.parentidheadername                        Specifies the header name that will be used to store the parent ID.
+--tracing.datadog.prioritysampling                          Enable priority sampling. When using distributed tracing, this option must be   (default "false")
+                                                            enabled in order to get all the parts of a distributed trace sampled.
+--tracing.datadog.samplingpriorityheadername                Specifies the header name that will be used to store the sampling priority.
+--tracing.datadog.traceidheadername                         Specifies the header name that will be used to store the trace ID.
+--tracing.instana                                           Settings for Instana                                                            (default "false")
+--tracing.instana.localagenthost                            Set instana-agent's host that the reporter will used.                           (default "localhost")
+--tracing.instana.localagentport                            Set instana-agent's port that the reporter will used.                           (default "42699")
+--tracing.instana.loglevel                                  Set instana-agent's log level. ('error','warn','info','debug')                  (default "info")
+--tracing.jaeger                                            Settings for jaeger                                                             (default "false")
+--tracing.jaeger.gen128bit                                  generate 128 bit span IDs.                                                      (default "false")
+--tracing.jaeger.localagenthostport                         set jaeger-agent's host:port that the reporter will used.                       (default "127.0.0.1:6831")
+--tracing.jaeger.propagation                                which propgation format to use (jaeger/b3).                                     (default "jaeger")
+--tracing.jaeger.samplingparam                              set the sampling parameter.                                                     (default "1")
+--tracing.jaeger.samplingserverurl                          set the sampling server url.                                                    (default "http://localhost:5778/sampling")
+--tracing.jaeger.samplingtype                               set the sampling type.                                                          (default "const")
+--tracing.jaeger.tracecontextheadername                     set the header to use for the trace-id.                                         (default "uber-trace-id")
+--tracing.servicename                                       Set the name for this service                                                   (default "traefik")
+--tracing.spannamelimit                                     Set the maximum character limit for Span names (default 0 = no limit)           (default "0")
+--tracing.zipkin                                            Settings for zipkin                                                             (default "false")
+--tracing.zipkin.debug                                      Enable Zipkin debug.                                                            (default "false")
+--tracing.zipkin.httpendpoint                               HTTP Endpoint to report traces to.                                              (default "http://localhost:9411/api/v1/spans")
+--tracing.zipkin.id128bit                                   Use Zipkin 128 bit root span IDs.                                               (default "true")
+--tracing.zipkin.samespan                                   Use Zipkin SameSpan RPC style traces.                                           (default "false")
+--tracing.zipkin.samplerate                                 The rate between 0.0 and 1.0 of requests to trace.                              (default "1")
+-h, --help                                                      Print Help (this message) and exit

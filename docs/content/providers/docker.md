@@ -63,9 +63,9 @@ Attach labels to your containers and let Traefik do the rest!
 ## Provider Configuration Options
 
 !!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [Docker Reference](../reference/providers/docker.md).
+    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/dynamic-configuration/docker.md) configuration references.
 
-### endpoint
+### `endpoint`
 
 Traefik requires access to the docker socket to get its dynamic configuration.
 
@@ -140,7 +140,9 @@ Traefik requires access to the docker socket to get its dynamic configuration.
           endpoint = "unix:///var/run/docker.sock"
     ```
 
-### usebindportip (_Optional_, _Default=false_)
+### `usebindportip`
+
+_Optional, Default=false_
 
 Traefik routes requests to the IP/Port of the matching container.
 When setting `usebindportip=true`, you tell Traefik to use the IP/Port attached to the container's _binding_ instead of its inner network IP/Port.
@@ -163,29 +165,39 @@ If it can't find such a binding, Traefik falls back on the internal network IP o
     !!! note
         In the above table, ExtIp stands for "external IP found in the binding", IntIp stands for "internal network container's IP", ExtPort stands for "external Port found in the binding", and IntPort stands for "internal network container's port."
 
-### exposedByDefault (_Optional_, _Default=true_)
+### `exposedByDefault`
+
+_Optional, Default=true_
 
 Expose containers by default through Traefik.
 If set to false, containers that don't have a `traefik.enable=true` label will be ignored from the resulting routing configuration.
 
-### network (_Optional_)
+### `network`
+
+_Optional_
 
 Defines a default docker network to use for connections to all containers.
 
 This option can be overridden on a container basis with the `traefik.docker.network` label.
 
-### domain (_Optional_, _Default=docker.localhost_)
+### `domain`
+
+_Optional_
 
 This is the default base domain used for the router rules.
 
 This option can be overridden on a container basis with the
 `traefik.domain` label.
 
-### swarmMode (_Optional_, _Default=false_)
+### `swarmMode`
+
+_Optional, Default=false_
 
 Activates the Swarm Mode.
 
-### swarmModeRefreshSeconds (_Optional_, _Default=15_)
+### `swarmModeRefreshSeconds`
+
+_Optional, Default=15_
 
 Defines the polling interval (in seconds) in Swarm Mode.
 
@@ -251,17 +263,17 @@ You can declare TCP Routers and/or Services using labels.
 
 ### Specific Options
 
-#### traefik.enable
+#### `traefik.enable`
 
 You can tell Traefik to consider (or not) the container by setting `traefik.enable` to true or false.
 
 This option overrides the value of `exposedByDefault`.
 
-#### traefik.tags
+#### `traefik.tags`
 
 Sets the tags for [constraints filtering](./overview.md#constraints-configuration).
 
-#### traefik.docker.network
+#### `traefik.docker.network`
 
 Overrides the default docker network to use for connections to the container.
 

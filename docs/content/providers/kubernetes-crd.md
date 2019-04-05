@@ -121,7 +121,7 @@ spec:
 
 ## Full reference example
 
-[Traefik IngressRoute Reference](../reference/providers/kubernetescrd.md).
+If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/dynamic-configuration/kubernetes-crd.md) configuration references.
 
 ## Further
 
