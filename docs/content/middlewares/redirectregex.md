@@ -1,4 +1,4 @@
-# TODO - RedirectRegex
+# RedirectRegex
 
 Redirecting the Client to a Different Location
 {: .subtitle }
@@ -44,7 +44,7 @@ Set the `permanent` option to `true` to apply a permanent redirection.
 
 ### `regex`
 
-The `Regex` option is the regular expression to match and capture elements form the request URL.
+The `Regex` option is the regular expression to match and capture elements from the request URL.
 
 !!! warning
 
