@@ -36,7 +36,6 @@ spec:
     replacement = "/bar/$1"
 ```
 
-
 ## Configuration Options
 
 ### General

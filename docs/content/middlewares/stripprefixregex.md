@@ -3,12 +3,11 @@
 Removing Prefixes From the Path Before Forwarding the Request (Using a Regex)
 {: .subtitle }
 
-
 `TODO: add schema`
 
 Remove the matching prefixes from the URL path.
 
-# Configuration Examples
+## Configuration Examples
 
 ```yaml tab="Docker"
 # Replace the path by /foo
@@ -50,7 +49,6 @@ The StripPrefixRegex middleware will:
 ### `regex`
 
 The `regex` option is the regular expression to match the path prefix from the request URL.
-
 
 !!! tip
 
