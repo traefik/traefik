@@ -123,10 +123,10 @@ func getBackendName(i ecsInstance) string {
 
 func getSegmentBackendName(i ecsInstance) string {
 	if value := label.GetStringValue(i.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
-		return provider.Normalize(i.Name + "-" + value)
+		return provider.Normalize(getDefaultBackendName(i) + "-" + value)
 	}
 
-	return provider.Normalize(i.Name + "-" + i.SegmentName)
+	return provider.Normalize(getDefaultBackendName(i) + "-" + i.SegmentName)
 }
 
 func getDefaultBackendName(i ecsInstance) string {
