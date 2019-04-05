@@ -184,12 +184,12 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:9752dad5e89cd779096bf2477a4ded16bea7ac62de453c8d6b4bf841d51a8512"
+  digest = "1:b39cf81d5f440b9c0757a25058432d33af867e5201109bf53621356d9dab4b73"
   name = "github.com/apache/thrift"
   packages = ["lib/go/thrift"]
   pruneopts = "NUT"
-  revision = "b2a4d4ae21c789b689dd162deb819665567f481c"
-  version = "0.10.0"
+  revision = "384647d290e2e4a55a14b1b7ef1b7e66293a2c33"
+  version = "v0.12.0"
 
 [[projects]]
   branch = "master"
@@ -1243,7 +1243,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:7da29c22bcc5c2ffb308324377dc00b5084650348c2799e573ed226d8cc9faf0"
+  digest = "1:6846140b3f116579680eefdc17145f2bcf064b68deb9febf86b4419a454049af"
   name = "github.com/opentracing/opentracing-go"
   packages = [
     ".",
@@ -1251,12 +1251,12 @@
     "log",
   ]
   pruneopts = "NUT"
-  revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
-  version = "v1.0.2"
+  revision = "659c90643e714681897ec2521c60567dd21da733"
+  version = "v1.1.0"
 
 [[projects]]
-  digest = "1:07c44a0ce6012eafd2f05b715d30852d576aeda7798b8760a2ff51b1e90eb753"
-  name = "github.com/openzipkin/zipkin-go-opentracing"
+  digest = "1:0f4793617dc898d3ee99fe1abab076d3976a9d17d14f8327af2dc3f1ec0fd92c"
+  name = "github.com/openzipkin-contrib/zipkin-go-opentracing"
   packages = [
     ".",
     "flag",
@@ -1266,7 +1266,8 @@
     "wire",
   ]
   pruneopts = "NUT"
-  revision = "1f5c07e90700ae93ddcba0c7af7d9c7201646ccc"
+  revision = "f0f479ad013a498e4cbfb369414e5d3880903779"
+  version = "v0.3.5"
 
 [[projects]]
   digest = "1:b52f6b7059f06a11ab6ab039714dda0d93878d9227f84c84ca9b6f046bfb5fef"
@@ -1507,7 +1508,7 @@
   revision = "1dc93a7db3567a5ccf865106afac88278ba940cf"
 
 [[projects]]
-  digest = "1:7d3a890e525da3b7014d26dd1d4a0e4d31a479995007cd11989ad31db132e66c"
+  digest = "1:dc5b63bdf6fd3b22c970e06ad4fb686f6d08104f50f414644d5ac5e267a7934a"
   name = "github.com/uber/jaeger-client-go"
   packages = [
     ".",
@@ -1530,16 +1531,18 @@
     "zipkin",
   ]
   pruneopts = "NUT"
-  revision = "1a782e2da844727691fef1757c72eb190c2909f0"
-  version = "v2.15.0"
+  revision = "2f47546e3facd43297739439600bcf43f44cce5d"
+  source = "github.com/jaegertracing/jaeger-client-go"
+  version = "v2.16.0"
 
 [[projects]]
-  digest = "1:0f09db8429e19d57c8346ad76fbbc679341fa86073d3b8fb5ac919f0357d8f4c"
+  digest = "1:c9d69a04f7fa171f50360bbcc32196b4de8ab8837ef772f6302d0140a1e3e7f6"
   name = "github.com/uber/jaeger-lib"
   packages = ["metrics"]
   pruneopts = "NUT"
-  revision = "ed3a127ec5fef7ae9ea95b01b542c47fbd999ce5"
-  version = "v1.5.0"
+  revision = "0e30338a695636fe5bcf7301e8030ce8dd2a8530"
+  source = "github.com/jaegertracing/jaeger-lib"
+  version = "v2.0.0"
 
 [[projects]]
   digest = "1:fb6d90081ae53fdb35d0fffa7d82a555df936bbc6db9a93126795655b2317604"
@@ -2220,7 +2223,7 @@
     "github.com/opentracing/opentracing-go",
     "github.com/opentracing/opentracing-go/ext",
     "github.com/opentracing/opentracing-go/log",
-    "github.com/openzipkin/zipkin-go-opentracing",
+    "github.com/openzipkin-contrib/zipkin-go-opentracing",
     "github.com/patrickmn/go-cache",
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",

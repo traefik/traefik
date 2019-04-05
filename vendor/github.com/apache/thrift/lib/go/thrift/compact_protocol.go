@@ -20,6 +20,7 @@
 package thrift
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -561,9 +562,6 @@ func (p *TCompactProtocol) ReadString() (value string, err error) {
 	if length < 0 {
 		return "", invalidDataLength
 	}
-	if uint64(length) > p.trans.RemainingBytes() {
-		return "", invalidDataLength
-	}
 
 	if length == 0 {
 		return "", nil
@@ -590,17 +588,14 @@ func (p *TCompactProtocol) ReadBinary() (value []byte, err error) {
 	if length < 0 {
 		return nil, invalidDataLength
 	}
-	if uint64(length) > p.trans.RemainingBytes() {
-		return nil, invalidDataLength
-	}
 
 	buf := make([]byte, length)
 	_, e = io.ReadFull(p.trans, buf)
 	return buf, NewTProtocolException(e)
 }
 
-func (p *TCompactProtocol) Flush() (err error) {
-	return NewTProtocolException(p.trans.Flush())
+func (p *TCompactProtocol) Flush(ctx context.Context) (err error) {
+	return NewTProtocolException(p.trans.Flush(ctx))
 }
 
 func (p *TCompactProtocol) Skip(fieldType TType) (err error) {
@@ -806,7 +801,7 @@ func (p *TCompactProtocol) getTType(t tCompactType) (TType, error) {
 	case COMPACT_STRUCT:
 		return STRUCT, nil
 	}
-	return STOP, TException(fmt.Errorf("don't know what type: %s", t&0x0f))
+	return STOP, TException(fmt.Errorf("don't know what type: %v", t&0x0f))
 }
 
 // Given a TType value, find the appropriate TCompactProtocol.Types constant.

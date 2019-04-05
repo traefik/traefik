@@ -172,11 +172,13 @@ required = [
 
 [[constraint]]
   name = "github.com/uber/jaeger-client-go"
-  version = "2.15.0"
+  source = "github.com/jaegertracing/jaeger-client-go"
+  version = "2.16.0"
 
 [[constraint]]
   name = "github.com/uber/jaeger-lib"
-  version = "1.3.0"
+  source = "github.com/jaegertracing/jaeger-lib"
+  version = "2.0.0"
 
 [[constraint]]
   branch = "v1"

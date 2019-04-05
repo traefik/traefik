@@ -20,9 +20,9 @@
 package thrift
 
 import (
+	"crypto/tls"
 	"net"
 	"time"
-	"crypto/tls"
 )
 
 type TSSLServerSocket struct {
@@ -38,6 +38,9 @@ func NewTSSLServerSocket(listenAddr string, cfg *tls.Config) (*TSSLServerSocket,
 }
 
 func NewTSSLServerSocketTimeout(listenAddr string, cfg *tls.Config, clientTimeout time.Duration) (*TSSLServerSocket, error) {
+	if cfg.MinVersion == 0 {
+		cfg.MinVersion = tls.VersionTLS10
+	}
 	addr, err := net.ResolveTCPAddr("tcp", listenAddr)
 	if err != nil {
 		return nil, err

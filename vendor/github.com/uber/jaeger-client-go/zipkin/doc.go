@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package zipkin comprises Zipkin functionality for Zipkin compatiblity.
+// Package zipkin comprises Zipkin functionality for Zipkin compatibility.
 package zipkin
