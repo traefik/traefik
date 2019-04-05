@@ -166,7 +166,7 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// modifyRequestHeaders set or delete request headers.
+// modifyRequestHeaders sets or deletes request headers.
 func (s *Header) modifyRequestHeaders(req *http.Request) {
 	// Loop through Custom request headers
 	for header, value := range s.headers.CustomRequestHeaders {
