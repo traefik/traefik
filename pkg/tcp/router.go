@@ -161,7 +161,9 @@ func (c *Conn) Read(p []byte) (n int, err error) {
 func clientHelloServerName(br *bufio.Reader) (string, bool, string) {
 	hdr, err := br.Peek(1)
 	if err != nil {
-		log.Errorf("Error while Peeking first byte: %s", err)
+		if err != io.EOF {
+			log.Errorf("Error while Peeking first byte: %s", err)
+		}
 		return "", false, ""
 	}
 	const recordTypeHandshake = 0x16
