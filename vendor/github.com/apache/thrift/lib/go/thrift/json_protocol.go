@@ -20,6 +20,7 @@
 package thrift
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 )
@@ -438,10 +439,10 @@ func (p *TJSONProtocol) ReadBinary() ([]byte, error) {
 	return v, p.ParsePostValue()
 }
 
-func (p *TJSONProtocol) Flush() (err error) {
+func (p *TJSONProtocol) Flush(ctx context.Context) (err error) {
 	err = p.writer.Flush()
 	if err == nil {
-		err = p.trans.Flush()
+		err = p.trans.Flush(ctx)
 	}
 	return NewTProtocolException(err)
 }

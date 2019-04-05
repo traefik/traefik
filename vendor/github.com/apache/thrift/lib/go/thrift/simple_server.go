@@ -23,11 +23,18 @@ import (
 	"log"
 	"runtime/debug"
 	"sync"
+	"sync/atomic"
 )
 
-// Simple, non-concurrent server for testing.
+/*
+ * This is not a typical TSimpleServer as it is not blocked after accept a socket.
+ * It is more like a TThreadedServer that can handle different connections in different goroutines.
+ * This will work if golang user implements a conn-pool like thing in client side.
+ */
 type TSimpleServer struct {
-	quit chan struct{}
+	closed int32
+	wg     sync.WaitGroup
+	mu     sync.Mutex
 
 	processorFactory       TProcessorFactory
 	serverTransport        TServerTransport
@@ -87,7 +94,6 @@ func NewTSimpleServerFactory6(processorFactory TProcessorFactory, serverTranspor
 		outputTransportFactory: outputTransportFactory,
 		inputProtocolFactory:   inputProtocolFactory,
 		outputProtocolFactory:  outputProtocolFactory,
-		quit: make(chan struct{}, 1),
 	}
 }
 
@@ -119,23 +125,37 @@ func (p *TSimpleServer) Listen() error {
 	return p.serverTransport.Listen()
 }
 
+func (p *TSimpleServer) innerAccept() (int32, error) {
+	client, err := p.serverTransport.Accept()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	closed := atomic.LoadInt32(&p.closed)
+	if closed != 0 {
+		return closed, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	if client != nil {
+		p.wg.Add(1)
+		go func() {
+			defer p.wg.Done()
+			if err := p.processRequests(client); err != nil {
+				log.Println("error processing request:", err)
+			}
+		}()
+	}
+	return 0, nil
+}
+
 func (p *TSimpleServer) AcceptLoop() error {
 	for {
-		client, err := p.serverTransport.Accept()
+		closed, err := p.innerAccept()
 		if err != nil {
-			select {
-			case <-p.quit:
-				return nil
-			default:
-			}
 			return err
 		}
-		if client != nil {
-			go func() {
-				if err := p.processRequests(client); err != nil {
-					log.Println("error processing request:", err)
-				}
-			}()
+		if closed != 0 {
+			return nil
 		}
 	}
 }
@@ -149,21 +169,28 @@ func (p *TSimpleServer) Serve() error {
 	return nil
 }
 
-var once sync.Once
-
 func (p *TSimpleServer) Stop() error {
-	q := func() {
-		p.quit <- struct{}{}
-		p.serverTransport.Interrupt()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if atomic.LoadInt32(&p.closed) != 0 {
+		return nil
 	}
-	once.Do(q)
+	atomic.StoreInt32(&p.closed, 1)
+	p.serverTransport.Interrupt()
+	p.wg.Wait()
 	return nil
 }
 
 func (p *TSimpleServer) processRequests(client TTransport) error {
 	processor := p.processorFactory.GetProcessor(client)
-	inputTransport := p.inputTransportFactory.GetTransport(client)
-	outputTransport := p.outputTransportFactory.GetTransport(client)
+	inputTransport, err := p.inputTransportFactory.GetTransport(client)
+	if err != nil {
+		return err
+	}
+	outputTransport, err := p.outputTransportFactory.GetTransport(client)
+	if err != nil {
+		return err
+	}
 	inputProtocol := p.inputProtocolFactory.GetProtocol(inputTransport)
 	outputProtocol := p.outputProtocolFactory.GetProtocol(outputTransport)
 	defer func() {
@@ -171,6 +198,7 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 			log.Printf("panic in processor: %s: %s", e, debug.Stack())
 		}
 	}()
+
 	if inputTransport != nil {
 		defer inputTransport.Close()
 	}
@@ -178,17 +206,20 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 		defer outputTransport.Close()
 	}
 	for {
-		ok, err := processor.Process(inputProtocol, outputProtocol)
+		if atomic.LoadInt32(&p.closed) != 0 {
+			return nil
+		}
+
+		ok, err := processor.Process(defaultCtx, inputProtocol, outputProtocol)
 		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
 			return nil
 		} else if err != nil {
-			log.Printf("error processing request: %s", err)
 			return err
 		}
 		if err, ok := err.(TApplicationException); ok && err.TypeId() == UNKNOWN_METHOD {
 			continue
 		}
- 		if !ok {
+		if !ok {
 			break
 		}
 	}
