@@ -64,7 +64,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 	auth := config.ForwardAuth{
 		Address:              server.URL,
 		AuthResponseHeaders:  []string{"X-Auth-User"},
-		AddHeadersToResponse: []string{"X-Auth-Token","X-Auth-User"},
+		AddHeadersToResponse: []string{"X-Auth-Token", "X-Auth-User"},
 	}
 	middleware, err := NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
