@@ -159,7 +159,7 @@ func getBackendName(service rancherData) string {
 
 func getSegmentBackendName(service rancherData) string {
 	if value := label.GetStringValue(service.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
-		return provider.Normalize(service.Name + "-" + value)
+		return provider.Normalize(value + "-" + service.SegmentName)
 	}
 
 	return provider.Normalize(service.Name + "-" + service.SegmentName)

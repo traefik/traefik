@@ -278,7 +278,7 @@ func getBackendName(container dockerData) string {
 func getSegmentBackendName(container dockerData) string {
 	serviceName := getServiceName(container)
 	if value := label.GetStringValue(container.SegmentLabels, label.TraefikBackend, ""); len(value) > 0 {
-		return provider.Normalize(serviceName + "-" + value)
+		return provider.Normalize(value + "-" + container.SegmentName)
 	}
 
 	return provider.Normalize(serviceName + "-" + container.SegmentName)
