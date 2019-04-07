@@ -52,7 +52,7 @@ func addMetadata(rootType reflect.Type, node *Node) error {
 			return fmt.Errorf("node %s (type %s) must have children", node.Name, fType)
 		}
 
-		node.Disabled = len(node.Value) > 0 && node.Value != "true" && field.Tag.Get(TagLabel) == "allowEmpty"
+		node.Disabled = len(node.Value) > 0 && !strings.EqualFold(node.Value, "true") && field.Tag.Get(TagLabel) == "allowEmpty"
 	}
 
 	if len(node.Children) == 0 {
