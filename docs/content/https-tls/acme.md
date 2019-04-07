@@ -330,7 +330,7 @@ storage = "traefik/acme/account"
     Because key-value stores have limited entry size, the certificates list is compressed _before_ it is saved.
     For example, it is possible to store up to _approximately_ 100 ACME certificates in Consul.
 
-## Fallbacks
+## Fallback
 
 If Let's Encrypt is not reachable, the following certificates will apply:
 
