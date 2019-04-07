@@ -32,6 +32,12 @@ spec:
       X-Custom-Response-Header: "True"
 ```
 
+```yaml tab="Rancher"
+labels:
+- "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test"
+- "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True"
+```
+
 ```toml tab="File"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
@@ -60,6 +66,12 @@ spec:
       X-Custom-Request-Header: "" # Removes
     CustomResponseHeaders:
       X-Custom-Response-Header: "" # Removes
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True"
 ```
 
 ```toml tab="File"    
@@ -92,6 +104,12 @@ spec:
   headers:
     FrameDeny: "true"
     SSLRedirect: "true"
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.testHeader.Headers.FrameDeny=true"
+  - "traefik.http.middlewares.testHeader.Headers.SSLRedirect=true"
 ```
 
 ```toml tab="File"    
@@ -128,6 +146,14 @@ spec:
     AccessControlAllowOrigin: "origin-list-or-null"
     AccessControlMaxAge: 100
     AddVaryHeader: "true"
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.testHeader.Headers.AccessControlAllowMethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testHeader.Headers.AccessControlAllowOrigin=origin-list-or-null"
+  - "traefik.http.middlewares.testHeader.Headers.AccessControlMaxAge=100"
+  - "traefik.http.middlewares.testHeader.Headers.AddVaryHeader=true"
 ```
 
 ```toml tab="File"    

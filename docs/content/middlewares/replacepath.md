@@ -26,6 +26,12 @@ spec:
     path: /foo
 ```
 
+```yaml tab="Rancher"
+# Replace the path by /foo
+labels:
+- "traefik.http.middlewares.test-replacepath.replacepath.path=/foo"
+```
+
 ```toml tab="File"
 # Replace the path by /foo
 [http.middlewares]

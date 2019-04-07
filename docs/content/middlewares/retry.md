@@ -26,6 +26,12 @@ spec:
     attempts: 4
 ```
 
+```yaml tab="Rancher"
+# Retry to send request 4 times
+labels:
+- "traefik.http.middlewares.test-retry.retry.attempts=4"
+```
+
 ```toml tab="File"
 # Retry to send request 4 times
 [http.middlewares]

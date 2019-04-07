@@ -26,6 +26,12 @@ spec:
     prefixes: "foobar, fiibar"
 ```
 
+```yaml tab="Rancher"
+# Replace the path by /foo
+labels:
+- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=foobar, fiibar"
+```
+
 ```toml tab="File"
 # Replace the path by /foo
 [http.middlewares]

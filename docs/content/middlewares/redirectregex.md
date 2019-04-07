@@ -28,6 +28,13 @@ spec:
     replacement: http://mydomain/$1
 ```
 
+```yaml tab="Rancher"
+# Redirect with domain replacement
+labels:
+- "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
+- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$1"
+```
+
 ```toml tab="File"
 # Redirect with domain replacement
 [http.middlewares]
