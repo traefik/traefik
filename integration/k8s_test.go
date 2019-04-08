@@ -74,9 +74,9 @@ func (s *K8sSuite) TestCRDSimple(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("PathPrefix(`/tobestripped`)"))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/kubernetescrd/routers", 1*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("default/stripprefix"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("default/stripprefix"))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/kubernetescrd/middlewares", 1*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("stripprefix"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("stripprefix"))
 	c.Assert(err, checker.IsNil)
 }

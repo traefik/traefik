@@ -26,7 +26,7 @@ const (
 )
 
 // NewManager creates a new Manager
-func NewManager(configs map[string]*config.Service, defaultRoundTripper http.RoundTripper) *Manager {
+func NewManager(configs map[string]*config.ServiceInfo, defaultRoundTripper http.RoundTripper) *Manager {
 	return &Manager{
 		bufferPool:          newBufferPool(),
 		defaultRoundTripper: defaultRoundTripper,
@@ -40,7 +40,12 @@ type Manager struct {
 	bufferPool          httputil.BufferPool
 	defaultRoundTripper http.RoundTripper
 	balancers           map[string][]healthcheck.BalancerHandler
-	configs             map[string]*config.Service
+	configs             map[string]*config.ServiceInfo
+}
+
+// GetRuntimeConfiguration returns the configuration of all the current services.
+func (m Manager) GetRuntimeConfiguration() map[string]*config.ServiceInfo {
+	return m.configs
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
@@ -50,15 +55,22 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 	serviceName = internal.GetQualifiedName(ctx, serviceName)
 	ctx = internal.AddProviderInContext(ctx, serviceName)
 
-	if conf, ok := m.configs[serviceName]; ok {
-		// TODO Should handle multiple service types
-		// FIXME Check if the service is declared multiple times with different types
-		if conf.LoadBalancer != nil {
-			return m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
-		}
-		return nil, fmt.Errorf("the service %q doesn't have any load balancer", serviceName)
+	conf, ok := m.configs[serviceName]
+	if !ok {
+		return nil, fmt.Errorf("the service %q does not exist", serviceName)
 	}
-	return nil, fmt.Errorf("the service %q does not exits", serviceName)
+	// TODO Should handle multiple service types
+	// FIXME Check if the service is declared multiple times with different types
+	if conf.LoadBalancer == nil {
+		lbErr := fmt.Errorf("the service %q doesn't have any load balancer", serviceName)
+		conf.Err = lbErr
+		return nil, lbErr
+	}
+	lb, err := m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
+	if err != nil {
+		conf.Err = err
+	}
+	return lb, err
 }
 
 func (m *Manager) getLoadBalancerServiceHandler(
@@ -158,7 +170,7 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler
 	}
 
 	if timeout >= interval {
-		logger.Warnf("Health check timeout for backend '%s' should be lower than the health check interval. Interval set to timeout + 1 second (%s).", backend)
+		logger.Warnf("Health check timeout for backend '%s' should be lower than the health check interval. Interval set to timeout + 1 second (%s).", backend, interval.String())
 	}
 
 	return &healthcheck.Options{
@@ -229,7 +241,8 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 		}
 	}
 
-	if err := m.upsertServers(ctx, lb, service.Servers); err != nil {
+	lbsu := healthcheck.NewLBStatusUpdater(lb, m.configs[serviceName])
+	if err := m.upsertServers(ctx, lbsu, service.Servers); err != nil {
 		return nil, fmt.Errorf("error configuring load balancer for service %s: %v", serviceName, err)
 	}
 

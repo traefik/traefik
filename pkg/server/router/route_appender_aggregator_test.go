@@ -62,7 +62,7 @@ func TestNewRouteAppenderAggregator(t *testing.T) {
 				"/wrong": http.StatusBadGateway,
 				"/ping":  http.StatusOK,
 				// "/.well-known/acme-challenge/token": http.StatusNotFound, // FIXME
-				"/api/providers": http.StatusUnauthorized,
+				"/api/rawdata": http.StatusUnauthorized,
 			},
 		},
 		{

@@ -1,0 +1,116 @@
+{
+	"Routers": {
+		"myprovider.bar": {
+			"entryPoints": [
+				"web"
+			],
+			"middlewares": [
+				"auth",
+				"anotherprovider.addPrefixTest"
+			],
+			"service": "myprovider.foo-service",
+			"rule": "Host(`foo.bar`)",
+			"Err": ""
+		},
+		"myprovider.test": {
+			"entryPoints": [
+				"web"
+			],
+			"middlewares": [
+				"addPrefixTest",
+				"auth"
+			],
+			"service": "myprovider.foo-service",
+			"rule": "Host(`foo.bar.other`)",
+			"Err": ""
+		}
+	},
+	"Middlewares": {
+		"anotherprovider.addPrefixTest": {
+			"addPrefix": {
+				"prefix": "/toto"
+			},
+			"Err": null,
+			"UsedBy": [
+				"myprovider.bar"
+			]
+		},
+		"myprovider.addPrefixTest": {
+			"addPrefix": {
+				"prefix": "/titi"
+			},
+			"Err": null,
+			"UsedBy": [
+				"myprovider.test"
+			]
+		},
+		"myprovider.auth": {
+			"basicAuth": {
+				"users": [
+					"admin:admin"
+				]
+			},
+			"Err": null,
+			"UsedBy": [
+				"myprovider.bar",
+				"myprovider.test"
+			]
+		}
+	},
+	"Services": {
+		"myprovider.foo-service": {
+			"loadbalancer": {
+				"servers": [
+					{
+						"url": "http://127.0.0.1",
+						"weight": 1
+					}
+				],
+				"method": "wrr",
+				"passHostHeader": false
+			},
+			"Err": null,
+			"UsedBy": [
+				"myprovider.bar",
+				"myprovider.test"
+			],
+			"ServerStatus": null
+		}
+	},
+	"TCPRouters": {
+		"myprovider.tcpbar": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "myprovider.tcpfoo-service",
+			"rule": "HostSNI(`foo.bar`)",
+			"Err": ""
+		},
+		"myprovider.tcptest": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "myprovider.tcpfoo-service",
+			"rule": "HostSNI(`foo.bar.other`)",
+			"Err": ""
+		}
+	},
+	"TCPServices": {
+		"myprovider.tcpfoo-service": {
+			"loadbalancer": {
+				"servers": [
+					{
+						"address": "127.0.0.1",
+						"weight": 1
+					}
+				],
+				"method": "wrr"
+			},
+			"Err": null,
+			"UsedBy": [
+				"myprovider.tcpbar",
+				"myprovider.tcptest"
+			]
+		}
+	}
+}

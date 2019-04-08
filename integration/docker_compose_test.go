@@ -62,27 +62,23 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 	_, err = try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
-	resp, err := http.Get("http://127.0.0.1:8080/api/providers/docker/services")
+	resp, err := http.Get("http://127.0.0.1:8080/api/rawdata")
 	c.Assert(err, checker.IsNil)
 	defer resp.Body.Close()
 
-	var services []api.ServiceRepresentation
-	err = json.NewDecoder(resp.Body).Decode(&services)
-	c.Assert(err, checker.IsNil)
-
-	// check that we have only one service with n servers
-	c.Assert(services, checker.HasLen, 1)
-	c.Assert(services[0].ID, checker.Equals, composeService+"_integrationtest"+composeProject)
-	c.Assert(services[0].LoadBalancer.Servers, checker.HasLen, serviceCount)
-
-	resp, err = http.Get("http://127.0.0.1:8080/api/providers/docker/routers")
-	c.Assert(err, checker.IsNil)
-	defer resp.Body.Close()
-
-	var routers []api.RouterRepresentation
-	err = json.NewDecoder(resp.Body).Decode(&routers)
+	var rtconf api.RunTimeRepresentation
+	err = json.NewDecoder(resp.Body).Decode(&rtconf)
 	c.Assert(err, checker.IsNil)
 
 	// check that we have only one router
-	c.Assert(routers, checker.HasLen, 1)
+	c.Assert(rtconf.Routers, checker.HasLen, 1)
+
+	// check that we have only one service with n servers
+	services := rtconf.Services
+	c.Assert(services, checker.HasLen, 1)
+	for k, v := range services {
+		c.Assert(k, checker.Equals, "docker."+composeService+"_integrationtest"+composeProject)
+		c.Assert(v.LoadBalancer.Servers, checker.HasLen, serviceCount)
+		// We could break here, but we don't just to keep us honest.
+	}
 }

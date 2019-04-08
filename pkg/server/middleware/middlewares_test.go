@@ -14,7 +14,7 @@ import (
 )
 
 func TestBuilder_BuildChainNilConfig(t *testing.T) {
-	testConfig := map[string]*config.Middleware{
+	testConfig := map[string]*config.MiddlewareInfo{
 		"empty": {},
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil)
@@ -25,7 +25,7 @@ func TestBuilder_BuildChainNilConfig(t *testing.T) {
 }
 
 func TestBuilder_BuildChainNonExistentChain(t *testing.T) {
-	testConfig := map[string]*config.Middleware{
+	testConfig := map[string]*config.MiddlewareInfo{
 		"foobar": {},
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil)
@@ -264,7 +264,12 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 				ctx = internal.AddProviderInContext(ctx, test.contextProvider+".foobar")
 			}
 
-			builder := NewBuilder(test.configuration, nil)
+			rtConf := config.NewRuntimeConfig(config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: test.configuration,
+				},
+			})
+			builder := NewBuilder(rtConf.Middlewares, nil)
 
 			result := builder.BuildChain(ctx, test.buildChain)
 
@@ -310,7 +315,12 @@ func TestBuilder_buildConstructor(t *testing.T) {
 		},
 	}
 
-	middlewaresBuilder := NewBuilder(testConfig, nil)
+	rtConf := config.NewRuntimeConfig(config.Configuration{
+		HTTP: &config.HTTPConfiguration{
+			Middlewares: testConfig,
+		},
+	})
+	middlewaresBuilder := NewBuilder(rtConf.Middlewares, nil)
 
 	testCases := []struct {
 		desc          string
@@ -344,7 +354,8 @@ func TestBuilder_buildConstructor(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			constructor, err := middlewaresBuilder.buildConstructor(context.Background(), test.middlewareID, *testConfig[test.middlewareID])
+			constructor, err := middlewaresBuilder.buildConstructor(context.Background(), test.middlewareID)
+
 			require.NoError(t, err)
 
 			middleware, err2 := constructor(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))

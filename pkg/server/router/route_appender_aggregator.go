@@ -3,13 +3,14 @@ package router
 import (
 	"context"
 
+	"github.com/containous/traefik/pkg/config"
+
 	"github.com/containous/alice"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/pkg/api"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/metrics"
-	"github.com/containous/traefik/pkg/safe"
 	"github.com/containous/traefik/pkg/types"
 )
 
@@ -19,7 +20,8 @@ type chainBuilder interface {
 }
 
 // NewRouteAppenderAggregator Creates a new RouteAppenderAggregator
-func NewRouteAppenderAggregator(ctx context.Context, chainBuilder chainBuilder, conf static.Configuration, entryPointName string, currentConfiguration *safe.Safe) *RouteAppenderAggregator {
+func NewRouteAppenderAggregator(ctx context.Context, chainBuilder chainBuilder, conf static.Configuration,
+	entryPointName string, runtimeConfiguration *config.RuntimeConfiguration) *RouteAppenderAggregator {
 	aggregator := &RouteAppenderAggregator{}
 
 	if conf.Providers != nil && conf.Providers.Rest != nil {
@@ -29,17 +31,9 @@ func NewRouteAppenderAggregator(ctx context.Context, chainBuilder chainBuilder, 
 	if conf.API != nil && conf.API.EntryPoint == entryPointName {
 		chain := chainBuilder.BuildChain(ctx, conf.API.Middlewares)
 		aggregator.AddAppender(&WithMiddleware{
-			appender: api.Handler{
-				EntryPoint:            conf.API.EntryPoint,
-				Dashboard:             conf.API.Dashboard,
-				Statistics:            conf.API.Statistics,
-				DashboardAssets:       conf.API.DashboardAssets,
-				CurrentConfigurations: currentConfiguration,
-				Debug:                 conf.Global.Debug,
-			},
+			appender:          api.New(conf, runtimeConfiguration),
 			routerMiddlewares: chain,
 		})
-
 	}
 
 	if conf.Ping != nil && conf.Ping.EntryPoint == entryPointName {

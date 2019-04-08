@@ -60,7 +60,7 @@ func (s *SimpleSuite) TestWithWebConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -173,10 +173,10 @@ func (s *SimpleSuite) TestApiOnSameEntryPoint(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/test", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/api/providers/docker", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	err = try.GetRequest("http://127.0.0.1:8000/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/api/providers/docker/routers", 1*time.Second, try.BodyContains("PathPrefix"))
+	err = try.GetRequest("http://127.0.0.1:8000/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -205,7 +205,7 @@ func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("PathPrefix"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -230,7 +230,7 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8001/api/providers", 2*time.Second, try.StatusCodeIs(http.StatusUnauthorized))
+	err = try.GetRequest("http://127.0.0.1:8001/api/rawdata", 2*time.Second, try.StatusCodeIs(http.StatusUnauthorized))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8001/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -248,7 +248,7 @@ func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 1*time.Second, try.BodyContains("PathPrefix"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -266,7 +266,7 @@ func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 1*time.Second, try.BodyContains("PathPrefix"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -284,7 +284,7 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 1*time.Second, try.BodyContains("PathPrefix"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -312,7 +312,7 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 1*time.Second, try.BodyContains("PathPrefix"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.BodyContains(ipWhoami01))
@@ -334,10 +334,10 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 2*time.Second, try.BodyContains("override"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override"))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 2*time.Second, try.BodyContains("override.remoteaddr.whitelist.docker.local"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override.remoteaddr.whitelist.docker.local"))
 	c.Assert(err, checker.IsNil)
 
 	testCases := []struct {
@@ -415,7 +415,7 @@ func (s *SimpleSuite) TestXForwardedHeaders(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 2*time.Second,
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains("override.remoteaddr.whitelist.docker.local"))
 	c.Assert(err, checker.IsNil)
 
@@ -450,7 +450,7 @@ func (s *SimpleSuite) TestMultiprovider(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/services", 1000*time.Millisecond, try.BodyContains("service"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("service"))
 	c.Assert(err, checker.IsNil)
 
 	config := config.HTTPConfiguration{
@@ -474,7 +474,7 @@ func (s *SimpleSuite) TestMultiprovider(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/rest/routers", 1000*time.Millisecond, try.BodyContains("PathPrefix(`/`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("PathPrefix(`/`)"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("CustomValue"))
