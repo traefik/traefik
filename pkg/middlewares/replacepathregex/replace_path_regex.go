@@ -49,7 +49,7 @@ func (rp *replacePathRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
 
 func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if rp.regexp != nil && len(rp.replacement) > 0 && rp.regexp.MatchString(req.URL.Path) {
-		req = req.WithContext(context.WithValue(req.Context(), replacepath.TypeName, req.URL.Path))
+		req = req.WithContext(context.WithValue(req.Context(), replacepath.ReplacePathKey, req.URL.Path))
 		req.Header.Add(replacepath.ReplacedPathHeader, req.URL.Path)
 		req.URL.Path = rp.regexp.ReplaceAllString(req.URL.Path, rp.replacement)
 		req.RequestURI = req.URL.RequestURI()

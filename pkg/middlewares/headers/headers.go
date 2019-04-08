@@ -18,10 +18,12 @@ import (
 	"github.com/unrolled/secure"
 )
 
+type key string
+
 const (
-	typeName               = "Headers"
-	originHeaderKey        = "X-Request-Origin"
-	secureContextHeaderKey = "SecureResponseHeader"
+	typeName                   = "Headers"
+	originHeaderKey            = "X-Request-Origin"
+	secureContextHeaderKey key = "SecureResponseHeader"
 )
 
 type headers struct {
@@ -108,32 +110,37 @@ func newSecure(next http.Handler, headers config.Headers) *secureHeader {
 }
 
 func (s *secureHeader) HandlerFuncWithNextForRequestOnlyWithContextCheck(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	originalURL := r.URL
 	requestURL := r.URL
 
-	if stripPrefix, stripPrefixOk := r.Context().Value(stripprefix.TypeName).(string); stripPrefixOk {
+	if stripPrefix, stripPrefixOk := r.Context().Value(stripprefix.StripPrefixKey).(string); stripPrefixOk {
 		if len(stripPrefix) > 0 {
 			requestURL.Path = stripPrefix
 		}
 	}
-	if addPrefix, addPrefixOk := r.Context().Value(addprefix.TypeName).(string); addPrefixOk {
+	if addPrefix, addPrefixOk := r.Context().Value(addprefix.AddPrefixKey).(string); addPrefixOk {
 		if len(addPrefix) > 0 {
 			requestURL.Path = strings.Replace(requestURL.Path, addPrefix, "", 1)
 		}
 	}
 
-	if replacePath, replacePathOk := r.Context().Value(replacepath.TypeName).(string); replacePathOk {
+	if replacePath, replacePathOk := r.Context().Value(replacepath.ReplacePathKey).(string); replacePathOk {
 		if len(replacePath) > 0 {
 			requestURL.Path = replacePath
 		}
 	}
 
+	// Modify the request before passing to the secure modify request
 	r.URL = requestURL
-	// make sure the request URI corresponds the rewritten URL
 	r.RequestURI = r.URL.RequestURI()
 
 	// Let secure process the request. If it returns an error,
 	// that indicates the request should not continue.
 	responseHeader, r, err := s.secure.ProcessNoModifyRequest(w, r)
+
+	// Put the original URL back before processing the next step in the chain
+	r.URL = originalURL
+	r.RequestURI = r.URL.RequestURI()
 
 	// If there was an error, do not call next.
 	if err == nil && next != nil {
@@ -146,7 +153,7 @@ func (s *secureHeader) HandlerFuncWithNextForRequestOnlyWithContextCheck(w http.
 }
 
 func (s secureHeader) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	s.secure.HandlerFuncWithNextForRequestOnly(rw, req, s.next.ServeHTTP)
+	s.HandlerFuncWithNextForRequestOnlyWithContextCheck(rw, req, s.next.ServeHTTP)
 }
 
 // Header is a middleware that helps setup a few basic security features. A single headerOptions struct can be

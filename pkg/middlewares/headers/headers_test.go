@@ -9,6 +9,9 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/middlewares/addprefix"
+	"github.com/containous/traefik/pkg/middlewares/replacepath"
+	"github.com/containous/traefik/pkg/middlewares/stripprefix"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/containous/traefik/pkg/tracing"
 	"github.com/stretchr/testify/assert"
@@ -495,6 +498,68 @@ func TestCustomResponseHeaders(t *testing.T) {
 			err := test.header.ModifyResponseHeaders(rw.Result())
 			require.NoError(t, err)
 			assert.Equal(t, test.expected, rw.Result().Header)
+		})
+	}
+}
+
+func TestSSLRedirectWithModifiedRequest(t *testing.T) {
+	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	testCases := []struct {
+		desc          string
+		addPrefix     bool
+		replacePrefix bool
+		stripPrefix   bool
+		url           string
+		key           string
+		expected      string
+	}{
+		{
+			desc:        "StripPrefix",
+			stripPrefix: true,
+			url:         "http://powpow.example.com/foo",
+			key:         "/bacon/foo",
+			expected:    "/bacon/foo",
+		},
+		{
+			desc:      "AddPrefix",
+			addPrefix: true,
+			url:       "http://powpow.example.com/bacon/foo",
+			key:       "/bacon",
+			expected:  "/foo",
+		},
+		{
+			desc:          "ReplacePrefix",
+			replacePrefix: true,
+			url:           "http://powpow.example.com/foo",
+			key:           "/bacon/foo",
+			expected:      "/bacon/foo",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+
+			headerMiddleware := NewHeader(emptyHandler, config.Headers{
+				SSLRedirect:  true,
+				SSLForceHost: true,
+				SSLHost:      "powpow.example.com",
+			})
+
+			req := testhelpers.MustNewRequest(http.MethodGet, test.url, nil)
+			switch {
+			case test.stripPrefix:
+				req = req.WithContext(context.WithValue(req.Context(), stripprefix.StripPrefixKey, test.key))
+			case test.addPrefix:
+				req = req.WithContext(context.WithValue(req.Context(), addprefix.AddPrefixKey, test.key))
+			case test.replacePrefix:
+				req = req.WithContext(context.WithValue(req.Context(), replacepath.ReplacePathKey, test.key))
+			}
+			req.RequestURI = req.URL.RequestURI()
+			rw := httptest.NewRecorder()
+			headerMiddleware.ServeHTTP(rw, req)
+			returnedLocation, err := rw.Result().Location()
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, returnedLocation.Path)
 		})
 	}
 }
