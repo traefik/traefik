@@ -1,4 +1,4 @@
-# TODO -- ReplacePath
+# ReplacePath
 
 Updating the Path Before Forwarding the Request
 {: .subtitle }
@@ -26,6 +26,12 @@ spec:
     path: /foo
 ```
 
+```yaml tab="Rancher"
+# Replace the path by /foo
+labels:
+- "traefik.http.middlewares.test-replacepath.replacepath.path=/foo"
+```
+
 ```toml tab="File"
 # Replace the path by /foo
 [http.middlewares]
@@ -39,8 +45,8 @@ spec:
 
 The ReplacePath middleware will:
 
-* replace the actual path by the specified one.
-* store the original path in a `X-Replaced-Path` header.
+- replace the actual path by the specified one.
+- store the original path in a `X-Replaced-Path` header.
 
 ### `path`
 

@@ -43,6 +43,19 @@ spec:
       key: path/to/foo.key  
 ```
 
+```yaml tab="Rancher"
+# Forward authentication to authserver.com
+labels:
+- "traefik.http.middlewares.test-auth.ForwardAuth.Address=https://authserver.com/auth"
+- "traefik.http.middlewares.test-auth.ForwardAuth.AuthResponseHeaders=X-Auth-User, X-Secret"
+- "traefik.http.middlewares.test-auth.ForwardAuth.TLS.CA=path/to/local.crt"
+- "traefik.http.middlewares.test-auth.ForwardAuth.TLS.CAOptional=true"
+- "traefik.http.middlewares.test-auth.ForwardAuth.TLS.Cert=path/to/foo.cert"
+- "traefik.http.middlewares.test-auth.ForwardAuth.TLS.InsecureSkipVerify=true"
+- "traefik.http.middlewares.test-auth.ForwardAuth.TLS.Key=path/to/foo.key"
+- "traefik.http.middlewares.test-auth.ForwardAuth.TrustForwardHeader=true"
+```
+
 ```toml tab="File"
 # Forward authentication to authserver.com
 [http.middlewares]

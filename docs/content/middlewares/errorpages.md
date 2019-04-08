@@ -33,6 +33,14 @@ spec:
     query: /{status}.html
 ```
 
+```yaml tab="Rancher"
+# Dynamic Custom Error Page for 5XX Status Code
+labels:
+- "traefik.http.middlewares.test-errorpage.errors.status=500-599"
+- "traefik.http.middlewares.test-errorpage.errors.service=serviceError"
+- "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
+```
+
 ```toml tab="File"
 # Custom Error Page for 5XX
 [http.middlewares]

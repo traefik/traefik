@@ -1,4 +1,4 @@
-# TODO - RedirectScheme
+# RedirectScheme
 
 Redirecting the Client to a Different Scheme/Port
 {: .subtitle }
@@ -24,6 +24,12 @@ metadata:
 spec:
   redirectScheme:
     scheme: https
+```
+
+```yaml tab="Rancher"
+# Redirect to https
+labels:
+- "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
 ```
 
 ```toml tab="File"

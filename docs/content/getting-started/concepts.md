@@ -5,7 +5,8 @@ Everything You Need to Know
 
 ## Edge Router
 
-Traefik is an _Edge Router_, it means that it's the door to your platform, and that it intercepts and routes every incoming request: it knows all the logic and every rule that determine which services handle which requests (based on the [path](../../routing/routers/#rule), the [host](../../routing/routers/#rule), [headers](../../routing/routers/#rule), [and so on](../../routing/routers/#rule) ...).
+Traefik is an _Edge Router_, it means that it's the door to your platform, and that it intercepts and routes every incoming request:
+it knows all the logic and every rule that determine which services handle which requests (based on the [path](../routing/routers/index.md#rule), the [host](../routing/routers/index.md#rule), [headers](../routing/routers/index.md#rule), [and so on](../routing/routers/index.md#rule) ...).
 
 ![The Door to Your Infrastructure](../assets/img/traefik-concepts-1.png)
 
@@ -18,7 +19,7 @@ Deploying your services, you attach information that tell Traefik the characteri
 ![Decentralized Configuration](../assets/img/traefik-concepts-2.png)
 
 It means that when a service is deployed, Traefik detects it immediately and updates the routing rules in real time.
-The opposite is true: when you remove a service from your infrastructure, the route will disapear accordingly.
+The opposite is true: when you remove a service from your infrastructure, the route will disappear accordingly.
 
 You no longer need to create and synchronize configuration files cluttered with IP addresses or other rules.
 

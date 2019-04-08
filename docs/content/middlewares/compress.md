@@ -15,6 +15,12 @@ labels:
 - "traefik.http.middlewares.test-compress.compress=true"
 ```
 
+```yaml tab="Rancher"
+# Enable gzip compression
+labels:
+- "traefik.http.middlewares.test-compress.compress=true"
+```
+
 ```toml tab="File"
 # Enable gzip compression
 [http.middlewares]

@@ -25,6 +25,12 @@ spec:
     prefix: /bar
 ```
 
+```yaml tab="Rancher"
+# Limiting to 10 simultaneous connections
+labels:
+- "traefik.http.middlewares.test-maxconn.maxconn.amount=10"
+```
+
 ```toml tab="File"
 # Limiting to 10 simultaneous connections
 [http.middlewares]

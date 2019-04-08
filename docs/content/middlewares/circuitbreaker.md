@@ -40,6 +40,12 @@ spec:
     expression: LatencyAtQuantileMS(50.0) > 100
 ```
 
+```yaml tab="Rancher"
+# Latency Check
+labels:
+- "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+```
+
 ```toml tab="File"
 # Latency Check
 [http.middlewares]

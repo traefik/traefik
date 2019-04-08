@@ -28,6 +28,12 @@ spec:
     - test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
 ```
 
+```yaml tab="Rancher"
+# Declaring the user list
+labels:
+  - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+```
+
 ```toml tab="File"
 # Declaring the user list
 [http.middlewares]

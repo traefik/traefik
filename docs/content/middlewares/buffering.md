@@ -30,6 +30,12 @@ spec:
     maxRequestBodyBytes: 250000
 ```
 
+```yaml tab="Rancher"
+# Sets the maximum request body to 2Mb
+labels:
+- "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=250000"
+```
+
 ```toml tab="File"
 # Sets the maximum request body to 2Mb
 [http.middlewares]

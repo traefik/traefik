@@ -26,6 +26,12 @@ spec:
     prefix: /foo
 ```
 
+```yaml tab="Rancher"
+# Prefixing with /foo
+labels:
+- "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
+```
+
 ```toml tab="File"
 # Prefixing with /foo
 [http.middlewares]
