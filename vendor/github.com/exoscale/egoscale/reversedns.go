@@ -20,8 +20,9 @@ type DeleteReverseDNSFromPublicIPAddress struct {
 	_  bool  `name:"deleteReverseDnsFromPublicIpAddress" description:"delete the PTR DNS record from the public IP address"`
 }
 
-func (*DeleteReverseDNSFromPublicIPAddress) response() interface{} {
-	return new(booleanResponse)
+// Response returns the struct to unmarshal
+func (*DeleteReverseDNSFromPublicIPAddress) Response() interface{} {
+	return new(BooleanResponse)
 }
 
 // DeleteReverseDNSFromVirtualMachine is a command to create/delete the PTR record(s) of a virtual machine
@@ -30,8 +31,9 @@ type DeleteReverseDNSFromVirtualMachine struct {
 	_  bool  `name:"deleteReverseDnsFromVirtualMachine" description:"Delete the PTR DNS record(s) from the virtual machine"`
 }
 
-func (*DeleteReverseDNSFromVirtualMachine) response() interface{} {
-	return new(booleanResponse)
+// Response returns the struct to unmarshal
+func (*DeleteReverseDNSFromVirtualMachine) Response() interface{} {
+	return new(BooleanResponse)
 }
 
 // QueryReverseDNSForPublicIPAddress is a command to create/query the PTR record of a public IP address
@@ -40,7 +42,8 @@ type QueryReverseDNSForPublicIPAddress struct {
 	_  bool  `name:"queryReverseDnsForPublicIpAddress" description:"Query the PTR DNS record for the public IP address"`
 }
 
-func (*QueryReverseDNSForPublicIPAddress) response() interface{} {
+// Response returns the struct to unmarshal
+func (*QueryReverseDNSForPublicIPAddress) Response() interface{} {
 	return new(IPAddress)
 }
 
@@ -50,7 +53,8 @@ type QueryReverseDNSForVirtualMachine struct {
 	_  bool  `name:"queryReverseDnsForVirtualMachine" description:"Query the PTR DNS record(s) for the virtual machine"`
 }
 
-func (*QueryReverseDNSForVirtualMachine) response() interface{} {
+// Response returns the struct to unmarshal
+func (*QueryReverseDNSForVirtualMachine) Response() interface{} {
 	return new(VirtualMachine)
 }
 
@@ -61,7 +65,8 @@ type UpdateReverseDNSForPublicIPAddress struct {
 	_          bool   `name:"updateReverseDnsForPublicIpAddress" description:"Update/create the PTR DNS record for the public IP address"`
 }
 
-func (*UpdateReverseDNSForPublicIPAddress) response() interface{} {
+// Response returns the struct to unmarshal
+func (*UpdateReverseDNSForPublicIPAddress) Response() interface{} {
 	return new(IPAddress)
 }
 
@@ -72,6 +77,7 @@ type UpdateReverseDNSForVirtualMachine struct {
 	_          bool   `name:"updateReverseDnsForVirtualMachine" description:"Update/create the PTR DNS record(s) for the virtual machine"`
 }
 
-func (*UpdateReverseDNSForVirtualMachine) response() interface{} {
+// Response returns the struct to unmarshal
+func (*UpdateReverseDNSForVirtualMachine) Response() interface{} {
 	return new(VirtualMachine)
 }

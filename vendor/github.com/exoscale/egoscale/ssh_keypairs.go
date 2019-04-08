@@ -37,49 +37,44 @@ func (ssh SSHKeyPair) ListRequest() (ListCommand, error) {
 
 // CreateSSHKeyPair represents a new keypair to be created
 type CreateSSHKeyPair struct {
-	Name     string `json:"name" doc:"Name of the keypair"`
-	Account  string `json:"account,omitempty" doc:"an optional account for the ssh key. Must be used with domainId."`
-	DomainID *UUID  `json:"domainid,omitempty" doc:"an optional domainId for the ssh key. If the account parameter is used, domainId must also be used."`
-	_        bool   `name:"createSSHKeyPair" description:"Create a new keypair and returns the private key"`
+	Name string `json:"name" doc:"Name of the keypair"`
+	_    bool   `name:"createSSHKeyPair" description:"Create a new keypair and returns the private key"`
 }
 
-func (CreateSSHKeyPair) response() interface{} {
+// Response returns the struct to unmarshal
+func (CreateSSHKeyPair) Response() interface{} {
 	return new(SSHKeyPair)
 }
 
 // DeleteSSHKeyPair represents a new keypair to be created
 type DeleteSSHKeyPair struct {
-	Name     string `json:"name" doc:"Name of the keypair"`
-	Account  string `json:"account,omitempty" doc:"the account associated with the keypair. Must be used with the domainId parameter."`
-	DomainID *UUID  `json:"domainid,omitempty" doc:"the domain ID associated with the keypair"`
-	_        bool   `name:"deleteSSHKeyPair" description:"Deletes a keypair by name"`
+	Name string `json:"name" doc:"Name of the keypair"`
+	_    bool   `name:"deleteSSHKeyPair" description:"Deletes a keypair by name"`
 }
 
-func (DeleteSSHKeyPair) response() interface{} {
-	return new(booleanResponse)
+// Response returns the struct to unmarshal
+func (DeleteSSHKeyPair) Response() interface{} {
+	return new(BooleanResponse)
 }
 
 // RegisterSSHKeyPair represents a new registration of a public key in a keypair
 type RegisterSSHKeyPair struct {
 	Name      string `json:"name" doc:"Name of the keypair"`
 	PublicKey string `json:"publickey" doc:"Public key material of the keypair"`
-	Account   string `json:"account,omitempty" doc:"an optional account for the ssh key. Must be used with domainId."`
-	DomainID  *UUID  `json:"domainid,omitempty" doc:"an optional domainId for the ssh key. If the account parameter is used, domainId must also be used."`
 	_         bool   `name:"registerSSHKeyPair" description:"Register a public key in a keypair under a certain name"`
 }
 
-func (RegisterSSHKeyPair) response() interface{} {
+// Response returns the struct to unmarshal
+func (RegisterSSHKeyPair) Response() interface{} {
 	return new(SSHKeyPair)
 }
 
+//go:generate go run generate/main.go -interface=Listable ListSSHKeyPairs
+
 // ListSSHKeyPairs represents a query for a list of SSH KeyPairs
 type ListSSHKeyPairs struct {
-	Account     string `json:"account,omitempty" doc:"list resources by account. Must be used with the domainId parameter."`
-	DomainID    *UUID  `json:"domainid,omitempty" doc:"list only resources belonging to the domain specified"`
 	Fingerprint string `json:"fingerprint,omitempty" doc:"A public key fingerprint to look for"`
-	IsRecursive *bool  `json:"isrecursive,omitempty" doc:"defaults to false, but if true, lists all resources from the parent specified by the domainId till leaves."`
 	Keyword     string `json:"keyword,omitempty" doc:"List by keyword"`
-	ListAll     *bool  `json:"listall,omitempty" doc:"If set to false, list only resources belonging to the command's caller; if set to true - list resources that the caller is authorized to see. Default value is false"`
 	Name        string `json:"name,omitempty" doc:"A key pair name to look for"`
 	Page        int    `json:"page,omitempty"`
 	PageSize    int    `json:"pagesize,omitempty"`
@@ -92,47 +87,19 @@ type ListSSHKeyPairsResponse struct {
 	SSHKeyPair []SSHKeyPair `json:"sshkeypair"`
 }
 
-func (ListSSHKeyPairs) response() interface{} {
-	return new(ListSSHKeyPairsResponse)
-}
-
-// SetPage sets the current page
-func (ls *ListSSHKeyPairs) SetPage(page int) {
-	ls.Page = page
-}
-
-// SetPageSize sets the page size
-func (ls *ListSSHKeyPairs) SetPageSize(pageSize int) {
-	ls.PageSize = pageSize
-}
-
-func (ListSSHKeyPairs) each(resp interface{}, callback IterateItemFunc) {
-	sshs, ok := resp.(*ListSSHKeyPairsResponse)
-	if !ok {
-		callback(nil, fmt.Errorf("wrong type. ListSSHKeyPairsResponse expected, got %T", resp))
-		return
-	}
-
-	for i := range sshs.SSHKeyPair {
-		if !callback(&sshs.SSHKeyPair[i], nil) {
-			break
-		}
-	}
-}
-
 // ResetSSHKeyForVirtualMachine (Async) represents a change for the key pairs
 type ResetSSHKeyForVirtualMachine struct {
-	ID       *UUID  `json:"id" doc:"The ID of the virtual machine"`
-	KeyPair  string `json:"keypair" doc:"name of the ssh key pair used to login to the virtual machine"`
-	Account  string `json:"account,omitempty" doc:"an optional account for the ssh key. Must be used with domainId."`
-	DomainID *UUID  `json:"domainid,omitempty" doc:"an optional domainId for the virtual machine. If the account parameter is used, domainId must also be used."`
-	_        bool   `name:"resetSSHKeyForVirtualMachine" description:"Resets the SSH Key for virtual machine. The virtual machine must be in a \"Stopped\" state."`
+	ID      *UUID  `json:"id" doc:"The ID of the virtual machine"`
+	KeyPair string `json:"keypair" doc:"Name of the ssh key pair used to login to the virtual machine"`
+	_       bool   `name:"resetSSHKeyForVirtualMachine" description:"Resets the SSH Key for virtual machine. The virtual machine must be in a \"Stopped\" state."`
 }
 
-func (ResetSSHKeyForVirtualMachine) response() interface{} {
+// Response returns the struct to unmarshal
+func (ResetSSHKeyForVirtualMachine) Response() interface{} {
 	return new(AsyncJobResult)
 }
 
-func (ResetSSHKeyForVirtualMachine) asyncResponse() interface{} {
+// AsyncResponse returns the struct to unmarshal the async job
+func (ResetSSHKeyForVirtualMachine) AsyncResponse() interface{} {
 	return new(VirtualMachine)
 }

@@ -1,0 +1,81 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik
+  namespace: testing
+spec:
+  rules:
+  - host: other
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /stuff
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: ""
+  namespace: testing
+spec:
+  rules:
+  - host: other
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /sslstuff
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: testing
+spec:
+  rules:
+  - host: other
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik-other
+  namespace: testing
+spec:
+  rules:
+  - host: foo
+    http:
+      paths:
+      - backend:
+          serviceName: service1
+          servicePort: 80
+        path: /bar
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: custom
+  namespace: testing
+spec:
+  rules:
+  - host: foo
+    http:
+      paths:
+      - backend:
+          serviceName: service2
+          servicePort: 80
+        path: /bar

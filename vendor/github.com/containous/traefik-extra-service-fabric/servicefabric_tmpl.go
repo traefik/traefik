@@ -162,6 +162,19 @@ const tmpl = `
           permanent = {{ $redirect.Permanent }}
         {{end}}
 
+        {{ $errorPages := getErrorPages $service }}
+        {{if $errorPages }}
+        [frontends."frontend-{{ $frontendName }}".errors]
+          {{range $pageName, $page := $errorPages }}
+          [frontends."frontend-{{ $frontendName }}".errors."{{ $pageName }}"]
+            status = [{{range $page.Status }}
+              "{{.}}",
+              {{end}}]
+            backend = "{{ $page.Backend }}"
+            query = "{{ $page.Query }}"
+          {{end}}
+        {{end}}
+
         {{ $headers := getHeaders $service }}
         {{if $headers }}
         [frontends."frontend-{{ $frontendName }}".headers]

@@ -35,15 +35,6 @@ func sUID(value types.UID) func(*corev1.Service) {
 	}
 }
 
-func sAnnotation(name string, value string) func(*corev1.Service) {
-	return func(s *corev1.Service) {
-		if s.Annotations == nil {
-			s.Annotations = make(map[string]string)
-		}
-		s.Annotations[name] = value
-	}
-}
-
 func sSpec(opts ...func(*corev1.ServiceSpec)) func(*corev1.Service) {
 	return func(s *corev1.Service) {
 		spec := &corev1.ServiceSpec{}
@@ -51,30 +42,6 @@ func sSpec(opts ...func(*corev1.ServiceSpec)) func(*corev1.Service) {
 			opt(spec)
 		}
 		s.Spec = *spec
-	}
-}
-
-func sLoadBalancerStatus(opts ...func(*corev1.LoadBalancerStatus)) func(service *corev1.Service) {
-	return func(s *corev1.Service) {
-		loadBalancer := &corev1.LoadBalancerStatus{}
-		for _, opt := range opts {
-			if opt != nil {
-				opt(loadBalancer)
-			}
-		}
-		s.Status = corev1.ServiceStatus{
-			LoadBalancer: *loadBalancer,
-		}
-	}
-}
-
-func sLoadBalancerIngress(ip string, hostname string) func(*corev1.LoadBalancerStatus) {
-	return func(status *corev1.LoadBalancerStatus) {
-		ingress := corev1.LoadBalancerIngress{
-			IP:       ip,
-			Hostname: hostname,
-		}
-		status.Ingress = append(status.Ingress, ingress)
 	}
 }
 

@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    ingress.kubernetes.io/circuit-breaker-expression: NetworkErrorRatio() > 0.5
+    ingress.kubernetes.io/load-balancer-method: drr
+  name: service1
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.1
+  ports:
+  - port: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    ingress.kubernetes.io/circuit-breaker-expression: ""
+    traefik.backend.loadbalancer.sticky: "true"
+  name: service2
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.2
+  ports:
+  - port: 802
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    ingress.kubernetes.io/buffering: |2
+
+      maxrequestbodybytes: 10485760
+      memrequestbodybytes: 2097153
+      maxresponsebodybytes: 10485761
+      memresponsebodybytes: 2097152
+      retryexpression: IsNetworkError() && Attempts() <= 2
+  name: service3
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.3
+  ports:
+  - name: http
+    port: 803
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    ingress.kubernetes.io/max-conn-amount: "6"
+    ingress.kubernetes.io/max-conn-extractor-func: client.ip
+  name: service4
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.4
+  ports:
+  - name: http
+    port: 804
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    ingress.kubernetes.io/responseforwarding-flushinterval: 10ms
+  name: service5
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.5
+  ports:
+  - port: 80

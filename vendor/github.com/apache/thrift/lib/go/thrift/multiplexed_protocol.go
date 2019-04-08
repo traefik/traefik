@@ -20,6 +20,7 @@
 package thrift
 
 import (
+	"context"
 	"fmt"
 	"strings"
 )
@@ -127,7 +128,7 @@ func (t *TMultiplexedProcessor) RegisterProcessor(name string, processor TProces
 	t.serviceProcessorMap[name] = processor
 }
 
-func (t *TMultiplexedProcessor) Process(in, out TProtocol) (bool, TException) {
+func (t *TMultiplexedProcessor) Process(ctx context.Context, in, out TProtocol) (bool, TException) {
 	name, typeId, seqid, err := in.ReadMessageBegin()
 	if err != nil {
 		return false, err
@@ -140,7 +141,7 @@ func (t *TMultiplexedProcessor) Process(in, out TProtocol) (bool, TException) {
 	if len(v) != 2 {
 		if t.DefaultProcessor != nil {
 			smb := NewStoredMessageProtocol(in, name, typeId, seqid)
-			return t.DefaultProcessor.Process(smb, out)
+			return t.DefaultProcessor.Process(ctx, smb, out)
 		}
 		return false, fmt.Errorf("Service name not found in message name: %s.  Did you forget to use a TMultiplexProtocol in your client?", name)
 	}
@@ -149,7 +150,7 @@ func (t *TMultiplexedProcessor) Process(in, out TProtocol) (bool, TException) {
 		return false, fmt.Errorf("Service name not found: %s.  Did you forget to call registerProcessor()?", v[0])
 	}
 	smb := NewStoredMessageProtocol(in, v[1], typeId, seqid)
-	return actualProcessor.Process(smb, out)
+	return actualProcessor.Process(ctx, smb, out)
 }
 
 //Protocol that use stored message for ReadMessageBegin

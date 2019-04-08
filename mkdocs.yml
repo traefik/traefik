@@ -6,6 +6,7 @@ dev_addr: 0.0.0.0:8000
 
 repo_name: 'GitHub'
 repo_url: 'https://github.com/containous/traefik'
+edit_uri: 'edit/v1.7/docs/'
 
 docs_dir: 'docs'
 

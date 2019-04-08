@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service1
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.1
+  ports:
+  - port: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service2
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.2
+  ports:
+  - port: 802
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service3
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.3
+  ports:
+  - name: http
+    port: 80
+  - name: https
+    port: 443
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service4
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.4
+  externalName: example.com
+  ports:
+  - name: https
+    port: 443
+  type: ExternalName
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service5
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.5
+  externalName: example.com
+  ports:
+  - name: http
+    port: 8888
+  type: ExternalName
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service6
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.6
+  ports:
+  - port: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service7
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.7
+  ports:
+  - port: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service8
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.8
+  ports:
+  - port: 80

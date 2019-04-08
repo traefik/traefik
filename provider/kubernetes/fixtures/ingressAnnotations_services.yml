@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service1
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.1
+  externalName: example.com
+  ports:
+  - name: http
+    port: 80
+  type: ExternalName
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service2
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.2
+  ports:
+  - port: 802
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: serviceHTTPS
+  namespace: testing
+spec:
+  clusterIP: 10.0.0.3
+  externalName: example.com
+  ports:
+  - name: https
+    port: 443
+  type: ExternalName

@@ -27,19 +27,19 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/eapache/channels"
+	"github.com/go-acme/lego/certificate"
+	"github.com/go-acme/lego/challenge"
+	"github.com/go-acme/lego/challenge/dns01"
+	"github.com/go-acme/lego/challenge/http01"
+	"github.com/go-acme/lego/lego"
+	legolog "github.com/go-acme/lego/log"
+	"github.com/go-acme/lego/providers/dns"
+	"github.com/go-acme/lego/registration"
 	"github.com/sirupsen/logrus"
-	"github.com/xenolf/lego/certificate"
-	"github.com/xenolf/lego/challenge"
-	"github.com/xenolf/lego/challenge/dns01"
-	"github.com/xenolf/lego/challenge/http01"
-	"github.com/xenolf/lego/lego"
-	legolog "github.com/xenolf/lego/log"
-	"github.com/xenolf/lego/providers/dns"
-	"github.com/xenolf/lego/registration"
 )
 
 var (
-	// OSCPMustStaple enables OSCP stapling as from https://github.com/xenolf/lego/issues/270
+	// OSCPMustStaple enables OSCP stapling as from https://github.com/go-acme/lego/issues/270
 	OSCPMustStaple = false
 )
 

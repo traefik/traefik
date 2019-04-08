@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: fully_working_service
+  namespace: testing
+subsets:
+- addresses:
+  - ip: 10.10.0.1
+  ports:
+  - port: 8080
+
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: missing_endpoint_subsets_service
+  namespace: testing
+subsets: null
