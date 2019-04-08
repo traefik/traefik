@@ -27,11 +27,10 @@ import (
 func TestDo_globalConfiguration(t *testing.T) {
 	config := &static.Configuration{}
 
-	sendAnonymousUsage := true
 	config.Global = &static.Global{
 		Debug:              true,
 		CheckNewVersion:    true,
-		SendAnonymousUsage: &sendAnonymousUsage,
+		SendAnonymousUsage: true,
 	}
 
 	config.AccessLog = &types.AccessLog{
