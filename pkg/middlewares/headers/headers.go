@@ -10,14 +10,18 @@ import (
 
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/middlewares"
+	"github.com/containous/traefik/pkg/middlewares/addprefix"
+	"github.com/containous/traefik/pkg/middlewares/replacepath"
+	"github.com/containous/traefik/pkg/middlewares/stripprefix"
 	"github.com/containous/traefik/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/unrolled/secure"
 )
 
 const (
-	typeName        = "Headers"
-	originHeaderKey = "X-Request-Origin"
+	typeName               = "Headers"
+	originHeaderKey        = "X-Request-Origin"
+	secureContextHeaderKey = "SecureResponseHeader"
 )
 
 type headers struct {
@@ -100,6 +104,44 @@ func newSecure(next http.Handler, headers config.Headers) *secureHeader {
 	return &secureHeader{
 		next:   next,
 		secure: secure.New(opt),
+	}
+}
+
+func (s *secureHeader) HandlerFuncWithNextForRequestOnlyWithContextCheck(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	requestURL := r.URL
+
+	if stripPrefix, stripPrefixOk := r.Context().Value(stripprefix.TypeName).(string); stripPrefixOk {
+		if len(stripPrefix) > 0 {
+			requestURL.Path = stripPrefix
+		}
+	}
+	if addPrefix, addPrefixOk := r.Context().Value(addprefix.TypeName).(string); addPrefixOk {
+		if len(addPrefix) > 0 {
+			requestURL.Path = strings.Replace(requestURL.Path, addPrefix, "", 1)
+		}
+	}
+
+	if replacePath, replacePathOk := r.Context().Value(replacepath.TypeName).(string); replacePathOk {
+		if len(replacePath) > 0 {
+			requestURL.Path = replacePath
+		}
+	}
+
+	r.URL = requestURL
+	// make sure the request URI corresponds the rewritten URL
+	r.RequestURI = r.URL.RequestURI()
+
+	// Let secure process the request. If it returns an error,
+	// that indicates the request should not continue.
+	responseHeader, r, err := s.secure.ProcessNoModifyRequest(w, r)
+
+	// If there was an error, do not call next.
+	if err == nil && next != nil {
+		// Save response headers in the request context
+		ctx := context.WithValue(r.Context(), secureContextHeaderKey, responseHeader)
+
+		// No headers will be written to the ResponseWriter.
+		next(w, r.WithContext(ctx))
 	}
 }
 

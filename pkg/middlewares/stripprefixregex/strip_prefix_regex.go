@@ -60,7 +60,7 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 			logger.Error("Error in stripPrefix middleware", err)
 			return
 		}
-
+		req = req.WithContext(context.WithValue(req.Context(), stripprefix.TypeName, req.URL.Path))
 		req.URL.Path = req.URL.Path[len(prefix.Path):]
 		if req.URL.RawPath != "" {
 			req.URL.RawPath = req.URL.RawPath[len(prefix.Path):]
