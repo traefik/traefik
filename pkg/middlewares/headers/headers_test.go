@@ -539,7 +539,7 @@ func TestSSLRedirectWithModifiedRequest(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 
-			headerMiddleware := NewHeader(emptyHandler, config.Headers{
+			headerMiddleware := NewSecure(emptyHandler, config.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
@@ -557,8 +557,9 @@ func TestSSLRedirectWithModifiedRequest(t *testing.T) {
 			req.RequestURI = req.URL.RequestURI()
 			rw := httptest.NewRecorder()
 			headerMiddleware.ServeHTTP(rw, req)
-			returnedLocation, err := rw.Result().Location()
+			err := headerMiddleware.ModifyResponseHeaders(rw.Result())
 			require.NoError(t, err)
+			returnedLocation, err := rw.Result().Location()
 			assert.Equal(t, test.expected, returnedLocation.Path)
 		})
 	}

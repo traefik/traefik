@@ -137,18 +137,21 @@ func (s *SecureHeader) HandlerFuncWithNextForRequestOnlyWithContextCheck(w http.
 	// Let secure process the request. If it returns an error,
 	// that indicates the request should not continue.
 	responseHeader, r, err := s.secure.ProcessNoModifyRequest(w, r)
+	if r == nil || err != nil {
+		return
+	}
 
-	// Put the original URL back before processing the next step in the chain
+	// If not nil, Put the original URL back before processing the next step in the chain
 	r.URL = originalURL
 	r.RequestURI = r.URL.RequestURI()
 
-	// If there was an error, do not call next.
-	if err == nil && next != nil {
-		// Save response headers in the request context
-		ctx := context.WithValue(r.Context(), secureContextHeaderKey, responseHeader)
+	// Store any modifications in the context
+	ctx := context.WithValue(r.Context(), secureContextHeaderKey, responseHeader)
+	r = r.WithContext(ctx)
 
-		// No headers will be written to the ResponseWriter.
-		next(w, r.WithContext(ctx))
+	// If there was an error, do not call next.
+	if next != nil {
+		next(w, r)
 	}
 }
 
