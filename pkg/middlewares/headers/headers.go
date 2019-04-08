@@ -50,7 +50,7 @@ func New(ctx context.Context, next http.Handler, config config.Headers, name str
 
 	if hasSecureHeaders {
 		logger.Debug("Setting up secureHeaders from %v", config)
-		handler = newSecure(next, config)
+		handler = NewSecure(next, config)
 		nextHandler = handler
 	}
 
@@ -73,13 +73,13 @@ func (h *headers) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	h.handler.ServeHTTP(rw, req)
 }
 
-type secureHeader struct {
+type SecureHeader struct {
 	next   http.Handler
 	secure *secure.Secure
 }
 
-// newSecure constructs a new secure instance with supplied options.
-func newSecure(next http.Handler, headers config.Headers) *secureHeader {
+// NewSecure constructs a new secure instance with supplied options.
+func NewSecure(next http.Handler, headers config.Headers) *SecureHeader {
 	opt := secure.Options{
 		BrowserXssFilter:        headers.BrowserXSSFilter,
 		ContentTypeNosniff:      headers.ContentTypeNosniff,
@@ -103,13 +103,13 @@ func newSecure(next http.Handler, headers config.Headers) *secureHeader {
 		STSSeconds:              headers.STSSeconds,
 	}
 
-	return &secureHeader{
+	return &SecureHeader{
 		next:   next,
 		secure: secure.New(opt),
 	}
 }
 
-func (s *secureHeader) HandlerFuncWithNextForRequestOnlyWithContextCheck(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (s *SecureHeader) HandlerFuncWithNextForRequestOnlyWithContextCheck(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	originalURL := r.URL
 	requestURL := r.URL
 
@@ -152,7 +152,23 @@ func (s *secureHeader) HandlerFuncWithNextForRequestOnlyWithContextCheck(w http.
 	}
 }
 
-func (s secureHeader) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+// ModifyResponseHeaders modifies the Response.
+// Used by http.ReverseProxy.
+func (s *SecureHeader) ModifyResponseHeaders(res *http.Response) error {
+	if res != nil && res.Request != nil {
+		responseHeader := res.Request.Context().Value(secureContextHeaderKey)
+		if responseHeader != nil {
+			for header, values := range responseHeader.(http.Header) {
+				if len(values) > 0 {
+					res.Header.Set(header, strings.Join(values, ","))
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (s SecureHeader) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	s.HandlerFuncWithNextForRequestOnlyWithContextCheck(rw, req, s.next.ServeHTTP)
 }
 

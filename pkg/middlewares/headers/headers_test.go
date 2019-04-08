@@ -116,13 +116,13 @@ func TestSSLForceHost(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		host             string
-		secureMiddleware *secureHeader
+		secureMiddleware *SecureHeader
 		expected         int
 	}{
 		{
 			desc: "http should return a 301",
 			host: "http://powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: NewSecure(next, config.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
@@ -132,7 +132,7 @@ func TestSSLForceHost(t *testing.T) {
 		{
 			desc: "http sub domain should return a 301",
 			host: "http://www.powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: NewSecure(next, config.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
@@ -142,7 +142,7 @@ func TestSSLForceHost(t *testing.T) {
 		{
 			desc: "https should return a 200",
 			host: "https://powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: NewSecure(next, config.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
@@ -152,7 +152,7 @@ func TestSSLForceHost(t *testing.T) {
 		{
 			desc: "https sub domain should return a 301",
 			host: "https://www.powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: NewSecure(next, config.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
@@ -162,7 +162,7 @@ func TestSSLForceHost(t *testing.T) {
 		{
 			desc: "http without force host and sub domain should return a 301",
 			host: "http://www.powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: NewSecure(next, config.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
@@ -172,7 +172,7 @@ func TestSSLForceHost(t *testing.T) {
 		{
 			desc: "https without force host and sub domain should return a 301",
 			host: "https://www.powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: NewSecure(next, config.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
