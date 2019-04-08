@@ -73,6 +73,7 @@ func (h *headers) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	h.handler.ServeHTTP(rw, req)
 }
 
+// SecureHeader holds a new secure instance from supplied frontend header struct.
 type SecureHeader struct {
 	next   http.Handler
 	secure *secure.Secure
@@ -109,6 +110,7 @@ func NewSecure(next http.Handler, headers config.Headers) *SecureHeader {
 	}
 }
 
+// HandlerFuncWithNextForRequestOnlyWithContextCheck processes the request with a context aware process. It also does not modify the response.
 func (s *SecureHeader) HandlerFuncWithNextForRequestOnlyWithContextCheck(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	originalURL := r.URL
 	requestURL := r.URL

@@ -560,6 +560,7 @@ func TestSSLRedirectWithModifiedRequest(t *testing.T) {
 			err := headerMiddleware.ModifyResponseHeaders(rw.Result())
 			require.NoError(t, err)
 			returnedLocation, err := rw.Result().Location()
+			require.NoError(t, err)
 			assert.Equal(t, test.expected, returnedLocation.Path)
 		})
 	}
