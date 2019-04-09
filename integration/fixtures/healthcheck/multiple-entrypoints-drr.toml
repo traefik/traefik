@@ -1,3 +1,7 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
 [log]
 logLevel = "DEBUG"
 

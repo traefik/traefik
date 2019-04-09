@@ -1,10 +1,10 @@
-[log]
-logLevel = "ERROR"
-filePath = "traefik.log"
-
 [global]
 checkNewVersion = false
 sendAnonymousUsage = false
+
+[log]
+logLevel = "ERROR"
+filePath = "traefik.log"
 
 [accessLog]
   filePath = "access.log"
