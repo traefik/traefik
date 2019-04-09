@@ -452,6 +452,33 @@ func TestAddMetadata(t *testing.T) {
 			},
 		},
 		{
+			desc: "level 2, struct with allowEmpty, value true with case variation",
+			tree: &Node{
+				Name: "traefik",
+				Children: []*Node{
+					{Name: "Foo", Value: "TruE"},
+				},
+			},
+			structure: struct {
+				Foo struct {
+					Bar string
+				} `label:"allowEmpty"`
+			}{
+				Foo: struct {
+					Bar string
+				}{},
+			},
+			expected: expected{
+				node: &Node{
+					Name: "traefik",
+					Kind: reflect.Struct,
+					Children: []*Node{
+						{Name: "Foo", FieldName: "Foo", Value: "TruE", Kind: reflect.Struct},
+					},
+				},
+			},
+		},
+		{
 			desc: "level 2, struct with allowEmpty, value false",
 			tree: &Node{
 				Name: "traefik",
