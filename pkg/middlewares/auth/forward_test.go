@@ -50,6 +50,8 @@ func TestForwardAuthSuccess(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Auth-User", "user@example.com")
 		w.Header().Set("X-Auth-Secret", "secret")
+		w.Header().Add("X-Auth-Group", "group1")
+		w.Header().Add("X-Auth-Group", "group2")
 		fmt.Fprintln(w, "Success")
 	}))
 	defer server.Close()
@@ -57,12 +59,13 @@ func TestForwardAuthSuccess(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "user@example.com", r.Header.Get("X-Auth-User"))
 		assert.Empty(t, r.Header.Get("X-Auth-Secret"))
+		assert.Equal(t, []string{"group1", "group2"}, r.Header["X-Auth-Group"])
 		fmt.Fprintln(w, "traefik")
 	})
 
 	auth := config.ForwardAuth{
 		Address:             server.URL,
-		AuthResponseHeaders: []string{"X-Auth-User"},
+		AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Group"},
 	}
 	middleware, err := NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
@@ -71,6 +74,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 	defer ts.Close()
 
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.Header.Set("X-Auth-Group", "admin_group")
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
