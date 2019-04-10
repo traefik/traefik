@@ -147,7 +147,11 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	for _, headerName := range fa.authResponseHeaders {
-		req.Header.Set(headerName, forwardResponse.Header.Get(headerName))
+		headerKey := http.CanonicalHeaderKey(headerName)
+		req.Header.Del(headerKey)
+		if len(forwardResponse.Header[headerKey]) > 0 {
+			req.Header[headerKey] = append([]string(nil), forwardResponse.Header[headerKey]...)
+		}
 	}
 
 	req.RequestURI = req.URL.RequestURI()
