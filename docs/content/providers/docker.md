@@ -180,14 +180,17 @@ Defines a default docker network to use for connections to all containers.
 
 This option can be overridden on a container basis with the `traefik.docker.network` label.
 
-### `domain`
+### `defaultRule`
 
-_Optional_
+_Optional, Default=Host(`{{ normalize .Name }}`)_
 
-This is the default base domain used for the router rules.
+For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
+It must be a valid [Go template](https://golang.org/pkg/text/template/),
+augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
+The container service name can be accessed as the Name identifier,
+and the template has access to all the labels defined on this container.
 
-This option can be overridden on a container basis with the
-`traefik.domain` label.
+``defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"``
 
 ### `swarmMode`
 
@@ -207,7 +210,8 @@ Defines the polling interval (in seconds) in Swarm Mode.
 
 Traefik creates, for each container, a corresponding [service](../routing/services/index.md) and [router](../routing/routers/index.md).
 
-The Service automatically gets a server per instance of the container, and the router gets a default rule attached to it, based on the container name.
+The Service automatically gets a server per instance of the container,
+and the router automatically gets a rule defined by defaultRule (if no rule for it was defined in labels).
 
 ### Routers
 
@@ -223,7 +227,7 @@ Every [Service](../routing/services/index.md) parameter can be updated this way.
 
 ### Middleware
 
-You can declare pieces of middleware using labels starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options. For example, to declare a middleware [`schemeredirect`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.schemeredirect.scheme: https`.
+You can declare pieces of middleware using labels starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options. For example, to declare a middleware [`redirectscheme`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme: https`.
 
 ??? example "Declaring and Referencing a Middleware"
 
@@ -281,3 +285,7 @@ If a container is linked to several networks, be sure to set the proper network 
 
 !!! warning
     When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.
+
+<!--
+TODO (docker.lbswarm)
+-->
