@@ -14,11 +14,11 @@ Checking the Health of Your Traefik Instances
 ??? example "Enabling /ping on a dedicated EntryPoint"
     
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
       
-      [entrypoints.ping]
+      [entryPoints.ping]
         address = ":8082"
     
     [ping]

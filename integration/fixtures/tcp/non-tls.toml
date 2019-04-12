@@ -5,8 +5,8 @@ sendAnonymousUsage = false
 [log]
 logLevel = "DEBUG"
 
-[entrypoints]
-  [entrypoints.tcp]
+[entryPoints]
+  [entryPoints.tcp]
     address = ":8093"
 
 [api]
@@ -16,7 +16,7 @@ logLevel = "DEBUG"
 [tcp]
     [tcp.routers]
        [tcp.routers.to-whoami-no-tls]
-          entrypoints = ["tcp"]
+          entryPoints = ["tcp"]
           rule="HostSNI(`*`)"
           service = "whoami-no-tls"
 

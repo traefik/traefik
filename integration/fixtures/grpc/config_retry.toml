@@ -8,8 +8,8 @@ logLevel = "DEBUG"
 [serversTransport]
 rootCAs = [ """{{ .CertContent }}""" ]
 
-[entrypoints]
-  [entrypoints.web-secure]
+[entryPoints]
+  [entryPoints.web-secure]
   address = ":4443"
 
 [api]

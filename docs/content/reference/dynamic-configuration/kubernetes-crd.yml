@@ -32,7 +32,7 @@ kind: IngressRoute
 metadata:
   name: ingressroute.crd
 spec:
-  entrypoints:
+  entryPoints:
     - web
     - web-secure
   routes:
@@ -45,21 +45,21 @@ spec:
       services:
         - name: s1
           port: 80
-          healthcheck:
+          healthCheck:
             path: /health
             host: baz.com
-            intervalseconds: 7
-            timeoutseconds: 60
+            intervalSeconds: 7
+            timeoutSeconds: 60
           # strategy defines the load balancing strategy between the servers. It defaults
           # to Round Robin, and for now only Round Robin is supported anyway.
           strategy: RoundRobin
         - name: s2
           port: 433
-          healthcheck:
+          healthCheck:
             path: /health
             host: baz.com
-            intervalseconds: 7
-            timeoutseconds: 60
+            intervalSeconds: 7
+            timeoutSeconds: 60
     - match: PathPrefix(`/misc`)
       services:
         - name: s3

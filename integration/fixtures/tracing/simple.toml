@@ -7,8 +7,8 @@ logLevel = "DEBUG"
 
 [api]
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
     address = ":8000"
 
 [tracing]

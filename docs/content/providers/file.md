@@ -28,7 +28,7 @@ You can write these configuration elements:
       # Add the router
       [http.routers]
         [http.routers.router0]
-          entrypoints = ["web"]
+          entryPoints = ["web"]
           middlewares = ["my-basic-auth"]
           service = "service-foo"
           rule = "Path(`foo`)"
