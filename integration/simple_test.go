@@ -483,8 +483,19 @@ func (s *SimpleSuite) TestMultiprovider(c *check.C) {
 }
 
 func (s *FileSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/file/simple.toml"))
-	defer display(c)
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	server := "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+
+	file := s.adaptFile(c, "fixtures/file/simple-hosts.toml", struct {
+		Server string
+	}{Server: server})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -512,9 +523,12 @@ func (s *FileSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.C)
 	}
 
 	for _, test := range testCases {
-		req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
-		req.Host = test.requestHost
-		err := try.Request(req, 1*time.Second, try.StatusCodeIs(http.StatusOK))
+		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
 		c.Assert(err, checker.IsNil)
+		req.Host = test.requestHost
+		err = try.Request(req, 1*time.Second, try.StatusCodeIs(http.StatusOK))
+		if err != nil {
+			c.Fatalf("Error while testing %s: %v", test.desc, err)
+		}
 	}
 }
