@@ -119,6 +119,22 @@ func host(route *mux.Route, hosts ...string) error {
 			if reqHost == host {
 				return true
 			}
+
+			// Check for match on trailing period on host
+			if last := len(host) - 1; last >= 0 && host[last] == '.' {
+				h := host[:last]
+				if reqHost == h {
+					return true
+				}
+			}
+
+			// Check for match on trailing period on request
+			if last := len(reqHost) - 1; last >= 0 && reqHost[last] == '.' {
+				h := reqHost[:last]
+				if h == host {
+					return true
+				}
+			}
 		}
 		return false
 	})
