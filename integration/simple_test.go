@@ -489,9 +489,6 @@ func (s *FileSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.C)
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
-	c.Assert(err, checker.IsNil)
-
 	testCases := []struct {
 		desc        string
 		requestHost string
