@@ -1,0 +1,41 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+logLevel = "DEBUG"
+
+[entrypoints]
+  [entrypoints.web]
+    address = ":8000"
+
+[providers]
+   [providers.file]
+
+[http.routers]
+  [http.routers.router1]
+    rule = "Host(`test.localhost`)"
+    service = "service1"
+
+  [http.routers.router2]
+    rule = "Host(`test.foo.localhost.`)"
+    service = "service2"
+
+[http.services]
+  [http.services.service1.loadbalancer]
+    [[http.services.service1.loadbalancer.servers]]
+      url = "http://172.17.0.2:80"
+      weight = 10
+    [[http.services.service1.loadbalancer.servers]]
+      url = "http://172.17.0.3:80"
+      weight = 1
+
+  [http.services.service2]
+    [http.services.service2.loadbalancer]
+      method = "drr"
+      [[http.services.service2.loadbalancer.servers]]
+        url = "http://172.17.0.4:80"
+        weight = 1
+      [[http.services.service2.loadbalancer.servers]]
+        url = "http://172.17.0.5:80"
+        weight = 2

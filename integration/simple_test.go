@@ -481,3 +481,43 @@ func (s *SimpleSuite) TestMultiprovider(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 }
+
+func (s *FileSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/file/simple.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	c.Assert(err, checker.IsNil)
+
+	testCases := []struct {
+		desc        string
+		requestHost string
+	}{
+		{
+			desc:        "Request host without trailing period, rule without trailing period",
+			requestHost: "test.localhost",
+		},
+		{
+			desc:        "Request host with trailing period, rule without trailing period",
+			requestHost: "test.localhost.",
+		},
+		{
+			desc:        "Request host without trailing period, rule with trailing period",
+			requestHost: "test.foo.localhost",
+		},
+		{
+			desc:        "Request host with trailing period, rule with trailing period",
+			requestHost: "test.foo.localhost.",
+		},
+	}
+
+	for _, test := range testCases {
+		req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+		req.Host = test.requestHost
+		err := try.Request(req, 1*time.Second, try.StatusCodeIs(http.StatusOK))
+		c.Assert(err, checker.IsNil)
+	}
+}
