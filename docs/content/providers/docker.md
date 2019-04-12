@@ -286,6 +286,6 @@ If a container is linked to several networks, be sure to set the proper network 
 !!! warning
     When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.
 
-<!--
-TODO (docker.lbswarm)
--->
+#### `traefik.docker.lbswarm`
+
+Enables Swarm's inbuilt load balancer (only relevant in Swarm Mode).
