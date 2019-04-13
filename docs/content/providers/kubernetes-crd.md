@@ -13,7 +13,133 @@ it would manage access to a cluster services by supporting the [Ingress](https:/
 However, as the community expressed the need to benefit from Traefik features without resorting to (lots of) annotations,
 we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (alias CRD in the following) for an IngressRoute type, defined below, in order to provide a better way to configure access to a Kubernetes cluster.
 
-## Traefik IngressRoute definition
+## Provider Configuration
+
+### `endpoint`
+
+_Optional, Default=empty_
+
+The Kubernetes server endpoint as URL.
+
+When deployed into Kubernetes, Traefik will read the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` to construct the endpoint.
+
+The access token will be looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token` and the SSL CA certificate in `/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`.
+Both are provided mounted automatically when deployed inside Kubernetes.
+
+The endpoint may be specified to override the environment variable values inside a cluster.
+
+When the environment variables are not found, Traefik will try to connect to the Kubernetes API server with an external-cluster client.
+In this case, the endpoint is required.
+Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication and authorization of the associated kubeconfig.
+
+```toml tab="File"
+[Providers.KubernetesCRD]
+  endpoint = "http://localhost:8080"
+  # ...
+```
+
+```txt tab="CLI"
+--providers.kubernetescrd
+--providers.kubernetescrd.certauthfilepath="http://localhost:8080"
+```
+
+### `token`
+
+_Optional, Default=empty_
+
+Bearer token used for the Kubernetes client configuration.
+
+```toml tab="File"
+[Providers.KubernetesCRD]
+  token = "mytoken"
+  # ...
+```
+
+```txt tab="CLI"
+--providers.kubernetescrd
+--providers.kubernetescrd.token="mytoken"
+```
+
+### `certAuthFilePath`
+
+_Optional, Default=empty_
+
+Path to the certificate authority file.
+Used for the Kubernetes client configuration.
+
+```toml tab="File"
+[Providers.KubernetesCRD]
+  certAuthFilePath = "/my/ca.crt"
+  # ...
+```
+
+```txt tab="CLI"
+--providers.kubernetescrd
+--providers.kubernetescrd.certauthfilepath="/my/ca.crt"
+```
+
+### `namespaces`
+
+_Optional, Default: all namespaces (empty array)_
+
+Array of namespaces to watch.
+
+```toml tab="File"
+[Providers.KubernetesCRD]
+  namespaces = ["default", "production"]
+  # ...
+```
+
+```txt tab="CLI"
+--providers.kubernetescrd
+--providers.kubernetescrd.namespaces="default,production"
+```
+
+### `labelselector`
+
+_Optional,Default: empty (process all Ingresses)_
+
+By default, Traefik processes all Ingress objects in the configured namespaces.
+A label selector can be defined to filter on specific Ingress objects only.
+
+See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
+
+```toml tab="File"
+[Providers.KubernetesCRD]
+  labelselector = "A and not B"
+  # ...
+```
+
+```txt tab="CLI"
+--providers.kubernetescrd
+--providers.kubernetescrd.labelselector="A and not B"
+```
+
+### `ingressClass`
+
+_Optional, Default: empty_
+
+Value of `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
+
+If the parameter is non-empty, only Ingresses containing an annotation with the same value are processed.
+Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
+
+```toml tab="File"
+[Providers.KubernetesCRD]
+  ingressClass = "traefik-internal"
+  # ...
+```
+
+```txt tab="CLI"
+--providers.kubernetescrd
+--providers.kubernetescrd.ingressclass="traefik-internal"
+```
+
+## Resource Configuration
+
+If you're in a hurry, maybe you'd rather go through the [dynamic](../reference/dynamic-configuration/kubernetes-crd.md) configuration reference.
+
+### Traefik IngressRoute definition
 
 ```yaml
 --8<-- "content/providers/crd_ingress_route.yml"
@@ -46,7 +172,7 @@ spec:
       port: 80
 ```
 
-## Middleware
+### Middleware
 
 Additionally, to allow for the use of middlewares in an `IngressRoute`, we defined the CRD below for the `Middleware` kind.
 
@@ -86,7 +212,7 @@ spec:
     - name: stripprefix
 ```
 
-## TLS
+### TLS
 
 To allow for TLS, we made use of the `Secret` kind, as it was already defined, and it can be directly used in an `IngressRoute`:
 
@@ -118,10 +244,6 @@ spec:
   tls:
     secretName: supersecret
 ```
-
-## Full reference example
-
-If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/dynamic-configuration/kubernetes-crd.md) configuration references.
 
 ## Further
 

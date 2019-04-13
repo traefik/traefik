@@ -16,7 +16,7 @@ In the following, the Kubernetes resources defined in YAML configuration files c
 - the first, and usual way, is simply with the `kubectl apply` command.
 - the second, which can be used for this tutorial, is to directly place the files in the directory used by the k3s docker image for such inputs (`/var/lib/rancher/k3s/server/manifests`).
 
-## k3s Docker-compose Configuration ##
+## k3s Docker-compose Configuration
 
 Our starting point is the docker-compose configuration file, to start the k3s cluster.
 You can start it with:
@@ -29,11 +29,11 @@ docker-compose -f k3s.yml up
 --8<-- "content/user-guides/crd-acme/k3s.yml"
 ```
 
-## Cluster Resources ##
+## Cluster Resources
 
 Let's now have a look (in the order they should be applied, if using `kubectl apply`) at all the required resources for the full setup.
 
-### IngressRoute Definition ###
+### IngressRoute Definition
 
 First, the definition of the `IngressRoute` and the `Middleware` kinds.
 Also note the RBAC authorization resources; they'll be referenced through the `serviceAccountName` of the deployment, later on.
@@ -42,7 +42,7 @@ Also note the RBAC authorization resources; they'll be referenced through the `s
 --8<-- "content/user-guides/crd-acme/01-crd.yml"
 ```
 
-### Services ###
+### Services
 
 Then, the services. One for Traefik itself, and one for the app it routes for, i.e. in this case our demo HTTP server: [whoami](https://github.com/containous/whoami).
 
@@ -50,7 +50,7 @@ Then, the services. One for Traefik itself, and one for the app it routes for, i
 --8<-- "content/user-guides/crd-acme/02-services.yml"
 ```
 
-### Deployments ###
+### Deployments
 
 Next, the deployments, i.e. the actual pods behind the services.
 Again, one pod for Traefik, and one for the whoami app.
@@ -59,7 +59,7 @@ Again, one pod for Traefik, and one for the whoami app.
 --8<-- "content/user-guides/crd-acme/03-deployments.yml"
 ```
 
-### Port Forwarding ###
+### Port Forwarding
 
 Now, as an exception to what we said above, please note that you should not let the ingressRoute resources below be applied automatically to your cluster.
 The reason is, as soon as the ACME provider of Traefik detects we have TLS routers, it will try to generate the certificates for the corresponding domains.
@@ -74,7 +74,7 @@ Also, and this is out of the scope if this guide, please note that because of th
 In which case you can use tricks such as elevating caps of `kubectl` with `setcaps`, or using `authbind`, or setting up a NAT between your host and the WAN.
 Look it up.
 
-### Traefik Routers ###
+### Traefik Routers
 
 We can now finally apply the actual ingressRoutes, with:
 
