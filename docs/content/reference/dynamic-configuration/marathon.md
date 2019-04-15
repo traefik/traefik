@@ -1,6 +1,6 @@
-# Docker Configuration Reference
+# Marathon Configuration Reference
 
-Dynamic configuration with Docker Labels
+Dynamic configuration with Marathon Labels
 {: .subtitle }
 
 ```yaml

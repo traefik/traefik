@@ -78,6 +78,7 @@ nav:
 #     - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
       - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
+      - 'Marathon': 'providers/marathon.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'Entrypoints': 'routing/entrypoints.md'
@@ -120,6 +121,7 @@ nav:
       - 'Tracing': 'observability/tracing.md'
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
+      - 'Marathon': 'user-guides/marathon.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'

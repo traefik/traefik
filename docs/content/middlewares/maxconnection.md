@@ -25,6 +25,12 @@ spec:
     prefix: /bar
 ```
 
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-maxconn.maxconn.amount": "10"
+}
+```
+
 ```yaml tab="Rancher"
 # Limiting to 10 simultaneous connections
 labels:

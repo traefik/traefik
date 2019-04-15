@@ -59,6 +59,18 @@ spec:
     - name: stripprefix
 ```
 
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo"
+}
+```
+
+```yaml tab="Rancher"
+# As a Rancher Label
+labels:
+  - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
+```
+
 ```toml tab="File"
 # As Toml Configuration File
 [providers]

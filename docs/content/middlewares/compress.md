@@ -15,6 +15,12 @@ labels:
 - "traefik.http.middlewares.test-compress.compress=true"
 ```
 
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-compress.compress": "true"
+}
+```
+
 ```yaml tab="Rancher"
 # Enable gzip compression
 labels:

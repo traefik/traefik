@@ -26,6 +26,12 @@ spec:
     regex: "^/foo/(.*)"
 ```
 
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex": "^/foo/(.*)"
+}
+```
+
 ```yaml tab="Rancher"
 # Replace the path by /foo
 labels:

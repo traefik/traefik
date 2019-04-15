@@ -43,6 +43,18 @@ spec:
         burst = 10
 ```
 
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-ratelimit.ratelimit.extractorfunc": "client.ip",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.period": "10s",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.average": "100",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.burst": "200",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.period": "3s",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.average": "5",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.burst": "10"
+}
+```
+
 ```yaml tab="Rancher"
 # Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
 # These can "burst" up to 10 and 200 in each period, respectively.
