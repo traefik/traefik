@@ -9,8 +9,8 @@ logLevel = "DEBUG"
 # Use certificate in net/internal/testcert.go
 rootCAs =  [ "fixtures/https/rootcas/local.crt"]
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
   address = ":8081"
 
 [api]

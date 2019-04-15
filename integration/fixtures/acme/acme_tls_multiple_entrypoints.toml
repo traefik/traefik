@@ -5,18 +5,18 @@ sendAnonymousUsage = false
 [log]
 logLevel = "DEBUG"
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
     address = "{{ .PortHTTP }}"
 
-  [entrypoints.web-secure]
+  [entryPoints.web-secure]
     address = "{{ .PortHTTPS }}"
 
-  [entrypoints.traefik]
+  [entryPoints.traefik]
     address = ":9000"
 #       FIXME
-#      [entrypoints.traefik.tls]
-#        [entrypoints.traefik.tls.DefaultCertificate]
+#      [entryPoints.traefik.tls]
+#        [entryPoints.traefik.tls.DefaultCertificate]
 #        certFile = "fixtures/acme/ssl/wildcard.crt"
 #        keyFile = "fixtures/acme/ssl/wildcard.key"
 

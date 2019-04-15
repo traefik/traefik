@@ -13,8 +13,8 @@ They define the port which will receive the requests (whether HTTP or TCP).
 ??? example "Port 80 only"
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
          address = ":80"
     ```
 
@@ -23,11 +23,11 @@ They define the port which will receive the requests (whether HTTP or TCP).
 ??? example "Port 80 & 443" 
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
     
-      [entrypoints.web-secure]
+      [entryPoints.web-secure]
         address = ":443"
     ```
 
@@ -118,11 +118,11 @@ Traefik supports [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-
 ??? example "Enabling Proxy Protocol with Trusted IPs" 
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
     
-        [entrypoints.web.proxyProtocol]
+        [entryPoints.web.proxyProtocol]
           trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
     ```
     
@@ -133,11 +133,11 @@ Traefik supports [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-
     In a test environments, you can configure Traefik to trust every incoming connection. Doing so, every remote client address will be replaced (`trustedIPs` won't have any effect)
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
     
-        [entrypoints.web.proxyProtocol]
+        [entryPoints.web.proxyProtocol]
           insecure = true
     ```
          
@@ -153,21 +153,21 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
 ??? example "Trusting Forwarded Headers from specific IPs"
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
     
-        [entrypoints.web.forwardedHeaders]
+        [entryPoints.web.forwardedHeaders]
           trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
     ```
     
 ??? example "Insecure Mode -- Always Trusting Forwarded Headers"
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
     
-        [entrypoints.web.forwardedHeaders]
+        [entryPoints.web.forwardedHeaders]
            insecure = true
     ```

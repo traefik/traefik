@@ -13,11 +13,11 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 ??? example "Enabling ACME"
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
          address = ":80"
     
-      [entrypoints.http-tls]
+      [entryPoints.http-tls]
          address = ":443"
     
     [acme] # every router with TLS enabled will now be able to use ACME for its certificates
@@ -31,11 +31,11 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 ??? example "Configuring Wildcard Certificates"
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
 
-      [entrypoints.http-tls]
+      [entryPoints.http-tls]
         address = ":443"
 
     [acme]

@@ -5,10 +5,10 @@ sendAnonymousUsage = false
 [log]
 logLevel = "DEBUG"
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
     address = "{{ .PortHTTP }}"
-  [entrypoints.web-secure]
+  [entryPoints.web-secure]
     address = "{{ .PortHTTPS }}"
 
 [acme]

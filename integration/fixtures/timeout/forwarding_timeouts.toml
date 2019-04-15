@@ -9,8 +9,8 @@ logLevel = "DEBUG"
   dialTimeout = "300ms"
   responseHeaderTimeout = "300ms"
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
     address = ":8000"
 
 [accessLog]

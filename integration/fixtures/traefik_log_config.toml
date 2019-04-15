@@ -9,8 +9,8 @@ filePath = "traefik.log"
 [accessLog]
   filePath = "access.log"
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
   address = ":8000"
 
 [api]

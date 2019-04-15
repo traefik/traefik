@@ -5,10 +5,10 @@ sendAnonymousUsage = false
 [log]
 logLevel = "DEBUG"
 
-[entrypoints]
-  [entrypoints.http1]
+[entryPoints]
+  [entryPoints.http1]
     address = ":8000"
-  [entrypoints.http2]
+  [entryPoints.http2]
     address = ":9000"
 
 [api]

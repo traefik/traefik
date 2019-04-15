@@ -5,15 +5,15 @@ sendAnonymousUsage = false
 [log]
 logLevel = "DEBUG"
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
   address = ":8000"
-  [entrypoints.web.transport.lifeCycle]
+  [entryPoints.web.transport.lifeCycle]
     RequestAcceptGraceTimeout = "10s"
 
-  [entrypoints.traefik]
+  [entryPoints.traefik]
   address = ":8001"
-[entrypoints.traefik.transport.lifeCycle]
+[entryPoints.traefik.transport.lifeCycle]
     RequestAcceptGraceTimeout = "10s"
 
 [ping]

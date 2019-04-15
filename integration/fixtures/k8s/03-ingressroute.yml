@@ -5,7 +5,7 @@ metadata:
   namespace: default
 
 spec:
-  entrypoints:
+  entryPoints:
     - web
 
   routes:

@@ -20,8 +20,8 @@
 #
 # Optional
 # Default:
-[entrypoints]
-    [entrypoints.web]
+[entryPoints]
+    [entryPoints.web]
     address = ":80"
 
 ################################################################

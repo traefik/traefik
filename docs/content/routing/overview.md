@@ -25,8 +25,8 @@ Below is an example of a full configuration file for the [file provider](../prov
 In the process, Traefik will make sure that the user is authenticated (using the [BasicAuth middleware](../middlewares/basicauth.md)).
 
 ```toml
-[entrypoints]
-   [entrypoints.web]
+[entryPoints]
+   [entryPoints.web]
       address = ":8081" # Listen on port 8081 for incoming requests
 
 [providers]
@@ -62,8 +62,8 @@ In the process, Traefik will make sure that the user is authenticated (using the
     ??? example "Adding a TCP route for TLS requests on whoami.traefik.io"
 
         ```toml
-        [entrypoints]
-           [entrypoints.web]
+        [entryPoints]
+           [entryPoints.web]
               address = ":8081" # Listen on port 8081 for incoming requests
 
         [providers]

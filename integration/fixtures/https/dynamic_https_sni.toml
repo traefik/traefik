@@ -5,11 +5,11 @@ sendAnonymousUsage = false
 [log]
 logLevel = "DEBUG"
 
-[entrypoints]
-  [entrypoints.web-secure]
+[entryPoints]
+  [entryPoints.web-secure]
      address = ":4443"
 
-  [entrypoints.https02]
+  [entryPoints.https02]
      address = ":8443"
 
 [api]

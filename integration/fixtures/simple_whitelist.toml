@@ -5,12 +5,12 @@ sendAnonymousUsage = false
 [log]
 logLevel = "DEBUG"
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
   address = ":8000"
-  [entrypoints.web.ForwardedHeaders]
+  [entryPoints.web.ForwardedHeaders]
     insecure=true
-  [entrypoints.web.ClientIPStrategy]
+  [entryPoints.web.ClientIPStrategy]
     depth=2
 
 [api]

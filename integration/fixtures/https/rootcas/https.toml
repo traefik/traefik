@@ -24,8 +24,8 @@ fblo6RBxUQ==
 -----END CERTIFICATE-----
 """]
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
   address = ":8081"
 
 [api]

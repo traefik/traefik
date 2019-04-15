@@ -28,7 +28,7 @@ metadata:
   name: ingressroutefoo.crd
 
 spec:
-  entrypoints:
+  entryPoints:
     - web
   routes:
   # Match is the rule corresponding to an underlying router.
@@ -63,7 +63,7 @@ metadata:
   name: stripprefix
 
 spec:
-  stripprefix:
+  stripPrefix:
     prefixes:
       - /stripit
 
@@ -74,7 +74,7 @@ metadata:
   name: ingressroutebar.crd
 
 spec:
-  entrypoints:
+  entryPoints:
     - web
   routes:
   - match: Host(`bar.com`) && PathPrefix(`/stripit`)

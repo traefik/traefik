@@ -5,11 +5,11 @@ sendAnonymousUsage = false
 [log]
 logLevel = "DEBUG"
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
     address = ":8888"
 
-  [entrypoints.web-secure]
+  [entryPoints.web-secure]
     address = ":8443"
 
 [api]
@@ -19,121 +19,121 @@ logLevel = "DEBUG"
 
 [http.routers]
   [http.routers.router1]
-    entrypoints = [ "web" ]
+    entryPoints = [ "web" ]
     rule = "Host(`example.com`)"
     middlewares = ["redirect-https"]
     service = "service1"
 
   [http.routers.router1TLS]
-    entrypoints = [ "web-secure" ]
+    entryPoints = [ "web-secure" ]
     rule = "Host(`example.com`)"
     service = "service1"
     [http.routers.router1TLS.tls]
 
   [http.routers.router2]
-    entrypoints = [ "web" ]
+    entryPoints = [ "web" ]
     rule = "Host(`example2.com`)"
     middlewares = ["redirect-https", "api-slash-strip"]
     service = "service1"
 
   [http.routers.router2TLS]
-    entrypoints = [ "web-secure" ]
+    entryPoints = [ "web-secure" ]
     rule = "Host(`example2.com`)"
     service = "service1"
     [http.routers.router2TLS.tls]
 
   [http.routers.router3]
-    entrypoints = [ "web" ]
+    entryPoints = [ "web" ]
     rule = "Host(`test.com`)"
     middlewares = ["redirect-https", "foo-add-prefix"]
     service = "service1"
 
   [http.routers.router3TLS]
-    entrypoints = [ "web-secure" ]
+    entryPoints = [ "web-secure" ]
     rule = "Host(`test.com`)"
     service = "service1"
     [http.routers.router3TLS.tls]
 
   [http.routers.router4]
-    entrypoints = [ "web" ]
+    entryPoints = [ "web" ]
     rule = "Host(`test2.com`)"
     middlewares = ["redirect-https", "foo-slash-add-prefix"]
     service = "service1"
 
   [http.routers.router4TLS]
-    entrypoints = [ "web-secure" ]
+    entryPoints = [ "web-secure" ]
     rule = "Host(`test2.com`)"
     service = "service1"
     [http.routers.router4TLS.tls]
 
   [http.routers.router5]
-    entrypoints = [ "web" ]
+    entryPoints = [ "web" ]
     rule = "Host(`foo.com`)"
     middlewares = ["redirect-https", "id-strip-regex-prefix"]
     service = "service1"
 
   [http.routers.router5TLS]
-    entrypoints = [ "web-secure" ]
+    entryPoints = [ "web-secure" ]
     rule = "Host(`foo.com`)"
     service = "service1"
     [http.routers.router5TLS.tls]
 
   [http.routers.router6]
-    entrypoints = [ "web" ]
+    entryPoints = [ "web" ]
     rule = "Host(`foo2.com`)"
     middlewares = ["redirect-https", "id-slash-strip-regex-prefix"]
     service = "service1"
 
   [http.routers.router6TLS]
-    entrypoints = [ "web-secure" ]
+    entryPoints = [ "web-secure" ]
     rule = "Host(`foo2.com`)"
     service = "service1"
     [http.routers.router6TLS.tls]
 
   [http.routers.router7]
-    entrypoints = [ "web" ]
+    entryPoints = [ "web" ]
     rule = "Host(`bar.com`)"
     middlewares = ["redirect-https", "api-regex-replace"]
     service = "service1"
 
   [http.routers.router7TLS]
-    entrypoints = [ "web-secure" ]
+    entryPoints = [ "web-secure" ]
     rule = "Host(`bar.com`)"
     service = "service1"
     [http.routers.router7TLS.tls]
 
   [http.routers.router8]
-    entrypoints = [ "web" ]
+    entryPoints = [ "web" ]
     rule = "Host(`bar2.com`)"
     middlewares = ["redirect-https", "api-slash-regex-replace"]
     service = "service1"
 
   [http.routers.router8TLS]
-    entrypoints = [ "web-secure" ]
+    entryPoints = [ "web-secure" ]
     rule = "Host(`bar2.com`)"
     service = "service1"
     [http.routers.router8TLS.tls]
 
   [http.routers.router9]
-    entrypoints = [ "web" ]
+    entryPoints = [ "web" ]
     rule = "Host(`pow.com`)"
     middlewares = ["redirect-https", "api-replace-path"]
     service = "service1"
 
   [http.routers.router9TLS]
-    entrypoints = [ "web-secure" ]
+    entryPoints = [ "web-secure" ]
     rule = "Host(`pow.com`)"
     service = "service1"
     [http.routers.router9TLS.tls]
 
   [http.routers.router10]
-    entrypoints = [ "web" ]
+    entryPoints = [ "web" ]
     rule = "Host(`pow2.com`)"
     middlewares = ["redirect-https", "api-slash-replace-path"]
     service = "service1"
 
   [http.routers.router10TLS]
-    entrypoints = [ "web-secure" ]
+    entryPoints = [ "web-secure" ]
     rule = "Host(`pow2.com`)"
     service = "service1"
     [http.routers.router10TLS.tls]
