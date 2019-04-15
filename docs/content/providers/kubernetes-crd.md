@@ -40,7 +40,7 @@ Specifically, it may be set to the URL used by `kubectl proxy` to connect to a K
 
 ```txt tab="CLI"
 --providers.kubernetescrd
---providers.kubernetescrd.certauthfilepath="http://localhost:8080"
+--providers.kubernetescrd.endpoint="http://localhost:8080"
 ```
 
 ### `token`
