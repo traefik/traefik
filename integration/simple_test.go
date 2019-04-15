@@ -482,7 +482,7 @@ func (s *SimpleSuite) TestMultiprovider(c *check.C) {
 
 }
 
-func (s *FileSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.C) {
+func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
