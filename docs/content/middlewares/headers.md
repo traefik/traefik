@@ -32,6 +32,13 @@ spec:
       X-Custom-Response-Header: "True"
 ```
 
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name": "test",
+  "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header": "True"
+}
+```
+
 ```yaml tab="Rancher"
 labels:
 - "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test"

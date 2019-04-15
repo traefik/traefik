@@ -26,6 +26,12 @@ spec:
     scheme: https
 ```
 
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme": "https"
+}
+```
+
 ```yaml tab="Rancher"
 # Redirect to https
 labels:

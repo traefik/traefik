@@ -26,6 +26,12 @@ spec:
     prefixes: "foobar, fiibar"
 ```
 
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes": "foobar, fiibar"
+}
+```
+
 ```yaml tab="Rancher"
 # Replace the path by /foo
 labels:

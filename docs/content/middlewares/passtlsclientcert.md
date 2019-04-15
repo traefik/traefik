@@ -27,6 +27,12 @@ spec:
     pem: true
 ```
 
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem": "true"
+}
+```
+
 ```yaml tab="Rancher"
 # Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header.
 labels:
