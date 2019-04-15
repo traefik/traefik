@@ -56,7 +56,7 @@ func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]TLS,
 			conf.Stores = []string{"default"}
 		}
 		for _, store := range conf.Stores {
-			if err := conf.Certificate.AppendCertificates(storesCertificates, store); err != nil {
+			if err := conf.Certificate.AppendCertificate(storesCertificates, store); err != nil {
 				log.Errorf("Unable to append certificate %s to store %s: %v", conf.Certificate.GetTruncatedCertificateName(), store, err)
 			}
 		}

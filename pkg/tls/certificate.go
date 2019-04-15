@@ -107,7 +107,7 @@ func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, erro
 		config.Certificates = append(config.Certificates, *cert)
 	} else {
 		for _, certificate := range *c {
-			err := certificate.AppendCertificates(domainsCertificates, entryPointName)
+			err := certificate.AppendCertificate(domainsCertificates, entryPointName)
 			if err != nil {
 				log.Errorf("Unable to add a certificate to the entryPoint %q : %v", entryPointName, err)
 				continue
@@ -138,8 +138,8 @@ func (c *Certificates) isEmpty() bool {
 	return key == len(*c)
 }
 
-// AppendCertificates appends a Certificate to a certificates map sorted by entrypoints
-func (c *Certificate) AppendCertificates(certs map[string]map[string]*tls.Certificate, ep string) error {
+// AppendCertificate appends a Certificate to a certificates map keyed by entrypoint.
+func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certificate, ep string) error {
 
 	certContent, err := c.CertFile.Read()
 	if err != nil {
@@ -192,9 +192,9 @@ func (c *Certificate) AppendCertificates(certs map[string]map[string]*tls.Certif
 		}
 	}
 	if certExists {
-		log.Warnf("Into EntryPoint %s, try to add certificate for domains which already have this certificate (%s). The new certificate will not be append to the EntryPoint.", ep, certKey)
+		log.Warnf("Skipping addition of certificate for domain(s) %q, to EntryPoint %s, as it already exists for this Entrypoint.", certKey, ep)
 	} else {
-		log.Debugf("Add certificate for domains %s", certKey)
+		log.Debugf("Adding certificate for domain(s) %s", certKey)
 		certs[ep][certKey] = &tlsCert
 	}
 
