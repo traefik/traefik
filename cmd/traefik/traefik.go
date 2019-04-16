@@ -317,7 +317,7 @@ func configureLogging(staticConfiguration *static.Configuration) {
 	// otherwise.
 	var levelStr string
 	if staticConfiguration.Log != nil {
-		levelStr = strings.ToLower(staticConfiguration.Log.LogLevel)
+		levelStr = strings.ToLower(staticConfiguration.Log.Level)
 	}
 	if levelStr == "" {
 		levelStr = "error"

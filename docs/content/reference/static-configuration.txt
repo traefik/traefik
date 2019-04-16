@@ -55,7 +55,7 @@
 --log                                                       Traefik log settings                                                            (default "false")
 --log.filepath                                              Traefik log file path. Stdout is used when omitted or empty
 --log.format                                                Traefik log format: json | common                                               (default "common")
---log.loglevel                                              Log level set to traefik logs.
+--log.level                                              Log level set to traefik logs.
 --metrics                                                   Enable a metrics exporter                                                       (default "false")
 --metrics.datadog                                           DataDog metrics exporter type                                                   (default "false")
 --metrics.datadog.address                                   DataDog's address                                                               (default "localhost:8125")

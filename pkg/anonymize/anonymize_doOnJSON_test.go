@@ -14,7 +14,7 @@ func Test_doOnJSON(t *testing.T) {
  "CheckNewVersion": true,
  "AccessLogsFile": "",
  "TraefikLogsFile": "",
- "LogLevel": "ERROR",
+ "Level": "ERROR",
  "EntryPoints": {
   "http": {
    "Network": "",
@@ -97,7 +97,7 @@ func Test_doOnJSON(t *testing.T) {
  "CheckNewVersion": true,
  "AccessLogsFile": "",
  "TraefikLogsFile": "",
- "LogLevel": "ERROR",
+ "Level": "ERROR",
  "EntryPoints": {
   "http": {
    "Network": "",
