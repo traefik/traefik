@@ -147,6 +147,13 @@
 --providers.providersthrottleduration                       Backends throttle duration: minimum duration between 2 events from providers    (default "2s")
                                                             before applying a new configuration. It avoids unnecessary reloads if multiples
                                                             events are sent in a short amount of time.
+--providers.rancher                                         Enable Rancher backend with default settings                                     (default "true")
+--providers.rancher.constraints                             Filter services by constraint, matching with Traefik tags.                       (default "[]")
+--providers.rancher.defaultrule                             Default rule                                                                     (default "Host(`{{ normalize .Name }}`)")
+--providers.rancher.exposedbydefault                        Expose containers by default                                                     (default "true")
+--providers.rancher.intervalpoll                            Poll the Rancher metadata service every 'rancher.refreshseconds' (less accurate) (default "false")
+--providers.rancher.prefix                                  Prefix used for accessing the Rancher metadata service                           (default "latest")
+--providers.rancher.watch                                   Watch provider                                                                   (default "true")
 --providers.rest                                            Enable Rest backend with default settings                                       (default "true")
 --providers.rest.entrypoint                                 EntryPoint                                                                      (default "traefik")
 --serverstransport                                          Servers default transport                                                       (default "true")
