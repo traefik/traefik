@@ -55,7 +55,7 @@ spec:
 # more fields...
   routes:
     # more fields...
-    middleware:
+    middlewares:
     - name: stripprefix
 ```
 
