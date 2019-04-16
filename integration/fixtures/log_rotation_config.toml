@@ -4,7 +4,7 @@ sendAnonymousUsage = false
 
 [log]
 filePath = "traefik.log"
-logLevel = "ERROR"
+level = "ERROR"
 
 [accessLog]
 filePath = "access.log"

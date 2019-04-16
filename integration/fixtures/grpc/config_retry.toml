@@ -3,7 +3,7 @@ checkNewVersion = false
 sendAnonymousUsage = false
 
 [log]
-logLevel = "DEBUG"
+level = "DEBUG"
 
 [serversTransport]
 rootCAs = [ """{{ .CertContent }}""" ]

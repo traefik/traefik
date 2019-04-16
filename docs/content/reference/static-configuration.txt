@@ -40,13 +40,13 @@
 --api.middlewares                                           Middleware list
 --api.statistics                                            Enable more detailed statistics                                                 (default "true")
 --api.statistics.recenterrors                               Number of recent errors logged                                                  (default "10")
--c, --configfile                                                Configuration file to use (TOML).
+-c, --configfile                                            Configuration file to use (TOML).
 --entrypoints                                               Entrypoints definition using format: --entryPoints='Name:http Address::8000     (default "map[]")
                                                             Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442
                                                             TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'
 --global                                                    Global configuration options                                                    (default "true")
 --global.checknewversion                                    Periodically check if a new version has been released                           (default "true")
--d, --global.debug                                              Enable debug mode                                                               (default "false")
+-d, --global.debug                                          Enable debug mode                                                               (default "false")
 --global.sendanonymoususage                                 send periodically anonymous usage statistics                                    (default "false")
 --hostresolver                                              Enable CNAME Flattening                                                         (default "false")
 --hostresolver.cnameflattening                              A flag to enable/disable CNAME flattening                                       (default "false")
@@ -55,7 +55,7 @@
 --log                                                       Traefik log settings                                                            (default "false")
 --log.filepath                                              Traefik log file path. Stdout is used when omitted or empty
 --log.format                                                Traefik log format: json | common                                               (default "common")
---log.loglevel                                              Log level set to traefik logs.
+--log.level                                                 Log level set to traefik logs.
 --metrics                                                   Enable a metrics exporter                                                       (default "false")
 --metrics.datadog                                           DataDog metrics exporter type                                                   (default "false")
 --metrics.datadog.address                                   DataDog's address                                                               (default "localhost:8125")
@@ -193,4 +193,4 @@
 --tracing.zipkin.id128bit                                   Use Zipkin 128 bit root span IDs.                                               (default "true")
 --tracing.zipkin.samespan                                   Use Zipkin SameSpan RPC style traces.                                           (default "false")
 --tracing.zipkin.samplerate                                 The rate between 0.0 and 1.0 of requests to trace.                              (default "1")
--h, --help                                                      Print Help (this message) and exit
+-h, --help                                                  Print Help (this message) and exit

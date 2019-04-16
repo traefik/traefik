@@ -40,7 +40,7 @@
 # Optional
 # Default: "ERROR"
 #
-# logLevel = "DEBUG"
+# level = "DEBUG"
 
 # Sets the filepath for the traefik log. If not specified, stdout will be used.
 # Intermediate directories are created if necessary.

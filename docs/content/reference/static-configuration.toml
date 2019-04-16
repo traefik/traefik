@@ -152,7 +152,7 @@
   Middlewares = ["foobar", "foobar"]
 
 [Log]
-  LogLevel = "foobar"
+  Level = "foobar"
   FilePath = "foobar"
   Format = "foobar"
 
@@ -205,7 +205,7 @@
   [Tracing.Instana]
     LocalAgentHost = "foobar"
     LocalAgentPort = 42
-    LogLevel = "foobar"
+    Level = "foobar"
 
 [HostResolver]
   CnameFlattening = true
