@@ -11,9 +11,14 @@ See also [Marathon user guide](../user-guides/marathon.md).
 
     Enabling the marathon provider
 
-    ```toml
+    ```toml tab="File"
     [providers.marathon]
     endpoint = "http://127.0.0.1:8080"
+    ```
+    
+    ```txt tab="CLI"
+    --providers.marathon
+    --providers.marathon.endpoint="http://127.0.0.1:8080"
     ```
 
     Attaching labels to marathon applications
@@ -52,40 +57,69 @@ _Optional_
 
 Enables Marathon basic authentication.
 
-	```toml
-	[marathon.basic]
-	httpBasicAuthUser = "foo"
-	httpBasicPassword = "bar"
-	```
+```toml tab="File"
+[marathon.basic]
+httpBasicAuthUser = "foo"
+httpBasicPassword = "bar"
+```
+
+```txt tab="CLI"
+--providers.marathon
+--providers.marathon.basic.httpbasicauthuser="foo"
+--providers.marathon.basic.httpbasicpassword="bar"
+```
 
 ### `dcosToken`
 
 _Optional_
 
 DCOSToken for DCOS environment.
+
 If set, it overrides the Authorization header.
 
-`dcosToken = "xxxxxx"`
+```toml tab="File"
+[marathon]
+dcosToken = "xxxxxx"
+# ...
+```
+
+```txt tab="CLI"
+--providers.marathon
+--providers.marathon.dcosToken="xxxxxx"
+```
 
 ### `defaultRule`
 
-_Optional, Default=Host(`{{ normalize .Name }}`)_
+_Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
 For a given application if no routing rule was defined by a label, it is defined by this defaultRule instead.
+
 It must be a valid [Go template](https://golang.org/pkg/text/template/),
 augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
+
 The app ID can be accessed as the Name identifier,
 and the template has access to all the labels defined on this Marathon application.
 
-``defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"``
+```toml tab="File"
+[marathon]
+defaultRule = ""
+# ...
+```
+
+```txt tab="CLI"
+--providers.marathon
+--providers.marathon.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+```
 
 ### `dialerTimeout`
 
 _Optional, Default=5s_
 
 Overrides DialerTimeout.
+
 Amount of time the Marathon provider should wait before timing out,
 when trying to open a TCP connection to a Marathon master.
+
 Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration),
 or directly as a number of seconds.
 
@@ -94,15 +128,26 @@ or directly as a number of seconds.
 _Optional, Default=http://127.0.0.1:8080_
 
 Marathon server endpoint.
+
 You can optionally specify multiple endpoints:
 
-`endpoint = "http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"`
+```toml tab="File"
+[marathon]
+endpoint = "http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"
+# ...
+```
+
+```txt tab="CLI"
+--providers.marathon
+--providers.marathon.endpoint="http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"
+```
 
 ### `exposedByDefault`
 
 _Optional, Default=true_
 
 Exposes Marathon applications by default through Traefik.
+
 If set to false, applications that don't have a `traefik.enable=true` label will be ignored from the resulting routing configuration.
 
 ### `filterMarathonConstraints`
@@ -110,7 +155,9 @@ If set to false, applications that don't have a `traefik.enable=true` label will
 _Optional, Default=false_
 
 Enables filtering using Marathon constraints.
-If enabled, Traefik will take into account Marathon constraints, as defined in https://mesosphere.github.io/marathon/docs/constraints.html
+
+If enabled, Traefik will take into account Marathon constraints, as defined in [Marathon constraints](https://mesosphere.github.io/marathon/docs/constraints.html).
+
 Each individual constraint will be treated as a verbatim compounded tag,
 e.g. "rack_id:CLUSTER:rack-1", with all constraint groups concatenated together using ":".
 
@@ -118,9 +165,8 @@ e.g. "rack_id:CLUSTER:rack-1", with all constraint groups concatenated together 
 
 _Optional, Default=false_
 
-By default, a task's IP address (as returned by the Marathon API) is used as
-backend server if an IP-per-task configuration can be found; otherwise, the
-name of the host running the task is used.
+By default, a task's IP address (as returned by the Marathon API) is used as backend server if an IP-per-task configuration can be found;
+otherwise, the name of the host running the task is used.
 The latter behavior can be enforced by enabling this switch.
 
 ### `keepAlive`
@@ -135,11 +181,10 @@ or directly as a number of seconds.
 
 _Optional, Default=false_
 
-Applications may define readiness checks which are probed by Marathon during
-deployments periodically, and these check results are exposed via the API.
-Enabling respectReadinessChecks causes Traefik to filter out tasks
-whose readiness checks have not succeeded.
+Applications may define readiness checks which are probed by Marathon during deployments periodically, and these check results are exposed via the API.
+Enabling respectReadinessChecks causes Traefik to filter out tasks whose readiness checks have not succeeded.
 Note that the checks are only valid at deployment times.
+
 See the Marathon guide for details.
 
 ### `responseHeaderTimeout`
@@ -149,22 +194,30 @@ _Optional, Default=60s_
 Overrides ResponseHeaderTimeout.
 Amount of time the Marathon provider should wait before timing out,
 when waiting for the first response header from a Marathon master.
-Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration),
-or directly as a number of seconds.
+
+Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration), or directly as a number of seconds.
 
 ### `TLS`
 
 _Optional_
 
-TLS client configuration. https://golang.org/pkg/crypto/tls/#Config
+TLS client configuration. [tls/#Config](https://golang.org/pkg/crypto/tls/#Config).
 
-	```toml
-	[marathon.TLS]
-	CA = "/etc/ssl/ca.crt"
-	Cert = "/etc/ssl/marathon.cert"
-	Key = "/etc/ssl/marathon.key"
-	insecureSkipVerify = true
-	```
+```toml tab="File"
+[marathon.TLS]
+CA = "/etc/ssl/ca.crt"
+Cert = "/etc/ssl/marathon.cert"
+Key = "/etc/ssl/marathon.key"
+insecureSkipVerify = true
+```
+
+```txt tab="CLI"
+--providers.marathon.tls
+--providers.marathon.tls.ca="/etc/ssl/ca.crt"
+--providers.marathon.tls.cert="/etc/ssl/marathon.cert"
+--providers.marathon.tls.key="/etc/ssl/marathon.key"
+--providers.marathon.tls.insecureskipverify=true
+```
 
 ### `TLSHandshakeTimeout`
 
@@ -172,7 +225,7 @@ _Optional, Default=5s_
 
 Overrides TLSHandshakeTimeout.
 Amount of time the Marathon provider should wait before timing out,
-when waiting for the TLS handkshake to complete.
+when waiting for the TLS handshake to complete.
 Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration),
 or directly as a number of seconds.
 
@@ -199,19 +252,24 @@ and the router automatically gets a rule defined by defaultRule (if no rule for 
 
 ### Routers
 
-To update the configuration of the Router automatically attached to the application, add labels starting with `traefik.HTTP.Routers.{router-name-of-your-choice}.` and followed by the option you want to change. For example, to change the routing rule, you could add the label `traefik.HTTP.Routers.Routername.Rule=Host(my-domain)`.
+To update the configuration of the Router automatically attached to the application,
+add labels starting with `traefik.HTTP.Routers.{router-name-of-your-choice}.` and followed by the option you want to change.
+For example, to change the routing rule, you could add the label ```traefik.HTTP.Routers.Routername.Rule=Host(`my-domain`)```.
 
 Every [Router](../routing/routers/index.md) parameter can be updated this way.
 
 ### Services
 
-To update the configuration of the Service automatically attached to the container, add labels starting with `traefik.HTTP.Services.{service-name-of-your-choice}.`, followed by the option you want to change. For example, to change the load balancer method, you'd add the label `traefik.HTTP.Services.Servicename.LoadBalancer.Method=drr`.
+To update the configuration of the Service automatically attached to the container,
+add labels starting with `traefik.HTTP.Services.{service-name-of-your-choice}.`, followed by the option you want to change.
+For example, to change the load balancer method, you'd add the label `traefik.HTTP.Services.Servicename.LoadBalancer.Method=drr`.
 
 Every [Service](../routing/services/index.md) parameter can be updated this way.
 
 ### Middleware
 
-You can declare pieces of middleware using labels starting with `traefik.HTTP.Middlewares.{middleware-name-of-your-choice}.`, followed by the middleware type/options. For example, to declare a middleware [`schemeredirect`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.HTTP.Middlewares.my-redirect.RedirectScheme.Scheme: https`.
+You can declare pieces of middleware using labels starting with `traefik.HTTP.Middlewares.{middleware-name-of-your-choice}.`, followed by the middleware type/options.
+For example, to declare a middleware [`schemeredirect`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.HTTP.Middlewares.my-redirect.RedirectScheme.Scheme: https`.
 
 ??? example "Declaring and Referencing a Middleware"
 
