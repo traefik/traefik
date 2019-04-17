@@ -254,7 +254,7 @@ and the router automatically gets a rule defined by defaultRule (if no rule for 
 
 To update the configuration of the Router automatically attached to the application,
 add labels starting with `traefik.HTTP.Routers.{router-name-of-your-choice}.` and followed by the option you want to change.
-For example, to change the routing rule, you could add the label `traefik.HTTP.Routers.Routername.Rule=Host(my-domain)`.
+For example, to change the routing rule, you could add the label ```traefik.HTTP.Routers.Routername.Rule=Host(`my-domain`)```.
 
 Every [Router](../routing/routers/index.md) parameter can be updated this way.
 
