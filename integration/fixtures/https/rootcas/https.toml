@@ -1,6 +1,9 @@
-[log]
-logLevel = "DEBUG"
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
 
+[log]
+level = "DEBUG"
 
 [serversTransport]
 # Use certificate in net/internal/testcert.go
@@ -21,8 +24,8 @@ fblo6RBxUQ==
 -----END CERTIFICATE-----
 """]
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
   address = ":8081"
 
 [api]

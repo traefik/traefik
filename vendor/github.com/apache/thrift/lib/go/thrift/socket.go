@@ -20,6 +20,7 @@
 package thrift
 
 import (
+	"context"
 	"net"
 	"time"
 )
@@ -148,7 +149,7 @@ func (p *TSocket) Write(buf []byte) (int, error) {
 	return p.conn.Write(buf)
 }
 
-func (p *TSocket) Flush() error {
+func (p *TSocket) Flush(ctx context.Context) error {
 	return nil
 }
 
@@ -161,6 +162,5 @@ func (p *TSocket) Interrupt() error {
 
 func (p *TSocket) RemainingBytes() (num_bytes uint64) {
 	const maxSize = ^uint64(0)
-	return maxSize  // the thruth is, we just don't know unless framed is used
+	return maxSize // the thruth is, we just don't know unless framed is used
 }
-

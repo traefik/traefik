@@ -19,6 +19,10 @@
 
 package thrift
 
+import (
+	"context"
+)
+
 type TSerializer struct {
 	Transport *TMemoryBuffer
 	Protocol  TProtocol
@@ -38,35 +42,35 @@ func NewTSerializer() *TSerializer {
 		protocol}
 }
 
-func (t *TSerializer) WriteString(msg TStruct) (s string, err error) {
+func (t *TSerializer) WriteString(ctx context.Context, msg TStruct) (s string, err error) {
 	t.Transport.Reset()
 
 	if err = msg.Write(t.Protocol); err != nil {
 		return
 	}
 
-	if err = t.Protocol.Flush(); err != nil {
+	if err = t.Protocol.Flush(ctx); err != nil {
 		return
 	}
-	if err = t.Transport.Flush(); err != nil {
+	if err = t.Transport.Flush(ctx); err != nil {
 		return
 	}
 
 	return t.Transport.String(), nil
 }
 
-func (t *TSerializer) Write(msg TStruct) (b []byte, err error) {
+func (t *TSerializer) Write(ctx context.Context, msg TStruct) (b []byte, err error) {
 	t.Transport.Reset()
 
 	if err = msg.Write(t.Protocol); err != nil {
 		return
 	}
 
-	if err = t.Protocol.Flush(); err != nil {
+	if err = t.Protocol.Flush(ctx); err != nil {
 		return
 	}
 
-	if err = t.Transport.Flush(); err != nil {
+	if err = t.Transport.Flush(ctx); err != nil {
 		return
 	}
 

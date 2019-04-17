@@ -1,8 +1,9 @@
 FROM golang:1.12-alpine
 
 RUN apk --update upgrade \
-&& apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar \
-&& rm -rf /var/cache/apk/*
+    && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \
+    && update-ca-certificates \
+    && rm -rf /var/cache/apk/*
 
 # Download golangci-lint and misspell binary to bin folder in $GOPATH
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.15.0 \

@@ -8,12 +8,12 @@ import (
 	"unicode/utf8"
 )
 
-// Get str's utf8 rune length.
+// Len returns str's utf8 rune length.
 func Len(str string) int {
 	return utf8.RuneCountInString(str)
 }
 
-// Count number of words in a string.
+// WordCount returns number of words in a string.
 //
 // Word is defined as a locale dependent string containing alphabetic characters,
 // which may also contain but not start with `'` and `-` characters.

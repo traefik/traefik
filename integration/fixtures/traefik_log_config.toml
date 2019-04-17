@@ -1,18 +1,16 @@
-################################################################
-# Global configuration
-################################################################
-[log]
-logLevel = "DEBUG"
-filePath = "traefik.log"
-
 [global]
 checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+level = "DEBUG"
+filePath = "traefik.log"
 
 [accessLog]
   filePath = "access.log"
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
   address = ":8000"
 
 [api]

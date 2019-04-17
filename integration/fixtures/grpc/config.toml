@@ -1,11 +1,15 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+level = "DEBUG"
+
 [serversTransport]
 rootCAs = [ """{{ .CertContent }}""" ]
 
-[global]
-debug = true
-
-[entrypoints]
-  [entrypoints.web-secure]
+[entryPoints]
+  [entryPoints.web-secure]
     address = ":4443"
 
 [api]

@@ -18,7 +18,7 @@ Pieces of middleware can be combined in chains to fit every scenario.
 whoami:
   image: containous/whoami  # A container that exposes an API to show its IP address
   labels:
-    - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo",
+    - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
 ```
 
 ```yaml tab="Kubernetes"
@@ -55,8 +55,20 @@ spec:
 # more fields...
   routes:
     # more fields...
-    middleware:
+    middlewares:
     - name: stripprefix
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo"
+}
+```
+
+```yaml tab="Rancher"
+# As a Rancher Label
+labels:
+  - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
 ```
 
 ```toml tab="File"
@@ -111,7 +123,7 @@ If you use multiple `providers` and wish to reference a middleware declared in a
 
         labels:
           # Attach file.add-foo-prefix middleware (declared in file)
-          - "traefik.http.routers.middlewares=file.add-foo-prefix",
+          - "traefik.http.routers.middlewares=file.add-foo-prefix"
     ```
 
 ## Available Middlewares

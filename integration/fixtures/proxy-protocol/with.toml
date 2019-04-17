@@ -1,10 +1,14 @@
-[log]
-logLevel = "DEBUG"
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
 
-[entrypoints]
-  [entrypoints.web]
+[log]
+level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
     address = ":8000"
-    [entrypoints.web.proxyProtocol]
+    [entryPoints.web.proxyProtocol]
       trustedIPs = ["{{.HaproxyIP}}"]
 
 [api]

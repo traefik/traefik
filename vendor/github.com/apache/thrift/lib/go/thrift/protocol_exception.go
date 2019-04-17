@@ -60,7 +60,7 @@ func NewTProtocolException(err error) TProtocolException {
 	if err == nil {
 		return nil
 	}
-	if e,ok := err.(TProtocolException); ok {
+	if e, ok := err.(TProtocolException); ok {
 		return e
 	}
 	if _, ok := err.(base64.CorruptInputError); ok {
@@ -75,4 +75,3 @@ func NewTProtocolExceptionWithType(errType int, err error) TProtocolException {
 	}
 	return &tProtocolException{errType, err.Error()}
 }
-

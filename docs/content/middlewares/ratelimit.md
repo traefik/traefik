@@ -1,4 +1,4 @@
-# TODO -- RateLimit
+# RateLimit
 
 Protection from Too Many Calls
 {: .subtitle }
@@ -9,42 +9,87 @@ The RateLimit middleware ensures that services will receive a _fair_ number of r
 
 ## Configuration Example
 
-??? example "Limit to 100 requests every 10 seconds (with a possible burst of 200)"
-    
-    ```toml
-    [http.middlewares]
-      [http.middlewares.fair-ratelimit.ratelimit]
-        extractorfunc = "client.ip"
-        
-        [http.middlewares.fair-ratelimit.ratelimit.rateset1]
-          period = "10s"
-          average = 100
-          burst = 200
-    ```
+```yaml tab="Docker"
+# Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
+# These can "burst" up to 10 and 200 in each period, respectively.
+labels:
+- "traefik.http.middlewares.test-ratelimit.ratelimit.extractorfunc=client.ip"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.period=10s"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.average=100"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.burst=200"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.period=3s"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.average=5"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.burst=10"
+  		
+```
 
-??? example "Combine multiple limits"
+```yaml tab="Kubernetes"
+# Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
+# These can "burst" up to 10 and 200 in each period, respectively.
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    extractorfunc = "client.ip"
+    rate0:
+        period = "10s"
+        average = 100
+        burst = 200
+    rate1:
+        period = "3s"
+        average = 5
+        burst = 10
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-ratelimit.ratelimit.extractorfunc": "client.ip",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.period": "10s",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.average": "100",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.burst": "200",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.period": "3s",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.average": "5",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.burst": "10"
+}
+```
+
+```yaml tab="Rancher"
+# Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
+# These can "burst" up to 10 and 200 in each period, respectively.
+labels:
+- "traefik.http.middlewares.test-ratelimit.ratelimit.extractorfunc=client.ip"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.period=10s"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.average=100"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.burst=200"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.period=3s"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.average=5"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.burst=10"
+  		
+```
+
+```toml tab="File"
+# Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
+# These can "burst" up to 10 and 200 in each period, respectively.
+[http.middlewares]
+  [http.middlewares.test-ratelimit.ratelimit]
+    extractorfunc = "client.ip"
     
-    ```toml
-    [http.middlewares]
-      [http.middlewares.fair-ratelimit.ratelimit]
-          extractorfunc = "client.ip"
+    [http.middlewares.test-ratelimit.ratelimit.rate0]
+      period = "10s"
+      average = 100
+      burst = 200
     
-          [http.middlewares.fair-ratelimit.ratelimit.rateset1]
-            period = "10s"
-            average = 100
-            burst = 200
-    
-          [http.middlewares.fair-ratelimit.ratelimit.rateset2]
-            period = "3s"
-            average = 5
-            burst = 10
-    ```
-    
-    Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds. These can "burst" up to 10 and 200 in each period, respectively. 
+    [http.middlewares.test-ratelimit.ratelimit.rate1]
+      period = "3s"
+      average = 5
+      burst = 10
+```
 
 ## Configuration Options
 
-### extractorfunc
+### `extractorfunc`
  
 The `extractorfunc` option defines the strategy used to categorize requests.
 
@@ -54,12 +99,12 @@ The possible values are:
 - `client.ip` categorizes requests based on the client ip.
 - `request.header.ANY_HEADER` categorizes requests based on the provided `ANY_HEADER` value.
 
-### ratelimit (multiple values)
+### `ratelimit`
 
-You can combine multiple ratelimit. 
-The ratelimit will trigger with the first reached limit.
+You can combine multiple rate limits. 
+The rate limit will trigger with the first reached limit.
 
-Each ratelimit has 3 options, `period`, `average`, and `burst`.
+Each rate limit has 3 options, `period`, `average`, and `burst`.
 
 The rate limit will allow an average of `average` requests every `period`, with a maximum of `burst` request on that period.
 

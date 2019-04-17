@@ -1,6 +1,7 @@
 package forwardedheaders
 
 import (
+	"crypto/tls"
 	"net/http"
 	"testing"
 
@@ -16,6 +17,9 @@ func TestServeHTTP(t *testing.T) {
 		incomingHeaders map[string]string
 		remoteAddr      string
 		expectedHeaders map[string]string
+		tls             bool
+		websocket       bool
+		host            string
 	}{
 		{
 			desc:            "all Empty",
@@ -99,6 +103,93 @@ func TestServeHTTP(t *testing.T) {
 				"X-Forwarded-for": "",
 			},
 		},
+		{
+			desc:       "xRealIP populated from remote address",
+			remoteAddr: "10.0.1.101:80",
+			expectedHeaders: map[string]string{
+				xRealIP: "10.0.1.101",
+			},
+		},
+		{
+			desc:       "xRealIP was already populated from previous headers",
+			insecure:   true,
+			remoteAddr: "10.0.1.101:80",
+			incomingHeaders: map[string]string{
+				xRealIP: "10.0.1.12",
+			},
+			expectedHeaders: map[string]string{
+				xRealIP: "10.0.1.12",
+			},
+		},
+		{
+			desc: "xForwardedProto with no tls",
+			tls:  false,
+			expectedHeaders: map[string]string{
+				xForwardedProto: "http",
+			},
+		},
+		{
+			desc: "xForwardedProto with tls",
+			tls:  true,
+			expectedHeaders: map[string]string{
+				xForwardedProto: "https",
+			},
+		},
+		{
+			desc:      "xForwardedProto with websocket",
+			tls:       false,
+			websocket: true,
+			expectedHeaders: map[string]string{
+				xForwardedProto: "ws",
+			},
+		},
+		{
+			desc:      "xForwardedProto with websocket and tls",
+			tls:       true,
+			websocket: true,
+			expectedHeaders: map[string]string{
+				xForwardedProto: "wss",
+			},
+		},
+		{
+			desc: "xForwardedPort with explicit port",
+			host: "foo.com:8080",
+			expectedHeaders: map[string]string{
+				xForwardedPort: "8080",
+			},
+		},
+		{
+			desc: "xForwardedPort with implicit tls port from proto header",
+			// setting insecure just so our initial xForwardedProto does not get cleaned
+			insecure: true,
+			incomingHeaders: map[string]string{
+				xForwardedProto: "https",
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto: "https",
+				xForwardedPort:  "443",
+			},
+		},
+		{
+			desc: "xForwardedPort with implicit tls port from TLS in req",
+			tls:  true,
+			expectedHeaders: map[string]string{
+				xForwardedPort: "443",
+			},
+		},
+		{
+			desc: "xForwardedHost from req host",
+			host: "foo.com:8080",
+			expectedHeaders: map[string]string{
+				xForwardedHost: "foo.com:8080",
+			},
+		}, {
+			desc: "xForwardedServer from req XForwarded",
+			host: "foo.com:8080",
+			expectedHeaders: map[string]string{
+				xForwardedServer: "foo.com:8080",
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -111,12 +202,30 @@ func TestServeHTTP(t *testing.T) {
 
 			req.RemoteAddr = test.remoteAddr
 
+			if test.tls {
+				req.TLS = &tls.ConnectionState{}
+			}
+
+			if test.websocket {
+				req.Header.Set(connection, "upgrade")
+				req.Header.Set(upgrade, "websocket")
+			}
+
+			if test.host != "" {
+				req.Host = test.host
+			}
+
 			for k, v := range test.incomingHeaders {
 				req.Header.Set(k, v)
 			}
 
-			m, err := NewXForwarded(test.insecure, test.trustedIps, http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
+			m, err := NewXForwarded(test.insecure, test.trustedIps,
+				http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 			require.NoError(t, err)
+
+			if test.host != "" {
+				m.hostname = test.host
+			}
 
 			m.ServeHTTP(nil, req)
 

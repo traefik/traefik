@@ -18,7 +18,7 @@ const (
 
 // TraefikLog holds the configuration settings for the traefik logger.
 type TraefikLog struct {
-	LogLevel string `description:"Log level set to traefik logs." export:"true"`
+	Level    string `description:"Log level set to traefik logs." export:"true"`
 	FilePath string `json:"file,omitempty" description:"Traefik log file path. Stdout is used when omitted or empty"`
 	Format   string `json:"format,omitempty" description:"Traefik log format: json | common"`
 }

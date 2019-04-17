@@ -1,11 +1,15 @@
-[log]
-logLevel = "DEBUG"
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
 
-[entrypoints]
-  [entrypoints.web]
+[log]
+level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
   address = ":8000"
 
-  [entrypoints.traefik]
+  [entryPoints.traefik]
   address = ":8001"
 
 [api]

@@ -1,4 +1,11 @@
 ################################################################
+#
+# Configuration sample for Traefik v2
+# For Traefik v1: https://github.com/containous/traefik/blob/v1.7/traefik.sample.toml
+#
+################################################################
+
+################################################################
 # Global configuration
 ################################################################
 [global]
@@ -13,8 +20,8 @@
 #
 # Optional
 # Default:
-[entrypoints]
-    [entrypoints.web]
+[entryPoints]
+    [entryPoints.web]
     address = ":80"
 
 ################################################################
@@ -33,7 +40,7 @@
 # Optional
 # Default: "ERROR"
 #
-# logLevel = "DEBUG"
+# level = "DEBUG"
 
 # Sets the filepath for the traefik log. If not specified, stdout will be used.
 # Intermediate directories are created if necessary.

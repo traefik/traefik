@@ -1,9 +1,12 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
 [log]
-logLevel = "DEBUG"
+level = "DEBUG"
 
-
-[entrypoints]
-  [entrypoints.web-secure]
+[entryPoints]
+  [entryPoints.web-secure]
   address = ":4443"
 
 [api]

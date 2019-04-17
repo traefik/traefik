@@ -1,13 +1,14 @@
-[log]
-logLevel = "DEBUG"
-
 [global]
-debug = true
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+level = "DEBUG"
 
 [api]
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
     address = ":8000"
 
 [tracing]

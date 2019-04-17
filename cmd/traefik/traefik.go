@@ -94,7 +94,7 @@ func main() {
 	// traefik Command init
 	traefikCmd := &flaeg.Command{
 		Name: "traefik",
-		Description: `traefik is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
+		Description: `Traefik is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
 Complete documentation is available at https://traefik.io`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
@@ -317,7 +317,7 @@ func configureLogging(staticConfiguration *static.Configuration) {
 	// otherwise.
 	var levelStr string
 	if staticConfiguration.Log != nil {
-		levelStr = strings.ToLower(staticConfiguration.Log.LogLevel)
+		levelStr = strings.ToLower(staticConfiguration.Log.Level)
 	}
 	if levelStr == "" {
 		levelStr = "error"

@@ -37,9 +37,9 @@ You can configure a file path instead using the `filePath` option.
 
 By default, the logs use a text format (`common`), but you can also ask for the `json` format in the `format` option.   
 
-#### logLevel
+#### log level
 
-By default, the `logLevel` is set to `error`, but you can choose amongst `debug`, `panic`, `fatal`, `error`, `warn`, and `info`. 
+By default, the `level` is set to `error`, but you can choose amongst `debug`, `panic`, `fatal`, `error`, `warn`, and `info`. 
 
 ## Log Rotation
 

@@ -29,10 +29,33 @@ labels:
 - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
 ```
 
+```yaml tab="Kubernetes"
+# Latency Check
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: latency-check
+spec:
+  circuitBreaker:
+    expression: LatencyAtQuantileMS(50.0) > 100
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.latency-check.circuitbreaker.expression": "LatencyAtQuantileMS(50.0) > 100"
+}
+```
+
+```yaml tab="Rancher"
+# Latency Check
+labels:
+- "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+```
+
 ```toml tab="File"
 # Latency Check
 [http.middlewares]
-   [http.middlewares.latency-check.circuitbreaker]
+   [http.middlewares.latency-check.circuitBreaker]
       expression = "LatencyAtQuantileMS(50.0) > 100"
 ```
 
@@ -52,11 +75,14 @@ At specified intervals (`checkPeriod`), it will evaluate `expression` to decide 
 
 ### Open
 
-While open, the fallback mechanism takes over the normal service calls for a duration of `FallbackDuration`. After this duration, it will enter the recovering state.
+While open, the fallback mechanism takes over the normal service calls for a duration of `FallbackDuration`.
+After this duration, it will enter the recovering state.
 
 ### Recovering
 
-While recovering, the circuit breaker will progressively send requests to your service again (in a linear way, for `RecoveryDuration`). If your service fails during recovery, the circuit breaker becomes open again. If the service operates normally during the whole recovering duration, then the circuit breaker returns to close.
+While recovering, the circuit breaker will progressively send requests to your service again (in a linear way, for `RecoveryDuration`).
+If your service fails during recovery, the circuit breaker becomes open again.
+If the service operates normally during the whole recovering duration, then the circuit breaker returns to close.
 
 ## Configuration Options
 
@@ -70,11 +96,11 @@ The `expression` can check three different metrics:
 - The status code ratio (`ResponseCodeRatio`)
 - The latency at quantile, in milliseconds (`LatencyAtQuantileMS`)
    
-#### NetworkErrorRatio
+#### `NetworkErrorRatio`
 
 If you want the circuit breaker to trigger at a 30% ratio of network errors, the expression will be `NetworkErrorRatio() > 0.30`
 
-#### ResponseCodeRatio
+#### `ResponseCodeRatio`
 
 You can trigger the circuit breaker based on the ratio of a given range of status codes.
 
@@ -89,11 +115,11 @@ The operation that will be computed is sum(`to` -> `from`) / sum (`dividedByFrom
 
 For example, the expression `ResponseCodeRatio(500, 600, 0, 600) > 0.25` will trigger the circuit breaker if 25% of the requests returned a 5XX status (amongst the request that returned a status code from 0 to 5XX). 
 
-#### LatencyAtQuantileMS
+#### `LatencyAtQuantileMS`
 
 You can trigger the circuit breaker when a given proportion of your requests become too slow.
 
-For example, the expression `LatencyAtQuantileMS(50.0) > 100` will trigger the circuit breaker when the median lantency (quantile 50) reaches 100MS.
+For example, the expression `LatencyAtQuantileMS(50.0) > 100` will trigger the circuit breaker when the median latency (quantile 50) reaches 100MS.
 
 !!! Note
 
@@ -106,7 +132,7 @@ You can combine multiple metrics using operators in your expression.
 Supported operators are:
 
 - AND (`&&`)
-- OR (`||)
+- OR (`||`)
 
 For example, `ResponseCodeRatio(500, 600, 0, 600) > 0.30 || NetworkErrorRatio() > 0.10` triggers the circuit breaker when 30% of the requests return a 5XX status code, or when the ratio of network errors reaches 10%. 
 
@@ -126,15 +152,15 @@ Here is the list of supported operators:
 
 The fallback mechanism returns a `HTTP 503 Service Unavailable` to the client (instead of calling the target service). This behavior cannot be configured. 
    
-### CheckPeriod
+### `CheckPeriod`
 
 The interval used to evaluate `expression` and decide if the state of the circuit breaker must change. By default, `CheckPeriod` is 100Ms. This value cannot be configured.
 
-### FallbackDuration
+### `FallbackDuration`
 
 By default, `FallbackDuration` is 10 seconds. This value cannot be configured.
 
-### RecoveringDuration
+### `RecoveringDuration`
 
 The duration of the recovering mode (recovering state). 
 

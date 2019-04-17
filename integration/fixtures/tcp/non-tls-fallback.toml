@@ -1,11 +1,15 @@
-[entrypoints]
-  [entrypoints.tcp]
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.tcp]
     address = ":8093"
 
 [api]
-
-[global]
-   debug = true
 
 [providers.file]
 
@@ -14,25 +18,25 @@
         [tcp.routers.to-whoami-a]
             rule = "HostSNI(`whoami-a.test`)"
             service = "whoami-a"
-            entrypoints = [ "tcp" ]
+            entryPoints = [ "tcp" ]
             [tcp.routers.to-whoami-a.tls]
                 passthrough=true
 
         [tcp.routers.to-whoami-b]
             rule = "HostSNI(`whoami-b.test`)"
             service = "whoami-b"
-            entrypoints = [ "tcp" ]
+            entryPoints = [ "tcp" ]
             [tcp.routers.to-whoami-b.tls]
                 passthrough=true
 
         [tcp.routers.to-whoami-no-cert]
             rule = "HostSNI(`whoami-c.test`)"
             service = "whoami-no-cert"
-            entrypoints = [ "tcp" ]
+            entryPoints = [ "tcp" ]
             [tcp.routers.to-whoami-no-cert.tls]
 
         [tcp.routers.to-whoami-no-tls]
-            entrypoints = ["tcp"]
+            entryPoints = ["tcp"]
             rule="HostSNI(`*`)"
             service = "whoami-no-tls"
 

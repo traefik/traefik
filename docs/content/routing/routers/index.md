@@ -32,16 +32,16 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
 ??? example "Forwarding all (non-tls) requests on port 3306 to a database service"
 
     ```toml
-      [entrypoints]
-        [entrypoints.mysql-default]
+      [entryPoints]
+        [entryPoints.mysql-default]
           address = ":80"
-        [entrypoints.mysql-default]
+        [entryPoints.mysql-default]
           address = ":3306"
           
       [tcp]
         [tcp.routers]
           [tcp.routers.to-database]
-            entrypoints = ["mysql-default"]
+            entryPoints = ["mysql-default"]
             rule = "HostSNI(`*`)" # Catch every request (only available rule for non-tls routers. See below.)
             service = "database"
     ```
@@ -56,12 +56,12 @@ If you want to limit the router scope to a set of entrypoint, set the entrypoint
 ??? example "Listens to Every EntryPoint"
 
     ```toml
-    [entrypoints]
-       [entrypoints.web]
+    [entryPoints]
+       [entryPoints.web]
           # ...
-       [entrypoints.web-secure]
+       [entryPoints.web-secure]
           # ...
-       [entrypoints.other]
+       [entryPoints.other]
           # ...
 
     [http.routers]
@@ -74,12 +74,12 @@ If you want to limit the router scope to a set of entrypoint, set the entrypoint
 ??? example "Listens to Specific EntryPoints"
 
     ```toml
-    [entrypoints]
-       [entrypoints.web]
+    [entryPoints]
+       [entryPoints.web]
           # ...
-       [entrypoint.web-secure]
+       [entryPoints.web-secure]
           # ...
-       [entrypoint.other]
+       [entryPoints.other]
           # ...
 
     [http.routers]
@@ -211,12 +211,12 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
 ??? example "Listens to Every EntryPoint"
 
     ```toml
-    [entrypoints]
-       [entrypoints.web]
+    [entryPoints]
+       [entryPoints.web]
           # ...
-       [entrypoints.web-secure]
+       [entryPoints.web-secure]
           # ...
-       [entrypoints.other]
+       [entryPoints.other]
           # ...
 
     [tcp.routers]
@@ -230,12 +230,12 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
 ??? example "Listens to Specific EntryPoints"
 
     ```toml
-    [entrypoints]
-       [entrypoints.web]
+    [entryPoints]
+       [entryPoints.web]
           # ...
-       [entrypoint.web-secure]
+       [entryPoints.web-secure]
           # ...
-       [entrypoint.other]
+       [entryPoints.other]
           # ...
 
     [tcp.routers]

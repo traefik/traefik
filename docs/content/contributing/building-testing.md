@@ -58,7 +58,7 @@ PRE_TARGET= make test-unit
 
 ### Method 2: Using `go`
 
-You need `go` v1.9+.
+You need `go` v1.12+.
 
 !!! tip "Source Directory"
  

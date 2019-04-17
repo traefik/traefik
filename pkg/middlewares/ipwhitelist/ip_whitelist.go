@@ -2,6 +2,7 @@ package ipwhitelist
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 

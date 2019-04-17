@@ -50,8 +50,8 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
 ??? example "Original configuration"
 
     ```toml
-    [entrypoints]
-        [entrypoints.web]
+    [entryPoints]
+        [entryPoints.web]
            address = ":80"
     
     [api]
@@ -80,8 +80,8 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
 ??? example "Resulting Obfuscated Configuration"
 
     ```toml
-    [entrypoints]
-        [entrypoints.web]
+    [entryPoints]
+        [entryPoints.web]
            address = ":80"
     
     [api]

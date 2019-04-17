@@ -13,11 +13,11 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 ??? example "Enabling ACME"
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
          address = ":80"
     
-      [entrypoints.http-tls]
+      [entryPoints.http-tls]
          address = ":443"
     
     [acme] # every router with TLS enabled will now be able to use ACME for its certificates
@@ -31,11 +31,11 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 ??? example "Configuring Wildcard Certificates"
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
 
-      [entrypoints.http-tls]
+      [entryPoints.http-tls]
         address = ":443"
 
     [acme]
@@ -49,9 +49,13 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
         sans = ["mydomain.com"]
     ```
 
-!!! note "Configuration Reference"
-
-    There are many available options for ACME. For a quick glance at what's possible, browse the [configuration reference](../reference/acme.md).
+??? note "Configuration Reference"
+    
+    There are many available options for ACME. For a quick glance at what's possible, browse the configuration reference:
+    
+    ```toml
+    --8<-- "content/https-tls/ref-acme.toml"
+    ```
 
 ## The Different ACME Challenges
 
@@ -110,7 +114,10 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
  
 Here is a list of supported `providers`, that can automate the DNS verification,
 along with the required environment variables and their [wildcard & root domain support](#wildcard-domains).
-Do not hesitate to complete it. 
+Do not hesitate to complete it.
+
+Every lego environment variable can be overridden by their respective `_FILE` counterpart, which should have a filepath to a file that contains the secret as its value.
+For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used to provide a Cloudflare API email address as a Docker secret named `traefik_cf-api-email`.
 
 | Provider Name                                               | Provider Code  | Environment Variables                                                                                                                       | Wildcard & Root Domain Support |
 |-------------------------------------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
@@ -127,6 +134,7 @@ Do not hesitate to complete it.
 | [DNSimple](https://dnsimple.com)                            | `dnsimple`     | `DNSIMPLE_OAUTH_TOKEN`, `DNSIMPLE_BASE_URL`                                                                                                 | YES                            |
 | [DNS Made Easy](https://dnsmadeeasy.com)                    | `dnsmadeeasy`  | `DNSMADEEASY_API_KEY`, `DNSMADEEASY_API_SECRET`, `DNSMADEEASY_SANDBOX`                                                                      | Not tested yet                 |
 | [DNSPod](https://www.dnspod.com/)                           | `dnspod`       | `DNSPOD_API_KEY`                                                                                                                            | Not tested yet                 |
+| [Domain Offensive (do.de)](https://www.do.de/)              | `dode`         | `DODE_TOKEN`                                                                                                                                | YES                            |
 | [DreamHost](https://www.dreamhost.com/)                     | `dreamhost`    | `DREAMHOST_API_KEY`                                                                                                                         | YES                            |
 | [Duck DNS](https://www.duckdns.org/)                        | `duckdns`      | `DUCKDNS_TOKEN`                                                                                                                             | YES                            |
 | [Dyn](https://dyn.com)                                      | `dyn`          | `DYN_CUSTOMER_NAME`, `DYN_USER_NAME`, `DYN_PASSWORD`                                                                                        | Not tested yet                 |
@@ -138,7 +146,7 @@ Do not hesitate to complete it.
 | [Glesys](https://glesys.com/)                               | `glesys`       | `GLESYS_API_USER`, `GLESYS_API_KEY`, `GLESYS_DOMAIN`                                                                                        | Not tested yet                 |
 | [GoDaddy](https://godaddy.com/domains)                      | `godaddy`      | `GODADDY_API_KEY`, `GODADDY_API_SECRET`                                                                                                     | Not tested yet                 |
 | [Google Cloud DNS](https://cloud.google.com/dns/docs/)      | `gcloud`       | `GCE_PROJECT`, Application Default Credentials [^2] [^3], [`GCE_SERVICE_ACCOUNT_FILE`]                                                      | YES                            |
-| [hosting.de](https://www.hosting.de)                        | `hostingde`    | `HOSTINGDE_API_KEY`, `HOSTINGDE_ZONE_NAME`                                                                                                  | Not tested yet                 |
+| [hosting.de](https://www.hosting.de)                        | `hostingde`    | `HOSTINGDE_API_KEY`, `HOSTINGDE_ZONE_NAME`                                                                                                  | YES                            |
 | HTTP request                                                | `httpreq`      | `HTTPREQ_ENDPOINT`, `HTTPREQ_MODE`, `HTTPREQ_USERNAME`, `HTTPREQ_PASSWORD` [^1]                                                             | YES                            |
 | [IIJ](https://www.iij.ad.jp/)                               | `iij`          | `IIJ_API_ACCESS_KEY`, `IIJ_API_SECRET_KEY`, `IIJ_DO_SERVICE_CODE`                                                                           | Not tested yet                 |
 | [INWX](https://www.inwx.de/en)                              | `inwx`         | `INWX_USERNAME`, `INWX_PASSWORD`                                                                                                            | YES                            |
@@ -208,9 +216,6 @@ As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/stagi
 
 !!! note "Double Wildcard Certificates"
     It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
-
-Due to an ACME limitation it is not possible to define wildcards in SANs (alternative domains).
-Thus, the wildcard domain has to be defined as a main domain.
 
 Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are executed.
 In this case the generated DNS TXT record for both domains is the same.
@@ -322,7 +327,7 @@ storage = "traefik/acme/account"
     Because key-value stores have limited entry size, the certificates list is compressed _before_ it is saved.
     For example, it is possible to store up to _approximately_ 100 ACME certificates in Consul.
 
-## Fallbacks
+## Fallback
 
 If Let's Encrypt is not reachable, the following certificates will apply:
 

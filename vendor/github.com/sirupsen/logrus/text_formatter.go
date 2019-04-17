@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -11,18 +12,13 @@ import (
 )
 
 const (
-	nocolor = 0
-	red     = 31
-	green   = 32
-	yellow  = 33
-	blue    = 36
-	gray    = 37
+	red    = 31
+	yellow = 33
+	blue   = 36
+	gray   = 37
 )
 
-var (
-	baseTimestamp time.Time
-	emptyFieldMap FieldMap
-)
+var baseTimestamp time.Time
 
 func init() {
 	baseTimestamp = time.Now()
@@ -76,6 +72,12 @@ type TextFormatter struct {
 	//         FieldKeyMsg:   "@message"}}
 	FieldMap FieldMap
 
+	// CallerPrettyfier can be set by the user to modify the content
+	// of the function and file keys in the json data when ReportCaller is
+	// activated. If any of the returned value is the empty string the
+	// corresponding key will be removed from json fields.
+	CallerPrettyfier func(*runtime.Frame) (function string, file string)
+
 	terminalInitOnce sync.Once
 }
 
@@ -90,7 +92,7 @@ func (f *TextFormatter) init(entry *Entry) {
 }
 
 func (f *TextFormatter) isColored() bool {
-	isColored := f.ForceColors || f.isTerminal
+	isColored := f.ForceColors || (f.isTerminal && (runtime.GOOS != "windows"))
 
 	if f.EnvironmentOverrideColors {
 		if force, ok := os.LookupEnv("CLICOLOR_FORCE"); ok && force != "0" {
@@ -107,20 +109,38 @@ func (f *TextFormatter) isColored() bool {
 
 // Format renders a single log entry
 func (f *TextFormatter) Format(entry *Entry) ([]byte, error) {
-	prefixFieldClashes(entry.Data, f.FieldMap)
-
-	keys := make([]string, 0, len(entry.Data))
-	for k := range entry.Data {
+	data := make(Fields)
+	for k, v := range entry.Data {
+		data[k] = v
+	}
+	prefixFieldClashes(data, f.FieldMap, entry.HasCaller())
+	keys := make([]string, 0, len(data))
+	for k := range data {
 		keys = append(keys, k)
 	}
 
-	fixedKeys := make([]string, 0, 3+len(entry.Data))
+	var funcVal, fileVal string
+
+	fixedKeys := make([]string, 0, 4+len(data))
 	if !f.DisableTimestamp {
 		fixedKeys = append(fixedKeys, f.FieldMap.resolve(FieldKeyTime))
 	}
 	fixedKeys = append(fixedKeys, f.FieldMap.resolve(FieldKeyLevel))
 	if entry.Message != "" {
 		fixedKeys = append(fixedKeys, f.FieldMap.resolve(FieldKeyMsg))
+	}
+	if entry.err != "" {
+		fixedKeys = append(fixedKeys, f.FieldMap.resolve(FieldKeyLogrusError))
+	}
+	if entry.HasCaller() {
+		fixedKeys = append(fixedKeys,
+			f.FieldMap.resolve(FieldKeyFunc), f.FieldMap.resolve(FieldKeyFile))
+		if f.CallerPrettyfier != nil {
+			funcVal, fileVal = f.CallerPrettyfier(entry.Caller)
+		} else {
+			funcVal = entry.Caller.Function
+			fileVal = fmt.Sprintf("%s:%d", entry.Caller.File, entry.Caller.Line)
+		}
 	}
 
 	if !f.DisableSorting {
@@ -153,19 +173,26 @@ func (f *TextFormatter) Format(entry *Entry) ([]byte, error) {
 		timestampFormat = defaultTimestampFormat
 	}
 	if f.isColored() {
-		f.printColored(b, entry, keys, timestampFormat)
+		f.printColored(b, entry, keys, data, timestampFormat)
 	} else {
+
 		for _, key := range fixedKeys {
 			var value interface{}
-			switch key {
-			case f.FieldMap.resolve(FieldKeyTime):
+			switch {
+			case key == f.FieldMap.resolve(FieldKeyTime):
 				value = entry.Time.Format(timestampFormat)
-			case f.FieldMap.resolve(FieldKeyLevel):
+			case key == f.FieldMap.resolve(FieldKeyLevel):
 				value = entry.Level.String()
-			case f.FieldMap.resolve(FieldKeyMsg):
+			case key == f.FieldMap.resolve(FieldKeyMsg):
 				value = entry.Message
+			case key == f.FieldMap.resolve(FieldKeyLogrusError):
+				value = entry.err
+			case key == f.FieldMap.resolve(FieldKeyFunc) && entry.HasCaller():
+				value = funcVal
+			case key == f.FieldMap.resolve(FieldKeyFile) && entry.HasCaller():
+				value = fileVal
 			default:
-				value = entry.Data[key]
+				value = data[key]
 			}
 			f.appendKeyValue(b, key, value)
 		}
@@ -175,10 +202,10 @@ func (f *TextFormatter) Format(entry *Entry) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func (f *TextFormatter) printColored(b *bytes.Buffer, entry *Entry, keys []string, timestampFormat string) {
+func (f *TextFormatter) printColored(b *bytes.Buffer, entry *Entry, keys []string, data Fields, timestampFormat string) {
 	var levelColor int
 	switch entry.Level {
-	case DebugLevel:
+	case DebugLevel, TraceLevel:
 		levelColor = gray
 	case WarnLevel:
 		levelColor = yellow
@@ -197,15 +224,27 @@ func (f *TextFormatter) printColored(b *bytes.Buffer, entry *Entry, keys []strin
 	// the behavior of logrus text_formatter the same as the stdlib log package
 	entry.Message = strings.TrimSuffix(entry.Message, "\n")
 
+	caller := ""
+
+	if entry.HasCaller() {
+		funcVal := fmt.Sprintf("%s()", entry.Caller.Function)
+		fileVal := fmt.Sprintf("%s:%d", entry.Caller.File, entry.Caller.Line)
+
+		if f.CallerPrettyfier != nil {
+			funcVal, fileVal = f.CallerPrettyfier(entry.Caller)
+		}
+		caller = fileVal + " " + funcVal
+	}
+
 	if f.DisableTimestamp {
-		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m %-44s ", levelColor, levelText, entry.Message)
+		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m%s %-44s ", levelColor, levelText, caller, entry.Message)
 	} else if !f.FullTimestamp {
-		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%04d] %-44s ", levelColor, levelText, int(entry.Time.Sub(baseTimestamp)/time.Second), entry.Message)
+		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%04d]%s %-44s ", levelColor, levelText, int(entry.Time.Sub(baseTimestamp)/time.Second), caller, entry.Message)
 	} else {
-		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %-44s ", levelColor, levelText, entry.Time.Format(timestampFormat), entry.Message)
+		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s]%s %-44s ", levelColor, levelText, entry.Time.Format(timestampFormat), caller, entry.Message)
 	}
 	for _, k := range keys {
-		v := entry.Data[k]
+		v := data[k]
 		fmt.Fprintf(b, " \x1b[%dm%s\x1b[0m=", levelColor, k)
 		f.appendValue(b, v)
 	}

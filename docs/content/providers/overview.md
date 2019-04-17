@@ -31,11 +31,15 @@ Below is the list of the currently supported providers in Traefik.
 | [Docker](./docker.md)           | Orchestrator | Label              |
 | [File](./file.md)               | Orchestrator | Custom Annotation  |
 | [Kubernetes](kubernetes-crd.md) | Orchestrator | Custom Resource    |
-| Marathon (not yet documented)   | Orchestrator | Label              |
+| [Marathon](marathon.md)         | Orchestrator | Label              |
 
 !!! note "More Providers"
 
     The current version of Traefik is in development and doesn't support (yet) every provider. See the previous version (1.7) for more providers.
+
+<!--
+ TODO (document TCP VS HTTP dynamic configuration)
+ -->
     
 ## Constraints Configuration
 

@@ -1,5 +1,41 @@
 # Change Log
 
+## [v2.0.0-alpha4](https://github.com/containous/traefik/tree/v2.0.0-alpha4) (2019-04-17)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha3...v2.0.0-alpha4)
+
+**Enhancements:**
+- **[logs]** log.loglevel becomes log.level in configuration ([#4775](https://github.com/containous/traefik/pull/4775) by [juliens](https://github.com/juliens))
+- **[marathon,tcp]** Handle TCP in the marathon provider ([#4728](https://github.com/containous/traefik/pull/4728) by [juliens](https://github.com/juliens))
+- **[middleware]** Enable CORS configuration ([#3809](https://github.com/containous/traefik/pull/3809) by [dtomcej](https://github.com/dtomcej))
+- **[rancher]** Add Rancher provider ([#4647](https://github.com/containous/traefik/pull/4647) by [SantoDE](https://github.com/SantoDE))
+- **[tracing]** Update tracing dependencies ([#4721](https://github.com/containous/traefik/pull/4721) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[docker]** Insensitive case for allow-empty value. ([#4745](https://github.com/containous/traefik/pull/4745) by [ldez](https://github.com/ldez))
+- **[middleware]** Fix response modifier initial building ([#4719](https://github.com/containous/traefik/pull/4719) by [mpl](https://github.com/mpl))
+- **[middleware]** Set X-Forwarded-* headers ([#4707](https://github.com/containous/traefik/pull/4707) by [mpl](https://github.com/mpl))
+- **[tcp]** Fix EOF error ([#4733](https://github.com/containous/traefik/pull/4733) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[acme]** Use the same case every where for entryPoints. ([#4764](https://github.com/containous/traefik/pull/4764) by [ldez](https://github.com/ldez))
+- **[docker]** Fix two minor nits in Traefik 2.0 docs ([#4692](https://github.com/containous/traefik/pull/4692) by [cfra](https://github.com/cfra))
+- **[k8s,k8s/crd]** k8s static configuration explanation ([#4767](https://github.com/containous/traefik/pull/4767) by [ldez](https://github.com/ldez))
+- **[marathon]** Enhance Marathon documentation ([#4776](https://github.com/containous/traefik/pull/4776) by [ldez](https://github.com/ldez))
+- **[middleware,k8s,k8s/crd]** Fix typo: middleware -&gt; middlewares. ([#4781](https://github.com/containous/traefik/pull/4781) by [ldez](https://github.com/ldez))
+- **[middleware]** Adds middlewares examples for k8s. ([#4713](https://github.com/containous/traefik/pull/4713) by [ldez](https://github.com/ldez))
+- **[middleware]** Remove invalid commas. ([#4706](https://github.com/containous/traefik/pull/4706) by [ldez](https://github.com/ldez))
+- **[middleware]** Fix doc about removing headers ([#4708](https://github.com/containous/traefik/pull/4708) by [mpl](https://github.com/mpl))
+- **[middleware]** Update the middleware documentation ([#4729](https://github.com/containous/traefik/pull/4729) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[tracing]** Fix typo in tracing docs ([#4737](https://github.com/containous/traefik/pull/4737) by [timoschwarzer](https://github.com/timoschwarzer))
+- Improve the Documentation with a Reference Section ([#4714](https://github.com/containous/traefik/pull/4714) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Adds a note in traefik.sample.toml ([#4757](https://github.com/containous/traefik/pull/4757) by [ldez](https://github.com/ldez))
+- Update to v2.0 readme links ([#4700](https://github.com/containous/traefik/pull/4700) by [karnthis](https://github.com/karnthis))
+- Remove dumpcerts.sh ([#4783](https://github.com/containous/traefik/pull/4783) by [ldez](https://github.com/ldez))
+
+**Misc:**
+- Cherry pick v1.7 into v2.0 ([#4787](https://github.com/containous/traefik/pull/4787) by [ldez](https://github.com/ldez))
+- Cherry pick v1.7 into v2.0 ([#4695](https://github.com/containous/traefik/pull/4695) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.0.0-alpha3](https://github.com/containous/traefik/tree/v2.0.0-alpha3) (2019-03-29)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha2...v2.0.0-alpha3)
 
@@ -129,6 +165,23 @@
 - Merge v1.7.0-rc4 into master ([#3867](https://github.com/containous/traefik/pull/3867) by [ldez](https://github.com/ldez))
 - Merge v1.7.0-rc2 into master ([#3634](https://github.com/containous/traefik/pull/3634) by [ldez](https://github.com/ldez))
 
+## [v1.7.10](https://github.com/containous/traefik/tree/v1.7.10) (2019-03-28)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.9...v1.7.10)
+
+**Bug fixes:**
+- **[acme]** fix: update lego. ([#4670](https://github.com/containous/traefik/pull/4670) by [ldez](https://github.com/ldez))
+- **[acme]** Migrate to go-acme/lego. ([#4577](https://github.com/containous/traefik/pull/4577) by [ldez](https://github.com/ldez))
+- **[authentication,middleware]** Reorder Auth and TLSClientHeaders middleware ([#4557](https://github.com/containous/traefik/pull/4557) by [tomberek](https://github.com/tomberek))
+- **[k8s/ingress]** Support external name service on global default backend ([#4564](https://github.com/containous/traefik/pull/4564) by [kippandrew](https://github.com/kippandrew))
+- **[k8s/ingress]** Loop through service ports for global backend ([#4486](https://github.com/containous/traefik/pull/4486) by [dtomcej](https://github.com/dtomcej))
+- **[k8s]** Add entrypoints prefix in kubernetes frontend/backend id  ([#4679](https://github.com/containous/traefik/pull/4679) by [juliens](https://github.com/juliens))
+- **[websocket]** Exclude websocket connections from Average Response Time ([#4313](https://github.com/containous/traefik/pull/4313) by [siyu6974](https://github.com/siyu6974))
+- **[middleware]** Added support for configuring trace headers for DataDog tracing ([#4516](https://github.com/containous/traefik/pull/4516) by [aantono](https://github.com/aantono))
+
+**Documentation:**
+- **[acme]** Add _FILE Environment Variable Documentation ([#4643](https://github.com/containous/traefik/pull/4643) by [dargmuesli](https://github.com/dargmuesli))
+- **[docker]** Add TraefikEE as security workaround ([#4606](https://github.com/containous/traefik/pull/4606) by [emilevauge](https://github.com/emilevauge))
+
 ## [v1.7.9](https://github.com/containous/traefik/tree/v1.7.9) (2019-02-11)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.8...v1.7.9)
 
@@ -154,7 +207,7 @@
 - **[acme]** Updates lego. ([#4376](https://github.com/containous/traefik/pull/4376) by [ldez](https://github.com/ldez))
 - **[docker]** Fixes docker swarm mode refresh second for KV. ([#4420](https://github.com/containous/traefik/pull/4420) by [ldez](https://github.com/ldez))
 - **[ecs]** Generic awsvpc support, not just Fargate ([#4360](https://github.com/containous/traefik/pull/4360) by [maartenvanderhoef](https://github.com/maartenvanderhoef))
-- **[ecs]** Cache exising task definitions to avoid rate limiting ([#4177](https://github.com/containous/traefik/pull/4177) by [hwhelan-CB](https://github.com/hwhelan-CB))
+- **[ecs]** Cache existing task definitions to avoid rate limiting ([#4177](https://github.com/containous/traefik/pull/4177) by [hwhelan-CB](https://github.com/hwhelan-CB))
 - **[tls]** Check for dynamic tls updates on configuration preload ([#4022](https://github.com/containous/traefik/pull/4022) by [ffilippopoulos](https://github.com/ffilippopoulos))
 - **[tracing]** Support Datadog tracer priority sampling ([#4359](https://github.com/containous/traefik/pull/4359) by [jcassee](https://github.com/jcassee))
 - Update to Go 1.11.5 [CVE-2019-6486](https://nvd.nist.gov/vuln/detail/CVE-2019-6486)
@@ -279,7 +332,7 @@
 **Bug fixes:**
 - **[acme]** DNS challenge Cloudflare auth zone ([#4042](https://github.com/containous/traefik/pull/4042) by [ldez](https://github.com/ldez))
 - **[acme]** ACME DNS challenges ([#3998](https://github.com/containous/traefik/pull/3998) by [ldez](https://github.com/ldez))
-- **[acme]** Don&#39;t initalize ACME provider if storage is empty ([#3988](https://github.com/containous/traefik/pull/3988) by [nmengin](https://github.com/nmengin))
+- **[acme]** Don&#39;t initialize ACME provider if storage is empty ([#3988](https://github.com/containous/traefik/pull/3988) by [nmengin](https://github.com/nmengin))
 - **[acme]** Fix: acme DNS providers ([#4021](https://github.com/containous/traefik/pull/4021) by [ldez](https://github.com/ldez))
 - **[acme]** Prevent some malformed errors in LE. ([#4015](https://github.com/containous/traefik/pull/4015) by [ldez](https://github.com/ldez))
 - **[authentication,consulcatalog,docker,ecs,etcd,kv,marathon,mesos,rancher]** Add the AuthResponseHeaders to the labels ([#3973](https://github.com/containous/traefik/pull/3973) by [Crypto89](https://github.com/Crypto89))
@@ -354,7 +407,7 @@
 - **[healthcheck]** Support all 2xx HTTP status code for health check. ([#3362](https://github.com/containous/traefik/pull/3362) by [ldez](https://github.com/ldez))
 - **[healthcheck]** Add HTTP headers to healthcheck. ([#3047](https://github.com/containous/traefik/pull/3047) by [zetaab](https://github.com/zetaab))
 - **[k8s]** Add more k8s tests ([#3491](https://github.com/containous/traefik/pull/3491) by [dtomcej](https://github.com/dtomcej))
-- **[k8s]** Substitude hardcoded &#34;&lt;namespace&gt;/&lt;name&gt;&#34; with k8s ListerGetter ([#3470](https://github.com/containous/traefik/pull/3470) by [yue9944882](https://github.com/yue9944882))
+- **[k8s]** Substitute hardcoded &#34;&lt;namespace&gt;/&lt;name&gt;&#34; with k8s ListerGetter ([#3470](https://github.com/containous/traefik/pull/3470) by [yue9944882](https://github.com/yue9944882))
 - **[k8s]** Custom frontend name for test helper ([#3444](https://github.com/containous/traefik/pull/3444) by [ldez](https://github.com/ldez))
 - **[k8s]** Add annotation to allow modifiers to be used properly in kubernetes ([#3481](https://github.com/containous/traefik/pull/3481) by [dtomcej](https://github.com/dtomcej))
 - **[k8s]** Create Global Backend Ingress ([#3404](https://github.com/containous/traefik/pull/3404) by [dtomcej](https://github.com/dtomcej))
@@ -651,7 +704,7 @@
 - **[healthcheck]** Support all 2xx HTTP status code for health check. ([#3362](https://github.com/containous/traefik/pull/3362) by [ldez](https://github.com/ldez))
 - **[healthcheck]** Add HTTP headers to healthcheck. ([#3047](https://github.com/containous/traefik/pull/3047) by [zetaab](https://github.com/zetaab))
 - **[k8s]** Add more k8s tests ([#3491](https://github.com/containous/traefik/pull/3491) by [dtomcej](https://github.com/dtomcej))
-- **[k8s]** Substitude hardcoded &#34;&lt;namespace&gt;/&lt;name&gt;&#34; with k8s ListerGetter ([#3470](https://github.com/containous/traefik/pull/3470) by [yue9944882](https://github.com/yue9944882))
+- **[k8s]** Substitute hardcoded &#34;&lt;namespace&gt;/&lt;name&gt;&#34; with k8s ListerGetter ([#3470](https://github.com/containous/traefik/pull/3470) by [yue9944882](https://github.com/yue9944882))
 - **[k8s]** Custom frontend name for test helper ([#3444](https://github.com/containous/traefik/pull/3444) by [ldez](https://github.com/ldez))
 - **[k8s]** Add annotation to allow modifiers to be used properly in kubernetes ([#3481](https://github.com/containous/traefik/pull/3481) by [dtomcej](https://github.com/dtomcej))
 - **[k8s]** Create Global Backend Ingress ([#3404](https://github.com/containous/traefik/pull/3404) by [dtomcej](https://github.com/dtomcej))

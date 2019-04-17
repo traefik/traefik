@@ -1,8 +1,12 @@
-[log]
-logLevel = "DEBUG"
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
 
-[entrypoints]
-  [entrypoints.web]
+[log]
+level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
   address = ":8080"
 
 [providers]

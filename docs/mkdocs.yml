@@ -66,12 +66,6 @@ markdown_extensions:
 
 # Page tree
 nav:
-  - '': 'providers/kubernetes-ingress.md'
-  - '': 'reference/acme.md'
-  - '': 'reference/providers/docker.md'
-  - '': 'reference/providers/file.md'
-  - '': 'reference/providers/kubernetescrd.md'
-  - '': 'reference/entrypoints.md'
   - 'Welcome': 'index.md'
   - 'Getting Started':
       - 'Concepts' : 'getting-started/concepts.md'
@@ -80,8 +74,11 @@ nav:
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
-      - 'File': 'providers/file.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
+#     - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
+      - 'Rancher': 'providers/rancher.md'
+      - 'File': 'providers/file.md'
+      - 'Marathon': 'providers/marathon.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'Entrypoints': 'routing/entrypoints.md'
@@ -124,6 +121,7 @@ nav:
       - 'Tracing': 'observability/tracing.md'
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
+      - 'Marathon': 'user-guides/marathon.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'
@@ -134,3 +132,9 @@ nav:
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'
   - 'Glossary': 'glossary.md'
+  - 'References':
+      - 'Static Configuration': 'reference/static-configuration.md'
+      - 'Dynamic Configuration':
+        - 'Docker': 'reference/dynamic-configuration/docker.md'
+        - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
+        - 'File': 'reference/dynamic-configuration/file.md'

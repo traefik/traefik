@@ -1,12 +1,15 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+level = "DEBUG"
 
 [serversTransport]
 insecureSkipVerify = true
 
-[global]
-debug = true
-
-[entrypoints]
-  [entrypoints.web-secure]
+[entryPoints]
+  [entryPoints.web-secure]
     address = ":4443"
 
 [api]

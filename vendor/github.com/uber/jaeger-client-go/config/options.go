@@ -33,6 +33,7 @@ type Options struct {
 	contribObservers    []jaeger.ContribObserver
 	observers           []jaeger.Observer
 	gen128Bit           bool
+	poolSpans           bool
 	zipkinSharedRPCSpan bool
 	maxTagValueLength   int
 	tags                []opentracing.Tag
@@ -78,7 +79,7 @@ func Observer(observer jaeger.Observer) Option {
 	}
 }
 
-// ContribObserver can be registered with the Tracer to recieve notifications
+// ContribObserver can be registered with the Tracer to receive notifications
 // about new spans.
 func ContribObserver(observer jaeger.ContribObserver) Option {
 	return func(c *Options) {
@@ -90,6 +91,13 @@ func ContribObserver(observer jaeger.ContribObserver) Option {
 func Gen128Bit(gen128Bit bool) Option {
 	return func(c *Options) {
 		c.gen128Bit = gen128Bit
+	}
+}
+
+// PoolSpans specifies whether to pool spans
+func PoolSpans(poolSpans bool) Option {
+	return func(c *Options) {
+		c.poolSpans = poolSpans
 	}
 }
 

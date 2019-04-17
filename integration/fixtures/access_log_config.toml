@@ -1,24 +1,24 @@
-[log]
-logLevel = "ERROR"
-filePath = "traefik.log"
-
 [global]
 checkNewVersion = false
 sendAnonymousUsage = false
 
+[log]
+level = "ERROR"
+filePath = "traefik.log"
+
 [accessLog]
   filePath = "access.log"
 
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
     address = ":8000"
-  [entrypoints.frontendRedirect]
+  [entryPoints.frontendRedirect]
     address = ":8005"
-  [entrypoints.httpFrontendAuth]
+  [entryPoints.httpFrontendAuth]
     address = ":8006"
-  [entrypoints.httpRateLimit]
+  [entryPoints.httpRateLimit]
     address = ":8007"
-  [entrypoints.digestAuth]
+  [entryPoints.digestAuth]
     address = ":8008"
 
 [api]

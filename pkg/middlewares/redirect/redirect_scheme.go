@@ -2,12 +2,11 @@ package redirect
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/pkg/errors"
-
 	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/middlewares"
 )
 
 const (

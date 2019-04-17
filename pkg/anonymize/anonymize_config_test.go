@@ -58,7 +58,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 
 	config.Log = &types.TraefikLog{
-		LogLevel: "LogLevel",
+		Level:    "Level",
 		FilePath: "/foo/path",
 		Format:   "json",
 	}

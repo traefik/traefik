@@ -1,0 +1,238 @@
+[Global]
+  Debug = true
+  CheckNewVersion = true
+  SendAnonymousUsage = true
+
+[ServersTransport]
+  InsecureSkipVerify = true
+  RootCAs = ["foobar", "foobar"]
+  MaxIdleConnsPerHost = 42
+  [ServersTransport.ForwardingTimeouts]
+    DialTimeout = 42
+    ResponseHeaderTimeout = 42
+
+[EntryPoints]
+
+  [EntryPoints.EntryPoint0]
+    Address = "foobar"
+    [EntryPoints.EntryPoint0.Transport]
+      [EntryPoints.EntryPoint0.Transport.LifeCycle]
+        RequestAcceptGraceTimeout = 42
+        GraceTimeOut = 42
+      [EntryPoints.EntryPoint0.Transport.RespondingTimeouts]
+        ReadTimeout = 42
+        WriteTimeout = 42
+        IdleTimeout = 42
+    [EntryPoints.EntryPoint0.ProxyProtocol]
+      Insecure = true
+      TrustedIPs = ["foobar", "foobar"]
+    [EntryPoints.EntryPoint0.ForwardedHeaders]
+      Insecure = true
+      TrustedIPs = ["foobar", "foobar"]
+
+[Providers]
+
+  ProvidersThrottleDuration = 42
+  [Providers.Docker]
+    Watch = true
+    Endpoint = "foobar"
+    DefaultRule = "foobar"
+    ExposedByDefault = true
+    UseBindPortIP = true
+    SwarmMode = true
+    Network = "foobar"
+    SwarmModeRefreshSeconds = 42
+
+    [[Providers.Docker.Constraints]]
+      Key = "foobar"
+      MustMatch = true
+      Regex = "foobar"
+
+    [[Providers.Docker.Constraints]]
+      Key = "foobar"
+      MustMatch = true
+      Regex = "foobar"
+    [Providers.Docker.TLS]
+      CA = "foobar"
+      CAOptional = true
+      Cert = "foobar"
+      Key = "foobar"
+      InsecureSkipVerify = true
+  [Providers.File]
+    Directory = "foobar"
+    Watch = true
+    Filename = "foobar"
+    DebugLogGeneratedTemplate = true
+    TraefikFile = "foobar"
+  [Providers.Marathon]
+    Trace = true
+    Watch = true
+    Endpoint = "foobar"
+    DefaultRule = "foobar"
+    ExposedByDefault = true
+    DCOSToken = "foobar"
+    FilterMarathonConstraints = true
+    DialerTimeout = 42
+    ResponseHeaderTimeout = 42
+    TLSHandshakeTimeout = 42
+    KeepAlive = 42
+    ForceTaskHostname = true
+    RespectReadinessChecks = true
+
+    [[Providers.Marathon.Constraints]]
+      Key = "foobar"
+      MustMatch = true
+      Regex = "foobar"
+
+    [[Providers.Marathon.Constraints]]
+      Key = "foobar"
+      MustMatch = true
+      Regex = "foobar"
+    [Providers.Marathon.TLS]
+      CA = "foobar"
+      CAOptional = true
+      Cert = "foobar"
+      Key = "foobar"
+      InsecureSkipVerify = true
+    [Providers.Marathon.Basic]
+      HTTPBasicAuthUser = "foobar"
+      HTTPBasicPassword = "foobar"
+  [Providers.Kubernetes]
+    Endpoint = "foobar"
+    Token = "foobar"
+    CertAuthFilePath = "foobar"
+    DisablePassHostHeaders = true
+    Namespaces = ["foobar", "foobar"]
+    LabelSelector = "foobar"
+    IngressClass = "foobar"
+    [Providers.Kubernetes.IngressEndpoint]
+      IP = "foobar"
+      Hostname = "foobar"
+      PublishedService = "foobar"
+  [Providers.KubernetesCRD]
+    Endpoint = "foobar"
+    Token = "foobar"
+    CertAuthFilePath = "foobar"
+    DisablePassHostHeaders = true
+    Namespaces = ["foobar", "foobar"]
+    LabelSelector = "foobar"
+    IngressClass = "foobar"
+  [Providers.Rest]
+    EntryPoint = "foobar"
+
+[API]
+  EntryPoint = "foobar"
+  Dashboard = true
+  Middlewares = ["foobar", "foobar"]
+  [API.Statistics]
+    RecentErrors = 42
+
+[Metrics]
+  [Metrics.Prometheus]
+    Buckets = [42.0, 42.0]
+    EntryPoint = "foobar"
+    Middlewares = ["foobar", "foobar"]
+  [Metrics.Datadog]
+    Address = "foobar"
+    PushInterval = "foobar"
+  [Metrics.StatsD]
+    Address = "foobar"
+    PushInterval = "foobar"
+  [Metrics.InfluxDB]
+    Address = "foobar"
+    Protocol = "foobar"
+    PushInterval = "foobar"
+    Database = "foobar"
+    RetentionPolicy = "foobar"
+    Username = "foobar"
+    Password = "foobar"
+
+[Ping]
+  EntryPoint = "foobar"
+  Middlewares = ["foobar", "foobar"]
+
+[Log]
+  Level = "foobar"
+  FilePath = "foobar"
+  Format = "foobar"
+
+[AccessLog]
+  FilePath = "foobar"
+  Format = "foobar"
+  BufferingSize = 42
+  [AccessLog.Filters]
+    StatusCodes = ["foobar", "foobar"]
+    RetryAttempts = true
+    MinDuration = 42
+  [AccessLog.Fields]
+    DefaultMode = "foobar"
+    [AccessLog.Fields.Names]
+      name0 = "foobar"
+      name1 = "foobar"
+    [AccessLog.Fields.Headers]
+      DefaultMode = "foobar"
+      [AccessLog.Fields.Headers.Names]
+        name0 = "foobar"
+        name1 = "foobar"
+
+[Tracing]
+  Backend = "foobar"
+  ServiceName = "foobar"
+  SpanNameLimit = 42
+  [Tracing.Jaeger]
+    SamplingServerURL = "foobar"
+    SamplingType = "foobar"
+    SamplingParam = 42.0
+    LocalAgentHostPort = "foobar"
+    Gen128Bit = true
+    Propagation = "foobar"
+    TraceContextHeaderName = "foobar"
+  [Tracing.Zipkin]
+    HTTPEndpoint = "foobar"
+    SameSpan = true
+    ID128Bit = true
+    Debug = true
+    SampleRate = 42.0
+  [Tracing.DataDog]
+    LocalAgentHostPort = "foobar"
+    GlobalTag = "foobar"
+    Debug = true
+    PrioritySampling = true
+    TraceIDHeaderName = "foobar"
+    ParentIDHeaderName = "foobar"
+    SamplingPriorityHeaderName = "foobar"
+    BagagePrefixHeaderName = "foobar"
+  [Tracing.Instana]
+    LocalAgentHost = "foobar"
+    LocalAgentPort = 42
+    Level = "foobar"
+
+[HostResolver]
+  CnameFlattening = true
+  ResolvConfig = "foobar"
+  ResolvDepth = 42
+
+[ACME]
+  Email = "foobar"
+  ACMELogging = true
+  CAServer = "foobar"
+  Storage = "foobar"
+  EntryPoint = "foobar"
+  KeyType = "foobar"
+  OnHostRule = true
+  [ACME.DNSChallenge]
+    Provider = "foobar"
+    DelayBeforeCheck = 42
+    Resolvers = ["foobar", "foobar"]
+    DisablePropagationCheck = true
+  [ACME.HTTPChallenge]
+    EntryPoint = "foobar"
+  [ACME.TLSChallenge]
+
+  [[ACME.Domains]]
+    Main = "foobar"
+    SANs = ["foobar", "foobar"]
+
+  [[ACME.Domains]]
+    Main = "foobar"
+    SANs = ["foobar", "foobar"]

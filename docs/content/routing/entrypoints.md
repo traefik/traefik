@@ -5,7 +5,7 @@ Opening Connections for Incoming Requests
 
 ![EntryPoints](../assets/img/entrypoints.png)
 
-Entrypoints are the network entry points into Traefik.
+EntryPoints are the network entry points into Traefik.
 They define the port which will receive the requests (whether HTTP or TCP).
 
 ## Configuration Examples
@@ -13,8 +13,8 @@ They define the port which will receive the requests (whether HTTP or TCP).
 ??? example "Port 80 only"
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
          address = ":80"
     ```
 
@@ -23,11 +23,11 @@ They define the port which will receive the requests (whether HTTP or TCP).
 ??? example "Port 80 & 443" 
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
     
-      [entrypoints.web-secure]
+      [entryPoints.web-secure]
         address = ":443"
     ```
 
@@ -38,7 +38,45 @@ They define the port which will receive the requests (whether HTTP or TCP).
 
 ### General
 
-Entrypoints are part of the [static configuration](../getting-started/configuration-overview.md#the-static-configuration). You can define them using a toml file, CLI arguments, or a key-value store. See the [complete reference](../reference/entrypoints.md) for the list of available options. 
+EntryPoints are part of the [static configuration](../getting-started/configuration-overview.md#the-static-configuration).
+You can define them using a toml file, CLI arguments, or a key-value store.
+
+See the complete reference for the list of available options:
+
+```toml tab="File"
+[EntryPoints]
+
+  [EntryPoints.EntryPoint0]
+    Address = "foobar"
+    [EntryPoints.EntryPoint0.Transport]
+      [EntryPoints.EntryPoint0.Transport.LifeCycle]
+        RequestAcceptGraceTimeout = 42
+        GraceTimeOut = 42
+      [EntryPoints.EntryPoint0.Transport.RespondingTimeouts]
+        ReadTimeout = 42
+        WriteTimeout = 42
+        IdleTimeout = 42
+    [EntryPoints.EntryPoint0.ProxyProtocol]
+      Insecure = true
+      TrustedIPs = ["foobar", "foobar"]
+    [EntryPoints.EntryPoint0.ForwardedHeaders]
+      Insecure = true
+      TrustedIPs = ["foobar", "foobar"]
+```
+
+```ini tab="CLI"
+Name:EntryPoint0
+Address:foobar
+Transport.LifeCycle.RequestAcceptGraceTimeout:42
+Transport.LifeCycle.GraceTimeOut:42
+Transport.RespondingTimeouts.ReadTimeout:42
+Transport.RespondingTimeouts.WriteTimeout:42
+Transport.RespondingTimeouts.IdleTimeout:42
+ProxyProtocol.Insecure:true
+ProxyProtocol.TrustedIPs:foobar,foobar
+ForwardedHeaders.Insecure:true
+ForwardedHeaders.TrustedIPs:foobar,foobar
+```
 
 ??? example "Using the CLI"
 
@@ -50,7 +88,7 @@ Entrypoints are part of the [static configuration](../getting-started/configurat
     ```
     
     !!! note
-        The whitespace character (` `) is the option separator, and the comma (`,`) is the value separator for lists.  
+        The whitespace character (` `) is the option separator, and the comma (`,`) is the value separator for lists inside an option.  
         The option names are case-insensitive.
     
     !!! warning "Using Docker Compose Files"
@@ -80,11 +118,11 @@ Traefik supports [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-
 ??? example "Enabling Proxy Protocol with Trusted IPs" 
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
     
-        [entrypoints.web.proxyProtocol]
+        [entryPoints.web.proxyProtocol]
           trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
     ```
     
@@ -95,11 +133,11 @@ Traefik supports [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-
     In a test environments, you can configure Traefik to trust every incoming connection. Doing so, every remote client address will be replaced (`trustedIPs` won't have any effect)
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
     
-        [entrypoints.web.proxyProtocol]
+        [entryPoints.web.proxyProtocol]
           insecure = true
     ```
          
@@ -115,21 +153,21 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
 ??? example "Trusting Forwarded Headers from specific IPs"
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
     
-        [entrypoints.web.forwardedHeaders]
+        [entryPoints.web.forwardedHeaders]
           trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
     ```
     
 ??? example "Insecure Mode -- Always Trusting Forwarded Headers"
 
     ```toml
-    [entrypoints]
-      [entrypoints.web]
+    [entryPoints]
+      [entryPoints.web]
         address = ":80"
     
-        [entrypoints.web.forwardedHeaders]
+        [entryPoints.web.forwardedHeaders]
            insecure = true
     ```

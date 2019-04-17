@@ -5,7 +5,7 @@ metadata:
   namespace: default
 
 spec:
-  stripprefix:
+  stripPrefix:
     prefixes:
       - /tobestripped
 
@@ -17,7 +17,7 @@ metadata:
   namespace: default
 
 spec:
-  entrypoints:
+  entryPoints:
     - web
   routes:
   - match: Host(`foo.com`) && PathPrefix(`/tobestripped`)

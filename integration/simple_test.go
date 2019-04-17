@@ -404,28 +404,32 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 	}
 }
 
-func (s *SimpleSuite) TestKeepTrailingSlash(c *check.C) {
-	file := s.adaptFile(c, "fixtures/keep_trailing_slash.toml", struct {
-		KeepTrailingSlash bool
-	}{true})
-	defer os.Remove(file)
+func (s *SimpleSuite) TestXForwardedHeaders(c *check.C) {
+	s.createComposeProject(c, "whitelist")
+	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd(withConfigFile(file))
+	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
 	defer output(c)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	oldCheckRedirect := http.DefaultClient.CheckRedirect
-	http.DefaultClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
-	}
-
-	err = try.GetRequest("http://127.0.0.1:8000/test/foo/", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/routers", 2*time.Second,
+		try.BodyContains("override.remoteaddr.whitelist.docker.local"))
 	c.Assert(err, checker.IsNil)
 
-	http.DefaultClient.CheckRedirect = oldCheckRedirect
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	c.Assert(err, checker.IsNil)
+
+	req.Host = "override.depth.whitelist.docker.local"
+	req.Header.Set("X-Forwarded-For", "8.8.8.8,10.0.0.1,127.0.0.1")
+
+	err = try.Request(req, 1*time.Second,
+		try.StatusCodeIs(http.StatusOK),
+		try.BodyContains("X-Forwarded-Proto", "X-Forwarded-For", "X-Forwarded-Host",
+			"X-Forwarded-Host", "X-Forwarded-Port", "X-Forwarded-Server", "X-Real-Ip"))
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestMultiprovider(c *check.C) {

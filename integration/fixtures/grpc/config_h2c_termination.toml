@@ -1,8 +1,12 @@
 [global]
-debug = true
+checkNewVersion = false
+sendAnonymousUsage = false
 
-[entrypoints]
-  [entrypoints.web-secure]
+[log]
+level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web-secure]
     address = ":4443"
 
 

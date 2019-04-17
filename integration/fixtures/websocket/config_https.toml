@@ -1,15 +1,18 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
 [log]
-logLevel = "DEBUG"
+level = "DEBUG"
 
 [serversTransport]
 insecureSkipVerify=true
 
-[entrypoints]
-  [entrypoints.wss]
+[entryPoints]
+  [entryPoints.wss]
   address = ":8000"
 
 [api]
-
 
 [providers]
    [providers.file]

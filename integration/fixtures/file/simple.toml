@@ -1,10 +1,13 @@
-
-[entrypoints]
-  [entrypoints.web]
-    address = ":8000"
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
 
 [log]
-logLevel = "DEBUG"
+level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
 
 [providers]
    [providers.file]

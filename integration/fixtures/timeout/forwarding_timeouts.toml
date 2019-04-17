@@ -1,21 +1,22 @@
-[log]
-logLevel = "DEBUG"
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
 
+[log]
+level = "DEBUG"
 
 [serversTransport.forwardingTimeouts]
   dialTimeout = "300ms"
   responseHeaderTimeout = "300ms"
 
-
-[entrypoints]
-  [entrypoints.web]
+[entryPoints]
+  [entryPoints.web]
     address = ":8000"
 
 [accessLog]
   format = "json"
 
 [api]
-
 
 [providers]
    [providers.file]

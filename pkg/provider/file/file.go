@@ -3,6 +3,7 @@ package file
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -18,7 +19,6 @@ import (
 	"github.com/containous/traefik/pkg/provider"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/containous/traefik/pkg/tls"
-	"github.com/pkg/errors"
 	"gopkg.in/fsnotify.v1"
 )
 

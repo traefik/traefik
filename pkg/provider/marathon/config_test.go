@@ -34,7 +34,7 @@ func TestBuildConfiguration(t *testing.T) {
 		constraints               types.Constraints
 		filterMarathonConstraints bool
 		defaultRule               string
-		expected                  *config.HTTPConfiguration
+		expected                  *config.Configuration
 	}{
 		{
 			desc: "simple application",
@@ -44,25 +44,31 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80),
 					withTasks(localhostTask(taskPorts(80))),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service: "app",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"app": {LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
-							{
-								URL:    "http://localhost:80",
-								Weight: 1,
-							},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "app",
+							Rule:    "Host(`app.marathon.localhost`)",
 						},
-						Method:         "wrr",
-						PassHostHeader: true,
-					}},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"app": {LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://localhost:80",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						}},
+					},
 				},
 			},
 		},
@@ -74,10 +80,16 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80),
 					withTasks(localhostTask(taskPorts(80), taskState(taskStateStaging))),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -88,25 +100,31 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service: "app",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"app": {LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
-							{
-								URL:    "http://localhost:80",
-								Weight: 1,
-							},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "app",
+							Rule:    "Host(`app.marathon.localhost`)",
 						},
-						Method:         "wrr",
-						PassHostHeader: true,
-					}},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"app": {LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://localhost:80",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						}},
+					},
 				},
 			},
 		},
@@ -120,35 +138,41 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.app.middlewares", "Middleware1"),
 					withTasks(localhostTask(taskPorts(80))),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service:     "app",
-						Rule:        "Host(`app.marathon.localhost`)",
-						Middlewares: []string{"Middleware1"},
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{
-					"Middleware1": {
-						BasicAuth: &config.BasicAuth{
-							Users: []string{
-								"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-								"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service:     "app",
+							Rule:        "Host(`app.marathon.localhost`)",
+							Middlewares: []string{"Middleware1"},
+						},
+					},
+					Middlewares: map[string]*config.Middleware{
+						"Middleware1": {
+							BasicAuth: &config.BasicAuth{
+								Users: []string{
+									"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+								},
 							},
 						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"app": {LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
-							{
-								URL:    "http://localhost:80",
-								Weight: 1,
+					Services: map[string]*config.Service{
+						"app": {LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://localhost:80",
+									Weight: 1,
+								},
 							},
-						},
-						Method:         "wrr",
-						PassHostHeader: true,
-					}},
+							Method:         "wrr",
+							PassHostHeader: true,
+						}},
+					},
 				},
 			},
 		},
@@ -170,29 +194,35 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 			),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Router1": {
-						Service: "Service1",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Service1": {LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
-							{
-								URL:    "http://localhost:8080",
-								Weight: 1,
-							},
-							{
-								URL:    "http://localhost:8081",
-								Weight: 1,
-							},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Router1": {
+							Service: "Service1",
+							Rule:    "Host(`app.marathon.localhost`)",
 						},
-						Method:         "wrr",
-						PassHostHeader: true,
-					}},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Service1": {LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://localhost:8080",
+									Weight: 1,
+								},
+								{
+									URL:    "http://localhost:8081",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						}},
+					},
 				},
 			},
 		},
@@ -216,37 +246,43 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 			),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Router1": {
-						Service: "Service1",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Service1": {LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
-							{
-								URL:    "http://localhost:8080",
-								Weight: 1,
-							},
-							{
-								URL:    "http://localhost:8081",
-								Weight: 1,
-							},
-							{
-								URL:    "http://localhost:8082",
-								Weight: 1,
-							},
-							{
-								URL:    "http://localhost:8083",
-								Weight: 1,
-							},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Router1": {
+							Service: "Service1",
+							Rule:    "Host(`app.marathon.localhost`)",
 						},
-						Method:         "wrr",
-						PassHostHeader: true,
-					}},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Service1": {LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://localhost:8080",
+									Weight: 1,
+								},
+								{
+									URL:    "http://localhost:8081",
+									Weight: 1,
+								},
+								{
+									URL:    "http://localhost:8082",
+									Weight: 1,
+								},
+								{
+									URL:    "http://localhost:8083",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						}},
+					},
 				},
 			},
 		},
@@ -262,39 +298,45 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(8081))),
 				),
 			),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"foo": {
-						Service: "foo",
-						Rule:    "Host(`foo.marathon.localhost`)",
-					},
-					"bar": {
-						Service: "bar",
-						Rule:    "Host(`bar.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"foo": {LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
-							{
-								URL:    "http://localhost:8080",
-								Weight: 1,
-							},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"foo": {
+							Service: "foo",
+							Rule:    "Host(`foo.marathon.localhost`)",
 						},
-						Method:         "wrr",
-						PassHostHeader: true,
-					}},
-					"bar": {LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
-							{
-								URL:    "http://localhost:8081",
-								Weight: 1,
-							},
+						"bar": {
+							Service: "bar",
+							Rule:    "Host(`bar.marathon.localhost`)",
 						},
-						Method:         "wrr",
-						PassHostHeader: true,
-					}},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"foo": {LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://localhost:8080",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						}},
+						"bar": {LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://localhost:8081",
+									Weight: 1,
+								},
+							},
+							Method:         "wrr",
+							PassHostHeader: true,
+						}},
+					},
 				},
 			},
 		},
@@ -306,29 +348,35 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80),
 					withTasks(localhostTask(taskPorts(80)), localhostTask(taskPorts(81))),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service: "app",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"app": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "app",
+							Rule:    "Host(`app.marathon.localhost`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"app": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
+									{
+										URL:    "http://localhost:81",
+										Weight: 1,
+									},
 								},
-								{
-									URL:    "http://localhost:81",
-									Weight: 1,
-								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -343,25 +391,31 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80))),
 					withLabel("traefik.http.services.Service1.loadbalancer.method", "drr"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service: "Service1",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Service1": {LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
-							{
-								URL:    "http://localhost:80",
-								Weight: 1,
-							},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "Service1",
+							Rule:    "Host(`app.marathon.localhost`)",
 						},
-						Method:         "drr",
-						PassHostHeader: true,
-					}},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Service1": {LoadBalancer: &config.LoadBalancerService{
+							Servers: []config.Server{
+								{
+									URL:    "http://localhost:80",
+									Weight: 1,
+								},
+							},
+							Method:         "drr",
+							PassHostHeader: true,
+						}},
+					},
 				},
 			},
 		},
@@ -376,25 +430,31 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 					withLabel("traefik.http.routers.Router1.service", "Service1"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Router1": {
-						Service: "Service1",
-						Rule:    "Host(`foo.com`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Service1": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Router1": {
+							Service: "Service1",
+							Rule:    "Host(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Service1": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -409,26 +469,32 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"app": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"app": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
-				},
-				Routers: map[string]*config.Router{
-					"Router1": {
-						Service: "app",
-						Rule:    "Host(`foo.com`)",
+					Routers: map[string]*config.Router{
+						"Router1": {
+							Service: "app",
+							Rule:    "Host(`foo.com`)",
+						},
 					},
 				},
 			},
@@ -443,25 +509,31 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 					withLabel("traefik.http.services.Service1.loadbalancer.method", "wrr"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Router1": {
-						Service: "Service1",
-						Rule:    "Host(`foo.com`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Service1": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Router1": {
+							Service: "Service1",
+							Rule:    "Host(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Service1": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -478,32 +550,38 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.services.Service1.loadbalancer.method", "wrr"),
 					withLabel("traefik.http.services.Service2.loadbalancer.method", "wrr"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Service1": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Service1": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
-					},
-					"Service2": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+						"Service2": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -524,19 +602,25 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.http.services.Service1.loadbalancer.method", "drr"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service: "Service1",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
-					"app2": {
-						Service: "Service1",
-						Rule:    "Host(`app2.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "Service1",
+							Rule:    "Host(`app.marathon.localhost`)",
+						},
+						"app2": {
+							Service: "Service1",
+							Rule:    "Host(`app2.marathon.localhost`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -554,48 +638,54 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service: "app",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
-					"app2": {
-						Service: "app2",
-						Rule:    "Host(`app2.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{
-					"Middleware1": {
-						MaxConn: &config.MaxConn{
-							Amount:        42,
-							ExtractorFunc: "request.host",
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "app",
+							Rule:    "Host(`app.marathon.localhost`)",
+						},
+						"app2": {
+							Service: "app2",
+							Rule:    "Host(`app2.marathon.localhost`)",
 						},
 					},
-				},
-				Services: map[string]*config.Service{
-					"app": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
-								},
+					Middlewares: map[string]*config.Middleware{
+						"Middleware1": {
+							MaxConn: &config.MaxConn{
+								Amount:        42,
+								ExtractorFunc: "request.host",
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
-					"app2": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+					Services: map[string]*config.Service{
+						"app": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
+						},
+						"app2": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
+								},
+								Method:         "wrr",
+								PassHostHeader: true,
+							},
 						},
 					},
 				},
@@ -616,41 +706,47 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "41"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service: "app",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
-					"app2": {
-						Service: "app2",
-						Rule:    "Host(`app2.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"app": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
-								},
-							},
-							Method:         "wrr",
-							PassHostHeader: true,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "app",
+							Rule:    "Host(`app.marathon.localhost`)",
+						},
+						"app2": {
+							Service: "app2",
+							Rule:    "Host(`app2.marathon.localhost`)",
 						},
 					},
-					"app2": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"app": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
+						},
+						"app2": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
+								},
+								Method:         "wrr",
+								PassHostHeader: true,
+							},
 						},
 					},
 				},
@@ -671,32 +767,38 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.http.routers.Router1.rule", "Host(`bar.com`)"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"app": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"app": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
-					},
-					"app2": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+						"app2": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -719,29 +821,35 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 					withLabel("traefik.http.services.Service1.LoadBalancer.method", "wrr"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"Router1": {
-						Service: "Service1",
-						Rule:    "Host(`foo.com`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Service1": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"Router1": {
+							Service: "Service1",
+							Rule:    "Host(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Service1": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
-								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -762,32 +870,38 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"app": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"app": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
-					},
-					"app2": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+						"app2": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -802,25 +916,31 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.wrong.label", "tchouk"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service: "app",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"app": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "app",
+							Rule:    "Host(`app.marathon.localhost`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"app": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -836,25 +956,31 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.services.Service1.LoadBalancer.server.scheme", "h2c"),
 					withLabel("traefik.http.services.Service1.LoadBalancer.server.port", "90"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service: "Service1",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Service1": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "h2c://localhost:90",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "Service1",
+							Rule:    "Host(`app.marathon.localhost`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Service1": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "h2c://localhost:90",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -870,32 +996,38 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.services.Service1.LoadBalancer.server.port", ""),
 					withLabel("traefik.http.services.Service2.LoadBalancer.server.port", "8080"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"Service1": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"Service1": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
-					},
-					"Service2": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:8080",
-									Weight: 1,
+						"Service2": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:8080",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -909,10 +1041,16 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80, 81),
 					withTasks(localhostTask()),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -924,10 +1062,16 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask()),
 					withLabel("traefik.http.middlewares.Middleware1.basicauth.users", "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -939,10 +1083,16 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask()),
 					withLabel("traefik.enable", "false"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -954,10 +1104,16 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask()),
 					withLabel("traefik.enable", "false"),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -976,10 +1132,16 @@ func TestBuildConfiguration(t *testing.T) {
 					Regex:     "bar",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -999,10 +1161,16 @@ func TestBuildConfiguration(t *testing.T) {
 					Regex:     "rack_id:CLUSTER:rack-2",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
 			},
 		},
 		{
@@ -1022,25 +1190,31 @@ func TestBuildConfiguration(t *testing.T) {
 					Regex:     "rack_id:CLUSTER:rack-1",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service: "app",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"app": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "app",
+							Rule:    "Host(`app.marathon.localhost`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"app": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -1063,25 +1237,31 @@ func TestBuildConfiguration(t *testing.T) {
 					Regex:     "bar",
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"app": {
-						Service: "app",
-						Rule:    "Host(`app.marathon.localhost`)",
-					},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"app": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "app",
+							Rule:    "Host(`app.marathon.localhost`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"app": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
 								},
+								Method:         "wrr",
+								PassHostHeader: true,
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
 						},
 					},
 				},
@@ -1096,25 +1276,205 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
 				)),
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
-					"a_b_app": {
-						Service: "a_b_app",
-						Rule:    `Host("app.b.a.marathon.localhost")`,
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"a_b_app": {
+							Service: "a_b_app",
+							Rule:    `Host("app.b.a.marathon.localhost")`,
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"a_b_app": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
+								},
+								Method:         "wrr",
+								PassHostHeader: true,
+							},
+						},
 					},
 				},
-				Middlewares: map[string]*config.Middleware{},
-				Services: map[string]*config.Service{
-					"a_b_app": {
-						LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
-								{
-									URL:    "http://localhost:80",
-									Weight: 1,
+			},
+		},
+		{
+			desc: "one app with tcp labels",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
+					withLabel("traefik.tcp.routers.foo.rule", "HostSNI(`foo.bar`)"),
+					withLabel("traefik.tcp.routers.foo.tls", "true"),
+				)),
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							Service: "app",
+							Rule:    "HostSNI(`foo.bar`)",
+							TLS:     &config.RouterTCPTLSConfig{},
+						},
+					},
+					Services: map[string]*config.TCPService{
+						"app": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "localhost:80",
+										Weight:  1,
+									},
 								},
+								Method: "wrr",
 							},
-							Method:         "wrr",
-							PassHostHeader: true,
+						},
+					},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
+			},
+		},
+		{
+			desc: "one app with tcp labels without rule",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
+					withLabel("traefik.tcp.routers.foo.tls", "true"),
+				)),
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{
+						"app": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "localhost:80",
+										Weight:  1,
+									},
+								},
+								Method: "wrr",
+							},
+						},
+					},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
+			},
+		},
+		{
+			desc: "one app with tcp labels with port",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
+					withLabel("traefik.tcp.routers.foo.rule", "HostSNI(`foo.bar`)"),
+					withLabel("traefik.tcp.routers.foo.tls", "true"),
+					withLabel("traefik.tcp.services.foo.loadbalancer.server.port", "8080"),
+				)),
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							Service: "foo",
+							Rule:    "HostSNI(`foo.bar`)",
+							TLS:     &config.RouterTCPTLSConfig{},
+						},
+					},
+					Services: map[string]*config.TCPService{
+						"foo": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "localhost:8080",
+										Weight:  1,
+									},
+								},
+								Method: "wrr",
+							},
+						},
+					},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
+			},
+		},
+		{
+			desc: "one app with tcp labels with port and http service",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
+					withLabel("traefik.tcp.routers.foo.rule", "HostSNI(`foo.bar`)"),
+					withLabel("traefik.tcp.routers.foo.tls", "true"),
+					withLabel("traefik.tcp.services.foo.loadbalancer.server.port", "8080"),
+					withLabel("traefik.http.services.bar.loadbalancer.method", "drr"),
+				)),
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							Service: "foo",
+							Rule:    "HostSNI(`foo.bar`)",
+							TLS:     &config.RouterTCPTLSConfig{},
+						},
+					},
+					Services: map[string]*config.TCPService{
+						"foo": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "localhost:8080",
+										Weight:  1,
+									},
+								},
+								Method: "wrr",
+							},
+						},
+					},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"app": {
+							Service: "bar",
+							Rule:    "Host(`app.marathon.localhost`)",
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"bar": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://localhost:80",
+										Weight: 1,
+									},
+								},
+								Method:         "drr",
+								PassHostHeader: true,
+							},
 						},
 					},
 				},
@@ -1145,7 +1505,7 @@ func TestBuildConfiguration(t *testing.T) {
 			actualConfig := p.buildConfiguration(context.Background(), test.applications)
 
 			assert.NotNil(t, actualConfig)
-			assert.Equal(t, test.expected, actualConfig.HTTP)
+			assert.Equal(t, test.expected, actualConfig)
 		})
 	}
 }

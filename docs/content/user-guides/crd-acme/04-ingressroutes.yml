@@ -3,7 +3,7 @@ kind: IngressRoute
 metadata:
   name: simpleingressroute
 spec:
-  entrypoints:
+  entryPoints:
     - web
   routes:
   - match: Host(`your.domain.com`) && PathPrefix(`/notls`)
@@ -18,7 +18,7 @@ kind: IngressRoute
 metadata:
   name: ingressroutetls
 spec:
-  entrypoints:
+  entryPoints:
     - websecure
   routes:
   - match: Host(`your.domain.com`) && PathPrefix(`/tls`)

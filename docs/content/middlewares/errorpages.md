@@ -15,24 +15,48 @@ The ErrorPage middleware returns a custom page in lieu of the default, according
 ```yaml tab="Docker"
 # Dynamic Custom Error Page for 5XX Status Code
 labels:
-- "traefik.http.middlewares.test-errorpage.errors.status=500-599",
-- "traefik.http.middlewares.test-errorpage.errors.service=serviceError",
-- "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html",
+- "traefik.http.middlewares.test-errorpage.errors.status=500-599"
+- "traefik.http.middlewares.test-errorpage.errors.service=serviceError"
+- "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-errorpage
+spec:
+  errors:
+    status:
+    - 500-599
+    service: serviceError
+    query: /{status}.html
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-errorpage.errors.status": "500-599",
+  "traefik.http.middlewares.test-errorpage.errors.service": "serviceError",
+  "traefik.http.middlewares.test-errorpage.errors.query": "/{status}.html"
+}
+```
+
+```yaml tab="Rancher"
+# Dynamic Custom Error Page for 5XX Status Code
+labels:
+- "traefik.http.middlewares.test-errorpage.errors.status=500-599"
+- "traefik.http.middlewares.test-errorpage.errors.service=serviceError"
+- "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
 ```
 
 ```toml tab="File"
 # Custom Error Page for 5XX
-[http.routers]
-  [http.routers.router1]
-    Service = "my-service"
-    Rule = Host(`my-domain`)
-
 [http.middlewares]
-  [http.middlewares.5XX-errors.Errors]
+  [http.middlewares.test-errorpage.Errors]
     status = ["500-599"]
-    service = "error-handler-service"
-    query = "/error.html"
-            
+    service = "serviceError"
+    query = "/{status}.html"
+
 [http.services]
   # ... definition of error-handler-service and my-service
 ```
@@ -42,7 +66,7 @@ labels:
 
 ## Configuration Options
 
-### status
+### `status`
 
 The `status` that will trigger the error page.
 
@@ -52,10 +76,10 @@ The status code ranges are inclusive (`500-599` will trigger with every code bet
 
     You can define either a status code like `500` or ranges with a syntax like `500-599`.
 
-### service
+### `service`
 
 The service that will serve the new requested error page.
 
-### query
+### `query`
 
 The URL for the error page (hosted by `service`). You can use `{status}` in the query, that will be replaced by the received status code.

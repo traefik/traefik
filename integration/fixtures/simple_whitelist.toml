@@ -1,12 +1,16 @@
-[log]
-logLevel = "DEBUG"
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
 
-[entrypoints]
-  [entrypoints.web]
+[log]
+level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
   address = ":8000"
-  [entrypoints.web.ForwardedHeaders]
+  [entryPoints.web.ForwardedHeaders]
     insecure=true
-  [entrypoints.web.ClientIPStrategy]
+  [entryPoints.web.ClientIPStrategy]
     depth=2
 
 [api]

@@ -28,7 +28,7 @@ You can write these configuration elements:
       # Add the router
       [http.routers]
         [http.routers.router0]
-          entrypoints = ["web"]
+          entryPoints = ["web"]
           middlewares = ["my-basic-auth"]
           service = "service-foo"
           rule = "Path(`foo`)"
@@ -56,9 +56,9 @@ You can write these configuration elements:
 ## Provider Configuration Options
 
 !!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [File Reference](../reference/providers/file.md).
-
-### filename (_Optional_)
+    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/dynamic-configuration/file.md) configuration references.
+    
+### `filename` (_Optional_)
 
 Defines the path of the configuration file.
 
@@ -68,7 +68,7 @@ Defines the path of the configuration file.
     filename = "rules.toml"
 ```
 
-### directory (_Optional_)
+### `directory` (_Optional_)
 
 Defines the directory that contains the configuration files.
 
@@ -78,7 +78,7 @@ Defines the directory that contains the configuration files.
     directory = "/path/to/config"
 ```
 
-### watch (_Optional_)
+### `watch` (_Optional_)
 
 Set the `watch` option to `true` to allow Traefik to automatically watch for file changes.  
 It works with both the `filename` and the `directory` options.

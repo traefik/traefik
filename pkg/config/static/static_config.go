@@ -14,6 +14,7 @@ import (
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd"
 	"github.com/containous/traefik/pkg/provider/kubernetes/ingress"
 	"github.com/containous/traefik/pkg/provider/marathon"
+	"github.com/containous/traefik/pkg/provider/rancher"
 	"github.com/containous/traefik/pkg/provider/rest"
 	"github.com/containous/traefik/pkg/tls"
 	"github.com/containous/traefik/pkg/tracing/datadog"
@@ -126,6 +127,7 @@ type Providers struct {
 	Kubernetes                *ingress.Provider  `description:"Enable Kubernetes backend with default settings" export:"true"`
 	KubernetesCRD             *crd.Provider      `description:"Enable Kubernetes backend with default settings" export:"true"`
 	Rest                      *rest.Provider     `description:"Enable Rest backend with default settings" export:"true"`
+	Rancher                   *rancher.Provider  `description:"Enable Rancher backend with default settings" export:"true"`
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
@@ -176,6 +178,12 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 
 	if c.Providers.File != nil {
 		c.Providers.File.TraefikFile = configFile
+	}
+
+	if c.Providers.Rancher != nil {
+		if c.Providers.Rancher.RefreshSeconds <= 0 {
+			c.Providers.Rancher.RefreshSeconds = 15
+		}
 	}
 
 	c.initACMEProvider()

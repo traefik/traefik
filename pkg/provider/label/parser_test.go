@@ -42,7 +42,14 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.insecureskipverify":              "true",
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.key":                             "foobar",
 		"traefik.http.middlewares.Middleware7.forwardauth.trustforwardheader":                  "true",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowcredentials":           "true",
 		"traefik.http.middlewares.Middleware8.headers.allowedhosts":                            "foobar, fiibar",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowheaders":               "X-foobar, X-fiibar",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowmethods":               "GET, PUT",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolalloworigin":                "foobar",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolexposeheaders":              "X-foobar, X-fiibar",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolmaxage":                     "200",
+		"traefik.http.middlewares.Middleware8.headers.addvaryheader":                           "true",
 		"traefik.http.middlewares.Middleware8.headers.browserxssfilter":                        "true",
 		"traefik.http.middlewares.Middleware8.headers.contentsecuritypolicy":                   "foobar",
 		"traefik.http.middlewares.Middleware8.headers.contenttypenosniff":                      "true",
@@ -153,345 +160,477 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.server.port":                      "8080",
 		"traefik.http.services.Service1.loadbalancer.stickiness":                       "false",
 		"traefik.http.services.Service1.loadbalancer.stickiness.cookiename":            "fui",
+		"traefik.tcp.routers.Router0.rule":                                             "foobar",
+		"traefik.tcp.routers.Router0.entrypoints":                                      "foobar, fiibar",
+		"traefik.tcp.routers.Router0.service":                                          "foobar",
+		"traefik.tcp.routers.Router0.tls.passthrough":                                  "false",
+		"traefik.tcp.routers.Router1.rule":                                             "foobar",
+		"traefik.tcp.routers.Router1.entrypoints":                                      "foobar, fiibar",
+		"traefik.tcp.routers.Router1.service":                                          "foobar",
+		"traefik.tcp.routers.Router1.tls.passthrough":                                  "false",
+		"traefik.tcp.services.Service0.loadbalancer.method":                            "foobar",
+		"traefik.tcp.services.Service0.loadbalancer.server.Port":                       "42",
+		"traefik.tcp.services.Service0.loadbalancer.server.Weight":                     "42",
+		"traefik.tcp.services.Service1.loadbalancer.method":                            "foobar",
+		"traefik.tcp.services.Service1.loadbalancer.server.Port":                       "42",
+		"traefik.tcp.services.Service1.loadbalancer.server.Weight":                     "42",
 	}
 
 	configuration, err := DecodeConfiguration(labels)
 	require.NoError(t, err)
 
-	expected := &config.HTTPConfiguration{
-		Routers: map[string]*config.Router{
-			"Router0": {
-				EntryPoints: []string{
-					"foobar",
-					"fiibar",
-				},
-				Middlewares: []string{
-					"foobar",
-					"fiibar",
-				},
-				Service:  "foobar",
-				Rule:     "foobar",
-				Priority: 42,
-				TLS:      &config.RouterTLSConfig{},
-			},
-			"Router1": {
-				EntryPoints: []string{
-					"foobar",
-					"fiibar",
-				},
-				Middlewares: []string{
-					"foobar",
-					"fiibar",
-				},
-				Service:  "foobar",
-				Rule:     "foobar",
-				Priority: 42,
-			},
-		},
-		Middlewares: map[string]*config.Middleware{
-			"Middleware0": {
-				AddPrefix: &config.AddPrefix{
-					Prefix: "foobar",
-				},
-			},
-			"Middleware1": {
-				BasicAuth: &config.BasicAuth{
-					Users: []string{
-						"foobar",
-						"fiibar",
-					},
-					UsersFile:    "foobar",
-					Realm:        "foobar",
-					RemoveHeader: true,
-					HeaderField:  "foobar",
-				},
-			},
-			"Middleware10": {
-				MaxConn: &config.MaxConn{
-					Amount:        42,
-					ExtractorFunc: "foobar",
-				},
-			},
-			"Middleware11": {
-				PassTLSClientCert: &config.PassTLSClientCert{
-					PEM: true,
-					Info: &config.TLSClientCertificateInfo{
-						NotAfter:  true,
-						NotBefore: true,
-						Subject: &config.TLSCLientCertificateDNInfo{
-							Country:         true,
-							Province:        true,
-							Locality:        true,
-							Organization:    true,
-							CommonName:      true,
-							SerialNumber:    true,
-							DomainComponent: true,
-						},
-						Issuer: &config.TLSCLientCertificateDNInfo{
-							Country:         true,
-							Province:        true,
-							Locality:        true,
-							Organization:    true,
-							CommonName:      true,
-							SerialNumber:    true,
-							DomainComponent: true,
-						},
-						Sans: true,
-					},
-				},
-			},
-			"Middleware12": {
-				RateLimit: &config.RateLimit{
-					RateSet: map[string]*config.Rate{
-						"Rate0": {
-							Period:  parse.Duration(42 * time.Second),
-							Average: 42,
-							Burst:   42,
-						},
-						"Rate1": {
-							Period:  parse.Duration(42 * time.Second),
-							Average: 42,
-							Burst:   42,
-						},
-					},
-					ExtractorFunc: "foobar",
-				},
-			},
-			"Middleware13": {
-				RedirectRegex: &config.RedirectRegex{
-					Regex:       "foobar",
-					Replacement: "foobar",
-					Permanent:   true,
-				},
-			},
-			"Middleware13b": {
-				RedirectScheme: &config.RedirectScheme{
-					Scheme:    "https",
-					Port:      "80",
-					Permanent: true,
-				},
-			},
-			"Middleware14": {
-				ReplacePath: &config.ReplacePath{
-					Path: "foobar",
-				},
-			},
-			"Middleware15": {
-				ReplacePathRegex: &config.ReplacePathRegex{
-					Regex:       "foobar",
-					Replacement: "foobar",
-				},
-			},
-			"Middleware16": {
-				Retry: &config.Retry{
-					Attempts: 42,
-				},
-			},
-			"Middleware17": {
-				StripPrefix: &config.StripPrefix{
-					Prefixes: []string{
-						"foobar",
-						"fiibar",
-					},
-				},
-			},
-			"Middleware18": {
-				StripPrefixRegex: &config.StripPrefixRegex{
-					Regex: []string{
-						"foobar",
-						"fiibar",
-					},
-				},
-			},
-			"Middleware19": {
-				Compress: &config.Compress{},
-			},
-			"Middleware2": {
-				Buffering: &config.Buffering{
-					MaxRequestBodyBytes:  42,
-					MemRequestBodyBytes:  42,
-					MaxResponseBodyBytes: 42,
-					MemResponseBodyBytes: 42,
-					RetryExpression:      "foobar",
-				},
-			},
-			"Middleware3": {
-				Chain: &config.Chain{
-					Middlewares: []string{
-						"foobar",
-						"fiibar",
-					},
-				},
-			},
-			"Middleware4": {
-				CircuitBreaker: &config.CircuitBreaker{
-					Expression: "foobar",
-				},
-			},
-			"Middleware5": {
-				DigestAuth: &config.DigestAuth{
-					Users: []string{
-						"foobar",
-						"fiibar",
-					},
-					UsersFile:    "foobar",
-					RemoveHeader: true,
-					Realm:        "foobar",
-					HeaderField:  "foobar",
-				},
-			},
-			"Middleware6": {
-				Errors: &config.ErrorPage{
-					Status: []string{
+	expected := &config.Configuration{
+		TCP: &config.TCPConfiguration{
+			Routers: map[string]*config.TCPRouter{
+				"Router0": {
+					EntryPoints: []string{
 						"foobar",
 						"fiibar",
 					},
 					Service: "foobar",
-					Query:   "foobar",
-				},
-			},
-			"Middleware7": {
-				ForwardAuth: &config.ForwardAuth{
-					Address: "foobar",
-					TLS: &config.ClientTLS{
-						CA:                 "foobar",
-						CAOptional:         true,
-						Cert:               "foobar",
-						Key:                "foobar",
-						InsecureSkipVerify: true,
+					Rule:    "foobar",
+					TLS: &config.RouterTCPTLSConfig{
+						Passthrough: false,
 					},
-					TrustForwardHeader: true,
-					AuthResponseHeaders: []string{
+				},
+				"Router1": {
+					EntryPoints: []string{
 						"foobar",
 						"fiibar",
+					},
+					Service: "foobar",
+					Rule:    "foobar",
+					TLS: &config.RouterTCPTLSConfig{
+						Passthrough: false,
 					},
 				},
 			},
-			"Middleware8": {
-				Headers: &config.Headers{
-					CustomRequestHeaders: map[string]string{
-						"name0": "foobar",
-						"name1": "foobar",
+			Services: map[string]*config.TCPService{
+				"Service0": {
+					LoadBalancer: &config.TCPLoadBalancerService{
+						Servers: []config.TCPServer{
+							{
+								Port:   "42",
+								Weight: 42,
+							},
+						},
+						Method: "foobar",
 					},
-					CustomResponseHeaders: map[string]string{
-						"name0": "foobar",
-						"name1": "foobar",
+				},
+				"Service1": {
+					LoadBalancer: &config.TCPLoadBalancerService{
+						Servers: []config.TCPServer{
+							{
+								Port:   "42",
+								Weight: 42,
+							},
+						},
+						Method: "foobar",
 					},
-					AllowedHosts: []string{
-						"foobar",
-						"fiibar",
-					},
-					HostsProxyHeaders: []string{
-						"foobar",
-						"fiibar",
-					},
-					SSLRedirect:          true,
-					SSLTemporaryRedirect: true,
-					SSLHost:              "foobar",
-					SSLProxyHeaders: map[string]string{
-						"name0": "foobar",
-						"name1": "foobar",
-					},
-					SSLForceHost:            true,
-					STSSeconds:              42,
-					STSIncludeSubdomains:    true,
-					STSPreload:              true,
-					ForceSTSHeader:          true,
-					FrameDeny:               true,
-					CustomFrameOptionsValue: "foobar",
-					ContentTypeNosniff:      true,
-					BrowserXSSFilter:        true,
-					CustomBrowserXSSValue:   "foobar",
-					ContentSecurityPolicy:   "foobar",
-					PublicKey:               "foobar",
-					ReferrerPolicy:          "foobar",
-					IsDevelopment:           true,
 				},
 			},
-			"Middleware9": {
-				IPWhiteList: &config.IPWhiteList{
-					SourceRange: []string{
+		},
+		HTTP: &config.HTTPConfiguration{
+			Routers: map[string]*config.Router{
+				"Router0": {
+					EntryPoints: []string{
 						"foobar",
 						"fiibar",
 					},
-					IPStrategy: &config.IPStrategy{
-						Depth: 42,
-						ExcludedIPs: []string{
+					Middlewares: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service:  "foobar",
+					Rule:     "foobar",
+					Priority: 42,
+					TLS:      &config.RouterTLSConfig{},
+				},
+				"Router1": {
+					EntryPoints: []string{
+						"foobar",
+						"fiibar",
+					},
+					Middlewares: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service:  "foobar",
+					Rule:     "foobar",
+					Priority: 42,
+				},
+			},
+			Middlewares: map[string]*config.Middleware{
+				"Middleware0": {
+					AddPrefix: &config.AddPrefix{
+						Prefix: "foobar",
+					},
+				},
+				"Middleware1": {
+					BasicAuth: &config.BasicAuth{
+						Users: []string{
+							"foobar",
+							"fiibar",
+						},
+						UsersFile:    "foobar",
+						Realm:        "foobar",
+						RemoveHeader: true,
+						HeaderField:  "foobar",
+					},
+				},
+				"Middleware10": {
+					MaxConn: &config.MaxConn{
+						Amount:        42,
+						ExtractorFunc: "foobar",
+					},
+				},
+				"Middleware11": {
+					PassTLSClientCert: &config.PassTLSClientCert{
+						PEM: true,
+						Info: &config.TLSClientCertificateInfo{
+							NotAfter:  true,
+							NotBefore: true,
+							Subject: &config.TLSCLientCertificateDNInfo{
+								Country:         true,
+								Province:        true,
+								Locality:        true,
+								Organization:    true,
+								CommonName:      true,
+								SerialNumber:    true,
+								DomainComponent: true,
+							},
+							Issuer: &config.TLSCLientCertificateDNInfo{
+								Country:         true,
+								Province:        true,
+								Locality:        true,
+								Organization:    true,
+								CommonName:      true,
+								SerialNumber:    true,
+								DomainComponent: true,
+							},
+							Sans: true,
+						},
+					},
+				},
+				"Middleware12": {
+					RateLimit: &config.RateLimit{
+						RateSet: map[string]*config.Rate{
+							"Rate0": {
+								Period:  parse.Duration(42 * time.Second),
+								Average: 42,
+								Burst:   42,
+							},
+							"Rate1": {
+								Period:  parse.Duration(42 * time.Second),
+								Average: 42,
+								Burst:   42,
+							},
+						},
+						ExtractorFunc: "foobar",
+					},
+				},
+				"Middleware13": {
+					RedirectRegex: &config.RedirectRegex{
+						Regex:       "foobar",
+						Replacement: "foobar",
+						Permanent:   true,
+					},
+				},
+				"Middleware13b": {
+					RedirectScheme: &config.RedirectScheme{
+						Scheme:    "https",
+						Port:      "80",
+						Permanent: true,
+					},
+				},
+				"Middleware14": {
+					ReplacePath: &config.ReplacePath{
+						Path: "foobar",
+					},
+				},
+				"Middleware15": {
+					ReplacePathRegex: &config.ReplacePathRegex{
+						Regex:       "foobar",
+						Replacement: "foobar",
+					},
+				},
+				"Middleware16": {
+					Retry: &config.Retry{
+						Attempts: 42,
+					},
+				},
+				"Middleware17": {
+					StripPrefix: &config.StripPrefix{
+						Prefixes: []string{
 							"foobar",
 							"fiibar",
 						},
 					},
 				},
-			},
-		},
-		Services: map[string]*config.Service{
-			"Service0": {
-				LoadBalancer: &config.LoadBalancerService{
-					Stickiness: &config.Stickiness{
-						CookieName: "foobar",
-					},
-					Servers: []config.Server{
-						{
-							Scheme: "foobar",
-							Port:   "8080",
-							Weight: 42,
+				"Middleware18": {
+					StripPrefixRegex: &config.StripPrefixRegex{
+						Regex: []string{
+							"foobar",
+							"fiibar",
 						},
 					},
-					Method: "foobar",
-					HealthCheck: &config.HealthCheck{
-						Scheme:   "foobar",
-						Path:     "foobar",
-						Port:     42,
-						Interval: "foobar",
-						Timeout:  "foobar",
-						Hostname: "foobar",
-						Headers: map[string]string{
+				},
+				"Middleware19": {
+					Compress: &config.Compress{},
+				},
+				"Middleware2": {
+					Buffering: &config.Buffering{
+						MaxRequestBodyBytes:  42,
+						MemRequestBodyBytes:  42,
+						MaxResponseBodyBytes: 42,
+						MemResponseBodyBytes: 42,
+						RetryExpression:      "foobar",
+					},
+				},
+				"Middleware3": {
+					Chain: &config.Chain{
+						Middlewares: []string{
+							"foobar",
+							"fiibar",
+						},
+					},
+				},
+				"Middleware4": {
+					CircuitBreaker: &config.CircuitBreaker{
+						Expression: "foobar",
+					},
+				},
+				"Middleware5": {
+					DigestAuth: &config.DigestAuth{
+						Users: []string{
+							"foobar",
+							"fiibar",
+						},
+						UsersFile:    "foobar",
+						RemoveHeader: true,
+						Realm:        "foobar",
+						HeaderField:  "foobar",
+					},
+				},
+				"Middleware6": {
+					Errors: &config.ErrorPage{
+						Status: []string{
+							"foobar",
+							"fiibar",
+						},
+						Service: "foobar",
+						Query:   "foobar",
+					},
+				},
+				"Middleware7": {
+					ForwardAuth: &config.ForwardAuth{
+						Address: "foobar",
+						TLS: &config.ClientTLS{
+							CA:                 "foobar",
+							CAOptional:         true,
+							Cert:               "foobar",
+							Key:                "foobar",
+							InsecureSkipVerify: true,
+						},
+						TrustForwardHeader: true,
+						AuthResponseHeaders: []string{
+							"foobar",
+							"fiibar",
+						},
+					},
+				},
+				"Middleware8": {
+					Headers: &config.Headers{
+						CustomRequestHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
 						},
+						CustomResponseHeaders: map[string]string{
+							"name0": "foobar",
+							"name1": "foobar",
+						},
+						AccessControlAllowCredentials: true,
+						AccessControlAllowHeaders: []string{
+							"X-foobar",
+							"X-fiibar",
+						},
+						AccessControlAllowMethods: []string{
+							"GET",
+							"PUT",
+						},
+						AccessControlAllowOrigin: "foobar",
+						AccessControlExposeHeaders: []string{
+							"X-foobar",
+							"X-fiibar",
+						},
+						AccessControlMaxAge: 200,
+						AddVaryHeader:       true,
+						AllowedHosts: []string{
+							"foobar",
+							"fiibar",
+						},
+						HostsProxyHeaders: []string{
+							"foobar",
+							"fiibar",
+						},
+						SSLRedirect:          true,
+						SSLTemporaryRedirect: true,
+						SSLHost:              "foobar",
+						SSLProxyHeaders: map[string]string{
+							"name0": "foobar",
+							"name1": "foobar",
+						},
+						SSLForceHost:            true,
+						STSSeconds:              42,
+						STSIncludeSubdomains:    true,
+						STSPreload:              true,
+						ForceSTSHeader:          true,
+						FrameDeny:               true,
+						CustomFrameOptionsValue: "foobar",
+						ContentTypeNosniff:      true,
+						BrowserXSSFilter:        true,
+						CustomBrowserXSSValue:   "foobar",
+						ContentSecurityPolicy:   "foobar",
+						PublicKey:               "foobar",
+						ReferrerPolicy:          "foobar",
+						IsDevelopment:           true,
 					},
-					PassHostHeader: true,
-					ResponseForwarding: &config.ResponseForwarding{
-						FlushInterval: "foobar",
+				},
+				"Middleware9": {
+					IPWhiteList: &config.IPWhiteList{
+						SourceRange: []string{
+							"foobar",
+							"fiibar",
+						},
+						IPStrategy: &config.IPStrategy{
+							Depth: 42,
+							ExcludedIPs: []string{
+								"foobar",
+								"fiibar",
+							},
+						},
 					},
 				},
 			},
-			"Service1": {
-				LoadBalancer: &config.LoadBalancerService{
-					Servers: []config.Server{
-						{
-							Scheme: "foobar",
-							Port:   "8080",
-							Weight: 1,
+			Services: map[string]*config.Service{
+				"Service0": {
+					LoadBalancer: &config.LoadBalancerService{
+						Stickiness: &config.Stickiness{
+							CookieName: "foobar",
+						},
+						Servers: []config.Server{
+							{
+								Scheme: "foobar",
+								Port:   "8080",
+								Weight: 42,
+							},
+						},
+						Method: "foobar",
+						HealthCheck: &config.HealthCheck{
+							Scheme:   "foobar",
+							Path:     "foobar",
+							Port:     42,
+							Interval: "foobar",
+							Timeout:  "foobar",
+							Hostname: "foobar",
+							Headers: map[string]string{
+								"name0": "foobar",
+								"name1": "foobar",
+							},
+						},
+						PassHostHeader: true,
+						ResponseForwarding: &config.ResponseForwarding{
+							FlushInterval: "foobar",
 						},
 					},
-					Method: "foobar",
-					HealthCheck: &config.HealthCheck{
-						Scheme:   "foobar",
-						Path:     "foobar",
-						Port:     42,
-						Interval: "foobar",
-						Timeout:  "foobar",
-						Hostname: "foobar",
-						Headers: map[string]string{
-							"name0": "foobar",
-							"name1": "foobar",
+				},
+				"Service1": {
+					LoadBalancer: &config.LoadBalancerService{
+						Servers: []config.Server{
+							{
+								Scheme: "foobar",
+								Port:   "8080",
+								Weight: 1,
+							},
 						},
-					},
-					PassHostHeader: true,
-					ResponseForwarding: &config.ResponseForwarding{
-						FlushInterval: "foobar",
+						Method: "foobar",
+						HealthCheck: &config.HealthCheck{
+							Scheme:   "foobar",
+							Path:     "foobar",
+							Port:     42,
+							Interval: "foobar",
+							Timeout:  "foobar",
+							Hostname: "foobar",
+							Headers: map[string]string{
+								"name0": "foobar",
+								"name1": "foobar",
+							},
+						},
+						PassHostHeader: true,
+						ResponseForwarding: &config.ResponseForwarding{
+							FlushInterval: "foobar",
+						},
 					},
 				},
 			},
 		},
 	}
 
-	assert.Equal(t, expected, configuration.HTTP)
+	assert.Equal(t, expected, configuration)
 }
 
 func TestEncodeConfiguration(t *testing.T) {
 	configuration := &config.Configuration{
+		TCP: &config.TCPConfiguration{
+			Routers: map[string]*config.TCPRouter{
+				"Router0": {
+					EntryPoints: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service: "foobar",
+					Rule:    "foobar",
+					TLS: &config.RouterTCPTLSConfig{
+						Passthrough: false,
+					},
+				},
+				"Router1": {
+					EntryPoints: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service: "foobar",
+					Rule:    "foobar",
+					TLS: &config.RouterTCPTLSConfig{
+						Passthrough: false,
+					},
+				},
+			},
+			Services: map[string]*config.TCPService{
+				"Service0": {
+					LoadBalancer: &config.TCPLoadBalancerService{
+						Servers: []config.TCPServer{
+							{
+								Port:   "42",
+								Weight: 42,
+							},
+						},
+						Method: "foobar",
+					},
+				},
+				"Service1": {
+					LoadBalancer: &config.TCPLoadBalancerService{
+						Servers: []config.TCPServer{
+							{
+								Port:   "42",
+								Weight: 42,
+							},
+						},
+						Method: "foobar",
+					},
+				},
+			},
+		},
 		HTTP: &config.HTTPConfiguration{
 			Routers: map[string]*config.Router{
 				"Router0": {
@@ -710,6 +849,22 @@ func TestEncodeConfiguration(t *testing.T) {
 							"name0": "foobar",
 							"name1": "foobar",
 						},
+						AccessControlAllowCredentials: true,
+						AccessControlAllowHeaders: []string{
+							"X-foobar",
+							"X-fiibar",
+						},
+						AccessControlAllowMethods: []string{
+							"GET",
+							"PUT",
+						},
+						AccessControlAllowOrigin: "foobar",
+						AccessControlExposeHeaders: []string{
+							"X-foobar",
+							"X-fiibar",
+						},
+						AccessControlMaxAge: 200,
+						AddVaryHeader:       true,
 						AllowedHosts: []string{
 							"foobar",
 							"fiibar",
@@ -854,6 +1009,13 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.InsecureSkipVerify":              "true",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.Key":                             "foobar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TrustForwardHeader":                  "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowCredentials":           "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowHeaders":               "X-foobar, X-fiibar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowMethods":               "GET, PUT",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowOrigin":                "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlExposeHeaders":              "X-foobar, X-fiibar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlMaxAge":                     "200",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AddVaryHeader":                           "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AllowedHosts":                            "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.BrowserXSSFilter":                        "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.ContentSecurityPolicy":                   "foobar",
@@ -964,6 +1126,21 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Weight":                    "42",
+
+		"traefik.TCP.Routers.Router0.Rule":                         "foobar",
+		"traefik.TCP.Routers.Router0.EntryPoints":                  "foobar, fiibar",
+		"traefik.TCP.Routers.Router0.Service":                      "foobar",
+		"traefik.TCP.Routers.Router0.TLS.Passthrough":              "false",
+		"traefik.TCP.Routers.Router1.Rule":                         "foobar",
+		"traefik.TCP.Routers.Router1.EntryPoints":                  "foobar, fiibar",
+		"traefik.TCP.Routers.Router1.Service":                      "foobar",
+		"traefik.TCP.Routers.Router1.TLS.Passthrough":              "false",
+		"traefik.TCP.Services.Service0.LoadBalancer.Method":        "foobar",
+		"traefik.TCP.Services.Service0.LoadBalancer.server.Port":   "42",
+		"traefik.TCP.Services.Service0.LoadBalancer.server.Weight": "42",
+		"traefik.TCP.Services.Service1.LoadBalancer.Method":        "foobar",
+		"traefik.TCP.Services.Service1.LoadBalancer.server.Port":   "42",
+		"traefik.TCP.Services.Service1.LoadBalancer.server.Weight": "42",
 	}
 
 	for key, val := range expected {
