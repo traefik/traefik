@@ -1,5 +1,41 @@
 # Change Log
 
+## [v2.0.0-alpha4](https://github.com/containous/traefik/tree/v2.0.0-alpha4) (2019-04-17)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha3...v2.0.0-alpha4)
+
+**Enhancements:**
+- **[logs]** log.loglevel becomes log.level in configuration ([#4775](https://github.com/containous/traefik/pull/4775) by [juliens](https://github.com/juliens))
+- **[marathon,tcp]** Handle TCP in the marathon provider ([#4728](https://github.com/containous/traefik/pull/4728) by [juliens](https://github.com/juliens))
+- **[middleware]** Enable CORS configuration ([#3809](https://github.com/containous/traefik/pull/3809) by [dtomcej](https://github.com/dtomcej))
+- **[rancher]** Add Rancher provider ([#4647](https://github.com/containous/traefik/pull/4647) by [SantoDE](https://github.com/SantoDE))
+- **[tracing]** Update tracing dependencies ([#4721](https://github.com/containous/traefik/pull/4721) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[docker]** Insensitive case for allow-empty value. ([#4745](https://github.com/containous/traefik/pull/4745) by [ldez](https://github.com/ldez))
+- **[middleware]** Fix response modifier initial building ([#4719](https://github.com/containous/traefik/pull/4719) by [mpl](https://github.com/mpl))
+- **[middleware]** Set X-Forwarded-* headers ([#4707](https://github.com/containous/traefik/pull/4707) by [mpl](https://github.com/mpl))
+- **[tcp]** Fix EOF error ([#4733](https://github.com/containous/traefik/pull/4733) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[acme]** Use the same case every where for entryPoints. ([#4764](https://github.com/containous/traefik/pull/4764) by [ldez](https://github.com/ldez))
+- **[docker]** Fix two minor nits in Traefik 2.0 docs ([#4692](https://github.com/containous/traefik/pull/4692) by [cfra](https://github.com/cfra))
+- **[k8s,k8s/crd]** k8s static configuration explanation ([#4767](https://github.com/containous/traefik/pull/4767) by [ldez](https://github.com/ldez))
+- **[marathon]** Enhance Marathon documentation ([#4776](https://github.com/containous/traefik/pull/4776) by [ldez](https://github.com/ldez))
+- **[middleware,k8s,k8s/crd]** Fix typo: middleware -&gt; middlewares. ([#4781](https://github.com/containous/traefik/pull/4781) by [ldez](https://github.com/ldez))
+- **[middleware]** Adds middlewares examples for k8s. ([#4713](https://github.com/containous/traefik/pull/4713) by [ldez](https://github.com/ldez))
+- **[middleware]** Remove invalid commas. ([#4706](https://github.com/containous/traefik/pull/4706) by [ldez](https://github.com/ldez))
+- **[middleware]** Fix doc about removing headers ([#4708](https://github.com/containous/traefik/pull/4708) by [mpl](https://github.com/mpl))
+- **[middleware]** Update the middleware documentation ([#4729](https://github.com/containous/traefik/pull/4729) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[tracing]** Fix typo in tracing docs ([#4737](https://github.com/containous/traefik/pull/4737) by [timoschwarzer](https://github.com/timoschwarzer))
+- Improve the Documentation with a Reference Section ([#4714](https://github.com/containous/traefik/pull/4714) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Adds a note in traefik.sample.toml ([#4757](https://github.com/containous/traefik/pull/4757) by [ldez](https://github.com/ldez))
+- Update to v2.0 readme links ([#4700](https://github.com/containous/traefik/pull/4700) by [karnthis](https://github.com/karnthis))
+- Remove dumpcerts.sh ([#4783](https://github.com/containous/traefik/pull/4783) by [ldez](https://github.com/ldez))
+
+**Misc:**
+- Cherry pick v1.7 into v2.0 ([#4787](https://github.com/containous/traefik/pull/4787) by [ldez](https://github.com/ldez))
+- Cherry pick v1.7 into v2.0 ([#4695](https://github.com/containous/traefik/pull/4695) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.0.0-alpha3](https://github.com/containous/traefik/tree/v2.0.0-alpha3) (2019-03-29)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha2...v2.0.0-alpha3)
 
