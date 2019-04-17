@@ -64,7 +64,7 @@ spec:
       services:
         - name: s3
           port: 80
-      middleware:
+      middlewares:
         - name: stripprefix
         - name: addprefix
   tls:
