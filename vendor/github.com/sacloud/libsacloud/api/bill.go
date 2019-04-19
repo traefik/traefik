@@ -4,10 +4,11 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"github.com/sacloud/libsacloud/sacloud"
 	"io"
 	"strings"
 	"time"
+
+	"github.com/sacloud/libsacloud/sacloud"
 )
 
 // BillAPI 請求情報API

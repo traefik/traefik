@@ -47,13 +47,13 @@ func (d *DNSProvider) addTXTRecord(domain string, name string, value string, ttl
 		return err
 	}
 
-	message := &apiResponse{}
-	err = d.do(req, message)
+	message := apiResponse{}
+	err = d.do(req, &message)
 	if err != nil {
 		return fmt.Errorf("unable to create TXT record for domain %s and name %s: %v", domain, name, err)
 	}
 
-	if message != nil && len(message.Message) > 0 {
+	if len(message.Message) > 0 {
 		log.Infof("API response: %s", message.Message)
 	}
 
@@ -87,13 +87,13 @@ func (d *DNSProvider) deleteTXTRecord(domain string, name string) error {
 		return err
 	}
 
-	message := &apiResponse{}
-	err = d.do(req, message)
+	message := apiResponse{}
+	err = d.do(req, &message)
 	if err != nil {
 		return fmt.Errorf("unable to delete TXT record for domain %s and name %s: %v", domain, name, err)
 	}
 
-	if message != nil && len(message.Message) > 0 {
+	if len(message.Message) > 0 {
 		log.Infof("API response: %s", message.Message)
 	}
 

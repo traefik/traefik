@@ -204,6 +204,37 @@ func (api *SIMAPI) Logs(id int64, body interface{}) ([]sacloud.SIMLog, error) {
 	return res.Logs, nil
 }
 
+// GetNetworkOperator 通信キャリア 取得
+func (api *SIMAPI) GetNetworkOperator(id int64) (*sacloud.SIMNetworkOperatorConfigs, error) {
+
+	var (
+		method = "GET"
+		uri    = fmt.Sprintf("%s/%d/sim/network_operator_config", api.getResourceURL(), id)
+	)
+
+	res := &sacloud.SIMNetworkOperatorConfigs{}
+	err := api.baseAPI.request(method, uri, nil, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// SetNetworkOperator 通信キャリア 設定
+func (api *SIMAPI) SetNetworkOperator(id int64, opConfig ...*sacloud.SIMNetworkOperatorConfig) (bool, error) {
+
+	var (
+		method = "PUT"
+		uri    = fmt.Sprintf("%s/%d/sim/network_operator_config", api.getResourceURL(), id)
+	)
+
+	err := api.baseAPI.request(method, uri, &sacloud.SIMNetworkOperatorConfigs{NetworkOperatorConfigs: opConfig}, nil)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Monitor アクティビティーモニター(Up/Down link BPS)取得
 func (api *SIMAPI) Monitor(id int64, body *sacloud.ResourceMonitorRequest) (*sacloud.MonitorValues, error) {
 	var (

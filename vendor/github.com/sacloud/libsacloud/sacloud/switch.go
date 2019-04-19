@@ -15,6 +15,7 @@ type Switch struct {
 	propIcon         // アイコン
 	propTags         // タグ
 	propCreatedAt    // 作成日時
+	propZone         // ゾーン
 
 	ServerCount    int            `json:",omitempty"` // 接続サーバー数
 	ApplianceCount int            `json:",omitempty"` // 接続アプライアンス数

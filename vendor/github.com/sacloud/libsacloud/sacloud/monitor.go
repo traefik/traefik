@@ -9,23 +9,27 @@ import (
 
 // MonitorValue アクティビティモニター
 type MonitorValue struct {
-	CPUTime         *float64 `json:"CPU-TIME,omitempty"`          // CPU時間
-	Write           *float64 `json:",omitempty"`                  // ディスク書き込み
-	Read            *float64 `json:",omitempty"`                  // ディスク読み取り
-	Receive         *float64 `json:",omitempty"`                  // パケット受信
-	Send            *float64 `json:",omitempty"`                  // パケット送信
-	In              *float64 `json:",omitempty"`                  // パケット受信
-	Out             *float64 `json:",omitempty"`                  // パケット送信
-	TotalMemorySize *float64 `json:"Total-Memory-Size,omitempty"` // 総メモリサイズ
-	UsedMemorySize  *float64 `json:"Used-Memory-Size,omitempty"`  // 使用済みメモリサイズ
-	TotalDisk1Size  *float64 `json:"Total-Disk1-Size,omitempty"`  // 総ディスクサイズ
-	UsedDisk1Size   *float64 `json:"Used-Disk1-Size,omitempty"`   // 使用済みディスクサイズ
-	TotalDisk2Size  *float64 `json:"Total-Disk2-Size,omitempty"`  // 総ディスクサイズ
-	UsedDisk2Size   *float64 `json:"Used-Disk2-Size,omitempty"`   // 使用済みディスクサイズ
-	FreeDiskSize    *float64 `json:"Free-Disk-Size,omitempty"`    // 空きディスクサイズ(NFS)
-	ResponseTimeSec *float64 `json:"responsetimesec,omitempty"`   // レスポンスタイム(シンプル監視)
-	UplinkBPS       *float64 `json:"UplinkBps,omitempty"`         // 上り方向トラフィック
-	DownlinkBPS     *float64 `json:"DownlinkBps"`                 // 下り方向トラフィック
+	CPUTime           *float64 `json:"CPU-TIME,omitempty"`          // CPU時間
+	Write             *float64 `json:",omitempty"`                  // ディスク書き込み
+	Read              *float64 `json:",omitempty"`                  // ディスク読み取り
+	Receive           *float64 `json:",omitempty"`                  // パケット受信
+	Send              *float64 `json:",omitempty"`                  // パケット送信
+	In                *float64 `json:",omitempty"`                  // パケット受信
+	Out               *float64 `json:",omitempty"`                  // パケット送信
+	TotalMemorySize   *float64 `json:"Total-Memory-Size,omitempty"` // 総メモリサイズ
+	UsedMemorySize    *float64 `json:"Used-Memory-Size,omitempty"`  // 使用済みメモリサイズ
+	TotalDisk1Size    *float64 `json:"Total-Disk1-Size,omitempty"`  // 総ディスクサイズ
+	UsedDisk1Size     *float64 `json:"Used-Disk1-Size,omitempty"`   // 使用済みディスクサイズ
+	TotalDisk2Size    *float64 `json:"Total-Disk2-Size,omitempty"`  // 総ディスクサイズ
+	UsedDisk2Size     *float64 `json:"Used-Disk2-Size,omitempty"`   // 使用済みディスクサイズ
+	BinlogUsedSizeKiB *float64 `json:"binlogUsedSizeKiB,omitempty"` // バイナリログのサイズ(レプリケーション有効時のみ、master/slave両方で利用可能)
+	DelayTimeSec      *float64 `json:"delayTimeSec,omitempty"`      // レプリケーション遅延時間(レプリケーション有効時のみ、slave側のみ)
+	FreeDiskSize      *float64 `json:"Free-Disk-Size,omitempty"`    // 空きディスクサイズ(NFS)
+	ResponseTimeSec   *float64 `json:"responsetimesec,omitempty"`   // レスポンスタイム(シンプル監視)
+	UplinkBPS         *float64 `json:"UplinkBps,omitempty"`         // 上り方向トラフィック
+	DownlinkBPS       *float64 `json:"DownlinkBps,omitempty"`       // 下り方向トラフィック
+	ActiveConnections *float64 `json:"activeConnections,omitempty"` // アクティブコネクション(プロキシLB)
+	ConnectionsPerSec *float64 `json:"connectionsPerSec,omitempty"` // 秒間コネクション数
 }
 
 // UnmarshalJSON JSONアンマーシャル(配列、オブジェクトが混在するためここで対応)
@@ -36,23 +40,27 @@ func (m *MonitorValue) UnmarshalJSON(data []byte) error {
 	}
 
 	tmp := &struct {
-		CPUTime         *float64 `json:"CPU-TIME,omitempty"`
-		Write           *float64 `json:",omitempty"`
-		Read            *float64 `json:",omitempty"`
-		Receive         *float64 `json:",omitempty"`
-		Send            *float64 `json:",omitempty"`
-		In              *float64 `json:",omitempty"`
-		Out             *float64 `json:",omitempty"`
-		TotalMemorySize *float64 `json:"Total-Memory-Size,omitempty"`
-		UsedMemorySize  *float64 `json:"Used-Memory-Size,omitempty"`
-		TotalDisk1Size  *float64 `json:"Total-Disk1-Size,omitempty"`
-		UsedDisk1Size   *float64 `json:"Used-Disk1-Size,omitempty"`
-		TotalDisk2Size  *float64 `json:"Total-Disk2-Size,omitempty"`
-		UsedDisk2Size   *float64 `json:"Used-Disk2-Size,omitempty"`
-		FreeDiskSize    *float64 `json:"Free-Disk-Size,omitempty"`
-		ResponseTimeSec *float64 `json:"responsetimesec,omitempty"`
-		UplinkBPS       *float64 `json:"UplinkBps,omitempty"`
-		DownlinkBPS     *float64 `json:"DownlinkBps"`
+		CPUTime           *float64 `json:"CPU-TIME,omitempty"`
+		Write             *float64 `json:",omitempty"`
+		Read              *float64 `json:",omitempty"`
+		Receive           *float64 `json:",omitempty"`
+		Send              *float64 `json:",omitempty"`
+		In                *float64 `json:",omitempty"`
+		Out               *float64 `json:",omitempty"`
+		TotalMemorySize   *float64 `json:"Total-Memory-Size,omitempty"`
+		UsedMemorySize    *float64 `json:"Used-Memory-Size,omitempty"`
+		TotalDisk1Size    *float64 `json:"Total-Disk1-Size,omitempty"`
+		UsedDisk1Size     *float64 `json:"Used-Disk1-Size,omitempty"`
+		TotalDisk2Size    *float64 `json:"Total-Disk2-Size,omitempty"`
+		UsedDisk2Size     *float64 `json:"Used-Disk2-Size,omitempty"`
+		BinlogUsedSizeKiB *float64 `json:"binlogUsedSizeKiB,omitempty"`
+		DelayTimeSec      *float64 `json:"delayTimeSec,omitempty"`
+		FreeDiskSize      *float64 `json:"Free-Disk-Size,omitempty"`
+		ResponseTimeSec   *float64 `json:"responsetimesec,omitempty"`
+		UplinkBPS         *float64 `json:"UplinkBps,omitempty"`
+		DownlinkBPS       *float64 `json:"DownlinkBps,omitempty"`
+		ActiveConnections *float64 `json:"activeConnections,omitempty"`
+		ConnectionsPerSec *float64 `json:"connectionsPerSec,omitempty"`
 	}{}
 	if err := json.Unmarshal(data, &tmp); err != nil {
 		return err
@@ -71,10 +79,14 @@ func (m *MonitorValue) UnmarshalJSON(data []byte) error {
 	m.UsedDisk1Size = tmp.UsedDisk1Size
 	m.TotalDisk2Size = tmp.TotalDisk2Size
 	m.UsedDisk2Size = tmp.UsedDisk2Size
+	m.BinlogUsedSizeKiB = tmp.BinlogUsedSizeKiB
+	m.DelayTimeSec = tmp.DelayTimeSec
 	m.FreeDiskSize = tmp.FreeDiskSize
 	m.ResponseTimeSec = tmp.ResponseTimeSec
 	m.UplinkBPS = tmp.UplinkBPS
 	m.DownlinkBPS = tmp.DownlinkBPS
+	m.ActiveConnections = tmp.ActiveConnections
+	m.ConnectionsPerSec = tmp.ConnectionsPerSec
 
 	return nil
 }
@@ -102,6 +114,23 @@ func NewResourceMonitorRequest(start *time.Time, end *time.Time) *ResourceMonito
 // ResourceMonitorResponse アクティビティモニターレスポンス
 type ResourceMonitorResponse struct {
 	Data *MonitorValues `json:",omitempty"` // メトリクス
+}
+
+// UnmarshalJSON JSONアンマーシャル(配列、オブジェクトが混在するためここで対応)
+func (m *MonitorValues) UnmarshalJSON(data []byte) error {
+	targetData := strings.Replace(strings.Replace(string(data), " ", "", -1), "\n", "", -1)
+	if targetData == `[]` {
+		return nil
+	}
+
+	tmp := map[string]*MonitorValue{}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	value := MonitorValues(tmp)
+	*m = value
+	return nil
 }
 
 // MonitorSummaryData メトリクスサマリー
@@ -242,6 +271,16 @@ func (m *MonitorValues) FlattenUsedDisk2SizeValue() ([]FlatMonitorValue, error) 
 	return m.flattenValue(func(v *MonitorValue) *float64 { return v.UsedDisk2Size })
 }
 
+// FlattenBinlogUsedSizeKiBValue フラット化 バイナリログサイズ
+func (m *MonitorValues) FlattenBinlogUsedSizeKiBValue() ([]FlatMonitorValue, error) {
+	return m.flattenValue(func(v *MonitorValue) *float64 { return v.BinlogUsedSizeKiB })
+}
+
+// FlattenDelayTimeSecValue フラット化 レプリケーション遅延時間
+func (m *MonitorValues) FlattenDelayTimeSecValue() ([]FlatMonitorValue, error) {
+	return m.flattenValue(func(v *MonitorValue) *float64 { return v.DelayTimeSec })
+}
+
 // FlattenFreeDiskSizeValue フラット化 空きディスクサイズ(NFS)
 func (m *MonitorValues) FlattenFreeDiskSizeValue() ([]FlatMonitorValue, error) {
 	return m.flattenValue(func(v *MonitorValue) *float64 { return v.FreeDiskSize })
@@ -260,6 +299,16 @@ func (m *MonitorValues) FlattenUplinkBPSValue() ([]FlatMonitorValue, error) {
 // FlattenDownlinkBPSValue フラット化 下り方向トライフィック(セキュアモバイルSIM)
 func (m *MonitorValues) FlattenDownlinkBPSValue() ([]FlatMonitorValue, error) {
 	return m.flattenValue(func(v *MonitorValue) *float64 { return v.DownlinkBPS })
+}
+
+// FlattenActiveConnections フラット化 アクティブコネクション
+func (m *MonitorValues) FlattenActiveConnections() ([]FlatMonitorValue, error) {
+	return m.flattenValue(func(v *MonitorValue) *float64 { return v.ActiveConnections })
+}
+
+// FlattenConnectionsPerSec フラット化 秒間接続数
+func (m *MonitorValues) FlattenConnectionsPerSec() ([]FlatMonitorValue, error) {
+	return m.flattenValue(func(v *MonitorValue) *float64 { return v.ConnectionsPerSec })
 }
 
 func (m *MonitorValues) flattenValue(f func(*MonitorValue) *float64) ([]FlatMonitorValue, error) {
@@ -293,8 +342,10 @@ func (m *MonitorValue) HasValue() bool {
 		m.TotalMemorySize, m.UsedMemorySize,
 		m.TotalDisk1Size, m.UsedDisk1Size,
 		m.TotalDisk2Size, m.UsedDisk2Size,
+		m.BinlogUsedSizeKiB, m.DelayTimeSec,
 		m.FreeDiskSize, m.ResponseTimeSec,
 		m.UplinkBPS, m.DownlinkBPS,
+		m.ActiveConnections, m.ConnectionsPerSec,
 	}
 	for _, v := range values {
 		if v != nil {

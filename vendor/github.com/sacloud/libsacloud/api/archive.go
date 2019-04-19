@@ -2,10 +2,11 @@ package api
 
 import (
 	"fmt"
-	"github.com/sacloud/libsacloud/sacloud"
-	"github.com/sacloud/libsacloud/sacloud/ostype"
 	"strings"
 	"time"
+
+	"github.com/sacloud/libsacloud/sacloud"
+	"github.com/sacloud/libsacloud/sacloud/ostype"
 )
 
 // ArchiveAPI アーカイブAPI
@@ -15,25 +16,30 @@ type ArchiveAPI struct {
 }
 
 var (
-	archiveLatestStableCentOSTags                      = []string{"current-stable", "distro-centos"}
-	archiveLatestStableCentOS6Tags                     = []string{"distro-centos", "distro-ver-6.9"}
-	archiveLatestStableUbuntuTags                      = []string{"current-stable", "distro-ubuntu"}
-	archiveLatestStableDebianTags                      = []string{"current-stable", "distro-debian"}
-	archiveLatestStableVyOSTags                        = []string{"current-stable", "distro-vyos"}
-	archiveLatestStableCoreOSTags                      = []string{"current-stable", "distro-coreos"}
-	archiveLatestStableRancherOSTags                   = []string{"current-stable", "distro-rancheros"}
-	archiveLatestStableKusanagiTags                    = []string{"current-stable", "pkg-kusanagi"}
-	archiveLatestStableSophosUTMTags                   = []string{"current-stable", "pkg-sophosutm"}
-	archiveLatestStableFreeBSDTags                     = []string{"current-stable", "distro-freebsd"}
-	archiveLatestStableWindows2012Tags                 = []string{"os-windows", "distro-ver-2012.2"}
-	archiveLatestStableWindows2012RDSTags              = []string{"os-windows", "distro-ver-2012.2", "windows-rds"}
-	archiveLatestStableWindows2012RDSOfficeTags        = []string{"os-windows", "distro-ver-2012.2", "windows-rds", "with-office"}
-	archiveLatestStableWindows2016Tags                 = []string{"os-windows", "distro-ver-2016"}
-	archiveLatestStableWindows2016RDSTags              = []string{"os-windows", "distro-ver-2016", "windows-rds"}
-	archiveLatestStableWindows2016RDSOfficeTags        = []string{"os-windows", "distro-ver-2016", "windows-rds", "with-office"}
-	archiveLatestStableWindows2016SQLServerWeb         = []string{"os-windows", "distro-ver-2016", "windows-sqlserver", "sqlserver-2016", "edition-web"}
-	archiveLatestStableWindows2016SQLServerStandard    = []string{"os-windows", "distro-ver-2016", "windows-sqlserver", "sqlserver-2016", "edition-standard"}
-	archiveLatestStableWindows2016SQLServerStandardAll = []string{"os-windows", "distro-ver-2016", "windows-sqlserver", "sqlserver-2016", "edition-standard", "windows-rds", "with-office"}
+	archiveLatestStableCentOSTags                          = []string{"current-stable", "distro-centos"}
+	archiveLatestStableCentOS6Tags                         = []string{"distro-centos", "distro-ver-6.10"}
+	archiveLatestStableUbuntuTags                          = []string{"current-stable", "distro-ubuntu"}
+	archiveLatestStableDebianTags                          = []string{"current-stable", "distro-debian"}
+	archiveLatestStableVyOSTags                            = []string{"current-stable", "distro-vyos"}
+	archiveLatestStableCoreOSTags                          = []string{"current-stable", "distro-coreos"}
+	archiveLatestStableRancherOSTags                       = []string{"current-stable", "distro-rancheros"}
+	archiveLatestStableKusanagiTags                        = []string{"current-stable", "pkg-kusanagi"}
+	archiveLatestStableSophosUTMTags                       = []string{"current-stable", "pkg-sophosutm"}
+	archiveLatestStableFreeBSDTags                         = []string{"current-stable", "distro-freebsd"}
+	archiveLatestStableNetwiserTags                        = []string{"current-stable", "pkg-netwiserve"}
+	archiveLatestStableOPNsenseTags                        = []string{"current-stable", "distro-opnsense"}
+	archiveLatestStableWindows2012Tags                     = []string{"os-windows", "distro-ver-2012.2"}
+	archiveLatestStableWindows2012RDSTags                  = []string{"os-windows", "distro-ver-2012.2", "windows-rds"}
+	archiveLatestStableWindows2012RDSOfficeTags            = []string{"os-windows", "distro-ver-2012.2", "windows-rds", "with-office"}
+	archiveLatestStableWindows2016Tags                     = []string{"os-windows", "distro-ver-2016"}
+	archiveLatestStableWindows2016RDSTags                  = []string{"os-windows", "distro-ver-2016", "windows-rds"}
+	archiveLatestStableWindows2016RDSOfficeTags            = []string{"os-windows", "distro-ver-2016", "windows-rds", "with-office"}
+	archiveLatestStableWindows2016SQLServerWeb             = []string{"os-windows", "distro-ver-2016", "windows-sqlserver", "sqlserver-2016", "edition-web"}
+	archiveLatestStableWindows2016SQLServerStandard        = []string{"os-windows", "distro-ver-2016", "windows-sqlserver", "sqlserver-2016", "edition-standard"}
+	archiveLatestStableWindows2016SQLServer2017Standard    = []string{"os-windows", "distro-ver-2016", "windows-sqlserver", "sqlserver-2017", "edition-standard"}
+	archiveLatestStableWindows2016SQLServerStandardAll     = []string{"os-windows", "distro-ver-2016", "windows-sqlserver", "sqlserver-2016", "edition-standard", "windows-rds", "with-office"}
+	archiveLatestStableWindows2016SQLServer2017StandardAll = []string{"os-windows", "distro-ver-2016", "windows-sqlserver", "sqlserver-2017", "edition-standard", "windows-rds", "with-office"}
+	archiveLatestStableWindows2019Tags                     = []string{"os-windows", "distro-ver-2019"}
 )
 
 // NewArchiveAPI アーカイブAPI作成
@@ -48,25 +54,29 @@ func NewArchiveAPI(client *Client) *ArchiveAPI {
 	}
 
 	api.findFuncMapPerOSType = map[ostype.ArchiveOSTypes]func() (*sacloud.Archive, error){
-		ostype.CentOS:                          api.FindLatestStableCentOS,
-		ostype.CentOS6:                         api.FindLatestStableCentOS6,
-		ostype.Ubuntu:                          api.FindLatestStableUbuntu,
-		ostype.Debian:                          api.FindLatestStableDebian,
-		ostype.VyOS:                            api.FindLatestStableVyOS,
-		ostype.CoreOS:                          api.FindLatestStableCoreOS,
-		ostype.RancherOS:                       api.FindLatestStableRancherOS,
-		ostype.Kusanagi:                        api.FindLatestStableKusanagi,
-		ostype.SophosUTM:                       api.FindLatestStableSophosUTM,
-		ostype.FreeBSD:                         api.FindLatestStableFreeBSD,
-		ostype.Windows2012:                     api.FindLatestStableWindows2012,
-		ostype.Windows2012RDS:                  api.FindLatestStableWindows2012RDS,
-		ostype.Windows2012RDSOffice:            api.FindLatestStableWindows2012RDSOffice,
-		ostype.Windows2016:                     api.FindLatestStableWindows2016,
-		ostype.Windows2016RDS:                  api.FindLatestStableWindows2016RDS,
-		ostype.Windows2016RDSOffice:            api.FindLatestStableWindows2016RDSOffice,
-		ostype.Windows2016SQLServerWeb:         api.FindLatestStableWindows2016SQLServerWeb,
-		ostype.Windows2016SQLServerStandard:    api.FindLatestStableWindows2016SQLServerStandard,
-		ostype.Windows2016SQLServerStandardAll: api.FindLatestStableWindows2016SQLServerStandardAll,
+		ostype.CentOS:                              api.FindLatestStableCentOS,
+		ostype.CentOS6:                             api.FindLatestStableCentOS6,
+		ostype.Ubuntu:                              api.FindLatestStableUbuntu,
+		ostype.Debian:                              api.FindLatestStableDebian,
+		ostype.VyOS:                                api.FindLatestStableVyOS,
+		ostype.CoreOS:                              api.FindLatestStableCoreOS,
+		ostype.RancherOS:                           api.FindLatestStableRancherOS,
+		ostype.Kusanagi:                            api.FindLatestStableKusanagi,
+		ostype.SophosUTM:                           api.FindLatestStableSophosUTM,
+		ostype.FreeBSD:                             api.FindLatestStableFreeBSD,
+		ostype.Netwiser:                            api.FindLatestStableNetwiser,
+		ostype.OPNsense:                            api.FindLatestStableOPNsense,
+		ostype.Windows2012:                         api.FindLatestStableWindows2012,
+		ostype.Windows2012RDS:                      api.FindLatestStableWindows2012RDS,
+		ostype.Windows2012RDSOffice:                api.FindLatestStableWindows2012RDSOffice,
+		ostype.Windows2016:                         api.FindLatestStableWindows2016,
+		ostype.Windows2016RDS:                      api.FindLatestStableWindows2016RDS,
+		ostype.Windows2016RDSOffice:                api.FindLatestStableWindows2016RDSOffice,
+		ostype.Windows2016SQLServerWeb:             api.FindLatestStableWindows2016SQLServerWeb,
+		ostype.Windows2016SQLServerStandard:        api.FindLatestStableWindows2016SQLServerStandard,
+		ostype.Windows2016SQLServer2017Standard:    api.FindLatestStableWindows2016SQLServer2017Standard,
+		ostype.Windows2016SQLServerStandardAll:     api.FindLatestStableWindows2016SQLServerStandardAll,
+		ostype.Windows2016SQLServer2017StandardAll: api.FindLatestStableWindows2016SQLServer2017StandardAll,
 	}
 
 	return api
@@ -137,6 +147,14 @@ func (api *ArchiveAPI) CanEditDisk(id int64) (bool, error) {
 	if archive.HasTag("pkg-sophosutm") || archive.IsSophosUTM() {
 		return false, nil
 	}
+	// OPNsenseであれば編集不可
+	if archive.HasTag("distro-opnsense") {
+		return false, nil
+	}
+	// Netwiser VEであれば編集不可
+	if archive.HasTag("pkg-netwiserve") {
+		return false, nil
+	}
 
 	for _, t := range allowDiskEditTags {
 		if archive.HasTag(t) {
@@ -178,6 +196,14 @@ func (api *ArchiveAPI) GetPublicArchiveIDFromAncestors(id int64) (int64, bool) {
 
 	// SophosUTMであれば編集不可
 	if archive.HasTag("pkg-sophosutm") || archive.IsSophosUTM() {
+		return emptyID, false
+	}
+	// OPNsenseであれば編集不可
+	if archive.HasTag("distro-opnsense") {
+		return emptyID, false
+	}
+	// Netwiser VEであれば編集不可
+	if archive.HasTag("pkg-netwiserve") {
 		return emptyID, false
 	}
 
@@ -249,6 +275,16 @@ func (api *ArchiveAPI) FindLatestStableFreeBSD() (*sacloud.Archive, error) {
 	return api.findByOSTags(archiveLatestStableFreeBSDTags)
 }
 
+// FindLatestStableNetwiser 安定版最新のNetwiserパブリックアーカイブを取得
+func (api *ArchiveAPI) FindLatestStableNetwiser() (*sacloud.Archive, error) {
+	return api.findByOSTags(archiveLatestStableNetwiserTags)
+}
+
+// FindLatestStableOPNsense 安定版最新のOPNsenseパブリックアーカイブを取得
+func (api *ArchiveAPI) FindLatestStableOPNsense() (*sacloud.Archive, error) {
+	return api.findByOSTags(archiveLatestStableOPNsenseTags)
+}
+
 // FindLatestStableWindows2012 安定版最新のWindows2012パブリックアーカイブを取得
 func (api *ArchiveAPI) FindLatestStableWindows2012() (*sacloud.Archive, error) {
 	return api.findByOSTags(archiveLatestStableWindows2012Tags, map[string]interface{}{
@@ -305,10 +341,31 @@ func (api *ArchiveAPI) FindLatestStableWindows2016SQLServerStandard() (*sacloud.
 	})
 }
 
+// FindLatestStableWindows2016SQLServer2017Standard 安定版最新のWindows2016 SQLServer2017(Standard) パブリックアーカイブを取得
+func (api *ArchiveAPI) FindLatestStableWindows2016SQLServer2017Standard() (*sacloud.Archive, error) {
+	return api.findByOSTags(archiveLatestStableWindows2016SQLServer2017Standard, map[string]interface{}{
+		"Name": "Windows Server 2016 for MS SQL 2017(Standard)",
+	})
+}
+
 // FindLatestStableWindows2016SQLServerStandardAll 安定版最新のWindows2016 SQLServer(RDS+Office) パブリックアーカイブを取得
 func (api *ArchiveAPI) FindLatestStableWindows2016SQLServerStandardAll() (*sacloud.Archive, error) {
-	return api.findByOSTags(archiveLatestStableWindows2016SQLServerStandard, map[string]interface{}{
+	return api.findByOSTags(archiveLatestStableWindows2016SQLServerStandardAll, map[string]interface{}{
 		"Name": "Windows Server 2016 for MS SQL 2016(Std) with RDS / MS Office",
+	})
+}
+
+// FindLatestStableWindows2016SQLServer2017StandardAll 安定版最新のWindows2016 SQLServer2017(RDS+Office) パブリックアーカイブを取得
+func (api *ArchiveAPI) FindLatestStableWindows2016SQLServer2017StandardAll() (*sacloud.Archive, error) {
+	return api.findByOSTags(archiveLatestStableWindows2016SQLServer2017StandardAll, map[string]interface{}{
+		"Name": "Windows Server 2016 for MS SQL 2017(Std) with RDS / MS Office",
+	})
+}
+
+// FindLatestStableWindows2019 安定版最新のWindows2019パブリックアーカイブを取得
+func (api *ArchiveAPI) FindLatestStableWindows2019() (*sacloud.Archive, error) {
+	return api.findByOSTags(archiveLatestStableWindows2019Tags, map[string]interface{}{
+		"Name": "Windows Server 2019 Datacenter Edition",
 	})
 }
 
