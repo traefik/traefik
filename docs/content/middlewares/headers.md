@@ -59,7 +59,7 @@ labels:
 `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` header removed from the request,
 and the `X-Custom-Response-Header` header removed from the response.
 
-Please note that is not possible to remove headers through the use of Docker labels for now.
+Please note that is not possible to remove headers through the use of labels (Docker, Rancher, Marathon, ...) for now.
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.containo.us/v1alpha1
@@ -78,7 +78,12 @@ spec:
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name": "test",
+}
 ```
 
 ```toml tab="File"    
@@ -117,6 +122,13 @@ spec:
 labels:
   - "traefik.http.middlewares.testHeader.Headers.FrameDeny=true"
   - "traefik.http.middlewares.testHeader.Headers.SSLRedirect=true"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.testHeader.Headers.FrameDeny": "true",
+  "traefik.http.middlewares.testHeader.Headers.SSLRedirect": "true"
+}
 ```
 
 ```toml tab="File"    
@@ -161,6 +173,15 @@ labels:
   - "traefik.http.middlewares.testHeader.Headers.AccessControlAllowOrigin=origin-list-or-null"
   - "traefik.http.middlewares.testHeader.Headers.AccessControlMaxAge=100"
   - "traefik.http.middlewares.testHeader.Headers.AddVaryHeader=true"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.testHeader.Headers.AccessControlAllowMethods": "GET,OPTIONS,PUT",
+  "traefik.http.middlewares.testHeader.Headers.AccessControlAllowOrigin": "origin-list-or-null",
+  "traefik.http.middlewares.testHeader.Headers.AccessControlMaxAge": "100",
+  "traefik.http.middlewares.testHeader.Headers.AddVaryHeader": "true"
+}
 ```
 
 ```toml tab="File"    
