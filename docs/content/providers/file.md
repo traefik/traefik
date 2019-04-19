@@ -7,8 +7,8 @@ The file provider lets you define the [dynamic configuration](./overview.md) in 
 You can write these configuration elements:
 
 * At the end of the main Traefik configuration file (by default: `traefik.toml`).
-* In [a dedicated file](#filename-optional)
-* In [several dedicated files](#directory-optional)
+* In [a dedicated file](#filename)
+* In [several dedicated files](#directory)
 
 !!! note
     The file provider is the default format used throughout the documentation to show samples of the configuration for many features. 
