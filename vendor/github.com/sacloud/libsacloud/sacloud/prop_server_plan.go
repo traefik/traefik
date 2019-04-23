@@ -23,6 +23,15 @@ func (p *propServerPlan) SetServerPlanByID(planID string) {
 	p.ServerPlan.Resource = NewResourceByStringID(planID)
 }
 
+// SetServerPlanByValue サーバープラン設定(値指定)
+func (p *propServerPlan) SetServerPlanByValue(cpu int, memoryGB int, gen PlanGenerations) {
+	plan := &ProductServer{}
+	plan.CPU = cpu
+	plan.SetMemoryGB(memoryGB)
+	plan.Generation = gen
+	p.ServerPlan = plan
+}
+
 // GetCPU CPUコア数 取得
 func (p *propServerPlan) GetCPU() int {
 	if p.ServerPlan == nil {
@@ -48,4 +57,8 @@ func (p *propServerPlan) GetMemoryGB() int {
 	}
 
 	return p.ServerPlan.GetMemoryGB()
+}
+
+func (p *propServerPlan) SetMemoryGB(memoryGB int) {
+	p.ServerPlan.SetMemoryGB(memoryGB)
 }

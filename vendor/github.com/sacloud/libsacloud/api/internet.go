@@ -2,8 +2,9 @@ package api
 
 import (
 	"fmt"
-	"github.com/sacloud/libsacloud/sacloud"
 	"time"
+
+	"github.com/sacloud/libsacloud/sacloud"
 )
 
 // InternetAPI ルーターAPI

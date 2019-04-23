@@ -41,3 +41,21 @@ func (i *Interface) GetHostName() string {
 func (i *Interface) GetPacketFilter() *PacketFilter {
 	return i.PacketFilter
 }
+
+// UpstreamType 上流ネットワーク種別
+func (i *Interface) UpstreamType() EUpstreamNetworkType {
+	sw := i.Switch
+	if sw == nil {
+		return EUpstreamNetworkNone
+	}
+
+	if sw.Subnet == nil {
+		return EUpstreamNetworkSwitch
+	}
+
+	if sw.Scope == ESCopeShared {
+		return EUpstreamNetworkShared
+	}
+
+	return EUpstreamNetworkRouter
+}

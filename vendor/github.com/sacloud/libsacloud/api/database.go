@@ -3,8 +3,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sacloud/libsacloud/sacloud"
 	"time"
+
+	"github.com/sacloud/libsacloud/sacloud"
 )
 
 //HACK: さくらのAPI側仕様: Applianceの内容によってJSONフォーマットが異なるため

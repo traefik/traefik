@@ -3,8 +3,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sacloud/libsacloud/sacloud"
 	"time"
+
+	"github.com/sacloud/libsacloud/sacloud"
 )
 
 // SearchMobileGatewayResponse モバイルゲートウェイ検索レスポンス
@@ -39,6 +40,14 @@ type mobileGatewaySIMResponse struct {
 	*sacloud.ResultFlagValue
 	SIM     []sacloud.SIMInfo `json:"sim,omitempty"`
 	Success interface{}       `json:",omitempty"` //HACK: さくらのAPI側仕様: 戻り値:Successがbool値へ変換できないためinterface{}
+}
+
+type trafficMonitoringBody struct {
+	TrafficMonitoring *sacloud.TrafficMonitoringConfig `json:"traffic_monitoring_config"`
+}
+
+type trafficStatusBody struct {
+	TrafficStatus *sacloud.TrafficStatus `json:"traffic_status"`
 }
 
 // MobileGatewayAPI モバイルゲートウェイAPI
@@ -322,8 +331,8 @@ func (api *MobileGatewayAPI) AddSIMRoute(id int64, simID int64, prefix string) (
 	param := &sacloud.MobileGatewaySIMRoutes{
 		SIMRoutes: routes,
 	}
-	added := param.AddSIMRoute(simID, prefix)
-	if !added {
+	index, added := param.AddSIMRoute(simID, prefix)
+	if index < 0 || added == nil {
 		return false, nil
 	}
 
@@ -411,4 +420,61 @@ func (api *MobileGatewayAPI) Logs(id int64, body interface{}) ([]sacloud.SIMLog,
 		return nil, err
 	}
 	return res.Logs, nil
+}
+
+// GetTrafficMonitoringConfig トラフィックコントロール 取得
+func (api *MobileGatewayAPI) GetTrafficMonitoringConfig(id int64) (*sacloud.TrafficMonitoringConfig, error) {
+	var (
+		method = "GET"
+		uri    = fmt.Sprintf("%s/%d/mobilegateway/traffic_monitoring", api.getResourceURL(), id)
+	)
+
+	res := &trafficMonitoringBody{}
+	err := api.baseAPI.request(method, uri, nil, res)
+	if err != nil {
+		return nil, err
+	}
+	return res.TrafficMonitoring, nil
+}
+
+// SetTrafficMonitoringConfig トラフィックコントロール 設定
+func (api *MobileGatewayAPI) SetTrafficMonitoringConfig(id int64, trafficMonConfig *sacloud.TrafficMonitoringConfig) (bool, error) {
+	var (
+		method = "PUT"
+		uri    = fmt.Sprintf("%s/%d/mobilegateway/traffic_monitoring", api.getResourceURL(), id)
+	)
+
+	req := &trafficMonitoringBody{
+		TrafficMonitoring: trafficMonConfig,
+	}
+	return api.modify(method, uri, req)
+}
+
+// DisableTrafficMonitoringConfig トラフィックコントロール 解除
+func (api *MobileGatewayAPI) DisableTrafficMonitoringConfig(id int64) (bool, error) {
+	var (
+		method = "DELETE"
+		uri    = fmt.Sprintf("%s/%d/mobilegateway/traffic_monitoring", api.getResourceURL(), id)
+	)
+	return api.modify(method, uri, nil)
+}
+
+// GetTrafficStatus 当月通信量 取得
+func (api *MobileGatewayAPI) GetTrafficStatus(id int64) (*sacloud.TrafficStatus, error) {
+	var (
+		method = "GET"
+		uri    = fmt.Sprintf("%s/%d/mobilegateway/traffic_status", api.getResourceURL(), id)
+	)
+
+	res := &trafficStatusBody{}
+	err := api.baseAPI.request(method, uri, nil, res)
+	if err != nil {
+		return nil, err
+	}
+	return res.TrafficStatus, nil
+}
+
+// MonitorBy 指定位置のインターフェースのアクティビティーモニター取得
+func (api *MobileGatewayAPI) MonitorBy(id int64, nicIndex int, body *sacloud.ResourceMonitorRequest) (*sacloud.MonitorValues, error) {
+	return api.baseAPI.applianceMonitorBy(id, "interface", nicIndex, body)
 }

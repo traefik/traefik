@@ -3,8 +3,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sacloud/libsacloud/sacloud"
 	"time"
+
+	"github.com/sacloud/libsacloud/sacloud"
 )
 
 //HACK: さくらのAPI側仕様: Applianceの内容によってJSONフォーマットが異なるため
@@ -36,6 +37,12 @@ type loadBalancerResponse struct {
 	*sacloud.ResultFlagValue
 	*sacloud.LoadBalancer `json:"Appliance,omitempty"`
 	Success               interface{} `json:",omitempty"` //HACK: さくらのAPI側仕様: 戻り値:Successがbool値へ変換できないためinterface{}
+}
+
+type loadBalancerStatusResponse struct {
+	*sacloud.ResultFlagValue
+	Success      interface{}                       `json:",omitempty"` //HACK: さくらのAPI側仕様: 戻り値:Successがbool値へ変換できないためinterface{}
+	LoadBalancer *sacloud.LoadBalancerStatusResult `json:",omitempty"`
 }
 
 // LoadBalancerAPI ロードバランサーAPI
@@ -229,4 +236,21 @@ func (api *LoadBalancerAPI) AsyncSleepWhileCopying(id int64, timeout time.Durati
 // Monitor アクティビティーモニター取得
 func (api *LoadBalancerAPI) Monitor(id int64, body *sacloud.ResourceMonitorRequest) (*sacloud.MonitorValues, error) {
 	return api.baseAPI.applianceMonitorBy(id, "interface", 0, body)
+}
+
+// Status ステータス取得
+func (api *LoadBalancerAPI) Status(id int64) (*sacloud.LoadBalancerStatusResult, error) {
+	var (
+		method = "GET"
+		uri    = fmt.Sprintf("%s/%d/status", api.getResourceURL(), id)
+		res    = &loadBalancerStatusResponse{}
+	)
+	err := api.baseAPI.request(method, uri, nil, res)
+	if err != nil {
+		return nil, err
+	}
+	if res.LoadBalancer == nil {
+		return nil, nil
+	}
+	return res.LoadBalancer, nil
 }
