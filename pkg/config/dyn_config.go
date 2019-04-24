@@ -87,7 +87,7 @@ func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool 
 	return reflect.DeepEqual(l, loadBalancer)
 }
 
-// SetDefaults Default values for a LoadBalancerService.
+// SetDefaults Default values for a TCPLoadBalancerService.
 func (l *TCPLoadBalancerService) SetDefaults() {
 	l.Method = "wrr"
 }
