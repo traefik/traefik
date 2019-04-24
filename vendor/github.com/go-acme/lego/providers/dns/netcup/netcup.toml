@@ -1,0 +1,20 @@
+Name = "Netcup"
+Description = ''''''
+URL = "https://www.netcup.eu/"
+Code = "netcup"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    NETCUP_CUSTOMER_NUMBER = "Customer number"
+    NETCUP_API_KEY = "API key"
+    NETCUP_API_PASSWORD = "API password"
+  [Configuration.Additional]
+    NETCUP_POLLING_INTERVAL = "Time between DNS propagation check"
+    NETCUP_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    NETCUP_TTL = "The TTL of the TXT record used for the DNS challenge"
+    NETCUP_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://www.netcup-wiki.de/wiki/DNS_API"

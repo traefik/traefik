@@ -1,0 +1,18 @@
+language: go
+
+go:
+  - '1.10'
+  - '1.11'
+
+# sudo=false makes the build run using a container
+sudo: false
+
+before_install:
+  - go get github.com/mattn/goveralls
+  - go get golang.org/x/tools/cmd/cover
+  - go get golang.org/x/tools/cmd/goimports
+  - go get github.com/golang/lint/golint
+script:
+  - gofiles=$(find ./ -name '*.go') && [ -z "$gofiles" ] || unformatted=$(goimports -l $gofiles) && [ -z "$unformatted" ] || (echo >&2 "Go files must be formatted with gofmt. Following files has problem:\n $unformatted" && false)
+  - golint ./... # This won't break the build, just show warnings
+  - $HOME/gopath/bin/goveralls -service=travis-ci

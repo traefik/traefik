@@ -1,0 +1,19 @@
+Name = "Vscale"
+Description = ''''''
+URL = "https://vscale.io/"
+Code = "vscale"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    VSCALE_API_TOKEN = "API token"
+  [Configuration.Additional]
+    VSCALE_BASE_URL = "API enddpoint URL"
+    VSCALE_POLLING_INTERVAL = "Time between DNS propagation check"
+    VSCALE_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    VSCALE_TTL = "The TTL of the TXT record used for the DNS challenge"
+    VSCALE_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://developers.vscale.io/documentation/api/v1/#api-Domains_Records"

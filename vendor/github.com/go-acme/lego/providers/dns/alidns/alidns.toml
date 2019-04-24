@@ -1,0 +1,20 @@
+Name = "Alibaba Cloud DNS"
+Description = ''''''
+URL = "https://www.alibabacloud.com/product/dns"
+Code = "alidns"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    ALICLOUD_ACCESS_KEY = "Access key ID"
+    ALICLOUD_SECRET_KEY = "Access Key secret"
+  [Configuration.Additional]
+    ALICLOUD_POLLING_INTERVAL = "Time between DNS propagation check"
+    ALICLOUD_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    ALICLOUD_TTL = "The TTL of the TXT record used for the DNS challenge"
+    ALICLOUD_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://www.alibabacloud.com/help/doc-detail/42875.htm"
+  GoClient = "https://github.com/aliyun/alibaba-cloud-sdk-go"

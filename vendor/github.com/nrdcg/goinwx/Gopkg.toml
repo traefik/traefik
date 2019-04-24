@@ -1,0 +1,11 @@
+[[constraint]]
+  name = "github.com/kolo/xmlrpc"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/fatih/structs"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/mitchellh/mapstructure"
+  version = "v1.1.2"

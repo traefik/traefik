@@ -1,0 +1,9 @@
+ignored = [
+  # From these libraries we should always ensure compatibility with the latest:
+  "github.com/opentracing/*",
+  "golang.org/x/*",
+]
+
+[[constraint]]
+  name = "github.com/tinylib/msgp"
+  revision = "3b5c87ab5fb00c660bf85b888445d9a01db64db4" # Feb 15, 2018

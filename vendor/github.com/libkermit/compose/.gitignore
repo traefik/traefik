@@ -1,0 +1,5 @@
+dist
+.gopath
+*.test
+vendor
+.idea

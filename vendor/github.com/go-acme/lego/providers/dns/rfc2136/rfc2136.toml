@@ -1,0 +1,22 @@
+Name = "RFC2136"
+Description = ''''''
+URL = "https://tools.ietf.org/html/rfc2136"
+Code = "rfc2136"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    RFC2136_TSIG_KEY = "Name of the secret key as defined in DNS server configuration. To disable TSIG authentication, leave the `RFC2136_TSIG*` variables unset."
+    RFC2136_TSIG_SECRET = "Secret key payload. To disable TSIG authentication, leave the` RFC2136_TSIG*` variables unset."
+    RFC2136_TSIG_ALGORITHM = "TSIG algorythm. See [miekg/dns#tsig.go](https://github.com/miekg/dns/blob/master/tsig.go) for supported values. To disable TSIG authentication, leave the `RFC2136_TSIG*` variables unset."
+    RFC2136_NAMESERVER = 'Network address in the form "host" or "host:port"'
+  [Configuration.Additional]
+    RFC2136_POLLING_INTERVAL = "Time between DNS propagation check"
+    RFC2136_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    RFC2136_TTL = "The TTL of the TXT record used for the DNS challenge"
+    RFC2136_DNS_TIMEOUT = "API request timeout"
+    RFC2136_SEQUENCE_INTERVAL = "Interval between iteration"
+
+[Links]
+  API = "https://tools.ietf.org/html/rfc2136"

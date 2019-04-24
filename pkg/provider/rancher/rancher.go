@@ -121,7 +121,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 				} else {
 					// Long polling should be favored for the most accurate configuration updates.
 					// Holds the connection until there is either a change in the metadata repository or `p.RefreshSeconds` has elapsed.
-					client.OnChangeCtx(ctxLog, p.RefreshSeconds, updateConfiguration)
+					client.OnChange(p.RefreshSeconds, updateConfiguration)
 				}
 			}
 

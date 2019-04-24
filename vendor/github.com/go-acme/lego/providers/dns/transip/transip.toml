@@ -1,0 +1,20 @@
+Name = "TransIP"
+Description = ''''''
+URL = "https://www.transip.nl/"
+Code = "transip"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    TRANSIP_ACCOUNT_NAME = "Account name"
+    TRANSIP_PRIVATE_KEY_PATH = "Private key path"
+  [Configuration.Additional]
+    TRANSIP_POLLING_INTERVAL = "Time between DNS propagation check"
+    TRANSIP_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    TRANSIP_TTL = "The TTL of the TXT record used for the DNS challenge"
+
+[Links]
+  API = "https://api.transip.nl/docs/transip.nl/package-Transip.html"
+  GoClient = "https://github.com/transip/gotransip"
+

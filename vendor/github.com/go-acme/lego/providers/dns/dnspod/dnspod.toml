@@ -1,0 +1,19 @@
+Name = "DNSPod"
+Description = ''''''
+URL = "http://www.dnspod.com/"
+Code = "dnspod"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    DNSPOD_API_KEY = "The user token"
+  [Configuration.Additional]
+    DNSPOD_POLLING_INTERVAL = "Time between DNS propagation check"
+    DNSPOD_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    DNSPOD_TTL = "The TTL of the TXT record used for the DNS challenge"
+    DNSPOD_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://www.dnspod.com/docs/index.html"
+  GoClient = "https://github.com/decker502/dnspod-go"

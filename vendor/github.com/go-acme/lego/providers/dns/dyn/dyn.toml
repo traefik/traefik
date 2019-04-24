@@ -1,0 +1,20 @@
+Name = "Dyn"
+Description = ''''''
+URL = "https://dyn.com/"
+Code = "dyn"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    DYN_CUSTOMER_NAME = "Customer name"
+    DYN_USER_NAME = "User name"
+    DYN_PASSWORD = "Paswword"
+  [Configuration.Additional]
+    DYN_POLLING_INTERVAL = "Time between DNS propagation check"
+    DYN_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    DYN_TTL = "The TTL of the TXT record used for the DNS challenge"
+    DYN_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://help.dyn.com/rest/"

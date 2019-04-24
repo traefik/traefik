@@ -1,0 +1,14 @@
+name: sarama
+
+up:
+  - go:
+      version: '1.8'
+
+commands:
+  test:
+    run: make test
+    desc: 'run unit tests'
+
+packages:
+  - git@github.com:Shopify/dev-shopify.git
+

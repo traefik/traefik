@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strings"
+
+	"github.com/kr/pretty"
 )
 
 // -----------------------------------------------------------------------
@@ -88,8 +91,12 @@ func (checker *notChecker) Info() *CheckerInfo {
 }
 
 func (checker *notChecker) Check(params []interface{}, names []string) (result bool, error string) {
-	result, _ = checker.sub.Check(params, names)
+	result, error = checker.sub.Check(params, names)
 	result = !result
+	if result {
+		// clear error message if the new result is true
+		error = ""
+	}
 	return
 }
 
@@ -153,6 +160,56 @@ func (checker *notNilChecker) Check(params []interface{}, names []string) (resul
 // -----------------------------------------------------------------------
 // Equals checker.
 
+func diffworthy(a interface{}) bool {
+	t := reflect.TypeOf(a)
+	switch t.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice, reflect.Struct, reflect.String, reflect.Ptr:
+		return true
+	}
+	return false
+}
+
+// formatUnequal will dump the actual and expected values into a textual
+// representation and return an error message containing a diff.
+func formatUnequal(obtained interface{}, expected interface{}) string {
+	// We do not do diffs for basic types because go-check already
+	// shows them very cleanly.
+	if !diffworthy(obtained) || !diffworthy(expected) {
+		return ""
+	}
+
+	// Handle strings, short strings are ignored (go-check formats
+	// them very nicely already). We do multi-line strings by
+	// generating two string slices and using kr.Diff to compare
+	// those (kr.Diff does not do string diffs by itself).
+	aStr, aOK := obtained.(string)
+	bStr, bOK := expected.(string)
+	if aOK && bOK {
+		l1 := strings.Split(aStr, "\n")
+		l2 := strings.Split(bStr, "\n")
+		// the "2" here is a bit arbitrary
+		if len(l1) > 2 && len(l2) > 2 {
+			diff := pretty.Diff(l1, l2)
+			return fmt.Sprintf(`String difference:
+%s`, formatMultiLine(strings.Join(diff, "\n"), false))
+		}
+		// string too short
+		return ""
+	}
+
+	// generic diff
+	diff := pretty.Diff(obtained, expected)
+	if len(diff) == 0 {
+		// No diff, this happens when e.g. just struct
+		// pointers are different but the structs have
+		// identical values.
+		return ""
+	}
+
+	return fmt.Sprintf(`Difference:
+%s`, formatMultiLine(strings.Join(diff, "\n"), false))
+}
+
 type equalsChecker struct {
 	*CheckerInfo
 }
@@ -175,7 +232,12 @@ func (checker *equalsChecker) Check(params []interface{}, names []string) (resul
 			error = fmt.Sprint(v)
 		}
 	}()
-	return params[0] == params[1], ""
+
+	result = params[0] == params[1]
+	if !result {
+		error = formatUnequal(params[0], params[1])
+	}
+	return
 }
 
 // -----------------------------------------------------------------------
@@ -200,7 +262,11 @@ var DeepEquals Checker = &deepEqualsChecker{
 }
 
 func (checker *deepEqualsChecker) Check(params []interface{}, names []string) (result bool, error string) {
-	return reflect.DeepEqual(params[0], params[1]), ""
+	result = reflect.DeepEqual(params[0], params[1])
+	if !result {
+		error = formatUnequal(params[0], params[1])
+	}
+	return
 }
 
 // -----------------------------------------------------------------------
@@ -235,10 +301,7 @@ func (checker *hasLenChecker) Check(params []interface{}, names []string) (resul
 	default:
 		return false, "obtained value type has no length"
 	}
-	if value.Len() == n {
-		return true, ""
-	}
-	return false, fmt.Sprintf("obtained length = %d", value.Len())
+	return value.Len() == n, ""
 }
 
 // -----------------------------------------------------------------------

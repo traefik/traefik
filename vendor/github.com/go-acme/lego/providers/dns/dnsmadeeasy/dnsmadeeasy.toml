@@ -1,0 +1,20 @@
+Name = "DNS Made Easy"
+Description = ''''''
+URL = "https://dnsmadeeasy.com/"
+Code = "dnsmadeeasy"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    DNSMADEEASY_API_KEY = "The API key"
+    DNSMADEEASY_API_SECRET = "The API Secret key"
+  [Configuration.Additional]
+    DNSMADEEASY_SANDBOX = "Activate the sandbox (boolean)"
+    DNSMADEEASY_POLLING_INTERVAL = "Time between DNS propagation check"
+    DNSMADEEASY_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    DNSMADEEASY_TTL = "The TTL of the TXT record used for the DNS challenge"
+    DNSMADEEASY_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://api-docs.dnsmadeeasy.com/"

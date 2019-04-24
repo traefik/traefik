@@ -1,0 +1,20 @@
+Name = "INWX"
+Description = ''''''
+URL = "https://www.inwx.de/en"
+Code = "inwx"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    INWX_USERNAME = "Username"
+    INWX_PASSWORD = "Password"
+  [Configuration.Additional]
+    INWX_POLLING_INTERVAL = "Time between DNS propagation check"
+    INWX_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    INWX_TTL = "The TTL of the TXT record used for the DNS challenge"
+    INWX_SANDBOX = "Activate the sandbox (boolean)"
+
+[Links]
+  API = "https://www.inwx.de/en/help/apidoc"
+  GoClient = "https://github.com/nrdcg/goinwx"

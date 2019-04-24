@@ -1,0 +1,19 @@
+Name = "Domain Offensive (do.de)"
+Description = ''''''
+URL = "https://www.do.de/"
+Code = "dode"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    DODE_TOKEN = "API token"
+  [Configuration.Additional]
+    DODE_POLLING_INTERVAL = "Time between DNS propagation check"
+    DODE_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    DODE_TTL = "The TTL of the TXT record used for the DNS challenge"
+    DODE_HTTP_TIMEOUT = "API request timeout"
+    DODE_SEQUENCE_INTERVAL = "Interval between iteration"
+
+[Links]
+  API = "https://www.do.de/wiki/LetsEncrypt_-_Entwickler"

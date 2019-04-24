@@ -1,0 +1,23 @@
+Name = "FastDNS"
+Description = ''''''
+URL = "https://www.akamai.com/us/en/products/security/fast-dns.jsp"
+Code = "fastdns"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    AKAMAI_HOST = "API host"
+    AKAMAI_CLIENT_TOKEN = "Client token"
+    AKAMAI_CLIENT_SECRET = "Client secret"
+    AKAMAI_ACCESS_TOKEN = "Access token"
+  [Configuration.Additional]
+    AKAMAI_POLLING_INTERVAL = "Time between DNS propagation check"
+    AKAMAI_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    AKAMAI_TTL = "The TTL of the TXT record used for the DNS challenge"
+
+[Links]
+  API = "https://developer.akamai.com/api/web_performance/fast_dns_record_management/v1.html"
+  GoClient = "https://github.com/akamai/AkamaiOPEN-edgegrid-golang"
+
+

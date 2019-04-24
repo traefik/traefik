@@ -1,0 +1,18 @@
+Name = "Amazon Lightsail"
+Description = ''''''
+URL = "https://aws.amazon.com/lightsail/"
+Code = "lightsail"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    AWS_ACCESS_KEY_ID = "Access key ID"
+    AWS_SECRET_ACCESS_KEY = "Secret access key"
+    DNS_ZONE = "DNS zone"
+  [Configuration.Additional]
+    LIGHTSAIL_POLLING_INTERVAL = "Time between DNS propagation check"
+    LIGHTSAIL_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+
+[Links]
+  GoClient = "https://github.com/aws/aws-sdk-go/aws"

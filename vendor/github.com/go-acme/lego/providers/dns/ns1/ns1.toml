@@ -1,0 +1,19 @@
+Name = "NS1"
+Description = ''''''
+URL = "https://ns1.com"
+Code = "ns1"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    NS1_API_KEY = "API key"
+  [Configuration.Additional]
+    NS1_POLLING_INTERVAL = "Time between DNS propagation check"
+    NS1_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    NS1_TTL = "The TTL of the TXT record used for the DNS challenge"
+    NS1_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://ns1.com/api"
+  GoClient = "https://github.com/ns1/ns1-go"

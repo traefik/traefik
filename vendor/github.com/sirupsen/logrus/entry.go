@@ -103,8 +103,7 @@ func (entry *Entry) WithError(err error) *Entry {
 
 // Add a context to the Entry.
 func (entry *Entry) WithContext(ctx context.Context) *Entry {
-	entry.Context = ctx
-	return entry
+	return &Entry{Logger: entry.Logger, Data: entry.Data, Time: entry.Time, err: entry.err, Context: ctx}
 }
 
 // Add a single field to the Entry.

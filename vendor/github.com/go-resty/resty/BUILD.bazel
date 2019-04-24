@@ -1,0 +1,36 @@
+package(default_visibility = ["//visibility:private"])
+
+load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+gazelle(
+    name = "gazelle",
+    command = "fix",
+    prefix = "gopkg.in/resty.v1",
+)
+
+go_library(
+    name = "go_default_library",
+    srcs = glob(
+        ["*.go"],
+        exclude = ["*_test.go"],
+    ),
+    importpath = "gopkg.in/resty.v1",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_x_net//publicsuffix:go_default_library"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs =
+        glob(
+            ["*_test.go"],
+            exclude = ["example_test.go"],
+        ),
+    data = glob(["test-data/*"]),
+    embed = [":go_default_library"],
+    importpath = "gopkg.in/resty.v1",
+    deps = [
+        "@org_golang_x_net//proxy:go_default_library",
+    ],
+)

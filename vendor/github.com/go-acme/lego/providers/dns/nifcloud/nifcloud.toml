@@ -1,0 +1,19 @@
+Name = "NIFCloud"
+Description = ''''''
+URL = "https://www.nifcloud.com/"
+Code = "nifcloud"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    NIFCLOUD_ACCESS_KEY_ID = "Access key"
+    NIFCLOUD_SECRET_ACCESS_KEY = "Secret access key"
+  [Configuration.Additional]
+    NIFCLOUD_POLLING_INTERVAL = "Time between DNS propagation check"
+    NIFCLOUD_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    NIFCLOUD_TTL = "The TTL of the TXT record used for the DNS challenge"
+    NIFCLOUD_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://mbaas.nifcloud.com/doc/current/rest/common/format.html"

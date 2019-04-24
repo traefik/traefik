@@ -1,0 +1,18 @@
+Name = "Linode (v4)"
+Description = ''''''
+URL = "https://www.linode.com/"
+Code = "linodev4"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    LINODE_TOKEN = "API token"
+  [Configuration.Additional]
+    LINODE_POLLING_INTERVAL = "Time between DNS propagation check"
+    LINODE_TTL = "The TTL of the TXT record used for the DNS challenge"
+    LINODE_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://developers.linode.com/api/v4"
+  GoClient = "https://github.com/linode/linodego"

@@ -1,0 +1,2 @@
+.idea/
+vendor/

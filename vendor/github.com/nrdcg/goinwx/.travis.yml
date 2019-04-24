@@ -1,0 +1,23 @@
+language: go
+
+go:
+  - 1.11.x
+  - 1.x
+
+sudo: false
+
+notifications:
+  email:
+    on_success: never
+    on_failure: change
+
+before_install:
+  # Download and install dep
+  - curl -sI https://github.com/golang/dep/releases/latest | grep -Fi Location  | tr -d '\r' | sed "s/tag/download/g" | awk -F " " '{ print $2 "/dep-linux-amd64"}' | wget --output-document=$GOPATH/bin/dep -i -
+  - chmod +x $GOPATH/bin/dep
+
+  # Install linters and misspell
+  - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.12.5
+  - golangci-lint --version
+
+install: make dependencies

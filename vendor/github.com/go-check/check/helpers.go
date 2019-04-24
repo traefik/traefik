@@ -212,7 +212,7 @@ func (c *C) internalCheck(funcName string, obtained interface{}, checker Checker
 
 	// Do the actual check.
 	result, error := checker.Check(params, names)
-	if !result {
+	if !result || error != "" {
 		c.logCaller(2)
 		for i := 0; i != len(params); i++ {
 			c.logValue(names[i], params[i])

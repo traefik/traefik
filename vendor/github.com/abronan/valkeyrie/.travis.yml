@@ -1,0 +1,34 @@
+language: go
+
+go:
+  - 1.9.1
+
+sudo: true
+
+before_install:
+  # Symlink below is needed for Travis CI to work correctly on personal forks of valkeyrie
+  - ln -s $HOME/gopath/src/github.com/${TRAVIS_REPO_SLUG///valkeyrie/} $HOME/gopath/src/github.com/abronan
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
+  - go get github.com/golang/lint/golint
+  - go get github.com/GeertJohan/fgt
+  # ca-certificates is needed for wget to work properly
+  - sudo apt-get install ca-certificates
+
+before_script:
+  - script/travis_consul.sh 0.9.3
+  - script/travis_etcd.sh 3.2.9
+  - script/travis_zk.sh 3.4.10
+  - script/travis_redis.sh 4.0.2
+
+script:
+  - ./consul agent -server -bootstrap -advertise=127.0.0.1 -data-dir /tmp/consul -config-file=./config.json 1>/dev/null &
+  - ./etcd/etcd --listen-client-urls 'http://0.0.0.0:4001' --advertise-client-urls 'http://127.0.0.1:4001' >/dev/null 2>&1 &
+  - ./zk/bin/zkServer.sh start ./zk/conf/zoo.cfg 1> /dev/null
+  - ./redis/src/redis-server &
+  - script/validate-gofmt
+  - go vet ./...
+  - fgt golint ./...
+  - go test -v -race ./...
+  - script/coverage
+  - goveralls -service=travis-ci -coverprofile=goverage.report

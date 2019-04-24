@@ -1,0 +1,16 @@
+package: github.com/Masterminds/sprig
+import:
+- package: github.com/Masterminds/goutils
+  version: ^1.0.0
+- package: github.com/google/uuid
+  version: ^0.2
+- package: golang.org/x/crypto
+  subpackages:
+  - scrypt
+- package: github.com/Masterminds/semver
+  version: v1.2.2
+- package: github.com/stretchr/testify
+- package: github.com/imdario/mergo
+  version: ~0.3.7
+- package: github.com/huandu/xstrings
+  version: ^1.2

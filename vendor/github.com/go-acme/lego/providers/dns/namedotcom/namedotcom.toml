@@ -1,0 +1,21 @@
+Name = "Name.com"
+Description = ''''''
+URL = "https://www.name.com"
+Code = "namedotcom"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    NAMECOM_USERNAME = "Username"
+    NAMECOM_API_TOKEN = "API token"
+  [Configuration.Additional]
+    NAMECOM_POLLING_INTERVAL = "Time between DNS propagation check"
+    NAMECOM_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    NAMECOM_TTL = "The TTL of the TXT record used for the DNS challenge"
+    NAMECOM_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://www.name.com/api-docs/DNS"
+  GoClient = "https://github.com/namedotcom/go"
+

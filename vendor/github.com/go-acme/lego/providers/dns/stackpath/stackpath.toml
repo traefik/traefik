@@ -1,0 +1,19 @@
+Name = "Stackpath"
+Description = ''''''
+URL = "https://www.stackpath.com/"
+Code = "stackpath"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    STACKPATH_CLIENT_ID = "Client ID"
+    STACKPATH_CLIENT_SECRET = "Client secret"
+    STACKPATH_STACK_ID = "Stack ID"
+  [Configuration.Additional]
+    STACKPATH_POLLING_INTERVAL = "Time between DNS propagation check"
+    STACKPATH_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    STACKPATH_TTL = "The TTL of the TXT record used for the DNS challenge"
+
+[Links]
+  API = "https://developer.stackpath.com/en/api/dns/#tag/Zone"

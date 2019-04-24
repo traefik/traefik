@@ -1,0 +1,8 @@
+.vscode
+debug.test
+coverage.out
+kv_local_test.go
+scripts
+vendor/
+*.swp
+.idea/

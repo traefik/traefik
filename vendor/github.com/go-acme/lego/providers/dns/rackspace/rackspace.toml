@@ -1,0 +1,19 @@
+Name = "Rackspace"
+Description = ''''''
+URL = "https://www.rackspace.com/"
+Code = "rackspace"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    RACKSPACE_USER = "API user"
+    RACKSPACE_API_KEY = "API key"
+  [Configuration.Additional]
+    RACKSPACE_POLLING_INTERVAL = "Time between DNS propagation check"
+    RACKSPACE_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    RACKSPACE_TTL = "The TTL of the TXT record used for the DNS challenge"
+    RACKSPACE_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://developer.rackspace.com/docs/cloud-dns/v1/"

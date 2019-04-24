@@ -1,0 +1,14 @@
+language: go
+
+go:
+  - 1.8.x
+  - 1.9.x
+  - 1.10.x
+  - tip
+
+install:
+  - go get -d -t ./...
+  - if [[ ! $TRAVIS_GO_VERSION = 1.8* ]]; then go get -u golang.org/x/lint/golint ; fi
+
+script:
+  - make test vet lint bench

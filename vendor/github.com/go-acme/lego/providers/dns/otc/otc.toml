@@ -1,0 +1,23 @@
+Name = "Open Telekom Cloud"
+Description = ''''''
+URL = "https://cloud.telekom.de/en"
+Code = "otc"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    OTC_USER_NAME = "User name"
+    OTC_PASSWORD = "Password"
+    OTC_PROJECT_NAME = "Project name"
+    OTC_DOMAIN_NAME = "Domain name"
+    OTC_IDENTITY_ENDPOINT = "Identity endpoint URL"
+  [Configuration.Additional]
+    OTC_POLLING_INTERVAL = "Time between DNS propagation check"
+    OTC_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    OTC_TTL = "The TTL of the TXT record used for the DNS challenge"
+    OTC_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://docs.otc.t-systems.com/en-us/dns/index.html"
+

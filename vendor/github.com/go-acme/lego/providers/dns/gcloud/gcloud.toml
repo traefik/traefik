@@ -1,0 +1,21 @@
+Name = "Google Cloud"
+Description = ''''''
+URL = "https://cloud.google.com"
+Code = "gcloud"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    GCE_PROJECT = "Project name"
+    'Application Default Credentials' = "[Documentation](https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application)"
+    GCE_SERVICE_ACCOUNT_FILE = "Account file path"
+    GCE_SERVICE_ACCOUNT = "Account"
+  [Configuration.Additional]
+    GCE_POLLING_INTERVAL = "Time between DNS propagation check"
+    GCE_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    GCE_TTL = "The TTL of the TXT record used for the DNS challenge"
+
+[Links]
+  API = "https://community.exoscale.com/documentation/dns/api/"
+  GoClient = "https://github.com/googleapis/google-api-go-client"

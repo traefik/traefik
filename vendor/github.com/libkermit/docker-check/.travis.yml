@@ -1,0 +1,14 @@
+sudo: required
+
+services:
+  - docker
+
+install:
+  - sudo service docker stop
+  - sudo curl https://get.docker.com/builds/Linux/x86_64/docker-1.10.0 -o /usr/bin/docker
+  - sudo chmod +x /usr/bin/docker
+  - sudo service docker start
+
+script:
+  - make validate
+  - make DAEMON_VERSION="all" test

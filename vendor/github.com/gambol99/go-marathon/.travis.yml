@@ -1,0 +1,18 @@
+env:
+  global:
+    secure: YiSCbBUz0VMONSBZ6TfRaSM9bFBuT5xvaknt9WxWczPSiSgiY8+dGYlsOaX2jzI26J4zA8KxIyxOihN1UE28tkkGoXRkRovoQuOl9YUYp+VCtZdaeksZ7tJ/j/b6aYGpGN3GRRfxkuIhXw1ghZLgqdCVtqfmD3GODlmeuFE01ug=
+language: go
+go:
+- 1.6
+- 1.7
+- 1.8
+- 1.9
+- "1.10"
+install:
+- go get github.com/mattn/goveralls
+script:
+- make test examples
+- if ([[ ${TRAVIS_BRANCH} == "master" ]] && [[ ${TRAVIS_EVENT_TYPE} == "push" ]]); then
+    make coverage;
+    goveralls -coverprofile=coverage -service=travis-ci;
+  fi

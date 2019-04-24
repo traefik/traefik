@@ -1,7 +1,6 @@
 package metadata
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +11,6 @@ import (
 type Client interface {
 	OnChangeWithError(int, func(string)) error
 	OnChange(int, func(string))
-	OnChangeCtx(context.Context, int, func(string))
 	SendRequest(string) ([]byte, error)
 	GetVersion() (string, error)
 	GetSelfHost() (Host, error)
@@ -68,15 +66,10 @@ func NewClientAndWait(url string) (Client, error) {
 
 func (m *client) SendRequest(path string) ([]byte, error) {
 	req, err := http.NewRequest("GET", m.url+path, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	req.Header.Add("Accept", "application/json")
 	if m.ip != "" {
 		req.Header.Add("X-Forwarded-For", m.ip)
 	}
-
 	resp, err := m.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -85,34 +78,6 @@ func (m *client) SendRequest(path string) ([]byte, error) {
 
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("Error %v accessing %v path", resp.StatusCode, path)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
-}
-
-func (m *client) SendRequestCtx(ctx context.Context, path string) ([]byte, error) {
-	req, err := http.NewRequest("GET", m.url+path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Accept", "application/json")
-	if m.ip != "" {
-		req.Header.Add("X-Forwarded-For", m.ip)
-	}
-
-	resp, err := m.client.Do(req.WithContext(ctx))
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("error %v accessing %v path", resp.StatusCode, path)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)

@@ -1,0 +1,24 @@
+Name = "Azure"
+Description = ''''''
+URL = "https://azure.microsoft.com/services/dns/"
+Code = "azure"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    AZURE_CLIENT_ID = "Client ID"
+    AZURE_CLIENT_SECRET = "Client secret"
+    AZURE_SUBSCRIPTION_ID = "Subscription ID"
+    AZURE_TENANT_ID = "Tenant ID"
+    AZURE_RESOURCE_GROUP = "Resource group"
+    'instance metadata service' = "If the credentials are **not** set via the environment, then it will attempt to get a bearer token via the [instance metadata service](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service)."
+  [Configuration.Additional]
+    AZURE_POLLING_INTERVAL = "Time between DNS propagation check"
+    AZURE_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    AZURE_TTL = "The TTL of the TXT record used for the DNS challenge"
+    AZURE_METADATA_ENDPOINT = "Metadata Service endpoint URL"
+
+[Links]
+  API = "https://docs.microsoft.com/en-us/go/azure/"
+  GoClient = "https://github.com/Azure/azure-sdk-for-go"

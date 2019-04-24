@@ -1,0 +1,19 @@
+Name = "Namecheap"
+Description = ''''''
+URL = "https://www.namecheap.com"
+Code = "namecheap"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    NAMECHEAP_API_USER = "API user"
+    NAMECHEAP_API_KEY = "API key"
+  [Configuration.Additional]
+    NAMECHEAP_POLLING_INTERVAL = "Time between DNS propagation check"
+    NAMECHEAP_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    NAMECHEAP_TTL = "The TTL of the TXT record used for the DNS challenge"
+    NAMECHEAP_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://www.namecheap.com/support/api/methods.aspx"

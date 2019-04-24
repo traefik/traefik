@@ -1,0 +1,11 @@
+language: go
+
+go:
+  - 1.7.5
+  - 1.8.7
+  - 1.9.5
+  - 1.10.1
+
+notifications:
+  slack:
+    secure: P+1XnVKNjAll5rDE4n6ZFAqH1byRtN2bBGNwkCs6DWtMFIsKaU6nn13OhFwUicZtHnQbLCDz7rNtmjIEBYYNiphUP0eBucH0mn3JmgoX5nSD4uSbUraNWATdhmhaCuX+P4ydd7z9tW9FLLRZWHWF7731e9l1HdV8t1KkiNgh6a4qMX/2g88b3YZPX9Np1OLjvlt2rmfsRn0V7TTVATvCodq9ddBFlJOUjIjB43cVqRgoDJSkLEV8jEyvncjTVcSj2jpJes+WyO5kwMz23/r62kXaAGofc2fKCIVPglGG3QOlC6j9WRkYJ2sRHC9CFX7broWBoergId2FJjevsdbAqB2AEppfm+zrKlbqv4oeOczsfumMitC4MMSmzJQdLGNdSN5+AwVqdxlUguMjLIwaZpYorWSNeOBF2uLsGoDA/q57SX6OcoqYdxQhi+mRKTR3O71wFd0AIGJEo1V5k2iGMwZVb126h6hWg646De5iYI4HKS8UeHsug78OnP9oI1e4w2TA3QOHGNu61fM5xunpjs2UlTkMWHWwkvwwVDgzNWailFnNKctQgzzBy/2Dnx0BWgDiZQMLteCOK8p0iB/Furp7fYx+e1L8Mxc++UnwoyBfCAfU95nDut/lSr+0yz3As4jMfz5S7fpJtpkjwtY2kfICCIESM/j3DakJeVrV03o=

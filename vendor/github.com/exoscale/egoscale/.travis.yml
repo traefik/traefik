@@ -1,0 +1,49 @@
+language: go
+
+dist: xenial
+sudo: required
+
+go:
+- "1.7.x"
+- "1.8.x"
+- "1.9.x"
+- "1.10.x"
+- "1.11.x"
+- "1.12.x"
+- tip
+
+env:
+  - GOLANGCI_LINT_VERSION=1.15.0 GO111MODULES=on
+
+cache: apt
+
+addons:
+  apt:
+    update: true
+    packages:
+    - rpm
+
+install:
+  - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $GOPATH/bin v${GOLANGCI_LINT_VERSION}
+  - npm i codeclimate-test-reporter
+  - '[ "$(echo "$TRAVIS_GO_VERSION" | perl -pe "s/\\.[x\\d]+$//")" = "1.11" ] && go mod vendor || go get -u github.com/satori/go.uuid'
+
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+
+script:
+  - go test -race -coverprofile=c.out -covermode=atomic .
+
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+
+jobs:
+  include:
+  - stage: golangci-lint
+    go: 1.10.x
+    if: type = pull_request
+    script:
+      - go get -u github.com/satori/go.uuid
+      - golangci-lint run .

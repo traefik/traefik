@@ -1,0 +1,19 @@
+language: go
+
+go:
+  - 1.7.x
+  - 1.8.x
+  - 1.9.x
+  - 1.10.x
+  - tip
+
+before_install:
+  - go get -u github.com/codegangsta/negroni
+  - go get -u github.com/alecthomas/gometalinter
+
+install:
+  - gometalinter --install
+
+script:
+  - gometalinter --cyclo-over=50
+  - go test -v -race -tags=integration

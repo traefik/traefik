@@ -1,0 +1,25 @@
+language: go
+
+go:
+  - 1.9.x
+  - master
+
+sudo: false
+
+before_install:
+  - go get -u golang.org/x/lint/golint
+  - go get -u honnef.co/go/tools/cmd/{gosimple,staticcheck}
+  - go get -u github.com/client9/misspell/cmd/misspell
+  - curl -sI https://github.com/golang/dep/releases/latest | grep -Fi Location  | tr -d '\r' | sed "s/tag/download/g" | awk -F " " '{ print $2 "/dep-linux-amd64"}' | wget --output-document=$GOPATH/bin/dep -i -
+  - chmod +x $GOPATH/bin/dep
+
+install:
+  - make dependencies
+  - go get github.com/mattn/goveralls
+
+script:
+  - make
+  - GOOS=darwin go build
+  - GOOS=windows go build
+  - GOOS=linux go build
+  - $HOME/gopath/bin/goveralls -service=travis-ci

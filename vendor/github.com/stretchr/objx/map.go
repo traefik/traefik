@@ -47,9 +47,8 @@ func New(data interface{}) Map {
 //
 // The arguments follow a key, value pattern.
 //
-// Panics
 //
-// Panics if any key argument is non-string or if there are an odd number of arguments.
+// Returns nil if any key argument is non-string or if there are an odd number of arguments.
 //
 // Example
 //
@@ -58,14 +57,13 @@ func New(data interface{}) Map {
 //     m := objx.MSI("name", "Mat", "age", 29, "subobj", objx.MSI("active", true))
 //
 //     // creates an Map equivalent to
-//     m := objx.New(map[string]interface{}{"name": "Mat", "age": 29, "subobj": map[string]interface{}{"active": true}})
+//     m := objx.Map{"name": "Mat", "age": 29, "subobj": objx.Map{"active": true}}
 func MSI(keyAndValuePairs ...interface{}) Map {
-	newMap := make(map[string]interface{})
+	newMap := Map{}
 	keyAndValuePairsLen := len(keyAndValuePairs)
 	if keyAndValuePairsLen%2 != 0 {
-		panic("objx: MSI must have an even number of arguments following the 'key, value' pattern.")
+		return nil
 	}
-
 	for i := 0; i < keyAndValuePairsLen; i = i + 2 {
 		key := keyAndValuePairs[i]
 		value := keyAndValuePairs[i+1]
@@ -73,11 +71,11 @@ func MSI(keyAndValuePairs ...interface{}) Map {
 		// make sure the key is a string
 		keyString, keyStringOK := key.(string)
 		if !keyStringOK {
-			panic("objx: MSI must follow 'string, interface{}' pattern.  " + keyString + " is not a valid key.")
+			return nil
 		}
 		newMap[keyString] = value
 	}
-	return New(newMap)
+	return newMap
 }
 
 // ****** Conversion Constructors
@@ -170,12 +168,11 @@ func FromURLQuery(query string) (Map, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	m := make(map[string]interface{})
+	m := Map{}
 	for k, vals := range vals {
 		m[k] = vals[0]
 	}
-	return New(m), nil
+	return m, nil
 }
 
 // MustFromURLQuery generates a new Obj by parsing the specified

@@ -1,0 +1,19 @@
+Name = "CloudXNS"
+Description = """"""
+URL = "https://www.cloudxns.net/"
+Code = "cloudxns"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    CLOUDXNS_API_KEY = "The API key"
+    CLOUDXNS_SECRET_KEY = "THe API secret key"
+  [Configuration.Additional]
+    CLOUDXNS_POLLING_INTERVAL = "Time between DNS propagation check"
+    CLOUDXNS_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    CLOUDXNS_TTL = "The TTL of the TXT record used for the DNS challenge"
+    CLOUDXNS_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://www.cloudxns.net/Public/Doc/CloudXNS_api2.0_doc_zh-cn.zip"

@@ -36,6 +36,8 @@ DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) -i $(DOCKER_RUN_OPTS)
 
 PRE_TARGET ?= build-dev-image
 
+export GO111MODULE=on
+
 default: binary
 
 ## Build Dev Docker image
@@ -126,14 +128,12 @@ docs-serve:
 generate-crd:
 	./script/update-generated-crd-code.sh
 
-## Download dependencies
-dep-ensure:
-	dep ensure -v
-	./script/prune-dep.sh
+## Dependencies
+go-mod-tidy:
+	go mod tidy
 
-## Clean vendor directory
-dep-prune:
-	./script/prune-dep.sh
+go-mod-vendor: go-mod-tidy
+	go mod vendor
 
 ## Create packages for the release
 release-packages: generate-webui build-dev-image

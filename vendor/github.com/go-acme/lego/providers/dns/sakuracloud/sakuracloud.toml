@@ -1,0 +1,19 @@
+Name = "Sakura Cloud"
+Description = ''''''
+URL = "https://cloud.sakura.ad.jp/"
+Code = "sakuracloud"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    SAKURACLOUD_ACCESS_TOKEN = "Access token"
+    SAKURACLOUD_ACCESS_TOKEN_SECRET = "Access token secret"
+  [Configuration.Additional]
+    SAKURACLOUD_POLLING_INTERVAL = "Time between DNS propagation check"
+    SAKURACLOUD_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    SAKURACLOUD_TTL = "The TTL of the TXT record used for the DNS challenge"
+
+[Links]
+  API = "https://developer.sakura.ad.jp/cloud/api/1.1/"
+  GoClient = "https://github.com/sacloud/libsacloud"

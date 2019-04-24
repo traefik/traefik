@@ -1,0 +1,22 @@
+language: "go"
+
+matrix:
+  allow_failures:
+  - go: tip
+
+go:
+  - "1.10"
+  - tip
+
+install:
+  - go get -u gopkg.in/alecthomas/gometalinter.v2
+  - gometalinter.v2 --install
+
+script:
+  - touch .env
+  - make test ARGS='-v -race -count=2 -coverprofile=coverage.txt -covermode=atomic ./...'
+  - gometalinter.v2 --enable-all --disable=vetshadow --disable=gocyclo --disable=unparam --disable=nakedret --disable=lll --disable=dupl --disable=gosec --disable=gochecknoinits --disable=gochecknoglobals --disable=test --deadline=120s
+  - gometalinter.v2 --disable-all --enable=vetshadow --enable=gocyclo --enable=unparam --enable=nakedret --enable=lll --enable=dupl --enable=gosec --enable=gochecknoinits --enable=gochecknoglobals --deadline=120s || true
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

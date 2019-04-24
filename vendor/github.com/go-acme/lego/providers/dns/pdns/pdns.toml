@@ -1,0 +1,29 @@
+Name = "PowerDNS"
+Description = ''''''
+URL = "https://www.powerdns.com/"
+Code = "pdns"
+
+Example = ''''''
+
+Additional = '''
+## Information
+
+Tested and confirmed to work with PowerDNS authoritative server 3.4.8 and 4.0.1. Refer to [PowerDNS documentation](https://doc.powerdns.com/md/httpapi/README/) instructions on how to enable the built-in API interface.
+
+PowerDNS Notes:
+- PowerDNS API does not currently support SSL, therefore you should take care to ensure that traffic between lego and the PowerDNS API is over a trusted network, VPN etc.
+- In order to have the SOA serial automatically increment each time the `_acme-challenge` record is added/modified via the API, set `SOA-EDIT-API` to `INCEPTION-INCREMENT` for the zone in the `domainmetadata` table
+'''
+
+[Configuration]
+  [Configuration.Credentials]
+    PDNS_API_KEY = "API key"
+    PDNS_API_URL = "API url"
+  [Configuration.Additional]
+    PDNS_POLLING_INTERVAL = "Time between DNS propagation check"
+    PDNS_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    PDNS_TTL = "The TTL of the TXT record used for the DNS challenge"
+    PDNS_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://doc.powerdns.com/md/httpapi/README/"

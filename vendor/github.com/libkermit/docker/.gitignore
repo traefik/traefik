@@ -1,0 +1,4 @@
+dist
+.gopath
+*.test
+vendor

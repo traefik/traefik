@@ -1,0 +1,19 @@
+Name = "Selectel"
+Description = ''''''
+URL = "https://kb.selectel.com/"
+Code = "selectel"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    SELECTEL_API_TOKEN = "API token"
+  [Configuration.Additional]
+    SELECTEL_BASE_URL = "API endpoint URL"
+    SELECTEL_POLLING_INTERVAL = "Time between DNS propagation check"
+    SELECTEL_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    SELECTEL_TTL = "The TTL of the TXT record used for the DNS challenge"
+    SELECTEL_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://kb.selectel.com/23136054.html"

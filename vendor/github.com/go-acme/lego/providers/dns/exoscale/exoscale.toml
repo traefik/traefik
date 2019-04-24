@@ -1,0 +1,21 @@
+Name = "Exoscale"
+Description = ''''''
+URL = "https://www.exoscale.com/"
+Code = "exoscale"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    EXOSCALE_API_KEY = "API key"
+    EXOSCALE_API_SECRET = "API secret"
+    EXOSCALE_ENDPOINT = "API endpoint URL"
+  [Configuration.Additional]
+    EXOSCALE_POLLING_INTERVAL = "Time between DNS propagation check"
+    EXOSCALE_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    EXOSCALE_TTL = "The TTL of the TXT record used for the DNS challenge"
+    EXOSCALE_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://community.exoscale.com/documentation/dns/api/"
+  GoClient = "https://github.com/exoscale/egoscale"

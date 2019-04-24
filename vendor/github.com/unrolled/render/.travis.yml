@@ -1,0 +1,14 @@
+language: go
+
+go:
+  - 1.5
+  - 1.6
+  - 1.7
+  - tip
+
+install:
+  - go get github.com/eknkc/amber
+
+script:
+  - go test -v -race -tags=integration
+

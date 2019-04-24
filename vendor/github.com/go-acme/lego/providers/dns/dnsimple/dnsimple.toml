@@ -1,0 +1,19 @@
+Name = "DNSimple"
+Description = ''''''
+URL = "https://dnsimple.com/"
+Code = "dnsimple"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    DNSIMPLE_OAUTH_TOKEN = "OAuth token"
+    DNSIMPLE_BASE_URL = "API endpoint URL"
+  [Configuration.Additional]
+    DNSIMPLE_POLLING_INTERVAL = "Time between DNS propagation check"
+    DNSIMPLE_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    DNSIMPLE_TTL = "The TTL of the TXT record used for the DNS challenge"
+
+[Links]
+  API = "https://developer.dnsimple.com/v2/"
+  GoClient = "https://github.com/dnsimple/dnsimple-go"

@@ -1,0 +1,19 @@
+Name = "Hosting.de"
+Description = ''''''
+URL = "https://www.hosting.de/"
+Code = "hostingde"
+
+[Configuration]
+  [Configuration.Credentials]
+    HOSTINGDE_API_KEY = "**TODO**"
+    HOSTINGDE_ZONE_NAME = "**TODO**"
+  [Configuration.Additional]
+    HOSTINGDE_POLLING_INTERVAL = "Time between DNS propagation check"
+    HOSTINGDE_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    HOSTINGDE_TTL = "The TTL of the TXT record used for the DNS challenge"
+    HOSTINGDE_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://www.hosting.de/api/#dns"
+
+

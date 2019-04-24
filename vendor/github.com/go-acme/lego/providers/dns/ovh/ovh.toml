@@ -1,0 +1,22 @@
+Name = "OVH"
+Description = ''''''
+URL = "https://www.ovh.com/"
+Code = "ovh"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    OVH_ENDPOINT = "Endpoint URL (ovh-eu or ovh-ca)"
+    OVH_APPLICATION_KEY = "Application key"
+    OVH_APPLICATION_SECRET = "Application secret"
+    OVH_CONSUMER_KEY = "Consumer key"
+  [Configuration.Additional]
+    OVH_POLLING_INTERVAL = "Time between DNS propagation check"
+    OVH_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    OVH_TTL = "The TTL of the TXT record used for the DNS challenge"
+    OVH_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://eu.api.ovh.com/"
+  GoClient = "https://github.com/ovh/go-ovh"

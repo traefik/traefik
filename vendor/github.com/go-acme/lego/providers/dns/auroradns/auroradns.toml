@@ -1,0 +1,20 @@
+Name = "Aurora DNS"
+Description = ''''''
+URL = "https://www.pcextreme.com/aurora/dns"
+Code = "auroradns"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    AURORA_USER_ID = "User ID"
+    AURORA_KEY = "User API key"
+    AURORA_ENDPOINT = "API endpoint URL"
+  [Configuration.Additional]
+    AURORA_POLLING_INTERVAL = "Time between DNS propagation check"
+    AURORA_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    AURORA_TTL = "The TTL of the TXT record used for the DNS challenge"
+
+[Links]
+  API = "https://libcloud.readthedocs.io/en/latest/dns/drivers/auroradns.html#api-docs"
+  GoClient = "https://github.com/nrdcg/auroradns"

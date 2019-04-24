@@ -1,0 +1,3 @@
+language: go
+
+go_import_path: gopkg.in/check.v1

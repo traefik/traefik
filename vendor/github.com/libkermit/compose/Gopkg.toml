@@ -1,0 +1,54 @@
+[[constraint]]
+  branch = "master"
+  name = "github.com/docker/docker"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/docker/libcompose"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/go-check/check"
+  source = "github.com/cpuguy83/check"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/libkermit/docker"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/net"
+
+[[override]]
+  branch = "master"
+  name = "github.com/docker/distribution"
+
+[[override]]
+  branch = "master"
+  name = "github.com/Nvveen/Gotty"
+  source = "github.com/ijc25/Gotty"
+
+[[override]]
+  name = "github.com/xeipuuv/gojsonschema"
+  revision = "93e72a773fade158921402d6a24c819b48aba29d"
+
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"

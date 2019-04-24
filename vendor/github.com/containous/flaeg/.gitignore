@@ -1,0 +1,6 @@
+.vscode
+debug.test
+coverage.out
+.idea/
+*.swp
+vendor/

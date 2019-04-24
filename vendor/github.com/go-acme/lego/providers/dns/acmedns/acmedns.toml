@@ -1,0 +1,15 @@
+Name = "Joohoi's ACME-DNS"
+Description = ''''''
+URL = "https://github.com/joohoi/acme-dns"
+Code = "acme-dns"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    ACME_DNS_API_BASE  = "The ACME-DNS API address"
+    ACME_DNS_STORAGE_PATH = "The ACME-DNS JSON account data file. A per-domain account will be registered/persisted to this file and used for TXT updates."
+
+[Links]
+  API = "https://github.com/joohoi/acme-dns#api"
+  GoClient = "https://github.com/cpu/goacmedns"

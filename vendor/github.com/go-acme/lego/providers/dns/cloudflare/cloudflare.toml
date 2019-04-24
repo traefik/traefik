@@ -1,0 +1,24 @@
+Name = "Cloudflare"
+Description = ''''''
+URL = "https://www.cloudflare.com/dns/"
+Code = "cloudflare"
+
+Example = '''
+CLOUDFLARE_EMAIL=foo@bar.com \
+CLOUDFLARE_API_KEY=b9841238feb177a84330febba8a83208921177bffe733 \
+lego --dns cloudflare --domains my.domain.com --email my@email.com run
+'''
+
+[Configuration]
+  [Configuration.Credentials]
+    CLOUDFLARE_EMAIL = "Account email"
+    CLOUDFLARE_API_KEY = "API key"
+  [Configuration.Additional]
+    CLOUDFLARE_POLLING_INTERVAL = "Time between DNS propagation check"
+    CLOUDFLARE_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    CLOUDFLARE_TTL = "The TTL of the TXT record used for the DNS challenge"
+    CLOUDFLARE_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://api.cloudflare.com/"
+  GoClient = "https://github.com/cloudflare/cloudflare-go"

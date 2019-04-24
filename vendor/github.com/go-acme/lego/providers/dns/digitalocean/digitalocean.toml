@@ -1,0 +1,18 @@
+Name = "Digital Ocean"
+Description = ''''''
+URL = "https://www.digitalocean.com/docs/networking/dns/"
+Code = "digitalocean"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    DO_AUTH_TOKEN = "Authentication token"
+  [Configuration.Additional]
+    DO_POLLING_INTERVAL = "Time between DNS propagation check"
+    DO_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    DO_TTL = "The TTL of the TXT record used for the DNS challenge"
+    DO_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://developers.digitalocean.com/documentation/v2/#domain-records"

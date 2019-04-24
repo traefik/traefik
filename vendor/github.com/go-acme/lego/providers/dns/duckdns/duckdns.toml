@@ -1,0 +1,19 @@
+Name = "Duck DNS"
+Description = ''''''
+URL = "https://www.duckdns.org/"
+Code = "duckdns"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    DUCKDNS_TOKEN = "Account token"
+  [Configuration.Additional]
+    DUCKDNS_POLLING_INTERVAL = "Time between DNS propagation check"
+    DUCKDNS_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    DUCKDNS_TTL = "The TTL of the TXT record used for the DNS challenge"
+    DUCKDNS_HTTP_TIMEOUT = "API request timeout"
+    DUCKDNS_SEQUENCE_INTERVAL = "Interval between iteration"
+
+[Links]
+  API = "https://www.duckdns.org/spec.jsp"

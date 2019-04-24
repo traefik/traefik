@@ -1,0 +1,18 @@
+Name = "Linode (deprecated)"
+Description = ''''''
+URL = "https://www.linode.com/"
+Code = "linode"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    LINODE_API_KEY = "API key"
+  [Configuration.Additional]
+    LINODE_POLLING_INTERVAL = "Time between DNS propagation check"
+    LINODE_TTL = "The TTL of the TXT record used for the DNS challenge"
+    LINODE_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://www.linode.com/api/dns"
+  GoClient = "https://github.com/timewasted/linode"

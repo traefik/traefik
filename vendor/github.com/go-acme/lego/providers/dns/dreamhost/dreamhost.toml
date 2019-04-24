@@ -1,0 +1,18 @@
+Name = "DreamHost"
+Description = ''''''
+URL = "https://www.dreamhost.com"
+Code = "dreamhost"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    DREAMHOST_API_KEY = "The API key"
+  [Configuration.Additional]
+    DREAMHOST_POLLING_INTERVAL = "Time between DNS propagation check"
+    DREAMHOST_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    DREAMHOST_TTL = "The TTL of the TXT record used for the DNS challenge"
+    DREAMHOST_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://help.dreamhost.com/hc/en-us/articles/217560167-API_overview"

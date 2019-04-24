@@ -1,0 +1,13 @@
+syntax = "proto3";
+package zipkintracer_go.wire;
+option go_package = "github.com/openzipkin-contrib/zipkin-go-opentracing/wire";
+
+message TracerState {
+  fixed64 trace_id = 1;
+  fixed64 span_id = 2;
+  bool    sampled = 3;
+  map<string, string> baggage_items = 4;
+  fixed64 trace_id_high = 20;
+  fixed64 parent_span_id = 21;
+  fixed64 flags = 22;
+}

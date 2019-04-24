@@ -1,0 +1,22 @@
+Name = "Designate DNSaaS for Openstack"
+Description = ''''''
+URL = "https://docs.openstack.org/designate/latest/"
+Code = "designate"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    OS_AUTH_URL = "Identity endpoint URL"
+    OS_USERNAME = "Username"
+    OS_PASSWORD = "Password"
+    OS_TENANT_NAME = "Tenant name"
+    OS_REGION_NAME = "Region name"
+  [Configuration.Additional]
+    DESIGNATE_POLLING_INTERVAL = "Time between DNS propagation check"
+    DESIGNATE_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    DESIGNATE_TTL = "The TTL of the TXT record used for the DNS challenge"
+
+[Links]
+  API = "https://docs.openstack.org/designate/latest/"
+  GoClient = "https://godoc.org/github.com/gophercloud/gophercloud/openstack/dns/v2"

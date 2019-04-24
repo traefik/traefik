@@ -1,0 +1,67 @@
+Name = "Amazon Route 53"
+Description = ''''''
+URL = "https://aws.amazon.com/route53/"
+Code = "route53"
+
+Example = ''''''
+
+Additional = '''
+## Description
+
+AWS Credentials are automatically detected in the following locations and prioritized in the following order:
+
+1. Environment variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, [`AWS_SESSION_TOKEN`]
+2. Shared credentials file (defaults to `~/.aws/credentials`)
+3. Amazon EC2 IAM role
+
+If `AWS_HOSTED_ZONE_ID` is not set, Lego tries to determine the correct public hosted zone via the FQDN.
+
+See also: [configuring-sdk](https://github.com/aws/aws-sdk-go/wiki/configuring-sdk)
+
+## Policy
+
+The following AWS IAM policy document describes the permissions required for lego to complete the DNS challenge.
+
+```json
+{
+   "Version": "2012-10-17",
+   "Statement": [
+       {
+           "Sid": "",
+           "Effect": "Allow",
+           "Action": [
+               "route53:GetChange",
+               "route53:ChangeResourceRecordSets",
+               "route53:ListResourceRecordSets"
+           ],
+           "Resource": [
+               "arn:aws:route53:::hostedzone/*",
+               "arn:aws:route53:::change/*"
+           ]
+       },
+       {
+           "Sid": "",
+           "Effect": "Allow",
+           "Action": "route53:ListHostedZonesByName",
+           "Resource": "*"
+       }
+   ]
+}
+```
+
+'''
+
+[Configuration]
+  [Configuration.Credentials]
+    AWS_ACCESS_KEY_ID = ""
+    AWS_SECRET_ACCESS_KEY = ""
+    AWS_REGION = ""
+    AWS_HOSTED_ZONE_ID = ""
+  [Configuration.Additional]
+    AWS_POLLING_INTERVAL = "Time between DNS propagation check"
+    AWS_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    AWS_TTL = "The TTL of the TXT record used for the DNS challenge"
+
+[Links]
+  API = "https://docs.aws.amazon.com/Route53/latest/APIReference/API_Operations_Amazon_Route_53.html"
+  GoClient = "https://github.com/aws/aws-sdk-go/aws"

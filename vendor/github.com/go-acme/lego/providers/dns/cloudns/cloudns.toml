@@ -1,0 +1,19 @@
+Name = "ClouDNS"
+Description = ''''''
+URL = "https://www.cloudns.net"
+Code = "cloudns"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    CLOUDNS_AUTH_ID = "The API user ID"
+    CLOUDNS_AUTH_PASSWORD = "The password for API user ID"
+  [Configuration.Additional]
+    CLOUDNS_POLLING_INTERVAL = "Time between DNS propagation check"
+    CLOUDNS_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    CLOUDNS_TTL = "The TTL of the TXT record used for the DNS challenge"
+    CLOUDNS_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://www.cloudns.net/wiki/article/42/"

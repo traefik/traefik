@@ -1,0 +1,18 @@
+Name = "Gandi"
+Description = """"""
+URL = "https://www.gandi.net"
+Code = "gandi"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    GANDI_API_KEY = "API key"
+  [Configuration.Additional]
+    GANDI_POLLING_INTERVAL = "Time between DNS propagation check"
+    GANDI_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    GANDI_TTL = "The TTL of the TXT record used for the DNS challenge"
+    GANDI_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "http://doc.rpc.gandi.net/index.html"

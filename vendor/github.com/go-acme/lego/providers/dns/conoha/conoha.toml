@@ -1,0 +1,21 @@
+Name = "ConoHa"
+Description = ''''''
+URL = "https://www.conoha.jp/"
+Code = "conoha"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    CONOHA_TENANT_ID = "Tenant ID"
+    CONOHA_API_USERNAME = "The API username"
+    CONOHA_API_PASSWORD = "The API password"
+  [Configuration.Additional]
+    CONOHA_POLLING_INTERVAL = "Time between DNS propagation check"
+    CONOHA_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    CONOHA_TTL = "The TTL of the TXT record used for the DNS challenge"
+    CONOHA_HTTP_TIMEOUT = "API request timeout"
+    CONOHA_REGION = "The region"
+
+[Links]
+  API = "https://www.conoha.jp/docs/"

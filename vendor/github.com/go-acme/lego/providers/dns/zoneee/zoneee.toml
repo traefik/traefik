@@ -1,0 +1,20 @@
+Name = "Zone.ee"
+Description = ''''''
+URL = "https://www.zone.ee/"
+Code = "zoneee"
+
+Example = ''''''
+
+[Configuration]
+  [Configuration.Credentials]
+    ZONEEE_API_USER = "API user"
+    ZONEEE_API_KEY = "API key"
+  [Configuration.Additional]
+    ZONEEE_ENDPOINT = "API endpoint URL"
+    ZONEEE_POLLING_INTERVAL = "Time between DNS propagation check"
+    ZONEEE_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    ZONEEE_TTL = "The TTL of the TXT record used for the DNS challenge"
+    ZONEEE_HTTP_TIMEOUT = "API request timeout"
+
+[Links]
+  API = "https://api.zone.eu/v2"

@@ -1,0 +1,10 @@
+syntax = "proto3";
+package basictracer_go.wire;
+option go_package = "wire";
+
+message TracerState {
+  fixed64 trace_id = 1;
+  fixed64 span_id = 2;
+  bool    sampled = 3;
+  map<string, string> baggage_items = 4;
+}

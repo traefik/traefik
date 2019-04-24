@@ -1,0 +1,34 @@
+Name = "Oracle Cloud"
+Description = ''''''
+URL = "https://cloud.oracle.com/home"
+Code = "oraclecloud"
+
+Example = '''
+OCI_PRIVKEY_FILE="~/.oci/oci_api_key.pem" \
+OCI_PRIVKEY_PASS="secret" \
+OCI_TENANCY_OCID="ocid1.tenancy.oc1..secret" \
+OCI_USER_OCID="ocid1.user.oc1..secret" \
+OCI_PUBKEY_FINGERPRINT="00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00" \
+OCI_REGION="us-phoenix-1" \
+OCI_COMPARTMENT_OCID="ocid1.tenancy.oc1..secret" \
+lego --dns oraclecloud --domains my.domain.com --email my@email.com run
+'''
+
+[Configuration]
+  [Configuration.Credentials]
+    OCI_PRIVKEY_FILE = "Private key file"
+    OCI_PRIVKEY_PASS = "Private key password"
+    OCI_TENANCY_OCID = "Tenanct OCID"
+    OCI_USER_OCID = "User OCID"
+    OCI_PUBKEY_FINGERPRINT = "Public key fingerprint"
+    OCI_REGION = "Region"
+    OCI_COMPARTMENT_OCID = "Compartment OCID"
+  [Configuration.Additional]
+    OCI_POLLING_INTERVAL = "Time between DNS propagation check"
+    OCI_PROPAGATION_TIMEOUT = "Maximum waiting time for DNS propagation"
+    OCI_TTL = "The TTL of the TXT record used for the DNS challenge"
+
+[Links]
+  API = "https://docs.cloud.oracle.com/iaas/Content/DNS/Concepts/dnszonemanagement.htm"
+  GoClient = "https://github.com/oracle/oci-go-sdk"
+
