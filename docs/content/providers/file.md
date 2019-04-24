@@ -7,8 +7,8 @@ The file provider lets you define the [dynamic configuration](./overview.md) in 
 You can write these configuration elements:
 
 * At the end of the main Traefik configuration file (by default: `traefik.toml`).
-* In [a dedicated file](#filename-optional)
-* In [several dedicated files](#directory-optional)
+* In [a dedicated file](#filename)
+* In [several dedicated files](#directory)
 
 !!! note
     The file provider is the default format used throughout the documentation to show samples of the configuration for many features. 
@@ -58,7 +58,9 @@ You can write these configuration elements:
 !!! tip "Browse the Reference"
     If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/dynamic-configuration/file.md) configuration references.
     
-### `filename` (_Optional_)
+### `filename`
+
+_Optional_
 
 Defines the path of the configuration file.
 
@@ -68,7 +70,9 @@ Defines the path of the configuration file.
     filename = "rules.toml"
 ```
 
-### `directory` (_Optional_)
+### `directory`
+
+_Optional_
 
 Defines the directory that contains the configuration files.
 
@@ -78,7 +82,9 @@ Defines the directory that contains the configuration files.
     directory = "/path/to/config"
 ```
 
-### `watch` (_Optional_)
+### `watch`
+
+_Optional_
 
 Set the `watch` option to `true` to allow Traefik to automatically watch for file changes.  
 It works with both the `filename` and the `directory` options.
@@ -145,5 +151,4 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
       [TLSConfig.TLS{{ $e }}]
       # ...
     {{ end }}
-    
     ```
