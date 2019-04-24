@@ -56,7 +56,10 @@ func (b *blockPathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if b.regexp != nil && b.responseCode != 0 && b.regexp.MatchString(req.URL.Path) {
 		rw.WriteHeader(b.responseCode)
 		if len(b.message) > 0 {
-			rw.Write([]byte(b.message))
+			_, err := rw.Write([]byte(b.message))
+			if err != nil {
+				return
+			}
 		}
 		return
 	}
