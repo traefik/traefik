@@ -327,6 +327,15 @@ type ReplacePathRegex struct {
 
 // +k8s:deepcopy-gen=true
 
+// BlockPathRegex holds the BlockPathRegex configuration.
+type BlockPathRegex struct {
+	Regex        string `json:"regex,omitempty"`
+	ResponseCode int    `json:"responseCode,omitempty"`
+	Message      string `json:"message,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
 // Retry holds the retry configuration.
 type Retry struct {
 	Attempts int `description:"Number of attempts" export:"true"`
