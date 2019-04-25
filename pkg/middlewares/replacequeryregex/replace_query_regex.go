@@ -1,46 +1,72 @@
-package middlewares
+package replacequeryregex
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 
-	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/tracing"
+	"github.com/opentracing/opentracing-go/ext"
+)
+
+const (
+	typeName = "ReplaceQueryRegex"
 )
 
 // ReplaceQueryRegex is a middleware used to replace the query of a URL request with a regular expression
-type ReplaceQueryRegex struct {
-	Handler     http.Handler
-	Regexp      *regexp.Regexp
-	Replacement string
+type replaceQueryRegex struct {
+	next        http.Handler
+	regexp      *regexp.Regexp
+	replacement string
+	name        string
 }
 
-// NewReplaceQueryRegexHandler returns a new ReplaceQueryRegex
-func NewReplaceQueryRegexHandler(regex string, replacement string, handler http.Handler) http.Handler {
-	re, err := regexp.Compile(strings.TrimSpace(regex))
+// New creates a new replace query regex middleware.
+func New(ctx context.Context, next http.Handler, config dynamic.ReplaceQueryRegex, name string) (http.Handler, error) {
+	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+
+	exp, err := regexp.Compile(strings.TrimSpace(config.Regex))
 	if err != nil {
-		log.Errorf("Error compiling regular expression %s: %s", regex, err)
+		return nil, fmt.Errorf("error compiling regular expression %s: %s", config.Regex, err)
 	}
-	return &ReplaceQueryRegex{
-		Regexp:      re,
-		Replacement: strings.TrimSpace(replacement),
-		Handler:     handler,
-	}
+
+	return &replaceQueryRegex{
+		regexp:      exp,
+		replacement: strings.TrimSpace(config.Replacement),
+		next:        next,
+		name:        name,
+	}, nil
 }
 
-func (s *ReplaceQueryRegex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if s.Regexp != nil && s.Regexp.MatchString(r.RequestURI) {
-		replacement := s.Regexp.ReplaceAllString(r.RequestURI, s.Replacement)
-		path := strings.SplitN(r.RequestURI, "?", 2)[0]
-		if replacement != "" {
-			path = path + "?" + replacement
+func (rq *replaceQueryRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
+	return rq.name, tracing.SpanKindNoneEnum
+}
+
+func (rq *replaceQueryRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	splitURI := strings.SplitN(req.RequestURI, "?", 2)
+	if len(splitURI) < 2 {
+		rq.next.ServeHTTP(rw, req)
+		return
+	}
+
+	rawPath := splitURI[0]
+	rawQuery := splitURI[1]
+
+	if rq.regexp != nil && rq.regexp.MatchString(rawQuery) {
+		newQuery := rq.regexp.ReplaceAllString(rawQuery, rq.replacement)
+		path := rawPath
+		if newQuery != "" {
+			path = path + "?" + newQuery
 		}
-		if u, err := r.URL.Parse(path); err != nil {
-			log.Errorf("bad replacement %s: %s", replacement, err)
-		} else {
-			r.URL = u
-			r.RequestURI = u.RequestURI()
+		if u, err := req.URL.Parse(path); err == nil {
+			req.URL = u
+			req.RequestURI = u.RequestURI()
 		}
 	}
-	s.Handler.ServeHTTP(w, r)
+	rq.next.ServeHTTP(rw, req)
 }

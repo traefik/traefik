@@ -348,6 +348,22 @@ type ReplacePathRegex struct {
 
 // +k8s:deepcopy-gen=true
 
+// ReplaceQueryRegex holds the ReplaceQueryRegex configuration.
+type ReplaceQueryRegex struct {
+	Regex       string `json:"regex,omitempty"`
+	Replacement string `json:"replacement,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ReplacePathQueryRegex holds the ReplacePathQueryRegex configuration.
+type ReplacePathQueryRegex struct {
+	Regex       string `json:"regex,omitempty"`
+	Replacement string `json:"replacement,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
 // Retry holds the retry configuration.
 type Retry struct {
 	Attempts int `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty" export:"true"`

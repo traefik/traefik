@@ -202,26 +202,28 @@ and therefore this specification would be ignored even if present.
 
 ## Available Middlewares
 
-| Middleware                                | Purpose                                           | Area                        |
-|-------------------------------------------|---------------------------------------------------|-----------------------------|
-| [AddPrefix](addprefix.md)                 | Add a Path Prefix                                 | Path Modifier               |
-| [BasicAuth](basicauth.md)                 | Basic auth mechanism                              | Security, Authentication    |
-| [Buffering](buffering.md)                 | Buffers the request/response                      | Request Lifecycle           |
-| [Chain](chain.md)                         | Combine multiple pieces of middleware             | Middleware tool             |
-| [CircuitBreaker](circuitbreaker.md)       | Stop calling unhealthy services                   | Request Lifecycle           |
-| [Compress](compress.md)                   | Compress the response                             | Content Modifier            |
-| [DigestAuth](digestauth.md)               | Adds Digest Authentication                        | Security, Authentication    |
-| [Errors](errorpages.md)                   | Define custom error pages                         | Request Lifecycle           |
-| [ForwardAuth](forwardauth.md)             | Authentication delegation                         | Security, Authentication    |
-| [Headers](headers.md)                     | Add / Update headers                              | Security                    |
-| [IPWhiteList](ipwhitelist.md)             | Limit the allowed client IPs                      | Security, Request lifecycle |
-| [InFlightReq](inflightreq.md)             | Limit the number of simultaneous connections      | Security, Request lifecycle |
-| [PassTLSClientCert](passtlsclientcert.md) | Adding Client Certificates in a Header            | Security                    |
-| [RateLimit](ratelimit.md)                 | Limit the call frequency                          | Security, Request lifecycle |
-| [RedirectScheme](redirectscheme.md)       | Redirect easily the client elsewhere              | Request lifecycle           |
-| [RedirectRegex](redirectregex.md)         | Redirect the client elsewhere                     | Request lifecycle           |
-| [ReplacePath](replacepath.md)             | Change the path of the request                    | Path Modifier               |
-| [ReplacePathRegex](replacepathregex.md)   | Change the path of the request                    | Path Modifier               |
-| [Retry](retry.md)                         | Automatically retry the request in case of errors | Request lifecycle           |
-| [StripPrefix](stripprefix.md)             | Change the path of the request                    | Path Modifier               |
-| [StripPrefixRegex](stripprefixregex.md)   | Change the path of the request                    | Path Modifier               |
+| Middleware                                        | Purpose                                           | Area                        |
+|---------------------------------------------------|---------------------------------------------------|-----------------------------|
+| [AddPrefix](addprefix.md)                         | Add a Path Prefix                                 | Path Modifier               |
+| [BasicAuth](basicauth.md)                         | Basic auth mechanism                              | Security, Authentication    |
+| [Buffering](buffering.md)                         | Buffers the request/response                      | Request Lifecycle           |
+| [Chain](chain.md)                                 | Combine multiple pieces of middleware             | Middleware tool             |
+| [CircuitBreaker](circuitbreaker.md)               | Stop calling unhealthy services                   | Request Lifecycle           |
+| [Compress](compress.md)                           | Compress the response                             | Content Modifier            |
+| [DigestAuth](digestauth.md)                       | Adds Digest Authentication                        | Security, Authentication    |
+| [Errors](errorpages.md)                           | Define custom error pages                         | Request Lifecycle           |
+| [ForwardAuth](forwardauth.md)                     | Authentication delegation                         | Security, Authentication    |
+| [Headers](headers.md)                             | Add / Update headers                              | Security                    |
+| [IPWhiteList](ipwhitelist.md)                     | Limit the allowed client IPs                      | Security, Request lifecycle |
+| [InFlightReq](inflightreq.md)                     | Limit the number of simultaneous connections      | Security, Request lifecycle |
+| [PassTLSClientCert](passtlsclientcert.md)         | Adding Client Certificates in a Header            | Security                    |
+| [RateLimit](ratelimit.md)                         | Limit the call frequency                          | Security, Request lifecycle |
+| [RedirectScheme](redirectscheme.md)               | Redirect easily the client elsewhere              | Request lifecycle           |
+| [RedirectRegex](redirectregex.md)                 | Redirect the client elsewhere                     | Request lifecycle           |
+| [ReplacePath](replacepath.md)                     | Change the path of the request                    | Path Modifier               |
+| [ReplacePathQueryRegex](replacepathqueryregex.md) | Change the path and the query of the request      | Path Modifier               |
+| [ReplacePathRegex](replacepathregex.md)           | Change the path of the request                    | Path Modifier               |
+| [ReplaceQueryRegex](replacequeryregex.md)         | Change the query of the request                   | Path Modifier               |
+| [Retry](retry.md)                                 | Automatically retry the request in case of errors | Request lifecycle           |
+| [StripPrefix](stripprefix.md)                     | Change the path of the request                    | Path Modifier               |
+| [StripPrefixRegex](stripprefixregex.md)           | Change the path of the request                    | Path Modifier               |
