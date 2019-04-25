@@ -609,12 +609,12 @@ func TestProviderListShouldPanic(t *testing.T) {
 		kvError error
 	}{
 		{
-			desc:    "Sould panic on an unexpected error",
+			desc:    "Should panic on an unexpected error",
 			kvError: store.ErrBackendNotSupported,
 			panic:   true,
 		},
 		{
-			desc:    "Sould not panic on an ErrKeyNotFound error",
+			desc:    "Should not panic on an ErrKeyNotFound error",
 			kvError: store.ErrKeyNotFound,
 		},
 	}
@@ -723,12 +723,12 @@ func TestProviderGetShouldPanic(t *testing.T) {
 		kvError error
 	}{
 		{
-			desc:    "Sould panic on an unexpected error",
+			desc:    "Should panic on an unexpected error",
 			kvError: store.ErrBackendNotSupported,
 			panic:   true,
 		},
 		{
-			desc:    "Sould not panic on an ErrKeyNotFound error",
+			desc:    "Should not panic on an ErrKeyNotFound error",
 			kvError: store.ErrKeyNotFound,
 		},
 	}
