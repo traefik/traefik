@@ -576,9 +576,9 @@ func (p *Provider) listServers(backend string) []string {
 func (p *Provider) serverFilter(serverName string) bool {
 	key := fmt.Sprint(serverName, pathBackendServerURL)
 	if _, err := p.kvClient.Get(key, nil); err != nil {
-		if err != store.ErrKeyNotFound {
-			panic(fmt.Errorf("failed to retrieve value for key %s: %s", key, err))
-		}
+		checkError(err)
+
+		log.Errorf("failed to retrieve value for key %s: %s", key, err)
 		return false
 	}
 	return p.checkConstraints(serverName, pathTags)
@@ -587,8 +587,8 @@ func (p *Provider) serverFilter(serverName string) bool {
 func (p *Provider) checkConstraints(keys ...string) bool {
 	joinedKeys := strings.Join(keys, "")
 	keyPair, err := p.kvClient.Get(joinedKeys, nil)
-	if err != nil && err != store.ErrKeyNotFound {
-		panic(err)
+	if err != nil {
+		checkError(err)
 	}
 
 	value := ""
@@ -640,11 +640,10 @@ func (p *Provider) get(defaultValue string, keyParts ...string) string {
 
 	keyPair, err := p.kvClient.Get(key, nil)
 	if err != nil {
-		if err == store.ErrKeyNotFound {
-			log.Debugf("Cannot get key %s %s, setting default %s", key, err, defaultValue)
-			return defaultValue
-		}
-		panic(err)
+		checkError(err)
+
+		log.Debugf("Cannot get key %s %s, setting default %s", key, err, defaultValue)
+		return defaultValue
 	}
 
 	if keyPair == nil {
@@ -683,11 +682,10 @@ func (p *Provider) hasPrefix(keyParts ...string) bool {
 
 	listKeys, err := p.kvClient.List(baseKey, nil)
 	if err != nil {
-		if err == store.ErrKeyNotFound {
-			log.Debugf("Cannot list keys under %q: %v", baseKey, err)
-			return false
-		}
-		panic(err)
+		checkError(err)
+
+		log.Debugf("Cannot list keys under %q: %v", baseKey, err)
+		return false
 	}
 
 	return len(listKeys) > 0
@@ -728,11 +726,10 @@ func (p *Provider) list(keyParts ...string) []string {
 
 	keysPairs, err := p.kvClient.List(rootKey, nil)
 	if err != nil {
-		if err == store.ErrKeyNotFound {
-			log.Debugf("Cannot list keys under %q: %v", rootKey, err)
-			return nil
-		}
-		panic(err)
+		checkError(err)
+
+		log.Debugf("Cannot list keys under %q: %v", rootKey, err)
+		return nil
 	}
 
 	directoryKeys := make(map[string]string)
@@ -801,4 +798,10 @@ func (p *Provider) getMap(keyParts ...string) map[string]string {
 	}
 
 	return mapData
+}
+
+func checkError(err error) {
+	if err != store.ErrKeyNotFound {
+		panic(err)
+	}
 }
