@@ -75,7 +75,11 @@ func (p *Provider) watchKv(configurationChan chan<- types.ConfigMessage, prefix 
 				if !ok {
 					return errors.New("watchtree channel closed")
 				}
-				configuration := p.buildConfiguration()
+				configuration, errC := p.buildConfiguration()
+				if errC != nil {
+					return errC
+				}
+
 				if configuration != nil {
 					configurationChan <- types.ConfigMessage{
 						ProviderName:  string(p.storeType),
@@ -110,7 +114,11 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				}
 			})
 		}
-		configuration := p.buildConfiguration()
+		configuration, err := p.buildConfiguration()
+		if err != nil {
+			return err
+		}
+
 		configurationChan <- types.ConfigMessage{
 			ProviderName:  string(p.storeType),
 			Configuration: configuration,
