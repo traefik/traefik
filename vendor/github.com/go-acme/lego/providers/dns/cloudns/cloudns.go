@@ -27,7 +27,7 @@ func NewDefaultConfig() *Config {
 	return &Config{
 		PropagationTimeout: env.GetOrDefaultSecond("CLOUDNS_PROPAGATION_TIMEOUT", 120*time.Second),
 		PollingInterval:    env.GetOrDefaultSecond("CLOUDNS_POLLING_INTERVAL", 4*time.Second),
-		TTL:                env.GetOrDefaultInt("CLOUDNS_TTL", dns01.DefaultTTL),
+		TTL:                env.GetOrDefaultInt("CLOUDNS_TTL", 60),
 		HTTPClient: &http.Client{
 			Timeout: env.GetOrDefaultSecond("CLOUDNS_HTTP_TIMEOUT", 30*time.Second),
 		},
@@ -64,7 +64,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 
 	client, err := internal.NewClient(config.AuthID, config.AuthPassword)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ClouDNS: %v", err)
 	}
 
 	client.HTTPClient = config.HTTPClient
@@ -78,10 +78,15 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 
 	zone, err := d.client.GetZone(fqdn)
 	if err != nil {
-		return err
+		return fmt.Errorf("ClouDNS: %v", err)
 	}
 
-	return d.client.AddTxtRecord(zone.Name, fqdn, value, d.config.TTL)
+	err = d.client.AddTxtRecord(zone.Name, fqdn, value, d.config.TTL)
+	if err != nil {
+		return fmt.Errorf("ClouDNS: %v", err)
+	}
+
+	return nil
 }
 
 // CleanUp removes the TXT record matching the specified parameters.
@@ -90,15 +95,23 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	zone, err := d.client.GetZone(fqdn)
 	if err != nil {
-		return err
+		return fmt.Errorf("ClouDNS: %v", err)
 	}
 
 	record, err := d.client.FindTxtRecord(zone.Name, fqdn)
 	if err != nil {
-		return err
+		return fmt.Errorf("ClouDNS: %v", err)
 	}
 
-	return d.client.RemoveTxtRecord(record.ID, zone.Name)
+	if record == nil {
+		return nil
+	}
+
+	err = d.client.RemoveTxtRecord(record.ID, zone.Name)
+	if err != nil {
+		return fmt.Errorf("ClouDNS: %v", err)
+	}
+	return nil
 }
 
 // Timeout returns the timeout and interval to use when checking for DNS propagation.

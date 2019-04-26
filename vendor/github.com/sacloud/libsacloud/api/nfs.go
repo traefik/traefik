@@ -2,9 +2,11 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/sacloud/libsacloud/sacloud"
 	"time"
+
+	"github.com/sacloud/libsacloud/sacloud"
 )
 
 // SearchNFSResponse NFS検索レスポンス
@@ -92,6 +94,58 @@ func (api *NFSAPI) Create(value *sacloud.NFS) (*sacloud.NFS, error) {
 	return api.request(func(res *nfsResponse) error {
 		return api.create(api.createRequest(value), res)
 	})
+}
+
+// CreateWithPlan プラン/サイズを指定してNFSを作成
+func (api *NFSAPI) CreateWithPlan(value *sacloud.CreateNFSValue, plan sacloud.NFSPlan, size sacloud.NFSSize) (*sacloud.NFS, error) {
+
+	nfs := sacloud.NewNFS(value)
+	// get plan
+	plans, err := api.GetNFSPlans()
+	if err != nil {
+		return nil, err
+	}
+	if plans == nil {
+		return nil, errors.New("NFS plans not found")
+	}
+
+	planID := plans.FindPlanID(plan, size)
+	if planID < 0 {
+		return nil, errors.New("NFS plans not found")
+	}
+
+	nfs.Plan = sacloud.NewResource(planID)
+	nfs.Remark.SetRemarkPlanID(planID)
+
+	return api.request(func(res *nfsResponse) error {
+		return api.create(api.createRequest(nfs), res)
+	})
+}
+
+// GetNFSPlans プラン一覧取得
+func (api *NFSAPI) GetNFSPlans() (*sacloud.NFSPlans, error) {
+	notes, err := api.client.Note.Reset().Find()
+	if err != nil {
+		return nil, err
+	}
+	for _, note := range notes.Notes {
+		if note.Class == sacloud.ENoteClass("json") && note.Name == "sys-nfs" {
+			rawPlans := note.Content
+
+			var plans struct {
+				Plans *sacloud.NFSPlans `json:"plans"`
+			}
+
+			err := json.Unmarshal([]byte(rawPlans), &plans)
+			if err != nil {
+				return nil, err
+			}
+
+			return plans.Plans, nil
+		}
+	}
+
+	return nil, nil
 }
 
 // Read 読み取り
@@ -223,9 +277,9 @@ func (api *NFSAPI) AsyncSleepWhileCopying(id int64, timeout time.Duration, maxRe
 	return poll(handler, timeout)
 }
 
-// MonitorNFS NFS固有項目アクティビティモニター取得
-func (api *NFSAPI) MonitorNFS(id int64, body *sacloud.ResourceMonitorRequest) (*sacloud.MonitorValues, error) {
-	return api.baseAPI.applianceMonitorBy(id, "nfs", 0, body)
+// MonitorFreeDiskSize NFSディスク残量アクティビティモニター取得
+func (api *NFSAPI) MonitorFreeDiskSize(id int64, body *sacloud.ResourceMonitorRequest) (*sacloud.MonitorValues, error) {
+	return api.baseAPI.applianceMonitorBy(id, "database", 0, body)
 }
 
 // MonitorInterface NICアクティビティーモニター取得

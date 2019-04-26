@@ -236,3 +236,134 @@ func (v *VPCRouter) FindBelongsInterface(ip net.IP) (int, *VPCRouterInterface) {
 	}
 	return -1, nil
 }
+
+// IPAddress1 1番目(0番目)のNICのIPアドレス1
+func (v *VPCRouter) IPAddress1() string {
+	return v.IPAddress1At(0)
+}
+
+// IPAddress1At 指定インデックスのNICのIPアドレス1
+func (v *VPCRouter) IPAddress1At(index int) string {
+	if len(v.Interfaces) <= index {
+		return ""
+	}
+
+	if index == 0 {
+		if v.IsStandardPlan() {
+			return v.Interfaces[0].IPAddress
+		}
+
+		if !v.HasInterfaces() {
+			return ""
+		}
+		if len(v.Settings.Router.Interfaces[0].IPAddress) < 1 {
+			return ""
+		}
+		return v.Settings.Router.Interfaces[0].IPAddress[0]
+	}
+
+	nic := v.Settings.Router.Interfaces[index]
+	if len(nic.IPAddress) < 1 {
+		return ""
+	}
+	return nic.IPAddress[0]
+}
+
+// IPAddress2 1番目(0番目)のNICのIPアドレス2
+func (v *VPCRouter) IPAddress2() string {
+	return v.IPAddress2At(0)
+}
+
+// IPAddress2At 指定インデックスのNICのIPアドレス2
+func (v *VPCRouter) IPAddress2At(index int) string {
+	if v.IsStandardPlan() {
+		return ""
+	}
+	if len(v.Interfaces) <= index {
+		return ""
+	}
+
+	if index == 0 {
+		if !v.HasInterfaces() {
+			return ""
+		}
+		if len(v.Settings.Router.Interfaces[0].IPAddress) < 2 {
+			return ""
+		}
+		return v.Settings.Router.Interfaces[0].IPAddress[1]
+	}
+
+	nic := v.Settings.Router.Interfaces[index]
+	if len(nic.IPAddress) < 2 {
+		return ""
+	}
+	return nic.IPAddress[1]
+}
+
+// VirtualIPAddress 1番目(0番目)のNICのVIP
+func (v *VPCRouter) VirtualIPAddress() string {
+	return v.VirtualIPAddressAt(0)
+}
+
+// VirtualIPAddressAt 指定インデックスのNICのVIP
+func (v *VPCRouter) VirtualIPAddressAt(index int) string {
+	if v.IsStandardPlan() {
+		return ""
+	}
+	if len(v.Interfaces) <= index {
+		return ""
+	}
+
+	return v.Settings.Router.Interfaces[0].VirtualIPAddress
+}
+
+// NetworkMaskLen 1番目(0番目)のNICのネットワークマスク長
+func (v *VPCRouter) NetworkMaskLen() int {
+	return v.NetworkMaskLenAt(0)
+}
+
+// NetworkMaskLenAt 指定インデックスのNICのネットワークマスク長
+func (v *VPCRouter) NetworkMaskLenAt(index int) int {
+	if !v.HasInterfaces() {
+		return -1
+	}
+	if len(v.Interfaces) <= index {
+		return -1
+	}
+
+	if index == 0 {
+		return v.Interfaces[0].Switch.Subnet.NetworkMaskLen
+	}
+
+	return v.Settings.Router.Interfaces[index].NetworkMaskLen
+}
+
+// Zone スイッチから現在のゾーン名を取得
+//
+// Note: 共有セグメント接続時は取得不能
+func (v *VPCRouter) Zone() string {
+	if v.Switch != nil {
+		return v.Switch.GetZoneName()
+	}
+
+	if len(v.Interfaces) > 0 && v.Interfaces[0].Switch != nil {
+		return v.Interfaces[0].Switch.GetZoneName()
+	}
+
+	return ""
+}
+
+// VRID VRIDを取得
+//
+// スタンダードプラン、またはVRIDの参照に失敗した場合は-1を返す
+func (v *VPCRouter) VRID() int {
+	if v.IsStandardPlan() {
+		return -1
+	}
+
+	if !v.HasSetting() || v.Settings.Router.VRID == nil {
+		return -1
+	}
+
+	return *v.Settings.Router.VRID
+}

@@ -41,7 +41,7 @@ func (i *Internet) SetNetworkMaskLen(v int) {
 
 // AllowInternetBandWidth 設定可能な帯域幅の値リスト
 func AllowInternetBandWidth() []int {
-	return []int{100, 250, 500, 1000, 1500, 2000, 2500, 3000}
+	return []int{100, 250, 500, 1000, 1500, 2000, 2500, 3000, 5000}
 }
 
 // AllowInternetNetworkMaskLen 設定可能なネットワークマスク長の値リスト
