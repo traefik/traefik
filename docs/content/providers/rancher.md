@@ -163,6 +163,8 @@ For example, to declare a middleware [`schemeredirect`](../middlewares/redirects
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
 
+More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
+
 ### Specific Options
 
 #### `traefik.enable`

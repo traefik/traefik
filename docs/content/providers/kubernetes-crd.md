@@ -212,6 +212,8 @@ spec:
     - name: stripprefix
 ```
 
+More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
+
 ### TLS
 
 To allow for TLS, we made use of the `Secret` kind, as it was already defined, and it can be directly used in an `IngressRoute`:
