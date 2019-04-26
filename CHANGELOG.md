@@ -1,5 +1,24 @@
 # Change Log
 
+## [v1.7.11](https://github.com/containous/traefik/tree/v1.7.11) (2019-04-26)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.10...v1.7.11)
+
+**Enhancements:**
+- **[k8s,k8s/ingress]** Enhance k8s tests maintainability ([#4696](https://github.com/containous/traefik/pull/4696) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[acme]** fix: update lego. ([#4800](https://github.com/containous/traefik/pull/4800) by [ldez](https://github.com/ldez))
+- **[authentication,middleware]** Forward all header values from forward auth response ([#4515](https://github.com/containous/traefik/pull/4515) by [ctas582](https://github.com/ctas582))
+- **[cluster]** Remove usage of github.com/satori/go.uuid ([#4722](https://github.com/containous/traefik/pull/4722) by [aaslamin](https://github.com/aaslamin))
+- **[kv]** Enhance KV client error management ([#4819](https://github.com/containous/traefik/pull/4819) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[tls]** Improve log message about redundant TLS certificate ([#4765](https://github.com/containous/traefik/pull/4765) by [mpl](https://github.com/mpl))
+- **[tracing]** Update zipkin-go-opentracing. ([#4720](https://github.com/containous/traefik/pull/4720) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** Documentation Update: Hosting.de wildcard support tested ([#4747](https://github.com/containous/traefik/pull/4747) by [martinhoefling](https://github.com/martinhoefling))
+- **[acme]** Update Wildcard Domain documentation ([#4682](https://github.com/containous/traefik/pull/4682) by [DWSR](https://github.com/DWSR))
+- **[middleware]** Keep consistent order ([#4690](https://github.com/containous/traefik/pull/4690) by [maxifom](https://github.com/maxifom))
+
 ## [v1.7.10](https://github.com/containous/traefik/tree/v1.7.10) (2019-03-28)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.9...v1.7.10)
 
