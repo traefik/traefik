@@ -187,10 +187,12 @@ _Optional, Default=Host(`{{ normalize .Name }}`)_
 For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
 It must be a valid [Go template](https://golang.org/pkg/text/template/),
 augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
-The container service name can be accessed as the Name identifier,
+The container service name can be accessed as the `Name` identifier,
 and the template has access to all the labels defined on this container.
 
-``defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"``
+```toml
+defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+```
 
 ### `swarmMode`
 

@@ -9,7 +9,7 @@ Attach labels to your services and let Traefik do the rest!
 
 ## Configuration Examples
 
-??? example "Configuring Docker & Deploying / Exposing Services"
+??? example "Configuring Rancher & Deploying / Exposing Services"
 
     Enabling the rancher provider
 
@@ -34,22 +34,16 @@ Attach labels to your services and let Traefik do the rest!
     # Rancher Provider
     ################################################################
     
-    # Enable Docker Provider.
+    # Enable Rancher Provider.
     [rancher]
-    
-    # The default host rule for all services.
-    #
-    # Optionnal
-    #
-    DefaultRule = "unix:///var/run/docker.sock"
     
     # Expose Rancher services by default in Traefik.
     #
     # Optional
     #
-    ExposedByDefault = "docker.localhost"
+    ExposedByDefault = "true"
     
-    # Enable watch docker changes.
+    # Enable watch Rancher changes.
     #
     # Optional
     #
@@ -89,9 +83,19 @@ If set to false, services that don't have a `traefik.enable=true` label will be 
 
 ### `DefaultRule`
 
-_Optional_
+_Optional, Default=Host(`{{ normalize .Name }}`)_
 
 The default host rule for all services.
+
+For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
+It must be a valid [Go template](https://golang.org/pkg/text/template/),
+augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
+The service name can be accessed as the `Name` identifier,
+and the template has access to all the labels defined on this container.
+
+```toml
+defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+```
 
 This option can be overridden on a container basis with the `traefik.http.routers.Router1.rule` label.
 
