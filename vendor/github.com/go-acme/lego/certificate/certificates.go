@@ -114,6 +114,7 @@ func (c *Certifier) Obtain(request ObtainRequest) (*Resource, error) {
 	err = c.resolver.Solve(authz)
 	if err != nil {
 		// If any challenge fails, return. Do not generate partial SAN certificates.
+		c.deactivateAuthorizations(order)
 		return nil, err
 	}
 
@@ -170,6 +171,7 @@ func (c *Certifier) ObtainForCSR(csr x509.CertificateRequest, bundle bool) (*Res
 	err = c.resolver.Solve(authz)
 	if err != nil {
 		// If any challenge fails, return. Do not generate partial SAN certificates.
+		c.deactivateAuthorizations(order)
 		return nil, err
 	}
 

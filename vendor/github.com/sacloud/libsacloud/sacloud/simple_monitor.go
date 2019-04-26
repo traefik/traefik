@@ -1,5 +1,7 @@
 package sacloud
 
+import "time"
+
 // SimpleMonitor シンプル監視
 type SimpleMonitor struct {
 	*Resource        // ID
@@ -47,18 +49,20 @@ type SimpleMonitorProvider struct {
 
 // SimpleMonitorHealthCheck ヘルスチェック
 type SimpleMonitorHealthCheck struct {
-	Protocol      string `json:",omitempty"` // プロトコル
-	Port          string `json:",omitempty"` // ポート
-	Path          string `json:",omitempty"` // HTTP/HTTPS監視の場合のリクエストパス
-	Status        string `json:",omitempty"` // HTTP/HTTPS監視の場合の期待ステータスコード
-	SNI           string `json:",omitempty"` // HTTPS監視時のSNI有効/無効
-	Host          string `json:",omitempty"` // 対象ホスト(IP or FQDN)
-	QName         string `json:",omitempty"` // DNS監視の場合の問い合わせFQDN
-	ExpectedData  string `json:",omitempty"` // 期待値
-	Community     string `json:",omitempty"` // SNMP監視の場合のコミュニティ名
-	SNMPVersion   string `json:",omitempty"` // SNMP監視 SNMPバージョン
-	OID           string `json:",omitempty"` // SNMP監視 OID
-	RemainingDays int    `json:",omitempty"` // SSL証明書 有効残日数
+	Protocol          string `json:",omitempty"` // プロトコル
+	Port              string `json:",omitempty"` // ポート
+	Path              string `json:",omitempty"` // HTTP/HTTPS監視の場合のリクエストパス
+	Status            string `json:",omitempty"` // HTTP/HTTPS監視の場合の期待ステータスコード
+	SNI               string `json:",omitempty"` // HTTPS監視時のSNI有効/無効
+	Host              string `json:",omitempty"` // 対象ホスト(IP or FQDN)
+	BasicAuthUsername string `json:",omitempty"` // HTTP/HTTPS監視の場合のBASIC認証 ユーザー名
+	BasicAuthPassword string `json:",omitempty"` // HTTP/HTTPS監視の場合のBASIC認証 パスワード
+	QName             string `json:",omitempty"` // DNS監視の場合の問い合わせFQDN
+	ExpectedData      string `json:",omitempty"` // 期待値
+	Community         string `json:",omitempty"` // SNMP監視の場合のコミュニティ名
+	SNMPVersion       string `json:",omitempty"` // SNMP監視 SNMPバージョン
+	OID               string `json:",omitempty"` // SNMP監視 OID
+	RemainingDays     int    `json:",omitempty"` // SSL証明書 有効残日数
 }
 
 // SimpleMonitorNotify シンプル監視通知
@@ -66,6 +70,33 @@ type SimpleMonitorNotify struct {
 	Enabled             string `json:",omitempty"` // 有効/無効
 	HTML                string `json:",omitempty"` // メール通知の場合のHTMLメール有効フラグ
 	IncomingWebhooksURL string `json:",omitempty"` // Slack通知の場合のWebhook URL
+}
+
+// ESimpleMonitorHealth シンプル監視ステータス
+type ESimpleMonitorHealth string
+
+var (
+	// EHealthUp Up
+	EHealthUp = ESimpleMonitorHealth("UP")
+	// EHealthDown Down
+	EHealthDown = ESimpleMonitorHealth("DOWN")
+)
+
+// IsUp アップ
+func (e ESimpleMonitorHealth) IsUp() bool {
+	return e == EHealthUp
+}
+
+// IsDown ダウン
+func (e ESimpleMonitorHealth) IsDown() bool {
+	return e == EHealthDown
+}
+
+// SimpleMonitorHealthCheckStatus シンプル監視ステータス
+type SimpleMonitorHealthCheckStatus struct {
+	LastCheckedAt       time.Time
+	LastHealthChangedAt time.Time
+	Health              ESimpleMonitorHealth
 }
 
 // CreateNewSimpleMonitor シンプル監視作成
@@ -142,29 +173,33 @@ func (s *SimpleMonitor) SetHealthCheckTCP(port string) {
 }
 
 // SetHealthCheckHTTP HTTPでのヘルスチェック設定
-func (s *SimpleMonitor) SetHealthCheckHTTP(port string, path string, status string, host string) {
+func (s *SimpleMonitor) SetHealthCheckHTTP(port string, path string, status string, host string, user, pass string) {
 	s.Settings.SimpleMonitor.HealthCheck = &SimpleMonitorHealthCheck{
-		Protocol: "http",
-		Port:     port,
-		Path:     path,
-		Status:   status,
-		Host:     host,
+		Protocol:          "http",
+		Port:              port,
+		Path:              path,
+		Status:            status,
+		Host:              host,
+		BasicAuthUsername: user,
+		BasicAuthPassword: pass,
 	}
 }
 
 // SetHealthCheckHTTPS HTTPSでのヘルスチェック設定
-func (s *SimpleMonitor) SetHealthCheckHTTPS(port string, path string, status string, host string, sni bool) {
+func (s *SimpleMonitor) SetHealthCheckHTTPS(port string, path string, status string, host string, sni bool, user, pass string) {
 	strSNI := "False"
 	if sni {
 		strSNI = "True"
 	}
 	s.Settings.SimpleMonitor.HealthCheck = &SimpleMonitorHealthCheck{
-		Protocol: "https",
-		Port:     port,
-		Path:     path,
-		Status:   status,
-		Host:     host,
-		SNI:      strSNI,
+		Protocol:          "https",
+		Port:              port,
+		Path:              path,
+		Status:            status,
+		Host:              host,
+		SNI:               strSNI,
+		BasicAuthUsername: user,
+		BasicAuthPassword: pass,
 	}
 }
 

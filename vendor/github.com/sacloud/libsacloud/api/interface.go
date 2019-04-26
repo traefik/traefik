@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+
 	"github.com/sacloud/libsacloud/sacloud"
 )
 
@@ -78,6 +79,29 @@ func (api *InterfaceAPI) DisconnectFromPacketFilter(interfaceID int64) (bool, er
 	var (
 		method = "DELETE"
 		uri    = fmt.Sprintf("/%s/%d/to/packetfilter", api.getResourceURL(), interfaceID)
+	)
+	return api.modify(method, uri, nil)
+}
+
+// SetDisplayIPAddress 表示用IPアドレス 設定
+func (api *InterfaceAPI) SetDisplayIPAddress(interfaceID int64, ipaddress string) (bool, error) {
+	var (
+		method = "PUT"
+		uri    = fmt.Sprintf("/%s/%d", api.getResourceURL(), interfaceID)
+	)
+	body := map[string]interface{}{
+		"Interface": map[string]string{
+			"UserIPAddress": ipaddress,
+		},
+	}
+	return api.modify(method, uri, body)
+}
+
+// DeleteDisplayIPAddress 表示用IPアドレス 削除
+func (api *InterfaceAPI) DeleteDisplayIPAddress(interfaceID int64) (bool, error) {
+	var (
+		method = "DELETE"
+		uri    = fmt.Sprintf("/%s/%d", api.getResourceURL(), interfaceID)
 	)
 	return api.modify(method, uri, nil)
 }
