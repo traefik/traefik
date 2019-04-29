@@ -83,7 +83,7 @@ If set to false, services that don't have a `traefik.enable=true` label will be 
 
 ### `DefaultRule`
 
-_Optional, Default=Host(`{{ normalize .Name }}`)_
+_Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
 The default host rule for all services.
 
@@ -93,8 +93,15 @@ augmented with the [sprig template functions](http://masterminds.github.io/sprig
 The service name can be accessed as the `Name` identifier,
 and the template has access to all the labels defined on this container.
 
-```toml
-defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+```toml tab="File"
+[rancher]
+defaultRule = ""
+# ...
+```
+
+```txt tab="CLI"
+--providers.rancher
+--providers.rancher.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
 ```
 
 This option can be overridden on a container basis with the `traefik.http.routers.Router1.rule` label.
@@ -162,6 +169,8 @@ For example, to declare a middleware [`schemeredirect`](../middlewares/redirects
 !!! warning "Conflicts in Declaration"
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
+
+More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
 
 ### Specific Options
 

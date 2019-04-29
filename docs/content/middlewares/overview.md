@@ -142,7 +142,7 @@ If you use multiple `providers` and wish to reference a middleware declared in a
 | [Headers](headers.md)                     | Add / Update headers                              | Security                    |
 | [IPWhiteList](ipwhitelist.md)             | Limit the allowed client IPs                      | Security, Request lifecycle |
 | [MaxConnection](maxconnection.md)         | Limit the number of simultaneous connections      | Security, Request lifecycle |
-| [PassTLSClientCert](passtlsclientcert.md) | TODO                                              | Security                    |
+| [PassTLSClientCert](passtlsclientcert.md) | Adding Client Certificates in a Header            | Security                    |
 | [RateLimit](ratelimit.md)                 | Limit the call frequency                          | Security, Request lifecycle |
 | [RedirectScheme](redirectscheme.md)       | Redirect easily the client elsewhere              | Request lifecycle           |
 | [RedirectRegex](redirectregex.md)         | Redirect the client elsewhere                     | Request lifecycle           |
