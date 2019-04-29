@@ -12,7 +12,9 @@ The BasicAuth middleware is a quick way to restrict access to your services to k
 ```yaml tab="Docker"
 # Declaring the user list
 labels:
-  - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+# Note: all dollar signs in the hash need to be doubled, for escaping.
+# https://docs.docker.com/v17.12/compose/compose-file/#variable-substitution
+  - "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="Kubernetes"
