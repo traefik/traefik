@@ -286,7 +286,9 @@ func newHTTP2Server(conn net.Conn, config *ServerConfig) (_ ServerTransport, err
 // operateHeader takes action on the decoded headers.
 func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(*Stream), traceCtx func(context.Context, string) context.Context) (fatal bool) {
 	streamID := frame.Header().StreamID
-	state := decodeState{serverSide: true}
+	state := &decodeState{
+		serverSide: true,
+	}
 	if err := state.decodeHeader(frame); err != nil {
 		if se, ok := status.FromError(err); ok {
 			t.controlBuf.put(&cleanupStream{
@@ -305,16 +307,16 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 		st:             t,
 		buf:            buf,
 		fc:             &inFlow{limit: uint32(t.initialWindowSize)},
-		recvCompress:   state.encoding,
-		method:         state.method,
-		contentSubtype: state.contentSubtype,
+		recvCompress:   state.data.encoding,
+		method:         state.data.method,
+		contentSubtype: state.data.contentSubtype,
 	}
 	if frame.StreamEnded() {
 		// s is just created by the caller. No lock needed.
 		s.state = streamReadDone
 	}
-	if state.timeoutSet {
-		s.ctx, s.cancel = context.WithTimeout(t.ctx, state.timeout)
+	if state.data.timeoutSet {
+		s.ctx, s.cancel = context.WithTimeout(t.ctx, state.data.timeout)
 	} else {
 		s.ctx, s.cancel = context.WithCancel(t.ctx)
 	}
@@ -327,19 +329,19 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 	}
 	s.ctx = peer.NewContext(s.ctx, pr)
 	// Attach the received metadata to the context.
-	if len(state.mdata) > 0 {
-		s.ctx = metadata.NewIncomingContext(s.ctx, state.mdata)
+	if len(state.data.mdata) > 0 {
+		s.ctx = metadata.NewIncomingContext(s.ctx, state.data.mdata)
 	}
-	if state.statsTags != nil {
-		s.ctx = stats.SetIncomingTags(s.ctx, state.statsTags)
+	if state.data.statsTags != nil {
+		s.ctx = stats.SetIncomingTags(s.ctx, state.data.statsTags)
 	}
-	if state.statsTrace != nil {
-		s.ctx = stats.SetIncomingTrace(s.ctx, state.statsTrace)
+	if state.data.statsTrace != nil {
+		s.ctx = stats.SetIncomingTrace(s.ctx, state.data.statsTrace)
 	}
 	if t.inTapHandle != nil {
 		var err error
 		info := &tap.Info{
-			FullMethodName: state.method,
+			FullMethodName: state.data.method,
 		}
 		s.ctx, err = t.inTapHandle(s.ctx, info)
 		if err != nil {
@@ -435,7 +437,7 @@ func (t *http2Server) HandleStreams(handle func(*Stream), traceCtx func(context.
 				s := t.activeStreams[se.StreamID]
 				t.mu.Unlock()
 				if s != nil {
-					t.closeStream(s, true, se.Code, nil, false)
+					t.closeStream(s, true, se.Code, false)
 				} else {
 					t.controlBuf.put(&cleanupStream{
 						streamID: se.StreamID,
@@ -577,7 +579,7 @@ func (t *http2Server) handleData(f *http2.DataFrame) {
 	}
 	if size > 0 {
 		if err := s.fc.onData(size); err != nil {
-			t.closeStream(s, true, http2.ErrCodeFlowControl, nil, false)
+			t.closeStream(s, true, http2.ErrCodeFlowControl, false)
 			return
 		}
 		if f.Header().Flags.Has(http2.FlagDataPadded) {
@@ -602,11 +604,18 @@ func (t *http2Server) handleData(f *http2.DataFrame) {
 }
 
 func (t *http2Server) handleRSTStream(f *http2.RSTStreamFrame) {
-	s, ok := t.getStream(f)
-	if !ok {
+	// If the stream is not deleted from the transport's active streams map, then do a regular close stream.
+	if s, ok := t.getStream(f); ok {
+		t.closeStream(s, false, 0, false)
 		return
 	}
-	t.closeStream(s, false, 0, nil, false)
+	// If the stream is already deleted from the active streams map, then put a cleanupStream item into controlbuf to delete the stream from loopy writer's established streams map.
+	t.controlBuf.put(&cleanupStream{
+		streamID: f.Header().StreamID,
+		rst:      false,
+		rstCode:  0,
+		onWrite:  func() {},
+	})
 }
 
 func (t *http2Server) handleSettings(f *http2.SettingsFrame) {
@@ -770,7 +779,7 @@ func (t *http2Server) writeHeaderLocked(s *Stream) error {
 		if err != nil {
 			return err
 		}
-		t.closeStream(s, true, http2.ErrCodeInternal, nil, false)
+		t.closeStream(s, true, http2.ErrCodeInternal, false)
 		return ErrHeaderListSizeLimitViolation
 	}
 	if t.stats != nil {
@@ -834,10 +843,12 @@ func (t *http2Server) WriteStatus(s *Stream, st *status.Status) error {
 		if err != nil {
 			return err
 		}
-		t.closeStream(s, true, http2.ErrCodeInternal, nil, false)
+		t.closeStream(s, true, http2.ErrCodeInternal, false)
 		return ErrHeaderListSizeLimitViolation
 	}
-	t.closeStream(s, false, 0, trailingHeader, true)
+	// Send a RST_STREAM after the trailers if the client has not already half-closed.
+	rst := s.getState() == streamActive
+	t.finishStream(s, rst, http2.ErrCodeNo, trailingHeader, true)
 	if t.stats != nil {
 		t.stats.HandleRPC(s.Context(), &stats.OutTrailer{})
 	}
@@ -849,6 +860,9 @@ func (t *http2Server) WriteStatus(s *Stream, st *status.Status) error {
 func (t *http2Server) Write(s *Stream, hdr []byte, data []byte, opts *Options) error {
 	if !s.isHeaderSent() { // Headers haven't been written yet.
 		if err := t.WriteHeader(s, nil); err != nil {
+			if _, ok := err.(ConnectionError); ok {
+				return err
+			}
 			// TODO(mmukhi, dfawley): Make sure this is the right code to return.
 			return status.Errorf(codes.Internal, "transport: %v", err)
 		}
@@ -1005,16 +1019,24 @@ func (t *http2Server) Close() error {
 }
 
 // deleteStream deletes the stream s from transport's active streams.
-func (t *http2Server) deleteStream(s *Stream, eosReceived bool) {
-	t.mu.Lock()
-	if _, ok := t.activeStreams[s.id]; !ok {
-		t.mu.Unlock()
-		return
+func (t *http2Server) deleteStream(s *Stream, eosReceived bool) (oldState streamState) {
+	oldState = s.swapState(streamDone)
+	if oldState == streamDone {
+		// If the stream was already done, return.
+		return oldState
 	}
 
-	delete(t.activeStreams, s.id)
-	if len(t.activeStreams) == 0 {
-		t.idle = time.Now()
+	// In case stream sending and receiving are invoked in separate
+	// goroutines (e.g., bi-directional streaming), cancel needs to be
+	// called to interrupt the potential blocking on other goroutines.
+	s.cancel()
+
+	t.mu.Lock()
+	if _, ok := t.activeStreams[s.id]; ok {
+		delete(t.activeStreams, s.id)
+		if len(t.activeStreams) == 0 {
+			t.idle = time.Now()
+		}
 	}
 	t.mu.Unlock()
 
@@ -1025,53 +1047,36 @@ func (t *http2Server) deleteStream(s *Stream, eosReceived bool) {
 			atomic.AddInt64(&t.czData.streamsFailed, 1)
 		}
 	}
+
+	return oldState
 }
 
-// closeStream clears the footprint of a stream when the stream is not needed
-// any more.
-func (t *http2Server) closeStream(s *Stream, rst bool, rstCode http2.ErrCode, hdr *headerFrame, eosReceived bool) {
-	// Mark the stream as done
-	oldState := s.swapState(streamDone)
+// finishStream closes the stream and puts the trailing headerFrame into controlbuf.
+func (t *http2Server) finishStream(s *Stream, rst bool, rstCode http2.ErrCode, hdr *headerFrame, eosReceived bool) {
+	oldState := t.deleteStream(s, eosReceived)
+	// If the stream is already closed, then don't put trailing header to controlbuf.
+	if oldState == streamDone {
+		return
+	}
 
-	// In case stream sending and receiving are invoked in separate
-	// goroutines (e.g., bi-directional streaming), cancel needs to be
-	// called to interrupt the potential blocking on other goroutines.
-	s.cancel()
-
-	// Deletes the stream from active streams
-	t.deleteStream(s, eosReceived)
-
-	cleanup := &cleanupStream{
+	hdr.cleanup = &cleanupStream{
 		streamID: s.id,
 		rst:      rst,
 		rstCode:  rstCode,
 		onWrite:  func() {},
 	}
-
-	// No trailer. Puts cleanupFrame into transport's control buffer.
-	if hdr == nil {
-		t.controlBuf.put(cleanup)
-		return
-	}
-
-	// We do the check here, because of the following scenario:
-	// 1. closeStream is called first with a trailer. A trailer item with a piggybacked cleanup item
-	// is put to control buffer.
-	// 2. Loopy writer is waiting on a stream quota. It will never get it because client errored at
-	// some point. So loopy can't act on trailer
-	// 3. Client sends a RST_STREAM due to the error. Then closeStream is called without a trailer as
-	// the result of the received RST_STREAM.
-	// If we do this check at the beginning of the closeStream, then we won't put a cleanup item in
-	// response to received RST_STREAM into the control buffer and outStream in loopy writer will
-	// never get cleaned up.
-
-	// If the stream is already done, don't send the trailer.
-	if oldState == streamDone {
-		return
-	}
-
-	hdr.cleanup = cleanup
 	t.controlBuf.put(hdr)
+}
+
+// closeStream clears the footprint of a stream when the stream is not needed any more.
+func (t *http2Server) closeStream(s *Stream, rst bool, rstCode http2.ErrCode, eosReceived bool) {
+	t.deleteStream(s, eosReceived)
+	t.controlBuf.put(&cleanupStream{
+		streamID: s.id,
+		rst:      rst,
+		rstCode:  rstCode,
+		onWrite:  func() {},
+	})
 }
 
 func (t *http2Server) RemoteAddr() net.Addr {

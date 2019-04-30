@@ -7,7 +7,7 @@ import (
 	"time"
 
 	haystack "github.com/ExpediaDotCom/haystack-client-go"
-	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/pkg/log"
 	"github.com/opentracing/opentracing-go"
 )
 

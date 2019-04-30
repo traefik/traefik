@@ -33,6 +33,7 @@ import (
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/encoding"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/internal/balancerload"
 	"google.golang.org/grpc/internal/binarylog"
 	"google.golang.org/grpc/internal/channelz"
 	"google.golang.org/grpc/internal/grpcrand"
@@ -230,10 +231,14 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 	if c.creds != nil {
 		callHdr.Creds = c.creds
 	}
-	var trInfo traceInfo
+	var trInfo *traceInfo
 	if EnableTracing {
-		trInfo.tr = trace.New("grpc.Sent."+methodFamily(method), method)
-		trInfo.firstLine.client = true
+		trInfo = &traceInfo{
+			tr: trace.New("grpc.Sent."+methodFamily(method), method),
+			firstLine: firstLine{
+				client: true,
+			},
+		}
 		if deadline, ok := ctx.Deadline(); ok {
 			trInfo.firstLine.deadline = time.Until(deadline)
 		}
@@ -323,7 +328,7 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 	return cs, nil
 }
 
-func (cs *clientStream) newAttemptLocked(sh stats.Handler, trInfo traceInfo) error {
+func (cs *clientStream) newAttemptLocked(sh stats.Handler, trInfo *traceInfo) error {
 	cs.attempt = &csAttempt{
 		cs:           cs,
 		dc:           cs.cc.dopts.dc,
@@ -337,6 +342,9 @@ func (cs *clientStream) newAttemptLocked(sh stats.Handler, trInfo traceInfo) err
 	t, done, err := cs.cc.getTransport(cs.ctx, cs.callInfo.failFast, cs.callHdr.Method)
 	if err != nil {
 		return err
+	}
+	if trInfo != nil {
+		trInfo.firstLine.SetRemoteAddr(t.RemoteAddr())
 	}
 	cs.attempt.t = t
 	cs.attempt.done = done
@@ -414,9 +422,10 @@ type csAttempt struct {
 	decompSet bool
 
 	mu sync.Mutex // guards trInfo.tr
+	// trInfo may be nil (if EnableTracing is false).
 	// trInfo.tr is set when created (if EnableTracing is true),
 	// and cleared when the finish method is called.
-	trInfo traceInfo
+	trInfo *traceInfo
 
 	statsHandler stats.Handler
 }
@@ -540,7 +549,7 @@ func (cs *clientStream) retryLocked(lastErr error) error {
 			cs.commitAttemptLocked()
 			return err
 		}
-		if err := cs.newAttemptLocked(nil, traceInfo{}); err != nil {
+		if err := cs.newAttemptLocked(nil, nil); err != nil {
 			return err
 		}
 		if lastErr = cs.replayBufferLocked(); lastErr == nil {
@@ -811,7 +820,7 @@ func (cs *clientStream) finish(err error) {
 
 func (a *csAttempt) sendMsg(m interface{}, hdr, payld, data []byte) error {
 	cs := a.cs
-	if EnableTracing {
+	if a.trInfo != nil {
 		a.mu.Lock()
 		if a.trInfo.tr != nil {
 			a.trInfo.tr.LazyLog(&payload{sent: true, msg: m}, true)
@@ -868,7 +877,7 @@ func (a *csAttempt) recvMsg(m interface{}, payInfo *payloadInfo) (err error) {
 		}
 		return toRPCErr(err)
 	}
-	if EnableTracing {
+	if a.trInfo != nil {
 		a.mu.Lock()
 		if a.trInfo.tr != nil {
 			a.trInfo.tr.LazyLog(&payload{sent: false, msg: m}, true)
@@ -881,8 +890,9 @@ func (a *csAttempt) recvMsg(m interface{}, payInfo *payloadInfo) (err error) {
 			RecvTime: time.Now(),
 			Payload:  m,
 			// TODO truncate large payload.
-			Data:   payInfo.uncompressedBytes,
-			Length: len(payInfo.uncompressedBytes),
+			Data:       payInfo.uncompressedBytes,
+			WireLength: payInfo.wireLength,
+			Length:     len(payInfo.uncompressedBytes),
 		})
 	}
 	if channelz.IsOn() {
@@ -915,22 +925,23 @@ func (a *csAttempt) finish(err error) {
 		// Ending a stream with EOF indicates a success.
 		err = nil
 	}
+	var tr metadata.MD
 	if a.s != nil {
 		a.t.CloseStream(a.s, err)
+		tr = a.s.Trailer()
 	}
 
 	if a.done != nil {
 		br := false
-		var tr metadata.MD
 		if a.s != nil {
 			br = a.s.BytesReceived()
-			tr = a.s.Trailer()
 		}
 		a.done(balancer.DoneInfo{
 			Err:           err,
 			Trailer:       tr,
 			BytesSent:     a.s != nil,
 			BytesReceived: br,
+			ServerLoad:    balancerload.Parse(tr),
 		})
 	}
 	if a.statsHandler != nil {
@@ -938,11 +949,12 @@ func (a *csAttempt) finish(err error) {
 			Client:    true,
 			BeginTime: a.cs.beginTime,
 			EndTime:   time.Now(),
+			Trailer:   tr,
 			Error:     err,
 		}
 		a.statsHandler.HandleRPC(a.cs.ctx, end)
 	}
-	if a.trInfo.tr != nil {
+	if a.trInfo != nil && a.trInfo.tr != nil {
 		if err == nil {
 			a.trInfo.tr.LazyPrintf("RPC: [OK]")
 		} else {
@@ -1466,8 +1478,9 @@ func (ss *serverStream) RecvMsg(m interface{}) (err error) {
 			RecvTime: time.Now(),
 			Payload:  m,
 			// TODO truncate large payload.
-			Data:   payInfo.uncompressedBytes,
-			Length: len(payInfo.uncompressedBytes),
+			Data:       payInfo.uncompressedBytes,
+			WireLength: payInfo.wireLength,
+			Length:     len(payInfo.uncompressedBytes),
 		})
 	}
 	if ss.binlog != nil {

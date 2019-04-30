@@ -55,6 +55,13 @@
   revision = "a368813c5e648fee92e5f6c30e3944ff9d5e8895"
 
 [[projects]]
+  digest = "1:63bade567307333f584bada523d1e84ed3740dbb569fdd5079333e39ee823a0e"
+  name = "github.com/ExpediaDotCom/haystack-client-go"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "3ee3ba12ce07ae900855f7cf3e3f543418e865bf"
+
+[[projects]]
   digest = "1:ab7fee312bbdc8070d0325d841de8704cc78bf032b076200f1458659b74b8ed6"
   name = "github.com/JamesClonk/vultr"
   packages = ["lib"]
@@ -765,7 +772,7 @@
   revision = "44145f04b68cf362d9c4df2182967c2275eaefed"
 
 [[projects]]
-  digest = "1:03e14cff610a8a58b774e36bd337fa979482be86aab01be81fb8bbd6d0f07fc8"
+  digest = "1:2d0636a8c490d2272dd725db26f74a537111b99b9dbdda0d8b98febe63702aa4"
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -775,8 +782,8 @@
     "ptypes/timestamp",
   ]
   pruneopts = "NUT"
-  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
-  version = "v1.1.0"
+  revision = "b5d812f8a3706043e23a9cd5babf2e5423744d30"
+  version = "v1.3.1"
 
 [[projects]]
   branch = "master"
@@ -1724,15 +1731,14 @@
   revision = "ec22f46f877b4505e0117eeaab541714644fdd28"
 
 [[projects]]
-  branch = "master"
-  digest = "1:4e67fdd7a13cbdb3c0dff0a7505abbdf4f42b12b27da350d66bffdc700db2899"
+  digest = "1:51bfac9fe01b6a949bfed6db70b00bada281f0d64e5296ec644163aa977bfee0"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "fff93fa7cd278d84afc205751523809c464168ab"
+  revision = "1c9583448a9c3aa0f9a6a5241bf73c0bd8aafded"
 
 [[projects]]
   digest = "1:ca9ebfc1200ca7423d9778dba9cdd463704753541c99dc4896f15e0b8b2bf1e8"
@@ -1823,22 +1829,31 @@
   revision = "09f6ed296fc66555a25fe4ce95173148778dfa85"
 
 [[projects]]
-  digest = "1:a840929a3a2d91282dc853cbd5f586069c14ae373247fb7d4cb4fa02b285326e"
+  digest = "1:ffb498178a6bbe5a877e715cc85a40d5a712883d85f5bf05acf26dbd6c8f71e2"
   name = "google.golang.org/grpc"
   packages = [
     ".",
     "balancer",
     "balancer/base",
     "balancer/roundrobin",
-    "channelz",
+    "binarylog/grpc_binarylog_v1",
     "codes",
     "connectivity",
     "credentials",
+    "credentials/internal",
     "encoding",
     "encoding/proto",
-    "grpclb/grpc_lb_v1/messages",
     "grpclog",
     "internal",
+    "internal/backoff",
+    "internal/balancerload",
+    "internal/binarylog",
+    "internal/channelz",
+    "internal/envconfig",
+    "internal/grpcrand",
+    "internal/grpcsync",
+    "internal/syscall",
+    "internal/transport",
     "keepalive",
     "metadata",
     "naming",
@@ -1849,11 +1864,10 @@
     "stats",
     "status",
     "tap",
-    "transport",
   ]
   pruneopts = "NUT"
-  revision = "41344da2231b913fa3d983840a57a6b1b7b631a1"
-  version = "v1.12.0"
+  revision = "25c4f928eaa6d96443009bd842389fb4fa48664e"
+  version = "v1.20.1"
 
 [[projects]]
   digest = "1:b886012746f19e2a7c6c3901ea9f86e8a5e32ff2b4407086f4f3181269976957"
@@ -2215,6 +2229,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/BurntSushi/toml",
+    "github.com/ExpediaDotCom/haystack-client-go",
     "github.com/Masterminds/sprig",
     "github.com/NYTimes/gziphandler",
     "github.com/abbot/go-http-auth",

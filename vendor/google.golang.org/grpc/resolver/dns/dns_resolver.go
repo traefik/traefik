@@ -47,6 +47,8 @@ const (
 	defaultFreq       = time.Minute * 30
 	defaultDNSSvrPort = "53"
 	golang            = "GO"
+	// txtPrefix is the prefix string to be prepended to the host name for txt record lookup.
+	txtPrefix = "_grpc_config."
 	// In DNS, service config is encoded in a TXT record via the mechanism
 	// described in RFC-1464 using the attribute name grpc_config.
 	txtAttribute = "grpc_config="
@@ -282,7 +284,7 @@ func (d *dnsResolver) lookupSRV() []resolver.Address {
 }
 
 func (d *dnsResolver) lookupTXT() string {
-	ss, err := d.resolver.LookupTXT(d.ctx, d.host)
+	ss, err := d.resolver.LookupTXT(d.ctx, txtPrefix+d.host)
 	if err != nil {
 		grpclog.Infof("grpc: failed dns TXT record lookup due to %v.\n", err)
 		return ""

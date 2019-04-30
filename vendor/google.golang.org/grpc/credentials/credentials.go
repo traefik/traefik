@@ -36,9 +36,6 @@ import (
 	"google.golang.org/grpc/credentials/internal"
 )
 
-// alpnProtoStr are the specified application level protocols for gRPC.
-var alpnProtoStr = []string{"h2"}
-
 // PerRPCCredentials defines the common interface for the credentials which need to
 // attach security information to every RPC (e.g., oauth2).
 type PerRPCCredentials interface {
@@ -208,10 +205,23 @@ func (c *tlsCreds) OverrideServerName(serverNameOverride string) error {
 	return nil
 }
 
+const alpnProtoStrH2 = "h2"
+
+func appendH2ToNextProtos(ps []string) []string {
+	for _, p := range ps {
+		if p == alpnProtoStrH2 {
+			return ps
+		}
+	}
+	ret := make([]string, 0, len(ps)+1)
+	ret = append(ret, ps...)
+	return append(ret, alpnProtoStrH2)
+}
+
 // NewTLS uses c to construct a TransportCredentials based on TLS.
 func NewTLS(c *tls.Config) TransportCredentials {
 	tc := &tlsCreds{cloneTLSConfig(c)}
-	tc.config.NextProtos = alpnProtoStr
+	tc.config.NextProtos = appendH2ToNextProtos(tc.config.NextProtos)
 	return tc
 }
 

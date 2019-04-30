@@ -99,6 +99,9 @@ type ServiceConfig struct {
 	// healthCheckConfig must be set as one of the requirement to enable LB channel
 	// health check.
 	healthCheckConfig *healthCheckConfig
+	// rawJSONString stores service config json string that get parsed into
+	// this service config struct.
+	rawJSONString string
 }
 
 // healthCheckConfig defines the go-native version of the LB channel health check config.
@@ -238,24 +241,22 @@ type jsonSC struct {
 	HealthCheckConfig   *healthCheckConfig
 }
 
-func parseServiceConfig(js string) (ServiceConfig, error) {
-	if len(js) == 0 {
-		return ServiceConfig{}, fmt.Errorf("no JSON service config provided")
-	}
+func parseServiceConfig(js string) (*ServiceConfig, error) {
 	var rsc jsonSC
 	err := json.Unmarshal([]byte(js), &rsc)
 	if err != nil {
 		grpclog.Warningf("grpc: parseServiceConfig error unmarshaling %s due to %v", js, err)
-		return ServiceConfig{}, err
+		return nil, err
 	}
 	sc := ServiceConfig{
 		LB:                rsc.LoadBalancingPolicy,
 		Methods:           make(map[string]MethodConfig),
 		retryThrottling:   rsc.RetryThrottling,
 		healthCheckConfig: rsc.HealthCheckConfig,
+		rawJSONString:     js,
 	}
 	if rsc.MethodConfig == nil {
-		return sc, nil
+		return &sc, nil
 	}
 
 	for _, m := range *rsc.MethodConfig {
@@ -265,7 +266,7 @@ func parseServiceConfig(js string) (ServiceConfig, error) {
 		d, err := parseDuration(m.Timeout)
 		if err != nil {
 			grpclog.Warningf("grpc: parseServiceConfig error unmarshaling %s due to %v", js, err)
-			return ServiceConfig{}, err
+			return nil, err
 		}
 
 		mc := MethodConfig{
@@ -274,7 +275,7 @@ func parseServiceConfig(js string) (ServiceConfig, error) {
 		}
 		if mc.retryPolicy, err = convertRetryPolicy(m.RetryPolicy); err != nil {
 			grpclog.Warningf("grpc: parseServiceConfig error unmarshaling %s due to %v", js, err)
-			return ServiceConfig{}, err
+			return nil, err
 		}
 		if m.MaxRequestMessageBytes != nil {
 			if *m.MaxRequestMessageBytes > int64(maxInt) {
@@ -299,13 +300,13 @@ func parseServiceConfig(js string) (ServiceConfig, error) {
 
 	if sc.retryThrottling != nil {
 		if sc.retryThrottling.MaxTokens <= 0 ||
-			sc.retryThrottling.MaxTokens >= 1000 ||
+			sc.retryThrottling.MaxTokens > 1000 ||
 			sc.retryThrottling.TokenRatio <= 0 {
 			// Illegal throttling config; disable throttling.
 			sc.retryThrottling = nil
 		}
 	}
-	return sc, nil
+	return &sc, nil
 }
 
 func convertRetryPolicy(jrp *jsonRetryPolicy) (p *retryPolicy, err error) {

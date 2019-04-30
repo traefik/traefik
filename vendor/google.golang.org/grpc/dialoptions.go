@@ -55,13 +55,16 @@ type dialOptions struct {
 	// balancer, and also by WithBalancerName dial option.
 	balancerBuilder balancer.Builder
 	// This is to support grpclb.
-	resolverBuilder      resolver.Builder
-	reqHandshake         envconfig.RequireHandshakeSetting
-	channelzParentID     int64
-	disableServiceConfig bool
-	disableRetry         bool
-	disableHealthCheck   bool
-	healthCheckFunc      internal.HealthChecker
+	resolverBuilder             resolver.Builder
+	reqHandshake                envconfig.RequireHandshakeSetting
+	channelzParentID            int64
+	disableServiceConfig        bool
+	disableRetry                bool
+	disableHealthCheck          bool
+	healthCheckFunc             internal.HealthChecker
+	minConnectTimeout           func() time.Duration
+	defaultServiceConfig        *ServiceConfig // defaultServiceConfig is parsed from defaultServiceConfigRawJSON.
+	defaultServiceConfigRawJSON *string
 }
 
 // DialOption configures how we set up the connection.
@@ -440,9 +443,24 @@ func WithChannelzParentID(id int64) DialOption {
 // WithDisableServiceConfig returns a DialOption that causes grpc to ignore any
 // service config provided by the resolver and provides a hint to the resolver
 // to not fetch service configs.
+//
+// Note that, this dial option only disables service config from resolver. If
+// default service config is provided, grpc will use the default service config.
 func WithDisableServiceConfig() DialOption {
 	return newFuncDialOption(func(o *dialOptions) {
 		o.disableServiceConfig = true
+	})
+}
+
+// WithDefaultServiceConfig returns a DialOption that configures the default
+// service config, which will be used in cases where:
+// 1. WithDisableServiceConfig is called.
+// 2. Resolver does not return service config or if the resolver gets and invalid config.
+//
+// This API is EXPERIMENTAL.
+func WithDefaultServiceConfig(s string) DialOption {
+	return newFuncDialOption(func(o *dialOptions) {
+		o.defaultServiceConfigRawJSON = &s
 	})
 }
 
@@ -470,7 +488,8 @@ func WithMaxHeaderListSize(s uint32) DialOption {
 	})
 }
 
-// WithDisableHealthCheck disables the LB channel health checking for all SubConns of this ClientConn.
+// WithDisableHealthCheck disables the LB channel health checking for all
+// SubConns of this ClientConn.
 //
 // This API is EXPERIMENTAL.
 func WithDisableHealthCheck() DialOption {
@@ -479,8 +498,8 @@ func WithDisableHealthCheck() DialOption {
 	})
 }
 
-// withHealthCheckFunc replaces the default health check function with the provided one. It makes
-// tests easier to change the health check function.
+// withHealthCheckFunc replaces the default health check function with the
+// provided one. It makes tests easier to change the health check function.
 //
 // For testing purpose only.
 func withHealthCheckFunc(f internal.HealthChecker) DialOption {
@@ -499,4 +518,15 @@ func defaultDialOptions() dialOptions {
 			ReadBufferSize:  defaultReadBufSize,
 		},
 	}
+}
+
+// withGetMinConnectDeadline specifies the function that clientconn uses to
+// get minConnectDeadline. This can be used to make connection attempts happen
+// faster/slower.
+//
+// For testing purpose only.
+func withMinConnectDeadline(f func() time.Duration) DialOption {
+	return newFuncDialOption(func(o *dialOptions) {
+		o.minConnectTimeout = f
+	})
 }
