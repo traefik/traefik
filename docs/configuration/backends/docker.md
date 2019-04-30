@@ -266,9 +266,10 @@ Required labels:
 #### Troubleshooting
 
 If service doesn't show up in the dashboard, check the debug logs to see if the port is missing:
-`Filtering container without port, <SERVICE_NAME>: port label is missing, please use traefik.port as default value or define port label for all segments ('traefik.<segment_name>.port')`
+`Filtering container without port, <SERVICE_NAME>: port label is missing, ...')`
 
-If `504 Gateway Timeout` occurs and there are networks used, ensure that `traefik.docker.network` is defined. The complete name is required, meaning if the network is internal the name needs to be `<project_name>_<network_name>`.
+If `504 Gateway Timeout` occurs and there are networks used, ensure that `traefik.docker.network` is defined. 
+The complete name is required, meaning if the network is internal the name needs to be `<project_name>_<network_name>`.
 
 ### Using Docker Compose
 
