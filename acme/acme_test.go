@@ -419,12 +419,12 @@ func TestAcme_getValidDomain(t *testing.T) {
 			expectedDomains: []string{"*.traefik.wtf", "traefik.wtf"},
 		},
 		{
-			desc:            "unexpected SANs",
+			desc:            "wildcard SANs",
 			domains:         []string{"*.traefik.wtf", "*.acme.wtf"},
 			dnsChallenge:    &acmeprovider.DNSChallenge{},
 			wildcardAllowed: true,
-			expectedErr:     "unable to generate a certificate for domains \"*.traefik.wtf,*.acme.wtf\": SANs can not be a wildcard domain",
-			expectedDomains: nil,
+			expectedErr:     "",
+			expectedDomains: []string{"*.traefik.wtf", "*.acme.wtf"},
 		},
 	}
 	for _, test := range testCases {

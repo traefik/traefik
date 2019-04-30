@@ -751,12 +751,6 @@ func (a *ACME) getValidDomains(domains []string, wildcardAllowed bool) ([]string
 			return nil, fmt.Errorf("unable to generate a wildcard certificate for domain %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
 		}
 	}
-	for _, san := range domains[1:] {
-		if strings.HasPrefix(san, "*") {
-			return nil, fmt.Errorf("unable to generate a certificate for domains %q: SANs can not be a wildcard domain", strings.Join(domains, ","))
-
-		}
-	}
 
 	domains = fun.Map(types.CanonicalDomain, domains).([]string)
 	return domains, nil

@@ -266,6 +266,14 @@ func TestGetValidDomain(t *testing.T) {
 			expectedErr:     "",
 			expectedDomains: []string{"*.traefik.wtf", "traefik.wtf"},
 		},
+		{
+			desc:            "wildcard SANs",
+			domains:         types.Domain{Main: "*.traefik.wtf", SANs: []string{"*.acme.wtf"}},
+			dnsChallenge:    &DNSChallenge{},
+			wildcardAllowed: true,
+			expectedErr:     "",
+			expectedDomains: []string{"*.traefik.wtf", "*.acme.wtf"},
+		},
 	}
 
 	for _, test := range testCases {
