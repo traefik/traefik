@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+
 	"github.com/sacloud/libsacloud/sacloud"
 )
 

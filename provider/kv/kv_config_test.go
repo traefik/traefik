@@ -12,6 +12,7 @@ import (
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func aKVPair(key string, value string) *store.KVPair {
@@ -22,6 +23,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		kvPairs  []*store.KVPair
+		kvError  KvError
 		expected *types.Configuration
 	}{
 		{
@@ -553,6 +555,22 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Should recover on panic",
+			kvPairs: filler("traefik",
+				frontend("frontend",
+					withPair(pathFrontendBackend, "backend"),
+					withPair(pathFrontendAuthHeaderField, "X-WebAuth-User"),
+					withPair(pathFrontendAuthBasicRemoveHeader, "true"),
+					withList(pathFrontendAuthBasicUsers, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+				),
+				backend("backend"),
+			),
+			kvError: KvError{
+				List: store.ErrNotReachable,
+			},
+			expected: nil,
+		},
 	}
 
 	for _, test := range testCases {
@@ -564,15 +582,62 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				Prefix: "traefik",
 				kvClient: &Mock{
 					KVPairs: test.kvPairs,
+					Error:   test.kvError,
 				},
 			}
 
-			actual := p.buildConfiguration()
-			assert.NotNil(t, actual)
+			actual, err := p.buildConfiguration()
+			if test.kvError.Get != nil || test.kvError.List != nil {
+				require.Error(t, err)
+				require.Nil(t, actual)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, actual)
+				assert.EqualValues(t, test.expected.Backends, actual.Backends)
+				assert.EqualValues(t, test.expected.Frontends, actual.Frontends)
+			}
 
-			assert.EqualValues(t, test.expected.Backends, actual.Backends)
-			assert.EqualValues(t, test.expected.Frontends, actual.Frontends)
 			assert.EqualValues(t, test.expected, actual)
+		})
+	}
+}
+
+func TestProviderListShouldPanic(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		panic   bool
+		kvError error
+	}{
+		{
+			desc:    "Should panic on an unexpected error",
+			kvError: store.ErrBackendNotSupported,
+			panic:   true,
+		},
+		{
+			desc:    "Should not panic on an ErrKeyNotFound error",
+			kvError: store.ErrKeyNotFound,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			kvPairs := []*store.KVPair{
+				aKVPair("foo", "bar"),
+			}
+			p := &Provider{
+				kvClient: newKvClientMock(kvPairs, test.kvError),
+			}
+
+			keyParts := []string{"foo"}
+			if test.panic {
+				assert.Panics(t, func() { p.list(keyParts...) })
+			} else {
+				assert.NotPanics(t, func() { p.list(keyParts...) })
+			}
 		})
 	}
 }
@@ -622,8 +687,8 @@ func TestProviderList(t *testing.T) {
 			expected: []string{"foo/baz/1", "foo/baz/2"},
 		},
 		{
-			desc:    "when KV error",
-			kvError: store.ErrNotReachable,
+			desc:    "when KV error key not found",
+			kvError: store.ErrKeyNotFound,
 			kvPairs: []*store.KVPair{
 				aKVPair("foo/baz/1", "bar1"),
 				aKVPair("foo/baz/2", "bar2"),
@@ -647,6 +712,46 @@ func TestProviderList(t *testing.T) {
 
 			sort.Strings(test.expected)
 			assert.Equal(t, test.expected, actual, "key: %v", test.keyParts)
+		})
+	}
+}
+
+func TestProviderGetShouldPanic(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		panic   bool
+		kvError error
+	}{
+		{
+			desc:    "Should panic on an unexpected error",
+			kvError: store.ErrBackendNotSupported,
+			panic:   true,
+		},
+		{
+			desc:    "Should not panic on an ErrKeyNotFound error",
+			kvError: store.ErrKeyNotFound,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			kvPairs := []*store.KVPair{
+				aKVPair("foo", "bar"),
+			}
+			p := &Provider{
+				kvClient: newKvClientMock(kvPairs, test.kvError),
+			}
+
+			keyParts := []string{"foo"}
+			if test.panic {
+				assert.Panics(t, func() { p.get("", keyParts...) })
+			} else {
+				assert.NotPanics(t, func() { p.get("", keyParts...) })
+			}
 		})
 	}
 }
@@ -718,7 +823,7 @@ func TestProviderGet(t *testing.T) {
 		},
 		{
 			desc:    "when KV error",
-			kvError: store.ErrNotReachable,
+			kvError: store.ErrKeyNotFound,
 			kvPairs: []*store.KVPair{
 				aKVPair("foo/baz/1", "bar1"),
 				aKVPair("foo/baz/2", "bar2"),
@@ -824,7 +929,7 @@ func TestProviderSplitGet(t *testing.T) {
 		},
 		{
 			desc:    "when KV error",
-			kvError: store.ErrNotReachable,
+			kvError: store.ErrKeyNotFound,
 			kvPairs: filler("traefik",
 				frontend("foo",
 					withPair("bar", ""),
@@ -900,7 +1005,7 @@ func TestProviderGetList(t *testing.T) {
 		},
 		{
 			desc:    "when KV error",
-			kvError: store.ErrNotReachable,
+			kvError: store.ErrKeyNotFound,
 			kvPairs: filler("traefik",
 				frontend("foo",
 					withPair("bar", ""),
@@ -973,7 +1078,7 @@ func TestProviderGetSlice(t *testing.T) {
 		},
 		{
 			desc:    "when KV error",
-			kvError: store.ErrNotReachable,
+			kvError: store.ErrKeyNotFound,
 			kvPairs: filler("traefik",
 				frontend("foo",
 					withPair("bar", ""),
@@ -1046,7 +1151,7 @@ func TestProviderGetBool(t *testing.T) {
 		},
 		{
 			desc:    "when KV error",
-			kvError: store.ErrNotReachable,
+			kvError: store.ErrKeyNotFound,
 			kvPairs: filler("traefik",
 				frontend("foo",
 					withPair("bar", "true"),
@@ -1111,7 +1216,7 @@ func TestProviderGetInt(t *testing.T) {
 		},
 		{
 			desc:    "when KV error",
-			kvError: store.ErrNotReachable,
+			kvError: store.ErrKeyNotFound,
 			kvPairs: filler("traefik",
 				frontend("foo",
 					withPair("bar", "true"),
@@ -1176,7 +1281,7 @@ func TestProviderGetInt64(t *testing.T) {
 		},
 		{
 			desc:    "when KV error",
-			kvError: store.ErrNotReachable,
+			kvError: store.ErrKeyNotFound,
 			kvPairs: filler("traefik",
 				frontend("foo",
 					withPair("bar", "true"),

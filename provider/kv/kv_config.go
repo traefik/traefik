@@ -18,7 +18,7 @@ import (
 	"github.com/containous/traefik/types"
 )
 
-func (p *Provider) buildConfiguration() *types.Configuration {
+func (p *Provider) buildConfiguration() (*types.Configuration, error) {
 	templateObjects := struct {
 		Prefix string
 	}{
@@ -26,7 +26,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		Prefix: strings.TrimSuffix(p.get(p.Prefix, p.Prefix+pathAlias), pathSeparator),
 	}
 
-	var KvFuncMap = template.FuncMap{
+	kvFuncMap := template.FuncMap{
 		"List":        p.list,
 		"ListServers": p.listServers,
 		"Get":         p.get,
@@ -69,9 +69,9 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getStickinessCookieName": p.getStickinessCookieName, // Deprecated [breaking]
 	}
 
-	configuration, err := p.GetConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
+	configuration, err := p.safeGetConfiguration("templates/kv.tmpl", kvFuncMap, templateObjects)
 	if err != nil {
-		log.Error(err)
+		return nil, err
 	}
 
 	for key, frontend := range configuration.Frontends {
@@ -80,7 +80,19 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		}
 	}
 
-	return configuration
+	return configuration, nil
+}
+
+func (p *Provider) safeGetConfiguration(defaultTemplate string, funcMap template.FuncMap, templateObjects interface{}) (configuration *types.Configuration, err error) {
+	defer func() {
+		e := recover()
+		if e != nil {
+			err = fmt.Errorf("%v", e)
+		}
+	}()
+
+	configuration, err = p.GetConfiguration("templates/kv.tmpl", funcMap, templateObjects)
+	return
 }
 
 // Deprecated
@@ -564,9 +576,9 @@ func (p *Provider) listServers(backend string) []string {
 func (p *Provider) serverFilter(serverName string) bool {
 	key := fmt.Sprint(serverName, pathBackendServerURL)
 	if _, err := p.kvClient.Get(key, nil); err != nil {
-		if err != store.ErrKeyNotFound {
-			log.Errorf("Failed to retrieve value for key %s: %s", key, err)
-		}
+		checkError(err)
+
+		log.Errorf("failed to retrieve value for key %s: %s", key, err)
 		return false
 	}
 	return p.checkConstraints(serverName, pathTags)
@@ -575,6 +587,9 @@ func (p *Provider) serverFilter(serverName string) bool {
 func (p *Provider) checkConstraints(keys ...string) bool {
 	joinedKeys := strings.Join(keys, "")
 	keyPair, err := p.kvClient.Get(joinedKeys, nil)
+	if err != nil {
+		checkError(err)
+	}
 
 	value := ""
 	if err == nil && keyPair != nil && keyPair.Value != nil {
@@ -625,9 +640,13 @@ func (p *Provider) get(defaultValue string, keyParts ...string) string {
 
 	keyPair, err := p.kvClient.Get(key, nil)
 	if err != nil {
+		checkError(err)
+
 		log.Debugf("Cannot get key %s %s, setting default %s", key, err, defaultValue)
 		return defaultValue
-	} else if keyPair == nil {
+	}
+
+	if keyPair == nil {
 		log.Debugf("Cannot get key %s, setting default %s", key, defaultValue)
 		return defaultValue
 	}
@@ -663,6 +682,8 @@ func (p *Provider) hasPrefix(keyParts ...string) bool {
 
 	listKeys, err := p.kvClient.List(baseKey, nil)
 	if err != nil {
+		checkError(err)
+
 		log.Debugf("Cannot list keys under %q: %v", baseKey, err)
 		return false
 	}
@@ -705,6 +726,8 @@ func (p *Provider) list(keyParts ...string) []string {
 
 	keysPairs, err := p.kvClient.List(rootKey, nil)
 	if err != nil {
+		checkError(err)
+
 		log.Debugf("Cannot list keys under %q: %v", rootKey, err)
 		return nil
 	}
@@ -775,4 +798,10 @@ func (p *Provider) getMap(keyParts ...string) map[string]string {
 	}
 
 	return mapData
+}
+
+func checkError(err error) {
+	if err != store.ErrKeyNotFound {
+		panic(err)
+	}
 }

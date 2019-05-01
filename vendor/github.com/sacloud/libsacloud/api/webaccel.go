@@ -3,8 +3,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sacloud/libsacloud/sacloud"
 	"strings"
+
+	"github.com/sacloud/libsacloud/sacloud"
 )
 
 // WebAccelAPI ウェブアクセラレータAPI
