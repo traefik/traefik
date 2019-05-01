@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/cenk/backoff"
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
@@ -23,7 +24,6 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
-	"github.com/eapache/channels"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -69,6 +69,7 @@ type Provider struct {
 	LabelSelector          string           `description:"Kubernetes Ingress label selector to use" export:"true"`
 	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
 	IngressEndpoint        *IngressEndpoint `description:"Kubernetes Ingress Endpoint"`
+	ThrottleDuration       flaeg.Duration   `description:"Ingress refresh throttle duration"`
 	lastConfiguration      safe.Safe
 }
 
@@ -139,35 +140,48 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				}
 			}
 
-			throttledEvents := channels.NewRingChannel(1)
-			go func() {
-				for {
-					select {
-					case <-stop:
-						return
-					case nextEvent := <-eventsChan:
-						throttledEvents.In() <- nextEvent
-					}
-				}
-			}()
+			eventsChanBuffered := eventsChan
+			throttleDuration := time.Duration(p.ThrottleDuration)
+			if throttleDuration > 0 {
+				// Create a buffered channel to hold the pending event (if we're
+				// delaying processing the event due to throttling)
+				eventsChanBuffered := make(chan interface{}, 1)
 
-			// TODO: should use Traefik config
-			throttlePeriod := 5 * time.Second
-			throttleEnv := os.Getenv("KUBE_EVENT_THROTTLE_SECONDS")
-			if throttleEnv != "" {
-				throttleEnvParsed, err := strconv.Atoi(throttleEnv)
-				if err != nil {
-					log.Errorf("Invalid KUBE_EVENT_THROTTLE_SECONDS: %s", throttleEnv)
-				} else {
-					throttlePeriod = time.Duration(throttleEnvParsed) * time.Second
-				}
+				// Run a goroutine that reads events from eventChan and does a
+				// non-blocking write to pendingEvent. This guarantees that writing to
+				// eventChan will never block, and that pendingEvent will have
+				// something in it if there's been an event since we read from that
+				// channel
+				go func() {
+					for {
+						select {
+						case <-stop:
+							return
+						case nextEvent := <-eventsChan:
+							select {
+							case eventsChanBuffered <- nextEvent:
+							default:
+								// We already have an event in eventsChanBuffered, so we'll
+								// do a refresh as soon as our throttle allows us to. It's fine
+								// to drop the event and keep whatever's in the buffer -- we
+								// don't do different things for different events
+								log.Debugf("Dropping event kind %T due to throttling", nextEvent)
+							}
+						}
+					}
+				}()
 			}
 
 			for {
 				select {
 				case <-stop:
 					return nil
-				case event := <-throttledEvents.Out():
+				case event := <-eventsChanBuffered:
+					// Note that event is the *first* event that came in during this
+					// throttling interval -- if we're hitting our throttle, we may have
+					// dropped events. This is fine, because we don't treat different
+					// event types differently. But if we do in the future, we'll need to
+					// track more information about the dropped events.
 					log.Debugf("Received Kubernetes event kind %T", event)
 					templateObjects, err := p.loadIngresses(k8sClient)
 					if err != nil {
@@ -184,7 +198,10 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						}
 					}
 
-					time.Sleep(throttlePeriod)
+					// If we're throttling, we sleep here for the throttle duration to
+					// enforce that we don't refresh faster than our throttle. time.Sleep
+					// returns immediately if p.ThrottleDuration is 0 (no throttle).
+					time.Sleep(throttleDuration)
 				}
 			}
 		}
