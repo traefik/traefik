@@ -101,6 +101,13 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
         - "traefik.http.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.depth=2"
     ```
     
+    ```json tab="Marathon"
+    "labels": {
+        "traefik.http.middlewares.testIPwhitelist.ipWhiteList.SourceRange": "127.0.0.1/32, 192.168.1.7",
+        "traefik.http.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.depth": "2"
+    }
+    ```
+    
     ```toml tab="File"
     # Whitelisting Based on `X-Forwarded-For` with `depth=2`
     [http.middlewares]
@@ -156,6 +163,12 @@ spec:
 # Exclude from `X-Forwarded-For`
 labels:
     - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.excludedIPs=127.0.0.1/32, 192.168.1.7"
+```
+
+```json tab="Marathon"
+"labels": {
+    "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.excludedIPs": "127.0.0.1/32, 192.168.1.7"
+}
 ```
 
 ```toml tab="File"

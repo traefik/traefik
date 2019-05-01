@@ -69,7 +69,7 @@ The file content is a list of `name:realm:encoded-password`.
 
 ??? example "A file containing test/test and test2/test2"
 
-    ```
+    ```txt
     test:traefik:a2688e031edb4be6a3797f3882655c05
     test2:traefik:518845800f9e2bfb1f1f740ec24f074e
     ```
@@ -107,6 +107,12 @@ spec:
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.my-auth.digestauth.headerField=X-WebAuth-User"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.my-auth.digestauth.headerField": "X-WebAuth-User"
+}
 ```
 
 ```toml tab="File"

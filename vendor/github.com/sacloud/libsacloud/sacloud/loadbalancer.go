@@ -1,11 +1,50 @@
 package sacloud
 
+import "strconv"
+
 // LoadBalancer ロードバランサー
 type LoadBalancer struct {
 	*Appliance // アプライアンス共通属性
 
 	Remark   *LoadBalancerRemark   `json:",omitempty"` // リマーク
 	Settings *LoadBalancerSettings `json:",omitempty"` // ロードバランサー設定
+}
+
+// IsHA 冗長化されている場合にtrueを返す
+func (l *LoadBalancer) IsHA() bool {
+	isHA := false
+	if len(l.Remark.Servers) > 1 {
+		if v, ok := l.Remark.Servers[1].(map[string]string); ok {
+			if _, ok := v["IPAddress"]; ok {
+				isHA = true
+			}
+		}
+	}
+	return isHA
+}
+
+// IPAddress1 ロードバランサ本体のIPアドレス(1番目)を返す
+func (l *LoadBalancer) IPAddress1() string {
+	if len(l.Remark.Servers) > 0 {
+		if v, ok := l.Remark.Servers[0].(map[string]string); ok {
+			if v, ok := v["IPAddress"]; ok {
+				return v
+			}
+		}
+	}
+	return ""
+}
+
+// IPAddress2 ロードバランサ本体のIPアドレス(2番目)を返す
+func (l *LoadBalancer) IPAddress2() string {
+	if len(l.Remark.Servers) > 1 {
+		if v, ok := l.Remark.Servers[1].(map[string]string); ok {
+			if v, ok := v["IPAddress"]; ok {
+				return v
+			}
+		}
+	}
+	return ""
 }
 
 // LoadBalancerRemark リマーク
@@ -17,7 +56,7 @@ type LoadBalancerRemark struct {
 
 // LoadBalancerSettings ロードバランサー設定リスト
 type LoadBalancerSettings struct {
-	LoadBalancer []*LoadBalancerSetting `json:",omitempty"` // ロードバランサー設定リスト
+	LoadBalancer []*LoadBalancerSetting // ロードバランサー設定リスト
 }
 
 // LoadBalancerSetting ロードバランサー仮想IP設定
@@ -26,6 +65,7 @@ type LoadBalancerSetting struct {
 	Port             string                `json:",omitempty"` // ポート番号
 	DelayLoop        string                `json:",omitempty"` // 監視間隔
 	SorryServer      string                `json:",omitempty"` // ソーリーサーバー
+	Description      string                `json:",omitempty"` // 説明
 	Servers          []*LoadBalancerServer `json:",omitempty"` // 仮想IP配下の実サーバー
 }
 
@@ -178,4 +218,74 @@ func (s *LoadBalancerSetting) DeleteServer(ip string, port string) {
 
 	s.Servers = res
 
+}
+
+// LoadBalancerStatusResult ロードバランサーのステータスAPI戻り値
+type LoadBalancerStatusResult []*LoadBalancerStatus
+
+// Get VIPに対応するステータスを取得
+func (l *LoadBalancerStatusResult) Get(vip string) *LoadBalancerStatus {
+	for _, v := range *l {
+		if v.VirtualIPAddress == vip {
+			return v
+		}
+	}
+	return nil
+}
+
+// LoadBalancerStatus ロードバランサーのステータス
+type LoadBalancerStatus struct {
+	VirtualIPAddress string
+	Port             string
+	Servers          []*LoadBalancerServerStatus `json:",omitempty"`
+	CPS              string
+}
+
+// Get IPアドレスに対応する実サーバのステータスを取得
+func (l *LoadBalancerStatus) Get(ip string) *LoadBalancerServerStatus {
+	for _, v := range l.Servers {
+		if v.IPAddress == ip {
+			return v
+		}
+	}
+	return nil
+}
+
+// NumCPS CPSを数値にして返す
+func (l *LoadBalancerStatus) NumCPS() int {
+	v, _ := strconv.Atoi(l.CPS) // nolint - ignore error
+	return v
+}
+
+// NumPort Portを数値にして返す
+func (l *LoadBalancerStatus) NumPort() int {
+	v, _ := strconv.Atoi(l.Port) // nolint - ignore error
+	return v
+}
+
+// LoadBalancerServerStatus ロードバランサーのVIP配下の実サーバのステータス
+type LoadBalancerServerStatus struct {
+	ActiveConn string
+	IPAddress  string
+	Status     string
+	Port       string
+	CPS        string
+}
+
+// NumActiveConn ActiveConnを数値にして返す
+func (l *LoadBalancerServerStatus) NumActiveConn() int {
+	v, _ := strconv.Atoi(l.ActiveConn) // nolint - ignore error
+	return v
+}
+
+// NumCPS CPSを数値にして返す
+func (l *LoadBalancerServerStatus) NumCPS() int {
+	v, _ := strconv.Atoi(l.CPS) // nolint - ignore error
+	return v
+}
+
+// NumPort Portを数値にして返す
+func (l *LoadBalancerServerStatus) NumPort() int {
+	v, _ := strconv.Atoi(l.Port) // nolint - ignore error
+	return v
 }

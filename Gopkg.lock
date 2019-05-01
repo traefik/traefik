@@ -598,7 +598,7 @@
   revision = "73d445a93680fa1a78ae23a5839bad48f32ba1ee"
 
 [[projects]]
-  digest = "1:a04af13190b67ff69cf8fcd79ee133a24c4a7a900cacbc296261dd43f3fbde5c"
+  digest = "1:68a7713d996a30a8394715220e779bbcbc880a18b1e0ab0e12fd1fbbf9c711e6"
   name = "github.com/go-acme/lego"
   packages = [
     "acme",
@@ -683,8 +683,8 @@
     "registration",
   ]
   pruneopts = "NUT"
-  revision = "aaecc1ca7254190b71c5f01f57ee3bb6701bc937"
-  version = "v2.4.0"
+  revision = "3d13faf68920543a393ad6cdfdea429627af2d34"
+  version = "v2.5.0"
 
 [[projects]]
   branch = "fork-containous"
@@ -1416,17 +1416,18 @@
   revision = "256dc444b735e061061cf46c809487313d5b0065"
 
 [[projects]]
-  branch = "master"
-  digest = "1:fff470b0a7bbf05cfe8bfc73bfdf4d21eb009ea84e601f3d27781474e5da960f"
+  digest = "1:253f275bd72c42f8d234712d1574c8b222fe9b72838bfaca11b21ace9c0e3d0a"
   name = "github.com/sacloud/libsacloud"
   packages = [
     ".",
     "api",
     "sacloud",
     "sacloud/ostype",
+    "utils/mutexkv",
   ]
   pruneopts = "NUT"
-  revision = "306ea89b6ef19334614f7b0fc5aa19595022bb8c"
+  revision = "41c392dee98a83260abbe0fcd5c13beb7c75d103"
+  version = "v1.21.1"
 
 [[projects]]
   digest = "1:6bc0652ea6e39e22ccd522458b8bdd8665bf23bdc5a20eec90056e4dc7e273ca"
@@ -1627,6 +1628,42 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
+  digest = "1:aafe0319af5410fb19a23a575ea6ee4b14253e122ef87f936bac65ea1e6b280c"
+  name = "go.opencensus.io"
+  packages = [
+    ".",
+    "internal",
+    "internal/tagencoding",
+    "metric/metricdata",
+    "metric/metricproducer",
+    "plugin/ochttp",
+    "plugin/ochttp/propagation/b3",
+    "resource",
+    "stats",
+    "stats/internal",
+    "stats/view",
+    "tag",
+    "trace",
+    "trace/internal",
+    "trace/propagation",
+    "trace/tracestate",
+  ]
+  pruneopts = "NUT"
+  revision = "df6e2001952312404b06f5f6f03fcb4aec1648e5"
+  version = "v0.21.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:02fe59517e10f9b400b500af8ac228c74cecb0cba7a5f438d8283edb97e14270"
+  name = "go.uber.org/ratelimit"
+  packages = [
+    ".",
+    "internal/clock",
+  ]
+  pruneopts = "NUT"
+  revision = "c15da02342779cb6dc027fc95ee2277787698f36"
+
+[[projects]]
   branch = "master"
   digest = "1:30c1930f8c9fee79f3af60c8b7cd92edd12a4f22187f5527d53509b1a794f555"
   name = "golang.org/x/crypto"
@@ -1744,16 +1781,21 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:da32ebe70dd3ec97d2df26281b08b18d05c2f12491ae79f389813f6c8d3006b3"
+  digest = "1:70c173b8ecc111dd01dc07f0ada72c076e4ed91618ee559312ef8adf154cc539"
   name = "google.golang.org/api"
   packages = [
     "dns/v1",
     "gensupport",
     "googleapi",
     "googleapi/internal/uritemplates",
+    "googleapi/transport",
+    "internal",
+    "option",
+    "transport/http",
+    "transport/http/internal/propagation",
   ]
   pruneopts = "NUT"
-  revision = "de943baf05a022a8f921b544b7827bacaba1aed5"
+  revision = "067bed655e9cbc26f4dbac8f8897b30756d90990"
 
 [[projects]]
   digest = "1:7206d98ec77c90c72ec2c405181a1dcf86965803b6dbc4f98ceab7a5047c37a9"

@@ -31,8 +31,8 @@
       TrustedIPs = ["foobar", "foobar"]
 
 [Providers]
-
   ProvidersThrottleDuration = 42
+
   [Providers.Docker]
     Watch = true
     Endpoint = "foobar"
@@ -52,18 +52,21 @@
       Key = "foobar"
       MustMatch = true
       Regex = "foobar"
+
     [Providers.Docker.TLS]
       CA = "foobar"
       CAOptional = true
       Cert = "foobar"
       Key = "foobar"
       InsecureSkipVerify = true
+
   [Providers.File]
     Directory = "foobar"
     Watch = true
     Filename = "foobar"
     DebugLogGeneratedTemplate = true
     TraefikFile = "foobar"
+
   [Providers.Marathon]
     Trace = true
     Watch = true
@@ -88,6 +91,7 @@
       Key = "foobar"
       MustMatch = true
       Regex = "foobar"
+
     [Providers.Marathon.TLS]
       CA = "foobar"
       CAOptional = true
@@ -97,6 +101,7 @@
     [Providers.Marathon.Basic]
       HTTPBasicAuthUser = "foobar"
       HTTPBasicPassword = "foobar"
+
   [Providers.Kubernetes]
     Endpoint = "foobar"
     Token = "foobar"
@@ -109,6 +114,7 @@
       IP = "foobar"
       Hostname = "foobar"
       PublishedService = "foobar"
+
   [Providers.KubernetesCRD]
     Endpoint = "foobar"
     Token = "foobar"
@@ -117,8 +123,28 @@
     Namespaces = ["foobar", "foobar"]
     LabelSelector = "foobar"
     IngressClass = "foobar"
+
   [Providers.Rest]
     EntryPoint = "foobar"
+
+  [Providers.Rancher]
+    Watch = true
+    DefaultRule = "foobar"
+    ExposedByDefault = true
+    EnableServiceHealthFilter = true
+    RefreshSeconds = 42
+    IntervalPoll = true
+    Prefix = "foobar"
+
+    [[Providers.Rancher.Constraints]]
+      Key = "foobar"
+      MustMatch = true
+      Regex = "foobar"
+
+    [[Providers.Rancher.Constraints]]
+      Key = "foobar"
+      MustMatch = true
+      Regex = "foobar"
 
 [API]
   EntryPoint = "foobar"
@@ -128,16 +154,20 @@
     RecentErrors = 42
 
 [Metrics]
+
   [Metrics.Prometheus]
     Buckets = [42.0, 42.0]
     EntryPoint = "foobar"
     Middlewares = ["foobar", "foobar"]
+
   [Metrics.Datadog]
     Address = "foobar"
     PushInterval = "foobar"
+
   [Metrics.StatsD]
     Address = "foobar"
     PushInterval = "foobar"
+
   [Metrics.InfluxDB]
     Address = "foobar"
     Protocol = "foobar"
@@ -179,6 +209,7 @@
   Backend = "foobar"
   ServiceName = "foobar"
   SpanNameLimit = 42
+
   [Tracing.Jaeger]
     SamplingServerURL = "foobar"
     SamplingType = "foobar"
@@ -187,12 +218,14 @@
     Gen128Bit = true
     Propagation = "foobar"
     TraceContextHeaderName = "foobar"
+
   [Tracing.Zipkin]
     HTTPEndpoint = "foobar"
     SameSpan = true
     ID128Bit = true
     Debug = true
     SampleRate = 42.0
+
   [Tracing.DataDog]
     LocalAgentHostPort = "foobar"
     GlobalTag = "foobar"
@@ -202,10 +235,11 @@
     ParentIDHeaderName = "foobar"
     SamplingPriorityHeaderName = "foobar"
     BagagePrefixHeaderName = "foobar"
+
   [Tracing.Instana]
     LocalAgentHost = "foobar"
     LocalAgentPort = 42
-    Level = "foobar"
+    LogLevel = "foobar"
 
 [HostResolver]
   CnameFlattening = true
@@ -220,13 +254,16 @@
   EntryPoint = "foobar"
   KeyType = "foobar"
   OnHostRule = true
+
   [ACME.DNSChallenge]
     Provider = "foobar"
     DelayBeforeCheck = 42
     Resolvers = ["foobar", "foobar"]
     DisablePropagationCheck = true
+
   [ACME.HTTPChallenge]
     EntryPoint = "foobar"
+
   [ACME.TLSChallenge]
 
   [[ACME.Domains]]

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,6 +14,11 @@ import (
 )
 
 const defaultBaseURL = "https://api.cloudns.net/dns/"
+
+type apiResponse struct {
+	Status            string `json:"status"`
+	StatusDescription string `json:"statusDescription"`
+}
 
 type Zone struct {
 	Name   string
@@ -37,11 +43,11 @@ type TXTRecords map[string]TXTRecord
 // NewClient creates a ClouDNS client
 func NewClient(authID string, authPassword string) (*Client, error) {
 	if authID == "" {
-		return nil, fmt.Errorf("ClouDNS: credentials missing: authID")
+		return nil, fmt.Errorf("credentials missing: authID")
 	}
 
 	if authPassword == "" {
-		return nil, fmt.Errorf("ClouDNS: credentials missing: authPassword")
+		return nil, fmt.Errorf("credentials missing: authPassword")
 	}
 
 	baseURL, err := url.Parse(defaultBaseURL)
@@ -90,7 +96,7 @@ func (c *Client) GetZone(authFQDN string) (*Zone, error) {
 
 	if len(result) > 0 {
 		if err = json.Unmarshal(result, &zone); err != nil {
-			return nil, fmt.Errorf("ClouDNS: zone unmarshaling error: %v", err)
+			return nil, fmt.Errorf("zone unmarshaling error: %v", err)
 		}
 	}
 
@@ -98,7 +104,7 @@ func (c *Client) GetZone(authFQDN string) (*Zone, error) {
 		return &zone, nil
 	}
 
-	return nil, fmt.Errorf("ClouDNS: zone %s not found for authFQDN %s", authZoneName, authFQDN)
+	return nil, fmt.Errorf("zone %s not found for authFQDN %s", authZoneName, authFQDN)
 }
 
 // FindTxtRecord return the TXT record a zone ID and a FQDN
@@ -119,9 +125,14 @@ func (c *Client) FindTxtRecord(zoneName, fqdn string) (*TXTRecord, error) {
 		return nil, err
 	}
 
+	// the API returns [] when there is no records.
+	if string(result) == "[]" {
+		return nil, nil
+	}
+
 	var records TXTRecords
 	if err = json.Unmarshal(result, &records); err != nil {
-		return nil, fmt.Errorf("ClouDNS: TXT record unmarshaling error: %v", err)
+		return nil, fmt.Errorf("TXT record unmarshaling error: %v: %s", err, string(result))
 	}
 
 	for _, record := range records {
@@ -130,7 +141,7 @@ func (c *Client) FindTxtRecord(zoneName, fqdn string) (*TXTRecord, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("ClouDNS: no existing record found for %q", fqdn)
+	return nil, nil
 }
 
 // AddTxtRecord add a TXT record
@@ -144,12 +155,25 @@ func (c *Client) AddTxtRecord(zoneName string, fqdn, value string, ttl int) erro
 	q.Add("domain-name", zoneName)
 	q.Add("host", host)
 	q.Add("record", value)
-	q.Add("ttl", strconv.Itoa(ttl))
+	q.Add("ttl", strconv.Itoa(ttlRounder(ttl)))
 	q.Add("record-type", "TXT")
 	reqURL.RawQuery = q.Encode()
 
-	_, err := c.doRequest(http.MethodPost, &reqURL)
-	return err
+	raw, err := c.doRequest(http.MethodPost, &reqURL)
+	if err != nil {
+		return err
+	}
+
+	resp := apiResponse{}
+	if err = json.Unmarshal(raw, &resp); err != nil {
+		return fmt.Errorf("apiResponse unmarshaling error: %v: %s", err, string(raw))
+	}
+
+	if resp.Status != "Success" {
+		return fmt.Errorf("fail to add TXT record: %s %s", resp.Status, resp.StatusDescription)
+	}
+
+	return nil
 }
 
 // RemoveTxtRecord remove a TXT record
@@ -162,8 +186,21 @@ func (c *Client) RemoveTxtRecord(recordID int, zoneName string) error {
 	q.Add("record-id", strconv.Itoa(recordID))
 	reqURL.RawQuery = q.Encode()
 
-	_, err := c.doRequest(http.MethodPost, &reqURL)
-	return err
+	raw, err := c.doRequest(http.MethodPost, &reqURL)
+	if err != nil {
+		return err
+	}
+
+	resp := apiResponse{}
+	if err = json.Unmarshal(raw, &resp); err != nil {
+		return fmt.Errorf("apiResponse unmarshaling error: %v: %s", err, string(raw))
+	}
+
+	if resp.Status != "Success" {
+		return fmt.Errorf("fail to add TXT record: %s %s", resp.Status, resp.StatusDescription)
+	}
+
+	return nil
 }
 
 func (c *Client) doRequest(method string, url *url.URL) (json.RawMessage, error) {
@@ -174,18 +211,18 @@ func (c *Client) doRequest(method string, url *url.URL) (json.RawMessage, error)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("ClouDNS: %v", err)
+		return nil, err
 	}
 
 	defer resp.Body.Close()
 
 	content, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("ClouDNS: %s", toUnreadableBodyMessage(req, content))
+		return nil, errors.New(toUnreadableBodyMessage(req, content))
 	}
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("ClouDNS: invalid code (%v), error: %s", resp.StatusCode, content)
+		return nil, fmt.Errorf("invalid code (%v), error: %s", resp.StatusCode, content)
 	}
 	return content, nil
 }
@@ -198,7 +235,7 @@ func (c *Client) buildRequest(method string, url *url.URL) (*http.Request, error
 
 	req, err := http.NewRequest(method, url.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("ClouDNS: invalid request: %v", err)
+		return nil, fmt.Errorf("invalid request: %v", err)
 	}
 
 	return req, nil
@@ -206,4 +243,29 @@ func (c *Client) buildRequest(method string, url *url.URL) (*http.Request, error
 
 func toUnreadableBodyMessage(req *http.Request, rawBody []byte) string {
 	return fmt.Sprintf("the request %s sent a response with a body which is an invalid format: %q", req.URL, string(rawBody))
+}
+
+// https://www.cloudns.net/wiki/article/58/
+// Available TTL's:
+// 60 = 1 minute
+// 300 = 5 minutes
+// 900 = 15 minutes
+// 1800 = 30 minutes
+// 3600 = 1 hour
+// 21600 = 6 hours
+// 43200 = 12 hours
+// 86400 = 1 day
+// 172800 = 2 days
+// 259200 = 3 days
+// 604800 = 1 week
+// 1209600 = 2 weeks
+// 2592000 = 1 month
+func ttlRounder(ttl int) int {
+	for _, validTTL := range []int{60, 300, 900, 1800, 3600, 21600, 43200, 86400, 172800, 259200, 604800, 1209600} {
+		if ttl <= validTTL {
+			return validTTL
+		}
+	}
+
+	return 2592000
 }

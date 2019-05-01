@@ -2,8 +2,9 @@ package api
 
 import (
 	"fmt"
-	"github.com/sacloud/libsacloud/sacloud"
 	"time"
+
+	"github.com/sacloud/libsacloud/sacloud"
 )
 
 // ServerAPI サーバーAPI
@@ -150,14 +151,18 @@ func (api *ServerAPI) SleepUntilDown(id int64, timeout time.Duration) error {
 }
 
 // ChangePlan サーバープラン変更(サーバーIDが変更となるため注意)
-func (api *ServerAPI) ChangePlan(serverID int64, planID string) (*sacloud.Server, error) {
+func (api *ServerAPI) ChangePlan(serverID int64, plan *sacloud.ProductServer) (*sacloud.Server, error) {
 	var (
 		method = "PUT"
-		uri    = fmt.Sprintf("%s/%d/to/plan/%s", api.getResourceURL(), serverID, planID)
+		uri    = fmt.Sprintf("%s/%d/plan", api.getResourceURL(), serverID)
+		body   = &sacloud.ProductServer{}
 	)
+	body.CPU = plan.CPU
+	body.MemoryMB = plan.MemoryMB
+	body.Generation = plan.Generation
 
 	return api.request(func(res *sacloud.Response) error {
-		return api.baseAPI.request(method, uri, nil, res)
+		return api.baseAPI.request(method, uri, body, res)
 	})
 }
 

@@ -2,8 +2,18 @@ package sacloud
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 	"time"
+)
+
+const (
+	// SIMOperatorsKDDI KDDI
+	SIMOperatorsKDDI = "KDDI"
+	// SIMOperatorsDOCOMO Docomo
+	SIMOperatorsDOCOMO = "NTT DOCOMO"
+	// SIMOperatorsSoftBank SoftBank
+	SIMOperatorsSoftBank = "SoftBank"
 )
 
 // SIM SIM(CommonServiceItem)
@@ -49,8 +59,8 @@ type SIMInfo struct {
 
 // SIMTrafficBytes 当月通信量
 type SIMTrafficBytes struct {
-	UplinkBytes   int64 `json:"uplink_bytes,omitempty"`
-	DownlinkBytes int64 `json:"downlink_bytes,omitempty"`
+	UplinkBytes   uint64 `json:"uplink_bytes,omitempty"`
+	DownlinkBytes uint64 `json:"downlink_bytes,omitempty"`
 }
 
 // UnmarshalJSON JSONアンマーシャル(配列、オブジェクトが混在するためここで対応)
@@ -60,15 +70,22 @@ func (s *SIMTrafficBytes) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	tmp := &struct {
-		UplinkBytes   int64 `json:"uplink_bytes,omitempty"`
-		DownlinkBytes int64 `json:"downlink_bytes,omitempty"`
+		UplinkBytes   string `json:"uplink_bytes,omitempty"`
+		DownlinkBytes string `json:"downlink_bytes,omitempty"`
 	}{}
 	if err := json.Unmarshal(data, &tmp); err != nil {
 		return err
 	}
 
-	s.UplinkBytes = tmp.UplinkBytes
-	s.DownlinkBytes = tmp.DownlinkBytes
+	var err error
+	s.UplinkBytes, err = strconv.ParseUint(tmp.UplinkBytes, 10, 64)
+	if err != nil {
+		return err
+	}
+	s.DownlinkBytes, err = strconv.ParseUint(tmp.DownlinkBytes, 10, 64)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -91,6 +108,18 @@ type SIMLog struct {
 	ResourceID    string     `json:"resource_id,omitempty"`
 	IMEI          string     `json:"imei,omitempty"`
 	IMSI          string     `json:"imsi,omitempty"`
+}
+
+// SIMNetworkOperatorConfig SIM通信キャリア設定
+type SIMNetworkOperatorConfig struct {
+	Allow       bool   `json:"allow,omitempty"`
+	CountryCode string `json:"country_code,omitempty"`
+	Name        string `json:"name,omitempty"`
+}
+
+// SIMNetworkOperatorConfigs SIM通信キャリア設定 リクエストパラメータ
+type SIMNetworkOperatorConfigs struct {
+	NetworkOperatorConfigs []*SIMNetworkOperatorConfig `json:"network_operator_config,omitempty"`
 }
 
 // CreateNewSIM SIM作成

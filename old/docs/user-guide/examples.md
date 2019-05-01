@@ -87,7 +87,7 @@ entryPoint = "https"
 
 This configuration allows generating Let's Encrypt certificates (thanks to `HTTP-01` challenge) for the four domains `local[1-4].com` with described SANs.
 
-Traefik generates these certificates when it starts and it needs to be restart if new domains are added.
+Traefik generates these certificates when it starts and it needs to be restarted if new domains are added.
 
 ### onHostRule option (with HTTP challenge)
 

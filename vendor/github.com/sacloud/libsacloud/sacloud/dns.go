@@ -50,7 +50,9 @@ func CreateNewDNS(zoneName string) *DNS {
 			Class: "dns",
 		},
 		Settings: DNSSettings{
-			DNS: DNSRecordSets{},
+			DNS: DNSRecordSets{
+				ResourceRecordSets: []DNSRecordSet{},
+			},
 		},
 	}
 }
@@ -135,7 +137,9 @@ func (d *DNS) AddRecord(record *DNSRecordSet) {
 
 // ClearRecords レコード クリア
 func (d *DNS) ClearRecords() {
-	d.Settings.DNS = DNSRecordSets{}
+	d.Settings.DNS = DNSRecordSets{
+		ResourceRecordSets: []DNSRecordSet{},
+	}
 }
 
 // DNSRecordSets DNSレコード設定リスト

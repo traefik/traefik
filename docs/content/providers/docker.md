@@ -182,15 +182,24 @@ This option can be overridden on a container basis with the `traefik.docker.netw
 
 ### `defaultRule`
 
-_Optional, Default=Host(`{{ normalize .Name }}`)_
+_Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
 For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
 It must be a valid [Go template](https://golang.org/pkg/text/template/),
 augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
-The container service name can be accessed as the Name identifier,
+The container service name can be accessed as the `Name` identifier,
 and the template has access to all the labels defined on this container.
 
-``defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"``
+```toml tab="File"
+[docker]
+defaultRule = ""
+# ...
+```
+
+```txt tab="CLI"
+--providers.docker
+--providers.docker.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+```
 
 ### `swarmMode`
 
@@ -243,6 +252,8 @@ You can declare pieces of middleware using labels starting with `traefik.http.mi
 !!! warning "Conflicts in Declaration"
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
+
+More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
 
 ### TCP
 
