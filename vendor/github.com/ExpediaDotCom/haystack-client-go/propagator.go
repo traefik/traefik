@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
+	"github.com/opentracing/opentracing-go"
 )
 
 /*Propagator defines the interface for injecting and extracing the SpanContext from the carrier*/
@@ -113,13 +115,17 @@ type TextMapPropagator struct {
 
 /*Inject injects the span context in the carrier*/
 func (p *TextMapPropagator) Inject(ctx *SpanContext, carrier interface{}) error {
-	carrierMap := carrier.(map[string]string)
-	carrierMap[p.opts.TraceIDKEY()] = ctx.TraceID
-	carrierMap[p.opts.SpanIDKEY()] = ctx.SpanID
-	carrierMap[p.opts.ParentSpanIDKEY()] = ctx.ParentID
+	textMapWriter, ok := carrier.(opentracing.TextMapWriter)
+	if !ok {
+		return opentracing.ErrInvalidCarrier
+	}
+
+	textMapWriter.Set(p.opts.TraceIDKEY(), ctx.TraceID)
+	textMapWriter.Set(p.opts.SpanIDKEY(), ctx.SpanID)
+	textMapWriter.Set(p.opts.ParentSpanIDKEY(), ctx.ParentID)
 
 	ctx.ForeachBaggageItem(func(key, value string) bool {
-		carrierMap[fmt.Sprintf("%s%s", p.opts.BaggageKeyPrefix(), key)] = p.codex.Encode(ctx.Baggage[key])
+		textMapWriter.Set(fmt.Sprintf("%s%s", p.opts.BaggageKeyPrefix(), key), p.codex.Encode(ctx.Baggage[key]))
 		return true
 	})
 
@@ -128,8 +134,11 @@ func (p *TextMapPropagator) Inject(ctx *SpanContext, carrier interface{}) error 
 
 /*Extract the span context from the carrier*/
 func (p *TextMapPropagator) Extract(carrier interface{}) (*SpanContext, error) {
-	baggage := make(map[string](string))
-	carrierMap := carrier.(map[string]string)
+	textMapReader, ok := carrier.(opentracing.TextMapReader)
+
+	if !ok {
+		return nil, opentracing.ErrInvalidCarrier
+	}
 
 	baggageKeyLowerCasePrefix := strings.ToLower(p.opts.BaggageKeyPrefix())
 	traceIDKeyLowerCase := strings.ToLower(p.opts.TraceIDKEY())
@@ -140,19 +149,27 @@ func (p *TextMapPropagator) Extract(carrier interface{}) (*SpanContext, error) {
 	spanID := ""
 	parentSpanID := ""
 
-	for k, v := range carrierMap {
+	baggage := make(map[string]string)
+	err := textMapReader.ForeachKey(func(k, v string) error {
 		lcKey := strings.ToLower(k)
+
 		if strings.HasPrefix(lcKey, baggageKeyLowerCasePrefix) {
-			keySansPrefix := k[len(p.opts.BaggageKeyPrefix()):]
+			keySansPrefix := lcKey[len(p.opts.BaggageKeyPrefix()):]
 			baggage[keySansPrefix] = p.codex.Decode(v)
 		} else if lcKey == traceIDKeyLowerCase {
-			traceID = carrierMap[k]
+			traceID = v
 		} else if lcKey == spanIDKeyLowerCase {
-			spanID = carrierMap[k]
+			spanID = v
 		} else if lcKey == parentSpanIDKeyLowerCase {
-			parentSpanID = carrierMap[k]
+			parentSpanID = v
 		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
+
 	return &SpanContext{
 		TraceID:            traceID,
 		SpanID:             spanID,

@@ -293,4 +293,4 @@ required = [
 
 [[constraint]]
   name = "github.com/ExpediaDotCom/haystack-client-go"
-  revision = "3ee3ba12ce07ae900855f7cf3e3f543418e865bf"
+  version = "0.2.3"

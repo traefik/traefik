@@ -55,11 +55,12 @@
   revision = "a368813c5e648fee92e5f6c30e3944ff9d5e8895"
 
 [[projects]]
-  digest = "1:63bade567307333f584bada523d1e84ed3740dbb569fdd5079333e39ee823a0e"
+  digest = "1:be4a03871fbc5250d19bcbc2d2b21c3c58fd97b048de64ec1ff4c8e3890d4f1b"
   name = "github.com/ExpediaDotCom/haystack-client-go"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "3ee3ba12ce07ae900855f7cf3e3f543418e865bf"
+  revision = "e7edbdf53a61a82ed143809088ed582312ff7e36"
+  version = "0.2.3"
 
 [[projects]]
   digest = "1:ab7fee312bbdc8070d0325d841de8704cc78bf032b076200f1458659b74b8ed6"
