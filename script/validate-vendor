@@ -3,7 +3,7 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-SCRIPT_DIR="$( cd "$( dirname "${0}" )" && pwd )"; export SCRIPT_DIR
+SCRIPT_DIR="$( cd "$( dirname "${0}" )" && pwd -P)"; export SCRIPT_DIR
 vendor_dir="./vendor/"
 
 # We run dep install to and see if we have a diff afterwards
