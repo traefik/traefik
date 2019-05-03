@@ -257,6 +257,20 @@ services:
         traefik.docker.network: traefik
 ```
 
+Required labels:
+
+- `traefik.frontend.rule`
+- `traefik.port` - Without this the debug logs will show this service is deliberately filtered out.
+- `traefik.docker.network` - Without this a 504 may occur.
+
+#### Troubleshooting
+
+If service doesn't show up in the dashboard, check the debug logs to see if the port is missing:
+`Filtering container without port, <SERVICE_NAME>: port label is missing, ...')`
+
+If `504 Gateway Timeout` occurs and there are networks used, ensure that `traefik.docker.network` is defined. 
+The complete name is required, meaning if the network is internal the name needs to be `<project_name>_<network_name>`.
+
 ### Using Docker Compose
 
 If you are intending to use only Docker Compose commands (e.g. `docker-compose up --scale whoami=2 -d`), labels should be under your service, otherwise they will be ignored.
