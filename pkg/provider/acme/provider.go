@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cenkalti/backoff"
 	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/log"
@@ -66,9 +65,6 @@ type DNSChallenge struct {
 	DelayBeforeCheck        parse.Duration     `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
 	Resolvers               types.DNSResolvers `description:"Use following DNS servers to resolve the FQDN authority."`
 	DisablePropagationCheck bool               `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]"`
-
-	preCheckTimeout  time.Duration
-	preCheckInterval time.Duration
 }
 
 // HTTPChallenge contains HTTP challenge Configuration
@@ -303,15 +299,6 @@ func (p *Provider) getClient() (*lego.Client, error) {
 			return nil, err
 		}
 
-		// Same default values than LEGO
-		p.DNSChallenge.preCheckTimeout = 60 * time.Second
-		p.DNSChallenge.preCheckInterval = 2 * time.Second
-
-		// Set the precheck timeout into the DNSChallenge provider
-		if challengeProviderTimeout, ok := provider.(challenge.ProviderTimeout); ok {
-			p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval = challengeProviderTimeout.Timeout()
-		}
-
 	case p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0:
 		logger.Debug("Using HTTP Challenge provider.")
 
@@ -441,17 +428,12 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 	}
 
 	var cert *certificate.Resource
-	bundle := true
-	if p.useCertificateWithRetry(uncheckedDomains) {
-		cert, err = obtainCertificateWithRetry(ctx, domains, client, p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval, bundle)
-	} else {
-		request := certificate.ObtainRequest{
-			Domains:    domains,
-			Bundle:     bundle,
-			MustStaple: oscpMustStaple,
-		}
-		cert, err = client.Certificate.Obtain(request)
+	request := certificate.ObtainRequest{
+		Domains:    domains,
+		Bundle:     true,
+		MustStaple: oscpMustStaple,
 	}
+	cert, err = client.Certificate.Obtain(request)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate a certificate for the domains %v: %v", uncheckedDomains, err)
@@ -491,67 +473,6 @@ func (p *Provider) addResolvingDomains(resolvingDomains []string) {
 	for _, domain := range resolvingDomains {
 		p.resolvingDomains[domain] = struct{}{}
 	}
-}
-
-func (p *Provider) useCertificateWithRetry(domains []string) bool {
-	// Check if we can use the retry mechanism only if we use the DNS Challenge and if is there are at least 2 domains to check
-	if p.DNSChallenge != nil && len(domains) > 1 {
-		rootDomain := ""
-		for _, searchWildcardDomain := range domains {
-			// Search a wildcard domain if not already found
-			if len(rootDomain) == 0 && strings.HasPrefix(searchWildcardDomain, "*.") {
-				rootDomain = strings.TrimPrefix(searchWildcardDomain, "*.")
-				if len(rootDomain) > 0 {
-					// Look for a root domain which matches the wildcard domain
-					for _, searchRootDomain := range domains {
-						if rootDomain == searchRootDomain {
-							// If the domains list contains a wildcard domain and its root domain, we can use the retry mechanism to obtain the certificate
-							return true
-						}
-					}
-				}
-				// There is only one wildcard domain in the slice, if its root domain has not been found, the retry mechanism does not have to be used
-				return false
-			}
-		}
-	}
-
-	return false
-}
-
-func obtainCertificateWithRetry(ctx context.Context, domains []string, client *lego.Client, timeout, interval time.Duration, bundle bool) (*certificate.Resource, error) {
-	logger := log.FromContext(ctx)
-
-	var cert *certificate.Resource
-	var err error
-
-	operation := func() error {
-		request := certificate.ObtainRequest{
-			Domains:    domains,
-			Bundle:     bundle,
-			MustStaple: oscpMustStaple,
-		}
-		cert, err = client.Certificate.Obtain(request)
-		return err
-	}
-
-	notify := func(err error, time time.Duration) {
-		logger.Errorf("Error obtaining certificate retrying in %s", time)
-	}
-
-	// Define a retry backOff to let LEGO tries twice to obtain a certificate for both wildcard and root domain
-	ebo := backoff.NewExponentialBackOff()
-	ebo.MaxElapsedTime = 2 * timeout
-	ebo.MaxInterval = interval
-	rbo := backoff.WithMaxRetries(ebo, 2)
-
-	err = backoff.RetryNotify(safe.OperationWithRecover(operation), rbo, notify)
-	if err != nil {
-		logger.Errorf("Error obtaining certificate: %v", err)
-		return nil, err
-	}
-
-	return cert, nil
 }
 
 func (p *Provider) addCertificateForDomain(domain types.Domain, certificate []byte, key []byte) {
