@@ -49,7 +49,7 @@ type Configuration struct {
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
 	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge"`
-	Domains       []types.Domain `description:"CN and SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='*.main.net'. No SANs for wildcards domain. Wildcard domains only accepted with DNSChallenge"`
+	Domains       []types.Domain `description:"CN and SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='*.main.net'. Wildcard domains only accepted with DNSChallenge"`
 }
 
 // Certificate is a struct which contains all data needed from an ACME certificate
@@ -717,12 +717,6 @@ func (p *Provider) getValidDomains(ctx context.Context, domain types.Domain, wil
 
 		if strings.HasPrefix(domain.Main, "*.*") {
 			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
-		}
-	}
-
-	for _, san := range domain.SANs {
-		if strings.HasPrefix(san, "*") {
-			return nil, fmt.Errorf("unable to generate a certificate in ACME provider for domains %q: SAN %q can not be a wildcard domain", strings.Join(domains, ","), san)
 		}
 	}
 
