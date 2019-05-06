@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-export SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$( cd "$( dirname "${0}" )" && pwd -P)"; export SCRIPT_DIR
 export DEST=.
 
 TESTFLAGS="${TESTFLAGS} -test.timeout=20m -check.v"

@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-HACK_DIR=$(dirname "${BASH_SOURCE}")
+HACK_DIR="$( cd "$( dirname "${0}" )" && pwd -P)"; export HACK_DIR
 REPO_ROOT=${HACK_DIR}/..
 
 ${REPO_ROOT}/vendor/k8s.io/code-generator/generate-groups.sh \

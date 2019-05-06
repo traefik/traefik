@@ -5,7 +5,8 @@ set -e
 CERT_IMAGE="alpine:edge"
 
 # cd to the current directory so the script can be run from anywhere.
-cd `dirname $0`
+SCRIPT_DIR="$( cd "$( dirname "${0}" )" && pwd -P)"; export SCRIPT_DIR
+cd "${SCRIPT_DIR}"
 
 # Update the cert image.
 docker pull $CERT_IMAGE

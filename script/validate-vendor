@@ -3,14 +3,14 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"; export SCRIPT_DIR
+SCRIPT_DIR="$( cd "$( dirname "${0}" )" && pwd -P)"; export SCRIPT_DIR
 vendor_dir="./vendor/"
 
 # We run dep install to and see if we have a diff afterwards
 echo "checking ${vendor_dir} for unintentional changes..."
 
 dep ensure -v
-(${SCRIPT_DIR}/prune-dep.sh)
+("${SCRIPT_DIR}"/prune-dep.sh)
 
 # Let see if the working directory is clean
 diffs="$(git status --porcelain -- ${vendor_dir} 2>/dev/null)"
