@@ -8,6 +8,9 @@ level = "DEBUG"
 [entryPoints]
   [entryPoints.web]
      address = ":8000"
+  [entryPoints.footcp]
+      address = ":8093"
+
 
 [api]
 

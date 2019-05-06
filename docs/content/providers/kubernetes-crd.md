@@ -172,6 +172,32 @@ spec:
       port: 80
 ```
 
+### Traefik IngressRouteTCP definition
+
+```yaml
+--8<-- "content/providers/crd_ingress_route_tcp.yml"
+```
+
+That `IngressRouteTCP` kind can then be used to define an `IngressRouteTCP` object, such as:
+
+```yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: ingressroutetcpfoo.crd
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+  # Match is the rule corresponding to an underlying router.
+  - match: HostSNI(`*`)
+    services:
+    - name: whoamitcp
+      port: 8080
+
+```
+
 ### Middleware
 
 Additionally, to allow for the use of middlewares in an `IngressRoute`, we defined the CRD below for the `Middleware` kind.

@@ -28,4 +28,6 @@ package v1alpha1
 
 type IngressRouteExpansion interface{}
 
+type IngressRouteTCPExpansion interface{}
+
 type MiddlewareExpansion interface{}

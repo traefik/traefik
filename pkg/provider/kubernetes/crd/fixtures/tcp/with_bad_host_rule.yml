@@ -1,0 +1,15 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: test.crd
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+  - match: HostSNI(`foo.com"0"`)
+    services:
+    - name: whoamitcp
+      port: 8000

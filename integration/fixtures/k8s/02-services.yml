@@ -39,3 +39,46 @@ spec:
   selector:
     app: containous
     task: whoami
+
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: whoamitcp
+  namespace: default
+  labels:
+    app: containous
+    name: whoamitcp
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: containous
+      task: whoamitcp
+  template:
+    metadata:
+      labels:
+        app: containous
+        task: whoamitcp
+    spec:
+      containers:
+        - name: containouswhoamitcp
+          image: containous/whoamitcp
+          ports:
+            - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp
+  namespace: default
+
+spec:
+  ports:
+    - name: footcp
+      port: 8080
+  selector:
+    app: containous
+    task: whoamitcp

@@ -40,6 +40,10 @@ func (c *FakeTraefikV1alpha1) IngressRoutes(namespace string) v1alpha1.IngressRo
 	return &FakeIngressRoutes{c, namespace}
 }
 
+func (c *FakeTraefikV1alpha1) IngressRouteTCPs(namespace string) v1alpha1.IngressRouteTCPInterface {
+	return &FakeIngressRouteTCPs{c, namespace}
+}
+
 func (c *FakeTraefikV1alpha1) Middlewares(namespace string) v1alpha1.MiddlewareInterface {
 	return &FakeMiddlewares{c, namespace}
 }

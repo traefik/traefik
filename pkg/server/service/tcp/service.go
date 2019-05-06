@@ -43,7 +43,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 
 	loadBalancer := tcp.NewRRLoadBalancer()
 
-	for _, server := range conf.LoadBalancer.Servers {
+	for name, server := range conf.LoadBalancer.Servers {
 		if _, _, err := net.SplitHostPort(server.Address); err != nil {
 			logger.Errorf("In service %q: %v", serviceQualifiedName, err)
 			continue
@@ -56,6 +56,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		}
 
 		loadBalancer.AddServer(handler)
+		logger.WithField(log.ServerName, name).Debugf("Creating TCP server %d at %s with weight %d", name, server.Address, server.Weight)
 	}
 	return loadBalancer, nil
 }

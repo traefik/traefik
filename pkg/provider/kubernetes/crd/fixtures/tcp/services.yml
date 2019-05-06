@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp
+  namespace: default
+
+spec:
+  ports:
+    - name: myapp
+      port: 8000
+  selector:
+    app: containous
+    task: whoamitcp
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamitcp
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.1
+      - ip: 10.10.0.2
+    ports:
+      - name: myapp
+        port: 8000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp2
+  namespace: default
+
+spec:
+  ports:
+    - name: myapp2
+      port: 8080
+  selector:
+    app: containous
+    task: whoamitcp2
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamitcp2
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.3
+      - ip: 10.10.0.4
+    ports:
+      - name: myapp2
+        port: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcptls
+  namespace: default
+
+spec:
+  ports:
+    - name: web-secure
+      port: 443
+  selector:
+    app: containous
+    task: whoamitcptls2
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamitcptls
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.5
+      - ip: 10.10.0.6
+    ports:
+      - name: web-secure
+        port: 443
