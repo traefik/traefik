@@ -481,3 +481,54 @@ func (s *SimpleSuite) TestMultiprovider(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 }
+
+func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.C) {
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	server := "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+
+	file := s.adaptFile(c, "fixtures/file/simple-hosts.toml", struct {
+		Server string
+	}{Server: server})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	testCases := []struct {
+		desc        string
+		requestHost string
+	}{
+		{
+			desc:        "Request host without trailing period, rule without trailing period",
+			requestHost: "test.localhost",
+		},
+		{
+			desc:        "Request host with trailing period, rule without trailing period",
+			requestHost: "test.localhost.",
+		},
+		{
+			desc:        "Request host without trailing period, rule with trailing period",
+			requestHost: "test.foo.localhost",
+		},
+		{
+			desc:        "Request host with trailing period, rule with trailing period",
+			requestHost: "test.foo.localhost.",
+		},
+	}
+
+	for _, test := range testCases {
+		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+		c.Assert(err, checker.IsNil)
+		req.Host = test.requestHost
+		err = try.Request(req, 1*time.Second, try.StatusCodeIs(http.StatusOK))
+		if err != nil {
+			c.Fatalf("Error while testing %s: %v", test.desc, err)
+		}
+	}
+}
