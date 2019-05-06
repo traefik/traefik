@@ -14,7 +14,7 @@ If they do, the router might transform the request using pieces of [middleware](
 ## Clear Responsibilities
 
 - [_Providers_](../providers/overview.md) discover the services that live on your infrastructure (their IP, health, ...)
-- [_Entrypoints_](./entrypoints.md) listen for incomming traffic (ports, ...)
+- [_Entrypoints_](./entrypoints.md) listen for incoming traffic (ports, ...)
 - [_Routers_](./routers/index.md) analyse the requests (host, path, headers, SSL, ...)
 - [_Services_](./services/index.md) forward the request to your services (load balancing, ...)
 - [_Middlewares_](../middlewares/overview.md) may update the request or make decisions based on the request (authentication, rate limiting, headers, ...)
