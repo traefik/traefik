@@ -11,7 +11,6 @@ import (
 
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/testhelpers"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vulcand/oxy/roundrobin"
@@ -469,6 +468,4 @@ func TestLBStatusUpdater(t *testing.T) {
 		assert.Equal(t, v, serverDown)
 		break
 	}
-	spew.Dump(svInfo)
-	// assert.Equal(t, "FUCK YOU", "FUCK ME")
 }
