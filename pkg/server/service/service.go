@@ -170,7 +170,7 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler
 	}
 
 	if timeout >= interval {
-		logger.Warnf("Health check timeout for backend '%s' should be lower than the health check interval. Interval set to timeout + 1 second (%s).", backend, interval.String())
+		logger.Warnf("Health check timeout for backend '%s' should be lower than the health check interval. Interval set to timeout + 1 second (%s).", backend, interval)
 	}
 
 	return &healthcheck.Options{
