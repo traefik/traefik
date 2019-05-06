@@ -186,12 +186,12 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 
         ```toml
         [http.routers]
-           [http.routers.Router-1-https]
+           [http.routers.my-https-router]
               rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
               service = "service-id"
-              [http.routers.Router-1.tls] # will terminate the TLS request
+              [http.routers.my-https-router.tls] # will terminate the TLS request
 
-           [http.routers.Router-1-http]
+           [http.routers.my-http-router]
               rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
               service = "service-id"
         ```
