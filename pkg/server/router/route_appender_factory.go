@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/containous/traefik/pkg/config"
-
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/provider/acme"
 	"github.com/containous/traefik/pkg/server/middleware"

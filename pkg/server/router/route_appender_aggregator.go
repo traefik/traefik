@@ -3,11 +3,10 @@ package router
 import (
 	"context"
 
-	"github.com/containous/traefik/pkg/config"
-
 	"github.com/containous/alice"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/pkg/api"
+	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/metrics"

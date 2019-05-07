@@ -3,10 +3,9 @@ package router
 import (
 	"context"
 	"io/ioutil"
-	"strings"
-
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/containous/traefik/pkg/config"
