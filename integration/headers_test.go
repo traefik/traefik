@@ -12,12 +12,6 @@ import (
 // Headers test suites
 type HeadersSuite struct{ BaseSuite }
 
-func (s *HeadersSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "headers")
-
-	s.composeProject.Start(c)
-}
-
 func (s *HeadersSuite) TestSimpleConfiguration(c *check.C) {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/headers/basic.toml"))
 	defer display(c)
@@ -38,6 +32,12 @@ func (s *HeadersSuite) TestCorsResponses(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
+	backend := startTestServer("9000", http.StatusOK)
+	defer backend.Close()
+
+	err = try.GetRequest(backend.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
 	testCase := []struct {
 		desc           string
 		requestHeaders http.Header
@@ -46,10 +46,10 @@ func (s *HeadersSuite) TestCorsResponses(c *check.C) {
 		{
 			desc: "simple access control allow origin",
 			requestHeaders: http.Header{
-				"Origin": {"https://foo.bar.org"},
+				"Origin": {"http://test.localhost"},
 			},
 			expected: http.Header{
-				"Access-Control-Allow-Origin": {"https://foo.bar.org"},
+				"Access-Control-Allow-Origin": {"http://test.localhost"},
 				"Vary":                        {"Origin"},
 			},
 		},
@@ -61,7 +61,7 @@ func (s *HeadersSuite) TestCorsResponses(c *check.C) {
 		req.Host = "test.localhost"
 		req.Header = test.requestHeaders
 
-		err = try.Request(req, 500*time.Millisecond, try.HasBody(), try.HasHeaderStruct(test.expected))
+		err = try.Request(req, 500*time.Millisecond, try.HasHeaderStruct(test.expected))
 		c.Assert(err, checker.IsNil)
 	}
 }
@@ -73,6 +73,12 @@ func (s *HeadersSuite) TestCorsPreflightResponses(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
+
+	backend := startTestServer("9000", http.StatusOK)
+	defer backend.Close()
+
+	err = try.GetRequest(backend.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
 
 	testCase := []struct {
 		desc           string
@@ -100,7 +106,7 @@ func (s *HeadersSuite) TestCorsPreflightResponses(c *check.C) {
 		req.Host = "test.localhost"
 		req.Header = test.requestHeaders
 
-		err = try.Request(req, 500*time.Millisecond, try.HasBody(), try.HasHeaderStruct(test.expected))
+		err = try.Request(req, 500*time.Millisecond, try.HasHeaderStruct(test.expected))
 		c.Assert(err, checker.IsNil)
 	}
 }

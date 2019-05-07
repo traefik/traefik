@@ -168,13 +168,13 @@ func HasHeaderValue(header, value string, exactMatch bool) ResponseCondition {
 func HasHeaderStruct(header http.Header) ResponseCondition {
 	return func(res *http.Response) error {
 		for key := range header {
-			if _, ok := res.Header[key]; ok {
-				// Header exists in the response, test it.
-				eq := reflect.DeepEqual(header[key], res.Header[key])
-				if !eq {
-					return fmt.Errorf("for header %s got values %v, wanted %v", key, res.Header[key], header[key])
-				}
-
+			if _, ok := res.Header[key]; !ok {
+				return fmt.Errorf("header %s not present in the response. Expected headers: %v Got response headers: %v", key, header, res.Header)
+			}
+			// Header exists in the response, test it.
+			eq := reflect.DeepEqual(header[key], res.Header[key])
+			if !eq {
+				return fmt.Errorf("for header %s got values %v, wanted %v", key, res.Header[key], header[key])
 			}
 		}
 		return nil

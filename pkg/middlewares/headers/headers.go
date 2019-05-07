@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	typeName        = "Headers"
-	originHeaderKey = "X-Request-Origin"
+	typeName = "Headers"
 )
 
 type headers struct {
@@ -155,19 +154,17 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if len(originHeader) > 0 {
-		rw.Header().Set(originHeaderKey, originHeader)
-	}
+	s.inlineModifyRequestHeaders(req)
+	s.inlineModifyResponseHeaders(rw, req)
 
-	s.modifyRequestHeaders(req)
 	// If there is a next, call it.
 	if s.next != nil {
 		s.next.ServeHTTP(rw, req)
 	}
 }
 
-// modifyRequestHeaders sets or deletes request headers.
-func (s *Header) modifyRequestHeaders(req *http.Request) {
+// inlineModifyRequestHeaders sets or deletes request headers.
+func (s *Header) inlineModifyRequestHeaders(req *http.Request) {
 	// Loop through Custom request headers
 	for header, value := range s.headers.CustomRequestHeaders {
 		if value == "" {
@@ -175,6 +172,24 @@ func (s *Header) modifyRequestHeaders(req *http.Request) {
 		} else {
 			req.Header.Set(header, value)
 		}
+	}
+}
+
+func (s *Header) inlineModifyResponseHeaders(rw http.ResponseWriter, req *http.Request) {
+	originHeader := req.Header.Get("Origin")
+	allowOrigin := s.getAllowOrigin(originHeader)
+
+	if allowOrigin != "" {
+		rw.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+	}
+
+	if s.headers.AccessControlAllowCredentials {
+		rw.Header().Set("Access-Control-Allow-Credentials", "true")
+	}
+
+	if len(s.headers.AccessControlExposeHeaders) > 0 {
+		exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
+		rw.Header().Set("Access-Control-Expose-Headers", exposeHeaders)
 	}
 }
 
@@ -188,33 +203,19 @@ func (s *Header) ModifyResponseHeaders(res *http.Response) error {
 			res.Header.Set(header, value)
 		}
 	}
-	originHeader := res.Header.Get(originHeaderKey)
-	allowOrigin := s.getAllowOrigin(originHeader)
-	//	Delete the origin header key, since it is only used to pass data from the request for response handling
-	res.Header.Del(originHeaderKey)
-	if allowOrigin != "" {
-		res.Header.Set("Access-Control-Allow-Origin", allowOrigin)
-
-		if s.headers.AddVaryHeader {
-			varyHeader := res.Header.Get("Vary")
-			if varyHeader != "" {
-				varyHeader += ","
-			}
-			varyHeader += "Origin"
-
-			res.Header.Set("Vary", varyHeader)
+	if s.headers.AddVaryHeader {
+		varyHeader := res.Header.Get("Vary")
+		if varyHeader == "Origin" {
+			return nil
 		}
-	}
 
-	if s.headers.AccessControlAllowCredentials {
-		res.Header.Set("Access-Control-Allow-Credentials", "true")
-	}
+		if varyHeader != "" {
+			varyHeader += ","
+		}
+		varyHeader += "Origin"
 
-	exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
-	if exposeHeaders != "" {
-		res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
+		res.Header.Set("Vary", varyHeader)
 	}
-
 	return nil
 }
 

@@ -333,6 +333,7 @@ func TestGetTracingInformation(t *testing.T) {
 func TestCORSResponses(t *testing.T) {
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	nonEmptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Header().Set("Vary", "Testing") })
+	existingOriginHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Header().Set("Vary", "Origin") })
 
 	testCases := []struct {
 		desc           string
@@ -434,6 +435,20 @@ func TestCORSResponses(t *testing.T) {
 			expected: map[string][]string{
 				"Access-Control-Allow-Origin": {"https://foo.bar.org"},
 				"Vary":                        {"Testing,Origin"},
+			},
+		},
+		{
+			desc: "Test Simple Request with Vary Headers and existing vary:origin response",
+			header: NewHeader(existingOriginHandler, config.Headers{
+				AccessControlAllowOrigin: "origin-list-or-null",
+				AddVaryHeader:            true,
+			}),
+			requestHeaders: map[string][]string{
+				"Origin": {"https://foo.bar.org"},
+			},
+			expected: map[string][]string{
+				"Access-Control-Allow-Origin": {"https://foo.bar.org"},
+				"Vary":                        {"Origin"},
 			},
 		},
 	}
