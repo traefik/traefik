@@ -1,5 +1,5 @@
 {
-	"Routers": {
+	"routers": {
 		"myprovider.bar": {
 			"entryPoints": [
 				"web"
@@ -9,8 +9,7 @@
 				"anotherprovider.addPrefixTest"
 			],
 			"service": "myprovider.foo-service",
-			"rule": "Host(`foo.bar`)",
-			"Err": ""
+			"rule": "Host(`foo.bar`)"
 		},
 		"myprovider.test": {
 			"entryPoints": [
@@ -21,17 +20,15 @@
 				"auth"
 			],
 			"service": "myprovider.foo-service",
-			"rule": "Host(`foo.bar.other`)",
-			"Err": ""
+			"rule": "Host(`foo.bar.other`)"
 		}
 	},
-	"Middlewares": {
+	"middlewares": {
 		"anotherprovider.addPrefixTest": {
 			"addPrefix": {
 				"prefix": "/toto"
 			},
-			"Err": null,
-			"UsedBy": [
+			"usedBy": [
 				"myprovider.bar"
 			]
 		},
@@ -39,8 +36,7 @@
 			"addPrefix": {
 				"prefix": "/titi"
 			},
-			"Err": null,
-			"UsedBy": [
+			"usedBy": [
 				"myprovider.test"
 			]
 		},
@@ -50,14 +46,13 @@
 					"admin:admin"
 				]
 			},
-			"Err": null,
-			"UsedBy": [
+			"usedBy": [
 				"myprovider.bar",
 				"myprovider.test"
 			]
 		}
 	},
-	"Services": {
+	"services": {
 		"myprovider.foo-service": {
 			"loadbalancer": {
 				"servers": [
@@ -69,33 +64,29 @@
 				"method": "wrr",
 				"passHostHeader": false
 			},
-			"Err": null,
-			"UsedBy": [
+			"usedBy": [
 				"myprovider.bar",
 				"myprovider.test"
-			],
-			"ServerStatus": null
+			]
 		}
 	},
-	"TCPRouters": {
+	"tcpRouters": {
 		"myprovider.tcpbar": {
 			"entryPoints": [
 				"web"
 			],
 			"service": "myprovider.tcpfoo-service",
-			"rule": "HostSNI(`foo.bar`)",
-			"Err": ""
+			"rule": "HostSNI(`foo.bar`)"
 		},
 		"myprovider.tcptest": {
 			"entryPoints": [
 				"web"
 			],
 			"service": "myprovider.tcpfoo-service",
-			"rule": "HostSNI(`foo.bar.other`)",
-			"Err": ""
+			"rule": "HostSNI(`foo.bar.other`)"
 		}
 	},
-	"TCPServices": {
+	"tcpServices": {
 		"myprovider.tcpfoo-service": {
 			"loadbalancer": {
 				"servers": [
@@ -106,8 +97,7 @@
 				],
 				"method": "wrr"
 			},
-			"Err": null,
-			"UsedBy": [
+			"usedBy": [
 				"myprovider.tcpbar",
 				"myprovider.tcptest"
 			]

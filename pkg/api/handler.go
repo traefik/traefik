@@ -15,18 +15,6 @@ import (
 	"github.com/unrolled/render"
 )
 
-// RouterRepresentation extended version of a router configuration with an ID
-type RouterRepresentation struct {
-	*config.Router
-	ID string `json:"id"`
-}
-
-// ServiceRepresentation extended version of a service configuration with an ID
-type ServiceRepresentation struct {
-	*config.Service
-	ID string `json:"id"`
-}
-
 // Handler serves the configuration and status of Traefik on API endpoints.
 type Handler struct {
 	EntryPoint string
@@ -84,17 +72,17 @@ func (h Handler) Append(router *mux.Router) {
 }
 
 type serviceInfoRepresentation struct {
-	*config.ServiceInfo
-	ServerStatus map[string]string
+	*config.ServiceInfo `json:",omitempty"`
+	ServerStatus        map[string]string `json:"serverStatus,omitempty"`
 }
 
 // RunTimeRepresentation is the configuration information exposed by the API handler.
 type RunTimeRepresentation struct {
-	Routers     map[string]*config.RouterInfo
-	Middlewares map[string]*config.MiddlewareInfo
-	Services    map[string]*serviceInfoRepresentation
-	TCPRouters  map[string]*config.TCPRouterInfo
-	TCPServices map[string]*config.TCPServiceInfo
+	Routers     map[string]*config.RouterInfo         `json:"routers,omitempty"`
+	Middlewares map[string]*config.MiddlewareInfo     `json:"middlewares,omitempty"`
+	Services    map[string]*serviceInfoRepresentation `json:"services,omitempty"`
+	TCPRouters  map[string]*config.TCPRouterInfo      `json:"tcpRouters,omitempty"`
+	TCPServices map[string]*config.TCPServiceInfo     `json:"tcpServices,omitempty"`
 }
 
 func (h Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.Request) {

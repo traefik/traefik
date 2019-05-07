@@ -9,15 +9,13 @@ import (
 	"github.com/containous/traefik/pkg/log"
 )
 
-// TODO(mpl): omitempty on all potential nils, for nicer endpoint outputs?
-
 // RuntimeConfiguration holds the information about the currently running traefik instance.
 type RuntimeConfiguration struct {
-	Routers     map[string]*RouterInfo
-	Middlewares map[string]*MiddlewareInfo
-	Services    map[string]*ServiceInfo
-	TCPRouters  map[string]*TCPRouterInfo
-	TCPServices map[string]*TCPServiceInfo
+	Routers     map[string]*RouterInfo     `json:"routers,omitempty"`
+	Middlewares map[string]*MiddlewareInfo `json:"middlewares,omitempty"`
+	Services    map[string]*ServiceInfo    `json:"services,omitempty"`
+	TCPRouters  map[string]*TCPRouterInfo  `json:"tcpRouters,omitempty"`
+	TCPServices map[string]*TCPServiceInfo `json:"tcpServices,omitempty"`
 }
 
 // NewRuntimeConfig returns a RuntimeConfiguration initialized with the given conf. It never returns nil.
@@ -76,28 +74,28 @@ func NewRuntimeConfig(conf Configuration) *RuntimeConfiguration {
 
 // RouterInfo holds information about a currently running HTTP router
 type RouterInfo struct {
-	*Router        // dynamic configuration
-	Err     string // initialization error
+	*Router `json:",omitempty"` // dynamic configuration
+	Err     string              `json:"err,omitempty"` // initialization error
 }
 
 // TCPRouterInfo holds information about a currently running TCP router
 type TCPRouterInfo struct {
-	*TCPRouter        // dynamic configuration
-	Err        string // initialization error
+	*TCPRouter `json:",omitempty"` // dynamic configuration
+	Err        string              `json:"err,omitempty"` // initialization error
 }
 
 // MiddlewareInfo holds information about a currently running middleware
 type MiddlewareInfo struct {
-	*Middleware          // dynamic configuration
-	Err         error    // initialization error
-	UsedBy      []string // list of routers and services using that middleware
+	*Middleware `json:",omitempty"` // dynamic configuration
+	Err         error               `json:"err,omitempty"`    // initialization error
+	UsedBy      []string            `json:"usedBy,omitempty"` // list of routers and services using that middleware
 }
 
 // ServiceInfo holds information about a currently running service
 type ServiceInfo struct {
-	*Service          // dynamic configuration
-	Err      error    // initialization error
-	UsedBy   []string // list of routers using that service
+	*Service `json:",omitempty"` // dynamic configuration
+	Err      error               `json:"err,omitempty"`    // initialization error
+	UsedBy   []string            `json:"usedBy,omitempty"` // list of routers using that service
 
 	statusMu sync.RWMutex
 	status   map[string]string // keyed by server URL
@@ -131,9 +129,9 @@ func (s *ServiceInfo) GetAllStatus() map[string]string {
 
 // TCPServiceInfo holds information about a currently running TCP service
 type TCPServiceInfo struct {
-	*TCPService          // dynamic configuration
-	Err         error    // initialization error
-	UsedBy      []string // list of routers using that service
+	*TCPService `json:",omitempty"` // dynamic configuration
+	Err         error               `json:"err,omitempty"`    // initialization error
+	UsedBy      []string            `json:"usedBy,omitempty"` // list of routers using that service
 }
 
 func getProviderName(elementName string) string {
