@@ -35,7 +35,8 @@ func New(staticConfig static.Configuration, runtimeConfig *config.RuntimeConfigu
 	if rConfig == nil {
 		rConfig = &config.RuntimeConfiguration{}
 	}
-	h := Handler{
+
+	return &Handler{
 		EntryPoint:           staticConfig.API.EntryPoint,
 		Dashboard:            staticConfig.API.Dashboard,
 		Statistics:           staticConfig.API.Statistics,
@@ -43,7 +44,6 @@ func New(staticConfig static.Configuration, runtimeConfig *config.RuntimeConfigu
 		runtimeConfiguration: rConfig,
 		Debug:                staticConfig.Global.Debug,
 	}
-	return &h
 }
 
 var templateRenderer jsonRenderer = render.New(render.Options{Directory: "nowhere"})
@@ -72,8 +72,8 @@ func (h Handler) Append(router *mux.Router) {
 }
 
 type serviceInfoRepresentation struct {
-	*config.ServiceInfo `json:",omitempty"`
-	ServerStatus        map[string]string `json:"serverStatus,omitempty"`
+	*config.ServiceInfo
+	ServerStatus map[string]string `json:"serverStatus,omitempty"`
 }
 
 // RunTimeRepresentation is the configuration information exposed by the API handler.

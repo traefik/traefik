@@ -1,7 +1,6 @@
 package config
 
 import (
-	"context"
 	"sort"
 	"strings"
 	"sync"
@@ -23,79 +22,136 @@ func NewRuntimeConfig(conf Configuration) *RuntimeConfiguration {
 	if conf.HTTP == nil && conf.TCP == nil {
 		return &RuntimeConfiguration{}
 	}
-	var (
-		mI    map[string]*MiddlewareInfo
-		rI    map[string]*RouterInfo
-		sI    map[string]*ServiceInfo
-		rITCP map[string]*TCPRouterInfo
-		sITCP map[string]*TCPServiceInfo
-	)
+
+	runtimeConfig := &RuntimeConfiguration{}
+
 	if conf.HTTP != nil {
 		routers := conf.HTTP.Routers
+		if len(routers) > 0 {
+			runtimeConfig.Routers = make(map[string]*RouterInfo, len(routers))
+			for k, v := range routers {
+				runtimeConfig.Routers[k] = &RouterInfo{Router: v}
+			}
+		}
+
 		services := conf.HTTP.Services
+		if len(services) > 0 {
+			runtimeConfig.Services = make(map[string]*ServiceInfo, len(services))
+			for k, v := range services {
+				runtimeConfig.Services[k] = &ServiceInfo{Service: v}
+			}
+		}
+
 		middlewares := conf.HTTP.Middlewares
-		rI = make(map[string]*RouterInfo, len(routers))
-		for k, v := range routers {
-			rI[k] = &RouterInfo{Router: v}
-		}
-		sI = make(map[string]*ServiceInfo, len(services))
-		for k, v := range services {
-			sI[k] = &ServiceInfo{Service: v}
-		}
-		mI = make(map[string]*MiddlewareInfo, len(middlewares))
-		for k, v := range middlewares {
-			mI[k] = &MiddlewareInfo{Middleware: v}
+		if len(middlewares) > 0 {
+			runtimeConfig.Middlewares = make(map[string]*MiddlewareInfo, len(middlewares))
+			for k, v := range middlewares {
+				runtimeConfig.Middlewares[k] = &MiddlewareInfo{Middleware: v}
+			}
 		}
 	}
+
 	if conf.TCP != nil {
-		routers := conf.TCP.Routers
-		services := conf.TCP.Services
-		rITCP = make(map[string]*TCPRouterInfo, len(routers))
-		for k, v := range routers {
-			rITCP[k] = &TCPRouterInfo{TCPRouter: v}
+		if len(conf.TCP.Routers) > 0 {
+			runtimeConfig.TCPRouters = make(map[string]*TCPRouterInfo, len(conf.TCP.Routers))
+			for k, v := range conf.TCP.Routers {
+				runtimeConfig.TCPRouters[k] = &TCPRouterInfo{TCPRouter: v}
+			}
 		}
-		sITCP = make(map[string]*TCPServiceInfo, len(services))
-		for k, v := range services {
-			sITCP[k] = &TCPServiceInfo{TCPService: v}
+
+		if len(conf.TCP.Services) > 0 {
+			runtimeConfig.TCPServices = make(map[string]*TCPServiceInfo, len(conf.TCP.Services))
+			for k, v := range conf.TCP.Services {
+				runtimeConfig.TCPServices[k] = &TCPServiceInfo{TCPService: v}
+			}
 		}
 	}
-	if len(sI) == 0 && len(rI) == 0 && len(mI) == 0 &&
-		len(rITCP) == 0 && len(sITCP) == 0 {
-		return &RuntimeConfiguration{}
+
+	return runtimeConfig
+}
+
+// PopulateUsedBy populates all the UsedBy lists of the underlying fields of r,
+// based on the relations between the included services, routers, and middlewares.
+func (r *RuntimeConfiguration) PopulateUsedBy() {
+	if r == nil {
+		return
 	}
-	return &RuntimeConfiguration{
-		Services:    sI,
-		Routers:     rI,
-		Middlewares: mI,
-		TCPRouters:  rITCP,
-		TCPServices: sITCP,
+
+	logger := log.WithoutContext()
+
+	for routerName, routerInfo := range r.Routers {
+		providerName := getProviderName(routerName)
+		if providerName == "" {
+			logger.WithField(log.RouterName, routerName).Error("router name is not fully qualified")
+			continue
+		}
+
+		for _, midName := range routerInfo.Router.Middlewares {
+			fullMidName := getQualifiedName(providerName, midName)
+			if _, ok := r.Middlewares[fullMidName]; !ok {
+				continue
+			}
+			r.Middlewares[fullMidName].UsedBy = append(r.Middlewares[fullMidName].UsedBy, routerName)
+		}
+
+		serviceName := getQualifiedName(providerName, routerInfo.Router.Service)
+		if _, ok := r.Services[serviceName]; !ok {
+			continue
+		}
+		r.Services[serviceName].UsedBy = append(r.Services[serviceName].UsedBy, routerName)
+	}
+
+	for k := range r.Services {
+		sort.Strings(r.Services[k].UsedBy)
+	}
+
+	for k := range r.Middlewares {
+		sort.Strings(r.Middlewares[k].UsedBy)
+	}
+
+	for routerName, routerInfo := range r.TCPRouters {
+		providerName := getProviderName(routerName)
+		if providerName == "" {
+			logger.WithField(log.RouterName, routerName).Error("tcp router name is not fully qualified")
+			continue
+		}
+
+		serviceName := getQualifiedName(providerName, routerInfo.TCPRouter.Service)
+		if _, ok := r.TCPServices[serviceName]; !ok {
+			continue
+		}
+		r.TCPServices[serviceName].UsedBy = append(r.TCPServices[serviceName].UsedBy, routerName)
+	}
+
+	for k := range r.TCPServices {
+		sort.Strings(r.TCPServices[k].UsedBy)
 	}
 }
 
 // RouterInfo holds information about a currently running HTTP router
 type RouterInfo struct {
-	*Router `json:",omitempty"` // dynamic configuration
-	Err     string              `json:"err,omitempty"` // initialization error
+	*Router        // dynamic configuration
+	Err     string `json:"error,omitempty"` // initialization error
 }
 
 // TCPRouterInfo holds information about a currently running TCP router
 type TCPRouterInfo struct {
-	*TCPRouter `json:",omitempty"` // dynamic configuration
-	Err        string              `json:"err,omitempty"` // initialization error
+	*TCPRouter        // dynamic configuration
+	Err        string `json:"error,omitempty"` // initialization error
 }
 
 // MiddlewareInfo holds information about a currently running middleware
 type MiddlewareInfo struct {
-	*Middleware `json:",omitempty"` // dynamic configuration
-	Err         error               `json:"err,omitempty"`    // initialization error
-	UsedBy      []string            `json:"usedBy,omitempty"` // list of routers and services using that middleware
+	*Middleware          // dynamic configuration
+	Err         error    `json:"error,omitempty"`  // initialization error
+	UsedBy      []string `json:"usedBy,omitempty"` // list of routers and services using that middleware
 }
 
 // ServiceInfo holds information about a currently running service
 type ServiceInfo struct {
-	*Service `json:",omitempty"` // dynamic configuration
-	Err      error               `json:"err,omitempty"`    // initialization error
-	UsedBy   []string            `json:"usedBy,omitempty"` // list of routers using that service
+	*Service          // dynamic configuration
+	Err      error    `json:"error,omitempty"`  // initialization error
+	UsedBy   []string `json:"usedBy,omitempty"` // list of routers using that service
 
 	statusMu sync.RWMutex
 	status   map[string]string // keyed by server URL
@@ -106,6 +162,7 @@ type ServiceInfo struct {
 func (s *ServiceInfo) UpdateStatus(server string, status string) {
 	s.statusMu.Lock()
 	defer s.statusMu.Unlock()
+
 	if s.status == nil {
 		s.status = make(map[string]string)
 	}
@@ -117,10 +174,12 @@ func (s *ServiceInfo) UpdateStatus(server string, status string) {
 func (s *ServiceInfo) GetAllStatus() map[string]string {
 	s.statusMu.RLock()
 	defer s.statusMu.RUnlock()
-	var allStatus map[string]string
-	if len(s.status) > 0 {
-		allStatus = make(map[string]string, len(s.status))
+
+	if len(s.status) == 0 {
+		return nil
 	}
+
+	allStatus := make(map[string]string, len(s.status))
 	for k, v := range s.status {
 		allStatus[k] = v
 	}
@@ -129,9 +188,9 @@ func (s *ServiceInfo) GetAllStatus() map[string]string {
 
 // TCPServiceInfo holds information about a currently running TCP service
 type TCPServiceInfo struct {
-	*TCPService `json:",omitempty"` // dynamic configuration
-	Err         error               `json:"err,omitempty"`    // initialization error
-	UsedBy      []string            `json:"usedBy,omitempty"` // list of routers using that service
+	*TCPService          // dynamic configuration
+	Err         error    `json:"error,omitempty"`  // initialization error
+	UsedBy      []string `json:"usedBy,omitempty"` // list of routers using that service
 }
 
 func getProviderName(elementName string) string {
@@ -148,60 +207,4 @@ func getQualifiedName(provider, elementName string) string {
 		return provider + "." + elementName
 	}
 	return elementName
-}
-
-// PopulateUsedBy populates all the UsedBy lists of the underlying fields of r,
-// based on the relations between the included services, routers, and middlewares.
-func (r *RuntimeConfiguration) PopulateUsedBy() {
-	if r == nil {
-		return
-	}
-	routerInfos := r.Routers
-	serviceInfos := r.Services
-	middlewareInfos := r.Middlewares
-	for routerName, routerInf := range routerInfos {
-		providerName := getProviderName(routerName)
-		if providerName == "" {
-			log.FromContext(context.Background()).Errorf("router name is not fully qualified: %q", routerName)
-			continue
-		}
-
-		for _, midName := range routerInf.Router.Middlewares {
-			fullMidName := getQualifiedName(providerName, midName)
-			if _, ok := middlewareInfos[fullMidName]; !ok {
-				continue
-			}
-			middlewareInfos[fullMidName].UsedBy = append(middlewareInfos[fullMidName].UsedBy, routerName)
-		}
-
-		serviceName := getQualifiedName(providerName, routerInf.Router.Service)
-		if _, ok := serviceInfos[serviceName]; !ok {
-			continue
-		}
-		serviceInfos[serviceName].UsedBy = append(serviceInfos[serviceName].UsedBy, routerName)
-	}
-	for k := range serviceInfos {
-		sort.Strings(serviceInfos[k].UsedBy)
-	}
-	for k := range middlewareInfos {
-		sort.Strings(middlewareInfos[k].UsedBy)
-	}
-
-	tcpServiceInfos := r.TCPServices
-	tcpRouterInfos := r.TCPRouters
-	for routerName, routerInf := range tcpRouterInfos {
-		providerName := getProviderName(routerName)
-		if providerName == "" {
-			log.FromContext(context.Background()).Errorf("tcp router name is not fully qualified: %q", routerName)
-			continue
-		}
-		serviceName := getQualifiedName(providerName, routerInf.TCPRouter.Service)
-		if _, ok := tcpServiceInfos[serviceName]; !ok {
-			continue
-		}
-		tcpServiceInfos[serviceName].UsedBy = append(tcpServiceInfos[serviceName].UsedBy, routerName)
-	}
-	for k := range tcpServiceInfos {
-		sort.Strings(tcpServiceInfos[k].UsedBy)
-	}
 }

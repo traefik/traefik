@@ -160,8 +160,10 @@ func TestHandler_Configuration(t *testing.T) {
 				var rtRepr RunTimeRepresentation
 				err := json.Unmarshal(contents, &rtRepr)
 				require.NoError(t, err)
+
 				newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
 				require.NoError(t, err)
+
 				err = ioutil.WriteFile(test.expected.json, newJSON, 0644)
 				require.NoError(t, err)
 			}
