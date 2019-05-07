@@ -26,10 +26,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 							Servers: []config.TCPServer{
 								{
 									Port:    "8085",
-									Address: "127.0.0.1",
+									Address: "127.0.0.1:8085",
 								},
 								{
-									Address: "127.0.0.1",
+									Address: "127.0.0.1:8086",
 									Port:    "8086",
 								},
 							},
@@ -65,7 +65,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 						LoadBalancer: &config.TCPLoadBalancerService{
 							Servers: []config.TCPServer{
 								{
-									Address: "127.0.0.1",
+									Address: "127.0.0.1:80",
 								},
 							},
 							Method: "wrr",
@@ -100,7 +100,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 						LoadBalancer: &config.TCPLoadBalancerService{
 							Servers: []config.TCPServer{
 								{
-									Address: "127.0.0.1",
+									Address: "127.0.0.1:80",
 									Weight:  1,
 								},
 							},
@@ -135,7 +135,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 						LoadBalancer: &config.TCPLoadBalancerService{
 							Servers: []config.TCPServer{
 								{
-									Address: "127.0.0.1",
+									Address: "127.0.0.1:80",
 									Weight:  1,
 								},
 							},

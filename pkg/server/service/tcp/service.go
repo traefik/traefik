@@ -53,7 +53,6 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 			return nil, conf.Err
 		}
 
-		// blabla
 		handler, err := tcp.NewProxy(server.Address)
 		if err != nil {
 			conf.Err = fmt.Errorf("in service %q, server %q: %v", serviceQualifiedName, server.Address, err)
@@ -63,18 +62,4 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		loadBalancer.AddServer(handler)
 	}
 	return loadBalancer, nil
-}
-
-func parseIP(s string) (string, error) {
-	ip, _, err := net.SplitHostPort(s)
-	if err == nil {
-		return ip, nil
-	}
-
-	ipNoPort := net.ParseIP(s)
-	if ipNoPort == nil {
-		return "", fmt.Errorf("invalid IP Address %s", ipNoPort)
-	}
-
-	return ipNoPort.String(), nil
 }
