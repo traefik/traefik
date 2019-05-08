@@ -18,15 +18,15 @@ func NewProxy(address string) (*Proxy, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Proxy{
-		target: tcpAddr,
-	}, nil
+
+	return &Proxy{target: tcpAddr}, nil
 }
 
 // ServeTCP forwards the connection to a service
 func (p *Proxy) ServeTCP(conn net.Conn) {
 	log.Debugf("Handling connection from %s", conn.RemoteAddr())
 	defer conn.Close()
+
 	connBackend, err := net.DialTCP("tcp", nil, p.target)
 	if err != nil {
 		log.Errorf("Error while connection to backend: %v", err)
