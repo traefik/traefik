@@ -75,15 +75,6 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	return entryPointHandlers
 }
 
-func contains(entryPoints []string, entryPointName string) bool {
-	for _, name := range entryPoints {
-		if name == entryPointName {
-			return true
-		}
-	}
-	return false
-}
-
 func (m *Manager) filteredRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*config.Router {
 	entryPointsRouters := make(map[string]map[string]*config.Router)
 
@@ -121,10 +112,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	}
 
 	for routerName, routerConfig := range configs {
-		ctxRouter := log.With(ctx, log.Str(log.RouterName, routerName))
+		ctxRouter := log.With(internal.AddProviderInContext(ctx, routerName), log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctxRouter)
-
-		ctxRouter = internal.AddProviderInContext(ctxRouter, routerName)
 
 		handler, err := m.buildRouterHandler(ctxRouter, routerName)
 		if err != nil {
@@ -196,4 +185,13 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *config.Router, r
 	}
 
 	return alice.New().Extend(*mHandler).Append(tHandler).Then(sHandler)
+}
+
+func contains(entryPoints []string, entryPointName string) bool {
+	for _, name := range entryPoints {
+		if name == entryPointName {
+			return true
+		}
+	}
+	return false
 }
