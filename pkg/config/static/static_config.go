@@ -18,6 +18,7 @@ import (
 	"github.com/containous/traefik/pkg/provider/rest"
 	"github.com/containous/traefik/pkg/tls"
 	"github.com/containous/traefik/pkg/tracing/datadog"
+	"github.com/containous/traefik/pkg/tracing/haystack"
 	"github.com/containous/traefik/pkg/tracing/instana"
 	"github.com/containous/traefik/pkg/tracing/jaeger"
 	"github.com/containous/traefik/pkg/tracing/zipkin"
@@ -109,13 +110,14 @@ type LifeCycle struct {
 
 // Tracing holds the tracing configuration.
 type Tracing struct {
-	Backend       string          `description:"Selects the tracking backend ('jaeger','zipkin','datadog','instana')." export:"true"`
-	ServiceName   string          `description:"Set the name for this service" export:"true"`
-	SpanNameLimit int             `description:"Set the maximum character limit for Span names (default 0 = no limit)" export:"true"`
-	Jaeger        *jaeger.Config  `description:"Settings for jaeger"`
-	Zipkin        *zipkin.Config  `description:"Settings for zipkin"`
-	DataDog       *datadog.Config `description:"Settings for DataDog"`
-	Instana       *instana.Config `description:"Settings for Instana"`
+	Backend       string           `description:"Selects the tracking backend ('jaeger','zipkin','datadog','instana')." export:"true"`
+	ServiceName   string           `description:"Set the name for this service" export:"true"`
+	SpanNameLimit int              `description:"Set the maximum character limit for Span names (default 0 = no limit)" export:"true"`
+	Jaeger        *jaeger.Config   `description:"Settings for jaeger"`
+	Zipkin        *zipkin.Config   `description:"Settings for zipkin"`
+	DataDog       *datadog.Config  `description:"Settings for DataDog"`
+	Instana       *instana.Config  `description:"Settings for Instana"`
+	Haystack      *haystack.Config `description:"Settings for Haystack"`
 }
 
 // Providers contains providers configuration
