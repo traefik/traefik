@@ -57,6 +57,15 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     --8<-- "content/https-tls/ref-acme.toml"
     ```
 
+## Automatic Renewals
+
+Traefik automatically tracks the expiry date of ACME certificates it generates.
+
+If there are less than 30 days remaining before the certificate expires, Traefik will attempt to rewnew it automatically.
+
+!!! note
+    Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
+
 ## The Different ACME Challenges
 
 ### `tlsChallenge`
