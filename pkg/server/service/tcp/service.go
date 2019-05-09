@@ -25,31 +25,40 @@ func NewManager(configs map[string]*config.TCPService) *Manager {
 
 // BuildTCP Creates a tcp.Handler for a service configuration.
 func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Handler, error) {
-	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
+	serviceQualifiedName := internal.GetQualifiedName(rootCtx, serviceName)
+	ctx := internal.AddProviderInContext(rootCtx, serviceQualifiedName)
+	ctx = log.With(ctx, log.Str(log.ServiceName, serviceName))
 
-	serviceName = internal.GetQualifiedName(ctx, serviceName)
-	ctx = internal.AddProviderInContext(ctx, serviceName)
-
-	if conf, ok := m.configs[serviceName]; ok {
-		// FIXME Check if the service is declared multiple times with different types
-		if conf.LoadBalancer != nil {
-			loadBalancer := tcp.NewRRLoadBalancer()
-
-			var handler tcp.Handler
-			for _, server := range conf.LoadBalancer.Servers {
-				_, err := parseIP(server.Address)
-				if err == nil {
-					handler, _ = tcp.NewProxy(server.Address)
-					loadBalancer.AddServer(handler)
-				} else {
-					log.FromContext(ctx).Errorf("Invalid IP address for a %s server %s: %v", serviceName, server.Address, err)
-				}
-			}
-			return loadBalancer, nil
-		}
-		return nil, fmt.Errorf("the service %q doesn't have any TCP load balancer", serviceName)
+	conf, ok := m.configs[serviceQualifiedName]
+	if !ok {
+		return nil, fmt.Errorf("the service %q does not exits", serviceQualifiedName)
 	}
-	return nil, fmt.Errorf("the service %q does not exits", serviceName)
+
+	if conf.LoadBalancer == nil {
+		return nil, fmt.Errorf("the service %q doesn't have any TCP load balancer", serviceQualifiedName)
+	}
+
+	logger := log.FromContext(ctx)
+
+	// FIXME Check if the service is declared multiple times with different types
+	loadBalancer := tcp.NewRRLoadBalancer()
+
+	for _, server := range conf.LoadBalancer.Servers {
+		if _, err := parseIP(server.Address); err != nil {
+			logger.Errorf("Invalid IP address for a %q server %q: %v", serviceQualifiedName, server.Address, err)
+			continue
+		}
+
+		handler, err := tcp.NewProxy(server.Address)
+		if err != nil {
+			logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
+			continue
+		}
+
+		loadBalancer.AddServer(handler)
+	}
+
+	return loadBalancer, nil
 }
 
 func parseIP(s string) (string, error) {

@@ -21,6 +21,11 @@ func NewRRLoadBalancer() *RRLoadBalancer {
 
 // ServeTCP forwards the connection to the right service
 func (r *RRLoadBalancer) ServeTCP(conn net.Conn) {
+	if len(r.servers) == 0 {
+		log.WithoutContext().Error("no available server")
+		return
+	}
+
 	r.next().ServeTCP(conn)
 }
 
@@ -38,6 +43,7 @@ func (r *RRLoadBalancer) next() Handler {
 		r.current = 0
 		log.Debugf("Load balancer: going back to the first available server")
 	}
+
 	handler := r.servers[r.current]
 	r.current++
 	return handler
