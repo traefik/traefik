@@ -45,7 +45,7 @@ Attach labels to your containers and let Traefik do the rest!
     swarmMode = true
     ```
 
-    Attaching labels to containers (in your docker compose file)
+    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
 
     ```yaml
     version: "3"
@@ -57,7 +57,7 @@ Attach labels to your containers and let Traefik do the rest!
     ```
 
     !!! important "Labels in Docker Swarm Mode"
-        If you use a compose file with the Swarm mode, labels should be defined in the `deploy` part of your service.
+        While in Swarm Mode, Traefik uses labels found on services, not on individual containers. Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
         This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
 
 ## Provider Configuration Options
