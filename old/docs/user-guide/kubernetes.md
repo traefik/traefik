@@ -85,7 +85,7 @@ It is possible to use Traefik with a [Deployment](https://kubernetes.io/docs/con
 - DaemonSets automatically scale to new nodes, when the nodes join the cluster, whereas Deployment pods are only scheduled on new nodes if required.
 - DaemonSets ensure that only one replica of pods run on any single node. Deployments require affinity settings if you want to ensure that two pods don't end up on the same node.
 - DaemonSets can be run with the `NET_BIND_SERVICE` capability, which will allow it to bind to port 80/443/etc on each host. This will allow bypassing the kube-proxy, and reduce traffic hops. Note that this is against the Kubernetes Best Practices [Guidelines](https://kubernetes.io/docs/concepts/configuration/overview/#services), and raises the potential for scheduling/scaling issues. Despite potential issues, this remains the choice for most ingress controllers.
-- If you are unsure which to choose, start with the Daemonset.
+- If you are unsure which to choose, start with the Deployment.
 
 The Deployment objects looks like this:
 
