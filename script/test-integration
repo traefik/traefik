@@ -18,11 +18,11 @@ echo "Testing against..."
 docker version
 
 if [ -n "$TEST_CONTAINER" ]; then
-echo "Testing from container…"
-CGO_ENABLED=0 go test -integration -container "${TESTFLAGS[@]}"
+    echo "Testing from container…"
+    CGO_ENABLED=0 go test -integration -container "${TESTFLAGS[@]}"
 fi
 
 if [ -n "$TEST_HOST" ]; then
-echo "Testing from host…"
-CGO_ENABLED=0 go test -integration -host "${TESTFLAGS[@]}"
+    echo "Testing from host…"
+    CGO_ENABLED=0 go test -integration -host "${TESTFLAGS[@]}"
 fi
