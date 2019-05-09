@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-SCRIPT_DIR="$( cd "$( dirname "${0}" )" && pwd -P)"
-export SCRIPT_DIR
 export DEST=.
 
 TESTFLAGS+=("-test.timeout=20m" -check.v)
@@ -13,7 +11,7 @@ elif [ -n "$VERBOSE_INTEGRATION" ]; then
     TESTFLAGS+=(-v)
 fi
 
-cd "${SCRIPT_DIR}"/../integration
+cd integration
 echo "Testing against..."
 docker version
 
