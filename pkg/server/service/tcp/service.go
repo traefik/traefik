@@ -50,8 +50,8 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 
 	for _, server := range conf.LoadBalancer.Servers {
 		if _, _, err := net.SplitHostPort(server.Address); err != nil {
-			conf.Err = fmt.Errorf("in service %q: %v", serviceQualifiedName, err)
-			return nil, conf.Err
+			logger.Errorf("In service %q: %v", serviceQualifiedName, err)
+			continue
 		}
 
 		handler, err := tcp.NewProxy(server.Address)

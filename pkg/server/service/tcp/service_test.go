@@ -2,7 +2,6 @@ package tcp
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/containous/traefik/pkg/config"
@@ -17,13 +16,13 @@ func TestManager_BuildTCP(t *testing.T) {
 		serviceName   string
 		configs       map[string]*config.TCPServiceInfo
 		providerName  string
-		expectedError error
+		expectedError string
 	}{
 		{
 			desc:          "without configuration",
 			serviceName:   "test",
 			configs:       nil,
-			expectedError: errors.New(`the service "test" does not exist`),
+			expectedError: `the service "test" does not exist`,
 		},
 		{
 			desc:        "missing lb configuration",
@@ -33,10 +32,10 @@ func TestManager_BuildTCP(t *testing.T) {
 					TCPService: &config.TCPService{},
 				},
 			},
-			expectedError: errors.New(`the service "test" doesn't have any TCP load balancer`),
+			expectedError: `the service "test" doesn't have any TCP load balancer`,
 		},
 		{
-			desc:        "no such host",
+			desc:        "no such host, server is skipped, error is logged",
 			serviceName: "test",
 			configs: map[string]*config.TCPServiceInfo{
 				"test": {
@@ -51,7 +50,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			},
 		},
 		{
-			desc:        "invalid IP address",
+			desc:        "invalid IP address, server is skipped, error is logged",
 			serviceName: "test",
 			configs: map[string]*config.TCPServiceInfo{
 				"test": {
@@ -64,7 +63,6 @@ func TestManager_BuildTCP(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New(`in service "test": address foobar: missing port in address`),
 		},
 		{
 			desc:        "Simple service name",
@@ -139,7 +137,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			providerName: "provider-1",
 		},
 		{
-			desc:        "Server address, hostname but missing port",
+			desc:        "missing port in address with hostname, server is skipped, error is logged",
 			serviceName: "serviceName",
 			configs: map[string]*config.TCPServiceInfo{
 				"provider-1.serviceName": {
@@ -155,11 +153,10 @@ func TestManager_BuildTCP(t *testing.T) {
 					},
 				},
 			},
-			providerName:  "provider-1",
-			expectedError: errors.New(`in service "provider-1.serviceName": address foobar.com: missing port in address`),
+			providerName: "provider-1",
 		},
 		{
-			desc:        "Server address, ip but missing port",
+			desc:        "missing port in address with ip, server is skipped, error is logged",
 			serviceName: "serviceName",
 			configs: map[string]*config.TCPServiceInfo{
 				"provider-1.serviceName": {
@@ -175,8 +172,7 @@ func TestManager_BuildTCP(t *testing.T) {
 					},
 				},
 			},
-			providerName:  "provider-1",
-			expectedError: errors.New(`in service "provider-1.serviceName": address 192.168.0.12: missing port in address`),
+			providerName: "provider-1",
 		},
 	}
 
@@ -196,14 +192,13 @@ func TestManager_BuildTCP(t *testing.T) {
 
 			handler, err := manager.BuildTCP(ctx, test.serviceName)
 
-			assert.Equal(t, test.expectedError, err)
-			if test.expectedError != nil {
+			if test.expectedError != "" {
+				assert.EqualError(t, err, test.expectedError)
 				require.Nil(t, handler)
 			} else {
+				assert.Nil(t, err)
 				require.NotNil(t, handler)
 			}
-
-			assert.Equal(t, test.expectedError, err)
 		})
 	}
 }
