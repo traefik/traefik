@@ -140,12 +140,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				}
 			}
 
-			eventsChanBuffered := eventsChan
+			eventsChanToRead := eventsChan
 			throttleDuration := time.Duration(p.ThrottleDuration)
 			if throttleDuration > 0 {
 				// Create a buffered channel to hold the pending event (if we're
 				// delaying processing the event due to throttling)
 				eventsChanBuffered := make(chan interface{}, 1)
+				eventsChanToRead = eventsChanBuffered
 
 				// Run a goroutine that reads events from eventChan and does a
 				// non-blocking write to pendingEvent. This guarantees that writing to
@@ -176,7 +177,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				select {
 				case <-stop:
 					return nil
-				case event := <-eventsChanBuffered:
+				case event := <-eventsChanToRead:
 					// Note that event is the *first* event that came in during this
 					// throttling interval -- if we're hitting our throttle, we may have
 					// dropped events. This is fine, because we don't treat different
