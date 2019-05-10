@@ -9,7 +9,7 @@ then
     # The list of shell script come from the (grep ...) command, feeding the loop
     while IFS= read -r script_to_check
     do
-        # The shellcheck command are run in background, to have an overvie of the linter (instead of a fail at first issue)
+        # The shellcheck command are run in background, to have an overview of the linter (instead of a fail at first issue)
         shellcheck "${script_to_check}" &
     done < <( # Search all the repository for sh and bash shebangs, excluding .js and .md files
         # the folders ".git" and "vendor" are also ignored
