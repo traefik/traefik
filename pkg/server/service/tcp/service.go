@@ -40,10 +40,11 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		return nil, fmt.Errorf("the service %q does not exist", serviceQualifiedName)
 	}
 	if conf.LoadBalancer == nil {
-		lbErr := fmt.Errorf("the service %q doesn't have any TCP load balancer", serviceQualifiedName)
-		conf.Err = lbErr
-		return nil, lbErr
+		conf.Err = fmt.Errorf("the service %q doesn't have any TCP load balancer", serviceQualifiedName)
+		return nil, conf.Err
 	}
+
+	logger := log.FromContext(ctx)
 
 	loadBalancer := tcp.NewRRLoadBalancer()
 
@@ -55,8 +56,8 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 
 		handler, err := tcp.NewProxy(server.Address)
 		if err != nil {
-			conf.Err = fmt.Errorf("in service %q, server %q: %v", serviceQualifiedName, server.Address, err)
-			return nil, conf.Err
+			logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
+			continue
 		}
 
 		loadBalancer.AddServer(handler)
