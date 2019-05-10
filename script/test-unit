@@ -11,17 +11,17 @@ GREEN=$'\033[32m'
 TEXTRESET=$'\033[0m' # reset the foreground colour
 
 # -failfast -timeout=5m
-TESTFLAGS="-cover -coverprofile=cover.out ${TESTFLAGS}"
+TESTFLAGS=(-cover "-coverprofile=cover.out" "${TESTFLAGS}")
 
 if [ -n "$VERBOSE" ]; then
-    TESTFLAGS="${TESTFLAGS} -v"
+    TESTFLAGS+=(-v)
 elif [ -n "$VERBOSE_UNIT" ]; then
-    TESTFLAGS="${TESTFLAGS} -v"
+    TESTFLAGS+=(-v)
 fi
 
 set +e
 
-go test ${TESTFLAGS} ./pkg/...
+go test "${TESTFLAGS[@]}" ./pkg/...
 
 CODE=$?
 if [ ${CODE} != 0 ]; then
