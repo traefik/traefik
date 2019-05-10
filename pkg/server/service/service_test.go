@@ -35,8 +35,7 @@ func TestGetLoadBalancer(t *testing.T) {
 			service: &config.LoadBalancerService{
 				Servers: []config.Server{
 					{
-						URL:    ":",
-						Weight: 0,
+						URL: ":",
 					},
 				},
 			},
@@ -122,15 +121,12 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			service: &config.LoadBalancerService{
 				Servers: []config.Server{
 					{
-						URL:    server1.URL,
-						Weight: 50,
+						URL: server1.URL,
 					},
 					{
-						URL:    server2.URL,
-						Weight: 50,
+						URL: server2.URL,
 					},
 				},
-				Method: "wrr",
 			},
 			expected: []ExpectedResult{
 				{
@@ -149,11 +145,9 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			service: &config.LoadBalancerService{
 				Servers: []config.Server{
 					{
-						URL:    "http://foo",
-						Weight: 1,
+						URL: "http://foo",
 					},
 				},
-				Method: "wrr",
 			},
 			expected: []ExpectedResult{
 				{
@@ -166,7 +160,6 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			serviceName: "test",
 			service: &config.LoadBalancerService{
 				Servers: []config.Server{},
-				Method:  "wrr",
 			},
 			expected: []ExpectedResult{
 				{
@@ -181,15 +174,12 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 				Stickiness: &config.Stickiness{},
 				Servers: []config.Server{
 					{
-						URL:    server1.URL,
-						Weight: 1,
+						URL: server1.URL,
 					},
 					{
-						URL:    server2.URL,
-						Weight: 1,
+						URL: server2.URL,
 					},
 				},
-				Method: "wrr",
 			},
 			expected: []ExpectedResult{
 				{
@@ -210,11 +200,9 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 				PassHostHeader: true,
 				Servers: []config.Server{
 					{
-						URL:    serverPassHost.URL,
-						Weight: 1,
+						URL: serverPassHost.URL,
 					},
 				},
-				Method: "wrr",
 			},
 			expected: []ExpectedResult{
 				{
@@ -230,11 +218,9 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 				Stickiness: &config.Stickiness{},
 				Servers: []config.Server{
 					{
-						URL:    serverPassHostFalse.URL,
-						Weight: 1,
+						URL: serverPassHostFalse.URL,
 					},
 				},
-				Method: "wrr",
 			},
 			expected: []ExpectedResult{
 				{
@@ -284,7 +270,7 @@ func TestManager_Build(t *testing.T) {
 			configs: map[string]*config.ServiceInfo{
 				"serviceName": {
 					Service: &config.Service{
-						LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+						LoadBalancer: &config.LoadBalancerService{},
 					},
 				},
 			},
@@ -295,7 +281,7 @@ func TestManager_Build(t *testing.T) {
 			configs: map[string]*config.ServiceInfo{
 				"provider-1.serviceName": {
 					Service: &config.Service{
-						LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+						LoadBalancer: &config.LoadBalancerService{},
 					},
 				},
 			},
@@ -306,7 +292,7 @@ func TestManager_Build(t *testing.T) {
 			configs: map[string]*config.ServiceInfo{
 				"provider-1.serviceName": {
 					Service: &config.Service{
-						LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+						LoadBalancer: &config.LoadBalancerService{},
 					},
 				},
 			},

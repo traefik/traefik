@@ -172,19 +172,16 @@
   [HTTP.Services]
     [HTTP.Services.Service0]
       [HTTP.Services.Service0.LoadBalancer]
-        Method = "foobar"
         PassHostHeader = true
 
         [[HTTP.Services.Service0.LoadBalancer.Servers]]
           URL = "foobar"
-          Weight = 42
 
         [HTTP.Services.Service0.LoadBalancer.Stickiness]
           CookieName = "foobar"
 
         [[HTTP.Services.Service0.LoadBalancer.Servers]]
           URL = "foobar"
-          Weight = 42
 
         [HTTP.Services.Service0.LoadBalancer.HealthCheck]
           Scheme = "foobar"
@@ -214,15 +211,12 @@
 
     [TCP.Services.TCPService0]
       [TCP.Services.TCPService0.LoadBalancer]
-        Method = "foobar"
 
         [[TCP.Services.TCPService0.LoadBalancer.Servers]]
           Address = "foobar"
-          Weight = 42
 
         [[TCP.Services.TCPService0.LoadBalancer.Servers]]
           Address = "foobar"
-          Weight = 42
 
 [[TLS]]
   Stores = ["foobar", "foobar"]

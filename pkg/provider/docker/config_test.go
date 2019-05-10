@@ -60,11 +60,9 @@ func TestDefaultRule(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -111,11 +109,9 @@ func TestDefaultRule(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -164,11 +160,9 @@ func TestDefaultRule(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -210,11 +204,9 @@ func TestDefaultRule(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -256,11 +248,9 @@ func TestDefaultRule(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -307,11 +297,9 @@ func TestDefaultRule(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -392,11 +380,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -462,11 +448,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -474,11 +458,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.2:80",
-										Weight: 1,
+										URL: "http://127.0.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -542,15 +524,12 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 									{
-										URL:    "http://127.0.0.2:80",
-										Weight: 1,
+										URL: "http://127.0.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -565,7 +544,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.method": "drr",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -598,11 +577,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "drr",
 								PassHostHeader: true,
 							},
 						},
@@ -617,9 +594,9 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.method": "wrr",
-						"traefik.http.routers.Router1.rule":                  "Host(`foo.com`)",
-						"traefik.http.routers.Router1.service":               "Service1",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+						"traefik.http.routers.Router1.rule":                          "Host(`foo.com`)",
+						"traefik.http.routers.Router1.service":                       "Service1",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -652,11 +629,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -698,11 +673,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -723,8 +696,8 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule":                  "Host(`foo.com`)",
-						"traefik.http.services.Service1.loadbalancer.method": "wrr",
+						"traefik.http.routers.Router1.rule":                          "Host(`foo.com`)",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -757,11 +730,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -776,9 +747,9 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule":                  "Host(`foo.com`)",
-						"traefik.http.services.Service1.loadbalancer.method": "wrr",
-						"traefik.http.services.Service2.loadbalancer.method": "wrr",
+						"traefik.http.routers.Router1.rule":                          "Host(`foo.com`)",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+						"traefik.http.services.Service2.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -806,11 +777,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -818,11 +787,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -831,14 +798,14 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with same service name and different LB methods",
+			desc: "two containers with same service name and different passhostheader",
 			containers: []dockerData{
 				{
 					ID:          "1",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.method": "drr",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -857,7 +824,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.method": "wrr",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "false",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -890,14 +857,14 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "three containers with same service name and different LB methods",
+			desc: "three containers with same service name and different passhostheader",
 			containers: []dockerData{
 				{
 					ID:          "1",
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.method": "drr",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "false",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -916,7 +883,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.method": "wrr",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -935,7 +902,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.method": "foo",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -975,7 +942,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.method": "drr",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -994,7 +961,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.method": "drr",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1027,15 +994,12 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 									{
-										URL:    "http://127.0.0.2:80",
-										Weight: 1,
+										URL: "http://127.0.0.2:80",
 									},
 								},
-								Method:         "drr",
 								PassHostHeader: true,
 							},
 						},
@@ -1082,11 +1046,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1169,15 +1131,12 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 									{
-										URL:    "http://127.0.0.2:80",
-										Weight: 1,
+										URL: "http://127.0.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1245,15 +1204,12 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 									{
-										URL:    "http://127.0.0.2:80",
-										Weight: 1,
+										URL: "http://127.0.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1340,19 +1296,15 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 									{
-										URL:    "http://127.0.0.2:80",
-										Weight: 1,
+										URL: "http://127.0.0.2:80",
 									},
 									{
-										URL:    "http://127.0.0.3:80",
-										Weight: 1,
+										URL: "http://127.0.0.3:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1415,15 +1367,12 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 									{
-										URL:    "http://127.0.0.2:80",
-										Weight: 1,
+										URL: "http://127.0.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1505,19 +1454,15 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 									{
-										URL:    "http://127.0.0.2:80",
-										Weight: 1,
+										URL: "http://127.0.0.2:80",
 									},
 									{
-										URL:    "http://127.0.0.3:80",
-										Weight: 1,
+										URL: "http://127.0.0.3:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1585,15 +1530,12 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 									{
-										URL:    "http://127.0.0.2:80",
-										Weight: 1,
+										URL: "http://127.0.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1654,11 +1596,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1666,11 +1606,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.2:80",
-										Weight: 1,
+										URL: "http://127.0.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1718,11 +1656,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1771,11 +1707,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "h2c://127.0.0.1:8080",
-										Weight: 1,
+										URL: "h2c://127.0.0.1:8080",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1819,11 +1753,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -1831,11 +1763,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:8080",
-										Weight: 1,
+										URL: "http://127.0.0.1:8080",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -2060,11 +1990,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -2123,11 +2051,9 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -2173,10 +2099,8 @@ func Test_buildConfiguration(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "127.0.0.1:80",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -2219,10 +2143,8 @@ func Test_buildConfiguration(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "127.0.0.1:80",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -2273,10 +2195,8 @@ func Test_buildConfiguration(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "127.0.0.1:8080",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -2295,10 +2215,10 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.tcp.routers.foo.rule":                       "HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls":                        "true",
-						"traefik.tcp.services.foo.loadbalancer.server.port":  "8080",
-						"traefik.http.services.Service1.loadbalancer.method": "drr",
+						"traefik.tcp.routers.foo.rule":                               "HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo.tls":                                "true",
+						"traefik.tcp.services.foo.loadbalancer.server.port":          "8080",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -2317,10 +2237,10 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.tcp.routers.foo.rule":                       "HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls":                        "true",
-						"traefik.tcp.services.foo.loadbalancer.server.port":  "8080",
-						"traefik.http.services.Service1.loadbalancer.method": "drr",
+						"traefik.tcp.routers.foo.rule":                               "HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo.tls":                                "true",
+						"traefik.tcp.services.foo.loadbalancer.server.port":          "8080",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -2350,14 +2270,11 @@ func Test_buildConfiguration(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "127.0.0.1:8080",
-										Weight:  1,
 									},
 									{
 										Address: "127.0.0.2:8080",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -2375,15 +2292,12 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:80",
-										Weight: 1,
+										URL: "http://127.0.0.1:80",
 									},
 									{
-										URL:    "http://127.0.0.2:80",
-										Weight: 1,
+										URL: "http://127.0.0.2:80",
 									},
 								},
-								Method:         "drr",
 								PassHostHeader: true,
 							},
 						},
@@ -2422,10 +2336,8 @@ func Test_buildConfiguration(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "127.0.0.1:8080",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},

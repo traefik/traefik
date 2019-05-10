@@ -7,4 +7,3 @@
   [http.services.service2.loadbalancer]
     [[http.services.service2.loadbalancer.servers]]
       url = "http://172.17.0.123:80"
-      weight = 1

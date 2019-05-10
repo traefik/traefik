@@ -95,16 +95,8 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 }
 
-func (s *HealthCheckSuite) TestMultipleEntrypointsWrr(c *check.C) {
-	s.doTestMultipleEntrypoints(c, "fixtures/healthcheck/multiple-entrypoints-wrr.toml")
-}
-
-func (s *HealthCheckSuite) TestMultipleEntrypointsDrr(c *check.C) {
-	s.doTestMultipleEntrypoints(c, "fixtures/healthcheck/multiple-entrypoints-drr.toml")
-}
-
-func (s *HealthCheckSuite) doTestMultipleEntrypoints(c *check.C, fixture string) {
-	file := s.adaptFile(c, fixture, struct {
+func (s *HealthCheckSuite) TestMultipleEntrypoints(c *check.C) {
+	file := s.adaptFile(c, "fixtures/healthcheck/multiple-entrypoints.toml", struct {
 		Server1 string
 		Server2 string
 	}{s.whoami1IP, s.whoami2IP})

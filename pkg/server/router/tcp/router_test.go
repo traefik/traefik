@@ -32,7 +32,6 @@ func TestRuntimeConfiguration(t *testing.T) {
 									Port:    "8086",
 								},
 							},
-							Method: "wrr",
 						},
 					},
 				},
@@ -67,7 +66,6 @@ func TestRuntimeConfiguration(t *testing.T) {
 									Address: "127.0.0.1:80",
 								},
 							},
-							Method: "wrr",
 						},
 					},
 				},
@@ -100,10 +98,8 @@ func TestRuntimeConfiguration(t *testing.T) {
 							Servers: []config.TCPServer{
 								{
 									Address: "127.0.0.1:80",
-									Weight:  1,
 								},
 							},
-							Method: "wrr",
 						},
 					},
 				},
@@ -135,10 +131,8 @@ func TestRuntimeConfiguration(t *testing.T) {
 							Servers: []config.TCPServer{
 								{
 									Address: "127.0.0.1:80",
-									Weight:  1,
 								},
 							},
-							Method: "wrr",
 						},
 					},
 				},

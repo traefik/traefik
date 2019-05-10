@@ -44,16 +44,9 @@ func TestPopulateUsedby(t *testing.T) {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
-									{
-										URL:    "http://127.0.0.1:8085",
-										Weight: 1,
-									},
-									{
-										URL:    "http://127.0.0.1:8086",
-										Weight: 1,
-									},
+									{URL: "http://127.0.0.1:8085"},
+									{URL: "http://127.0.0.1:8086"},
 								},
-								Method: "wrr",
 								HealthCheck: &config.HealthCheck{
 									Interval: "500ms",
 									Path:     "/health",
@@ -83,12 +76,8 @@ func TestPopulateUsedby(t *testing.T) {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
-									{
-										URL:    "http://127.0.0.1",
-										Weight: 1,
-									},
+									{URL: "http://127.0.0.1"},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -162,15 +151,12 @@ func TestPopulateUsedby(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:8085",
-										Weight: 1,
+										URL: "http://127.0.0.1:8085",
 									},
 									{
-										URL:    "http://127.0.0.1:8086",
-										Weight: 1,
+										URL: "http://127.0.0.1:8086",
 									},
 								},
-								Method: "wrr",
 								HealthCheck: &config.HealthCheck{
 									Interval: "500ms",
 									Path:     "/health",
@@ -183,15 +169,12 @@ func TestPopulateUsedby(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1:8087",
-										Weight: 1,
+										URL: "http://127.0.0.1:8087",
 									},
 									{
-										URL:    "http://127.0.0.1:8088",
-										Weight: 1,
+										URL: "http://127.0.0.1:8088",
 									},
 								},
-								Method: "wrr",
 								HealthCheck: &config.HealthCheck{
 									Interval: "500ms",
 									Path:     "/health",
@@ -241,11 +224,9 @@ func TestPopulateUsedby(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1",
-										Weight: 1,
+										URL: "http://127.0.0.1",
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -314,11 +295,9 @@ func TestPopulateUsedby(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1",
-										Weight: 1,
+										URL: "http://127.0.0.1",
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -360,11 +339,9 @@ func TestPopulateUsedby(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1",
-										Weight: 1,
+										URL: "http://127.0.0.1",
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -414,11 +391,9 @@ func TestPopulateUsedby(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1",
-										Weight: 1,
+										URL: "http://127.0.0.1",
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -517,15 +492,12 @@ func TestPopulateUsedby(t *testing.T) {
 									{
 										Address: "127.0.0.1",
 										Port:    "8085",
-										Weight:  1,
 									},
 									{
 										Address: "127.0.0.1",
 										Port:    "8086",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -553,10 +525,8 @@ func TestPopulateUsedby(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "127.0.0.1",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -632,15 +602,12 @@ func TestPopulateUsedby(t *testing.T) {
 									{
 										Address: "127.0.0.1",
 										Port:    "8085",
-										Weight:  1,
 									},
 									{
 										Address: "127.0.0.1",
 										Port:    "8086",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -651,15 +618,12 @@ func TestPopulateUsedby(t *testing.T) {
 									{
 										Address: "127.0.0.1",
 										Port:    "8087",
-										Weight:  1,
 									},
 									{
 										Address: "127.0.0.1",
 										Port:    "8088",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},

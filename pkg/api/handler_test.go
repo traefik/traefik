@@ -39,11 +39,9 @@ func TestHandler_Configuration(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://127.0.0.1",
-										Weight: 1,
+										URL: "http://127.0.0.1",
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -96,10 +94,8 @@ func TestHandler_Configuration(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "127.0.0.1",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},

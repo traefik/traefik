@@ -195,8 +195,7 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, config.Server{
-			URL:    fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
-			Weight: 1,
+			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, backend.ServiceName)
@@ -233,8 +232,7 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 
 			for _, addr := range subset.Addresses {
 				servers = append(servers, config.Server{
-					URL:    fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
-					Weight: 1,
+					URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
 				})
 			}
 		}
@@ -243,7 +241,6 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 	return &config.Service{
 		LoadBalancer: &config.LoadBalancerService{
 			Servers:        servers,
-			Method:         "wrr",
 			PassHostHeader: true,
 		},
 	}, nil

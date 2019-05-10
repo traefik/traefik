@@ -36,4 +36,3 @@ level = "DEBUG"
       passHostHeader = true
       [[http.services.service1.LoadBalancer.Servers]]
         URL = "http://{{.Server1}}:80"
-        Weight = 1

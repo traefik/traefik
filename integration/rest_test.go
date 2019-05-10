@@ -46,8 +46,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 				LoadBalancer: &config.LoadBalancerService{
 					Servers: []config.Server{
 						{
-							URL:    "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
-							Weight: 1,
+							URL: "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
 						},
 					},
 				},

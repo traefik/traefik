@@ -44,24 +44,14 @@ level = "DEBUG"
         [tcp.services.whoami-no-tls.loadbalancer]
             [[tcp.services.whoami-no-tls.loadbalancer.servers]]
                 address = "localhost:8084"
+        [tcp.services.whoami-a.loadbalancer]
+            [[tcp.services.whoami-a.loadbalancer.servers]]
+                address = "localhost:8081"
 
-        [tcp.services.whoami-a]
-            [tcp.services.whoami-a.loadbalancer]
-                method = "wrr"
-                [[tcp.services.whoami-a.loadbalancer.servers]]
-                    address = "localhost:8081"
-                    weight = 1
+        [tcp.services.whoami-b.loadbalancer]
+            [[tcp.services.whoami-b.loadbalancer.servers]]
+                address = "localhost:8082"
 
-        [tcp.services.whoami-b]
-            [tcp.services.whoami-b.loadbalancer]
-                method = "wrr"
-                [[tcp.services.whoami-b.loadbalancer.servers]]
-                    address = "localhost:8082"
-                    weight = 1
-
-        [tcp.services.whoami-no-cert]
-            [tcp.services.whoami-no-cert.loadbalancer]
-            method = "wrr"
-                [[tcp.services.whoami-no-cert.loadbalancer.servers]]
-                    address = "localhost:8083"
-                    weight = 1
+        [tcp.services.whoami-no-cert.loadbalancer]
+            [[tcp.services.whoami-no-cert.loadbalancer.servers]]
+                address = "localhost:8083"

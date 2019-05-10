@@ -57,11 +57,9 @@
 			"loadbalancer": {
 				"servers": [
 					{
-						"url": "http://127.0.0.1",
-						"weight": 1
+						"url": "http://127.0.0.1"
 					}
 				],
-				"method": "wrr",
 				"passHostHeader": false
 			},
 			"usedBy": [
@@ -91,11 +89,9 @@
 			"loadbalancer": {
 				"servers": [
 					{
-						"address": "127.0.0.1",
-						"weight": 1
+						"address": "127.0.0.1"
 					}
-				],
-				"method": "wrr"
+				]
 			},
 			"usedBy": [
 				"myprovider.tcpbar",

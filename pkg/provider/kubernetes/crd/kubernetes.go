@@ -187,8 +187,7 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 	var servers []config.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, config.Server{
-			URL:    fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
-			Weight: 1,
+			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
@@ -224,8 +223,7 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 
 			for _, addr := range subset.Addresses {
 				servers = append(servers, config.Server{
-					URL:    fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
-					Weight: 1,
+					URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
 				})
 			}
 		}
@@ -332,7 +330,6 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				LoadBalancer: &config.LoadBalancerService{
 					Servers: allServers,
 					// TODO: support other strategies.
-					Method:         "wrr",
 					PassHostHeader: true,
 				},
 			}

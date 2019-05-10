@@ -21,7 +21,6 @@ level = "DEBUG"
 
 [http.services]
   [http.services.service1.loadbalancer]
-    method = "drr"
     [http.services.service1.loadbalancer.healthcheck]
       path = "/health"
       port = 80
@@ -29,4 +28,3 @@ level = "DEBUG"
       timeout = "0.9s"
     [[http.services.service1.loadbalancer.servers]]
       url = "http://{{.Server1}}:81"
-      weight = 1

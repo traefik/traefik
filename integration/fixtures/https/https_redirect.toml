@@ -170,4 +170,3 @@ level = "DEBUG"
     [http.services.service1.LoadBalancer]
       [[http.services.service1.LoadBalancer.Servers]]
         url = "http://127.0.0.1:80"
-        weight = 1

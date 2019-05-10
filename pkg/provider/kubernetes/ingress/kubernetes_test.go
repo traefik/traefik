@@ -51,16 +51,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8080",
-										Weight: 1,
+										URL: "http://10.10.0.1:8080",
 									},
 									{
-										URL:    "http://10.21.0.1:8080",
-										Weight: 1,
+										URL: "http://10.21.0.1:8080",
 									},
 								},
 							},
@@ -88,16 +85,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8080",
-										Weight: 1,
+										URL: "http://10.10.0.1:8080",
 									},
 									{
-										URL:    "http://10.21.0.1:8080",
-										Weight: 1,
+										URL: "http://10.21.0.1:8080",
 									},
 								},
 							},
@@ -125,16 +119,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8080",
-										Weight: 1,
+										URL: "http://10.10.0.1:8080",
 									},
 									{
-										URL:    "http://10.21.0.1:8080",
-										Weight: 1,
+										URL: "http://10.21.0.1:8080",
 									},
 								},
 							},
@@ -158,16 +149,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8080",
-										Weight: 1,
+										URL: "http://10.10.0.1:8080",
 									},
 									{
-										URL:    "http://10.21.0.1:8080",
-										Weight: 1,
+										URL: "http://10.21.0.1:8080",
 									},
 								},
 							},
@@ -190,12 +178,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/example-com/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.11.0.1:80",
-										Weight: 1,
+										URL: "http://10.11.0.1:80",
 									},
 								},
 							},
@@ -223,16 +209,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8080",
-										Weight: 1,
+										URL: "http://10.10.0.1:8080",
 									},
 									{
-										URL:    "http://10.21.0.1:8080",
-										Weight: 1,
+										URL: "http://10.21.0.1:8080",
 									},
 								},
 							},
@@ -260,16 +243,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8080",
-										Weight: 1,
+										URL: "http://10.10.0.1:8080",
 									},
 									{
-										URL:    "http://10.21.0.1:8080",
-										Weight: 1,
+										URL: "http://10.21.0.1:8080",
 									},
 								},
 							},
@@ -297,16 +277,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8080",
-										Weight: 1,
+										URL: "http://10.10.0.1:8080",
 									},
 									{
-										URL:    "http://10.21.0.1:8080",
-										Weight: 1,
+										URL: "http://10.21.0.1:8080",
 									},
 								},
 							},
@@ -341,16 +318,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8080",
-										Weight: 1,
+										URL: "http://10.10.0.1:8080",
 									},
 									{
-										URL:    "http://10.21.0.1:8080",
-										Weight: 1,
+										URL: "http://10.21.0.1:8080",
 									},
 								},
 							},
@@ -389,32 +363,26 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8080",
-										Weight: 1,
+										URL: "http://10.10.0.1:8080",
 									},
 									{
-										URL:    "http://10.21.0.1:8080",
-										Weight: 1,
+										URL: "http://10.21.0.1:8080",
 									},
 								},
 							},
 						},
 						"testing/service2/8082": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.2:8080",
-										Weight: 1,
+										URL: "http://10.10.0.2:8080",
 									},
 									{
-										URL:    "http://10.21.0.2:8080",
-										Weight: 1,
+										URL: "http://10.21.0.2:8080",
 									},
 								},
 							},
@@ -461,16 +429,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"default-backend": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8080",
-										Weight: 1,
+										URL: "http://10.10.0.1:8080",
 									},
 									{
-										URL:    "http://10.21.0.1:8080",
-										Weight: 1,
+										URL: "http://10.21.0.1:8080",
 									},
 								},
 							},
@@ -494,16 +459,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8089",
-										Weight: 1,
+										URL: "http://10.10.0.1:8089",
 									},
 									{
-										URL:    "http://10.21.0.1:8089",
-										Weight: 1,
+										URL: "http://10.21.0.1:8089",
 									},
 								},
 							},
@@ -527,16 +489,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/tchouk": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8089",
-										Weight: 1,
+										URL: "http://10.10.0.1:8089",
 									},
 									{
-										URL:    "http://10.21.0.1:8089",
-										Weight: 1,
+										URL: "http://10.21.0.1:8089",
 									},
 								},
 							},
@@ -560,16 +519,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/tchouk": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8089",
-										Weight: 1,
+										URL: "http://10.10.0.1:8089",
 									},
 									{
-										URL:    "http://10.10.0.2:8089",
-										Weight: 1,
+										URL: "http://10.10.0.2:8089",
 									},
 								},
 							},
@@ -597,32 +553,26 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/tchouk": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8089",
-										Weight: 1,
+										URL: "http://10.10.0.1:8089",
 									},
 									{
-										URL:    "http://10.10.0.2:8089",
-										Weight: 1,
+										URL: "http://10.10.0.2:8089",
 									},
 								},
 							},
 						},
 						"testing/service1/carotte": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8090",
-										Weight: 1,
+										URL: "http://10.10.0.1:8090",
 									},
 									{
-										URL:    "http://10.10.0.2:8090",
-										Weight: 1,
+										URL: "http://10.10.0.2:8090",
 									},
 								},
 							},
@@ -650,32 +600,26 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/tchouk": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8089",
-										Weight: 1,
+										URL: "http://10.10.0.1:8089",
 									},
 									{
-										URL:    "http://10.10.0.2:8089",
-										Weight: 1,
+										URL: "http://10.10.0.2:8089",
 									},
 								},
 							},
 						},
 						"toto/service1/tchouk": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.11.0.1:8089",
-										Weight: 1,
+										URL: "http://10.11.0.1:8089",
 									},
 									{
-										URL:    "http://10.11.0.2:8089",
-										Weight: 1,
+										URL: "http://10.11.0.2:8089",
 									},
 								},
 							},
@@ -721,12 +665,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/8080": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://traefik.wtf:8080",
-										Weight: 1,
+										URL: "http://traefik.wtf:8080",
 									},
 								},
 							},
@@ -750,12 +692,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/example-com/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.11.0.1:80",
-										Weight: 1,
+										URL: "http://10.11.0.1:80",
 									},
 								},
 							},
@@ -787,16 +727,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/443": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "https://10.10.0.1:443",
-										Weight: 1,
+										URL: "https://10.10.0.1:443",
 									},
 									{
-										URL:    "https://10.21.0.1:443",
-										Weight: 1,
+										URL: "https://10.21.0.1:443",
 									},
 								},
 							},
@@ -820,16 +757,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/8443": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "https://10.10.0.1:8443",
-										Weight: 1,
+										URL: "https://10.10.0.1:8443",
 									},
 									{
-										URL:    "https://10.21.0.1:8443",
-										Weight: 1,
+										URL: "https://10.21.0.1:8443",
 									},
 								},
 							},
@@ -854,16 +788,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/8443": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "https://10.10.0.1:8443",
-										Weight: 1,
+										URL: "https://10.10.0.1:8443",
 									},
 									{
-										URL:    "https://10.21.0.1:8443",
-										Weight: 1,
+										URL: "https://10.21.0.1:8443",
 									},
 								},
 							},
@@ -888,16 +819,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"default-backend": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.30.0.1:8080",
-										Weight: 1,
+										URL: "http://10.30.0.1:8080",
 									},
 									{
-										URL:    "http://10.41.0.1:8080",
-										Weight: 1,
+										URL: "http://10.41.0.1:8080",
 									},
 								},
 							},
@@ -921,12 +849,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Services: map[string]*config.Service{
 						"testing/service1/80": {
 							LoadBalancer: &config.LoadBalancerService{
-								Method:         "wrr",
 								PassHostHeader: true,
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:8080",
-										Weight: 1,
+										URL: "http://10.10.0.1:8080",
 									},
 								},
 							},
