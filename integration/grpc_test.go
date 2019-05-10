@@ -377,8 +377,7 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval(c *check.C) {
 		c.Assert(err, check.IsNil)
 	}()
 
-	// TODO(mpl): there's virtually no difference with config.toml. remove one of the two?
-	file := s.adaptFile(c, "fixtures/grpc/config_with_flush.toml", struct {
+	file := s.adaptFile(c, "fixtures/grpc/config.toml", struct {
 		CertContent    string
 		KeyContent     string
 		GRPCServerPort string
@@ -402,7 +401,6 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval(c *check.C) {
 	var client helloworld.Greeter_StreamExampleClient
 	client, closer, err := callStreamExampleClientGRPC()
 	defer closer()
-	// TODO(mpl): the position of this defer is the only thinng that differs with TestGRPCBuffer. normal?
 	defer func() { stopStreamExample <- true }()
 	c.Assert(err, check.IsNil)
 
