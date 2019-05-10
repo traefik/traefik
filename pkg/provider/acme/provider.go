@@ -427,14 +427,13 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 		return nil, fmt.Errorf("cannot get ACME client %v", err)
 	}
 
-	var cert *certificate.Resource
 	request := certificate.ObtainRequest{
 		Domains:    domains,
 		Bundle:     true,
 		MustStaple: oscpMustStaple,
 	}
-	cert, err = client.Certificate.Obtain(request)
 
+	cert, err := client.Certificate.Obtain(request)
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate a certificate for the domains %v: %v", uncheckedDomains, err)
 	}
