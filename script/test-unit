@@ -21,7 +21,8 @@ fi
 
 set +e
 
-eval go test "${TESTFLAGS[@]}" ./pkg/...
+# shellcheck disable=SC2086
+go test ${TESTFLAGS[*]} ./pkg/...
 
 CODE=$?
 if [ ${CODE} != 0 ]; then
