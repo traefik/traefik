@@ -58,7 +58,6 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 		entryPointName := entryPointName
 		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
 
-		// TODO: set routers.usedby
 		handler, err := m.buildEntryPointHandler(ctx, routers)
 		if err != nil {
 			log.FromContext(ctx).Error(err)
