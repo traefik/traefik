@@ -101,8 +101,7 @@ func (s *Server) createHTTPHandlers(ctx context.Context, configuration *config.R
 
 	routerHandlers := make(map[string]http.Handler)
 	for _, entryPointName := range entryPoints {
-		internalMuxRouter := mux.NewRouter().
-			SkipClean(true)
+		internalMuxRouter := mux.NewRouter().SkipClean(true)
 
 		ctx = log.With(ctx, log.Str(log.EntryPointName, entryPointName))
 

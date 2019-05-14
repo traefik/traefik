@@ -17,6 +17,11 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 )
 
+const (
+	serverUp   = "UP"
+	serverDown = "DOWN"
+)
+
 var singleton *HealthCheck
 var once sync.Once
 
@@ -222,11 +227,6 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 
 	return nil
 }
-
-const (
-	serverUp   = "UP"
-	serverDown = "DOWN"
-)
 
 // NewLBStatusUpdater returns a new LbStatusUpdater
 func NewLBStatusUpdater(bh BalancerHandler, svinfo *config.ServiceInfo) *LbStatusUpdater {

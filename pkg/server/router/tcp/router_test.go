@@ -2,7 +2,6 @@ package tcp
 
 import (
 	"context"
-
 	"testing"
 
 	"github.com/containous/traefik/pkg/config"
