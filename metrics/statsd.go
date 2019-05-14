@@ -10,11 +10,7 @@ import (
 	"github.com/go-kit/kit/metrics/statsd"
 )
 
-var statsdClient = statsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
-	log.Info(keyvals)
-	return nil
-}))
-
+var statsdClient *statsd.Statsd
 var statsdTicker *time.Ticker
 
 const (
@@ -34,6 +30,16 @@ const (
 
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
 func RegisterStatsd(config *types.Statsd) Registry {
+
+	if config.Prefix == "" {
+		config.Prefix = "traefik"
+	}
+
+	statsdClient = statsd.New(config.Prefix+".", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
+		log.Info(keyvals)
+		return nil
+	}))
+
 	if statsdTicker == nil {
 		statsdTicker = initStatsdTicker(config)
 	}
