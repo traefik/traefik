@@ -21,7 +21,7 @@ fi
 
 set +e
 
-go test "${TESTFLAGS[@]}" ./pkg/...
+eval go test "${TESTFLAGS[@]}" ./pkg/...
 
 CODE=$?
 if [ ${CODE} != 0 ]; then
