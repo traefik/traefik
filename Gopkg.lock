@@ -1864,7 +1864,7 @@
   version = "v1.20.1"
 
 [[projects]]
-  digest = "1:b886012746f19e2a7c6c3901ea9f86e8a5e32ff2b4407086f4f3181269976957"
+  digest = "1:b49eceff862a3048ec28dad1fce40bcbdc1703119dbad35d7e5f1beb4f9a4527"
   name = "gopkg.in/DataDog/dd-trace-go.v1"
   packages = [
     "ddtrace",
@@ -1872,10 +1872,11 @@
     "ddtrace/internal",
     "ddtrace/opentracer",
     "ddtrace/tracer",
+    "internal/globalconfig",
   ]
   pruneopts = "NUT"
-  revision = "7fb2bce4b1ed6ab61f7a9e1be30dea56de19db7c"
-  version = "v1.8.0"
+  revision = "c19e9e56d5b5b71b6507ce1b0ec06d85aa3705a1"
+  version = "v1.14.0"
 
 [[projects]]
   digest = "1:c970218a20933dd0a2eb2006de922217fa9276f57d25009b2a934eb1c50031cc"
@@ -2287,6 +2288,7 @@
     "github.com/opentracing/opentracing-go/log",
     "github.com/openzipkin-contrib/zipkin-go-opentracing",
     "github.com/patrickmn/go-cache",
+    "github.com/pmezard/go-difflib/difflib",
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/prometheus/client_model/go",
