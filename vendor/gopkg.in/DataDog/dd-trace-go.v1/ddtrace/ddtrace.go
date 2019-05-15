@@ -108,4 +108,8 @@ type StartSpanConfig struct {
 	// Tags holds a set of key/value pairs that should be set as metadata on the
 	// new span.
 	Tags map[string]interface{}
+
+	// Force-set the SpanID, rather than use a random number. If no Parent SpanContext is present,
+	// then this will also set the TraceID to the same value.
+	SpanID uint64
 }
