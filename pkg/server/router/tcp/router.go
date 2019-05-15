@@ -39,11 +39,6 @@ type Manager struct {
 	tlsConfig      *tls.Config
 }
 
-// GetRuntimeConfiguration returns the configuration of all the current TCP routers.
-func (m Manager) GetRuntimeConfiguration() map[string]*config.TCPRouterInfo {
-	return m.configs
-}
-
 // BuildHandlers builds the handlers for the given entrypoints
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) map[string]*tcp.Router {
 	entryPointsRouters := m.filteredRouters(rootCtx, entryPoints)

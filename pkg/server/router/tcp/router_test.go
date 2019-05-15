@@ -202,15 +202,16 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints)
 
-			runtimeRouters := routerManager.GetRuntimeConfiguration()
-			runtimeServices := serviceManager.GetRuntimeConfiguration()
+			// even though conf was passed by argument to the manager builders above,
+			// it's ok to use it as the result we check, because everything worth checking
+			// can be accessed by pointers in it.
 			var allErrors int
-			for _, v := range runtimeServices {
+			for _, v := range conf.TCPServices {
 				if v.Err != nil {
 					allErrors++
 				}
 			}
-			for _, v := range runtimeRouters {
+			for _, v := range conf.TCPRouters {
 				if v.Err != "" {
 					allErrors++
 				}

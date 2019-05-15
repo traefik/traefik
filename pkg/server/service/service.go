@@ -43,11 +43,6 @@ type Manager struct {
 	configs             map[string]*config.ServiceInfo
 }
 
-// GetRuntimeConfiguration returns the configuration of all the current services.
-func (m Manager) GetRuntimeConfiguration() map[string]*config.ServiceInfo {
-	return m.configs
-}
-
 // BuildHTTP Creates a http.Handler for a service configuration.
 func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
 	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))

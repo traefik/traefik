@@ -52,11 +52,6 @@ func NewBuilder(configs map[string]*config.MiddlewareInfo, serviceBuilder servic
 	return &Builder{configs: configs, serviceBuilder: serviceBuilder}
 }
 
-// GetRuntimeConfiguration returns the configuration of all the current middlewares.
-func (b Builder) GetRuntimeConfiguration() map[string]*config.MiddlewareInfo {
-	return b.configs
-}
-
 // BuildChain creates a middleware chain
 func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.Chain {
 	chain := alice.New()

@@ -23,11 +23,6 @@ func NewManager(conf *config.RuntimeConfiguration) *Manager {
 	}
 }
 
-// GetRuntimeConfiguration returns the configuration of all the current TCP services.
-func (m Manager) GetRuntimeConfiguration() map[string]*config.TCPServiceInfo {
-	return m.configs
-}
-
 // BuildTCP Creates a tcp.Handler for a service configuration.
 func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Handler, error) {
 	serviceQualifiedName := internal.GetQualifiedName(rootCtx, serviceName)

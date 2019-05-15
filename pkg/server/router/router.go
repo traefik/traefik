@@ -44,11 +44,6 @@ type Manager struct {
 	modifierBuilder    *responsemodifiers.Builder
 }
 
-// GetRuntimeConfiguration returns the configuration of all the current HTTP routers.
-func (m Manager) getRuntimeConfiguration() map[string]*config.RouterInfo {
-	return m.configs
-}
-
 // BuildHandlers Builds handler for all entry points
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
 	entryPointsRouters := m.filteredRouters(rootCtx, entryPoints, tls)
