@@ -8,6 +8,7 @@ import (
 
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
+	"gopkg.in/DataDog/dd-trace-go.v1/internal/globalconfig"
 )
 
 // config holds the tracer configuration.
@@ -117,6 +118,22 @@ func WithHTTPRoundTripper(r http.RoundTripper) StartOption {
 	}
 }
 
+// WithAnalytics allows specifying whether Trace Search & Analytics should be enabled
+// for integrations.
+func WithAnalytics(on bool) StartOption {
+	if on {
+		return WithAnalyticsRate(1.0)
+	}
+	return WithAnalyticsRate(0.0)
+}
+
+// WithAnalyticsRate sets the global sampling rate for sampling APM events.
+func WithAnalyticsRate(rate float64) StartOption {
+	return func(_ *config) {
+		globalconfig.SetAnalyticsRate(rate)
+	}
+}
+
 // StartSpanOption is a configuration option for StartSpan. It is aliased in order
 // to help godoc group all the functions returning it together. It is considered
 // more correct to refer to it as the type as the origin, ddtrace.StartSpanOption.
@@ -149,6 +166,15 @@ func SpanType(name string) StartSpanOption {
 	return Tag(ext.SpanType, name)
 }
 
+// WithSpanID sets the SpanID on the started span, instead of using a random number.
+// If there is no parent Span (eg from ChildOf), then the TraceID will also be set to the
+// value given here.
+func WithSpanID(id uint64) StartSpanOption {
+	return func(cfg *ddtrace.StartSpanConfig) {
+		cfg.SpanID = id
+	}
+}
+
 // ChildOf tells StartSpan to use the given span context as a parent for the
 // created span.
 func ChildOf(ctx ddtrace.SpanContext) StartSpanOption {
@@ -179,7 +205,8 @@ func FinishTime(t time.Time) FinishOption {
 }
 
 // WithError marks the span as having had an error. It uses the information from
-// err to set tags such as the error message, error type and stack trace.
+// err to set tags such as the error message, error type and stack trace. It has
+// no effect if the error is nil.
 func WithError(err error) FinishOption {
 	return func(cfg *ddtrace.FinishConfig) {
 		cfg.Error = err

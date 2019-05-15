@@ -2023,7 +2023,8 @@
   revision = "8be79e1e0910c292df4e79c241bb7e8f7e725959"
 
 [[projects]]
-  digest = "1:887c07769ee52c81222ea1112b11a3947c703da529d1643d85c216b9537d87b8"
+  branch = "master"
+  digest = "1:70c173b8ecc111dd01dc07f0ada72c076e4ed91618ee559312ef8adf154cc539"
   name = "google.golang.org/api"
   packages = [
     "dns/v1",
@@ -2037,8 +2038,7 @@
     "transport/http/internal/propagation",
   ]
   pruneopts = "NUT"
-  revision = "0cbcb99a9ea0c8023c794b2693cbe1def82ed4d7"
-  version = "v0.3.2"
+  revision = "bbbc0e98e3cc6ddcebca23f9ac35acda33bd5b38"
 
 [[projects]]
   digest = "1:7206d98ec77c90c72ec2c405181a1dcf86965803b6dbc4f98ceab7a5047c37a9"
@@ -2100,7 +2100,7 @@
   version = "v1.12.0"
 
 [[projects]]
-  digest = "1:b886012746f19e2a7c6c3901ea9f86e8a5e32ff2b4407086f4f3181269976957"
+  digest = "1:2d9005f36a1bd4f00c3fd501f87cd82909aa69b5fe15aee28636cced39c9ecfe"
   name = "gopkg.in/DataDog/dd-trace-go.v1"
   packages = [
     "ddtrace",
@@ -2108,10 +2108,11 @@
     "ddtrace/internal",
     "ddtrace/opentracer",
     "ddtrace/tracer",
+    "internal/globalconfig",
   ]
   pruneopts = "NUT"
-  revision = "7fb2bce4b1ed6ab61f7a9e1be30dea56de19db7c"
-  version = "v1.8.0"
+  revision = "eed4d38387cb9c74f7a29cb3eb9b06155a09d259"
+  version = "v1.13.0"
 
 [[projects]]
   digest = "1:c970218a20933dd0a2eb2006de922217fa9276f57d25009b2a934eb1c50031cc"

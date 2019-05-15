@@ -80,8 +80,13 @@ func (s *span) SetTag(key string, value interface{}) {
 	if s.finished {
 		return
 	}
-	if key == ext.Error {
+	switch key {
+	case ext.Error:
 		s.setTagError(value, true)
+		return
+	}
+	if v, ok := value.(bool); ok {
+		s.setTagBool(key, v)
 		return
 	}
 	if v, ok := value.(string); ok {
@@ -133,6 +138,8 @@ func (s *span) setTagError(value interface{}, debugStack bool) {
 // setTagString sets a string tag. This method is not safe for concurrent use.
 func (s *span) setTagString(key, v string) {
 	switch key {
+	case ext.SpanName:
+		s.Name = v
 	case ext.ServiceName:
 		s.Service = v
 	case ext.ResourceName:
@@ -144,13 +151,39 @@ func (s *span) setTagString(key, v string) {
 	}
 }
 
+// setTagBool sets a boolean tag on the span.
+func (s *span) setTagBool(key string, v bool) {
+	switch key {
+	case ext.AnalyticsEvent:
+		if v {
+			s.setTagNumeric(ext.EventSampleRate, 1.0)
+		} else {
+			s.setTagNumeric(ext.EventSampleRate, 0.0)
+		}
+	case ext.ManualDrop:
+		if v {
+			s.setTagNumeric(ext.SamplingPriority, ext.PriorityUserReject)
+		}
+	case ext.ManualKeep:
+		if v {
+			s.setTagNumeric(ext.SamplingPriority, ext.PriorityUserKeep)
+		}
+	default:
+		if v {
+			s.setTagString(key, "true")
+		} else {
+			s.setTagString(key, "false")
+		}
+	}
+}
+
 // setTagNumeric sets a numeric tag, in our case called a metric. This method
 // is not safe for concurrent use.
 func (s *span) setTagNumeric(key string, v float64) {
 	switch key {
 	case ext.SamplingPriority:
 		// setting sampling priority per spec
-		s.Metrics[samplingPriorityKey] = v
+		s.Metrics[keySamplingPriority] = v
 		s.context.setSamplingPriority(int(v))
 	default:
 		s.Metrics[key] = v
@@ -236,6 +269,7 @@ func (s *span) String() string {
 }
 
 const (
-	samplingPriorityKey     = "_sampling_priority_v1"
-	samplingPriorityRateKey = "_sampling_priority_rate_v1"
+	keySamplingPriority     = "_sampling_priority_v1"
+	keySamplingPriorityRate = "_sampling_priority_rate_v1"
+	keyOrigin               = "_dd.origin"
 )
