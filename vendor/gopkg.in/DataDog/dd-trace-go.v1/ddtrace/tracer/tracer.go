@@ -44,6 +44,8 @@ type tracer struct {
 
 	// prioritySampling holds an instance of the priority sampler.
 	prioritySampling *prioritySampler
+	// pid of the process
+	pid string
 }
 
 const (
@@ -131,6 +133,7 @@ func newTracer(opts ...StartOption) *tracer {
 		errorBuffer:      make(chan error, errorBufferSize),
 		stopped:          make(chan struct{}),
 		prioritySampling: newPrioritySampler(),
+		pid:              strconv.Itoa(os.Getpid()),
 	}
 
 	go t.worker()
@@ -230,7 +233,10 @@ func (t *tracer) StartSpan(operationName string, options ...ddtrace.StartSpanOpt
 			context = ctx
 		}
 	}
-	id := random.Uint64()
+	id := opts.SpanID
+	if id == 0 {
+		id = random.Uint64()
+	}
 	// span defaults
 	span := &span{
 		Name:     operationName,
@@ -248,19 +254,28 @@ func (t *tracer) StartSpan(operationName string, options ...ddtrace.StartSpanOpt
 		span.TraceID = context.traceID
 		span.ParentID = context.spanID
 		if context.hasSamplingPriority() {
-			span.Metrics[samplingPriorityKey] = float64(context.samplingPriority())
+			span.Metrics[keySamplingPriority] = float64(context.samplingPriority())
 		}
 		if context.span != nil {
-			// it has a local parent, inherit the service
+			// local parent, inherit service
 			context.span.RLock()
 			span.Service = context.span.Service
 			context.span.RUnlock()
+		} else {
+			// remote parent
+			if context.origin != "" {
+				// mark origin
+				span.Meta[keyOrigin] = context.origin
+			}
 		}
 	}
 	span.context = newSpanContext(span, context)
 	if context == nil || context.span == nil {
 		// this is either a root span or it has a remote parent, we should add the PID.
-		span.SetTag(ext.Pid, strconv.Itoa(os.Getpid()))
+		span.SetTag(ext.Pid, t.pid)
+		if t.hostname != "" {
+			span.SetTag(keyHostname, t.hostname)
+		}
 	}
 	// add tags from options
 	for k, v := range opts.Tags {
@@ -361,7 +376,7 @@ const sampleRateMetricKey = "_sample_rate"
 
 // Sample samples a span with the internal sampler.
 func (t *tracer) sample(span *span) {
-	if span.context.hasPriority {
+	if span.context.hasSamplingPriority() {
 		// sampling decision was already made
 		return
 	}

@@ -285,7 +285,7 @@ required = [
 
 [[constraint]]
   name = "gopkg.in/DataDog/dd-trace-go.v1"
-  version = "1.7.0"
+  version = "1.13.0"
 
 [[constraint]]
   name = "github.com/instana/go-sensor"

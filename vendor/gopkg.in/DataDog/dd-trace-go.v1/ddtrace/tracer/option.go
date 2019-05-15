@@ -1,6 +1,7 @@
 package tracer
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -8,6 +9,7 @@ import (
 
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
+	"gopkg.in/DataDog/dd-trace-go.v1/internal/globalconfig"
 )
 
 // config holds the tracer configuration.
@@ -21,7 +23,7 @@ type config struct {
 	// sampler specifies the sampler that will be used for sampling traces.
 	sampler Sampler
 
-	// agentAddr specifies the hostname and  of the agent where the traces
+	// agentAddr specifies the hostname and port of the agent where the traces
 	// are sent to.
 	agentAddr string
 
@@ -37,6 +39,10 @@ type config struct {
 
 	// httpRoundTripper defines the http.RoundTripper used by the agent transport.
 	httpRoundTripper http.RoundTripper
+
+	// hostname is automatically assigned when the DD_TRACE_REPORT_HOSTNAME is set to true,
+	// and is added as a special tag to the root span of traces.
+	hostname string
 }
 
 // StartOption represents a function that can be provided as a parameter to Start.
@@ -47,6 +53,14 @@ func defaults(c *config) {
 	c.serviceName = filepath.Base(os.Args[0])
 	c.sampler = NewAllSampler()
 	c.agentAddr = defaultAddress
+
+	if os.Getenv("DD_TRACE_REPORT_HOSTNAME") == "true" {
+		var err error
+		c.hostname, err = os.Hostname()
+		if err != nil {
+			log.Printf("%sunable to look up hostname: %v\n", errorPrefix, err)
+		}
+	}
 }
 
 // WithPrioritySampling is deprecated, and priority sampling is enabled by default.
@@ -117,6 +131,22 @@ func WithHTTPRoundTripper(r http.RoundTripper) StartOption {
 	}
 }
 
+// WithAnalytics allows specifying whether Trace Search & Analytics should be enabled
+// for integrations.
+func WithAnalytics(on bool) StartOption {
+	if on {
+		return WithAnalyticsRate(1.0)
+	}
+	return WithAnalyticsRate(0.0)
+}
+
+// WithAnalyticsRate sets the global sampling rate for sampling APM events.
+func WithAnalyticsRate(rate float64) StartOption {
+	return func(_ *config) {
+		globalconfig.SetAnalyticsRate(rate)
+	}
+}
+
 // StartSpanOption is a configuration option for StartSpan. It is aliased in order
 // to help godoc group all the functions returning it together. It is considered
 // more correct to refer to it as the type as the origin, ddtrace.StartSpanOption.
@@ -149,6 +179,15 @@ func SpanType(name string) StartSpanOption {
 	return Tag(ext.SpanType, name)
 }
 
+// WithSpanID sets the SpanID on the started span, instead of using a random number.
+// If there is no parent Span (eg from ChildOf), then the TraceID will also be set to the
+// value given here.
+func WithSpanID(id uint64) StartSpanOption {
+	return func(cfg *ddtrace.StartSpanConfig) {
+		cfg.SpanID = id
+	}
+}
+
 // ChildOf tells StartSpan to use the given span context as a parent for the
 // created span.
 func ChildOf(ctx ddtrace.SpanContext) StartSpanOption {
@@ -179,7 +218,8 @@ func FinishTime(t time.Time) FinishOption {
 }
 
 // WithError marks the span as having had an error. It uses the information from
-// err to set tags such as the error message, error type and stack trace.
+// err to set tags such as the error message, error type and stack trace. It has
+// no effect if the error is nil.
 func WithError(err error) FinishOption {
 	return func(cfg *ddtrace.FinishConfig) {
 		cfg.Error = err
@@ -192,5 +232,16 @@ func WithError(err error) FinishOption {
 func NoDebugStack() FinishOption {
 	return func(cfg *ddtrace.FinishConfig) {
 		cfg.NoDebugStack = true
+	}
+}
+
+// StackFrames limits the number of stack frames included into erroneous spans to n, starting from skip.
+func StackFrames(n, skip uint) FinishOption {
+	if n == 0 {
+		return NoDebugStack()
+	}
+	return func(cfg *ddtrace.FinishConfig) {
+		cfg.StackFrames = n
+		cfg.SkipStackFrames = skip
 	}
 }

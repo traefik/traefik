@@ -140,5 +140,5 @@ func (ps *prioritySampler) apply(spn *span) {
 	} else {
 		spn.SetTag(ext.SamplingPriority, ext.PriorityAutoReject)
 	}
-	spn.SetTag(samplingPriorityRateKey, rate)
+	spn.SetTag(keySamplingPriorityRate, rate)
 }

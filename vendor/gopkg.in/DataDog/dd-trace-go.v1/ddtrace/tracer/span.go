@@ -5,7 +5,9 @@ package tracer
 import (
 	"fmt"
 	"reflect"
+	"runtime"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -29,6 +31,13 @@ var (
 	_ msgp.Encodable = (*spanList)(nil)
 	_ msgp.Decodable = (*spanLists)(nil)
 )
+
+// errorConfig holds customization options for setting error tags.
+type errorConfig struct {
+	noDebugStack bool
+	stackFrames  uint
+	stackSkip    uint
+}
 
 // span represents a computation. Callers must call Finish when a span is
 // complete to ensure it's submitted.
@@ -80,8 +89,13 @@ func (s *span) SetTag(key string, value interface{}) {
 	if s.finished {
 		return
 	}
-	if key == ext.Error {
-		s.setTagError(value, true)
+	switch key {
+	case ext.Error:
+		s.setTagError(value, &errorConfig{})
+		return
+	}
+	if v, ok := value.(bool); ok {
+		s.setTagBool(key, v)
 		return
 	}
 	if v, ok := value.(string); ok {
@@ -99,7 +113,7 @@ func (s *span) SetTag(key string, value interface{}) {
 
 // setTagError sets the error tag. It accounts for various valid scenarios.
 // This method is not safe for concurrent use.
-func (s *span) setTagError(value interface{}, debugStack bool) {
+func (s *span) setTagError(value interface{}, cfg *errorConfig) {
 	if s.finished {
 		return
 	}
@@ -117,8 +131,12 @@ func (s *span) setTagError(value interface{}, debugStack bool) {
 		s.Error = 1
 		s.Meta[ext.ErrorMsg] = v.Error()
 		s.Meta[ext.ErrorType] = reflect.TypeOf(v).String()
-		if debugStack {
-			s.Meta[ext.ErrorStack] = string(debug.Stack())
+		if !cfg.noDebugStack {
+			if cfg.stackFrames == 0 {
+				s.Meta[ext.ErrorStack] = string(debug.Stack())
+			} else {
+				s.Meta[ext.ErrorStack] = takeStacktrace(cfg.stackFrames, cfg.stackSkip)
+			}
 		}
 	case nil:
 		// no error
@@ -130,9 +148,40 @@ func (s *span) setTagError(value interface{}, debugStack bool) {
 	}
 }
 
+// takeStacktrace takes stacktrace
+func takeStacktrace(n, skip uint) string {
+	var builder strings.Builder
+	pcs := make([]uintptr, n)
+
+	// +2 to exclude runtime.Callers and takeStacktrace
+	numFrames := runtime.Callers(2+int(skip), pcs)
+	if numFrames == 0 {
+		return ""
+	}
+	frames := runtime.CallersFrames(pcs[:numFrames])
+	for i := 0; ; i++ {
+		frame, more := frames.Next()
+		if i != 0 {
+			builder.WriteByte('\n')
+		}
+		builder.WriteString(frame.Function)
+		builder.WriteByte('\n')
+		builder.WriteByte('\t')
+		builder.WriteString(frame.File)
+		builder.WriteByte(':')
+		builder.WriteString(strconv.Itoa(frame.Line))
+		if !more {
+			break
+		}
+	}
+	return builder.String()
+}
+
 // setTagString sets a string tag. This method is not safe for concurrent use.
 func (s *span) setTagString(key, v string) {
 	switch key {
+	case ext.SpanName:
+		s.Name = v
 	case ext.ServiceName:
 		s.Service = v
 	case ext.ResourceName:
@@ -144,13 +193,39 @@ func (s *span) setTagString(key, v string) {
 	}
 }
 
+// setTagBool sets a boolean tag on the span.
+func (s *span) setTagBool(key string, v bool) {
+	switch key {
+	case ext.AnalyticsEvent:
+		if v {
+			s.setTagNumeric(ext.EventSampleRate, 1.0)
+		} else {
+			s.setTagNumeric(ext.EventSampleRate, 0.0)
+		}
+	case ext.ManualDrop:
+		if v {
+			s.setTagNumeric(ext.SamplingPriority, ext.PriorityUserReject)
+		}
+	case ext.ManualKeep:
+		if v {
+			s.setTagNumeric(ext.SamplingPriority, ext.PriorityUserKeep)
+		}
+	default:
+		if v {
+			s.setTagString(key, "true")
+		} else {
+			s.setTagString(key, "false")
+		}
+	}
+}
+
 // setTagNumeric sets a numeric tag, in our case called a metric. This method
 // is not safe for concurrent use.
 func (s *span) setTagNumeric(key string, v float64) {
 	switch key {
 	case ext.SamplingPriority:
 		// setting sampling priority per spec
-		s.Metrics[samplingPriorityKey] = v
+		s.Metrics[keySamplingPriority] = v
 		s.context.setSamplingPriority(int(v))
 	default:
 		s.Metrics[key] = v
@@ -172,7 +247,11 @@ func (s *span) Finish(opts ...ddtrace.FinishOption) {
 	}
 	if cfg.Error != nil {
 		s.Lock()
-		s.setTagError(cfg.Error, !cfg.NoDebugStack)
+		s.setTagError(cfg.Error, &errorConfig{
+			noDebugStack: cfg.NoDebugStack,
+			stackFrames:  cfg.StackFrames,
+			stackSkip:    cfg.SkipStackFrames,
+		})
 		s.Unlock()
 	}
 	s.finish(t)
@@ -236,6 +315,8 @@ func (s *span) String() string {
 }
 
 const (
-	samplingPriorityKey     = "_sampling_priority_v1"
-	samplingPriorityRateKey = "_sampling_priority_rate_v1"
+	keySamplingPriority     = "_sampling_priority_v1"
+	keySamplingPriorityRate = "_sampling_priority_rate_v1"
+	keyOrigin               = "_dd.origin"
+	keyHostname             = "_dd.hostname"
 )
