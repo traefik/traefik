@@ -31,7 +31,7 @@ func TestBuildConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc                      string
 		applications              *marathon.Applications
-		constraints               types.Constraints
+		constraints               []*types.Constraint
 		filterMarathonConstraints bool
 		defaultRule               string
 		expected                  *config.Configuration
@@ -1065,11 +1065,11 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.tags", "foo"),
 				)),
-			constraints: types.Constraints{
-				&types.Constraint{
+			constraints: []*types.Constraint{
+				{
 					Key:       "tag",
 					MustMatch: true,
-					Regex:     "bar",
+					Value:     "bar",
 				},
 			},
 			expected: &config.Configuration{
@@ -1094,11 +1094,11 @@ func TestBuildConfiguration(t *testing.T) {
 					constraint("rack_id:CLUSTER:rack-1"),
 				)),
 			filterMarathonConstraints: true,
-			constraints: types.Constraints{
-				&types.Constraint{
+			constraints: []*types.Constraint{
+				{
 					Key:       "tag",
 					MustMatch: true,
-					Regex:     "rack_id:CLUSTER:rack-2",
+					Value:     "rack_id:CLUSTER:rack-2",
 				},
 			},
 			expected: &config.Configuration{
@@ -1123,11 +1123,11 @@ func TestBuildConfiguration(t *testing.T) {
 					constraint("rack_id:CLUSTER:rack-1"),
 				)),
 			filterMarathonConstraints: true,
-			constraints: types.Constraints{
-				&types.Constraint{
+			constraints: []*types.Constraint{
+				{
 					Key:       "tag",
 					MustMatch: true,
-					Regex:     "rack_id:CLUSTER:rack-1",
+					Value:     "rack_id:CLUSTER:rack-1",
 				},
 			},
 			expected: &config.Configuration{
@@ -1168,11 +1168,11 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.tags", "bar"),
 				)),
 
-			constraints: types.Constraints{
-				&types.Constraint{
+			constraints: []*types.Constraint{
+				{
 					Key:       "tag",
 					MustMatch: true,
-					Regex:     "bar",
+					Value:     "bar",
 				},
 			},
 			expected: &config.Configuration{
@@ -1466,7 +1466,7 @@ func TestApplicationFilterEnabled(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			provider := &Provider{ExposedByDefault: test.exposedByDefault}
+			provider := &Provider{ExposedByDefault: true}
 
 			app := application(withLabel("traefik.enable", test.enabledLabel))
 

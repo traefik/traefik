@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"text/template"
 
@@ -144,7 +145,7 @@ func (s *BaseSuite) adaptFile(c *check.C, path string, tempObjects interface{}) 
 	c.Assert(err, checker.IsNil)
 
 	folder, prefix := filepath.Split(path)
-	tmpFile, err := ioutil.TempFile(folder, prefix)
+	tmpFile, err := ioutil.TempFile(folder, strings.TrimSuffix(prefix, filepath.Ext(prefix))+"_*"+filepath.Ext(prefix))
 	c.Assert(err, checker.IsNil)
 	defer tmpFile.Close()
 

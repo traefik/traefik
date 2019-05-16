@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/ping"
 	"github.com/containous/traefik/pkg/provider"
@@ -68,9 +67,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 			Address: "foo Address",
 			Transport: &static.EntryPointsTransport{
 				RespondingTimeouts: &static.RespondingTimeouts{
-					ReadTimeout:  parse.Duration(111 * time.Second),
-					WriteTimeout: parse.Duration(111 * time.Second),
-					IdleTimeout:  parse.Duration(111 * time.Second),
+					ReadTimeout:  types.Duration(111 * time.Second),
+					WriteTimeout: types.Duration(111 * time.Second),
+					IdleTimeout:  types.Duration(111 * time.Second),
 				},
 			},
 			ProxyProtocol: &static.ProxyProtocol{
@@ -81,9 +80,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 			Address: "fii Address",
 			Transport: &static.EntryPointsTransport{
 				RespondingTimeouts: &static.RespondingTimeouts{
-					ReadTimeout:  parse.Duration(111 * time.Second),
-					WriteTimeout: parse.Duration(111 * time.Second),
-					IdleTimeout:  parse.Duration(111 * time.Second),
+					ReadTimeout:  types.Duration(111 * time.Second),
+					WriteTimeout: types.Duration(111 * time.Second),
+					IdleTimeout:  types.Duration(111 * time.Second),
 				},
 			},
 			ProxyProtocol: &static.ProxyProtocol{
@@ -112,7 +111,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 	}
 	config.Providers = &static.Providers{
-		ProvidersThrottleDuration: parse.Duration(111 * time.Second),
+		ProvidersThrottleDuration: types.Duration(111 * time.Second),
 	}
 
 	config.ServersTransport = &static.ServersTransport{
@@ -120,8 +119,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 		RootCAs:             traefiktls.FilesOrContents{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
 		MaxIdleConnsPerHost: 111,
 		ForwardingTimeouts: &static.ForwardingTimeouts{
-			DialTimeout:           parse.Duration(111 * time.Second),
-			ResponseHeaderTimeout: parse.Duration(111 * time.Second),
+			DialTimeout:           types.Duration(111 * time.Second),
+			ResponseHeaderTimeout: types.Duration(111 * time.Second),
 		},
 	}
 
@@ -156,15 +155,15 @@ func TestDo_globalConfiguration(t *testing.T) {
 
 	config.Providers.Docker = &docker.Provider{
 		Constrainer: provider.Constrainer{
-			Constraints: types.Constraints{
+			Constraints: []*types.Constraint{
 				{
 					Key:       "file Constraints Key 1",
-					Regex:     "file Constraints Regex 2",
+					Value:     "file Constraints Regex 2",
 					MustMatch: true,
 				},
 				{
 					Key:       "file Constraints Key 1",
-					Regex:     "file Constraints Regex 2",
+					Value:     "file Constraints Regex 2",
 					MustMatch: true,
 				},
 			},
@@ -216,16 +215,16 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 		Datadog: &types.Datadog{
 			Address:      "localhost:8181",
-			PushInterval: "12",
+			PushInterval: 12,
 		},
 		StatsD: &types.Statsd{
 			Address:      "localhost:8182",
-			PushInterval: "42",
+			PushInterval: 42,
 		},
 		InfluxDB: &types.InfluxDB{
 			Address:         "localhost:8183",
 			Protocol:        "http",
-			PushInterval:    "22",
+			PushInterval:    22,
 			Database:        "myDB",
 			RetentionPolicy: "12",
 			Username:        "a",

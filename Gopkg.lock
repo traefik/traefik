@@ -151,12 +151,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:28be1959f81e9a6dec3058768a4c4535cf73fcd6e171d21688ad0a7fdf49d43a"
+  digest = "1:d37d0fa13c422a0b85981fe42ff8f176885921294cf0c3ce585c160669cc32bb"
   name = "github.com/abronan/valkeyrie"
-  packages = [
-    ".",
-    "store",
-  ]
+  packages = ["store"]
   pruneopts = "NUT"
   revision = "063d875e3c5fd734fa2aa12fac83829f62acfc70"
 
@@ -296,31 +293,12 @@
   revision = "d83ebdd94cbdbcd9c6c6a22e1a0cde05e55d9d90"
 
 [[projects]]
-  digest = "1:3cd675d508d3f9067704d36011c7a262fc0a0bf1ad0361a7d1e60a405d12941e"
-  name = "github.com/containous/flaeg"
-  packages = [
-    ".",
-    "parse",
-  ]
-  pruneopts = "NUT"
-  revision = "c93d194b807ef171c43344d60adad8b58217390a"
-  version = "v1.4.1"
-
-[[projects]]
   branch = "master"
   digest = "1:3a789aa5487458c1fc913b47be763e5906e1524f1143acb8617287866184f9a7"
   name = "github.com/containous/mux"
   packages = ["."]
   pruneopts = "NUT"
   revision = "c33f32e268983f989290677351b871b65da75ba5"
-
-[[projects]]
-  digest = "1:a4f16a1b72349621b887bde88f458da518160abcb600eae3d591d8a2afa78bda"
-  name = "github.com/containous/staert"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "7a9987c3a6d46be84e141a5c3191347ec10af17d"
-  version = "v3.1.2"
 
 [[projects]]
   digest = "1:fa91847d50d3f656fc2d2d608b9749b97d77528e8988ad8001f957640545e91e"
@@ -1227,14 +1205,6 @@
   pruneopts = "NUT"
   revision = "d8152159450570012552f924a0ae6ab3d8c617e0"
   version = "v0.6.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:95d27e49401b61dd203a4cf8237037bd6cd49599651f855ac1988c4ae27b090e"
-  name = "github.com/ogier/pflag"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "45c278ab3607870051a2ea9040bb85fcb8557481"
 
 [[projects]]
   digest = "1:69e47979091e47a10e5ff0e2776ca71aa3e884238ce446bd71e246878ba0858d"
@@ -2262,10 +2232,7 @@
     "github.com/armon/go-proxyproto",
     "github.com/cenkalti/backoff",
     "github.com/containous/alice",
-    "github.com/containous/flaeg",
-    "github.com/containous/flaeg/parse",
     "github.com/containous/mux",
-    "github.com/containous/staert",
     "github.com/coreos/go-systemd/daemon",
     "github.com/davecgh/go-spew/spew",
     "github.com/docker/docker/api/types",
@@ -2312,7 +2279,6 @@
     "github.com/mitchellh/copystructure",
     "github.com/mitchellh/hashstructure",
     "github.com/mvdan/xurls",
-    "github.com/ogier/pflag",
     "github.com/opentracing/opentracing-go",
     "github.com/opentracing/opentracing-go/ext",
     "github.com/opentracing/opentracing-go/log",
@@ -2353,6 +2319,7 @@
     "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer",
     "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer",
     "gopkg.in/fsnotify.v1",
+    "gopkg.in/yaml.v2",
     "k8s.io/api/core/v1",
     "k8s.io/api/extensions/v1beta1",
     "k8s.io/apimachinery/pkg/api/errors",

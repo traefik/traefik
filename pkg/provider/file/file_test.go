@@ -224,7 +224,7 @@ func createProvider(t *testing.T, test ProvideTestCase, watch bool) (*Provider, 
 	tempDir := createTempDir(t, "testdir")
 
 	provider := &Provider{}
-	provider.Watch = watch
+	provider.Watch = true
 
 	if len(test.directoryContent) > 0 {
 		if !watch {

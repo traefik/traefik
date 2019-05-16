@@ -4,7 +4,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/containous/traefik/pkg/provider/label"
+	"github.com/containous/traefik/pkg/config/label"
 	"github.com/gambol99/go-marathon"
 )
 

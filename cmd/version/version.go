@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"text/template"
 
-	"github.com/containous/flaeg"
+	"github.com/containous/traefik/pkg/cli"
 	"github.com/containous/traefik/pkg/version"
 )
 
@@ -18,19 +18,17 @@ Built:        {{.BuildTime}}
 OS/Arch:      {{.Os}}/{{.Arch}}`
 
 // NewCmd builds a new Version command
-func NewCmd() *flaeg.Command {
-	return &flaeg.Command{
-		Name:                  "version",
-		Description:           `Print version`,
-		Config:                struct{}{},
-		DefaultPointersConfig: struct{}{},
-		Run: func() error {
+func NewCmd() *cli.Command {
+	return &cli.Command{
+		Name:          "version",
+		Description:   `Shows the current Traefik version.`,
+		Configuration: nil,
+		Run: func(_ []string) error {
 			if err := GetPrint(os.Stdout); err != nil {
 				return err
 			}
 			fmt.Print("\n")
 			return nil
-
 		},
 	}
 }

@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/tcp"
+	"github.com/containous/traefik/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +21,7 @@ func TestShutdownHTTP(t *testing.T) {
 		Transport: &static.EntryPointsTransport{
 			LifeCycle: &static.LifeCycle{
 				RequestAcceptGraceTimeout: 0,
-				GraceTimeOut:              parse.Duration(5 * time.Second),
+				GraceTimeOut:              types.Duration(5 * time.Second),
 			},
 		},
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -59,7 +59,7 @@ func TestShutdownHTTPHijacked(t *testing.T) {
 		Transport: &static.EntryPointsTransport{
 			LifeCycle: &static.LifeCycle{
 				RequestAcceptGraceTimeout: 0,
-				GraceTimeOut:              parse.Duration(5 * time.Second),
+				GraceTimeOut:              types.Duration(5 * time.Second),
 			},
 		},
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -103,7 +103,7 @@ func TestShutdownTCPConn(t *testing.T) {
 		Transport: &static.EntryPointsTransport{
 			LifeCycle: &static.LifeCycle{
 				RequestAcceptGraceTimeout: 0,
-				GraceTimeOut:              parse.Duration(5 * time.Second),
+				GraceTimeOut:              types.Duration(5 * time.Second),
 			},
 		},
 		ForwardedHeaders: &static.ForwardedHeaders{},

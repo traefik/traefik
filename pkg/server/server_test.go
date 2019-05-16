@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/config/static"
 	th "github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -132,7 +132,7 @@ func setupListenProvider(throttleDuration time.Duration) (server *Server, stop c
 
 	staticConfiguration := static.Configuration{
 		Providers: &static.Providers{
-			ProvidersThrottleDuration: parse.Duration(throttleDuration),
+			ProvidersThrottleDuration: types.Duration(throttleDuration),
 		},
 	}
 

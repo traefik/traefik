@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/types"
 	"github.com/sirupsen/logrus"
@@ -330,7 +329,7 @@ func (h *Handler) keepAccessLog(statusCode, retryAttempts int, duration time.Dur
 		return true
 	}
 
-	if h.config.Filters.MinDuration > 0 && (parse.Duration(duration) > h.config.Filters.MinDuration) {
+	if h.config.Filters.MinDuration > 0 && (types.Duration(duration) > h.config.Filters.MinDuration) {
 		return true
 	}
 

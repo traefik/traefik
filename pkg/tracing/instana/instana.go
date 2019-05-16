@@ -18,6 +18,13 @@ type Config struct {
 	LogLevel       string `description:"Set instana-agent's log level. ('error','warn','info','debug')" export:"false"`
 }
 
+// SetDefaults sets the default values.
+func (c *Config) SetDefaults() {
+	c.LocalAgentHost = "localhost"
+	c.LocalAgentPort = 42699
+	c.LogLevel = "info"
+}
+
 // Setup sets up the tracer
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
 	// set default logLevel

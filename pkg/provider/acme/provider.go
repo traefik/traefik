@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/rules"
@@ -39,17 +38,24 @@ var (
 
 // Configuration holds ACME configuration provided by users
 type Configuration struct {
-	Email         string         `description:"Email address used for registration"`
+	Email         string         `description:"Email address used for registration."`
 	ACMELogging   bool           `description:"Enable debug logging of ACME actions."`
 	CAServer      string         `description:"CA server to use."`
 	Storage       string         `description:"Storage to use."`
 	EntryPoint    string         `description:"EntryPoint to use."`
-	KeyType       string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'"`
-	OnHostRule    bool           `description:"Enable certificate generation on frontends Host rules."`
-	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge"`
-	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
-	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge"`
-	Domains       []types.Domain `description:"CN and SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='*.main.net'. Wildcard domains only accepted with DNSChallenge"`
+	KeyType       string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'."`
+	OnHostRule    bool           `description:"Enable certificate generation on router Host rules."`
+	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." label:"allowEmpty"`
+	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." label:"allowEmpty"`
+	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge." label:"allowEmpty"`
+	Domains       []types.Domain `description:"The list of domains for which certificates are generated on startup. Wildcard domains only accepted with DNSChallenge."`
+}
+
+// SetDefaults sets the default values.
+func (a *Configuration) SetDefaults() {
+	a.CAServer = lego.LEDirectoryProduction
+	a.Storage = "acme.json"
+	a.KeyType = "RSA4096"
 }
 
 // Certificate is a struct which contains all data needed from an ACME certificate
@@ -62,7 +68,7 @@ type Certificate struct {
 // DNSChallenge contains DNS challenge Configuration
 type DNSChallenge struct {
 	Provider                string             `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
-	DelayBeforeCheck        parse.Duration     `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	DelayBeforeCheck        types.Duration     `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
 	Resolvers               types.DNSResolvers `description:"Use following DNS servers to resolve the FQDN authority."`
 	DisablePropagationCheck bool               `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]"`
 }
@@ -239,7 +245,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 	logger.Debug("Building ACME client...")
 
-	caServer := "https://acme-v02.api.letsencrypt.org/directory"
+	caServer := lego.LEDirectoryProduction
 	if len(p.CAServer) > 0 {
 		caServer = p.CAServer
 	}

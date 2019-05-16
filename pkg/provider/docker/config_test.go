@@ -339,7 +339,7 @@ func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		containers  []dockerData
-		constraints types.Constraints
+		constraints []*types.Constraint
 		expected    *config.Configuration
 	}{
 		{
@@ -1924,11 +1924,11 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			constraints: types.Constraints{
-				&types.Constraint{
+			constraints: []*types.Constraint{
+				{
 					Key:       "tag",
 					MustMatch: true,
-					Regex:     "bar",
+					Value:     "bar",
 				},
 			},
 			expected: &config.Configuration{
@@ -1965,11 +1965,11 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			constraints: types.Constraints{
-				&types.Constraint{
+			constraints: []*types.Constraint{
+				{
 					Key:       "tag",
 					MustMatch: true,
-					Regex:     "foo",
+					Value:     "foo",
 				},
 			},
 			expected: &config.Configuration{

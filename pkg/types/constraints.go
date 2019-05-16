@@ -10,12 +10,12 @@ import (
 )
 
 // Constraint holds a parsed constraint expression.
+// FIXME replace by a string.
 type Constraint struct {
-	Key string `export:"true"`
+	Key string `description:"The provider label that will be matched against. In practice, it is always 'tag'." export:"true"`
 	// MustMatch is true if operator is "==" or false if operator is "!="
-	MustMatch bool `export:"true"`
-	// TODO: support regex
-	Regex string `export:"true"`
+	MustMatch bool   `description:"Whether the matching operator is equals or not equals." export:"true"`
+	Value     string `description:"The value that will be matched against." export:"true"` // TODO: support regex
 }
 
 // NewConstraint receives a string and return a *Constraint, after checking syntax and parsing the constraint expression.
@@ -42,7 +42,7 @@ func NewConstraint(exp string) (*Constraint, error) {
 		}
 
 		constraint.Key = kv[0]
-		constraint.Regex = kv[1]
+		constraint.Value = kv[1]
 		return constraint, nil
 	}
 
@@ -51,9 +51,9 @@ func NewConstraint(exp string) (*Constraint, error) {
 
 func (c *Constraint) String() string {
 	if c.MustMatch {
-		return c.Key + "==" + c.Regex
+		return c.Key + "==" + c.Value
 	}
-	return c.Key + "!=" + c.Regex
+	return c.Key + "!=" + c.Value
 }
 
 var _ encoding.TextUnmarshaler = (*Constraint)(nil)
@@ -66,7 +66,7 @@ func (c *Constraint) UnmarshalText(text []byte) error {
 	}
 	c.Key = constraint.Key
 	c.MustMatch = constraint.MustMatch
-	c.Regex = constraint.Regex
+	c.Value = constraint.Value
 	return nil
 }
 
@@ -80,44 +80,9 @@ func (c *Constraint) MarshalText() (text []byte, err error) {
 // MatchConstraintWithAtLeastOneTag tests a constraint for one single service.
 func (c *Constraint) MatchConstraintWithAtLeastOneTag(tags []string) bool {
 	for _, tag := range tags {
-		if glob.Glob(c.Regex, tag) {
+		if glob.Glob(c.Value, tag) {
 			return true
 		}
 	}
 	return false
-}
-
-// Set []*Constraint.
-func (cs *Constraints) Set(str string) error {
-	exps := strings.Split(str, ",")
-	if len(exps) == 0 {
-		return fmt.Errorf("bad Constraint format: %s", str)
-	}
-	for _, exp := range exps {
-		constraint, err := NewConstraint(exp)
-		if err != nil {
-			return err
-		}
-		*cs = append(*cs, constraint)
-	}
-	return nil
-}
-
-// Constraints holds a Constraint parser.
-type Constraints []*Constraint
-
-// Get []*Constraint
-func (cs *Constraints) Get() interface{} { return []*Constraint(*cs) }
-
-// String returns []*Constraint in string.
-func (cs *Constraints) String() string { return fmt.Sprintf("%+v", *cs) }
-
-// SetValue sets []*Constraint into the parser.
-func (cs *Constraints) SetValue(val interface{}) {
-	*cs = val.(Constraints)
-}
-
-// Type exports the Constraints type as a string.
-func (cs *Constraints) Type() string {
-	return "constraint"
 }

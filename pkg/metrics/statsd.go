@@ -62,13 +62,8 @@ func initStatsdTicker(ctx context.Context, config *types.Statsd) *time.Ticker {
 	if len(address) == 0 {
 		address = "localhost:8125"
 	}
-	pushInterval, err := time.ParseDuration(config.PushInterval)
-	if err != nil {
-		log.FromContext(ctx).Warnf("Unable to parse %s from config.PushInterval: using 10s as the default value", config.PushInterval)
-		pushInterval = 10 * time.Second
-	}
 
-	report := time.NewTicker(pushInterval)
+	report := time.NewTicker(time.Duration(config.PushInterval))
 
 	safe.Go(func() {
 		statsdClient.SendLoop(report.C, "udp", address)

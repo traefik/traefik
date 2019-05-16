@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/ip"
+	"github.com/containous/traefik/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true
@@ -52,7 +52,7 @@ type Auth struct {
 
 // BasicAuth holds the HTTP basic authentication configuration.
 type BasicAuth struct {
-	Users        `json:"users,omitempty" mapstructure:","`
+	Users        Users  `json:"users,omitempty"`
 	UsersFile    string `json:"usersFile,omitempty"`
 	Realm        string `json:"realm,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty"`
@@ -93,7 +93,7 @@ type Compress struct{}
 
 // DigestAuth holds the Digest HTTP authentication configuration.
 type DigestAuth struct {
-	Users        `json:"users,omitempty" mapstructure:","`
+	Users        Users  `json:"users,omitempty"`
 	UsersFile    string `json:"usersFile,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty"`
 	Realm        string `json:"realm,omitempty" mapstructure:","`
@@ -273,7 +273,7 @@ type PassTLSClientCert struct {
 
 // Rate holds the rate limiting configuration for a specific time period.
 type Rate struct {
-	Period  parse.Duration `json:"period,omitempty"`
+	Period  types.Duration `json:"period,omitempty"`
 	Average int64          `json:"average,omitempty"`
 	Burst   int64          `json:"burst,omitempty"`
 }

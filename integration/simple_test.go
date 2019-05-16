@@ -161,7 +161,7 @@ func (s *SimpleSuite) TestApiOnSameEntryPoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--api.entryPoint=http", "--global.debug", "--providers.docker")
+	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.entryPoint=http", "--global.debug", "--providers.docker")
 	defer output(c)
 
 	err := cmd.Start()
@@ -241,7 +241,7 @@ func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--global.debug", "--providers.docker", "--api")
+	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--global.debug", "--providers.docker", "--api")
 	defer output(c)
 
 	err := cmd.Start()
@@ -259,7 +259,7 @@ func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--global.debug", "--providers.docker", "--api")
+	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--global.debug", "--providers.docker", "--api")
 	defer output(c)
 
 	err := cmd.Start()
@@ -277,7 +277,7 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--api", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--global.debug")
+	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--global.debug")
 	defer output(c)
 
 	err := cmd.Start()

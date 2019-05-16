@@ -49,7 +49,7 @@ See also [Marathon user guide](../user-guides/marathon.md).
 ## Provider Configuration Options
 
 !!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/dynamic-configuration/marathon.md) configuration references.
+    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration/overview.md) and the [dynamic](../reference/dynamic-configuration/marathon.md) configuration references.
 
 ### `basic`
 

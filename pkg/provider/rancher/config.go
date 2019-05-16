@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/label"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/provider/label"
 )
 
 func (p *Provider) buildConfiguration(ctx context.Context, services []rancherData) *config.Configuration {

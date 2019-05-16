@@ -7,30 +7,26 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/flaeg"
-	"github.com/containous/traefik/cmd"
+	"github.com/containous/traefik/pkg/cli"
 	"github.com/containous/traefik/pkg/config/static"
 )
 
-// NewCmd builds a new HealthCheck command
-func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfiguration *cmd.TraefikConfiguration) *flaeg.Command {
-	return &flaeg.Command{
-		Name:                  "healthcheck",
-		Description:           `Calls traefik /ping to check health (web provider must be enabled)`,
-		Config:                traefikConfiguration,
-		DefaultPointersConfig: traefikPointersConfiguration,
-		Run:                   runCmd(traefikConfiguration),
-		Metadata: map[string]string{
-			"parseAllSources": "true",
-		},
+// NewCmd builds a new HealthCheck command.
+func NewCmd(traefikConfiguration *static.Configuration, loaders []cli.ResourceLoader) *cli.Command {
+	return &cli.Command{
+		Name:          "healthcheck",
+		Description:   `Calls Traefik /ping to check the health of Traefik (the API must be enabled).`,
+		Configuration: traefikConfiguration,
+		Run:           runCmd(traefikConfiguration),
+		Resources:     loaders,
 	}
 }
 
-func runCmd(traefikConfiguration *cmd.TraefikConfiguration) func() error {
-	return func() error {
-		traefikConfiguration.Configuration.SetEffectiveConfiguration(traefikConfiguration.ConfigFile)
+func runCmd(traefikConfiguration *static.Configuration) func(_ []string) error {
+	return func(_ []string) error {
+		traefikConfiguration.SetEffectiveConfiguration("")
 
-		resp, errPing := Do(traefikConfiguration.Configuration)
+		resp, errPing := Do(*traefikConfiguration)
 		if errPing != nil {
 			fmt.Printf("Error calling healthcheck: %s\n", errPing)
 			os.Exit(1)
@@ -50,6 +46,7 @@ func Do(staticConfiguration static.Configuration) (*http.Response, error) {
 	if staticConfiguration.Ping == nil {
 		return nil, errors.New("please enable `ping` to use health check")
 	}
+
 	pingEntryPoint, ok := staticConfiguration.EntryPoints[staticConfiguration.Ping.EntryPoint]
 	if !ok {
 		return nil, errors.New("missing `ping` entrypoint")
