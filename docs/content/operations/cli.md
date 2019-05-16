@@ -11,8 +11,8 @@ traefik [command] [--flag=flag_argument]
 
 Available commands: 
 
-- `version` : Print version
-- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the `Store Traefik configuration`(TODO: add doc and link) section to get documentation on it.
+- `version` : Print version
+- `storeconfig` : Store the static Traefik configuration into a Key-value store. Please refer to the `Store Traefik configuration`(TODO: add doc and link) section to get documentation on it.
 - `healthcheck`: Calls Traefik `/ping` to check health.
 
 Each command can have additional flags.

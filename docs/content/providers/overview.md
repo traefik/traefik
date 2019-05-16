@@ -43,7 +43,7 @@ Below is the list of the currently supported providers in Traefik.
     
 ## Constraints Configuration
 
-If you want to limit the scope of Traefik service discovery, you can set constraints.
+If you want to limit the scope of Traefik's service discovery, you can set constraints.
 Doing so, Traefik will create routes for containers that match these constraints only.
 
 ??? example "Containers with the api Tag"

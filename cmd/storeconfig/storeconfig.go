@@ -14,7 +14,7 @@ import (
 func NewCmd(traefikConfiguration *cmd.TraefikConfiguration, traefikPointersConfiguration *cmd.TraefikConfiguration) *flaeg.Command {
 	return &flaeg.Command{
 		Name:                  "storeconfig",
-		Description:           `Stores the static traefik configuration into a Key-value stores. Traefik will not start.`,
+		Description:           `Stores the static traefik configuration into a Key-value store. Traefik will not start.`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		HideHelp:              true, // TODO storeconfig

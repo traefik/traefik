@@ -86,7 +86,7 @@ Traefik requires access to the docker socket to get its dynamic configuration.
         - [KubeCon EU 2018 Keynote, Running with Scissors, from Liz Rice](https://www.youtube.com/watch?v=ltrV-Qmh3oY)
         - [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container.html)
         - [A thread on Stack Overflow about sharing the `/var/run/docker.sock` file](https://news.ycombinator.com/item?id=17983623)
-        - [To Dind or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
+        - [To DinD or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
 
 ??? tip "Security Compensation"
 
@@ -273,7 +273,7 @@ You can declare TCP Routers and/or Services using labels.
 
 !!! warning "TCP and HTTP"
 
-    If you declare a TCP Router/Service, it will prevent Traefik from automatically create an HTTP Router/Service (like it does by default if no TCP Router/Service is defined).
+    If you declare a TCP Router/Service, it will prevent Traefik from automatically creating an HTTP Router/Service (like it does by default if no TCP Router/Service is defined).
     You can declare both a TCP Router/Service and an HTTP Router/Service for the same container (but you have to do so manually).
 
 ### Specific Options

@@ -14,7 +14,7 @@ it knows all the logic and every rule that determine which services handle which
 
 Where traditionally edge routers (or reverse proxies) need a configuration file that contains every possible route to your services, Traefik gets them from the services themselves.
 
-Deploying your services, you attach information that tell Traefik the characteristics of the requests the services can handle.
+Deploying your services, you attach information that tells Traefik the characteristics of the requests the services can handle.
 
 ![Decentralized Configuration](../assets/img/traefik-concepts-2.png)
 

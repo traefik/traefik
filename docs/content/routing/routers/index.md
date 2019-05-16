@@ -51,7 +51,7 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
 ### EntryPoints
 
 If not specified, HTTP routers will accept requests from all defined entrypoints.
-If you want to limit the router scope to a set of entrypoint, set the entrypoints option.
+If you want to limit the router scope to a set of entrypoints, set the entrypoints option.
 
 ??? example "Listens to Every EntryPoint"
 
@@ -92,7 +92,7 @@ If you want to limit the router scope to a set of entrypoint, set the entrypoint
 ### Rule
 
 Rules are a set of matchers that determine if a particular request matches specific criteria.
-If the rule is verified, then the router becomes active and calls middlewares, then forward the request to the service.
+If the rule is verified, the router becomes active, calls middlewares, and then forwards the request to the service.
 
 ??? example "Host is traefik.io"
 
