@@ -258,7 +258,8 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			}
 
 			srv := NewServer(globalConfig, nil, entryPointsConfig, nil)
-			entryPoints, _ := srv.createHTTPHandlers(context.Background(), *test.config(testServer.URL), []string{"http"})
+			rtConf := config.NewRuntimeConfig(config.Configuration{HTTP: test.config(testServer.URL)})
+			entryPoints, _ := srv.createHTTPHandlers(context.Background(), rtConf, []string{"http"})
 
 			responseRecorder := &httptest.ResponseRecorder{}
 			request := httptest.NewRequest(http.MethodGet, testServer.URL+requestPath, nil)

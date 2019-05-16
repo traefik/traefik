@@ -1490,13 +1490,6 @@
   revision = "c4434f09ec131ecf30f986d5dcb1636508bfa49a"
 
 [[projects]]
-  digest = "1:84b9a5318d8ce3b8a9b1509bf15734f4f9dcd4decf9d9e9c7346a16c7b64d49e"
-  name = "github.com/thoas/stats"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "4975baf6a358ed3ddaa42133996e1959f96c9300"
-
-[[projects]]
   branch = "master"
   digest = "1:99ce99ce6d6d0cbc5f822cda92095906e01d5546d60999ac839ab008938e4e17"
   name = "github.com/timewasted/linode"
@@ -2304,7 +2297,6 @@
     "github.com/stretchr/testify/mock",
     "github.com/stretchr/testify/require",
     "github.com/stvp/go-udp-testing",
-    "github.com/thoas/stats",
     "github.com/uber/jaeger-client-go",
     "github.com/uber/jaeger-client-go/config",
     "github.com/uber/jaeger-client-go/zipkin",

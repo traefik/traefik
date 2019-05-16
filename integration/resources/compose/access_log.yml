@@ -11,6 +11,7 @@ server1:
     - traefik.enable=true
     - traefik.http.routers.rt-server1.entryPoints=web
     - traefik.http.routers.rt-server1.rule=Host("frontend1.docker.local")
+    - traefik.http.routers.rt-server1.service=service1
     - traefik.http.services.service1.loadbalancer.server.port=80
 server2:
   image: containous/whoami

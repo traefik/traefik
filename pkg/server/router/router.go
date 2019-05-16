@@ -23,7 +23,7 @@ const (
 )
 
 // NewManager Creates a new Manager
-func NewManager(routers map[string]*config.Router,
+func NewManager(routers map[string]*config.RouterInfo,
 	serviceManager *service.Manager, middlewaresBuilder *middleware.Builder, modifierBuilder *responsemodifiers.Builder,
 ) *Manager {
 	return &Manager{
@@ -38,7 +38,7 @@ func NewManager(routers map[string]*config.Router,
 // Manager A route/router manager
 type Manager struct {
 	routerHandlers     map[string]http.Handler
-	configs            map[string]*config.Router
+	configs            map[string]*config.RouterInfo
 	serviceManager     *service.Manager
 	middlewaresBuilder *middleware.Builder
 	modifierBuilder    *responsemodifiers.Builder
@@ -75,8 +75,17 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	return entryPointHandlers
 }
 
-func (m *Manager) filteredRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*config.Router {
-	entryPointsRouters := make(map[string]map[string]*config.Router)
+func contains(entryPoints []string, entryPointName string) bool {
+	for _, name := range entryPoints {
+		if name == entryPointName {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *Manager) filteredRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*config.RouterInfo {
+	entryPointsRouters := make(map[string]map[string]*config.RouterInfo)
 
 	for rtName, rt := range m.configs {
 		if (tls && rt.TLS == nil) || (!tls && rt.TLS != nil) {
@@ -95,7 +104,7 @@ func (m *Manager) filteredRouters(ctx context.Context, entryPoints []string, tls
 			}
 
 			if _, ok := entryPointsRouters[entryPointName]; !ok {
-				entryPointsRouters[entryPointName] = make(map[string]*config.Router)
+				entryPointsRouters[entryPointName] = make(map[string]*config.RouterInfo)
 			}
 
 			entryPointsRouters[entryPointName][rtName] = rt
@@ -105,7 +114,7 @@ func (m *Manager) filteredRouters(ctx context.Context, entryPoints []string, tls
 	return entryPointsRouters
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*config.Router) (http.Handler, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*config.RouterInfo) (http.Handler, error) {
 	router, err := rules.NewRouter()
 	if err != nil {
 		return nil, err
@@ -117,12 +126,14 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		handler, err := m.buildRouterHandler(ctxRouter, routerName)
 		if err != nil {
+			routerConfig.Err = err.Error()
 			logger.Error(err)
 			continue
 		}
 
 		err = router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
 		if err != nil {
+			routerConfig.Err = err.Error()
 			logger.Error(err)
 			continue
 		}
@@ -166,7 +177,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string) (ht
 	return m.routerHandlers[routerName], nil
 }
 
-func (m *Manager) buildHTTPHandler(ctx context.Context, router *config.Router, routerName string) (http.Handler, error) {
+func (m *Manager) buildHTTPHandler(ctx context.Context, router *config.RouterInfo, routerName string) (http.Handler, error) {
 	qualifiedNames := make([]string, len(router.Middlewares))
 	for i, name := range router.Middlewares {
 		qualifiedNames[i] = internal.GetQualifiedName(ctx, name)
@@ -185,13 +196,4 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *config.Router, r
 	}
 
 	return alice.New().Extend(*mHandler).Append(tHandler).Then(sHandler)
-}
-
-func contains(entryPoints []string, entryPointName string) bool {
-	for _, name := range entryPoints {
-		if name == entryPointName {
-			return true
-		}
-	}
-	return false
 }

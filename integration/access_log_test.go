@@ -603,7 +603,7 @@ func checkAccessLogExactValues(c *check.C, line string, i int, v accessLogValue)
 
 func waitForTraefik(c *check.C, containerName string) {
 	// Wait for Traefik to turn ready.
-	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/api/providers/docker/routers", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/api/rawdata", nil)
 	c.Assert(err, checker.IsNil)
 
 	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains(containerName))

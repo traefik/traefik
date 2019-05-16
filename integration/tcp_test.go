@@ -31,7 +31,7 @@ func (s *TCPSuite) TestMixed(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("Path(`/test`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("Path(`/test`)"))
 	c.Assert(err, checker.IsNil)
 
 	//Traefik passes through, termination handled by whoami-a

@@ -47,7 +47,8 @@ func TestReuseService(t *testing.T) {
 
 	srv := NewServer(staticConfig, nil, entryPoints, nil)
 
-	entrypointsHandlers, _ := srv.createHTTPHandlers(context.Background(), *dynamicConfigs, []string{"http"})
+	rtConf := config.NewRuntimeConfig(config.Configuration{HTTP: dynamicConfigs})
+	entrypointsHandlers, _ := srv.createHTTPHandlers(context.Background(), rtConf, []string{"http"})
 
 	// Test that the /ok path returns a status 200.
 	responseRecorderOk := &httptest.ResponseRecorder{}

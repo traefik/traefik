@@ -315,7 +315,7 @@ func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
 	c.Assert(json.Unmarshal(body, &version), checker.IsNil)
 	c.Assert(version["Version"], checker.Equals, "swarm/1.0.0")
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/services", 60*time.Second, try.BodyContains("powpow"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("powpow"))
 	c.Assert(err, checker.IsNil)
 
 	s.stopAndRemoveContainerByName(c, "powpow")
@@ -323,11 +323,11 @@ func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
 
 	time.Sleep(5 * time.Second)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/services", 10*time.Second, try.BodyContains("powpow"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("powpow"))
 	c.Assert(err, checker.NotNil)
 
 	s.startContainerWithNameAndLabels(c, "powpow", "swarm:1.0.0", labels, "manage", "token://blabla")
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/services", 60*time.Second, try.BodyContains("powpow"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("powpow"))
 	c.Assert(err, checker.IsNil)
 }

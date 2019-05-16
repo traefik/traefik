@@ -50,7 +50,7 @@ type Server struct {
 
 // RouteAppenderFactory the route appender factory interface
 type RouteAppenderFactory interface {
-	NewAppender(ctx context.Context, middlewaresBuilder *middleware.Builder, currentConfigurations *safe.Safe) types.RouteAppender
+	NewAppender(ctx context.Context, middlewaresBuilder *middleware.Builder, runtimeConfiguration *config.RuntimeConfiguration) types.RouteAppender
 }
 
 func setupTracing(conf *static.Tracing) tracing.TrackingBackend {

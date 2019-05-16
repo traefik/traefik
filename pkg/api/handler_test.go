@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/json"
+	"flag"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -8,188 +10,122 @@ import (
 
 	"github.com/containous/mux"
 	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/safe"
+	"github.com/containous/traefik/pkg/config/static"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+var updateExpected = flag.Bool("update_expected", false, "Update expected files in testdata")
+
 func TestHandler_Configuration(t *testing.T) {
 	type expected struct {
 		statusCode int
-		body       string
+		json       string
 	}
 
 	testCases := []struct {
-		desc          string
-		path          string
-		configuration config.Configurations
-		expected      expected
+		desc     string
+		path     string
+		conf     config.RuntimeConfiguration
+		expected expected
 	}{
 		{
-			desc: "Get all the providers",
-			path: "/api/providers",
-			configuration: config.Configurations{
-				"foo": {
-					HTTP: &config.HTTPConfiguration{
-						Routers: map[string]*config.Router{
-							"bar": {EntryPoints: []string{"foo", "bar"}},
-						},
-					},
-				},
-			},
-			expected: expected{statusCode: http.StatusOK, body: `[{"id":"foo","path":"/api/providers/foo"}]`},
-		},
-		{
-			desc: "Get a provider",
-			path: "/api/providers/foo",
-			configuration: config.Configurations{
-				"foo": {
-					HTTP: &config.HTTPConfiguration{
-						Routers: map[string]*config.Router{
-							"bar": {EntryPoints: []string{"foo", "bar"}},
-						},
-						Middlewares: map[string]*config.Middleware{
-							"bar": {
-								AddPrefix: &config.AddPrefix{Prefix: "bar"},
-							},
-						},
-						Services: map[string]*config.Service{
-							"foo": {
-								LoadBalancer: &config.LoadBalancerService{
-									Method: "wrr",
+			desc: "Get rawdata",
+			path: "/api/rawdata",
+			conf: config.RuntimeConfiguration{
+				Services: map[string]*config.ServiceInfo{
+					"myprovider.foo-service": {
+						Service: &config.Service{
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://127.0.0.1",
+										Weight: 1,
+									},
 								},
+								Method: "wrr",
 							},
 						},
 					},
 				},
-			},
-			expected: expected{statusCode: http.StatusOK, body: `{"routers":[{"id":"bar","path":"/api/providers/foo/routers"}],"middlewares":[{"id":"bar","path":"/api/providers/foo/middlewares"}],"services":[{"id":"foo","path":"/api/providers/foo/services"}]}`},
-		},
-		{
-			desc:          "Provider not found",
-			path:          "/api/providers/foo",
-			configuration: config.Configurations{},
-			expected:      expected{statusCode: http.StatusNotFound, body: "404 page not found\n"},
-		},
-		{
-			desc: "Get all routers",
-			path: "/api/providers/foo/routers",
-			configuration: config.Configurations{
-				"foo": {
-					HTTP: &config.HTTPConfiguration{
-						Routers: map[string]*config.Router{
-							"bar": {EntryPoints: []string{"foo", "bar"}},
+				Middlewares: map[string]*config.MiddlewareInfo{
+					"myprovider.auth": {
+						Middleware: &config.Middleware{
+							BasicAuth: &config.BasicAuth{
+								Users: []string{"admin:admin"},
+							},
+						},
+					},
+					"myprovider.addPrefixTest": {
+						Middleware: &config.Middleware{
+							AddPrefix: &config.AddPrefix{
+								Prefix: "/titi",
+							},
+						},
+					},
+					"anotherprovider.addPrefixTest": {
+						Middleware: &config.Middleware{
+							AddPrefix: &config.AddPrefix{
+								Prefix: "/toto",
+							},
 						},
 					},
 				},
-			},
-			expected: expected{statusCode: http.StatusOK, body: `[{"entryPoints":["foo","bar"],"id":"bar"}]`},
-		},
-		{
-			desc: "Get a router",
-			path: "/api/providers/foo/routers/bar",
-			configuration: config.Configurations{
-				"foo": {
-					HTTP: &config.HTTPConfiguration{
-						Routers: map[string]*config.Router{
-							"bar": {EntryPoints: []string{"foo", "bar"}},
+				Routers: map[string]*config.RouterInfo{
+					"myprovider.bar": {
+						Router: &config.Router{
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "Host(`foo.bar`)",
+							Middlewares: []string{"auth", "anotherprovider.addPrefixTest"},
+						},
+					},
+					"myprovider.test": {
+						Router: &config.Router{
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "Host(`foo.bar.other`)",
+							Middlewares: []string{"addPrefixTest", "auth"},
 						},
 					},
 				},
-			},
-			expected: expected{statusCode: http.StatusOK, body: `{"entryPoints":["foo","bar"]}`},
-		},
-		{
-			desc: "Router not found",
-			path: "/api/providers/foo/routers/bar",
-			configuration: config.Configurations{
-				"foo": {},
-			},
-			expected: expected{statusCode: http.StatusNotFound, body: "404 page not found\n"},
-		},
-		{
-			desc: "Get all services",
-			path: "/api/providers/foo/services",
-			configuration: config.Configurations{
-				"foo": {
-					HTTP: &config.HTTPConfiguration{
-						Services: map[string]*config.Service{
-							"foo": {
-								LoadBalancer: &config.LoadBalancerService{
-									Method: "wrr",
+				TCPServices: map[string]*config.TCPServiceInfo{
+					"myprovider.tcpfoo-service": {
+						TCPService: &config.TCPService{
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "127.0.0.1",
+										Weight:  1,
+									},
 								},
+								Method: "wrr",
 							},
 						},
 					},
 				},
-			},
-			expected: expected{statusCode: http.StatusOK, body: `[{"loadbalancer":{"method":"wrr","passHostHeader":false},"id":"foo"}]`},
-		},
-		{
-			desc: "Get a service",
-			path: "/api/providers/foo/services/foo",
-			configuration: config.Configurations{
-				"foo": {
-					HTTP: &config.HTTPConfiguration{
-						Services: map[string]*config.Service{
-							"foo": {
-								LoadBalancer: &config.LoadBalancerService{
-									Method: "wrr",
-								},
-							},
+				TCPRouters: map[string]*config.TCPRouterInfo{
+					"myprovider.tcpbar": {
+						TCPRouter: &config.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.tcpfoo-service",
+							Rule:        "HostSNI(`foo.bar`)",
+						},
+					},
+					"myprovider.tcptest": {
+						TCPRouter: &config.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.tcpfoo-service",
+							Rule:        "HostSNI(`foo.bar.other`)",
 						},
 					},
 				},
 			},
-			expected: expected{statusCode: http.StatusOK, body: `{"loadbalancer":{"method":"wrr","passHostHeader":false}}`},
-		},
-		{
-			desc: "Service not found",
-			path: "/api/providers/foo/services/bar",
-			configuration: config.Configurations{
-				"foo": {},
+
+			expected: expected{
+				statusCode: http.StatusOK,
+				json:       "testdata/getrawdata.json",
 			},
-			expected: expected{statusCode: http.StatusNotFound, body: "404 page not found\n"},
-		},
-		{
-			desc: "Get all middlewares",
-			path: "/api/providers/foo/middlewares",
-			configuration: config.Configurations{
-				"foo": {
-					HTTP: &config.HTTPConfiguration{
-						Middlewares: map[string]*config.Middleware{
-							"bar": {
-								AddPrefix: &config.AddPrefix{Prefix: "bar"},
-							},
-						},
-					},
-				},
-			},
-			expected: expected{statusCode: http.StatusOK, body: `[{"addPrefix":{"prefix":"bar"},"id":"bar"}]`},
-		},
-		{
-			desc: "Get a middleware",
-			path: "/api/providers/foo/middlewares/bar",
-			configuration: config.Configurations{
-				"foo": {
-					HTTP: &config.HTTPConfiguration{
-						Middlewares: map[string]*config.Middleware{
-							"bar": {
-								AddPrefix: &config.AddPrefix{Prefix: "bar"},
-							},
-						},
-					},
-				},
-			},
-			expected: expected{statusCode: http.StatusOK, body: `{"addPrefix":{"prefix":"bar"}}`},
-		},
-		{
-			desc: "Middleware not found",
-			path: "/api/providers/foo/middlewares/bar",
-			configuration: config.Configurations{
-				"foo": {},
-			},
-			expected: expected{statusCode: http.StatusNotFound, body: "404 page not found\n"},
 		},
 	}
 
@@ -198,15 +134,11 @@ func TestHandler_Configuration(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			currentConfiguration := &safe.Safe{}
-			currentConfiguration.Set(test.configuration)
-
-			handler := Handler{
-				CurrentConfigurations: currentConfiguration,
-			}
-
+			rtConf := &test.conf
+			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
 			router := mux.NewRouter()
 			handler.Append(router)
+			rtConf.PopulateUsedBy()
 
 			server := httptest.NewServer(router)
 
@@ -215,12 +147,30 @@ func TestHandler_Configuration(t *testing.T) {
 
 			assert.Equal(t, test.expected.statusCode, resp.StatusCode)
 
-			content, err := ioutil.ReadAll(resp.Body)
+			contents, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
+
 			err = resp.Body.Close()
 			require.NoError(t, err)
 
-			assert.Equal(t, test.expected.body, string(content))
+			if test.expected.json == "" {
+				return
+			}
+			if *updateExpected {
+				var rtRepr RunTimeRepresentation
+				err := json.Unmarshal(contents, &rtRepr)
+				require.NoError(t, err)
+
+				newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
+				require.NoError(t, err)
+
+				err = ioutil.WriteFile(test.expected.json, newJSON, 0644)
+				require.NoError(t, err)
+			}
+
+			data, err := ioutil.ReadFile(test.expected.json)
+			require.NoError(t, err)
+			assert.JSONEq(t, string(data), string(contents))
 		})
 	}
 }

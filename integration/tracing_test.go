@@ -59,6 +59,10 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	c.Assert(err, checker.IsNil)
+
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
@@ -106,6 +110,10 @@ func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	c.Assert(err, checker.IsNil)
+
 	err = try.GetRequest("http://127.0.0.1:8000/retry", 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
 	c.Assert(err, checker.IsNil)
 
@@ -128,6 +136,10 @@ func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
 	c.Assert(err, checker.IsNil)

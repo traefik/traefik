@@ -275,33 +275,39 @@ func TestManager_Build(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		serviceName  string
-		configs      map[string]*config.Service
+		configs      map[string]*config.ServiceInfo
 		providerName string
 	}{
 		{
 			desc:        "Simple service name",
 			serviceName: "serviceName",
-			configs: map[string]*config.Service{
+			configs: map[string]*config.ServiceInfo{
 				"serviceName": {
-					LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+					Service: &config.Service{
+						LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+					},
 				},
 			},
 		},
 		{
 			desc:        "Service name with provider",
 			serviceName: "provider-1.serviceName",
-			configs: map[string]*config.Service{
+			configs: map[string]*config.ServiceInfo{
 				"provider-1.serviceName": {
-					LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+					Service: &config.Service{
+						LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+					},
 				},
 			},
 		},
 		{
 			desc:        "Service name with provider in context",
 			serviceName: "serviceName",
-			configs: map[string]*config.Service{
+			configs: map[string]*config.ServiceInfo{
 				"provider-1.serviceName": {
-					LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+					Service: &config.Service{
+						LoadBalancer: &config.LoadBalancerService{Method: "wrr"},
+					},
 				},
 			},
 			providerName: "provider-1",
