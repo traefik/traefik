@@ -147,12 +147,14 @@ _Optional, Default=false_
 Traefik routes requests to the IP/Port of the matching container.
 When setting `usebindportip=true`, you tell Traefik to use the IP/Port attached to the container's _binding_ instead of its inner network IP/Port.
 
-When used in conjunction with the `traefik.port` label (that tells Traefik to route requests to a specific port), Traefik tries to find a binding on port `traefik.port`.
-If it can't find such a binding, Traefik falls back on the internal network IP of the container, but still uses the `traefik.port` that is set in the label.
+When used in conjunction with the `traefik.http.services.XXX.loadbalancer.server.port` label (that tells Traefik to route requests to a specific port),
+Traefik tries to find a binding on port `traefik.http.services.XXX.loadbalancer.server.port`.
+If it can't find such a binding, Traefik falls back on the internal network IP of the container,
+but still uses the `traefik.http.services.XXX.loadbalancer.server.port` that is set in the label.
 
 ??? example "Examples of `usebindportip` in different situations."
 
-    | traefik.port label | Container's binding                                | Routes to      |
+    | port label         | Container's binding                                | Routes to      |
     |--------------------|----------------------------------------------------|----------------|
     |          -         |           -                                        | IntIP:IntPort  |
     |          -         | ExtPort:IntPort                                    | IntIP:IntPort  |
