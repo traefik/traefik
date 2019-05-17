@@ -18,7 +18,12 @@ type RouteTCP struct {
 }
 
 // TLSTCP contains the TLS certificates configuration of the routes. To enable
-// Let's Encrypt, set a SecretName with an empty value.
+// Let's Encrypt, use an empty TLS struct, e.g. in YAML:
+//
+// tls: {} # inline format
+//
+// tls:
+//   secretName: # block format
 type TLSTCP struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.

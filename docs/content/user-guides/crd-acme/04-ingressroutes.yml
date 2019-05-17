@@ -26,5 +26,5 @@ spec:
     services:
     - name: whoami
       port: 80
-  tls:
-    secretName: ""
+  # Please note the use of an empty TLS object to enable TLS with Let's Encrypt.
+  tls: {}

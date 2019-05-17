@@ -82,6 +82,7 @@ spec:
       middlewares:
         - name: stripprefix
         - name: addprefix
+  # use an empty tls object for TLS with Let's Encrypt
   tls:
     secretName: supersecret
 

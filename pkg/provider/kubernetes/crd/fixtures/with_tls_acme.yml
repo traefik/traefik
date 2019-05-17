@@ -16,5 +16,4 @@ spec:
     - name: whoami
       port: 80
 
-  tls:
-    secretName:
+  tls: {}
