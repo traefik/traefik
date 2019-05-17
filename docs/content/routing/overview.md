@@ -3,7 +3,7 @@
 What's Happening to the Requests?
 {: .subtitle }
 
-Let's zoom on Traefik's architecture and talk about the components that enable the routes to be created.
+Let's zoom in on Traefik's architecture and talk about the components that enable the routes to be created.
 
 First, when you start Traefik, you define [entrypoints](../entrypoints) (in their most basic forms, they are port numbers).
 Then, connected to these entrypoints, [routers](../routers) analyze the incoming requests to see if they match a set of [rules](../routers#rule).
