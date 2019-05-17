@@ -9,7 +9,7 @@ Traefik Web UI provide 2 types of informations:
 - Providers with their backends and frontends information.
 - Health of the web server.
 
-## How to build (for backends developer)
+## How to build (for backend developer)
 
 Use the make file :
 
@@ -18,7 +18,7 @@ make build           # Generate Docker image
 make generate-webui  # Generate static contents in `traefik/static/` folder.
 ```
 
-## How to build (only for frontends developer)
+## How to build (only for frontend developer)
 
 - prerequisite: [Node 6+](https://nodejs.org) [yarn](https://yarnpkg.com/)
 
@@ -47,7 +47,7 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
   - all images will be optimized at build
   - bundle JavaScript in one file
 
-## How to edit (only for frontends developer)
+## How to edit (only for frontend developer)
 
 **Don't change manually the files in the directory `static`**
 
