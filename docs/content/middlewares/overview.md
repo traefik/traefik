@@ -123,7 +123,7 @@ If you use multiple `providers` and wish to reference a middleware declared in a
 
         labels:
           # Attach file.add-foo-prefix middleware (declared in file)
-          - "traefik.http.routers.middlewares=file.add-foo-prefix"
+          - "traefik.http.routers.my-container.middlewares=file.add-foo-prefix"
     ```
 
 ## Available Middlewares
