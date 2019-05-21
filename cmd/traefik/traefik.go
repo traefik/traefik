@@ -377,7 +377,7 @@ func checkNewVersion() {
 func stats(staticConfiguration *static.Configuration) {
 	if staticConfiguration.Global.SendAnonymousUsage == nil {
 		log.WithoutContext().Error(`
-You haven't specify the sendAnonymousUsage option, it will be enable by default.
+You haven't specified the sendAnonymousUsage option, it will be enabled by default.
 `)
 		sendAnonymousUsage := true
 		staticConfiguration.Global.SendAnonymousUsage = &sendAnonymousUsage
