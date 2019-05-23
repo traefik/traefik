@@ -1838,7 +1838,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c878a802780168c80738d74607d14e7cb8765706990ae1260a3fd271c2c3b133"
+  digest = "1:86f14aadf288fe3ad8ac060bcb2b5083cec3829dd883803486ec834d031060c9"
   name = "github.com/vulcand/oxy"
   packages = [
     "buffer",
@@ -1851,7 +1851,7 @@
     "utils",
   ]
   pruneopts = "NUT"
-  revision = "c34b0c501e43223bc816ac9b40b0ac29c44c8952"
+  revision = "0d102f45103cf49a95b5c6e810e092973cbcb68c"
 
 [[projects]]
   digest = "1:ca6bac407fedc14fbeeba861dd33a821ba3a1624c10126ec6003b0a28d4139c5"
