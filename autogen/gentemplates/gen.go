@@ -1316,7 +1316,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
 
     {{if $backend.ResponseForwarding }}
     [backends."{{ $backendName }}".responseForwarding]
-      flushInterval = "{{ $backend.responseForwarding.FlushInterval }}"
+      flushInterval = "{{ $backend.ResponseForwarding.FlushInterval }}"
     {{end}}
 
     [backends."{{ $backendName }}".loadBalancer]
