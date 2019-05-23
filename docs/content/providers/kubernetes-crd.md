@@ -151,7 +151,7 @@ That `IngressRoute` kind can then be used to define an `IngressRoute` object, su
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingressroutefoo.crd
+  name: ingressroutefoo
 
 spec:
   entryPoints:
