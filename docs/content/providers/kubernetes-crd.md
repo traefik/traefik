@@ -197,7 +197,7 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingressroutebar.crd
+  name: ingressroutebar
 
 spec:
   entryPoints:
@@ -232,7 +232,7 @@ data:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingressroutetls.crd
+  name: ingressroutetls
 
 spec:
   entryPoints:

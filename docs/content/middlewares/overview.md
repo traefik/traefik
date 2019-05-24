@@ -50,7 +50,7 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingressroute.crd
+  name: ingressroute
 spec:
 # more fields...
   routes:
