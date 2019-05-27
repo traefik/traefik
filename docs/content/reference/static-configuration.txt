@@ -41,9 +41,8 @@
 --api.statistics                                            Enable more detailed statistics                                                 (default "true")
 --api.statistics.recenterrors                               Number of recent errors logged                                                  (default "10")
 -c, --configfile                                            Configuration file to use (TOML).
---entrypoints                                               Entrypoints definition using format: --entryPoints='Name:http Address::8000     (default "map[]")
-                                                            Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442
-                                                            TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'
+--entrypoints                                               Entrypoints definition using format: --entryPoints='Name:http Address::8000'    (default "map[]")
+                                                            --entryPoints='Name:https Address::4442'
 --global                                                    Global configuration options                                                    (default "true")
 --global.checknewversion                                    Periodically check if a new version has been released                           (default "true")
 -d, --global.debug                                          Enable debug mode                                                               (default "false")

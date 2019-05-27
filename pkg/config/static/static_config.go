@@ -48,7 +48,7 @@ type Configuration struct {
 	Global *Global `description:"Global configuration options" export:"true"`
 
 	ServersTransport *ServersTransport `description:"Servers default transport" export:"true"`
-	EntryPoints      EntryPoints       `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'" export:"true"`
+	EntryPoints      EntryPoints       `description:"Entry points definition using format: --entryPoints='Name:http Address::8000' --entryPoints='Name:https Address::4442'" export:"true"`
 	Providers        *Providers        `description:"Providers configuration" export:"true"`
 
 	API     *API           `description:"Enable api/dashboard" export:"true"`
