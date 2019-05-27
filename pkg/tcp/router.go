@@ -27,6 +27,11 @@ type Router struct {
 func (r *Router) ServeTCP(conn net.Conn) {
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
 
+	if r.catchAllNoTLS != nil && len(r.routingTable) == 0 && r.httpsHandler == nil {
+		r.catchAllNoTLS.ServeTCP(conn)
+		return
+	}
+
 	br := bufio.NewReader(conn)
 	serverName, tls, peeked := clientHelloServerName(br)
 	if !tls {

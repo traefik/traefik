@@ -30,3 +30,9 @@ whoami:
   image: containous/whoami
   ports:
     - "8085:80"
+
+whoami-banner:
+  image: containous/whoamitcp
+  command: -name whoami-banner --banner
+  ports:
+    - "8086:8080"
