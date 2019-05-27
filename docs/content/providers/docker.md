@@ -248,7 +248,7 @@ You can declare pieces of middleware using labels starting with `traefik.http.mi
            # ...
            labels:
              - traefik.http.middlewares.my-redirect.schemeredirect.scheme=https
-             - traefik.http.routers.middlewares=my-redirect
+             - traefik.http.routers.my-container.middlewares=my-redirect
     ```
 
 !!! warning "Conflicts in Declaration"

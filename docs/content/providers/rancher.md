@@ -163,7 +163,7 @@ For example, to declare a middleware [`schemeredirect`](../middlewares/redirects
     # ...
     labels:
      - traefik.http.middlewares.my-redirect.schemeredirect.scheme=https
-     - traefik.http.routers.middlewares=my-redirect
+     - traefik.http.routers.my-container.middlewares=my-redirect
     ```
 
 !!! warning "Conflicts in Declaration"
