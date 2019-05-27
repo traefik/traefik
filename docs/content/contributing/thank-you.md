@@ -20,7 +20,7 @@ So once again, thank you for your invaluable help on making Traefik such a good 
       the page [Building and Testing](./building-testing.md) is for you.
     - Contribute to the documentation,
       read the related page [Documentation](./documentation.md).
-    - Understand how we we learn about Traefik usage,
+    - Understand how do we learn about Traefik usage,
       read the [Data Collection](./data-collection.md) page.
     - Spread the love about Traefik, please check the [Advocating](./advocating.md) page.
     - Learn about who are the maintainers and how they work on the project,
