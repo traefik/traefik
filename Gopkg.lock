@@ -735,7 +735,7 @@
   revision = "73d445a93680fa1a78ae23a5839bad48f32ba1ee"
 
 [[projects]]
-  digest = "1:68a7713d996a30a8394715220e779bbcbc880a18b1e0ab0e12fd1fbbf9c711e6"
+  digest = "1:d82b2dc81c551e7c15f31523a2cc8ee9121b39cfbf63174d98a0bc8edf2d3c5e"
   name = "github.com/go-acme/lego"
   packages = [
     "acme",
@@ -759,6 +759,7 @@
     "providers/dns/alidns",
     "providers/dns/auroradns",
     "providers/dns/azure",
+    "providers/dns/bindman",
     "providers/dns/bluecat",
     "providers/dns/cloudflare",
     "providers/dns/cloudns",
@@ -777,6 +778,7 @@
     "providers/dns/dreamhost",
     "providers/dns/duckdns",
     "providers/dns/dyn",
+    "providers/dns/easydns",
     "providers/dns/exec",
     "providers/dns/exoscale",
     "providers/dns/fastdns",
@@ -789,6 +791,7 @@
     "providers/dns/httpreq",
     "providers/dns/iij",
     "providers/dns/inwx",
+    "providers/dns/joker",
     "providers/dns/lightsail",
     "providers/dns/linode",
     "providers/dns/linodev4",
@@ -820,8 +823,8 @@
     "registration",
   ]
   pruneopts = "NUT"
-  revision = "3d13faf68920543a393ad6cdfdea429627af2d34"
-  version = "v2.5.0"
+  revision = "01903cdfb9869df45cf5274c53226823a2532f2d"
+  version = "v2.6.0"
 
 [[projects]]
   branch = "fork-containous"
@@ -831,6 +834,14 @@
   pruneopts = "NUT"
   revision = "ca0bf163426aa183d03fd4949101785c0347f273"
   source = "github.com/containous/check"
+
+[[projects]]
+  digest = "1:ea1d5bfdb4ec5c2ee48c97865e6de1a28fa8c4849a3f56b27d521aa619038e06"
+  name = "github.com/go-errors/errors"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "a6af135bd4e28680facf08a3d206b454abc877a4"
+  version = "v1.0.1"
 
 [[projects]]
   digest = "1:5e92676b56ce4c69edf9ee1f6343c56f637e30af11b9d8b5edd1b6530f3fbc3d"
@@ -1217,6 +1228,25 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
+
+[[projects]]
+  digest = "1:1082aeb059ff66b4fb6da53f9e7591726c6a81901f05ce48a470091784b23914"
+  name = "github.com/labbsr0x/bindman-dns-webhook"
+  packages = [
+    "src/client",
+    "src/types",
+  ]
+  pruneopts = "NUT"
+  revision = "234ca2a50eebc2095f42a884709a6e9013366d86"
+  version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:ad2a63b2d6dfe7d66bf14c01f1171a3951abef6e0fb136170359c3f7c4f51615"
+  name = "github.com/labbsr0x/goh"
+  packages = ["gohclient"]
+  pruneopts = "NUT"
+  revision = "94bcf1cb07b70b26b72ad54b2b050bcd0a66a9c8"
 
 [[projects]]
   branch = "master"

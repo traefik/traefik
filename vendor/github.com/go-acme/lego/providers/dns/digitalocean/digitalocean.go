@@ -88,7 +88,7 @@ func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
-	respData, err := d.addTxtRecord(domain, fqdn, value)
+	respData, err := d.addTxtRecord(fqdn, value)
 	if err != nil {
 		return fmt.Errorf("digitalocean: %v", err)
 	}
@@ -104,6 +104,11 @@ func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
+	authZone, err := dns01.FindZoneByFqdn(fqdn)
+	if err != nil {
+		return fmt.Errorf("digitalocean: %v", err)
+	}
+
 	// get the record's unique ID from when we created it
 	d.recordIDsMu.Lock()
 	recordID, ok := d.recordIDs[fqdn]
@@ -112,7 +117,7 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 		return fmt.Errorf("digitalocean: unknown record ID for '%s'", fqdn)
 	}
 
-	err := d.removeTxtRecord(domain, recordID)
+	err = d.removeTxtRecord(authZone, recordID)
 	if err != nil {
 		return fmt.Errorf("digitalocean: %v", err)
 	}
