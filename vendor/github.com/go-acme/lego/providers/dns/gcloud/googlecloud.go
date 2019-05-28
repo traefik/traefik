@@ -156,7 +156,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
-	zone, err := d.getHostedZone(domain)
+	zone, err := d.getHostedZone(fqdn)
 	if err != nil {
 		return fmt.Errorf("googlecloud: %v", err)
 	}
@@ -264,7 +264,7 @@ func (d *DNSProvider) applyChanges(zone string, change *dns.Change) error {
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
-	zone, err := d.getHostedZone(domain)
+	zone, err := d.getHostedZone(fqdn)
 	if err != nil {
 		return fmt.Errorf("googlecloud: %v", err)
 	}
@@ -311,7 +311,7 @@ func (d *DNSProvider) getHostedZone(domain string) (string, error) {
 	}
 
 	for _, z := range zones.ManagedZones {
-		if z.Visibility == "public" {
+		if z.Visibility == "public" || z.Visibility == "" {
 			return z.Name, nil
 		}
 	}
