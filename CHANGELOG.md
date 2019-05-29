@@ -1,5 +1,21 @@
 # Change Log
 
+## [v1.7.12](https://github.com/containous/traefik/tree/v1.7.12) (2019-05-29)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.11...v1.7.12)
+
+**Bug fixes:**
+- **[acme]** Allow SANs for wildcards domain. ([#4821](https://github.com/containous/traefik/pull/4821) by [vizv](https://github.com/vizv))
+- **[acme]** fix: update lego. ([#4910](https://github.com/containous/traefik/pull/4910) by [ldez](https://github.com/ldez))
+- **[api,authentication]** Remove authentication hashes from API ([#4918](https://github.com/containous/traefik/pull/4918) by [ldez](https://github.com/ldez))
+- **[consul]** Enhance KV logs. ([#4877](https://github.com/containous/traefik/pull/4877) by [ldez](https://github.com/ldez))
+- **[k8s]** Fix kubernetes template for backend responseforwarding flushinterval setting ([#4901](https://github.com/containous/traefik/pull/4901) by [ravilr](https://github.com/ravilr))
+- **[metrics]** Upgraded DataDog tracing library to 1.13.0 ([#4878](https://github.com/containous/traefik/pull/4878) by [aantono](https://github.com/aantono))
+- **[server]** Add missing callback on close of hijacked connections ([#4900](https://github.com/containous/traefik/pull/4900) by [ravilr](https://github.com/ravilr))
+
+**Documentation:**
+- **[docker]** Docs: Troubleshooting help for Docker Swarm labels ([#4751](https://github.com/containous/traefik/pull/4751) by [gregberns](https://github.com/gregberns))
+- **[logs]** Adds a log fields documentation. ([#4890](https://github.com/containous/traefik/pull/4890) by [ldez](https://github.com/ldez))
+
 ## [v1.7.11](https://github.com/containous/traefik/tree/v1.7.11) (2019-04-26)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.10...v1.7.11)
 
