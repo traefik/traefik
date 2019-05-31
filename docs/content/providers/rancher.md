@@ -1,4 +1,4 @@
-# Traefik & Rancher 1.x
+# Traefik & Rancher
 
 A Story of Labels, Services & Containers
 {: .subtitle }
