@@ -7,7 +7,7 @@ A Story of Labels, Services & Containers
 
 Attach labels to your services and let Traefik do the rest!
 
-Note: This provider is specific to Rancher 1.x. Rancher 2.x requires Kubernetes and does not have a metadata endpoint of its own for Traefik to query. As such, Rancher 2.x users should utilize the [Kubernetes provider](../kubernetes-crd/index.md) directly.
+Note: This provider is specific to Rancher 1.x. Rancher 2.x requires Kubernetes and does not have a metadata endpoint of its own for Traefik to query. As such, Rancher 2.x users should utilize the [Kubernetes provider](./kubernetes-crd.md) directly.
 
 ## Configuration Examples
 
