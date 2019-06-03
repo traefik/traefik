@@ -139,7 +139,7 @@ Here is the [docker-compose file](https://docs.docker.com/compose/compose-file/)
 
 ```yaml
 traefik:
-  image: traefik
+  image: traefik:<stable version from https://hub.docker.com/_/traefik>
   command: --consul --consul.endpoint=127.0.0.1:8500
   ports:
     - "80:80"
