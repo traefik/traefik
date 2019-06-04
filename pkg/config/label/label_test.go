@@ -162,9 +162,11 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.tcp.routers.Router0.entrypoints":                                      "foobar, fiibar",
 		"traefik.tcp.routers.Router0.service":                                          "foobar",
 		"traefik.tcp.routers.Router0.tls.passthrough":                                  "false",
+		"traefik.tcp.routers.Router0.tls.options":                                      "foo",
 		"traefik.tcp.routers.Router1.rule":                                             "foobar",
 		"traefik.tcp.routers.Router1.entrypoints":                                      "foobar, fiibar",
 		"traefik.tcp.routers.Router1.service":                                          "foobar",
+		"traefik.tcp.routers.Router1.tls.options":                                      "foo",
 		"traefik.tcp.routers.Router1.tls.passthrough":                                  "false",
 		"traefik.tcp.services.Service0.loadbalancer.server.Port":                       "42",
 		"traefik.tcp.services.Service1.loadbalancer.server.Port":                       "42",
@@ -185,6 +187,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					Rule:    "foobar",
 					TLS: &config.RouterTCPTLSConfig{
 						Passthrough: false,
+						Options:     "foo",
 					},
 				},
 				"Router1": {
@@ -196,6 +199,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					Rule:    "foobar",
 					TLS: &config.RouterTCPTLSConfig{
 						Passthrough: false,
+						Options:     "foo",
 					},
 				},
 			},
@@ -580,6 +584,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					Rule:    "foobar",
 					TLS: &config.RouterTCPTLSConfig{
 						Passthrough: false,
+						Options:     "foo",
 					},
 				},
 				"Router1": {
@@ -591,6 +596,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					Rule:    "foobar",
 					TLS: &config.RouterTCPTLSConfig{
 						Passthrough: false,
+						Options:     "foo",
 					},
 				},
 			},
@@ -1110,10 +1116,12 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.TCP.Routers.Router0.EntryPoints":                "foobar, fiibar",
 		"traefik.TCP.Routers.Router0.Service":                    "foobar",
 		"traefik.TCP.Routers.Router0.TLS.Passthrough":            "false",
+		"traefik.TCP.Routers.Router0.TLS.Options":                "foo",
 		"traefik.TCP.Routers.Router1.Rule":                       "foobar",
 		"traefik.TCP.Routers.Router1.EntryPoints":                "foobar, fiibar",
 		"traefik.TCP.Routers.Router1.Service":                    "foobar",
 		"traefik.TCP.Routers.Router1.TLS.Passthrough":            "false",
+		"traefik.TCP.Routers.Router1.TLS.Options":                "foo",
 		"traefik.TCP.Services.Service0.LoadBalancer.server.Port": "42",
 		"traefik.TCP.Services.Service1.LoadBalancer.server.Port": "42",
 	}

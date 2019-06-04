@@ -1,0 +1,64 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web-secure]
+  address = ":4443"
+
+[api]
+
+[providers]
+   [providers.file]
+
+[http.routers]
+  [http.routers.router1]
+    Service = "service1"
+    Rule = "Host(`snitest.com`)"
+    [http.routers.router1.tls]
+      options = "foo"
+
+  [http.routers.router2]
+    Service = "service2"
+    Rule = "Host(`snitest.org`)"
+    [http.routers.router2.tls]
+      options = "bar"
+
+  [http.routers.router3]
+    Service = "service2"
+    Rule = "Host(`snitest.org`)"
+    [http.routers.router3.tls]
+      options = "unknown"
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
+      [[http.services.service1.LoadBalancer.Servers]]
+        URL = "http://127.0.0.1:9010"
+        Weight = 1
+
+  [http.services.service2]
+    [http.services.service2.LoadBalancer]
+      [[http.services.service2.LoadBalancer.Servers]]
+        URL = "http://127.0.0.1:9020"
+        Weight = 1
+
+
+[[tls]]
+  [tls.certificate]
+     certFile = "fixtures/https/snitest.com.cert"
+     keyFile = "fixtures/https/snitest.com.key"
+
+[[tls]]
+  [tls.certificate]
+     certFile = "fixtures/https/snitest.org.cert"
+     keyFile = "fixtures/https/snitest.org.key"
+
+[tlsoptions.foo]
+    minversion = "VersionTLS11"
+
+[tlsoptions.bar]
+    minversion = "VersionTLS12"

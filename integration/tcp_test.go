@@ -70,6 +70,38 @@ func (s *TCPSuite) TestMixed(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *TCPSuite) TestTLSOptions(c *check.C) {
+	file := s.adaptFile(c, "fixtures/tcp/multi-tls-options.toml", struct {
+	}{})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-c.test`)"))
+	c.Assert(err, checker.IsNil)
+
+	// Check that we can use a client tls version <= 1.1 with hostSNI 'whoami-c.test'
+	out, err := guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-c.test", true, tls.VersionTLS11)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "whoami-no-cert")
+
+	// Check that we can use a client tls version <= 1.2 with hostSNI 'whoami-d.test'
+	out, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS12)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "whoami-no-cert")
+
+	// Check that we cannot use a client tls version <= 1.1 with hostSNI 'whoami-d.test'
+	_, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS11)
+	c.Assert(err, checker.NotNil)
+	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
+
+}
+
 func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
 	file := s.adaptFile(c, "fixtures/tcp/non-tls-fallback.toml", struct{}{})
 	defer os.Remove(file)
@@ -191,11 +223,21 @@ func welcome(addr string) (string, error) {
 }
 
 func guessWho(addr, serverName string, tlsCall bool) (string, error) {
+	return guessWhoTLSMaxVersion(addr, serverName, tlsCall, 0)
+}
+
+func guessWhoTLSMaxVersion(addr, serverName string, tlsCall bool, tlsMaxVersion uint16) (string, error) {
 	var conn net.Conn
 	var err error
 
 	if tlsCall {
-		conn, err = tls.Dial("tcp", addr, &tls.Config{ServerName: serverName, InsecureSkipVerify: true})
+
+		conn, err = tls.Dial("tcp", addr, &tls.Config{
+			ServerName:         serverName,
+			InsecureSkipVerify: true,
+			MinVersion:         0,
+			MaxVersion:         tlsMaxVersion,
+		})
 	} else {
 		tcpAddr, err2 := net.ResolveTCPAddr("tcp", addr)
 		if err2 != nil {

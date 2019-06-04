@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"net/http"
 	"reflect"
@@ -71,20 +70,21 @@ func (s *Server) loadConfigurationTCP(configurations config.Configurations) map[
 
 	rtConf := config.NewRuntimeConfig(conf)
 	handlersNonTLS, handlersTLS := s.createHTTPHandlers(ctx, rtConf, entryPoints)
-	routersTCP := s.createTCPRouters(ctx, rtConf, entryPoints, handlersNonTLS, handlersTLS, s.tlsManager.Get("default", "default"))
+	routersTCP := s.createTCPRouters(ctx, rtConf, entryPoints, handlersNonTLS, handlersTLS)
 	rtConf.PopulateUsedBy()
 
 	return routersTCP
 }
 
 // the given configuration must not be nil. its fields will get mutated.
-func (s *Server) createTCPRouters(ctx context.Context, configuration *config.RuntimeConfiguration, entryPoints []string, handlers map[string]http.Handler, handlersTLS map[string]http.Handler, tlsConfig *tls.Config) map[string]*tcpCore.Router {
+func (s *Server) createTCPRouters(ctx context.Context, configuration *config.RuntimeConfiguration, entryPoints []string, handlers map[string]http.Handler, handlersTLS map[string]http.Handler) map[string]*tcpCore.Router {
 	if configuration == nil {
 		return make(map[string]*tcpCore.Router)
 	}
 
 	serviceManager := tcp.NewManager(configuration)
-	routerManager := routertcp.NewManager(configuration, serviceManager, handlers, handlersTLS, tlsConfig)
+
+	routerManager := routertcp.NewManager(configuration, serviceManager, handlers, handlersTLS, s.tlsManager)
 
 	return routerManager.BuildHandlers(ctx, entryPoints)
 }

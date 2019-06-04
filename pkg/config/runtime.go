@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"sort"
 	"strings"
 	"sync"
@@ -126,6 +127,74 @@ func (r *RuntimeConfiguration) PopulateUsedBy() {
 	for k := range r.TCPServices {
 		sort.Strings(r.TCPServices[k].UsedBy)
 	}
+}
+
+func contains(entryPoints []string, entryPointName string) bool {
+	for _, name := range entryPoints {
+		if name == entryPointName {
+			return true
+		}
+	}
+	return false
+}
+
+// GetRoutersByEntrypoints returns all the http routers by entrypoints name and routers name
+func (r *RuntimeConfiguration) GetRoutersByEntrypoints(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*RouterInfo {
+	entryPointsRouters := make(map[string]map[string]*RouterInfo)
+
+	for rtName, rt := range r.Routers {
+		if (tls && rt.TLS == nil) || (!tls && rt.TLS != nil) {
+			continue
+		}
+
+		eps := rt.EntryPoints
+		if len(eps) == 0 {
+			eps = entryPoints
+		}
+		for _, entryPointName := range eps {
+			if !contains(entryPoints, entryPointName) {
+				log.FromContext(log.With(ctx, log.Str(log.EntryPointName, entryPointName))).
+					Errorf("entryPoint %q doesn't exist", entryPointName)
+				continue
+			}
+
+			if _, ok := entryPointsRouters[entryPointName]; !ok {
+				entryPointsRouters[entryPointName] = make(map[string]*RouterInfo)
+			}
+
+			entryPointsRouters[entryPointName][rtName] = rt
+		}
+	}
+
+	return entryPointsRouters
+}
+
+// GetTCPRoutersByEntrypoints returns all the tcp routers by entrypoints name and routers name
+func (r *RuntimeConfiguration) GetTCPRoutersByEntrypoints(ctx context.Context, entryPoints []string) map[string]map[string]*TCPRouterInfo {
+	entryPointsRouters := make(map[string]map[string]*TCPRouterInfo)
+
+	for rtName, rt := range r.TCPRouters {
+		eps := rt.EntryPoints
+		if len(eps) == 0 {
+			eps = entryPoints
+		}
+
+		for _, entryPointName := range eps {
+			if !contains(entryPoints, entryPointName) {
+				log.FromContext(log.With(ctx, log.Str(log.EntryPointName, entryPointName))).
+					Errorf("entryPoint %q doesn't exist", entryPointName)
+				continue
+			}
+
+			if _, ok := entryPointsRouters[entryPointName]; !ok {
+				entryPointsRouters[entryPointName] = make(map[string]*TCPRouterInfo)
+			}
+
+			entryPointsRouters[entryPointName][rtName] = rt
+		}
+	}
+
+	return entryPointsRouters
 }
 
 // RouterInfo holds information about a currently running HTTP router

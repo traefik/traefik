@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/containous/traefik/pkg/config"
@@ -687,4 +688,400 @@ func TestPopulateUsedby(t *testing.T) {
 		})
 	}
 
+}
+
+func TestGetTCPRoutersByEntrypoints(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		conf        config.Configuration
+		entryPoints []string
+		expected    map[string]map[string]*config.TCPRouterInfo
+	}{
+		{
+			desc:        "Empty Configuration without entrypoint",
+			conf:        config.Configuration{},
+			entryPoints: []string{""},
+			expected:    map[string]map[string]*config.TCPRouterInfo{},
+		},
+		{
+			desc:        "Empty Configuration with unknown entrypoints",
+			conf:        config.Configuration{},
+			entryPoints: []string{"foo"},
+			expected:    map[string]map[string]*config.TCPRouterInfo{},
+		},
+		{
+			desc: "Valid configuration with an unknown entrypoint",
+			conf: config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "Host(`bar.foo`)",
+						},
+					},
+				},
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "HostSNI(`bar.foo`)",
+						},
+					},
+				},
+			},
+			entryPoints: []string{"foo"},
+			expected:    map[string]map[string]*config.TCPRouterInfo{},
+		},
+		{
+			desc: "Valid configuration with a known entrypoint",
+			conf: config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "Host(`bar.foo`)",
+						},
+						"bar": {
+							EntryPoints: []string{"webs"},
+							Service:     "myprovider.bar-service",
+							Rule:        "Host(`foo.bar`)",
+						},
+						"foobar": {
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "Host(`bar.foobar`)",
+						},
+					},
+				},
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "HostSNI(`bar.foo`)",
+						},
+						"bar": {
+							EntryPoints: []string{"webs"},
+							Service:     "myprovider.bar-service",
+							Rule:        "HostSNI(`foo.bar`)",
+						},
+						"foobar": {
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "HostSNI(`bar.foobar`)",
+						},
+					},
+				},
+			},
+			entryPoints: []string{"web"},
+			expected: map[string]map[string]*config.TCPRouterInfo{
+				"web": {
+					"foo": {
+						TCPRouter: &config.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "HostSNI(`bar.foo`)",
+						},
+					},
+					"foobar": {
+						TCPRouter: &config.TCPRouter{
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "HostSNI(`bar.foobar`)",
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Valid configuration with multiple known entrypoints",
+			conf: config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "Host(`bar.foo`)",
+						},
+						"bar": {
+							EntryPoints: []string{"webs"},
+							Service:     "myprovider.bar-service",
+							Rule:        "Host(`foo.bar`)",
+						},
+						"foobar": {
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "Host(`bar.foobar`)",
+						},
+					},
+				},
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "HostSNI(`bar.foo`)",
+						},
+						"bar": {
+							EntryPoints: []string{"webs"},
+							Service:     "myprovider.bar-service",
+							Rule:        "HostSNI(`foo.bar`)",
+						},
+						"foobar": {
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "HostSNI(`bar.foobar`)",
+						},
+					},
+				},
+			},
+			entryPoints: []string{"web", "webs"},
+			expected: map[string]map[string]*config.TCPRouterInfo{
+				"web": {
+					"foo": {
+						TCPRouter: &config.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "HostSNI(`bar.foo`)",
+						},
+					},
+					"foobar": {
+						TCPRouter: &config.TCPRouter{
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "HostSNI(`bar.foobar`)",
+						},
+					},
+				},
+				"webs": {
+					"bar": {
+						TCPRouter: &config.TCPRouter{
+
+							EntryPoints: []string{"webs"},
+							Service:     "myprovider.bar-service",
+							Rule:        "HostSNI(`foo.bar`)",
+						},
+					},
+					"foobar": {
+						TCPRouter: &config.TCPRouter{
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "HostSNI(`bar.foobar`)",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			runtimeConfig := config.NewRuntimeConfig(test.conf)
+			actual := runtimeConfig.GetTCPRoutersByEntrypoints(context.Background(), test.entryPoints)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetRoutersByEntrypoints(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		conf        config.Configuration
+		entryPoints []string
+		expected    map[string]map[string]*config.RouterInfo
+	}{
+		{
+			desc:        "Empty Configuration without entrypoint",
+			conf:        config.Configuration{},
+			entryPoints: []string{""},
+			expected:    map[string]map[string]*config.RouterInfo{},
+		},
+		{
+			desc:        "Empty Configuration with unknown entrypoints",
+			conf:        config.Configuration{},
+			entryPoints: []string{"foo"},
+			expected:    map[string]map[string]*config.RouterInfo{},
+		},
+		{
+			desc: "Valid configuration with an unknown entrypoint",
+			conf: config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "Host(`bar.foo`)",
+						},
+					},
+				},
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "HostSNI(`bar.foo`)",
+						},
+					},
+				},
+			},
+			entryPoints: []string{"foo"},
+			expected:    map[string]map[string]*config.RouterInfo{},
+		},
+		{
+			desc: "Valid configuration with a known entrypoint",
+			conf: config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "Host(`bar.foo`)",
+						},
+						"bar": {
+							EntryPoints: []string{"webs"},
+							Service:     "myprovider.bar-service",
+							Rule:        "Host(`foo.bar`)",
+						},
+						"foobar": {
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "Host(`bar.foobar`)",
+						},
+					},
+				},
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "HostSNI(`bar.foo`)",
+						},
+						"bar": {
+							EntryPoints: []string{"webs"},
+							Service:     "myprovider.bar-service",
+							Rule:        "HostSNI(`foo.bar`)",
+						},
+						"foobar": {
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "HostSNI(`bar.foobar`)",
+						},
+					},
+				},
+			},
+			entryPoints: []string{"web"},
+			expected: map[string]map[string]*config.RouterInfo{
+				"web": {
+					"foo": {
+						Router: &config.Router{
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "Host(`bar.foo`)",
+						},
+					},
+					"foobar": {
+						Router: &config.Router{
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "Host(`bar.foobar`)",
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Valid configuration with multiple known entrypoints",
+			conf: config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "Host(`bar.foo`)",
+						},
+						"bar": {
+							EntryPoints: []string{"webs"},
+							Service:     "myprovider.bar-service",
+							Rule:        "Host(`foo.bar`)",
+						},
+						"foobar": {
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "Host(`bar.foobar`)",
+						},
+					},
+				},
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"foo": {
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "HostSNI(`bar.foo`)",
+						},
+						"bar": {
+							EntryPoints: []string{"webs"},
+							Service:     "myprovider.bar-service",
+							Rule:        "HostSNI(`foo.bar`)",
+						},
+						"foobar": {
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "HostSNI(`bar.foobar`)",
+						},
+					},
+				},
+			},
+			entryPoints: []string{"web", "webs"},
+			expected: map[string]map[string]*config.RouterInfo{
+				"web": {
+					"foo": {
+						Router: &config.Router{
+							EntryPoints: []string{"web"},
+							Service:     "myprovider.foo-service",
+							Rule:        "Host(`bar.foo`)",
+						},
+					},
+					"foobar": {
+						Router: &config.Router{
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "Host(`bar.foobar`)",
+						},
+					},
+				},
+				"webs": {
+					"bar": {
+						Router: &config.Router{
+
+							EntryPoints: []string{"webs"},
+							Service:     "myprovider.bar-service",
+							Rule:        "Host(`foo.bar`)",
+						},
+					},
+					"foobar": {
+						Router: &config.Router{
+							EntryPoints: []string{"web", "webs"},
+							Service:     "myprovider.foobar-service",
+							Rule:        "Host(`bar.foobar`)",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			runtimeConfig := config.NewRuntimeConfig(test.conf)
+			actual := runtimeConfig.GetRoutersByEntrypoints(context.Background(), test.entryPoints, false)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
 }

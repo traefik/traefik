@@ -14,13 +14,14 @@ import (
 
 // Router is a TCP router
 type Router struct {
-	routingTable   map[string]Handler
-	httpForwarder  Handler
-	httpsForwarder Handler
-	httpHandler    http.Handler
-	httpsHandler   http.Handler
-	httpsTLSConfig *tls.Config
-	catchAllNoTLS  Handler
+	routingTable      map[string]Handler
+	httpForwarder     Handler
+	httpsForwarder    Handler
+	httpHandler       http.Handler
+	httpsHandler      http.Handler
+	httpsTLSConfig    *tls.Config
+	catchAllNoTLS     Handler
+	hostHTTPTLSConfig map[string]*tls.Config
 }
 
 // ServeTCP forwards the connection to the right TCP/HTTP handler
@@ -84,6 +85,15 @@ func (r *Router) AddRouteTLS(sniHost string, target Handler, config *tls.Config)
 	})
 }
 
+// AddRouteHTTPTLS defines a handler for a given sniHost and sets the matching tlsConfig
+func (r *Router) AddRouteHTTPTLS(sniHost string, config *tls.Config) {
+	if r.hostHTTPTLSConfig == nil {
+		r.hostHTTPTLSConfig = map[string]*tls.Config{}
+	}
+	log.Debugf("add route %s with minversion %d", sniHost, config.MinVersion)
+	r.hostHTTPTLSConfig[sniHost] = config
+}
+
 // AddCatchAllNoTLS defines the fallback tcp handler
 func (r *Router) AddCatchAllNoTLS(handler Handler) {
 	r.catchAllNoTLS = handler
@@ -116,6 +126,10 @@ func (r *Router) HTTPForwarder(handler Handler) {
 
 // HTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler
 func (r *Router) HTTPSForwarder(handler Handler) {
+	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
+		r.AddRouteTLS(sniHost, handler, tlsConf)
+	}
+
 	r.httpsForwarder = &TLSHandler{
 		Next:   handler,
 		Config: r.httpsTLSConfig,
