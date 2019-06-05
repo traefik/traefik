@@ -94,7 +94,7 @@ func (s *Server) createHTTPHandlers(ctx context.Context, configuration *config.R
 	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper)
 	middlewaresBuilder := middleware.NewBuilder(configuration.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(configuration.Middlewares)
-	routerManager := router.NewManager(configuration.Routers, serviceManager, middlewaresBuilder, responseModifierFactory)
+	routerManager := router.NewManager(configuration, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 	handlersNonTLS := routerManager.BuildHandlers(ctx, entryPoints, false)
 	handlersTLS := routerManager.BuildHandlers(ctx, entryPoints, true)
