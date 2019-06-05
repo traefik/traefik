@@ -156,6 +156,8 @@ Services are the target for the router.
 
 ### TLS
 
+#### General
+
 When specifying a TLS section, you tell Traefik that the current router is dedicated to HTTPS requests only (and that the router should ignore HTTP (non tls) requests).
 Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services).
 
@@ -172,8 +174,7 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 !!! note "HTTPS & ACME"
 
     In the current version, with [ACME](../../https-tls/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
-    In the near future, options will be available to enable fine-grain control of the TLS parameters.
-
+    
 !!! note "Passthrough"
 
     On TCP routers, you can configure a passthrough option so that Traefik doesn't terminate the TLS connection.
@@ -195,6 +196,31 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
               rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
               service = "service-id"
         ```
+
+#### `Options`
+
+The `Options` field enable fine-grain control of the TLS parameters.  
+It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and will be applied only if a "Host" rule is defined.
+
+??? example "Configuring the tls options"
+
+    ```toml
+    [http.routers]
+       [http.routers.Router-1]
+          rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
+          service = "service-id"
+          [http.routers.Router-1.tls] # will terminate the TLS request
+            options = "foo"
+    
+    
+    [tlsOptions]
+      [tlsOptions.foo]
+          minVersion = "VersionTLS12"
+          cipherSuites = [
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_RSA_WITH_AES_256_GCM_SHA384"
+          ]
+    ```
 
 ## Configuring TCP Routers
 
@@ -269,6 +295,8 @@ Services are the target for the router.
 
 ### TLS
 
+#### General
+
 When specifying a TLS section, you tell Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-tls requests).
 By default, Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services), but you can tell Traefik that the request should pass through (keeping the encrypted data) and be forwarded to the service "as is". 
 
@@ -296,4 +324,28 @@ By default, Traefik will terminate the SSL connections (meaning that it will sen
 !!! note "TLS & ACME"
 
     In the current version, with [ACME](../../https-tls/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
-    In the near future, options will be available to enable fine-grain control of the TLS parameters.
+
+#### `Options`
+
+The `Options` field enable fine-grain control of the TLS parameters.  
+It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and will be applied only if a "HostSNI" rule is defined.
+
+??? example "Configuring the tls options"
+
+    ```toml
+    [tcp.routers]
+       [tcp.routers.Router-1]
+          rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
+          service = "service-id"
+          [tcp.routers.Router-1.tls] # will terminate the TLS request
+            options = "foo"
+    
+    
+    [tlsOptions]
+      [tlsOptions.foo]
+          minVersion = "VersionTLS12"
+          cipherSuites = [
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_RSA_WITH_AES_256_GCM_SHA384"
+          ]
+    ```
