@@ -44,6 +44,7 @@ level = "DEBUG"
         [tcp.services.whoami-no-tls.loadbalancer]
             [[tcp.services.whoami-no-tls.loadbalancer.servers]]
                 address = "localhost:8084"
+
         [tcp.services.whoami-a.loadbalancer]
             [[tcp.services.whoami-a.loadbalancer.servers]]
                 address = "localhost:8081"
