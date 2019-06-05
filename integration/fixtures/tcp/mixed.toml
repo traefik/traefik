@@ -30,7 +30,7 @@ level = "DEBUG"
           [http.services.whoami.loadbalancer]
             [[http.services.whoami.loadbalancer.servers]]
               url = "http://localhost:8085"
-    [tcp]
+[tcp]
     [tcp.routers]
         [tcp.routers.to-whoami-a]
             rule = "HostSNI(`whoami-a.test`)"

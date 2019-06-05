@@ -22,6 +22,6 @@ level = "DEBUG"
 
       [[http.services.service.LoadBalancer.Servers]]
         URL = "{{.Server}}"
-        [http.middlewares]
+[http.middlewares]
   [http.middlewares.customheader.Headers.CustomRequestHeaders]
   X-Custom="CustomValue"
