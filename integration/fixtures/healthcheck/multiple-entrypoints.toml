@@ -23,14 +23,11 @@ level = "DEBUG"
 
 [http.services]
   [http.services.service1.loadbalancer]
-    method = "wrr"
     [http.services.service1.loadbalancer.healthcheck]
       path = "/health"
       interval = "1s"
       timeout = "0.9s"
     [[http.services.service1.loadbalancer.servers]]
       url = "http://{{.Server1}}:80"
-      weight = 1
     [[http.services.service1.loadbalancer.servers]]
       url = "http://{{.Server2}}:80"
-      weight = 1

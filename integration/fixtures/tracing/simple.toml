@@ -61,18 +61,15 @@ level = "DEBUG"
       passHostHeader = true
       [[http.services.service1.LoadBalancer.Servers]]
         URL = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
-        Weight = 1
 
   [http.services.service2]
     passHostHeader = true
     [http.services.service2.LoadBalancer]
       [[http.services.service2.LoadBalancer.Servers]]
         URL = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
-        Weight = 1
 
   [http.services.service3]
     passHostHeader = true
     [http.services.service3.LoadBalancer]
       [[http.services.service3.LoadBalancer.Servers]]
         URL = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
-        Weight = 1

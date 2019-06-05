@@ -262,7 +262,7 @@ Every [Router](../routing/routers/index.md) parameter can be updated this way.
 
 To update the configuration of the Service automatically attached to the container,
 add labels starting with `traefik.HTTP.Services.{service-name-of-your-choice}.`, followed by the option you want to change.
-For example, to change the load balancer method, you'd add the label `traefik.HTTP.Services.Servicename.LoadBalancer.Method=drr`.
+For example, to change the passhostheader behavior, you'd add the label `traefik.HTTP.Services.Servicename.LoadBalancer.PassHostHeader=false`.
 
 Every [Service](../routing/services/index.md) parameter can be updated this way.
 

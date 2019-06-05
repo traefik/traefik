@@ -138,12 +138,10 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.healthcheck.port":                 "42",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.scheme":               "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.timeout":              "foobar",
-		"traefik.http.services.Service0.loadbalancer.method":                           "foobar",
 		"traefik.http.services.Service0.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service0.loadbalancer.responseforwarding.flushinterval": "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.scheme":                    "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.port":                      "8080",
-		"traefik.http.services.Service0.loadbalancer.server.weight":                    "42",
 		"traefik.http.services.Service0.loadbalancer.stickiness.cookiename":            "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name0":        "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name1":        "foobar",
@@ -153,7 +151,6 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.healthcheck.port":                 "42",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.scheme":               "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.timeout":              "foobar",
-		"traefik.http.services.Service1.loadbalancer.method":                           "foobar",
 		"traefik.http.services.Service1.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service1.loadbalancer.responseforwarding.flushinterval": "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.scheme":                    "foobar",
@@ -168,12 +165,8 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.tcp.routers.Router1.entrypoints":                                      "foobar, fiibar",
 		"traefik.tcp.routers.Router1.service":                                          "foobar",
 		"traefik.tcp.routers.Router1.tls.passthrough":                                  "false",
-		"traefik.tcp.services.Service0.loadbalancer.method":                            "foobar",
 		"traefik.tcp.services.Service0.loadbalancer.server.Port":                       "42",
-		"traefik.tcp.services.Service0.loadbalancer.server.Weight":                     "42",
-		"traefik.tcp.services.Service1.loadbalancer.method":                            "foobar",
 		"traefik.tcp.services.Service1.loadbalancer.server.Port":                       "42",
-		"traefik.tcp.services.Service1.loadbalancer.server.Weight":                     "42",
 	}
 
 	configuration, err := DecodeConfiguration(labels)
@@ -210,22 +203,18 @@ func TestDecodeConfiguration(t *testing.T) {
 					LoadBalancer: &config.TCPLoadBalancerService{
 						Servers: []config.TCPServer{
 							{
-								Port:   "42",
-								Weight: 42,
+								Port: "42",
 							},
 						},
-						Method: "foobar",
 					},
 				},
 				"Service1": {
 					LoadBalancer: &config.TCPLoadBalancerService{
 						Servers: []config.TCPServer{
 							{
-								Port:   "42",
-								Weight: 42,
+								Port: "42",
 							},
 						},
-						Method: "foobar",
 					},
 				},
 			},
@@ -522,10 +511,8 @@ func TestDecodeConfiguration(t *testing.T) {
 							{
 								Scheme: "foobar",
 								Port:   "8080",
-								Weight: 42,
 							},
 						},
-						Method: "foobar",
 						HealthCheck: &config.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
@@ -550,10 +537,8 @@ func TestDecodeConfiguration(t *testing.T) {
 							{
 								Scheme: "foobar",
 								Port:   "8080",
-								Weight: 1,
 							},
 						},
-						Method: "foobar",
 						HealthCheck: &config.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
@@ -611,22 +596,18 @@ func TestEncodeConfiguration(t *testing.T) {
 					LoadBalancer: &config.TCPLoadBalancerService{
 						Servers: []config.TCPServer{
 							{
-								Port:   "42",
-								Weight: 42,
+								Port: "42",
 							},
 						},
-						Method: "foobar",
 					},
 				},
 				"Service1": {
 					LoadBalancer: &config.TCPLoadBalancerService{
 						Servers: []config.TCPServer{
 							{
-								Port:   "42",
-								Weight: 42,
+								Port: "42",
 							},
 						},
-						Method: "foobar",
 					},
 				},
 			},
@@ -922,10 +903,8 @@ func TestEncodeConfiguration(t *testing.T) {
 							{
 								Scheme: "foobar",
 								Port:   "8080",
-								Weight: 42,
 							},
 						},
-						Method: "foobar",
 						HealthCheck: &config.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
@@ -950,10 +929,8 @@ func TestEncodeConfiguration(t *testing.T) {
 							{
 								Scheme: "foobar",
 								Port:   "8080",
-								Weight: 42,
 							},
 						},
-						Method: "foobar",
 						HealthCheck: &config.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
@@ -1104,12 +1081,10 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Port":                 "42",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Scheme":               "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Timeout":              "foobar",
-		"traefik.HTTP.Services.Service0.LoadBalancer.Method":                           "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.ResponseForwarding.FlushInterval": "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Port":                      "8080",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Scheme":                    "foobar",
-		"traefik.HTTP.Services.Service0.LoadBalancer.server.Weight":                    "42",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.CookieName":            "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name1":        "foobar",
@@ -1119,28 +1094,22 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Port":                 "42",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Scheme":               "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Timeout":              "foobar",
-		"traefik.HTTP.Services.Service1.LoadBalancer.Method":                           "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.PassHostHeader":                   "true",
 		"traefik.HTTP.Services.Service1.LoadBalancer.ResponseForwarding.FlushInterval": "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Port":                      "8080",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
-		"traefik.HTTP.Services.Service1.LoadBalancer.server.Weight":                    "42",
 
-		"traefik.TCP.Routers.Router0.Rule":                         "foobar",
-		"traefik.TCP.Routers.Router0.EntryPoints":                  "foobar, fiibar",
-		"traefik.TCP.Routers.Router0.Service":                      "foobar",
-		"traefik.TCP.Routers.Router0.TLS.Passthrough":              "false",
-		"traefik.TCP.Routers.Router1.Rule":                         "foobar",
-		"traefik.TCP.Routers.Router1.EntryPoints":                  "foobar, fiibar",
-		"traefik.TCP.Routers.Router1.Service":                      "foobar",
-		"traefik.TCP.Routers.Router1.TLS.Passthrough":              "false",
-		"traefik.TCP.Services.Service0.LoadBalancer.Method":        "foobar",
-		"traefik.TCP.Services.Service0.LoadBalancer.server.Port":   "42",
-		"traefik.TCP.Services.Service0.LoadBalancer.server.Weight": "42",
-		"traefik.TCP.Services.Service1.LoadBalancer.Method":        "foobar",
-		"traefik.TCP.Services.Service1.LoadBalancer.server.Port":   "42",
-		"traefik.TCP.Services.Service1.LoadBalancer.server.Weight": "42",
+		"traefik.TCP.Routers.Router0.Rule":                       "foobar",
+		"traefik.TCP.Routers.Router0.EntryPoints":                "foobar, fiibar",
+		"traefik.TCP.Routers.Router0.Service":                    "foobar",
+		"traefik.TCP.Routers.Router0.TLS.Passthrough":            "false",
+		"traefik.TCP.Routers.Router1.Rule":                       "foobar",
+		"traefik.TCP.Routers.Router1.EntryPoints":                "foobar, fiibar",
+		"traefik.TCP.Routers.Router1.Service":                    "foobar",
+		"traefik.TCP.Routers.Router1.TLS.Passthrough":            "false",
+		"traefik.TCP.Services.Service0.LoadBalancer.server.Port": "42",
+		"traefik.TCP.Services.Service1.LoadBalancer.server.Port": "42",
 	}
 
 	for key, val := range expected {

@@ -50,11 +50,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -89,11 +87,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -114,11 +110,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -140,11 +134,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -183,11 +175,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -225,11 +215,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -250,11 +238,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -276,11 +262,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -373,11 +357,9 @@ func TestAccessLog(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -403,11 +385,9 @@ func TestAccessLog(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -470,15 +450,12 @@ func TestRuntimeConfiguration(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    "http://127.0.0.1:8085",
-								Weight: 1,
+								URL: "http://127.0.0.1:8085",
 							},
 							{
-								URL:    "http://127.0.0.1:8086",
-								Weight: 1,
+								URL: "http://127.0.0.1:8086",
 							},
 						},
-						Method: "wrr",
 						HealthCheck: &config.HealthCheck{
 							Interval: "500ms",
 							Path:     "/health",
@@ -507,11 +484,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    "http://127.0.0.1",
-								Weight: 1,
+								URL: "http://127.0.0.1",
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -536,11 +511,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    "http://127.0.0.1",
-								Weight: 1,
+								URL: "http://127.0.0.1",
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -565,11 +538,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    "http://127.0.0.1",
-								Weight: 1,
+								URL: "http://127.0.0.1",
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -610,11 +581,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    "http://127.0.0.1",
-								Weight: 1,
+								URL: "http://127.0.0.1",
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -652,11 +621,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    "http://127.0.0.1",
-								Weight: 1,
+								URL: "http://127.0.0.1",
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -685,11 +652,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    "http://127.0.0.1",
-								Weight: 1,
+								URL: "http://127.0.0.1",
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -786,11 +751,9 @@ func BenchmarkRouterServe(b *testing.B) {
 			LoadBalancer: &config.LoadBalancerService{
 				Servers: []config.Server{
 					{
-						URL:    server.URL,
-						Weight: 1,
+						URL: server.URL,
 					},
 				},
-				Method: "wrr",
 			},
 		},
 	}
@@ -832,11 +795,9 @@ func BenchmarkService(b *testing.B) {
 			LoadBalancer: &config.LoadBalancerService{
 				Servers: []config.Server{
 					{
-						URL:    "tchouck",
-						Weight: 1,
+						URL: "tchouck",
 					},
 				},
-				Method: "wrr",
 			},
 		},
 	}

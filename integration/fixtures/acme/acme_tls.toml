@@ -46,7 +46,6 @@ level = "DEBUG"
   [http.services.test.loadbalancer]
     [[http.services.test.loadbalancer.servers]]
     url = "http://127.0.0.1:9010"
-    weight = 1
 
 [http.routers]
   [http.routers.test]

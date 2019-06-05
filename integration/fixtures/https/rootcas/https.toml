@@ -44,4 +44,3 @@ fblo6RBxUQ==
 
       [[http.services.service1.LoadBalancer.Servers]]
         URL = "{{ .BackendHost }}"
-        Weight = 1

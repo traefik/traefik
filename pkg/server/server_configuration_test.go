@@ -40,7 +40,6 @@ func TestReuseService(t *testing.T) {
 			th.WithBasicAuth(&config.BasicAuth{Users: []string{"foo:bar"}}),
 		)),
 		th.WithLoadBalancerServices(th.WithService("bar",
-			th.WithLBMethod("wrr"),
 			th.WithServers(th.WithServer(testServer.URL))),
 		),
 	)

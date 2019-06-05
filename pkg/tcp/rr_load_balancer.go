@@ -38,7 +38,6 @@ func (r *RRLoadBalancer) next() Handler {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	// FIXME handle weight
 	if r.current >= len(r.servers) {
 		r.current = 0
 		log.Debugf("Load balancer: going back to the first available server")

@@ -185,58 +185,20 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler
 
 func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, service *config.LoadBalancerService, fwd http.Handler) (healthcheck.BalancerHandler, error) {
 	logger := log.FromContext(ctx)
+	logger.Debug("Creating load-balancer")
 
-	var stickySession *roundrobin.StickySession
+	var options []roundrobin.LBOption
+
 	var cookieName string
 	if stickiness := service.Stickiness; stickiness != nil {
 		cookieName = cookie.GetName(stickiness.CookieName, serviceName)
-		stickySession = roundrobin.NewStickySession(cookieName)
+		options = append(options, roundrobin.EnableStickySession(roundrobin.NewStickySession(cookieName)))
+		logger.Debugf("Sticky session cookie name: %v", cookieName)
 	}
 
-	var lb healthcheck.BalancerHandler
-
-	if service.Method == "drr" {
-		logger.Debug("Creating drr load-balancer")
-		rr, err := roundrobin.New(fwd)
-		if err != nil {
-			return nil, err
-		}
-
-		if stickySession != nil {
-			logger.Debugf("Sticky session cookie name: %v", cookieName)
-
-			lb, err = roundrobin.NewRebalancer(rr, roundrobin.RebalancerStickySession(stickySession))
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			lb, err = roundrobin.NewRebalancer(rr)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		if service.Method != "wrr" {
-			logger.Warnf("Invalid load-balancing method %q, fallback to 'wrr' method", service.Method)
-		}
-
-		logger.Debug("Creating wrr load-balancer")
-
-		if stickySession != nil {
-			logger.Debugf("Sticky session cookie name: %v", cookieName)
-
-			var err error
-			lb, err = roundrobin.New(fwd, roundrobin.EnableStickySession(stickySession))
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			var err error
-			lb, err = roundrobin.New(fwd)
-			if err != nil {
-				return nil, err
-			}
-		}
+	lb, err := roundrobin.New(fwd, options...)
+	if err != nil {
+		return nil, err
 	}
 
 	lbsu := healthcheck.NewLBStatusUpdater(lb, m.configs[serviceName])
@@ -256,9 +218,9 @@ func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHand
 			return fmt.Errorf("error parsing server URL %s: %v", srv.URL, err)
 		}
 
-		logger.WithField(log.ServerName, name).Debugf("Creating server %d at %s with weight %d", name, u, srv.Weight)
+		logger.WithField(log.ServerName, name).Debugf("Creating server %d %s", name, u)
 
-		if err := lb.UpsertServer(u, roundrobin.Weight(srv.Weight)); err != nil {
+		if err := lb.UpsertServer(u, roundrobin.Weight(1)); err != nil {
 			return fmt.Errorf("error adding server %s to load balancer: %v", srv.URL, err)
 		}
 

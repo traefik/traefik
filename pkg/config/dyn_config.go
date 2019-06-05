@@ -41,7 +41,6 @@ type RouterTCPTLSConfig struct {
 type LoadBalancerService struct {
 	Stickiness         *Stickiness         `json:"stickiness,omitempty" toml:",omitempty" label:"allowEmpty"`
 	Servers            []Server            `json:"servers,omitempty" toml:",omitempty" label-slice-as-struct:"server"`
-	Method             string              `json:"method,omitempty" toml:",omitempty"`
 	HealthCheck        *HealthCheck        `json:"healthCheck,omitempty" toml:",omitempty"`
 	PassHostHeader     bool                `json:"passHostHeader" toml:",omitempty"`
 	ResponseForwarding *ResponseForwarding `json:"forwardingResponse,omitempty" toml:",omitempty"`
@@ -50,7 +49,6 @@ type LoadBalancerService struct {
 // TCPLoadBalancerService holds the LoadBalancerService configuration.
 type TCPLoadBalancerService struct {
 	Servers []TCPServer `json:"servers,omitempty" toml:",omitempty" label-slice-as-struct:"server"`
-	Method  string      `json:"method,omitempty" toml:",omitempty"`
 }
 
 // Mergeable tells if the given service is mergeable.
@@ -87,15 +85,9 @@ func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool 
 	return reflect.DeepEqual(l, loadBalancer)
 }
 
-// SetDefaults Default values for a TCPLoadBalancerService.
-func (l *TCPLoadBalancerService) SetDefaults() {
-	l.Method = "wrr"
-}
-
 // SetDefaults Default values for a LoadBalancerService.
 func (l *LoadBalancerService) SetDefaults() {
 	l.PassHostHeader = true
-	l.Method = "wrr"
 }
 
 // ResponseForwarding holds configuration for the forward of the response.
@@ -113,24 +105,16 @@ type Server struct {
 	URL    string `json:"url" label:"-"`
 	Scheme string `toml:"-" json:"-"`
 	Port   string `toml:"-" json:"-"`
-	Weight int    `json:"weight"`
 }
 
 // TCPServer holds a TCP Server configuration
 type TCPServer struct {
 	Address string `json:"address" label:"-"`
 	Port    string `toml:"-" json:"-"`
-	Weight  int    `json:"weight"`
-}
-
-// SetDefaults Default values for a Server.
-func (s *TCPServer) SetDefaults() {
-	s.Weight = 1
 }
 
 // SetDefaults Default values for a Server.
 func (s *Server) SetDefaults() {
-	s.Weight = 1
 	s.Scheme = "http"
 }
 

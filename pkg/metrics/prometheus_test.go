@@ -284,7 +284,6 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 					th.WithServiceName("bar")),
 			),
 			th.WithLoadBalancerServices(th.WithService("bar",
-				th.WithLBMethod("wrr"),
 				th.WithServers(th.WithServer("http://localhost:9000"))),
 			),
 		),

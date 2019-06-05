@@ -29,4 +29,3 @@ rootCAs =  [ "fixtures/https/rootcas/local.crt"]
 
       [[http.services.service1.LoadBalancer.Servers]]
         URL = "{{ .BackendHost }}"
-        Weight = 1

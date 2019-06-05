@@ -50,15 +50,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:80",
-										Weight: 1,
+										URL: "http://10.10.0.1:80",
 									},
 									{
-										URL:    "http://10.10.0.2:80",
-										Weight: 1,
+										URL: "http://10.10.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -98,15 +95,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:80",
-										Weight: 1,
+										URL: "http://10.10.0.1:80",
 									},
 									{
-										URL:    "http://10.10.0.2:80",
-										Weight: 1,
+										URL: "http://10.10.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -140,15 +134,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:80",
-										Weight: 1,
+										URL: "http://10.10.0.1:80",
 									},
 									{
-										URL:    "http://10.10.0.2:80",
-										Weight: 1,
+										URL: "http://10.10.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -156,15 +147,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:80",
-										Weight: 1,
+										URL: "http://10.10.0.1:80",
 									},
 									{
-										URL:    "http://10.10.0.2:80",
-										Weight: 1,
+										URL: "http://10.10.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -192,23 +180,18 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:80",
-										Weight: 1,
+										URL: "http://10.10.0.1:80",
 									},
 									{
-										URL:    "http://10.10.0.2:80",
-										Weight: 1,
+										URL: "http://10.10.0.2:80",
 									},
 									{
-										URL:    "http://10.10.0.3:8080",
-										Weight: 1,
+										URL: "http://10.10.0.3:8080",
 									},
 									{
-										URL:    "http://10.10.0.4:8080",
-										Weight: 1,
+										URL: "http://10.10.0.4:8080",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -294,15 +277,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:80",
-										Weight: 1,
+										URL: "http://10.10.0.1:80",
 									},
 									{
-										URL:    "http://10.10.0.2:80",
-										Weight: 1,
+										URL: "http://10.10.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -331,15 +311,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "http://10.10.0.1:80",
-										Weight: 1,
+										URL: "http://10.10.0.1:80",
 									},
 									{
-										URL:    "http://10.10.0.2:80",
-										Weight: 1,
+										URL: "http://10.10.0.2:80",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},
@@ -367,15 +344,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
-										URL:    "https://10.10.0.5:443",
-										Weight: 1,
+										URL: "https://10.10.0.5:443",
 									},
 									{
-										URL:    "https://10.10.0.6:443",
-										Weight: 1,
+										URL: "https://10.10.0.6:443",
 									},
 								},
-								Method:         "wrr",
 								PassHostHeader: true,
 							},
 						},

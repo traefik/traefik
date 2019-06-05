@@ -70,7 +70,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*config.TCPServiceInfo{
 				"serviceName": {
 					TCPService: &config.TCPService{
-						LoadBalancer: &config.TCPLoadBalancerService{Method: "wrr"},
+						LoadBalancer: &config.TCPLoadBalancerService{},
 					},
 				},
 			},
@@ -81,7 +81,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*config.TCPServiceInfo{
 				"provider-1.serviceName": {
 					TCPService: &config.TCPService{
-						LoadBalancer: &config.TCPLoadBalancerService{Method: "wrr"},
+						LoadBalancer: &config.TCPLoadBalancerService{},
 					},
 				},
 			},
@@ -92,7 +92,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*config.TCPServiceInfo{
 				"provider-1.serviceName": {
 					TCPService: &config.TCPService{
-						LoadBalancer: &config.TCPLoadBalancerService{Method: "wrr"},
+						LoadBalancer: &config.TCPLoadBalancerService{},
 					},
 				},
 			},
@@ -110,7 +110,6 @@ func TestManager_BuildTCP(t *testing.T) {
 									Address: "foobar.com:80",
 								},
 							},
-							Method: "wrr",
 						},
 					},
 				},
@@ -129,7 +128,6 @@ func TestManager_BuildTCP(t *testing.T) {
 									Address: "192.168.0.12:80",
 								},
 							},
-							Method: "wrr",
 						},
 					},
 				},
@@ -148,7 +146,6 @@ func TestManager_BuildTCP(t *testing.T) {
 									Address: "foobar.com",
 								},
 							},
-							Method: "wrr",
 						},
 					},
 				},
@@ -167,7 +164,6 @@ func TestManager_BuildTCP(t *testing.T) {
 									Address: "192.168.0.12",
 								},
 							},
-							Method: "wrr",
 						},
 					},
 				},

@@ -14,14 +14,11 @@ The `Services` are responsible for configuring how to reach the actual services 
     ```toml
     [http.services]
       [http.services.my-service.LoadBalancer]
-         method = "wrr" # Load Balancing based on weights
          
          [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
-            weight = 30 # 30% of the requests will go to that instance
          [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-2/"
-            weight = 70 # 70% of the requests will go to that instance         
     ```
 
 ??? example "Declaring a TCP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
@@ -52,21 +49,17 @@ The load balancers are able to load balance the requests between multiple instan
     ```toml
     [http.services]
       [http.services.my-service.LoadBalancer]
-         method = "wrr" # Load Balancing based on weights
          
          [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
-            weight = 50 # 50% of the requests will go to that instance
          [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-2/"
-            weight = 50 # 50% of the requests will go to that instance         
     ```
 
 #### Servers
 
 Servers declare a single instance of your program.
 The `url` option point to a specific instance. 
-The `weight` option defines the weight of the server for the load balancing algorithm.
 
 !!! note
     Paths in the servers' `url` have no effet. 
@@ -80,28 +73,21 @@ The `weight` option defines the weight of the server for the load balancing algo
       [http.services.my-service.LoadBalancer]
          [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
-            weight = 1
     ```
 
 #### Load-balancing
 
-Various methods of load balancing are supported:
+For now, only round robin load balancing is supported:
 
-- `wrr`: Weighted Round Robin.
-- `drr`: Dynamic Round Robin: increases weights on servers that perform better than others (rolls back to original weights when the server list is updated)
-
-??? example "Load Balancing Using DRR -- Using the [File Provider](../../providers/file.md)"
+??? example "Load Balancing -- Using the [File Provider](../../providers/file.md)"
 
     ```toml
     [http.services]
       [http.services.my-service.LoadBalancer]
-         method = "drr"
          [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
-            weight = 1
          [[http.services.my-service.LoadBalancer.servers]]
             url = "http://private-ip-server-1/"
-            weight = 1
     ```
 
 #### Sticky sessions
@@ -239,7 +225,3 @@ The `address` option (IP:Port) point to a specific instance.
          [[tcp.services.my-service.LoadBalancer.servers]]
             address = "xx.xx.xx.xx:xx"
     ```
-
-!!! note "Weight"
-    
-    The TCP LoadBalancer is currently a round robin only implementation and doesn't yet support weights.

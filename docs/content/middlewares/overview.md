@@ -92,7 +92,6 @@ labels:
 
      [[http.services.service1.LoadBalancer.Servers]]
        URL = "http://127.0.0.1:80"
-       Weight = 1
 ```
 
 ## Advanced Configuration

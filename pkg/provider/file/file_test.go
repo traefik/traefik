@@ -191,7 +191,6 @@ func getTestCases() []ProvideTestCase {
   [http.services.application-{{ $e }}]
 	[[http.services.application-{{ $e }}.servers]]
 	url="http://127.0.0.1"
-	weight = 1
 {{ end }}
 `,
 			},
@@ -318,7 +317,6 @@ func createServicesConfiguration(n int) string {
 [http.services.application-%[1]d.loadbalancer]
    [[http.services.application-%[1]d.loadbalancer.servers]]
      url = "http://172.17.0.%[1]d:80"
-     weight = 1
 `, i)
 	}
 	return conf

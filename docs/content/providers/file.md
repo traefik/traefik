@@ -44,13 +44,10 @@ You can write these configuration elements:
         [http.services]
           [http.services.service-foo]
             [http.services.service-foo.LoadBalancer]
-              method = "wrr"
               [[http.services.service-foo.LoadBalancer.Servers]]
                 url = "http://foo/"
-                weight = 30
               [[http.services.service-foo.LoadBalancer.Servers]]
                 url = "http://bar/"
-                weight = 70
     ```
 
 ## Provider Configuration Options

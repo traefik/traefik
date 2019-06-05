@@ -25,4 +25,3 @@ level = "DEBUG"
   [http.services.service1.loadbalancer]
     [[http.services.service1.loadbalancer.servers]]
         URL = "{{.Server}}"
-        weight = 10
