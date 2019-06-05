@@ -24,7 +24,9 @@ const (
 
 // NewManager Creates a new Manager
 func NewManager(routers map[string]*config.RouterInfo,
-	serviceManager *service.Manager, middlewaresBuilder *middleware.Builder, modifierBuilder *responsemodifiers.Builder,
+	serviceManager *service.Manager,
+	middlewaresBuilder *middleware.Builder,
+	modifierBuilder *responsemodifiers.Builder,
 ) *Manager {
 	return &Manager{
 		routerHandlers:     make(map[string]http.Handler),
@@ -42,10 +44,12 @@ type Manager struct {
 	serviceManager     *service.Manager
 	middlewaresBuilder *middleware.Builder
 	modifierBuilder    *responsemodifiers.Builder
+	conf               *config.RuntimeConfiguration
 }
 
 // BuildHandlers Builds handler for all entry points
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
+	// TODO: use the function in runtime
 	entryPointsRouters := m.filteredRouters(rootCtx, entryPoints, tls)
 
 	entryPointHandlers := make(map[string]http.Handler)

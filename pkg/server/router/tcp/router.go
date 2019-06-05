@@ -90,6 +90,10 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	router.HTTPSHandler(handlerHTTPS, defaultTLSConf)
 
 	for routerHTTPName, routerHTTPConfig := range configsHTTP {
+		if len(routerHTTPConfig.TLS.Options) == 0 || routerHTTPConfig.TLS.Options == "default" {
+			continue
+		}
+
 		ctxRouter := log.With(internal.AddProviderInContext(ctx, routerHTTPName), log.Str(log.RouterName, routerHTTPName))
 		logger := log.FromContext(ctxRouter)
 
@@ -101,15 +105,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
+		if len(domains) == 0 {
+			logger.Warnf("The 'default' tls option will be applied instead of %q as no domain has been defined", routerHTTPConfig.TLS.Options)
+		}
+
 		for _, domain := range domains {
 			if routerHTTPConfig.TLS != nil {
-
-				configName := "default"
-				if len(routerHTTPConfig.TLS.Options) > 0 {
-					configName = routerHTTPConfig.TLS.Options
-				}
-
-				tlsConf, err := m.tlsManager.Get("default", configName)
+				tlsConf, err := m.tlsManager.Get("default", routerHTTPConfig.TLS.Options)
 				if err != nil {
 					routerHTTPConfig.Err = err.Error()
 					logger.Debug(err)
