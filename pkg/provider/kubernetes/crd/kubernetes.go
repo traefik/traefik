@@ -179,7 +179,6 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, config.TCPServer{
 			Address: fmt.Sprintf("%s:%d", service.Spec.ExternalName, portSpec.Port),
-			Port:    fmt.Sprintf("%d", portSpec.Port),
 			Weight:  1,
 		})
 	} else {
@@ -212,7 +211,6 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 			for _, addr := range subset.Addresses {
 				servers = append(servers, config.TCPServer{
 					Address: fmt.Sprintf("%s:%d", addr.IP, port),
-					Port:    fmt.Sprintf("%d", port),
 					Weight:  1,
 				})
 			}

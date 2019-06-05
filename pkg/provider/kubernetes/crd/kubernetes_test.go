@@ -56,12 +56,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 								},
@@ -95,12 +95,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 								},
@@ -112,12 +112,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 								},
@@ -151,22 +151,22 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 									{
 										Address: "10.10.0.3:8080",
-										Port:    "8080",
+										Port:    "",
 										Weight:  1,
 									},
 									{
 										Address: "10.10.0.4:8080",
-										Port:    "8080",
+										Port:    "",
 										Weight:  1,
 									},
 								},
@@ -254,12 +254,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 								},
@@ -296,12 +296,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 								},
@@ -336,12 +336,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []config.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "8000",
+										Port:    "",
 										Weight:  1,
 									},
 								},
