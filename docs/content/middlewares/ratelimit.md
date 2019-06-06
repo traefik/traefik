@@ -76,12 +76,12 @@ labels:
   [http.middlewares.test-ratelimit.ratelimit]
     extractorfunc = "client.ip"
     
-    [http.middlewares.test-ratelimit.ratelimit.rate0]
+    [http.middlewares.test-ratelimit.rateset.ratelimit.rate0]
       period = "10s"
       average = 100
       burst = 200
     
-    [http.middlewares.test-ratelimit.ratelimit.rate1]
+    [http.middlewares.test-ratelimit.rateset.ratelimit.rate1]
       period = "3s"
       average = 5
       burst = 10
