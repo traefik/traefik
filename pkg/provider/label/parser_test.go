@@ -143,6 +143,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.server.scheme":                    "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.port":                      "8080",
 		"traefik.http.services.Service0.loadbalancer.stickiness.cookiename":            "foobar",
+		"traefik.http.services.Service0.loadbalancer.stickiness.securecookie":          "true",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name0":        "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name1":        "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.hostname":             "foobar",
@@ -505,7 +506,9 @@ func TestDecodeConfiguration(t *testing.T) {
 				"Service0": {
 					LoadBalancer: &config.LoadBalancerService{
 						Stickiness: &config.Stickiness{
-							CookieName: "foobar",
+							CookieName:     "foobar",
+							SecureCookie:   true,
+							HTTPOnlyCookie: false,
 						},
 						Servers: []config.Server{
 							{
@@ -897,7 +900,8 @@ func TestEncodeConfiguration(t *testing.T) {
 				"Service0": {
 					LoadBalancer: &config.LoadBalancerService{
 						Stickiness: &config.Stickiness{
-							CookieName: "foobar",
+							CookieName:     "foobar",
+							HTTPOnlyCookie: true,
 						},
 						Servers: []config.Server{
 							{
@@ -1086,6 +1090,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Port":                      "8080",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.CookieName":            "foobar",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.HTTPOnlyCookie":        "true",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name1":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Hostname":             "foobar",
