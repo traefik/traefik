@@ -1,9 +1,6 @@
 package types
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -17,14 +14,14 @@ type Metrics struct {
 
 // Prometheus can contain specific configuration used by the Prometheus Metrics exporter
 type Prometheus struct {
-	Buckets     Buckets  `description:"Buckets for latency metrics." export:"true"`
-	EntryPoint  string   `description:"EntryPoint." export:"true"`
-	Middlewares []string `description:"Middlewares." export:"true"`
+	Buckets     []float64 `description:"Buckets for latency metrics." export:"true"`
+	EntryPoint  string    `description:"EntryPoint." export:"true"`
+	Middlewares []string  `description:"Middlewares." export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (p *Prometheus) SetDefaults() {
-	p.Buckets = Buckets{0.1, 0.3, 1.2, 5}
+	p.Buckets = []float64{0.1, 0.3, 1.2, 5}
 	p.EntryPoint = "traefik"
 	// FIXME p.EntryPoint = static.DefaultInternalEntryPointName
 }
@@ -79,36 +76,4 @@ type Statistics struct {
 // SetDefaults sets the default values.
 func (s *Statistics) SetDefaults() {
 	s.RecentErrors = 10
-}
-
-// Buckets holds Prometheus Buckets
-type Buckets []float64
-
-// Set adds strings elem into the the parser
-// it splits str on "," and ";" and apply ParseFloat to string
-func (b *Buckets) Set(str string) error {
-	fargs := func(c rune) bool {
-		return c == ',' || c == ';'
-	}
-	// get function
-	slice := strings.FieldsFunc(str, fargs)
-	for _, bucket := range slice {
-		bu, err := strconv.ParseFloat(bucket, 64)
-		if err != nil {
-			return err
-		}
-		*b = append(*b, bu)
-	}
-	return nil
-}
-
-// Get []float64
-func (b *Buckets) Get() interface{} { return *b }
-
-// String return slice in a string
-func (b *Buckets) String() string { return fmt.Sprintf("%v", *b) }
-
-// SetValue sets []float64 into the parser
-func (b *Buckets) SetValue(val interface{}) {
-	*b = val.(Buckets)
 }

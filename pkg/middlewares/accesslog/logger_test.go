@@ -286,12 +286,12 @@ func TestLoggerJSON(t *testing.T) {
 				Format:   JSONFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						RequestHost: "keep",
 					},
 					Headers: &types.FieldHeaders{
 						DefaultMode: "drop",
-						Names: types.FieldHeaderNames{
+						Names: map[string]string{
 							"Referer": "keep",
 						},
 					},
@@ -432,7 +432,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "keep",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						ClientHost: "drop",
 					},
 				},
@@ -457,7 +457,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
@@ -472,7 +472,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
@@ -490,7 +490,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
@@ -508,13 +508,13 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
 					Headers: &types.FieldHeaders{
 						DefaultMode: "keep",
-						Names: types.FieldHeaderNames{
+						Names: map[string]string{
 							"Referer": "redact",
 						},
 					},

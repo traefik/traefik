@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
@@ -42,7 +41,7 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	WatchAll(namespaces k8s.Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 	GetIngresses() []*extensionsv1beta1.Ingress
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
@@ -55,7 +54,7 @@ type clientWrapper struct {
 	factories            map[string]informers.SharedInformerFactory
 	ingressLabelSelector labels.Selector
 	isNamespaceAll       bool
-	watchedNamespaces    k8s.Namespaces
+	watchedNamespaces    []string
 }
 
 // newInClusterClient returns a new Provider client that is expected to run
@@ -122,12 +121,12 @@ func newClientImpl(clientset *kubernetes.Clientset) *clientWrapper {
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(namespaces k8s.Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
 	eventHandler := c.newResourceEventHandler(eventCh)
 
 	if len(namespaces) == 0 {
-		namespaces = k8s.Namespaces{metav1.NamespaceAll}
+		namespaces = []string{metav1.NamespaceAll}
 		c.isNamespaceAll = true
 	}
 

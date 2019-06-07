@@ -18,7 +18,6 @@ import (
 	"github.com/containous/traefik/pkg/job"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
-	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/containous/traefik/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
@@ -32,13 +31,13 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint               string         `description:"Kubernetes server endpoint (required for external cluster client)."`
-	Token                  string         `description:"Kubernetes bearer token (not needed for in-cluster client)."`
-	CertAuthFilePath       string         `description:"Kubernetes certificate authority file path (not needed for in-cluster client)."`
-	DisablePassHostHeaders bool           `description:"Kubernetes disable PassHost Headers." export:"true"`
-	Namespaces             k8s.Namespaces `description:"Kubernetes namespaces." export:"true"`
-	LabelSelector          string         `description:"Kubernetes label selector to use." export:"true"`
-	IngressClass           string         `description:"Value of kubernetes.io/ingress.class annotation to watch for." export:"true"`
+	Endpoint               string   `description:"Kubernetes server endpoint (required for external cluster client)."`
+	Token                  string   `description:"Kubernetes bearer token (not needed for in-cluster client)."`
+	CertAuthFilePath       string   `description:"Kubernetes certificate authority file path (not needed for in-cluster client)."`
+	DisablePassHostHeaders bool     `description:"Kubernetes disable PassHost Headers." export:"true"`
+	Namespaces             []string `description:"Kubernetes namespaces." export:"true"`
+	LabelSelector          string   `description:"Kubernetes label selector to use." export:"true"`
+	IngressClass           string   `description:"Value of kubernetes.io/ingress.class annotation to watch for." export:"true"`
 	lastConfiguration      safe.Safe
 }
 

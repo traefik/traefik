@@ -10,7 +10,6 @@ import (
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/informers/externalversions"
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
-	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
@@ -45,7 +44,7 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	WatchAll(namespaces k8s.Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 
 	GetIngressRoutes() []*v1alpha1.IngressRoute
 	GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP
@@ -69,7 +68,7 @@ type clientWrapper struct {
 	labelSelector labels.Selector
 
 	isNamespaceAll    bool
-	watchedNamespaces k8s.Namespaces
+	watchedNamespaces []string
 }
 
 func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
@@ -144,12 +143,12 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrappe
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(namespaces k8s.Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
 	eventHandler := c.newResourceEventHandler(eventCh)
 
 	if len(namespaces) == 0 {
-		namespaces = k8s.Namespaces{metav1.NamespaceAll}
+		namespaces = []string{metav1.NamespaceAll}
 		c.isNamespaceAll = true
 	}
 	c.watchedNamespaces = namespaces

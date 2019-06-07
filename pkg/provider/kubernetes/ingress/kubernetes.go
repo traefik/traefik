@@ -17,7 +17,6 @@ import (
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/job"
 	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/containous/traefik/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
@@ -37,7 +36,7 @@ type Provider struct {
 	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)."`
 	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)."`
 	DisablePassHostHeaders bool             `description:"Kubernetes disable PassHost Headers." export:"true"`
-	Namespaces             k8s.Namespaces   `description:"Kubernetes namespaces." export:"true"`
+	Namespaces             []string         `description:"Kubernetes namespaces." export:"true"`
 	LabelSelector          string           `description:"Kubernetes Ingress label selector to use." export:"true"`
 	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for." export:"true"`
 	IngressEndpoint        *EndpointIngress `description:"Kubernetes Ingress Endpoint."`

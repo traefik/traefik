@@ -67,10 +67,10 @@ type Certificate struct {
 
 // DNSChallenge contains DNS challenge Configuration
 type DNSChallenge struct {
-	Provider                string             `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
-	DelayBeforeCheck        types.Duration     `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
-	Resolvers               types.DNSResolvers `description:"Use following DNS servers to resolve the FQDN authority."`
-	DisablePropagationCheck bool               `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]"`
+	Provider                string         `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
+	DelayBeforeCheck        types.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	Resolvers               []string       `description:"Use following DNS servers to resolve the FQDN authority."`
+	DisablePropagationCheck bool           `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]"`
 }
 
 // HTTPChallenge contains HTTP challenge Configuration

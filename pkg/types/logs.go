@@ -1,10 +1,5 @@
 package types
 
-import (
-	"fmt"
-	"strings"
-)
-
 const (
 	// AccessLogKeep is the keep string value
 	AccessLogKeep = "keep"
@@ -55,126 +50,22 @@ func (l *AccessLog) SetDefaults() {
 
 // AccessLogFilters holds filters configuration
 type AccessLogFilters struct {
-	StatusCodes   StatusCodes `json:"statusCodes,omitempty" description:"Keep access logs with status codes in the specified range." export:"true"`
-	RetryAttempts bool        `json:"retryAttempts,omitempty" description:"Keep access logs when at least one retry happened." export:"true"`
-	MinDuration   Duration    `json:"duration,omitempty" description:"Keep access logs when request took longer than the specified duration." export:"true"`
+	StatusCodes   []string `json:"statusCodes,omitempty" description:"Keep access logs with status codes in the specified range." export:"true"`
+	RetryAttempts bool     `json:"retryAttempts,omitempty" description:"Keep access logs when at least one retry happened." export:"true"`
+	MinDuration   Duration `json:"duration,omitempty" description:"Keep access logs when request took longer than the specified duration." export:"true"`
 }
 
 // FieldHeaders holds configuration for access log headers
 type FieldHeaders struct {
-	DefaultMode string           `json:"defaultMode,omitempty" description:"Default mode for fields: keep | drop | redact" export:"true"`
-	Names       FieldHeaderNames `json:"names,omitempty" description:"Override mode for headers" export:"true"`
-}
-
-// StatusCodes holds status codes ranges to filter access log
-type StatusCodes []string
-
-// Set adds strings elem into the the parser
-// it splits str on , and ;
-func (s *StatusCodes) Set(str string) error {
-	fargs := func(c rune) bool {
-		return c == ',' || c == ';'
-	}
-	// get function
-	slice := strings.FieldsFunc(str, fargs)
-	*s = append(*s, slice...)
-	return nil
-}
-
-// Get StatusCodes
-func (s *StatusCodes) Get() interface{} { return *s }
-
-// String return slice in a string
-func (s *StatusCodes) String() string { return fmt.Sprintf("%v", *s) }
-
-// SetValue sets StatusCodes into the parser
-func (s *StatusCodes) SetValue(val interface{}) {
-	*s = val.(StatusCodes)
-}
-
-// FieldNames holds maps of fields with specific mode
-type FieldNames map[string]string
-
-// String is the method to format the flag's value, part of the flag.Value interface.
-// The String method's output will be used in diagnostics.
-func (f *FieldNames) String() string {
-	return fmt.Sprintf("%+v", *f)
-}
-
-// Get return the FieldNames map
-func (f *FieldNames) Get() interface{} {
-	return *f
-}
-
-// Set is the method to set the flag value, part of the flag.Value interface.
-// Set's argument is a string to be parsed to set the flag.
-// It's a space-separated list, so we split it.
-func (f *FieldNames) Set(value string) error {
-	// When arguments are passed through YAML, escaped double quotes
-	// might be added to this string, and they would break the last
-	// key/value pair. This ensures the string is clean.
-	value = strings.Trim(value, "\"")
-
-	fields := strings.Fields(value)
-
-	for _, field := range fields {
-		n := strings.SplitN(field, "=", 2)
-		if len(n) == 2 {
-			(*f)[n[0]] = n[1]
-		}
-	}
-
-	return nil
-}
-
-// SetValue sets the FieldNames map with val
-func (f *FieldNames) SetValue(val interface{}) {
-	*f = val.(FieldNames)
-}
-
-// FieldHeaderNames holds maps of fields with specific mode
-type FieldHeaderNames map[string]string
-
-// String is the method to format the flag's value, part of the flag.Value interface.
-// The String method's output will be used in diagnostics.
-func (f *FieldHeaderNames) String() string {
-	return fmt.Sprintf("%+v", *f)
-}
-
-// Get return the FieldHeaderNames map
-func (f *FieldHeaderNames) Get() interface{} {
-	return *f
-}
-
-// Set is the method to set the flag value, part of the flag.Value interface.
-// Set's argument is a string to be parsed to set the flag.
-// It's a space-separated list, so we split it.
-func (f *FieldHeaderNames) Set(value string) error {
-	// When arguments are passed through YAML, escaped double quotes
-	// might be added to this string, and they would break the last
-	// key/value pair. This ensures the string is clean.
-	value = strings.Trim(value, "\"")
-
-	fields := strings.Fields(value)
-
-	for _, field := range fields {
-		n := strings.SplitN(field, "=", 2)
-		(*f)[n[0]] = n[1]
-	}
-
-	return nil
-}
-
-// SetValue sets the FieldHeaderNames map with val
-func (f *FieldHeaderNames) SetValue(val interface{}) {
-	*f = val.(FieldHeaderNames)
+	DefaultMode string            `json:"defaultMode,omitempty" description:"Default mode for fields: keep | drop | redact" export:"true"`
+	Names       map[string]string `json:"names,omitempty" description:"Override mode for headers" export:"true"`
 }
 
 // AccessLogFields holds configuration for access log fields
 type AccessLogFields struct {
-	DefaultMode string        `json:"defaultMode,omitempty" description:"Default mode for fields: keep | drop" export:"true"`
-	Names       FieldNames    `json:"names,omitempty" description:"Override mode for fields" export:"true"`
-	Headers     *FieldHeaders `json:"headers,omitempty" description:"Headers to keep, drop or redact" export:"true"`
+	DefaultMode string            `json:"defaultMode,omitempty" description:"Default mode for fields: keep | drop" export:"true"`
+	Names       map[string]string `json:"names,omitempty" description:"Override mode for fields" export:"true"`
+	Headers     *FieldHeaders     `json:"headers,omitempty" description:"Headers to keep, drop or redact" export:"true"`
 }
 
 // SetDefaults sets the default values.

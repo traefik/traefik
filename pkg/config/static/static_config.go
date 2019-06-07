@@ -74,7 +74,7 @@ type Global struct {
 // ServersTransport options to configure communication between Traefik and the servers
 type ServersTransport struct {
 	InsecureSkipVerify  bool                `description:"Disable SSL certificate verification." export:"true"`
-	RootCAs             tls.FilesOrContents `description:"Add cert file for self-signed certificate."`
+	RootCAs             []tls.FileOrContent `description:"Add cert file for self-signed certificate."`
 	MaxIdleConnsPerHost int                 `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used" export:"true"`
 	ForwardingTimeouts  *ForwardingTimeouts `description:"Timeouts for requests forwarded to the backend servers." export:"true"`
 }

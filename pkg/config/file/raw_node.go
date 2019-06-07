@@ -68,7 +68,7 @@ func decodeRaw(node *parser.Node, vData reflect.Value, excludes ...string) {
 						values = append(values, getSimpleValue(sValue))
 					}
 				default:
-					panic("OOPS slice: " + item.Kind().String())
+					panic("Unsupported slice type: " + item.Kind().String())
 				}
 			}
 
@@ -76,7 +76,7 @@ func decodeRaw(node *parser.Node, vData reflect.Value, excludes ...string) {
 		case reflect.Map:
 			decodeRaw(child, value)
 		default:
-			panic("OOPS:" + value.Kind().String())
+			panic("Unsupported type: " + value.Kind().String())
 		}
 
 		node.Children = append(node.Children, child)
@@ -96,7 +96,7 @@ func getSimpleValue(item reflect.Value) string {
 	case reflect.Bool:
 		return strconv.FormatBool(item.Bool())
 	default:
-		panic("Simple values: " + item.Kind().String())
+		panic("Unsupported Simple value type: " + item.Kind().String())
 	}
 }
 

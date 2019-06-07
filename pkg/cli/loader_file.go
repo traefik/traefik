@@ -27,6 +27,7 @@ func (f *FileLoader) Load(args []string, cmd *Command) (bool, error) {
 		return false, err
 	}
 
+	// FIXME
 	configFile, err := loadConfigFiles(ref["traefik.configfile"], cmd.Configuration)
 	if err != nil {
 		return false, err
@@ -34,17 +35,17 @@ func (f *FileLoader) Load(args []string, cmd *Command) (bool, error) {
 
 	f.filename = configFile
 
-	if configFile != "" {
-		logger := log.WithoutContext()
-
-		logger.Printf("Configuration loaded from file: %s", configFile)
-
-		content, _ := ioutil.ReadFile(configFile)
-		logger.Debug(string(content))
-		return true, nil
+	if configFile == "" {
+		return false, nil
 	}
 
-	return false, nil
+	logger := log.WithoutContext()
+	logger.Printf("Configuration loaded from file: %s", configFile)
+
+	content, _ := ioutil.ReadFile(configFile)
+	logger.Debug(string(content))
+
+	return true, nil
 }
 
 // loadConfigFiles tries to decode the given configuration file and all default locations for the configuration file.

@@ -37,18 +37,18 @@ func TestDo_globalConfiguration(t *testing.T) {
 		FilePath: "AccessLog FilePath",
 		Format:   "AccessLog Format",
 		Filters: &types.AccessLogFilters{
-			StatusCodes:   types.StatusCodes{"200", "500"},
+			StatusCodes:   []string{"200", "500"},
 			RetryAttempts: true,
 			MinDuration:   10,
 		},
 		Fields: &types.AccessLogFields{
 			DefaultMode: "drop",
-			Names: types.FieldNames{
+			Names: map[string]string{
 				"RequestHost": "keep",
 			},
 			Headers: &types.FieldHeaders{
 				DefaultMode: "drop",
-				Names: types.FieldHeaderNames{
+				Names: map[string]string{
 					"Referer": "keep",
 				},
 			},
@@ -116,7 +116,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 
 	config.ServersTransport = &static.ServersTransport{
 		InsecureSkipVerify:  true,
-		RootCAs:             traefiktls.FilesOrContents{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
+		RootCAs:             []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
 		MaxIdleConnsPerHost: 111,
 		ForwardingTimeouts: &static.ForwardingTimeouts{
 			DialTimeout:           types.Duration(111 * time.Second),
@@ -209,7 +209,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 
 	config.Metrics = &types.Metrics{
 		Prometheus: &types.Prometheus{
-			Buckets:     types.Buckets{0.1, 0.3, 1.2, 5},
+			Buckets:     []float64{0.1, 0.3, 1.2, 5},
 			EntryPoint:  "MyEntryPoint",
 			Middlewares: []string{"m1", "m2"},
 		},
