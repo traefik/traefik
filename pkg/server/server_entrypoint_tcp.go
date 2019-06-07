@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/armon/go-proxyproto"
+	proxyprotocol "github.com/c0va23/go-proxyprotocol"
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/ip"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -240,10 +240,11 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 
 	log.FromContext(ctx).Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
 
-	return &proxyproto.Listener{
-		Listener:    listener,
-		SourceCheck: sourceCheck,
-	}, nil
+	proxyprotocolListner := proxyprotocol.NewDefaultListener(listener).
+		WithSourceChecker(sourceCheck).
+		WithLogger(log.FromContext(ctx))
+
+	return proxyprotocolListner, nil
 }
 
 func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {
