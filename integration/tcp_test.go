@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"time"
 
@@ -20,8 +21,7 @@ func (s *TCPSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *TCPSuite) TestMixed(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/mixed.toml", struct {
-	}{})
+	file := s.adaptFile(c, "fixtures/tcp/mixed.toml", struct{}{})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -34,17 +34,17 @@ func (s *TCPSuite) TestMixed(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("Path(`/test`)"))
 	c.Assert(err, checker.IsNil)
 
-	//Traefik passes through, termination handled by whoami-a
+	// Traefik passes through, termination handled by whoami-a
 	out, err := guessWho("127.0.0.1:8093", "whoami-a.test", true)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-a")
 
-	//Traefik passes through, termination handled by whoami-b
+	// Traefik passes through, termination handled by whoami-b
 	out, err = guessWho("127.0.0.1:8093", "whoami-b.test", true)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-b")
 
-	//Termination handled by traefik
+	// Termination handled by traefik
 	out, err = guessWho("127.0.0.1:8093", "whoami-c.test", true)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-no-cert")
@@ -71,8 +71,7 @@ func (s *TCPSuite) TestMixed(c *check.C) {
 }
 
 func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/non-tls-fallback.toml", struct {
-	}{})
+	file := s.adaptFile(c, "fixtures/tcp/non-tls-fallback.toml", struct{}{})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -85,17 +84,17 @@ func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	c.Assert(err, checker.IsNil)
 
-	//Traefik passes through, termination handled by whoami-a
+	// Traefik passes through, termination handled by whoami-a
 	out, err := guessWho("127.0.0.1:8093", "whoami-a.test", true)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-a")
 
-	//Traefik passes through, termination handled by whoami-b
+	// Traefik passes through, termination handled by whoami-b
 	out, err = guessWho("127.0.0.1:8093", "whoami-b.test", true)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-b")
 
-	//Termination handled by traefik
+	// Termination handled by traefik
 	out, err = guessWho("127.0.0.1:8093", "whoami-c.test", true)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-no-cert")
@@ -106,9 +105,7 @@ func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
 }
 
 func (s *TCPSuite) TestNonTlsTcp(c *check.C) {
-
-	file := s.adaptFile(c, "fixtures/tcp/non-tls.toml", struct {
-	}{})
+	file := s.adaptFile(c, "fixtures/tcp/non-tls.toml", struct{}{})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -121,10 +118,76 @@ func (s *TCPSuite) TestNonTlsTcp(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	c.Assert(err, checker.IsNil)
 
-	//Traefik will forward every requests on the given port to whoami-no-tls
+	// Traefik will forward every requests on the given port to whoami-no-tls
 	out, err := guessWho("127.0.0.1:8093", "", false)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-no-tls")
+}
+
+func (s *TCPSuite) TestCatchAllNoTLS(c *check.C) {
+	file := s.adaptFile(c, "fixtures/tcp/catch-all-no-tls.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	c.Assert(err, checker.IsNil)
+
+	// Traefik will forward every requests on the given port to whoami-no-tls
+	out, err := welcome("127.0.0.1:8093")
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "Welcome")
+}
+
+func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS(c *check.C) {
+	file := s.adaptFile(c, "fixtures/tcp/catch-all-no-tls-with-https.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	c.Assert(err, checker.IsNil)
+
+	req := httptest.NewRequest(http.MethodGet, "https://127.0.0.1:8093/test", nil)
+	req.RequestURI = ""
+
+	err = try.RequestWithTransport(req, 500*time.Millisecond, &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+}
+
+func welcome(addr string) (string, error) {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
+	if err != nil {
+		return "", err
+	}
+
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
+	out := make([]byte, 2048)
+	n, err := conn.Read(out)
+	if err != nil {
+		return "", err
+	}
+
+	return string(out[:n]), nil
 }
 
 func guessWho(addr, serverName string, tlsCall bool) (string, error) {
