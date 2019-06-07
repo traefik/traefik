@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type bar string
-
 func Test_decodeRawToNode(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -533,7 +531,7 @@ func Test_decodeRawToNode(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			node, err := decodeRawToNode(test.data, "http", "tcp", "tls", "TLSOptions", "TLSStores")
+			node, err := decodeRawToNode(test.data)
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, node)

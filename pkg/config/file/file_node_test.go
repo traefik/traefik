@@ -7,8 +7,44 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_getRootFieldNames(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		element  interface{}
+		expected []string
+	}{
+		{
+			desc:     "simple fields",
+			element:  &Yo{},
+			expected: []string{"Foo", "Fii", "Fuu", "Yi"},
+		},
+		{
+			desc:     "embedded struct",
+			element:  &Yu{},
+			expected: []string{"Foo", "Fii", "Fuu"},
+		},
+		{
+			desc:     "embedded struct pointer",
+			element:  &Ye{},
+			expected: []string{"Foo", "Fii", "Fuu"},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			names := getRootFieldNames(test.element)
+
+			assert.Equal(t, test.expected, names)
+		})
+	}
+}
+
 func Test_decodeFileToNode_compare(t *testing.T) {
-	nodeToml, err := decodeFileToNode("./fixtures/sample.toml", "http", "tcp", "tls", "TLSOptions", "TLSStores")
+	nodeToml, err := decodeFileToNode("./fixtures/sample.toml",
+		"Global", "ServersTransport", "EntryPoints", "Providers", "API", "Metrics", "Ping", "Log", "AccessLog", "Tracing", "HostResolver", "ACME")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +58,8 @@ func Test_decodeFileToNode_compare(t *testing.T) {
 }
 
 func Test_decodeFileToNode_Toml(t *testing.T) {
-	node, err := decodeFileToNode("./fixtures/sample.toml", "http", "tcp", "tls", "TLSOptions", "TLSStores")
+	node, err := decodeFileToNode("./fixtures/sample.toml",
+		"Global", "ServersTransport", "EntryPoints", "Providers", "API", "Metrics", "Ping", "Log", "AccessLog", "Tracing", "HostResolver", "ACME")
 	if err != nil {
 		t.Fatal(err)
 	}

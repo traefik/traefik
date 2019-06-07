@@ -65,7 +65,7 @@ func loadConfigFiles(configFile string, element interface{}) (string, error) {
 		return "", nil
 	}
 
-	if err = file.Decode(filePath, element, "http", "tcp", "tls", "TLSOptions", "TLSStores"); err != nil {
+	if err = file.Decode(filePath, element); err != nil {
 		return "", err
 	}
 	return filePath, nil

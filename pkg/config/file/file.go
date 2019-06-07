@@ -6,12 +6,14 @@ import (
 
 // Decode converts the file to an element.
 // file -> [ node -> node + metadata (type) ] -> element (node)
-func Decode(filePath string, element interface{}, excludes ...string) error {
+func Decode(filePath string, element interface{}) error {
 	if element == nil {
 		return nil
 	}
 
-	root, err := decodeFileToNode(filePath, excludes...)
+	filters := getRootFieldNames(element)
+
+	root, err := decodeFileToNode(filePath, filters...)
 	if err != nil {
 		return err
 	}

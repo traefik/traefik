@@ -12,18 +12,7 @@ import (
 	"github.com/containous/traefik/pkg/config/parser"
 )
 
-func isHelp(args []string) bool {
-	for _, name := range args {
-		if name == "--help" || name == "-help" || name == "-h" {
-			return true
-		}
-	}
-	return false
-}
-
-// PrintHelp prints the command help.
-func PrintHelp(w io.Writer, cmd *Command) error {
-	tmplHelp := `{{ .Cmd.Name }}	{{ .Cmd.Description }}
+const tmplHelp = `{{ .Cmd.Name }}	{{ .Cmd.Description }}
 
 Usage: {{ .Cmd.Name }} [command] [flags] [arguments]
 
@@ -47,6 +36,17 @@ Flags:
 {{- end}}
 `
 
+func isHelp(args []string) bool {
+	for _, name := range args {
+		if name == "--help" || name == "-help" || name == "-h" {
+			return true
+		}
+	}
+	return false
+}
+
+// PrintHelp prints the command help.
+func PrintHelp(w io.Writer, cmd *Command) error {
 	var flags []parser.Flat
 	if cmd.Configuration != nil {
 		generator.Generate(cmd.Configuration)

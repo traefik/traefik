@@ -74,26 +74,3 @@ yi: {}
 	}
 	assert.Equal(t, expected, element)
 }
-
-type Yo struct {
-	Foo string
-	Fii string
-	Fuu string
-	Yi  *Yi `label:"allowEmpty"`
-}
-
-func (y *Yo) SetDefaults() {
-	y.Foo = "foo"
-	y.Fii = "fii"
-}
-
-type Yi struct {
-	Foo string
-	Fii string
-	Fuu string
-}
-
-func (y *Yi) SetDefaults() {
-	y.Foo = "foo"
-	y.Fii = "fii"
-}

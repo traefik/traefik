@@ -9,19 +9,19 @@ import (
 	"github.com/containous/traefik/pkg/config/parser"
 )
 
-func decodeRawToNode(data map[string]interface{}, excludes ...string) (*parser.Node, error) {
+func decodeRawToNode(data map[string]interface{}, filters ...string) (*parser.Node, error) {
 	root := &parser.Node{
 		Name: "traefik",
 	}
 
 	vData := reflect.ValueOf(data)
-	decodeRaw(root, vData, excludes...)
+	decodeRaw(root, vData, filters...)
 
 	return root, nil
 }
 
-func decodeRaw(node *parser.Node, vData reflect.Value, excludes ...string) {
-	sortedKeys := sortKeys(vData, excludes)
+func decodeRaw(node *parser.Node, vData reflect.Value, filters ...string) {
+	sortedKeys := sortKeys(vData, filters)
 
 	for _, key := range sortedKeys {
 		value := reflect.ValueOf(vData.MapIndex(key).Interface())
@@ -100,28 +100,23 @@ func getSimpleValue(item reflect.Value) string {
 	}
 }
 
-func sortKeys(vData reflect.Value, excludes []string) []reflect.Value {
+func sortKeys(vData reflect.Value, filters []string) []reflect.Value {
 	var sortedKeys []reflect.Value
 
 	for _, v := range vData.MapKeys() {
 		rValue := reflect.ValueOf(v.Interface())
 		key := rValue.String()
 
-		if len(excludes) == 0 {
+		if len(filters) == 0 {
 			sortedKeys = append(sortedKeys, rValue)
 			continue
 		}
 
-		var found bool
-		for _, filter := range excludes {
+		for _, filter := range filters {
 			if strings.EqualFold(key, filter) {
-				found = true
-				break
+				sortedKeys = append(sortedKeys, rValue)
+				continue
 			}
-		}
-
-		if !found {
-			sortedKeys = append(sortedKeys, rValue)
 		}
 	}
 

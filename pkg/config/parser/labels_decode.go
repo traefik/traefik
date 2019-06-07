@@ -6,26 +6,12 @@ import (
 	"strings"
 )
 
+const labelRoot = "traefik"
+
 // DecodeToNode Converts the labels to a node.
 // labels -> nodes
 func DecodeToNode(labels map[string]string, filters ...string) (*Node, error) {
-	var sortedKeys []string
-	for key := range labels {
-		if len(filters) == 0 {
-			sortedKeys = append(sortedKeys, key)
-			continue
-		}
-
-		for _, filter := range filters {
-			if len(key) >= len(filter) && strings.EqualFold(key[:len(filter)], filter) {
-				sortedKeys = append(sortedKeys, key)
-				continue
-			}
-		}
-	}
-	sort.Strings(sortedKeys)
-
-	labelRoot := "traefik"
+	sortedKeys := sortKeys(labels, filters)
 
 	var node *Node
 	for i, key := range sortedKeys {
@@ -86,4 +72,24 @@ func containsNode(nodes []*Node, name string) *Node {
 		}
 	}
 	return nil
+}
+
+func sortKeys(labels map[string]string, filters []string) []string {
+	var sortedKeys []string
+	for key := range labels {
+		if len(filters) == 0 {
+			sortedKeys = append(sortedKeys, key)
+			continue
+		}
+
+		for _, filter := range filters {
+			if len(key) >= len(filter) && strings.EqualFold(key[:len(filter)], filter) {
+				sortedKeys = append(sortedKeys, key)
+				continue
+			}
+		}
+	}
+	sort.Strings(sortedKeys)
+
+	return sortedKeys
 }
