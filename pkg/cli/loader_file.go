@@ -3,6 +3,7 @@ package cli
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/containous/traefik/pkg/config/file"
 	"github.com/containous/traefik/pkg/config/flag"
@@ -11,7 +12,8 @@ import (
 
 // FileLoader loads configuration from file.
 type FileLoader struct {
-	filename string
+	ConfigFileFlag string
+	filename       string
 }
 
 // GetFilename returns the configuration file if any.
@@ -27,8 +29,12 @@ func (f *FileLoader) Load(args []string, cmd *Command) (bool, error) {
 		return false, err
 	}
 
-	// FIXME
-	configFile, err := loadConfigFiles(ref["traefik.configfile"], cmd.Configuration)
+	configFileFlag := "traefik.configfile"
+	if f.ConfigFileFlag != "" {
+		configFileFlag = "traefik." + strings.ToLower(f.ConfigFileFlag)
+	}
+
+	configFile, err := loadConfigFiles(ref[configFileFlag], cmd.Configuration)
 	if err != nil {
 		return false, err
 	}

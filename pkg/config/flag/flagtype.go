@@ -23,7 +23,11 @@ func getFlagTypes(element interface{}) map[string]reflect.Kind {
 			continue
 		}
 
-		addFlagType(ref, strings.ToLower(field.Name), field.Type)
+		if field.Anonymous {
+			addFlagType(ref, "", field.Type)
+		} else {
+			addFlagType(ref, getName(field.Name), field.Type)
+		}
 	}
 
 	return ref
@@ -35,7 +39,7 @@ func addFlagType(ref map[string]reflect.Kind, name string, typ reflect.Type) {
 		ref[name] = typ.Kind()
 
 	case reflect.Map:
-		addFlagType(ref, name+"."+parser.MapNamePlaceholder, typ.Elem())
+		addFlagType(ref, getName(name, parser.MapNamePlaceholder), typ.Elem())
 
 	case reflect.Ptr:
 		if typ.Elem().Kind() == reflect.Struct {
@@ -51,10 +55,18 @@ func addFlagType(ref map[string]reflect.Kind, name string, typ reflect.Type) {
 				continue
 			}
 
-			addFlagType(ref, name+"."+strings.ToLower(subField.Name), subField.Type)
+			if subField.Anonymous {
+				addFlagType(ref, getName(name), subField.Type)
+			} else {
+				addFlagType(ref, getName(name, subField.Name), subField.Type)
+			}
 		}
 
 	default:
 		// noop
 	}
+}
+
+func getName(names ...string) string {
+	return strings.TrimPrefix(strings.ToLower(strings.Join(names, ".")), ".")
 }

@@ -11,6 +11,7 @@
 /autogen/
 /traefik
 /traefik.toml
+/traefik.yml
 *.log
 *.exe
 cover.out

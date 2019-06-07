@@ -107,6 +107,9 @@
 --api.statistics.recenterrors  (Default: "10")
     Number of recent errors logged.
 
+--configfile  (Default: "")
+    Configuration file to use.
+
 --entrypoints.<name>  (Default: "false")
     Entry points definition.
 

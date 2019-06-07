@@ -42,7 +42,7 @@ func init() {
 
 func main() {
 	// traefik config inits
-	traefikConfiguration := cmd.NewTraefikConfiguration()
+	tConfig := cmd.NewTraefikConfiguration()
 
 	loaders := []cli.ResourceLoader{&cli.FileLoader{}, &cli.EnvLoader{}, &cli.FlagLoader{}}
 
@@ -50,14 +50,14 @@ func main() {
 		Name: "traefik",
 		Description: `Traefik is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
 Complete documentation is available at https://traefik.io`,
-		Configuration: &traefikConfiguration,
+		Configuration: tConfig,
 		Resources:     loaders,
 		Run: func(_ []string) error {
-			return runCmd(&traefikConfiguration, cli.GetConfigFile(loaders))
+			return runCmd(&tConfig.Configuration, cli.GetConfigFile(loaders))
 		},
 	}
 
-	err := cmdTraefik.AddCommand(healthcheck.NewCmd(&traefikConfiguration, loaders))
+	err := cmdTraefik.AddCommand(healthcheck.NewCmd(&tConfig.Configuration, loaders))
 	if err != nil {
 		stdlog.Println(err)
 		os.Exit(1)

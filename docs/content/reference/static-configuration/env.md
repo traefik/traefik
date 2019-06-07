@@ -105,6 +105,9 @@ Enable more detailed statistics. (Default: ```false```)
 `TRAEFIK_API_STATISTICS_RECENTERRORS`:  
 Number of recent errors logged. (Default: ```10```)
 
+`TRAEFIK_CONFIGFILE`:  
+Configuration file to use. (Default: "")
+
 `TRAEFIK_ENTRYPOINTS_<NAME>`:  
 Entry points definition. (Default: ```false```)
 

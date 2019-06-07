@@ -199,6 +199,15 @@ func Test_getFlagTypes(t *testing.T) {
 				"foo." + parser.MapNamePlaceholder: reflect.Slice,
 			},
 		},
+		{
+			desc: "embedded struct",
+			element: &struct {
+				Yo
+			}{},
+			expected: map[string]reflect.Kind{
+				"foo": reflect.Bool,
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -210,4 +219,8 @@ func Test_getFlagTypes(t *testing.T) {
 			assert.Equal(t, test.expected, actual)
 		})
 	}
+}
+
+type Yo struct {
+	Foo bool
 }
