@@ -13,9 +13,12 @@ import (
 type EnvLoader struct{}
 
 // Load loads the configuration.
-func (f *EnvLoader) Load(_ []string, cmd *Command) (bool, error) {
+func (e *EnvLoader) Load(_ []string, cmd *Command) (bool, error) {
 	environ := os.Environ()
+	return e.load(environ, cmd)
+}
 
+func (*EnvLoader) load(environ []string, cmd *Command) (bool, error) {
 	var found bool
 	for _, value := range environ {
 		if strings.HasPrefix(value, "TRAEFIK_") {

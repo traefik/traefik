@@ -16,19 +16,7 @@ func getFlagTypes(element interface{}) map[string]reflect.Kind {
 
 	tp := reflect.TypeOf(element).Elem()
 
-	for i := 0; i < tp.NumField(); i++ {
-		field := tp.Field(i)
-
-		if !parser.IsExported(field) {
-			continue
-		}
-
-		if field.Anonymous {
-			addFlagType(ref, "", field.Type)
-		} else {
-			addFlagType(ref, getName(field.Name), field.Type)
-		}
-	}
+	addFlagType(ref, "", tp)
 
 	return ref
 }

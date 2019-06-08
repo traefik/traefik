@@ -14,7 +14,7 @@ type Command struct {
 	Configuration interface{}
 	Resources     []ResourceLoader
 	Run           func([]string) error
-	Hide          bool
+	Hidden        bool
 	subCommands   []*Command
 }
 

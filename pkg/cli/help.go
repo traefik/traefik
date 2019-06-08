@@ -20,7 +20,7 @@ Use "{{ .Cmd.Name }} [command] --help" for help on any command.
 {{if .SubCommands }}
 Commands:
 {{- range $i, $subCmd := .SubCommands }}
-{{ if not $subCmd.Hide }}	{{ $subCmd.Name }}	{{ $subCmd.Description }}{{end}}{{end}}
+{{ if not $subCmd.Hidden }}	{{ $subCmd.Name }}	{{ $subCmd.Description }}{{end}}{{end}}
 {{end}}
 {{- if .Flags }}
 Flag's usage: {{ .Cmd.Name }} [--flag=flag_argument] [-f [flag_argument]]	# set flag_argument to flag(s)
