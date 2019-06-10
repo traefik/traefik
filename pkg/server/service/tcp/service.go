@@ -56,7 +56,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		}
 
 		loadBalancer.AddServer(handler)
-		logger.WithField(log.ServerName, name).Debugf("Creating TCP server %d at %s with weight %d", name, server.Address, server.Weight)
+		logger.WithField(log.ServerName, name).Debugf("Creating TCP server %d at %s", name, server.Address)
 	}
 	return loadBalancer, nil
 }

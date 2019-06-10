@@ -36,15 +36,12 @@
 			"loadbalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80",
-						"weight": 1
+						"url": "http://10.42.0.4:80"
 					},
 					{
-						"url": "http://10.42.0.5:80",
-						"weight": 1
+						"url": "http://10.42.0.5:80"
 					}
 				],
-				"method": "wrr",
 				"passHostHeader": true
 			},
 			"usedBy": [
@@ -59,15 +56,12 @@
 			"loadbalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80",
-						"weight": 1
+						"url": "http://10.42.0.4:80"
 					},
 					{
-						"url": "http://10.42.0.5:80",
-						"weight": 1
+						"url": "http://10.42.0.5:80"
 					}
 				],
-				"method": "wrr",
 				"passHostHeader": true
 			},
 			"usedBy": [
@@ -93,15 +87,12 @@
 			"loadbalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.2:8080",
-						"weight": 1
+						"address": "10.42.0.2:8080"
 					},
 					{
-						"address": "10.42.0.3:8080",
-						"weight": 1
+						"address": "10.42.0.3:8080"
 					}
-				],
-				"method": "wrr"
+				]
 			},
 			"usedBy": [
 				"kubernetescrd.default/test3-crd-673acf455cb2dab0b43a"

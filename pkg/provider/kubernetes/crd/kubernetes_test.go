@@ -57,15 +57,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
-										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
 										Port:    "",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -96,15 +93,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
-										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
 										Port:    "",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 						"default/test-crd-f44ce589164e656d231c": {
@@ -113,15 +107,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
-										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
 										Port:    "",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -152,25 +143,20 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
-										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
 										Port:    "",
-										Weight:  1,
 									},
 									{
 										Address: "10.10.0.3:8080",
 										Port:    "",
-										Weight:  1,
 									},
 									{
 										Address: "10.10.0.4:8080",
 										Port:    "",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						}},
 				},
@@ -255,15 +241,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
-										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
 										Port:    "",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -297,15 +280,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
-										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
 										Port:    "",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},
@@ -337,15 +317,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
-										Weight:  1,
 									},
 									{
 										Address: "10.10.0.2:8000",
 										Port:    "",
-										Weight:  1,
 									},
 								},
-								Method: "wrr",
 							},
 						},
 					},

@@ -179,7 +179,6 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, config.TCPServer{
 			Address: fmt.Sprintf("%s:%d", service.Spec.ExternalName, portSpec.Port),
-			Weight:  1,
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
@@ -211,7 +210,6 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 			for _, addr := range subset.Addresses {
 				servers = append(servers, config.TCPServer{
 					Address: fmt.Sprintf("%s:%d", addr.IP, port),
-					Weight:  1,
 				})
 			}
 		}
@@ -475,7 +473,6 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			conf.TCP.Services[serviceName] = &config.TCPService{
 				LoadBalancer: &config.TCPLoadBalancerService{
 					Servers: allServers,
-					Method:  "wrr",
 				},
 			}
 		}
