@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -16,6 +17,7 @@ import (
 	"github.com/containous/traefik/integration/try"
 	"github.com/containous/traefik/pkg/api"
 	"github.com/go-check/check"
+	"github.com/pmezard/go-difflib/difflib"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -133,6 +135,13 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 			return err
 		}
 
+		if buf != nil {
+			buf.Reset()
+			if _, err := io.Copy(buf, bytes.NewReader(body)); err != nil {
+				return err
+			}
+		}
+
 		got, err := json.MarshalIndent(obtained, "", "\t")
 		if err != nil {
 			return err
@@ -143,27 +152,32 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 			return err
 		}
 
-		if buf != nil {
-			buf.Reset()
-			if _, err := io.Copy(buf, bytes.NewReader(body)); err != nil {
-				return err
-			}
-		}
-
 		// The pods IPs are dynamic, so we cannot predict them,
 		// which is why we have to ignore them in the comparison.
-		var rxURL = regexp.MustCompile(`"(url|address)":\s+(".*")`)
+		rxURL := regexp.MustCompile(`"(url|address)":\s+(".*")`)
 		sanitizedExpected := rxURL.ReplaceAll(expected, []byte(`"$1": "XXXX"`))
 		sanitizedGot := rxURL.ReplaceAll(got, []byte(`"$1": "XXXX"`))
 
-		var rxServerStatus = regexp.MustCompile(`"http://.*?":\s+(".*")`)
+		rxServerStatus := regexp.MustCompile(`"http://.*?":\s+(".*")`)
 		sanitizedExpected = rxServerStatus.ReplaceAll(sanitizedExpected, []byte(`"http://XXXX": $1`))
 		sanitizedGot = rxServerStatus.ReplaceAll(sanitizedGot, []byte(`"http://XXXX": $1`))
 
-		if !bytes.Equal(sanitizedExpected, sanitizedGot) {
-			return fmt.Errorf("got:\n%s\nwant:\n%s", sanitizedGot, sanitizedExpected)
+		if bytes.Equal(sanitizedExpected, sanitizedGot) {
+			return nil
 		}
 
-		return nil
+		diff := difflib.UnifiedDiff{
+			FromFile: "Expected",
+			A:        difflib.SplitLines(string(sanitizedExpected)),
+			ToFile:   "Want",
+			B:        difflib.SplitLines(string(sanitizedGot)),
+			Context:  3,
+		}
+
+		text, err := difflib.GetUnifiedDiffString(diff)
+		if err != nil {
+			return err
+		}
+		return errors.New(text)
 	}
 }
