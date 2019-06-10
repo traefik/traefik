@@ -58,6 +58,64 @@ func (s *K8sSuite) TearDownSuite(c *check.C) {
 	}
 }
 
+func (s *K8sSuite) TestIngressConfiguration(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_default.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	testConfiguration(c, "testdata/rawdata-ingress.json")
+}
+
+func (s *K8sSuite) TestCRDConfiguration(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_crd.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	testConfiguration(c, "testdata/rawdata-crd.json")
+}
+
+func testConfiguration(c *check.C, path string) {
+	expectedJSON := filepath.FromSlash(path)
+
+	if *updateExpected {
+		fi, err := os.Create(expectedJSON)
+		c.Assert(err, checker.IsNil)
+		err = fi.Close()
+		c.Assert(err, checker.IsNil)
+	}
+
+	var buf bytes.Buffer
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 20*time.Second, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
+
+	if !*updateExpected {
+		if err != nil {
+			c.Error(err)
+		}
+		return
+	}
+
+	if err != nil {
+		c.Logf("In file update mode, got expected error: %v", err)
+	}
+
+	var rtRepr api.RunTimeRepresentation
+	err = json.Unmarshal(buf.Bytes(), &rtRepr)
+	c.Assert(err, checker.IsNil)
+
+	newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
+	c.Assert(err, checker.IsNil)
+
+	err = ioutil.WriteFile(expectedJSON, newJSON, 0644)
+	c.Assert(err, checker.IsNil)
+	c.Errorf("We do not want a passing test in file update mode")
+}
+
 func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 	return func(res *http.Response) error {
 		body, err := ioutil.ReadAll(res.Body)
@@ -94,15 +152,11 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 
 		// The pods IPs are dynamic, so we cannot predict them,
 		// which is why we have to ignore them in the comparison.
-		var rxURL = regexp.MustCompile(`"url":.*,`)
-		sanitizedExpected := rxURL.ReplaceAll(expected, []byte(`"url": "XXXX",`))
-		sanitizedGot := rxURL.ReplaceAll(got, []byte(`"url": "XXXX",`))
+		var rxURL = regexp.MustCompile(`"(url|address)":\s+(".*")`)
+		sanitizedExpected := rxURL.ReplaceAll(expected, []byte(`"$1": "XXXX"`))
+		sanitizedGot := rxURL.ReplaceAll(got, []byte(`"$1": "XXXX"`))
 
-		var rxAddress = regexp.MustCompile(`"address":.*,`)
-		sanitizedExpected = rxAddress.ReplaceAll(sanitizedExpected, []byte(`"address": "XXXX",`))
-		sanitizedGot = rxAddress.ReplaceAll(sanitizedGot, []byte(`"address": "XXXX",`))
-
-		var rxServerStatus = regexp.MustCompile(`"http://.*?": (".*")`)
+		var rxServerStatus = regexp.MustCompile(`"http://.*?":\s+(".*")`)
 		sanitizedExpected = rxServerStatus.ReplaceAll(sanitizedExpected, []byte(`"http://XXXX": $1`))
 		sanitizedGot = rxServerStatus.ReplaceAll(sanitizedGot, []byte(`"http://XXXX": $1`))
 
@@ -112,60 +166,4 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 
 		return nil
 	}
-}
-
-func (s *K8sSuite) TestIngressConfiguration(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_default.toml"))
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	testConfiguration(c, "testdata/rawdata-ingress.json")
-}
-
-func (s *K8sSuite) TestCRDConfiguration(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_crd.toml"))
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	testConfiguration(c, "testdata/rawdata-crd.json")
-}
-
-func testConfiguration(c *check.C, path string) {
-	expectedJSON := filepath.FromSlash(path)
-	if *updateExpected {
-		fi, err := os.Create(expectedJSON)
-		c.Assert(err, checker.IsNil)
-		err = fi.Close()
-		c.Assert(err, checker.IsNil)
-	}
-	var buf bytes.Buffer
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 20*time.Second, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
-	if !*updateExpected {
-		if err != nil {
-			c.Errorf("%v", err)
-		}
-
-		return
-	}
-
-	if err != nil {
-		c.Logf("In file update mode, got expected error: %v", err)
-	}
-
-	var rtRepr api.RunTimeRepresentation
-	err = json.Unmarshal(buf.Bytes(), &rtRepr)
-	c.Assert(err, checker.IsNil)
-
-	newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
-	c.Assert(err, checker.IsNil)
-
-	err = ioutil.WriteFile(expectedJSON, newJSON, 0644)
-	c.Assert(err, checker.IsNil)
-	c.Errorf("We do not want a passing test in file update mode")
 }
