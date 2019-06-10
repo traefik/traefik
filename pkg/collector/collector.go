@@ -56,7 +56,11 @@ func Collect(staticConfiguration *static.Configuration) error {
 		return err
 	}
 
-	_, err = makeHTTPClient().Post(collectorURL, "application/json; charset=utf-8", buf)
+	resp, err := makeHTTPClient().Post(collectorURL, "application/json; charset=utf-8", buf)
+	if resp != nil {
+		resp.Body.Close()
+	}
+
 	return err
 }
 

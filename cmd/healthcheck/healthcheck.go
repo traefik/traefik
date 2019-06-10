@@ -27,10 +27,14 @@ func runCmd(traefikConfiguration *static.Configuration) func(_ []string) error {
 		traefikConfiguration.SetEffectiveConfiguration("")
 
 		resp, errPing := Do(*traefikConfiguration)
+		if resp != nil {
+			resp.Body.Close()
+		}
 		if errPing != nil {
 			fmt.Printf("Error calling healthcheck: %s\n", errPing)
 			os.Exit(1)
 		}
+
 		if resp.StatusCode != http.StatusOK {
 			fmt.Printf("Bad healthcheck status: %s\n", resp.Status)
 			os.Exit(1)

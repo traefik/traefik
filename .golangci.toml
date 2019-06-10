@@ -36,6 +36,8 @@
     "scopelint",
     "gochecknoinits",
     "gochecknoglobals",
+    # uncomment when the CI will be updated
+    # "bodyclose", # Too many false-positive and panics.
   ]
 
 [issues]

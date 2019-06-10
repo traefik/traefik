@@ -174,7 +174,11 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) error 
 		safe.Go(func() {
 			tick := time.Tick(t)
 			for range tick {
-				_, errHealthCheck := healthcheck.Do(*staticConfiguration)
+				resp, errHealthCheck := healthcheck.Do(*staticConfiguration)
+				if resp != nil {
+					resp.Body.Close()
+				}
+
 				if staticConfiguration.Ping == nil || errHealthCheck == nil {
 					if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
 						log.WithoutContext().Error("Fail to tick watchdog")
