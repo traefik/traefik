@@ -161,17 +161,15 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 		return nil, errors.New("service not found")
 	}
 
-	var portSpec corev1.ServicePort
-	var match bool
+	var portSpec *corev1.ServicePort
 	for _, p := range service.Spec.Ports {
 		if svc.Port == p.Port {
-			portSpec = p
-			match = true
+			portSpec = &p
 			break
 		}
 	}
 
-	if !match {
+	if portSpec == nil {
 		return nil, errors.New("service port not found")
 	}
 
@@ -236,18 +234,15 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 		return nil, errors.New("service not found")
 	}
 
-	var portSpec corev1.ServicePort
-	var match bool
-	// TODO: support name ports? do we actually care?
+	var portSpec *corev1.ServicePort
 	for _, p := range service.Spec.Ports {
 		if svc.Port == p.Port {
-			portSpec = p
-			match = true
+			portSpec = &p
 			break
 		}
 	}
 
-	if !match {
+	if portSpec == nil {
 		return nil, errors.New("service port not found")
 	}
 
