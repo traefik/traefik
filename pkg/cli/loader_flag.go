@@ -10,7 +10,7 @@ import (
 // FlagLoader loads configuration from flags.
 type FlagLoader struct{}
 
-// Load loads the configuration.
+// Load loads the command's configuration from flag arguments.
 func (*FlagLoader) Load(args []string, cmd *Command) (bool, error) {
 	if err := flag.Decode(args, cmd.Configuration); err != nil {
 		return false, fmt.Errorf("failed to decode configuration from flags: %v", err)

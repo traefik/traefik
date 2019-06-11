@@ -9,10 +9,10 @@ import (
 	"github.com/containous/traefik/pkg/log"
 )
 
-// EnvLoader loads configuration from environment variables.
+// EnvLoader loads a configuration from all the environment variables prefixed with "TRAEFIK_".
 type EnvLoader struct{}
 
-// Load loads the configuration.
+// Load loads the command's configuration from the environment variables.
 func (e *EnvLoader) Load(_ []string, cmd *Command) (bool, error) {
 	environ := os.Environ()
 	return e.load(environ, cmd)

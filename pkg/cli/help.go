@@ -45,7 +45,7 @@ func isHelp(args []string) bool {
 	return false
 }
 
-// PrintHelp prints the command help.
+// PrintHelp prints the help for the command given as argument.
 func PrintHelp(w io.Writer, cmd *Command) error {
 	var flags []parser.Flat
 	if cmd.Configuration != nil {

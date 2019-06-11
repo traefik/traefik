@@ -10,7 +10,7 @@ import (
 	"github.com/containous/traefik/pkg/log"
 )
 
-// FileLoader loads configuration from file.
+// FileLoader loads a configuration from a file.
 type FileLoader struct {
 	ConfigFileFlag string
 	filename       string
@@ -21,7 +21,7 @@ func (f *FileLoader) GetFilename() string {
 	return f.filename
 }
 
-// Load loads the configuration.
+// Load loads the command's configuration from a file either specified with the -traefik.configfile flag, or from default locations.
 func (f *FileLoader) Load(args []string, cmd *Command) (bool, error) {
 	ref, err := flag.Parse(args, cmd.Configuration)
 	if err != nil {

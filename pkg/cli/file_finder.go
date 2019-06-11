@@ -6,13 +6,14 @@ import (
 	"strings"
 )
 
-// Finder finds a first available file path.
+// Finder holds a list of file paths.
 type Finder struct {
 	BasePaths  []string
 	Extensions []string
 }
 
-// Find finds a first available file path.
+// Find returns the first valid existing file among configFile
+// and the paths already registered with Finder.
 func (f Finder) Find(configFile string) (string, error) {
 	paths := f.getPaths(configFile)
 

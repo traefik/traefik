@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// EncodeToNode Converts an element to a node.
+// EncodeToNode converts an element to a node.
 // element -> nodes
 func EncodeToNode(element interface{}, omitEmpty bool) (*Node, error) {
 	rValue := reflect.ValueOf(element)

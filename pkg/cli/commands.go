@@ -1,3 +1,6 @@
+// Package cli provides tools to create commands that support advanced
+// configuration features, sub-commands, and allowing configuration from
+// command-line flags, configuration files, and environment variables.
 package cli
 
 import (

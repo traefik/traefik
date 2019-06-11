@@ -1,3 +1,4 @@
+// Package env implements encoding and decoding between environment variable and a configuration.
 package env
 
 import (
@@ -6,8 +7,11 @@ import (
 	"github.com/containous/traefik/pkg/config/parser"
 )
 
-// Decode Converts the environment variables to an element.
-// env vars -> [ node -> node + metadata (type) ] -> element (node)
+// Decode decodes the given environment variables into the given element.
+// The operation goes through three stages roughly summarized as:
+// env vars -> tree of untyped nodes
+// untyped nodes -> nodes augmented with metadata such as type (inferred from element)
+// "typed" nodes -> typed element
 func Decode(environ []string, element interface{}) error {
 	vars := make(map[string]string)
 	for _, evr := range environ {
@@ -21,8 +25,11 @@ func Decode(environ []string, element interface{}) error {
 	return parser.Decode(vars, element)
 }
 
-// Encode Converts an element to environment variables.
-// element -> node (value) -> env vars (node)
+// Encode encodes the configuration in element in the returned environment variables.
+// The operation goes through three stages roughly summarized as:
+// typed configuration in element -> tree of untyped nodes
+// untyped nodes -> nodes augmented with metadata such as type (inferred from element)
+// "typed" nodes -> environment variables with default values (determined by type)
 func Encode(element interface{}) ([]parser.Flat, error) {
 	if element == nil {
 		return nil, nil

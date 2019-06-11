@@ -1,3 +1,4 @@
+// package cmd provides the configuration structure for a traefik command.
 package cmd
 
 import (
@@ -7,13 +8,14 @@ import (
 	"github.com/containous/traefik/pkg/types"
 )
 
-// TraefikCmdConfiguration holds GlobalConfiguration and other stuff
+// TraefikCmdConfiguration wraps the static configuration and extra parameters.
 type TraefikCmdConfiguration struct {
 	static.Configuration `export:"true"`
-	ConfigFile           string `description:"Configuration file to use." export:"true"`
+	// ConfigFile is the path to the configuration file.
+	ConfigFile string `description:"Configuration file to use." export:"true"`
 }
 
-// NewTraefikConfiguration creates a TraefikCmdConfiguration with default values
+// NewTraefikConfiguration creates a TraefikCmdConfiguration with default values.
 func NewTraefikConfiguration() *TraefikCmdConfiguration {
 	return &TraefikCmdConfiguration{
 		Configuration: static.Configuration{
