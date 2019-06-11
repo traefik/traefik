@@ -553,7 +553,7 @@ Specifies the header name that will be used to store the parent ID.
 Specifies the header name that will be used to store the span ID.
 
 `TRAEFIK_TRACING_HAYSTACK_TRACEIDHEADERNAME`:  
-Specifies the header name that will be used to store the trace ID..
+Specifies the header name that will be used to store the trace ID.
 
 `TRAEFIK_TRACING_INSTANA`:  
 Settings for Instana. (Default: ```false```)

@@ -18,7 +18,7 @@ type Config struct {
 	LocalAgentHost          string `description:"Set haystack-agent's host that the reporter will used." export:"false"`
 	LocalAgentPort          int    `description:"Set haystack-agent's port that the reporter will used." export:"false"`
 	GlobalTag               string `description:"Key:Value tag to be set on all the spans." export:"true"`
-	TraceIDHeaderName       string `description:"Specifies the header name that will be used to store the trace ID.." export:"true"`
+	TraceIDHeaderName       string `description:"Specifies the header name that will be used to store the trace ID." export:"true"`
 	ParentIDHeaderName      string `description:"Specifies the header name that will be used to store the parent ID." export:"true"`
 	SpanIDHeaderName        string `description:"Specifies the header name that will be used to store the span ID." export:"true"`
 	BaggagePrefixHeaderName string `description:"specifies the header name prefix that will be used to store baggage items in a map." export:"true"`

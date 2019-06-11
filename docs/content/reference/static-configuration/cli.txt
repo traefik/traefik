@@ -571,7 +571,7 @@
     Specifies the header name that will be used to store the span ID.
 
 --tracing.haystack.traceidheadername  (Default: "")
-    Specifies the header name that will be used to store the trace ID..
+    Specifies the header name that will be used to store the trace ID.
 
 --tracing.instana  (Default: "false")
     Settings for Instana.
