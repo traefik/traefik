@@ -169,7 +169,7 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 		diff := difflib.UnifiedDiff{
 			FromFile: "Expected",
 			A:        difflib.SplitLines(string(sanitizedExpected)),
-			ToFile:   "Want",
+			ToFile:   "Got",
 			B:        difflib.SplitLines(string(sanitizedGot)),
 			Context:  3,
 		}
