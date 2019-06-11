@@ -194,7 +194,7 @@ required = [
 
 [[constraint]]
   name = "github.com/go-acme/lego"
-  version = "2.5.0"
+  version = "2.6.0"
 
 [[constraint]]
   name = "google.golang.org/grpc"
