@@ -105,3 +105,9 @@ func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
 	return d.config.PropagationTimeout, d.config.PollingInterval
 }
+
+// Sequential All DNS challenges for this provider will be resolved sequentially.
+// Returns the interval between each iteration.
+func (d *DNSProvider) Sequential() time.Duration {
+	return d.config.PropagationTimeout
+}
