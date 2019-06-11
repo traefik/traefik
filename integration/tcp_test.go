@@ -71,8 +71,7 @@ func (s *TCPSuite) TestMixed(c *check.C) {
 }
 
 func (s *TCPSuite) TestTLSOptions(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/multi-tls-options.toml", struct {
-	}{})
+	file := s.adaptFile(c, "fixtures/tcp/multi-tls-options.toml", struct{}{})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -99,7 +98,6 @@ func (s *TCPSuite) TestTLSOptions(c *check.C) {
 	_, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS11)
 	c.Assert(err, checker.NotNil)
 	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
-
 }
 
 func (s *TCPSuite) TestNonTLSFallback(c *check.C) {

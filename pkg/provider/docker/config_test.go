@@ -336,7 +336,7 @@ func TestDefaultRule(t *testing.T) {
 }
 
 func Test_buildConfiguration(t *testing.T) {
-	var testCases = []struct {
+	testCases := []struct {
 		desc        string
 		containers  []dockerData
 		constraints []*types.Constraint
@@ -2352,6 +2352,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 	}
+
 	for _, test := range testCases {
 		test := test
 
