@@ -48,6 +48,7 @@ type Client interface {
 	WatchAll(namespaces k8s.Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error)
 
 	GetIngressRoutes() []*v1alpha1.IngressRoute
+	GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP
 	GetMiddlewares() []*v1alpha1.Middleware
 
 	GetIngresses() []*extensionsv1beta1.Ingress
@@ -157,6 +158,7 @@ func (c *clientWrapper) WatchAll(namespaces k8s.Namespaces, stopCh <-chan struct
 		factoryCrd := externalversions.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod, externalversions.WithNamespace(ns))
 		factoryCrd.Traefik().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().Middlewares().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1alpha1().IngressRouteTCPs().Informer().AddEventHandler(eventHandler)
 
 		factoryKube := informers.NewFilteredSharedInformerFactory(c.csKube, resyncPeriod, ns, nil)
 		factoryKube.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
@@ -205,6 +207,20 @@ func (c *clientWrapper) GetIngressRoutes() []*v1alpha1.IngressRoute {
 		ings, err := factory.Traefik().V1alpha1().IngressRoutes().Lister().List(c.labelSelector)
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
+		}
+		result = append(result, ings...)
+	}
+
+	return result
+}
+
+func (c *clientWrapper) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
+	var result []*v1alpha1.IngressRouteTCP
+
+	for ns, factory := range c.factoriesCrd {
+		ings, err := factory.Traefik().V1alpha1().IngressRouteTCPs().Lister().List(c.labelSelector)
+		if err != nil {
+			log.Errorf("Failed to list tcp ingresses in namespace %s: %s", ns, err)
 		}
 		result = append(result, ings...)
 	}

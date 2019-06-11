@@ -145,7 +145,7 @@ If you're in a hurry, maybe you'd rather go through the [dynamic](../reference/d
 --8<-- "content/providers/crd_ingress_route.yml"
 ```
 
-That `IngressRoute` kind can then be used to define an `IngressRoute` object, such as:
+That `IngressRoute` kind can then be used to define an `IngressRoute` object, such as in:
 
 ```yaml
 apiVersion: traefik.containo.us/v1alpha1
@@ -170,6 +170,22 @@ spec:
     services:
     - name: whoami
       port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: ingressroutetcpfoo.crd
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+  # Match is the rule corresponding to an underlying router.
+  - match: HostSNI(`*`)
+    services:
+    - name: whoamitcp
+      port: 8080
 ```
 
 ### Middleware

@@ -27,6 +27,21 @@ spec:
   scope: Namespaced
 
 ---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: ingressroutetcps.traefik.containo.us
+
+spec:
+  group: traefik.containo.us
+  version: v1alpha1
+  names:
+    kind: IngressRouteTCP
+    plural: ingressroutetcps
+    singular: ingressroutetcp
+  scope: Namespaced
+
+---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
@@ -67,5 +82,25 @@ spec:
       middlewares:
         - name: stripprefix
         - name: addprefix
+  # use an empty tls object for TLS with Let's Encrypt
   tls:
     secretName: supersecret
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: ingressroutetcp.crd
+  namespace: default
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+    - match: HostSNI(`bar.com`)
+      services:
+        - name: whoamitcp
+          port: 8080
+  tls:
+    secretName: foosecret
+    passthrough: false
