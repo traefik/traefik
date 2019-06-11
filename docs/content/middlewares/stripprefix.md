@@ -23,7 +23,9 @@ metadata:
   name: test-stripprefix
 spec:
   StripPrefix:
-    prefixes: "/foobar, /fiibar"
+    prefixes:
+    - /foobar
+    - /fiibar
 ```
 
 ```json tab="Marathon"
