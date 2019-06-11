@@ -25,7 +25,6 @@ type Provider struct {
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
 	p.EntryPoint = "traefik"
-	// FIXME p.EntryPoint = static.DefaultInternalEntryPointName
 }
 
 var templatesRenderer = render.New(render.Options{Directory: "nowhere"})

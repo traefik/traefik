@@ -37,7 +37,7 @@ Attach labels to your containers and let Traefik do the rest!
     Enabling the docker provider (Swarm Mode)
 
     ```toml
-    [docker]
+    [providers.docker]
     # swarm classic (1.12-)
     # endpoint = "tcp://127.0.0.1:2375"
     # docker swarm mode (1.12+)
@@ -193,8 +193,8 @@ The container service name can be accessed as the `Name` identifier,
 and the template has access to all the labels defined on this container.
 
 ```toml tab="File"
-[docker]
-defaultRule = ""
+[providers.docker]
+defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
 # ...
 ```
 
@@ -214,6 +214,48 @@ Activates the Swarm Mode.
 _Optional, Default=15_
 
 Defines the polling interval (in seconds) in Swarm Mode.
+
+### `constraints`
+
+_Optional, Default=""_
+
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+That is to say, if none of the container's labels match the expression, no route for the container is created.
+If the expression is empty, all detected containers are included.
+
+The expression syntax is based on the `Label("key", "value")`, and `LabelRegexp("key", "value")` functions, as well as the usual boolean logic, as shown in examples below.
+
+??? example "Constraints Expression Examples"
+
+    ```toml
+    # Includes only containers having a label with key `a.label.name` and value `foo`
+    constraints = "Label(`a.label.name`, `foo`)"
+    ```
+    
+    ```toml
+    # Excludes containers having any label with key `a.label.name` and value `foo`
+    constraints = "!Label(`a.label.name`, `value`)"
+    ```
+    
+    ```toml
+    # With logical AND.
+    constraints = "Label(`a.label.name`, `valueA`) && Label(`another.label.name`, `valueB`)"
+    ```
+    
+    ```toml
+    # With logical OR.
+    constraints = "Label(`a.label.name`, `valueA`) || Label(`another.label.name`, `valueB`)"
+    ```
+    
+    ```toml
+    # With logical AND and OR, with precedence set by parentheses.
+    constraints = "Label(`a.label.name`, `valueA`) && (Label(`another.label.name`, `valueB`) || Label(`yet.another.label.name`, `valueC`))"
+    ```
+    
+    ```toml
+    # Includes only containers having a label with key `a.label.name` and a value matching the `a.+` regular expression.
+    constraints = "LabelRegexp(`a.label.name`, `a.+`)"
+    ```
 
 ## Routing Configuration Options
 
@@ -285,10 +327,6 @@ You can declare TCP Routers and/or Services using labels.
 You can tell Traefik to consider (or not) the container by setting `traefik.enable` to true or false.
 
 This option overrides the value of `exposedByDefault`.
-
-#### `traefik.tags`
-
-Sets the tags for [constraints filtering](./overview.md#constraints-configuration).
 
 #### `traefik.docker.network`
 

@@ -14,7 +14,6 @@ const (
 // configuration Contains information from the labels that are globals (not related to the dynamic configuration) or specific to the provider.
 type configuration struct {
 	Enable bool
-	Tags   []string
 	Docker specificConfiguration
 }
 
@@ -31,7 +30,7 @@ func (p *Provider) getConfiguration(container dockerData) (configuration, error)
 		},
 	}
 
-	err := label.Decode(container.Labels, &conf, "traefik.docker.", "traefik.enable", "traefik.tags")
+	err := label.Decode(container.Labels, &conf, "traefik.docker.", "traefik.enable")
 	if err != nil {
 		return configuration{}, err
 	}

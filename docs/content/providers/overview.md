@@ -26,74 +26,46 @@ Even if each provider is different, we can categorize them in four groups:
 
 Below is the list of the currently supported providers in Traefik. 
 
-| Provider                        | Type         | Configuration Type |
-|---------------------------------|--------------|--------------------|
-| [Docker](./docker.md)           | Orchestrator | Label              |
-| [File](./file.md)               | Orchestrator | Custom Annotation  |
-| [Kubernetes](kubernetes-crd.md) | Orchestrator | Custom Resource    |
-| [Marathon](marathon.md)         | Orchestrator | Label              |
+| Provider                          | Type         | Configuration Type |
+|-----------------------------------|--------------|--------------------|
+| [Docker](./docker.md)             | Orchestrator | Label              |
+| [Kubernetes](./kubernetes-crd.md) | Orchestrator | Custom Resource    |
+| [Marathon](./marathon.md)         | Orchestrator | Label              |
+| [Rancher](./rancher.md)           | Orchestrator | Label              |
+| [File](./file.md)                 | Manual       | TOML format        |
 
 !!! note "More Providers"
 
-    The current version of Traefik is in development and doesn't support (yet) every provider. See the previous version (1.7) for more providers.
+    The current version of Traefik is in development and doesn't support (yet) every provider.
+    See the previous version (1.7) for more providers.
 
 <!--
- TODO (document TCP VS HTTP dynamic configuration)
- -->
-    
-## Constraints Configuration
+TODO (document TCP VS HTTP dynamic configuration)
+-->
 
-If you want to limit the scope of Traefik's service discovery, you can set constraints.
-Doing so, Traefik will create routes for containers that match these constraints only.
+## Restrict the Scope of Service Discovery
 
-??? example "Containers with the api Tag"
+By default Traefik will create routes for all detected containers.
 
-    ```toml
-    constraints = ["tag==api"]
-    ```
+If you want to limit the scope of Traefik's service discovery,
+i.e. disallow route creation for some containers,
+you can do so in two different ways:
+either with the generic configuration option `exposedByDefault`,
+or with a finer granularity mechanism based on constraints.
 
-??? example "Containers without the api Tag"
+### `exposedByDefault` and `traefik.enable`
 
-    ```toml
-    constraints = ["tag!=api"]
-    ```
-    
-??? example "Containers with tags starting with 'us-'"
+List of providers that support that feature:
 
-    ```toml
-    constraints = ["tag==us-*"]
-    ```
+- [Docker](./docker.md#exposedbydefault)
+- [Rancher](./rancher.md#exposedbydefault)
+- [Marathon](./marathon.md#exposedbydefault)
 
-??? example "Multiple constraints"
+### Constraints
 
-    ```toml
-    # Multiple constraints
-    #   - "tag==" must match with at least one tag
-    #   - "tag!=" must match with none of tags
-    constraints = ["tag!=us-*", "tag!=asia-*"]
-    ```
+List of providers that support constraints:
 
-??? note "List of Providers that Support Constraints"
-
-    - Docker
-    - Consul K/V
-    - BoltDB
-    - Zookeeper
-    - ECS
-    - Etcd
-    - Consul Catalog
-    - Rancher
-    - Marathon
-    - Kubernetes (using a provider-specific mechanism based on label selectors)
-    
-!!! note
-
-    The constraint option belongs to the provider configuration itself.
-   
-    ??? example "Setting the Constraint Options for Docker"
-   
-        ```toml
-        [providers]
-         [providers.docker]
-            constraints = ["tag==api"]
-        ```
+- [Docker](./docker.md#constraints)
+- [Rancher](./rancher.md#constraints)
+- [Marathon](./marathon.md#constraints)
+- [Kubernetes CRD](./kubernetes-crd.md#labelselector)

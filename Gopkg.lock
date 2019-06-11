@@ -1416,14 +1416,6 @@
   revision = "1f30fe9094a513ce4c700b9a54458bbb0c96996c"
 
 [[projects]]
-  branch = "master"
-  digest = "1:09d61699d553a4e6ec998ad29816177b1f3d3ed0c18fe923d2c174ec065c99c8"
-  name = "github.com/ryanuber/go-glob"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "256dc444b735e061061cf46c809487313d5b0065"
-
-[[projects]]
   digest = "1:253f275bd72c42f8d234712d1574c8b222fe9b72838bfaca11b21ace9c0e3d0a"
   name = "github.com/sacloud/libsacloud"
   packages = [
@@ -1598,12 +1590,12 @@
   revision = "3d629cff40b7040e0519628e7774ed11a95d9aff"
 
 [[projects]]
-  digest = "1:ca6bac407fedc14fbeeba861dd33a821ba3a1624c10126ec6003b0a28d4139c5"
+  digest = "1:b9d8cc221fb40078c7eb78d73b1702b5b548511b3d62bbd56b2f8180089c79af"
   name = "github.com/vulcand/predicate"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "939c094524d124c55fa8afe0e077701db4a865e2"
-  version = "v1.0.0"
+  revision = "8fbfb3ab0e94276b6b58bec378600829adc7a203"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
@@ -2289,7 +2281,6 @@
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/prometheus/client_model/go",
     "github.com/rancher/go-rancher-metadata/metadata",
-    "github.com/ryanuber/go-glob",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",

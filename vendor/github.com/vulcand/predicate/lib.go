@@ -119,6 +119,14 @@ func Or(a, b BoolPredicate) BoolPredicate {
 	}
 }
 
+// Not is a boolean predicate that calls a boolean predicate
+// and returns negated result
+func Not(a BoolPredicate) BoolPredicate {
+	return func() bool {
+		return !a()
+	}
+}
+
 // GetFieldByTag returns a field from the object based on the tag
 func GetFieldByTag(ival interface{}, tagName string, fieldNames []string) (interface{}, error) {
 	if len(fieldNames) == 0 {
