@@ -103,12 +103,18 @@ On subsequent requests, the client is forwarded to the same server.
     
     The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
 
+!!! note "Secure & HTTPOnly flags"
+
+    By default, the affinity cookie is created without those flags. One however can change that through configuration. 
+
 ??? example "Adding Stickiness"
 
     ```toml
     [http.services]
       [http.services.my-service]
         [http.services.my-service.LoadBalancer.stickiness]
+          secureCookie = true
+          httpOnlyCookie = true
     ```
 
 ??? example "Adding Stickiness with a Custom Cookie Name"
@@ -118,6 +124,8 @@ On subsequent requests, the client is forwarded to the same server.
       [http.services.my-service]
         [http.services.my-service.LoadBalancer.stickiness]
            cookieName = "my_stickiness_cookie_name"
+           secureCookie = true
+           httpOnlyCookie = true
     ```
 
 #### Health Check

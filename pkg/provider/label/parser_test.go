@@ -1091,6 +1091,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.CookieName":            "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.HTTPOnlyCookie":        "true",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.SecureCookie":          "false",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name1":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Hostname":             "foobar",

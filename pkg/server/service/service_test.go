@@ -202,11 +202,9 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 				Stickiness: &config.Stickiness{HTTPOnlyCookie: true, SecureCookie: true},
 				Servers: []config.Server{
 					{
-						URL:    server1.URL,
-						Weight: 1,
+						URL: server1.URL,
 					},
 				},
-				Method: "wrr",
 			},
 			expected: []ExpectedResult{
 				{
