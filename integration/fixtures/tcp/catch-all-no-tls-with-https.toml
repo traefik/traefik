@@ -38,4 +38,3 @@ level = "DEBUG"
           [http.services.whoami.loadbalancer]
             [[http.services.whoami.loadbalancer.servers]]
               url = "http://localhost:8085"
-              weight=1
