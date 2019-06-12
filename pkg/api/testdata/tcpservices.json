@@ -1,0 +1,31 @@
+[
+	{
+		"loadbalancer": {
+			"servers": [
+				{
+					"address": "127.0.0.1:2345"
+				}
+			]
+		},
+		"name": "myprovider.bar",
+		"provider": "myprovider",
+		"usedBy": [
+			"myprovider.foo",
+			"myprovider.test"
+		]
+	},
+	{
+		"loadbalancer": {
+			"servers": [
+				{
+					"address": "127.0.0.2:2345"
+				}
+			]
+		},
+		"name": "myprovider.baz",
+		"provider": "myprovider",
+		"usedBy": [
+			"myprovider.foo"
+		]
+	}
+]
