@@ -1,4 +1,4 @@
-// Package env implements encoding and decoding between environment variable and a configuration.
+// Package env implements encoding and decoding between environment variable and a typed Configuration.
 package env
 
 import (
@@ -8,9 +8,10 @@ import (
 )
 
 // Decode decodes the given environment variables into the given element.
-// The operation goes through three stages roughly summarized as:
-// env vars -> tree of untyped nodes
-// untyped nodes -> nodes augmented with metadata such as type (inferred from element)
+// The operation goes through four stages roughly summarized as:
+// env vars -> map
+// map -> tree of untyped nodes
+// untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
 // "typed" nodes -> typed element
 func Decode(environ []string, element interface{}) error {
 	vars := make(map[string]string)
@@ -25,11 +26,11 @@ func Decode(environ []string, element interface{}) error {
 	return parser.Decode(vars, element)
 }
 
-// Encode encodes the configuration in element in the returned environment variables.
+// Encode encodes the configuration in element into the environment variables represented in the returned Flats.
 // The operation goes through three stages roughly summarized as:
 // typed configuration in element -> tree of untyped nodes
-// untyped nodes -> nodes augmented with metadata such as type (inferred from element)
-// "typed" nodes -> environment variables with default values (determined by type)
+// untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
+// "typed" nodes -> environment variables with default values (determined by type/kind)
 func Encode(element interface{}) ([]parser.Flat, error) {
 	if element == nil {
 		return nil, nil

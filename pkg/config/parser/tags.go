@@ -13,6 +13,6 @@ const (
 	// TagDescription is the documentation for the field.
 	TagDescription = "description"
 
-	// TagLabelAllowEmpty related to TagLabel
+	// TagLabelAllowEmpty is related to TagLabel.
 	TagLabelAllowEmpty = "allowEmpty"
 )

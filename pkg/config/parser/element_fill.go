@@ -14,8 +14,7 @@ type initializer interface {
 	SetDefaults()
 }
 
-// Fill the fields of the element.
-// nodes -> element
+// Fill populates the fields of the element using the information in node.
 func Fill(element interface{}, node *Node) error {
 	if element == nil || node == nil {
 		return nil

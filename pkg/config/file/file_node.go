@@ -11,6 +11,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// decodeFileToNode decodes the configuration in filePath in a tree of untyped nodes.
+// If filters is not empty, it skips any configuration element whose name is
+// not among filters.
 func decodeFileToNode(filePath string, filters ...string) (*parser.Node, error) {
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {

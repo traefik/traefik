@@ -1,11 +1,16 @@
+// Package flag implements encoding and decoding between flag arguments and a typed Configuration.
 package flag
 
 import (
 	"github.com/containous/traefik/pkg/config/parser"
 )
 
-// Decode Converts the flags to an element.
-// flags -> [ node -> node + metadata (type) ] -> element (node)
+// Decode decodes the given flag arguments into the given element.
+// The operation goes through four stages roughly summarized as:
+// flag arguments -> parsed map of flags
+// map -> tree of untyped nodes
+// untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
+// "typed" nodes -> typed element
 func Decode(args []string, element interface{}) error {
 	ref, err := Parse(args, element)
 	if err != nil {
@@ -15,8 +20,11 @@ func Decode(args []string, element interface{}) error {
 	return parser.Decode(ref, element)
 }
 
-// Encode Converts an element to Flat.
-// element -> node (value) -> Flat
+// Encode encodes the configuration in element into the flags represented in the returned Flats.
+// The operation goes through three stages roughly summarized as:
+// typed configuration in element -> tree of untyped nodes
+// untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
+// "typed" nodes -> flags with default values (determined by type/kind)
 func Encode(element interface{}) ([]parser.Flat, error) {
 	if element == nil {
 		return nil, nil

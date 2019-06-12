@@ -2,10 +2,10 @@ package parser
 
 import "reflect"
 
-// MapNamePlaceholder the placeholder for the map name.
+// MapNamePlaceholder is the placeholder for the map name.
 const MapNamePlaceholder = "<name>"
 
-// Node a label node.
+// Node is a label node.
 type Node struct {
 	Name        string            `json:"name"`
 	Description string            `json:"description,omitempty"`

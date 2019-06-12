@@ -1,3 +1,4 @@
+// Package cmd provides the configuration structure for a traefik command.
 package cmd
 
 import (

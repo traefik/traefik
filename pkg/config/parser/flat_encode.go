@@ -13,23 +13,23 @@ import (
 
 const defaultPtrValue = "false"
 
-// FlatOpts Encode options.
-// Case: lower by default, can be "lower" or "upper"
+// FlatOpts holds options used when encoding to Flat.
 type FlatOpts struct {
-	Case      string // lower|upper
+	Case      string // "lower" or "upper", defaults to "lower".
 	Separator string
 	SkipRoot  bool
 }
 
-// Flat a configuration item representation.
+// Flat is a configuration item representation.
 type Flat struct {
 	Name        string
 	Description string
 	Default     string
 }
 
-// EncodeToFlat encode a node to a Flat representation
-// nodes + element -> flats
+// EncodeToFlat encodes a node to a Flat representation.
+// Even though the given node argument should have already been augmented with metadata such as kind,
+// the element (and its type information) is still needed to treat remaining edge cases.
 func EncodeToFlat(element interface{}, node *Node, opts FlatOpts) ([]Flat, error) {
 	if element == nil || node == nil {
 		return nil, nil
@@ -41,7 +41,7 @@ func EncodeToFlat(element interface{}, node *Node, opts FlatOpts) ([]Flat, error
 
 	elem := reflect.ValueOf(element)
 	if elem.Kind() == reflect.Struct {
-		return nil, fmt.Errorf("struct are not supported, use pointer instead")
+		return nil, fmt.Errorf("structs are not supported, use pointer instead")
 	}
 
 	encoder := encoderToFlat{FlatOpts: opts}

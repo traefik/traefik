@@ -7,9 +7,8 @@ import (
 	"strings"
 )
 
-// AddMetadata Adds metadata to a node.
-// nodes + element -> nodes
-func AddMetadata(structure interface{}, node *Node) error {
+// AddMetadata adds metadata such as type, inferred from element, to a node.
+func AddMetadata(element interface{}, node *Node) error {
 	if node == nil {
 		return nil
 	}
@@ -18,11 +17,11 @@ func AddMetadata(structure interface{}, node *Node) error {
 		return fmt.Errorf("invalid node %s: no child", node.Name)
 	}
 
-	if structure == nil {
+	if element == nil {
 		return errors.New("nil structure")
 	}
 
-	rootType := reflect.TypeOf(structure)
+	rootType := reflect.TypeOf(element)
 	node.Kind = rootType.Kind()
 
 	return browseChildren(rootType, node)
@@ -137,7 +136,7 @@ func findTypedField(rType reflect.Type, node *Node) (reflect.StructField, error)
 	return reflect.StructField{}, fmt.Errorf("field not found, node: %s", node.Name)
 }
 
-// IsExported return true is a struct field is exported, else false
+// IsExported reports whether f is exported.
 // https://golang.org/pkg/reflect/#StructField
 func IsExported(f reflect.StructField) bool {
 	return f.PkgPath == ""

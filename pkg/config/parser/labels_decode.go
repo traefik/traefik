@@ -8,8 +8,8 @@ import (
 
 const labelRoot = "traefik"
 
-// DecodeToNode Converts the labels to a node.
-// labels -> nodes
+// DecodeToNode converts the labels to a tree of nodes.
+// If any filters are present, labels which do not match the filters are skipped.
 func DecodeToNode(labels map[string]string, filters ...string) (*Node, error) {
 	sortedKeys := sortKeys(labels, filters)
 

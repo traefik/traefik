@@ -1,11 +1,15 @@
+// Package file implements decoding between configuration in a file and a typed Configuration.
 package file
 
 import (
 	"github.com/containous/traefik/pkg/config/parser"
 )
 
-// Decode converts the file to an element.
-// file -> [ node -> node + metadata (type) ] -> element (node)
+// Decode decodes the given configuration file into the given element.
+// The operation goes through three stages roughly summarized as:
+// file contents -> tree of untyped nodes
+// untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
+// "typed" nodes -> typed element
 func Decode(filePath string, element interface{}) error {
 	if element == nil {
 		return nil

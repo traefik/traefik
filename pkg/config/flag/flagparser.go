@@ -6,7 +6,9 @@ import (
 	"strings"
 )
 
-// Parse Parses CLI flags/args to a map.
+// Parse parses the command-line flag arguments into a map,
+// using the type information in element to discriminate whether a flag is supposed to be a bool,
+// and other such ambiguities.
 func Parse(args []string, element interface{}) (map[string]string, error) {
 	f := flagSet{
 		flagTypes: getFlagTypes(element),

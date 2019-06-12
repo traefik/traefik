@@ -1,3 +1,4 @@
+// Package generator implements the custom initialization of all the fields of an empty interface.
 package generator
 
 import (
@@ -10,7 +11,7 @@ type initializer interface {
 	SetDefaults()
 }
 
-// Generate generates an empty structure.
+// Generate recursively initializes an empty structure, calling SetDefaults on each field, when it applies.
 func Generate(element interface{}) {
 	if element == nil {
 		return
