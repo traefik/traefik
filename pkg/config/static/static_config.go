@@ -110,11 +110,13 @@ func (a *RespondingTimeouts) SetDefaults() {
 type ForwardingTimeouts struct {
 	DialTimeout           types.Duration `description:"The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists." export:"true"`
 	ResponseHeaderTimeout types.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists." export:"true"`
+	IdleConnTimeout       types.Duration `description:"The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (f *ForwardingTimeouts) SetDefaults() {
 	f.DialTimeout = types.Duration(30 * time.Second)
+	f.IdleConnTimeout = types.Duration(90 * time.Second)
 }
 
 // LifeCycle contains configurations relevant to the lifecycle (such as the shutdown phase) of Traefik.

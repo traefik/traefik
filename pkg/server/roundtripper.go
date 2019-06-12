@@ -63,6 +63,7 @@ func createHTTPTransport(transportConfiguration *static.ServersTransport) (*http
 
 	if transportConfiguration.ForwardingTimeouts != nil {
 		transport.ResponseHeaderTimeout = time.Duration(transportConfiguration.ForwardingTimeouts.ResponseHeaderTimeout)
+		transport.IdleConnTimeout = time.Duration(transportConfiguration.ForwardingTimeouts.IdleConnTimeout)
 	}
 
 	if transportConfiguration.InsecureSkipVerify {
