@@ -97,7 +97,9 @@ type ResponseForwarding struct {
 
 // Stickiness holds the stickiness configuration.
 type Stickiness struct {
-	CookieName string `json:"cookieName,omitempty" toml:",omitempty"`
+	CookieName     string `json:"cookieName,omitempty" toml:",omitempty"`
+	SecureCookie   bool   `json:"secureCookie,omitempty" toml:",omitempty"`
+	HTTPOnlyCookie bool   `json:"httpOnlyCookie,omitempty" toml:",omitempty"`
 }
 
 // Server holds the server configuration.

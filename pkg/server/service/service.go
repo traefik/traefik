@@ -192,7 +192,8 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 	var cookieName string
 	if stickiness := service.Stickiness; stickiness != nil {
 		cookieName = cookie.GetName(stickiness.CookieName, serviceName)
-		options = append(options, roundrobin.EnableStickySession(roundrobin.NewStickySession(cookieName)))
+		opts := roundrobin.CookieOptions{HTTPOnly: stickiness.HTTPOnlyCookie, Secure: stickiness.SecureCookie}
+		options = append(options, roundrobin.EnableStickySession(roundrobin.NewStickySessionWithOptions(cookieName, opts)))
 		logger.Debugf("Sticky session cookie name: %v", cookieName)
 	}
 

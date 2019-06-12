@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/containous/traefik/pkg/config"
@@ -103,8 +104,10 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 	defer serverPassHostFalse.Close()
 
 	type ExpectedResult struct {
-		StatusCode int
-		XFrom      string
+		StatusCode     int
+		XFrom          string
+		SecureCookie   bool
+		HTTPOnlyCookie bool
 	}
 
 	testCases := []struct {
@@ -193,6 +196,26 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			},
 		},
 		{
+			desc:        "Sticky Cookie's options set correctly",
+			serviceName: "test",
+			service: &config.LoadBalancerService{
+				Stickiness: &config.Stickiness{HTTPOnlyCookie: true, SecureCookie: true},
+				Servers: []config.Server{
+					{
+						URL: server1.URL,
+					},
+				},
+			},
+			expected: []ExpectedResult{
+				{
+					StatusCode:     http.StatusOK,
+					XFrom:          "first",
+					SecureCookie:   true,
+					HTTPOnlyCookie: true,
+				},
+			},
+		},
+		{
 			desc:        "PassHost passes the host instead of the IP",
 			serviceName: "test",
 			service: &config.LoadBalancerService{
@@ -249,8 +272,11 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 				assert.Equal(t, expected.StatusCode, recorder.Code)
 				assert.Equal(t, expected.XFrom, recorder.Header().Get("X-From"))
 
-				if len(recorder.Header().Get("Set-Cookie")) > 0 {
-					req.Header.Set("Cookie", recorder.Header().Get("Set-Cookie"))
+				cookieHeader := recorder.Header().Get("Set-Cookie")
+				if len(cookieHeader) > 0 {
+					req.Header.Set("Cookie", cookieHeader)
+					assert.Equal(t, expected.SecureCookie, strings.Contains(cookieHeader, "Secure"))
+					assert.Equal(t, expected.HTTPOnlyCookie, strings.Contains(cookieHeader, "HttpOnly"))
 				}
 			}
 		})
