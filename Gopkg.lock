@@ -1392,14 +1392,16 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:d05ebef91c056e176dc4dfe905002bd3dd7b1dc8703b53bf6e88761053236a75"
+  digest = "1:3d7ad9c93ee2e43dc7dd48b76f96804c365be7fe30e75f7405028c4e633d189a"
   name = "github.com/prometheus/client_golang"
   packages = [
     "prometheus",
+    "prometheus/internal",
     "prometheus/promhttp",
   ]
   pruneopts = "NUT"
-  revision = "08fd2e12372a66e68e30523c7642e0cbc3e4fbde"
+  revision = "2641b987480bca71fb39738eb8c8b0d577cb1d76"
+  version = "v0.9.4"
 
 [[projects]]
   digest = "1:32d10bdfa8f09ecf13598324dba86ab891f11db3c538b6a34d1c3b5b99d7c36b"
@@ -1420,14 +1422,15 @@
   revision = "49fee292b27bfff7f354ee0f64e1bc4850462edf"
 
 [[projects]]
-  digest = "1:60d19aad385900a8aa4a755524e68965fcb31b444ec30e673812e06c98674f2e"
+  digest = "1:afe5de112e0ca26a37730f01bc4bac9aabe9843cbfd66034f0c16e5a1fbd045b"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
-    "xfs",
+    "internal/fs",
   ]
   pruneopts = "NUT"
-  revision = "a1dba9ce8baed984a2495b658c82687f8157b98f"
+  revision = "833678b5bb319f2d20a475cb165c6cc59c2cc77c"
+  version = "v0.0.2"
 
 [[projects]]
   branch = "containous-fork"
@@ -2322,6 +2325,7 @@
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/prometheus/client_model/go",
+    "github.com/prometheus/procfs",
     "github.com/rancher/go-rancher-metadata/metadata",
     "github.com/ryanuber/go-glob",
     "github.com/sirupsen/logrus",

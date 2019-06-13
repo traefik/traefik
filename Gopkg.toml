@@ -294,3 +294,11 @@ required = [
 [[constraint]]
   name = "github.com/ExpediaDotCom/haystack-client-go"
   version = "0.2.3"
+
+[[constraint]]
+  name = "github.com/prometheus/client_golang"
+  version = "0.9.4"
+
+[[constraint]]
+  name = "github.com/prometheus/procfs"
+  version = "0.0.2"
