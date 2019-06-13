@@ -318,7 +318,7 @@ services:
     command:
       - --docker
       - --accesslog
-      - --accesslog.fields.names="StartLocal=keep StartUTC=drop"
+      - --accesslog.fields.names="StartUTC=drop"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/usr/share/zoneinfo:/usr/share/zoneinfo:ro"
