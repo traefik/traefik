@@ -479,13 +479,17 @@ func (h *histogram) Observe(value float64) {
 	labels := h.labelNamesValues.ToLabels()
 	collector := h.hv.With(labels)
 	collector.Observe(value)
-	h.collectors <- newCollector(h.name, labels, collector, func() {
+	h.collectors <- newCollector(h.name, labels, h, func() {
 		h.hv.Delete(labels)
 	})
 }
 
 func (h *histogram) Describe(ch chan<- *stdprometheus.Desc) {
 	h.hv.Describe(ch)
+}
+
+func (h *histogram) Collect(ch chan<- stdprometheus.Metric) {
+	h.hv.Collect(ch)
 }
 
 // labelNamesValues is a type alias that provides validation on its With method.
