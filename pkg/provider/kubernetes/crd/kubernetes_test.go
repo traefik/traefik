@@ -217,6 +217,50 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "One ingress Route with different services and weights",
+			paths: []string{"services.yml", "with_two_services_weighted.yml"},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"default/test.crd-77c62dfe9517144aeeaa": {
+							EntryPoints: []string{"web"},
+							Service:     "default/test.crd-77c62dfe9517144aeeaa",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"default/test.crd-77c62dfe9517144aeeaa": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL:    "http://10.10.0.1:80",
+										Weight: 30,
+									},
+									{
+										URL:    "http://10.10.0.2:80",
+										Weight: 30,
+									},
+									{
+										URL:    "http://10.10.0.3:8080",
+										Weight: 70,
+									},
+									{
+										URL:    "http://10.10.0.4:8080",
+										Weight: 70,
+									},
+								},
+								Method:         "wrr",
+								PassHostHeader: true,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc:         "Ingress class",
 			paths:        []string{"services.yml", "simple.yml"},
 			ingressClass: "tchouk",

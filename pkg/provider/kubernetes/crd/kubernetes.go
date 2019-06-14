@@ -160,6 +160,11 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 		return nil, fmt.Errorf("load balancing strategy %v is not supported", strategy)
 	}
 
+	weight := svc.Weight
+	if weight == 0 {
+		weight = 1
+	}
+
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
 		return nil, err
@@ -188,7 +193,7 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, config.Server{
 			URL:    fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
-			Weight: 1,
+			Weight: weight,
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
@@ -225,7 +230,7 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 			for _, addr := range subset.Addresses {
 				servers = append(servers, config.Server{
 					URL:    fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
-					Weight: 1,
+					Weight: weight,
 				})
 			}
 		}

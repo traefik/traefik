@@ -31,9 +31,9 @@ type TLS struct {
 
 // Service defines an upstream to proxy traffic.
 type Service struct {
-	Name string `json:"name"`
-	Port int32  `json:"port"`
-	// TODO Weight      int          `json:"weight,omitempty"`
+	Name        string       `json:"name"`
+	Port        int32        `json:"port"`
+	Weight      int          `json:"weight,omitempty"`
 	HealthCheck *HealthCheck `json:"healthCheck,omitempty"`
 	Strategy    string       `json:"strategy,omitempty"`
 }

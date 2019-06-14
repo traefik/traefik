@@ -45,6 +45,8 @@ spec:
       services:
         - name: s1
           port: 80
+          # specify how much will be routed to this service
+          weight: 90
           healthCheck:
             path: /health
             host: baz.com
@@ -55,6 +57,7 @@ spec:
           strategy: RoundRobin
         - name: s2
           port: 433
+          weight: 10
           healthCheck:
             path: /health
             host: baz.com
