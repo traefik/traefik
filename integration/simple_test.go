@@ -346,19 +346,6 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 		host               string
 		expectedStatusCode int
 	}{
-		// {
-		// 	desc:               "default client ip strategy accept",
-		// 	xForwardedFor:      "8.8.8.8,127.0.0.1",
-		// 	host:               "no.override.whitelist.docker.local",
-		// 	expectedStatusCode: 200,
-		// },
-		// FIXME add clientipstrategy and forwarded headers on entrypoint
-		// {
-		// 	desc:               "default client ip strategy reject",
-		// 	xForwardedFor:      "8.8.8.10,127.0.0.1",
-		// 	host:               "no.override.whitelist.docker.local",
-		// 	expectedStatusCode: 403,
-		// },
 		{
 			desc:               "override remote addr reject",
 			xForwardedFor:      "8.8.8.8,8.8.8.8",

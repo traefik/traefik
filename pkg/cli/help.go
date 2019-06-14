@@ -28,7 +28,7 @@ Flag's usage: {{ .Cmd.Name }} [--flag=flag_argument] [-f [flag_argument]]	# set 
 
 Flags:
 {{- range $i, $flag := .Flags }}
-	--{{ SliceIndexN $flag.Name }}  (Default: "{{ $flag.Default}}")
+	--{{ SliceIndexN $flag.Name }}  {{if ne $flag.Name "global.sendanonymoususage"}}(Default: "{{ $flag.Default}}"){{end}}
 {{if $flag.Description }}		{{ wrapWith 80 "\n\t\t" $flag.Description }}
 {{else}}
 {{- end}}

@@ -106,7 +106,7 @@ Enable more detailed statistics. (Default: ```false```)
 Number of recent errors logged. (Default: ```10```)
 
 `TRAEFIK_CONFIGFILE`:  
-Configuration file to use. (Default: "")
+Configuration file to use. If specified all other flags are ignored. (Default: "")
 
 `TRAEFIK_ENTRYPOINTS_<NAME>`:  
 Entry points definition. (Default: ```false```)
@@ -151,7 +151,7 @@ Periodically check if a new version has been released. (Default: ```false```)
 Enable debug mode. (Default: ```false```)
 
 `TRAEFIK_GLOBAL_SENDANONYMOUSUSAGE`:  
-Send periodically anonymous usage statistics. (Default: ```false```)
+Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default.
 
 `TRAEFIK_HOSTRESOLVER`:  
 Enable CNAME Flattening. (Default: ```false```)

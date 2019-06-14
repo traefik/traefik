@@ -108,7 +108,7 @@
     Number of recent errors logged.
 
 --configfile  (Default: "")
-    Configuration file to use.
+    Configuration file to use. If specified all other flags are ignored.
 
 --entrypoints.<name>  (Default: "false")
     Entry points definition.
@@ -156,8 +156,9 @@
 --global.debug  (Default: "false")
     Enable debug mode.
 
---global.sendanonymoususage  (Default: "false")
-    Send periodically anonymous usage statistics.
+--global.sendanonymoususage
+    Periodically send anonymous usage statistics. If the option is not specified, it
+    will be enabled by default.
 
 --hostresolver  (Default: "false")
     Enable CNAME Flattening.

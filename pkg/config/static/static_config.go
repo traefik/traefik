@@ -68,7 +68,7 @@ type Configuration struct {
 type Global struct {
 	Debug              bool  `description:"Enable debug mode." export:"true"`
 	CheckNewVersion    bool  `description:"Periodically check if a new version has been released." export:"true"`
-	SendAnonymousUsage *bool `description:"Send periodically anonymous usage statistics." export:"true"`
+	SendAnonymousUsage *bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default." export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers

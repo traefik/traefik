@@ -14,8 +14,7 @@ type EnvLoader struct{}
 
 // Load loads the command's configuration from the environment variables.
 func (e *EnvLoader) Load(_ []string, cmd *Command) (bool, error) {
-	environ := os.Environ()
-	return e.load(environ, cmd)
+	return e.load(os.Environ(), cmd)
 }
 
 func (*EnvLoader) load(environ []string, cmd *Command) (bool, error) {
@@ -32,7 +31,7 @@ func (*EnvLoader) load(environ []string, cmd *Command) (bool, error) {
 	}
 
 	if err := env.Decode(environ, cmd.Configuration); err != nil {
-		return false, fmt.Errorf("failed to decode configuration from flags: %v", err)
+		return false, fmt.Errorf("failed to decode configuration from environment variables: %v", err)
 	}
 
 	log.WithoutContext().Println("Configuration loaded from environment variables.")

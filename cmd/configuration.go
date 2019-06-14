@@ -11,7 +11,7 @@ import (
 type TraefikCmdConfiguration struct {
 	static.Configuration `export:"true"`
 	// ConfigFile is the path to the configuration file.
-	ConfigFile string `description:"Configuration file to use." export:"true"`
+	ConfigFile string `description:"Configuration file to use. If specified all other flags are ignored." export:"true"`
 }
 
 // NewTraefikConfiguration creates a TraefikCmdConfiguration with default values.
