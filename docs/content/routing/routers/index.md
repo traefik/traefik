@@ -158,7 +158,7 @@ Services are the target for the router.
 
 #### General
 
-When specifying a TLS section, you tell Traefik that the current router is dedicated to HTTPS requests only (and that the router should ignore HTTP (non tls) requests).
+ When a TLS section is specified, it instructs Traefik that the current router is dedicated to HTTPS requests only (and that the router should ignore HTTP (non TLS) requests).
 Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services).
 
 ??? example "Configuring the router to accept HTTPS requests only"
@@ -199,8 +199,8 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 
 #### `Options`
 
-The `Options` field enable fine-grain control of the TLS parameters.  
-It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and will be applied only if a "Host" rule is defined.
+The `Options` field enables fine-grained control of the TLS parameters.  
+It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and will be applied only if a `Host` rule is defined.
 
 ??? example "Configuring the tls options"
 
@@ -297,8 +297,8 @@ Services are the target for the router.
 
 #### General
 
-When specifying a TLS section, you tell Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-tls requests).
-By default, Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services), but you can tell Traefik that the request should pass through (keeping the encrypted data) and be forwarded to the service "as is". 
+ When a TLS section is specified, it instructs Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-TLS requests).
+ By default, Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services), but Traefik can be configured in order to let the requests pass through (keeping the data encrypted), and be forwarded to the service "as is". 
 
 ??? example "Configuring TLS Termination"
 
@@ -327,8 +327,8 @@ By default, Traefik will terminate the SSL connections (meaning that it will sen
 
 #### `Options`
 
-The `Options` field enable fine-grain control of the TLS parameters.  
-It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and will be applied only if a "HostSNI" rule is defined.
+The `Options` field enables fine-grained control of the TLS parameters.  
+It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and will be applied only if a `HostSNI` rule is defined.
 
 ??? example "Configuring the tls options"
 
