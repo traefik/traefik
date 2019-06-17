@@ -6,6 +6,7 @@ import (
 
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/server/service/tcp"
+	"github.com/containous/traefik/pkg/tls"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,6 +43,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "HostSNI(`bar.foo`)",
+						TLS: &config.RouterTCPTLSConfig{
+							Passthrough: false,
+							Options:     "foo",
+						},
 					},
 				},
 				"bar": {
@@ -50,6 +55,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "HostSNI(`foo.bar`)",
+						TLS: &config.RouterTCPTLSConfig{
+							Passthrough: false,
+							Options:     "bar",
+						},
 					},
 				},
 			},
@@ -191,8 +200,21 @@ func TestRuntimeConfiguration(t *testing.T) {
 				TCPRouters:  test.routerConfig,
 			}
 			serviceManager := tcp.NewManager(conf)
+			tlsManager := tls.NewManager()
+			tlsManager.UpdateConfigs(
+				map[string]tls.Store{},
+				map[string]tls.TLS{
+					"foo": {
+						MinVersion: "VersionTLS12",
+					},
+					"bar": {
+						MinVersion: "VersionTLS11",
+					},
+				},
+				[]*tls.Configuration{})
+
 			routerManager := NewManager(conf, serviceManager,
-				nil, nil, nil)
+				nil, nil, tlsManager)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints)
 

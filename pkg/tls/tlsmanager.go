@@ -67,14 +67,19 @@ func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]TLS,
 	}
 }
 
-// Get gets the tls configuration to use for a given store / configuration
-func (m *Manager) Get(storeName string, configName string) *tls.Config {
+// Get gets the TLS configuration to use for a given store / configuration
+func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
+	config, ok := m.configs[configName]
+	if !ok && configName != "default" {
+		return nil, fmt.Errorf("unknown TLS options: %s", configName)
+	}
+
 	store := m.getStore(storeName)
 
-	tlsConfig, err := buildTLSConfig(m.configs[configName])
+	tlsConfig, err := buildTLSConfig(config)
 	if err != nil {
 		log.Error(err)
 		tlsConfig = &tls.Config{}
@@ -106,7 +111,7 @@ func (m *Manager) Get(storeName string, configName string) *tls.Config {
 		log.WithoutContext().Debugf("Serving default certificate for request: %q", domainToCheck)
 		return store.DefaultCertificate, nil
 	}
-	return tlsConfig
+	return tlsConfig, nil
 }
 
 func (m *Manager) getStore(storeName string) *CertificateStore {

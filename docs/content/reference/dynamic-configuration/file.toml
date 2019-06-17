@@ -9,6 +9,7 @@
       Rule = "foobar"
       priority = 42
       [HTTP.Routers.Router0.tls]
+        options = "TLS0"
 
   [HTTP.Middlewares]
 
@@ -206,6 +207,7 @@
       Rule = "foobar"
       [TCP.Routers.TCPRouter0.tls]
         passthrough = true
+        options = "TLS1"
 
   [TCP.Services]
 

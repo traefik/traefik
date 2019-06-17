@@ -2,12 +2,19 @@
 checkNewVersion = false
 sendAnonymousUsage = false
 
+[api]
+entrypoint="api"
+
 [log]
 level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
-  address = ":80"
+  address = ":8081"
+
+
+  [entryPoints.api]
+  address = ":8080"
 
 [providers]
    [providers.file]

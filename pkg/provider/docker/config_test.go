@@ -2164,7 +2164,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Name:        "Test",
 					Labels: map[string]string{
 						"traefik.tcp.routers.foo.rule":                      "HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls":                       "true",
+						"traefik.tcp.routers.foo.tls.options":               "foo",
 						"traefik.tcp.services.foo.loadbalancer.server.port": "8080",
 					},
 					NetworkSettings: networkSettings{
@@ -2186,7 +2186,9 @@ func Test_buildConfiguration(t *testing.T) {
 						"foo": {
 							Service: "foo",
 							Rule:    "HostSNI(`foo.bar`)",
-							TLS:     &config.RouterTCPTLSConfig{},
+							TLS: &config.RouterTCPTLSConfig{
+								Options: "foo",
+							},
 						},
 					},
 					Services: map[string]*config.TCPService{

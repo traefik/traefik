@@ -308,7 +308,7 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
-			routerManager := NewManager(rtConf.Routers, serviceManager, middlewaresBuilder, responseModifierFactory)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -409,7 +409,7 @@ func TestAccessLog(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
-			routerManager := NewManager(rtConf.Routers, serviceManager, middlewaresBuilder, responseModifierFactory)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -695,7 +695,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*config.MiddlewareInfo{})
-			routerManager := NewManager(rtConf.Routers, serviceManager, middlewaresBuilder, responseModifierFactory)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -769,7 +769,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res})
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
-	routerManager := NewManager(rtConf.Routers, serviceManager, middlewaresBuilder, responseModifierFactory)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
