@@ -15,8 +15,6 @@ git config --global user.name "Traefiker"
 
 # load ssh key
 echo "Loading key..."
-${encrypted_f9e835a425bc_key:?}
-${encrypted_f9e835a425bc_iv:?}
 openssl aes-256-cbc -K "${encrypted_f9e835a425bc_key}" -iv "${encrypted_f9e835a425bc_iv}" -in .travis/traefiker_rsa.enc -out ~/.ssh/traefiker_rsa -d
 eval "$(ssh-agent -s)"
 chmod 600 ~/.ssh/traefiker_rsa
