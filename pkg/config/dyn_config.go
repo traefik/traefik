@@ -23,7 +23,7 @@ type Router struct {
 
 // RouterTLSConfig holds the TLS configuration for a router
 type RouterTLSConfig struct {
-	Options string `json:"options" toml:"options,omitzero"`
+	Options string `json:"options,omitempty" toml:"options,omitzero"`
 }
 
 // TCPRouter holds the router configuration.
@@ -37,7 +37,7 @@ type TCPRouter struct {
 // RouterTCPTLSConfig holds the TLS configuration for a router
 type RouterTCPTLSConfig struct {
 	Passthrough bool   `json:"passthrough" toml:"passthrough,omitzero"`
-	Options     string `json:"options" toml:"options,omitzero"`
+	Options     string `json:"options,omitempty" toml:"options,omitzero"`
 }
 
 // LoadBalancerService holds the LoadBalancerService configuration.

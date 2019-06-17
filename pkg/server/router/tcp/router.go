@@ -99,7 +99,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		domains, err := rules.ParseDomains(routerHTTPConfig.Rule)
 		if err != nil {
-			routerErr := fmt.Errorf("unknown rule %s", routerHTTPConfig.Rule)
+			routerErr := fmt.Errorf("invalid rule %s, error: %v", routerHTTPConfig.Rule, err)
 			routerHTTPConfig.Err = routerErr.Error()
 			logger.Debug(routerErr)
 			continue
