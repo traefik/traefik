@@ -106,7 +106,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 
 		if len(domains) == 0 {
-			logger.Warnf("The 'default' tls option will be applied instead of %q as no domain has been defined", routerHTTPConfig.TLS.Options)
+			logger.Warnf("The 'default' TLS options will be applied instead of %q as no domain has been found in the rule", routerHTTPConfig.TLS.Options)
 		}
 
 		for _, domain := range domains {

@@ -67,14 +67,14 @@ func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]TLS,
 	}
 }
 
-// Get gets the tls configuration to use for a given store / configuration
+// Get gets the TLS configuration to use for a given store / configuration
 func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
 	config, ok := m.configs[configName]
 	if !ok && configName != "default" {
-		return nil, fmt.Errorf("unknown tls options: %s", configName)
+		return nil, fmt.Errorf("unknown TLS options: %s", configName)
 	}
 
 	store := m.getStore(storeName)

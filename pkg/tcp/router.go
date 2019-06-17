@@ -19,9 +19,9 @@ type Router struct {
 	httpsForwarder    Handler
 	httpHandler       http.Handler
 	httpsHandler      http.Handler
-	httpsTLSConfig    *tls.Config
+	httpsTLSConfig    *tls.Config // default TLS config
 	catchAllNoTLS     Handler
-	hostHTTPTLSConfig map[string]*tls.Config
+	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
 }
 
 // ServeTCP forwards the connection to the right TCP/HTTP handler
@@ -90,7 +90,7 @@ func (r *Router) AddRouteHTTPTLS(sniHost string, config *tls.Config) {
 	if r.hostHTTPTLSConfig == nil {
 		r.hostHTTPTLSConfig = map[string]*tls.Config{}
 	}
-	log.Debugf("add route %s with minversion %d", sniHost, config.MinVersion)
+	log.Debugf("adding route %s with minversion %d", sniHost, config.MinVersion)
 	r.hostHTTPTLSConfig[sniHost] = config
 }
 
