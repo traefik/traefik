@@ -271,6 +271,7 @@ func (s *TLSClientHeaders) getXForwardedTLSClientCertInfo(certs []*x509.Certific
 // ModifyRequestHeaders set the wanted headers with the certificates informations
 func (s *TLSClientHeaders) ModifyRequestHeaders(r *http.Request) {
 	if s.PEM {
+		r.Header.Del(xForwardedTLSClientCert)
 		if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
 			r.Header.Set(xForwardedTLSClientCert, getXForwardedTLSClientCert(r.TLS.PeerCertificates))
 		} else {
@@ -279,6 +280,7 @@ func (s *TLSClientHeaders) ModifyRequestHeaders(r *http.Request) {
 	}
 
 	if s.Infos != nil {
+		r.Header.Del(xForwardedTLSClientCertInfos)
 		if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
 			headerContent := s.getXForwardedTLSClientCertInfo(r.TLS.PeerCertificates)
 			r.Header.Set(xForwardedTLSClientCertInfos, url.QueryEscape(headerContent))

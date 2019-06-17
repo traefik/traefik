@@ -404,6 +404,10 @@ func TestTlsClientheadersWithPEM(t *testing.T) {
 		res := httptest.NewRecorder()
 		req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
 
+		if test.tlsClientCertHeaders != nil {
+			req.Header.Set(xForwardedTLSClientCert, "Unsanitized HEADER")
+		}
+
 		if test.certContents != nil && len(test.certContents) > 0 {
 			req.TLS = buildTLSWith(test.certContents)
 		}
@@ -631,6 +635,10 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 
 		res := httptest.NewRecorder()
 		req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+
+		if test.tlsClientCertHeaders != nil {
+			req.Header.Set(xForwardedTLSClientCertInfos, "Unsanitized HEADER")
+		}
 
 		if test.certContents != nil && len(test.certContents) > 0 {
 			req.TLS = buildTLSWith(test.certContents)
