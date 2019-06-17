@@ -269,7 +269,7 @@ Every [Service](../routing/services/index.md) parameter can be updated this way.
 ### Middleware
 
 You can declare pieces of middleware using labels starting with `traefik.HTTP.Middlewares.{middleware-name-of-your-choice}.`, followed by the middleware type/options.
-For example, to declare a middleware [`schemeredirect`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.HTTP.Middlewares.my-redirect.RedirectScheme.Scheme: https`.
+For example, to declare a middleware [`redirectscheme`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.HTTP.Middlewares.my-redirect.RedirectScheme.Scheme: https`.
 
 ??? example "Declaring and Referencing a Middleware"
 
@@ -277,7 +277,7 @@ For example, to declare a middleware [`schemeredirect`](../middlewares/redirects
 	{
 		...
 		"labels": {
-			"traefik.http.middlewares.my-redirect.schemeredirect.scheme": "https",
+			"traefik.http.middlewares.my-redirect.redirectscheme.scheme": "https",
 			"traefik.http.routers.my-container.middlewares": "my-redirect"
 		}
 	}
