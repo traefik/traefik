@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
@@ -37,6 +38,7 @@ type clientMock struct {
 	ingressRoutes    []*v1alpha1.IngressRoute
 	ingressRouteTCPs []*v1alpha1.IngressRouteTCP
 	middlewares      []*v1alpha1.Middleware
+	tlsOptions       []*v1alpha1.TLSOption
 
 	watchChan chan interface{}
 }
@@ -63,6 +65,9 @@ func newClientMock(paths ...string) clientMock {
 				c.ingressRouteTCPs = append(c.ingressRouteTCPs, o)
 			case *v1alpha1.Middleware:
 				c.middlewares = append(c.middlewares, o)
+			case *v1alpha1.TLSOption:
+				log.Debug("Add the tls option: %v", o)
+				c.tlsOptions = append(c.tlsOptions, o)
 			case *v1beta12.Ingress:
 				c.ingresses = append(c.ingresses, o)
 			case *corev1.Secret:
@@ -86,6 +91,20 @@ func (c clientMock) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
 
 func (c clientMock) GetMiddlewares() []*v1alpha1.Middleware {
 	return c.middlewares
+}
+
+func (c clientMock) GetTLSOptions() []*v1alpha1.TLSOption {
+	return c.tlsOptions
+}
+
+func (c clientMock) GetTLSOption(namespace, name string) (*v1alpha1.TLSOption, bool, error) {
+	for _, option := range c.tlsOptions {
+		if option.Namespace == namespace && option.Name == name {
+			return option, true, nil
+		}
+	}
+
+	return nil, false, nil
 }
 
 func (c clientMock) GetIngresses() []*extensionsv1beta1.Ingress {

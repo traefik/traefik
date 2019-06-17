@@ -29,6 +29,8 @@ type TLSTCP struct {
 	// certificate details.
 	SecretName  string `json:"secretName"`
 	Passthrough bool   `json:"passthrough"`
+	// Options is the name of the referenced TLSOption CRD
+	Options string `json:"options"`
 }
 
 // ServiceTCP defines an upstream to proxy traffic.

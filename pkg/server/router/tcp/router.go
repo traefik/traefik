@@ -81,8 +81,9 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*config.TCPRouterInfo, configsHTTP map[string]*config.RouterInfo, handlerHTTP http.Handler, handlerHTTPS http.Handler) (*tcp.Router, error) {
 	router := &tcp.Router{}
 	router.HTTPHandler(handlerHTTP)
+	const defaultTLSConfigName = "default"
 
-	defaultTLSConf, err := m.tlsManager.Get("default", "default")
+	defaultTLSConf, err := m.tlsManager.Get("default", defaultTLSConfigName)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +91,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	router.HTTPSHandler(handlerHTTPS, defaultTLSConf)
 
 	for routerHTTPName, routerHTTPConfig := range configsHTTP {
-		if len(routerHTTPConfig.TLS.Options) == 0 || routerHTTPConfig.TLS.Options == "default" {
+		if len(routerHTTPConfig.TLS.Options) == 0 || routerHTTPConfig.TLS.Options == defaultTLSConfigName {
 			continue
 		}
 
@@ -111,7 +112,12 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		for _, domain := range domains {
 			if routerHTTPConfig.TLS != nil {
-				tlsConf, err := m.tlsManager.Get("default", routerHTTPConfig.TLS.Options)
+				tlsOptionsName := routerHTTPConfig.TLS.Options
+				if tlsOptionsName != "default" {
+					tlsOptionsName = internal.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
+				}
+
+				tlsConf, err := m.tlsManager.Get("default", tlsOptionsName)
 				if err != nil {
 					routerHTTPConfig.Err = err.Error()
 					logger.Debug(err)
@@ -149,12 +155,17 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 				if routerConfig.TLS.Passthrough {
 					router.AddRoute(domain, handler)
 				} else {
-					configName := "default"
-					if len(routerConfig.TLS.Options) > 0 {
-						configName = routerConfig.TLS.Options
+					tlsOptionsName := routerConfig.TLS.Options
+
+					if len(tlsOptionsName) == 0 {
+						tlsOptionsName = defaultTLSConfigName
 					}
 
-					tlsConf, err := m.tlsManager.Get("default", configName)
+					if tlsOptionsName != defaultTLSConfigName {
+						tlsOptionsName = internal.GetQualifiedName(ctxRouter, tlsOptionsName)
+					}
+
+					tlsConf, err := m.tlsManager.Get("default", tlsOptionsName)
 					if err != nil {
 						routerConfig.Err = err.Error()
 						logger.Debug(err)

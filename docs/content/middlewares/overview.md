@@ -72,6 +72,38 @@ labels:
 ```
 
 ```toml tab="File"
+[tlsOptions]
+    [tlsOptions.default]
+    minVersion = "VersionTLS12"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: tlsoptions.traefik.containo.us
+
+spec:
+  group: traefik.containo.us
+  version: v1alpha1
+  names:
+    kind: TLSOption
+    plural: tlsoptions
+    singular: tlsoption
+  scope: Namespaced
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: mytlsoption
+  namespace: default
+
+spec:
+  minversion: VersionTLS12
+```
+
+```toml tab="File"
 # As Toml Configuration File
 [providers]
    [providers.file]

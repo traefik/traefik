@@ -118,7 +118,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 				case <-stop:
 					return nil
 				case event := <-eventsChan:
-					conf := p.loadConfigurationFromIngresses(ctxLog, k8sClient)
+					conf := p.loadConfigurationFromCRD(ctxLog, k8sClient)
 
 					if reflect.DeepEqual(p.lastConfiguration.Get(), conf) {
 						logger.Debugf("Skipping Kubernetes event kind %T", event)
@@ -293,19 +293,58 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 	return servers, nil
 }
 
-func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Client) *config.Configuration {
-	conf := &config.Configuration{
-		HTTP: &config.HTTPConfiguration{
-			Routers:     map[string]*config.Router{},
-			Middlewares: map[string]*config.Middleware{},
-			Services:    map[string]*config.Service{},
-		},
-		TCP: &config.TCPConfiguration{
-			Routers:  map[string]*config.TCPRouter{},
-			Services: map[string]*config.TCPService{},
-		},
+func buildTLSOptions(ctx context.Context, client Client) map[string]tls.TLS {
+	tlsOptionsCRD := client.GetTLSOptions()
+	var tlsOptions map[string]tls.TLS
+
+	if len(tlsOptionsCRD) > 0 {
+		tlsOptions = make(map[string]tls.TLS)
+
+		for _, tlsOption := range tlsOptionsCRD {
+			logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOption.Name), log.Str("namespace", tlsOption.Namespace)))
+			var clientCAs []tls.FileOrContent
+
+			for _, secretName := range tlsOption.Spec.ClientCA.SecretNames {
+				secret, exists, err := client.GetSecret(tlsOption.Namespace, secretName)
+				if err != nil {
+					logger.Errorf("Failed to fetch secret %s/%s: %v", tlsOption.Namespace, secretName, err)
+					continue
+				}
+
+				if !exists {
+					logger.Warnf("Secret %s/%s does not exist", tlsOption.Namespace, secretName)
+					continue
+				}
+
+				cert, err := getCABlocks(secret, tlsOption.Namespace, secretName)
+				if err != nil {
+					logger.Errorf("Failed to extract CA from secret %s/%s: %v", tlsOption.Namespace, secretName, err)
+					continue
+				}
+
+				clientCAs = append(clientCAs, tls.FileOrContent(cert))
+			}
+
+			tlsOptions[tlsOption.Name] = tls.TLS{
+				MinVersion:   tlsOption.Spec.MinVersion,
+				CipherSuites: tlsOption.Spec.CipherSuites,
+				ClientCA: tls.ClientCA{
+					Files:    clientCAs,
+					Optional: tlsOption.Spec.ClientCA.Optional,
+				},
+				SniStrict: tlsOption.Spec.SniStrict,
+			}
+		}
 	}
-	tlsConfigs := make(map[string]*tls.Configuration)
+	return tlsOptions
+}
+
+func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.Configuration) *config.HTTPConfiguration {
+	conf := &config.HTTPConfiguration{
+		Routers:     map[string]*config.Router{},
+		Middlewares: map[string]*config.Middleware{},
+		Services:    map[string]*config.Service{},
+	}
 
 	for _, ingressRoute := range client.GetIngressRoutes() {
 		logger := log.FromContext(log.With(ctx, log.Str("ingress", ingressRoute.Name), log.Str("namespace", ingressRoute.Namespace)))
@@ -377,17 +416,23 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 			serviceName := makeID(ingressRoute.Namespace, key)
 
-			conf.HTTP.Routers[serviceName] = &config.Router{
+			conf.Routers[serviceName] = &config.Router{
 				Middlewares: mds,
 				Priority:    route.Priority,
 				EntryPoints: ingressRoute.Spec.EntryPoints,
 				Rule:        route.Match,
 				Service:     serviceName,
 			}
+
 			if ingressRoute.Spec.TLS != nil {
-				conf.HTTP.Routers[serviceName].TLS = &config.RouterTLSConfig{}
+				tlsConf := &config.RouterTLSConfig{}
+				if len(ingressRoute.Spec.TLS.Options) > 0 {
+					tlsConf.Options = ingressRoute.Spec.TLS.Options
+				}
+				conf.Routers[serviceName].TLS = tlsConf
 			}
-			conf.HTTP.Services[serviceName] = &config.Service{
+
+			conf.Services[serviceName] = &config.Service{
 				LoadBalancer: &config.LoadBalancerService{
 					Servers: allServers,
 					// TODO: support other strategies.
@@ -397,8 +442,13 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		}
 	}
 
-	for _, middleware := range client.GetMiddlewares() {
-		conf.HTTP.Middlewares[makeID(middleware.Namespace, middleware.Name)] = &middleware.Spec
+	return conf
+}
+
+func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.Configuration) *config.TCPConfiguration {
+	conf := &config.TCPConfiguration{
+		Routers:  map[string]*config.TCPRouter{},
+		Services: map[string]*config.TCPService{},
 	}
 
 	for _, ingressRouteTCP := range client.GetIngressRouteTCPs() {
@@ -452,19 +502,23 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			serviceName := makeID(ingressRouteTCP.Namespace, key)
-			conf.TCP.Routers[serviceName] = &config.TCPRouter{
+			conf.Routers[serviceName] = &config.TCPRouter{
 				EntryPoints: ingressRouteTCP.Spec.EntryPoints,
 				Rule:        route.Match,
 				Service:     serviceName,
 			}
 
 			if ingressRouteTCP.Spec.TLS != nil {
-				conf.TCP.Routers[serviceName].TLS = &config.RouterTCPTLSConfig{
+				conf.Routers[serviceName].TLS = &config.RouterTCPTLSConfig{
 					Passthrough: ingressRouteTCP.Spec.TLS.Passthrough,
+				}
+
+				if len(ingressRouteTCP.Spec.TLS.Options) > 0 {
+					conf.Routers[serviceName].TLS.Options = ingressRouteTCP.Spec.TLS.Options
 				}
 			}
 
-			conf.TCP.Services[serviceName] = &config.TCPService{
+			conf.Services[serviceName] = &config.TCPService{
 				LoadBalancer: &config.TCPLoadBalancerService{
 					Servers: allServers,
 				},
@@ -472,7 +526,21 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		}
 	}
 
-	conf.TLS = getTLSConfig(tlsConfigs)
+	return conf
+}
+
+func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *config.Configuration {
+	tlsConfigs := make(map[string]*tls.Configuration)
+	conf := &config.Configuration{
+		HTTP:       p.loadIngressRouteConfiguration(ctx, client, tlsConfigs),
+		TCP:        p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
+		TLSOptions: buildTLSOptions(ctx, client),
+		TLS:        getTLSConfig(tlsConfigs),
+	}
+
+	for _, middleware := range client.GetMiddlewares() {
+		conf.HTTP.Middlewares[makeID(middleware.Namespace, middleware.Name)] = &middleware.Spec
+	}
 
 	return conf
 }
@@ -617,4 +685,20 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 	}
 
 	return cert, key, nil
+}
+
+func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, error) {
+	tlsCrtData, tlsCrtExists := secret.Data["tls.ca"]
+	if !tlsCrtExists {
+		return "", fmt.Errorf("secret %s/%s is missing the following TLS data entries: %s",
+			namespace, secretName, "tls.ca")
+	}
+
+	cert := string(tlsCrtData)
+	if cert == "" {
+		return "", fmt.Errorf("secret %s/%s contains the following empty TLS data entries: %s",
+			namespace, secretName, "tls.ca")
+	}
+
+	return cert, nil
 }

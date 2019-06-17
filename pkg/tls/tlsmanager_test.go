@@ -3,6 +3,8 @@ package tls
 import (
 	"crypto/tls"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert with SAN IPs
@@ -88,4 +90,68 @@ func TestTLSInvalidStore(t *testing.T) {
 	if len(certs) == 0 {
 		t.Fatal("got error: default store must have TLS certificates.")
 	}
+}
+
+func TestManager_Get(t *testing.T) {
+	dynamicConfigs :=
+		[]*Configuration{
+			{
+				Certificate: &Certificate{
+					CertFile: localhostCert,
+					KeyFile:  localhostKey,
+				},
+			},
+		}
+	tlsConfigs := map[string]TLS{
+		"foo": {MinVersion: "VersionTLS12"},
+		"bar": {MinVersion: "VersionTLS11"},
+	}
+
+	testCases := []struct {
+		desc               string
+		tlsOptionsName     string
+		expectedMinVersion uint16
+		expectedError      bool
+	}{
+		{
+			desc:               "Get a tls config from a valid name",
+			tlsOptionsName:     "foo",
+			expectedMinVersion: uint16(tls.VersionTLS12),
+		},
+		{
+			desc:               "Get another tls config from a valid name",
+			tlsOptionsName:     "bar",
+			expectedMinVersion: uint16(tls.VersionTLS11),
+		},
+		{
+			desc:           "Get an tls config from an invalid name",
+			tlsOptionsName: "unknown",
+			expectedError:  true,
+		},
+		{
+			desc:           "Get an tls config from unexisting 'default' name",
+			tlsOptionsName: "default",
+			expectedError:  true,
+		},
+	}
+
+	tlsManager := NewManager()
+	tlsManager.UpdateConfigs(nil, tlsConfigs, dynamicConfigs)
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			config, err := tlsManager.Get("default", test.tlsOptionsName)
+			if test.expectedError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, config.MinVersion, test.expectedMinVersion)
+		})
+	}
+
 }

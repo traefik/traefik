@@ -32,6 +32,8 @@ type TLS struct {
 	// certificate details.
 	SecretName string `json:"secretName"`
 	// TODO MinimumProtocolVersion string `json:"minimumProtocolVersion,omitempty"`
+	// Options is the name of the referenced TLSOption CRD
+	Options string `json:"options"`
 }
 
 // Service defines an upstream to proxy traffic.

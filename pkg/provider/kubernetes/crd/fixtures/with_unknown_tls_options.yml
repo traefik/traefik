@@ -1,4 +1,14 @@
 apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: foo
+  namespace: default
+
+spec:
+  minversion: VersionTLS12
+
+---
+apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: test.crd
@@ -17,4 +27,4 @@ spec:
       port: 80
 
   tls:
-    options: mytlsoption
+    options: unknown

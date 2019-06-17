@@ -12,3 +12,5 @@ spec:
     services:
     - name: whoamitcp
       port: 8080
+  tls:
+    options: mytlsoption
