@@ -292,3 +292,34 @@ This allows the logs to be rotated and processed by an external program, such as
 
 !!! note
     This does not work on Windows due to the lack of USR signals.
+
+## Time Zones
+
+The timestamp of each log line is in UTC time by default.
+
+If you want to use local timezone, you need to ensure the 3 following elements:
+
+1. Provide the timezone data into /usr/share/zoneinfo
+2. Set the environement variable TZ to the timezone to be used
+3. Specify the field StartLocal instead of StartUTC (works on default Common Log Format (CLF) as well as JSON)
+
+Example using docker-compose:
+
+```yml
+version: '3'
+
+services:
+  traefik:
+    image: containous/traefik:[latest stable version]
+    ports:
+      - "80:80"
+    environment:
+      - "TZ=US/Alaska"
+    command:
+      - --docker
+      - --accesslog
+      - --accesslog.fields.names="StartUTC=drop"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/usr/share/zoneinfo:/usr/share/zoneinfo:ro"
+```

@@ -2,6 +2,7 @@ package accesslog
 
 import (
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -59,7 +60,31 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 			expectedLog: `10.0.0.1 - Client [10/Nov/2009:23:00:00 +0000] "GET /foo http" 123 132 "referer" "agent" - "foo" "http://10.0.0.2/toto" 123000ms
 `,
 		},
+		{
+			name: "all data with local time",
+			data: map[string]interface{}{
+				StartLocal:             time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Duration:               123 * time.Second,
+				ClientHost:             "10.0.0.1",
+				ClientUsername:         "Client",
+				RequestMethod:          http.MethodGet,
+				RequestPath:            "/foo",
+				RequestProtocol:        "http",
+				OriginStatus:           123,
+				OriginContentSize:      132,
+				RequestRefererHeader:   "referer",
+				RequestUserAgentHeader: "agent",
+				RequestCount:           nil,
+				FrontendName:           "foo",
+				BackendURL:             "http://10.0.0.2/toto",
+			},
+			expectedLog: `10.0.0.1 - Client [10/Nov/2009:14:00:00 -0900] "GET /foo http" 123 132 "referer" "agent" - "foo" "http://10.0.0.2/toto" 123000ms
+`,
+		},
 	}
+
+	// Set timezone to Alaska to have a constant behavior
+	os.Setenv("TZ", "US/Alaska")
 
 	for _, test := range testCases {
 		test := test
