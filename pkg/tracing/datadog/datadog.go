@@ -15,14 +15,22 @@ const Name = "datadog"
 
 // Config provides configuration settings for a datadog tracer
 type Config struct {
-	LocalAgentHostPort         string `description:"Set datadog-agent's host:port that the reporter will used. Defaults to localhost:8126" export:"false"`
+	LocalAgentHostPort         string `description:"Set datadog-agent's host:port that the reporter will used." export:"false"`
 	GlobalTag                  string `description:"Key:Value tag to be set on all the spans." export:"true"`
 	Debug                      bool   `description:"Enable DataDog debug." export:"true"`
 	PrioritySampling           bool   `description:"Enable priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled."`
 	TraceIDHeaderName          string `description:"Specifies the header name that will be used to store the trace ID." export:"true"`
 	ParentIDHeaderName         string `description:"Specifies the header name that will be used to store the parent ID." export:"true"`
 	SamplingPriorityHeaderName string `description:"Specifies the header name that will be used to store the sampling priority." export:"true"`
-	BagagePrefixHeaderName     string `description:"specifies the header name prefix that will be used to store baggage items in a map." export:"true"`
+	BagagePrefixHeaderName     string `description:"Specifies the header name prefix that will be used to store baggage items in a map." export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (c *Config) SetDefaults() {
+	c.LocalAgentHostPort = "localhost:8126"
+	c.GlobalTag = ""
+	c.Debug = false
+	c.PrioritySampling = false
 }
 
 // Setup sets up the tracer

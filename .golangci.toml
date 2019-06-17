@@ -36,6 +36,8 @@
     "scopelint",
     "gochecknoinits",
     "gochecknoglobals",
+    # uncomment when the CI will be updated
+    # "bodyclose", # Too many false-positive and panics.
   ]
 
 [issues]
@@ -72,7 +74,7 @@
     path = "pkg/provider/kubernetes/builder_(endpoint|service)_test.go"
     text = "(U1000: func )?`(.+)` is unused"
  [[issues.exclude-rules]]
-    path = "pkg/provider/label/internal/.+_test.go"
+    path = "pkg/config/parser/.+_test.go"
     text = "U1000: field `(foo|fuu)` is unused"
  [[issues.exclude-rules]]
     path = "pkg/server/service/bufferpool.go"

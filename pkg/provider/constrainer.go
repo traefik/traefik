@@ -4,7 +4,7 @@ import "github.com/containous/traefik/pkg/types"
 
 // Constrainer Filter services by constraint, matching with Traefik tags.
 type Constrainer struct {
-	Constraints types.Constraints `description:"Filter services by constraint, matching with Traefik tags." export:"true"`
+	Constraints []*types.Constraint `description:"Filter services by constraint, matching with Traefik tags." export:"true"`
 }
 
 // MatchConstraints must match with EVERY single constraint

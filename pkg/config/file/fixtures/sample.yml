@@ -1,0 +1,257 @@
+Global:
+  Debug: true
+  CheckNewVersion: true
+  SendAnonymousUsage: true
+ServersTransport:
+  InsecureSkipVerify: true
+  RootCAs:
+    - foobar
+    - foobar
+  MaxIdleConnsPerHost: 42
+  ForwardingTimeouts:
+    DialTimeout: 42
+    ResponseHeaderTimeout: 42
+EntryPoints:
+  EntryPoint0:
+    Address: foobar
+    Transport:
+      LifeCycle:
+        RequestAcceptGraceTimeout: 42
+        GraceTimeOut: 42
+      RespondingTimeouts:
+        ReadTimeout: 42
+        WriteTimeout: 42
+        IdleTimeout: 42
+    ProxyProtocol:
+      Insecure: true
+      TrustedIPs:
+        - foobar
+        - foobar
+    ForwardedHeaders:
+      Insecure: true
+      TrustedIPs:
+        - foobar
+        - foobar
+Providers:
+  ProvidersThrottleDuration: 42
+  Docker:
+    Watch: true
+    Endpoint: foobar
+    DefaultRule: foobar
+    ExposedByDefault: true
+    UseBindPortIP: true
+    SwarmMode: true
+    Network: foobar
+    SwarmModeRefreshSeconds: 42
+    Constraints:
+      - Key: foobar
+        MustMatch: true
+        Value: foobar
+      - Key: foobar
+        MustMatch: true
+        Value: foobar
+    TLS:
+      CA: foobar
+      CAOptional: true
+      Cert: foobar
+      Key: foobar
+      InsecureSkipVerify: true
+  File:
+    Directory: foobar
+    Watch: true
+    Filename: foobar
+    DebugLogGeneratedTemplate: true
+    TraefikFile: foobar
+  Marathon:
+    Trace: true
+    Watch: true
+    Endpoint: foobar
+    DefaultRule: foobar
+    ExposedByDefault: true
+    DCOSToken: foobar
+    FilterMarathonConstraints: true
+    DialerTimeout: 42
+    ResponseHeaderTimeout: 42
+    TLSHandshakeTimeout: 42
+    KeepAlive: 42
+    ForceTaskHostname: true
+    RespectReadinessChecks: true
+    Constraints:
+      - Key: foobar
+        MustMatch: true
+        Value: foobar
+      - Key: foobar
+        MustMatch: true
+        Value: foobar
+    TLS:
+      CA: foobar
+      CAOptional: true
+      Cert: foobar
+      Key: foobar
+      InsecureSkipVerify: true
+    Basic:
+      HTTPBasicAuthUser: foobar
+      HTTPBasicPassword: foobar
+  Kubernetes:
+    Endpoint: foobar
+    Token: foobar
+    CertAuthFilePath: foobar
+    DisablePassHostHeaders: true
+    Namespaces:
+      - foobar
+      - foobar
+    LabelSelector: foobar
+    IngressClass: foobar
+    IngressEndpoint:
+      IP: foobar
+      Hostname: foobar
+      PublishedService: foobar
+  KubernetesCRD:
+    Endpoint: foobar
+    Token: foobar
+    CertAuthFilePath: foobar
+    DisablePassHostHeaders: true
+    Namespaces:
+      - foobar
+      - foobar
+    LabelSelector: foobar
+    IngressClass: foobar
+  Rest:
+    EntryPoint: foobar
+  Rancher:
+    Watch: true
+    DefaultRule: foobar
+    ExposedByDefault: true
+    EnableServiceHealthFilter: true
+    RefreshSeconds: 42
+    IntervalPoll: true
+    Prefix: foobar
+    Constraints:
+      - Key: foobar
+        MustMatch: true
+        Value: foobar
+      - Key: foobar
+        MustMatch: true
+        Value: foobar
+API:
+  EntryPoint: foobar
+  Dashboard: true
+  Middlewares:
+    - foobar
+    - foobar
+  Statistics:
+    RecentErrors: 42
+Metrics:
+  Prometheus:
+    Buckets:
+      - 42
+      - 42
+    EntryPoint: foobar
+    Middlewares:
+      - foobar
+      - foobar
+  Datadog:
+    Address: foobar
+    PushInterval: 10s
+  StatsD:
+    Address: foobar
+    PushInterval: 10s
+  InfluxDB:
+    Address: foobar
+    Protocol: foobar
+    PushInterval: 10s
+    Database: foobar
+    RetentionPolicy: foobar
+    Username: foobar
+    Password: foobar
+Ping:
+  EntryPoint: foobar
+  Middlewares:
+    - foobar
+    - foobar
+Log:
+  Level: foobar
+  FilePath: foobar
+  Format: foobar
+AccessLog:
+  FilePath: foobar
+  Format: foobar
+  BufferingSize: 42
+  Filters:
+    StatusCodes:
+      - foobar
+      - foobar
+    RetryAttempts: true
+    MinDuration: 42
+  Fields:
+    DefaultMode: foobar
+    Names:
+      name0: foobar
+      name1: foobar
+    Headers:
+      DefaultMode: foobar
+      Names:
+        name0: foobar
+        name1: foobar
+Tracing:
+  Backend: foobar
+  ServiceName: foobar
+  SpanNameLimit: 42
+  Jaeger:
+    SamplingServerURL: foobar
+    SamplingType: foobar
+    SamplingParam: 42
+    LocalAgentHostPort: foobar
+    Gen128Bit: true
+    Propagation: foobar
+    TraceContextHeaderName: foobar
+  Zipkin:
+    HTTPEndpoint: foobar
+    SameSpan: true
+    ID128Bit: true
+    Debug: true
+    SampleRate: 42
+  DataDog:
+    LocalAgentHostPort: foobar
+    GlobalTag: foobar
+    Debug: true
+    PrioritySampling: true
+    TraceIDHeaderName: foobar
+    ParentIDHeaderName: foobar
+    SamplingPriorityHeaderName: foobar
+    BagagePrefixHeaderName: foobar
+  Instana:
+    LocalAgentHost: foobar
+    LocalAgentPort: 42
+    LogLevel: foobar
+HostResolver:
+  CnameFlattening: true
+  ResolvConfig: foobar
+  ResolvDepth: 42
+ACME:
+  Email: foobar
+  ACMELogging: true
+  CAServer: foobar
+  Storage: foobar
+  EntryPoint: foobar
+  KeyType: foobar
+  OnHostRule: true
+  DNSChallenge:
+    Provider: foobar
+    DelayBeforeCheck: 42
+    Resolvers:
+      - foobar
+      - foobar
+    DisablePropagationCheck: true
+  HTTPChallenge:
+    EntryPoint: foobar
+  TLSChallenge: {}
+  Domains:
+    - Main: foobar
+      SANs:
+        - foobar
+        - foobar
+    - Main: foobar
+      SANs:
+        - foobar
+        - foobar

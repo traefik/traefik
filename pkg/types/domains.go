@@ -7,8 +7,8 @@ import (
 
 // Domain holds a domain name with SANs.
 type Domain struct {
-	Main string
-	SANs []string
+	Main string   `description:"Default subject name."`
+	SANs []string `description:"Subject alternative names."`
 }
 
 // ToStrArray convert a domain into an array of strings.

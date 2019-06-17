@@ -1,0 +1,635 @@
+--accesslog  (Default: "false")
+    Access log settings.
+
+--accesslog.bufferingsize  (Default: "0")
+    Number of access log lines to process in a buffered way.
+
+--accesslog.fields.defaultmode  (Default: "keep")
+    Default mode for fields: keep | drop
+
+--accesslog.fields.headers.defaultmode  (Default: "keep")
+    Default mode for fields: keep | drop | redact
+
+--accesslog.fields.headers.names.<name>  (Default: "")
+    Override mode for headers
+
+--accesslog.fields.names.<name>  (Default: "")
+    Override mode for fields
+
+--accesslog.filepath  (Default: "")
+    Access log file path. Stdout is used when omitted or empty.
+
+--accesslog.filters.minduration  (Default: "0")
+    Keep access logs when request took longer than the specified duration.
+
+--accesslog.filters.retryattempts  (Default: "false")
+    Keep access logs when at least one retry happened.
+
+--accesslog.filters.statuscodes  (Default: "")
+    Keep access logs with status codes in the specified range.
+
+--accesslog.format  (Default: "common")
+    Access log format: json | common
+
+--acme.acmelogging  (Default: "false")
+    Enable debug logging of ACME actions.
+
+--acme.caserver  (Default: "https://acme-v02.api.letsencrypt.org/directory")
+    CA server to use.
+
+--acme.dnschallenge  (Default: "false")
+    Activate DNS-01 Challenge.
+
+--acme.dnschallenge.delaybeforecheck  (Default: "0")
+    Assume DNS propagates after a delay in seconds rather than finding and querying
+    nameservers.
+
+--acme.dnschallenge.disablepropagationcheck  (Default: "false")
+    Disable the DNS propagation checks before notifying ACME that the DNS challenge
+    is ready. [not recommended]
+
+--acme.dnschallenge.provider  (Default: "")
+    Use a DNS-01 based challenge provider rather than HTTPS.
+
+--acme.dnschallenge.resolvers  (Default: "")
+    Use following DNS servers to resolve the FQDN authority.
+
+--acme.domains  (Default: "")
+    The list of domains for which certificates are generated on startup. Wildcard
+    domains only accepted with DNSChallenge.
+
+--acme.domains[n].main  (Default: "")
+    Default subject name.
+
+--acme.domains[n].sans  (Default: "")
+    Subject alternative names.
+
+--acme.email  (Default: "")
+    Email address used for registration.
+
+--acme.entrypoint  (Default: "")
+    EntryPoint to use.
+
+--acme.httpchallenge  (Default: "false")
+    Activate HTTP-01 Challenge.
+
+--acme.httpchallenge.entrypoint  (Default: "")
+    HTTP challenge EntryPoint
+
+--acme.keytype  (Default: "RSA4096")
+    KeyType used for generating certificate private key. Allow value 'EC256',
+    'EC384', 'RSA2048', 'RSA4096', 'RSA8192'.
+
+--acme.onhostrule  (Default: "false")
+    Enable certificate generation on router Host rules.
+
+--acme.storage  (Default: "acme.json")
+    Storage to use.
+
+--acme.tlschallenge  (Default: "true")
+    Activate TLS-ALPN-01 Challenge.
+
+--api  (Default: "false")
+    Enable api/dashboard.
+
+--api.dashboard  (Default: "true")
+    Activate dashboard.
+
+--api.entrypoint  (Default: "traefik")
+    EntryPoint.
+
+--api.middlewares  (Default: "")
+    Middleware list.
+
+--api.statistics  (Default: "false")
+    Enable more detailed statistics.
+
+--api.statistics.recenterrors  (Default: "10")
+    Number of recent errors logged.
+
+--configfile  (Default: "")
+    Configuration file to use. If specified all other flags are ignored.
+
+--entrypoints.<name>  (Default: "false")
+    Entry points definition.
+
+--entrypoints.<name>.address  (Default: "")
+    Entry point address.
+
+--entrypoints.<name>.forwardedheaders.insecure  (Default: "false")
+    Trust all forwarded headers.
+
+--entrypoints.<name>.forwardedheaders.trustedips  (Default: "")
+    Trust only forwarded headers from selected IPs.
+
+--entrypoints.<name>.proxyprotocol  (Default: "false")
+    Proxy-Protocol configuration.
+
+--entrypoints.<name>.proxyprotocol.insecure  (Default: "false")
+    Trust all.
+
+--entrypoints.<name>.proxyprotocol.trustedips  (Default: "")
+    Trust only selected IPs.
+
+--entrypoints.<name>.transport.lifecycle.gracetimeout  (Default: "10")
+    Duration to give active requests a chance to finish before Traefik stops.
+
+--entrypoints.<name>.transport.lifecycle.requestacceptgracetimeout  (Default: "0")
+    Duration to keep accepting requests before Traefik initiates the graceful
+    shutdown procedure.
+
+--entrypoints.<name>.transport.respondingtimeouts.idletimeout  (Default: "180")
+    IdleTimeout is the maximum amount duration an idle (keep-alive) connection will
+    remain idle before closing itself. If zero, no timeout is set.
+
+--entrypoints.<name>.transport.respondingtimeouts.readtimeout  (Default: "0")
+    ReadTimeout is the maximum duration for reading the entire request, including
+    the body. If zero, no timeout is set.
+
+--entrypoints.<name>.transport.respondingtimeouts.writetimeout  (Default: "0")
+    WriteTimeout is the maximum duration before timing out writes of the response.
+    If zero, no timeout is set.
+
+--global.checknewversion  (Default: "true")
+    Periodically check if a new version has been released.
+
+--global.debug  (Default: "false")
+    Enable debug mode.
+
+--global.sendanonymoususage
+    Periodically send anonymous usage statistics. If the option is not specified, it
+    will be enabled by default.
+
+--hostresolver  (Default: "false")
+    Enable CNAME Flattening.
+
+--hostresolver.cnameflattening  (Default: "false")
+    A flag to enable/disable CNAME flattening
+
+--hostresolver.resolvconfig  (Default: "/etc/resolv.conf")
+    resolv.conf used for DNS resolving
+
+--hostresolver.resolvdepth  (Default: "5")
+    The maximal depth of DNS recursive resolving
+
+--log.filepath  (Default: "")
+    Traefik log file path. Stdout is used when omitted or empty.
+
+--log.format  (Default: "common")
+    Traefik log format: json | common
+
+--log.level  (Default: "ERROR")
+    Log level set to traefik logs.
+
+--metrics.datadog  (Default: "false")
+    DataDog metrics exporter type.
+
+--metrics.datadog.address  (Default: "localhost:8125")
+    DataDog's address.
+
+--metrics.datadog.pushinterval  (Default: "10")
+    DataDog push interval.
+
+--metrics.influxdb  (Default: "false")
+    InfluxDB metrics exporter type.
+
+--metrics.influxdb.address  (Default: "localhost:8089")
+    InfluxDB address.
+
+--metrics.influxdb.database  (Default: "")
+    InfluxDB database used when protocol is http.
+
+--metrics.influxdb.password  (Default: "")
+    InfluxDB password (only with http).
+
+--metrics.influxdb.protocol  (Default: "udp")
+    InfluxDB address protocol (udp or http).
+
+--metrics.influxdb.pushinterval  (Default: "10")
+    InfluxDB push interval.
+
+--metrics.influxdb.retentionpolicy  (Default: "")
+    InfluxDB retention policy used when protocol is http.
+
+--metrics.influxdb.username  (Default: "")
+    InfluxDB username (only with http).
+
+--metrics.prometheus  (Default: "false")
+    Prometheus metrics exporter type.
+
+--metrics.prometheus.buckets  (Default: "0.100000, 0.300000, 1.200000, 5.000000")
+    Buckets for latency metrics.
+
+--metrics.prometheus.entrypoint  (Default: "traefik")
+    EntryPoint.
+
+--metrics.prometheus.middlewares  (Default: "")
+    Middlewares.
+
+--metrics.statsd  (Default: "false")
+    StatsD metrics exporter type.
+
+--metrics.statsd.address  (Default: "localhost:8125")
+    StatsD address.
+
+--metrics.statsd.pushinterval  (Default: "10")
+    StatsD push interval.
+
+--ping  (Default: "false")
+    Enable ping.
+
+--ping.entrypoint  (Default: "traefik")
+    Ping entryPoint.
+
+--ping.middlewares  (Default: "")
+    Middleware list.
+
+--providers.docker  (Default: "false")
+    Enable Docker backend with default settings.
+
+--providers.docker.constraints  (Default: "")
+    Filter services by constraint, matching with Traefik tags.
+
+--providers.docker.constraints[n].key  (Default: "")
+    The provider label that will be matched against. In practice, it is always
+    'tag'.
+
+--providers.docker.constraints[n].mustmatch  (Default: "false")
+    Whether the matching operator is equals or not equals.
+
+--providers.docker.constraints[n].value  (Default: "")
+    The value that will be matched against.
+
+--providers.docker.defaultrule  (Default: "Host(`{{ normalize .Name }}`)")
+    Default rule.
+
+--providers.docker.endpoint  (Default: "unix:///var/run/docker.sock")
+    Docker server endpoint. Can be a tcp or a unix socket endpoint.
+
+--providers.docker.exposedbydefault  (Default: "true")
+    Expose containers by default.
+
+--providers.docker.network  (Default: "")
+    Default Docker network used.
+
+--providers.docker.swarmmode  (Default: "false")
+    Use Docker on Swarm Mode.
+
+--providers.docker.swarmmoderefreshseconds  (Default: "15")
+    Polling interval for swarm mode.
+
+--providers.docker.tls.ca  (Default: "")
+    TLS CA
+
+--providers.docker.tls.caoptional  (Default: "false")
+    TLS CA.Optional
+
+--providers.docker.tls.cert  (Default: "")
+    TLS cert
+
+--providers.docker.tls.insecureskipverify  (Default: "false")
+    TLS insecure skip verify
+
+--providers.docker.tls.key  (Default: "")
+    TLS key
+
+--providers.docker.usebindportip  (Default: "false")
+    Use the ip address from the bound port, rather than from the inner network.
+
+--providers.docker.watch  (Default: "true")
+    Watch provider.
+
+--providers.file  (Default: "false")
+    Enable File backend with default settings.
+
+--providers.file.debugloggeneratedtemplate  (Default: "false")
+    Enable debug logging of generated configuration template.
+
+--providers.file.directory  (Default: "")
+    Load configuration from one or more .toml files in a directory.
+
+--providers.file.filename  (Default: "")
+    Override default configuration template. For advanced users :)
+
+--providers.file.watch  (Default: "true")
+    Watch provider.
+
+--providers.kubernetes  (Default: "false")
+    Enable Kubernetes backend with default settings.
+
+--providers.kubernetes.certauthfilepath  (Default: "")
+    Kubernetes certificate authority file path (not needed for in-cluster client).
+
+--providers.kubernetes.disablepasshostheaders  (Default: "false")
+    Kubernetes disable PassHost Headers.
+
+--providers.kubernetes.endpoint  (Default: "")
+    Kubernetes server endpoint (required for external cluster client).
+
+--providers.kubernetes.ingressclass  (Default: "")
+    Value of kubernetes.io/ingress.class annotation to watch for.
+
+--providers.kubernetes.ingressendpoint.hostname  (Default: "")
+    Hostname used for Kubernetes Ingress endpoints.
+
+--providers.kubernetes.ingressendpoint.ip  (Default: "")
+    IP used for Kubernetes Ingress endpoints.
+
+--providers.kubernetes.ingressendpoint.publishedservice  (Default: "")
+    Published Kubernetes Service to copy status from.
+
+--providers.kubernetes.labelselector  (Default: "")
+    Kubernetes Ingress label selector to use.
+
+--providers.kubernetes.namespaces  (Default: "")
+    Kubernetes namespaces.
+
+--providers.kubernetes.token  (Default: "")
+    Kubernetes bearer token (not needed for in-cluster client).
+
+--providers.kubernetescrd  (Default: "false")
+    Enable Kubernetes backend with default settings.
+
+--providers.kubernetescrd.certauthfilepath  (Default: "")
+    Kubernetes certificate authority file path (not needed for in-cluster client).
+
+--providers.kubernetescrd.disablepasshostheaders  (Default: "false")
+    Kubernetes disable PassHost Headers.
+
+--providers.kubernetescrd.endpoint  (Default: "")
+    Kubernetes server endpoint (required for external cluster client).
+
+--providers.kubernetescrd.ingressclass  (Default: "")
+    Value of kubernetes.io/ingress.class annotation to watch for.
+
+--providers.kubernetescrd.labelselector  (Default: "")
+    Kubernetes label selector to use.
+
+--providers.kubernetescrd.namespaces  (Default: "")
+    Kubernetes namespaces.
+
+--providers.kubernetescrd.token  (Default: "")
+    Kubernetes bearer token (not needed for in-cluster client).
+
+--providers.marathon  (Default: "false")
+    Enable Marathon backend with default settings.
+
+--providers.marathon.basic.httpbasicauthuser  (Default: "")
+    Basic authentication User.
+
+--providers.marathon.basic.httpbasicpassword  (Default: "")
+    Basic authentication Password.
+
+--providers.marathon.constraints  (Default: "")
+    Filter services by constraint, matching with Traefik tags.
+
+--providers.marathon.constraints[n].key  (Default: "")
+    The provider label that will be matched against. In practice, it is always
+    'tag'.
+
+--providers.marathon.constraints[n].mustmatch  (Default: "false")
+    Whether the matching operator is equals or not equals.
+
+--providers.marathon.constraints[n].value  (Default: "")
+    The value that will be matched against.
+
+--providers.marathon.dcostoken  (Default: "")
+    DCOSToken for DCOS environment, This will override the Authorization header.
+
+--providers.marathon.defaultrule  (Default: "Host(`{{ normalize .Name }}`)")
+    Default rule.
+
+--providers.marathon.dialertimeout  (Default: "5")
+    Set a dialer timeout for Marathon.
+
+--providers.marathon.endpoint  (Default: "http://127.0.0.1:8080")
+    Marathon server endpoint. You can also specify multiple endpoint for Marathon.
+
+--providers.marathon.exposedbydefault  (Default: "true")
+    Expose Marathon apps by default.
+
+--providers.marathon.filtermarathonconstraints  (Default: "false")
+    Enable use of Marathon constraints in constraint filtering.
+
+--providers.marathon.forcetaskhostname  (Default: "false")
+    Force to use the task's hostname.
+
+--providers.marathon.keepalive  (Default: "10")
+    Set a TCP Keep Alive time.
+
+--providers.marathon.respectreadinesschecks  (Default: "false")
+    Filter out tasks with non-successful readiness checks during deployments.
+
+--providers.marathon.responseheadertimeout  (Default: "60")
+    Set a response header timeout for Marathon.
+
+--providers.marathon.tls.ca  (Default: "")
+    TLS CA
+
+--providers.marathon.tls.caoptional  (Default: "false")
+    TLS CA.Optional
+
+--providers.marathon.tls.cert  (Default: "")
+    TLS cert
+
+--providers.marathon.tls.insecureskipverify  (Default: "false")
+    TLS insecure skip verify
+
+--providers.marathon.tls.key  (Default: "")
+    TLS key
+
+--providers.marathon.tlshandshaketimeout  (Default: "5")
+    Set a TLS handshake timeout for Marathon.
+
+--providers.marathon.trace  (Default: "false")
+    Display additional provider logs.
+
+--providers.marathon.watch  (Default: "true")
+    Watch provider.
+
+--providers.providersthrottleduration  (Default: "2")
+    Backends throttle duration: minimum duration between 2 events from providers
+    before applying a new configuration. It avoids unnecessary reloads if multiples
+    events are sent in a short amount of time.
+
+--providers.rancher  (Default: "false")
+    Enable Rancher backend with default settings.
+
+--providers.rancher.constraints  (Default: "")
+    Filter services by constraint, matching with Traefik tags.
+
+--providers.rancher.constraints[n].key  (Default: "")
+    The provider label that will be matched against. In practice, it is always
+    'tag'.
+
+--providers.rancher.constraints[n].mustmatch  (Default: "false")
+    Whether the matching operator is equals or not equals.
+
+--providers.rancher.constraints[n].value  (Default: "")
+    The value that will be matched against.
+
+--providers.rancher.defaultrule  (Default: "Host(`{{ normalize .Name }}`)")
+    Default rule.
+
+--providers.rancher.enableservicehealthfilter  (Default: "true")
+    Filter services with unhealthy states and inactive states.
+
+--providers.rancher.exposedbydefault  (Default: "true")
+    Expose containers by default.
+
+--providers.rancher.intervalpoll  (Default: "false")
+    Poll the Rancher metadata service every 'rancher.refreshseconds' (less
+    accurate).
+
+--providers.rancher.prefix  (Default: "latest")
+    Prefix used for accessing the Rancher metadata service.
+
+--providers.rancher.refreshseconds  (Default: "15")
+    Defines the polling interval in seconds.
+
+--providers.rancher.watch  (Default: "true")
+    Watch provider.
+
+--providers.rest  (Default: "false")
+    Enable Rest backend with default settings.
+
+--providers.rest.entrypoint  (Default: "traefik")
+    EntryPoint.
+
+--serverstransport.forwardingtimeouts.dialtimeout  (Default: "30")
+    The amount of time to wait until a connection to a backend server can be
+    established. If zero, no timeout exists.
+
+--serverstransport.forwardingtimeouts.responseheadertimeout  (Default: "0")
+    The amount of time to wait for a server's response headers after fully writing
+    the request (including its body, if any). If zero, no timeout exists.
+
+--serverstransport.insecureskipverify  (Default: "false")
+    Disable SSL certificate verification.
+
+--serverstransport.maxidleconnsperhost  (Default: "200")
+    If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero,
+    DefaultMaxIdleConnsPerHost is used
+
+--serverstransport.rootcas  (Default: "")
+    Add cert file for self-signed certificate.
+
+--tracing  (Default: "false")
+    OpenTracing configuration.
+
+--tracing.backend  (Default: "jaeger")
+    Selects the tracking backend ('jaeger','zipkin','datadog','instana').
+
+--tracing.datadog  (Default: "false")
+    Settings for DataDog.
+
+--tracing.datadog.bagageprefixheadername  (Default: "")
+    Specifies the header name prefix that will be used to store baggage items in a
+    map.
+
+--tracing.datadog.debug  (Default: "false")
+    Enable DataDog debug.
+
+--tracing.datadog.globaltag  (Default: "")
+    Key:Value tag to be set on all the spans.
+
+--tracing.datadog.localagenthostport  (Default: "localhost:8126")
+    Set datadog-agent's host:port that the reporter will used.
+
+--tracing.datadog.parentidheadername  (Default: "")
+    Specifies the header name that will be used to store the parent ID.
+
+--tracing.datadog.prioritysampling  (Default: "false")
+    Enable priority sampling. When using distributed tracing, this option must be
+    enabled in order to get all the parts of a distributed trace sampled.
+
+--tracing.datadog.samplingpriorityheadername  (Default: "")
+    Specifies the header name that will be used to store the sampling priority.
+
+--tracing.datadog.traceidheadername  (Default: "")
+    Specifies the header name that will be used to store the trace ID.
+
+--tracing.haystack  (Default: "false")
+    Settings for Haystack.
+
+--tracing.haystack.baggageprefixheadername  (Default: "")
+    specifies the header name prefix that will be used to store baggage items in a
+    map.
+
+--tracing.haystack.globaltag  (Default: "")
+    Key:Value tag to be set on all the spans.
+
+--tracing.haystack.localagenthost  (Default: "LocalAgentHost")
+    Set haystack-agent's host that the reporter will used.
+
+--tracing.haystack.localagentport  (Default: "35000")
+    Set haystack-agent's port that the reporter will used.
+
+--tracing.haystack.parentidheadername  (Default: "")
+    Specifies the header name that will be used to store the parent ID.
+
+--tracing.haystack.spanidheadername  (Default: "")
+    Specifies the header name that will be used to store the span ID.
+
+--tracing.haystack.traceidheadername  (Default: "")
+    Specifies the header name that will be used to store the trace ID.
+
+--tracing.instana  (Default: "false")
+    Settings for Instana.
+
+--tracing.instana.localagenthost  (Default: "localhost")
+    Set instana-agent's host that the reporter will used.
+
+--tracing.instana.localagentport  (Default: "42699")
+    Set instana-agent's port that the reporter will used.
+
+--tracing.instana.loglevel  (Default: "info")
+    Set instana-agent's log level. ('error','warn','info','debug')
+
+--tracing.jaeger  (Default: "false")
+    Settings for jaeger.
+
+--tracing.jaeger.gen128bit  (Default: "false")
+    Generate 128 bit span IDs.
+
+--tracing.jaeger.localagenthostport  (Default: "127.0.0.1:6831")
+    Set jaeger-agent's host:port that the reporter will used.
+
+--tracing.jaeger.propagation  (Default: "jaeger")
+    Which propgation format to use (jaeger/b3).
+
+--tracing.jaeger.samplingparam  (Default: "1.000000")
+    Set the sampling parameter.
+
+--tracing.jaeger.samplingserverurl  (Default: "http://localhost:5778/sampling")
+    Set the sampling server url.
+
+--tracing.jaeger.samplingtype  (Default: "const")
+    Set the sampling type.
+
+--tracing.jaeger.tracecontextheadername  (Default: "uber-trace-id")
+    Set the header to use for the trace-id.
+
+--tracing.servicename  (Default: "traefik")
+    Set the name for this service.
+
+--tracing.spannamelimit  (Default: "0")
+    Set the maximum character limit for Span names (default 0 = no limit).
+
+--tracing.zipkin  (Default: "false")
+    Settings for zipkin.
+
+--tracing.zipkin.debug  (Default: "false")
+    Enable Zipkin debug.
+
+--tracing.zipkin.httpendpoint  (Default: "http://localhost:9411/api/v1/spans")
+    HTTP Endpoint to report traces to.
+
+--tracing.zipkin.id128bit  (Default: "true")
+    Use Zipkin 128 bit root span IDs.
+
+--tracing.zipkin.samespan  (Default: "false")
+    Use Zipkin SameSpan RPC style traces.
+
+--tracing.zipkin.samplerate  (Default: "1.000000")
+    The rate between 0.0 and 1.0 of requests to trace.

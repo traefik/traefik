@@ -15,13 +15,19 @@ const Name = "haystack"
 
 // Config provides configuration settings for a haystack tracer
 type Config struct {
-	LocalAgentHost          string `description:"Set haystack-agent's host that the reporter will used. Defaults to localhost" export:"false"`
-	LocalAgentPort          int    `description:"Set haystack-agent's port that the reporter will used. Defaults to 35000" export:"false"`
+	LocalAgentHost          string `description:"Set haystack-agent's host that the reporter will used." export:"false"`
+	LocalAgentPort          int    `description:"Set haystack-agent's port that the reporter will used." export:"false"`
 	GlobalTag               string `description:"Key:Value tag to be set on all the spans." export:"true"`
-	TraceIDHeaderName       string `description:"Specifies the header name that will be used to store the trace ID.." export:"true"`
+	TraceIDHeaderName       string `description:"Specifies the header name that will be used to store the trace ID." export:"true"`
 	ParentIDHeaderName      string `description:"Specifies the header name that will be used to store the parent ID." export:"true"`
 	SpanIDHeaderName        string `description:"Specifies the header name that will be used to store the span ID." export:"true"`
 	BaggagePrefixHeaderName string `description:"specifies the header name prefix that will be used to store baggage items in a map." export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (c *Config) SetDefaults() {
+	c.LocalAgentHost = "LocalAgentHost"
+	c.LocalAgentPort = 35000
 }
 
 // Setup sets up the tracer

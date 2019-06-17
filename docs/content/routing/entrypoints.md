@@ -47,7 +47,7 @@ See the complete reference for the list of available options:
 [EntryPoints]
 
   [EntryPoints.EntryPoint0]
-    Address = "foobar"
+    Address = ":8888"
     [EntryPoints.EntryPoint0.Transport]
       [EntryPoints.EntryPoint0.Transport.LifeCycle]
         RequestAcceptGraceTimeout = 42
@@ -65,51 +65,17 @@ See the complete reference for the list of available options:
 ```
 
 ```ini tab="CLI"
-Name:EntryPoint0
-Address:foobar
-Transport.LifeCycle.RequestAcceptGraceTimeout:42
-Transport.LifeCycle.GraceTimeOut:42
-Transport.RespondingTimeouts.ReadTimeout:42
-Transport.RespondingTimeouts.WriteTimeout:42
-Transport.RespondingTimeouts.IdleTimeout:42
-ProxyProtocol.Insecure:true
-ProxyProtocol.TrustedIPs:foobar,foobar
-ForwardedHeaders.Insecure:true
-ForwardedHeaders.TrustedIPs:foobar,foobar
+--entryPoints.EntryPoint0.Address=:8888
+--entryPoints.EntryPoint0.Transport.LifeCycle.RequestAcceptGraceTimeout=42
+--entryPoints.EntryPoint0.Transport.LifeCycle.GraceTimeOut=42
+--entryPoints.EntryPoint0.Transport.RespondingTimeouts.ReadTimeout=42
+--entryPoints.EntryPoint0.Transport.RespondingTimeouts.WriteTimeout=42
+--entryPoints.EntryPoint0.Transport.RespondingTimeouts.IdleTimeout=42
+--entryPoints.EntryPoint0.ProxyProtocol.Insecure=true
+--entryPoints.EntryPoint0.ProxyProtocol.TrustedIPs=foobar,foobar
+--entryPoints.EntryPoint0.ForwardedHeaders.Insecure=true
+--entryPoints.EntryPoint0.ForwardedHeaders.TrustedIPs=foobar,foobar
 ```
-
-??? example "Using the CLI"
-
-    Here is an example of using the CLI to define `entrypoints`:
-    
-    ```shell
-    --entryPoints='Name:http Address::80'
-    --entryPoints='Name:https Address::443'
-    ```
-    
-    !!! note
-        The whitespace character (` `) is the option separator, and the comma (`,`) is the value separator for lists inside an option.  
-        The option names are case-insensitive.
-    
-    !!! warning "Using Docker Compose Files"
-    
-        The syntax for passing arguments inside a docker compose file is a little different. Here are two examples.
-        
-        ```yaml
-        traefik:
-            image: traefik:v2.0 # The official v2.0 Traefik docker image
-            command:
-                - --defaultentrypoints=powpow
-                - "--entryPoints=Name:powpow Address::42 Compress:true"
-        ```
-
-        or
-        
-        ```yaml
-        traefik:
-            image: traefik:v2.0 # The official v2.0 Traefik docker image
-            command: --defaultentrypoints=powpow --entryPoints='Name:powpow Address::42 Compress:true'
-        ```
 
 ## ProxyProtocol
 
@@ -128,9 +94,10 @@ Traefik supports [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-
     
     IPs in `trustedIPs` only will lead to remote client address replacement: Declare load-balancer IPs or CIDR range here.
     
-??? example "Insecure Mode -- Testing Environnement Only"
+??? example "Insecure Mode -- Testing Environment Only"
 
-    In a test environments, you can configure Traefik to trust every incoming connection. Doing so, every remote client address will be replaced (`trustedIPs` won't have any effect)
+    In a test environments, you can configure Traefik to trust every incoming connection.
+    Doing so, every remote client address will be replaced (`trustedIPs` won't have any effect)
 
     ```toml
     [entryPoints]

@@ -51,7 +51,7 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		influxDBClient = initInfluxDBClient(ctx, config)
 	}
 	if influxDBTicker == nil {
-		influxDBTicker = initInfluxDBTicker(ctx, config)
+		influxDBTicker = initInfluxDBTicker(config)
 	}
 
 	return &standardRegistry{
@@ -115,14 +115,8 @@ func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Inf
 }
 
 // initInfluxDBTicker initializes metrics pusher
-func initInfluxDBTicker(ctx context.Context, config *types.InfluxDB) *time.Ticker {
-	pushInterval, err := time.ParseDuration(config.PushInterval)
-	if err != nil {
-		log.FromContext(ctx).Warnf("Unable to parse %s from config.PushInterval: using 10s as the default value", config.PushInterval)
-		pushInterval = 10 * time.Second
-	}
-
-	report := time.NewTicker(pushInterval)
+func initInfluxDBTicker(config *types.InfluxDB) *time.Ticker {
+	report := time.NewTicker(time.Duration(config.PushInterval))
 
 	safe.Go(func() {
 		var buf bytes.Buffer

@@ -40,15 +40,26 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.Constrainer      `mapstructure:",squash" export:"true"`
-	Watch                     bool   `description:"Watch provider" export:"true"`
-	DefaultRule               string `description:"Default rule"`
-	ExposedByDefault          bool   `description:"Expose containers by default" export:"true"`
-	EnableServiceHealthFilter bool
-	RefreshSeconds            int
+	provider.Constrainer `description:"List of constraints used to filter out some containers." export:"true"`
+
+	Watch                     bool   `description:"Watch provider." export:"true"`
+	DefaultRule               string `description:"Default rule."`
+	ExposedByDefault          bool   `description:"Expose containers by default." export:"true"`
+	EnableServiceHealthFilter bool   `description:"Filter services with unhealthy states and inactive states." export:"true"`
+	RefreshSeconds            int    `description:"Defines the polling interval in seconds." export:"true"`
+	IntervalPoll              bool   `description:"Poll the Rancher metadata service every 'rancher.refreshseconds' (less accurate)."`
+	Prefix                    string `description:"Prefix used for accessing the Rancher metadata service."`
 	defaultRuleTpl            *template.Template
-	IntervalPoll              bool   `description:"Poll the Rancher metadata service every 'rancher.refreshseconds' (less accurate)"`
-	Prefix                    string `description:"Prefix used for accessing the Rancher metadata service"`
+}
+
+// SetDefaults sets the default values.
+func (p *Provider) SetDefaults() {
+	p.Watch = true
+	p.ExposedByDefault = true
+	p.EnableServiceHealthFilter = true
+	p.RefreshSeconds = 15
+	p.DefaultRule = DefaultTemplateRule
+	p.Prefix = "latest"
 }
 
 type rancherData struct {

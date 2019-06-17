@@ -125,9 +125,9 @@ type HealthCheck struct {
 	Scheme string `json:"scheme,omitempty" toml:",omitempty"`
 	Path   string `json:"path,omitempty" toml:",omitempty"`
 	Port   int    `json:"port,omitempty" toml:",omitempty,omitzero"`
-	// FIXME change string to parse.Duration
+	// FIXME change string to types.Duration
 	Interval string `json:"interval,omitempty" toml:",omitempty"`
-	// FIXME change string to parse.Duration
+	// FIXME change string to types.Duration
 	Timeout  string            `json:"timeout,omitempty" toml:",omitempty"`
 	Hostname string            `json:"hostname,omitempty" toml:",omitempty"`
 	Headers  map[string]string `json:"headers,omitempty" toml:",omitempty"`

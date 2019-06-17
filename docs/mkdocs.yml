@@ -133,7 +133,11 @@ nav:
       - 'Maintainers': 'contributing/maintainers.md'
   - 'Glossary': 'glossary.md'
   - 'References':
-      - 'Static Configuration': 'reference/static-configuration.md'
+      - 'Static Configuration':
+          - 'Overview': 'reference/static-configuration/overview.md'
+          - 'File': 'reference/static-configuration/file.md'
+          - 'CLI': 'reference/static-configuration/cli.md'
+          - 'Environment variables': 'reference/static-configuration/env.md'
       - 'Dynamic Configuration':
         - 'Docker': 'reference/dynamic-configuration/docker.md'
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'

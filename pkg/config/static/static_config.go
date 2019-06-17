@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/ping"
 	acmeprovider "github.com/containous/traefik/pkg/provider/acme"
@@ -47,99 +46,127 @@ const (
 type Configuration struct {
 	Global *Global `description:"Global configuration options" export:"true"`
 
-	ServersTransport *ServersTransport `description:"Servers default transport" export:"true"`
-	EntryPoints      EntryPoints       `description:"Entry points definition using format: --entryPoints='Name:http Address::8000' --entryPoints='Name:https Address::4442'" export:"true"`
-	Providers        *Providers        `description:"Providers configuration" export:"true"`
+	ServersTransport *ServersTransport `description:"Servers default transport." export:"true"`
+	EntryPoints      EntryPoints       `description:"Entry points definition." export:"true"`
+	Providers        *Providers        `description:"Providers configuration." export:"true"`
 
-	API     *API           `description:"Enable api/dashboard" export:"true"`
-	Metrics *types.Metrics `description:"Enable a metrics exporter" export:"true"`
-	Ping    *ping.Handler  `description:"Enable ping" export:"true"`
+	API     *API           `description:"Enable api/dashboard." export:"true" label:"allowEmpty"`
+	Metrics *types.Metrics `description:"Enable a metrics exporter." export:"true"`
+	Ping    *ping.Handler  `description:"Enable ping." export:"true" label:"allowEmpty"`
 	// Rest    *rest.Provider `description:"Enable Rest backend with default settings" export:"true"`
 
-	Log       *types.TraefikLog `description:"Traefik log settings" export:"true"`
-	AccessLog *types.AccessLog  `description:"Access log settings" export:"true"`
-	Tracing   *Tracing          `description:"OpenTracing configuration" export:"true"`
+	Log       *types.TraefikLog `description:"Traefik log settings." export:"true"`
+	AccessLog *types.AccessLog  `description:"Access log settings." export:"true" label:"allowEmpty"`
+	Tracing   *Tracing          `description:"OpenTracing configuration." export:"true" label:"allowEmpty"`
 
-	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening" export:"true"`
+	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening." export:"true" label:"allowEmpty"`
 
-	ACME *acmeprovider.Configuration `description:"Enable ACME (Let's Encrypt): automatic SSL" export:"true"`
+	ACME *acmeprovider.Configuration `description:"Enable ACME (Let's Encrypt): automatic SSL." export:"true"`
 }
 
 // Global holds the global configuration.
 type Global struct {
-	Debug              bool  `short:"d" description:"Enable debug mode" export:"true"`
-	CheckNewVersion    bool  `description:"Periodically check if a new version has been released" export:"true"`
-	SendAnonymousUsage *bool `description:"send periodically anonymous usage statistics" export:"true"`
+	Debug              bool  `description:"Enable debug mode." export:"true"`
+	CheckNewVersion    bool  `description:"Periodically check if a new version has been released." export:"true"`
+	SendAnonymousUsage *bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default." export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers
 type ServersTransport struct {
-	InsecureSkipVerify  bool                `description:"Disable SSL certificate verification" export:"true"`
-	RootCAs             tls.FilesOrContents `description:"Add cert file for self-signed certificate"`
-	MaxIdleConnsPerHost int                 `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used" export:"true"`
-	ForwardingTimeouts  *ForwardingTimeouts `description:"Timeouts for requests forwarded to the backend servers" export:"true"`
+	InsecureSkipVerify  bool                `description:"Disable SSL certificate verification." export:"true"`
+	RootCAs             []tls.FileOrContent `description:"Add cert file for self-signed certificate."`
+	MaxIdleConnsPerHost int                 `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used" export:"true"`
+	ForwardingTimeouts  *ForwardingTimeouts `description:"Timeouts for requests forwarded to the backend servers." export:"true"`
 }
 
 // API holds the API configuration
 type API struct {
-	EntryPoint      string            `description:"EntryPoint" export:"true"`
-	Dashboard       bool              `description:"Activate dashboard" export:"true"`
-	Statistics      *types.Statistics `description:"Enable more detailed statistics" export:"true"`
-	Middlewares     []string          `description:"Middleware list" export:"true"`
-	DashboardAssets *assetfs.AssetFS  `json:"-"`
+	EntryPoint      string            `description:"EntryPoint." export:"true"`
+	Dashboard       bool              `description:"Activate dashboard." export:"true"`
+	Statistics      *types.Statistics `description:"Enable more detailed statistics." export:"true" label:"allowEmpty"`
+	Middlewares     []string          `description:"Middleware list." export:"true"`
+	DashboardAssets *assetfs.AssetFS  `json:"-" label:"-"`
+}
+
+// SetDefaults sets the default values.
+func (a *API) SetDefaults() {
+	a.EntryPoint = "traefik"
+	a.Dashboard = true
 }
 
 // RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.
 type RespondingTimeouts struct {
-	ReadTimeout  parse.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set" export:"true"`
-	WriteTimeout parse.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set" export:"true"`
-	IdleTimeout  parse.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. Defaults to 180 seconds. If zero, no timeout is set" export:"true"`
+	ReadTimeout  types.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set." export:"true"`
+	WriteTimeout types.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set." export:"true"`
+	IdleTimeout  types.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set." export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (a *RespondingTimeouts) SetDefaults() {
+	a.IdleTimeout = types.Duration(DefaultIdleTimeout)
 }
 
 // ForwardingTimeouts contains timeout configurations for forwarding requests to the backend servers.
 type ForwardingTimeouts struct {
-	DialTimeout           parse.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists" export:"true"`
-	ResponseHeaderTimeout parse.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists" export:"true"`
+	DialTimeout           types.Duration `description:"The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists." export:"true"`
+	ResponseHeaderTimeout types.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists." export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (f *ForwardingTimeouts) SetDefaults() {
+	f.DialTimeout = types.Duration(30 * time.Second)
 }
 
 // LifeCycle contains configurations relevant to the lifecycle (such as the shutdown phase) of Traefik.
 type LifeCycle struct {
-	RequestAcceptGraceTimeout parse.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
-	GraceTimeOut              parse.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
+	RequestAcceptGraceTimeout types.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure."`
+	GraceTimeOut              types.Duration `description:"Duration to give active requests a chance to finish before Traefik stops."`
+}
+
+// SetDefaults sets the default values.
+func (a *LifeCycle) SetDefaults() {
+	a.GraceTimeOut = types.Duration(DefaultGraceTimeout)
 }
 
 // Tracing holds the tracing configuration.
 type Tracing struct {
 	Backend       string           `description:"Selects the tracking backend ('jaeger','zipkin','datadog','instana')." export:"true"`
-	ServiceName   string           `description:"Set the name for this service" export:"true"`
-	SpanNameLimit int              `description:"Set the maximum character limit for Span names (default 0 = no limit)" export:"true"`
-	Jaeger        *jaeger.Config   `description:"Settings for jaeger"`
-	Zipkin        *zipkin.Config   `description:"Settings for zipkin"`
-	DataDog       *datadog.Config  `description:"Settings for DataDog"`
-	Instana       *instana.Config  `description:"Settings for Instana"`
-	Haystack      *haystack.Config `description:"Settings for Haystack"`
+	ServiceName   string           `description:"Set the name for this service." export:"true"`
+	SpanNameLimit int              `description:"Set the maximum character limit for Span names (default 0 = no limit)." export:"true"`
+	Jaeger        *jaeger.Config   `description:"Settings for jaeger." label:"allowEmpty"`
+	Zipkin        *zipkin.Config   `description:"Settings for zipkin." label:"allowEmpty"`
+	DataDog       *datadog.Config  `description:"Settings for DataDog." label:"allowEmpty"`
+	Instana       *instana.Config  `description:"Settings for Instana." label:"allowEmpty"`
+	Haystack      *haystack.Config `description:"Settings for Haystack." label:"allowEmpty"`
+}
+
+// SetDefaults sets the default values.
+func (t *Tracing) SetDefaults() {
+	t.Backend = "jaeger"
+	t.ServiceName = "traefik"
+	t.SpanNameLimit = 0
 }
 
 // Providers contains providers configuration
 type Providers struct {
-	ProvidersThrottleDuration parse.Duration     `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
-	Docker                    *docker.Provider   `description:"Enable Docker backend with default settings" export:"true"`
-	File                      *file.Provider     `description:"Enable File backend with default settings" export:"true"`
-	Marathon                  *marathon.Provider `description:"Enable Marathon backend with default settings" export:"true"`
-	Kubernetes                *ingress.Provider  `description:"Enable Kubernetes backend with default settings" export:"true"`
-	KubernetesCRD             *crd.Provider      `description:"Enable Kubernetes backend with default settings" export:"true"`
-	Rest                      *rest.Provider     `description:"Enable Rest backend with default settings" export:"true"`
-	Rancher                   *rancher.Provider  `description:"Enable Rancher backend with default settings" export:"true"`
+	ProvidersThrottleDuration types.Duration     `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
+	Docker                    *docker.Provider   `description:"Enable Docker backend with default settings." export:"true" label:"allowEmpty"`
+	File                      *file.Provider     `description:"Enable File backend with default settings." export:"true" label:"allowEmpty"`
+	Marathon                  *marathon.Provider `description:"Enable Marathon backend with default settings." export:"true" label:"allowEmpty"`
+	Kubernetes                *ingress.Provider  `description:"Enable Kubernetes backend with default settings." export:"true" label:"allowEmpty"`
+	KubernetesCRD             *crd.Provider      `description:"Enable Kubernetes backend with default settings." export:"true" label:"allowEmpty"`
+	Rest                      *rest.Provider     `description:"Enable Rest backend with default settings." export:"true" label:"allowEmpty"`
+	Rancher                   *rancher.Provider  `description:"Enable Rancher backend with default settings." export:"true" label:"allowEmpty"`
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
 // It also takes care of maintaining backwards compatibility.
 func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 	if len(c.EntryPoints) == 0 {
+		ep := &EntryPoint{Address: ":80"}
+		ep.SetDefaults()
 		c.EntryPoints = EntryPoints{
-			"http": &EntryPoint{
-				Address: ":80",
-			},
+			"http": ep,
 		}
 	}
 
@@ -148,33 +175,15 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 		(c.Metrics != nil && c.Metrics.Prometheus != nil && c.Metrics.Prometheus.EntryPoint == DefaultInternalEntryPointName) ||
 		(c.Providers.Rest != nil && c.Providers.Rest.EntryPoint == DefaultInternalEntryPointName) {
 		if _, ok := c.EntryPoints[DefaultInternalEntryPointName]; !ok {
-			c.EntryPoints[DefaultInternalEntryPointName] = &EntryPoint{Address: ":8080"}
-		}
-	}
-
-	for _, entryPoint := range c.EntryPoints {
-		if entryPoint.Transport == nil {
-			entryPoint.Transport = &EntryPointsTransport{}
-		}
-
-		// Make sure LifeCycle isn't nil to spare nil checks elsewhere.
-		if entryPoint.Transport.LifeCycle == nil {
-			entryPoint.Transport.LifeCycle = &LifeCycle{
-				GraceTimeOut: parse.Duration(DefaultGraceTimeout),
-			}
-			entryPoint.Transport.RespondingTimeouts = &RespondingTimeouts{
-				IdleTimeout: parse.Duration(DefaultIdleTimeout),
-			}
-		}
-
-		if entryPoint.ForwardedHeaders == nil {
-			entryPoint.ForwardedHeaders = &ForwardedHeaders{}
+			ep := &EntryPoint{Address: ":8080"}
+			ep.SetDefaults()
+			c.EntryPoints[DefaultInternalEntryPointName] = ep
 		}
 	}
 
 	if c.Providers.Docker != nil {
 		if c.Providers.Docker.SwarmModeRefreshSeconds <= 0 {
-			c.Providers.Docker.SwarmModeRefreshSeconds = 15
+			c.Providers.Docker.SwarmModeRefreshSeconds = types.Duration(15 * time.Second)
 		}
 	}
 

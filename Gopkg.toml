@@ -70,10 +70,6 @@ required = [
   version = "2.1.1"
 
 [[constraint]]
-  name = "github.com/containous/flaeg"
-  version = "1.4.1"
-
-[[constraint]]
   branch = "master"
   name = "github.com/containous/mux"
 
@@ -81,14 +77,10 @@ required = [
   branch = "containous-fork"
   name = "github.com/containous/alice"
 
-[[constraint]]
-  name = "github.com/containous/staert"
-  version = "3.1.2"
-
-[[constraint]]
-  name = "github.com/thoas/stats"
-  # related to https://github.com/thoas/stats/pull/32
-  revision = "4975baf6a358ed3ddaa42133996e1959f96c9300"
+#[[constraint]]
+#  name = "github.com/thoas/stats"
+#  # related to https://github.com/thoas/stats/pull/32
+#  revision = "4975baf6a358ed3ddaa42133996e1959f96c9300"
 
 [[constraint]]
   name = "github.com/coreos/go-systemd"
@@ -137,9 +129,9 @@ required = [
 #  branch = "master"
 #  name = "github.com/jjcollinge/servicefabric"
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/abronan/valkeyrie"
+#[[constraint]]
+#  branch = "master"
+#  name = "github.com/abronan/valkeyrie"
 
 #[[constraint]]
 #  name = "github.com/mesosphere/mesos-dns"

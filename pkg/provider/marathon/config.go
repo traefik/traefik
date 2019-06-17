@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/label"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/provider/label"
 	"github.com/gambol99/go-marathon"
 )
 
