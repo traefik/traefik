@@ -26,9 +26,9 @@ metadata:
   name: testHeader
 spec:
   headers:
-    CustomRequestHeaders:
+    customRequestHeaders:
       X-Script-Name: "test"
-    CustomResponseHeaders:
+    customResponseHeaders:
       X-Custom-Response-Header: "True"
 ```
 
@@ -68,10 +68,10 @@ metadata:
   name: testHeader
 spec:
   headers:
-    CustomRequestHeaders:
+    customRequestHeaders:
       X-Script-Name: "test" # Adds
       X-Custom-Request-Header: "" # Removes
-    CustomResponseHeaders:
+    customResponseHeaders:
       X-Custom-Response-Header: "" # Removes
 ```
 
@@ -114,8 +114,8 @@ metadata:
   name: testHeader
 spec:
   headers:
-    FrameDeny: "true"
-    SSLRedirect: "true"
+    frameDeny: "true"
+    sslRedirect: "true"
 ```
 
 ```yaml tab="Rancher"
