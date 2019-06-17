@@ -24,6 +24,8 @@ func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	var timestamp = defaultValue
 	if v, ok := entry.Data[StartUTC]; ok {
 		timestamp = v.(time.Time).Format(commonLogTimeFormat)
+	} else if v, ok := entry.Data[StartLocal]; ok {
+		timestamp = v.(time.Time).Local().Format(commonLogTimeFormat)
 	}
 
 	var elapsedMillis int64
