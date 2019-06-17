@@ -38,7 +38,6 @@ deploy:
     file: dist/traefik*
     skip_cleanup: true
     file_glob: true
-    draft: true
     on:
       repo: containous/traefik
       tags: true
