@@ -22,7 +22,7 @@ kind: Middleware
 metadata:
   name: test-stripprefix
 spec:
-  StripPrefix:
+  stripPrefix:
     prefixes:
     - /foobar
     - /fiibar

@@ -22,7 +22,7 @@ kind: Middleware
 metadata:
   name: test-stripprefixregex
 spec:
-  StripPrefixRegex:
+  stripPrefixRegex:
     regex: "^/foo/(.*)"
 ```
 
