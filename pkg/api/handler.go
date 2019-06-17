@@ -100,7 +100,7 @@ func New(staticConfig static.Configuration, runtimeConfig *config.RuntimeConfigu
 		statistics:           staticConfig.API.Statistics,
 		dashboardAssets:      staticConfig.API.DashboardAssets,
 		runtimeConfiguration: rConfig,
-		debug:                staticConfig.Global.Debug,
+		debug:                staticConfig.API.Debug,
 	}
 }
 

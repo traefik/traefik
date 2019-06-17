@@ -1,3 +1,4 @@
+
 --accesslog  (Default: "false")
     Access log settings.
 
@@ -95,8 +96,11 @@
 --api.dashboard  (Default: "true")
     Activate dashboard.
 
+--api.debug  (Default: "false")
+    Enable additional endpoints for debugging and profiling.
+
 --api.entrypoint  (Default: "traefik")
-    EntryPoint.
+    The entry point that the API handler will be bound to.
 
 --api.middlewares  (Default: "")
     Middleware list.
@@ -152,9 +156,6 @@
 
 --global.checknewversion  (Default: "true")
     Periodically check if a new version has been released.
-
---global.debug  (Default: "false")
-    Enable debug mode.
 
 --global.sendanonymoususage
     Periodically send anonymous usage statistics. If the option is not specified, it

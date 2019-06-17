@@ -80,6 +80,21 @@ The list of [middlewares](../middlewares/overview.md) applied to the API handler
 --api.middlewares="api-auth,api-prefix"
 ```
 
+### `debug`
+
+_Optional, Default=false_
+
+Enable additional endpoints for debugging and profiling, served under `/debug/`.
+
+```toml tab="File"
+[api]
+  debug = true
+```
+
+```bash tab="CLI"
+--api.debug=true
+```
+
 ## Endpoints
 
 All the following endpoints must be accessed with a `GET` HTTP request.

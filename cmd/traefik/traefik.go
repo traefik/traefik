@@ -204,16 +204,11 @@ func configureLogging(staticConfiguration *static.Configuration) {
 	// an explicitly defined log level always has precedence. if none is
 	// given and debug mode is disabled, the default is ERROR, and DEBUG
 	// otherwise.
-	var levelStr string
-	if staticConfiguration.Log != nil {
+	levelStr := "error"
+	if staticConfiguration.Log != nil && staticConfiguration.Log.Level != "" {
 		levelStr = strings.ToLower(staticConfiguration.Log.Level)
 	}
-	if levelStr == "" {
-		levelStr = "error"
-		if staticConfiguration.Global.Debug {
-			levelStr = "debug"
-		}
-	}
+
 	level, err := logrus.ParseLevel(levelStr)
 	if err != nil {
 		log.WithoutContext().Errorf("Error getting level: %v", err)
