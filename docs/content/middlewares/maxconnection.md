@@ -19,7 +19,7 @@ labels:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: addprefix
+  name: test-maxconn
 spec:
   maxConn:
     amount: 10
