@@ -1,5 +1,15 @@
 # Change Log
 
+## [v2.0.0-alpha6](https://github.com/containous/traefik/tree/v2.0.0-alpha6) (2019-06-18)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha5...v2.0.0-alpha6)
+
+**Bug fixes:**
+- **[cli]** Don&#39;t allow non flag arguments by default. ([#4970](https://github.com/containous/traefik/pull/4970) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[middleware,k8s/crd]** doc: fix middleware names for CRD. ([#4966](https://github.com/containous/traefik/pull/4966) by [ldez](https://github.com/ldez))
+- **[middleware]** Kubernetes CRD documentation fixes ([#4971](https://github.com/containous/traefik/pull/4971) by [orhanhenrik](https://github.com/orhanhenrik))
+
 ## [v2.0.0-alpha5](https://github.com/containous/traefik/tree/v2.0.0-alpha5) (2019-06-17)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha4...v2.0.0-alpha5)
 
