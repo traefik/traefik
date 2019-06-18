@@ -87,6 +87,23 @@ func Test_execute(t *testing.T) {
 			expected: expected{result: "root"},
 		},
 		{
+			desc: "root command, with argument, command not found",
+			args: []string{"", "echo"},
+			command: func() *Command {
+				return &Command{
+					Name:          "root",
+					Description:   "This is a test",
+					Configuration: nil,
+					Run: func(_ []string) error {
+						called = "root"
+						return nil
+					},
+				}
+
+			},
+			expected: expected{error: true},
+		},
+		{
 			desc: "one sub command",
 			args: []string{"", "sub1"},
 			command: func() *Command {
@@ -113,6 +130,34 @@ func Test_execute(t *testing.T) {
 				return rootCmd
 			},
 			expected: expected{result: "sub1"},
+		},
+		{
+			desc: "one sub command, with argument, command not found",
+			args: []string{"", "sub1", "echo"},
+			command: func() *Command {
+				rootCmd := &Command{
+					Name:          "test",
+					Description:   "This is a test",
+					Configuration: nil,
+					Run: func(_ []string) error {
+						called += "root"
+						return nil
+					},
+				}
+
+				_ = rootCmd.AddCommand(&Command{
+					Name:          "sub1",
+					Description:   "sub1",
+					Configuration: nil,
+					Run: func(_ []string) error {
+						called += "sub1"
+						return nil
+					},
+				})
+
+				return rootCmd
+			},
+			expected: expected{error: true},
 		},
 		{
 			desc: "two sub commands",
@@ -376,6 +421,7 @@ func Test_execute(t *testing.T) {
 					Name:          "sub1",
 					Description:   "sub1",
 					Configuration: nil,
+					AllowArg:      true,
 					Run: func(args []string) error {
 						called += "sub1-" + strings.Join(args, "-")
 						return nil
@@ -394,6 +440,7 @@ func Test_execute(t *testing.T) {
 					Name:          "root",
 					Description:   "This is a test",
 					Configuration: nil,
+					AllowArg:      true,
 					Run: func(args []string) error {
 						called += "root-" + strings.Join(args, "-")
 						return nil
