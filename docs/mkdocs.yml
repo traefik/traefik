@@ -85,8 +85,9 @@ nav:
       - 'Routers': 'routing/routers/index.md'
       - 'Services': 'routing/services/index.md'
   - 'HTTPS & TLS':
-      - 'Overview': 'https-tls/overview.md'
-      - 'ACME': 'https-tls/acme.md'
+      - 'Overview': 'https/overview.md'
+      - 'TLS': 'https/tls.md'
+      - 'Let''s Encrypt': 'https/acme.md'
   - 'Middlewares':
       - 'Overview': 'middlewares/overview.md'
       - 'AddPrefix': 'middlewares/addprefix.md'

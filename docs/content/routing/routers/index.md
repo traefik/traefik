@@ -173,7 +173,7 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 
 !!! note "HTTPS & ACME"
 
-    In the current version, with [ACME](../../https-tls/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
+    In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
     
 !!! note "Passthrough"
 
@@ -200,7 +200,7 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 #### `Options`
 
 The `Options` field enables fine-grained control of the TLS parameters.  
-It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and will be applied only if a `Host` rule is defined.
+It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied only if a `Host` rule is defined.
 
 ??? example "Configuring the tls options"
 
@@ -323,12 +323,12 @@ Services are the target for the router.
 
 !!! note "TLS & ACME"
 
-    In the current version, with [ACME](../../https-tls/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
+    In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
 
 #### `Options`
 
 The `Options` field enables fine-grained control of the TLS parameters.  
-It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and will be applied only if a `HostSNI` rule is defined.
+It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied only if a `HostSNI` rule is defined.
 
 ??? example "Configuring the tls options"
 

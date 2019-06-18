@@ -1,4 +1,4 @@
-# ACME
+# Let's Encrypt
 
 Automatic HTTPS
 {: .subtitle }
@@ -54,7 +54,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     There are many available options for ACME. For a quick glance at what's possible, browse the configuration reference:
     
     ```toml
-    --8<-- "content/https-tls/ref-acme.toml"
+    --8<-- "content/https/ref-acme.toml"
     ```
 
 ## Automatic Renewals
