@@ -15,6 +15,16 @@ labels:
 - "traefik.http.middlewares.test-compress.compress=true"
 ```
 
+```yaml tab="Kubernetes"
+# Enable gzip compression
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-compress
+spec:
+  compress: {}
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-compress.compress": "true"
