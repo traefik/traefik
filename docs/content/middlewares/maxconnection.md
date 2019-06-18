@@ -21,8 +21,8 @@ kind: Middleware
 metadata:
   name: addprefix
 spec:
-  addPrefix:
-    prefix: /bar
+  maxConn:
+    amount: 10
 ```
 
 ```json tab="Marathon"
