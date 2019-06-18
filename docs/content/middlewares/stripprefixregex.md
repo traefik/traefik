@@ -1,4 +1,4 @@
-# StripPrefix
+# StripPrefixRegex
 
 Removing Prefixes From the Path Before Forwarding the Request (Using a Regex)
 {: .subtitle }

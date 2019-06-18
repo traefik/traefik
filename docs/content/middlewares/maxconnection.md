@@ -19,10 +19,10 @@ labels:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: addprefix
+  name: test-maxconn
 spec:
-  addPrefix:
-    prefix: /bar
+  maxConn:
+    amount: 10
 ```
 
 ```json tab="Marathon"

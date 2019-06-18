@@ -32,15 +32,16 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-    extractorfunc = "client.ip"
-    rate0:
-        period = "10s"
-        average = 100
-        burst = 200
-    rate1:
-        period = "3s"
-        average = 5
-        burst = 10
+    extractorFunc: client.ip
+    rateset:
+      rate0:
+          period: 10s
+          average: 100
+          burst: 200
+      rate1:
+          period: 3s
+          average: 5
+          burst: 10
 ```
 
 ```json tab="Marathon"
