@@ -86,6 +86,11 @@ func execute(cmd *Command, args []string, root bool) error {
 }
 
 func run(cmd *Command, args []string) error {
+	if len(args) > 0 && !isFlag(args[0]) && !cmd.AllowArg {
+		_ = PrintHelp(os.Stdout, cmd)
+		return fmt.Errorf("command not found: %s", args[0])
+	}
+
 	if isHelp(args) {
 		return PrintHelp(os.Stdout, cmd)
 	}
@@ -93,11 +98,6 @@ func run(cmd *Command, args []string) error {
 	if cmd.Run == nil {
 		_ = PrintHelp(os.Stdout, cmd)
 		return fmt.Errorf("command %s is not runnable", cmd.Name)
-	}
-
-	if len(args) > 0 && !isFlag(args[0]) && !cmd.AllowArg {
-		_ = PrintHelp(os.Stdout, cmd)
-		return fmt.Errorf("command not found: %v", args)
 	}
 
 	if cmd.Configuration == nil {
