@@ -107,16 +107,16 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
     ```
 The table below lists all the available matchers:
 
-| Rule                                                               | Description                                                                                                    |
-|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| ``Headers(`key`, `value`)``                                        | Check if there is a key `key`defined in the headers, with the value `value`                                    |
-| ``HeadersRegexp(`key`, `regexp`)``                                 | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
-| ``Host(`domain-1`, ...)``                                          | Check if the request domain targets one of the given `domains`.                                                |
-| ``HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)`` | Check if the request domain matches the given `regexp`.                                                        |
-| `Method(methods, ...)`                                             | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
-| ``Path(`path`, `/articles/{category}/{id:[0-9]+}`, ...)``          | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
-| ``PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)``   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
-| ``Query(`foo=bar`, `bar=baz`)``                                    | Match` Query String parameters. It accepts a sequence of key=value pairs.                                      |
+| Rule                                                                 | Description                                                                                                    |
+|----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| ```Headers(`key`, `value`)```                                        | Check if there is a key `key`defined in the headers, with the value `value`                                    |
+| ```HeadersRegexp(`key`, `regexp`)```                                 | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
+| ```Host(`domain-1`, ...)```                                          | Check if the request domain targets one of the given `domains`.                                                |
+| ```HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
+| `Method(methods, ...)`                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
+| ```Path(`path`, `/articles/{category}/{id:[0-9]+}`, ...)```          | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
+| ```PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
+| ```Query(`foo=bar`, `bar=baz`)```                                    | Match` Query String parameters. It accepts a sequence of key=value pairs.                                      |
 
 !!! important "Regexp Syntax"
 
@@ -226,13 +226,13 @@ It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied 
 
 ### General
 
-If both HTTP routers and TCP routers listen to the same entrypoints, the TCP routers will apply *before* the HTTP routers.
+If both HTTP routers and TCP routers listen to the same entry points, the TCP routers will apply *before* the HTTP routers.
 If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ### EntryPoints
 
-If not specified, TCP routers will accept requests from all defined entrypoints.
-If you want to limit the router scope to a set of entrypoints, set the entrypoints option.
+If not specified, TCP routers will accept requests from all defined entry points.
+If you want to limit the router scope to a set of entry points, set the entry points option.
 
 ??? example "Listens to Every EntryPoint"
 
@@ -274,9 +274,9 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
 
 ### Rule
 
-| Rule                         | Description                                                             |
-|------------------------------|-------------------------------------------------------------------------|
-| ``HostSNI(`domain-1`, ...)`` | Check if the Server Name Indication corresponds to the given `domains`. |
+| Rule                           | Description                                                             |
+|--------------------------------|-------------------------------------------------------------------------|
+| ```HostSNI(`domain-1`, ...)``` | Check if the Server Name Indication corresponds to the given `domains`. |
 
 !!! important "HostSNI & TLS"
 
@@ -305,7 +305,7 @@ Services are the target for the router.
     ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
-          rule = "Host(`foo-domain`)"
+          rule = "HostSNI(`foo-domain`)"
           service = "service-id"
           [tcp.routers.Router-1.tls] # will terminate the TLS request by default
     ```
@@ -315,7 +315,7 @@ Services are the target for the router.
     ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
-          rule = "Host(`foo-domain`)"
+          rule = "HostSNI(`foo-domain`)"
           service = "service-id"
           [tcp.routers.Router-1.tls]
              passthrough=true
@@ -335,7 +335,7 @@ It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied 
     ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
-          rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
+          rule = "HostSNI(`foo-domain`)"
           service = "service-id"
           [tcp.routers.Router-1.tls] # will terminate the TLS request
             options = "foo"
