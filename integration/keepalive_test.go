@@ -1,15 +1,16 @@
 package integration
 
 import (
-	"github.com/containous/traefik/integration/try"
-	"github.com/go-check/check"
-	checker "github.com/vdemeester/shakers"
 	"math"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"time"
+
+	"github.com/containous/traefik/integration/try"
+	"github.com/go-check/check"
+	checker "github.com/vdemeester/shakers"
 )
 
 type KeepAliveSuite struct {
@@ -53,7 +54,7 @@ func (s *KeepAliveSuite) TestShouldRespectConfiguredBackendHttpKeepAliveTime(c *
 				case http.StateIdle:
 					idlePeriodStartMap[event.key] = time.Now()
 				case http.StateClosed:
-					idlePeriodLengthMap[event.key] = time.Now().Sub(idlePeriodStartMap[event.key])
+					idlePeriodLengthMap[event.key] = time.Since(idlePeriodStartMap[event.key])
 				}
 			case <-noMoreRequests:
 				moreRequestsExpected = false
