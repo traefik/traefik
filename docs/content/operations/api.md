@@ -36,7 +36,7 @@ To enable the API handler:
 
 ### `dashboard`
 
-_Optional, Default=false_
+_Optional, Default=true_
 
 Enable the dashboard. More about the dashboard features [here](./dashboard.md).
 
