@@ -49,7 +49,7 @@ func (s *WebsocketSuite) TestBase(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--global.debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 	defer display(c)
 
 	err := cmd.Start()
@@ -99,7 +99,7 @@ func (s *WebsocketSuite) TestWrongOrigin(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--global.debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 	defer display(c)
 
 	err := cmd.Start()
@@ -149,7 +149,7 @@ func (s *WebsocketSuite) TestOrigin(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--global.debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 	defer display(c)
 
 	err := cmd.Start()
@@ -210,7 +210,7 @@ func (s *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--global.debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 	defer display(c)
 
 	err := cmd.Start()
@@ -268,7 +268,7 @@ func (s *WebsocketSuite) TestSSLTermination(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--global.debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 	defer display(c)
 
 	err := cmd.Start()
@@ -331,7 +331,7 @@ func (s *WebsocketSuite) TestBasicAuth(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--global.debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 	defer display(c)
 
 	err := cmd.Start()
@@ -375,7 +375,7 @@ func (s *WebsocketSuite) TestSpecificResponseFromBackend(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--global.debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 	defer display(c)
 
 	err := cmd.Start()
@@ -421,7 +421,7 @@ func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--global.debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 	defer display(c)
 
 	err := cmd.Start()
@@ -476,7 +476,7 @@ func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--global.debug", "--accesslog")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
 	defer display(c)
 
 	err := cmd.Start()
@@ -535,7 +535,7 @@ func (s *WebsocketSuite) TestHeaderAreForwared(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file), "--global.debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
 	defer display(c)
 
 	err := cmd.Start()

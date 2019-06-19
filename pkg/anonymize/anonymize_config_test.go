@@ -28,7 +28,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 
 	sendAnonymousUsage := true
 	config.Global = &static.Global{
-		Debug:              true,
 		CheckNewVersion:    true,
 		SendAnonymousUsage: &sendAnonymousUsage,
 	}

@@ -1,0 +1,35 @@
+[
+	{
+		"addPrefix": {
+			"prefix": "/toto"
+		},
+		"name": "anotherprovider.addPrefixTest",
+		"provider": "anotherprovider",
+		"usedBy": [
+			"myprovider.bar"
+		]
+	},
+	{
+		"addPrefix": {
+			"prefix": "/titi"
+		},
+		"name": "myprovider.addPrefixTest",
+		"provider": "myprovider",
+		"usedBy": [
+			"myprovider.test"
+		]
+	},
+	{
+		"basicAuth": {
+			"users": [
+				"admin:admin"
+			]
+		},
+		"name": "myprovider.auth",
+		"provider": "myprovider",
+		"usedBy": [
+			"myprovider.bar",
+			"myprovider.test"
+		]
+	}
+]
