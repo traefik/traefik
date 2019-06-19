@@ -25,23 +25,23 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "One service used by two routers",
 			conf: &config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.foo": {
+					"myprovider@foo": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
-					"myprovider.bar": {
+					"myprovider@bar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
 				},
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
@@ -59,12 +59,12 @@ func TestPopulateUsedby(t *testing.T) {
 			},
 			expected: config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.foo": {},
-					"myprovider.bar": {},
+					"myprovider@foo": {},
+					"myprovider@bar": {},
 				},
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.bar", "myprovider.foo"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@bar", "myprovider@foo"},
 					},
 				},
 			},
@@ -73,7 +73,7 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "One service used by two routers, but one router with wrong rule",
 			conf: &config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
@@ -84,17 +84,17 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.foo": {
+					"myprovider@foo": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "WrongRule(`bar.foo`)",
 						},
 					},
-					"myprovider.bar": {
+					"myprovider@bar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
@@ -102,12 +102,12 @@ func TestPopulateUsedby(t *testing.T) {
 			},
 			expected: config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.foo": {},
-					"myprovider.bar": {},
+					"myprovider@foo": {},
+					"myprovider@bar": {},
 				},
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.bar", "myprovider.foo"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@bar", "myprovider@foo"},
 					},
 				},
 			},
@@ -116,17 +116,17 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "Broken Service used by one Router",
 			conf: &config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						Service: &config.Service{
 							LoadBalancer: nil,
 						},
 					},
 				},
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {
+					"myprovider@bar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
@@ -134,11 +134,11 @@ func TestPopulateUsedby(t *testing.T) {
 			},
 			expected: config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {},
+					"myprovider@bar": {},
 				},
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.bar"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@bar"},
 					},
 				},
 			},
@@ -147,7 +147,7 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "2 different Services each used by a disctinct router.",
 			conf: &config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
@@ -165,7 +165,7 @@ func TestPopulateUsedby(t *testing.T) {
 							},
 						},
 					},
-					"myprovider.bar-service": {
+					"myprovider@bar-service": {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
@@ -185,17 +185,17 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.foo": {
+					"myprovider@foo": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
-					"myprovider.bar": {
+					"myprovider@bar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
@@ -203,15 +203,15 @@ func TestPopulateUsedby(t *testing.T) {
 			},
 			expected: config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {},
-					"myprovider.foo": {},
+					"myprovider@bar": {},
+					"myprovider@foo": {},
 				},
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.foo"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@foo"},
 					},
-					"myprovider.bar-service": {
-						UsedBy: []string{"myprovider.bar"},
+					"myprovider@bar-service": {
+						UsedBy: []string{"myprovider@bar"},
 					},
 				},
 			},
@@ -220,7 +220,7 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "2 middlewares both used by 2 Routers",
 			conf: &config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
@@ -233,14 +233,14 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
+					"myprovider@auth": {
 						Middleware: &config.Middleware{
 							BasicAuth: &config.BasicAuth{
 								Users: []string{"admin:admin"},
 							},
 						},
 					},
-					"myprovider.addPrefixTest": {
+					"myprovider@addPrefixTest": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/toto",
@@ -249,18 +249,18 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {
+					"myprovider@bar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar`)",
 							Middlewares: []string{"auth", "addPrefixTest"},
 						},
 					},
-					"myprovider.test": {
+					"myprovider@test": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar.other`)",
 							Middlewares: []string{"addPrefixTest", "auth"},
 						},
@@ -269,20 +269,20 @@ func TestPopulateUsedby(t *testing.T) {
 			},
 			expected: config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar":  {},
-					"myprovider.test": {},
+					"myprovider@bar":  {},
+					"myprovider@test": {},
 				},
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.bar", "myprovider.test"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@bar", "myprovider@test"},
 					},
 				},
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
-						UsedBy: []string{"myprovider.bar", "myprovider.test"},
+					"myprovider@auth": {
+						UsedBy: []string{"myprovider@bar", "myprovider@test"},
 					},
-					"myprovider.addPrefixTest": {
-						UsedBy: []string{"myprovider.bar", "myprovider.test"},
+					"myprovider@addPrefixTest": {
+						UsedBy: []string{"myprovider@bar", "myprovider@test"},
 					},
 				},
 			},
@@ -291,7 +291,7 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "Unknown middleware is not used by the Router",
 			conf: &config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
@@ -304,7 +304,7 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
+					"myprovider@auth": {
 						Middleware: &config.Middleware{
 							BasicAuth: &config.BasicAuth{
 								Users: []string{"admin:admin"},
@@ -313,10 +313,10 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {
+					"myprovider@bar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar`)",
 							Middlewares: []string{"unknown"},
 						},
@@ -325,8 +325,8 @@ func TestPopulateUsedby(t *testing.T) {
 			},
 			expected: config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.bar"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@bar"},
 					},
 				},
 			},
@@ -335,7 +335,7 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "Broken middleware is used by Router",
 			conf: &config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
@@ -348,7 +348,7 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
+					"myprovider@auth": {
 						Middleware: &config.Middleware{
 							BasicAuth: &config.BasicAuth{
 								Users: []string{"badConf"},
@@ -357,28 +357,28 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {
+					"myprovider@bar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar`)",
-							Middlewares: []string{"myprovider.auth"},
+							Middlewares: []string{"myprovider@auth"},
 						},
 					},
 				},
 			},
 			expected: config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {},
+					"myprovider@bar": {},
 				},
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.bar"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@bar"},
 					},
 				},
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
-						UsedBy: []string{"myprovider.bar"},
+					"myprovider@auth": {
+						UsedBy: []string{"myprovider@bar"},
 					},
 				},
 			},
@@ -387,7 +387,7 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "2 middlewares from 2 disctinct providers both used by 2 Routers",
 			conf: &config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
@@ -400,21 +400,21 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
+					"myprovider@auth": {
 						Middleware: &config.Middleware{
 							BasicAuth: &config.BasicAuth{
 								Users: []string{"admin:admin"},
 							},
 						},
 					},
-					"myprovider.addPrefixTest": {
+					"myprovider@addPrefixTest": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/titi",
 							},
 						},
 					},
-					"anotherprovider.addPrefixTest": {
+					"anotherprovider@addPrefixTest": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/toto",
@@ -423,18 +423,18 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {
+					"myprovider@bar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar`)",
-							Middlewares: []string{"auth", "anotherprovider.addPrefixTest"},
+							Middlewares: []string{"auth", "anotherprovider@addPrefixTest"},
 						},
 					},
-					"myprovider.test": {
+					"myprovider@test": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar.other`)",
 							Middlewares: []string{"addPrefixTest", "auth"},
 						},
@@ -443,23 +443,23 @@ func TestPopulateUsedby(t *testing.T) {
 			},
 			expected: config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar":  {},
-					"myprovider.test": {},
+					"myprovider@bar":  {},
+					"myprovider@test": {},
 				},
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.bar", "myprovider.test"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@bar", "myprovider@test"},
 					},
 				},
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
-						UsedBy: []string{"myprovider.bar", "myprovider.test"},
+					"myprovider@auth": {
+						UsedBy: []string{"myprovider@bar", "myprovider@test"},
 					},
-					"myprovider.addPrefixTest": {
-						UsedBy: []string{"myprovider.test"},
+					"myprovider@addPrefixTest": {
+						UsedBy: []string{"myprovider@test"},
 					},
-					"anotherprovider.addPrefixTest": {
-						UsedBy: []string{"myprovider.bar"},
+					"anotherprovider@addPrefixTest": {
+						UsedBy: []string{"myprovider@bar"},
 					},
 				},
 			},
@@ -470,23 +470,23 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "TCP, One service used by two routers",
 			conf: &config.RuntimeConfiguration{
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.foo": {
+					"myprovider@foo": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
-					"myprovider.bar": {
+					"myprovider@bar": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
 				},
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -506,12 +506,12 @@ func TestPopulateUsedby(t *testing.T) {
 			},
 			expected: config.RuntimeConfiguration{
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.foo": {},
-					"myprovider.bar": {},
+					"myprovider@foo": {},
+					"myprovider@bar": {},
 				},
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.bar", "myprovider.foo"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@bar", "myprovider@foo"},
 					},
 				},
 			},
@@ -520,7 +520,7 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "TCP, One service used by two routers, but one router with wrong rule",
 			conf: &config.RuntimeConfiguration{
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -533,17 +533,17 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.foo": {
+					"myprovider@foo": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "WrongRule(`bar.foo`)",
 						},
 					},
-					"myprovider.bar": {
+					"myprovider@bar": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
@@ -551,12 +551,12 @@ func TestPopulateUsedby(t *testing.T) {
 			},
 			expected: config.RuntimeConfiguration{
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.foo": {},
-					"myprovider.bar": {},
+					"myprovider@foo": {},
+					"myprovider@bar": {},
 				},
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.bar", "myprovider.foo"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@bar", "myprovider@foo"},
 					},
 				},
 			},
@@ -565,17 +565,17 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "TCP, Broken Service used by one Router",
 			conf: &config.RuntimeConfiguration{
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						TCPService: &config.TCPService{
 							LoadBalancer: nil,
 						},
 					},
 				},
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.bar": {
+					"myprovider@bar": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
@@ -583,11 +583,11 @@ func TestPopulateUsedby(t *testing.T) {
 			},
 			expected: config.RuntimeConfiguration{
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.bar": {},
+					"myprovider@bar": {},
 				},
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.bar"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@bar"},
 					},
 				},
 			},
@@ -596,7 +596,7 @@ func TestPopulateUsedby(t *testing.T) {
 			desc: "TCP, 2 different Services each used by a disctinct router.",
 			conf: &config.RuntimeConfiguration{
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -612,7 +612,7 @@ func TestPopulateUsedby(t *testing.T) {
 							},
 						},
 					},
-					"myprovider.bar-service": {
+					"myprovider@bar-service": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -630,17 +630,17 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.foo": {
+					"myprovider@foo": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
-					"myprovider.bar": {
+					"myprovider@bar": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
@@ -648,15 +648,15 @@ func TestPopulateUsedby(t *testing.T) {
 			},
 			expected: config.RuntimeConfiguration{
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.bar": {},
-					"myprovider.foo": {},
+					"myprovider@bar": {},
+					"myprovider@foo": {},
 				},
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.foo-service": {
-						UsedBy: []string{"myprovider.foo"},
+					"myprovider@foo-service": {
+						UsedBy: []string{"myprovider@foo"},
 					},
-					"myprovider.bar-service": {
-						UsedBy: []string{"myprovider.bar"},
+					"myprovider@bar-service": {
+						UsedBy: []string{"myprovider@bar"},
 					},
 				},
 			},
@@ -716,7 +716,7 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
@@ -725,7 +725,7 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
 					},
@@ -741,17 +741,17 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 						"bar": {
 							EntryPoints: []string{"webs"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 						"foobar": {
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "Host(`bar.foobar`)",
 						},
 					},
@@ -760,17 +760,17 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
 						"bar": {
 							EntryPoints: []string{"webs"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "HostSNI(`foo.bar`)",
 						},
 						"foobar": {
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "HostSNI(`bar.foobar`)",
 						},
 					},
@@ -782,14 +782,14 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 					"foo": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
 					},
 					"foobar": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "HostSNI(`bar.foobar`)",
 						},
 					},
@@ -803,17 +803,17 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 						"bar": {
 							EntryPoints: []string{"webs"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 						"foobar": {
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "Host(`bar.foobar`)",
 						},
 					},
@@ -822,17 +822,17 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
 						"bar": {
 							EntryPoints: []string{"webs"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "HostSNI(`foo.bar`)",
 						},
 						"foobar": {
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "HostSNI(`bar.foobar`)",
 						},
 					},
@@ -844,14 +844,14 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 					"foo": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
 					},
 					"foobar": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "HostSNI(`bar.foobar`)",
 						},
 					},
@@ -861,14 +861,14 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 						TCPRouter: &config.TCPRouter{
 
 							EntryPoints: []string{"webs"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "HostSNI(`foo.bar`)",
 						},
 					},
 					"foobar": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "HostSNI(`bar.foobar`)",
 						},
 					},
@@ -914,7 +914,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
@@ -923,7 +923,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
 					},
@@ -939,17 +939,17 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 						"bar": {
 							EntryPoints: []string{"webs"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 						"foobar": {
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "Host(`bar.foobar`)",
 						},
 					},
@@ -958,17 +958,17 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
 						"bar": {
 							EntryPoints: []string{"webs"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "HostSNI(`foo.bar`)",
 						},
 						"foobar": {
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "HostSNI(`bar.foobar`)",
 						},
 					},
@@ -980,14 +980,14 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 					"foo": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
 					"foobar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "Host(`bar.foobar`)",
 						},
 					},
@@ -1001,17 +1001,17 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 						"bar": {
 							EntryPoints: []string{"webs"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 						"foobar": {
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "Host(`bar.foobar`)",
 						},
 					},
@@ -1020,17 +1020,17 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 					Routers: map[string]*config.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
 						"bar": {
 							EntryPoints: []string{"webs"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "HostSNI(`foo.bar`)",
 						},
 						"foobar": {
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "HostSNI(`bar.foobar`)",
 						},
 					},
@@ -1042,14 +1042,14 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 					"foo": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
 					"foobar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "Host(`bar.foobar`)",
 						},
 					},
@@ -1059,14 +1059,14 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 						Router: &config.Router{
 
 							EntryPoints: []string{"webs"},
-							Service:     "myprovider.bar-service",
+							Service:     "myprovider@bar-service",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
 					"foobar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web", "webs"},
-							Service:     "myprovider.foobar-service",
+							Service:     "myprovider@foobar-service",
 							Rule:        "Host(`bar.foobar`)",
 						},
 					},

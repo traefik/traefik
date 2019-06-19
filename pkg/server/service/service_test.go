@@ -303,9 +303,9 @@ func TestManager_Build(t *testing.T) {
 		},
 		{
 			desc:        "Service name with provider",
-			serviceName: "provider-1.serviceName",
+			serviceName: "provider-1@serviceName",
 			configs: map[string]*config.ServiceInfo{
-				"provider-1.serviceName": {
+				"provider-1@serviceName": {
 					Service: &config.Service{
 						LoadBalancer: &config.LoadBalancerService{},
 					},
@@ -316,7 +316,7 @@ func TestManager_Build(t *testing.T) {
 			desc:        "Service name with provider in context",
 			serviceName: "serviceName",
 			configs: map[string]*config.ServiceInfo{
-				"provider-1.serviceName": {
+				"provider-1@serviceName": {
 					Service: &config.Service{
 						LoadBalancer: &config.LoadBalancerService{},
 					},
@@ -335,7 +335,7 @@ func TestManager_Build(t *testing.T) {
 
 			ctx := context.Background()
 			if len(test.providerName) > 0 {
-				ctx = internal.AddProviderInContext(ctx, test.providerName+".foobar")
+				ctx = internal.AddProviderInContext(ctx, test.providerName+"@foobar")
 			}
 
 			_, err := manager.BuildHTTP(ctx, test.serviceName, nil)

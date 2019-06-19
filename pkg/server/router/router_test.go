@@ -204,14 +204,14 @@ func TestRouterManager_Get(t *testing.T) {
 		{
 			desc: "no middleware with provider name",
 			routersConfig: map[string]*config.Router{
-				"provider-1.foo": {
+				"provider-1@foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
-				"provider-1.foo-service": {
+				"provider-1@foo-service": {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
@@ -227,14 +227,14 @@ func TestRouterManager_Get(t *testing.T) {
 		{
 			desc: "no middleware with specified provider name",
 			routersConfig: map[string]*config.Router{
-				"provider-1.foo": {
+				"provider-1@foo": {
 					EntryPoints: []string{"web"},
-					Service:     "provider-2.foo-service",
+					Service:     "provider-2@foo-service",
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
-				"provider-2.foo-service": {
+				"provider-2@foo-service": {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
@@ -250,15 +250,15 @@ func TestRouterManager_Get(t *testing.T) {
 		{
 			desc: "middleware: chain with provider name",
 			routersConfig: map[string]*config.Router{
-				"provider-1.foo": {
+				"provider-1@foo": {
 					EntryPoints: []string{"web"},
-					Middlewares: []string{"provider-2.chain-middle", "headers-middle"},
+					Middlewares: []string{"provider-2@chain-middle", "headers-middle"},
 					Service:     "foo-service",
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
-				"provider-1.foo-service": {
+				"provider-1@foo-service": {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
@@ -269,15 +269,15 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			},
 			middlewaresConfig: map[string]*config.Middleware{
-				"provider-2.chain-middle": {
+				"provider-2@chain-middle": {
 					Chain: &config.Chain{Middlewares: []string{"auth-middle"}},
 				},
-				"provider-2.auth-middle": {
+				"provider-2@auth-middle": {
 					BasicAuth: &config.BasicAuth{
 						Users: []string{"toto:titi"},
 					},
 				},
-				"provider-1.headers-middle": {
+				"provider-1@headers-middle": {
 					Headers: &config.Headers{
 						CustomRequestHeaders: map[string]string{"X-Apero": "beer"},
 					},

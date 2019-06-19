@@ -912,7 +912,7 @@ func TestHandler_Configuration(t *testing.T) {
 			path: "/api/rawdata",
 			conf: config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
+					"myprovider@foo-service": {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
@@ -925,21 +925,21 @@ func TestHandler_Configuration(t *testing.T) {
 					},
 				},
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
+					"myprovider@auth": {
 						Middleware: &config.Middleware{
 							BasicAuth: &config.BasicAuth{
 								Users: []string{"admin:admin"},
 							},
 						},
 					},
-					"myprovider.addPrefixTest": {
+					"myprovider@addPrefixTest": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/titi",
 							},
 						},
 					},
-					"anotherprovider.addPrefixTest": {
+					"anotherprovider@addPrefixTest": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/toto",
@@ -948,25 +948,25 @@ func TestHandler_Configuration(t *testing.T) {
 					},
 				},
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {
+					"myprovider@bar": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar`)",
-							Middlewares: []string{"auth", "anotherprovider.addPrefixTest"},
+							Middlewares: []string{"auth", "anotherprovider@addPrefixTest"},
 						},
 					},
-					"myprovider.test": {
+					"myprovider@test": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "myprovider@foo-service",
 							Rule:        "Host(`foo.bar.other`)",
 							Middlewares: []string{"addPrefixTest", "auth"},
 						},
 					},
 				},
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.tcpfoo-service": {
+					"myprovider@tcpfoo-service": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -979,17 +979,17 @@ func TestHandler_Configuration(t *testing.T) {
 					},
 				},
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.tcpbar": {
+					"myprovider@tcpbar": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.tcpfoo-service",
+							Service:     "myprovider@tcpfoo-service",
 							Rule:        "HostSNI(`foo.bar`)",
 						},
 					},
-					"myprovider.tcptest": {
+					"myprovider@tcptest": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.tcpfoo-service",
+							Service:     "myprovider@tcpfoo-service",
 							Rule:        "HostSNI(`foo.bar.other`)",
 						},
 					},

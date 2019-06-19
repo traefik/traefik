@@ -1,6 +1,6 @@
 {
 	"routers": {
-		"kubernetescrd.default/test-crd-6b204d94623b3df4370c": {
+		"kubernetescrd@default/test-crd-6b204d94623b3df4370c": {
 			"entryPoints": [
 				"web"
 			],
@@ -8,7 +8,7 @@
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/bar`)",
 			"priority": 12
 		},
-		"kubernetescrd.default/test2-crd-23c7f4c450289ee29016": {
+		"kubernetescrd@default/test2-crd-23c7f4c450289ee29016": {
 			"entryPoints": [
 				"web"
 			],
@@ -20,19 +20,19 @@
 		}
 	},
 	"middlewares": {
-		"kubernetescrd.default/stripprefix": {
+		"kubernetescrd@default/stripprefix": {
 			"stripPrefix": {
 				"prefixes": [
 					"/tobestripped"
 				]
 			},
 			"usedBy": [
-				"kubernetescrd.default/test2-crd-23c7f4c450289ee29016"
+				"kubernetescrd@default/test2-crd-23c7f4c450289ee29016"
 			]
 		}
 	},
 	"services": {
-		"kubernetescrd.default/test-crd-6b204d94623b3df4370c": {
+		"kubernetescrd@default/test-crd-6b204d94623b3df4370c": {
 			"loadbalancer": {
 				"servers": [
 					{
@@ -45,14 +45,14 @@
 				"passHostHeader": true
 			},
 			"usedBy": [
-				"kubernetescrd.default/test-crd-6b204d94623b3df4370c"
+				"kubernetescrd@default/test-crd-6b204d94623b3df4370c"
 			],
 			"serverStatus": {
 				"http://10.42.0.4:80": "UP",
 				"http://10.42.0.5:80": "UP"
 			}
 		},
-		"kubernetescrd.default/test2-crd-23c7f4c450289ee29016": {
+		"kubernetescrd@default/test2-crd-23c7f4c450289ee29016": {
 			"loadbalancer": {
 				"servers": [
 					{
@@ -65,7 +65,7 @@
 				"passHostHeader": true
 			},
 			"usedBy": [
-				"kubernetescrd.default/test2-crd-23c7f4c450289ee29016"
+				"kubernetescrd@default/test2-crd-23c7f4c450289ee29016"
 			],
 			"serverStatus": {
 				"http://10.42.0.4:80": "UP",
@@ -74,7 +74,7 @@
 		}
 	},
 	"tcpRouters": {
-		"kubernetescrd.default/test3-crd-673acf455cb2dab0b43a": {
+		"kubernetescrd@default/test3-crd-673acf455cb2dab0b43a": {
 			"entryPoints": [
 				"footcp"
 			],
@@ -83,7 +83,7 @@
 		}
 	},
 	"tcpServices": {
-		"kubernetescrd.default/test3-crd-673acf455cb2dab0b43a": {
+		"kubernetescrd@default/test3-crd-673acf455cb2dab0b43a": {
 			"loadbalancer": {
 				"servers": [
 					{
@@ -95,7 +95,7 @@
 				]
 			},
 			"usedBy": [
-				"kubernetescrd.default/test3-crd-673acf455cb2dab0b43a"
+				"kubernetescrd@default/test3-crd-673acf455cb2dab0b43a"
 			]
 		}
 	}

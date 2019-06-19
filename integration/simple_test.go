@@ -444,8 +444,8 @@ func (s *SimpleSuite) TestMultiprovider(c *check.C) {
 		Routers: map[string]*config.Router{
 			"router1": {
 				EntryPoints: []string{"web"},
-				Middlewares: []string{"file.customheader"},
-				Service:     "file.service",
+				Middlewares: []string{"file@customheader"},
+				Service:     "file@service",
 				Rule:        "PathPrefix(`/`)",
 			},
 		},
