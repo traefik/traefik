@@ -4,10 +4,10 @@
 	],
 	"middlewares": [
 		"auth",
-		"anotherprovider.addPrefixTest"
+		"anotherprovider@addPrefixTest"
 	],
-	"name": "myprovider.bar",
-	"provider": "myprovider",
+	"name": "myprovider@bar",
+	"provider": "myprovider@bar",
 	"rule": "Host(`foo.bar`)",
-	"service": "myprovider.foo-service"
+	"service": "myprovider@foo-service"
 }

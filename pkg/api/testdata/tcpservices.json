@@ -7,11 +7,11 @@
 				}
 			]
 		},
-		"name": "myprovider.bar",
-		"provider": "myprovider",
+		"name": "myprovider@bar",
+		"provider": "myprovider@bar",
 		"usedBy": [
-			"myprovider.foo",
-			"myprovider.test"
+			"myprovider@foo",
+			"myprovider@test"
 		]
 	},
 	{
@@ -22,10 +22,10 @@
 				}
 			]
 		},
-		"name": "myprovider.baz",
-		"provider": "myprovider",
+		"name": "myprovider@baz",
+		"provider": "myprovider@baz",
 		"usedBy": [
-			"myprovider.foo"
+			"myprovider@foo"
 		]
 	}
 ]

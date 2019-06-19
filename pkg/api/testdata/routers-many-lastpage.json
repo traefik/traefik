@@ -3,45 +3,45 @@
 		"entryPoints": [
 			"web"
 		],
-		"name": "myprovider.bar14",
-		"provider": "myprovider",
+		"name": "myprovider@bar14",
+		"provider": "myprovider@bar14",
 		"rule": "Host(`foo.bar14`)",
-		"service": "myprovider.foo-service"
+		"service": "myprovider@foo-service"
 	},
 	{
 		"entryPoints": [
 			"web"
 		],
-		"name": "myprovider.bar15",
-		"provider": "myprovider",
+		"name": "myprovider@bar15",
+		"provider": "myprovider@bar15",
 		"rule": "Host(`foo.bar15`)",
-		"service": "myprovider.foo-service"
+		"service": "myprovider@foo-service"
 	},
 	{
 		"entryPoints": [
 			"web"
 		],
-		"name": "myprovider.bar16",
-		"provider": "myprovider",
+		"name": "myprovider@bar16",
+		"provider": "myprovider@bar16",
 		"rule": "Host(`foo.bar16`)",
-		"service": "myprovider.foo-service"
+		"service": "myprovider@foo-service"
 	},
 	{
 		"entryPoints": [
 			"web"
 		],
-		"name": "myprovider.bar17",
-		"provider": "myprovider",
+		"name": "myprovider@bar17",
+		"provider": "myprovider@bar17",
 		"rule": "Host(`foo.bar17`)",
-		"service": "myprovider.foo-service"
+		"service": "myprovider@foo-service"
 	},
 	{
 		"entryPoints": [
 			"web"
 		],
-		"name": "myprovider.bar18",
-		"provider": "myprovider",
+		"name": "myprovider@bar18",
+		"provider": "myprovider@bar18",
 		"rule": "Host(`foo.bar18`)",
-		"service": "myprovider.foo-service"
+		"service": "myprovider@foo-service"
 	}
 ]

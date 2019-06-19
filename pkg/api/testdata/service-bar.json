@@ -7,13 +7,13 @@
 			}
 		]
 	},
-	"name": "myprovider.bar",
-	"provider": "myprovider",
+	"name": "myprovider@bar",
+	"provider": "myprovider@bar",
 	"serverStatus": {
 		"http://127.0.0.1": "UP"
 	},
 	"usedBy": [
-		"myprovider.foo",
-		"myprovider.test"
+		"myprovider@foo",
+		"myprovider@test"
 	]
 }
