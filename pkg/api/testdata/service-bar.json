@@ -1,0 +1,19 @@
+{
+	"loadbalancer": {
+		"passHostHeader": false,
+		"servers": [
+			{
+				"url": "http://127.0.0.1"
+			}
+		]
+	},
+	"name": "myprovider.bar",
+	"provider": "myprovider",
+	"serverStatus": {
+		"http://127.0.0.1": "UP"
+	},
+	"usedBy": [
+		"myprovider.foo",
+		"myprovider.test"
+	]
+}

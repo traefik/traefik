@@ -1,0 +1,47 @@
+[
+	{
+		"entryPoints": [
+			"web"
+		],
+		"name": "myprovider.bar14",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar14`)",
+		"service": "myprovider.foo-service"
+	},
+	{
+		"entryPoints": [
+			"web"
+		],
+		"name": "myprovider.bar15",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar15`)",
+		"service": "myprovider.foo-service"
+	},
+	{
+		"entryPoints": [
+			"web"
+		],
+		"name": "myprovider.bar16",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar16`)",
+		"service": "myprovider.foo-service"
+	},
+	{
+		"entryPoints": [
+			"web"
+		],
+		"name": "myprovider.bar17",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar17`)",
+		"service": "myprovider.foo-service"
+	},
+	{
+		"entryPoints": [
+			"web"
+		],
+		"name": "myprovider.bar18",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar18`)",
+		"service": "myprovider.foo-service"
+	}
+]

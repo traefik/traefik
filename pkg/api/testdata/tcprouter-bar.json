@@ -1,0 +1,9 @@
+{
+	"entryPoints": [
+		"web"
+	],
+	"name": "myprovider.bar",
+	"provider": "myprovider",
+	"rule": "Host(`foo.bar`)",
+	"service": "myprovider.foo-service"
+}

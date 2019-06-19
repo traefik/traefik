@@ -1,5 +1,4 @@
 [Global]
-  Debug = true
   CheckNewVersion = true
   SendAnonymousUsage = true
 

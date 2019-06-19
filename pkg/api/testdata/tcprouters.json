@@ -1,0 +1,23 @@
+[
+	{
+		"entryPoints": [
+			"web"
+		],
+		"name": "myprovider.bar",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar`)",
+		"service": "myprovider.foo-service"
+	},
+	{
+		"entryPoints": [
+			"web"
+		],
+		"name": "myprovider.test",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar.other`)",
+		"service": "myprovider.foo-service",
+		"tls": {
+			"passthrough": false
+		}
+	}
+]

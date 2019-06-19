@@ -93,8 +93,11 @@ Enable api/dashboard. (Default: ```false```)
 `TRAEFIK_API_DASHBOARD`:  
 Activate dashboard. (Default: ```true```)
 
+`TRAEFIK_API_DEBUG`:  
+Enable additional endpoints for debugging and profiling. (Default: ```false```)
+
 `TRAEFIK_API_ENTRYPOINT`:  
-EntryPoint. (Default: ```traefik```)
+The entry point that the API handler will be bound to. (Default: ```traefik```)
 
 `TRAEFIK_API_MIDDLEWARES`:  
 Middleware list.
@@ -146,9 +149,6 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 
 `TRAEFIK_GLOBAL_CHECKNEWVERSION`:  
 Periodically check if a new version has been released. (Default: ```false```)
-
-`TRAEFIK_GLOBAL_DEBUG`:  
-Enable debug mode. (Default: ```false```)
 
 `TRAEFIK_GLOBAL_SENDANONYMOUSUSAGE`:  
 Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default.

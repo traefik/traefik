@@ -113,8 +113,8 @@ nav:
   - 'Operations':
       - 'CLI': 'operations/cli.md'
       - 'Dashboard' : 'operations/dashboard.md'
+      - 'API': 'operations/api.md'
       - 'Ping': 'operations/ping.md'
-      - 'Debug Mode': 'operations/debug-mode.md'
   - 'Observability':
       - 'Logs': 'observability/logs.md'
       - 'Access Logs': 'observability/access-logs.md'

@@ -66,7 +66,6 @@ type Configuration struct {
 
 // Global holds the global configuration.
 type Global struct {
-	Debug              bool  `description:"Enable debug mode." export:"true"`
 	CheckNewVersion    bool  `description:"Periodically check if a new version has been released." export:"true"`
 	SendAnonymousUsage *bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default." export:"true"`
 }
@@ -81,8 +80,9 @@ type ServersTransport struct {
 
 // API holds the API configuration
 type API struct {
-	EntryPoint      string            `description:"EntryPoint." export:"true"`
+	EntryPoint      string            `description:"The entry point that the API handler will be bound to." export:"true"`
 	Dashboard       bool              `description:"Activate dashboard." export:"true"`
+	Debug           bool              `description:"Enable additional endpoints for debugging and profiling." export:"true"`
 	Statistics      *types.Statistics `description:"Enable more detailed statistics." export:"true" label:"allowEmpty"`
 	Middlewares     []string          `description:"Middleware list." export:"true"`
 	DashboardAssets *assetfs.AssetFS  `json:"-" label:"-"`
