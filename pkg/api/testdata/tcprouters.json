@@ -3,19 +3,19 @@
 		"entryPoints": [
 			"web"
 		],
-		"name": "myprovider.bar",
-		"provider": "myprovider",
+		"name": "myprovider@bar",
+		"provider": "myprovider@bar",
 		"rule": "Host(`foo.bar`)",
-		"service": "myprovider.foo-service"
+		"service": "myprovider@foo-service"
 	},
 	{
 		"entryPoints": [
 			"web"
 		],
-		"name": "myprovider.test",
-		"provider": "myprovider",
+		"name": "myprovider@test",
+		"provider": "myprovider@test",
 		"rule": "Host(`foo.bar.other`)",
-		"service": "myprovider.foo-service",
+		"service": "myprovider@foo-service",
 		"tls": {
 			"passthrough": false
 		}

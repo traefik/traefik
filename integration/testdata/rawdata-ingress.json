@@ -1,13 +1,13 @@
 {
 	"routers": {
-		"kubernetes.whoami-test/whoami": {
+		"kubernetes@whoami-test/whoami": {
 			"entryPoints": null,
 			"service": "default/whoami/http",
 			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)"
 		}
 	},
 	"services": {
-		"kubernetes.default/whoami/http": {
+		"kubernetes@default/whoami/http": {
 			"loadbalancer": {
 				"servers": [
 					{
@@ -20,7 +20,7 @@
 				"passHostHeader": true
 			},
 			"usedBy": [
-				"kubernetes.whoami-test/whoami"
+				"kubernetes@whoami-test/whoami"
 			],
 			"serverStatus": {
 				"http://10.42.0.2:80": "UP",

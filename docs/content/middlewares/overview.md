@@ -121,8 +121,8 @@ If you use multiple `providers` and wish to reference a middleware declared in a
         image: your-docker-image
 
         labels:
-          # Attach file.add-foo-prefix middleware (declared in file)
-          - "traefik.http.routers.my-container.middlewares=file.add-foo-prefix"
+          # Attach file@add-foo-prefix middleware (declared in file)
+          - "traefik.http.routers.my-container.middlewares=file@add-foo-prefix"
     ```
 
 ## Available Middlewares

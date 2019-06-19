@@ -6,10 +6,10 @@
 			}
 		]
 	},
-	"name": "myprovider.bar",
-	"provider": "myprovider",
+	"name": "myprovider@bar",
+	"provider": "myprovider@bar",
 	"usedBy": [
-		"myprovider.foo",
-		"myprovider.test"
+		"myprovider@foo",
+		"myprovider@test"
 	]
 }

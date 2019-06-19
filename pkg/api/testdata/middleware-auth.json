@@ -4,10 +4,10 @@
 			"admin:admin"
 		]
 	},
-	"name": "myprovider.auth",
-	"provider": "myprovider",
+	"name": "myprovider@auth",
+	"provider": "myprovider@auth",
 	"usedBy": [
-		"myprovider.bar",
-		"myprovider.test"
+		"myprovider@bar",
+		"myprovider@test"
 	]
 }
