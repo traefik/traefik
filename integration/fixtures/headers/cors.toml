@@ -20,12 +20,21 @@
     middlewares = ["cors"]
     service = "service1"
 
+  [http.routers.router2]
+    rule = "Host(`test2.localhost`)"
+    middlewares = ["nocors"]
+    service = "service1"
+
 [http.middlewares]
   [http.middlewares.cors.headers]
     accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
     accessControlAllowOrigin = "origin-list-or-null"
     accessControlMaxAge = 100
     addVaryHeader = true
+
+  [http.middlewares.nocors.Headers]
+    [http.middlewares.nocors.Headers.CustomResponseHeaders]
+      X-Custom-Response-Header = "True"
 
 [http.services]
   [http.services.service1.loadBalancer]

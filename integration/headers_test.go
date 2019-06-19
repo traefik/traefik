@@ -110,3 +110,46 @@ func (s *HeadersSuite) TestCorsPreflightResponses(c *check.C) {
 		c.Assert(err, checker.IsNil)
 	}
 }
+
+func (s *HeadersSuite) TestCorsPreflightResponseDoesntHijack(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/headers/cors.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	backend := startTestServer("9000", http.StatusOK)
+	defer backend.Close()
+
+	err = try.GetRequest(backend.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	testCase := []struct {
+		desc           string
+		requestHeaders http.Header
+		expected       http.Header
+	}{
+		{
+			desc: "simple preflight request",
+			requestHeaders: http.Header{
+				"Access-Control-Request-Headers": {"origin"},
+				"Access-Control-Request-Method":  {"GET", "OPTIONS"},
+				"Origin":                         {"https://foo.bar.org"},
+			},
+			expected: http.Header{
+				"X-Custom-Response-Header": {"True"},
+			},
+		},
+	}
+
+	for _, test := range testCase {
+		req, err := http.NewRequest(http.MethodOptions, "http://127.0.0.1:8000/", nil)
+		c.Assert(err, checker.IsNil)
+		req.Host = "test2.localhost"
+		req.Header = test.requestHeaders
+
+		err = try.Request(req, 500*time.Millisecond, try.HasHeaderStruct(test.expected))
+		c.Assert(err, checker.IsNil)
+	}
+}
