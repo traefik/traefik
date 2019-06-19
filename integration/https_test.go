@@ -191,7 +191,7 @@ func (s *HTTPSSuite) TestWithTLSOptions(c *check.C) {
 	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
 
 	//	with unknown tls option
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("unknown TLS options: unknown"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("unknown TLS options: file.unknown"))
 	c.Assert(err, checker.IsNil)
 }
 

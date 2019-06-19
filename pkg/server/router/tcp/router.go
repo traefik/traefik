@@ -113,7 +113,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		for _, domain := range domains {
 			if routerHTTPConfig.TLS != nil {
 				tlsOptionsName := routerHTTPConfig.TLS.Options
-				if tlsOptionsName != "default" {
+				if tlsOptionsName != defaultTLSConfigName {
 					tlsOptionsName = internal.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
 				}
 
