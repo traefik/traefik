@@ -104,6 +104,22 @@ func Test_execute(t *testing.T) {
 			expected: expected{error: true},
 		},
 		{
+			desc: "root command, call help, with argument, command not found",
+			args: []string{"", "echo", "--help"},
+			command: func() *Command {
+				return &Command{
+					Name:          "root",
+					Description:   "This is a test",
+					Configuration: nil,
+					Run: func(_ []string) error {
+						called = "root"
+						return nil
+					},
+				}
+			},
+			expected: expected{error: true},
+		},
+		{
 			desc: "one sub command",
 			args: []string{"", "sub1"},
 			command: func() *Command {
