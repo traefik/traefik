@@ -395,13 +395,18 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				allServers = append(allServers, servers...)
 			}
 
-			// TODO: support middlewares from other providers.
-			// Mechanism: in the spec, prefix the name with the provider name,
-			// with dot as the separator. In which case. we ignore the
-			// namespace.
-
 			var mds []string
 			for _, mi := range route.Middlewares {
+				if strings.Contains(mi.Name, "@") {
+					if len(mi.Namespace) > 0 {
+						logger.
+							WithField("middlewareName", mi.Name).
+							Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+					}
+					mds = append(mds, mi.Name)
+					continue
+				}
+
 				ns := mi.Namespace
 				if len(ns) == 0 {
 					ns = ingressRoute.Namespace
@@ -573,7 +578,6 @@ func makeServiceKey(rule, ingressName string) (string, error) {
 		return "", err
 	}
 
-	ingressName = strings.ReplaceAll(ingressName, ".", "-")
 	key := fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil))
 
 	return key, nil
