@@ -1,4 +1,3 @@
-
 --accesslog  (Default: "false")
     Access log settings.
 
@@ -172,6 +171,9 @@
 
 --hostresolver.resolvdepth  (Default: "5")
     The maximal depth of DNS recursive resolving
+
+--log  (Default: "false")
+    Traefik log settings.
 
 --log.filepath  (Default: "")
     Traefik log file path. Stdout is used when omitted or empty.

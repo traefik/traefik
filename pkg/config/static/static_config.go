@@ -55,7 +55,7 @@ type Configuration struct {
 	Ping    *ping.Handler  `description:"Enable ping." export:"true" label:"allowEmpty"`
 	// Rest    *rest.Provider `description:"Enable Rest backend with default settings" export:"true"`
 
-	Log       *types.TraefikLog `description:"Traefik log settings." export:"true"`
+	Log       *types.TraefikLog `description:"Traefik log settings." export:"true" label:"allowEmpty"`
 	AccessLog *types.AccessLog  `description:"Access log settings." export:"true" label:"allowEmpty"`
 	Tracing   *Tracing          `description:"OpenTracing configuration." export:"true" label:"allowEmpty"`
 
