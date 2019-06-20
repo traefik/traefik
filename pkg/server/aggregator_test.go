@@ -136,7 +136,7 @@ func TestAggregator_tlsoptions(t *testing.T) {
 			},
 			expected: map[string]tls.TLS{
 				"default": {},
-				"provider-1.foo": {
+				"provider-1@foo": {
 					MinVersion: "VersionTLS12",
 				},
 			},
@@ -161,10 +161,10 @@ func TestAggregator_tlsoptions(t *testing.T) {
 			},
 			expected: map[string]tls.TLS{
 				"default": {},
-				"provider-1.foo": {
+				"provider-1@foo": {
 					MinVersion: "VersionTLS13",
 				},
-				"provider-2.foo": {
+				"provider-2@foo": {
 					MinVersion: "VersionTLS12",
 				},
 			},
@@ -194,10 +194,10 @@ func TestAggregator_tlsoptions(t *testing.T) {
 				"default": {
 					MinVersion: "VersionTLS11",
 				},
-				"provider-1.foo": {
+				"provider-1@foo": {
 					MinVersion: "VersionTLS13",
 				},
-				"provider-2.foo": {
+				"provider-2@foo": {
 					MinVersion: "VersionTLS12",
 				},
 			},
@@ -227,10 +227,10 @@ func TestAggregator_tlsoptions(t *testing.T) {
 				},
 			},
 			expected: map[string]tls.TLS{
-				"provider-1.foo": {
+				"provider-1@foo": {
 					MinVersion: "VersionTLS12",
 				},
-				"provider-2.foo": {
+				"provider-2@foo": {
 					MinVersion: "VersionTLS13",
 				},
 			},
@@ -255,10 +255,10 @@ func TestAggregator_tlsoptions(t *testing.T) {
 			},
 			expected: map[string]tls.TLS{
 				"default": {},
-				"provider-1.foo": {
+				"provider-1@foo": {
 					MinVersion: "VersionTLS12",
 				},
-				"provider-2.foo": {
+				"provider-2@foo": {
 					MinVersion: "VersionTLS13",
 				},
 			},
