@@ -36,13 +36,13 @@ func decodeFileToNode(filePath string, filters ...string) (*parser.Node, error) 
 			return nil, err
 		}
 
-		return decodeRawToNode(data, filters...)
+		return decodeRawToNode(data, parser.DefaultRootName, filters...)
 
 	default:
 		return nil, fmt.Errorf("unsupported file extension: %s", filePath)
 	}
 
-	return decodeRawToNode(data, filters...)
+	return decodeRawToNode(data, parser.DefaultRootName, filters...)
 }
 
 func getRootFieldNames(element interface{}) []string {

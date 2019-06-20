@@ -6,18 +6,16 @@ import (
 	"strings"
 )
 
-const labelRoot = "traefik"
-
 // DecodeToNode converts the labels to a tree of nodes.
 // If any filters are present, labels which do not match the filters are skipped.
-func DecodeToNode(labels map[string]string, filters ...string) (*Node, error) {
+func DecodeToNode(labels map[string]string, rootName string, filters ...string) (*Node, error) {
 	sortedKeys := sortKeys(labels, filters)
 
 	var node *Node
 	for i, key := range sortedKeys {
 		split := strings.Split(key, ".")
 
-		if split[0] != labelRoot {
+		if split[0] != rootName {
 			return nil, fmt.Errorf("invalid label root %s", split[0])
 		}
 

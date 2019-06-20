@@ -17,7 +17,7 @@ func Decode(args []string, element interface{}) error {
 		return err
 	}
 
-	return parser.Decode(ref, element)
+	return parser.Decode(ref, element, parser.DefaultRootName)
 }
 
 // Encode encodes the configuration in element into the flags represented in the returned Flats.
@@ -30,7 +30,7 @@ func Encode(element interface{}) ([]parser.Flat, error) {
 		return nil, nil
 	}
 
-	node, err := parser.EncodeToNode(element, false)
+	node, err := parser.EncodeToNode(element, parser.DefaultRootName, false)
 	if err != nil {
 		return nil, err
 	}
