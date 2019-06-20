@@ -33,7 +33,7 @@ type TLSTCP struct {
 	Options *TLSOptionsTCPSpec `json:"options"`
 }
 
-// TLSOptionsSpec is a ref to the TLSOption resources.
+// TLSOptionsTCPSpec is a ref to the TLSOption resources.
 type TLSOptionsTCPSpec struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
