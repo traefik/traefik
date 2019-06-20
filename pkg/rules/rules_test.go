@@ -51,6 +51,27 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
+			desc: "Host with trailing period in rule",
+			rule: "Host(`localhost.`)",
+			expected: map[string]int{
+				"http://localhost/foo": http.StatusOK,
+			},
+		},
+		{
+			desc: "Host with trailing period in domain",
+			rule: "Host(`localhost`)",
+			expected: map[string]int{
+				"http://localhost./foo": http.StatusOK,
+			},
+		},
+		{
+			desc: "Host with trailing period in domain and rule",
+			rule: "Host(`localhost.`)",
+			expected: map[string]int{
+				"http://localhost./foo": http.StatusOK,
+			},
+		},
+		{
 			desc: "wrong Host",
 			rule: "Host(`nope`)",
 			expected: map[string]int{

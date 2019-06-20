@@ -49,7 +49,7 @@ See also [Marathon user guide](../user-guides/marathon.md).
 ## Provider Configuration Options
 
 !!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/dynamic-configuration/marathon.md) configuration references.
+    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration/overview.md) and the [dynamic](../reference/dynamic-configuration/marathon.md) configuration references.
 
 ### `basic`
 
@@ -262,14 +262,14 @@ Every [Router](../routing/routers/index.md) parameter can be updated this way.
 
 To update the configuration of the Service automatically attached to the container,
 add labels starting with `traefik.HTTP.Services.{service-name-of-your-choice}.`, followed by the option you want to change.
-For example, to change the load balancer method, you'd add the label `traefik.HTTP.Services.Servicename.LoadBalancer.Method=drr`.
+For example, to change the passhostheader behavior, you'd add the label `traefik.HTTP.Services.Servicename.LoadBalancer.PassHostHeader=false`.
 
 Every [Service](../routing/services/index.md) parameter can be updated this way.
 
 ### Middleware
 
 You can declare pieces of middleware using labels starting with `traefik.HTTP.Middlewares.{middleware-name-of-your-choice}.`, followed by the middleware type/options.
-For example, to declare a middleware [`schemeredirect`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.HTTP.Middlewares.my-redirect.RedirectScheme.Scheme: https`.
+For example, to declare a middleware [`redirectscheme`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.HTTP.Middlewares.my-redirect.RedirectScheme.Scheme: https`.
 
 ??? example "Declaring and Referencing a Middleware"
 
@@ -277,8 +277,8 @@ For example, to declare a middleware [`schemeredirect`](../middlewares/redirects
 	{
 		...
 		"labels": {
-			"traefik.http.middlewares.my-redirect.schemeredirect.scheme": "https",
-			"traefik.http.routers.middlewares": "my-redirect"
+			"traefik.http.middlewares.my-redirect.redirectscheme.scheme": "https",
+			"traefik.http.routers.my-container.middlewares": "my-redirect"
 		}
 	}
     ```
@@ -286,6 +286,8 @@ For example, to declare a middleware [`schemeredirect`](../middlewares/redirects
 !!! warning "Conflicts in Declaration"
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
+
+More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
 
 ### TCP
 

@@ -10,8 +10,6 @@ level = "DEBUG"
   address = ":8000"
   [entryPoints.web.ForwardedHeaders]
     insecure=true
-  [entryPoints.web.ClientIPStrategy]
-    depth=2
 
 [api]
 

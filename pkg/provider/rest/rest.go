@@ -19,7 +19,13 @@ var _ provider.Provider = (*Provider)(nil)
 // Provider is a provider.Provider implementation that provides a Rest API.
 type Provider struct {
 	configurationChan chan<- config.Message
-	EntryPoint        string `description:"EntryPoint" export:"true"`
+	EntryPoint        string `description:"EntryPoint." export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (p *Provider) SetDefaults() {
+	p.EntryPoint = "traefik"
+	// FIXME p.EntryPoint = static.DefaultInternalEntryPointName
 }
 
 var templatesRenderer = render.New(render.Options{Directory: "nowhere"})

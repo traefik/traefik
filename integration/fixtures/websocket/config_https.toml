@@ -29,7 +29,6 @@ insecureSkipVerify=true
       PassHostHeader = true
       [[http.services.service1.LoadBalancer.Servers]]
         URL = "{{ .WebsocketServer }}"
-        Weight = 1
 
 [tlsStores.default.DefaultCertificate]
     certFile = "resources/tls/local.cert"

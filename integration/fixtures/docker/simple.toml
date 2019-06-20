@@ -15,4 +15,4 @@ level = "DEBUG"
    [providers.docker]
       endpoint = "{{ .DockerHost }}"
       defaultRule = "{{ .DefaultRule }}"
-       exposedByDefault = true
+      exposedByDefault = true

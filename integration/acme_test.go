@@ -333,7 +333,7 @@ func (s *AcmeSuite) TestNoValidLetsEncryptServer(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// Expected traefik works
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.StatusCodeIs(http.StatusOK))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 

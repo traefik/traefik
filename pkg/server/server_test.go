@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/config/static"
 	th "github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -132,7 +132,7 @@ func setupListenProvider(throttleDuration time.Duration) (server *Server, stop c
 
 	staticConfiguration := static.Configuration{
 		Providers: &static.Providers{
-			ProvidersThrottleDuration: parse.Duration(throttleDuration),
+			ProvidersThrottleDuration: types.Duration(throttleDuration),
 		},
 	}
 
@@ -161,7 +161,6 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 						th.WithRule(routeRule)),
 					),
 					th.WithLoadBalancerServices(th.WithService("bar",
-						th.WithLBMethod("wrr"),
 						th.WithServers(th.WithServer(testServerURL))),
 					),
 				)
@@ -176,7 +175,21 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			expectedStatusCode: http.StatusNotFound,
 		},
 		{
-			desc: "Empty Backend LB-Drr",
+			desc: "Empty Backend LB",
+			config: func(testServerURL string) *config.HTTPConfiguration {
+				return th.BuildConfiguration(
+					th.WithRouters(th.WithRouter("foo",
+						th.WithEntryPoints("http"),
+						th.WithServiceName("bar"),
+						th.WithRule(routeRule)),
+					),
+					th.WithLoadBalancerServices(th.WithService("bar")),
+				)
+			},
+			expectedStatusCode: http.StatusServiceUnavailable,
+		},
+		{
+			desc: "Empty Backend LB Sticky",
 			config: func(testServerURL string) *config.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
@@ -185,14 +198,14 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 						th.WithRule(routeRule)),
 					),
 					th.WithLoadBalancerServices(th.WithService("bar",
-						th.WithLBMethod("drr")),
+						th.WithStickiness("test")),
 					),
 				)
 			},
 			expectedStatusCode: http.StatusServiceUnavailable,
 		},
 		{
-			desc: "Empty Backend LB-Drr Sticky",
+			desc: "Empty Backend LB",
 			config: func(testServerURL string) *config.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
@@ -200,15 +213,13 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 						th.WithServiceName("bar"),
 						th.WithRule(routeRule)),
 					),
-					th.WithLoadBalancerServices(th.WithService("bar",
-						th.WithLBMethod("drr"), th.WithStickiness("test")),
-					),
+					th.WithLoadBalancerServices(th.WithService("bar")),
 				)
 			},
 			expectedStatusCode: http.StatusServiceUnavailable,
 		},
 		{
-			desc: "Empty Backend LB-Wrr",
+			desc: "Empty Backend LB Sticky",
 			config: func(testServerURL string) *config.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
@@ -217,23 +228,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 						th.WithRule(routeRule)),
 					),
 					th.WithLoadBalancerServices(th.WithService("bar",
-						th.WithLBMethod("wrr")),
-					),
-				)
-			},
-			expectedStatusCode: http.StatusServiceUnavailable,
-		},
-		{
-			desc: "Empty Backend LB-Wrr Sticky",
-			config: func(testServerURL string) *config.HTTPConfiguration {
-				return th.BuildConfiguration(
-					th.WithRouters(th.WithRouter("foo",
-						th.WithEntryPoints("http"),
-						th.WithServiceName("bar"),
-						th.WithRule(routeRule)),
-					),
-					th.WithLoadBalancerServices(th.WithService("bar",
-						th.WithLBMethod("wrr"), th.WithStickiness("test")),
+						th.WithStickiness("test")),
 					),
 				)
 			},
@@ -258,7 +253,8 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			}
 
 			srv := NewServer(globalConfig, nil, entryPointsConfig, nil)
-			entryPoints, _ := srv.createHTTPHandlers(context.Background(), *test.config(testServer.URL), []string{"http"})
+			rtConf := config.NewRuntimeConfig(config.Configuration{HTTP: test.config(testServer.URL)})
+			entryPoints, _ := srv.createHTTPHandlers(context.Background(), rtConf, []string{"http"})
 
 			responseRecorder := &httptest.ResponseRecorder{}
 			request := httptest.NewRequest(http.MethodGet, testServer.URL+requestPath, nil)

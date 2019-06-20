@@ -4,9 +4,9 @@ package ostype
 
 import "strconv"
 
-const _ArchiveOSTypes_name = "CentOSCentOS6UbuntuDebianVyOSCoreOSRancherOSKusanagiSophosUTMFreeBSDWindows2012Windows2012RDSWindows2012RDSOfficeWindows2016Windows2016RDSWindows2016RDSOfficeWindows2016SQLServerWebWindows2016SQLServerStandardWindows2016SQLServerStandardAllCustom"
+const _ArchiveOSTypes_name = "CentOSCentOS6UbuntuDebianVyOSCoreOSRancherOSKusanagiSophosUTMFreeBSDNetwiserOPNsenseWindows2012Windows2012RDSWindows2012RDSOfficeWindows2016Windows2016RDSWindows2016RDSOfficeWindows2016SQLServerWebWindows2016SQLServerStandardWindows2016SQLServer2017StandardWindows2016SQLServerStandardAllWindows2016SQLServer2017StandardAllWindows2019Custom"
 
-var _ArchiveOSTypes_index = [...]uint8{0, 6, 13, 19, 25, 29, 35, 44, 52, 61, 68, 79, 93, 113, 124, 138, 158, 181, 209, 240, 246}
+var _ArchiveOSTypes_index = [...]uint16{0, 6, 13, 19, 25, 29, 35, 44, 52, 61, 68, 76, 84, 95, 109, 129, 140, 154, 174, 197, 225, 257, 288, 323, 334, 340}
 
 func (i ArchiveOSTypes) String() string {
 	if i < 0 || i >= ArchiveOSTypes(len(_ArchiveOSTypes_index)-1) {

@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/label"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/provider/label"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -78,7 +78,6 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*config.TCPService)
 		lb := &config.TCPLoadBalancerService{}
-		lb.SetDefaults()
 		configuration.Services[serviceName] = &config.TCPService{
 			LoadBalancer: lb,
 		}
@@ -151,7 +150,6 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 
 	if len(loadBalancer.Servers) == 0 {
 		server := config.TCPServer{}
-		server.SetDefaults()
 
 		loadBalancer.Servers = []config.TCPServer{server}
 	}

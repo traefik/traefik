@@ -29,8 +29,6 @@ level = "DEBUG"
 
       [[http.services.service1.LoadBalancer.Servers]]
         URL = "http://{{.WhoamiEndpoint}}:8080"
-        Weight = 1
 
       [[http.services.service1.LoadBalancer.Servers]]
         URL = "http://{{.WhoamiEndpoint}}:80"
-        Weight = 1

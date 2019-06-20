@@ -96,10 +96,12 @@ test-integration: $(PRE_TARGET)
 ## Validate code and docs
 validate-files: $(PRE_TARGET)
 	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate validate-lint validate-misspell
+	bash $(CURDIR)/script/validate-shell-script.sh
 
 ## Validate code, docs, and vendor
 validate: $(PRE_TARGET)
 	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate validate-lint validate-misspell validate-vendor
+	bash $(CURDIR)/script/validate-shell-script.sh
 
 ## Clean up static directory and build a Docker Traefik image
 build-image: binary

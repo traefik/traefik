@@ -10,7 +10,7 @@ Let's see how.
 
 ### General
 
-This [documentation](http://docs.traefik.io/) is built with [mkdocs](http://mkdocs.org/).
+This [documentation](https://docs.traefik.io/) is built with [mkdocs](https://mkdocs.org/).
 
 ### Method 1: `Docker` and `make`
 

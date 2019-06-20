@@ -14,7 +14,7 @@ import (
 )
 
 func TestBuilder_BuildChainNilConfig(t *testing.T) {
-	testConfig := map[string]*config.Middleware{
+	testConfig := map[string]*config.MiddlewareInfo{
 		"empty": {},
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil)
@@ -25,7 +25,7 @@ func TestBuilder_BuildChainNilConfig(t *testing.T) {
 }
 
 func TestBuilder_BuildChainNonExistentChain(t *testing.T) {
-	testConfig := map[string]*config.Middleware{
+	testConfig := map[string]*config.MiddlewareInfo{
 		"foobar": {},
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil)
@@ -77,7 +77,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 			desc:       "Should prefix the middlewareName with the provider in the context",
 			buildChain: []string{"middleware-1"},
 			configuration: map[string]*config.Middleware{
-				"provider-1.middleware-1": {
+				"provider-1@middleware-1": {
 					Headers: &config.Headers{
 						CustomRequestHeaders: map[string]string{"provider-1.middleware-1": "value-middleware-1"},
 					},
@@ -88,9 +88,9 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		},
 		{
 			desc:       "Should not prefix a qualified middlewareName with the provider in the context",
-			buildChain: []string{"provider-1.middleware-1"},
+			buildChain: []string{"provider-1@middleware-1"},
 			configuration: map[string]*config.Middleware{
-				"provider-1.middleware-1": {
+				"provider-1@middleware-1": {
 					Headers: &config.Headers{
 						CustomRequestHeaders: map[string]string{"provider-1.middleware-1": "value-middleware-1"},
 					},
@@ -101,14 +101,14 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		},
 		{
 			desc:       "Should be context aware if a chain references another middleware",
-			buildChain: []string{"provider-1.middleware-chain-1"},
+			buildChain: []string{"provider-1@middleware-chain-1"},
 			configuration: map[string]*config.Middleware{
-				"provider-1.middleware-1": {
+				"provider-1@middleware-1": {
 					Headers: &config.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-1": "value-middleware-1"},
 					},
 				},
-				"provider-1.middleware-chain-1": {
+				"provider-1@middleware-chain-1": {
 					Chain: &config.Chain{
 						Middlewares: []string{"middleware-1"},
 					},
@@ -118,31 +118,31 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		},
 		{
 			desc:       "Should handle nested chains with different context",
-			buildChain: []string{"provider-1.middleware-chain-1", "middleware-chain-1"},
+			buildChain: []string{"provider-1@middleware-chain-1", "middleware-chain-1"},
 			configuration: map[string]*config.Middleware{
-				"provider-1.middleware-1": {
+				"provider-1@middleware-1": {
 					Headers: &config.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-1": "value-middleware-1"},
 					},
 				},
-				"provider-1.middleware-2": {
+				"provider-1@middleware-2": {
 					Headers: &config.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-2": "value-middleware-2"},
 					},
 				},
-				"provider-1.middleware-chain-1": {
+				"provider-1@middleware-chain-1": {
 					Chain: &config.Chain{
 						Middlewares: []string{"middleware-1"},
 					},
 				},
-				"provider-1.middleware-chain-2": {
+				"provider-1@middleware-chain-2": {
 					Chain: &config.Chain{
 						Middlewares: []string{"middleware-2"},
 					},
 				},
-				"provider-2.middleware-chain-1": {
+				"provider-2@middleware-chain-1": {
 					Chain: &config.Chain{
-						Middlewares: []string{"provider-1.middleware-2", "provider-1.middleware-chain-2"},
+						Middlewares: []string{"provider-1@middleware-2", "provider-1@middleware-chain-2"},
 					},
 				},
 			},
@@ -176,28 +176,28 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		},
 		{
 			desc:       "Detects recursion in Middleware chain",
-			buildChain: []string{"provider.m1"},
+			buildChain: []string{"provider@m1"},
 			configuration: map[string]*config.Middleware{
-				"provider2.ok": {
+				"provider2@ok": {
 					Retry: &config.Retry{},
 				},
-				"provider.m1": {
+				"provider@m1": {
 					Chain: &config.Chain{
-						Middlewares: []string{"provider2.m2"},
+						Middlewares: []string{"provider2@m2"},
 					},
 				},
-				"provider2.m2": {
+				"provider2@m2": {
 					Chain: &config.Chain{
-						Middlewares: []string{"ok", "provider.m3"},
+						Middlewares: []string{"ok", "provider@m3"},
 					},
 				},
-				"provider.m3": {
+				"provider@m3": {
 					Chain: &config.Chain{
 						Middlewares: []string{"m1"},
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware provider.m1: recursion detected in provider.m1->provider2.m2->provider.m3->provider.m1"),
+			expectedError: errors.New("could not instantiate middleware provider@m1: recursion detected in provider@m1->provider2@m2->provider@m3->provider@m1"),
 		},
 		{
 			buildChain: []string{"ok", "m0"},
@@ -261,10 +261,15 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 
 			ctx := context.Background()
 			if len(test.contextProvider) > 0 {
-				ctx = internal.AddProviderInContext(ctx, test.contextProvider+".foobar")
+				ctx = internal.AddProviderInContext(ctx, test.contextProvider+"@foobar")
 			}
 
-			builder := NewBuilder(test.configuration, nil)
+			rtConf := config.NewRuntimeConfig(config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: test.configuration,
+				},
+			})
+			builder := NewBuilder(rtConf.Middlewares, nil)
 
 			result := builder.BuildChain(ctx, test.buildChain)
 
@@ -310,7 +315,12 @@ func TestBuilder_buildConstructor(t *testing.T) {
 		},
 	}
 
-	middlewaresBuilder := NewBuilder(testConfig, nil)
+	rtConf := config.NewRuntimeConfig(config.Configuration{
+		HTTP: &config.HTTPConfiguration{
+			Middlewares: testConfig,
+		},
+	})
+	middlewaresBuilder := NewBuilder(rtConf.Middlewares, nil)
 
 	testCases := []struct {
 		desc          string
@@ -344,7 +354,8 @@ func TestBuilder_buildConstructor(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			constructor, err := middlewaresBuilder.buildConstructor(context.Background(), test.middlewareID, *testConfig[test.middlewareID])
+			constructor, err := middlewaresBuilder.buildConstructor(context.Background(), test.middlewareID)
+
 			require.NoError(t, err)
 
 			middleware, err2 := constructor(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))

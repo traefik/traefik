@@ -159,5 +159,5 @@ func GetOrFile(envVar string) string {
 		return ""
 	}
 
-	return string(fileContents)
+	return strings.TrimSuffix(string(fileContents), "\n")
 }

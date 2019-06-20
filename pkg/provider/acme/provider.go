@@ -14,8 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cenkalti/backoff"
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/rules"
@@ -40,17 +38,24 @@ var (
 
 // Configuration holds ACME configuration provided by users
 type Configuration struct {
-	Email         string         `description:"Email address used for registration"`
+	Email         string         `description:"Email address used for registration."`
 	ACMELogging   bool           `description:"Enable debug logging of ACME actions."`
 	CAServer      string         `description:"CA server to use."`
 	Storage       string         `description:"Storage to use."`
 	EntryPoint    string         `description:"EntryPoint to use."`
-	KeyType       string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'"`
-	OnHostRule    bool           `description:"Enable certificate generation on frontends Host rules."`
-	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge"`
-	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
-	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge"`
-	Domains       []types.Domain `description:"CN and SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='*.main.net'. No SANs for wildcards domain. Wildcard domains only accepted with DNSChallenge"`
+	KeyType       string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'."`
+	OnHostRule    bool           `description:"Enable certificate generation on router Host rules."`
+	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." label:"allowEmpty"`
+	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." label:"allowEmpty"`
+	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge." label:"allowEmpty"`
+	Domains       []types.Domain `description:"The list of domains for which certificates are generated on startup. Wildcard domains only accepted with DNSChallenge."`
+}
+
+// SetDefaults sets the default values.
+func (a *Configuration) SetDefaults() {
+	a.CAServer = lego.LEDirectoryProduction
+	a.Storage = "acme.json"
+	a.KeyType = "RSA4096"
 }
 
 // Certificate is a struct which contains all data needed from an ACME certificate
@@ -62,13 +67,10 @@ type Certificate struct {
 
 // DNSChallenge contains DNS challenge Configuration
 type DNSChallenge struct {
-	Provider                string             `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
-	DelayBeforeCheck        parse.Duration     `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
-	Resolvers               types.DNSResolvers `description:"Use following DNS servers to resolve the FQDN authority."`
-	DisablePropagationCheck bool               `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]"`
-
-	preCheckTimeout  time.Duration
-	preCheckInterval time.Duration
+	Provider                string         `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
+	DelayBeforeCheck        types.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	Resolvers               []string       `description:"Use following DNS servers to resolve the FQDN authority."`
+	DisablePropagationCheck bool           `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]"`
 }
 
 // HTTPChallenge contains HTTP challenge Configuration
@@ -243,7 +245,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 	logger.Debug("Building ACME client...")
 
-	caServer := "https://acme-v02.api.letsencrypt.org/directory"
+	caServer := lego.LEDirectoryProduction
 	if len(p.CAServer) > 0 {
 		caServer = p.CAServer
 	}
@@ -301,15 +303,6 @@ func (p *Provider) getClient() (*lego.Client, error) {
 		)
 		if err != nil {
 			return nil, err
-		}
-
-		// Same default values than LEGO
-		p.DNSChallenge.preCheckTimeout = 60 * time.Second
-		p.DNSChallenge.preCheckInterval = 2 * time.Second
-
-		// Set the precheck timeout into the DNSChallenge provider
-		if challengeProviderTimeout, ok := provider.(challenge.ProviderTimeout); ok {
-			p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval = challengeProviderTimeout.Timeout()
 		}
 
 	case p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0:
@@ -440,19 +433,13 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 		return nil, fmt.Errorf("cannot get ACME client %v", err)
 	}
 
-	var cert *certificate.Resource
-	bundle := true
-	if p.useCertificateWithRetry(uncheckedDomains) {
-		cert, err = obtainCertificateWithRetry(ctx, domains, client, p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval, bundle)
-	} else {
-		request := certificate.ObtainRequest{
-			Domains:    domains,
-			Bundle:     bundle,
-			MustStaple: oscpMustStaple,
-		}
-		cert, err = client.Certificate.Obtain(request)
+	request := certificate.ObtainRequest{
+		Domains:    domains,
+		Bundle:     true,
+		MustStaple: oscpMustStaple,
 	}
 
+	cert, err := client.Certificate.Obtain(request)
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate a certificate for the domains %v: %v", uncheckedDomains, err)
 	}
@@ -491,67 +478,6 @@ func (p *Provider) addResolvingDomains(resolvingDomains []string) {
 	for _, domain := range resolvingDomains {
 		p.resolvingDomains[domain] = struct{}{}
 	}
-}
-
-func (p *Provider) useCertificateWithRetry(domains []string) bool {
-	// Check if we can use the retry mechanism only if we use the DNS Challenge and if is there are at least 2 domains to check
-	if p.DNSChallenge != nil && len(domains) > 1 {
-		rootDomain := ""
-		for _, searchWildcardDomain := range domains {
-			// Search a wildcard domain if not already found
-			if len(rootDomain) == 0 && strings.HasPrefix(searchWildcardDomain, "*.") {
-				rootDomain = strings.TrimPrefix(searchWildcardDomain, "*.")
-				if len(rootDomain) > 0 {
-					// Look for a root domain which matches the wildcard domain
-					for _, searchRootDomain := range domains {
-						if rootDomain == searchRootDomain {
-							// If the domains list contains a wildcard domain and its root domain, we can use the retry mechanism to obtain the certificate
-							return true
-						}
-					}
-				}
-				// There is only one wildcard domain in the slice, if its root domain has not been found, the retry mechanism does not have to be used
-				return false
-			}
-		}
-	}
-
-	return false
-}
-
-func obtainCertificateWithRetry(ctx context.Context, domains []string, client *lego.Client, timeout, interval time.Duration, bundle bool) (*certificate.Resource, error) {
-	logger := log.FromContext(ctx)
-
-	var cert *certificate.Resource
-	var err error
-
-	operation := func() error {
-		request := certificate.ObtainRequest{
-			Domains:    domains,
-			Bundle:     bundle,
-			MustStaple: oscpMustStaple,
-		}
-		cert, err = client.Certificate.Obtain(request)
-		return err
-	}
-
-	notify := func(err error, time time.Duration) {
-		logger.Errorf("Error obtaining certificate retrying in %s", time)
-	}
-
-	// Define a retry backOff to let LEGO tries twice to obtain a certificate for both wildcard and root domain
-	ebo := backoff.NewExponentialBackOff()
-	ebo.MaxElapsedTime = 2 * timeout
-	ebo.MaxInterval = interval
-	rbo := backoff.WithMaxRetries(ebo, 2)
-
-	err = backoff.RetryNotify(safe.OperationWithRecover(operation), rbo, notify)
-	if err != nil {
-		logger.Errorf("Error obtaining certificate: %v", err)
-		return nil, err
-	}
-
-	return cert, nil
 }
 
 func (p *Provider) addCertificateForDomain(domain types.Domain, certificate []byte, key []byte) {
@@ -797,12 +723,6 @@ func (p *Provider) getValidDomains(ctx context.Context, domain types.Domain, wil
 
 		if strings.HasPrefix(domain.Main, "*.*") {
 			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
-		}
-	}
-
-	for _, san := range domain.SANs {
-		if strings.HasPrefix(san, "*") {
-			return nil, fmt.Errorf("unable to generate a certificate in ACME provider for domains %q: SAN %q can not be a wildcard domain", strings.Join(domains, ","), san)
 		}
 	}
 

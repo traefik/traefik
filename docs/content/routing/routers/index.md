@@ -51,7 +51,7 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
 ### EntryPoints
 
 If not specified, HTTP routers will accept requests from all defined entrypoints.
-If you want to limit the router scope to a set of entrypoint, set the entrypoints option.
+If you want to limit the router scope to a set of entrypoints, set the entrypoints option.
 
 ??? example "Listens to Every EntryPoint"
 
@@ -92,7 +92,7 @@ If you want to limit the router scope to a set of entrypoint, set the entrypoint
 ### Rule
 
 Rules are a set of matchers that determine if a particular request matches specific criteria.
-If the rule is verified, then the router becomes active and calls middlewares, then forward the request to the service.
+If the rule is verified, the router becomes active, calls middlewares, and then forwards the request to the service.
 
 ??? example "Host is traefik.io"
 
@@ -107,16 +107,16 @@ If the rule is verified, then the router becomes active and calls middlewares, t
     ```
 The table below lists all the available matchers:
 
-| Rule                                                               | Description                                                                                                    |
-|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| ``Headers(`key`, `value`)``                                        | Check if there is a key `key`defined in the headers, with the value `value`                                    |
-| ``HeadersRegexp(`key`, `regexp`)``                                 | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
-| ``Host(`domain-1`, ...)``                                          | Check if the request domain targets one of the given `domains`.                                                |
-| ``HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)`` | Check if the request domain matches the given `regexp`.                                                        |
-| `Method(methods, ...)`                                             | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
-| ``Path(`path`, `/articles/{category}/{id:[0-9]+}`, ...)``          | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
-| ``PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)``   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
-| ``Query(`foo=bar`, `bar=baz`)``                                    | Match` Query String parameters. It accepts a sequence of key=value pairs.                                      |
+| Rule                                                                 | Description                                                                                                    |
+|----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| ```Headers(`key`, `value`)```                                        | Check if there is a key `key`defined in the headers, with the value `value`                                    |
+| ```HeadersRegexp(`key`, `regexp`)```                                 | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
+| ```Host(`domain-1`, ...)```                                          | Check if the request domain targets one of the given `domains`.                                                |
+| ```HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
+| `Method(methods, ...)`                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
+| ```Path(`path`, `/articles/{category}/{id:[0-9]+}`, ...)```          | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
+| ```PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
+| ```Query(`foo=bar`, `bar=baz`)```                                    | Match` Query String parameters. It accepts a sequence of key=value pairs.                                      |
 
 !!! important "Regexp Syntax"
 
@@ -156,7 +156,9 @@ Services are the target for the router.
 
 ### TLS
 
-When specifying a TLS section, you tell Traefik that the current router is dedicated to HTTPS requests only (and that the router should ignore HTTP (non tls) requests).
+#### General
+
+ When a TLS section is specified, it instructs Traefik that the current router is dedicated to HTTPS requests only (and that the router should ignore HTTP (non TLS) requests).
 Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services).
 
 ??? example "Configuring the router to accept HTTPS requests only"
@@ -171,9 +173,8 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 
 !!! note "HTTPS & ACME"
 
-    In the current version, with [ACME](../../https-tls/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
-    In the near future, options will be available to enable fine-grain control of the TLS parameters.
-
+    In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
+    
 !!! note "Passthrough"
 
     On TCP routers, you can configure a passthrough option so that Traefik doesn't terminate the TLS connection.
@@ -186,27 +187,52 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 
         ```toml
         [http.routers]
-           [http.routers.Router-1-https]
+           [http.routers.my-https-router]
               rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
               service = "service-id"
-              [http.routers.Router-1.tls] # will terminate the TLS request
+              [http.routers.my-https-router.tls] # will terminate the TLS request
 
-           [http.routers.Router-1-http]
+           [http.routers.my-http-router]
               rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
               service = "service-id"
         ```
+
+#### `Options`
+
+The `Options` field enables fine-grained control of the TLS parameters.  
+It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied only if a `Host` rule is defined.
+
+??? example "Configuring the tls options"
+
+    ```toml
+    [http.routers]
+       [http.routers.Router-1]
+          rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
+          service = "service-id"
+          [http.routers.Router-1.tls] # will terminate the TLS request
+            options = "foo"
+    
+    
+    [tlsOptions]
+      [tlsOptions.foo]
+          minVersion = "VersionTLS12"
+          cipherSuites = [
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_RSA_WITH_AES_256_GCM_SHA384"
+          ]
+    ```
 
 ## Configuring TCP Routers
 
 ### General
 
-If both HTTP routers and TCP routers listen to the same entrypoints, the TCP routers will apply *before* the HTTP routers.
+If both HTTP routers and TCP routers listen to the same entry points, the TCP routers will apply *before* the HTTP routers.
 If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ### EntryPoints
 
-If not specified, TCP routers will accept requests from all defined entrypoints.
-If you want to limit the router scope to a set of entrypoints, set the entrypoints option.
+If not specified, TCP routers will accept requests from all defined entry points.
+If you want to limit the router scope to a set of entry points, set the entry points option.
 
 ??? example "Listens to Every EntryPoint"
 
@@ -248,9 +274,9 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
 
 ### Rule
 
-| Rule                         | Description                                                             |
-|------------------------------|-------------------------------------------------------------------------|
-| ``HostSNI(`domain-1`, ...)`` | Check if the Server Name Indication corresponds to the given `domains`. |
+| Rule                           | Description                                                             |
+|--------------------------------|-------------------------------------------------------------------------|
+| ```HostSNI(`domain-1`, ...)``` | Check if the Server Name Indication corresponds to the given `domains`. |
 
 !!! important "HostSNI & TLS"
 
@@ -269,15 +295,17 @@ Services are the target for the router.
 
 ### TLS
 
-When specifying a TLS section, you tell Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-tls requests).
-By default, Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services), but you can tell Traefik that the request should pass through (keeping the encrypted data) and be forwarded to the service "as is". 
+#### General
+
+ When a TLS section is specified, it instructs Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-TLS requests).
+ By default, Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services), but Traefik can be configured in order to let the requests pass through (keeping the data encrypted), and be forwarded to the service "as is". 
 
 ??? example "Configuring TLS Termination"
 
     ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
-          rule = "Host(`foo-domain`)"
+          rule = "HostSNI(`foo-domain`)"
           service = "service-id"
           [tcp.routers.Router-1.tls] # will terminate the TLS request by default
     ```
@@ -287,7 +315,7 @@ By default, Traefik will terminate the SSL connections (meaning that it will sen
     ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
-          rule = "Host(`foo-domain`)"
+          rule = "HostSNI(`foo-domain`)"
           service = "service-id"
           [tcp.routers.Router-1.tls]
              passthrough=true
@@ -295,5 +323,29 @@ By default, Traefik will terminate the SSL connections (meaning that it will sen
 
 !!! note "TLS & ACME"
 
-    In the current version, with [ACME](../../https-tls/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
-    In the near future, options will be available to enable fine-grain control of the TLS parameters.
+    In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
+
+#### `Options`
+
+The `Options` field enables fine-grained control of the TLS parameters.  
+It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied only if a `HostSNI` rule is defined.
+
+??? example "Configuring the tls options"
+
+    ```toml
+    [tcp.routers]
+       [tcp.routers.Router-1]
+          rule = "HostSNI(`foo-domain`)"
+          service = "service-id"
+          [tcp.routers.Router-1.tls] # will terminate the TLS request
+            options = "foo"
+    
+    
+    [tlsOptions]
+      [tlsOptions.foo]
+          minVersion = "VersionTLS12"
+          cipherSuites = [
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_RSA_WITH_AES_256_GCM_SHA384"
+          ]
+    ```

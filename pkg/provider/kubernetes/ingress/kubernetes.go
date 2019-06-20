@@ -17,7 +17,6 @@ import (
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/job"
 	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/containous/traefik/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
@@ -33,22 +32,22 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint               string           `description:"Kubernetes server endpoint (required for external cluster client)"`
-	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)"`
-	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
-	DisablePassHostHeaders bool             `description:"Kubernetes disable PassHost Headers" export:"true"`
-	Namespaces             k8s.Namespaces   `description:"Kubernetes namespaces" export:"true"`
-	LabelSelector          string           `description:"Kubernetes Ingress label selector to use" export:"true"`
-	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
-	IngressEndpoint        *EndpointIngress `description:"Kubernetes Ingress Endpoint"`
+	Endpoint               string           `description:"Kubernetes server endpoint (required for external cluster client)."`
+	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)."`
+	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)."`
+	DisablePassHostHeaders bool             `description:"Kubernetes disable PassHost Headers." export:"true"`
+	Namespaces             []string         `description:"Kubernetes namespaces." export:"true"`
+	LabelSelector          string           `description:"Kubernetes Ingress label selector to use." export:"true"`
+	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for." export:"true"`
+	IngressEndpoint        *EndpointIngress `description:"Kubernetes Ingress Endpoint."`
 	lastConfiguration      safe.Safe
 }
 
 // EndpointIngress holds the endpoint information for the Kubernetes provider
 type EndpointIngress struct {
-	IP               string `description:"IP used for Kubernetes Ingress endpoints"`
-	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints"`
-	PublishedService string `description:"Published Kubernetes Service to copy status from"`
+	IP               string `description:"IP used for Kubernetes Ingress endpoints."`
+	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints."`
+	PublishedService string `description:"Published Kubernetes Service to copy status from."`
 }
 
 func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string) (*clientWrapper, error) {
@@ -195,8 +194,7 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, config.Server{
-			URL:    fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
-			Weight: 1,
+			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, backend.ServiceName)
@@ -233,8 +231,7 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 
 			for _, addr := range subset.Addresses {
 				servers = append(servers, config.Server{
-					URL:    fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
-					Weight: 1,
+					URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
 				})
 			}
 		}
@@ -243,7 +240,6 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 	return &config.Service{
 		LoadBalancer: &config.LoadBalancerService{
 			Servers:        servers,
-			Method:         "wrr",
 			PassHostHeader: true,
 		},
 	}, nil
@@ -321,7 +317,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				}
 
 				serviceName := ingress.Namespace + "/" + p.Backend.ServiceName + "/" + p.Backend.ServicePort.String()
-
+				serviceName = strings.ReplaceAll(serviceName, ".", "-")
 				var rules []string
 				if len(rule.Host) > 0 {
 					rules = []string{"Host(`" + rule.Host + "`)"}

@@ -42,4 +42,4 @@ Help the readers focus on what matters, and help them understand the structure o
 
 !!! tip "10 Tips for Better Pull Requests"
 
-    We enjoyed this article, maybe you will too! [10 tips for better pull requests](http://blog.ploeh.dk/2015/01/15/10-tips-for-better-pull-requests/).
+    We enjoyed this article, maybe you will too! [10 tips for better pull requests](https://blog.ploeh.dk/2015/01/15/10-tips-for-better-pull-requests/).

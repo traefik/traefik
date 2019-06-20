@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/label"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/provider/label"
 )
 
 func (p *Provider) buildConfiguration(ctx context.Context, services []rancherData) *config.Configuration {
@@ -74,7 +74,6 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, service ran
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*config.TCPService)
 		lb := &config.TCPLoadBalancerService{}
-		lb.SetDefaults()
 		configuration.Services[serviceName] = &config.TCPService{
 			LoadBalancer: lb,
 		}
@@ -155,7 +154,6 @@ func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBa
 
 	if len(loadBalancer.Servers) == 0 {
 		server := config.TCPServer{}
-		server.SetDefaults()
 
 		loadBalancer.Servers = []config.TCPServer{server}
 	}
@@ -173,7 +171,6 @@ func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBa
 	for _, containerIP := range service.Containers {
 		servers = append(servers, config.TCPServer{
 			Address: net.JoinHostPort(containerIP, port),
-			Weight:  1,
 		})
 	}
 
@@ -207,8 +204,7 @@ func (p *Provider) addServers(ctx context.Context, service rancherData, loadBala
 	var servers []config.Server
 	for _, containerIP := range service.Containers {
 		servers = append(servers, config.Server{
-			URL:    fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(containerIP, port)),
-			Weight: 1,
+			URL: fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(containerIP, port)),
 		})
 	}
 

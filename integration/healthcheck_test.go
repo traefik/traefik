@@ -41,7 +41,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	c.Assert(err, checker.IsNil)
 
 	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
@@ -95,16 +95,8 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 }
 
-func (s *HealthCheckSuite) TestMultipleEntrypointsWrr(c *check.C) {
-	s.doTestMultipleEntrypoints(c, "fixtures/healthcheck/multiple-entrypoints-wrr.toml")
-}
-
-func (s *HealthCheckSuite) TestMultipleEntrypointsDrr(c *check.C) {
-	s.doTestMultipleEntrypoints(c, "fixtures/healthcheck/multiple-entrypoints-drr.toml")
-}
-
-func (s *HealthCheckSuite) doTestMultipleEntrypoints(c *check.C, fixture string) {
-	file := s.adaptFile(c, fixture, struct {
+func (s *HealthCheckSuite) TestMultipleEntrypoints(c *check.C) {
+	file := s.adaptFile(c, "fixtures/healthcheck/multiple-entrypoints.toml", struct {
 		Server1 string
 		Server2 string
 	}{s.whoami1IP, s.whoami2IP})
@@ -117,7 +109,7 @@ func (s *HealthCheckSuite) doTestMultipleEntrypoints(c *check.C, fixture string)
 	defer cmd.Process.Kill()
 
 	// Wait for traefik
-	err = try.GetRequest("http://localhost:8080/api/providers/file/routers", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
+	err = try.GetRequest("http://localhost:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	c.Assert(err, checker.IsNil)
 
 	// Check entrypoint http1
@@ -194,7 +186,7 @@ func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/file/routers", 10*time.Second, try.BodyContains("Host(`test.localhost`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	c.Assert(err, checker.IsNil)
 
 	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)

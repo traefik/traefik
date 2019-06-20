@@ -25,7 +25,6 @@ level = "DEBUG"
     [http.services.service1.LoadBalancer]
       [[http.services.service1.LoadBalancer.Servers]]
         url = "http://127.0.0.1:9010"
-        weight = 1
 
 [tlsOptions.default]
     sniStrict = true

@@ -14,18 +14,24 @@ import (
 
 // Router is a TCP router
 type Router struct {
-	routingTable   map[string]Handler
-	httpForwarder  Handler
-	httpsForwarder Handler
-	httpHandler    http.Handler
-	httpsHandler   http.Handler
-	httpsTLSConfig *tls.Config
-	catchAllNoTLS  Handler
+	routingTable      map[string]Handler
+	httpForwarder     Handler
+	httpsForwarder    Handler
+	httpHandler       http.Handler
+	httpsHandler      http.Handler
+	httpsTLSConfig    *tls.Config // default TLS config
+	catchAllNoTLS     Handler
+	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
 }
 
 // ServeTCP forwards the connection to the right TCP/HTTP handler
 func (r *Router) ServeTCP(conn net.Conn) {
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
+
+	if r.catchAllNoTLS != nil && len(r.routingTable) == 0 && r.httpsHandler == nil {
+		r.catchAllNoTLS.ServeTCP(conn)
+		return
+	}
 
 	br := bufio.NewReader(conn)
 	serverName, tls, peeked := clientHelloServerName(br)
@@ -79,6 +85,15 @@ func (r *Router) AddRouteTLS(sniHost string, target Handler, config *tls.Config)
 	})
 }
 
+// AddRouteHTTPTLS defines a handler for a given sniHost and sets the matching tlsConfig
+func (r *Router) AddRouteHTTPTLS(sniHost string, config *tls.Config) {
+	if r.hostHTTPTLSConfig == nil {
+		r.hostHTTPTLSConfig = map[string]*tls.Config{}
+	}
+	log.Debugf("adding route %s with minversion %d", sniHost, config.MinVersion)
+	r.hostHTTPTLSConfig[sniHost] = config
+}
+
 // AddCatchAllNoTLS defines the fallback tcp handler
 func (r *Router) AddCatchAllNoTLS(handler Handler) {
 	r.catchAllNoTLS = handler
@@ -111,6 +126,10 @@ func (r *Router) HTTPForwarder(handler Handler) {
 
 // HTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler
 func (r *Router) HTTPSForwarder(handler Handler) {
+	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
+		r.AddRouteTLS(sniHost, handler, tlsConf)
+	}
+
 	r.httpsForwarder = &TLSHandler{
 		Next:   handler,
 		Config: r.httpsTLSConfig,

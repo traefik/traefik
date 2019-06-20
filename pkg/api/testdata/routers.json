@@ -1,0 +1,28 @@
+[
+	{
+		"entryPoints": [
+			"web"
+		],
+		"middlewares": [
+			"auth",
+			"anotherprovider@addPrefixTest"
+		],
+		"name": "myprovider@bar",
+		"provider": "myprovider@bar",
+		"rule": "Host(`foo.bar`)",
+		"service": "myprovider@foo-service"
+	},
+	{
+		"entryPoints": [
+			"web"
+		],
+		"middlewares": [
+			"addPrefixTest",
+			"auth"
+		],
+		"name": "myprovider@test",
+		"provider": "myprovider@test",
+		"rule": "Host(`foo.bar.other`)",
+		"service": "myprovider@foo-service"
+	}
+]

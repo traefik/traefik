@@ -18,6 +18,7 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/option"
 )
 
 const (
@@ -139,8 +140,11 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	if config == nil {
 		return nil, errors.New("googlecloud: the configuration of the DNS provider is nil")
 	}
+	if config.HTTPClient == nil {
+		return nil, fmt.Errorf("googlecloud: unable to create Google Cloud DNS service: client is nil")
+	}
 
-	svc, err := dns.New(config.HTTPClient)
+	svc, err := dns.NewService(context.Background(), option.WithHTTPClient(config.HTTPClient))
 	if err != nil {
 		return nil, fmt.Errorf("googlecloud: unable to create Google Cloud DNS service: %v", err)
 	}
@@ -152,7 +156,7 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 func (d *DNSProvider) Present(domain, token, keyAuth string) error {
 	fqdn, value := dns01.GetRecord(domain, keyAuth)
 
-	zone, err := d.getHostedZone(domain)
+	zone, err := d.getHostedZone(fqdn)
 	if err != nil {
 		return fmt.Errorf("googlecloud: %v", err)
 	}
@@ -260,7 +264,7 @@ func (d *DNSProvider) applyChanges(zone string, change *dns.Change) error {
 func (d *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 	fqdn, _ := dns01.GetRecord(domain, keyAuth)
 
-	zone, err := d.getHostedZone(domain)
+	zone, err := d.getHostedZone(fqdn)
 	if err != nil {
 		return fmt.Errorf("googlecloud: %v", err)
 	}
@@ -306,7 +310,13 @@ func (d *DNSProvider) getHostedZone(domain string) (string, error) {
 		return "", fmt.Errorf("no matching domain found for domain %s", authZone)
 	}
 
-	return zones.ManagedZones[0].Name, nil
+	for _, z := range zones.ManagedZones {
+		if z.Visibility == "public" || z.Visibility == "" {
+			return z.Name, nil
+		}
+	}
+
+	return "", fmt.Errorf("no public zone found for domain %s", authZone)
 }
 
 func (d *DNSProvider) findTxtRecords(zone, fqdn string) ([]*dns.ResourceRecordSet, error) {

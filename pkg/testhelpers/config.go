@@ -120,7 +120,7 @@ func WithRule(rule string) func(*config.Router) {
 func WithServers(opts ...func(*config.Server)) func(*config.LoadBalancerService) {
 	return func(b *config.LoadBalancerService) {
 		for _, opt := range opts {
-			server := config.Server{Weight: 1}
+			server := config.Server{}
 			opt(&server)
 			b.Servers = append(b.Servers, server)
 		}
@@ -134,13 +134,6 @@ func WithServer(url string, opts ...func(*config.Server)) func(*config.Server) {
 			opt(s)
 		}
 		s.URL = url
-	}
-}
-
-// WithLBMethod is a helper to create a configuration.
-func WithLBMethod(method string) func(*config.LoadBalancerService) {
-	return func(b *config.LoadBalancerService) {
-		b.Method = method
 	}
 }
 

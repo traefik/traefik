@@ -10,39 +10,41 @@ Remove the specified prefixes from the URL path.
 ## Configuration Examples
 
 ```yaml tab="Docker"
-# Replace the path by /foo
+# Strip prefix /foobar and /fiibar
 labels:
-- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=foobar, fiibar"
+- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar, /fiibar"
 ```
 
 ```yaml tab="Kubernetes"
-# Replace the path by /foo
+# Strip prefix /foobar and /fiibar
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: test-stripprefix
 spec:
-  StripPrefix:
-    prefixes: "foobar, fiibar"
+  stripPrefix:
+    prefixes:
+    - /foobar
+    - /fiibar
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes": "foobar, fiibar"
+  "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes": "/foobar, /fiibar"
 }
 ```
 
 ```yaml tab="Rancher"
-# Replace the path by /foo
+# Strip prefix /foobar and /fiibar
 labels:
-- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=foobar, fiibar"
+- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar, /fiibar"
 ```
 
 ```toml tab="File"
-# Replace the path by /foo
+# Strip prefix /foobar and /fiibar
 [http.middlewares]
   [http.middlewares.test-stripprefix.StripPrefix]
-     prefixes: "foobar, fiibar"
+     prefixes = ["/foobar", "/fiibar"]
 ```
 
 ## Configuration Options

@@ -81,7 +81,7 @@ docker-compose up -d --scale whoami=2
 
 Go back to your browser ([http://localhost:8080/api/rawdata](http://localhost:8080/api/rawdata)) and see that Traefik has automatically detected the new instance of the container.
 
-Finally, see that Traefik load-balances between the two instances of your services by running twice the following command:
+Finally, see that Traefik load-balances between the two instances of your service by running the following command twice:
 
 ```shell
 curl -H Host:whoami.docker.localhost http://127.0.0.1

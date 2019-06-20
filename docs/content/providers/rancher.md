@@ -1,15 +1,20 @@
 # Traefik & Rancher
 
-A Story of Labels, Services & Container
+A Story of Labels, Services & Containers
 {: .subtitle }
 
 ![Rancher](../assets/img/providers/rancher.png)
 
 Attach labels to your services and let Traefik do the rest!
 
+!!! important
+    This provider is specific to Rancher 1.x.
+    Rancher 2.x requires Kubernetes and does not have a metadata endpoint of its own for Traefik to query.
+    As such, Rancher 2.x users should utilize the [Kubernetes provider](./kubernetes-crd.md) directly.
+
 ## Configuration Examples
 
-??? example "Configuring Docker & Deploying / Exposing Services"
+??? example "Configuring Rancher & Deploying / Exposing Services"
 
     Enabling the rancher provider
 
@@ -34,22 +39,16 @@ Attach labels to your services and let Traefik do the rest!
     # Rancher Provider
     ################################################################
     
-    # Enable Docker Provider.
+    # Enable Rancher Provider.
     [rancher]
-    
-    # The default host rule for all services.
-    #
-    # Optionnal
-    #
-    DefaultRule = "unix:///var/run/docker.sock"
     
     # Expose Rancher services by default in Traefik.
     #
     # Optional
     #
-    ExposedByDefault = "docker.localhost"
+    ExposedByDefault = "true"
     
-    # Enable watch docker changes.
+    # Enable watch Rancher changes.
     #
     # Optional
     #
@@ -89,9 +88,26 @@ If set to false, services that don't have a `traefik.enable=true` label will be 
 
 ### `DefaultRule`
 
-_Optional_
+_Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
 The default host rule for all services.
+
+For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
+It must be a valid [Go template](https://golang.org/pkg/text/template/),
+augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
+The service name can be accessed as the `Name` identifier,
+and the template has access to all the labels defined on this container.
+
+```toml tab="File"
+[rancher]
+defaultRule = ""
+# ...
+```
+
+```txt tab="CLI"
+--providers.rancher
+--providers.rancher.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+```
 
 This option can be overridden on a container basis with the `traefik.http.routers.Router1.rule` label.
 
@@ -136,28 +152,30 @@ Every [Router](../routing/routers/index.md) parameter can be updated this way.
 ### Services
 
 To update the configuration of the Service automatically attached to the container, add labels starting with `traefik.http.services.{name-of-your-choice}.`,
-followed by the option you want to change. For example, to change the load balancer method,
-you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.method=drr`.
+followed by the option you want to change. For example, to change the passhostheader behavior,
+you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.passhostheader=false`.
 
 Every [Service](../routing/services/index.md) parameter can be updated this way.
 
 ### Middleware
 
 You can declare pieces of middleware using labels starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.
-For example, to declare a middleware [`schemeredirect`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.schemeredirect.scheme: https`.
+For example, to declare a middleware [`redirectscheme`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme: https`.
 
 ??? example "Declaring and Referencing a Middleware"
     
     ```yaml
     # ...
     labels:
-     - traefik.http.middlewares.my-redirect.schemeredirect.scheme=https
-     - traefik.http.routers.middlewares=my-redirect
+     - traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
+     - traefik.http.routers.my-container.middlewares=my-redirect
     ```
 
 !!! warning "Conflicts in Declaration"
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
+
+More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
 
 ### Specific Options
 

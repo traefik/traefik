@@ -243,12 +243,12 @@ func TestGetValidDomain(t *testing.T) {
 			expectedDomains: []string{"*.traefik.wtf", "traefik.wtf"},
 		},
 		{
-			desc:            "unexpected SANs",
+			desc:            "wildcard SANs",
 			domains:         types.Domain{Main: "*.traefik.wtf", SANs: []string{"*.acme.wtf"}},
 			dnsChallenge:    &DNSChallenge{},
 			wildcardAllowed: true,
-			expectedErr:     "unable to generate a certificate in ACME provider for domains \"*.traefik.wtf,*.acme.wtf\": SAN \"*.acme.wtf\" can not be a wildcard domain",
-			expectedDomains: nil,
+			expectedErr:     "",
+			expectedDomains: []string{"*.traefik.wtf", "*.acme.wtf"},
 		},
 	}
 
@@ -518,64 +518,6 @@ func TestIsAccountMatchingCaServer(t *testing.T) {
 			result := isAccountMatchingCaServer(context.Background(), test.accountURI, test.serverURI)
 
 			assert.Equal(t, test.expected, result)
-		})
-	}
-}
-
-func TestUseBackOffToObtainCertificate(t *testing.T) {
-	testCases := []struct {
-		desc             string
-		domains          []string
-		dnsChallenge     *DNSChallenge
-		expectedResponse bool
-	}{
-		{
-			desc:             "only one single domain",
-			domains:          []string{"acme.wtf"},
-			dnsChallenge:     &DNSChallenge{},
-			expectedResponse: false,
-		},
-		{
-			desc:             "only one wildcard domain",
-			domains:          []string{"*.acme.wtf"},
-			dnsChallenge:     &DNSChallenge{},
-			expectedResponse: false,
-		},
-		{
-			desc:             "wildcard domain with no root domain",
-			domains:          []string{"*.acme.wtf", "foo.acme.wtf", "bar.acme.wtf", "foo.bar"},
-			dnsChallenge:     &DNSChallenge{},
-			expectedResponse: false,
-		},
-		{
-			desc:             "wildcard and root domain",
-			domains:          []string{"*.acme.wtf", "foo.acme.wtf", "bar.acme.wtf", "acme.wtf"},
-			dnsChallenge:     &DNSChallenge{},
-			expectedResponse: true,
-		},
-		{
-			desc:             "wildcard and root domain but no DNS challenge",
-			domains:          []string{"*.acme.wtf", "acme.wtf"},
-			dnsChallenge:     nil,
-			expectedResponse: false,
-		},
-		{
-			desc:             "two wildcard domains (must never happen)",
-			domains:          []string{"*.acme.wtf", "*.bar.foo"},
-			dnsChallenge:     nil,
-			expectedResponse: false,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			acmeProvider := Provider{Configuration: &Configuration{DNSChallenge: test.dnsChallenge}}
-
-			actualResponse := acmeProvider.useCertificateWithRetry(test.domains)
-			assert.Equal(t, test.expectedResponse, actualResponse, "unexpected response to use backOff")
 		})
 	}
 }

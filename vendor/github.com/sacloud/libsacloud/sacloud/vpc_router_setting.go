@@ -22,6 +22,7 @@ type VPCRouterSetting struct {
 	RemoteAccessUsers  *VPCRouterRemoteAccessUsers  `json:",omitempty"` // リモートアクセスユーザー設定
 	SiteToSiteIPsecVPN *VPCRouterSiteToSiteIPsecVPN `json:",omitempty"` // サイト間VPN設定
 	StaticRoutes       *VPCRouterStaticRoutes       `json:",omitempty"` // スタティックルート設定
+	InternetConnection *VPCRouterInternetConnection `json:",omitempty"` // インターネット接続
 	VRID               *int                         `json:",omitempty"` // VRID
 	SyslogHost         string                       `json:",omitempty"` // syslog転送先ホスト
 
@@ -1155,4 +1156,23 @@ func (s *VPCRouterSetting) FindStaticRoute(prefix string, nextHop string) (int, 
 		}
 	}
 	return -1, nil
+}
+
+// VPCRouterInternetConnection インターネット接続
+type VPCRouterInternetConnection struct {
+	Enabled string `json:",omitempty"` // 有効/無効
+}
+
+// SetInternetConnection インターネット接続 有効/無効 設定
+func (s *VPCRouterSetting) SetInternetConnection(enabled bool) {
+	if s.InternetConnection == nil {
+		s.InternetConnection = &VPCRouterInternetConnection{
+			Enabled: "True",
+		}
+	}
+	if enabled {
+		s.InternetConnection.Enabled = "True"
+	} else {
+		s.InternetConnection.Enabled = "False"
+	}
 }

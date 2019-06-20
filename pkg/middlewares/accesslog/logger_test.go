@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/flaeg/parse"
 	"github.com/containous/traefik/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -287,12 +286,12 @@ func TestLoggerJSON(t *testing.T) {
 				Format:   JSONFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						RequestHost: "keep",
 					},
 					Headers: &types.FieldHeaders{
 						DefaultMode: "drop",
-						Names: types.FieldHeaderNames{
+						Names: map[string]string{
 							"Referer": "keep",
 						},
 					},
@@ -388,7 +387,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				FilePath: "",
 				Format:   CommonFormat,
 				Filters: &types.AccessLogFilters{
-					MinDuration: parse.Duration(1 * time.Hour),
+					MinDuration: types.Duration(1 * time.Hour),
 				},
 			},
 			expectedLog: ``,
@@ -399,7 +398,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				FilePath: "",
 				Format:   CommonFormat,
 				Filters: &types.AccessLogFilters{
-					MinDuration: parse.Duration(1 * time.Millisecond),
+					MinDuration: types.Duration(1 * time.Millisecond),
 				},
 			},
 			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
@@ -433,7 +432,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "keep",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						ClientHost: "drop",
 					},
 				},
@@ -458,7 +457,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
@@ -473,7 +472,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
@@ -491,7 +490,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
@@ -509,13 +508,13 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 				Format:   CommonFormat,
 				Fields: &types.AccessLogFields{
 					DefaultMode: "drop",
-					Names: types.FieldNames{
+					Names: map[string]string{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
 					Headers: &types.FieldHeaders{
 						DefaultMode: "keep",
-						Names: types.FieldHeaderNames{
+						Names: map[string]string{
 							"Referer": "redact",
 						},
 					},

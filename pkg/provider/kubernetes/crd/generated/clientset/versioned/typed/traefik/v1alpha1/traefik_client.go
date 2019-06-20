@@ -36,6 +36,7 @@ import (
 type TraefikV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	IngressRoutesGetter
+	IngressRouteTCPsGetter
 	MiddlewaresGetter
 }
 
@@ -46,6 +47,10 @@ type TraefikV1alpha1Client struct {
 
 func (c *TraefikV1alpha1Client) IngressRoutes(namespace string) IngressRouteInterface {
 	return newIngressRoutes(c, namespace)
+}
+
+func (c *TraefikV1alpha1Client) IngressRouteTCPs(namespace string) IngressRouteTCPInterface {
+	return newIngressRouteTCPs(c, namespace)
 }
 
 func (c *TraefikV1alpha1Client) Middlewares(namespace string) MiddlewareInterface {

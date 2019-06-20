@@ -27,4 +27,3 @@ level = "DEBUG"
 
       [[http.services.service1.LoadBalancer.Servers]]
         URL = "http://{{.WhoamiIP}}"
-        Weight = 1

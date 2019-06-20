@@ -70,10 +70,6 @@ required = [
   version = "2.1.1"
 
 [[constraint]]
-  name = "github.com/containous/flaeg"
-  version = "1.4.1"
-
-[[constraint]]
   branch = "master"
   name = "github.com/containous/mux"
 
@@ -81,14 +77,10 @@ required = [
   branch = "containous-fork"
   name = "github.com/containous/alice"
 
-[[constraint]]
-  name = "github.com/containous/staert"
-  version = "3.1.2"
-
-[[constraint]]
-  name = "github.com/thoas/stats"
-  # related to https://github.com/thoas/stats/pull/32
-  revision = "4975baf6a358ed3ddaa42133996e1959f96c9300"
+#[[constraint]]
+#  name = "github.com/thoas/stats"
+#  # related to https://github.com/thoas/stats/pull/32
+#  revision = "4975baf6a358ed3ddaa42133996e1959f96c9300"
 
 [[constraint]]
   name = "github.com/coreos/go-systemd"
@@ -137,9 +129,9 @@ required = [
 #  branch = "master"
 #  name = "github.com/jjcollinge/servicefabric"
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/abronan/valkeyrie"
+#[[constraint]]
+#  branch = "master"
+#  name = "github.com/abronan/valkeyrie"
 
 #[[constraint]]
 #  name = "github.com/mesosphere/mesos-dns"
@@ -193,13 +185,20 @@ required = [
   name = "github.com/vulcand/oxy"
 
 [[constraint]]
-#  branch = "master"
   name = "github.com/go-acme/lego"
-  version = "2.4.0"
+  version = "2.6.0"
 
 [[constraint]]
   name = "google.golang.org/grpc"
-  version = "1.5.2"
+  version = "1.13.0"
+
+[[override]]
+  name = "golang.org/x/sys"
+  revision = "1c9583448a9c3aa0f9a6a5241bf73c0bd8aafded"
+
+[[constraint]]
+  name = "github.com/golang/protobuf"
+  version = "v1.3.0"
 
 [[constraint]]
   name = "gopkg.in/fsnotify.v1"
@@ -278,8 +277,12 @@ required = [
 
 [[constraint]]
   name = "gopkg.in/DataDog/dd-trace-go.v1"
-  version = "1.7.0"
+  version = "1.13.0"
 
 [[constraint]]
   name = "github.com/instana/go-sensor"
   version = "1.4.12"
+
+[[constraint]]
+  name = "github.com/ExpediaDotCom/haystack-client-go"
+  version = "0.2.3"

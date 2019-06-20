@@ -31,27 +31,41 @@ import (
 )
 
 const (
+	// DockerAPIVersion is a constant holding the version of the Provider API traefik will use
+	DockerAPIVersion = "1.24"
+
 	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use.
 	SwarmAPIVersion = "1.24"
-	// DefaultTemplateRule The default template for the default rule.
-	DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 )
+
+// DefaultTemplateRule The default template for the default rule.
+const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.Constrainer    `mapstructure:",squash" export:"true"`
-	Watch                   bool             `description:"Watch provider" export:"true"`
-	Endpoint                string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
-	DefaultRule             string           `description:"Default rule"`
-	TLS                     *types.ClientTLS `description:"Enable Docker TLS support" export:"true"`
-	ExposedByDefault        bool             `description:"Expose containers by default" export:"true"`
-	UseBindPortIP           bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
-	SwarmMode               bool             `description:"Use Docker on Swarm Mode" export:"true"`
-	Network                 string           `description:"Default Docker network used" export:"true"`
-	SwarmModeRefreshSeconds int              `description:"Polling interval for swarm mode (in seconds)" export:"true"`
+	provider.Constrainer    `description:"List of constraints used to filter out some containers." export:"true"`
+	Watch                   bool             `description:"Watch provider." export:"true"`
+	Endpoint                string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint."`
+	DefaultRule             string           `description:"Default rule."`
+	TLS                     *types.ClientTLS `description:"Enable Docker TLS support." export:"true"`
+	ExposedByDefault        bool             `description:"Expose containers by default." export:"true"`
+	UseBindPortIP           bool             `description:"Use the ip address from the bound port, rather than from the inner network." export:"true"`
+	SwarmMode               bool             `description:"Use Docker on Swarm Mode." export:"true"`
+	Network                 string           `description:"Default Docker network used." export:"true"`
+	SwarmModeRefreshSeconds types.Duration   `description:"Polling interval for swarm mode." export:"true"`
 	defaultRuleTpl          *template.Template
+}
+
+// SetDefaults sets the default values.
+func (p *Provider) SetDefaults() {
+	p.Watch = true
+	p.ExposedByDefault = true
+	p.Endpoint = "unix:///var/run/docker.sock"
+	p.SwarmMode = false
+	p.SwarmModeRefreshSeconds = types.Duration(15 * time.Second)
+	p.DefaultRule = DefaultTemplateRule
 }
 
 // Init the provider.
@@ -123,11 +137,9 @@ func (p *Provider) createClient() (client.APIClient, error) {
 		"User-Agent": "Traefik " + version.Version,
 	}
 
-	var apiVersion string
+	apiVersion := DockerAPIVersion
 	if p.SwarmMode {
 		apiVersion = SwarmAPIVersion
-	} else {
-		apiVersion = DockerAPIVersion
 	}
 
 	return client.NewClient(p.Endpoint, apiVersion, httpClient, httpHeaders)
@@ -182,7 +194,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 				if p.SwarmMode {
 					errChan := make(chan error)
 					// TODO: This need to be change. Linked to Swarm events docker/docker#23827
-					ticker := time.NewTicker(time.Second * time.Duration(p.SwarmModeRefreshSeconds))
+					ticker := time.NewTicker(time.Duration(p.SwarmModeRefreshSeconds))
 					pool.GoCtx(func(ctx context.Context) {
 
 						ctx = log.With(ctx, log.Str(log.ProviderName, "docker"))

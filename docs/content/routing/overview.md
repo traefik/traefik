@@ -3,7 +3,7 @@
 What's Happening to the Requests?
 {: .subtitle }
 
-Let's zoom on Traefik's architecture and talk about the components that enable the routes to be created.
+Let's zoom in on Traefik's architecture and talk about the components that enable the routes to be created.
 
 First, when you start Traefik, you define [entrypoints](../entrypoints) (in their most basic forms, they are port numbers).
 Then, connected to these entrypoints, [routers](../routers) analyze the incoming requests to see if they match a set of [rules](../routers#rule).
@@ -14,7 +14,7 @@ If they do, the router might transform the request using pieces of [middleware](
 ## Clear Responsibilities
 
 - [_Providers_](../providers/overview.md) discover the services that live on your infrastructure (their IP, health, ...)
-- [_Entrypoints_](./entrypoints.md) listen for incomming traffic (ports, ...)
+- [_Entrypoints_](./entrypoints.md) listen for incoming traffic (ports, ...)
 - [_Routers_](./routers/index.md) analyse the requests (host, path, headers, SSL, ...)
 - [_Services_](./services/index.md) forward the request to your services (load balancing, ...)
 - [_Middlewares_](../middlewares/overview.md) may update the request or make decisions based on the request (authentication, rate limiting, headers, ...)

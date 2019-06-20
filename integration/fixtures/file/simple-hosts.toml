@@ -1,0 +1,27 @@
+[global]
+checkNewVersion = false
+sendAnonymousUsage = false
+
+[log]
+level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[providers]
+   [providers.file]
+
+[http.routers]
+  [http.routers.router1]
+    rule = "Host(`test.localhost`)"
+    service = "service1"
+
+  [http.routers.router2]
+    rule = "Host(`test.foo.localhost.`)"
+    service = "service1"
+
+[http.services]
+  [http.services.service1.loadbalancer]
+    [[http.services.service1.loadbalancer.servers]]
+        URL = "{{.Server}}"

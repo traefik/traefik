@@ -1,0 +1,16 @@
+[
+	{
+		"loadbalancer": {
+			"servers": [
+				{
+					"address": "127.0.0.2:2345"
+				}
+			]
+		},
+		"name": "myprovider@baz",
+		"provider": "myprovider@baz",
+		"usedBy": [
+			"myprovider@foo"
+		]
+	}
+]

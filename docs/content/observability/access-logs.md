@@ -110,38 +110,38 @@ Each field can be set to:
     
 ??? list "Available Fields"
 
-    ```ini
-    StartUTC
-    StartLocal
-    Duration
-    FrontendName
-    BackendName
-    BackendURL
-    BackendAddr
-    ClientAddr
-    ClientHost
-    ClientPort
-    ClientUsername
-    RequestAddr
-    RequestHost
-    RequestPort
-    RequestMethod
-    RequestPath
-    RequestProtocol
-    RequestLine
-    RequestContentSize
-    OriginDuration
-    OriginContentSize
-    OriginStatus
-    OriginStatusLine
-    DownstreamStatus
-    DownstreamStatusLine
-    DownstreamContentSize
-    RequestCount
-    GzipRatio
-    Overhead
-    RetryAttempts
-    ```
+    | Field                   | Description                                                                                                                                                         |
+    |-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+    | `StartUTC`              | The time at which request processing started.                                                                                                                       |
+    | `StartLocal`            | The local time at which request processing started.                                                                                                                 |
+    | `Duration`              | The total time taken by processing the response, including the origin server's time but not the log writing time.                                                   |
+    | `FrontendName`          | The name of the Traefik frontend.                                                                                                                                   |
+    | `BackendName`           | The name of the Traefik backend.                                                                                                                                    |
+    | `BackendURL`            | The URL of the Traefik backend.                                                                                                                                     |
+    | `BackendAddr`           | The IP:port of the Traefik backend (extracted from `BackendURL`)                                                                                                    |
+    | `ClientAddr`            | The remote address in its original form (usually IP:port).                                                                                                          |
+    | `ClientHost`            | The remote IP address from which the client request was received.                                                                                                   |
+    | `ClientPort`            | The remote TCP port from which the client request was received.                                                                                                     |
+    | `ClientUsername`        | The username provided in the URL, if present.                                                                                                                       |
+    | `RequestAddr`           | The HTTP Host header (usually IP:port). This is treated as not a header by the Go API.                                                                              |
+    | `RequestHost`           | The HTTP Host server name (not including port).                                                                                                                     |
+    | `RequestPort`           | The TCP port from the HTTP Host.                                                                                                                                    |
+    | `RequestMethod`         | The HTTP method.                                                                                                                                                    |
+    | `RequestPath`           | The HTTP request URI, not including the scheme, host or port.                                                                                                       |
+    | `RequestProtocol`       | The version of HTTP requested.                                                                                                                                      |
+    | `RequestLine`           | `RequestMethod` + `RequestPath` + `RequestProtocol`                                                                                                                 |
+    | `RequestContentSize`    | The number of bytes in the request entity (a.k.a. body) sent by the client.                                                                                         |
+    | `OriginDuration`        | The time taken by the origin server ('upstream') to return its response.                                                                                            |
+    | `OriginContentSize`     | The content length specified by the origin server, or 0 if unspecified.                                                                                             |
+    | `OriginStatus`          | The HTTP status code returned by the origin server. If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent.     |
+    | `OriginStatusLine`      | `OriginStatus` + Status code explanation                                                                                                                            |
+    | `DownstreamStatus`      | The HTTP status code returned to the client.                                                                                                                        |
+    | `DownstreamStatusLine`  | `DownstreamStatus` + Status code explanation                                                                                                                        |
+    | `DownstreamContentSize` | The number of bytes in the response entity returned to the client. This is in addition to the "Content-Length" header, which may be present in the origin response. |
+    | `RequestCount`          | The number of requests received since the Traefik instance started.                                                                                                 |
+    | `GzipRatio`             | The response body compression ratio achieved.                                                                                                                       |
+    | `Overhead`              | The processing time overhead caused by Traefik.                                                                                                                     |
+    | `RetryAttempts`         | The amount of attempts the request was retried.                                                                                                                     |
 
 ## Log Rotation
 

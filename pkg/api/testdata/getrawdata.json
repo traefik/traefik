@@ -1,0 +1,102 @@
+{
+	"routers": {
+		"myprovider@bar": {
+			"entryPoints": [
+				"web"
+			],
+			"middlewares": [
+				"auth",
+				"anotherprovider@addPrefixTest"
+			],
+			"service": "myprovider@foo-service",
+			"rule": "Host(`foo.bar`)"
+		},
+		"myprovider@test": {
+			"entryPoints": [
+				"web"
+			],
+			"middlewares": [
+				"addPrefixTest",
+				"auth"
+			],
+			"service": "myprovider@foo-service",
+			"rule": "Host(`foo.bar.other`)"
+		}
+	},
+	"middlewares": {
+		"anotherprovider@addPrefixTest": {
+			"addPrefix": {
+				"prefix": "/toto"
+			},
+			"usedBy": [
+				"myprovider@bar"
+			]
+		},
+		"myprovider@addPrefixTest": {
+			"addPrefix": {
+				"prefix": "/titi"
+			},
+			"usedBy": [
+				"myprovider@test"
+			]
+		},
+		"myprovider@auth": {
+			"basicAuth": {
+				"users": [
+					"admin:admin"
+				]
+			},
+			"usedBy": [
+				"myprovider@bar",
+				"myprovider@test"
+			]
+		}
+	},
+	"services": {
+		"myprovider@foo-service": {
+			"loadbalancer": {
+				"servers": [
+					{
+						"url": "http://127.0.0.1"
+					}
+				],
+				"passHostHeader": false
+			},
+			"usedBy": [
+				"myprovider@bar",
+				"myprovider@test"
+			]
+		}
+	},
+	"tcpRouters": {
+		"myprovider@tcpbar": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "myprovider@tcpfoo-service",
+			"rule": "HostSNI(`foo.bar`)"
+		},
+		"myprovider@tcptest": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "myprovider@tcpfoo-service",
+			"rule": "HostSNI(`foo.bar.other`)"
+		}
+	},
+	"tcpServices": {
+		"myprovider@tcpfoo-service": {
+			"loadbalancer": {
+				"servers": [
+					{
+						"address": "127.0.0.1"
+					}
+				]
+			},
+			"usedBy": [
+				"myprovider@tcpbar",
+				"myprovider@tcptest"
+			]
+		}
+	}
+}

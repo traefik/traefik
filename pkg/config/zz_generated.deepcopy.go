@@ -266,6 +266,21 @@ func (in *Headers) DeepCopyInto(out *Headers) {
 			(*out)[key] = val
 		}
 	}
+	if in.AccessControlAllowHeaders != nil {
+		in, out := &in.AccessControlAllowHeaders, &out.AccessControlAllowHeaders
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.AccessControlAllowMethods != nil {
+		in, out := &in.AccessControlAllowMethods, &out.AccessControlAllowMethods
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.AccessControlExposeHeaders != nil {
+		in, out := &in.AccessControlExposeHeaders, &out.AccessControlExposeHeaders
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.AllowedHosts != nil {
 		in, out := &in.AllowedHosts, &out.AllowedHosts
 		*out = make([]string, len(*in))

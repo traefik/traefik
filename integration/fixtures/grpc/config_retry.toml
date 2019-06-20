@@ -34,7 +34,6 @@ rootCAs = [ """{{ .CertContent }}""" ]
      flushInterval="1ms"
     [[http.services.service1.loadbalancer.servers]]
       url = "https://127.0.0.1:{{ .GRPCServerPort }}"
-      weight = 1
 
 [tlsStores.default.DefaultCertificate]
     certFile = """{{ .CertContent }}"""

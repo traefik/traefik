@@ -29,9 +29,7 @@ level = "DEBUG"
     passHostHeader = true
     [[http.services.service1.loadbalancer.servers]]
         url = "http://{{.Server1}}:8989474"
-        weight = 1
 
   [http.services.error.loadbalancer]
     [[http.services.error.loadbalancer.servers]]
         url = "http://{{.Server2}}:80"
-        weight = 1

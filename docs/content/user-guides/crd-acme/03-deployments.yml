@@ -30,8 +30,8 @@ spec:
           args:
             - --api
             - --accesslog
-            - --entrypoints=Name:web Address::8000
-            - --entrypoints=Name:websecure Address::4443
+            - --entrypoints.web.Address=:8000
+            - --entrypoints.websecure.Address=:4443
             - --providers.kubernetescrd
             - --providers.kubernetescrd.trace
             - --acme

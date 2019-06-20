@@ -28,11 +28,17 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Directory                 string `description:"Load configuration from one or more .toml files in a directory" export:"true"`
-	Watch                     bool   `description:"Watch provider" export:"true"`
+	Directory                 string `description:"Load configuration from one or more .toml files in a directory." export:"true"`
+	Watch                     bool   `description:"Watch provider." export:"true"`
 	Filename                  string `description:"Override default configuration template. For advanced users :)" export:"true"`
 	DebugLogGeneratedTemplate bool   `description:"Enable debug logging of generated configuration template." export:"true"`
-	TraefikFile               string
+	TraefikFile               string `description:"-"`
+}
+
+// SetDefaults sets the default values.
+func (p *Provider) SetDefaults() {
+	p.Watch = true
+	p.Filename = ""
 }
 
 // Init the provider

@@ -50,11 +50,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -89,11 +87,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -114,11 +110,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -140,11 +134,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -183,11 +175,9 @@ func TestRouterManager_Get(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -214,22 +204,20 @@ func TestRouterManager_Get(t *testing.T) {
 		{
 			desc: "no middleware with provider name",
 			routersConfig: map[string]*config.Router{
-				"provider-1.foo": {
+				"provider-1@foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
-				"provider-1.foo-service": {
+				"provider-1@foo-service": {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -239,22 +227,20 @@ func TestRouterManager_Get(t *testing.T) {
 		{
 			desc: "no middleware with specified provider name",
 			routersConfig: map[string]*config.Router{
-				"provider-1.foo": {
+				"provider-1@foo": {
 					EntryPoints: []string{"web"},
-					Service:     "provider-2.foo-service",
+					Service:     "provider-2@foo-service",
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
-				"provider-2.foo-service": {
+				"provider-2@foo-service": {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -264,36 +250,34 @@ func TestRouterManager_Get(t *testing.T) {
 		{
 			desc: "middleware: chain with provider name",
 			routersConfig: map[string]*config.Router{
-				"provider-1.foo": {
+				"provider-1@foo": {
 					EntryPoints: []string{"web"},
-					Middlewares: []string{"provider-2.chain-middle", "headers-middle"},
+					Middlewares: []string{"provider-2@chain-middle", "headers-middle"},
 					Service:     "foo-service",
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
 			serviceConfig: map[string]*config.Service{
-				"provider-1.foo-service": {
+				"provider-1@foo-service": {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
 			middlewaresConfig: map[string]*config.Middleware{
-				"provider-2.chain-middle": {
+				"provider-2@chain-middle": {
 					Chain: &config.Chain{Middlewares: []string{"auth-middle"}},
 				},
-				"provider-2.auth-middle": {
+				"provider-2@auth-middle": {
 					BasicAuth: &config.BasicAuth{
 						Users: []string{"toto:titi"},
 					},
 				},
-				"provider-1.headers-middle": {
+				"provider-1@headers-middle": {
 					Headers: &config.Headers{
 						CustomRequestHeaders: map[string]string{"X-Apero": "beer"},
 					},
@@ -314,11 +298,17 @@ func TestRouterManager_Get(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			serviceManager := service.NewManager(test.serviceConfig, http.DefaultTransport)
-			middlewaresBuilder := middleware.NewBuilder(test.middlewaresConfig, serviceManager)
-			responseModifierFactory := responsemodifiers.NewBuilder(test.middlewaresConfig)
-
-			routerManager := NewManager(test.routersConfig, serviceManager, middlewaresBuilder, responseModifierFactory)
+			rtConf := config.NewRuntimeConfig(config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Services:    test.serviceConfig,
+					Routers:     test.routersConfig,
+					Middlewares: test.middlewaresConfig,
+				},
+			})
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -367,11 +357,9 @@ func TestAccessLog(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -397,11 +385,9 @@ func TestAccessLog(t *testing.T) {
 					LoadBalancer: &config.LoadBalancerService{
 						Servers: []config.Server{
 							{
-								URL:    server.URL,
-								Weight: 1,
+								URL: server.URL,
 							},
 						},
-						Method: "wrr",
 					},
 				},
 			},
@@ -413,11 +399,17 @@ func TestAccessLog(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 
-			serviceManager := service.NewManager(test.serviceConfig, http.DefaultTransport)
-			middlewaresBuilder := middleware.NewBuilder(test.middlewaresConfig, serviceManager)
-			responseModifierFactory := responsemodifiers.NewBuilder(test.middlewaresConfig)
-
-			routerManager := NewManager(test.routersConfig, serviceManager, middlewaresBuilder, responseModifierFactory)
+			rtConf := config.NewRuntimeConfig(config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Services:    test.serviceConfig,
+					Routers:     test.routersConfig,
+					Middlewares: test.middlewaresConfig,
+				},
+			})
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -441,6 +433,295 @@ func TestAccessLog(t *testing.T) {
 			}))
 		})
 	}
+}
+
+func TestRuntimeConfiguration(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		serviceConfig    map[string]*config.Service
+		routerConfig     map[string]*config.Router
+		middlewareConfig map[string]*config.Middleware
+		expectedError    int
+	}{
+		{
+			desc: "No error",
+			serviceConfig: map[string]*config.Service{
+				"foo-service": {
+					LoadBalancer: &config.LoadBalancerService{
+						Servers: []config.Server{
+							{
+								URL: "http://127.0.0.1:8085",
+							},
+							{
+								URL: "http://127.0.0.1:8086",
+							},
+						},
+						HealthCheck: &config.HealthCheck{
+							Interval: "500ms",
+							Path:     "/health",
+						},
+					},
+				},
+			},
+			routerConfig: map[string]*config.Router{
+				"foo": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`bar.foo`)",
+				},
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+				},
+			},
+			expectedError: 0,
+		},
+		{
+			desc: "One router with wrong rule",
+			serviceConfig: map[string]*config.Service{
+				"foo-service": {
+					LoadBalancer: &config.LoadBalancerService{
+						Servers: []config.Server{
+							{
+								URL: "http://127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			routerConfig: map[string]*config.Router{
+				"foo": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "WrongRule(`bar.foo`)",
+				},
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+				},
+			},
+			expectedError: 1,
+		},
+		{
+			desc: "All router with wrong rule",
+			serviceConfig: map[string]*config.Service{
+				"foo-service": {
+					LoadBalancer: &config.LoadBalancerService{
+						Servers: []config.Server{
+							{
+								URL: "http://127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			routerConfig: map[string]*config.Router{
+				"foo": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "WrongRule(`bar.foo`)",
+				},
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "WrongRule(`foo.bar`)",
+				},
+			},
+			expectedError: 2,
+		},
+		{
+			desc: "Router with unknown service",
+			serviceConfig: map[string]*config.Service{
+				"foo-service": {
+					LoadBalancer: &config.LoadBalancerService{
+						Servers: []config.Server{
+							{
+								URL: "http://127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			routerConfig: map[string]*config.Router{
+				"foo": {
+					EntryPoints: []string{"web"},
+					Service:     "wrong-service",
+					Rule:        "Host(`bar.foo`)",
+				},
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+				},
+			},
+			expectedError: 1,
+		},
+		{
+			desc: "Router with broken service",
+			serviceConfig: map[string]*config.Service{
+				"foo-service": {
+					LoadBalancer: nil,
+				},
+			},
+			routerConfig: map[string]*config.Router{
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+				},
+			},
+			expectedError: 2,
+		},
+		{
+			desc: "Router with middleware",
+			serviceConfig: map[string]*config.Service{
+				"foo-service": {
+					LoadBalancer: &config.LoadBalancerService{
+						Servers: []config.Server{
+							{
+								URL: "http://127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			middlewareConfig: map[string]*config.Middleware{
+				"auth": {
+					BasicAuth: &config.BasicAuth{
+						Users: []string{"admin:admin"},
+					},
+				},
+				"addPrefixTest": {
+					AddPrefix: &config.AddPrefix{
+						Prefix: "/toto",
+					},
+				},
+			},
+			routerConfig: map[string]*config.Router{
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					Middlewares: []string{"auth", "addPrefixTest"},
+				},
+				"test": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar.other`)",
+					Middlewares: []string{"addPrefixTest", "auth"},
+				},
+			},
+		},
+		{
+			desc: "Router with unknown middleware",
+			serviceConfig: map[string]*config.Service{
+				"foo-service": {
+					LoadBalancer: &config.LoadBalancerService{
+						Servers: []config.Server{
+							{
+								URL: "http://127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			middlewareConfig: map[string]*config.Middleware{
+				"auth": {
+					BasicAuth: &config.BasicAuth{
+						Users: []string{"admin:admin"},
+					},
+				},
+			},
+			routerConfig: map[string]*config.Router{
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					Middlewares: []string{"unknown"},
+				},
+			},
+			expectedError: 1,
+		},
+
+		{
+			desc: "Router with broken middleware",
+			serviceConfig: map[string]*config.Service{
+				"foo-service": {
+					LoadBalancer: &config.LoadBalancerService{
+						Servers: []config.Server{
+							{
+								URL: "http://127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			middlewareConfig: map[string]*config.Middleware{
+				"auth": {
+					BasicAuth: &config.BasicAuth{
+						Users: []string{"foo"},
+					},
+				},
+			},
+			routerConfig: map[string]*config.Router{
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					Middlewares: []string{"auth"},
+				},
+			},
+			expectedError: 2,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			entryPoints := []string{"web"}
+
+			rtConf := config.NewRuntimeConfig(config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Services:    test.serviceConfig,
+					Routers:     test.routerConfig,
+					Middlewares: test.middlewareConfig,
+				},
+			})
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*config.MiddlewareInfo{})
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
+
+			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
+
+			// even though rtConf was passed by argument to the manager builders above,
+			// it's ok to use it as the result we check, because everything worth checking
+			// can be accessed by pointers in it.
+			var allErrors int
+			for _, v := range rtConf.Services {
+				if v.Err != nil {
+					allErrors++
+				}
+			}
+			for _, v := range rtConf.Routers {
+				if v.Err != "" {
+					allErrors++
+				}
+			}
+			for _, v := range rtConf.Middlewares {
+				if v.Err != nil {
+					allErrors++
+				}
+			}
+			assert.Equal(t, test.expectedError, allErrors)
+		})
+	}
+
 }
 
 type staticTransport struct {
@@ -470,21 +751,25 @@ func BenchmarkRouterServe(b *testing.B) {
 			LoadBalancer: &config.LoadBalancerService{
 				Servers: []config.Server{
 					{
-						URL:    server.URL,
-						Weight: 1,
+						URL: server.URL,
 					},
 				},
-				Method: "wrr",
 			},
 		},
 	}
 	entryPoints := []string{"web"}
 
-	serviceManager := service.NewManager(serviceConfig, &staticTransport{res})
-	middlewaresBuilder := middleware.NewBuilder(map[string]*config.Middleware{}, serviceManager)
-	responseModifierFactory := responsemodifiers.NewBuilder(map[string]*config.Middleware{})
-
-	routerManager := NewManager(routersConfig, serviceManager, middlewaresBuilder, responseModifierFactory)
+	rtConf := config.NewRuntimeConfig(config.Configuration{
+		HTTP: &config.HTTPConfiguration{
+			Services:    serviceConfig,
+			Routers:     routersConfig,
+			Middlewares: map[string]*config.Middleware{},
+		},
+	})
+	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res})
+	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -498,6 +783,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	}
 
 }
+
 func BenchmarkService(b *testing.B) {
 	res := &http.Response{
 		StatusCode: 200,
@@ -509,16 +795,19 @@ func BenchmarkService(b *testing.B) {
 			LoadBalancer: &config.LoadBalancerService{
 				Servers: []config.Server{
 					{
-						URL:    "tchouck",
-						Weight: 1,
+						URL: "tchouck",
 					},
 				},
-				Method: "wrr",
 			},
 		},
 	}
 
-	serviceManager := service.NewManager(serviceConfig, &staticTransport{res})
+	rtConf := config.NewRuntimeConfig(config.Configuration{
+		HTTP: &config.HTTPConfiguration{
+			Services: serviceConfig,
+		},
+	})
+	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res})
 	w := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 

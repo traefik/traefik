@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/label"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/provider/label"
 	"github.com/gambol99/go-marathon"
 )
 
@@ -131,7 +131,6 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, app maratho
 	if len(conf.Services) == 0 {
 		conf.Services = make(map[string]*config.TCPService)
 		lb := &config.TCPLoadBalancerService{}
-		lb.SetDefaults()
 		conf.Services[appName] = &config.TCPService{
 			LoadBalancer: lb,
 		}
@@ -141,7 +140,6 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, app maratho
 		var servers []config.TCPServer
 
 		defaultServer := config.TCPServer{}
-		defaultServer.SetDefaults()
 
 		if len(service.LoadBalancer.Servers) > 0 {
 			defaultServer = service.LoadBalancer.Servers[0]
@@ -212,7 +210,6 @@ func (p *Provider) getTCPServer(app marathon.Application, task marathon.Task, ex
 
 	server := config.TCPServer{
 		Address: net.JoinHostPort(host, port),
-		Weight:  1,
 	}
 
 	return server, nil
@@ -230,8 +227,7 @@ func (p *Provider) getServer(app marathon.Application, task marathon.Task, extra
 	}
 
 	server := config.Server{
-		URL:    fmt.Sprintf("%s://%s", defaultServer.Scheme, net.JoinHostPort(host, port)),
-		Weight: 1,
+		URL: fmt.Sprintf("%s://%s", defaultServer.Scheme, net.JoinHostPort(host, port)),
 	}
 
 	return server, nil

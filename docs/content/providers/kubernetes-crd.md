@@ -145,13 +145,13 @@ If you're in a hurry, maybe you'd rather go through the [dynamic](../reference/d
 --8<-- "content/providers/crd_ingress_route.yml"
 ```
 
-That `IngressRoute` kind can then be used to define an `IngressRoute` object, such as:
+That `IngressRoute` kind can then be used to define an `IngressRoute` object, such as in:
 
 ```yaml
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingressroutefoo.crd
+  name: ingressroutefoo
 
 spec:
   entryPoints:
@@ -170,6 +170,22 @@ spec:
     services:
     - name: whoami
       port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: ingressroutetcpfoo.crd
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+  # Match is the rule corresponding to an underlying router.
+  - match: HostSNI(`*`)
+    services:
+    - name: whoamitcp
+      port: 8080
 ```
 
 ### Middleware
@@ -197,7 +213,7 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingressroutebar.crd
+  name: ingressroutebar
 
 spec:
   entryPoints:
@@ -211,6 +227,8 @@ spec:
     middlewares:
     - name: stripprefix
 ```
+
+More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
 
 ### TLS
 
@@ -230,7 +248,7 @@ data:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingressroutetls.crd
+  name: ingressroutetls
 
 spec:
   entryPoints:

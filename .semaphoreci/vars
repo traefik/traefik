@@ -24,8 +24,8 @@ function ci_retry {
     until [ $n -ge $NRETRY ]
     do
         "$@" && break
-        n=$[$n+1]
-        echo "$@ failed, attempt ${n}/${NRETRY}"
+        n=$((n+1))
+        echo "${*} failed, attempt ${n}/${NRETRY}"
         sleep $NSLEEP
     done
 
@@ -34,4 +34,3 @@ function ci_retry {
 }
 
 export -f ci_retry
-

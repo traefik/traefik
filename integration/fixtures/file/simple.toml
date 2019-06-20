@@ -30,17 +30,12 @@ level = "DEBUG"
   [http.services.service1.loadbalancer]
     [[http.services.service1.loadbalancer.servers]]
       url = "http://172.17.0.2:80"
-      weight = 10
     [[http.services.service1.loadbalancer.servers]]
       url = "http://172.17.0.3:80"
-      weight = 1
-
+    
   [http.services.service2]
     [http.services.service2.loadbalancer]
-      method = "drr"
       [[http.services.service2.loadbalancer.servers]]
         url = "http://172.17.0.4:80"
-        weight = 1
       [[http.services.service2.loadbalancer.servers]]
         url = "http://172.17.0.5:80"
-        weight = 2

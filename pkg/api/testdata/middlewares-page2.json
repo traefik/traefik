@@ -1,0 +1,12 @@
+[
+	{
+		"addPrefix": {
+			"prefix": "/titi"
+		},
+		"name": "myprovider@addPrefixTest",
+		"provider": "myprovider@addPrefixTest",
+		"usedBy": [
+			"myprovider@test"
+		]
+	}
+]

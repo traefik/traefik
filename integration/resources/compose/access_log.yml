@@ -11,6 +11,7 @@ server1:
     - traefik.enable=true
     - traefik.http.routers.rt-server1.entryPoints=web
     - traefik.http.routers.rt-server1.rule=Host("frontend1.docker.local")
+    - traefik.http.routers.rt-server1.service=service1
     - traefik.http.services.service1.loadbalancer.server.port=80
 server2:
   image: containous/whoami
@@ -19,7 +20,6 @@ server2:
     - traefik.http.routers.rt-server2.entryPoints=web
     - traefik.http.routers.rt-server2.rule=Host("frontend2.docker.local")
     - traefik.http.services.service2.loadbalancer.server.port=80
-    - traefik.http.services.service2.loadbalancer.method=drr
 server3:
   image: containous/whoami
   labels:
@@ -27,7 +27,6 @@ server3:
     - traefik.http.routers.rt-server3.entryPoints=web
     - traefik.http.routers.rt-server3.rule=Host("frontend2.docker.local")
     - traefik.http.services.service2.loadbalancer.server.port=80
-    - traefik.http.services.service2.loadbalancer.method=drr
 authFrontend:
   image: containous/whoami
   labels:

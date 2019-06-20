@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -367,6 +368,8 @@ type testLoadBalancer struct {
 	numRemovedServers  int
 	numUpsertedServers int
 	servers            []*url.URL
+	// options is just to make sure that LBStatusUpdater forwards options on Upsert to its BalancerHandler
+	options []roundrobin.ServerOption
 }
 
 func (lb *testLoadBalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -386,6 +389,7 @@ func (lb *testLoadBalancer) UpsertServer(u *url.URL, options ...roundrobin.Serve
 	defer lb.Unlock()
 	lb.numUpsertedServers++
 	lb.servers = append(lb.servers, u)
+	lb.options = append(lb.options, options...)
 	return nil
 }
 
@@ -393,13 +397,22 @@ func (lb *testLoadBalancer) Servers() []*url.URL {
 	return lb.servers
 }
 
+func (lb *testLoadBalancer) Options() []roundrobin.ServerOption {
+	return lb.options
+}
+
 func (lb *testLoadBalancer) removeServer(u *url.URL) {
 	var i int
 	var serverURL *url.URL
+	found := false
 	for i, serverURL = range lb.servers {
 		if *serverURL == *u {
+			found = true
 			break
 		}
+	}
+	if !found {
+		return
 	}
 
 	lb.servers = append(lb.servers[:i], lb.servers[i+1:]...)
@@ -425,5 +438,34 @@ func (th *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	th.healthSequence = th.healthSequence[1:]
 	if len(th.healthSequence) == 0 {
 		th.done()
+	}
+}
+
+func TestLBStatusUpdater(t *testing.T) {
+	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+	svInfo := &config.ServiceInfo{}
+	lbsu := NewLBStatusUpdater(lb, svInfo)
+	newServer, err := url.Parse("http://foo.com")
+	assert.Nil(t, err)
+	err = lbsu.UpsertServer(newServer, roundrobin.Weight(1))
+	assert.Nil(t, err)
+	assert.Equal(t, len(lbsu.Servers()), 1)
+	assert.Equal(t, len(lbsu.BalancerHandler.(*testLoadBalancer).Options()), 1)
+	statuses := svInfo.GetAllStatus()
+	assert.Equal(t, len(statuses), 1)
+	for k, v := range statuses {
+		assert.Equal(t, k, newServer.String())
+		assert.Equal(t, v, serverUp)
+		break
+	}
+	err = lbsu.RemoveServer(newServer)
+	assert.Nil(t, err)
+	assert.Equal(t, len(lbsu.Servers()), 0)
+	statuses = svInfo.GetAllStatus()
+	assert.Equal(t, len(statuses), 1)
+	for k, v := range statuses {
+		assert.Equal(t, k, newServer.String())
+		assert.Equal(t, v, serverDown)
+		break
 	}
 }

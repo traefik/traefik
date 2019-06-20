@@ -85,8 +85,9 @@ nav:
       - 'Routers': 'routing/routers/index.md'
       - 'Services': 'routing/services/index.md'
   - 'HTTPS & TLS':
-      - 'Overview': 'https-tls/overview.md'
-      - 'ACME': 'https-tls/acme.md'
+      - 'Overview': 'https/overview.md'
+      - 'TLS': 'https/tls.md'
+      - 'Let''s Encrypt': 'https/acme.md'
   - 'Middlewares':
       - 'Overview': 'middlewares/overview.md'
       - 'AddPrefix': 'middlewares/addprefix.md'
@@ -113,8 +114,8 @@ nav:
   - 'Operations':
       - 'CLI': 'operations/cli.md'
       - 'Dashboard' : 'operations/dashboard.md'
+      - 'API': 'operations/api.md'
       - 'Ping': 'operations/ping.md'
-      - 'Debug Mode': 'operations/debug-mode.md'
   - 'Observability':
       - 'Logs': 'observability/logs.md'
       - 'Access Logs': 'observability/access-logs.md'
@@ -133,7 +134,11 @@ nav:
       - 'Maintainers': 'contributing/maintainers.md'
   - 'Glossary': 'glossary.md'
   - 'References':
-      - 'Static Configuration': 'reference/static-configuration.md'
+      - 'Static Configuration':
+          - 'Overview': 'reference/static-configuration/overview.md'
+          - 'File': 'reference/static-configuration/file.md'
+          - 'CLI': 'reference/static-configuration/cli.md'
+          - 'Environment variables': 'reference/static-configuration/env.md'
       - 'Dynamic Configuration':
         - 'Docker': 'reference/dynamic-configuration/docker.md'
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'

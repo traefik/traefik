@@ -30,7 +30,6 @@ level = "DEBUG"
           [http.services.whoami.loadbalancer]
             [[http.services.whoami.loadbalancer.servers]]
               url = "http://localhost:8085"
-              weight=1
 [tcp]
     [tcp.routers]
         [tcp.routers.to-whoami-a]
@@ -53,26 +52,17 @@ level = "DEBUG"
             entryPoints = [ "tcp" ]
             [tcp.routers.to-whoami-no-cert.tls]
 
-        [tcp.services.whoami-a]
-            [tcp.services.whoami-a.loadbalancer]
-              method = "wrr"
-              [[tcp.services.whoami-a.loadbalancer.servers]]
+        [tcp.services.whoami-a.loadbalancer]
+            [[tcp.services.whoami-a.loadbalancer.servers]]
                 address = "localhost:8081"
-                weight = 1
 
-        [tcp.services.whoami-b]
-            [tcp.services.whoami-b.loadbalancer]
-              method = "wrr"
-              [[tcp.services.whoami-b.loadbalancer.servers]]
+        [tcp.services.whoami-b.loadbalancer]
+            [[tcp.services.whoami-b.loadbalancer.servers]]
                 address = "localhost:8082"
-                weight = 1
 
-        [tcp.services.whoami-no-cert]
-            [tcp.services.whoami-no-cert.loadbalancer]
-              method = "wrr"
-              [[tcp.services.whoami-no-cert.loadbalancer.servers]]
+        [tcp.services.whoami-no-cert.loadbalancer]
+            [[tcp.services.whoami-no-cert.loadbalancer.servers]]
                 address = "localhost:8083"
-                weight = 1
 
 [[tls]]
   [tls.certificate]

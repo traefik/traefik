@@ -6,48 +6,56 @@ The Traefik Command Line
 ## General
 
 ```bash
-traefik [command] [--flag=flag_argument]
+traefik [command] [flags] [arguments]
 ```
 
-Available commands: 
+Use `traefik [command] --help` for help on any command.
 
-- `version` : Print version
-- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the `Store Traefik configuration`(TODO: add doc and link) section to get documentation on it.
-- `healthcheck`: Calls Traefik `/ping` to check health.
+Commands:
 
-Each command can have additional flags.
+- `healthcheck` Calls Traefik `/ping` to check the health of Traefik (the API must be enabled).
+- `version` Shows the current Traefik version.
 
-All those flags will be displayed with:
+Flag's usage:
 
 ```bash
-traefik [command] --help
+# set flag_argument to flag(s)
+traefik [--flag=flag_argument] [-f [flag_argument]]
+
+# set true/false to boolean flag(s)
+traefik [--flag[=true|false| ]] [-f [true|false| ]]
 ```
 
-Each command is described at the beginning of the help section:
+### healthcheck
 
-```bash
-traefik --help
+Calls Traefik `/ping` to check the health of Traefik.
+Its exit status is `0` if Traefik is healthy and `1` otherwise.
 
-# or
-
-docker run traefik[:version] --help
-# ex: docker run traefik:1.5 --help
-```
-
-### Command: healthcheck
-
-Checks the health of Traefik.
-Its exit status is `0` if Traefik is healthy and `1` if it is unhealthy.
-
-This can be used with Docker [HEALTHCHECK](https://docs.docker.com/engine/reference/builder/#healthcheck) instruction or any other health check orchestration mechanism.
+This can be used with Docker [HEALTHCHECK](https://docs.docker.com/engine/reference/builder/#healthcheck) instruction
+or any other health check orchestration mechanism.
 
 !!! note
     The [`ping` endpoint](../ping/) must be enabled to allow the `healthcheck` command to call `/ping`.
 
-```bash
-traefik healthcheck
-```
+Usage:
 
 ```bash
+traefik healthcheck [command] [flags] [arguments]
+```
+
+Example:
+
+```bash
+$ traefik healthcheck
 OK: http://:8082/ping
+```
+
+### version
+
+Shows the current Traefik version.
+
+Usage:
+
+```bash
+traefik version [command] [flags] [arguments]
 ```

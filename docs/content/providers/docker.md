@@ -45,7 +45,7 @@ Attach labels to your containers and let Traefik do the rest!
     swarmMode = true
     ```
 
-    Attaching labels to containers (in your docker compose file)
+    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
 
     ```yaml
     version: "3"
@@ -57,13 +57,13 @@ Attach labels to your containers and let Traefik do the rest!
     ```
 
     !!! important "Labels in Docker Swarm Mode"
-        If you use a compose file with the Swarm mode, labels should be defined in the `deploy` part of your service.
+        While in Swarm Mode, Traefik uses labels found on services, not on individual containers. Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
         This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
 
 ## Provider Configuration Options
 
 !!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration.md) and the [dynamic](../reference/dynamic-configuration/docker.md) configuration references.
+    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration/overview.md) and the [dynamic](../reference/dynamic-configuration/docker.md) configuration references.
 
 ### `endpoint`
 
@@ -86,7 +86,7 @@ Traefik requires access to the docker socket to get its dynamic configuration.
         - [KubeCon EU 2018 Keynote, Running with Scissors, from Liz Rice](https://www.youtube.com/watch?v=ltrV-Qmh3oY)
         - [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container.html)
         - [A thread on Stack Overflow about sharing the `/var/run/docker.sock` file](https://news.ycombinator.com/item?id=17983623)
-        - [To Dind or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
+        - [To DinD or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
 
 ??? tip "Security Compensation"
 
@@ -147,12 +147,14 @@ _Optional, Default=false_
 Traefik routes requests to the IP/Port of the matching container.
 When setting `usebindportip=true`, you tell Traefik to use the IP/Port attached to the container's _binding_ instead of its inner network IP/Port.
 
-When used in conjunction with the `traefik.port` label (that tells Traefik to route requests to a specific port), Traefik tries to find a binding on port `traefik.port`.
-If it can't find such a binding, Traefik falls back on the internal network IP of the container, but still uses the `traefik.port` that is set in the label.
+When used in conjunction with the `traefik.http.services.XXX.loadbalancer.server.port` label (that tells Traefik to route requests to a specific port),
+Traefik tries to find a binding on port `traefik.http.services.XXX.loadbalancer.server.port`.
+If it can't find such a binding, Traefik falls back on the internal network IP of the container,
+but still uses the `traefik.http.services.XXX.loadbalancer.server.port` that is set in the label.
 
 ??? example "Examples of `usebindportip` in different situations."
 
-    | traefik.port label | Container's binding                                | Routes to      |
+    | port label         | Container's binding                                | Routes to      |
     |--------------------|----------------------------------------------------|----------------|
     |          -         |           -                                        | IntIP:IntPort  |
     |          -         | ExtPort:IntPort                                    | IntIP:IntPort  |
@@ -182,15 +184,24 @@ This option can be overridden on a container basis with the `traefik.docker.netw
 
 ### `defaultRule`
 
-_Optional, Default=Host(`{{ normalize .Name }}`)_
+_Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
 For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
 It must be a valid [Go template](https://golang.org/pkg/text/template/),
 augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
-The container service name can be accessed as the Name identifier,
+The container service name can be accessed as the `Name` identifier,
 and the template has access to all the labels defined on this container.
 
-``defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"``
+```toml tab="File"
+[docker]
+defaultRule = ""
+# ...
+```
+
+```txt tab="CLI"
+--providers.docker
+--providers.docker.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+```
 
 ### `swarmMode`
 
@@ -221,7 +232,7 @@ Every [Router](../routing/routers/index.md) parameter can be updated this way.
 
 ### Services
 
-To update the configuration of the Service automatically attached to the container, add labels starting with `traefik.http.services.{name-of-your-choice}.`, followed by the option you want to change. For example, to change the load balancer method, you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.method=drr`.
+To update the configuration of the Service automatically attached to the container, add labels starting with `traefik.http.services.{name-of-your-choice}.`, followed by the option you want to change. For example, to change the passhostheader behavior, you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.passhostheader=false`.
 
 Every [Service](../routing/services/index.md) parameter can be updated this way.
 
@@ -236,13 +247,15 @@ You can declare pieces of middleware using labels starting with `traefik.http.mi
          my-container:
            # ...
            labels:
-             - traefik.http.middlewares.my-redirect.schemeredirect.scheme=https
-             - traefik.http.routers.middlewares=my-redirect
+             - traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
+             - traefik.http.routers.my-container.middlewares=my-redirect
     ```
 
 !!! warning "Conflicts in Declaration"
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
+
+More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
 
 ### TCP
 
@@ -262,7 +275,7 @@ You can declare TCP Routers and/or Services using labels.
 
 !!! warning "TCP and HTTP"
 
-    If you declare a TCP Router/Service, it will prevent Traefik from automatically create an HTTP Router/Service (like it does by default if no TCP Router/Service is defined).
+    If you declare a TCP Router/Service, it will prevent Traefik from automatically creating an HTTP Router/Service (like it does by default if no TCP Router/Service is defined).
     You can declare both a TCP Router/Service and an HTTP Router/Service for the same container (but you have to do so manually).
 
 ### Specific Options

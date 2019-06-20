@@ -166,7 +166,12 @@ func TestBuilderBuild(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			builder := NewBuilder(test.conf)
+			rtConf := config.NewRuntimeConfig(config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Middlewares: test.conf,
+				},
+			})
+			builder := NewBuilder(rtConf.Middlewares)
 
 			rm := builder.Build(context.Background(), test.middlewares)
 

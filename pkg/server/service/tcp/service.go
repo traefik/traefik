@@ -13,55 +13,50 @@ import (
 
 // Manager is the TCPHandlers factory
 type Manager struct {
-	configs map[string]*config.TCPService
+	configs map[string]*config.TCPServiceInfo
 }
 
 // NewManager creates a new manager
-func NewManager(configs map[string]*config.TCPService) *Manager {
+func NewManager(conf *config.RuntimeConfiguration) *Manager {
 	return &Manager{
-		configs: configs,
+		configs: conf.TCPServices,
 	}
 }
 
 // BuildTCP Creates a tcp.Handler for a service configuration.
 func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Handler, error) {
-	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
+	serviceQualifiedName := internal.GetQualifiedName(rootCtx, serviceName)
+	ctx := internal.AddProviderInContext(rootCtx, serviceQualifiedName)
+	ctx = log.With(ctx, log.Str(log.ServiceName, serviceName))
 
-	serviceName = internal.GetQualifiedName(ctx, serviceName)
-	ctx = internal.AddProviderInContext(ctx, serviceName)
+	// FIXME Check if the service is declared multiple times with different types
+	conf, ok := m.configs[serviceQualifiedName]
+	if !ok {
+		return nil, fmt.Errorf("the service %q does not exist", serviceQualifiedName)
+	}
+	if conf.LoadBalancer == nil {
+		conf.Err = fmt.Errorf("the service %q doesn't have any TCP load balancer", serviceQualifiedName)
+		return nil, conf.Err
+	}
 
-	if conf, ok := m.configs[serviceName]; ok {
-		// FIXME Check if the service is declared multiple times with different types
-		if conf.LoadBalancer != nil {
-			loadBalancer := tcp.NewRRLoadBalancer()
+	logger := log.FromContext(ctx)
 
-			var handler tcp.Handler
-			for _, server := range conf.LoadBalancer.Servers {
-				_, err := parseIP(server.Address)
-				if err == nil {
-					handler, _ = tcp.NewProxy(server.Address)
-					loadBalancer.AddServer(handler)
-				} else {
-					log.FromContext(ctx).Errorf("Invalid IP address for a %s server %s: %v", serviceName, server.Address, err)
-				}
-			}
-			return loadBalancer, nil
+	loadBalancer := tcp.NewRRLoadBalancer()
+
+	for name, server := range conf.LoadBalancer.Servers {
+		if _, _, err := net.SplitHostPort(server.Address); err != nil {
+			logger.Errorf("In service %q: %v", serviceQualifiedName, err)
+			continue
 		}
-		return nil, fmt.Errorf("the service %q doesn't have any TCP load balancer", serviceName)
-	}
-	return nil, fmt.Errorf("the service %q does not exits", serviceName)
-}
 
-func parseIP(s string) (string, error) {
-	ip, _, err := net.SplitHostPort(s)
-	if err == nil {
-		return ip, nil
-	}
+		handler, err := tcp.NewProxy(server.Address)
+		if err != nil {
+			logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
+			continue
+		}
 
-	ipNoPort := net.ParseIP(s)
-	if ipNoPort == nil {
-		return "", fmt.Errorf("invalid IP Address %s", ipNoPort)
+		loadBalancer.AddServer(handler)
+		logger.WithField(log.ServerName, name).Debugf("Creating TCP server %d at %s", name, server.Address)
 	}
-
-	return ipNoPort.String(), nil
+	return loadBalancer, nil
 }

@@ -3,6 +3,7 @@ package crd
 import (
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
@@ -33,8 +34,9 @@ type clientMock struct {
 	apiEndpointsError     error
 	apiIngressStatusError error
 
-	ingressRoutes []*v1alpha1.IngressRoute
-	middlewares   []*v1alpha1.Middleware
+	ingressRoutes    []*v1alpha1.IngressRoute
+	ingressRouteTCPs []*v1alpha1.IngressRouteTCP
+	middlewares      []*v1alpha1.Middleware
 
 	watchChan chan interface{}
 }
@@ -43,7 +45,7 @@ func newClientMock(paths ...string) clientMock {
 	var c clientMock
 
 	for _, path := range paths {
-		yamlContent, err := ioutil.ReadFile("./fixtures/" + path)
+		yamlContent, err := ioutil.ReadFile(filepath.FromSlash("./fixtures/" + path))
 		if err != nil {
 			panic(err)
 		}
@@ -57,6 +59,8 @@ func newClientMock(paths ...string) clientMock {
 				c.endpoints = append(c.endpoints, o)
 			case *v1alpha1.IngressRoute:
 				c.ingressRoutes = append(c.ingressRoutes, o)
+			case *v1alpha1.IngressRouteTCP:
+				c.ingressRouteTCPs = append(c.ingressRouteTCPs, o)
 			case *v1alpha1.Middleware:
 				c.middlewares = append(c.middlewares, o)
 			case *v1beta12.Ingress:
@@ -74,6 +78,10 @@ func newClientMock(paths ...string) clientMock {
 
 func (c clientMock) GetIngressRoutes() []*v1alpha1.IngressRoute {
 	return c.ingressRoutes
+}
+
+func (c clientMock) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
+	return c.ingressRouteTCPs
 }
 
 func (c clientMock) GetMiddlewares() []*v1alpha1.Middleware {
@@ -124,7 +132,7 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 	return nil, false, nil
 }
 
-func (c clientMock) WatchAll(namespaces k8s.Namespaces, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	return c.watchChan, nil
 }
 

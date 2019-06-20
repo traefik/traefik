@@ -30,13 +30,11 @@ level = "DEBUG"
     [http.services.service1.LoadBalancer]
       [[http.services.service1.LoadBalancer.Servers]]
         URL = "http://127.0.0.1:9010"
-        Weight = 1
 
   [http.services.service2]
     [http.services.service2.LoadBalancer]
       [[http.services.service2.LoadBalancer.Servers]]
         URL = "http://127.0.0.1:9020"
-        Weight = 1
 
 [[tls]]
   [tls.certificate]

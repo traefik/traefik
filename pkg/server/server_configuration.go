@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"net/http"
 	"reflect"
@@ -69,47 +68,47 @@ func (s *Server) loadConfigurationTCP(configurations config.Configurations) map[
 
 	s.tlsManager.UpdateConfigs(conf.TLSStores, conf.TLSOptions, conf.TLS)
 
-	handlersNonTLS, handlersTLS := s.createHTTPHandlers(ctx, *conf.HTTP, entryPoints)
-
-	routersTCP := s.createTCPRouters(ctx, conf.TCP, entryPoints, handlersNonTLS, handlersTLS, s.tlsManager.Get("default", "default"))
+	rtConf := config.NewRuntimeConfig(conf)
+	handlersNonTLS, handlersTLS := s.createHTTPHandlers(ctx, rtConf, entryPoints)
+	routersTCP := s.createTCPRouters(ctx, rtConf, entryPoints, handlersNonTLS, handlersTLS)
+	rtConf.PopulateUsedBy()
 
 	return routersTCP
 }
 
-func (s *Server) createTCPRouters(ctx context.Context, configuration *config.TCPConfiguration, entryPoints []string, handlers map[string]http.Handler, handlersTLS map[string]http.Handler, tlsConfig *tls.Config) map[string]*tcpCore.Router {
+// the given configuration must not be nil. its fields will get mutated.
+func (s *Server) createTCPRouters(ctx context.Context, configuration *config.RuntimeConfiguration, entryPoints []string, handlers map[string]http.Handler, handlersTLS map[string]http.Handler) map[string]*tcpCore.Router {
 	if configuration == nil {
 		return make(map[string]*tcpCore.Router)
 	}
 
-	serviceManager := tcp.NewManager(configuration.Services)
-	routerManager := routertcp.NewManager(configuration.Routers, serviceManager, handlers, handlersTLS, tlsConfig)
+	serviceManager := tcp.NewManager(configuration)
+
+	routerManager := routertcp.NewManager(configuration, serviceManager, handlers, handlersTLS, s.tlsManager)
 
 	return routerManager.BuildHandlers(ctx, entryPoints)
-
 }
 
-func (s *Server) createHTTPHandlers(ctx context.Context, configuration config.HTTPConfiguration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
+// createHTTPHandlers returns, for the given configuration and entryPoints, the HTTP handlers for non-TLS connections, and for the TLS ones. the given configuration must not be nil. its fields will get mutated.
+func (s *Server) createHTTPHandlers(ctx context.Context, configuration *config.RuntimeConfiguration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
 	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper)
 	middlewaresBuilder := middleware.NewBuilder(configuration.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(configuration.Middlewares)
-
-	routerManager := router.NewManager(configuration.Routers, serviceManager, middlewaresBuilder, responseModifierFactory)
+	routerManager := router.NewManager(configuration, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 	handlersNonTLS := routerManager.BuildHandlers(ctx, entryPoints, false)
 	handlersTLS := routerManager.BuildHandlers(ctx, entryPoints, true)
 
 	routerHandlers := make(map[string]http.Handler)
-
 	for _, entryPointName := range entryPoints {
-		internalMuxRouter := mux.NewRouter().
-			SkipClean(true)
+		internalMuxRouter := mux.NewRouter().SkipClean(true)
 
 		ctx = log.With(ctx, log.Str(log.EntryPointName, entryPointName))
 
 		factory := s.entryPointsTCP[entryPointName].RouteAppenderFactory
 		if factory != nil {
 			// FIXME remove currentConfigurations
-			appender := factory.NewAppender(ctx, middlewaresBuilder, &s.currentConfigurations)
+			appender := factory.NewAppender(ctx, middlewaresBuilder, configuration)
 			appender.Append(internalMuxRouter)
 		}
 

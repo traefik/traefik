@@ -1,8 +1,8 @@
 package api
 
 import (
-	"encoding/json"
-	//	"strings"
+	"encoding/json" //	"strings"
+
 	"github.com/sacloud/libsacloud/sacloud"
 )
 

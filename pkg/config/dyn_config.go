@@ -22,7 +22,9 @@ type Router struct {
 }
 
 // RouterTLSConfig holds the TLS configuration for a router
-type RouterTLSConfig struct{}
+type RouterTLSConfig struct {
+	Options string `json:"options,omitempty" toml:"options,omitzero"`
+}
 
 // TCPRouter holds the router configuration.
 type TCPRouter struct {
@@ -34,14 +36,14 @@ type TCPRouter struct {
 
 // RouterTCPTLSConfig holds the TLS configuration for a router
 type RouterTCPTLSConfig struct {
-	Passthrough bool `json:"passthrough" toml:"passthrough,omitzero"`
+	Passthrough bool   `json:"passthrough" toml:"passthrough,omitzero"`
+	Options     string `json:"options,omitempty" toml:"options,omitzero"`
 }
 
 // LoadBalancerService holds the LoadBalancerService configuration.
 type LoadBalancerService struct {
 	Stickiness         *Stickiness         `json:"stickiness,omitempty" toml:",omitempty" label:"allowEmpty"`
 	Servers            []Server            `json:"servers,omitempty" toml:",omitempty" label-slice-as-struct:"server"`
-	Method             string              `json:"method,omitempty" toml:",omitempty"`
 	HealthCheck        *HealthCheck        `json:"healthCheck,omitempty" toml:",omitempty"`
 	PassHostHeader     bool                `json:"passHostHeader" toml:",omitempty"`
 	ResponseForwarding *ResponseForwarding `json:"forwardingResponse,omitempty" toml:",omitempty"`
@@ -50,7 +52,6 @@ type LoadBalancerService struct {
 // TCPLoadBalancerService holds the LoadBalancerService configuration.
 type TCPLoadBalancerService struct {
 	Servers []TCPServer `json:"servers,omitempty" toml:",omitempty" label-slice-as-struct:"server"`
-	Method  string      `json:"method,omitempty" toml:",omitempty"`
 }
 
 // Mergeable tells if the given service is mergeable.
@@ -88,14 +89,8 @@ func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool 
 }
 
 // SetDefaults Default values for a LoadBalancerService.
-func (l *TCPLoadBalancerService) SetDefaults() {
-	l.Method = "wrr"
-}
-
-// SetDefaults Default values for a LoadBalancerService.
 func (l *LoadBalancerService) SetDefaults() {
 	l.PassHostHeader = true
-	l.Method = "wrr"
 }
 
 // ResponseForwarding holds configuration for the forward of the response.
@@ -105,7 +100,9 @@ type ResponseForwarding struct {
 
 // Stickiness holds the stickiness configuration.
 type Stickiness struct {
-	CookieName string `json:"cookieName,omitempty" toml:",omitempty"`
+	CookieName     string `json:"cookieName,omitempty" toml:",omitempty"`
+	SecureCookie   bool   `json:"secureCookie,omitempty" toml:",omitempty"`
+	HTTPOnlyCookie bool   `json:"httpOnlyCookie,omitempty" toml:",omitempty"`
 }
 
 // Server holds the server configuration.
@@ -113,24 +110,16 @@ type Server struct {
 	URL    string `json:"url" label:"-"`
 	Scheme string `toml:"-" json:"-"`
 	Port   string `toml:"-" json:"-"`
-	Weight int    `json:"weight"`
 }
 
 // TCPServer holds a TCP Server configuration
 type TCPServer struct {
 	Address string `json:"address" label:"-"`
 	Port    string `toml:"-" json:"-"`
-	Weight  int    `json:"weight"`
-}
-
-// SetDefaults Default values for a Server.
-func (s *TCPServer) SetDefaults() {
-	s.Weight = 1
 }
 
 // SetDefaults Default values for a Server.
 func (s *Server) SetDefaults() {
-	s.Weight = 1
 	s.Scheme = "http"
 }
 
@@ -139,9 +128,9 @@ type HealthCheck struct {
 	Scheme string `json:"scheme,omitempty" toml:",omitempty"`
 	Path   string `json:"path,omitempty" toml:",omitempty"`
 	Port   int    `json:"port,omitempty" toml:",omitempty,omitzero"`
-	// FIXME change string to parse.Duration
+	// FIXME change string to types.Duration
 	Interval string `json:"interval,omitempty" toml:",omitempty"`
-	// FIXME change string to parse.Duration
+	// FIXME change string to types.Duration
 	Timeout  string            `json:"timeout,omitempty" toml:",omitempty"`
 	Hostname string            `json:"hostname,omitempty" toml:",omitempty"`
 	Headers  map[string]string `json:"headers,omitempty" toml:",omitempty"`

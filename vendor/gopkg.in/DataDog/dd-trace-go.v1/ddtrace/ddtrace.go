@@ -91,6 +91,12 @@ type FinishConfig struct {
 
 	// NoDebugStack will prevent any set errors from generating an attached stack trace tag.
 	NoDebugStack bool
+
+	// StackFrames specifies the number of stack frames to be attached in spans that finish with errors.
+	StackFrames uint
+
+	// SkipStackFrames specifies the offset at which to start reporting stack frames from the stack.
+	SkipStackFrames uint
 }
 
 // StartSpanConfig holds the configuration for starting a new span. It is usually passed
@@ -108,4 +114,8 @@ type StartSpanConfig struct {
 	// Tags holds a set of key/value pairs that should be set as metadata on the
 	// new span.
 	Tags map[string]interface{}
+
+	// Force-set the SpanID, rather than use a random number. If no Parent SpanContext is present,
+	// then this will also set the TraceID to the same value.
+	SpanID uint64
 }

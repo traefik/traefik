@@ -35,10 +35,8 @@ level = "DEBUG"
     [http.services.service1.LoadBalancer]
       [[http.services.service1.LoadBalancer.Servers]]
         URL = "http://50.255.255.1"
-        Weight = 1
 
   [http.services.service2]
     [http.services.service2.LoadBalancer]
       [[http.services.service2.LoadBalancer.Servers]]
         URL = "http://{{.TimeoutEndpoint}}:9000"
-        Weight = 1
