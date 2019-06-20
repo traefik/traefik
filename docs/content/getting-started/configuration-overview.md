@@ -41,6 +41,8 @@ There are three different, mutually exclusive, ways to define static configurati
 
 These ways are evaluated in the order listed above.
 
+To enable the configuration through environment variables, the `TRAEFIK_ENABLE_ENV_VARS` environment variable must be set to `true`.
+
 If no value was provided for a given option, a default value applies.
 Moreover, if an option has sub-options, and any of these sub-options is not specified, a default value will apply as well.
     

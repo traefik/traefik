@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
-	"strings"
+	"strconv"
 
 	"github.com/containous/traefik/pkg/config/env"
 	"github.com/containous/traefik/pkg/log"
@@ -14,23 +14,11 @@ type EnvLoader struct{}
 
 // Load loads the command's configuration from the environment variables.
 func (e *EnvLoader) Load(_ []string, cmd *Command) (bool, error) {
-	return e.load(os.Environ(), cmd)
-}
-
-func (*EnvLoader) load(environ []string, cmd *Command) (bool, error) {
-	var found bool
-	for _, value := range environ {
-		if strings.HasPrefix(value, "TRAEFIK_") {
-			found = true
-			break
-		}
-	}
-
-	if !found {
+	if ok, _ := strconv.ParseBool(os.Getenv("TRAEFIK_ENABLE_ENV_VARS")); !ok {
 		return false, nil
 	}
 
-	if err := env.Decode(environ, cmd.Configuration); err != nil {
+	if err := env.Decode(os.Environ(), cmd.Configuration); err != nil {
 		return false, fmt.Errorf("failed to decode configuration from environment variables: %v", err)
 	}
 
