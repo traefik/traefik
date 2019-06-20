@@ -233,7 +233,7 @@ More information about available middlewares in the dedicated [middlewares secti
 ### Traefik TLS Option Definition
 
 Additionally, to allow for the use of tls options in an IngressRoute, we defined the CRD below for the TLSOption kind.
-More information about TLS Options is available in the dedicated [TLS Configuration Options](../../https-tls/overview/#configuration-options).
+More information about TLS Options is available in the dedicated [TLS Configuration Options](../../https/tls/#tls-options).
 
 ```yaml
 --8<-- "content/providers/crd_tls_option.yml"
@@ -267,8 +267,13 @@ spec:
     - name: whoami
       port: 80
   tls:
-    options: mytlsoption
+    options: 
+      name: mytlsoption
+      namespace: default
 ```
+
+!!! note "TLS Option reference and namespace"
+    If the optional `namespace` attribute is not set, the configuration will be applied with the namespace of the IngressRoute.
 
 ### TLS
 

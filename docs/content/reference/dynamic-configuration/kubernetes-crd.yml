@@ -100,7 +100,9 @@ spec:
   # use an empty tls object for TLS with Let's Encrypt
   tls:
     secretName: supersecret
-    options: myTLSOption
+    options:
+      name: myTLSOption
+      namespace: default
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -120,4 +122,6 @@ spec:
   tls:
     secretName: foosecret
     passthrough: false
-    options: myTLSOption
+    options:
+      name: myTLSOption
+      namespace: default
