@@ -41,13 +41,13 @@ func TestAggregator(t *testing.T) {
 			},
 			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
-					"provider-1@router-1": {},
+					"router-1@provider-1": {},
 				},
 				Middlewares: map[string]*config.Middleware{
-					"provider-1@middleware-1": {},
+					"middleware-1@provider-1": {},
 				},
 				Services: map[string]*config.Service{
-					"provider-1@service-1": {},
+					"service-1@provider-1": {},
 				},
 			},
 		},
@@ -83,16 +83,16 @@ func TestAggregator(t *testing.T) {
 			},
 			expected: &config.HTTPConfiguration{
 				Routers: map[string]*config.Router{
-					"provider-1@router-1": {},
-					"provider-2@router-1": {},
+					"router-1@provider-1": {},
+					"router-1@provider-2": {},
 				},
 				Middlewares: map[string]*config.Middleware{
-					"provider-1@middleware-1": {},
-					"provider-2@middleware-1": {},
+					"middleware-1@provider-1": {},
+					"middleware-1@provider-2": {},
 				},
 				Services: map[string]*config.Service{
-					"provider-1@service-1": {},
-					"provider-2@service-1": {},
+					"service-1@provider-1": {},
+					"service-1@provider-2": {},
 				},
 			},
 		},

@@ -3,20 +3,20 @@
 		"addPrefix": {
 			"prefix": "/toto"
 		},
-		"name": "anotherprovider@addPrefixTest",
-		"provider": "anotherprovider@addPrefixTest",
+		"name": "addPrefixTest@anotherprovider",
+		"provider": "anotherprovider",
 		"usedBy": [
-			"myprovider@bar"
+			"bar@myprovider"
 		]
 	},
 	{
 		"addPrefix": {
 			"prefix": "/titi"
 		},
-		"name": "myprovider@addPrefixTest",
-		"provider": "myprovider@addPrefixTest",
+		"name": "addPrefixTest@myprovider",
+		"provider": "myprovider",
 		"usedBy": [
-			"myprovider@test"
+			"test@myprovider"
 		]
 	},
 	{
@@ -25,11 +25,11 @@
 				"admin:admin"
 			]
 		},
-		"name": "myprovider@auth",
-		"provider": "myprovider@auth",
+		"name": "auth@myprovider",
+		"provider": "myprovider",
 		"usedBy": [
-			"myprovider@bar",
-			"myprovider@test"
+			"bar@myprovider",
+			"test@myprovider"
 		]
 	}
 ]

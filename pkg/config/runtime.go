@@ -265,7 +265,7 @@ type TCPServiceInfo struct {
 func getProviderName(elementName string) string {
 	parts := strings.Split(elementName, "@")
 	if len(parts) > 1 {
-		return parts[0]
+		return parts[1]
 	}
 	return ""
 }
@@ -273,7 +273,7 @@ func getProviderName(elementName string) string {
 func getQualifiedName(provider, elementName string) string {
 	parts := strings.Split(elementName, "@")
 	if len(parts) == 1 {
-		return provider + "@" + elementName
+		return elementName + "@" + provider
 	}
 	return elementName
 }

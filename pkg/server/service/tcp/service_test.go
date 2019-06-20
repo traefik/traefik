@@ -77,9 +77,9 @@ func TestManager_BuildTCP(t *testing.T) {
 		},
 		{
 			desc:        "Service name with provider",
-			serviceName: "provider-1@serviceName",
+			serviceName: "serviceName@provider-1",
 			configs: map[string]*config.TCPServiceInfo{
-				"provider-1@serviceName": {
+				"serviceName@provider-1": {
 					TCPService: &config.TCPService{
 						LoadBalancer: &config.TCPLoadBalancerService{},
 					},
@@ -90,7 +90,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			desc:        "Service name with provider in context",
 			serviceName: "serviceName",
 			configs: map[string]*config.TCPServiceInfo{
-				"provider-1@serviceName": {
+				"serviceName@provider-1": {
 					TCPService: &config.TCPService{
 						LoadBalancer: &config.TCPLoadBalancerService{},
 					},
@@ -102,7 +102,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			desc:        "Server with correct host:port as address",
 			serviceName: "serviceName",
 			configs: map[string]*config.TCPServiceInfo{
-				"provider-1@serviceName": {
+				"serviceName@provider-1": {
 					TCPService: &config.TCPService{
 						LoadBalancer: &config.TCPLoadBalancerService{
 							Servers: []config.TCPServer{
@@ -120,7 +120,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			desc:        "Server with correct ip:port as address",
 			serviceName: "serviceName",
 			configs: map[string]*config.TCPServiceInfo{
-				"provider-1@serviceName": {
+				"serviceName@provider-1": {
 					TCPService: &config.TCPService{
 						LoadBalancer: &config.TCPLoadBalancerService{
 							Servers: []config.TCPServer{
@@ -138,7 +138,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			desc:        "missing port in address with hostname, server is skipped, error is logged",
 			serviceName: "serviceName",
 			configs: map[string]*config.TCPServiceInfo{
-				"provider-1@serviceName": {
+				"serviceName@provider-1": {
 					TCPService: &config.TCPService{
 						LoadBalancer: &config.TCPLoadBalancerService{
 							Servers: []config.TCPServer{
@@ -156,7 +156,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			desc:        "missing port in address with ip, server is skipped, error is logged",
 			serviceName: "serviceName",
 			configs: map[string]*config.TCPServiceInfo{
-				"provider-1@serviceName": {
+				"serviceName@provider-1": {
 					TCPService: &config.TCPService{
 						LoadBalancer: &config.TCPLoadBalancerService{
 							Servers: []config.TCPServer{
@@ -183,7 +183,7 @@ func TestManager_BuildTCP(t *testing.T) {
 
 			ctx := context.Background()
 			if len(test.providerName) > 0 {
-				ctx = internal.AddProviderInContext(ctx, test.providerName+"@foobar")
+				ctx = internal.AddProviderInContext(ctx, "foobar@"+test.providerName)
 			}
 
 			handler, err := manager.BuildTCP(ctx, test.serviceName)

@@ -8,13 +8,13 @@
 				}
 			]
 		},
-		"name": "myprovider@baz",
-		"provider": "myprovider@baz",
+		"name": "baz@myprovider",
+		"provider": "myprovider",
 		"serverStatus": {
 			"http://127.0.0.2": "UP"
 		},
 		"usedBy": [
-			"myprovider@foo"
+			"foo@myprovider"
 		]
 	}
 ]
