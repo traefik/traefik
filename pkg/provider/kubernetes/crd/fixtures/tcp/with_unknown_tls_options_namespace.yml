@@ -1,3 +1,4 @@
+---
 apiVersion: traefik.containo.us/v1alpha1
 kind: TLSOption
 metadata:
@@ -9,23 +10,22 @@ spec:
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+kind: IngressRouteTCP
 metadata:
   name: test.crd
   namespace: default
 
 spec:
   entryPoints:
-    - web
+    - foo
 
   routes:
-  - match: Host(`foo.com`) && PathPrefix(`/bar`)
-    kind: Rule
-    priority: 12
+  - match: HostSNI(`foo.com`)
     services:
-    - name: whoami
-      port: 80
+    - name: whoamitcp
+      port: 8000
 
   tls:
     options:
-      name: unknown
+      name: foo
+      namespace: unknown

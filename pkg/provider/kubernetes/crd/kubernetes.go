@@ -325,7 +325,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.TLS {
 				clientCAs = append(clientCAs, tls.FileOrContent(cert))
 			}
 
-			tlsOptions[tlsOption.Name] = tls.TLS{
+			tlsOptions[makeID(tlsOption.Namespace, tlsOption.Name)] = tls.TLS{
 				MinVersion:   tlsOption.Spec.MinVersion,
 				CipherSuites: tlsOption.Spec.CipherSuites,
 				ClientCA: tls.ClientCA{
@@ -426,8 +426,18 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 
 			if ingressRoute.Spec.TLS != nil {
 				tlsConf := &config.RouterTLSConfig{}
-				if len(ingressRoute.Spec.TLS.Options) > 0 {
-					tlsConf.Options = ingressRoute.Spec.TLS.Options
+				if ingressRoute.Spec.TLS.Options != nil && len(ingressRoute.Spec.TLS.Options.Name) > 0 {
+					tlsOptionsName := ingressRoute.Spec.TLS.Options.Name
+					// Is a Kubernetes CRD reference
+					if !strings.Contains(tlsOptionsName, "@") {
+						ns := ingressRoute.Spec.TLS.Options.Namespace
+						if len(ns) == 0 {
+							ns = ingressRoute.Namespace
+						}
+						tlsOptionsName = makeID(ns, tlsOptionsName)
+					}
+
+					tlsConf.Options = tlsOptionsName
 				}
 				conf.Routers[serviceName].TLS = tlsConf
 			}
@@ -513,8 +523,19 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					Passthrough: ingressRouteTCP.Spec.TLS.Passthrough,
 				}
 
-				if len(ingressRouteTCP.Spec.TLS.Options) > 0 {
-					conf.Routers[serviceName].TLS.Options = ingressRouteTCP.Spec.TLS.Options
+				if ingressRouteTCP.Spec.TLS.Options != nil && len(ingressRouteTCP.Spec.TLS.Options.Name) > 0 {
+					tlsOptionsName := ingressRouteTCP.Spec.TLS.Options.Name
+					// Is a Kubernetes CRD reference
+					if !strings.Contains(tlsOptionsName, "@") {
+						ns := ingressRouteTCP.Spec.TLS.Options.Namespace
+						if len(ns) == 0 {
+							ns = ingressRouteTCP.Namespace
+						}
+						tlsOptionsName = makeID(ns, tlsOptionsName)
+					}
+
+					conf.Routers[serviceName].TLS.Options = tlsOptionsName
+
 				}
 			}
 

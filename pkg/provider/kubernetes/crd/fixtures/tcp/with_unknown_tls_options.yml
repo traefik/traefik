@@ -26,4 +26,5 @@ spec:
       port: 8000
 
   tls:
-    options: unknown
+    options:
+      name: unknown

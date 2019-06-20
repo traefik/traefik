@@ -13,4 +13,5 @@ spec:
     - name: whoamitcp
       port: 8080
   tls:
-    options: mytlsoption
+    options:
+      name: mytlsoption

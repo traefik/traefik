@@ -66,4 +66,5 @@ spec:
       port: 8000
 
   tls:
-    options: foo
+    options:
+      name: foo

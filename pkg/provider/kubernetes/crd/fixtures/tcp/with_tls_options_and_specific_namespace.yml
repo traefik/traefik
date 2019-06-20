@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: secretCA1
-  namespace: default
+  namespace: myns
 
 data:
   tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
@@ -11,18 +11,18 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: badSecret
-  namespace: default
+  name: secretCA2
+  namespace: myns
 
 data:
-  tls.ca:
+  tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: TLSOption
 metadata:
   name: foo
-  namespace: default
+  namespace: myns
 
 spec:
   minversion: VersionTLS12
@@ -33,29 +33,38 @@ spec:
   clientca:
     secretnames:
       - secretCA1
-      - secretUnknown
-      - emptySecret
+      - secretCA2
     optional: true
 
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: supersecret
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+
+---
 apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+kind: IngressRouteTCP
 metadata:
   name: test.crd
   namespace: default
 
 spec:
   entryPoints:
-    - web
+    - foo
 
   routes:
-  - match: Host(`foo.com`) && PathPrefix(`/bar`)
-    kind: Rule
-    priority: 12
+  - match: HostSNI(`foo.com`)
     services:
-    - name: whoami
-      port: 80
+    - name: whoamitcp
+      port: 8000
 
   tls:
     options:
       name: foo
+      namespace: myns

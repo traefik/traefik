@@ -302,7 +302,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_tls_options.yml"},
 			expected: &config.Configuration{
 				TLSOptions: map[string]tls.TLS{
-					"foo": {
+					"default/foo": {
 						MinVersion: "VersionTLS12",
 						CipherSuites: []string{
 							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -325,7 +325,63 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Service:     "default/test-crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &config.RouterTCPTLSConfig{
-								Options: "foo",
+								Options: "default/foo",
+							},
+						},
+					},
+					Services: map[string]*config.TCPService{
+						"default/test-crd-fdd3e9338e47a45efefc": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+									{
+										Address: "10.10.0.2:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
+			},
+		},
+		{
+			desc:  "TLS with tls options and specific namespace",
+			paths: []string{"tcp/services.yml", "tcp/with_tls_options_and_specific_namespace.yml"},
+			expected: &config.Configuration{
+				TLSOptions: map[string]tls.TLS{
+					"myns/foo": {
+						MinVersion: "VersionTLS12",
+						CipherSuites: []string{
+							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+							"TLS_RSA_WITH_AES_256_GCM_SHA384",
+						},
+						ClientCA: tls.ClientCA{
+							Files: []tls.FileOrContent{
+								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							},
+							Optional: true,
+						},
+						SniStrict: true,
+					},
+				},
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"default/test-crd-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+							TLS: &config.RouterTCPTLSConfig{
+								Options: "myns/foo",
 							},
 						},
 					},
@@ -358,7 +414,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_bad_tls_options.yml"},
 			expected: &config.Configuration{
 				TLSOptions: map[string]tls.TLS{
-					"foo": {
+					"default/foo": {
 						MinVersion: "VersionTLS12",
 						CipherSuites: []string{
 							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -380,7 +436,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Service:     "default/test-crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &config.RouterTCPTLSConfig{
-								Options: "foo",
+								Options: "default/foo",
 							},
 						},
 					},
@@ -413,7 +469,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_unknown_tls_options.yml"},
 			expected: &config.Configuration{
 				TLSOptions: map[string]tls.TLS{
-					"foo": {
+					"default/foo": {
 						MinVersion: "VersionTLS12",
 					},
 				},
@@ -424,7 +480,51 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Service:     "default/test-crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &config.RouterTCPTLSConfig{
-								Options: "unknown",
+								Options: "default/unknown",
+							},
+						},
+					},
+					Services: map[string]*config.TCPService{
+						"default/test-crd-fdd3e9338e47a45efefc": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+									{
+										Address: "10.10.0.2:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers:     map[string]*config.Router{},
+					Middlewares: map[string]*config.Middleware{},
+					Services:    map[string]*config.Service{},
+				},
+			},
+		},
+		{
+			desc:  "TLS with unknown tls options namespace",
+			paths: []string{"tcp/services.yml", "tcp/with_unknown_tls_options_namespace.yml"},
+			expected: &config.Configuration{
+				TLSOptions: map[string]tls.TLS{
+					"default/foo": {
+						MinVersion: "VersionTLS12",
+					},
+				},
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"default/test-crd-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+							TLS: &config.RouterTCPTLSConfig{
+								Options: "unknown/foo",
 							},
 						},
 					},
@@ -493,6 +593,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
+
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -820,7 +921,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_tls_options.yml"},
 			expected: &config.Configuration{
 				TLSOptions: map[string]tls.TLS{
-					"foo": {
+					"default/foo": {
 						MinVersion: "VersionTLS12",
 						CipherSuites: []string{
 							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -848,7 +949,63 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &config.RouterTLSConfig{
-								Options: "foo",
+								Options: "default/foo",
+							},
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"default/test-crd-6b204d94623b3df4370c": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: true,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "TLS with tls options and specific namespace",
+			paths: []string{"services.yml", "with_tls_options_and_specific_namespace.yml"},
+			expected: &config.Configuration{
+				TLSOptions: map[string]tls.TLS{
+					"myns/foo": {
+						MinVersion: "VersionTLS12",
+						CipherSuites: []string{
+							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+							"TLS_RSA_WITH_AES_256_GCM_SHA384",
+						},
+						ClientCA: tls.ClientCA{
+							Files: []tls.FileOrContent{
+								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+							},
+							Optional: true,
+						},
+						SniStrict: true,
+					},
+				},
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"default/test-crd-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							TLS: &config.RouterTLSConfig{
+								Options: "myns/foo",
 							},
 						},
 					},
@@ -876,7 +1033,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_bad_tls_options.yml"},
 			expected: &config.Configuration{
 				TLSOptions: map[string]tls.TLS{
-					"foo": {
+					"default/foo": {
 						MinVersion: "VersionTLS12",
 						CipherSuites: []string{
 							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -903,7 +1060,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &config.RouterTLSConfig{
-								Options: "foo",
+								Options: "default/foo",
 							},
 						},
 					},
@@ -931,7 +1088,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_unknown_tls_options.yml"},
 			expected: &config.Configuration{
 				TLSOptions: map[string]tls.TLS{
-					"foo": {
+					"default/foo": {
 						MinVersion: "VersionTLS12",
 					},
 				},
@@ -947,7 +1104,51 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &config.RouterTLSConfig{
-								Options: "unknown",
+								Options: "default/unknown",
+							},
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"default/test-crd-6b204d94623b3df4370c": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: true,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "TLS with unknown tls options namespace",
+			paths: []string{"services.yml", "with_unknown_tls_options_namespace.yml"},
+			expected: &config.Configuration{
+				TLSOptions: map[string]tls.TLS{
+					"default/foo": {
+						MinVersion: "VersionTLS12",
+					},
+				},
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"default/test-crd-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							TLS: &config.RouterTLSConfig{
+								Options: "unknown/foo",
 							},
 						},
 					},

@@ -56,4 +56,5 @@ spec:
       port: 80
 
   tls:
-    options: foo
+    options:
+      name: foo

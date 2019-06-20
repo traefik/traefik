@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: secretCA1
-  namespace: default
+  namespace: myns
 
 data:
   tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
@@ -11,18 +11,18 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: badSecret
-  namespace: default
+  name: secretCA2
+  namespace: myns
 
 data:
-  tls.ca:
+  tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: TLSOption
 metadata:
   name: foo
-  namespace: default
+  namespace: myns
 
 spec:
   minversion: VersionTLS12
@@ -33,8 +33,7 @@ spec:
   clientca:
     secretnames:
       - secretCA1
-      - secretUnknown
-      - emptySecret
+      - secretCA2
     optional: true
 
 ---
@@ -59,3 +58,4 @@ spec:
   tls:
     options:
       name: foo
+      namespace: myns
