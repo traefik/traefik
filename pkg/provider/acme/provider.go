@@ -55,7 +55,7 @@ type Configuration struct {
 func (a *Configuration) SetDefaults() {
 	a.CAServer = lego.LEDirectoryProduction
 	a.Storage = "acme.json"
-	a.KeyType = "RSA4096"
+	a.KeyType = "EC256"
 }
 
 // Certificate is a struct which contains all data needed from an ACME certificate
