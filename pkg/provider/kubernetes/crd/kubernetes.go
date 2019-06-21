@@ -297,43 +297,44 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.TLS {
 	tlsOptionsCRD := client.GetTLSOptions()
 	var tlsOptions map[string]tls.TLS
 
-	if len(tlsOptionsCRD) > 0 {
-		tlsOptions = make(map[string]tls.TLS)
+	if len(tlsOptionsCRD) <= 0 {
+		return tlsOptions
+	}
+	tlsOptions = make(map[string]tls.TLS)
 
-		for _, tlsOption := range tlsOptionsCRD {
-			logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOption.Name), log.Str("namespace", tlsOption.Namespace)))
-			var clientCAs []tls.FileOrContent
+	for _, tlsOption := range tlsOptionsCRD {
+		logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOption.Name), log.Str("namespace", tlsOption.Namespace)))
+		var clientCAs []tls.FileOrContent
 
-			for _, secretName := range tlsOption.Spec.ClientCA.SecretNames {
-				secret, exists, err := client.GetSecret(tlsOption.Namespace, secretName)
-				if err != nil {
-					logger.Errorf("Failed to fetch secret %s/%s: %v", tlsOption.Namespace, secretName, err)
-					continue
-				}
-
-				if !exists {
-					logger.Warnf("Secret %s/%s does not exist", tlsOption.Namespace, secretName)
-					continue
-				}
-
-				cert, err := getCABlocks(secret, tlsOption.Namespace, secretName)
-				if err != nil {
-					logger.Errorf("Failed to extract CA from secret %s/%s: %v", tlsOption.Namespace, secretName, err)
-					continue
-				}
-
-				clientCAs = append(clientCAs, tls.FileOrContent(cert))
+		for _, secretName := range tlsOption.Spec.ClientCA.SecretNames {
+			secret, exists, err := client.GetSecret(tlsOption.Namespace, secretName)
+			if err != nil {
+				logger.Errorf("Failed to fetch secret %s/%s: %v", tlsOption.Namespace, secretName, err)
+				continue
 			}
 
-			tlsOptions[makeID(tlsOption.Namespace, tlsOption.Name)] = tls.TLS{
-				MinVersion:   tlsOption.Spec.MinVersion,
-				CipherSuites: tlsOption.Spec.CipherSuites,
-				ClientCA: tls.ClientCA{
-					Files:    clientCAs,
-					Optional: tlsOption.Spec.ClientCA.Optional,
-				},
-				SniStrict: tlsOption.Spec.SniStrict,
+			if !exists {
+				logger.Warnf("Secret %s/%s does not exist", tlsOption.Namespace, secretName)
+				continue
 			}
+
+			cert, err := getCABlocks(secret, tlsOption.Namespace, secretName)
+			if err != nil {
+				logger.Errorf("Failed to extract CA from secret %s/%s: %v", tlsOption.Namespace, secretName, err)
+				continue
+			}
+
+			clientCAs = append(clientCAs, tls.FileOrContent(cert))
+		}
+
+		tlsOptions[makeID(tlsOption.Namespace, tlsOption.Name)] = tls.TLS{
+			MinVersion:   tlsOption.Spec.MinVersion,
+			CipherSuites: tlsOption.Spec.CipherSuites,
+			ClientCA: tls.ClientCA{
+				Files:    clientCAs,
+				Optional: tlsOption.Spec.ClientCA.Optional,
+			},
+			SniStrict: tlsOption.Spec.SniStrict,
 		}
 	}
 	return tlsOptions

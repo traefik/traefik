@@ -31,12 +31,12 @@ type TLS struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
 	SecretName string `json:"secretName"`
-	// Options is the name of the referenced TLSOption
-	Options *TLSOptionsSpec `json:"options"`
+	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
+	Options *TLSOptionRef `json:"options"`
 }
 
 // TLSOptionsSpec is a ref to the TLSOption resources.
-type TLSOptionsSpec struct {
+type TLSOptionRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }

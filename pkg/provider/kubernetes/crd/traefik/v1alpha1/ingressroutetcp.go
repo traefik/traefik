@@ -29,12 +29,12 @@ type TLSTCP struct {
 	// certificate details.
 	SecretName  string `json:"secretName"`
 	Passthrough bool   `json:"passthrough"`
-	// Options is the name of the referenced TLSOption
-	Options *TLSOptionsTCPSpec `json:"options"`
+	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
+	Options *TLSOptionTCPRef `json:"options"`
 }
 
-// TLSOptionsTCPSpec is a ref to the TLSOption resources.
-type TLSOptionsTCPSpec struct {
+// TLSOptionTCPRef is a ref to the TLSOption resources.
+type TLSOptionTCPRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }
