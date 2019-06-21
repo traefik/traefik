@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/server/internal"
 	"github.com/containous/traefik/pkg/tls"
 )
@@ -21,6 +22,7 @@ func mergeConfiguration(configurations config.Configurations) config.Configurati
 		TLSStores:  make(map[string]tls.Store),
 	}
 
+	var defaultTLSOptionProviders []string
 	for provider, configuration := range configurations {
 		if configuration.HTTP != nil {
 			for routerName, router := range configuration.HTTP.Routers {
@@ -48,9 +50,24 @@ func mergeConfiguration(configurations config.Configurations) config.Configurati
 			conf.TLSStores[key] = store
 		}
 
-		for key, config := range configuration.TLSOptions {
-			conf.TLSOptions[key] = config
+		for tlsOptionsName, config := range configuration.TLSOptions {
+			if tlsOptionsName != "default" {
+				tlsOptionsName = internal.MakeQualifiedName(provider, tlsOptionsName)
+			} else {
+				defaultTLSOptionProviders = append(defaultTLSOptionProviders, provider)
+			}
+
+			conf.TLSOptions[tlsOptionsName] = config
 		}
+	}
+
+	if len(defaultTLSOptionProviders) == 0 {
+		conf.TLSOptions["default"] = tls.TLS{}
+	} else if len(defaultTLSOptionProviders) > 1 {
+		log.WithoutContext().Errorf("Default TLS Options defined multiple times in %v", defaultTLSOptionProviders)
+		// We do not set an empty tls.TLS{} as above so that we actually get a "cascading failure" later on,
+		// i.e. routers depending on this missing TLS option will fail to initialize as well.
+		delete(conf.TLSOptions, "default")
 	}
 
 	return conf

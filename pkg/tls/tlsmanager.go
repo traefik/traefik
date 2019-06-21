@@ -74,7 +74,7 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 	defer m.lock.RUnlock()
 
 	config, ok := m.configs[configName]
-	if !ok && configName != "default" {
+	if !ok {
 		return nil, fmt.Errorf("unknown TLS options: %s", configName)
 	}
 

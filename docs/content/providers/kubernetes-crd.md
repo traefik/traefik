@@ -230,6 +230,51 @@ spec:
 
 More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
 
+### Traefik TLS Option Definition
+
+Additionally, to allow for the use of tls options in an IngressRoute, we defined the CRD below for the TLSOption kind.
+More information about TLS Options is available in the dedicated [TLS Configuration Options](../../https/tls/#tls-options).
+
+```yaml
+--8<-- "content/providers/crd_tls_option.yml"
+```
+
+Once the TLSOption kind has been registered with the Kubernetes cluster or defined in the File Provider, it can then be used in IngressRoute definitions, such as:
+
+```yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: mytlsoption
+  namespace: default
+
+spec:
+  minversion: VersionTLS12
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingressroutebar
+
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`bar.com`) && PathPrefix(`/stripit`)
+    kind: Rule
+    services:
+    - name: whoami
+      port: 80
+  tls:
+    options: 
+      name: mytlsoption
+      namespace: default
+```
+
+!!! note "TLS Option reference and namespace"
+    If the optional `namespace` attribute is not set, the configuration will be applied with the namespace of the IngressRoute.
+
 ### TLS
 
 To allow for TLS, we made use of the `Secret` kind, as it was already defined, and it can be directly used in an `IngressRoute`:

@@ -44,7 +44,6 @@ level = "DEBUG"
       [[http.services.service2.LoadBalancer.Servers]]
         URL = "http://127.0.0.1:9020"
 
-
 [[tls]]
   [tls.certificate]
      certFile = "fixtures/https/snitest.com.cert"
