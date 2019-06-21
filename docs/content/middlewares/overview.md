@@ -74,7 +74,7 @@ labels:
 ```toml tab="File"
 [tlsOptions]
     [tlsOptions.default]
-    minVersion = "VersionTLS12"
+        minVersion = "VersionTLS12"
 ```
 
 ```yaml tab="Kubernetes"

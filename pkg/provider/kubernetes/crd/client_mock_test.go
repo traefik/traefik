@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
@@ -66,7 +65,6 @@ func newClientMock(paths ...string) clientMock {
 			case *v1alpha1.Middleware:
 				c.middlewares = append(c.middlewares, o)
 			case *v1alpha1.TLSOption:
-				log.Debug("Add the tls option: %v", o)
 				c.tlsOptions = append(c.tlsOptions, o)
 			case *v1beta12.Ingress:
 				c.ingresses = append(c.ingresses, o)
