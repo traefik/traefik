@@ -70,6 +70,12 @@ docker run traefik[:version] --help
 # ex: docker run traefik:2.0 --help
 ```
 
+All available arguments can also be found [here](../reference/static-configuration/cli.md).
+
+### Environment Variables
+
+All available environment variables can be found [here](../reference/static-configuration/env.md)
+
 ## Available Configuration Options
 
 All the configuration options are documented in their related section.

@@ -9,9 +9,9 @@ import (
 
 // EncodeToNode converts an element to a node.
 // element -> nodes
-func EncodeToNode(element interface{}, omitEmpty bool) (*Node, error) {
+func EncodeToNode(element interface{}, rootName string, omitEmpty bool) (*Node, error) {
 	rValue := reflect.ValueOf(element)
-	node := &Node{Name: "traefik"}
+	node := &Node{Name: rootName}
 
 	encoder := encoderToNode{omitEmpty: omitEmpty}
 

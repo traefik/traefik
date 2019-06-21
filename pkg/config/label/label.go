@@ -13,7 +13,7 @@ func DecodeConfiguration(labels map[string]string) (*config.Configuration, error
 		TCP:  &config.TCPConfiguration{},
 	}
 
-	err := parser.Decode(labels, conf, "traefik.http", "traefik.tcp")
+	err := parser.Decode(labels, conf, parser.DefaultRootName, "traefik.http", "traefik.tcp")
 	if err != nil {
 		return nil, err
 	}
@@ -23,11 +23,11 @@ func DecodeConfiguration(labels map[string]string) (*config.Configuration, error
 
 // EncodeConfiguration converts a configuration to labels.
 func EncodeConfiguration(conf *config.Configuration) (map[string]string, error) {
-	return parser.Encode(conf)
+	return parser.Encode(conf, parser.DefaultRootName)
 }
 
 // Decode converts the labels to an element.
 // labels -> [ node -> node + metadata (type) ] -> element (node)
 func Decode(labels map[string]string, element interface{}, filters ...string) error {
-	return parser.Decode(labels, element, filters...)
+	return parser.Decode(labels, element, parser.DefaultRootName, filters...)
 }

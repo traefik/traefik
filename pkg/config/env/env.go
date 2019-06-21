@@ -2,10 +2,15 @@
 package env
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/containous/traefik/pkg/config/parser"
 )
+
+// DefaultNamePrefix is the default prefix for environment variable names.
+const DefaultNamePrefix = "TRAEFIK_"
 
 // Decode decodes the given environment variables into the given element.
 // The operation goes through four stages roughly summarized as:
@@ -13,17 +18,22 @@ import (
 // map -> tree of untyped nodes
 // untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
 // "typed" nodes -> typed element
-func Decode(environ []string, element interface{}) error {
+func Decode(environ []string, prefix string, element interface{}) error {
+	if err := checkPrefix(prefix); err != nil {
+		return err
+	}
+
 	vars := make(map[string]string)
 	for _, evr := range environ {
 		n := strings.SplitN(evr, "=", 2)
-		if strings.HasPrefix(strings.ToUpper(n[0]), "TRAEFIK_") {
+		if strings.HasPrefix(strings.ToUpper(n[0]), prefix) {
 			key := strings.ReplaceAll(strings.ToLower(n[0]), "_", ".")
 			vars[key] = n[1]
 		}
 	}
 
-	return parser.Decode(vars, element)
+	rootName := strings.ToLower(prefix[:len(prefix)-1])
+	return parser.Decode(vars, element, rootName)
 }
 
 // Encode encodes the configuration in element into the environment variables represented in the returned Flats.
@@ -36,7 +46,7 @@ func Encode(element interface{}) ([]parser.Flat, error) {
 		return nil, nil
 	}
 
-	node, err := parser.EncodeToNode(element, false)
+	node, err := parser.EncodeToNode(element, parser.DefaultRootName, false)
 	if err != nil {
 		return nil, err
 	}
@@ -47,4 +57,18 @@ func Encode(element interface{}) ([]parser.Flat, error) {
 	}
 
 	return parser.EncodeToFlat(element, node, parser.FlatOpts{Case: "upper", Separator: "_"})
+}
+
+func checkPrefix(prefix string) error {
+	prefixPattern := `[a-zA-Z0-9]+_`
+	matched, err := regexp.MatchString(prefixPattern, prefix)
+	if err != nil {
+		return err
+	}
+
+	if !matched {
+		return fmt.Errorf("invalid prefix %q, the prefix pattern must match the following pattern: %s", prefix, prefixPattern)
+	}
+
+	return nil
 }
