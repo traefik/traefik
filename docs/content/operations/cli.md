@@ -26,7 +26,7 @@ traefik [--flag=flag_argument] [-f [flag_argument]]
 traefik [--flag[=true|false| ]] [-f [true|false| ]]
 ```
 
-### healthcheck
+### `healthcheck`
 
 Calls Traefik `/ping` to check the health of Traefik.
 Its exit status is `0` if Traefik is healthy and `1` otherwise.
@@ -50,12 +50,12 @@ $ traefik healthcheck
 OK: http://:8082/ping
 ```
 
-### version
+### `version`
 
 Shows the current Traefik version.
 
 Usage:
 
 ```bash
-traefik version [command] [flags] [arguments]
+traefik version
 ```

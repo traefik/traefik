@@ -19,64 +19,23 @@ Attach labels to your services and let Traefik do the rest!
     Enabling the rancher provider
 
     ```toml
-    [provider.rancher]
+    [Providers.Rancher]
     ```
 
     Attaching labels to services
 
     ```yaml
     labels:
-      - traefik.http.services.my-service.rule=Host(my-domain)
+      - traefik.http.services.my-service.rule=Host(`my-domain`)
     ```
 
 ## Provider Configuration Options
 
-!!! tip "Browse the Reference"
+??? tip "Browse the Reference"
     If you're in a hurry, maybe you'd rather go through the configuration reference:
     
     ```toml
-    ################################################################
-    # Rancher Provider
-    ################################################################
-    
-    # Enable Rancher Provider.
-    [rancher]
-    
-    # Expose Rancher services by default in Traefik.
-    #
-    # Optional
-    #
-    ExposedByDefault = "true"
-    
-    # Enable watch Rancher changes.
-    #
-    # Optional
-    #
-    watch = true
-    
-    # Filter services with unhealthy states and inactive states.
-    #
-    # Optional
-    #
-    EnableServiceHealthFilter = true
-    
-    # Defines the polling interval (in seconds).
-    #
-    # Optional
-    #
-    RefreshSeconds = true
-    
-    # Poll the Rancher metadata service for changes every `rancher.refreshSeconds`, which is less accurate
-    #
-    # Optional
-    #
-    IntervalPoll = false
-    
-    # Prefix used for accessing the Rancher metadata service
-    #
-    # Optional
-    #
-    Prefix = 15
+    --8<-- "content/providers/rancher.toml"
     ```
 
 ### `ExposedByDefault`
@@ -99,8 +58,8 @@ The service name can be accessed as the `Name` identifier,
 and the template has access to all the labels defined on this container.
 
 ```toml tab="File"
-[rancher]
-defaultRule = ""
+[Providers.Rancher]
+defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
 # ...
 ```
 
@@ -135,6 +94,50 @@ which is less accurate than the default long polling technique which will provid
 _Optional, Default=/latest_
 
 Prefix used for accessing the Rancher metadata service
+
+### `constraints`
+
+_Optional, Default=""_
+
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+That is to say, if none of the container's labels match the expression, no route for the container is created.
+If the expression is empty, all detected containers are included.
+
+The expression syntax is based on the `Label("key", "value")`, and `LabelRegexp("key", "value")` functions, as well as the usual boolean logic, as shown in examples below.
+
+??? example "Constraints Expression Examples"
+
+    ```toml
+    # Includes only containers having a label with key `a.label.name` and value `foo`
+    constraints = "Label(`a.label.name`, `foo`)"
+    ```
+    
+    ```toml
+    # Excludes containers having any label with key `a.label.name` and value `foo`
+    constraints = "!Label(`a.label.name`, `value`)"
+    ```
+    
+    ```toml
+    # With logical AND.
+    constraints = "Label(`a.label.name`, `valueA`) && Label(`another.label.name`, `valueB`)"
+    ```
+    
+    ```toml
+    # With logical OR.
+    constraints = "Label(`a.label.name`, `valueA`) || Label(`another.label.name`, `valueB`)"
+    ```
+    
+    ```toml
+    # With logical AND and OR, with precedence set by parentheses.
+    constraints = "Label(`a.label.name`, `valueA`) && (Label(`another.label.name`, `valueB`) || Label(`yet.another.label.name`, `valueC`))"
+    ```
+    
+    ```toml
+    # Includes only containers having a label with key `a.label.name` and a value matching the `a.+` regular expression.
+    constraints = "LabelRegexp(`a.label.name`, `a.+`)"
+    ```
+
+## Routing Configuration Options
 
 ### General
 
@@ -184,10 +187,6 @@ More information about available middlewares in the dedicated [middlewares secti
 You can tell Traefik to consider (or not) the container by setting `traefik.enable` to true or false.
 
 This option overrides the value of `exposedByDefault`.
-
-#### `traefik.tags`
-
-Sets the tags for [constraints filtering](./overview.md#constraints-configuration).
 
 #### Port Lookup
 

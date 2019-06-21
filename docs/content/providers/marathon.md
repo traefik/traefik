@@ -78,7 +78,7 @@ DCOSToken for DCOS environment.
 If set, it overrides the Authorization header.
 
 ```toml tab="File"
-[marathon]
+[providers.marathon]
 dcosToken = "xxxxxx"
 # ...
 ```
@@ -101,8 +101,8 @@ The app ID can be accessed as the Name identifier,
 and the template has access to all the labels defined on this Marathon application.
 
 ```toml tab="File"
-[marathon]
-defaultRule = ""
+[providers.marathon]
+defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
 # ...
 ```
 
@@ -132,7 +132,7 @@ Marathon server endpoint.
 You can optionally specify multiple endpoints:
 
 ```toml tab="File"
-[marathon]
+[providers.marathon]
 endpoint = "http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"
 # ...
 ```
@@ -150,16 +150,59 @@ Exposes Marathon applications by default through Traefik.
 
 If set to false, applications that don't have a `traefik.enable=true` label will be ignored from the resulting routing configuration.
 
-### `filterMarathonConstraints`
+### `constraints`
 
-_Optional, Default=false_
+_Optional, Default=""_
 
-Enables filtering using Marathon constraints.
+Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application.
+That is to say, if none of the application's labels match the expression, no route for the application is created.
+In addition, the expression also matched against the application's constraints, such as described in [Marathon constraints](https://mesosphere.github.io/marathon/docs/constraints.html).
+If the expression is empty, all detected applications are included.
 
-If enabled, Traefik will take into account Marathon constraints, as defined in [Marathon constraints](https://mesosphere.github.io/marathon/docs/constraints.html).
+The expression syntax is based on the `Label("key", "value")`, and `LabelRegexp("key", "value")`, as well as the usual boolean logic.
+In addition, to match against marathon constraints, the function `MarathonConstraint("field:operator:value")` can be used, where the field, operator, and value parts are joined together in a single string with the `:` separator.
 
-Each individual constraint will be treated as a verbatim compounded tag,
-e.g. "rack_id:CLUSTER:rack-1", with all constraint groups concatenated together using ":".
+??? example "Constraints Expression Examples"
+
+    ```toml
+    # Includes only applications having a label with key `a.label.name` and value `foo`
+    constraints = "Label(`a.label.name`, `foo`)"
+    ```
+    
+    ```toml
+    # Excludes applications having any label with key `a.label.name` and value `foo`
+    constraints = "!Label(`a.label.name`, `value`)"
+    ```
+    
+    ```toml
+    # With logical AND.
+    constraints = "Label(`a.label.name`, `valueA`) && Label(`another.label.name`, `valueB`)"
+    ```
+    
+    ```toml
+    # With logical OR.
+    constraints = "Label(`a.label.name`, `valueA`) || Label(`another.label.name`, `valueB`)"
+    ```
+    
+    ```toml
+    # With logical AND and OR, with precedence set by parentheses.
+    constraints = "Label(`a.label.name`, `valueA`) && (Label(`another.label.name`, `valueB`) || Label(`yet.another.label.name`, `valueC`))"
+    ```
+    
+    ```toml
+    # Includes only applications having a label with key `a.label.name` and a value matching the `a.+` regular expression.
+    constraints = "LabelRegexp(`a.label.name`, `a.+`)"
+    ```
+
+    ```toml
+    # Includes only applications having a Marathon constraint with field `A`, operator `B`, and value `C`.
+    constraints = "MarathonConstraint(`A:B:C`)"
+    ```
+
+    ```toml
+    # Uses both Marathon constraint and application label with logical operator.
+    constraints = "MarathonConstraint(`A:B:C`) && Label(`a.label.name`, `value`)"
+    ```
 
 ### `forceTaskHostname`
 
@@ -317,10 +360,6 @@ You can declare TCP Routers and/or Services using labels.
 
 Setting this option controls whether Traefik exposes the application.
 It overrides the value of `exposedByDefault`.
-
-#### `traefik.tags`
-
-Sets the tags for [constraints filtering](./overview.md#constraints-configuration).
 
 #### `traefik.marathon.ipadressidx`
 

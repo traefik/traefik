@@ -69,7 +69,6 @@ Providers:
     DefaultRule: foobar
     ExposedByDefault: true
     DCOSToken: foobar
-    FilterMarathonConstraints: true
     DialerTimeout: 42
     ResponseHeaderTimeout: 42
     TLSHandshakeTimeout: 42
