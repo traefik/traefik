@@ -39,11 +39,12 @@ func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]TLS,
 
 	m.stores = make(map[string]*CertificateStore)
 	for storeName, storeConfig := range m.storesConfig {
-		var err error
-		m.stores[storeName], err = buildCertificateStore(storeConfig)
+		store, err := buildCertificateStore(storeConfig)
 		if err != nil {
-			log.Errorf("Error while creating certificate store %s", storeName)
+			log.Errorf("Error while creating certificate store %s: %v", storeName, err)
+			continue
 		}
+		m.stores[storeName] = store
 	}
 
 	storesCertificates := make(map[string]map[string]*tls.Certificate)
@@ -137,14 +138,14 @@ func buildCertificateStore(tlsStore Store) (*CertificateStore, error) {
 	if tlsStore.DefaultCertificate != nil {
 		cert, err := buildDefaultCertificate(tlsStore.DefaultCertificate)
 		if err != nil {
-			return nil, err
+			return certificateStore, err
 		}
 		certificateStore.DefaultCertificate = cert
 	} else {
 		log.Debug("No default certificate, generate one")
 		cert, err := generate.DefaultCertificate()
 		if err != nil {
-			return nil, err
+			return certificateStore, err
 		}
 		certificateStore.DefaultCertificate = cert
 	}
