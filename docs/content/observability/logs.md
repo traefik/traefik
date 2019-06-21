@@ -17,13 +17,13 @@ By default, the logs are written to the standard output.
 You can configure a file path instead using the `filePath` option.
 
 ```toml tab="File"
-# Writing Logs in a File
+# Writing Logs to a File
 [log]
   filePath = "/path/to/traefik.log"
 ```
 
 ```bash tab="CLI"
-# Writing Logs in a File
+# Writing Logs to a File
 --log.filePath="/path/to/traefik.log"
 ```
 
@@ -32,14 +32,14 @@ You can configure a file path instead using the `filePath` option.
 By default, the logs use a text format (`common`), but you can also ask for the `json` format in the `format` option.   
 
 ```toml tab="File"
-# Writing Logs in a File, in JSON
+# Writing Logs to a File, in JSON
 [log]
   filePath = "/path/to/log-file.log"
   format   = "json"
 ```
 
 ```bash tab="CLI"
-# Writing Logs in a File, in JSON
+# Writing Logs to a File, in JSON
 --log.filePath="/path/to/traefik.log"
 --log.format="json"
 ```
