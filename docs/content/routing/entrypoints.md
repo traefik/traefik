@@ -44,22 +44,22 @@ You can define them using a toml file, CLI arguments, or a key-value store.
 See the complete reference for the list of available options:
 
 ```toml tab="File"
-[EntryPoints]
+[entryPoints]
 
-  [EntryPoints.EntryPoint0]
+  [entryPoints.EntryPoint0]
     Address = ":8888"
     [EntryPoints.EntryPoint0.Transport]
-      [EntryPoints.EntryPoint0.Transport.LifeCycle]
+      [entryPoints.EntryPoint0.Transport.LifeCycle]
         RequestAcceptGraceTimeout = 42
         GraceTimeOut = 42
-      [EntryPoints.EntryPoint0.Transport.RespondingTimeouts]
+      [entryPoints.EntryPoint0.Transport.RespondingTimeouts]
         ReadTimeout = 42
         WriteTimeout = 42
         IdleTimeout = 42
-    [EntryPoints.EntryPoint0.ProxyProtocol]
+    [entryPoints.EntryPoint0.ProxyProtocol]
       Insecure = true
       TrustedIPs = ["foobar", "foobar"]
-    [EntryPoints.EntryPoint0.ForwardedHeaders]
+    [entryPoints.EntryPoint0.ForwardedHeaders]
       Insecure = true
       TrustedIPs = ["foobar", "foobar"]
 ```
