@@ -429,7 +429,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				tlsConf := &config.RouterTLSConfig{}
 				if ingressRoute.Spec.TLS.Options != nil && len(ingressRoute.Spec.TLS.Options.Name) > 0 {
 					tlsOptionsName := ingressRoute.Spec.TLS.Options.Name
-					// Is a Kubernetes CRD reference
+					// Is a Kubernetes CRD reference, (i.e. not a cross-provider default)
 					if !strings.Contains(tlsOptionsName, "@") {
 						ns := ingressRoute.Spec.TLS.Options.Namespace
 						if len(ns) == 0 {
@@ -526,7 +526,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 				if ingressRouteTCP.Spec.TLS.Options != nil && len(ingressRouteTCP.Spec.TLS.Options.Name) > 0 {
 					tlsOptionsName := ingressRouteTCP.Spec.TLS.Options.Name
-					// Is a Kubernetes CRD reference
+					// Is a Kubernetes CRD reference (i.e. not a cross-provider reference)
 					if !strings.Contains(tlsOptionsName, "@") {
 						ns := ingressRouteTCP.Spec.TLS.Options.Namespace
 						if len(ns) == 0 {
@@ -712,14 +712,14 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, error) {
 	tlsCrtData, tlsCrtExists := secret.Data["tls.ca"]
 	if !tlsCrtExists {
-		return "", fmt.Errorf("secret %s/%s is missing the following TLS data entries: %s",
-			namespace, secretName, "tls.ca")
+		return "", fmt.Errorf("the tls.ca entry is missing from secret %s/%s",
+			namespace, secretName)
 	}
 
 	cert := string(tlsCrtData)
 	if cert == "" {
-		return "", fmt.Errorf("secret %s/%s contains the following empty TLS data entries: %s",
-			namespace, secretName, "tls.ca")
+		return "", fmt.Errorf("the tls.ca entry in secret %s/%s is empty",
+			namespace, secretName)
 	}
 
 	return cert, nil

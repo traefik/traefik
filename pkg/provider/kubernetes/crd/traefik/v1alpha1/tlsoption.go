@@ -27,7 +27,7 @@ type TLSOptionSpec struct {
 
 // +k8s:deepcopy-gen=true
 
-// ClientCA defines traefik CA files for a entryPoint
+// ClientCA defines traefik CA files for an entryPoint
 // and it indicates if they are mandatory or have just to be analyzed if provided
 type ClientCA struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the

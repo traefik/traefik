@@ -65,6 +65,8 @@ func mergeConfiguration(configurations config.Configurations) config.Configurati
 		conf.TLSOptions["default"] = tls.TLS{}
 	} else if len(defaultTLSOptionProviders) > 1 {
 		log.WithoutContext().Errorf("Default TLS Options defined multiple times in %v", defaultTLSOptionProviders)
+		// We do not set an empty tls.TLS{} as above so that we actually get a "cascading failure" later on,
+		// i.e. routers depending on this missing TLS option will fail to initialize as well.
 		delete(conf.TLSOptions, "default")
 	}
 
