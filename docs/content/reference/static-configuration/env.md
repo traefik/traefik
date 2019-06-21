@@ -165,6 +165,9 @@ resolv.conf used for DNS resolving (Default: ```/etc/resolv.conf```)
 `TRAEFIK_HOSTRESOLVER_RESOLVDEPTH`:  
 The maximal depth of DNS recursive resolving (Default: ```5```)
 
+`TRAEFIK_LOG`:  
+Traefik log settings. (Default: "false")
+
 `TRAEFIK_LOG_FILEPATH`:  
 Traefik log file path. Stdout is used when omitted or empty.
 
