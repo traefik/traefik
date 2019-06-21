@@ -46,7 +46,7 @@ By default, the logs use a text format (`common`), but you can also ask for the 
 
 #### `level`
 
-By default, the `level` is set to `ERROR`, but you can choose amongst `DEBUG`, `PANIC`, `FATAL`, `ERROR`, `WARN`, and `INFO`. 
+By default, the `level` is set to `ERROR`. Alternative logging levels are `DEBUG`, `PANIC`, `FATAL`, `ERROR`, `WARN`, and `INFO`. 
 
 ```toml tab="File"
 [log]

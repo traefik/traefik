@@ -53,7 +53,7 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
 ### EntryPoints
 
 If not specified, HTTP routers will accept requests from all defined entry points.
-If you want to limit the router scope to a set of entry points, set the entry points option.
+If you want to limit the router scope to a set of entry points, set the `entryPoints` option.
 
 ??? example "Listens to Every EntryPoint"
 

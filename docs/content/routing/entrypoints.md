@@ -48,7 +48,7 @@ See the complete reference for the list of available options:
 
   [entryPoints.EntryPoint0]
     Address = ":8888"
-    [EntryPoints.EntryPoint0.Transport]
+    [entryPoints.EntryPoint0.Transport]
       [entryPoints.EntryPoint0.Transport.LifeCycle]
         RequestAcceptGraceTimeout = 42
         GraceTimeOut = 42
