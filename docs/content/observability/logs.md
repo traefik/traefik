@@ -11,7 +11,7 @@ By default, logs are written to stdout, in text format.
 
 Traefik logs concern everything that happens to Traefik itself (startup, configuration, events, shutdown, and so on).
 
-#### filePath
+#### `filePath`
 
 By default, the logs are written to the standard output.
 You can configure a file path instead using the `filePath` option.
@@ -27,7 +27,7 @@ You can configure a file path instead using the `filePath` option.
 --log.filePath="/path/to/traefik.log"
 ```
 
-#### format
+#### `format`
 
 By default, the logs use a text format (`common`), but you can also ask for the `json` format in the `format` option.   
 
@@ -44,7 +44,7 @@ By default, the logs use a text format (`common`), but you can also ask for the 
 --log.format="json"
 ```
 
-#### log level
+#### `level`
 
 By default, the `level` is set to `ERROR`, but you can choose amongst `DEBUG`, `PANIC`, `FATAL`, `ERROR`, `WARN`, and `INFO`. 
 
