@@ -297,7 +297,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.TLS {
 	tlsOptionsCRD := client.GetTLSOptions()
 	var tlsOptions map[string]tls.TLS
 
-	if len(tlsOptionsCRD) <= 0 {
+	if len(tlsOptionsCRD) == 0 {
 		return tlsOptions
 	}
 	tlsOptions = make(map[string]tls.TLS)

@@ -35,7 +35,7 @@ type TLS struct {
 	Options *TLSOptionRef `json:"options"`
 }
 
-// TLSOptionsSpec is a ref to the TLSOption resources.
+// TLSOptionRef is a ref to the TLSOption resources.
 type TLSOptionRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
