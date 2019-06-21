@@ -464,5 +464,5 @@ func getIntParam(request *http.Request, key string, defaultValue int) (int, erro
 }
 
 func getProviderName(id string) string {
-	return strings.SplitN(id, ".", 2)[0]
+	return strings.SplitN(id, "@", 2)[1]
 }

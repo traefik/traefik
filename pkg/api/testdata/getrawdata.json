@@ -1,17 +1,17 @@
 {
 	"routers": {
-		"myprovider@bar": {
+		"bar@myprovider": {
 			"entryPoints": [
 				"web"
 			],
 			"middlewares": [
 				"auth",
-				"anotherprovider@addPrefixTest"
+				"addPrefixTest@anotherprovider"
 			],
-			"service": "myprovider@foo-service",
+			"service": "foo-service@myprovider",
 			"rule": "Host(`foo.bar`)"
 		},
-		"myprovider@test": {
+		"test@myprovider": {
 			"entryPoints": [
 				"web"
 			],
@@ -19,41 +19,41 @@
 				"addPrefixTest",
 				"auth"
 			],
-			"service": "myprovider@foo-service",
+			"service": "foo-service@myprovider",
 			"rule": "Host(`foo.bar.other`)"
 		}
 	},
 	"middlewares": {
-		"anotherprovider@addPrefixTest": {
+		"addPrefixTest@anotherprovider": {
 			"addPrefix": {
 				"prefix": "/toto"
 			},
 			"usedBy": [
-				"myprovider@bar"
+				"bar@myprovider"
 			]
 		},
-		"myprovider@addPrefixTest": {
+		"addPrefixTest@myprovider": {
 			"addPrefix": {
 				"prefix": "/titi"
 			},
 			"usedBy": [
-				"myprovider@test"
+				"test@myprovider"
 			]
 		},
-		"myprovider@auth": {
+		"auth@myprovider": {
 			"basicAuth": {
 				"users": [
 					"admin:admin"
 				]
 			},
 			"usedBy": [
-				"myprovider@bar",
-				"myprovider@test"
+				"bar@myprovider",
+				"test@myprovider"
 			]
 		}
 	},
 	"services": {
-		"myprovider@foo-service": {
+		"foo-service@myprovider": {
 			"loadbalancer": {
 				"servers": [
 					{
@@ -63,29 +63,29 @@
 				"passHostHeader": false
 			},
 			"usedBy": [
-				"myprovider@bar",
-				"myprovider@test"
+				"bar@myprovider",
+				"test@myprovider"
 			]
 		}
 	},
 	"tcpRouters": {
-		"myprovider@tcpbar": {
+		"tcpbar@myprovider": {
 			"entryPoints": [
 				"web"
 			],
-			"service": "myprovider@tcpfoo-service",
+			"service": "tcpfoo-service@myprovider",
 			"rule": "HostSNI(`foo.bar`)"
 		},
-		"myprovider@tcptest": {
+		"tcptest@myprovider": {
 			"entryPoints": [
 				"web"
 			],
-			"service": "myprovider@tcpfoo-service",
+			"service": "tcpfoo-service@myprovider",
 			"rule": "HostSNI(`foo.bar.other`)"
 		}
 	},
 	"tcpServices": {
-		"myprovider@tcpfoo-service": {
+		"tcpfoo-service@myprovider": {
 			"loadbalancer": {
 				"servers": [
 					{
@@ -94,8 +94,8 @@
 				]
 			},
 			"usedBy": [
-				"myprovider@tcpbar",
-				"myprovider@tcptest"
+				"tcpbar@myprovider",
+				"tcptest@myprovider"
 			]
 		}
 	}
