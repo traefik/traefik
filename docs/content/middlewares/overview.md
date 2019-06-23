@@ -136,7 +136,7 @@ For example, if you declare a middleware using a Docker label, under the hoods, 
 If you use multiple providers and wish to reference a middleware declared in another provider,
 then you'll have to prefix the middleware name with the provider name.
 
-```
+```text
 <resource-name>@<provider-name>
 ```
 
