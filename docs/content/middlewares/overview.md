@@ -16,9 +16,13 @@ Pieces of middleware can be combined in chains to fit every scenario.
 ```yaml tab="Docker"
 # As a Docker Label
 whoami:
-  image: containous/whoami  # A container that exposes an API to show its IP address
+  #  A container that exposes an API to show its IP address
+  image: containous/whoami
   labels:
+    # Create a middleware named `foo-add-prefix`
     - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
+    # Aplly the middleware named `foo-add-prefix` to the router named `router1`
+    - "traefik.http.router.router1.Middlewares=foo-add-prefix@docker"
 ```
 
 ```yaml tab="Kubernetes"
@@ -61,20 +65,18 @@ spec:
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo"
+  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo",
+  "traefik.http.router.router1.Middlewares": "foo-add-prefix@marathon"
 }
 ```
 
 ```yaml tab="Rancher"
 # As a Rancher Label
 labels:
+  # Create a middleware named `foo-add-prefix`
   - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
-```
-
-```toml tab="File"
-[tlsOptions]
-    [tlsOptions.default]
-        minVersion = "VersionTLS12"
+  # Aplly the middleware named `foo-add-prefix` to the router named `router1`
+  - "traefik.http.router.router1.Middlewares=foo-add-prefix@rancher"
 ```
 
 ```yaml tab="Kubernetes"
@@ -115,15 +117,15 @@ spec:
     Rule = "Host(`example.com`)"
 
 [http.middlewares]
- [http.middlewares.foo-add-prefix.AddPrefix]
+  [http.middlewares.foo-add-prefix.AddPrefix]
     prefix = "/foo"
 
 [http.services]
- [http.services.service1]
-   [http.services.service1.LoadBalancer]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
 
-     [[http.services.service1.LoadBalancer.Servers]]
-       URL = "http://127.0.0.1:80"
+      [[http.services.service1.LoadBalancer.Servers]]
+        URL = "http://127.0.0.1:80"
 ```
 
 ## Advanced Configuration
