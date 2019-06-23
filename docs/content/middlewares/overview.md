@@ -21,7 +21,7 @@ whoami:
   labels:
     # Create a middleware named `foo-add-prefix`
     - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
-    # Aplly the middleware named `foo-add-prefix` to the router named `router1`
+    # Apply the middleware named `foo-add-prefix` to the router named `router1`
     - "traefik.http.router.router1.Middlewares=foo-add-prefix@docker"
 ```
 
@@ -75,7 +75,7 @@ spec:
 labels:
   # Create a middleware named `foo-add-prefix`
   - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
-  # Aplly the middleware named `foo-add-prefix` to the router named `router1`
+  # Apply the middleware named `foo-add-prefix` to the router named `router1`
   - "traefik.http.router.router1.Middlewares=foo-add-prefix@rancher"
 ```
 
