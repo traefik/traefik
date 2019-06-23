@@ -128,14 +128,19 @@ spec:
         URL = "http://127.0.0.1:80"
 ```
 
-## Advanced Configuration
+## Provider Namespace
 
-When you declare a middleware, it lives in its `provider` namespace.
-For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker `provider` namespace.
+When you declare a middleware, it lives in its provider namespace.
+For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker provider namespace.
 
-If you use multiple `providers` and wish to reference a middleware declared in another `provider`, then you'll have to prefix the middleware name with the `provider` name.
+If you use multiple providers and wish to reference a middleware declared in another provider,
+then you'll have to prefix the middleware name with the provider name.
 
-??? abstract "Referencing a Middleware from Another Provider"
+```
+<resource-name>@<provider-name>
+```
+
+!!! abstract "Referencing a Middleware from Another Provider"
 
     Declaring the add-foo-prefix in the file provider.
 
