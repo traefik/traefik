@@ -123,7 +123,6 @@ In this case, since the definition of the middleware is not in kubernetes,
 specifying a "kubernetes namespace" when refering to the resource does not make any sense,
 and therefore this specification would be ignored even if present.
 
-
 !!! abstract "Referencing a Middleware from Another Provider"
 
     Declaring the add-foo-prefix in the file provider.
