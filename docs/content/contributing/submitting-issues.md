@@ -11,10 +11,10 @@ To save us some time and get quicker feedback, be sure to follow the guide lines
 !!! important "Getting Help Vs Reporting an Issue"
 
     The issue tracker is not a general support forum, but a place to report bugs and asks for new features.
-    
+
     For end-user related support questions, try using first:
-    
-    - the Traefik community Slack channel: [![Join the chat at https://slack.traefik.io](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://slack.traefik.io)
+
+    - the Traefik community forum: [![Join the chat at https://community.containo.us/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.containo.us/)
     - [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
 
 ## Issue Title
