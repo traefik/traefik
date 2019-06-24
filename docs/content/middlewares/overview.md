@@ -16,9 +16,13 @@ Pieces of middleware can be combined in chains to fit every scenario.
 ```yaml tab="Docker"
 # As a Docker Label
 whoami:
-  image: containous/whoami  # A container that exposes an API to show its IP address
+  #  A container that exposes an API to show its IP address
+  image: containous/whoami
   labels:
+    # Create a middleware named `foo-add-prefix`
     - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
+    # Apply the middleware named `foo-add-prefix` to the router named `router1`
+    - "traefik.http.router.router1.Middlewares=foo-add-prefix@docker"
 ```
 
 ```yaml tab="Kubernetes"
@@ -61,20 +65,18 @@ spec:
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo"
+  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo",
+  "traefik.http.router.router1.Middlewares": "foo-add-prefix@marathon"
 }
 ```
 
 ```yaml tab="Rancher"
 # As a Rancher Label
 labels:
+  # Create a middleware named `foo-add-prefix`
   - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
-```
-
-```toml tab="File"
-[tlsOptions]
-    [tlsOptions.default]
-        minVersion = "VersionTLS12"
+  # Apply the middleware named `foo-add-prefix` to the router named `router1`
+  - "traefik.http.router.router1.Middlewares=foo-add-prefix@rancher"
 ```
 
 ```yaml tab="Kubernetes"
@@ -115,25 +117,30 @@ spec:
     Rule = "Host(`example.com`)"
 
 [http.middlewares]
- [http.middlewares.foo-add-prefix.AddPrefix]
+  [http.middlewares.foo-add-prefix.AddPrefix]
     prefix = "/foo"
 
 [http.services]
- [http.services.service1]
-   [http.services.service1.LoadBalancer]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
 
-     [[http.services.service1.LoadBalancer.Servers]]
-       URL = "http://127.0.0.1:80"
+      [[http.services.service1.LoadBalancer.Servers]]
+        URL = "http://127.0.0.1:80"
 ```
 
-## Advanced Configuration
+## Provider Namespace
 
-When you declare a middleware, it lives in its `provider` namespace.
-For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker `provider` namespace.
+When you declare a middleware, it lives in its provider namespace.
+For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker provider namespace.
 
-If you use multiple `providers` and wish to reference a middleware declared in another `provider`, then you'll have to prefix the middleware name with the `provider` name.
+If you use multiple providers and wish to reference a middleware declared in another provider,
+then you'll have to prefix the middleware name with the provider name.
 
-??? abstract "Referencing a Middleware from Another Provider"
+```text
+<resource-name>@<provider-name>
+```
+
+!!! abstract "Referencing a Middleware from Another Provider"
 
     Declaring the add-foo-prefix in the file provider.
 
