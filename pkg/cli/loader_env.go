@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/containous/traefik/pkg/config/env"
 	"github.com/containous/traefik/pkg/log"
@@ -19,7 +20,8 @@ func (e *EnvLoader) Load(_ []string, cmd *Command) (bool, error) {
 	}
 
 	if err := env.Decode(vars, env.DefaultNamePrefix, cmd.Configuration); err != nil {
-		return false, fmt.Errorf("failed to decode configuration from environment variables: %v", err)
+		log.WithoutContext().Debug("environment variables", strings.Join(vars, ", "))
+		return false, fmt.Errorf("failed to decode configuration from environment variables: %v ", err)
 	}
 
 	log.WithoutContext().Println("Configuration loaded from environment variables.")

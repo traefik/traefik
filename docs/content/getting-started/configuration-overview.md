@@ -36,8 +36,8 @@ Traefik gets its _dynamic configuration_ from [providers](../providers/overview.
 There are three different, mutually exclusive, ways to define static configuration options in Traefik:
 
 - In a configuration file
-- As environment variables
 - In the command-line arguments
+- As environment variables
 
 These ways are evaluated in the order listed above.
 
