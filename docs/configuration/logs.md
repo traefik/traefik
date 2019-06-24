@@ -9,7 +9,7 @@ logLevel = "INFO"
 
 [traefikLog]
   filePath = "/path/to/traefik.log"
-  format   = "json" # Default: "common"
+  format   = "json"
 
 [accessLog]
   filePath = "/path/to/access.log"
@@ -42,7 +42,7 @@ For more information about the CLI, see the documentation about [Traefik command
 ```bash
 --logLevel="DEBUG"
 --traefikLog.filePath="/path/to/traefik.log"
---traefikLog.format="json"  # Default: "common"
+--traefikLog.format="json"
 --accessLog.filePath="/path/to/access.log"
 --accessLog.format="json"  # Default: "common"
 --accessLog.filters.statusCodes="200,300-302"
@@ -65,12 +65,12 @@ To write the logs into a log file specify the `filePath`:
   filePath = "/path/to/traefik.log"
 ```
 
-To switch to JSON format instead of [Common Log Format (CLF)](#clf-common-log-format), specify `json` as the format:
+To switch to JSON format instead of standard format (`common`), specify `json` as the format:
 
 ```toml
 [traefikLog]
   filePath = "/path/to/traefik.log"
-  format   = "json" # Default: "common"
+  format   = "json"
 ```
 
 Deprecated way (before 1.4):
