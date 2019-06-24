@@ -400,7 +400,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				if strings.Contains(mi.Name, "@") {
 					if len(mi.Namespace) > 0 {
 						logger.
-							WithField("middlewareName", mi.Name).
+							WithField(log.MiddlewareName, mi.Name).
 							Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
 					}
 					mds = append(mds, mi.Name)
