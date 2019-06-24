@@ -31,6 +31,10 @@ func (s *TracingSuite) SetUpSuite(c *check.C) {
 	s.WhoAmiPort = 80
 }
 
+func (s *TracingSuite) TearDownTest(c *check.C) {
+
+}
+
 func (s *TracingSuite) startZipkin(c *check.C) {
 	s.composeProject.Start(c, "zipkin")
 	s.IP = s.composeProject.Container(c, "zipkin").NetworkSettings.IPAddress
@@ -42,6 +46,7 @@ func (s *TracingSuite) startZipkin(c *check.C) {
 
 func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 	s.startZipkin(c)
+	defer s.composeProject.Stop(c, "zipkin")
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
 		WhoAmiPort: s.WhoAmiPort,
@@ -92,6 +97,7 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 
 func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 	s.startZipkin(c)
+	defer s.composeProject.Stop(c, "zipkin")
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
 		WhoAmiPort: 81,
@@ -118,6 +124,7 @@ func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 
 func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 	s.startZipkin(c)
+	defer s.composeProject.Stop(c, "zipkin")
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
 		WhoAmiPort: s.WhoAmiPort,
@@ -153,6 +160,7 @@ func (s *TracingSuite) startJaeger(c *check.C) {
 
 func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
 	s.startJaeger(c)
+	defer s.composeProject.Stop(c, "jaeger")
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
 		WhoAmiPort: s.WhoAmiPort,
@@ -203,6 +211,7 @@ func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
 
 func (s *TracingSuite) TestJaegerRetry(c *check.C) {
 	s.startJaeger(c)
+	defer s.composeProject.Stop(c, "jaeger")
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
 		WhoAmiPort: 81,
@@ -229,6 +238,7 @@ func (s *TracingSuite) TestJaegerRetry(c *check.C) {
 
 func (s *TracingSuite) TestJaegerAuth(c *check.C) {
 	s.startJaeger(c)
+	defer s.composeProject.Stop(c, "jaeger")
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
 		WhoAmiPort: s.WhoAmiPort,
@@ -249,6 +259,6 @@ func (s *TracingSuite) TestJaegerAuth(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://"+s.IP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("entrypoint web", "basic-auth@file"))
+	err = try.GetRequest("http://"+s.IP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("EntryPoint web", "basic-auth@file"))
 	c.Assert(err, checker.IsNil)
 }
