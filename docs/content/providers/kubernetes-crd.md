@@ -235,7 +235,7 @@ spec:
 	As Kubernetes also has its own notion of namespace, one should not confuse the kubernetes namespace of a resource
 (in the reference to the middleware) with the [provider namespace](../middlewares/overview.md#provider-namespace),
 when the definition of the middleware is from another provider.
-In this context, specifying a namespace when refering to the resource does not make any sense, and will be ignored.
+In this context, specifying a namespace when referring to the resource does not make any sense, and will be ignored.
 
 More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
 
