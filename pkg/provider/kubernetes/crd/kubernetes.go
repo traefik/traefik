@@ -434,13 +434,19 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				tlsConf := &config.RouterTLSConfig{}
 				if ingressRoute.Spec.TLS.Options != nil && len(ingressRoute.Spec.TLS.Options.Name) > 0 {
 					tlsOptionsName := ingressRoute.Spec.TLS.Options.Name
-					// Is a Kubernetes CRD reference, (i.e. not a cross-provider default)
+					// Is a Kubernetes CRD reference, (i.e. not a cross-provider reference)
+					ns := ingressRoute.Spec.TLS.Options.Namespace
 					if !strings.Contains(tlsOptionsName, "@") {
-						ns := ingressRoute.Spec.TLS.Options.Namespace
 						if len(ns) == 0 {
 							ns = ingressRoute.Namespace
 						}
 						tlsOptionsName = makeID(ns, tlsOptionsName)
+					} else {
+						if len(ns) > 0 {
+							logger.
+								WithField("TLSoptions", ingressRoute.Spec.TLS.Options.Name).
+								Warnf("namespace %q is ignored in cross-provider context", ns)
+						}
 					}
 
 					tlsConf.Options = tlsOptionsName
@@ -532,12 +538,18 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				if ingressRouteTCP.Spec.TLS.Options != nil && len(ingressRouteTCP.Spec.TLS.Options.Name) > 0 {
 					tlsOptionsName := ingressRouteTCP.Spec.TLS.Options.Name
 					// Is a Kubernetes CRD reference (i.e. not a cross-provider reference)
+					ns := ingressRouteTCP.Spec.TLS.Options.Namespace
 					if !strings.Contains(tlsOptionsName, "@") {
-						ns := ingressRouteTCP.Spec.TLS.Options.Namespace
 						if len(ns) == 0 {
 							ns = ingressRouteTCP.Namespace
 						}
 						tlsOptionsName = makeID(ns, tlsOptionsName)
+					} else {
+						if len(ns) > 0 {
+							logger.
+								WithField("TLSoptions", ingressRouteTCP.Spec.TLS.Options.Name).
+								Warnf("namespace %q is ignored in cross-provider context", ns)
+						}
 					}
 
 					conf.Routers[serviceName].TLS.Options = tlsOptionsName
