@@ -38,8 +38,8 @@ func FromContext(ctx context.Context) (*Tracing, error) {
 	return tracer, nil
 }
 
-// TrackingBackend is an abstraction for tracking backend (Jaeger, Zipkin, ...).
-type TrackingBackend interface {
+// Backend is an abstraction for tracking backend (Jaeger, Zipkin, ...).
+type Backend interface {
 	Setup(componentName string) (opentracing.Tracer, io.Closer, error)
 }
 
@@ -53,14 +53,14 @@ type Tracing struct {
 }
 
 // NewTracing Creates a Tracing.
-func NewTracing(serviceName string, spanNameLimit int, trackingBackend TrackingBackend) (*Tracing, error) {
+func NewTracing(serviceName string, spanNameLimit int, tracingBackend Backend) (*Tracing, error) {
 	tracing := &Tracing{
 		ServiceName:   serviceName,
 		SpanNameLimit: spanNameLimit,
 	}
 
 	var err error
-	tracing.tracer, tracing.closer, err = trackingBackend.Setup(serviceName)
+	tracing.tracer, tracing.closer, err = tracingBackend.Setup(serviceName)
 	if err != nil {
 		return nil, err
 	}

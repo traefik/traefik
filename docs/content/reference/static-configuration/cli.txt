@@ -490,9 +490,6 @@
 --tracing  (Default: "false")
     OpenTracing configuration.
 
---tracing.backend  (Default: "jaeger")
-    Selects the tracking backend ('jaeger','zipkin','datadog','instana').
-
 --tracing.datadog  (Default: "false")
     Settings for DataDog.
 

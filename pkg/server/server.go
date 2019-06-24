@@ -20,10 +20,6 @@ import (
 	"github.com/containous/traefik/pkg/server/middleware"
 	"github.com/containous/traefik/pkg/tls"
 	"github.com/containous/traefik/pkg/tracing"
-	"github.com/containous/traefik/pkg/tracing/datadog"
-	"github.com/containous/traefik/pkg/tracing/instana"
-	"github.com/containous/traefik/pkg/tracing/jaeger"
-	"github.com/containous/traefik/pkg/tracing/zipkin"
 	"github.com/containous/traefik/pkg/types"
 )
 
@@ -53,20 +49,29 @@ type RouteAppenderFactory interface {
 	NewAppender(ctx context.Context, middlewaresBuilder *middleware.Builder, runtimeConfiguration *config.RuntimeConfiguration) types.RouteAppender
 }
 
-func setupTracing(conf *static.Tracing) tracing.TrackingBackend {
-	switch conf.Backend {
-	case jaeger.Name:
+func setupTracing(conf *static.Tracing) tracing.Backend {
+	if conf.Jaeger != nil {
 		return conf.Jaeger
-	case zipkin.Name:
-		return conf.Zipkin
-	case datadog.Name:
-		return conf.DataDog
-	case instana.Name:
-		return conf.Instana
-	default:
-		log.WithoutContext().Warnf("Could not initialize tracing: unknown tracer %q", conf.Backend)
-		return nil
 	}
+
+	if conf.Zipkin != nil {
+		return conf.Zipkin
+	}
+
+	if conf.DataDog != nil {
+		return conf.DataDog
+	}
+
+	if conf.Instana != nil {
+		return conf.Instana
+	}
+
+	if conf.Haystack != nil {
+		return conf.Haystack
+	}
+
+	log.WithoutContext().Warn("Could not initialize tracing: unknown tracer")
+	return nil
 }
 
 // NewServer returns an initialized Server.
@@ -100,11 +105,12 @@ func NewServer(staticConfiguration static.Configuration, provider provider.Provi
 	server.routinesPool = safe.NewPool(context.Background())
 
 	if staticConfiguration.Tracing != nil {
-		trackingBackend := setupTracing(staticConfiguration.Tracing)
-		var err error
-		server.tracer, err = tracing.NewTracing(staticConfiguration.Tracing.ServiceName, staticConfiguration.Tracing.SpanNameLimit, trackingBackend)
-		if err != nil {
-			log.WithoutContext().Warnf("Unable to create tracer: %v", err)
+		tracingBackend := setupTracing(staticConfiguration.Tracing)
+		if tracingBackend != nil {
+			server.tracer, err = tracing.NewTracing(staticConfiguration.Tracing.ServiceName, staticConfiguration.Tracing.SpanNameLimit, tracingBackend)
+			if err != nil {
+				log.WithoutContext().Warnf("Unable to create tracer: %v", err)
+			}
 		}
 	}
 

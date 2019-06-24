@@ -474,9 +474,6 @@ Add cert file for self-signed certificate.
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)
 
-`TRAEFIK_TRACING_BACKEND`:  
-Selects the tracking backend ('jaeger','zipkin','datadog','instana'). (Default: ```jaeger```)
-
 `TRAEFIK_TRACING_DATADOG`:  
 Settings for DataDog. (Default: ```false```)
 
