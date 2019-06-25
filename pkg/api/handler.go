@@ -156,6 +156,7 @@ func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	rw.Header().Set("Content-Type", "application/json")
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
@@ -179,6 +180,8 @@ func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
 		Name:       routerID,
 		Provider:   getProviderName(routerID),
 	}
+
+	rw.Header().Set("Content-Type", "application/json")
 
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
@@ -209,6 +212,7 @@ func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	rw.Header().Set("Content-Type", "application/json")
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
@@ -233,6 +237,8 @@ func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
 		Provider:     getProviderName(serviceID),
 		ServerStatus: service.GetAllStatus(),
 	}
+
+	rw.Header().Add("Content-Type", "application/json")
 
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
@@ -262,6 +268,7 @@ func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	rw.Header().Set("Content-Type", "application/json")
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
@@ -285,6 +292,8 @@ func (h Handler) getMiddleware(rw http.ResponseWriter, request *http.Request) {
 		Name:           middlewareID,
 		Provider:       getProviderName(middlewareID),
 	}
+
+	rw.Header().Set("Content-Type", "application/json")
 
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
@@ -314,6 +323,7 @@ func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	rw.Header().Set("Content-Type", "application/json")
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
@@ -337,6 +347,8 @@ func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
 		Name:          routerID,
 		Provider:      getProviderName(routerID),
 	}
+
+	rw.Header().Set("Content-Type", "application/json")
 
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
@@ -366,6 +378,7 @@ func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	rw.Header().Set("Content-Type", "application/json")
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
@@ -390,6 +403,8 @@ func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
 		Provider:       getProviderName(serviceID),
 	}
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
@@ -413,6 +428,8 @@ func (h Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.R
 		TCPRouters:  h.runtimeConfiguration.TCPRouters,
 		TCPServices: h.runtimeConfiguration.TCPServices,
 	}
+
+	rw.Header().Set("Content-Type", "application/json")
 
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
