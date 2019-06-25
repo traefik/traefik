@@ -13,7 +13,7 @@ logLevel = "INFO"
 
 [accessLog]
   filePath = "/path/to/access.log"
-  format = "json" # Default: "common"
+  format = "json"
 
   [accessLog.filters]
     statusCodes = ["200", "300-302"]
@@ -44,7 +44,7 @@ For more information about the CLI, see the documentation about [Traefik command
 --traefikLog.filePath="/path/to/traefik.log"
 --traefikLog.format="json"
 --accessLog.filePath="/path/to/access.log"
---accessLog.format="json"  # Default: "common"
+--accessLog.format="json"
 --accessLog.filters.statusCodes="200,300-302"
 --accessLog.filters.retryAttempts="true"
 --accessLog.filters.minDuration="10ms"
