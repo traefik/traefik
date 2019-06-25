@@ -126,7 +126,7 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 
 	matches, err := constraints.Match(container.Labels, p.Constraints)
 	if err != nil {
-		logger.Error("Error matching constraints expression: %v", err)
+		logger.Errorf("Error matching constraints expression: %v", err)
 		return false
 	}
 	if !matches {
