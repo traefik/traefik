@@ -15,6 +15,8 @@ const (
 	xForwardedHost   = "X-Forwarded-Host"
 	xForwardedPort   = "X-Forwarded-Port"
 	xForwardedServer = "X-Forwarded-Server"
+	xForwardedURI    = "X-Forwarded-Uri"
+	xForwardedMethod = "X-Forwarded-Method"
 	xRealIP          = "X-Real-Ip"
 	connection       = "Connection"
 	upgrade          = "Upgrade"
@@ -26,6 +28,8 @@ var xHeaders = []string{
 	xForwardedHost,
 	xForwardedPort,
 	xForwardedServer,
+	xForwardedURI,
+	xForwardedMethod,
 	xRealIP,
 }
 
