@@ -728,7 +728,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default/test2.crd-23c7f4c450289ee29016",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
 							Priority:    12,
-							Middlewares: []string{"default/stripprefix", "foo/addprefix", "file@basicauth", "file@redirect"},
+							Middlewares: []string{"default/stripprefix", "foo/addprefix", "basicauth@file", "redirect@file"},
 						},
 					},
 					Middlewares: map[string]*config.Middleware{

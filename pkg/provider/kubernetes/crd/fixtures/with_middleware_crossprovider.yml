@@ -42,6 +42,6 @@ spec:
         - name: stripprefix
         - name: addprefix
           namespace: foo
-        - name: file@basicauth
-        - name: file@redirect
+        - name: basicauth@file
+        - name: redirect@file
           namespace: foo
