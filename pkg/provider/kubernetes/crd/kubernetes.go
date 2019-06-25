@@ -441,12 +441,10 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 							ns = ingressRoute.Namespace
 						}
 						tlsOptionsName = makeID(ns, tlsOptionsName)
-					} else {
-						if len(ns) > 0 {
-							logger.
-								WithField("TLSoptions", ingressRoute.Spec.TLS.Options.Name).
-								Warnf("namespace %q is ignored in cross-provider context", ns)
-						}
+					} else if len(ns) > 0 {
+						logger.
+							WithField("TLSoptions", ingressRoute.Spec.TLS.Options.Name).
+							Warnf("namespace %q is ignored in cross-provider context", ns)
 					}
 
 					tlsConf.Options = tlsOptionsName
@@ -544,12 +542,10 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 							ns = ingressRouteTCP.Namespace
 						}
 						tlsOptionsName = makeID(ns, tlsOptionsName)
-					} else {
-						if len(ns) > 0 {
-							logger.
-								WithField("TLSoptions", ingressRouteTCP.Spec.TLS.Options.Name).
-								Warnf("namespace %q is ignored in cross-provider context", ns)
-						}
+					} else if len(ns) > 0 {
+						logger.
+							WithField("TLSoptions", ingressRouteTCP.Spec.TLS.Options.Name).
+							Warnf("namespace %q is ignored in cross-provider context", ns)
 					}
 
 					conf.Routers[serviceName].TLS.Options = tlsOptionsName
