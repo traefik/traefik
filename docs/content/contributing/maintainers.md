@@ -28,7 +28,7 @@
 * Modifying an issue or a pull request (labels, assignees, milestone) is only possible:
     * During the Contributions Daily Meeting
     * By an assigned maintainer
-    * In case of emergency, if a change proposal is approved by 2 other maintainers (on Slack, Discord, etc)
+    * In case of emergency, if a change proposal is approved by 2 other maintainers (on Slack, Discord, Discourse, etc)
 
 ## PR review process:
 
