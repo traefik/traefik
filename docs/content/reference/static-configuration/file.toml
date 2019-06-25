@@ -133,16 +133,16 @@
 
   [Metrics.Datadog]
     Address = "foobar"
-    PushInterval = "foobar"
+    PushInterval = "10s"
 
   [Metrics.StatsD]
     Address = "foobar"
-    PushInterval = "foobar"
+    PushInterval = "10s"
 
   [Metrics.InfluxDB]
     Address = "foobar"
     Protocol = "foobar"
-    PushInterval = "foobar"
+    PushInterval = "10s"
     Database = "foobar"
     RetentionPolicy = "foobar"
     Username = "foobar"
