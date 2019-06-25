@@ -898,6 +898,7 @@ func TestHandlerHTTP_API(t *testing.T) {
 func TestHandler_Configuration(t *testing.T) {
 	type expected struct {
 		statusCode int
+		headers    map[string]string
 		json       string
 	}
 
@@ -997,6 +998,7 @@ func TestHandler_Configuration(t *testing.T) {
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
+				headers:    map[string]string{"Content-Type": "application/json"},
 				json:       "testdata/getrawdata.json",
 			},
 		},
@@ -1022,6 +1024,11 @@ func TestHandler_Configuration(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected.statusCode, resp.StatusCode)
+
+			for key, _ := range test.expected.headers {
+				assert.Contains(t, resp.Header, key)
+				assert.Equal(t, test.expected.headers[key], resp.Header.Get(key))
+			}
 
 			contents, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
