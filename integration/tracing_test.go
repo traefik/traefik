@@ -31,10 +31,6 @@ func (s *TracingSuite) SetUpSuite(c *check.C) {
 	s.WhoAmiPort = 80
 }
 
-func (s *TracingSuite) TearDownTest(c *check.C) {
-
-}
-
 func (s *TracingSuite) startZipkin(c *check.C) {
 	s.composeProject.Start(c, "zipkin")
 	s.IP = s.composeProject.Container(c, "zipkin").NetworkSettings.IPAddress

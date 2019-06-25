@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containous/traefik/pkg/tracing/jaeger"
+
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
@@ -70,8 +72,10 @@ func setupTracing(conf *static.Tracing) tracing.Backend {
 		return conf.Haystack
 	}
 
-	log.WithoutContext().Warn("Could not initialize tracing: unknown tracer")
-	return nil
+	log.WithoutContext().Debug("Could not initialize tracing, use Jaeger by default")
+	jaegerCfg := &jaeger.Config{}
+	jaegerCfg.SetDefaults()
+	return jaegerCfg
 }
 
 // NewServer returns an initialized Server.
