@@ -471,9 +471,6 @@ If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, D
 `TRAEFIK_SERVERSTRANSPORT_ROOTCAS`:  
 Add cert file for self-signed certificate.
 
-`TRAEFIK_TRACING`:  
-OpenTracing configuration. (Default: ```false```)
-
 `TRAEFIK_TRACING_DATADOG`:  
 Settings for DataDog. (Default: ```false```)
 

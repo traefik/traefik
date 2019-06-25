@@ -56,7 +56,7 @@ type Configuration struct {
 
 	Log       *types.TraefikLog `description:"Traefik log settings." export:"true" label:"allowEmpty"`
 	AccessLog *types.AccessLog  `description:"Access log settings." export:"true" label:"allowEmpty"`
-	Tracing   *Tracing          `description:"OpenTracing configuration." export:"true" label:"allowEmpty"`
+	Tracing   *Tracing          `description:"OpenTracing configuration." export:"true"`
 
 	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening." export:"true" label:"allowEmpty"`
 

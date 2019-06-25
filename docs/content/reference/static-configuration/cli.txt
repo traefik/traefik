@@ -487,9 +487,6 @@
 --serverstransport.rootcas  (Default: "")
     Add cert file for self-signed certificate.
 
---tracing  (Default: "false")
-    OpenTracing configuration.
-
 --tracing.datadog  (Default: "false")
     Settings for DataDog.
 
@@ -523,7 +520,7 @@
     Settings for Haystack.
 
 --tracing.haystack.baggageprefixheadername  (Default: "")
-    specifies the header name prefix that will be used to store baggage items in a
+    Specifies the header name prefix that will be used to store baggage items in a
     map.
 
 --tracing.haystack.globaltag  (Default: "")
