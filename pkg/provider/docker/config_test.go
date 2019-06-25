@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/types"
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
@@ -339,7 +338,7 @@ func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		containers  []dockerData
-		constraints []*types.Constraint
+		constraints string
 		expected    *config.Configuration
 	}{
 		{
@@ -1924,13 +1923,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			constraints: []*types.Constraint{
-				{
-					Key:       "tag",
-					MustMatch: true,
-					Value:     "bar",
-				},
-			},
+			constraints: `Label("traefik.tags", "bar")`,
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
@@ -1965,13 +1958,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 			},
-			constraints: []*types.Constraint{
-				{
-					Key:       "tag",
-					MustMatch: true,
-					Value:     "foo",
-				},
-			},
+			constraints: `Label("traefik.tags", "foo")`,
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},

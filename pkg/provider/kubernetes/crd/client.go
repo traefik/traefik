@@ -49,6 +49,7 @@ type Client interface {
 	GetIngressRoutes() []*v1alpha1.IngressRoute
 	GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP
 	GetMiddlewares() []*v1alpha1.Middleware
+	GetTLSOptions() []*v1alpha1.TLSOption
 
 	GetIngresses() []*extensionsv1beta1.Ingress
 	GetService(namespace, name string) (*corev1.Service, bool, error)
@@ -158,6 +159,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryCrd.Traefik().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().Middlewares().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().IngressRouteTCPs().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1alpha1().TLSOptions().Informer().AddEventHandler(eventHandler)
 
 		factoryKube := informers.NewFilteredSharedInformerFactory(c.csKube, resyncPeriod, ns, nil)
 		factoryKube.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
@@ -236,6 +238,21 @@ func (c *clientWrapper) GetMiddlewares() []*v1alpha1.Middleware {
 			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
 		}
 		result = append(result, ings...)
+	}
+
+	return result
+}
+
+// GetTLSOptions
+func (c *clientWrapper) GetTLSOptions() []*v1alpha1.TLSOption {
+	var result []*v1alpha1.TLSOption
+
+	for ns, factory := range c.factoriesCrd {
+		options, err := factory.Traefik().V1alpha1().TLSOptions().Lister().List(c.labelSelector)
+		if err != nil {
+			log.Errorf("Failed to list tls options in namespace %s: %s", ns, err)
+		}
+		result = append(result, options...)
 	}
 
 	return result

@@ -128,5 +128,5 @@ func contains(cmds []*Command, name string) bool {
 }
 
 func isFlag(arg string) bool {
-	return len(arg) > 0 && arg[1] == '-'
+	return len(arg) > 0 && arg[0] == '-'
 }

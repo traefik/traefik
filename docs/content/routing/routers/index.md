@@ -36,8 +36,10 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
         [entryPoints.mysql-default]
           address = ":80"
         [entryPoints.mysql-default]
-          address = ":3306"
-          
+          address = ":3306"   
+    ```
+    
+    ```toml
       [tcp]
         [tcp.routers]
           [tcp.routers.to-database]
@@ -50,8 +52,8 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
 
 ### EntryPoints
 
-If not specified, HTTP routers will accept requests from all defined entrypoints.
-If you want to limit the router scope to a set of entrypoints, set the entrypoints option.
+If not specified, HTTP routers will accept requests from all defined entry points.
+If you want to limit the router scope to a set of entry points, set the `entryPoints` option.
 
 ??? example "Listens to Every EntryPoint"
 
@@ -63,7 +65,9 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
           # ...
        [entryPoints.other]
           # ...
-
+    ```
+    
+    ```toml
     [http.routers]
        [http.routers.Router-1]
           # By default, routers listen to every entrypoints
@@ -81,7 +85,9 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
           # ...
        [entryPoints.other]
           # ...
-
+    ```
+    
+    ```toml
     [http.routers]
        [http.routers.Router-1]
           entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
@@ -97,14 +103,15 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 ??? example "Host is traefik.io"
 
     ```toml
-       rule = "Host(`traefik.io`)"
+    rule = "Host(`traefik.io`)"
     ```
 
 ??? example "Host is traefik.io OR Host is containo.us AND path is /traefik"
 
     ```toml
-       rule = "Host(`traefik.io`) || (Host(`containo.us`) && Path(`/traefik`))"
+    rule = "Host(`traefik.io`) || (Host(`containo.us`) && Path(`/traefik`))"
     ```
+
 The table below lists all the available matchers:
 
 | Rule                                                                 | Description                                                                                                    |
@@ -126,7 +133,7 @@ The table below lists all the available matchers:
 
 !!! tip "Combining Matchers Using Operators and Parenthesis"
 
-    You can combine multiple matchers using the AND (`&&`) and OR (`||) operators. You can also use parenthesis.
+    You can combine multiple matchers using the AND (`&&`) and OR (`||`) operators. You can also use parenthesis.
 
 !!! important "Rule, Middleware, and Services"
 
@@ -212,7 +219,6 @@ It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied 
           [http.routers.Router-1.tls] # will terminate the TLS request
             options = "foo"
     
-    
     [tlsOptions]
       [tlsOptions.foo]
           minVersion = "VersionTLS12"
@@ -234,7 +240,7 @@ If no matching route is found for the TCP routers, then the HTTP routers will ta
 If not specified, TCP routers will accept requests from all defined entry points.
 If you want to limit the router scope to a set of entry points, set the entry points option.
 
-??? example "Listens to Every EntryPoint"
+??? example "Listens to Every Entry Point"
 
     ```toml
     [entryPoints]
@@ -244,7 +250,9 @@ If you want to limit the router scope to a set of entry points, set the entry po
           # ...
        [entryPoints.other]
           # ...
-
+    ```
+    
+    ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
           # By default, routers listen to every entrypoints
@@ -253,7 +261,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
           [tcp.routers.Router-1.tls] # will route TLS requests (and ignore non tls requests)
     ```
 
-??? example "Listens to Specific EntryPoints"
+??? example "Listens to Specific Entry Points"
 
     ```toml
     [entryPoints]
@@ -263,7 +271,9 @@ If you want to limit the router scope to a set of entry points, set the entry po
           # ...
        [entryPoints.other]
           # ...
+    ```
 
+    ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
           entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
@@ -339,7 +349,6 @@ It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied 
           service = "service-id"
           [tcp.routers.Router-1.tls] # will terminate the TLS request
             options = "foo"
-    
     
     [tlsOptions]
       [tlsOptions.foo]

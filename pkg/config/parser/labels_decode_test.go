@@ -218,7 +218,7 @@ func TestDecodeToNode(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			out, err := DecodeToNode(test.in, test.filters...)
+			out, err := DecodeToNode(test.in, DefaultRootName, test.filters...)
 
 			if test.expected.error {
 				require.Error(t, err)

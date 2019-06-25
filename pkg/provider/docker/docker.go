@@ -45,7 +45,7 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.Constrainer    `description:"List of constraints used to filter out some containers." export:"true"`
+	Constraints             string           `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." export:"true"`
 	Watch                   bool             `description:"Watch provider." export:"true"`
 	Endpoint                string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint."`
 	DefaultRule             string           `description:"Default rule."`

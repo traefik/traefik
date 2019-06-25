@@ -7,7 +7,6 @@ import (
 
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/ping"
-	"github.com/containous/traefik/pkg/provider"
 	"github.com/containous/traefik/pkg/provider/acme"
 	acmeprovider "github.com/containous/traefik/pkg/provider/acme"
 	"github.com/containous/traefik/pkg/provider/docker"
@@ -153,20 +152,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 
 	config.Providers.Docker = &docker.Provider{
-		Constrainer: provider.Constrainer{
-			Constraints: []*types.Constraint{
-				{
-					Key:       "file Constraints Key 1",
-					Value:     "file Constraints Regex 2",
-					MustMatch: true,
-				},
-				{
-					Key:       "file Constraints Key 1",
-					Value:     "file Constraints Regex 2",
-					MustMatch: true,
-				},
-			},
-		},
+		Constraints: `Label("foo", "bar")`,
 		Watch:       true,
 		Endpoint:    "MyEndPoint",
 		DefaultRule: "PathPrefix(`/`)",

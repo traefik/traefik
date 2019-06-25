@@ -41,16 +41,7 @@
     SwarmMode = true
     Network = "foobar"
     SwarmModeRefreshSeconds = 42
-
-    [[Providers.Docker.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
-
-    [[Providers.Docker.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
+    Constraints = "foobar"
 
     [Providers.Docker.TLS]
       CA = "foobar"
@@ -73,23 +64,13 @@
     DefaultRule = "foobar"
     ExposedByDefault = true
     DCOSToken = "foobar"
-    FilterMarathonConstraints = true
     DialerTimeout = 42
     ResponseHeaderTimeout = 42
     TLSHandshakeTimeout = 42
     KeepAlive = 42
     ForceTaskHostname = true
     RespectReadinessChecks = true
-
-    [[Providers.Marathon.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
-
-    [[Providers.Marathon.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
+    Constraints = "foobar"
 
     [Providers.Marathon.TLS]
       CA = "foobar"
@@ -134,16 +115,7 @@
     RefreshSeconds = 42
     IntervalPoll = true
     Prefix = "foobar"
-
-    [[Providers.Rancher.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
-
-    [[Providers.Rancher.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
+    Constraints = "foobar"
 
 [API]
   EntryPoint = "foobar"

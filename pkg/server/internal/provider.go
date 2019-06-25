@@ -21,11 +21,11 @@ func AddProviderInContext(ctx context.Context, elementName string) context.Conte
 		return ctx
 	}
 
-	if name, ok := ctx.Value(providerKey).(string); ok && name == parts[0] {
+	if name, ok := ctx.Value(providerKey).(string); ok && name == parts[1] {
 		return ctx
 	}
 
-	return context.WithValue(ctx, providerKey, parts[0])
+	return context.WithValue(ctx, providerKey, parts[1])
 }
 
 // GetQualifiedName Gets the fully qualified name.
@@ -41,5 +41,5 @@ func GetQualifiedName(ctx context.Context, elementName string) string {
 
 // MakeQualifiedName Creates a qualified name for an element
 func MakeQualifiedName(providerName string, elementName string) string {
-	return providerName + "@" + elementName
+	return elementName + "@" + providerName
 }

@@ -3,9 +3,9 @@
 		"entryPoints": [
 			"web"
 		],
-		"name": "myprovider@baz",
-		"provider": "myprovider@baz",
+		"name": "baz@myprovider",
+		"provider": "myprovider",
 		"rule": "Host(`toto.bar`)",
-		"service": "myprovider@foo-service"
+		"service": "foo-service@myprovider"
 	}
 ]

@@ -31,3 +31,5 @@ type IngressRouteExpansion interface{}
 type IngressRouteTCPExpansion interface{}
 
 type MiddlewareExpansion interface{}
+
+type TLSOptionExpansion interface{}

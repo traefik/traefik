@@ -2,7 +2,6 @@ package marathon
 
 import (
 	"math"
-	"strings"
 
 	"github.com/containous/traefik/pkg/config/label"
 	"github.com/gambol99/go-marathon"
@@ -10,7 +9,6 @@ import (
 
 type configuration struct {
 	Enable   bool
-	Tags     []string
 	Marathon specificConfiguration
 }
 
@@ -23,21 +21,14 @@ func (p *Provider) getConfiguration(app marathon.Application) (configuration, er
 
 	conf := configuration{
 		Enable: p.ExposedByDefault,
-		Tags:   nil,
 		Marathon: specificConfiguration{
 			IPAddressIdx: math.MinInt32,
 		},
 	}
 
-	err := label.Decode(labels, &conf, "traefik.marathon.", "traefik.enable", "traefik.tags")
+	err := label.Decode(labels, &conf, "traefik.marathon.", "traefik.enable")
 	if err != nil {
 		return configuration{}, err
-	}
-
-	if p.FilterMarathonConstraints && app.Constraints != nil {
-		for _, constraintParts := range *app.Constraints {
-			conf.Tags = append(conf.Tags, strings.Join(constraintParts, ":"))
-		}
 	}
 
 	return conf, nil

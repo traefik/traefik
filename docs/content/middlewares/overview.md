@@ -16,9 +16,13 @@ Pieces of middleware can be combined in chains to fit every scenario.
 ```yaml tab="Docker"
 # As a Docker Label
 whoami:
-  image: containous/whoami  # A container that exposes an API to show its IP address
+  #  A container that exposes an API to show its IP address
+  image: containous/whoami
   labels:
+    # Create a middleware named `foo-add-prefix`
     - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
+    # Apply the middleware named `foo-add-prefix` to the router named `router1`
+    - "traefik.http.router.router1.Middlewares=foo-add-prefix@docker"
 ```
 
 ```yaml tab="Kubernetes"
@@ -61,14 +65,44 @@ spec:
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo"
+  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo",
+  "traefik.http.router.router1.Middlewares": "foo-add-prefix@marathon"
 }
 ```
 
 ```yaml tab="Rancher"
 # As a Rancher Label
 labels:
+  # Create a middleware named `foo-add-prefix`
   - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
+  # Apply the middleware named `foo-add-prefix` to the router named `router1`
+  - "traefik.http.router.router1.Middlewares=foo-add-prefix@rancher"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: tlsoptions.traefik.containo.us
+
+spec:
+  group: traefik.containo.us
+  version: v1alpha1
+  names:
+    kind: TLSOption
+    plural: tlsoptions
+    singular: tlsoption
+  scope: Namespaced
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: mytlsoption
+  namespace: default
+
+spec:
+  minversion: VersionTLS12
 ```
 
 ```toml tab="File"
@@ -83,25 +117,30 @@ labels:
     Rule = "Host(`example.com`)"
 
 [http.middlewares]
- [http.middlewares.foo-add-prefix.AddPrefix]
+  [http.middlewares.foo-add-prefix.AddPrefix]
     prefix = "/foo"
 
 [http.services]
- [http.services.service1]
-   [http.services.service1.LoadBalancer]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
 
-     [[http.services.service1.LoadBalancer.Servers]]
-       URL = "http://127.0.0.1:80"
+      [[http.services.service1.LoadBalancer.Servers]]
+        URL = "http://127.0.0.1:80"
 ```
 
-## Advanced Configuration
+## Provider Namespace
 
-When you declare a middleware, it lives in its `provider` namespace.
-For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker `provider` namespace.
+When you declare a middleware, it lives in its provider namespace.
+For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker provider namespace.
 
-If you use multiple `providers` and wish to reference a middleware declared in another `provider`, then you'll have to prefix the middleware name with the `provider` name.
+If you use multiple providers and wish to reference a middleware declared in another provider,
+then you'll have to prefix the middleware name with the provider name.
 
-??? abstract "Referencing a Middleware from Another Provider"
+```text
+<resource-name>@<provider-name>
+```
+
+!!! abstract "Referencing a Middleware from Another Provider"
 
     Declaring the add-foo-prefix in the file provider.
 
@@ -121,8 +160,8 @@ If you use multiple `providers` and wish to reference a middleware declared in a
         image: your-docker-image
 
         labels:
-          # Attach file@add-foo-prefix middleware (declared in file)
-          - "traefik.http.routers.my-container.middlewares=file@add-foo-prefix"
+          # Attach add-foo-prefix@file middleware (declared in file)
+          - "traefik.http.routers.my-container.middlewares=add-foo-prefix@file"
     ```
 
 ## Available Middlewares

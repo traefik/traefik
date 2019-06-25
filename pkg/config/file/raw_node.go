@@ -9,9 +9,9 @@ import (
 	"github.com/containous/traefik/pkg/config/parser"
 )
 
-func decodeRawToNode(data map[string]interface{}, filters ...string) (*parser.Node, error) {
+func decodeRawToNode(data map[string]interface{}, rootName string, filters ...string) (*parser.Node, error) {
 	root := &parser.Node{
-		Name: "traefik",
+		Name: rootName,
 	}
 
 	vData := reflect.ValueOf(data)

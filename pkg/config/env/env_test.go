@@ -173,7 +173,7 @@ func TestDecode(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			err := Decode(test.environ, test.element)
+			err := Decode(test.environ, DefaultNamePrefix, test.element)
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, test.element)
@@ -459,40 +459,4 @@ func TestEncode(t *testing.T) {
 	}
 
 	assert.Equal(t, expected, flats)
-}
-
-type Ya struct {
-	Foo     *Yaa
-	Field1  string
-	Field2  bool
-	Field3  int
-	Field4  map[string]string
-	Field5  map[string]int
-	Field6  map[string]struct{ Field string }
-	Field7  map[string]struct{ Field map[string]string }
-	Field8  map[string]*struct{ Field string }
-	Field9  map[string]*struct{ Field map[string]string }
-	Field10 struct{ Field string }
-	Field11 *struct{ Field string }
-	Field12 *string
-	Field13 *bool
-	Field14 *int
-	Field15 []int
-}
-
-type Yaa struct {
-	FieldIn1  string
-	FieldIn2  bool
-	FieldIn3  int
-	FieldIn4  map[string]string
-	FieldIn5  map[string]int
-	FieldIn6  map[string]struct{ Field string }
-	FieldIn7  map[string]struct{ Field map[string]string }
-	FieldIn8  map[string]*struct{ Field string }
-	FieldIn9  map[string]*struct{ Field map[string]string }
-	FieldIn10 struct{ Field string }
-	FieldIn11 *struct{ Field string }
-	FieldIn12 *string
-	FieldIn13 *bool
-	FieldIn14 *int
 }

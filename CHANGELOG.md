@@ -1,5 +1,25 @@
 # Change Log
 
+## [v2.0.0-alpha7](https://github.com/containous/traefik/tree/v2.0.0-alpha7) (2019-06-21)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha6...v2.0.0-alpha7)
+
+**Enhancements:**
+- **[api]** API: new contract ([#4964](https://github.com/containous/traefik/pull/4964) by [mpl](https://github.com/mpl))
+- **[k8s,k8s/crd,tls]** Define TLS options on the Router configuration for Kubernetes ([#4973](https://github.com/containous/traefik/pull/4973) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[middleware,provider]** Change the provider separator from . to @ ([#4982](https://github.com/containous/traefik/pull/4982) by [ldez](https://github.com/ldez))
+- **[provider]** Use name@provider instead of provider@name. ([#4990](https://github.com/containous/traefik/pull/4990) by [ldez](https://github.com/ldez))
+- **[provider]** New constraints management. ([#4965](https://github.com/containous/traefik/pull/4965) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[cli]** Fix some CLI bugs ([#4989](https://github.com/containous/traefik/pull/4989) by [ldez](https://github.com/ldez))
+- **[cli]** Filter env vars configuration ([#4985](https://github.com/containous/traefik/pull/4985) by [ldez](https://github.com/ldez))
+- **[cli]** Return an error when help is called on a non existing command. ([#4977](https://github.com/containous/traefik/pull/4977) by [ldez](https://github.com/ldez))
+- **[tls]** Fix panic in TLS stores handling ([#4997](https://github.com/containous/traefik/pull/4997) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[acme,tls]** docs: rewrite of the HTTPS and TLS section ([#4980](https://github.com/containous/traefik/pull/4980) by [mpl](https://github.com/mpl))
+- Improve various parts of the documentation. ([#4996](https://github.com/containous/traefik/pull/4996) by [ldez](https://github.com/ldez))
+
 ## [v2.0.0-alpha6](https://github.com/containous/traefik/tree/v2.0.0-alpha6) (2019-06-18)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha5...v2.0.0-alpha6)
 
