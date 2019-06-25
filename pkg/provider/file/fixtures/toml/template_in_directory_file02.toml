@@ -1,0 +1,6 @@
+[http.services]
+{{ range $i, $e := until 20 }}
+  [http.services.application-{{ $e }}]
+    [[http.services.application-{{ $e }}.servers]]
+    url="http://127.0.0.1"
+{{ end }}

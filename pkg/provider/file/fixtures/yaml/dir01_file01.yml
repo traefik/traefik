@@ -1,0 +1,6 @@
+http:
+  routers:
+    router1:
+      service: application-1
+    router2:
+      service: application-2

@@ -1,0 +1,39 @@
+
+				temp="{{ getTag \"test\" }}"
+				[providers.file]	
+				[http.routers]
+ 
+[http.routers."router1"]
+	service = "application-1"
+ 
+[http.routers."router2"]
+	service = "application-2"
+[http.services]
+
+[http.services.application-1.loadbalancer]
+   [[http.services.application-1.loadbalancer.servers]]
+     url = "http://172.17.0.1:80"
+
+[http.services.application-2.loadbalancer]
+   [[http.services.application-2.loadbalancer.servers]]
+     url = "http://172.17.0.2:80"
+
+[http.services.application-3.loadbalancer]
+   [[http.services.application-3.loadbalancer.servers]]
+     url = "http://172.17.0.3:80"
+[[TLS]]
+	[TLS.Certificate]
+	CertFile = "integration/fixtures/https/snitest1.com.cert"
+	KeyFile = "integration/fixtures/https/snitest1.com.key"
+[[TLS]]
+	[TLS.Certificate]
+	CertFile = "integration/fixtures/https/snitest2.com.cert"
+	KeyFile = "integration/fixtures/https/snitest2.com.key"
+[[TLS]]
+	[TLS.Certificate]
+	CertFile = "integration/fixtures/https/snitest3.com.cert"
+	KeyFile = "integration/fixtures/https/snitest3.com.key"
+[[TLS]]
+	[TLS.Certificate]
+	CertFile = "integration/fixtures/https/snitest4.com.cert"
+	KeyFile = "integration/fixtures/https/snitest4.com.key"
