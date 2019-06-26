@@ -44,14 +44,14 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Service:     "default/test.crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Services: map[string]*config.TCPService{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -75,19 +75,19 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Service:     "default/test.crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 						},
-						"default/test-crd-f44ce589164e656d231c": {
+						"default/test.crd-f44ce589164e656d231c": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-f44ce589164e656d231c",
+							Service:     "default/test.crd-f44ce589164e656d231c",
 							Rule:        "HostSNI(`bar.com`)",
 						},
 					},
 					Services: map[string]*config.TCPService{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -101,7 +101,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 							},
 						},
-						"default/test-crd-f44ce589164e656d231c": {
+						"default/test.crd-f44ce589164e656d231c": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -130,14 +130,14 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Service:     "default/test.crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Services: map[string]*config.TCPService{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -227,15 +227,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Service:     "default/test.crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS:         &config.RouterTCPTLSConfig{},
 						},
 					},
 					Services: map[string]*config.TCPService{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -264,9 +264,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Service:     "default/test.crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &config.RouterTCPTLSConfig{
 								Passthrough: true,
@@ -274,7 +274,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 					Services: map[string]*config.TCPService{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -320,9 +320,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Service:     "default/test.crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &config.RouterTCPTLSConfig{
 								Options: "default/foo",
@@ -330,7 +330,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 					Services: map[string]*config.TCPService{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -376,9 +376,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Service:     "default/test.crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &config.RouterTCPTLSConfig{
 								Options: "myns/foo",
@@ -386,7 +386,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 					Services: map[string]*config.TCPService{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -431,9 +431,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Service:     "default/test.crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &config.RouterTCPTLSConfig{
 								Options: "default/foo",
@@ -441,7 +441,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 					Services: map[string]*config.TCPService{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -475,9 +475,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Service:     "default/test.crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &config.RouterTCPTLSConfig{
 								Options: "default/unknown",
@@ -485,7 +485,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 					Services: map[string]*config.TCPService{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -519,9 +519,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Service:     "default/test.crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS: &config.RouterTCPTLSConfig{
 								Options: "unknown/foo",
@@ -529,7 +529,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 					Services: map[string]*config.TCPService{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -558,15 +558,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-fdd3e9338e47a45efefc",
+							Service:     "default/test.crd-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 							TLS:         &config.RouterTCPTLSConfig{},
 						},
 					},
 					Services: map[string]*config.TCPService{
-						"default/test-crd-fdd3e9338e47a45efefc": {
+						"default/test.crd-fdd3e9338e47a45efefc": {
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
 									{
@@ -639,16 +639,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Service:     "default/test.crd-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*config.Middleware{},
 					Services: map[string]*config.Service{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -675,9 +675,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test2-crd-23c7f4c450289ee29016": {
+						"default/test2.crd-23c7f4c450289ee29016": {
 							EntryPoints: []string{"web"},
-							Service:     "default/test2-crd-23c7f4c450289ee29016",
+							Service:     "default/test2.crd-23c7f4c450289ee29016",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
 							Priority:    12,
 							Middlewares: []string{"default/stripprefix", "foo/addprefix"},
@@ -696,7 +696,55 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 					Services: map[string]*config.Service{
-						"default/test2-crd-23c7f4c450289ee29016": {
+						"default/test2.crd-23c7f4c450289ee29016": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: true,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Simple Ingress Route with middleware crossprovider",
+			paths: []string{"services.yml", "with_middleware_crossprovider.yml"},
+			expected: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"default/test2.crd-23c7f4c450289ee29016": {
+							EntryPoints: []string{"web"},
+							Service:     "default/test2.crd-23c7f4c450289ee29016",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
+							Priority:    12,
+							Middlewares: []string{"default/stripprefix", "foo/addprefix", "basicauth@file", "redirect@file"},
+						},
+					},
+					Middlewares: map[string]*config.Middleware{
+						"default/stripprefix": {
+							StripPrefix: &config.StripPrefix{
+								Prefixes: []string{"/tobestripped"},
+							},
+						},
+						"foo/addprefix": {
+							AddPrefix: &config.AddPrefix{
+								Prefix: "/tobeadded",
+							},
+						},
+					},
+					Services: map[string]*config.Service{
+						"default/test2.crd-23c7f4c450289ee29016": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -723,22 +771,22 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
-							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Service:     "default/test.crd-6b204d94623b3df4370c",
 							Priority:    14,
 						},
-						"default/test-crd-77c62dfe9517144aeeaa": {
+						"default/test.crd-77c62dfe9517144aeeaa": {
 							EntryPoints: []string{"web"},
-							Service:     "default/test-crd-77c62dfe9517144aeeaa",
+							Service:     "default/test.crd-77c62dfe9517144aeeaa",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*config.Middleware{},
 					Services: map[string]*config.Service{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -751,7 +799,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PassHostHeader: true,
 							},
 						},
-						"default/test-crd-77c62dfe9517144aeeaa": {
+						"default/test.crd-77c62dfe9517144aeeaa": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -778,16 +826,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test-crd-77c62dfe9517144aeeaa": {
+						"default/test.crd-77c62dfe9517144aeeaa": {
 							EntryPoints: []string{"web"},
-							Service:     "default/test-crd-77c62dfe9517144aeeaa",
+							Service:     "default/test.crd-77c62dfe9517144aeeaa",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*config.Middleware{},
 					Services: map[string]*config.Service{
-						"default/test-crd-77c62dfe9517144aeeaa": {
+						"default/test.crd-77c62dfe9517144aeeaa": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -889,9 +937,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
-							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Service:     "default/test.crd-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &config.RouterTLSConfig{},
@@ -899,7 +947,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*config.Middleware{},
 					Services: map[string]*config.Service{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -943,9 +991,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
-							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Service:     "default/test.crd-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &config.RouterTLSConfig{
@@ -955,7 +1003,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*config.Middleware{},
 					Services: map[string]*config.Service{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -999,9 +1047,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
-							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Service:     "default/test.crd-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &config.RouterTLSConfig{
@@ -1011,7 +1059,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*config.Middleware{},
 					Services: map[string]*config.Service{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -1054,9 +1102,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
-							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Service:     "default/test.crd-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &config.RouterTLSConfig{
@@ -1066,7 +1114,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*config.Middleware{},
 					Services: map[string]*config.Service{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -1098,9 +1146,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
-							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Service:     "default/test.crd-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &config.RouterTLSConfig{
@@ -1110,7 +1158,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*config.Middleware{},
 					Services: map[string]*config.Service{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -1142,9 +1190,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
-							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Service:     "default/test.crd-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS: &config.RouterTLSConfig{
@@ -1154,7 +1202,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*config.Middleware{},
 					Services: map[string]*config.Service{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -1181,9 +1229,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
-							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Service:     "default/test.crd-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 							TLS:         &config.RouterTLSConfig{},
@@ -1191,7 +1239,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*config.Middleware{},
 					Services: map[string]*config.Service{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
@@ -1218,16 +1266,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 				},
 				HTTP: &config.HTTPConfiguration{
 					Routers: map[string]*config.Router{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							EntryPoints: []string{"foo"},
-							Service:     "default/test-crd-6b204d94623b3df4370c",
+							Service:     "default/test.crd-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
 					Middlewares: map[string]*config.Middleware{},
 					Services: map[string]*config.Service{
-						"default/test-crd-6b204d94623b3df4370c": {
+						"default/test.crd-6b204d94623b3df4370c": {
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
 									{
