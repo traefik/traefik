@@ -1,0 +1,62 @@
+[http.routers]
+
+[http.routers."router1"]
+	service = "application-1"
+
+[http.routers."router2"]
+	service = "application-2"
+
+[http.routers."router3"]
+	service = "application-3"
+
+[http.routers."router4"]
+	service = "application-4"
+[http.services]
+
+[http.services.application-1.loadbalancer]
+   [[http.services.application-1.loadbalancer.servers]]
+     url = "http://172.17.0.1:80"
+
+[http.services.application-2.loadbalancer]
+   [[http.services.application-2.loadbalancer.servers]]
+     url = "http://172.17.0.2:80"
+
+[http.services.application-3.loadbalancer]
+   [[http.services.application-3.loadbalancer.servers]]
+     url = "http://172.17.0.3:80"
+
+[http.services.application-4.loadbalancer]
+   [[http.services.application-4.loadbalancer.servers]]
+     url = "http://172.17.0.4:80"
+
+[http.services.application-5.loadbalancer]
+   [[http.services.application-5.loadbalancer.servers]]
+     url = "http://172.17.0.5:80"
+
+[http.services.application-6.loadbalancer]
+   [[http.services.application-6.loadbalancer.servers]]
+     url = "http://172.17.0.6:80"
+
+[http.services.application-7.loadbalancer]
+   [[http.services.application-7.loadbalancer.servers]]
+     url = "http://172.17.0.7:80"
+
+[http.services.application-8.loadbalancer]
+   [[http.services.application-8.loadbalancer.servers]]
+     url = "http://172.17.0.8:80"
+[[TLS]]
+	[TLS.Certificate]
+	CertFile = "integration/fixtures/https/snitest1.com.cert"
+	KeyFile = "integration/fixtures/https/snitest1.com.key"
+[[TLS]]
+	[TLS.Certificate]
+	CertFile = "integration/fixtures/https/snitest2.com.cert"
+	KeyFile = "integration/fixtures/https/snitest2.com.key"
+[[TLS]]
+	[TLS.Certificate]
+	CertFile = "integration/fixtures/https/snitest3.com.cert"
+	KeyFile = "integration/fixtures/https/snitest3.com.key"
+[[TLS]]
+	[TLS.Certificate]
+	CertFile = "integration/fixtures/https/snitest4.com.cert"
+	KeyFile = "integration/fixtures/https/snitest4.com.key"

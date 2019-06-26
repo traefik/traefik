@@ -9,27 +9,27 @@ import (
 
 // Middleware holds the Middleware configuration.
 type Middleware struct {
-	AddPrefix         *AddPrefix         `json:"addPrefix,omitempty"`
-	StripPrefix       *StripPrefix       `json:"stripPrefix,omitempty"`
-	StripPrefixRegex  *StripPrefixRegex  `json:"stripPrefixRegex,omitempty"`
-	ReplacePath       *ReplacePath       `json:"replacePath,omitempty"`
-	ReplacePathRegex  *ReplacePathRegex  `json:"replacePathRegex,omitempty"`
-	Chain             *Chain             `json:"chain,omitempty"`
-	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty"`
-	Headers           *Headers           `json:"headers,omitempty"`
-	Errors            *ErrorPage         `json:"errors,omitempty"`
-	RateLimit         *RateLimit         `json:"rateLimit,omitempty"`
-	RedirectRegex     *RedirectRegex     `json:"redirectRegex,omitempty"`
-	RedirectScheme    *RedirectScheme    `json:"redirectScheme,omitempty"`
-	BasicAuth         *BasicAuth         `json:"basicAuth,omitempty"`
-	DigestAuth        *DigestAuth        `json:"digestAuth,omitempty"`
-	ForwardAuth       *ForwardAuth       `json:"forwardAuth,omitempty"`
-	MaxConn           *MaxConn           `json:"maxConn,omitempty"`
-	Buffering         *Buffering         `json:"buffering,omitempty"`
-	CircuitBreaker    *CircuitBreaker    `json:"circuitBreaker,omitempty"`
-	Compress          *Compress          `json:"compress,omitempty" label:"allowEmpty"`
-	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty"`
-	Retry             *Retry             `json:"retry,omitempty"`
+	AddPrefix         *AddPrefix         `json:"addPrefix,omitempty" yaml:"addPrefix,omitempty"`
+	StripPrefix       *StripPrefix       `json:"stripPrefix,omitempty" yaml:"stripPrefix,omitempty"`
+	StripPrefixRegex  *StripPrefixRegex  `json:"stripPrefixRegex,omitempty" yaml:"stripPrefixRegex,omitempty"`
+	ReplacePath       *ReplacePath       `json:"replacePath,omitempty" yaml:"replacePath,omitempty"`
+	ReplacePathRegex  *ReplacePathRegex  `json:"replacePathRegex,omitempty" yaml:"replacePathRegex,omitempty"`
+	Chain             *Chain             `json:"chain,omitempty" yaml:"chain,omitempty"`
+	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty"`
+	Headers           *Headers           `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Errors            *ErrorPage         `json:"errors,omitempty" yaml:"errors,omitempty"`
+	RateLimit         *RateLimit         `json:"rateLimit,omitempty" yaml:"rateLimit,omitempty"`
+	RedirectRegex     *RedirectRegex     `json:"redirectRegex,omitempty" yaml:"redirectRegex,omitempty"`
+	RedirectScheme    *RedirectScheme    `json:"redirectScheme,omitempty" yaml:"redirectScheme,omitempty"`
+	BasicAuth         *BasicAuth         `json:"basicAuth,omitempty" yaml:"basicAuth,omitempty"`
+	DigestAuth        *DigestAuth        `json:"digestAuth,omitempty" yaml:"digestAuth,omitempty"`
+	ForwardAuth       *ForwardAuth       `json:"forwardAuth,omitempty" yaml:"forwardAuth,omitempty"`
+	MaxConn           *MaxConn           `json:"maxConn,omitempty" yaml:"maxConn,omitempty"`
+	Buffering         *Buffering         `json:"buffering,omitempty" yaml:"buffering,omitempty"`
+	CircuitBreaker    *CircuitBreaker    `json:"circuitBreaker,omitempty" yaml:"circuitBreaker,omitempty"`
+	Compress          *Compress          `json:"compress,omitempty" label:"allowEmpty" yaml:"compress,omitempty" label:"allowEmpty"`
+	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty" yaml:"passTLSClientCert,omitempty"`
+	Retry             *Retry             `json:"retry,omitempty" yaml:"retry,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

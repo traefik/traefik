@@ -215,7 +215,7 @@ type Message struct {
 type Configuration struct {
 	HTTP       *HTTPConfiguration
 	TCP        *TCPConfiguration
-	TLS        []*traefiktls.Configuration `json:"-" label:"-"`
+	TLS        []*traefiktls.Configuration `json:"-" label:"-" yaml:"tls"`
 	TLSOptions map[string]traefiktls.TLS
 	TLSStores  map[string]traefiktls.Store
 }
