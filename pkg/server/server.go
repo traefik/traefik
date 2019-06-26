@@ -9,8 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/pkg/tracing/jaeger"
-
 	"github.com/containous/traefik/pkg/config"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
@@ -22,6 +20,7 @@ import (
 	"github.com/containous/traefik/pkg/server/middleware"
 	"github.com/containous/traefik/pkg/tls"
 	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/pkg/tracing/jaeger"
 	"github.com/containous/traefik/pkg/types"
 )
 

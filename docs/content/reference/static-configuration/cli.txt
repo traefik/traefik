@@ -487,6 +487,9 @@
 --serverstransport.rootcas  (Default: "")
     Add cert file for self-signed certificate.
 
+--tracing  (Default: "false")
+    OpenTracing configuration.
+
 --tracing.datadog  (Default: "false")
     Settings for DataDog.
 
