@@ -44,7 +44,7 @@ type DistinguishedNameOptions struct {
 
 // TLSClientHeaders is a middleware that helps setup a few tls info features.
 type TLSClientHeaders struct {
-	Infos *TLSClientCertificateInfos // pass selected informations from the client certificate
+	Infos *TLSClientCertificateInfos // pass selected information from the client certificate
 	PEM   bool                       // pass the sanitized pem to the backend in a specific header
 }
 
@@ -79,23 +79,14 @@ func newTLSClientInfos(infos *types.TLSClientCertificateInfos) *TLSClientCertifi
 }
 
 // NewTLSClientHeaders constructs a new TLSClientHeaders instance from supplied frontend header struct.
-func NewTLSClientHeaders(frontend *types.Frontend) *TLSClientHeaders {
-	if frontend == nil {
+func NewTLSClientHeaders(passTLSClientCert *types.TLSClientHeaders) *TLSClientHeaders {
+	if passTLSClientCert == nil {
 		return nil
 	}
 
-	var addPEM bool
-	var infos *TLSClientCertificateInfos
-
-	if frontend.PassTLSClientCert != nil {
-		conf := frontend.PassTLSClientCert
-		addPEM = conf.PEM
-		infos = newTLSClientInfos(conf.Infos)
-	}
-
 	return &TLSClientHeaders{
-		Infos: infos,
-		PEM:   addPEM,
+		Infos: newTLSClientInfos(passTLSClientCert.Infos),
+		PEM:   passTLSClientCert.PEM,
 	}
 }
 
@@ -221,7 +212,7 @@ func writePart(content *strings.Builder, entry string, prefix string) {
 	}
 }
 
-// getXForwardedTLSClientCertInfo Build a string with the wanted client certificates informations
+// getXForwardedTLSClientCertInfo Build a string with the wanted client certificates information
 // like Subject="DC=%s,C=%s,ST=%s,L=%s,O=%s,CN=%s",NB=%d,NA=%d,SAN=%s;
 func (s *TLSClientHeaders) getXForwardedTLSClientCertInfo(certs []*x509.Certificate) string {
 	var headerValues []string
@@ -268,8 +259,9 @@ func (s *TLSClientHeaders) getXForwardedTLSClientCertInfo(certs []*x509.Certific
 	return strings.Join(headerValues, ";")
 }
 
-// ModifyRequestHeaders set the wanted headers with the certificates informations
+// ModifyRequestHeaders set the wanted headers with the certificates information
 func (s *TLSClientHeaders) ModifyRequestHeaders(r *http.Request) {
+	r.Header.Del(xForwardedTLSClientCert)
 	if s.PEM {
 		if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
 			r.Header.Set(xForwardedTLSClientCert, getXForwardedTLSClientCert(r.TLS.PeerCertificates))
@@ -278,6 +270,7 @@ func (s *TLSClientHeaders) ModifyRequestHeaders(r *http.Request) {
 		}
 	}
 
+	r.Header.Del(xForwardedTLSClientCertInfos)
 	if s.Infos != nil {
 		if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
 			headerContent := s.getXForwardedTLSClientCertInfo(r.TLS.PeerCertificates)
