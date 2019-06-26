@@ -240,26 +240,6 @@ mxcl71pV8i3NDU3kgVi2440JYpoMveTlXPCV2svHNCw0X238YHsSW4b93yGJO0gI
 ML9n/4zmm1PMhzZHcEA72ZAq0tKCxpz10djg5v2qL5V+Oaz8TtTOZbPsxpiKMQ==
 -----END CERTIFICATE-----
 `
-
-	minimalCert = `-----BEGIN CERTIFICATE-----
-MIIDGTCCAgECCQCqLd75YLi2kDANBgkqhkiG9w0BAQsFADBYMQswCQYDVQQGEwJG
-UjETMBEGA1UECAwKU29tZS1TdGF0ZTERMA8GA1UEBwwIVG91bG91c2UxITAfBgNV
-BAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0xODA3MTgwODI4MTZaFw0x
-ODA4MTcwODI4MTZaMEUxCzAJBgNVBAYTAkZSMRMwEQYDVQQIDApTb21lLVN0YXRl
-MSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggEiMA0GCSqGSIb3
-DQEBAQUAA4IBDwAwggEKAoIBAQC/+frDMMTLQyXG34F68BPhQq0kzK4LIq9Y0/gl
-FjySZNn1C0QDWA1ubVCAcA6yY204I9cxcQDPNrhC7JlS5QA8Y5rhIBrqQlzZizAi
-Rj3NTrRjtGUtOScnHuJaWjLy03DWD+aMwb7q718xt5SEABmmUvLwQK+EjW2MeDwj
-y8/UEIpvrRDmdhGaqv7IFpIDkcIF7FowJ/hwDvx3PMc+z/JWK0ovzpvgbx69AVbw
-ZxCimeha65rOqVi+lEetD26le+WnOdYsdJ2IkmpPNTXGdfb15xuAc+gFXfMCh7Iw
-3Ynl6dZtZM/Ok2kiA7/OsmVnRKkWrtBfGYkI9HcNGb3zrk6nAgMBAAEwDQYJKoZI
-hvcNAQELBQADggEBAC/R+Yvhh1VUhcbK49olWsk/JKqfS3VIDQYZg1Eo+JCPbwgS
-I1BSYVfMcGzuJTX6ua3m/AHzGF3Tap4GhF4tX12jeIx4R4utnjj7/YKkTvuEM2f4
-xT56YqI7zalGScIB0iMeyNz1QcimRl+M/49au8ow9hNX8C2tcA2cwd/9OIj/6T8q
-SBRHc6ojvbqZSJCO0jziGDT1L3D+EDgTjED4nd77v/NRdP+egb0q3P0s4dnQ/5AV
-aQlQADUn61j3ScbGJ4NSeZFFvsl38jeRi/MEzp0bGgNBcPj6JHi7qbbauZcZfQ05
-jECvgAY7Nfd9mZ1KtyNaW31is+kag7NsvjxU/kM=
------END CERTIFICATE-----`
 )
 
 func getCleanCertContents(certContents []string) string {
@@ -302,10 +282,6 @@ func buildTLSWith(certContents []string) *tls.ConnectionState {
 
 	return &tls.ConnectionState{PeerCertificates: peerCertificates}
 }
-
-var myPassTLSClientCustomHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("bar"))
-})
 
 func getExpectedSanitized(s string) string {
 	return url.QueryEscape(strings.Replace(s, "\n", "", -1))
@@ -360,20 +336,13 @@ WqeUSNGYV//RunTeuRDAf5OxehERb1srzBXhRZ3cZdzXbgR/`),
 
 }
 
-func TestTlsClientheadersWithPEM(t *testing.T) {
+func TestTlsClientHeadersWithPEM(t *testing.T) {
 	testCases := []struct {
 		desc                 string
 		certContents         []string // set the request TLS attribute if defined
 		tlsClientCertHeaders *types.TLSClientHeaders
 		expectedHeader       string
 	}{
-		{
-			desc: "No TLS, no option",
-		},
-		{
-			desc:         "TLS, no option",
-			certContents: []string{minimalCheeseCrt},
-		},
 		{
 			desc:                 "No TLS, with pem option true",
 			tlsClientCertHeaders: &types.TLSClientHeaders{PEM: true},
@@ -399,24 +368,24 @@ func TestTlsClientheadersWithPEM(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		tlsClientHeaders := NewTLSClientHeaders(&types.Frontend{PassTLSClientCert: test.tlsClientCertHeaders})
-
-		res := httptest.NewRecorder()
-		req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
-
-		if test.tlsClientCertHeaders != nil {
-			req.Header.Set(xForwardedTLSClientCert, "Unsanitized HEADER")
-		}
-
-		if test.certContents != nil && len(test.certContents) > 0 {
-			req.TLS = buildTLSWith(test.certContents)
-		}
-
-		tlsClientHeaders.ServeHTTP(res, req, myPassTLSClientCustomHandler)
-
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+
+			tlsClientHeaders := NewTLSClientHeaders(test.tlsClientCertHeaders)
+
+			res := httptest.NewRecorder()
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+
+			if test.tlsClientCertHeaders != nil {
+				req.Header.Set(xForwardedTLSClientCert, "Unsanitized HEADER")
+			}
+
+			if test.certContents != nil && len(test.certContents) > 0 {
+				req.TLS = buildTLSWith(test.certContents)
+			}
+
+			tlsClientHeaders.ServeHTTP(res, req, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("bar"))
+			}))
 
 			require.Equal(t, http.StatusOK, res.Code, "Http Status should be OK")
 			require.Equal(t, "bar", res.Body.String(), "Should be the expected body")
@@ -481,7 +450,7 @@ func TestGetSans(t *testing.T) {
 
 }
 
-func TestTlsClientheadersWithCertInfos(t *testing.T) {
+func TestTlsClientHeadersWithCertInfos(t *testing.T) {
 	minimalCheeseCertAllInfos := `Subject="C=FR,ST=Some-State,O=Cheese",Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2",NB=1544094636,NA=1632568236,SAN=`
 	completeCertAllInfos := `Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.cheese.com",Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2",NB=1544094616,NA=1607166616,SAN=*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2`
 
@@ -491,13 +460,6 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 		tlsClientCertHeaders *types.TLSClientHeaders
 		expectedHeader       string
 	}{
-		{
-			desc: "No TLS, no option",
-		},
-		{
-			desc:         "TLS, no option",
-			certContents: []string{minimalCert},
-		},
 		{
 			desc: "No TLS, with pem option true",
 			tlsClientCertHeaders: &types.TLSClientHeaders{
@@ -631,24 +593,24 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		tlsClientHeaders := NewTLSClientHeaders(&types.Frontend{PassTLSClientCert: test.tlsClientCertHeaders})
-
-		res := httptest.NewRecorder()
-		req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
-
-		if test.tlsClientCertHeaders != nil {
-			req.Header.Set(xForwardedTLSClientCertInfos, "Unsanitized HEADER")
-		}
-
-		if test.certContents != nil && len(test.certContents) > 0 {
-			req.TLS = buildTLSWith(test.certContents)
-		}
-
-		tlsClientHeaders.ServeHTTP(res, req, myPassTLSClientCustomHandler)
-
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+
+			tlsClientHeaders := NewTLSClientHeaders(test.tlsClientCertHeaders)
+
+			res := httptest.NewRecorder()
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+
+			if test.tlsClientCertHeaders != nil {
+				req.Header.Set(xForwardedTLSClientCertInfos, "Unsanitized HEADER")
+			}
+
+			if test.certContents != nil && len(test.certContents) > 0 {
+				req.TLS = buildTLSWith(test.certContents)
+			}
+
+			tlsClientHeaders.ServeHTTP(res, req, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("bar"))
+			}))
 
 			require.Equal(t, http.StatusOK, res.Code, "Http Status should be OK")
 			require.Equal(t, "bar", res.Body.String(), "Should be the expected body")
@@ -672,45 +634,31 @@ func TestTlsClientheadersWithCertInfos(t *testing.T) {
 
 func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		frontend *types.Frontend
-		expected *TLSClientHeaders
+		desc             string
+		tlsClientHeaders *types.TLSClientHeaders
+		expected         *TLSClientHeaders
 	}{
 		{
-			desc: "Without frontend",
-		},
-		{
-			desc:     "frontend without the option",
-			frontend: &types.Frontend{},
-			expected: &TLSClientHeaders{},
-		},
-		{
-			desc: "frontend with the pem set false",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					PEM: false,
-				},
+			desc: "TLS client headers with the pem set false",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				PEM: false,
 			},
 			expected: &TLSClientHeaders{PEM: false},
 		},
 		{
-			desc: "frontend with the pem set true",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					PEM: true,
-				},
+			desc: "TLS client headers with the pem set true",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				PEM: true,
 			},
 			expected: &TLSClientHeaders{PEM: true},
 		},
 		{
-			desc: "frontend with the Infos with no flag",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						NotAfter:  false,
-						NotBefore: false,
-						Sans:      false,
-					},
+			desc: "TLS client headers with the Infos with no flag",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					NotAfter:  false,
+					NotBefore: false,
+					Sans:      false,
 				},
 			},
 			expected: &TLSClientHeaders{
@@ -719,14 +667,12 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos basic",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						NotAfter:  true,
-						NotBefore: true,
-						Sans:      true,
-					},
+			desc: "TLS client headers with the Infos basic",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					NotAfter:  true,
+					NotBefore: true,
+					Sans:      true,
 				},
 			},
 			expected: &TLSClientHeaders{
@@ -739,12 +685,10 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos NotAfter",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						NotAfter: true,
-					},
+			desc: "TLS client headers with the Infos NotAfter",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					NotAfter: true,
 				},
 			},
 			expected: &TLSClientHeaders{
@@ -755,12 +699,10 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos NotBefore",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						NotBefore: true,
-					},
+			desc: "TLS client headers with the Infos NotBefore",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					NotBefore: true,
 				},
 			},
 			expected: &TLSClientHeaders{
@@ -771,12 +713,10 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos Sans",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						Sans: true,
-					},
+			desc: "TLS client headers with the Infos Sans",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					Sans: true,
 				},
 			},
 			expected: &TLSClientHeaders{
@@ -787,13 +727,11 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos Subject Organization",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDNInfos{
-							Organization: true,
-						},
+			desc: "TLS client headers with the Infos Subject Organization",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
+						Organization: true,
 					},
 				},
 			},
@@ -807,13 +745,11 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos Subject Country",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDNInfos{
-							Country: true,
-						},
+			desc: "TLS client headers with the Infos Subject Country",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
+						Country: true,
 					},
 				},
 			},
@@ -827,13 +763,11 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos Subject SerialNumber",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDNInfos{
-							SerialNumber: true,
-						},
+			desc: "TLS client headers with the Infos Subject SerialNumber",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
+						SerialNumber: true,
 					},
 				},
 			},
@@ -847,13 +781,11 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos Subject Province",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDNInfos{
-							Province: true,
-						},
+			desc: "TLS client headers with the Infos Subject Province",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
+						Province: true,
 					},
 				},
 			},
@@ -867,13 +799,11 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos Subject Locality",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDNInfos{
-							Locality: true,
-						},
+			desc: "TLS client headers with the Infos Subject Locality",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
+						Locality: true,
 					},
 				},
 			},
@@ -887,13 +817,11 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos Subject CommonName",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						Subject: &types.TLSCLientCertificateDNInfos{
-							CommonName: true,
-						},
+			desc: "TLS client headers with the Infos Subject CommonName",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					Subject: &types.TLSCLientCertificateDNInfos{
+						CommonName: true,
 					},
 				},
 			},
@@ -907,19 +835,17 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos Issuer",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						Issuer: &types.TLSCLientCertificateDNInfos{
-							CommonName:      true,
-							Country:         true,
-							DomainComponent: true,
-							Locality:        true,
-							Organization:    true,
-							SerialNumber:    true,
-							Province:        true,
-						},
+			desc: "TLS client headers with the Infos Issuer",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					Issuer: &types.TLSCLientCertificateDNInfos{
+						CommonName:      true,
+						Country:         true,
+						DomainComponent: true,
+						Locality:        true,
+						Organization:    true,
+						SerialNumber:    true,
+						Province:        true,
 					},
 				},
 			},
@@ -939,12 +865,10 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Sans Infos",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						Sans: true,
-					},
+			desc: "TLS client headers with the Sans Infos",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					Sans: true,
 				},
 			},
 			expected: &TLSClientHeaders{
@@ -955,30 +879,28 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 			},
 		},
 		{
-			desc: "frontend with the Infos all",
-			frontend: &types.Frontend{
-				PassTLSClientCert: &types.TLSClientHeaders{
-					Infos: &types.TLSClientCertificateInfos{
-						NotAfter:  true,
-						NotBefore: true,
-						Subject: &types.TLSCLientCertificateDNInfos{
-							CommonName:   true,
-							Country:      true,
-							Locality:     true,
-							Organization: true,
-							Province:     true,
-							SerialNumber: true,
-						},
-						Issuer: &types.TLSCLientCertificateDNInfos{
-							Country:         true,
-							DomainComponent: true,
-							Locality:        true,
-							Organization:    true,
-							SerialNumber:    true,
-							Province:        true,
-						},
-						Sans: true,
+			desc: "TLS client headers with the Infos all",
+			tlsClientHeaders: &types.TLSClientHeaders{
+				Infos: &types.TLSClientCertificateInfos{
+					NotAfter:  true,
+					NotBefore: true,
+					Subject: &types.TLSCLientCertificateDNInfos{
+						CommonName:   true,
+						Country:      true,
+						Locality:     true,
+						Organization: true,
+						Province:     true,
+						SerialNumber: true,
 					},
+					Issuer: &types.TLSCLientCertificateDNInfos{
+						Country:         true,
+						DomainComponent: true,
+						Locality:        true,
+						Organization:    true,
+						SerialNumber:    true,
+						Province:        true,
+					},
+					Sans: true,
 				},
 			},
 			expected: &TLSClientHeaders{
@@ -1012,8 +934,7 @@ func TestNewTLSClientHeadersFromStruct(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, test.expected, NewTLSClientHeaders(test.frontend))
+			require.Equal(t, test.expected, NewTLSClientHeaders(test.tlsClientHeaders))
 		})
 	}
-
 }
