@@ -207,7 +207,7 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 #### `Options`
 
 The `Options` field enables fine-grained control of the TLS parameters.  
-It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied only if a `Host` rule is defined.
+It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied only if a `Host` rule is defined.
 
 ??? example "Configuring the tls options"
 
@@ -219,8 +219,8 @@ It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied 
           [http.routers.Router-1.tls] # will terminate the TLS request
             options = "foo"
     
-    [tlsOptions]
-      [tlsOptions.foo]
+    [tls.options]
+      [tls.options.foo]
           minVersion = "VersionTLS12"
           cipherSuites = [
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -338,7 +338,7 @@ Services are the target for the router.
 #### `Options`
 
 The `Options` field enables fine-grained control of the TLS parameters.  
-It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied only if a `HostSNI` rule is defined.
+It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied only if a `HostSNI` rule is defined.
 
 ??? example "Configuring the tls options"
 
@@ -350,8 +350,8 @@ It refers to a [tlsOptions](../../https/tls.md#tls-options) and will be applied 
           [tcp.routers.Router-1.tls] # will terminate the TLS request
             options = "foo"
     
-    [tlsOptions]
-      [tlsOptions.foo]
+    [tls.options]
+      [tls.options.foo]
           minVersion = "VersionTLS12"
           cipherSuites = [
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",

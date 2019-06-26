@@ -182,26 +182,34 @@ func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*config.
 		return nil, err
 	}
 
-	var tlsConfigs []*tls.Configuration
-	for _, conf := range configuration.TLS {
-		bytes, err := conf.Certificate.CertFile.Read()
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		conf.Certificate.CertFile = tls.FileOrContent(string(bytes))
-
-		bytes, err = conf.Certificate.KeyFile.Read()
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		conf.Certificate.KeyFile = tls.FileOrContent(string(bytes))
-		tlsConfigs = append(tlsConfigs, conf)
+	if configuration.TLS != nil {
+		configuration.TLS.Certificates = flattenCertificates(configuration.TLS)
 	}
-	configuration.TLS = tlsConfigs
 
 	return configuration, nil
+}
+
+func flattenCertificates(tlsConfig *config.TLSConfiguration) []*tls.Configuration {
+	var certs []*tls.Configuration
+	for _, cert := range tlsConfig.Certificates {
+		content, err := cert.Certificate.CertFile.Read()
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		cert.Certificate.CertFile = tls.FileOrContent(string(content))
+
+		content, err = cert.Certificate.KeyFile.Read()
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		cert.Certificate.KeyFile = tls.FileOrContent(string(content))
+
+		certs = append(certs, cert)
+	}
+
+	return certs
 }
 
 func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory string, configuration *config.Configuration) (*config.Configuration, error) {
@@ -223,13 +231,16 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				Routers:  make(map[string]*config.TCPRouter),
 				Services: make(map[string]*config.TCPService),
 			},
+			TLS: &config.TLSConfiguration{
+				Stores:  make(map[string]tls.Store),
+				Options: make(map[string]tls.Options),
+			},
 		}
 	}
 
 	configTLSMaps := make(map[*tls.Configuration]struct{})
 
 	for _, item := range fileList {
-
 		if item.IsDir() {
 			configuration, err = p.loadFileConfigFromDirectory(ctx, filepath.Join(directory, item.Name()), configuration)
 			if err != nil {
@@ -291,7 +302,8 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 			}
 		}
 
-		for _, conf := range c.TLS {
+		// FIXME nil
+		for _, conf := range c.TLS.Certificates {
 			if _, exists := configTLSMaps[conf]; exists {
 				logger.Warnf("TLS configuration %v already configured, skipping", conf)
 			} else {
@@ -300,9 +312,14 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 		}
 	}
 
-	for conf := range configTLSMaps {
-		configuration.TLS = append(configuration.TLS, conf)
+	if len(configTLSMaps) > 0 {
+		configuration.TLS = &config.TLSConfiguration{}
 	}
+
+	for conf := range configTLSMaps {
+		configuration.TLS.Certificates = append(configuration.TLS.Certificates, conf)
+	}
+
 	return configuration, nil
 }
 
@@ -364,9 +381,10 @@ func (p *Provider) decodeConfiguration(filePath string, content string) (*config
 			Routers:  make(map[string]*config.TCPRouter),
 			Services: make(map[string]*config.TCPService),
 		},
-		TLS:        make([]*tls.Configuration, 0),
-		TLSStores:  make(map[string]tls.Store),
-		TLSOptions: make(map[string]tls.TLS),
+		TLS: &config.TLSConfiguration{
+			Stores:  make(map[string]tls.Store),
+			Options: make(map[string]tls.Options),
+		},
 	}
 
 	switch strings.ToLower(filepath.Ext(filePath)) {

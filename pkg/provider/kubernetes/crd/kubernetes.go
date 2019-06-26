@@ -293,14 +293,14 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 	return servers, nil
 }
 
-func buildTLSOptions(ctx context.Context, client Client) map[string]tls.TLS {
+func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
 	tlsOptionsCRD := client.GetTLSOptions()
-	var tlsOptions map[string]tls.TLS
+	var tlsOptions map[string]tls.Options
 
 	if len(tlsOptionsCRD) == 0 {
 		return tlsOptions
 	}
-	tlsOptions = make(map[string]tls.TLS)
+	tlsOptions = make(map[string]tls.Options)
 
 	for _, tlsOption := range tlsOptionsCRD {
 		logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOption.Name), log.Str("namespace", tlsOption.Namespace)))
@@ -327,7 +327,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.TLS {
 			clientCAs = append(clientCAs, tls.FileOrContent(cert))
 		}
 
-		tlsOptions[makeID(tlsOption.Namespace, tlsOption.Name)] = tls.TLS{
+		tlsOptions[makeID(tlsOption.Namespace, tlsOption.Name)] = tls.Options{
 			MinVersion:   tlsOption.Spec.MinVersion,
 			CipherSuites: tlsOption.Spec.CipherSuites,
 			ClientCA: tls.ClientCA{
@@ -567,10 +567,12 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *config.Configuration {
 	tlsConfigs := make(map[string]*tls.Configuration)
 	conf := &config.Configuration{
-		HTTP:       p.loadIngressRouteConfiguration(ctx, client, tlsConfigs),
-		TCP:        p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
-		TLSOptions: buildTLSOptions(ctx, client),
-		TLS:        getTLSConfig(tlsConfigs),
+		HTTP: p.loadIngressRouteConfiguration(ctx, client, tlsConfigs),
+		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
+		TLS: &config.TLSConfiguration{
+			Certificates: getTLSConfig(tlsConfigs),
+			Options:      buildTLSOptions(ctx, client),
+		},
 	}
 
 	for _, middleware := range client.GetMiddlewares() {
@@ -663,7 +665,7 @@ func getTLS(k8sClient Client, secretName, namespace string) (*tls.Configuration,
 	}
 
 	return &tls.Configuration{
-		Certificate: &tls.Certificate{
+		Certificate: tls.Certificate{
 			CertFile: tls.FileOrContent(cert),
 			KeyFile:  tls.FileOrContent(key),
 		},

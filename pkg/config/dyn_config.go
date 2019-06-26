@@ -213,24 +213,29 @@ type Message struct {
 
 // Configuration is the root of the dynamic configuration
 type Configuration struct {
-	HTTP       *HTTPConfiguration
-	TCP        *TCPConfiguration
-	TLS        []*traefiktls.Configuration `json:"-" label:"-" yaml:"tls"`
-	TLSOptions map[string]traefiktls.TLS
-	TLSStores  map[string]traefiktls.Store
+	HTTP *HTTPConfiguration
+	TCP  *TCPConfiguration
+	TLS  *TLSConfiguration
+}
+
+// TLSConfiguration FIXME godoc
+type TLSConfiguration struct {
+	Certificates []*traefiktls.Configuration `json:"-" label:"-" yaml:"certificates"`
+	Options      map[string]traefiktls.Options
+	Stores       map[string]traefiktls.Store
 }
 
 // Configurations is for currentConfigurations Map.
 type Configurations map[string]*Configuration
 
-// HTTPConfiguration FIXME better name?
+// HTTPConfiguration FIXME godoc
 type HTTPConfiguration struct {
 	Routers     map[string]*Router     `json:"routers,omitempty" toml:",omitempty"`
 	Middlewares map[string]*Middleware `json:"middlewares,omitempty" toml:",omitempty"`
 	Services    map[string]*Service    `json:"services,omitempty" toml:",omitempty"`
 }
 
-// TCPConfiguration FIXME better name?
+// TCPConfiguration FIXME godoc
 type TCPConfiguration struct {
 	Routers  map[string]*TCPRouter  `json:"routers,omitempty" toml:",omitempty"`
 	Services map[string]*TCPService `json:"services,omitempty" toml:",omitempty"`

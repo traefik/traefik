@@ -35,8 +35,10 @@ level = "DEBUG"
               [[tcp.services.whoami-no-cert.loadbalancer.servers]]
                 address = "localhost:8083"
 
-[tlsoptions.foo]
+[tls.options]
+
+  [tls.options.foo]
     minversion = "VersionTLS11"
 
-[tlsoptions.bar]
+  [tls.options.bar]
     minversion = "VersionTLS12"

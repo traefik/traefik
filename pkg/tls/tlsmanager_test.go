@@ -49,7 +49,7 @@ func TestTLSInStore(t *testing.T) {
 	dynamicConfigs :=
 		[]*Configuration{
 			{
-				Certificate: &Certificate{
+				Certificate: Certificate{
 					CertFile: localhostCert,
 					KeyFile:  localhostKey,
 				},
@@ -69,7 +69,7 @@ func TestTLSInvalidStore(t *testing.T) {
 	dynamicConfigs :=
 		[]*Configuration{
 			{
-				Certificate: &Certificate{
+				Certificate: Certificate{
 					CertFile: localhostCert,
 					KeyFile:  localhostKey,
 				},
@@ -96,13 +96,13 @@ func TestManager_Get(t *testing.T) {
 	dynamicConfigs :=
 		[]*Configuration{
 			{
-				Certificate: &Certificate{
+				Certificate: Certificate{
 					CertFile: localhostCert,
 					KeyFile:  localhostKey,
 				},
 			},
 		}
-	tlsConfigs := map[string]TLS{
+	tlsConfigs := map[string]Options{
 		"foo": {MinVersion: "VersionTLS12"},
 		"bar": {MinVersion: "VersionTLS11"},
 	}

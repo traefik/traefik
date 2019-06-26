@@ -9,8 +9,8 @@ type ClientCA struct {
 	Optional bool
 }
 
-// TLS configures TLS for an entry point
-type TLS struct {
+// Options configures TLS for an entry point
+type Options struct {
 	MinVersion   string `export:"true"`
 	CipherSuites []string
 	ClientCA     ClientCA
@@ -23,7 +23,8 @@ type Store struct {
 }
 
 // Configuration allows mapping a TLS certificate to a list of entry points.
+// FIXME better name?
 type Configuration struct {
+	Certificate `yaml:",inline"`
 	Stores      []string
-	Certificate *Certificate
 }

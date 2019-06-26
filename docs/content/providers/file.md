@@ -192,16 +192,15 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
       {{ end }}  
     
     {{ range $i, $e := until 10 }}
-    [[TLS]]
+    [[tls.certificates]]
+      CertFile = "/etc/traefik/cert-{{ $e }}.pem"
+      KeyFile = "/etc/traefik/cert-{{ $e }}.key"
       Store = ["my-store-foo-{{ $e }}", "my-store-bar-{{ $e }}"]
-      [TLS.Certificate]
-        CertFile = "/etc/traefik/cert-{{ $e }}.pem"
-        KeyFile = "/etc/traefik/cert-{{ $e }}.key"
     {{ end }}
     
-    [TLSConfig]
+    [tls.config]
     {{ range $i, $e := until 10 }}
-      [TLSConfig.TLS{{ $e }}]
+      [tls.config.TLS{{ $e }}]
       # ...
     {{ end }}
     ```
@@ -237,11 +236,11 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
     
     {{ range $i, $e := until 10 }}
     tls:
-      store:
-      - "my-store-foo-{{ $e }}"
-      - "my-store-bar-{{ $e }}"
-      certificate:
-        certfile: "/etc/traefik/cert-{{ $e }}.pem"
+      certificates:
+      - certfile: "/etc/traefik/cert-{{ $e }}.pem"
         keyfile: "/etc/traefik/cert-{{ $e }}.key"
+        store:
+        - "my-store-foo-{{ $e }}"
+        - "my-store-bar-{{ $e }}"
     {{end}}
     ```

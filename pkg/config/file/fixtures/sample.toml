@@ -497,42 +497,40 @@
         [[TCP.Services.TCPService0.LoadBalancer.Servers]]
           Address = "foobar"
 
-[[TLS]]
+[[TLS.Certificates]]
   Stores = ["foobar", "foobar"]
-  [TLS.Certificate]
-    CertFile = "foobar"
-    KeyFile = "foobar"
+  CertFile = "foobar"
+  KeyFile = "foobar"
 
-[[TLS]]
+[[TLS.Certificates]]
   Stores = ["foobar", "foobar"]
-  [TLS.Certificate]
-    CertFile = "foobar"
-    KeyFile = "foobar"
+  CertFile = "foobar"
+  KeyFile = "foobar"
 
-[TLSOptions]
+[TLS.Options]
 
-  [TLSOptions.TLS0]
+  [TLS.Options.TLS0]
     MinVersion = "foobar"
     CipherSuites = ["foobar", "foobar"]
     SniStrict = true
-    [TLSOptions.TLS0.ClientCA]
+    [TLS.Options.TLS0.ClientCA]
       Files = ["foobar", "foobar"]
       Optional = true
-  [TLSOptions.TLS1]
+  [TLS.Options.TLS1]
     MinVersion = "foobar"
     CipherSuites = ["foobar", "foobar"]
     SniStrict = true
-    [TLSOptions.TLS1.ClientCA]
+    [TLS.Options.TLS1.ClientCA]
       Files = ["foobar", "foobar"]
       Optional = true
 
-[TLSStores]
+[TLS.Stores]
 
-  [TLSStores.Store0]
-    [TLSStores.Store0.DefaultCertificate]
+  [TLS.Stores.Store0]
+    [TLS.Stores.Store0.DefaultCertificate]
       CertFile = "foobar"
       KeyFile = "foobar"
-  [TLSStores.Store1]
-    [TLSStores.Store1.DefaultCertificate]
+  [TLS.Stores.Store1]
+    [TLS.Stores.Store1.DefaultCertificate]
       CertFile = "foobar"
       KeyFile = "foobar"

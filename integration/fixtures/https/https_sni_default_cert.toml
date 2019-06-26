@@ -31,16 +31,15 @@ level = "DEBUG"
       [[http.services.service1.LoadBalancer.Servers]]
         url = "http://127.0.0.1:9010"
 
-[[tls]]
-  [tls.certificate]
-     certFile = "fixtures/https/wildcard.snitest.com.cert"
-     keyFile = "fixtures/https/wildcard.snitest.com.key"
+[[tls.certificates]]
+  certFile = "fixtures/https/wildcard.snitest.com.cert"
+  keyFile = "fixtures/https/wildcard.snitest.com.key"
 
-[[tls]]
-  [tls.certificate]
-     certFile = "fixtures/https/www.snitest.com.cert"
-     keyFile = "fixtures/https/www.snitest.com.key"
+[[tls.certificates]]
+  certFile = "fixtures/https/www.snitest.com.cert"
+  keyFile = "fixtures/https/www.snitest.com.key"
 
-[tlsStores.default.DefaultCertificate]
+[tls.stores]
+  [tls.stores.default.DefaultCertificate]
     certFile = "fixtures/https/snitest.com.cert"
     keyFile = "fixtures/https/snitest.com.key"

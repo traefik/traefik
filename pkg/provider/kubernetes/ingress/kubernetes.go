@@ -341,7 +341,13 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		}
 	}
 
-	conf.TLS = getTLSConfig(tlsConfigs)
+	certs := getTLSConfig(tlsConfigs)
+	if len(certs) > 0 {
+		conf.TLS = &config.TLSConfiguration{
+			Certificates: certs,
+		}
+	}
+
 	return conf
 }
 
@@ -373,7 +379,7 @@ func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tls
 			}
 
 			tlsConfigs[configKey] = &tls.Configuration{
-				Certificate: &tls.Certificate{
+				Certificate: tls.Certificate{
 					CertFile: tls.FileOrContent(cert),
 					KeyFile:  tls.FileOrContent(key),
 				},

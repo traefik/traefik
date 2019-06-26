@@ -589,14 +589,22 @@ func (p *Provider) refreshCertificates() {
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
 			},
-			TLS: []*traefiktls.Configuration{},
+			TLS: &config.TLSConfiguration{
+				Certificates: []*traefiktls.Configuration{},
+			},
 		},
 	}
 
 	for _, cert := range p.certificates {
-		cert := &traefiktls.Certificate{CertFile: traefiktls.FileOrContent(cert.Certificate), KeyFile: traefiktls.FileOrContent(cert.Key)}
-		conf.Configuration.TLS = append(conf.Configuration.TLS, &traefiktls.Configuration{Certificate: cert})
+		certConf := &traefiktls.Configuration{
+			Certificate: traefiktls.Certificate{
+				CertFile: traefiktls.FileOrContent(cert.Certificate),
+				KeyFile:  traefiktls.FileOrContent(cert.Key),
+			},
+		}
+		conf.Configuration.TLS.Certificates = append(conf.Configuration.TLS.Certificates, certConf)
 	}
+
 	p.configurationChan <- conf
 }
 

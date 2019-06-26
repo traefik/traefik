@@ -203,7 +203,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			tlsManager := tls.NewManager()
 			tlsManager.UpdateConfigs(
 				map[string]tls.Store{},
-				map[string]tls.TLS{
+				map[string]tls.Options{
 					"default": {
 						MinVersion: "VersionTLS10",
 					},

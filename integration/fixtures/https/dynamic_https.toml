@@ -20,9 +20,8 @@
       [[http.services.service2.LoadBalancer.Servers]]
         url = "http://127.0.0.1:9020"
 
-[[tls]]
-    #  bad certificates to validate the loop on the certificate appending
-  [tls.certificate]
+#  bad certificates to validate the loop on the certificate appending
+[[tls.certificates]]
     # bad content
     certFile = """-----BEGIN CERTIFICATE-----
 MIIC/zCCAeegAwIBAgIJALAYHG/vGqWEMA0GCSqGSIb3DQEBBQUAMBYxFDASBgNV
@@ -34,8 +33,7 @@ eRG3DaVpez4DQVupZDHMgxJUYqqKynUj6GD1YiaxGROj3TYCu6e7OxyhalhCllSu
 w/X5M802XqzLjeec5zHoZDfknnAkgR9MsxZYmZPFaDyL6GOKUB8=
 -----END RSA PRIVATE KEY-----"""
 
-[[tls]]
-  [tls.certificate]
+[[tls.certificates]]
     certFile = """-----BEGIN CERTIFICATE-----
 MIIC/zCCAeegAwIBAgIJALAYHG/vGqWEMA0GCSqGSIb3DQEBBQUAMBYxFDASBgNV
 BAMMC3NuaXRlc3Qub3JnMB4XDTE1MTEyMzIyMDU0NFoXDTI1MTEyMDIyMDU0NFow

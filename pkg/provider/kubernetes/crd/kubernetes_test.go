@@ -31,6 +31,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Middlewares: map[string]*config.Middleware{},
 					Services:    map[string]*config.Service{},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
@@ -67,6 +68,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
@@ -122,6 +124,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Middlewares: map[string]*config.Middleware{},
 					Services:    map[string]*config.Service{},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
@@ -165,6 +168,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Middlewares: map[string]*config.Middleware{},
 					Services:    map[string]*config.Service{},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
@@ -181,6 +185,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Middlewares: map[string]*config.Middleware{},
 					Services:    map[string]*config.Service{},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
@@ -196,6 +201,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Middlewares: map[string]*config.Middleware{},
 					Services:    map[string]*config.Service{},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
@@ -211,17 +217,20 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Middlewares: map[string]*config.Middleware{},
 					Services:    map[string]*config.Service{},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "TLS",
 			paths: []string{"tcp/services.yml", "tcp/with_tls.yml"},
 			expected: &config.Configuration{
-				TLS: []*tls.Configuration{
-					{
-						Certificate: &tls.Certificate{
-							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+				TLS: &config.TLSConfiguration{
+					Certificates: []*tls.Configuration{
+						{
+							Certificate: tls.Certificate{
+								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+							},
 						},
 					},
 				},
@@ -295,27 +304,30 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Middlewares: map[string]*config.Middleware{},
 					Services:    map[string]*config.Service{},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "TLS with tls options",
 			paths: []string{"tcp/services.yml", "tcp/with_tls_options.yml"},
 			expected: &config.Configuration{
-				TLSOptions: map[string]tls.TLS{
-					"default/foo": {
-						MinVersion: "VersionTLS12",
-						CipherSuites: []string{
-							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-							"TLS_RSA_WITH_AES_256_GCM_SHA384",
-						},
-						ClientCA: tls.ClientCA{
-							Files: []tls.FileOrContent{
-								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+				TLS: &config.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"default/foo": {
+							MinVersion: "VersionTLS12",
+							CipherSuites: []string{
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							Optional: true,
+							ClientCA: tls.ClientCA{
+								Files: []tls.FileOrContent{
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								},
+								Optional: true,
+							},
+							SniStrict: true,
 						},
-						SniStrict: true,
 					},
 				},
 				TCP: &config.TCPConfiguration{
@@ -357,21 +369,23 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			desc:  "TLS with tls options and specific namespace",
 			paths: []string{"tcp/services.yml", "tcp/with_tls_options_and_specific_namespace.yml"},
 			expected: &config.Configuration{
-				TLSOptions: map[string]tls.TLS{
-					"myns/foo": {
-						MinVersion: "VersionTLS12",
-						CipherSuites: []string{
-							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-							"TLS_RSA_WITH_AES_256_GCM_SHA384",
-						},
-						ClientCA: tls.ClientCA{
-							Files: []tls.FileOrContent{
-								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+				TLS: &config.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"myns/foo": {
+							MinVersion: "VersionTLS12",
+							CipherSuites: []string{
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							Optional: true,
+							ClientCA: tls.ClientCA{
+								Files: []tls.FileOrContent{
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								},
+								Optional: true,
+							},
+							SniStrict: true,
 						},
-						SniStrict: true,
 					},
 				},
 				TCP: &config.TCPConfiguration{
@@ -413,20 +427,22 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			desc:  "TLS with bad tls options",
 			paths: []string{"tcp/services.yml", "tcp/with_bad_tls_options.yml"},
 			expected: &config.Configuration{
-				TLSOptions: map[string]tls.TLS{
-					"default/foo": {
-						MinVersion: "VersionTLS12",
-						CipherSuites: []string{
-							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-							"TLS_RSA_WITH_AES_256_GCM_SHA384",
-						},
-						ClientCA: tls.ClientCA{
-							Files: []tls.FileOrContent{
-								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+				TLS: &config.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"default/foo": {
+							MinVersion: "VersionTLS12",
+							CipherSuites: []string{
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							Optional: true,
+							ClientCA: tls.ClientCA{
+								Files: []tls.FileOrContent{
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								},
+								Optional: true,
+							},
+							SniStrict: true,
 						},
-						SniStrict: true,
 					},
 				},
 				TCP: &config.TCPConfiguration{
@@ -468,9 +484,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			desc:  "TLS with unknown tls options",
 			paths: []string{"tcp/services.yml", "tcp/with_unknown_tls_options.yml"},
 			expected: &config.Configuration{
-				TLSOptions: map[string]tls.TLS{
-					"default/foo": {
-						MinVersion: "VersionTLS12",
+				TLS: &config.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"default/foo": {
+							MinVersion: "VersionTLS12",
+						},
 					},
 				},
 				TCP: &config.TCPConfiguration{
@@ -512,9 +530,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			desc:  "TLS with unknown tls options namespace",
 			paths: []string{"tcp/services.yml", "tcp/with_unknown_tls_options_namespace.yml"},
 			expected: &config.Configuration{
-				TLSOptions: map[string]tls.TLS{
-					"default/foo": {
-						MinVersion: "VersionTLS12",
+				TLS: &config.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"default/foo": {
+							MinVersion: "VersionTLS12",
+						},
 					},
 				},
 				TCP: &config.TCPConfiguration{
@@ -587,6 +607,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Middlewares: map[string]*config.Middleware{},
 					Services:    map[string]*config.Service{},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 	}
@@ -627,6 +648,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*config.Middleware{},
 					Services:    map[string]*config.Service{},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
@@ -663,6 +685,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
@@ -711,12 +734,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "Simple Ingress Route with middleware crossprovider",
 			paths: []string{"services.yml", "with_middleware_crossprovider.yml"},
 			expected: &config.Configuration{
+				TLS: &config.TLSConfiguration{},
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
 					Services: map[string]*config.TCPService{},
@@ -814,12 +839,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 				},
+				TLS: &config.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "One ingress Route with two different services, their servers will merge",
 			paths: []string{"services.yml", "with_two_services.yml"},
 			expected: &config.Configuration{
+				TLS: &config.TLSConfiguration{},
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
 					Services: map[string]*config.TCPService{},
@@ -863,6 +890,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths:        []string{"services.yml", "simple.yml"},
 			ingressClass: "tchouk",
 			expected: &config.Configuration{
+				TLS: &config.TLSConfiguration{},
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
 					Services: map[string]*config.TCPService{},
@@ -878,6 +906,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:  "Route with empty rule value is ignored",
 			paths: []string{"services.yml", "with_no_rule_value.yml"},
 			expected: &config.Configuration{
+				TLS: &config.TLSConfiguration{},
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
 					Services: map[string]*config.TCPService{},
@@ -893,6 +922,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:  "Route with kind not of a rule type (empty kind) is ignored",
 			paths: []string{"services.yml", "with_wrong_rule_kind.yml"},
 			expected: &config.Configuration{
+				TLS: &config.TLSConfiguration{},
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
 					Services: map[string]*config.TCPService{},
@@ -908,6 +938,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:  "check rule quoting validity",
 			paths: []string{"services.yml", "with_bad_host_rule.yml"},
 			expected: &config.Configuration{
+				TLS: &config.TLSConfiguration{},
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
 					Services: map[string]*config.TCPService{},
@@ -923,11 +954,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:  "TLS",
 			paths: []string{"services.yml", "with_tls.yml"},
 			expected: &config.Configuration{
-				TLS: []*tls.Configuration{
-					{
-						Certificate: &tls.Certificate{
-							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+				TLS: &config.TLSConfiguration{
+					Certificates: []*tls.Configuration{
+						{
+							Certificate: tls.Certificate{
+								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+							},
 						},
 					},
 				},
@@ -968,21 +1001,23 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:  "TLS with tls options",
 			paths: []string{"services.yml", "with_tls_options.yml"},
 			expected: &config.Configuration{
-				TLSOptions: map[string]tls.TLS{
-					"default/foo": {
-						MinVersion: "VersionTLS12",
-						CipherSuites: []string{
-							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-							"TLS_RSA_WITH_AES_256_GCM_SHA384",
-						},
-						ClientCA: tls.ClientCA{
-							Files: []tls.FileOrContent{
-								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+				TLS: &config.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"default/foo": {
+							MinVersion: "VersionTLS12",
+							CipherSuites: []string{
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							Optional: true,
+							ClientCA: tls.ClientCA{
+								Files: []tls.FileOrContent{
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								},
+								Optional: true,
+							},
+							SniStrict: true,
 						},
-						SniStrict: true,
 					},
 				},
 				TCP: &config.TCPConfiguration{
@@ -1024,21 +1059,23 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:  "TLS with tls options and specific namespace",
 			paths: []string{"services.yml", "with_tls_options_and_specific_namespace.yml"},
 			expected: &config.Configuration{
-				TLSOptions: map[string]tls.TLS{
-					"myns/foo": {
-						MinVersion: "VersionTLS12",
-						CipherSuites: []string{
-							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-							"TLS_RSA_WITH_AES_256_GCM_SHA384",
-						},
-						ClientCA: tls.ClientCA{
-							Files: []tls.FileOrContent{
-								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+				TLS: &config.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"myns/foo": {
+							MinVersion: "VersionTLS12",
+							CipherSuites: []string{
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							Optional: true,
+							ClientCA: tls.ClientCA{
+								Files: []tls.FileOrContent{
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								},
+								Optional: true,
+							},
+							SniStrict: true,
 						},
-						SniStrict: true,
 					},
 				},
 				TCP: &config.TCPConfiguration{
@@ -1080,20 +1117,22 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:  "TLS with bad tls options",
 			paths: []string{"services.yml", "with_bad_tls_options.yml"},
 			expected: &config.Configuration{
-				TLSOptions: map[string]tls.TLS{
-					"default/foo": {
-						MinVersion: "VersionTLS12",
-						CipherSuites: []string{
-							"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-							"TLS_RSA_WITH_AES_256_GCM_SHA384",
-						},
-						ClientCA: tls.ClientCA{
-							Files: []tls.FileOrContent{
-								tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+				TLS: &config.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"default/foo": {
+							MinVersion: "VersionTLS12",
+							CipherSuites: []string{
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							Optional: true,
+							ClientCA: tls.ClientCA{
+								Files: []tls.FileOrContent{
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								},
+								Optional: true,
+							},
+							SniStrict: true,
 						},
-						SniStrict: true,
 					},
 				},
 				TCP: &config.TCPConfiguration{
@@ -1135,9 +1174,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:  "TLS with unknown tls options",
 			paths: []string{"services.yml", "with_unknown_tls_options.yml"},
 			expected: &config.Configuration{
-				TLSOptions: map[string]tls.TLS{
-					"default/foo": {
-						MinVersion: "VersionTLS12",
+				TLS: &config.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"default/foo": {
+							MinVersion: "VersionTLS12",
+						},
 					},
 				},
 				TCP: &config.TCPConfiguration{
@@ -1179,9 +1220,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:  "TLS with unknown tls options namespace",
 			paths: []string{"services.yml", "with_unknown_tls_options_namespace.yml"},
 			expected: &config.Configuration{
-				TLSOptions: map[string]tls.TLS{
-					"default/foo": {
-						MinVersion: "VersionTLS12",
+				TLS: &config.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"default/foo": {
+							MinVersion: "VersionTLS12",
+						},
 					},
 				},
 				TCP: &config.TCPConfiguration{
@@ -1223,6 +1266,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:  "TLS with ACME",
 			paths: []string{"services.yml", "with_tls_acme.yml"},
 			expected: &config.Configuration{
+				TLS: &config.TLSConfiguration{},
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
 					Services: map[string]*config.TCPService{},
@@ -1260,6 +1304,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:  "Simple Ingress Route, defaulting to https for servers",
 			paths: []string{"services.yml", "with_https_default.yml"},
 			expected: &config.Configuration{
+				TLS: &config.TLSConfiguration{},
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
 					Services: map[string]*config.TCPService{},

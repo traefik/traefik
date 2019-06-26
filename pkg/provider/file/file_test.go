@@ -37,10 +37,9 @@ func TestTLSContent(t *testing.T) {
 	require.NoError(t, err)
 
 	content := `
-[[tls]]
-  [tls.certificate]
-    certFile = "` + fileTLS.Name() + `"
-    keyFile = "` + fileTLS.Name() + `"
+[[tls.certificates]]
+  certFile = "` + fileTLS.Name() + `"
+  keyFile = "` + fileTLS.Name() + `"
 `
 
 	_, err = fileConfig.Write([]byte(content))
@@ -50,8 +49,8 @@ func TestTLSContent(t *testing.T) {
 	configuration, err := provider.loadFileConfig(fileConfig.Name(), true)
 	require.NoError(t, err)
 
-	require.Equal(t, "CONTENT", configuration.TLS[0].Certificate.CertFile.String())
-	require.Equal(t, "CONTENT", configuration.TLS[0].Certificate.KeyFile.String())
+	require.Equal(t, "CONTENT", configuration.TLS.Certificates[0].Certificate.CertFile.String())
+	require.Equal(t, "CONTENT", configuration.TLS.Certificates[0].Certificate.KeyFile.String())
 }
 
 func TestErrorWhenEmptyConfig(t *testing.T) {
@@ -91,9 +90,11 @@ func TestProvideWithoutWatch(t *testing.T) {
 			timeout := time.After(time.Second)
 			select {
 			case conf := <-configChan:
+				require.NotNil(t, conf.Configuration.HTTP)
 				assert.Len(t, conf.Configuration.HTTP.Services, test.expectedNumService)
 				assert.Len(t, conf.Configuration.HTTP.Routers, test.expectedNumRouter)
-				assert.Len(t, conf.Configuration.TLS, test.expectedNumTLSConf)
+				require.NotNil(t, conf.Configuration.TLS)
+				assert.Len(t, conf.Configuration.TLS.Certificates, test.expectedNumTLSConf)
 			case <-timeout:
 				t.Errorf("timeout while waiting for config")
 			}
@@ -116,9 +117,11 @@ func TestProvideWithWatch(t *testing.T) {
 			timeout := time.After(time.Second)
 			select {
 			case conf := <-configChan:
+				require.NotNil(t, conf.Configuration.HTTP)
 				assert.Len(t, conf.Configuration.HTTP.Services, 0)
 				assert.Len(t, conf.Configuration.HTTP.Routers, 0)
-				assert.Len(t, conf.Configuration.TLS, 0)
+				require.NotNil(t, conf.Configuration.TLS)
+				assert.Len(t, conf.Configuration.TLS.Certificates, 0)
 			case <-timeout:
 				t.Errorf("timeout while waiting for config")
 			}
@@ -148,7 +151,7 @@ func TestProvideWithWatch(t *testing.T) {
 					numUpdates++
 					numServices = len(conf.Configuration.HTTP.Services)
 					numRouters = len(conf.Configuration.HTTP.Routers)
-					numTLSConfs = len(conf.Configuration.TLS)
+					numTLSConfs = len(conf.Configuration.TLS.Certificates)
 					t.Logf("received update #%d: services %d/%d, routers %d/%d, TLS configs %d/%d", numUpdates, numServices, test.expectedNumService, numRouters, test.expectedNumRouter, numTLSConfs, test.expectedNumTLSConf)
 
 					if numServices == test.expectedNumService && numRouters == test.expectedNumRouter && numTLSConfs == test.expectedNumTLSConf {
