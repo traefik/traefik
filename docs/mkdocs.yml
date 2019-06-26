@@ -119,7 +119,13 @@ nav:
   - 'Observability':
       - 'Logs': 'observability/logs.md'
       - 'Access Logs': 'observability/access-logs.md'
-      - 'Tracing': 'observability/tracing.md'
+      - 'Tracing':
+          - 'Overview': 'observability/tracing/overview.md'
+          - 'Jaeger': 'observability/tracing/jaeger.md'
+          - 'Zipkin': 'observability/tracing/zipkin.md'
+          - 'DataDog': 'observability/tracing/datadog.md'
+          - 'Instana': 'observability/tracing/instana.md'
+          - 'Haystack': 'observability/tracing/haystack.md'
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'Marathon': 'user-guides/marathon.md'
