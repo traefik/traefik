@@ -39,7 +39,7 @@ logLevel = "INFO"
 
 For more information about the CLI, see the documentation about [Traefik command](/basics/#traefik).
 
-```shell
+```bash
 --logLevel="DEBUG"
 --traefikLog.filePath="/path/to/traefik.log"
 --traefikLog.format="json"
@@ -54,7 +54,6 @@ For more information about the CLI, see the documentation about [Traefik command
 --accessLog.fields.headers.names="User-Agent=redact Authorization=drop Content-Type=keep"
 ```
 
-
 ## Traefik Logs
 
 By default the Traefik log is written to stdout in text format.
@@ -66,14 +65,13 @@ To write the logs into a log file specify the `filePath`:
   filePath = "/path/to/traefik.log"
 ```
 
-To write JSON format logs, specify `json` as the format:
+To switch to JSON format instead of standard format (`common`), specify `json` as the format:
 
 ```toml
 [traefikLog]
   filePath = "/path/to/traefik.log"
   format   = "json"
 ```
-
 
 Deprecated way (before 1.4):
 
@@ -105,11 +103,10 @@ To customize the log level:
 logLevel = "ERROR"
 ```
 
-
 ## Access Logs
 
 Access logs are written when `[accessLog]` is defined.
-By default it will write to stdout and produce logs in the textual Common Log Format (CLF), extended with additional fields.
+By default it will write to stdout and produce logs in the textual [Common Log Format (CLF)](#clf-common-log-format), extended with additional fields.
 
 To enable access logs using the default settings just add the `[accessLog]` entry:
 
@@ -124,12 +121,12 @@ To write the logs into a log file specify the `filePath`:
 filePath = "/path/to/access.log"
 ```
 
-To write JSON format logs, specify `json` as the format:
+To switch to JSON format instead of [Common Log Format (CLF)](#clf-common-log-format), specify `json` as the format:
 
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
-format = "json"
+format = "json"  # Default: "common"
 ```
 
 To write the logs in async, specify `bufferingSize` as the format (must be >0):
@@ -152,7 +149,7 @@ To filter logs you can specify a set of filters which are logically "OR-connecte
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
-format = "json"
+format = "json"  # Default: "common"
 
   [accessLog.filters]
 
@@ -178,12 +175,12 @@ format = "json"
   minDuration = "10ms"
 ```
 
-To customize logs format:
+To customize logs format, you must switch to the JSON format:
 
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
-format = "json"
+format = "json" # Default: "common"
 
   [accessLog.filters]
 
@@ -226,7 +223,6 @@ format = "json"
       "Content-Type" = "keep"
       # ...
 ```
-
 
 ### List of all available fields
 
@@ -281,9 +277,8 @@ accessLogsFile = "log/access.log"
 By default, Traefik use the CLF (`common`) as access log format.
 
 ```html
-<remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms 
+<remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms
 ```
-
 
 ## Log Rotation
 
