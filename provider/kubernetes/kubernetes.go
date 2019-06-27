@@ -508,6 +508,10 @@ func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, tem
 
 	for _, port := range service.Spec.Ports {
 
+		if !equalPorts(port, i.Spec.Backend.ServicePort) {
+			continue
+		}
+
 		// We have to treat external-name service differently here b/c it doesn't have any endpoints
 		if service.Spec.Type == corev1.ServiceTypeExternalName {
 

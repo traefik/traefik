@@ -169,6 +169,33 @@ func TestProvider_loadIngresses(t *testing.T) {
 			),
 		},
 		{
+			desc: "loadGlobalIngressWithMultiplePortNumbers",
+			fixtures: []string{
+				filepath.Join("fixtures", "loadGlobalIngressWithMultiplePortNumbers_ingresses.yml"),
+				filepath.Join("fixtures", "loadGlobalIngressWithMultiplePortNumbers_services.yml"),
+				filepath.Join("fixtures", "loadGlobalIngressWithMultiplePortNumbers_endpoints.yml"),
+			},
+			expected: buildConfiguration(
+				backends(
+					backend("global-default-backend",
+						lbMethod("wrr"),
+						servers(
+							server("http://10.10.0.1:8080", weight(1)),
+						),
+					),
+				),
+				frontends(
+					frontend("global-default-backend",
+						frontendName("global-default-frontend"),
+						passHostHeader(),
+						routes(
+							route("/", "PathPrefix:/"),
+						),
+					),
+				),
+			),
+		},
+		{
 			desc: "loadGlobalIngressWithHttpsPortNames",
 			fixtures: []string{
 				filepath.Join("fixtures", "loadGlobalIngressWithHttpsPortNames_ingresses.yml"),
