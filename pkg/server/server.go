@@ -51,30 +51,51 @@ type RouteAppenderFactory interface {
 }
 
 func setupTracing(conf *static.Tracing) tracing.Backend {
+	var backend tracing.Backend
+
 	if conf.Jaeger != nil {
-		return conf.Jaeger
+		backend = conf.Jaeger
 	}
 
 	if conf.Zipkin != nil {
-		return conf.Zipkin
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Zipkin backend.")
+		} else {
+			backend = conf.Zipkin
+		}
 	}
 
 	if conf.DataDog != nil {
-		return conf.DataDog
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create DataDog backend.")
+		} else {
+			backend = conf.DataDog
+		}
 	}
 
 	if conf.Instana != nil {
-		return conf.Instana
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Instana backend.")
+		} else {
+			backend = conf.Instana
+		}
 	}
 
 	if conf.Haystack != nil {
-		return conf.Haystack
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Haystack backend.")
+		} else {
+			backend = conf.Haystack
+		}
 	}
 
-	log.WithoutContext().Debug("Could not initialize tracing, use Jaeger by default")
-	jaegerCfg := &jaeger.Config{}
-	jaegerCfg.SetDefaults()
-	return jaegerCfg
+	if backend == nil {
+		log.WithoutContext().Debug("Could not initialize tracing, use Jaeger by default")
+		backend := &jaeger.Config{}
+		backend.SetDefaults()
+	}
+
+	return backend
 }
 
 // NewServer returns an initialized Server.
