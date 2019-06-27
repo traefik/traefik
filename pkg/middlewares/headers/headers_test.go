@@ -451,6 +451,18 @@ func TestCORSResponses(t *testing.T) {
 				"Vary":                        {"Origin"},
 			},
 		},
+		{
+			desc: "Test Simple CustomRequestHeaders Not Hijacked by CORS",
+			header: NewHeader(emptyHandler, config.Headers{
+				CustomRequestHeaders: map[string]string{"foo": "bar"},
+			}),
+			requestHeaders: map[string][]string{
+				"Access-Control-Request-Headers": {"origin"},
+				"Access-Control-Request-Method":  {"GET", "OPTIONS"},
+				"Origin":                         {"https://foo.bar.org"},
+			},
+			expected: map[string][]string{},
+		},
 	}
 
 	for _, test := range testCases {
@@ -460,7 +472,7 @@ func TestCORSResponses(t *testing.T) {
 
 			rw := httptest.NewRecorder()
 			test.header.ServeHTTP(rw, req)
-			err := test.header.ModifyResponseHeaders(rw.Result())
+			err := test.header.PostRequestModifyResponseHeaders(rw.Result())
 			require.NoError(t, err)
 			assert.Equal(t, test.expected, rw.Result().Header)
 		})
@@ -507,44 +519,8 @@ func TestCustomResponseHeaders(t *testing.T) {
 			req := testhelpers.MustNewRequest(http.MethodGet, "/foo", nil)
 			rw := httptest.NewRecorder()
 			test.header.ServeHTTP(rw, req)
-			err := test.header.ModifyResponseHeaders(rw.Result())
+			err := test.header.PostRequestModifyResponseHeaders(rw.Result())
 			require.NoError(t, err)
-			assert.Equal(t, test.expected, rw.Result().Header)
-		})
-	}
-}
-
-func TestCORSPreflightDoesntHijack(t *testing.T) {
-	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-
-	testCases := []struct {
-		desc           string
-		header         *Header
-		requestHeaders http.Header
-		expected       http.Header
-	}{
-		{
-			desc: "Test Simple CustomRequestHeaders",
-			header: NewHeader(emptyHandler, config.Headers{
-				CustomRequestHeaders: map[string]string{"foo": "bar"},
-			}),
-			requestHeaders: map[string][]string{
-				"Access-Control-Request-Headers": {"origin"},
-				"Access-Control-Request-Method":  {"GET", "OPTIONS"},
-				"Origin":                         {"https://foo.bar.org"},
-			},
-			expected: map[string][]string{},
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			req := testhelpers.MustNewRequest(http.MethodOptions, "/foo", nil)
-			req.Header = test.requestHeaders
-
-			rw := httptest.NewRecorder()
-			test.header.ServeHTTP(rw, req)
-
 			assert.Equal(t, test.expected, rw.Result().Header)
 		})
 	}
