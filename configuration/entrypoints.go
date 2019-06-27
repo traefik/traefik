@@ -146,6 +146,7 @@ func makeEntryPointAuth(result map[string]string) *types.Auth {
 			Address:             address,
 			TLS:                 clientTLS,
 			TrustForwardHeader:  toBool(result, "auth_forward_trustforwardheader"),
+			PassHostHeader:      toBool(result, "auth_forward_passhostheader"),
 			AuthResponseHeaders: authResponseHeaders,
 		}
 	}

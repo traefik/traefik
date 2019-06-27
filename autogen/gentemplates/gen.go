@@ -756,6 +756,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       [frontends."frontend-{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        passHostHeader = {{ $auth.Forward.PassHostHeader }}
         {{if $auth.Forward.AuthResponseHeaders }}
         authResponseHeaders = [{{range $auth.Forward.AuthResponseHeaders }}
           "{{.}}",
@@ -1390,6 +1391,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
             "{{.}}",
             {{end}}]
           trustForwardHeader = {{ $frontend.Auth.Forward.TrustForwardHeader }}
+          passHostHeader = {{ $frontend.Auth.Forward.PassHostHeader }}
           {{if $frontend.Auth.Forward.TLS }}
           [frontends."{{ $frontendName }}".auth.forward.tls]
             cert = """{{ $frontend.Auth.Forward.TLS.Cert }}"""

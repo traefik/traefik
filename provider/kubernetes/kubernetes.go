@@ -933,6 +933,7 @@ func getForwardAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*type
 		Address:             authURL,
 		TrustForwardHeader:  getBoolValue(i.Annotations, annotationKubernetesAuthForwardTrustHeaders, false),
 		AuthResponseHeaders: getSliceStringValue(i.Annotations, annotationKubernetesAuthForwardResponseHeaders),
+		PassHostHeader:      getBoolValue(i.Annotations, annotationKubernetesAuthForwardPassHostHeader, false),
 	}
 
 	authSecretName := getStringValue(i.Annotations, annotationKubernetesAuthForwardTLSSecret, "")

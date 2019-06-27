@@ -84,6 +84,7 @@
             "{{.}}",
             {{end}}]
           trustForwardHeader = {{ $frontend.Auth.Forward.TrustForwardHeader }}
+          passHostHeader = {{ $frontend.Auth.Forward.PassHostHeader }}
           {{if $frontend.Auth.Forward.TLS }}
           [frontends."{{ $frontendName }}".auth.forward.tls]
             cert = """{{ $frontend.Auth.Forward.TLS.Cert }}"""

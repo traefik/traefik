@@ -163,6 +163,7 @@ func getAuthForward(labels map[string]string) *types.Forward {
 		Address:             GetStringValue(labels, TraefikFrontendAuthForwardAddress, ""),
 		AuthResponseHeaders: GetSliceStringValue(labels, TraefikFrontendAuthForwardAuthResponseHeaders),
 		TrustForwardHeader:  GetBoolValue(labels, TraefikFrontendAuthForwardTrustForwardHeader, false),
+		PassHostHeader:      GetBoolValue(labels, TraefikFrontendAuthForwardPassHostHeader, false),
 	}
 
 	// TLS configuration

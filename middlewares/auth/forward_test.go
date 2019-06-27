@@ -238,6 +238,7 @@ func Test_writeHeader(t *testing.T) {
 		name                      string
 		headers                   map[string]string
 		trustForwardHeader        bool
+		passHostHeader            bool
 		emptyHost                 bool
 		expectedHeaders           map[string]string
 		checkForUnexpectedHeaders bool
@@ -378,7 +379,7 @@ func Test_writeHeader(t *testing.T) {
 
 			forwardReq := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/path?q=1", nil)
 
-			writeHeader(req, forwardReq, test.trustForwardHeader)
+			writeHeader(req, forwardReq, test.trustForwardHeader, test.passHostHeader)
 
 			actualHeaders := forwardReq.Header
 			expectedHeaders := test.expectedHeaders

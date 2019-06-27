@@ -125,6 +125,7 @@
       [frontends."frontend-{{ $frontendName }}".auth.forward]
         address = "{{ $auth.Forward.Address }}"
         trustForwardHeader = {{ $auth.Forward.TrustForwardHeader }}
+        passHostHeader = {{ $auth.Forward.PassHostHeader }}
         {{if $auth.Forward.AuthResponseHeaders }}
         authResponseHeaders = [{{range $auth.Forward.AuthResponseHeaders }}
           "{{.}}",

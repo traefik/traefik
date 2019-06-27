@@ -426,6 +426,7 @@ type Forward struct {
 	TLS                 *ClientTLS `description:"Enable TLS support" json:"tls,omitempty" export:"true"`
 	TrustForwardHeader  bool       `description:"Trust X-Forwarded-* headers" json:"trustForwardHeader,omitempty" export:"true"`
 	AuthResponseHeaders []string   `description:"Headers to be forwarded from auth response" json:"authResponseHeaders,omitempty"`
+	PassHostHeader      bool       `description:"Use incoming Host header in requests to authentication server" json:"passHostHeader,omitempty" export:"true"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space

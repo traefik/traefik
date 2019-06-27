@@ -48,7 +48,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 		return
 	}
 
-	writeHeader(r, forwardReq, config.TrustForwardHeader)
+	writeHeader(r, forwardReq, config.TrustForwardHeader, config.PassHostHeader)
 
 	tracing.InjectRequestHeaders(forwardReq)
 
@@ -107,7 +107,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 	next(w, r)
 }
 
-func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader bool) {
+func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader, passHostHeader bool) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
 	utils.RemoveHeaders(forwardReq.Header, forward.HopHeaders...)
 
@@ -154,5 +154,9 @@ func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader
 		forwardReq.Header.Set(xForwardedURI, req.URL.RequestURI())
 	} else {
 		forwardReq.Header.Del(xForwardedURI)
+	}
+
+	if passHostHeader {
+		forwardReq.Host = req.Host
 	}
 }

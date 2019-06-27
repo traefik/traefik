@@ -776,12 +776,14 @@ func TestGetAuth(t *testing.T) {
 				TraefikFrontendAuthForwardTLSInsecureSkipVerify: "true",
 				TraefikFrontendAuthForwardTLSKey:                "myKey",
 				TraefikFrontendAuthForwardTLSCert:               "myCert",
+				TraefikFrontendAuthForwardPassHostHeader:        "true",
 			},
 			expected: &types.Auth{
 				HeaderField: "myHeaderField",
 				Forward: &types.Forward{
 					TrustForwardHeader: true,
 					Address:            "myAddress",
+					PassHostHeader:     true,
 					TLS: &types.ClientTLS{
 						InsecureSkipVerify: true,
 						CA:                 "ca.crt",

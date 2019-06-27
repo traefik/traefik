@@ -55,6 +55,7 @@ const (
 	SuffixFrontendAuthForwardTLSInsecureSkipVerify              = SuffixFrontendAuthForwardTLS + ".insecureSkipVerify"
 	SuffixFrontendAuthForwardTLSKey                             = SuffixFrontendAuthForwardTLS + ".key"
 	SuffixFrontendAuthForwardTrustForwardHeader                 = SuffixFrontendAuthForward + ".trustForwardHeader"
+	SuffixFrontendAuthForwardPassHostHeader                     = SuffixFrontendAuthForward + ".passHostHeader"
 	SuffixFrontendAuthHeaderField                               = SuffixFrontendAuth + ".headerField"
 	SuffixFrontendEntryPoints                                   = "frontend.entryPoints"
 	SuffixFrontendHeaders                                       = "frontend.headers."
@@ -167,6 +168,7 @@ const (
 	TraefikFrontendAuthForwardTLSInsecureSkipVerify             = Prefix + SuffixFrontendAuthForwardTLSInsecureSkipVerify
 	TraefikFrontendAuthForwardTLSKey                            = Prefix + SuffixFrontendAuthForwardTLSKey
 	TraefikFrontendAuthForwardTrustForwardHeader                = Prefix + SuffixFrontendAuthForwardTrustForwardHeader
+	TraefikFrontendAuthForwardPassHostHeader                    = Prefix + SuffixFrontendAuthForwardPassHostHeader
 	TraefikFrontendAuthHeaderField                              = Prefix + SuffixFrontendAuthHeaderField
 	TraefikFrontendEntryPoints                                  = Prefix + SuffixFrontendEntryPoints
 	TraefikFrontendPassHostHeader                               = Prefix + SuffixFrontendPassHostHeader

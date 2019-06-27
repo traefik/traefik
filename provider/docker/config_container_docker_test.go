@@ -343,6 +343,51 @@ func TestDockerBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "when frontend forward auth with host pass",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test"),
+					labels(map[string]string{
+						label.TraefikFrontendAuthForwardAddress:        "auth.server",
+						label.TraefikFrontendAuthForwardPassHostHeader: "true",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-docker-localhost-0": {
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					Auth: &types.Auth{
+						Forward: &types.Forward{
+							Address:        "auth.server",
+							PassHostHeader: true,
+						},
+					},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-docker-localhost-0": {
+							Rule: "Host:test.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test": {
+					Servers: map[string]types.Server{
+						"server-test-842895ca2aca17f6ee36ddb2f621194d": {
+							URL:    "http://127.0.0.1:80",
+							Weight: label.DefaultWeight,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
 			desc: "when basic container configuration with multiple network",
 			containers: []docker.ContainerJSON{
 				containerJSON(
