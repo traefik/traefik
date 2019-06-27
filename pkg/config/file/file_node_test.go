@@ -292,7 +292,6 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 				{Name: "MaxIdleConnsPerHost", Value: "42"},
 				{Name: "RootCAs", Value: "foobar,foobar"}}},
 			{Name: "Tracing", Children: []*parser.Node{
-				{Name: "Backend", Value: "foobar"},
 				{Name: "DataDog", Children: []*parser.Node{
 					{Name: "BagagePrefixHeaderName", Value: "foobar"},
 					{Name: "Debug", Value: "true"},
@@ -301,6 +300,13 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 					{Name: "ParentIDHeaderName", Value: "foobar"},
 					{Name: "PrioritySampling", Value: "true"},
 					{Name: "SamplingPriorityHeaderName", Value: "foobar"},
+					{Name: "TraceIDHeaderName", Value: "foobar"}}},
+				{Name: "Haystack", Children: []*parser.Node{
+					{Name: "GlobalTag", Value: "foobar"},
+					{Name: "LocalAgentHost", Value: "foobar"},
+					{Name: "LocalAgentPort", Value: "42"},
+					{Name: "ParentIDHeaderName", Value: "foobar"},
+					{Name: "SpanIDHeaderName", Value: "foobar"},
 					{Name: "TraceIDHeaderName", Value: "foobar"}}},
 				{Name: "Instana", Children: []*parser.Node{
 					{Name: "LocalAgentHost", Value: "foobar"},
@@ -561,7 +567,6 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 				{Name: "MaxIdleConnsPerHost", Value: "42"},
 				{Name: "RootCAs", Value: "foobar,foobar"}}},
 			{Name: "Tracing", Children: []*parser.Node{
-				{Name: "Backend", Value: "foobar"},
 				{Name: "DataDog", Children: []*parser.Node{
 					{Name: "BagagePrefixHeaderName", Value: "foobar"},
 					{Name: "Debug", Value: "true"},
@@ -570,6 +575,13 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 					{Name: "ParentIDHeaderName", Value: "foobar"},
 					{Name: "PrioritySampling", Value: "true"},
 					{Name: "SamplingPriorityHeaderName", Value: "foobar"},
+					{Name: "TraceIDHeaderName", Value: "foobar"}}},
+				{Name: "Haystack", Children: []*parser.Node{
+					{Name: "GlobalTag", Value: "foobar"},
+					{Name: "LocalAgentHost", Value: "foobar"},
+					{Name: "LocalAgentPort", Value: "42"},
+					{Name: "ParentIDHeaderName", Value: "foobar"},
+					{Name: "SpanIDHeaderName", Value: "foobar"},
 					{Name: "TraceIDHeaderName", Value: "foobar"}}},
 				{Name: "Instana", Children: []*parser.Node{
 					{Name: "LocalAgentHost", Value: "foobar"},

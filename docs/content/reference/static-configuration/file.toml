@@ -177,7 +177,6 @@
         name1 = "foobar"
 
 [Tracing]
-  Backend = "foobar"
   ServiceName = "foobar"
   SpanNameLimit = 42
 
@@ -211,6 +210,14 @@
     LocalAgentHost = "foobar"
     LocalAgentPort = 42
     LogLevel = "foobar"
+
+  [Tracing.Haystack]
+    LocalAgentHost = "foobar"
+    LocalAgentPort = 42
+    GlobalTag = "foobar"
+    ParentIDHeaderName = "foobar"
+    SpanIDHeaderName = "foobar"
+    TraceIDHeaderName = "foobar"
 
 [HostResolver]
   CnameFlattening = true

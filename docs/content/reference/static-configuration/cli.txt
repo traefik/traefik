@@ -490,9 +490,6 @@
 --tracing  (Default: "false")
     OpenTracing configuration.
 
---tracing.backend  (Default: "jaeger")
-    Selects the tracking backend ('jaeger','zipkin','datadog','instana').
-
 --tracing.datadog  (Default: "false")
     Settings for DataDog.
 
@@ -526,7 +523,7 @@
     Settings for Haystack.
 
 --tracing.haystack.baggageprefixheadername  (Default: "")
-    specifies the header name prefix that will be used to store baggage items in a
+    Specifies the header name prefix that will be used to store baggage items in a
     map.
 
 --tracing.haystack.globaltag  (Default: "")

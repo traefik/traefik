@@ -20,10 +20,7 @@ import (
 	"github.com/containous/traefik/pkg/server/middleware"
 	"github.com/containous/traefik/pkg/tls"
 	"github.com/containous/traefik/pkg/tracing"
-	"github.com/containous/traefik/pkg/tracing/datadog"
-	"github.com/containous/traefik/pkg/tracing/instana"
 	"github.com/containous/traefik/pkg/tracing/jaeger"
-	"github.com/containous/traefik/pkg/tracing/zipkin"
 	"github.com/containous/traefik/pkg/types"
 )
 
@@ -53,20 +50,52 @@ type RouteAppenderFactory interface {
 	NewAppender(ctx context.Context, middlewaresBuilder *middleware.Builder, runtimeConfiguration *config.RuntimeConfiguration) types.RouteAppender
 }
 
-func setupTracing(conf *static.Tracing) tracing.TrackingBackend {
-	switch conf.Backend {
-	case jaeger.Name:
-		return conf.Jaeger
-	case zipkin.Name:
-		return conf.Zipkin
-	case datadog.Name:
-		return conf.DataDog
-	case instana.Name:
-		return conf.Instana
-	default:
-		log.WithoutContext().Warnf("Could not initialize tracing: unknown tracer %q", conf.Backend)
-		return nil
+func setupTracing(conf *static.Tracing) tracing.Backend {
+	var backend tracing.Backend
+
+	if conf.Jaeger != nil {
+		backend = conf.Jaeger
 	}
+
+	if conf.Zipkin != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Zipkin backend.")
+		} else {
+			backend = conf.Zipkin
+		}
+	}
+
+	if conf.DataDog != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create DataDog backend.")
+		} else {
+			backend = conf.DataDog
+		}
+	}
+
+	if conf.Instana != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Instana backend.")
+		} else {
+			backend = conf.Instana
+		}
+	}
+
+	if conf.Haystack != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Haystack backend.")
+		} else {
+			backend = conf.Haystack
+		}
+	}
+
+	if backend == nil {
+		log.WithoutContext().Debug("Could not initialize tracing, use Jaeger by default")
+		backend := &jaeger.Config{}
+		backend.SetDefaults()
+	}
+
+	return backend
 }
 
 // NewServer returns an initialized Server.
@@ -100,11 +129,12 @@ func NewServer(staticConfiguration static.Configuration, provider provider.Provi
 	server.routinesPool = safe.NewPool(context.Background())
 
 	if staticConfiguration.Tracing != nil {
-		trackingBackend := setupTracing(staticConfiguration.Tracing)
-		var err error
-		server.tracer, err = tracing.NewTracing(staticConfiguration.Tracing.ServiceName, staticConfiguration.Tracing.SpanNameLimit, trackingBackend)
-		if err != nil {
-			log.WithoutContext().Warnf("Unable to create tracer: %v", err)
+		tracingBackend := setupTracing(staticConfiguration.Tracing)
+		if tracingBackend != nil {
+			server.tracer, err = tracing.NewTracing(staticConfiguration.Tracing.ServiceName, staticConfiguration.Tracing.SpanNameLimit, tracingBackend)
+			if err != nil {
+				log.WithoutContext().Warnf("Unable to create tracer: %v", err)
+			}
 		}
 	}
 
