@@ -111,7 +111,10 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 				return
 			case evt := <-watcher.Events:
 				if evt.Op == fsnotify.Remove {
-					watcher.Remove(evt.Name)
+					err = watcher.Remove(evt.Name)
+					if err != nil {
+						log.WithoutContext().WithField(log.ProviderName, providerName).Errorf("Could not remove watcher: %s", err)
+					}
 					err = watcher.Add(directory)
 					if err != nil {
 						log.WithoutContext().WithField(log.ProviderName, providerName).Errorf("Could not re-add watcher: %s", err)
