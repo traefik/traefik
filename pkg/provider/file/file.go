@@ -110,6 +110,14 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 			case <-ctx.Done():
 				return
 			case evt := <-watcher.Events:
+				if evt.Op == fsnotify.Remove {
+					watcher.Remove(evt.Name)
+					err = watcher.Add(directory)
+					if err != nil {
+						log.WithoutContext().WithField(log.ProviderName, providerName).Errorf("Could not re-add watcher: %s", err)
+					}
+				}
+
 				if p.Directory == "" {
 					_, evtFileName := filepath.Split(evt.Name)
 					_, confFileName := filepath.Split(p.Filename)
