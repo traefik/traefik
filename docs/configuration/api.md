@@ -2,6 +2,10 @@
 
 ## Configuration
 
+Note: If you are using toml remove your command argument --api. If not traefik will log fatal error:  
+`Error preparing server: error opening listener: listen tcp :8080: bind: address already in use"`
+
+
 ```toml
 # API definition
 # Warning: Enabling API will expose Traefik's configuration.
