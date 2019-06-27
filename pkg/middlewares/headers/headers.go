@@ -161,12 +161,12 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 			return
 		}
-		s.inlineModifyResponseHeaders(rw, req)
+		s.preRequestModifyCorsResponseHeaders(rw, req)
 
 	}
 
 	if s.hasCustomHeaders {
-		s.inlineModifyRequestHeaders(req)
+		s.modifyCustomRequestHeaders(req)
 	}
 
 	// If there is a next, call it.
@@ -175,8 +175,8 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// inlineModifyRequestHeaders sets or deletes request headers.
-func (s *Header) inlineModifyRequestHeaders(req *http.Request) {
+// modifyCustomRequestHeaders sets or deletes custom request headers.
+func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 	// Loop through Custom request headers
 	for header, value := range s.headers.CustomRequestHeaders {
 		if value == "" {
@@ -187,7 +187,12 @@ func (s *Header) inlineModifyRequestHeaders(req *http.Request) {
 	}
 }
 
-func (s *Header) inlineModifyResponseHeaders(rw http.ResponseWriter, req *http.Request) {
+// preRequestModifyCorsResponseHeaders sets during request processing time,
+// all the CORS response headers that we already know that are supposed to be set,
+// and which do not depend on a later state of the response.
+// One notable example of a header that can only be modified later on is "Vary",
+// And this is set in the post-response response modifier method
+func (s *Header) preRequestModifyCorsResponseHeaders(rw http.ResponseWriter, req *http.Request) {
 	originHeader := req.Header.Get("Origin")
 	allowOrigin := s.getAllowOrigin(originHeader)
 
@@ -206,7 +211,9 @@ func (s *Header) inlineModifyResponseHeaders(rw http.ResponseWriter, req *http.R
 }
 
 // ModifyResponseHeaders set or delete response headers
-func (s *Header) ModifyResponseHeaders(res *http.Response) error {
+// This method is called AFTER the response is generated from the backend
+// And can merge/override headers from the backend response
+func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 	// Loop through Custom response headers
 	for header, value := range s.headers.CustomResponseHeaders {
 		if value == "" {
@@ -215,19 +222,21 @@ func (s *Header) ModifyResponseHeaders(res *http.Response) error {
 			res.Header.Set(header, value)
 		}
 	}
-	if s.headers.AddVaryHeader {
-		varyHeader := res.Header.Get("Vary")
-		if varyHeader == "Origin" {
-			return nil
-		}
-
-		if varyHeader != "" {
-			varyHeader += ","
-		}
-		varyHeader += "Origin"
-
-		res.Header.Set("Vary", varyHeader)
+	if !s.headers.AddVaryHeader {
+		return nil
 	}
+
+	varyHeader := res.Header.Get("Vary")
+	if varyHeader == "Origin" {
+		return nil
+	}
+
+	if varyHeader != "" {
+		varyHeader += ","
+	}
+	varyHeader += "Origin"
+
+	res.Header.Set("Vary", varyHeader)
 	return nil
 }
 

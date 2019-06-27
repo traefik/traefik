@@ -34,7 +34,7 @@ func buildHeaders(hdrs *dynamic.Headers) func(*http.Response) error {
 
 	return func(resp *http.Response) error {
 		if hdrs.HasCustomHeadersDefined() || hdrs.HasCorsHeadersDefined() {
-			err := headers.NewHeader(nil, *hdrs).ModifyResponseHeaders(resp)
+			err := headers.NewHeader(nil, *hdrs).PostRequestModifyResponseHeaders(resp)
 			if err != nil {
 				return err
 			}
