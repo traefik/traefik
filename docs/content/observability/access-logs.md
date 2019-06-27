@@ -98,7 +98,7 @@ Each field can be set to:
 - `drop` to drop the value
 - `redact` to replace the value with "redacted"
 
-The `defaultMode` the `fields.header` is `drop`.
+The `defaultMode` for `fields.header` is `drop`.
 
 ```toml tab="File"
 # Limiting the Logs to Specific Fields
