@@ -477,6 +477,10 @@
     The amount of time to wait for a server's response headers after fully writing
     the request (including its body, if any). If zero, no timeout exists.
 
+--serverstransport.forwardingtimeouts.idleconntimeout  (Default: "90s")
+	The maximum period for which an idle HTTP keep-alive connection to a backend
+	server will remain open before closing itself.
+
 --serverstransport.insecureskipverify  (Default: "false")
     Disable SSL certificate verification.
 

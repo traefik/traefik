@@ -9,6 +9,7 @@
   [ServersTransport.ForwardingTimeouts]
     DialTimeout = 42
     ResponseHeaderTimeout = 42
+    IdleConnTimeout = 5
 
 [EntryPoints]
 
