@@ -218,7 +218,7 @@ type Configuration struct {
 	TLS  *TLSConfiguration
 }
 
-// TLSConfiguration FIXME godoc
+// TLSConfiguration contains all the configuration parameters of a TLS connection.
 type TLSConfiguration struct {
 	Certificates []*traefiktls.Configuration `json:"-" label:"-" yaml:"certificates"`
 	Options      map[string]traefiktls.Options
@@ -228,14 +228,14 @@ type TLSConfiguration struct {
 // Configurations is for currentConfigurations Map.
 type Configurations map[string]*Configuration
 
-// HTTPConfiguration FIXME godoc
+// HTTPConfiguration contains all the HTTP configuration parameters.
 type HTTPConfiguration struct {
 	Routers     map[string]*Router     `json:"routers,omitempty" toml:",omitempty"`
 	Middlewares map[string]*Middleware `json:"middlewares,omitempty" toml:",omitempty"`
 	Services    map[string]*Service    `json:"services,omitempty" toml:",omitempty"`
 }
 
-// TCPConfiguration FIXME godoc
+// TCPConfiguration contains all the TCP configuration parameters.
 type TCPConfiguration struct {
 	Routers  map[string]*TCPRouter  `json:"routers,omitempty" toml:",omitempty"`
 	Services map[string]*TCPService `json:"services,omitempty" toml:",omitempty"`
