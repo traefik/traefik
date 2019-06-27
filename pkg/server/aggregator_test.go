@@ -114,12 +114,12 @@ func TestAggregator_tlsoptions(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		given    config.Configurations
-		expected map[string]tls.TLS
+		expected map[string]tls.Options
 	}{
 		{
 			desc:  "Nil returns an empty configuration",
 			given: nil,
-			expected: map[string]tls.TLS{
+			expected: map[string]tls.Options{
 				"default": {},
 			},
 		},
@@ -127,14 +127,16 @@ func TestAggregator_tlsoptions(t *testing.T) {
 			desc: "Returns fully qualified elements from a mono-provider configuration map",
 			given: config.Configurations{
 				"provider-1": &config.Configuration{
-					TLSOptions: map[string]tls.TLS{
-						"foo": {
-							MinVersion: "VersionTLS12",
+					TLS: &config.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"foo": {
+								MinVersion: "VersionTLS12",
+							},
 						},
 					},
 				},
 			},
-			expected: map[string]tls.TLS{
+			expected: map[string]tls.Options{
 				"default": {},
 				"foo@provider-1": {
 					MinVersion: "VersionTLS12",
@@ -145,21 +147,25 @@ func TestAggregator_tlsoptions(t *testing.T) {
 			desc: "Returns fully qualified elements from a multi-provider configuration map",
 			given: config.Configurations{
 				"provider-1": &config.Configuration{
-					TLSOptions: map[string]tls.TLS{
-						"foo": {
-							MinVersion: "VersionTLS13",
+					TLS: &config.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"foo": {
+								MinVersion: "VersionTLS13",
+							},
 						},
 					},
 				},
 				"provider-2": &config.Configuration{
-					TLSOptions: map[string]tls.TLS{
-						"foo": {
-							MinVersion: "VersionTLS12",
+					TLS: &config.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"foo": {
+								MinVersion: "VersionTLS12",
+							},
 						},
 					},
 				},
 			},
-			expected: map[string]tls.TLS{
+			expected: map[string]tls.Options{
 				"default": {},
 				"foo@provider-1": {
 					MinVersion: "VersionTLS13",
@@ -173,24 +179,28 @@ func TestAggregator_tlsoptions(t *testing.T) {
 			desc: "Create a valid default tls option when appears only in one provider",
 			given: config.Configurations{
 				"provider-1": &config.Configuration{
-					TLSOptions: map[string]tls.TLS{
-						"foo": {
-							MinVersion: "VersionTLS13",
-						},
-						"default": {
-							MinVersion: "VersionTLS11",
+					TLS: &config.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"foo": {
+								MinVersion: "VersionTLS13",
+							},
+							"default": {
+								MinVersion: "VersionTLS11",
+							},
 						},
 					},
 				},
 				"provider-2": &config.Configuration{
-					TLSOptions: map[string]tls.TLS{
-						"foo": {
-							MinVersion: "VersionTLS12",
+					TLS: &config.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"foo": {
+								MinVersion: "VersionTLS12",
+							},
 						},
 					},
 				},
 			},
-			expected: map[string]tls.TLS{
+			expected: map[string]tls.Options{
 				"default": {
 					MinVersion: "VersionTLS11",
 				},
@@ -206,27 +216,31 @@ func TestAggregator_tlsoptions(t *testing.T) {
 			desc: "No default tls option if it is defined in multiple providers",
 			given: config.Configurations{
 				"provider-1": &config.Configuration{
-					TLSOptions: map[string]tls.TLS{
-						"foo": {
-							MinVersion: "VersionTLS12",
-						},
-						"default": {
-							MinVersion: "VersionTLS11",
+					TLS: &config.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"foo": {
+								MinVersion: "VersionTLS12",
+							},
+							"default": {
+								MinVersion: "VersionTLS11",
+							},
 						},
 					},
 				},
 				"provider-2": &config.Configuration{
-					TLSOptions: map[string]tls.TLS{
-						"foo": {
-							MinVersion: "VersionTLS13",
-						},
-						"default": {
-							MinVersion: "VersionTLS12",
+					TLS: &config.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"foo": {
+								MinVersion: "VersionTLS13",
+							},
+							"default": {
+								MinVersion: "VersionTLS12",
+							},
 						},
 					},
 				},
 			},
-			expected: map[string]tls.TLS{
+			expected: map[string]tls.Options{
 				"foo@provider-1": {
 					MinVersion: "VersionTLS12",
 				},
@@ -239,21 +253,25 @@ func TestAggregator_tlsoptions(t *testing.T) {
 			desc: "Create a default TLS Options configuration if none was provided",
 			given: config.Configurations{
 				"provider-1": &config.Configuration{
-					TLSOptions: map[string]tls.TLS{
-						"foo": {
-							MinVersion: "VersionTLS12",
+					TLS: &config.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"foo": {
+								MinVersion: "VersionTLS12",
+							},
 						},
 					},
 				},
 				"provider-2": &config.Configuration{
-					TLSOptions: map[string]tls.TLS{
-						"foo": {
-							MinVersion: "VersionTLS13",
+					TLS: &config.TLSConfiguration{
+						Options: map[string]tls.Options{
+							"foo": {
+								MinVersion: "VersionTLS13",
+							},
 						},
 					},
 				},
 			},
-			expected: map[string]tls.TLS{
+			expected: map[string]tls.Options{
 				"default": {},
 				"foo@provider-1": {
 					MinVersion: "VersionTLS12",
@@ -272,7 +290,7 @@ func TestAggregator_tlsoptions(t *testing.T) {
 			t.Parallel()
 
 			actual := mergeConfiguration(test.given)
-			assert.Equal(t, test.expected, actual.TLSOptions)
+			assert.Equal(t, test.expected, actual.TLS.Options)
 		})
 	}
 }

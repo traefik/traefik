@@ -64,7 +64,6 @@ level = "DEBUG"
             [[tcp.services.whoami-no-cert.loadbalancer.servers]]
                 address = "localhost:8083"
 
-[[tls]]
-  [tls.certificate]
+[[tls.certificates]]
   certFile = "fixtures/tcp/whoami-c.crt"
   keyFile = "fixtures/tcp/whoami-c.key"

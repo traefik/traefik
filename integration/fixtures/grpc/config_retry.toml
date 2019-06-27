@@ -35,6 +35,7 @@ rootCAs = [ """{{ .CertContent }}""" ]
     [[http.services.service1.loadbalancer.servers]]
       url = "https://127.0.0.1:{{ .GRPCServerPort }}"
 
-[tlsStores.default.DefaultCertificate]
+[tls.stores]
+  [tls.stores.default.DefaultCertificate]
     certFile = """{{ .CertContent }}"""
     keyFile  = """{{ .KeyContent }}"""

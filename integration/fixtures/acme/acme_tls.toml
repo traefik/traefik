@@ -54,6 +54,7 @@ level = "DEBUG"
   service = "test"
   [http.routers.test.tls]
 
-[tlsStores.default.defaultCertificate]
-      certFile = "fixtures/acme/ssl/wildcard.crt"
-      keyFile = "fixtures/acme/ssl/wildcard.key"
+[tls.stores]
+  [tls.stores.default.defaultCertificate]
+    certFile = "fixtures/acme/ssl/wildcard.crt"
+    keyFile = "fixtures/acme/ssl/wildcard.key"

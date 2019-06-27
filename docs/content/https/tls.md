@@ -11,18 +11,16 @@ See the [Let's Encrypt](./acme.md) page.
 
 ### User defined
 
-To add / remove TLS certificates, even when Traefik is already running, their definition can be added to the [dynamic configuration](../getting-started/configuration-overview.md), in the `[[tls]]` section:
+To add / remove TLS certificates, even when Traefik is already running, their definition can be added to the [dynamic configuration](../getting-started/configuration-overview.md), in the `[[tls.certificates]]` section:
 
 ```toml
-[[tls]]
-  [tls.certificate]
-    certFile = "/path/to/domain.cert"
-    keyFile = "/path/to/domain.key"
+[[tls.certificates]]
+  certFile = "/path/to/domain.cert"
+  keyFile = "/path/to/domain.key"
 
-[[tls]]
-  [tls.certificate]
-    certFile = "/path/to/other-domain.cert"
-    keyFile = "/path/to/other-domain.key"
+[[tls.certificates]]
+  certFile = "/path/to/other-domain.cert"
+  keyFile = "/path/to/other-domain.key"
 ```
 
 !!! important "File Provider Only"
@@ -35,8 +33,8 @@ To add / remove TLS certificates, even when Traefik is already running, their de
 In Traefik, certificates are grouped together in certificates stores, which are defined as such:
 
 ```toml
-[tlsStores]
-  [tlsStores.default]
+[tls.stores]
+  [tls.stores.default]
 ```
 
 !!! important "Alpha restriction"
@@ -44,21 +42,19 @@ In Traefik, certificates are grouped together in certificates stores, which are 
     During the alpha version, any store definition other than the default one (named `default`) will be ignored,
     and there is thefore only one globally available TLS store.
 
-In the `[[tls]]` section, a list of stores can then be specified to indicate where the certificates should be stored:
+In the `[[tls.certificates]]` section, a list of stores can then be specified to indicate where the certificates should be stored:
 
 ```toml
-[[tls]]
+[[tls.certificates]]
   stores = ["default"]
-  [tls.certificate]
-    certFile = "/path/to/domain.cert"
-    keyFile = "/path/to/domain.key"
+  certFile = "/path/to/domain.cert"
+  keyFile = "/path/to/domain.key"
 
-[[tls]]
+[[tls.certificates]]
   # Note that since no store is defined,
   # the certificate below will be stored in the `default` store.
-  [tls.certificate]
-    certFile = "/path/to/other-domain.cert"
-    keyFile = "/path/to/other-domain.key"
+  certFile = "/path/to/other-domain.cert"
+  keyFile = "/path/to/other-domain.key"
 ```
 
 !!! important "Alpha restriction"
@@ -71,9 +67,9 @@ Traefik can use a default certificate for connections without a SNI, or without 
 This default certificate should be defined in a TLS store:
 
 ```toml
-[tlsStores]
-  [tlsStores.default]
-    [tlsStores.default.defaultCertificate]
+[tls.stores]
+  [tls.stores.default]
+    [tls.stores.default.defaultCertificate]
       certFile = "path/to/cert.crt"
       keyFile  = "path/to/cert.key"
 ```
@@ -87,12 +83,12 @@ The TLS options allow one to configure some parameters of the TLS connection.
 ### Minimum TLS Version
 
 ```toml
-[tlsOptions]
+[tls.options]
 
-  [tlsOptions.default]
+  [tls.options.default]
     minVersion = "VersionTLS12"
 
-  [tlsOptions.mintls13]
+  [tls.options.mintls13]
     minVersion = "VersionTLS13"
 ```
 
@@ -107,9 +103,9 @@ For clients with a certificate, the `optional` option governs the behaviour as f
 - When `optional = true`, Traefik authorizes connections from clients presenting a certificate signed by an unknown CA.
 
 ```toml
-[tlsOptions]
-  [tlsOptions.default]
-    [tlsOptions.default.ClientCA]
+[tls.options]
+  [tls.options.default]
+    [tls.options.default.ClientCA]
       # in PEM format. each file can contain multiple CAs.
       files = ["tests/clientca1.crt", "tests/clientca2.crt"]
       optional = false
@@ -120,8 +116,8 @@ For clients with a certificate, the `optional` option governs the behaviour as f
 See [cipherSuites](https://godoc.org/crypto/tls#pkg-constants) for more information.
 
 ```toml
-[tlsOptions]
-  [tlsOptions.default]
+[tls.options]
+  [tls.options.default]
     cipherSuites = [
       "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
       "TLS_RSA_WITH_AES_256_GCM_SHA384"
@@ -134,7 +130,7 @@ With strict SNI checking, Traefik won't allow connections from clients connectio
 that do not specify a server_name extension.
 
 ```toml
-[tlsOptions]
-  [tlsOptions.default]
+[tls.options]
+  [tls.options.default]
     sniStrict = true
 ```

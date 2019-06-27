@@ -43,16 +43,12 @@ http:
           - url: 'http://172.17.0.8:80'
 
 tls:
-  - certificate:
-      certfile: integration/fixtures/https/snitest1.com.cert
+  certificates:
+    - certfile: integration/fixtures/https/snitest1.com.cert
       keyfile: integration/fixtures/https/snitest1.com.key
-  - certificate:
-      certfile: integration/fixtures/https/snitest2.com.cert
+    - certfile: integration/fixtures/https/snitest2.com.cert
       keyfile: integration/fixtures/https/snitest2.com.key
-  - certificate:
-      certfile: integration/fixtures/https/snitest3.com.cert
+    - certfile: integration/fixtures/https/snitest3.com.cert
       keyfile: integration/fixtures/https/snitest3.com.key
-  - certificate:
-      certfile: integration/fixtures/https/snitest4.com.cert
+    - certfile: integration/fixtures/https/snitest4.com.cert
       keyfile: integration/fixtures/https/snitest4.com.key
-

@@ -36,14 +36,14 @@ level = "DEBUG"
       [[http.services.service2.LoadBalancer.Servers]]
         URL = "http://127.0.0.1:9020"
 
-[[tls]]
-  [tls.certificate]
-      certFile = "fixtures/https/snitest.com.cert"
-      keyFile = "fixtures/https/snitest.com.key"
-[[tls]]
-  [tls.certificate]
-      certFile = "fixtures/https/snitest.org.cert"
-      keyFile = "fixtures/https/snitest.org.key"
+[[tls.certificates]]
+    certFile = "fixtures/https/snitest.com.cert"
+    keyFile = "fixtures/https/snitest.com.key"
 
-[tlsOptions.default.ClientCA]
+[[tls.certificates]]
+  certFile = "fixtures/https/snitest.org.cert"
+  keyFile = "fixtures/https/snitest.org.key"
+
+[tls.options]
+  [tls.options.default.ClientCA]
     files = ["fixtures/https/clientca/ca1and2.crt"]

@@ -30,6 +30,7 @@ insecureSkipVerify=true
       [[http.services.service1.LoadBalancer.Servers]]
         URL = "{{ .WebsocketServer }}"
 
-[tlsStores.default.DefaultCertificate]
+[tls.stores]
+  [tls.stores.default.DefaultCertificate]
     certFile = "resources/tls/local.cert"
     keyFile = "resources/tls/local.key"

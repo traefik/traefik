@@ -66,7 +66,7 @@ func (s *Server) loadConfigurationTCP(configurations config.Configurations) map[
 
 	conf := mergeConfiguration(configurations)
 
-	s.tlsManager.UpdateConfigs(conf.TLSStores, conf.TLSOptions, conf.TLS)
+	s.tlsManager.UpdateConfigs(conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
 
 	rtConf := config.NewRuntimeConfig(conf)
 	handlersNonTLS, handlersTLS := s.createHTTPHandlers(ctx, rtConf, entryPoints)
@@ -167,7 +167,7 @@ func isEmptyConfiguration(conf *config.Configuration) bool {
 	return conf.HTTP.Routers == nil &&
 		conf.HTTP.Services == nil &&
 		conf.HTTP.Middlewares == nil &&
-		conf.TLS == nil &&
+		(conf.TLS == nil || conf.TLS.Certificates == nil && conf.TLS.Stores == nil && conf.TLS.Options == nil) &&
 		conf.TCP.Routers == nil &&
 		conf.TCP.Services == nil
 }
