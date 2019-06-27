@@ -15,3 +15,7 @@ spec:
     services:
     - name: whoami
       port: 80
+
+  tls:
+    options:
+      name: mytlsoption

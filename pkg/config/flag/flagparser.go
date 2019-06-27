@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/containous/traefik/pkg/config/parser"
 )
 
 // Parse parses the command-line flag arguments into a map,
@@ -96,7 +98,7 @@ func (f *flagSet) parseOne() (bool, error) {
 }
 
 func (f *flagSet) setValue(name string, value string) {
-	n := strings.ToLower("traefik." + name)
+	n := strings.ToLower(parser.DefaultRootName + "." + name)
 	v, ok := f.values[n]
 
 	if ok && f.flagTypes[name] == reflect.Slice {

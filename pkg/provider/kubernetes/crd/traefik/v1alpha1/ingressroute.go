@@ -31,7 +31,14 @@ type TLS struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
 	SecretName string `json:"secretName"`
-	// TODO MinimumProtocolVersion string `json:"minimumProtocolVersion,omitempty"`
+	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
+	Options *TLSOptionRef `json:"options"`
+}
+
+// TLSOptionRef is a ref to the TLSOption resources.
+type TLSOptionRef struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 // Service defines an upstream to proxy traffic.

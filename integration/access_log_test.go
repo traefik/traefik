@@ -581,7 +581,7 @@ func CheckAccessLogFormat(c *check.C, line string, i int) {
 	c.Assert(results, checker.HasLen, 14)
 	c.Assert(results[accesslog.OriginStatus], checker.Matches, `^(-|\d{3})$`)
 	c.Assert(results[accesslog.RequestCount], checker.Equals, fmt.Sprintf("%d", i+1))
-	c.Assert(results[accesslog.RouterName], checker.HasPrefix, "\"docker.rt-")
+	c.Assert(results[accesslog.RouterName], checker.Matches, `"rt-.+@docker"`)
 	c.Assert(results[accesslog.ServiceURL], checker.HasPrefix, "\"http://")
 	c.Assert(results[accesslog.Duration], checker.Matches, `^\d+ms$`)
 }
@@ -596,7 +596,7 @@ func checkAccessLogExactValues(c *check.C, line string, i int, v accessLogValue)
 	}
 	c.Assert(results[accesslog.OriginStatus], checker.Equals, v.code)
 	c.Assert(results[accesslog.RequestCount], checker.Equals, fmt.Sprintf("%d", i+1))
-	c.Assert(results[accesslog.RouterName], checker.Matches, `^"?(docker\.)?`+v.routerName+`.*$`)
+	c.Assert(results[accesslog.RouterName], checker.Matches, `^"?`+v.routerName+`.*(@docker)?$`)
 	c.Assert(results[accesslog.ServiceURL], checker.Matches, `^"?`+v.serviceURL+`.*$`)
 	c.Assert(results[accesslog.Duration], checker.Matches, `^\d+ms$`)
 }

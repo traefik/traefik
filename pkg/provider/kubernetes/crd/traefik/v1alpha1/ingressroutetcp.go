@@ -29,6 +29,14 @@ type TLSTCP struct {
 	// certificate details.
 	SecretName  string `json:"secretName"`
 	Passthrough bool   `json:"passthrough"`
+	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
+	Options *TLSOptionTCPRef `json:"options"`
+}
+
+// TLSOptionTCPRef is a ref to the TLSOption resources.
+type TLSOptionTCPRef struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 // ServiceTCP defines an upstream to proxy traffic.

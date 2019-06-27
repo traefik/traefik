@@ -23,12 +23,10 @@ func TestGetConfiguration(t *testing.T) {
 				Labels:      &map[string]string{},
 			},
 			p: Provider{
-				ExposedByDefault:          false,
-				FilterMarathonConstraints: false,
+				ExposedByDefault: false,
 			},
 			expected: configuration{
 				Enable: false,
-				Tags:   nil,
 				Marathon: specificConfiguration{
 					IPAddressIdx: math.MinInt32,
 				},
@@ -43,12 +41,10 @@ func TestGetConfiguration(t *testing.T) {
 				},
 			},
 			p: Provider{
-				ExposedByDefault:          false,
-				FilterMarathonConstraints: false,
+				ExposedByDefault: false,
 			},
 			expected: configuration{
 				Enable: true,
-				Tags:   nil,
 				Marathon: specificConfiguration{
 					IPAddressIdx: math.MinInt32,
 				},
@@ -63,12 +59,10 @@ func TestGetConfiguration(t *testing.T) {
 				},
 			},
 			p: Provider{
-				ExposedByDefault:          false,
-				FilterMarathonConstraints: false,
+				ExposedByDefault: false,
 			},
 			expected: configuration{
 				Enable: false,
-				Tags:   nil,
 				Marathon: specificConfiguration{
 					IPAddressIdx: 4,
 				},
@@ -83,14 +77,10 @@ func TestGetConfiguration(t *testing.T) {
 				Labels: &map[string]string{},
 			},
 			p: Provider{
-				ExposedByDefault:          false,
-				FilterMarathonConstraints: true,
+				ExposedByDefault: false,
 			},
 			expected: configuration{
 				Enable: false,
-				Tags: []string{
-					"key:value",
-				},
 				Marathon: specificConfiguration{
 					IPAddressIdx: math.MinInt32,
 				},
@@ -103,12 +93,10 @@ func TestGetConfiguration(t *testing.T) {
 				Labels:      &map[string]string{},
 			},
 			p: Provider{
-				ExposedByDefault:          true,
-				FilterMarathonConstraints: false,
+				ExposedByDefault: true,
 			},
 			expected: configuration{
 				Enable: true,
-				Tags:   nil,
 				Marathon: specificConfiguration{
 					IPAddressIdx: math.MinInt32,
 				},
@@ -123,32 +111,10 @@ func TestGetConfiguration(t *testing.T) {
 				},
 			},
 			p: Provider{
-				ExposedByDefault:          true,
-				FilterMarathonConstraints: false,
+				ExposedByDefault: true,
 			},
 			expected: configuration{
 				Enable: false,
-				Tags:   nil,
-				Marathon: specificConfiguration{
-					IPAddressIdx: math.MinInt32,
-				},
-			},
-		},
-		{
-			desc: "Tags in label",
-			app: marathon.Application{
-				Constraints: &[][]string{},
-				Labels: &map[string]string{
-					"traefik.tags": "mytags",
-				},
-			},
-			p: Provider{
-				ExposedByDefault:          true,
-				FilterMarathonConstraints: false,
-			},
-			expected: configuration{
-				Enable: true,
-				Tags:   []string{"mytags"},
 				Marathon: specificConfiguration{
 					IPAddressIdx: math.MinInt32,
 				},

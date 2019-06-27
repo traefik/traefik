@@ -3,10 +3,10 @@
 		"addPrefix": {
 			"prefix": "/titi"
 		},
-		"name": "myprovider.addPrefixTest",
+		"name": "addPrefixTest@myprovider",
 		"provider": "myprovider",
 		"usedBy": [
-			"myprovider.test"
+			"test@myprovider"
 		]
 	}
 ]

@@ -47,20 +47,20 @@ func TestHandlerTCP_API(t *testing.T) {
 			path: "/api/tcp/routers",
 			conf: config.RuntimeConfiguration{
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.test": {
+					"test@myprovider": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar.other`)",
 							TLS: &config.RouterTCPTLSConfig{
 								Passthrough: false,
 							},
 						},
 					},
-					"myprovider.bar": {
+					"bar@myprovider": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
@@ -77,24 +77,24 @@ func TestHandlerTCP_API(t *testing.T) {
 			path: "/api/tcp/routers?page=2&per_page=1",
 			conf: config.RuntimeConfiguration{
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.bar": {
+					"bar@myprovider": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
-					"myprovider.baz": {
+					"baz@myprovider": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`toto.bar`)",
 						},
 					},
-					"myprovider.test": {
+					"test@myprovider": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar.other`)",
 						},
 					},
@@ -108,13 +108,13 @@ func TestHandlerTCP_API(t *testing.T) {
 		},
 		{
 			desc: "one TCP router by id",
-			path: "/api/tcp/routers/myprovider.bar",
+			path: "/api/tcp/routers/bar@myprovider",
 			conf: config.RuntimeConfiguration{
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.bar": {
+					"bar@myprovider": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
@@ -127,13 +127,13 @@ func TestHandlerTCP_API(t *testing.T) {
 		},
 		{
 			desc: "one TCP router by id, that does not exist",
-			path: "/api/tcp/routers/myprovider.foo",
+			path: "/api/tcp/routers/foo@myprovider",
 			conf: config.RuntimeConfiguration{
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.bar": {
+					"bar@myprovider": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
@@ -145,7 +145,7 @@ func TestHandlerTCP_API(t *testing.T) {
 		},
 		{
 			desc: "one TCP router by id, but no config",
-			path: "/api/tcp/routers/myprovider.bar",
+			path: "/api/tcp/routers/bar@myprovider",
 			conf: config.RuntimeConfiguration{},
 			expected: expected{
 				statusCode: http.StatusNotFound,
@@ -166,7 +166,7 @@ func TestHandlerTCP_API(t *testing.T) {
 			path: "/api/tcp/services",
 			conf: config.RuntimeConfiguration{
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.bar": {
+					"bar@myprovider": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -176,9 +176,9 @@ func TestHandlerTCP_API(t *testing.T) {
 								},
 							},
 						},
-						UsedBy: []string{"myprovider.foo", "myprovider.test"},
+						UsedBy: []string{"foo@myprovider", "test@myprovider"},
 					},
-					"myprovider.baz": {
+					"baz@myprovider": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -188,7 +188,7 @@ func TestHandlerTCP_API(t *testing.T) {
 								},
 							},
 						},
-						UsedBy: []string{"myprovider.foo"},
+						UsedBy: []string{"foo@myprovider"},
 					},
 				},
 			},
@@ -203,7 +203,7 @@ func TestHandlerTCP_API(t *testing.T) {
 			path: "/api/tcp/services?page=2&per_page=1",
 			conf: config.RuntimeConfiguration{
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.bar": {
+					"bar@myprovider": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -213,9 +213,9 @@ func TestHandlerTCP_API(t *testing.T) {
 								},
 							},
 						},
-						UsedBy: []string{"myprovider.foo", "myprovider.test"},
+						UsedBy: []string{"foo@myprovider", "test@myprovider"},
 					},
-					"myprovider.baz": {
+					"baz@myprovider": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -225,9 +225,9 @@ func TestHandlerTCP_API(t *testing.T) {
 								},
 							},
 						},
-						UsedBy: []string{"myprovider.foo"},
+						UsedBy: []string{"foo@myprovider"},
 					},
-					"myprovider.test": {
+					"test@myprovider": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -248,10 +248,10 @@ func TestHandlerTCP_API(t *testing.T) {
 		},
 		{
 			desc: "one tcp service by id",
-			path: "/api/tcp/services/myprovider.bar",
+			path: "/api/tcp/services/bar@myprovider",
 			conf: config.RuntimeConfiguration{
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.bar": {
+					"bar@myprovider": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -261,7 +261,7 @@ func TestHandlerTCP_API(t *testing.T) {
 								},
 							},
 						},
-						UsedBy: []string{"myprovider.foo", "myprovider.test"},
+						UsedBy: []string{"foo@myprovider", "test@myprovider"},
 					},
 				},
 			},
@@ -272,10 +272,10 @@ func TestHandlerTCP_API(t *testing.T) {
 		},
 		{
 			desc: "one tcp service by id, that does not exist",
-			path: "/api/tcp/services/myprovider.nono",
+			path: "/api/tcp/services/nono@myprovider",
 			conf: config.RuntimeConfiguration{
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.bar": {
+					"bar@myprovider": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -285,7 +285,7 @@ func TestHandlerTCP_API(t *testing.T) {
 								},
 							},
 						},
-						UsedBy: []string{"myprovider.foo", "myprovider.test"},
+						UsedBy: []string{"foo@myprovider", "test@myprovider"},
 					},
 				},
 			},
@@ -295,7 +295,7 @@ func TestHandlerTCP_API(t *testing.T) {
 		},
 		{
 			desc: "one tcp service by id, but no config",
-			path: "/api/tcp/services/myprovider.foo",
+			path: "/api/tcp/services/foo@myprovider",
 			conf: config.RuntimeConfiguration{},
 			expected: expected{
 				statusCode: http.StatusNotFound,
@@ -325,6 +325,8 @@ func TestHandlerTCP_API(t *testing.T) {
 			if test.expected.jsonFile == "" {
 				return
 			}
+
+			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
 
 			contents, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
@@ -379,20 +381,20 @@ func TestHandlerHTTP_API(t *testing.T) {
 			path: "/api/http/routers",
 			conf: config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.test": {
+					"test@myprovider": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar.other`)",
 							Middlewares: []string{"addPrefixTest", "auth"},
 						},
 					},
-					"myprovider.bar": {
+					"bar@myprovider": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
-							Middlewares: []string{"auth", "anotherprovider.addPrefixTest"},
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
 						},
 					},
 				},
@@ -408,25 +410,25 @@ func TestHandlerHTTP_API(t *testing.T) {
 			path: "/api/http/routers?page=2&per_page=1",
 			conf: config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {
+					"bar@myprovider": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
-							Middlewares: []string{"auth", "anotherprovider.addPrefixTest"},
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
 						},
 					},
-					"myprovider.baz": {
+					"baz@myprovider": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`toto.bar`)",
 						},
 					},
-					"myprovider.test": {
+					"test@myprovider": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar.other`)",
 							Middlewares: []string{"addPrefixTest", "auth"},
 						},
@@ -473,15 +475,15 @@ func TestHandlerHTTP_API(t *testing.T) {
 		},
 		{
 			desc: "one router by id",
-			path: "/api/http/routers/myprovider.bar",
+			path: "/api/http/routers/bar@myprovider",
 			conf: config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {
+					"bar@myprovider": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
-							Middlewares: []string{"auth", "anotherprovider.addPrefixTest"},
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
 						},
 					},
 				},
@@ -493,15 +495,15 @@ func TestHandlerHTTP_API(t *testing.T) {
 		},
 		{
 			desc: "one router by id, that does not exist",
-			path: "/api/http/routers/myprovider.foo",
+			path: "/api/http/routers/foo@myprovider",
 			conf: config.RuntimeConfiguration{
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {
+					"bar@myprovider": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
-							Middlewares: []string{"auth", "anotherprovider.addPrefixTest"},
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
 						},
 					},
 				},
@@ -512,7 +514,7 @@ func TestHandlerHTTP_API(t *testing.T) {
 		},
 		{
 			desc: "one router by id, but no config",
-			path: "/api/http/routers/myprovider.foo",
+			path: "/api/http/routers/foo@myprovider",
 			conf: config.RuntimeConfiguration{},
 			expected: expected{
 				statusCode: http.StatusNotFound,
@@ -533,7 +535,7 @@ func TestHandlerHTTP_API(t *testing.T) {
 			path: "/api/http/services",
 			conf: config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.bar": func() *config.ServiceInfo {
+					"bar@myprovider": func() *config.ServiceInfo {
 						si := &config.ServiceInfo{
 							Service: &config.Service{
 								LoadBalancer: &config.LoadBalancerService{
@@ -544,12 +546,12 @@ func TestHandlerHTTP_API(t *testing.T) {
 									},
 								},
 							},
-							UsedBy: []string{"myprovider.foo", "myprovider.test"},
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
 						}
 						si.UpdateStatus("http://127.0.0.1", "UP")
 						return si
 					}(),
-					"myprovider.baz": func() *config.ServiceInfo {
+					"baz@myprovider": func() *config.ServiceInfo {
 						si := &config.ServiceInfo{
 							Service: &config.Service{
 								LoadBalancer: &config.LoadBalancerService{
@@ -560,7 +562,7 @@ func TestHandlerHTTP_API(t *testing.T) {
 									},
 								},
 							},
-							UsedBy: []string{"myprovider.foo"},
+							UsedBy: []string{"foo@myprovider"},
 						}
 						si.UpdateStatus("http://127.0.0.2", "UP")
 						return si
@@ -578,7 +580,7 @@ func TestHandlerHTTP_API(t *testing.T) {
 			path: "/api/http/services?page=2&per_page=1",
 			conf: config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.bar": func() *config.ServiceInfo {
+					"bar@myprovider": func() *config.ServiceInfo {
 						si := &config.ServiceInfo{
 							Service: &config.Service{
 								LoadBalancer: &config.LoadBalancerService{
@@ -589,12 +591,12 @@ func TestHandlerHTTP_API(t *testing.T) {
 									},
 								},
 							},
-							UsedBy: []string{"myprovider.foo", "myprovider.test"},
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
 						}
 						si.UpdateStatus("http://127.0.0.1", "UP")
 						return si
 					}(),
-					"myprovider.baz": func() *config.ServiceInfo {
+					"baz@myprovider": func() *config.ServiceInfo {
 						si := &config.ServiceInfo{
 							Service: &config.Service{
 								LoadBalancer: &config.LoadBalancerService{
@@ -605,12 +607,12 @@ func TestHandlerHTTP_API(t *testing.T) {
 									},
 								},
 							},
-							UsedBy: []string{"myprovider.foo"},
+							UsedBy: []string{"foo@myprovider"},
 						}
 						si.UpdateStatus("http://127.0.0.2", "UP")
 						return si
 					}(),
-					"myprovider.test": func() *config.ServiceInfo {
+					"test@myprovider": func() *config.ServiceInfo {
 						si := &config.ServiceInfo{
 							Service: &config.Service{
 								LoadBalancer: &config.LoadBalancerService{
@@ -621,7 +623,7 @@ func TestHandlerHTTP_API(t *testing.T) {
 									},
 								},
 							},
-							UsedBy: []string{"myprovider.foo", "myprovider.test"},
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
 						}
 						si.UpdateStatus("http://127.0.0.4", "UP")
 						return si
@@ -636,10 +638,10 @@ func TestHandlerHTTP_API(t *testing.T) {
 		},
 		{
 			desc: "one service by id",
-			path: "/api/http/services/myprovider.bar",
+			path: "/api/http/services/bar@myprovider",
 			conf: config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.bar": func() *config.ServiceInfo {
+					"bar@myprovider": func() *config.ServiceInfo {
 						si := &config.ServiceInfo{
 							Service: &config.Service{
 								LoadBalancer: &config.LoadBalancerService{
@@ -650,7 +652,7 @@ func TestHandlerHTTP_API(t *testing.T) {
 									},
 								},
 							},
-							UsedBy: []string{"myprovider.foo", "myprovider.test"},
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
 						}
 						si.UpdateStatus("http://127.0.0.1", "UP")
 						return si
@@ -664,10 +666,10 @@ func TestHandlerHTTP_API(t *testing.T) {
 		},
 		{
 			desc: "one service by id, that does not exist",
-			path: "/api/http/services/myprovider.nono",
+			path: "/api/http/services/nono@myprovider",
 			conf: config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.bar": func() *config.ServiceInfo {
+					"bar@myprovider": func() *config.ServiceInfo {
 						si := &config.ServiceInfo{
 							Service: &config.Service{
 								LoadBalancer: &config.LoadBalancerService{
@@ -678,7 +680,7 @@ func TestHandlerHTTP_API(t *testing.T) {
 									},
 								},
 							},
-							UsedBy: []string{"myprovider.foo", "myprovider.test"},
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
 						}
 						si.UpdateStatus("http://127.0.0.1", "UP")
 						return si
@@ -691,7 +693,7 @@ func TestHandlerHTTP_API(t *testing.T) {
 		},
 		{
 			desc: "one service by id, but no config",
-			path: "/api/http/services/myprovider.foo",
+			path: "/api/http/services/foo@myprovider",
 			conf: config.RuntimeConfiguration{},
 			expected: expected{
 				statusCode: http.StatusNotFound,
@@ -712,29 +714,29 @@ func TestHandlerHTTP_API(t *testing.T) {
 			path: "/api/http/middlewares",
 			conf: config.RuntimeConfiguration{
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
+					"auth@myprovider": {
 						Middleware: &config.Middleware{
 							BasicAuth: &config.BasicAuth{
 								Users: []string{"admin:admin"},
 							},
 						},
-						UsedBy: []string{"myprovider.bar", "myprovider.test"},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
-					"myprovider.addPrefixTest": {
+					"addPrefixTest@myprovider": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/titi",
 							},
 						},
-						UsedBy: []string{"myprovider.test"},
+						UsedBy: []string{"test@myprovider"},
 					},
-					"anotherprovider.addPrefixTest": {
+					"addPrefixTest@anotherprovider": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/toto",
 							},
 						},
-						UsedBy: []string{"myprovider.bar"},
+						UsedBy: []string{"bar@myprovider"},
 					},
 				},
 			},
@@ -749,29 +751,29 @@ func TestHandlerHTTP_API(t *testing.T) {
 			path: "/api/http/middlewares?page=2&per_page=1",
 			conf: config.RuntimeConfiguration{
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
+					"auth@myprovider": {
 						Middleware: &config.Middleware{
 							BasicAuth: &config.BasicAuth{
 								Users: []string{"admin:admin"},
 							},
 						},
-						UsedBy: []string{"myprovider.bar", "myprovider.test"},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
-					"myprovider.addPrefixTest": {
+					"addPrefixTest@myprovider": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/titi",
 							},
 						},
-						UsedBy: []string{"myprovider.test"},
+						UsedBy: []string{"test@myprovider"},
 					},
-					"anotherprovider.addPrefixTest": {
+					"addPrefixTest@anotherprovider": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/toto",
 							},
 						},
-						UsedBy: []string{"myprovider.bar"},
+						UsedBy: []string{"bar@myprovider"},
 					},
 				},
 			},
@@ -783,32 +785,32 @@ func TestHandlerHTTP_API(t *testing.T) {
 		},
 		{
 			desc: "one middleware by id",
-			path: "/api/http/middlewares/myprovider.auth",
+			path: "/api/http/middlewares/auth@myprovider",
 			conf: config.RuntimeConfiguration{
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
+					"auth@myprovider": {
 						Middleware: &config.Middleware{
 							BasicAuth: &config.BasicAuth{
 								Users: []string{"admin:admin"},
 							},
 						},
-						UsedBy: []string{"myprovider.bar", "myprovider.test"},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
-					"myprovider.addPrefixTest": {
+					"addPrefixTest@myprovider": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/titi",
 							},
 						},
-						UsedBy: []string{"myprovider.test"},
+						UsedBy: []string{"test@myprovider"},
 					},
-					"anotherprovider.addPrefixTest": {
+					"addPrefixTest@anotherprovider": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/toto",
 							},
 						},
-						UsedBy: []string{"myprovider.bar"},
+						UsedBy: []string{"bar@myprovider"},
 					},
 				},
 			},
@@ -819,16 +821,16 @@ func TestHandlerHTTP_API(t *testing.T) {
 		},
 		{
 			desc: "one middleware by id, that does not exist",
-			path: "/api/http/middlewares/myprovider.foo",
+			path: "/api/http/middlewares/foo@myprovider",
 			conf: config.RuntimeConfiguration{
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
+					"auth@myprovider": {
 						Middleware: &config.Middleware{
 							BasicAuth: &config.BasicAuth{
 								Users: []string{"admin:admin"},
 							},
 						},
-						UsedBy: []string{"myprovider.bar", "myprovider.test"},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
 				},
 			},
@@ -838,7 +840,7 @@ func TestHandlerHTTP_API(t *testing.T) {
 		},
 		{
 			desc: "one middleware by id, but no config",
-			path: "/api/http/middlewares/myprovider.foo",
+			path: "/api/http/middlewares/foo@myprovider",
 			conf: config.RuntimeConfiguration{},
 			expected: expected{
 				statusCode: http.StatusNotFound,
@@ -869,6 +871,7 @@ func TestHandlerHTTP_API(t *testing.T) {
 				return
 			}
 
+			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
 			contents, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
 
@@ -912,7 +915,7 @@ func TestHandler_Configuration(t *testing.T) {
 			path: "/api/rawdata",
 			conf: config.RuntimeConfiguration{
 				Services: map[string]*config.ServiceInfo{
-					"myprovider.foo-service": {
+					"foo-service@myprovider": {
 						Service: &config.Service{
 							LoadBalancer: &config.LoadBalancerService{
 								Servers: []config.Server{
@@ -925,21 +928,21 @@ func TestHandler_Configuration(t *testing.T) {
 					},
 				},
 				Middlewares: map[string]*config.MiddlewareInfo{
-					"myprovider.auth": {
+					"auth@myprovider": {
 						Middleware: &config.Middleware{
 							BasicAuth: &config.BasicAuth{
 								Users: []string{"admin:admin"},
 							},
 						},
 					},
-					"myprovider.addPrefixTest": {
+					"addPrefixTest@myprovider": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/titi",
 							},
 						},
 					},
-					"anotherprovider.addPrefixTest": {
+					"addPrefixTest@anotherprovider": {
 						Middleware: &config.Middleware{
 							AddPrefix: &config.AddPrefix{
 								Prefix: "/toto",
@@ -948,25 +951,25 @@ func TestHandler_Configuration(t *testing.T) {
 					},
 				},
 				Routers: map[string]*config.RouterInfo{
-					"myprovider.bar": {
+					"bar@myprovider": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
-							Middlewares: []string{"auth", "anotherprovider.addPrefixTest"},
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
 						},
 					},
-					"myprovider.test": {
+					"test@myprovider": {
 						Router: &config.Router{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.foo-service",
+							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar.other`)",
 							Middlewares: []string{"addPrefixTest", "auth"},
 						},
 					},
 				},
 				TCPServices: map[string]*config.TCPServiceInfo{
-					"myprovider.tcpfoo-service": {
+					"tcpfoo-service@myprovider": {
 						TCPService: &config.TCPService{
 							LoadBalancer: &config.TCPLoadBalancerService{
 								Servers: []config.TCPServer{
@@ -979,23 +982,22 @@ func TestHandler_Configuration(t *testing.T) {
 					},
 				},
 				TCPRouters: map[string]*config.TCPRouterInfo{
-					"myprovider.tcpbar": {
+					"tcpbar@myprovider": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.tcpfoo-service",
+							Service:     "tcpfoo-service@myprovider",
 							Rule:        "HostSNI(`foo.bar`)",
 						},
 					},
-					"myprovider.tcptest": {
+					"tcptest@myprovider": {
 						TCPRouter: &config.TCPRouter{
 							EntryPoints: []string{"web"},
-							Service:     "myprovider.tcpfoo-service",
+							Service:     "tcpfoo-service@myprovider",
 							Rule:        "HostSNI(`foo.bar.other`)",
 						},
 					},
 				},
 			},
-
 			expected: expected{
 				statusCode: http.StatusOK,
 				json:       "testdata/getrawdata.json",
@@ -1011,6 +1013,7 @@ func TestHandler_Configuration(t *testing.T) {
 			// TODO: server status
 
 			rtConf := &test.conf
+
 			rtConf.PopulateUsedBy()
 			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
 			router := mux.NewRouter()
@@ -1022,6 +1025,7 @@ func TestHandler_Configuration(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected.statusCode, resp.StatusCode)
+			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
 
 			contents, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
@@ -1054,10 +1058,10 @@ func TestHandler_Configuration(t *testing.T) {
 func generateHTTPRouters(nbRouters int) map[string]*config.RouterInfo {
 	routers := make(map[string]*config.RouterInfo, nbRouters)
 	for i := 0; i < nbRouters; i++ {
-		routers[fmt.Sprintf("myprovider.bar%2d", i)] = &config.RouterInfo{
+		routers[fmt.Sprintf("bar%2d@myprovider", i)] = &config.RouterInfo{
 			Router: &config.Router{
 				EntryPoints: []string{"web"},
-				Service:     "myprovider.foo-service",
+				Service:     "foo-service@myprovider",
 				Rule:        "Host(`foo.bar" + strconv.Itoa(i) + "`)",
 			},
 		}

@@ -1,0 +1,10 @@
+tls:
+  certificates:
+  - certfile: integration/fixtures/https/snitest1.com.cert
+    keyfile: integration/fixtures/https/snitest1.com.key
+  - certfile: integration/fixtures/https/snitest2.com.cert
+    keyfile: integration/fixtures/https/snitest2.com.key
+  - certfile: integration/fixtures/https/snitest3.com.cert
+    keyfile: integration/fixtures/https/snitest3.com.key
+  - certfile: integration/fixtures/https/snitest4.com.cert
+    keyfile: integration/fixtures/https/snitest4.com.key

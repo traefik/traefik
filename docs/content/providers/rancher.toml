@@ -1,0 +1,20 @@
+# Enable Rancher Provider.
+[Providers.Rancher]
+
+  # Expose Rancher services by default in Traefik.
+  ExposedByDefault = true
+
+  # Enable watch Rancher changes.
+  Watch = true
+
+  # Filter services with unhealthy states and inactive states.
+  EnableServiceHealthFilter = true
+
+  # Defines the polling interval (in seconds).
+  RefreshSeconds = true
+
+  # Poll the Rancher metadata service for changes every `rancher.refreshSeconds`, which is less accurate
+  IntervalPoll = false
+
+  # Prefix used for accessing the Rancher metadata service
+  Prefix = "/latest"

@@ -72,7 +72,7 @@ type AccessLogFields struct {
 func (f *AccessLogFields) SetDefaults() {
 	f.DefaultMode = AccessLogKeep
 	f.Headers = &FieldHeaders{
-		DefaultMode: AccessLogKeep,
+		DefaultMode: AccessLogDrop,
 	}
 }
 

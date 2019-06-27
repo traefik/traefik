@@ -74,41 +74,41 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 			expected: map[string]string{"middleware-1": "value-middleware-1"},
 		},
 		{
-			desc:       "Should prefix the middlewareName with the provider in the context",
+			desc:       "Should suffix the middlewareName with the provider in the context",
 			buildChain: []string{"middleware-1"},
 			configuration: map[string]*config.Middleware{
-				"provider-1.middleware-1": {
+				"middleware-1@provider-1": {
 					Headers: &config.Headers{
-						CustomRequestHeaders: map[string]string{"provider-1.middleware-1": "value-middleware-1"},
+						CustomRequestHeaders: map[string]string{"middleware-1@provider-1": "value-middleware-1"},
 					},
 				},
 			},
-			expected:        map[string]string{"provider-1.middleware-1": "value-middleware-1"},
+			expected:        map[string]string{"middleware-1@provider-1": "value-middleware-1"},
 			contextProvider: "provider-1",
 		},
 		{
-			desc:       "Should not prefix a qualified middlewareName with the provider in the context",
-			buildChain: []string{"provider-1.middleware-1"},
+			desc:       "Should not suffix a qualified middlewareName with the provider in the context",
+			buildChain: []string{"middleware-1@provider-1"},
 			configuration: map[string]*config.Middleware{
-				"provider-1.middleware-1": {
+				"middleware-1@provider-1": {
 					Headers: &config.Headers{
-						CustomRequestHeaders: map[string]string{"provider-1.middleware-1": "value-middleware-1"},
+						CustomRequestHeaders: map[string]string{"middleware-1@provider-1": "value-middleware-1"},
 					},
 				},
 			},
-			expected:        map[string]string{"provider-1.middleware-1": "value-middleware-1"},
+			expected:        map[string]string{"middleware-1@provider-1": "value-middleware-1"},
 			contextProvider: "provider-1",
 		},
 		{
 			desc:       "Should be context aware if a chain references another middleware",
-			buildChain: []string{"provider-1.middleware-chain-1"},
+			buildChain: []string{"middleware-chain-1@provider-1"},
 			configuration: map[string]*config.Middleware{
-				"provider-1.middleware-1": {
+				"middleware-1@provider-1": {
 					Headers: &config.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-1": "value-middleware-1"},
 					},
 				},
-				"provider-1.middleware-chain-1": {
+				"middleware-chain-1@provider-1": {
 					Chain: &config.Chain{
 						Middlewares: []string{"middleware-1"},
 					},
@@ -118,31 +118,31 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		},
 		{
 			desc:       "Should handle nested chains with different context",
-			buildChain: []string{"provider-1.middleware-chain-1", "middleware-chain-1"},
+			buildChain: []string{"middleware-chain-1@provider-1", "middleware-chain-1"},
 			configuration: map[string]*config.Middleware{
-				"provider-1.middleware-1": {
+				"middleware-1@provider-1": {
 					Headers: &config.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-1": "value-middleware-1"},
 					},
 				},
-				"provider-1.middleware-2": {
+				"middleware-2@provider-1": {
 					Headers: &config.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-2": "value-middleware-2"},
 					},
 				},
-				"provider-1.middleware-chain-1": {
+				"middleware-chain-1@provider-1": {
 					Chain: &config.Chain{
 						Middlewares: []string{"middleware-1"},
 					},
 				},
-				"provider-1.middleware-chain-2": {
+				"middleware-chain-2@provider-1": {
 					Chain: &config.Chain{
 						Middlewares: []string{"middleware-2"},
 					},
 				},
-				"provider-2.middleware-chain-1": {
+				"middleware-chain-1@provider-2": {
 					Chain: &config.Chain{
-						Middlewares: []string{"provider-1.middleware-2", "provider-1.middleware-chain-2"},
+						Middlewares: []string{"middleware-2@provider-1", "middleware-chain-2@provider-1"},
 					},
 				},
 			},
@@ -176,28 +176,28 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		},
 		{
 			desc:       "Detects recursion in Middleware chain",
-			buildChain: []string{"provider.m1"},
+			buildChain: []string{"m1@provider"},
 			configuration: map[string]*config.Middleware{
-				"provider2.ok": {
+				"ok@provider2": {
 					Retry: &config.Retry{},
 				},
-				"provider.m1": {
+				"m1@provider": {
 					Chain: &config.Chain{
-						Middlewares: []string{"provider2.m2"},
+						Middlewares: []string{"m2@provider2"},
 					},
 				},
-				"provider2.m2": {
+				"m2@provider2": {
 					Chain: &config.Chain{
-						Middlewares: []string{"ok", "provider.m3"},
+						Middlewares: []string{"ok", "m3@provider"},
 					},
 				},
-				"provider.m3": {
+				"m3@provider": {
 					Chain: &config.Chain{
 						Middlewares: []string{"m1"},
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware provider.m1: recursion detected in provider.m1->provider2.m2->provider.m3->provider.m1"),
+			expectedError: errors.New("could not instantiate middleware m1@provider: recursion detected in m1@provider->m2@provider2->m3@provider->m1@provider"),
 		},
 		{
 			buildChain: []string{"ok", "m0"},
@@ -261,7 +261,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 
 			ctx := context.Background()
 			if len(test.contextProvider) > 0 {
-				ctx = internal.AddProviderInContext(ctx, test.contextProvider+".foobar")
+				ctx = internal.AddProviderInContext(ctx, "foobar@"+test.contextProvider)
 			}
 
 			rtConf := config.NewRuntimeConfig(config.Configuration{

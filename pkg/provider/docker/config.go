@@ -11,6 +11,7 @@ import (
 	"github.com/containous/traefik/pkg/config/label"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
+	"github.com/containous/traefik/pkg/provider/constraints"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -123,10 +124,13 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 		return false
 	}
 
-	if ok, failingConstraint := p.MatchConstraints(container.ExtraConf.Tags); !ok {
-		if failingConstraint != nil {
-			logger.Debugf("Container pruned by %q constraint", failingConstraint.String())
-		}
+	matches, err := constraints.Match(container.Labels, p.Constraints)
+	if err != nil {
+		logger.Errorf("Error matching constraints expression: %v", err)
+		return false
+	}
+	if !matches {
+		logger.Debugf("Container pruned by constraint expression: %q", p.Constraints)
 		return false
 	}
 

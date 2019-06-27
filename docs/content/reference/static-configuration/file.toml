@@ -42,16 +42,7 @@
     SwarmMode = true
     Network = "foobar"
     SwarmModeRefreshSeconds = 42
-
-    [[Providers.Docker.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
-
-    [[Providers.Docker.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
+    Constraints = "foobar"
 
     [Providers.Docker.TLS]
       CA = "foobar"
@@ -74,23 +65,13 @@
     DefaultRule = "foobar"
     ExposedByDefault = true
     DCOSToken = "foobar"
-    FilterMarathonConstraints = true
     DialerTimeout = 42
     ResponseHeaderTimeout = 42
     TLSHandshakeTimeout = 42
     KeepAlive = 42
     ForceTaskHostname = true
     RespectReadinessChecks = true
-
-    [[Providers.Marathon.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
-
-    [[Providers.Marathon.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
+    Constraints = "foobar"
 
     [Providers.Marathon.TLS]
       CA = "foobar"
@@ -135,16 +116,7 @@
     RefreshSeconds = 42
     IntervalPoll = true
     Prefix = "foobar"
-
-    [[Providers.Rancher.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
-
-    [[Providers.Rancher.Constraints]]
-      Key = "foobar"
-      MustMatch = true
-      Regex = "foobar"
+    Constraints = "foobar"
 
 [API]
   EntryPoint = "foobar"
@@ -162,16 +134,16 @@
 
   [Metrics.Datadog]
     Address = "foobar"
-    PushInterval = "foobar"
+    PushInterval = "10s"
 
   [Metrics.StatsD]
     Address = "foobar"
-    PushInterval = "foobar"
+    PushInterval = "10s"
 
   [Metrics.InfluxDB]
     Address = "foobar"
     Protocol = "foobar"
-    PushInterval = "foobar"
+    PushInterval = "10s"
     Database = "foobar"
     RetentionPolicy = "foobar"
     Username = "foobar"
@@ -206,7 +178,6 @@
         name1 = "foobar"
 
 [Tracing]
-  Backend = "foobar"
   ServiceName = "foobar"
   SpanNameLimit = 42
 
@@ -240,6 +211,14 @@
     LocalAgentHost = "foobar"
     LocalAgentPort = 42
     LogLevel = "foobar"
+
+  [Tracing.Haystack]
+    LocalAgentHost = "foobar"
+    LocalAgentPort = 42
+    GlobalTag = "foobar"
+    ParentIDHeaderName = "foobar"
+    SpanIDHeaderName = "foobar"
+    TraceIDHeaderName = "foobar"
 
 [HostResolver]
   CnameFlattening = true

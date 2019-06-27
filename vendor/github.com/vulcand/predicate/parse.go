@@ -59,6 +59,16 @@ func (p *predicateParser) parseNode(node ast.Node) (interface{}, error) {
 		return callFunction(fn, arguments)
 	case *ast.ParenExpr:
 		return p.parseNode(n.X)
+	case *ast.UnaryExpr:
+		joinFn, err := p.getJoinFunction(n.Op)
+		if err != nil {
+			return nil, err
+		}
+		node, err := p.parseNode(n.X)
+		if err != nil {
+			return nil, err
+		}
+		return callFunction(joinFn, []interface{}{node})
 	}
 	return nil, trace.BadParameter("unsupported %T", node)
 }
@@ -122,6 +132,20 @@ func (p *predicateParser) evaluateExpr(n ast.Expr) (interface{}, error) {
 			return nil, trace.Wrap(err)
 		}
 		return val, nil
+	case *ast.CallExpr:
+		name, err := getIdentifier(l.Fun)
+		if err != nil {
+			return nil, err
+		}
+		fn, err := p.getFunction(name)
+		if err != nil {
+			return nil, err
+		}
+		arguments, err := p.evaluateArguments(l.Args)
+		if err != nil {
+			return nil, err
+		}
+		return callFunction(fn, arguments)
 	default:
 		return nil, trace.BadParameter("%T is not supported", n)
 	}
@@ -161,6 +185,8 @@ func (p *predicateParser) joinPredicates(op token.Token, a, b interface{}) (inte
 func (p *predicateParser) getJoinFunction(op token.Token) (interface{}, error) {
 	var fn interface{}
 	switch op {
+	case token.NOT:
+		fn = p.d.Operators.NOT
 	case token.LAND:
 		fn = p.d.Operators.AND
 	case token.LOR:

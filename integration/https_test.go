@@ -191,7 +191,7 @@ func (s *HTTPSSuite) TestWithTLSOptions(c *check.C) {
 	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
 
 	//	with unknown tls option
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("unknown TLS options: unknown"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("unknown TLS options: unknown@file"))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -799,12 +799,14 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 	// If certificate file is not provided, just truncate the configuration file
 	if len(certFileName) > 0 {
 		tlsConf := config.Configuration{
-			TLS: []*traefiktls.Configuration{{
-				Certificate: &traefiktls.Certificate{
-					CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
-					KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
+			TLS: &config.TLSConfiguration{
+				Certificates: []*traefiktls.CertAndStores{{
+					Certificate: traefiktls.Certificate{
+						CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
+						KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
+					}},
 				},
-			}},
+			},
 		}
 
 		var confBuffer bytes.Buffer

@@ -723,7 +723,7 @@ func TestEncodeToNode(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			node, err := EncodeToNode(test.element, true)
+			node, err := EncodeToNode(test.element, DefaultRootName, true)
 
 			if test.expected.error {
 				require.Error(t, err)

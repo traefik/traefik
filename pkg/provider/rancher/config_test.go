@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +13,7 @@ func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		containers  []rancherData
-		constraints []*types.Constraint
+		constraints string
 		expected    *config.Configuration
 	}{
 		{
@@ -330,13 +329,7 @@ func Test_buildConfiguration(t *testing.T) {
 					State:      "",
 				},
 			},
-			constraints: []*types.Constraint{
-				{
-					Key:       "tag",
-					MustMatch: true,
-					Value:     "bar",
-				},
-			},
+			constraints: `Label("traefik.tags", "bar")`,
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
@@ -363,13 +356,7 @@ func Test_buildConfiguration(t *testing.T) {
 					State:      "",
 				},
 			},
-			constraints: []*types.Constraint{
-				{
-					Key:       "tag",
-					MustMatch: true,
-					Value:     "foo",
-				},
-			},
+			constraints: `Label("traefik.tags", "foo")`,
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},

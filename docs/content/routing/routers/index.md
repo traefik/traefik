@@ -36,8 +36,10 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
         [entryPoints.mysql-default]
           address = ":80"
         [entryPoints.mysql-default]
-          address = ":3306"
-          
+          address = ":3306"   
+    ```
+    
+    ```toml
       [tcp]
         [tcp.routers]
           [tcp.routers.to-database]
@@ -50,8 +52,8 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
 
 ### EntryPoints
 
-If not specified, HTTP routers will accept requests from all defined entrypoints.
-If you want to limit the router scope to a set of entrypoints, set the entrypoints option.
+If not specified, HTTP routers will accept requests from all defined entry points.
+If you want to limit the router scope to a set of entry points, set the `entryPoints` option.
 
 ??? example "Listens to Every EntryPoint"
 
@@ -63,7 +65,9 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
           # ...
        [entryPoints.other]
           # ...
-
+    ```
+    
+    ```toml
     [http.routers]
        [http.routers.Router-1]
           # By default, routers listen to every entrypoints
@@ -81,7 +85,9 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
           # ...
        [entryPoints.other]
           # ...
-
+    ```
+    
+    ```toml
     [http.routers]
        [http.routers.Router-1]
           entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
@@ -97,26 +103,27 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 ??? example "Host is traefik.io"
 
     ```toml
-       rule = "Host(`traefik.io`)"
+    rule = "Host(`traefik.io`)"
     ```
 
 ??? example "Host is traefik.io OR Host is containo.us AND path is /traefik"
 
     ```toml
-       rule = "Host(`traefik.io`) || (Host(`containo.us`) && Path(`/traefik`))"
+    rule = "Host(`traefik.io`) || (Host(`containo.us`) && Path(`/traefik`))"
     ```
+
 The table below lists all the available matchers:
 
-| Rule                                                               | Description                                                                                                    |
-|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| ``Headers(`key`, `value`)``                                        | Check if there is a key `key`defined in the headers, with the value `value`                                    |
-| ``HeadersRegexp(`key`, `regexp`)``                                 | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
-| ``Host(`domain-1`, ...)``                                          | Check if the request domain targets one of the given `domains`.                                                |
-| ``HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)`` | Check if the request domain matches the given `regexp`.                                                        |
-| `Method(methods, ...)`                                             | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
-| ``Path(`path`, `/articles/{category}/{id:[0-9]+}`, ...)``          | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
-| ``PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)``   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
-| ``Query(`foo=bar`, `bar=baz`)``                                    | Match` Query String parameters. It accepts a sequence of key=value pairs.                                      |
+| Rule                                                                 | Description                                                                                                    |
+|----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| ```Headers(`key`, `value`)```                                        | Check if there is a key `key`defined in the headers, with the value `value`                                    |
+| ```HeadersRegexp(`key`, `regexp`)```                                 | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
+| ```Host(`domain-1`, ...)```                                          | Check if the request domain targets one of the given `domains`.                                                |
+| ```HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
+| `Method(methods, ...)`                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
+| ```Path(`path`, `/articles/{category}/{id:[0-9]+}`, ...)```          | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
+| ```PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
+| ```Query(`foo=bar`, `bar=baz`)```                                    | Match` Query String parameters. It accepts a sequence of key=value pairs.                                      |
 
 !!! important "Regexp Syntax"
 
@@ -126,7 +133,7 @@ The table below lists all the available matchers:
 
 !!! tip "Combining Matchers Using Operators and Parenthesis"
 
-    You can combine multiple matchers using the AND (`&&`) and OR (`||) operators. You can also use parenthesis.
+    You can combine multiple matchers using the AND (`&&`) and OR (`||`) operators. You can also use parenthesis.
 
 !!! important "Rule, Middleware, and Services"
 
@@ -173,7 +180,7 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 
 !!! note "HTTPS & ACME"
 
-    In the current version, with [ACME](../../https-tls/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
+    In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
     
 !!! note "Passthrough"
 
@@ -200,7 +207,7 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 #### `Options`
 
 The `Options` field enables fine-grained control of the TLS parameters.  
-It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and will be applied only if a `Host` rule is defined.
+It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied only if a `Host` rule is defined.
 
 ??? example "Configuring the tls options"
 
@@ -212,9 +219,8 @@ It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and
           [http.routers.Router-1.tls] # will terminate the TLS request
             options = "foo"
     
-    
-    [tlsOptions]
-      [tlsOptions.foo]
+    [tls.options]
+      [tls.options.foo]
           minVersion = "VersionTLS12"
           cipherSuites = [
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
@@ -226,15 +232,15 @@ It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and
 
 ### General
 
-If both HTTP routers and TCP routers listen to the same entrypoints, the TCP routers will apply *before* the HTTP routers.
+If both HTTP routers and TCP routers listen to the same entry points, the TCP routers will apply *before* the HTTP routers.
 If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ### EntryPoints
 
-If not specified, TCP routers will accept requests from all defined entrypoints.
-If you want to limit the router scope to a set of entrypoints, set the entrypoints option.
+If not specified, TCP routers will accept requests from all defined entry points.
+If you want to limit the router scope to a set of entry points, set the entry points option.
 
-??? example "Listens to Every EntryPoint"
+??? example "Listens to Every Entry Point"
 
     ```toml
     [entryPoints]
@@ -244,7 +250,9 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
           # ...
        [entryPoints.other]
           # ...
-
+    ```
+    
+    ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
           # By default, routers listen to every entrypoints
@@ -253,7 +261,7 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
           [tcp.routers.Router-1.tls] # will route TLS requests (and ignore non tls requests)
     ```
 
-??? example "Listens to Specific EntryPoints"
+??? example "Listens to Specific Entry Points"
 
     ```toml
     [entryPoints]
@@ -263,7 +271,9 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
           # ...
        [entryPoints.other]
           # ...
+    ```
 
+    ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
           entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
@@ -274,9 +284,9 @@ If you want to limit the router scope to a set of entrypoints, set the entrypoin
 
 ### Rule
 
-| Rule                         | Description                                                             |
-|------------------------------|-------------------------------------------------------------------------|
-| ``HostSNI(`domain-1`, ...)`` | Check if the Server Name Indication corresponds to the given `domains`. |
+| Rule                           | Description                                                             |
+|--------------------------------|-------------------------------------------------------------------------|
+| ```HostSNI(`domain-1`, ...)``` | Check if the Server Name Indication corresponds to the given `domains`. |
 
 !!! important "HostSNI & TLS"
 
@@ -305,7 +315,7 @@ Services are the target for the router.
     ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
-          rule = "Host(`foo-domain`)"
+          rule = "HostSNI(`foo-domain`)"
           service = "service-id"
           [tcp.routers.Router-1.tls] # will terminate the TLS request by default
     ```
@@ -315,7 +325,7 @@ Services are the target for the router.
     ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
-          rule = "Host(`foo-domain`)"
+          rule = "HostSNI(`foo-domain`)"
           service = "service-id"
           [tcp.routers.Router-1.tls]
              passthrough=true
@@ -323,26 +333,25 @@ Services are the target for the router.
 
 !!! note "TLS & ACME"
 
-    In the current version, with [ACME](../../https-tls/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
+    In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
 
 #### `Options`
 
 The `Options` field enables fine-grained control of the TLS parameters.  
-It refers to a [tlsOptions](../../https-tls/overview/#configuration-options) and will be applied only if a `HostSNI` rule is defined.
+It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied only if a `HostSNI` rule is defined.
 
 ??? example "Configuring the tls options"
 
     ```toml
     [tcp.routers]
        [tcp.routers.Router-1]
-          rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
+          rule = "HostSNI(`foo-domain`)"
           service = "service-id"
           [tcp.routers.Router-1.tls] # will terminate the TLS request
             options = "foo"
     
-    
-    [tlsOptions]
-      [tlsOptions.foo]
+    [tls.options]
+      [tls.options.foo]
           minVersion = "VersionTLS12"
           cipherSuites = [
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",

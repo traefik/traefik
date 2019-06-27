@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/pkg/config/parser"
@@ -22,7 +23,7 @@ func decodeFileToNode(filePath string, filters ...string) (*parser.Node, error) 
 
 	data := make(map[string]interface{})
 
-	switch filepath.Ext(filePath) {
+	switch strings.ToLower(filepath.Ext(filePath)) {
 	case ".toml":
 		err = toml.Unmarshal(content, &data)
 		if err != nil {
@@ -30,19 +31,16 @@ func decodeFileToNode(filePath string, filters ...string) (*parser.Node, error) 
 		}
 
 	case ".yml", ".yaml":
-		var err error
 		err = yaml.Unmarshal(content, data)
 		if err != nil {
 			return nil, err
 		}
 
-		return decodeRawToNode(data, filters...)
-
 	default:
 		return nil, fmt.Errorf("unsupported file extension: %s", filePath)
 	}
 
-	return decodeRawToNode(data, filters...)
+	return decodeRawToNode(data, parser.DefaultRootName, filters...)
 }
 
 func getRootFieldNames(element interface{}) []string {

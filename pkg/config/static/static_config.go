@@ -24,7 +24,6 @@ import (
 	"github.com/containous/traefik/pkg/types"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/go-acme/lego/challenge/dns01"
-	jaegercli "github.com/uber/jaeger-client-go"
 )
 
 const (
@@ -55,7 +54,7 @@ type Configuration struct {
 	Ping    *ping.Handler  `description:"Enable ping." export:"true" label:"allowEmpty"`
 	// Rest    *rest.Provider `description:"Enable Rest backend with default settings" export:"true"`
 
-	Log       *types.TraefikLog `description:"Traefik log settings." export:"true"`
+	Log       *types.TraefikLog `description:"Traefik log settings." export:"true" label:"allowEmpty"`
 	AccessLog *types.AccessLog  `description:"Access log settings." export:"true" label:"allowEmpty"`
 	Tracing   *Tracing          `description:"OpenTracing configuration." export:"true" label:"allowEmpty"`
 
@@ -132,7 +131,6 @@ func (a *LifeCycle) SetDefaults() {
 
 // Tracing holds the tracing configuration.
 type Tracing struct {
-	Backend       string           `description:"Selects the tracking backend ('jaeger','zipkin','datadog','instana')." export:"true"`
 	ServiceName   string           `description:"Set the name for this service." export:"true"`
 	SpanNameLimit int              `description:"Set the maximum character limit for Span names (default 0 = no limit)." export:"true"`
 	Jaeger        *jaeger.Config   `description:"Settings for jaeger." label:"allowEmpty"`
@@ -144,7 +142,6 @@ type Tracing struct {
 
 // SetDefaults sets the default values.
 func (t *Tracing) SetDefaults() {
-	t.Backend = "jaeger"
 	t.ServiceName = "traefik"
 	t.SpanNameLimit = 0
 }
@@ -200,103 +197,6 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 	}
 
 	c.initACMEProvider()
-	c.initTracing()
-}
-
-func (c *Configuration) initTracing() {
-	if c.Tracing != nil {
-		switch c.Tracing.Backend {
-		case jaeger.Name:
-			if c.Tracing.Jaeger == nil {
-				c.Tracing.Jaeger = &jaeger.Config{
-					SamplingServerURL:      "http://localhost:5778/sampling",
-					SamplingType:           "const",
-					SamplingParam:          1.0,
-					LocalAgentHostPort:     "127.0.0.1:6831",
-					Propagation:            "jaeger",
-					Gen128Bit:              false,
-					TraceContextHeaderName: jaegercli.TraceContextHeaderName,
-				}
-			}
-			if c.Tracing.Zipkin != nil {
-				log.Warn("Zipkin configuration will be ignored")
-				c.Tracing.Zipkin = nil
-			}
-			if c.Tracing.DataDog != nil {
-				log.Warn("DataDog configuration will be ignored")
-				c.Tracing.DataDog = nil
-			}
-			if c.Tracing.Instana != nil {
-				log.Warn("Instana configuration will be ignored")
-				c.Tracing.Instana = nil
-			}
-		case zipkin.Name:
-			if c.Tracing.Zipkin == nil {
-				c.Tracing.Zipkin = &zipkin.Config{
-					HTTPEndpoint: "http://localhost:9411/api/v1/spans",
-					SameSpan:     false,
-					ID128Bit:     true,
-					Debug:        false,
-					SampleRate:   1.0,
-				}
-			}
-			if c.Tracing.Jaeger != nil {
-				log.Warn("Jaeger configuration will be ignored")
-				c.Tracing.Jaeger = nil
-			}
-			if c.Tracing.DataDog != nil {
-				log.Warn("DataDog configuration will be ignored")
-				c.Tracing.DataDog = nil
-			}
-			if c.Tracing.Instana != nil {
-				log.Warn("Instana configuration will be ignored")
-				c.Tracing.Instana = nil
-			}
-		case datadog.Name:
-			if c.Tracing.DataDog == nil {
-				c.Tracing.DataDog = &datadog.Config{
-					LocalAgentHostPort: "localhost:8126",
-					GlobalTag:          "",
-					Debug:              false,
-				}
-			}
-			if c.Tracing.Zipkin != nil {
-				log.Warn("Zipkin configuration will be ignored")
-				c.Tracing.Zipkin = nil
-			}
-			if c.Tracing.Jaeger != nil {
-				log.Warn("Jaeger configuration will be ignored")
-				c.Tracing.Jaeger = nil
-			}
-			if c.Tracing.Instana != nil {
-				log.Warn("Instana configuration will be ignored")
-				c.Tracing.Instana = nil
-			}
-		case instana.Name:
-			if c.Tracing.Instana == nil {
-				c.Tracing.Instana = &instana.Config{
-					LocalAgentHost: "localhost",
-					LocalAgentPort: 42699,
-					LogLevel:       "info",
-				}
-			}
-			if c.Tracing.Zipkin != nil {
-				log.Warn("Zipkin configuration will be ignored")
-				c.Tracing.Zipkin = nil
-			}
-			if c.Tracing.Jaeger != nil {
-				log.Warn("Jaeger configuration will be ignored")
-				c.Tracing.Jaeger = nil
-			}
-			if c.Tracing.DataDog != nil {
-				log.Warn("DataDog configuration will be ignored")
-				c.Tracing.DataDog = nil
-			}
-		default:
-			log.Warnf("Unknown tracer %q", c.Tracing.Backend)
-			return
-		}
-	}
 }
 
 // FIXME handle on new configuration ACME struct

@@ -11,6 +11,7 @@ import (
 	"github.com/containous/traefik/pkg/config/label"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
+	"github.com/containous/traefik/pkg/provider/constraints"
 )
 
 func (p *Provider) buildConfiguration(ctx context.Context, services []rancherData) *config.Configuration {
@@ -120,10 +121,13 @@ func (p *Provider) keepService(ctx context.Context, service rancherData) bool {
 		return false
 	}
 
-	if ok, failingConstraint := p.MatchConstraints(service.ExtraConf.Tags); !ok {
-		if failingConstraint != nil {
-			logger.Debugf("service pruned by %q constraint", failingConstraint.String())
-		}
+	matches, err := constraints.Match(service.Labels, p.Constraints)
+	if err != nil {
+		logger.Errorf("Error matching constraints expression: %v", err)
+		return false
+	}
+	if !matches {
+		logger.Debugf("Service pruned by constraint expression: %q", p.Constraints)
 		return false
 	}
 

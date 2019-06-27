@@ -165,6 +165,9 @@ resolv.conf used for DNS resolving (Default: ```/etc/resolv.conf```)
 `TRAEFIK_HOSTRESOLVER_RESOLVDEPTH`:  
 The maximal depth of DNS recursive resolving (Default: ```5```)
 
+`TRAEFIK_LOG`:  
+Traefik log settings. (Default: "false")
+
 `TRAEFIK_LOG_FILEPATH`:  
 Traefik log file path. Stdout is used when omitted or empty.
 
@@ -241,16 +244,7 @@ Middleware list.
 Enable Docker backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_DOCKER_CONSTRAINTS`:  
-Filter services by constraint, matching with Traefik tags.
-
-`TRAEFIK_PROVIDERS_DOCKER_CONSTRAINTS[n]_KEY`:  
-The provider label that will be matched against. In practice, it is always 'tag'.
-
-`TRAEFIK_PROVIDERS_DOCKER_CONSTRAINTS[n]_MUSTMATCH`:  
-Whether the matching operator is equals or not equals. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_DOCKER_CONSTRAINTS[n]_VALUE`:  
-The value that will be matched against.
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
 `TRAEFIK_PROVIDERS_DOCKER_DEFAULTRULE`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
@@ -373,16 +367,7 @@ Basic authentication User.
 Basic authentication Password.
 
 `TRAEFIK_PROVIDERS_MARATHON_CONSTRAINTS`:  
-Filter services by constraint, matching with Traefik tags.
-
-`TRAEFIK_PROVIDERS_MARATHON_CONSTRAINTS[n]_KEY`:  
-The provider label that will be matched against. In practice, it is always 'tag'.
-
-`TRAEFIK_PROVIDERS_MARATHON_CONSTRAINTS[n]_MUSTMATCH`:  
-Whether the matching operator is equals or not equals. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_CONSTRAINTS[n]_VALUE`:  
-The value that will be matched against.
+Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application.
 
 `TRAEFIK_PROVIDERS_MARATHON_DCOSTOKEN`:  
 DCOSToken for DCOS environment, This will override the Authorization header.
@@ -398,9 +383,6 @@ Marathon server endpoint. You can also specify multiple endpoint for Marathon. (
 
 `TRAEFIK_PROVIDERS_MARATHON_EXPOSEDBYDEFAULT`:  
 Expose Marathon apps by default. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_MARATHON_FILTERMARATHONCONSTRAINTS`:  
-Enable use of Marathon constraints in constraint filtering. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_MARATHON_FORCETASKHOSTNAME`:  
 Force to use the task's hostname. (Default: ```false```)
@@ -445,16 +427,7 @@ Backends throttle duration: minimum duration between 2 events from providers bef
 Enable Rancher backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_RANCHER_CONSTRAINTS`:  
-Filter services by constraint, matching with Traefik tags.
-
-`TRAEFIK_PROVIDERS_RANCHER_CONSTRAINTS[n]_KEY`:  
-The provider label that will be matched against. In practice, it is always 'tag'.
-
-`TRAEFIK_PROVIDERS_RANCHER_CONSTRAINTS[n]_MUSTMATCH`:  
-Whether the matching operator is equals or not equals. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_RANCHER_CONSTRAINTS[n]_VALUE`:  
-The value that will be matched against.
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
 `TRAEFIK_PROVIDERS_RANCHER_DEFAULTRULE`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
@@ -504,9 +477,6 @@ Add cert file for self-signed certificate.
 
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)
-
-`TRAEFIK_TRACING_BACKEND`:  
-Selects the tracking backend ('jaeger','zipkin','datadog','instana'). (Default: ```jaeger```)
 
 `TRAEFIK_TRACING_DATADOG`:  
 Settings for DataDog. (Default: ```false```)

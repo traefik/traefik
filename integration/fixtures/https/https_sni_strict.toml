@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web-secure]
@@ -26,11 +26,13 @@ level = "DEBUG"
       [[http.services.service1.LoadBalancer.Servers]]
         url = "http://127.0.0.1:9010"
 
-[tlsOptions.default]
+[tls.options]
+  [tls.options.default]
     sniStrict = true
 
-[tlsStores.default]
-    [tlsStores.default.DefaultCertificate]
-        certFile = "fixtures/https/snitest.com.cert"
-        keyFile = "fixtures/https/snitest.com.key"
+[tls.stores]
+  [tls.stores.default]
+    [tls.stores.default.DefaultCertificate]
+      certFile = "fixtures/https/snitest.com.cert"
+      keyFile = "fixtures/https/snitest.com.key"
 

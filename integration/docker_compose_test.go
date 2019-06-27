@@ -77,7 +77,7 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 	services := rtconf.Services
 	c.Assert(services, checker.HasLen, 1)
 	for k, v := range services {
-		c.Assert(k, checker.Equals, "docker."+composeService+"_integrationtest"+composeProject)
+		c.Assert(k, checker.Equals, composeService+"_integrationtest"+composeProject+"@docker")
 		c.Assert(v.LoadBalancer.Servers, checker.HasLen, serviceCount)
 		// We could break here, but we don't just to keep us honest.
 	}

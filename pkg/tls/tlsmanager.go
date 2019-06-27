@@ -17,8 +17,8 @@ import (
 type Manager struct {
 	storesConfig  map[string]Store
 	stores        map[string]*CertificateStore
-	configs       map[string]TLS
-	certs         []*Configuration
+	configs       map[string]Options
+	certs         []*CertAndStores
 	TLSAlpnGetter func(string) (*tls.Certificate, error)
 	lock          sync.RWMutex
 }
@@ -29,7 +29,7 @@ func NewManager() *Manager {
 }
 
 // UpdateConfigs updates the TLS* configuration options
-func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]TLS, certs []*Configuration) {
+func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]Options, certs []*CertAndStores) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
@@ -39,11 +39,12 @@ func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]TLS,
 
 	m.stores = make(map[string]*CertificateStore)
 	for storeName, storeConfig := range m.storesConfig {
-		var err error
-		m.stores[storeName], err = buildCertificateStore(storeConfig)
+		store, err := buildCertificateStore(storeConfig)
 		if err != nil {
-			log.Errorf("Error while creating certificate store %s", storeName)
+			log.Errorf("Error while creating certificate store %s: %v", storeName, err)
+			continue
 		}
+		m.stores[storeName] = store
 	}
 
 	storesCertificates := make(map[string]map[string]*tls.Certificate)
@@ -73,7 +74,7 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 	defer m.lock.RUnlock()
 
 	config, ok := m.configs[configName]
-	if !ok && configName != "default" {
+	if !ok {
 		return nil, fmt.Errorf("unknown TLS options: %s", configName)
 	}
 
@@ -137,14 +138,14 @@ func buildCertificateStore(tlsStore Store) (*CertificateStore, error) {
 	if tlsStore.DefaultCertificate != nil {
 		cert, err := buildDefaultCertificate(tlsStore.DefaultCertificate)
 		if err != nil {
-			return nil, err
+			return certificateStore, err
 		}
 		certificateStore.DefaultCertificate = cert
 	} else {
 		log.Debug("No default certificate, generate one")
 		cert, err := generate.DefaultCertificate()
 		if err != nil {
-			return nil, err
+			return certificateStore, err
 		}
 		certificateStore.DefaultCertificate = cert
 	}
@@ -152,7 +153,7 @@ func buildCertificateStore(tlsStore Store) (*CertificateStore, error) {
 }
 
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI
-func buildTLSConfig(tlsOption TLS) (*tls.Config, error) {
+func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 	conf := &tls.Config{}
 
 	// ensure http2 enabled

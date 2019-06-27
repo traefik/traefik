@@ -7,7 +7,6 @@ import (
 
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/ping"
-	"github.com/containous/traefik/pkg/provider"
 	"github.com/containous/traefik/pkg/provider/acme"
 	acmeprovider "github.com/containous/traefik/pkg/provider/acme"
 	"github.com/containous/traefik/pkg/provider/docker"
@@ -16,6 +15,7 @@ import (
 	"github.com/containous/traefik/pkg/provider/kubernetes/ingress"
 	traefiktls "github.com/containous/traefik/pkg/tls"
 	"github.com/containous/traefik/pkg/tracing/datadog"
+	"github.com/containous/traefik/pkg/tracing/haystack"
 	"github.com/containous/traefik/pkg/tracing/instana"
 	"github.com/containous/traefik/pkg/tracing/jaeger"
 	"github.com/containous/traefik/pkg/tracing/zipkin"
@@ -153,20 +153,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 
 	config.Providers.Docker = &docker.Provider{
-		Constrainer: provider.Constrainer{
-			Constraints: []*types.Constraint{
-				{
-					Key:       "file Constraints Key 1",
-					Value:     "file Constraints Regex 2",
-					MustMatch: true,
-				},
-				{
-					Key:       "file Constraints Key 1",
-					Value:     "file Constraints Regex 2",
-					MustMatch: true,
-				},
-			},
-		},
+		Constraints: `Label("foo", "bar")`,
 		Watch:       true,
 		Endpoint:    "MyEndPoint",
 		DefaultRule: "PathPrefix(`/`)",
@@ -237,7 +224,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 
 	config.Tracing = &static.Tracing{
-		Backend:       "myBackend",
 		ServiceName:   "myServiceName",
 		SpanNameLimit: 3,
 		Jaeger: &jaeger.Config{
@@ -266,6 +252,15 @@ func TestDo_globalConfiguration(t *testing.T) {
 			LocalAgentHost: "fff",
 			LocalAgentPort: 32,
 			LogLevel:       "ggg",
+		},
+		Haystack: &haystack.Config{
+			LocalAgentHost:          "fff",
+			LocalAgentPort:          32,
+			GlobalTag:               "eee",
+			TraceIDHeaderName:       "fff",
+			ParentIDHeaderName:      "ggg",
+			SpanIDHeaderName:        "hhh",
+			BaggagePrefixHeaderName: "iii",
 		},
 	}
 

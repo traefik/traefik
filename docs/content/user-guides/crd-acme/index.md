@@ -16,6 +16,10 @@ In the following, the Kubernetes resources defined in YAML configuration files c
 - the first, and usual way, is simply with the `kubectl apply` command.
 - the second, which can be used for this tutorial, is to directly place the files in the directory used by the k3s docker image for such inputs (`/var/lib/rancher/k3s/server/manifests`).
 
+!!! important "Kubectl Version"
+
+    With the `rancher/k3s` version used in this guide (`0.5.0`), the kubectl version needs to be >= `0.11`.
+
 ## k3s Docker-compose Configuration
 
 Our starting point is the docker-compose configuration file, to start the k3s cluster.

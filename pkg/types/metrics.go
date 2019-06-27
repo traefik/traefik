@@ -23,7 +23,6 @@ type Prometheus struct {
 func (p *Prometheus) SetDefaults() {
 	p.Buckets = []float64{0.1, 0.3, 1.2, 5}
 	p.EntryPoint = "traefik"
-	// FIXME p.EntryPoint = static.DefaultInternalEntryPointName
 }
 
 // Datadog contains address and metrics pushing interval configuration

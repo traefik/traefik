@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -20,6 +19,7 @@ import (
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/containous/traefik/pkg/tls"
 	"gopkg.in/fsnotify.v1"
+	"gopkg.in/yaml.v2"
 )
 
 const providerName = "file"
@@ -170,60 +170,52 @@ func sendConfigToChannel(configurationChan chan<- config.Message, configuration 
 	}
 }
 
-func readFile(filename string) (string, error) {
-	if len(filename) > 0 {
-		buf, err := ioutil.ReadFile(filename)
-		if err != nil {
-			return "", err
-		}
-		return string(buf), nil
-	}
-	return "", fmt.Errorf("invalid filename: %s", filename)
-}
-
 func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*config.Configuration, error) {
-	fileContent, err := readFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("error reading configuration file: %s - %s", filename, err)
-	}
-
+	var err error
 	var configuration *config.Configuration
 	if parseTemplate {
-		configuration, err = p.CreateConfiguration(fileContent, template.FuncMap{}, false)
+		configuration, err = p.CreateConfiguration(filename, template.FuncMap{}, false)
 	} else {
-		configuration, err = p.DecodeConfiguration(fileContent)
+		configuration, err = p.DecodeConfiguration(filename)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	var tlsConfigs []*tls.Configuration
-	for _, conf := range configuration.TLS {
-		bytes, err := conf.Certificate.CertFile.Read()
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		conf.Certificate.CertFile = tls.FileOrContent(string(bytes))
-
-		bytes, err = conf.Certificate.KeyFile.Read()
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		conf.Certificate.KeyFile = tls.FileOrContent(string(bytes))
-		tlsConfigs = append(tlsConfigs, conf)
+	if configuration.TLS != nil {
+		configuration.TLS.Certificates = flattenCertificates(configuration.TLS)
 	}
-	configuration.TLS = tlsConfigs
 
 	return configuration, nil
+}
+
+func flattenCertificates(tlsConfig *config.TLSConfiguration) []*tls.CertAndStores {
+	var certs []*tls.CertAndStores
+	for _, cert := range tlsConfig.Certificates {
+		content, err := cert.Certificate.CertFile.Read()
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		cert.Certificate.CertFile = tls.FileOrContent(string(content))
+
+		content, err = cert.Certificate.KeyFile.Read()
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		cert.Certificate.KeyFile = tls.FileOrContent(string(content))
+
+		certs = append(certs, cert)
+	}
+
+	return certs
 }
 
 func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory string, configuration *config.Configuration) (*config.Configuration, error) {
 	logger := log.FromContext(ctx)
 
 	fileList, err := ioutil.ReadDir(directory)
-
 	if err != nil {
 		return configuration, fmt.Errorf("unable to read directory %s: %v", directory, err)
 	}
@@ -239,25 +231,33 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				Routers:  make(map[string]*config.TCPRouter),
 				Services: make(map[string]*config.TCPService),
 			},
+			TLS: &config.TLSConfiguration{
+				Stores:  make(map[string]tls.Store),
+				Options: make(map[string]tls.Options),
+			},
 		}
 	}
 
-	configTLSMaps := make(map[*tls.Configuration]struct{})
-	for _, item := range fileList {
+	configTLSMaps := make(map[*tls.CertAndStores]struct{})
 
+	for _, item := range fileList {
 		if item.IsDir() {
 			configuration, err = p.loadFileConfigFromDirectory(ctx, filepath.Join(directory, item.Name()), configuration)
 			if err != nil {
 				return configuration, fmt.Errorf("unable to load content configuration from subdirectory %s: %v", item, err)
 			}
 			continue
-		} else if !strings.HasSuffix(item.Name(), ".toml") && !strings.HasSuffix(item.Name(), ".tmpl") {
+		}
+
+		switch strings.ToLower(filepath.Ext(item.Name())) {
+		case ".toml", ".yaml", ".yml":
+			// noop
+		default:
 			continue
 		}
 
 		var c *config.Configuration
-		c, err = p.loadFileConfig(path.Join(directory, item.Name()), true)
-
+		c, err = p.loadFileConfig(filepath.Join(directory, item.Name()), true)
 		if err != nil {
 			return configuration, err
 		}
@@ -302,7 +302,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 			}
 		}
 
-		for _, conf := range c.TLS {
+		for _, conf := range c.TLS.Certificates {
 			if _, exists := configTLSMaps[conf]; exists {
 				logger.Warnf("TLS configuration %v already configured, skipping", conf)
 			} else {
@@ -311,14 +311,24 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 		}
 	}
 
-	for conf := range configTLSMaps {
-		configuration.TLS = append(configuration.TLS, conf)
+	if len(configTLSMaps) > 0 {
+		configuration.TLS = &config.TLSConfiguration{}
 	}
+
+	for conf := range configTLSMaps {
+		configuration.TLS.Certificates = append(configuration.TLS.Certificates, conf)
+	}
+
 	return configuration, nil
 }
 
 // CreateConfiguration creates a provider configuration from content using templating.
-func (p *Provider) CreateConfiguration(tmplContent string, funcMap template.FuncMap, templateObjects interface{}) (*config.Configuration, error) {
+func (p *Provider) CreateConfiguration(filename string, funcMap template.FuncMap, templateObjects interface{}) (*config.Configuration, error) {
+	tmplContent, err := readFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("error reading configuration file: %s - %s", filename, err)
+	}
+
 	var defaultFuncMap = sprig.TxtFuncMap()
 	defaultFuncMap["normalize"] = provider.Normalize
 	defaultFuncMap["split"] = strings.Split
@@ -328,7 +338,7 @@ func (p *Provider) CreateConfiguration(tmplContent string, funcMap template.Func
 
 	tmpl := template.New(p.Filename).Funcs(defaultFuncMap)
 
-	_, err := tmpl.Parse(tmplContent)
+	_, err = tmpl.Parse(tmplContent)
 	if err != nil {
 		return nil, err
 	}
@@ -341,14 +351,25 @@ func (p *Provider) CreateConfiguration(tmplContent string, funcMap template.Func
 
 	var renderedTemplate = buffer.String()
 	if p.DebugLogGeneratedTemplate {
-		log.Debugf("Template content: %s", tmplContent)
-		log.Debugf("Rendering results: %s", renderedTemplate)
+		logger := log.WithoutContext().WithField(log.ProviderName, providerName)
+		logger.Debugf("Template content: %s", tmplContent)
+		logger.Debugf("Rendering results: %s", renderedTemplate)
 	}
-	return p.DecodeConfiguration(renderedTemplate)
+
+	return p.decodeConfiguration(filename, renderedTemplate)
 }
 
 // DecodeConfiguration Decodes a *types.Configuration from a content.
-func (p *Provider) DecodeConfiguration(content string) (*config.Configuration, error) {
+func (p *Provider) DecodeConfiguration(filename string) (*config.Configuration, error) {
+	content, err := readFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("error reading configuration file: %s - %s", filename, err)
+	}
+
+	return p.decodeConfiguration(filename, content)
+}
+
+func (p *Provider) decodeConfiguration(filePath string, content string) (*config.Configuration, error) {
 	configuration := &config.Configuration{
 		HTTP: &config.HTTPConfiguration{
 			Routers:     make(map[string]*config.Router),
@@ -359,12 +380,40 @@ func (p *Provider) DecodeConfiguration(content string) (*config.Configuration, e
 			Routers:  make(map[string]*config.TCPRouter),
 			Services: make(map[string]*config.TCPService),
 		},
-		TLS:        make([]*tls.Configuration, 0),
-		TLSStores:  make(map[string]tls.Store),
-		TLSOptions: make(map[string]tls.TLS),
+		TLS: &config.TLSConfiguration{
+			Stores:  make(map[string]tls.Store),
+			Options: make(map[string]tls.Options),
+		},
 	}
-	if _, err := toml.Decode(content, configuration); err != nil {
-		return nil, err
+
+	switch strings.ToLower(filepath.Ext(filePath)) {
+	case ".toml":
+		_, err := toml.Decode(content, configuration)
+		if err != nil {
+			return nil, err
+		}
+
+	case ".yml", ".yaml":
+		var err error
+		err = yaml.Unmarshal([]byte(content), configuration)
+		if err != nil {
+			return nil, err
+		}
+
+	default:
+		return nil, fmt.Errorf("unsupported file extension: %s", filePath)
 	}
+
 	return configuration, nil
+}
+
+func readFile(filename string) (string, error) {
+	if len(filename) > 0 {
+		buf, err := ioutil.ReadFile(filename)
+		if err != nil {
+			return "", err
+		}
+		return string(buf), nil
+	}
+	return "", fmt.Errorf("invalid filename: %s", filename)
 }

@@ -14,24 +14,14 @@ type EnvLoader struct{}
 
 // Load loads the command's configuration from the environment variables.
 func (e *EnvLoader) Load(_ []string, cmd *Command) (bool, error) {
-	return e.load(os.Environ(), cmd)
-}
-
-func (*EnvLoader) load(environ []string, cmd *Command) (bool, error) {
-	var found bool
-	for _, value := range environ {
-		if strings.HasPrefix(value, "TRAEFIK_") {
-			found = true
-			break
-		}
-	}
-
-	if !found {
+	vars := env.FindPrefixedEnvVars(os.Environ(), env.DefaultNamePrefix, cmd.Configuration)
+	if len(vars) == 0 {
 		return false, nil
 	}
 
-	if err := env.Decode(environ, cmd.Configuration); err != nil {
-		return false, fmt.Errorf("failed to decode configuration from environment variables: %v", err)
+	if err := env.Decode(vars, env.DefaultNamePrefix, cmd.Configuration); err != nil {
+		log.WithoutContext().Debug("environment variables", strings.Join(vars, ", "))
+		return false, fmt.Errorf("failed to decode configuration from environment variables: %v ", err)
 	}
 
 	log.WithoutContext().Println("Configuration loaded from environment variables.")

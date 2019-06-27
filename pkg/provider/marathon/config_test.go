@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/types"
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,12 +28,11 @@ func TestGetConfigurationAPIErrors(t *testing.T) {
 
 func TestBuildConfiguration(t *testing.T) {
 	testCases := []struct {
-		desc                      string
-		applications              *marathon.Applications
-		constraints               []*types.Constraint
-		filterMarathonConstraints bool
-		defaultRule               string
-		expected                  *config.Configuration
+		desc         string
+		applications *marathon.Applications
+		constraints  string
+		defaultRule  string
+		expected     *config.Configuration
 	}{
 		{
 			desc: "simple application",
@@ -1065,13 +1063,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.tags", "foo"),
 				)),
-			constraints: []*types.Constraint{
-				{
-					Key:       "tag",
-					MustMatch: true,
-					Value:     "bar",
-				},
-			},
+			constraints: `Label("traefik.tags", "bar")`,
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
@@ -1093,14 +1085,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					constraint("rack_id:CLUSTER:rack-1"),
 				)),
-			filterMarathonConstraints: true,
-			constraints: []*types.Constraint{
-				{
-					Key:       "tag",
-					MustMatch: true,
-					Value:     "rack_id:CLUSTER:rack-2",
-				},
-			},
+			constraints: `MarathonConstraint("rack_id:CLUSTER:rack-2")`,
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
@@ -1122,14 +1107,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					constraint("rack_id:CLUSTER:rack-1"),
 				)),
-			filterMarathonConstraints: true,
-			constraints: []*types.Constraint{
-				{
-					Key:       "tag",
-					MustMatch: true,
-					Value:     "rack_id:CLUSTER:rack-1",
-				},
-			},
+			constraints: `MarathonConstraint("rack_id:CLUSTER:rack-1")`,
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
@@ -1167,14 +1145,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.tags", "bar"),
 				)),
-
-			constraints: []*types.Constraint{
-				{
-					Key:       "tag",
-					MustMatch: true,
-					Value:     "bar",
-				},
-			},
+			constraints: `Label("traefik.tags", "bar")`,
 			expected: &config.Configuration{
 				TCP: &config.TCPConfiguration{
 					Routers:  map[string]*config.TCPRouter{},
@@ -1417,9 +1388,8 @@ func TestBuildConfiguration(t *testing.T) {
 			}
 
 			p := &Provider{
-				DefaultRule:               defaultRule,
-				ExposedByDefault:          true,
-				FilterMarathonConstraints: test.filterMarathonConstraints,
+				DefaultRule:      defaultRule,
+				ExposedByDefault: true,
 			}
 			p.Constraints = test.constraints
 
@@ -1473,7 +1443,7 @@ func TestApplicationFilterEnabled(t *testing.T) {
 			extraConf, err := provider.getConfiguration(app)
 			require.NoError(t, err)
 
-			if provider.keepApplication(context.Background(), extraConf) != test.expected {
+			if provider.keepApplication(context.Background(), extraConf, stringValueMap(app.Labels)) != test.expected {
 				t.Errorf("got unexpected filtering = %t", !test.expected)
 			}
 		})

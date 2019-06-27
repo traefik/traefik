@@ -10,10 +10,10 @@ Configuration in Traefik can refer to two different things:
 - The fully dynamic routing configuration (referred to as the _dynamic configuration_)
 - The startup configuration (referred to as the _static configuration_)
 
-Elements in the _static configuration_ set up connections to [providers](../../providers/overview/) and define the [entrypoints](../../routing/entrypoints/) Traefik will listen to (these elements don't change often).
+Elements in the _static configuration_ set up connections to [providers](../providers/overview.md) and define the [entrypoints](../routing/entrypoints.md) Traefik will listen to (these elements don't change often).
 
 The _dynamic configuration_ contains everything that defines how the requests are handled by your system.
-This configuration can change and is seamlessly hot-reloaded, without any request interuption or connection loss.    
+This configuration can change and is seamlessly hot-reloaded, without any request interruption or connection loss.    
 
 !!! warning "Incompatible Configuration"
     Please be aware that the old configurations for Traefik v1.X are NOT compatible with the v2.X config as of now.
@@ -36,8 +36,8 @@ Traefik gets its _dynamic configuration_ from [providers](../providers/overview.
 There are three different, mutually exclusive, ways to define static configuration options in Traefik:
 
 - In a configuration file
-- As environment variables
 - In the command-line arguments
+- As environment variables
 
 These ways are evaluated in the order listed above.
 
@@ -49,7 +49,12 @@ Once positioned, this option sets (and resets) all the default values of the sub
     
 ### Configuration File
 
-At startup, Traefik searches for a file named `traefik.toml` in `/etc/traefik/`, `$XDG_CONFIG_HOME/`, `$HOME/.config/`, and `.` (_the working directory_).
+At startup, Traefik searches for a file named `traefik.toml` (or `traefik.yml` or `traefik.yaml`) in:
+
+- `/etc/traefik/`
+- `$XDG_CONFIG_HOME/`
+- `$HOME/.config/`
+- `.` (_the working directory_).
 
 You can override this using the `configFile` argument.
 
@@ -69,6 +74,12 @@ traefik --help
 docker run traefik[:version] --help
 # ex: docker run traefik:2.0 --help
 ```
+
+All available arguments can also be found [here](../reference/static-configuration/cli.md).
+
+### Environment Variables
+
+All available environment variables can be found [here](../reference/static-configuration/env.md)
 
 ## Available Configuration Options
 

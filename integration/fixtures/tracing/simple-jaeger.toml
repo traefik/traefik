@@ -12,14 +12,12 @@ level = "DEBUG"
     address = ":8000"
 
 [tracing]
-  backend = "{{.TracingBackend}}"
   servicename = "tracing"
-    [tracing.zipkin]
-      httpEndpoint = "http://{{.ZipkinIP}}:9411/api/v1/spans"
-      debug = true
-    [tracing.jaeger]
-      samplingType = "const"
-      samplingParam = 1.0
+  [tracing.jaeger]
+    samplingType = "const"
+    samplingParam = 1.0
+    samplingServerURL = "http://{{.IP}}:5778/sampling"
+    localAgentHostPort = "{{.IP}}:6831"
 
 [providers]
    [providers.file]

@@ -16,9 +16,13 @@ Pieces of middleware can be combined in chains to fit every scenario.
 ```yaml tab="Docker"
 # As a Docker Label
 whoami:
-  image: containous/whoami  # A container that exposes an API to show its IP address
+  #  A container that exposes an API to show its IP address
+  image: containous/whoami
   labels:
+    # Create a middleware named `foo-add-prefix`
     - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
+    # Apply the middleware named `foo-add-prefix` to the router named `router1`
+    - "traefik.http.router.router1.Middlewares=foo-add-prefix@docker"
 ```
 
 ```yaml tab="Kubernetes"
@@ -61,14 +65,18 @@ spec:
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo"
+  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo",
+  "traefik.http.router.router1.Middlewares": "foo-add-prefix@marathon"
 }
 ```
 
 ```yaml tab="Rancher"
 # As a Rancher Label
 labels:
+  # Create a middleware named `foo-add-prefix`
   - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
+  # Apply the middleware named `foo-add-prefix` to the router named `router1`
+  - "traefik.http.router.router1.Middlewares=foo-add-prefix@rancher"
 ```
 
 ```toml tab="File"
@@ -83,46 +91,82 @@ labels:
     Rule = "Host(`example.com`)"
 
 [http.middlewares]
- [http.middlewares.foo-add-prefix.AddPrefix]
+  [http.middlewares.foo-add-prefix.AddPrefix]
     prefix = "/foo"
 
 [http.services]
- [http.services.service1]
-   [http.services.service1.LoadBalancer]
+  [http.services.service1]
+    [http.services.service1.LoadBalancer]
 
-     [[http.services.service1.LoadBalancer.Servers]]
-       URL = "http://127.0.0.1:80"
+      [[http.services.service1.LoadBalancer.Servers]]
+        URL = "http://127.0.0.1:80"
 ```
 
-## Advanced Configuration
+## Provider Namespace
 
-When you declare a middleware, it lives in its `provider` namespace.
-For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker `provider` namespace.
+When you declare a middleware, it lives in its provider namespace.
+For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker provider namespace.
 
-If you use multiple `providers` and wish to reference a middleware declared in another `provider`, then you'll have to prefix the middleware name with the `provider` name.
+If you use multiple providers and wish to reference a middleware declared in another provider
+(aka referencing a cross-provider middleware),
+then you'll have to append to the middleware name, the `@` separator, followed by the provider name.
 
-??? abstract "Referencing a Middleware from Another Provider"
+```text
+<resource-name>@<provider-name>
+```
+
+!!! important "Kubernetes Namespace"
+
+	As Kubernetes also has its own notion of namespace, one should not confuse the "provider namespace"
+with the "kubernetes namespace" of a resource when in the context of a cross-provider usage.
+In this case, since the definition of the middleware is not in kubernetes,
+specifying a "kubernetes namespace" when referring to the resource does not make any sense,
+and therefore this specification would be ignored even if present.
+
+!!! abstract "Referencing a Middleware from Another Provider"
 
     Declaring the add-foo-prefix in the file provider.
 
     ```toml
     [providers]
-       [providers.file]
+      [providers.file]
 
     [http.middlewares]
-     [http.middlewares.add-foo-prefix.AddPrefix]
+      [http.middlewares.add-foo-prefix.AddPrefix]
         prefix = "/foo"
     ```
 
-    Using the add-foo-prefix middleware from docker.
+    Using the add-foo-prefix middleware from other providers:
 
-    ```yaml
+    ```yaml tab="Docker"
     your-container: #
-        image: your-docker-image
+      image: your-docker-image
 
-        labels:
-          # Attach file.add-foo-prefix middleware (declared in file)
-          - "traefik.http.routers.my-container.middlewares=file.add-foo-prefix"
+      labels:
+        # Attach add-foo-prefix@file middleware (declared in file)
+        - "traefik.http.routers.my-container.middlewares=add-foo-prefix@file"
+    ```
+
+    ```yaml tab="Kubernetes"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: ingressroutestripprefix
+
+    spec:
+      entryPoints:
+        - web
+      routes:
+        - match: Host(`bar.com`)
+          kind: Rule
+        services:
+          - name: whoami
+            port: 80
+        middlewares:
+          - name: add-foo-prefix@file
+          # namespace: bar
+          # A namespace specification such as above is ignored
+          # when the cross-provider syntax is used.
     ```
 
 ## Available Middlewares

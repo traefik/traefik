@@ -45,26 +45,24 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configuration of the provider.
 type Provider struct {
-	provider.Constrainer `description:"List of constraints used to filter out some containers." export:"true"`
-
-	Trace                     bool             `description:"Display additional provider logs." export:"true"`
-	Watch                     bool             `description:"Watch provider." export:"true"`
-	Endpoint                  string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon." export:"true"`
-	DefaultRule               string           `description:"Default rule."`
-	ExposedByDefault          bool             `description:"Expose Marathon apps by default." export:"true"`
-	DCOSToken                 string           `description:"DCOSToken for DCOS environment, This will override the Authorization header." export:"true"`
-	FilterMarathonConstraints bool             `description:"Enable use of Marathon constraints in constraint filtering." export:"true"`
-	TLS                       *types.ClientTLS `description:"Enable TLS support." export:"true"`
-	DialerTimeout             types.Duration   `description:"Set a dialer timeout for Marathon." export:"true"`
-	ResponseHeaderTimeout     types.Duration   `description:"Set a response header timeout for Marathon." export:"true"`
-	TLSHandshakeTimeout       types.Duration   `description:"Set a TLS handshake timeout for Marathon." export:"true"`
-	KeepAlive                 types.Duration   `description:"Set a TCP Keep Alive time." export:"true"`
-	ForceTaskHostname         bool             `description:"Force to use the task's hostname." export:"true"`
-	Basic                     *Basic           `description:"Enable basic authentication." export:"true"`
-	RespectReadinessChecks    bool             `description:"Filter out tasks with non-successful readiness checks during deployments." export:"true"`
-	readyChecker              *readinessChecker
-	marathonClient            marathon.Marathon
-	defaultRuleTpl            *template.Template
+	Constraints            string           `description:"Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application." export:"true"`
+	Trace                  bool             `description:"Display additional provider logs." export:"true"`
+	Watch                  bool             `description:"Watch provider." export:"true"`
+	Endpoint               string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon." export:"true"`
+	DefaultRule            string           `description:"Default rule."`
+	ExposedByDefault       bool             `description:"Expose Marathon apps by default." export:"true"`
+	DCOSToken              string           `description:"DCOSToken for DCOS environment, This will override the Authorization header." export:"true"`
+	TLS                    *types.ClientTLS `description:"Enable TLS support." export:"true"`
+	DialerTimeout          types.Duration   `description:"Set a dialer timeout for Marathon." export:"true"`
+	ResponseHeaderTimeout  types.Duration   `description:"Set a response header timeout for Marathon." export:"true"`
+	TLSHandshakeTimeout    types.Duration   `description:"Set a TLS handshake timeout for Marathon." export:"true"`
+	KeepAlive              types.Duration   `description:"Set a TCP Keep Alive time." export:"true"`
+	ForceTaskHostname      bool             `description:"Force to use the task's hostname." export:"true"`
+	Basic                  *Basic           `description:"Enable basic authentication." export:"true"`
+	RespectReadinessChecks bool             `description:"Filter out tasks with non-successful readiness checks during deployments." export:"true"`
+	readyChecker           *readinessChecker
+	marathonClient         marathon.Marathon
+	defaultRuleTpl         *template.Template
 }
 
 // SetDefaults sets the default values.

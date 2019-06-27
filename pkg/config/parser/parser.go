@@ -7,8 +7,8 @@ package parser
 // labels -> tree of untyped nodes
 // untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
 // "typed" nodes -> typed element
-func Decode(labels map[string]string, element interface{}, filters ...string) error {
-	node, err := DecodeToNode(labels, filters...)
+func Decode(labels map[string]string, element interface{}, rootName string, filters ...string) error {
+	node, err := DecodeToNode(labels, rootName, filters...)
 	if err != nil {
 		return err
 	}
@@ -28,8 +28,8 @@ func Decode(labels map[string]string, element interface{}, filters ...string) er
 
 // Encode converts an element to labels.
 // element -> node (value) -> label (node)
-func Encode(element interface{}) (map[string]string, error) {
-	node, err := EncodeToNode(element, true)
+func Encode(element interface{}, rootName string) (map[string]string, error) {
+	node, err := EncodeToNode(element, rootName, true)
 	if err != nil {
 		return nil, err
 	}

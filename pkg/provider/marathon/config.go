@@ -13,6 +13,7 @@ import (
 	"github.com/containous/traefik/pkg/config/label"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
+	"github.com/containous/traefik/pkg/provider/constraints"
 	"github.com/gambol99/go-marathon"
 )
 
@@ -29,11 +30,20 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 			continue
 		}
 
-		if !p.keepApplication(ctxApp, extraConf) {
+		labels := stringValueMap(app.Labels)
+
+		if app.Constraints != nil {
+			for i, constraintParts := range *app.Constraints {
+				key := constraints.MarathonConstraintPrefix + "-" + strconv.Itoa(i)
+				labels[key] = strings.Join(constraintParts, ":")
+			}
+		}
+
+		if !p.keepApplication(ctxApp, extraConf, labels) {
 			continue
 		}
 
-		confFromLabel, err := label.DecodeConfiguration(stringValueMap(app.Labels))
+		confFromLabel, err := label.DecodeConfiguration(labels)
 		if err != nil {
 			logger.Error(err)
 			continue
@@ -65,7 +75,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 			Labels map[string]string
 		}{
 			Name:   app.ID,
-			Labels: stringValueMap(app.Labels),
+			Labels: labels,
 		}
 
 		serviceName := getServiceName(app)
@@ -164,7 +174,7 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, app maratho
 	return nil
 }
 
-func (p *Provider) keepApplication(ctx context.Context, extraConf configuration) bool {
+func (p *Provider) keepApplication(ctx context.Context, extraConf configuration, labels map[string]string) bool {
 	logger := log.FromContext(ctx)
 
 	// Filter disabled application.
@@ -174,10 +184,13 @@ func (p *Provider) keepApplication(ctx context.Context, extraConf configuration)
 	}
 
 	// Filter by constraints.
-	if ok, failingConstraint := p.MatchConstraints(extraConf.Tags); !ok {
-		if failingConstraint != nil {
-			logger.Debugf("Filtering Marathon application, pruned by %q constraint", failingConstraint.String())
-		}
+	matches, err := constraints.Match(labels, p.Constraints)
+	if err != nil {
+		logger.Errorf("Error matching constraints expression: %v", err)
+		return false
+	}
+	if !matches {
+		logger.Debugf("Marathon application filtered by constraint expression: %q", p.Constraints)
 		return false
 	}
 
