@@ -220,7 +220,7 @@ type Configuration struct {
 
 // TLSConfiguration contains all the configuration parameters of a TLS connection.
 type TLSConfiguration struct {
-	Certificates []*traefiktls.Configuration `json:"-" label:"-" yaml:"certificates"`
+	Certificates []*traefiktls.CertAndStores `json:"-" label:"-" yaml:"certificates"`
 	Options      map[string]traefiktls.Options
 	Stores       map[string]traefiktls.Store
 }

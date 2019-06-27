@@ -66,7 +66,6 @@ func (s *Server) loadConfigurationTCP(configurations config.Configurations) map[
 
 	conf := mergeConfiguration(configurations)
 
-	// FIXME nil
 	s.tlsManager.UpdateConfigs(conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
 
 	rtConf := config.NewRuntimeConfig(conf)

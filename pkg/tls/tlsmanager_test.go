@@ -46,15 +46,12 @@ f9Oeos0UUothgiDktdQHxdNEwLjQf7lJJBzV+5OtwswCWA==
 )
 
 func TestTLSInStore(t *testing.T) {
-	dynamicConfigs :=
-		[]*Configuration{
-			{
-				Certificate: Certificate{
-					CertFile: localhostCert,
-					KeyFile:  localhostKey,
-				},
-			},
-		}
+	dynamicConfigs := []*CertAndStores{{
+		Certificate: Certificate{
+			CertFile: localhostCert,
+			KeyFile:  localhostKey,
+		},
+	}}
 
 	tlsManager := NewManager()
 	tlsManager.UpdateConfigs(nil, nil, dynamicConfigs)
@@ -66,15 +63,12 @@ func TestTLSInStore(t *testing.T) {
 }
 
 func TestTLSInvalidStore(t *testing.T) {
-	dynamicConfigs :=
-		[]*Configuration{
-			{
-				Certificate: Certificate{
-					CertFile: localhostCert,
-					KeyFile:  localhostKey,
-				},
-			},
-		}
+	dynamicConfigs := []*CertAndStores{{
+		Certificate: Certificate{
+			CertFile: localhostCert,
+			KeyFile:  localhostKey,
+		},
+	}}
 
 	tlsManager := NewManager()
 	tlsManager.UpdateConfigs(map[string]Store{
@@ -93,15 +87,13 @@ func TestTLSInvalidStore(t *testing.T) {
 }
 
 func TestManager_Get(t *testing.T) {
-	dynamicConfigs :=
-		[]*Configuration{
-			{
-				Certificate: Certificate{
-					CertFile: localhostCert,
-					KeyFile:  localhostKey,
-				},
-			},
-		}
+	dynamicConfigs := []*CertAndStores{{
+		Certificate: Certificate{
+			CertFile: localhostCert,
+			KeyFile:  localhostKey,
+		},
+	}}
+
 	tlsConfigs := map[string]Options{
 		"foo": {MinVersion: "VersionTLS12"},
 		"bar": {MinVersion: "VersionTLS11"},
@@ -153,5 +145,4 @@ func TestManager_Get(t *testing.T) {
 			assert.Equal(t, config.MinVersion, test.expectedMinVersion)
 		})
 	}
-
 }

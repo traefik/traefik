@@ -703,7 +703,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 				},
 				TLS: &config.TLSConfiguration{
-					Certificates: []*tls.Configuration{
+					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
 								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
@@ -975,7 +975,7 @@ func TestGetTLS(t *testing.T) {
 		desc      string
 		ingress   *v1beta1.Ingress
 		client    Client
-		result    map[string]*tls.Configuration
+		result    map[string]*tls.CertAndStores
 		errResult string
 	}{
 		{
@@ -1082,7 +1082,7 @@ func TestGetTLS(t *testing.T) {
 					},
 				},
 			},
-			result: map[string]*tls.Configuration{
+			result: map[string]*tls.CertAndStores{
 				"testing/test-secret": {
 					Certificate: tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
@@ -1101,7 +1101,7 @@ func TestGetTLS(t *testing.T) {
 			desc:    "return nil when no secret is defined",
 			ingress: testIngressWithoutSecret,
 			client:  clientMock{},
-			result:  map[string]*tls.Configuration{},
+			result:  map[string]*tls.CertAndStores{},
 		},
 	}
 
@@ -1110,7 +1110,7 @@ func TestGetTLS(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			tlsConfigs := map[string]*tls.Configuration{}
+			tlsConfigs := map[string]*tls.CertAndStores{}
 			err := getTLS(context.Background(), test.ingress, test.client, tlsConfigs)
 
 			if test.errResult != "" {

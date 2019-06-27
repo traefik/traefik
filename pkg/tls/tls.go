@@ -22,9 +22,8 @@ type Store struct {
 	DefaultCertificate *Certificate
 }
 
-// Configuration allows mapping a TLS certificate to a list of entry points.
-// FIXME better name?
-type Configuration struct {
+// CertAndStores allows mapping a TLS certificate to a list of entry points.
+type CertAndStores struct {
 	Certificate `yaml:",inline"`
 	Stores      []string
 }

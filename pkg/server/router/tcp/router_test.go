@@ -214,7 +214,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 						MinVersion: "VersionTLS11",
 					},
 				},
-				[]*tls.Configuration{})
+				[]*tls.CertAndStores{})
 
 			routerManager := NewManager(conf, serviceManager,
 				nil, nil, tlsManager)

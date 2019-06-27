@@ -800,7 +800,7 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 	if len(certFileName) > 0 {
 		tlsConf := config.Configuration{
 			TLS: &config.TLSConfiguration{
-				Certificates: []*traefiktls.Configuration{{
+				Certificates: []*traefiktls.CertAndStores{{
 					Certificate: traefiktls.Certificate{
 						CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
 						KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),

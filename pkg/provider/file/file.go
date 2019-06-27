@@ -189,8 +189,8 @@ func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*config.
 	return configuration, nil
 }
 
-func flattenCertificates(tlsConfig *config.TLSConfiguration) []*tls.Configuration {
-	var certs []*tls.Configuration
+func flattenCertificates(tlsConfig *config.TLSConfiguration) []*tls.CertAndStores {
+	var certs []*tls.CertAndStores
 	for _, cert := range tlsConfig.Certificates {
 		content, err := cert.Certificate.CertFile.Read()
 		if err != nil {
@@ -238,7 +238,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 		}
 	}
 
-	configTLSMaps := make(map[*tls.Configuration]struct{})
+	configTLSMaps := make(map[*tls.CertAndStores]struct{})
 
 	for _, item := range fileList {
 		if item.IsDir() {
@@ -302,7 +302,6 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 			}
 		}
 
-		// FIXME nil
 		for _, conf := range c.TLS.Certificates {
 			if _, exists := configTLSMaps[conf]; exists {
 				logger.Warnf("TLS configuration %v already configured, skipping", conf)

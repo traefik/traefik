@@ -225,7 +225,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_tls.yml"},
 			expected: &config.Configuration{
 				TLS: &config.TLSConfiguration{
-					Certificates: []*tls.Configuration{
+					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
 								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
@@ -955,7 +955,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_tls.yml"},
 			expected: &config.Configuration{
 				TLS: &config.TLSConfiguration{
-					Certificates: []*tls.Configuration{
+					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
 								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),

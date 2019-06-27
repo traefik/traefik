@@ -340,7 +340,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	return tlsOptions
 }
 
-func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.Configuration) *config.HTTPConfiguration {
+func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *config.HTTPConfiguration {
 	conf := &config.HTTPConfiguration{
 		Routers:     map[string]*config.Router{},
 		Middlewares: map[string]*config.Middleware{},
@@ -465,7 +465,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	return conf
 }
 
-func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.Configuration) *config.TCPConfiguration {
+func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *config.TCPConfiguration {
 	conf := &config.TCPConfiguration{
 		Routers:  map[string]*config.TCPRouter{},
 		Services: map[string]*config.TCPService{},
@@ -565,7 +565,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 }
 
 func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *config.Configuration {
-	tlsConfigs := make(map[string]*tls.Configuration)
+	tlsConfigs := make(map[string]*tls.CertAndStores)
 	conf := &config.Configuration{
 		HTTP: p.loadIngressRouteConfiguration(ctx, client, tlsConfigs),
 		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
@@ -606,7 +606,7 @@ func shouldProcessIngress(ingressClass string, ingressClassAnnotation string) bo
 		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
 }
 
-func getTLSHTTP(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, k8sClient Client, tlsConfigs map[string]*tls.Configuration) error {
+func getTLSHTTP(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
 	if ingressRoute.Spec.TLS == nil {
 		return nil
 	}
@@ -628,7 +628,7 @@ func getTLSHTTP(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, k8sCli
 	return nil
 }
 
-func getTLSTCP(ctx context.Context, ingressRoute *v1alpha1.IngressRouteTCP, k8sClient Client, tlsConfigs map[string]*tls.Configuration) error {
+func getTLSTCP(ctx context.Context, ingressRoute *v1alpha1.IngressRouteTCP, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
 	if ingressRoute.Spec.TLS == nil {
 		return nil
 	}
@@ -650,7 +650,7 @@ func getTLSTCP(ctx context.Context, ingressRoute *v1alpha1.IngressRouteTCP, k8sC
 	return nil
 }
 
-func getTLS(k8sClient Client, secretName, namespace string) (*tls.Configuration, error) {
+func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {
 	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch secret %s/%s: %v", namespace, secretName, err)
@@ -664,7 +664,7 @@ func getTLS(k8sClient Client, secretName, namespace string) (*tls.Configuration,
 		return nil, err
 	}
 
-	return &tls.Configuration{
+	return &tls.CertAndStores{
 		Certificate: tls.Certificate{
 			CertFile: tls.FileOrContent(cert),
 			KeyFile:  tls.FileOrContent(key),
@@ -672,14 +672,14 @@ func getTLS(k8sClient Client, secretName, namespace string) (*tls.Configuration,
 	}, nil
 }
 
-func getTLSConfig(tlsConfigs map[string]*tls.Configuration) []*tls.Configuration {
+func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores {
 	var secretNames []string
 	for secretName := range tlsConfigs {
 		secretNames = append(secretNames, secretName)
 	}
 	sort.Strings(secretNames)
 
-	var configs []*tls.Configuration
+	var configs []*tls.CertAndStores
 	for _, secretName := range secretNames {
 		configs = append(configs, tlsConfigs[secretName])
 	}

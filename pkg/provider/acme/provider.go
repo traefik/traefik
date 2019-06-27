@@ -589,14 +589,12 @@ func (p *Provider) refreshCertificates() {
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
 			},
-			TLS: &config.TLSConfiguration{
-				Certificates: []*traefiktls.Configuration{},
-			},
+			TLS: &config.TLSConfiguration{},
 		},
 	}
 
 	for _, cert := range p.certificates {
-		certConf := &traefiktls.Configuration{
+		certConf := &traefiktls.CertAndStores{
 			Certificate: traefiktls.Certificate{
 				CertFile: traefiktls.FileOrContent(cert.Certificate),
 				KeyFile:  traefiktls.FileOrContent(cert.Key),
