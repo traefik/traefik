@@ -5,51 +5,57 @@ Who Calls Whom?
 
 By default, logs are written to stdout, in text format.
 
-## Configuration Examples
+## Configuration 
 
-??? example "Enabling Access Logs"
+To enable the access logs:
 
-    ```toml
-    [accessLog]
-    ```
+```toml tab="File"
+[accessLog]
+```
 
-## Configuration Options 
+```bash tab="CLI"
+--accesslog
+```
 
-### filePath
+### `filePath`
 
 By default access logs are written to the standard output.
 To write the logs into a log file, use the `filePath` option.
 
 in the Common Log Format (CLF), extended with additional fields.
 
-### format
+### `format`
  
 By default, logs are written using the Common Log Format (CLF).
 To write logs in JSON, use `json` in the `format` option.
 
 !!! note "Common Log Format"
-
-#### CLF - Common Log Format
-
+    
     ```html
     <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms 
     ```
 
-#### bufferingSize
+### `bufferingSize`
 
 To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.
 This option represents the number of log lines Traefik will keep in memory before writing them to the selected output.
 In some cases, this option can greatly help performances.
 
-??? example "Configuring a buffer of 100 lines"
+```toml tab="File"
+# Configuring a buffer of 100 lines
+[accessLog]
+  filePath = "/path/to/access.log"
+  bufferingSize = 100
+```
 
-    ```toml
-    [accessLog]
-    filePath = "/path/to/access.log"
-    bufferingSize = 100
-    ```
+```bash tab="CLI"
+# Configuring a buffer of 100 lines
+--accesslog
+--accesslog.filepath="/path/to/access.log"
+--accesslog.bufferingsize=100
+```
 
-#### Filtering
+### Filtering
 
 To filter logs, you can specify a set of filters which are logically "OR-connected". 
 Thus, specifying multiple filters will keep more access logs than specifying only one.
@@ -60,20 +66,29 @@ The available filters are:
 - `retryAttempts`, to keep the access logs when at least one retry has happened
 - `minDuration`, to keep access logs when requests take longer than the specified duration
 
-??? example "Configuring Multiple Filters"
+```toml tab="File"
+# Configuring Multiple Filters
+[accessLog]
+filePath = "/path/to/access.log"
+format = "json"
 
-    ```toml
-    [accessLog]
-    filePath = "/path/to/access.log"
-    format = "json"
-    
-      [accessLog.filters]    
-        statusCodes = ["200", "300-302"]
-        retryAttempts = true
-        minDuration = "10ms"
-    ```
+  [accessLog.filters]    
+    statusCodes = ["200", "300-302"]
+    retryAttempts = true
+    minDuration = "10ms"
+```
 
-#### Limiting the Fields
+```bash tab="CLI"
+# Configuring Multiple Filters
+--accesslog
+--accesslog.filepath="/path/to/access.log"
+--accesslog.format="json"
+--accesslog.filters.statuscodes="200, 300-302"
+--accesslog.filters.retryattempts
+--accesslog.filters.minduration="10ms"
+```
+
+### Limiting the Fields
 
 You can decide to limit the logged fields/headers to a given list with the `fields.names` and `fields.header` options
 
@@ -83,31 +98,42 @@ Each field can be set to:
 - `drop` to drop the value
 - `redact` to replace the value with "redacted"
 
-??? example "Limiting the Logs to Specific Fields"
+The `defaultMode` for `fields.header` is `drop`.
 
-    ```toml
-    [accessLog]
-        filePath = "/path/to/access.log"
-        format = "json"
-        
-        [accessLog.filters]
-            statusCodes = ["200", "300-302"]
-    
-        [accessLog.fields]
-            defaultMode = "keep"
-    
-            [accessLog.fields.names]
-                "ClientUsername" = "drop"
+```toml tab="File"
+# Limiting the Logs to Specific Fields
+[accessLog]
+  filePath = "/path/to/access.log"
+  format = "json"
 
-            [accessLog.fields.headers]
-                defaultMode = "keep"
-        
-                [accessLog.fields.headers.names]
-                    "User-Agent" = "redact"
-                    "Authorization" = "drop"
-                    "Content-Type" = "keep"
-    ```
-    
+  [accessLog.fields]
+    defaultMode = "keep"
+
+    [accessLog.fields.names]
+      "ClientUsername" = "drop"
+
+    [accessLog.fields.headers]
+      defaultMode = "keep"
+  
+      [accessLog.fields.headers.names]
+        "User-Agent" = "redact"
+        "Authorization" = "drop"
+        "Content-Type" = "keep"
+```
+
+```bash tab="CLI"
+# Limiting the Logs to Specific Fields
+--accesslog
+--accesslog.filepath="/path/to/access.log"
+--accesslog.format="json"
+--accesslog.fields.defaultmode="keep"
+--accesslog.fields.names.ClientUsername="drop"
+--accesslog.fields.headers.defaultmode="keep"
+--accesslog.fields.headers.names.User-Agent="redact"
+--accesslog.fields.headers.names.Authorization="drop"
+--accesslog.fields.headers.names.Content-Type="keep"
+```
+
 ??? list "Available Fields"
 
     | Field                   | Description                                                                                                                                                         |
