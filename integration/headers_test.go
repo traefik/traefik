@@ -43,6 +43,7 @@ func (s *HeadersSuite) TestCorsResponses(c *check.C) {
 		requestHeaders http.Header
 		expected       http.Header
 		reqHost        string
+		method         string
 	}{
 		{
 			desc: "simple access control allow origin",
@@ -54,6 +55,7 @@ func (s *HeadersSuite) TestCorsResponses(c *check.C) {
 				"Vary":                        {"Origin"},
 			},
 			reqHost: "test.localhost",
+			method:  http.MethodGet,
 		},
 		{
 			desc: "simple preflight request",
@@ -68,9 +70,10 @@ func (s *HeadersSuite) TestCorsResponses(c *check.C) {
 				"Access-Control-Allow-Methods": {"GET,OPTIONS,PUT"},
 			},
 			reqHost: "test.localhost",
+			method:  http.MethodOptions,
 		},
 		{
-			desc: "preflight request with no cors configured",
+			desc: "preflight Options request with no cors configured",
 			requestHeaders: http.Header{
 				"Access-Control-Request-Headers": {"origin"},
 				"Access-Control-Request-Method":  {"GET", "OPTIONS"},
@@ -80,11 +83,25 @@ func (s *HeadersSuite) TestCorsResponses(c *check.C) {
 				"X-Custom-Response-Header": {"True"},
 			},
 			reqHost: "test2.localhost",
+			method:  http.MethodOptions,
+		},
+		{
+			desc: "preflight Get request with no cors configured",
+			requestHeaders: http.Header{
+				"Access-Control-Request-Headers": {"origin"},
+				"Access-Control-Request-Method":  {"GET", "OPTIONS"},
+				"Origin":                         {"https://foo.bar.org"},
+			},
+			expected: http.Header{
+				"X-Custom-Response-Header": {"True"},
+			},
+			reqHost: "test2.localhost",
+			method:  http.MethodGet,
 		},
 	}
 
 	for _, test := range testCase {
-		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+		req, err := http.NewRequest(test.method, "http://127.0.0.1:8000/", nil)
 		c.Assert(err, checker.IsNil)
 		req.Host = test.reqHost
 		req.Header = test.requestHeaders
