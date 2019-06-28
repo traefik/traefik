@@ -35,6 +35,18 @@
     [http.routers.router3.tls]
       options = "unknown"
 
+  [http.routers.router4]
+    Service = "service1"
+    Rule = "Host(`snitest.net`)"
+    [http.routers.router4.tls]
+      options = "foo"
+
+  [http.routers.router5]
+    Service = "service1"
+    Rule = "Host(`snitest.net`)"
+    [http.routers.router5.tls]
+      options = "baz"
+
 [http.services]
   [http.services.service1]
     [http.services.service1.loadBalancer]
@@ -59,5 +71,11 @@
   [tls.options.foo]
     minversion = "VersionTLS11"
 
+  [tls.options.baz]
+    minversion = "VersionTLS11"
+
   [tls.options.bar]
+    minversion = "VersionTLS12"
+
+  [tls.options.default]
     minversion = "VersionTLS12"
