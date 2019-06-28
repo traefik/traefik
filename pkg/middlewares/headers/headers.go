@@ -210,7 +210,7 @@ func (s *Header) preRequestModifyCorsResponseHeaders(rw http.ResponseWriter, req
 	}
 }
 
-// ModifyResponseHeaders set or delete response headers
+// PostRequestModifyResponseHeaders set or delete response headers
 // This method is called AFTER the response is generated from the backend
 // And can merge/override headers from the backend response
 func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
