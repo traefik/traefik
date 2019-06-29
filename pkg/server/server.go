@@ -306,11 +306,11 @@ func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 		}
 	}
 
-	if metricsConfig.Datadog != nil {
+	if metricsConfig.DataDog != nil {
 		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "datadog"))
-		registries = append(registries, metrics.RegisterDatadog(ctx, metricsConfig.Datadog))
+		registries = append(registries, metrics.RegisterDatadog(ctx, metricsConfig.DataDog))
 		log.FromContext(ctx).Debugf("Configured DataDog metrics: pushing to %s once every %s",
-			metricsConfig.Datadog.Address, metricsConfig.Datadog.PushInterval)
+			metricsConfig.DataDog.Address, metricsConfig.DataDog.PushInterval)
 	}
 
 	if metricsConfig.StatsD != nil {

@@ -151,7 +151,7 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 				{Name: "Format", Value: "foobar"},
 				{Name: "Level", Value: "foobar"}}},
 			{Name: "Metrics", Children: []*parser.Node{
-				{Name: "Datadog", Children: []*parser.Node{
+				{Name: "DataDog", Children: []*parser.Node{
 					{Name: "Address", Value: "foobar"},
 					{Name: "PushInterval", Value: "10s"}}},
 				{Name: "InfluxDB", Children: []*parser.Node{
@@ -426,7 +426,7 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 				{Name: "Format", Value: "foobar"},
 				{Name: "Level", Value: "foobar"}}},
 			{Name: "Metrics", Children: []*parser.Node{
-				{Name: "Datadog", Children: []*parser.Node{
+				{Name: "DataDog", Children: []*parser.Node{
 					{Name: "Address", Value: "foobar"},
 					{Name: "PushInterval", Value: "10s"}}},
 				{Name: "InfluxDB", Children: []*parser.Node{
