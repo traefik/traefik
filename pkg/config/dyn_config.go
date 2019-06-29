@@ -1,57 +1,98 @@
 package config
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"fmt"
-	"io/ioutil"
-	"os"
 	"reflect"
 
 	traefiktls "github.com/containous/traefik/pkg/tls"
 )
 
+// Message holds configuration information exchanged between parts of traefik.
+type Message struct {
+	ProviderName  string
+	Configuration *Configuration
+}
+
+// Configurations is for currentConfigurations Map.
+type Configurations map[string]*Configuration
+
+// Configuration is the root of the dynamic configuration
+type Configuration struct {
+	HTTP *HTTPConfiguration `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty"`
+	TCP  *TCPConfiguration  `json:"tcp,omitempty" toml:"tcp,omitempty" yaml:"tcp,omitempty"`
+	TLS  *TLSConfiguration  `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+}
+
+// TLSConfiguration contains all the configuration parameters of a TLS connection.
+type TLSConfiguration struct {
+	Certificates []*traefiktls.CertAndStores   `json:"-"  toml:"certificates,omitempty" yaml:"certificates,omitempty" label:"-"`
+	Options      map[string]traefiktls.Options `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
+	Stores       map[string]traefiktls.Store   `json:"stores,omitempty" toml:"stores,omitempty" yaml:"stores,omitempty"`
+}
+
+// HTTPConfiguration contains all the HTTP configuration parameters.
+type HTTPConfiguration struct {
+	Routers     map[string]*Router     `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty"`
+	Middlewares map[string]*Middleware `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty"`
+	Services    map[string]*Service    `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty"`
+}
+
+// TCPConfiguration contains all the TCP configuration parameters.
+type TCPConfiguration struct {
+	Routers  map[string]*TCPRouter  `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty"`
+	Services map[string]*TCPService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty"`
+}
+
+// Service holds a service configuration (can only be of one type at the same time).
+type Service struct {
+	LoadBalancer *LoadBalancerService `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty"`
+}
+
+// TCPService holds a tcp service configuration (can only be of one type at the same time).
+type TCPService struct {
+	LoadBalancer *TCPLoadBalancerService `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty"`
+}
+
 // Router holds the router configuration.
 type Router struct {
-	EntryPoints []string         `json:"entryPoints"`
-	Middlewares []string         `json:"middlewares,omitempty" toml:",omitempty"`
-	Service     string           `json:"service,omitempty" toml:",omitempty"`
-	Rule        string           `json:"rule,omitempty" toml:",omitempty"`
-	Priority    int              `json:"priority,omitempty" toml:"priority,omitzero"`
-	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitzero" label:"allowEmpty"`
+	EntryPoints []string         `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty"`
+	Middlewares []string         `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty"`
+	Service     string           `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
+	Rule        string           `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
+	Priority    int              `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty"`
+	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
 }
 
 // RouterTLSConfig holds the TLS configuration for a router
 type RouterTLSConfig struct {
-	Options string `json:"options,omitempty" toml:"options,omitzero"`
+	Options string `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
 }
 
 // TCPRouter holds the router configuration.
 type TCPRouter struct {
-	EntryPoints []string            `json:"entryPoints"`
-	Service     string              `json:"service,omitempty" toml:",omitempty"`
-	Rule        string              `json:"rule,omitempty" toml:",omitempty"`
-	TLS         *RouterTCPTLSConfig `json:"tls,omitempty" toml:"tls,omitzero" label:"allowEmpty"`
+	EntryPoints []string            `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty"`
+	Service     string              `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
+	Rule        string              `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
+	TLS         *RouterTCPTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
 }
 
 // RouterTCPTLSConfig holds the TLS configuration for a router
 type RouterTCPTLSConfig struct {
-	Passthrough bool   `json:"passthrough" toml:"passthrough,omitzero"`
-	Options     string `json:"options,omitempty" toml:"options,omitzero"`
+	Passthrough bool   `json:"passthrough" toml:"passthrough" yaml:"passthrough"`
+	Options     string `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
 }
 
 // LoadBalancerService holds the LoadBalancerService configuration.
 type LoadBalancerService struct {
-	Stickiness         *Stickiness         `json:"stickiness,omitempty" toml:",omitempty" label:"allowEmpty"`
-	Servers            []Server            `json:"servers,omitempty" toml:",omitempty" label-slice-as-struct:"server"`
-	HealthCheck        *HealthCheck        `json:"healthCheck,omitempty" toml:",omitempty"`
-	PassHostHeader     bool                `json:"passHostHeader" toml:",omitempty"`
-	ResponseForwarding *ResponseForwarding `json:"forwardingResponse,omitempty" toml:",omitempty"`
+	Stickiness         *Stickiness         `json:"stickiness,omitempty" toml:"stickiness,omitempty" yaml:"stickiness,omitempty" label:"allowEmpty"`
+	Servers            []Server            `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
+	HealthCheck        *HealthCheck        `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty"`
+	PassHostHeader     bool                `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader"`
+	ResponseForwarding *ResponseForwarding `json:"responseForwarding,omitempty" toml:"responseForwarding,omitempty" yaml:"responseForwarding,omitempty"`
 }
 
 // TCPLoadBalancerService holds the LoadBalancerService configuration.
 type TCPLoadBalancerService struct {
-	Servers []TCPServer `json:"servers,omitempty" toml:",omitempty" label-slice-as-struct:"server"`
+	Servers []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" label-slice-as-struct:"server"`
 }
 
 // Mergeable tells if the given service is mergeable.
@@ -95,27 +136,27 @@ func (l *LoadBalancerService) SetDefaults() {
 
 // ResponseForwarding holds configuration for the forward of the response.
 type ResponseForwarding struct {
-	FlushInterval string `json:"flushInterval,omitempty" toml:",omitempty"`
+	FlushInterval string `json:"flushInterval,omitempty" toml:"flushInterval,omitempty" yaml:"flushInterval,omitempty"`
 }
 
 // Stickiness holds the stickiness configuration.
 type Stickiness struct {
-	CookieName     string `json:"cookieName,omitempty" toml:",omitempty"`
-	SecureCookie   bool   `json:"secureCookie,omitempty" toml:",omitempty"`
-	HTTPOnlyCookie bool   `json:"httpOnlyCookie,omitempty" toml:",omitempty"`
+	CookieName     string `json:"cookieName,omitempty" toml:"cookieName,omitempty" yaml:"cookieName,omitempty"`
+	SecureCookie   bool   `json:"secureCookie,omitempty" toml:"secureCookie,omitempty" yaml:"secureCookie,omitempty"`
+	HTTPOnlyCookie bool   `json:"httpOnlyCookie,omitempty" toml:"httpOnlyCookie,omitempty" yaml:"httpOnlyCookie,omitempty"`
 }
 
 // Server holds the server configuration.
 type Server struct {
-	URL    string `json:"url" label:"-"`
-	Scheme string `toml:"-" json:"-"`
-	Port   string `toml:"-" json:"-"`
+	URL    string `json:"url,omitempty" toml:"url,omitempty" yaml:"url,omitempty" label:"-"`
+	Scheme string `toml:"-" json:"-" yaml:"-"`
+	Port   string `toml:"-" json:"-" yaml:"-"`
 }
 
 // TCPServer holds a TCP Server configuration
 type TCPServer struct {
-	Address string `json:"address" label:"-"`
-	Port    string `toml:"-" json:"-"`
+	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
+	Port    string `toml:"-" json:"-" yaml:"-"`
 }
 
 // SetDefaults Default values for a Server.
@@ -125,128 +166,13 @@ func (s *Server) SetDefaults() {
 
 // HealthCheck holds the HealthCheck configuration.
 type HealthCheck struct {
-	Scheme string `json:"scheme,omitempty" toml:",omitempty"`
-	Path   string `json:"path,omitempty" toml:",omitempty"`
-	Port   int    `json:"port,omitempty" toml:",omitempty,omitzero"`
+	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty"`
+	Path   string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty"`
+	Port   int    `json:"port,omitempty" toml:"port,omitempty,omitzero" yaml:"port,omitempty"`
 	// FIXME change string to types.Duration
-	Interval string `json:"interval,omitempty" toml:",omitempty"`
+	Interval string `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty"`
 	// FIXME change string to types.Duration
-	Timeout  string            `json:"timeout,omitempty" toml:",omitempty"`
-	Hostname string            `json:"hostname,omitempty" toml:",omitempty"`
-	Headers  map[string]string `json:"headers,omitempty" toml:",omitempty"`
-}
-
-// CreateTLSConfig creates a TLS config from ClientTLS structures.
-func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
-	if clientTLS == nil {
-		return nil, nil
-	}
-
-	var err error
-	caPool := x509.NewCertPool()
-	clientAuth := tls.NoClientCert
-	if clientTLS.CA != "" {
-		var ca []byte
-		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
-			ca, err = ioutil.ReadFile(clientTLS.CA)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read CA. %s", err)
-			}
-		} else {
-			ca = []byte(clientTLS.CA)
-		}
-
-		if !caPool.AppendCertsFromPEM(ca) {
-			return nil, fmt.Errorf("failed to parse CA")
-		}
-
-		if clientTLS.CAOptional {
-			clientAuth = tls.VerifyClientCertIfGiven
-		} else {
-			clientAuth = tls.RequireAndVerifyClientCert
-		}
-	}
-
-	cert := tls.Certificate{}
-	_, errKeyIsFile := os.Stat(clientTLS.Key)
-
-	if !clientTLS.InsecureSkipVerify && (len(clientTLS.Cert) == 0 || len(clientTLS.Key) == 0) {
-		return nil, fmt.Errorf("TLS Certificate or Key file must be set when TLS configuration is created")
-	}
-
-	if len(clientTLS.Cert) > 0 && len(clientTLS.Key) > 0 {
-		if _, errCertIsFile := os.Stat(clientTLS.Cert); errCertIsFile == nil {
-			if errKeyIsFile == nil {
-				cert, err = tls.LoadX509KeyPair(clientTLS.Cert, clientTLS.Key)
-				if err != nil {
-					return nil, fmt.Errorf("failed to load TLS keypair: %v", err)
-				}
-			} else {
-				return nil, fmt.Errorf("tls cert is a file, but tls key is not")
-			}
-		} else {
-			if errKeyIsFile != nil {
-				cert, err = tls.X509KeyPair([]byte(clientTLS.Cert), []byte(clientTLS.Key))
-				if err != nil {
-					return nil, fmt.Errorf("failed to load TLS keypair: %v", err)
-
-				}
-			} else {
-				return nil, fmt.Errorf("TLS key is a file, but tls cert is not")
-			}
-		}
-	}
-
-	return &tls.Config{
-		Certificates:       []tls.Certificate{cert},
-		RootCAs:            caPool,
-		InsecureSkipVerify: clientTLS.InsecureSkipVerify,
-		ClientAuth:         clientAuth,
-	}, nil
-}
-
-// Message holds configuration information exchanged between parts of traefik.
-type Message struct {
-	ProviderName  string
-	Configuration *Configuration
-}
-
-// Configuration is the root of the dynamic configuration
-type Configuration struct {
-	HTTP *HTTPConfiguration
-	TCP  *TCPConfiguration
-	TLS  *TLSConfiguration
-}
-
-// TLSConfiguration contains all the configuration parameters of a TLS connection.
-type TLSConfiguration struct {
-	Certificates []*traefiktls.CertAndStores `json:"-" label:"-" yaml:"certificates"`
-	Options      map[string]traefiktls.Options
-	Stores       map[string]traefiktls.Store
-}
-
-// Configurations is for currentConfigurations Map.
-type Configurations map[string]*Configuration
-
-// HTTPConfiguration contains all the HTTP configuration parameters.
-type HTTPConfiguration struct {
-	Routers     map[string]*Router     `json:"routers,omitempty" toml:",omitempty"`
-	Middlewares map[string]*Middleware `json:"middlewares,omitempty" toml:",omitempty"`
-	Services    map[string]*Service    `json:"services,omitempty" toml:",omitempty"`
-}
-
-// TCPConfiguration contains all the TCP configuration parameters.
-type TCPConfiguration struct {
-	Routers  map[string]*TCPRouter  `json:"routers,omitempty" toml:",omitempty"`
-	Services map[string]*TCPService `json:"services,omitempty" toml:",omitempty"`
-}
-
-// Service holds a service configuration (can only be of one type at the same time).
-type Service struct {
-	LoadBalancer *LoadBalancerService `json:"loadbalancer,omitempty" toml:",omitempty,omitzero"`
-}
-
-// TCPService holds a tcp service configuration (can only be of one type at the same time).
-type TCPService struct {
-	LoadBalancer *TCPLoadBalancerService `json:"loadbalancer,omitempty" toml:",omitempty,omitzero"`
+	Timeout  string            `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
+	Hostname string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
+	Headers  map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty"`
 }
