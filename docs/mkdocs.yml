@@ -128,6 +128,7 @@ nav:
           - 'Haystack': 'observability/tracing/haystack.md'
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
+      - 'gRPC Examples': 'user-guides/grpc.md'
       - 'Marathon': 'user-guides/marathon.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
