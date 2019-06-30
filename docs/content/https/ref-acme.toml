@@ -7,31 +7,11 @@
 #
 email = "test@traefik.io"
 
-# File used for certificates storage.
-#
-# Optional (Deprecated)
-#
-#storageFile = "acme.json"
-
 # File or key used for certificates storage.
 #
 # Required
 #
 storage = "acme.json"
-# or `storage = "traefik/acme/account"` if using KV store.
-
-# Deprecated, replaced by [acme.dnsChallenge].
-#
-# Optional.
-#
-# dnsProvider = "digitalocean"
-
-# Deprecated, replaced by [acme.dnsChallenge.delayBeforeCheck].
-#
-# Optional
-# Default: 0
-#
-# delayDontCheckDNS = 0
 
 # If true, display debug log messages from the acme client library.
 #
@@ -46,13 +26,6 @@ storage = "acme.json"
 # Default: false
 #
 # overrideCertificates = true
-
-# Deprecated. Enable on demand certificate generation.
-#
-# Optional
-# Default: false
-#
-# onDemand = true
 
 # Enable certificate generation on frontends host rules.
 #
@@ -95,7 +68,7 @@ storage = "acme.json"
   #
   # Required
   #
-  # entryPoint = "http"
+  # entryPoint = "web"
 
 # Use a DNS-01 ACME challenge rather than HTTP-01 challenge.
 # Note: mandatory for wildcard certificate generation.

@@ -15,8 +15,8 @@ Add the `X-Script-Name` header to the proxied request and the `X-Custom-Response
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test"
-- "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True"
+- "traefik.http.middlewares.testHeader.headers.customrequestheaders.X-Script-Name=test"
+- "traefik.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=True"
 ```
 
 ```yaml tab="Kubernetes"
@@ -34,23 +34,23 @@ spec:
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name": "test",
-  "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header": "True"
+  "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
+  "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header": "True"
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test"
-- "traefik.http.middlewares.testHeader.Headers.CustomResponseHeaders.X-Custom-Response-Header=True"
+- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=True"
 ```
 
 ```toml tab="File"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
-    [http.middlewares.testHeader.headers.CustomRequestHeaders]
+    [http.middlewares.testHeader.headers.customRequestHeaders]
         X-Script-Name = "test"
-    [http.middlewares.testHeader.headers.CustomResponseHeaders]
+    [http.middlewares.testHeader.headers.customResponseHeaders]
         X-Custom-Response-Header = "True"
 ```
 
@@ -77,22 +77,22 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.testHeader.Headers.CustomRequestHeaders.X-Script-Name": "test",
+  "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
 }
 ```
 
 ```toml tab="File"    
 [http.middlewares]
   [http.middlewares.testHeader.headers]
-    [http.middlewares.testHeader.headers.CustomRequestHeaders]
+    [http.middlewares.testHeader.headers.customRequestHeaders]
         X-Script-Name = "test" # Adds
         X-Custom-Request-Header = "" # Removes
-    [http.middlewares.testHeader.headers.CustomResponseHeaders]
+    [http.middlewares.testHeader.headers.chustomResponseHeaders]
         X-Custom-Response-Header = "" # Removes
 ```
 
@@ -103,8 +103,8 @@ This functionality allows for some easy security features to quickly be set.
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.middlewares.testHeader.Headers.FrameDeny=true"
-  - "traefik.http.middlewares.testHeader.Headers.SSLRedirect=true"
+  - "traefik.http.middlewares.testHeader.headers.framedeny=true"
+  - "traefik.http.middlewares.testHeader.headers.sslredirect=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -120,14 +120,14 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.testHeader.Headers.FrameDeny=true"
-  - "traefik.http.middlewares.testHeader.Headers.SSLRedirect=true"
+  - "traefik.http.middlewares.testheader.headers.framedeny=true"
+  - "traefik.http.middlewares.testheader.headers.sslredirect=true"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.testHeader.Headers.FrameDeny": "true",
-  "traefik.http.middlewares.testHeader.Headers.SSLRedirect": "true"
+  "traefik.http.middlewares.testheader.headers.framedeny": "true",
+  "traefik.http.middlewares.testheader.headers.sslredirect": "true"
 }
 ```
 
@@ -145,10 +145,10 @@ This functionality allows for more advanced security features to quickly be set.
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.middlewares.testHeader.Headers.AccessControlAllowMethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testHeader.Headers.AccessControlAllowOrigin=origin-list-or-null"
-  - "traefik.http.middlewares.testHeader.Headers.AccessControlMaxAge=100"
-  - "traefik.http.middlewares.testHeader.Headers.AddVaryHeader=true"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin=origin-list-or-null"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
+  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -158,39 +158,39 @@ metadata:
   name: testHeader
 spec:
   headers:
-    AccessControlAllowMethods:
+    accessControlAllowMethods:
       - "GET"
       - "OPTIONS"
       - "PUT"
-    AccessControlAllowOrigin: "origin-list-or-null"
-    AccessControlMaxAge: 100
-    AddVaryHeader: "true"
+    accessControlAllowOrigin: "origin-list-or-null"
+    accessControlMaxAge: 100
+    addVaryHeader: "true"
 ```
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.testHeader.Headers.AccessControlAllowMethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testHeader.Headers.AccessControlAllowOrigin=origin-list-or-null"
-  - "traefik.http.middlewares.testHeader.Headers.AccessControlMaxAge=100"
-  - "traefik.http.middlewares.testHeader.Headers.AddVaryHeader=true"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin=origin-list-or-null"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
+  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.testHeader.Headers.AccessControlAllowMethods": "GET,OPTIONS,PUT",
-  "traefik.http.middlewares.testHeader.Headers.AccessControlAllowOrigin": "origin-list-or-null",
-  "traefik.http.middlewares.testHeader.Headers.AccessControlMaxAge": "100",
-  "traefik.http.middlewares.testHeader.Headers.AddVaryHeader": "true"
+  "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods": "GET,OPTIONS,PUT",
+  "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin": "origin-list-or-null",
+  "traefik.http.middlewares.testheader.headers.accesscontrolmaxage": "100",
+  "traefik.http.middlewares.testheader.headers.addvaryheader": "true"
 }
 ```
 
 ```toml tab="File"    
 [http.middlewares]
   [http.middlewares.testHeader.headers]
-    AccessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
-    AccessControlAllowOrigin = "origin-list-or-null"
-    AccessControlMaxAge = 100
-    AddVaryHeader = true
+    accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
+    accessControlAllowOrigin = "origin-list-or-null"
+    accessControlMaxAge = 100
+    addVaryHeader = true
 ```
 
 ## Configuration Options
@@ -225,7 +225,8 @@ The  `accessControlAllowMethods` indicates which methods can be used during requ
 
 ### `accessControlAllowOrigin`
 
-The `accessControlAllowOrigin` indicates whether a resource can be shared by returning different values. The three options for this value are:
+The `accessControlAllowOrigin` indicates whether a resource can be shared by returning different values.
+The three options for this value are:
 
 - `origin-list-or-null`
 - `*`
@@ -261,11 +262,12 @@ Set the `sslTemporaryRedirect` to `true` to force an SSL redirection using a 302
 
 ### `sslHost` 
 
-The `SSLHost` option is the host name that is used to redirect http requests to https.
+The `sslHost` option is the host name that is used to redirect http requests to https.
 
 ### `sslProxyHeaders` 
 
-The `sslProxyHeaders` option is set of header keys with associated values that would indicate a valid https request. Useful when using other proxies with header like: `"X-Forwarded-Proto": "https"`.
+The `sslProxyHeaders` option is set of header keys with associated values that would indicate a valid https request.
+Useful when using other proxies with header like: `"X-Forwarded-Proto": "https"`.
 
 ### `sslForceHost` 
 
@@ -273,7 +275,8 @@ Set `sslForceHost` to true and set SSLHost to forced requests to use `SSLHost` e
 
 ### `stsSeconds` 
 
-The `stsSeconds` is the max-age of the Strict-Transport-Security header. If set to 0, would NOT include the header.
+The `stsSeconds` is the max-age of the Strict-Transport-Security header.
+If set to 0, would NOT include the header.
 
 ### `stsIncludeSubdomains` 
 
@@ -281,11 +284,11 @@ The `stsIncludeSubdomains` is set to true, the `includeSubdomains` will be appen
 
 ### `stsPreload` 
 
-Set `STSPreload` to true to have the `preload` flag appended to the Strict-Transport-Security header.
+Set `stsPreload` to true to have the `preload` flag appended to the Strict-Transport-Security header.
 
 ### `forceSTSHeader`
 
-Set `ForceSTSHeader` to true, to add the STS header even when the connection is HTTP.
+Set `forceSTSHeader` to true, to add the STS header even when the connection is HTTP.
 
 ### `frameDeny` 
 
@@ -293,7 +296,8 @@ Set `frameDeny` to true to add the `X-Frame-Options` header with the value of `D
  
 ### `customFrameOptionsValue` 
 
-The `customFrameOptionsValue` allows the `X-Frame-Options` header value to be set with a custom value. This overrides the FrameDeny option.
+The `customFrameOptionsValue` allows the `X-Frame-Options` header value to be set with a custom value.
+This overrides the FrameDeny option.
 
 ### `contentTypeNosniff`
 
@@ -301,11 +305,12 @@ Set `contentTypeNosniff` to true to add the `X-Content-Type-Options` header with
 
 ### `browserXssFilter`
 
-Set `BrowserXssFilter` to true to add the `X-XSS-Protection` header with the value `1; mode=block`.
+Set `browserXssFilter` to true to add the `X-XSS-Protection` header with the value `1; mode=block`.
 
 ### `customBrowserXSSValue`
 
-The `customBrowserXssValue` option allows the `X-XSS-Protection` header value to be set with a custom value. This overrides the BrowserXssFilter option.
+The `customBrowserXssValue` option allows the `X-XSS-Protection` header value to be set with a custom value.
+This overrides the BrowserXssFilter option.
 
 ### `contentSecurityPolicy`
 
@@ -321,5 +326,7 @@ The `referrerPolicy` allows sites to control when browsers will pass the Referer
 
 ### `isDevelopment`
 
-Set `isDevelopment` to true when developing. The AllowedHosts, SSL, and STS options can cause some unwanted effects. Usually testing happens on http, not https, and on localhost, not your production domain.  
+Set `isDevelopment` to true when developing.
+The AllowedHosts, SSL, and STS options can cause some unwanted effects.
+Usually testing happens on http, not https, and on localhost, not your production domain.  
 If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as false.

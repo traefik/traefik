@@ -22,7 +22,7 @@ whoami:
     # Create a middleware named `foo-add-prefix`
     - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
     # Apply the middleware named `foo-add-prefix` to the router named `router1`
-    - "traefik.http.router.router1.Middlewares=foo-add-prefix@docker"
+    - "traefik.http.router.router1.middlewares=foo-add-prefix@docker"
 ```
 
 ```yaml tab="Kubernetes"
@@ -46,7 +46,7 @@ kind: Middleware
 metadata:
   name: stripprefix
 spec:
-  stripprefix:
+  stripPrefix:
     prefixes:
       - /stripit
 
@@ -66,7 +66,7 @@ spec:
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo",
-  "traefik.http.router.router1.Middlewares": "foo-add-prefix@marathon"
+  "traefik.http.router.router1.middlewares": "foo-add-prefix@marathon"
 }
 ```
 
@@ -76,30 +76,30 @@ labels:
   # Create a middleware named `foo-add-prefix`
   - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
   # Apply the middleware named `foo-add-prefix` to the router named `router1`
-  - "traefik.http.router.router1.Middlewares=foo-add-prefix@rancher"
+  - "traefik.http.router.router1.middlewares=foo-add-prefix@rancher"
 ```
 
 ```toml tab="File"
 # As Toml Configuration File
 [providers]
-   [providers.file]
+  [providers.file]
 
 [http.routers]
   [http.routers.router1]
-    Service = "myService"
-    Middlewares = ["foo-add-prefix"]
-    Rule = "Host(`example.com`)"
+    service = "myService"
+    middlewares = ["foo-add-prefix"]
+    rule = "Host(`example.com`)"
 
 [http.middlewares]
-  [http.middlewares.foo-add-prefix.AddPrefix]
+  [http.middlewares.foo-add-prefix.addPrefix]
     prefix = "/foo"
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
+    [http.services.service1.loadBalancer]
 
-      [[http.services.service1.LoadBalancer.Servers]]
-        URL = "http://127.0.0.1:80"
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://127.0.0.1:80"
 ```
 
 ## Provider Namespace
@@ -132,7 +132,7 @@ and therefore this specification would be ignored even if present.
       [providers.file]
 
     [http.middlewares]
-      [http.middlewares.add-foo-prefix.AddPrefix]
+      [http.middlewares.add-foo-prefix.addPrefix]
         prefix = "/foo"
     ```
 

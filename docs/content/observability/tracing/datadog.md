@@ -4,7 +4,7 @@ To enable the DataDog:
 
 ```toml tab="File"
 [tracing]
-  [tracing.datadog]
+  [tracing.dataDog]
 ```
 
 ```bash tab="CLI"
@@ -20,7 +20,7 @@ Local Agent Host Port instructs reporter to send spans to datadog-tracing-agent 
 
 ```toml tab="File"
 [tracing]
-  [tracing.datadog]
+  [tracing.dataDog]
     localAgentHostPort = "127.0.0.1:8126"
 ```
 
@@ -37,7 +37,7 @@ Enable DataDog debug.
 
 ```toml tab="File"
 [tracing]
-  [tracing.datadog]
+  [tracing.dataDog]
     debug = true
 ```
 
@@ -54,7 +54,7 @@ Apply shared tag in a form of Key:Value to all the traces.
 
 ```toml tab="File"
 [tracing]
-  [tracing.datadog]
+  [tracing.dataDog]
     globalTag = "sample"
 ```
 
@@ -72,7 +72,7 @@ this option must be enabled in order to get all the parts of a distributed trace
 
 ```toml tab="File"
 [tracing]
-  [tracing.datadog]
+  [tracing.dataDog]
     prioritySampling = true
 ```
 

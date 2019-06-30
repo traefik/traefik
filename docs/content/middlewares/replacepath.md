@@ -41,8 +41,8 @@ labels:
 ```toml tab="File"
 # Replace the path by /foo
 [http.middlewares]
-  [http.middlewares.test-replacepath.ReplacePath]
-     path = "/foo"
+  [http.middlewares.test-replacepath.replacePath]
+    path = "/foo"
 ```
 
 ## Configuration Options

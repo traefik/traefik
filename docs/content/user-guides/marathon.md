@@ -17,10 +17,10 @@ Traefik tries to detect the configured mode and route traffic to the right IP ad
 Traefik also attempts to determine the right port (which is a [non-trivial matter in Marathon](https://mesosphere.github.io/marathon/docs/ports.html)).
 Following is the order by which Traefik tries to identify the port (the first one that yields a positive result will be used):
 
-1. A arbitrary port specified through the `traefik.HTTP.Services.ServiceName.LoadBalancer.server.Port=8080`
-1. The task port (possibly indexed through the `traefik.HTTP.Services.ServiceName.LoadBalancer.server.Port=index:0` label, otherwise the first one).
-1. The port from the application's `portDefinitions` field (possibly indexed through the `traefik.HTTP.Services.ServiceName.LoadBalancer.server.Port=index:0` label, otherwise the first one).
-1. The port from the application's `ipAddressPerTask` field (possibly indexed through the `traefik.HTTP.Services.ServiceName.LoadBalancer.server.Port=index:0` label, otherwise the first one).
+1. A arbitrary port specified through the `traefik.http.services.serviceName.loadbalancer.server.port=8080`
+1. The task port (possibly indexed through the `traefik.http.services.serviceName.loadbalancer.server.port=index:0` label, otherwise the first one).
+1. The port from the application's `portDefinitions` field (possibly indexed through the `traefik.http.services.serviceName.loadbalancer.server.port=index:0` label, otherwise the first one).
+1. The port from the application's `ipAddressPerTask` field (possibly indexed through the `traefik.http.services.serviceName.loadbalancer.server.port=index:0` label, otherwise the first one).
 
 ## Achieving high availability
 
@@ -47,7 +47,7 @@ Beginning with version 1.4, Traefik respects readiness check results if the Trae
 
 !!! note
     Due to the way readiness check results are currently exposed by the Marathon API, ready tasks may be taken into rotation with a small delay.
-    It is on the order of one readiness check timeout interval (as configured on the application specifiation) and guarantees that non-ready tasks do not receive traffic prematurely.
+    It is on the order of one readiness check timeout interval (as configured on the application specification) and guarantees that non-ready tasks do not receive traffic prematurely.
 
 If readiness checks are not possible, a current mitigation strategy is to enable [retries](../middlewares/retry.md) and make sure that a sufficient number of healthy application tasks exist so that one retry will likely hit one of those.
 Apart from its probabilistic nature, the workaround comes at the price of increased latency.
@@ -80,7 +80,7 @@ Failure reasons vary broadly and could stretch from unacceptable slowness, a tas
 There are two mitigaton efforts:
 
 1. Configure [Marathon health checks](https://mesosphere.github.io/marathon/docs/health-checks.html) on each application.
-2. Configure Traefik health checks (possibly via the `traefik.HTTP.Services.YourServiceName.LoadBalancer.HealthCheck.*` labels) and make sure they probe with proper frequency.
+2. Configure Traefik health checks (possibly via the `traefik.http.services.yourServiceName.loadbalancer.healthcheck.*` labels) and make sure they probe with proper frequency.
 
 The Marathon health check makes sure that applications once deemed dysfunctional are being rescheduled to different slaves.
 However, they might take a while to get triggered and the follow-up processes to complete.

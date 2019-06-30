@@ -22,7 +22,7 @@ Checking the Health of Your Traefik Instances
         address = ":8082"
     
     [ping]
-        entryPoint = "ping"
+      entryPoint = "ping"
     ```
 
 | Path    | Method        | Description                                                                                         |

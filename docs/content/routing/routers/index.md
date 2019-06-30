@@ -12,21 +12,41 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
 
 ??? example "Requests /foo are Handled by service-foo -- Using the [File Provider](../../providers/file.md)"
 
-    ```toml
+    ```toml tab="TOML"
       [http.routers]
         [http.routers.my-router]
-        rule = "Path(`/foo`)"
-        service = "service-foo"
+          rule = "Path(`/foo`)"
+          service = "service-foo"
+    ```
+
+    ```yaml tab="YAML"
+      http:
+        routers:
+          my-router:
+            rule: "Path(`/foo`)"
+            service: service-foo
     ```
 
 ??? example "With a [middleware](../../middlewares/overview.md) -- using the [File Provider](../../providers/file.md)"
 
-    ```toml
+    ```toml tab="TOML"
       [http.routers]
         [http.routers.my-router]
-        rule = "Path(`/foo`)"
-        middlewares = ["authentication"] # declared elsewhere
-        service = "service-foo"
+          rule = "Path(`/foo`)"
+          # declared elsewhere
+          middlewares = ["authentication"]
+          service = "service-foo"
+    ```
+
+    ```yaml tab="YAML"
+      http:
+        routers:
+          my-router:
+            rule: "Path(`/foo`)"
+            # declared elsewhere
+            middlewares:
+            - authentication
+            service: service-foo
     ```
 
 ??? example "Forwarding all (non-tls) requests on port 3306 to a database service"
@@ -59,40 +79,40 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
     ```toml
     [entryPoints]
-       [entryPoints.web]
-          # ...
-       [entryPoints.web-secure]
-          # ...
-       [entryPoints.other]
-          # ...
+      [entryPoints.web]
+        # ...
+      [entryPoints.web-secure]
+        # ...
+      [entryPoints.other]
+        # ...
     ```
     
     ```toml
     [http.routers]
-       [http.routers.Router-1]
-          # By default, routers listen to every entrypoints
-          rule = "Host(`traefik.io`)"
-          service = "service-1"
+      [http.routers.Router-1]
+        # By default, routers listen to every entrypoints
+        rule = "Host(`traefik.io`)"
+        service = "service-1"
     ```
 
 ??? example "Listens to Specific EntryPoints"
 
     ```toml
     [entryPoints]
-       [entryPoints.web]
-          # ...
-       [entryPoints.web-secure]
-          # ...
-       [entryPoints.other]
-          # ...
+      [entryPoints.web]
+        # ...
+      [entryPoints.web-secure]
+        # ...
+      [entryPoints.other]
+        # ...
     ```
     
     ```toml
     [http.routers]
-       [http.routers.Router-1]
-          entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
-          rule = "Host(`traefik.io`)"
-          service = "service-1"
+      [http.routers.Router-1]
+        entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
+        rule = "Host(`traefik.io`)"
+        service = "service-1"
     ```
 
 ### Rule
@@ -170,12 +190,23 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 
 ??? example "Configuring the router to accept HTTPS requests only"
 
-    ```toml
+    ```toml tab="TOML"
     [http.routers]
-       [http.routers.Router-1]
-          rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
-          service = "service-id"
-          [http.routers.Router-1.tls] # will terminate the TLS request
+      [http.routers.Router-1]
+        rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
+        service = "service-id"
+        # will terminate the TLS request
+        [http.routers.Router-1.tls
+    ```
+    
+    ```yaml tab="YAML"
+    http:
+      routers:
+        Router-1:
+          rule: "Host(`foo-domain`) && Path(`/foo-path/`)"
+          service: service-id
+          # will terminate the TLS request
+          tls: {}
     ```
 
 !!! note "HTTPS & ACME"
@@ -192,16 +223,31 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 
     ??? example "HTTP & HTTPS routes"
 
-        ```toml
+        ```toml tab="TOML"
         [http.routers]
-           [http.routers.my-https-router]
-              rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
-              service = "service-id"
-              [http.routers.my-https-router.tls] # will terminate the TLS request
+          [http.routers.my-https-router]
+            rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
+            service = "service-id"
+            # will terminate the TLS request
+            [http.routers.my-https-router.tls
 
-           [http.routers.my-http-router]
-              rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
-              service = "service-id"
+          [http.routers.my-http-router]
+            rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
+            service = "service-id"
+        ```
+
+        ```yaml tab="YAML"
+        http:
+          routers:
+            my-https-router:
+              rule: "Host(`foo-domain`) && Path(`/foo-path/`)"
+              service: service-id
+              # will terminate the TLS request
+              tls: {}
+
+            my-http-router:
+              rule: "Host(`foo-domain`) && Path(`/foo-path/`)"
+              service: service-id
         ```
 
 #### `Options`
@@ -211,21 +257,40 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
 
 ??? example "Configuring the tls options"
 
-    ```toml
+    ```toml tab="TOML"
     [http.routers]
-       [http.routers.Router-1]
-          rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
-          service = "service-id"
-          [http.routers.Router-1.tls] # will terminate the TLS request
-            options = "foo"
+      [http.routers.Router-1]
+        rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
+        service = "service-id"
+        [http.routers.Router-1.tls] # will terminate the TLS request
+          options = "foo"
     
     [tls.options]
       [tls.options.foo]
-          minVersion = "VersionTLS12"
-          cipherSuites = [
-            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_RSA_WITH_AES_256_GCM_SHA384"
-          ]
+        minVersion = "VersionTLS12"
+        cipherSuites = [
+          "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+          "TLS_RSA_WITH_AES_256_GCM_SHA384"
+        ]
+    ```
+    
+    ```yaml tab="YAML"
+    http:
+      routers:
+        Router-1:
+          rule: "Host(`foo-domain`) && Path(`/foo-path/`)"
+          service: service-id
+          # will terminate the TLS request
+          tls:
+            options: foo
+    
+    tls:
+      options:
+        foo:
+          minVersion: VersionTLS12
+          cipherSuites:
+          - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          - TLS_RSA_WITH_AES_256_GCM_SHA384
     ```
 
 ## Configuring TCP Routers
@@ -244,42 +309,42 @@ If you want to limit the router scope to a set of entry points, set the entry po
 
     ```toml
     [entryPoints]
-       [entryPoints.web]
-          # ...
-       [entryPoints.web-secure]
-          # ...
-       [entryPoints.other]
-          # ...
+      [entryPoints.web]
+        # ...
+      [entryPoints.web-secure]
+        # ...
+      [entryPoints.other]
+        # ...
     ```
     
     ```toml
     [tcp.routers]
-       [tcp.routers.Router-1]
-          # By default, routers listen to every entrypoints
-          rule = "HostSNI(`traefik.io`)"
-          service = "service-1"
-          [tcp.routers.Router-1.tls] # will route TLS requests (and ignore non tls requests)
+      [tcp.routers.Router-1]
+        # By default, routers listen to every entrypoints
+        rule = "HostSNI(`traefik.io`)"
+        service = "service-1"
+        [tcp.routers.Router-1.tls] # will route TLS requests (and ignore non tls requests)
     ```
 
 ??? example "Listens to Specific Entry Points"
 
     ```toml
     [entryPoints]
-       [entryPoints.web]
-          # ...
-       [entryPoints.web-secure]
-          # ...
-       [entryPoints.other]
-          # ...
+      [entryPoints.web]
+        # ...
+      [entryPoints.web-secure]
+        # ...
+      [entryPoints.other]
+        # ...
     ```
 
     ```toml
     [tcp.routers]
-       [tcp.routers.Router-1]
-          entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
-          rule = "HostSNI(`traefik.io`)"
-          service = "service-1"
-          [tcp.routers.Router-1.tls] # will route TLS requests (and ignore non tls requests)
+      [tcp.routers.Router-1]
+        entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
+        rule = "HostSNI(`traefik.io`)"
+        service = "service-1"
+        [tcp.routers.Router-1.tls] # will route TLS requests (and ignore non tls requests)
     ```
 
 ### Rule
@@ -312,23 +377,44 @@ Services are the target for the router.
 
 ??? example "Configuring TLS Termination"
 
-    ```toml
+    ```toml tab="TOML"
     [tcp.routers]
-       [tcp.routers.Router-1]
-          rule = "HostSNI(`foo-domain`)"
-          service = "service-id"
-          [tcp.routers.Router-1.tls] # will terminate the TLS request by default
+      [tcp.routers.Router-1]
+        rule = "HostSNI(`foo-domain`)"
+        service = "service-id"
+        # will terminate the TLS request by default
+        [tcp.routers.Router-1.tls]
+    ```
+
+    ```yaml tab="YAML"
+    tcp:
+      routers:
+        Router-1:
+          rule: "HostSNI(`foo-domain`)"
+          service: service-id
+          # will terminate the TLS request by default
+          tld: {}
     ```
 
 ??? example "Configuring passthrough"
 
-    ```toml
+    ```toml tab="TOML"
     [tcp.routers]
-       [tcp.routers.Router-1]
-          rule = "HostSNI(`foo-domain`)"
-          service = "service-id"
-          [tcp.routers.Router-1.tls]
-             passthrough=true
+      [tcp.routers.Router-1]
+        rule = "HostSNI(`foo-domain`)"
+        service = "service-id"
+        [tcp.routers.Router-1.tls]
+          passthrough = true
+    ```
+
+    ```yaml tab="YAML"
+    tcp:
+      routers:
+        Router-1:
+          rule: "HostSNI(`foo-domain`)"
+          service: service-id
+          tls:
+            passthrough: true
     ```
 
 !!! note "TLS & ACME"
@@ -342,19 +428,39 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
 
 ??? example "Configuring the tls options"
 
-    ```toml
+    ```toml tab="TOML"
     [tcp.routers]
-       [tcp.routers.Router-1]
-          rule = "HostSNI(`foo-domain`)"
-          service = "service-id"
-          [tcp.routers.Router-1.tls] # will terminate the TLS request
-            options = "foo"
+      [tcp.routers.Router-1]
+        rule = "HostSNI(`foo-domain`)"
+        service = "service-id"
+        # will terminate the TLS request
+        [tcp.routers.Router-1.tls]
+          options = "foo"
     
     [tls.options]
       [tls.options.foo]
-          minVersion = "VersionTLS12"
-          cipherSuites = [
-            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_RSA_WITH_AES_256_GCM_SHA384"
-          ]
+        minVersion = "VersionTLS12"
+        cipherSuites = [
+          "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+          "TLS_RSA_WITH_AES_256_GCM_SHA384"
+        ]
+    ```
+
+    ```yaml tab="YAML"
+    tcp:
+      routers:
+        Router-1:
+          rule: "HostSNI(`foo-domain`)"
+          service: service-id
+          # will terminate the TLS request
+          tls:
+            options: foo
+    
+    tls:
+      options:
+        foo:
+          minVersion: VersionTLS12
+          cipherSuites:
+          - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+          - "TLS_RSA_WITH_AES_256_GCM_SHA384"
     ```

@@ -18,7 +18,7 @@ Attach labels to your containers and let Traefik do the rest!
 
     ```toml
     [providers.docker]
-    endpoint = "unix:///var/run/docker.sock"
+      endpoint = "unix:///var/run/docker.sock"
     ```
 
     Attaching labels to containers (in your docker compose file)
@@ -136,8 +136,8 @@ Traefik requires access to the docker socket to get its dynamic configuration.
     ```toml
     # ...
     [providers]
-       [providers.docker]
-          endpoint = "unix:///var/run/docker.sock"
+      [providers.docker]
+        endpoint = "unix:///var/run/docker.sock"
     ```
 
 ### `usebindportip`
@@ -194,8 +194,8 @@ and the template has access to all the labels defined on this container.
 
 ```toml tab="File"
 [providers.docker]
-defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
-# ...
+  defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+  # ...
 ```
 
 ```txt tab="CLI"

@@ -45,7 +45,7 @@ You can write these configuration elements:
     
         # Add the middleware
         [http.middlewares]    
-          [http.middlewares.my-basic-auth.BasicAuth]
+          [http.middlewares.my-basic-auth.basicAuth]
             users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
                       "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
             usersFile = "etc/traefik/.htpasswd"
@@ -53,37 +53,42 @@ You can write these configuration elements:
         # Add the service
         [http.services]
           [http.services.service-foo]
-            [http.services.service-foo.LoadBalancer]
-              [[http.services.service-foo.LoadBalancer.Servers]]
+            [http.services.service-foo.loadBalancer]
+              [[http.services.service-foo.loadBalancer.servers]]
                 url = "http://foo/"
-              [[http.services.service-foo.LoadBalancer.Servers]]
+              [[http.services.service-foo.loadBalancer.servers]]
                 url = "http://bar/"
     ```
     
     ```yaml tab="YAML"
     http:
+      # Add the router
       routers:
         router0:
-          entrypoints:
+          entryPoints:
           - web
           middlewares:
           - my-basic-auth
           service: service-foo
           rule: Path(`foo`)
+      
+      # Add the middleware
       middlewares:
         my-basic-auth:
           basicAuth:
             users:
             - test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/
             - test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
-            usersfile: etc/traefik/.htpasswd
-            headerfield: ""
+            usersFile: etc/traefik/.htpasswd
+      
+      # Add the service
       services:
         service-foo:
-          loadbalancer:
+          loadBalancer:
             servers:
             - url: http://foo/
             - url: http://bar/
+            passHostHeader: false
     ```
 
 ## Provider Configuration Options
@@ -170,7 +175,7 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
       {{ end }}  
       
       
-      [http.Services]
+      [http.services]
       {{ range $i, $e := until 100 }}
           [http.services.service{{ $e }}]
           # ...
@@ -185,7 +190,7 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
       {{ end }}  
       
       
-      [tcp.Services]
+      [tcp.services]
       {{ range $i, $e := until 100 }}
           [http.services.service{{ $e }}]
           # ...
@@ -193,9 +198,9 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
     
     {{ range $i, $e := until 10 }}
     [[tls.certificates]]
-      CertFile = "/etc/traefik/cert-{{ $e }}.pem"
-      KeyFile = "/etc/traefik/cert-{{ $e }}.key"
-      Store = ["my-store-foo-{{ $e }}", "my-store-bar-{{ $e }}"]
+      certFile = "/etc/traefik/cert-{{ $e }}.pem"
+      keyFile = "/etc/traefik/cert-{{ $e }}.key"
+      store = ["my-store-foo-{{ $e }}", "my-store-bar-{{ $e }}"]
     {{ end }}
     
     [tls.config]
@@ -237,8 +242,8 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
     {{ range $i, $e := until 10 }}
     tls:
       certificates:
-      - certfile: "/etc/traefik/cert-{{ $e }}.pem"
-        keyfile: "/etc/traefik/cert-{{ $e }}.key"
+      - certFile: "/etc/traefik/cert-{{ $e }}.pem"
+        keyFile: "/etc/traefik/cert-{{ $e }}.key"
         store:
         - "my-store-foo-{{ $e }}"
         - "my-store-bar-{{ $e }}"
