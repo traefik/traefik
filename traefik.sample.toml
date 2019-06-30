@@ -21,8 +21,8 @@
 # Optional
 # Default:
 [entryPoints]
-    [entryPoints.web]
-    address = ":80"
+  [entryPoints.web]
+  address = ":80"
 
 ################################################################
 # Traefik logs configuration

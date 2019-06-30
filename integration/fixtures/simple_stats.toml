@@ -1,37 +1,36 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8000"
+    address = ":8000"
 
 [api]
 
-[providers]
-   [providers.file]
+[providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
-    EntryPoints = ["web"]
-    Service = "service1"
-    Rule = "PathPrefix(`/whoami`)"
+    entryPoints = ["web"]
+    service = "service1"
+    rule = "PathPrefix(`/whoami`)"
 
   [http.routers.router2]
-    EntryPoints = ["traefik"]
-    Service = "service2"
-    Rule = "PathPrefix(`/whoami`)"
+    entryPoints = ["traefik"]
+    service = "service2"
+    rule = "PathPrefix(`/whoami`)"
 
 [http.services]
-  [http.services.service1]
-    [http.services.service1.LoadBalancer]
-      [[http.services.service1.LoadBalancer.Servers]]
-        URL = "{{ .Server1 }}"
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "{{ .Server1 }}"
 
-  [http.services.service2]
-    [http.services.service2.LoadBalancer]
-      [[http.services.service2.LoadBalancer.Servers]]
-        URL = "{{ .Server2 }}"
+  [http.services.service2.loadBalancer]
+    [[http.services.service2.loadBalancer.servers]]
+      url = "{{ .Server2 }}"

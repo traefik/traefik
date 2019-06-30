@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [api]
 
@@ -18,54 +18,55 @@ level = "DEBUG"
     debug = true
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
-    Service = "service1"
-    Middlewares = ["retry", "ratelimit"]
-    Rule = "Path(`/ratelimit`)"
+    service = "service1"
+    middlewares = ["retry", "ratelimit"]
+    rule = "Path(`/ratelimit`)"
   [http.routers.router2]
-    Service = "service2"
-    Middlewares = ["retry"]
-    Rule = "Path(`/retry`)"
+    service = "service2"
+    middlewares = ["retry"]
+    rule = "Path(`/retry`)"
   [http.routers.router3]
-    Service = "service3"
-    Middlewares = ["retry", "basic-auth"]
-    Rule = "Path(`/auth`)"
+    service = "service3"
+    middlewares = ["retry", "basic-auth"]
+    rule = "Path(`/auth`)"
 
 [http.middlewares]
   [http.middlewares.retry.retry]
-     attempts = 3
-  [http.middlewares.basic-auth.BasicAuth]
-     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-  [http.middlewares.ratelimit.RateLimit]
-        extractorfunc = "client.ip"
-          [http.middlewares.ratelimit.RateLimit.rateset.rateset1]
-            period = "60s"
-            average = 4
-            burst = 5
-          [http.middlewares.ratelimit.RateLimit.rateset.rateset2]
-            period = "3s"
-            average = 1
-            burst = 2
-
+    attempts = 3
+  [http.middlewares.basic-auth.basicAuth]
+    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+  [http.middlewares.ratelimit.rateLimit]
+    extractorfunc = "client.ip"
+      [http.middlewares.ratelimit.rateLimit.rateSet.rateset1]
+        period = "60s"
+        average = 4
+        burst = 5
+      [http.middlewares.ratelimit.rateLimit.rateSet.rateset2]
+        period = "3s"
+        average = 1
+        burst = 2
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
+    [http.services.service1.loadBalancer]
       passHostHeader = true
-      [[http.services.service1.LoadBalancer.Servers]]
-        URL = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
 
   [http.services.service2]
     passHostHeader = true
-    [http.services.service2.LoadBalancer]
-      [[http.services.service2.LoadBalancer.Servers]]
-        URL = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+    [http.services.service2.loadBalancer]
+      [[http.services.service2.loadBalancer.servers]]
+        url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
 
   [http.services.service3]
     passHostHeader = true
-    [http.services.service3.LoadBalancer]
-      [[http.services.service3.LoadBalancer.Servers]]
-        URL = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+    [http.services.service3.loadBalancer]
+      [[http.services.service3.loadBalancer.servers]]
+        url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"

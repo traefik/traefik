@@ -12,7 +12,9 @@
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
@@ -22,8 +24,8 @@
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
-      [[http.services.service1.LoadBalancer.Servers]]
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
         url = "http://127.0.0.1:9010"
 
 [tls.options]
@@ -32,7 +34,7 @@
 
 [tls.stores]
   [tls.stores.default]
-    [tls.stores.default.DefaultCertificate]
+    [tls.stores.default.defaultCertificate]
       certFile = "fixtures/https/snitest.com.cert"
       keyFile = "fixtures/https/snitest.com.key"
 

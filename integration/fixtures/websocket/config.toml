@@ -1,27 +1,29 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8000"
+    address = ":8000"
 
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
-    Service = "service1"
-    Rule = "PathPrefix(`/ws`)"
+    service = "service1"
+    rule = "PathPrefix(`/ws`)"
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
+    [http.services.service1.loadBalancer]
       passHostHeader = true
-      [[http.services.service1.LoadBalancer.Servers]]
-        URL = "{{ .WebsocketServer }}"
+      [[http.services.service1.loadBalancer.servers]]
+        url = "{{ .WebsocketServer }}"

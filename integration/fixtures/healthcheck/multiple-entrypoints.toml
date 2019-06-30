@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.http1]
@@ -14,20 +14,22 @@ level = "DEBUG"
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
     service = "service1"
-    Rule = "Host(`test.localhost`)"
+    rule = "Host(`test.localhost`)"
 
 [http.services]
-  [http.services.service1.loadbalancer]
-    [http.services.service1.loadbalancer.healthcheck]
+  [http.services.service1.loadBalancer]
+    [http.services.service1.loadBalancer.healthcheck]
       path = "/health"
       interval = "1s"
       timeout = "0.9s"
-    [[http.services.service1.loadbalancer.servers]]
+    [[http.services.service1.loadBalancer.servers]]
       url = "http://{{.Server1}}:80"
-    [[http.services.service1.loadbalancer.servers]]
+    [[http.services.service1.loadBalancer.servers]]
       url = "http://{{.Server2}}:80"

@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
@@ -16,6 +16,8 @@ level = "DEBUG"
 
 [providers]
   [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
@@ -139,34 +141,34 @@ level = "DEBUG"
     [http.routers.router10TLS.tls]
 
 [http.middlewares]
-  [http.middlewares.api-strip.StripPrefix]
-     prefixes = ["/api"]
-  [http.middlewares.api-slash-strip.StripPrefix]
-     prefixes = ["/api/"]
-  [http.middlewares.foo-add-prefix.AddPrefix]
-     prefix = "/foo"
-  [http.middlewares.foo-slash-add-prefix.AddPrefix]
-     prefix = "/foo/"
-  [http.middlewares.id-strip-regex-prefix.StripPrefixRegex]
-     regex = ["/{id:[a-z]+}"]
-  [http.middlewares.id-slash-strip-regex-prefix.StripPrefixRegex]
-     regex = ["/{id:[a-z]+}/"]
-  [http.middlewares.api-regex-replace.ReplacePathRegex]
-     regex = "/api"
-     replacement = "/"
-  [http.middlewares.api-slash-regex-replace.ReplacePathRegex]
-     regex = "/api/"
-     replacement = "/"
-  [http.middlewares.api-replace-path.ReplacePath]
-     path = "/api"
-  [http.middlewares.api-slash-replace-path.ReplacePath]
-     path = "/api/"
+  [http.middlewares.api-strip.stripPrefix]
+    prefixes = ["/api"]
+  [http.middlewares.api-slash-strip.stripPrefix]
+    prefixes = ["/api/"]
+  [http.middlewares.foo-add-prefix.addPrefix]
+    prefix = "/foo"
+  [http.middlewares.foo-slash-add-prefix.addPrefix]
+    prefix = "/foo/"
+  [http.middlewares.id-strip-regex-prefix.stripPrefixRegex]
+    regex = ["/{id:[a-z]+}"]
+  [http.middlewares.id-slash-strip-regex-prefix.stripPrefixRegex]
+    regex = ["/{id:[a-z]+}/"]
+  [http.middlewares.api-regex-replace.replacePathRegex]
+    regex = "/api"
+    replacement = "/"
+  [http.middlewares.api-slash-regex-replace.replacePathRegex]
+    regex = "/api/"
+    replacement = "/"
+  [http.middlewares.api-replace-path.replacePath]
+    path = "/api"
+  [http.middlewares.api-slash-replace-path.replacePath]
+    path = "/api/"
   [http.middlewares.redirect-https.redirectScheme]
-     scheme = "https"
-     port = "8443"
+    scheme = "https"
+    port = "8443"
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
-      [[http.services.service1.LoadBalancer.Servers]]
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
         url = "http://127.0.0.1:80"

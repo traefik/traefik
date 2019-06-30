@@ -1,24 +1,24 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8000"
+    address = ":8000"
 
   [entryPoints.traefik]
-  address = ":8001"
+    address = ":8001"
 
 [api]
-   middlewares = ["authentication@file"]
+  middlewares = ["authentication@file"]
 
 [ping]
 
 [providers.file]
 
 [http.middlewares]
-   [http.middlewares.authentication.basicauth]
-      users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+  [http.middlewares.authentication.basicAuth]
+    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]

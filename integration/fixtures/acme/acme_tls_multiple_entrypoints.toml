@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
@@ -16,7 +16,7 @@ level = "DEBUG"
     address = ":9000"
 #       FIXME
 #      [entryPoints.traefik.tls]
-#        [entryPoints.traefik.tls.DefaultCertificate]
+#        [entryPoints.traefik.tls.defaultCertificate]
 #        certFile = "fixtures/acme/ssl/wildcard.crt"
 #        keyFile = "fixtures/acme/ssl/wildcard.key"
 

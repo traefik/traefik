@@ -1,48 +1,50 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web-secure]
-  address = ":4443"
+    address = ":4443"
 
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
-    Service = "service1"
-    Rule = "Host(`snitest.com`)"
+    service = "service1"
+    rule = "Host(`snitest.com`)"
     [http.routers.router1.tls]
 
   [http.routers.router2]
-    Service = "service2"
-    Rule = "Host(`snitest.org`)"
+    service = "service2"
+    rule = "Host(`snitest.org`)"
     [http.routers.router2.tls]
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
-      [[http.services.service1.LoadBalancer.Servers]]
-        URL = "http://127.0.0.1:9010"
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://127.0.0.1:9010"
 
   [http.services.service2]
-    [http.services.service2.LoadBalancer]
-      [[http.services.service2.LoadBalancer.Servers]]
-        URL = "http://127.0.0.1:9020"
+    [http.services.service2.loadBalancer]
+      [[http.services.service2.loadBalancer.servers]]
+        url = "http://127.0.0.1:9020"
 
 [[tls.certificates]]
-    certFile = "fixtures/https/snitest.com.cert"
-    keyFile = "fixtures/https/snitest.com.key"
+  certFile = "fixtures/https/snitest.com.cert"
+  keyFile = "fixtures/https/snitest.com.key"
 
 [[tls.certificates]]
-    certFile = "fixtures/https/snitest.org.cert"
-    keyFile = "fixtures/https/snitest.org.key"
+  certFile = "fixtures/https/snitest.org.cert"
+  keyFile = "fixtures/https/snitest.org.key"
 
 [tls.options]
   [tls.options.default.ClientCA]

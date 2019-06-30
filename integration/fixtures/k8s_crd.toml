@@ -1,18 +1,16 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
-
-[entryPoints]
-  [entryPoints.web]
-     address = ":8000"
-  [entryPoints.footcp]
-      address = ":8093"
-
+  level = "DEBUG"
 
 [api]
 
-[Providers]
-   [Providers.KubernetesCRD]
+[entryPoints]
+  [entryPoints.footcp]
+    address = ":8093"
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.kubernetesCRD]

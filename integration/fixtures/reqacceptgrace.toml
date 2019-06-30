@@ -1,35 +1,36 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
+
   [entryPoints.web]
-  address = ":8000"
-  [entryPoints.web.transport.lifeCycle]
-    RequestAcceptGraceTimeout = "10s"
+    address = ":8000"
+    [entryPoints.web.transport.lifeCycle]
+      requestAcceptGraceTimeout = "10s"
 
   [entryPoints.traefik]
-  address = ":8001"
-[entryPoints.traefik.transport.lifeCycle]
-    RequestAcceptGraceTimeout = "10s"
+    address = ":8001"
+    [entryPoints.traefik.transport.lifeCycle]
+      requestAcceptGraceTimeout = "10s"
 
 [ping]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router]
-    Service = "service"
-    Rule = "Path(`/service`)"
+    service = "service"
+    rule = "Path(`/service`)"
 
 [http.services]
-  [http.services.service]
-    [http.services.service.LoadBalancer]
-
-      [[http.services.service.LoadBalancer.Servers]]
-        URL = "{{.Server}}"
+    [http.services.service.loadBalancer]
+      [[http.services.service.loadBalancer.servers]]
+        url = "{{.Server}}"
 

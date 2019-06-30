@@ -1,259 +1,248 @@
-[HTTP]
-
-  [HTTP.Routers]
-
-    [HTTP.Routers.Router0]
-      EntryPoints = ["foobar", "foobar"]
-      Middlewares = ["foobar", "foobar"]
-      Service = "foobar"
-      Rule = "foobar"
+[http]
+  [http.routers]
+    [http.routers.Router0]
+      entryPoints = ["foobar", "foobar"]
+      middlewares = ["foobar", "foobar"]
+      service = "foobar"
+      rule = "foobar"
       priority = 42
-      [HTTP.Routers.Router0.tls]
+      [http.routers.Router0.tls]
         options = "TLS0"
-
-  [HTTP.Middlewares]
-
-      [HTTP.Middlewares.Middleware0.AddPrefix]
-        Prefix = "foobar"
-
-      [HTTP.Middlewares.Middleware1.StripPrefix]
-        Prefixes = ["foobar", "foobar"]
-
-      [HTTP.Middlewares.Middleware2.StripPrefixRegex]
-        Regex = ["foobar", "foobar"]
-
-      [HTTP.Middlewares.Middleware3.ReplacePath]
-        Path = "foobar"
-
-      [HTTP.Middlewares.Middleware4.ReplacePathRegex]
-        Regex = "foobar"
-        Replacement = "foobar"
-
-      [HTTP.Middlewares.Middleware5.Chain]
-        Middlewares = ["foobar", "foobar"]
-
-      [HTTP.Middlewares.Middleware6.IPWhiteList]
-        SourceRange = ["foobar", "foobar"]
-
-        [HTTP.Middlewares.Middleware7.IPWhiteList.IPStrategy]
-          Depth = 42
-          ExcludedIPs = ["foobar", "foobar"]
-
-      [HTTP.Middlewares.Middleware8.Headers]
-        AccessControlAllowCredentials = true
-        AccessControlAllowHeaders = ["foobar", "foobar"]
-        AccessControlAllowMethods = ["foobar", "foobar"]
-        AccessControlAllowOrigin = "foobar"
-        AccessControlExposeHeaders = ["foobar", "foobar"]
-        AccessControlMaxAge = 42
-        AddVaryHeader = true
-        AllowedHosts = ["foobar", "foobar"]
-        HostsProxyHeaders = ["foobar", "foobar"]
-        SSLRedirect = true
-        SSLTemporaryRedirect = true
-        SSLHost = "foobar"
-        SSLForceHost = true
-        STSSeconds = 42
-        STSIncludeSubdomains = true
-        STSPreload = true
-        ForceSTSHeader = true
-        FrameDeny = true
-        CustomFrameOptionsValue = "foobar"
-        ContentTypeNosniff = true
-        BrowserXSSFilter = true
-        CustomBrowserXSSValue = "foobar"
-        ContentSecurityPolicy = "foobar"
-        PublicKey = "foobar"
-        ReferrerPolicy = "foobar"
-        IsDevelopment = true
-        [HTTP.Middlewares.Middleware8.Headers.CustomRequestHeaders]
+  [http.middlewares]
+    [http.middlewares.Middleware0]
+      [http.middlewares.Middleware0.addPrefix]
+        prefix = "foobar"
+    [http.middlewares.Middleware1]
+      [http.middlewares.Middleware1.stripPrefix]
+        prefixes = ["foobar", "foobar"]
+    [http.middlewares.Middleware10]
+      [http.middlewares.Middleware10.rateLimit]
+        extractorFunc = "foobar"
+        [http.middlewares.Middleware10.rateLimit.rateSet]
+          [http.middlewares.Middleware10.rateLimit.rateSet.Rate0]
+            period = 42
+            average = 42
+            burst = 42
+          [http.middlewares.Middleware10.rateLimit.rateSet.Rate1]
+            period = 42
+            average = 42
+            burst = 42
+    [http.middlewares.Middleware11]
+      [http.middlewares.Middleware11.redirectRegex]
+        regex = "foobar"
+        replacement = "foobar"
+        permanent = true
+    [http.middlewares.Middleware12]
+      [http.middlewares.Middleware12.redirectScheme]
+        scheme = "foobar"
+        port = "foobar"
+        permanent = true
+    [http.middlewares.Middleware13]
+      [http.middlewares.Middleware13.basicAuth]
+        users = ["foobar", "foobar"]
+        usersFile = "foobar"
+        realm = "foobar"
+        removeHeader = true
+        headerField = "foobar"
+    [http.middlewares.Middleware14]
+      [http.middlewares.Middleware14.digestAuth]
+        users = ["foobar", "foobar"]
+        usersFile = "foobar"
+        removeHeader = true
+        realm = "foobar"
+        headerField = "foobar"
+    [http.middlewares.Middleware15]
+      [http.middlewares.Middleware15.forwardAuth]
+        address = "foobar"
+        trustForwardHeader = true
+        authResponseHeaders = ["foobar", "foobar"]
+        [http.middlewares.Middleware15.forwardAuth.tls]
+          ca = "foobar"
+          caOptional = true
+          cert = "foobar"
+          key = "foobar"
+          insecureSkipVerify = true
+    [http.middlewares.Middleware16]
+      [http.middlewares.Middleware16.maxConn]
+        amount = 42
+        extractorFunc = "foobar"
+    [http.middlewares.Middleware17]
+      [http.middlewares.Middleware17.buffering]
+        maxRequestBodyBytes = 42
+        memRequestBodyBytes = 42
+        maxResponseBodyBytes = 42
+        memResponseBodyBytes = 42
+        retryExpression = "foobar"
+    [http.middlewares.Middleware18]
+      [http.middlewares.Middleware18.circuitBreaker]
+        expression = "foobar"
+    [http.middlewares.Middleware19]
+      [http.middlewares.Middleware19.compress]
+    [http.middlewares.Middleware2]
+      [http.middlewares.Middleware2.stripPrefixRegex]
+        regex = ["foobar", "foobar"]
+    [http.middlewares.Middleware20]
+      [http.middlewares.Middleware20.passTLSClientCert]
+        pem = true
+        [http.middlewares.Middleware20.passTLSClientCert.info]
+          notAfter = true
+          notBefore = true
+          sans = true
+          [http.middlewares.Middleware20.passTLSClientCert.info.subject]
+            country = true
+            province = true
+            locality = true
+            organization = true
+            commonName = true
+            serialNumber = true
+            domainComponent = true
+          [http.middlewares.Middleware20.passTLSClientCert.info.issuer]
+            country = true
+            province = true
+            locality = true
+            organization = true
+            commonName = true
+            serialNumber = true
+            domainComponent = true
+    [http.middlewares.Middleware21]
+      [http.middlewares.Middleware21.retry]
+        regex = 0
+    [http.middlewares.Middleware3]
+      [http.middlewares.Middleware3.replacePath]
+        path = "foobar"
+    [http.middlewares.Middleware4]
+      [http.middlewares.Middleware4.replacePathRegex]
+        regex = "foobar"
+        replacement = "foobar"
+    [http.middlewares.Middleware5]
+      [http.middlewares.Middleware5.chain]
+        middlewares = ["foobar", "foobar"]
+    [http.middlewares.Middleware6]
+      [http.middlewares.Middleware6.ipWhiteList]
+        sourceRange = ["foobar", "foobar"]
+    [http.middlewares.Middleware7]
+      [http.middlewares.Middleware7.ipWhiteList]
+        [http.middlewares.Middleware7.ipWhiteList.ipStrategy]
+          depth = 42
+          excludedIPs = ["foobar", "foobar"]
+    [http.middlewares.Middleware8]
+      [http.middlewares.Middleware8.headers]
+        accessControlAllowCredentials = true
+        accessControlAllowHeaders = ["foobar", "foobar"]
+        accessControlAllowMethods = ["foobar", "foobar"]
+        accessControlAllowOrigin = "foobar"
+        accessControlExposeHeaders = ["foobar", "foobar"]
+        accessControlMaxAge = 42
+        addVaryHeader = true
+        allowedHosts = ["foobar", "foobar"]
+        hostsProxyHeaders = ["foobar", "foobar"]
+        sslRedirect = true
+        sslTemporaryRedirect = true
+        sslHost = "foobar"
+        sslForceHost = true
+        stsSeconds = 42
+        stsIncludeSubdomains = true
+        stsPreload = true
+        forceSTSHeader = true
+        frameDeny = true
+        customFrameOptionsValue = "foobar"
+        contentTypeNosniff = true
+        browserXssFilter = true
+        customBrowserXSSValue = "foobar"
+        contentSecurityPolicy = "foobar"
+        publicKey = "foobar"
+        referrerPolicy = "foobar"
+        isDevelopment = true
+        [http.middlewares.Middleware8.headers.customRequestHeaders]
           name0 = "foobar"
           name1 = "foobar"
-        [HTTP.Middlewares.Middleware8.Headers.CustomResponseHeaders]
+        [http.middlewares.Middleware8.headers.customResponseHeaders]
           name0 = "foobar"
           name1 = "foobar"
-        [HTTP.Middlewares.Middleware8.Headers.SSLProxyHeaders]
+        [http.middlewares.Middleware8.headers.sslProxyHeaders]
           name0 = "foobar"
           name1 = "foobar"
+    [http.middlewares.Middleware9]
+      [http.middlewares.Middleware9.errors]
+        status = ["foobar", "foobar"]
+        service = "foobar"
+        query = "foobar"
+  [http.services]
+    [http.services.Service0]
+      [http.services.Service0.loadBalancer]
+        passHostHeader = true
+        [http.services.Service0.loadBalancer.stickiness]
+          cookieName = "foobar"
 
-      [HTTP.Middlewares.Middleware9.Errors]
-        Status = ["foobar", "foobar"]
-        Service = "foobar"
-        Query = "foobar"
+        [[http.services.Service0.loadBalancer.servers]]
+          url = "foobar"
 
-      [HTTP.Middlewares.Middleware10.RateLimit]
-        ExtractorFunc = "foobar"
-        [HTTP.Middlewares.Middleware10.RateLimit.RateSet]
-          [HTTP.Middlewares.Middleware10.RateLimit.RateSet.Rate0]
-            Period = 42
-            Average = 42
-            Burst = 42
-          [HTTP.Middlewares.Middleware10.RateLimit.RateSet.Rate1]
-            Period = 42
-            Average = 42
-            Burst = 42
-
-      [HTTP.Middlewares.Middleware11.RedirectRegex]
-        Regex = "foobar"
-        Replacement = "foobar"
-        Permanent = true
-
-      [HTTP.Middlewares.Middleware12.RedirectScheme]
-        Scheme = "foobar"
-        Port = "foobar"
-        Permanent = true
-
-      [HTTP.Middlewares.Middleware13.BasicAuth]
-        Users = ["foobar", "foobar"]
-        UsersFile = "foobar"
-        Realm = "foobar"
-        RemoveHeader = true
-        HeaderField = "foobar"
-
-      [HTTP.Middlewares.Middleware14.DigestAuth]
-        Users = ["foobar", "foobar"]
-        UsersFile = "foobar"
-        RemoveHeader = true
-        Realm = "foobar"
-        HeaderField = "foobar"
-
-      [HTTP.Middlewares.Middleware15.ForwardAuth]
-        Address = "foobar"
-        TrustForwardHeader = true
-        AuthResponseHeaders = ["foobar", "foobar"]
-        [HTTP.Middlewares.Middleware15.ForwardAuth.TLS]
-          CA = "foobar"
-          CAOptional = true
-          Cert = "foobar"
-          Key = "foobar"
-          InsecureSkipVerify = true
-
-      [HTTP.Middlewares.Middleware16.MaxConn]
-        Amount = 42
-        ExtractorFunc = "foobar"
-
-      [HTTP.Middlewares.Middleware17.Buffering]
-        MaxRequestBodyBytes = 42
-        MemRequestBodyBytes = 42
-        MaxResponseBodyBytes = 42
-        MemResponseBodyBytes = 42
-        RetryExpression = "foobar"
-
-      [HTTP.Middlewares.Middleware18.CircuitBreaker]
-        Expression = "foobar"
-
-      [HTTP.Middlewares.Middleware19.Compress]
-
-      [HTTP.Middlewares.Middleware20.PassTLSClientCert]
-        PEM = true
-        [HTTP.Middlewares.Middleware20.PassTLSClientCert.Info]
-          NotAfter = true
-          NotBefore = true
-          Sans = true
-          [HTTP.Middlewares.Middleware20.PassTLSClientCert.Info.Subject]
-            Country = true
-            Province = true
-            Locality = true
-            Organization = true
-            CommonName = true
-            SerialNumber = true
-            DomainComponent = true
-          [HTTP.Middlewares.Middleware20.PassTLSClientCert.Info.Issuer]
-            Country = true
-            Province = true
-            Locality = true
-            Organization = true
-            CommonName = true
-            SerialNumber = true
-            DomainComponent = true
-
-      [HTTP.Middlewares.Middleware21.Retry]
-        Attempts = 42
-
-  [HTTP.Services]
-    [HTTP.Services.Service0]
-      [HTTP.Services.Service0.LoadBalancer]
-        PassHostHeader = true
-
-        [[HTTP.Services.Service0.LoadBalancer.Servers]]
-          URL = "foobar"
-
-        [HTTP.Services.Service0.LoadBalancer.Stickiness]
-          CookieName = "foobar"
-
-        [[HTTP.Services.Service0.LoadBalancer.Servers]]
-          URL = "foobar"
-
-        [HTTP.Services.Service0.LoadBalancer.HealthCheck]
-          Scheme = "foobar"
-          Path = "foobar"
-          Port = 42
-          Interval = "foobar"
-          Timeout = "foobar"
-          Hostname = "foobar"
-          [HTTP.Services.Service0.LoadBalancer.HealthCheck.Headers]
+        [[http.services.Service0.loadBalancer.servers]]
+          url = "foobar"
+        [http.services.Service0.loadBalancer.healthCheck]
+          scheme = "foobar"
+          path = "foobar"
+          port = 42
+          interval = "foobar"
+          timeout = "foobar"
+          hostname = "foobar"
+          [http.services.Service0.loadBalancer.healthCheck.headers]
             name0 = "foobar"
             name1 = "foobar"
-        [HTTP.Services.Service0.LoadBalancer.ResponseForwarding]
-          FlushInterval = "foobar"
+        [http.services.Service0.loadBalancer.responseForwarding]
+          flushInterval = "foobar"
 
-[TCP]
-
-  [TCP.Routers]
-
-    [TCP.Routers.TCPRouter0]
-      EntryPoints = ["foobar", "foobar"]
-      Service = "foobar"
-      Rule = "foobar"
-      [TCP.Routers.TCPRouter0.tls]
+[tcp]
+  [tcp.routers]
+    [tcp.routers.TCPRouter0]
+      entryPoints = ["foobar", "foobar"]
+      service = "foobar"
+      rule = "foobar"
+      [tcp.routers.TCPRouter0.tls]
         passthrough = true
         options = "TLS1"
+  [tcp.services]
+    [tcp.services.TCPService0]
+      [tcp.services.TCPService0.loadBalancer]
 
-  [TCP.Services]
+        [[tcp.services.TCPService0.loadBalancer.servers]]
+          address = "foobar"
 
-    [TCP.Services.TCPService0]
-      [TCP.Services.TCPService0.LoadBalancer]
+        [[tcp.services.TCPService0.loadBalancer.servers]]
+          address = "foobar"
 
-        [[TCP.Services.TCPService0.LoadBalancer.Servers]]
-          Address = "foobar"
+[tls]
 
-        [[TCP.Services.TCPService0.LoadBalancer.Servers]]
-          Address = "foobar"
+  [[tls.certificates]]
+    certFile = "foobar"
+    keyFile = "foobar"
+    stores = ["foobar", "foobar"]
 
-[TLS]
-
-  [[TLS.Certificates]]
-    Stores = ["foobar", "foobar"]
-    CertFile = "foobar"
-    KeyFile = "foobar"
-
-  [[TLS.Certificates]]
-    Stores = ["foobar", "foobar"]
-    CertFile = "foobar"
-    KeyFile = "foobar"
-
-  [TLS.Options]
-    [TLS.Options.TLS0]
-      MinVersion = "foobar"
-      CipherSuites = ["foobar", "foobar"]
-      SniStrict = true
-      [TLS.Options.TLS0.ClientCA]
-        Files = ["foobar", "foobar"]
-        Optional = true
-    [TLS.Options.TLS1]
-      MinVersion = "foobar"
-      CipherSuites = ["foobar", "foobar"]
-      SniStrict = true
-      [TLS.Options.TLS1.ClientCA]
-        Files = ["foobar", "foobar"]
-        Optional = true
-
-  [TLS.Stores]
-    [TLS.Stores.Store0]
-      [TLS.Stores.Store0.DefaultCertificate]
-        CertFile = "foobar"
-        KeyFile = "foobar"
-    [TLS.Stores.Store1]
-      [TLS.Stores.Store1.DefaultCertificate]
-        CertFile = "foobar"
-        KeyFile = "foobar"
+  [[tls.certificates]]
+    certFile = "foobar"
+    keyFile = "foobar"
+    stores = ["foobar", "foobar"]
+  [tls.options]
+    [tls.options.TLS0]
+      minVersion = "foobar"
+      cipherSuites = ["foobar", "foobar"]
+      sniStrict = true
+      [tls.options.TLS0.clientCA]
+        files = ["foobar", "foobar"]
+        optional = true
+    [tls.options.TLS1]
+      minVersion = "foobar"
+      cipherSuites = ["foobar", "foobar"]
+      sniStrict = true
+      [tls.options.TLS1.clientCA]
+        files = ["foobar", "foobar"]
+        optional = true
+  [tls.stores]
+    [tls.stores.Store0]
+      [tls.stores.Store0.defaultCertificate]
+        certFile = "foobar"
+        keyFile = "foobar"
+    [tls.stores.Store1]
+      [tls.stores.Store1.defaultCertificate]
+        certFile = "foobar"
+        keyFile = "foobar"

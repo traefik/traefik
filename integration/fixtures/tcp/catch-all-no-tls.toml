@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.tcp]
@@ -13,14 +13,16 @@ level = "DEBUG"
 
 [providers.file]
 
-[tcp]
-    [tcp.routers]
-       [tcp.routers.to-whoami-no-tls]
-          entryPoints = ["tcp"]
-          rule="HostSNI(`*`)"
-          service = "whoami-no-tls"
+## dynamic configuration ##
 
-    [tcp.services]
-        [tcp.services.whoami-no-tls.loadbalancer]
-          [[tcp.services.whoami-no-tls.loadbalancer.servers]]
-            address = "localhost:8086"
+[tcp]
+  [tcp.routers]
+    [tcp.routers.to-whoami-no-tls]
+      entryPoints = ["tcp"]
+      rule = "HostSNI(`*`)"
+      service = "whoami-no-tls"
+
+  [tcp.services]
+    [tcp.services.whoami-no-tls.loadBalancer]
+      [[tcp.services.whoami-no-tls.loadBalancer.servers]]
+        address = "localhost:8086"

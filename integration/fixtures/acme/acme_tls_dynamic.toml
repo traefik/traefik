@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
@@ -36,6 +36,6 @@ level = "DEBUG"
 [api]
 
 [providers]
-   [providers.file]
-      filename = "fixtures/acme/certificates.toml"
-      watch = true
+  [providers.file]
+    filename = "fixtures/acme/certificates.toml"
+    watch = true

@@ -1,31 +1,33 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [serversTransport.forwardingTimeouts]
   idleConnTimeout = "{{ .IdleConnTimeout }}"
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8000"
+    address = ":8000"
 
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
-    Service = "keepalive"
-    Rule = "PathPrefix(`/keepalive`)"
+    service = "keepalive"
+    rule = "PathPrefix(`/keepalive`)"
 
 [http.services]
   [http.services.keepalive]
-    [http.services.keepalive.LoadBalancer]
+    [http.services.keepalive.loadBalancer]
       passHostHeader = true
-      [[http.services.keepalive.LoadBalancer.Servers]]
-        URL = "{{ .KeepAliveServer }}"
-        Weight = 1
+      [[http.services.keepalive.loadBalancer.servers]]
+        url = "{{ .KeepAliveServer }}"
+        weight = 1

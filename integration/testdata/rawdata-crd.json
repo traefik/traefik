@@ -36,7 +36,7 @@
 	},
 	"services": {
 		"default/test.crd-6b204d94623b3df4370c@kubernetescrd": {
-			"loadbalancer": {
+			"loadBalancer": {
 				"servers": [
 					{
 						"url": "http://10.42.0.3:80"
@@ -56,7 +56,7 @@
 			}
 		},
 		"default/test2.crd-23c7f4c450289ee29016@kubernetescrd": {
-			"loadbalancer": {
+			"loadBalancer": {
 				"servers": [
 					{
 						"url": "http://10.42.0.3:80"
@@ -91,7 +91,7 @@
 	},
 	"tcpServices": {
 		"default/test3.crd-673acf455cb2dab0b43a@kubernetescrd": {
-			"loadbalancer": {
+			"loadBalancer": {
 				"servers": [
 					{
 						"address": "10.42.0.4:8080"
