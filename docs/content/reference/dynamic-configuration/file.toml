@@ -106,7 +106,7 @@
             domainComponent = true
     [http.middlewares.Middleware21]
       [http.middlewares.Middleware21.retry]
-        regex = 0
+        attemps = 42
     [http.middlewares.Middleware3]
       [http.middlewares.Middleware3.replacePath]
         path = "foobar"

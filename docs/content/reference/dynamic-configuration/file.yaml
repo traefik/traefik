@@ -196,7 +196,8 @@ http:
             serialNumber: true
             domainComponent: true
     Middleware21:
-      retry: {}
+      retry:
+        attemps: 42
   services:
     Service0:
       loadBalancer:
