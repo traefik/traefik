@@ -201,7 +201,7 @@ Traefik will consider your servers healthy as long as they return status codes b
 
 Below are the available options for the health check mechanism:
 
-- `path` is appended to the server URL to set the heal check endpoint.
+- `path` is appended to the server URL to set the health check endpoint.
 - `scheme`, if defined, will replace the server URL `scheme` for the health check endpoint
 - `hostname`, if defined, will replace the server URL `hostname` for the health check endpoint.
 - `port`, if defined, will replace the server URL `port` for the health check endpoint.
