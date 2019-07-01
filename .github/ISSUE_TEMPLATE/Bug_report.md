@@ -10,7 +10,6 @@ DO NOT FILE ISSUES FOR GENERAL SUPPORT QUESTIONS.
 The issue tracker is for reporting bugs and feature requests only.
 For end-user related support questions, please refer to one of the following:
 
-- Stack Overflow (using the "traefik" tag): https://stackoverflow.com/questions/tagged/traefik
 - the Traefik community forum: https://community.containo.us/
 
 -->

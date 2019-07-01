@@ -15,7 +15,6 @@ To save us some time and get quicker feedback, be sure to follow the guide lines
     For end-user related support questions, try using first:
 
     - the Traefik community forum: [![Join the chat at https://community.containo.us/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.containo.us/)
-    - [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
 
 ## Issue Title
 
