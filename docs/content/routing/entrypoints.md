@@ -24,7 +24,7 @@ They define the port which will receive the requests (whether HTTP or TCP).
        address: ":80"
     ```
     
-    ```ini tab="CLI"
+    ```bash tab="CLI"
     --entryPoints.web.address=:80
     ```
 
@@ -50,7 +50,7 @@ They define the port which will receive the requests (whether HTTP or TCP).
         address: ":443"
     ```
     
-    ```ini tab="CLI"
+    ```bash tab="CLI"
     --entryPoints.web.address=:80
     --entryPoints.web-secure.address=:443
     ```
@@ -113,7 +113,7 @@ entryPoints:
       - "foobar"
 ```
 
-```ini tab="CLI"
+```bash tab="CLI"
 --entryPoints.EntryPoint0.address=:8888
 --entryPoints.EntryPoint0.transport.lifeCycle.requestAcceptGraceTimeout=42
 --entryPoints.EntryPoint0.transport.lifeCycle.graceTimeOut=42
@@ -151,7 +151,7 @@ Traefik supports [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-
           - "192.168.1.7"
     ```
     
-    ```ini tab="CLI"
+    ```bash tab="CLI"
     --entryPoints.web.address=:80
     --entryPoints.web.proxyProtocol.trustedIPs=127.0.0.1/32,192.168.1.7
     ```
@@ -180,7 +180,7 @@ Traefik supports [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-
           insecure: true
     ```
     
-    ```ini tab="CLI"
+    ```bash tab="CLI"
     --entryPoints.web.address=:80
     --entryPoints.web.proxyProtocol.insecure
     ```
@@ -215,7 +215,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
           - "192.168.1.7"
     ```
     
-    ```ini tab="CLI"
+    ```bash tab="CLI"
     --entryPoints.web.address=:80
     --entryPoints.web.forwardedHeaders.trustedIPs=127.0.0.1/32,192.168.1.7
     ```
@@ -239,7 +239,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
           insecure: true
     ```
     
-    ```ini tab="CLI"
+    ```bash tab="CLI"
     --entryPoints.web.address=:80
     --entryPoints.web.forwardedHeaders.insecure
     ```
