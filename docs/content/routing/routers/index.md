@@ -330,7 +330,7 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 The `Options` field enables fine-grained control of the TLS parameters.  
 It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied only if a `Host` rule is defined.
 
-??? example "Configuring the tls options"
+??? example "Configuring the TLS options"
 
     ```toml tab="TOML"
     [http.routers]
