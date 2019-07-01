@@ -14,9 +14,9 @@ For this very reason, the sendAnonymousUsage option is mandatory: we want you to
 ??? example "Enabling Data Collection with TOML"
 
     ```toml
-    [Global]
-        # Send anonymous usage data
-        sendAnonymousUsage = true
+    [global]
+      # Send anonymous usage data
+      sendAnonymousUsage = true
     ```
 
 ??? example "Enabling Data Collection with the CLI"
@@ -51,24 +51,23 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
 
     ```toml
     [entryPoints]
-        [entryPoints.web]
-           address = ":80"
+      [entryPoints.web]
+         address = ":80"
     
     [api]
     
-    [Docker]
+    [providers.docker]
       endpoint = "tcp://10.10.10.10:2375"
-      domain = "foo.bir"
       exposedByDefault = true
       swarmMode = true
     
-      [Docker.TLS]
+      [providers.docker.TLS]
         ca = "dockerCA"
         cert = "dockerCert"
         key = "dockerKey"
         insecureSkipVerify = true
     
-    [ECS]
+    [providers.ecs]
       domain = "foo.bar"
       exposedByDefault = true
       clusters = ["foo-bar"]
@@ -81,24 +80,24 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
 
     ```toml
     [entryPoints]
-        [entryPoints.web]
-           address = ":80"
+      [entryPoints.web]
+        address = ":80"
     
     [api]
     
-    [Docker]
+    [providers.docker]
       endpoint = "xxxx"
       domain = "xxxx"
       exposedByDefault = true
       swarmMode = true
     
-      [Docker.TLS]
+      [providers.docker.TLS]
         ca = "xxxx"
         cert = "xxxx"
         key = "xxxx"
         insecureSkipVerify = false
     
-    [ECS]
+    [providers.ecs]
       domain = "xxxx"
       exposedByDefault = true
       clusters = []

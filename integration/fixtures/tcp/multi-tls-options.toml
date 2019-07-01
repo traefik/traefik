@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.tcp]
@@ -13,27 +13,29 @@ level = "DEBUG"
 
 [providers.file]
 
+## dynamic configuration ##
+
 [tcp]
-    [tcp.routers]
-        [tcp.routers.to-whoami-no-cert]
-            rule = "HostSNI(`whoami-c.test`)"
-            service = "whoami-no-cert"
-            entryPoints = [ "tcp" ]
-            [tcp.routers.to-whoami-no-cert.tls]
-              options = "foo"
+  [tcp.routers]
+    [tcp.routers.to-whoami-no-cert]
+      rule = "HostSNI(`whoami-c.test`)"
+      service = "whoami-no-cert"
+      entryPoints = [ "tcp" ]
+      [tcp.routers.to-whoami-no-cert.tls]
+        options = "foo"
 
-        [tcp.routers.to-whoami-sni-strict]
-            rule = "HostSNI(`whoami-d.test`)"
-            service = "whoami-no-cert"
-            entryPoints = [ "tcp" ]
-            [tcp.routers.to-whoami-sni-strict.tls]
-              options = "bar"
+    [tcp.routers.to-whoami-sni-strict]
+      rule = "HostSNI(`whoami-d.test`)"
+      service = "whoami-no-cert"
+      entryPoints = [ "tcp" ]
+      [tcp.routers.to-whoami-sni-strict.tls]
+        options = "bar"
 
-        [tcp.services.whoami-no-cert]
-            [tcp.services.whoami-no-cert.loadbalancer]
-              method = "wrr"
-              [[tcp.services.whoami-no-cert.loadbalancer.servers]]
-                address = "localhost:8083"
+    [tcp.services.whoami-no-cert]
+      [tcp.services.whoami-no-cert.loadBalancer]
+        method = "wrr"
+        [[tcp.services.whoami-no-cert.loadBalancer.servers]]
+        address = "localhost:8083"
 
 [tls.options]
 

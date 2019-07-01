@@ -61,7 +61,7 @@ The ReplacePathRegex middleware will:
 
 ### `regex`
 
-The `Regex` option is the regular expression to match and capture the path from the request URL.
+The `regex` option is the regular expression to match and capture the path from the request URL.
 
 !!! warning
 

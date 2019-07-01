@@ -1,17 +1,17 @@
-[TLS]
+[tls]
 
-[[TLS.Certificates]]
-  CertFile = "integration/fixtures/https/snitest1.com.cert"
-  KeyFile = "integration/fixtures/https/snitest1.com.key"
+[[tls.certificates]]
+  certFile = "integration/fixtures/https/snitest1.com.cert"
+  keyFile = "integration/fixtures/https/snitest1.com.key"
 
-[[TLS.Certificates]]
-  CertFile = "integration/fixtures/https/snitest2.com.cert"
-  KeyFile = "integration/fixtures/https/snitest2.com.key"
+[[tls.certificates]]
+  certFile = "integration/fixtures/https/snitest2.com.cert"
+  keyFile = "integration/fixtures/https/snitest2.com.key"
 
-[[TLS.Certificates]]
-  CertFile = "integration/fixtures/https/snitest3.com.cert"
-  KeyFile = "integration/fixtures/https/snitest3.com.key"
+[[tls.certificates]]
+  certFile = "integration/fixtures/https/snitest3.com.cert"
+  keyFile = "integration/fixtures/https/snitest3.com.key"
 
-[[TLS.Certificates]]
-  CertFile = "integration/fixtures/https/snitest4.com.cert"
-  KeyFile = "integration/fixtures/https/snitest4.com.key"
+[[tls.certificates]]
+  certFile = "integration/fixtures/https/snitest4.com.cert"
+  keyFile = "integration/fixtures/https/snitest4.com.key"

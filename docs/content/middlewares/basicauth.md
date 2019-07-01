@@ -47,7 +47,7 @@ labels:
 ```toml tab="File"
 # Declaring the user list
 [http.middlewares]
-  [http.middlewares.test-auth.basicauth]
+  [http.middlewares.test-auth.basicAuth]
   users = [
     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
     "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
@@ -61,7 +61,7 @@ labels:
 Passwords must be encoded using MD5, SHA1, or BCrypt.
 
 !!! tip 
-   
+
     Use `htpasswd` to generate the passwords.
 
 ### `users`
@@ -120,7 +120,7 @@ spec:
 ```
 
 ```toml tab="File"
-[http.middlewares.my-auth.basicauth]
+[http.middlewares.my-auth.basicAuth]
   # ...
   headerField = "X-WebAuth-User"
 ```

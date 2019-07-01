@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [serversTransport.forwardingTimeouts]
   dialTimeout = "300ms"
@@ -19,24 +19,26 @@ level = "DEBUG"
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
-    Service = "service1"
-    Rule = "Path(`/dialTimeout`)"
+    service = "service1"
+    rule = "Path(`/dialTimeout`)"
 
   [http.routers.router2]
-    Service = "service2"
-    Rule = "Path(`/responseHeaderTimeout`)"
+    service = "service2"
+    rule = "Path(`/responseHeaderTimeout`)"
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
-      [[http.services.service1.LoadBalancer.Servers]]
-        URL = "http://50.255.255.1"
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://50.255.255.1"
 
   [http.services.service2]
-    [http.services.service2.LoadBalancer]
-      [[http.services.service2.LoadBalancer.Servers]]
-        URL = "http://{{.TimeoutEndpoint}}:9000"
+    [http.services.service2.loadBalancer]
+      [[http.services.service2.loadBalancer.servers]]
+        url = "http://{{.TimeoutEndpoint}}:9000"

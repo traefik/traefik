@@ -12,56 +12,103 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 
 ??? example "Enabling ACME"
 
-    ```toml
-    [entryPoints]
-      [entryPoints.web]
-         address = ":80"
-    
-      [entryPoints.http-tls]
-         address = ":443"
-    
-    [acme] # every router with TLS enabled will now be able to use ACME for its certificates
-       email = "your-email@your-domain.org"
-       storage = "acme.json"
-       onHostRule = true # dynamic generation based on the Host() & HostSNI() matchers
-       [acme.httpChallenge]
-          entryPoint = "web" # used during the challenge
-    ```
-
-??? example "Configuring Wildcard Certificates"
-
-    ```toml
+    ```toml tab="TOML"
     [entryPoints]
       [entryPoints.web]
         address = ":80"
-
+    
       [entryPoints.http-tls]
         address = ":443"
+    
+    # every router with TLS enabled will now be able to use ACME for its certificates
+    [acme]
+      email = "your-email@your-domain.org"
+      storage = "acme.json"
+      # dynamic generation based on the Host() & HostSNI() matchers
+      onHostRule = true
+      [acme.httpChallenge]
+        # used during the challenge
+        entryPoint = "web"
+    ```
+    
+    ```yaml tab="YAML"
+    entryPoints:
+      web:
+        address: ":80"
+    
+      http-tls:
+        address: ":443"
+    
+    # every router with TLS enabled will now be able to use ACME for its certificates
+    acme:
+      email: your-email@your-domain.org
+      storage: acme.json
+      # dynamic generation based on the Host() & HostSNI() matchers
+      onHostRule: true
+      httpChallenge:
+        # used during the challenge
+        entryPoint: web
+    ```
 
+??? example "Configuring Wildcard Certificates"
+    
+    ```toml tab="TOML"
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+    
+      [entryPoints.http-tls]
+        address = ":443"
+    
     [acme]
       email = "your-email@your-domain.org"
       storage = "acme.json"
       [acme.dnsChallenge]
         provider = "xxx"
-
+    
       [[acme.domains]]
         main = "*.mydomain.com"
         sans = ["mydomain.com"]
     ```
+    
+    ```yaml tab="YAML"
+    entryPoints:
+      web:
+        address: ":80"
+    
+      http-tls:
+        address: ":443"
+    
+    acme:
+      email: your-email@your-domain.org
+      storage: acme.json
+      dnsChallenge:
+        provide: xxx
+    
+      domains:
+        - main: "*.mydomain.com"
+          sans:
+            - mydomain.com
+    ```
 
 ??? note "Configuration Reference"
     
-    There are many available options for ACME. For a quick glance at what's possible, browse the configuration reference:
+    There are many available options for ACME.
+    For a quick glance at what's possible, browse the configuration reference:
     
-    ```toml
+    ```toml tab="TOML"
     --8<-- "content/https/ref-acme.toml"
+    ```
+    
+    ```yaml tab="YAML"
+    --8<-- "content/https/ref-acme.yaml"
     ```
 
 ## Automatic Renewals
 
 Traefik automatically tracks the expiry date of ACME certificates it generates.
 
-If there are less than 30 days remaining before the certificate expires, Traefik will attempt to rewnew it automatically.
+If there are less than 30 days remaining before the certificate expires, Traefik will attempt to renew it automatically.
 
 !!! note
     Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
@@ -77,9 +124,14 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
 
 ??? example "Configuring the `tlsChallenge`"
 
-    ```toml
+    ```toml tab="TOML"
     [acme]
-       [acme.tlsChallenge]
+      [acme.tlsChallenge]
+    ```
+
+    ```yaml tab="YAML"
+    acme:
+      tlsChallenge: {}
     ```
     
 ### `httpChallenge`
@@ -91,11 +143,18 @@ when using the `HTTP-01` challenge, `acme.httpChallenge.entryPoint` must be reac
 
 ??? example "Using an EntryPoint Called http for the `httpChallenge`"
 
-    ```toml
+    ```toml tab="TOML"
     [acme]
-       # ...
-       [acme.httpChallenge]
-          entryPoint = "http"
+      # ...
+      [acme.httpChallenge]
+        entryPoint = "http"
+    ```
+
+    ```yaml tab="YAML"
+    acme:
+      # ...
+      httpChallenge:
+        entryPoint: http
     ```
 
 !!! note
@@ -107,12 +166,21 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
 
 ??? example "Configuring a `dnsChallenge` with the DigitalOcean Provider"
 
-    ```toml
+    ```toml tab="TOML"
     [acme]
-       # ...
-       [acme.dnsChallenge]
-          provider = "digitalocean"
-          delayBeforeCheck = 0
+      # ...
+      [acme.dnsChallenge]
+        provider = "digitalocean"
+        delayBeforeCheck = 0
+    # ...
+    ```
+    
+    ```yaml tab="YAML"
+    acme:
+      # ...
+      dnsChallenge:
+        provider: digitalocean
+        delayBeforeCheck: 0
     # ...
     ```
 
@@ -200,12 +268,22 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 
 Use custom DNS servers to resolve the FQDN authority.
 
-```toml
+```toml tab="TOML"
 [acme]
-   # ...
-   [acme.dnsChallenge]
-      # ...
-      resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
+  # ...
+  [acme.dnsChallenge]
+    # ...
+    resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
+```
+
+```yaml tab="YAML"
+acme:
+  # ...
+  dnsChallenge:
+    # ...
+    resolvers:
+    - "1.1.1.1:53"
+    - "8.8.8.8:53"
 ```
 
 #### Wildcard Domains
@@ -213,12 +291,23 @@ Use custom DNS servers to resolve the FQDN authority.
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
 As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](#dnschallenge).
 
-```toml
+```toml tab="TOML"
 [acme]
-   # ...
-   [[acme.domains]]
-      main = "*.local1.com"
-      sans = ["local1.com"]
+  # ...
+  [[acme.domains]]
+    main = "*.local1.com"
+    sans = ["local1.com"]
+
+# ...
+```
+
+```yaml tab="YAML"
+acme:
+  # ...
+  domains:
+    - main: "*.local1.com"
+      sans:
+      - local1.com
 
 # ...
 ```
@@ -240,17 +329,33 @@ You can set SANs (alternative domains) for each main domain.
 Every domain must have A/AAAA records pointing to Traefik.
 Each domain & SAN will lead to a certificate request.
 
-```toml
+```toml tab="TOML"
 [acme]
-   # ...
-   [[acme.domains]]
-      main = "local1.com"
-      sans = ["test1.local1.com", "test2.local1.com"]
-   [[acme.domains]]
-      main = "local2.com"
-   [[acme.domains]]
-      main = "*.local3.com"
-      sans = ["local3.com", "test1.test1.local3.com"]
+  # ...
+  [[acme.domains]]
+    main = "local1.com"
+    sans = ["test1.local1.com", "test2.local1.com"]
+  [[acme.domains]]
+    main = "local2.com"
+  [[acme.domains]]
+    main = "*.local3.com"
+    sans = ["local3.com", "test1.test1.local3.com"]
+# ...
+```
+
+```yaml tab="YAML"
+acme:
+  # ...
+  domains:
+    - main: "local1.com"
+      sans:
+      - "test1.local1.com"
+      - "test2.local1.com"
+    - main: "local2.com"
+    - main: "*.local3.com"
+      sans:
+      - "local3.com"
+      - "test1.test1.local3.com"
 # ...
 ```
 
@@ -264,11 +369,18 @@ Each domain & SAN will lead to a certificate request.
 
 ??? example "Using the Let's Encrypt staging server"
 
-    ```toml
+    ```toml tab="TOML"
     [acme]
-       # ...
-       caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
-       # ...
+      # ...
+      caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+      # ...
+    ```
+    
+    ```yaml tab="YAML"
+    acme:
+      # ...
+      caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+      # ...
     ```
 
 ## `onHostRule`
@@ -277,11 +389,18 @@ Enable certificate generation on [routers](../routing/routers/index.md) `Host` &
 
 This will request a certificate from Let's Encrypt for each router with a Host rule.
 
-```toml
+```toml tab="TOML"
 [acme]
-   # ...
-   onHostRule = true
-   # ...
+  # ...
+  onHostRule = true
+  # ...
+```
+
+```yaml tab="YAML"
+acme:
+  # ...
+  onHostRule: true
+  # ...
 ```
 
 !!! note "Multiple Hosts in a Rule"
@@ -294,17 +413,23 @@ This will request a certificate from Let's Encrypt for each router with a Host r
 
 The `storage` option sets the location where your ACME certificates are saved to.
 
-```toml
+```toml tab="TOML"
 [acme]
-   # ...
-   storage = "acme.json"
-   # ...
+  # ...
+  storage = "acme.json"
+  # ...
 ```
 
-The value can refer to two kinds of storage:
+```yaml tab="YAML"
+acme
+  # ...
+  storage: acme.json
+  # ...
+```
+
+The value can refer to some kinds of storage:
 
 - a JSON file
-- a KV store entry
 
 ### In a File
 
@@ -322,19 +447,6 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 !!! warning
     For concurrency reason, this file cannot be shared across multiple instances of Traefik. Use a key value store entry instead.
-
-### In a a Key Value Store Entry
-
-ACME certificates can be stored in a key-value store entry.
-
-```toml
-storage = "traefik/acme/account"
-```
-
-!!! note "Storage Size"
-
-    Because key-value stores have limited entry size, the certificates list is compressed _before_ it is saved.
-    For example, it is possible to store up to _approximately_ 100 ACME certificates in Consul.
 
 ## Fallback
 

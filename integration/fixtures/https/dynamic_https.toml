@@ -11,30 +11,30 @@
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
-      [[http.services.service1.LoadBalancer.Servers]]
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
         url = "http://127.0.0.1:9010"
 
   [http.services.service2]
-    [http.services.service2.LoadBalancer]
-      [[http.services.service2.LoadBalancer.Servers]]
+    [http.services.service2.loadBalancer]
+      [[http.services.service2.loadBalancer.servers]]
         url = "http://127.0.0.1:9020"
 
 #  bad certificates to validate the loop on the certificate appending
 [[tls.certificates]]
-    # bad content
-    certFile = """-----BEGIN CERTIFICATE-----
+  # bad content
+  certFile = """-----BEGIN CERTIFICATE-----
 MIIC/zCCAeegAwIBAgIJALAYHG/vGqWEMA0GCSqGSIb3DQEBBQUAMBYxFDASBgNV
 -----END CERTIFICATE-----"""
-    # bad content
-    keyFile = """-----BEGIN RSA PRIVATE KEY-----
+  # bad content
+  keyFile = """-----BEGIN RSA PRIVATE KEY-----
 wihZ13e3i5UQEYuoRcH1RUd1wyYoBSKuQnsT2WwVZ1wlXSYaELAbQgaI9NtfBA0G
 eRG3DaVpez4DQVupZDHMgxJUYqqKynUj6GD1YiaxGROj3TYCu6e7OxyhalhCllSu
 w/X5M802XqzLjeec5zHoZDfknnAkgR9MsxZYmZPFaDyL6GOKUB8=
 -----END RSA PRIVATE KEY-----"""
 
 [[tls.certificates]]
-    certFile = """-----BEGIN CERTIFICATE-----
+  certFile = """-----BEGIN CERTIFICATE-----
 MIIC/zCCAeegAwIBAgIJALAYHG/vGqWEMA0GCSqGSIb3DQEBBQUAMBYxFDASBgNV
 BAMMC3NuaXRlc3Qub3JnMB4XDTE1MTEyMzIyMDU0NFoXDTI1MTEyMDIyMDU0NFow
 FjEUMBIGA1UEAwwLc25pdGVzdC5vcmcwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw
@@ -53,7 +53,7 @@ FJTkElnxtELAGHoIwZ+bKprnexefpn9UW84VJvJ2crSR63vBvdTrgsrEGW6kQj1I
 k5fvuuXbIc979pQOoO03zG0S7Wpmpsw+9dQB9TOxGITOLfCZwEuIhnv+M9lLqCks
 7H2A
 -----END CERTIFICATE-----"""
-   keyFile = """-----BEGIN RSA PRIVATE KEY-----
+  keyFile = """-----BEGIN RSA PRIVATE KEY-----
 MIIEogIBAAKCAQEAvG9kL+vF57+MICehzbqcQAUlAOSl5r/YO6cMLBTEjiteaNqh
 hc8f8fZaCIuaTCGCMuElcCTa2FIu+9pwmDKkiFV5cHLfwhO9I9iW9oHiB7t4x2xV
 l67lm1tbRhlGM757DlM4jxN6y1mvzTmzWCy5VCiWsXx68Z6biqUFLF86C5duXCRF

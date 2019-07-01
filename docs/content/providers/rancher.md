@@ -19,7 +19,7 @@ Attach labels to your services and let Traefik do the rest!
     Enabling the rancher provider
 
     ```toml
-    [Providers.Rancher]
+    [providers.rancher]
     ```
 
     Attaching labels to services
@@ -58,9 +58,9 @@ The service name can be accessed as the `Name` identifier,
 and the template has access to all the labels defined on this container.
 
 ```toml tab="File"
-[Providers.Rancher]
-defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
-# ...
+[providers.rancher]
+  defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+  # ...
 ```
 
 ```txt tab="CLI"

@@ -40,8 +40,8 @@ labels:
 ```toml tab="File"
 # Limiting to 10 simultaneous connections
 [http.middlewares]
-  [http.middlewares.test-maxconn.maxconn]
-  amount = 10 
+  [http.middlewares.test-maxconn.maxConn]
+    amount = 10 
 ```
 
 ## Configuration Options

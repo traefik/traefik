@@ -1,27 +1,28 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [api]
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8000"
+    address = ":8000"
 
-[Providers]
-   [Providers.Rest]
+[providers]
+  [providers.rest]
 
-   [Providers.File]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.services]
-  [http.services.service]
-    [http.services.service.LoadBalancer]
+    [http.services.service.loadBalancer]
+      [[http.services.service.loadBalancer.servers]]
+        url = "{{.Server}}"
 
-      [[http.services.service.LoadBalancer.Servers]]
-        URL = "{{.Server}}"
 [http.middlewares]
-  [http.middlewares.customheader.Headers.CustomRequestHeaders]
-  X-Custom="CustomValue"
+  [http.middlewares.customheader.headers.customRequestHeaders]
+    X-Custom="CustomValue"

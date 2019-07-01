@@ -45,21 +45,21 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configuration of the provider.
 type Provider struct {
-	Constraints            string           `description:"Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application." export:"true"`
-	Trace                  bool             `description:"Display additional provider logs." export:"true"`
-	Watch                  bool             `description:"Watch provider." export:"true"`
-	Endpoint               string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon." export:"true"`
-	DefaultRule            string           `description:"Default rule."`
-	ExposedByDefault       bool             `description:"Expose Marathon apps by default." export:"true"`
-	DCOSToken              string           `description:"DCOSToken for DCOS environment, This will override the Authorization header." export:"true"`
-	TLS                    *types.ClientTLS `description:"Enable TLS support." export:"true"`
-	DialerTimeout          types.Duration   `description:"Set a dialer timeout for Marathon." export:"true"`
-	ResponseHeaderTimeout  types.Duration   `description:"Set a response header timeout for Marathon." export:"true"`
-	TLSHandshakeTimeout    types.Duration   `description:"Set a TLS handshake timeout for Marathon." export:"true"`
-	KeepAlive              types.Duration   `description:"Set a TCP Keep Alive time." export:"true"`
-	ForceTaskHostname      bool             `description:"Force to use the task's hostname." export:"true"`
-	Basic                  *Basic           `description:"Enable basic authentication." export:"true"`
-	RespectReadinessChecks bool             `description:"Filter out tasks with non-successful readiness checks during deployments." export:"true"`
+	Constraints            string           `description:"Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
+	Trace                  bool             `description:"Display additional provider logs." json:"trace,omitempty" toml:"trace,omitempty" yaml:"trace,omitempty" export:"true"`
+	Watch                  bool             `description:"Watch provider." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
+	Endpoint               string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
+	DefaultRule            string           `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
+	ExposedByDefault       bool             `description:"Expose Marathon apps by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
+	DCOSToken              string           `description:"DCOSToken for DCOS environment, This will override the Authorization header." json:"dcosToken,omitempty" toml:"dcosToken,omitempty" yaml:"dcosToken,omitempty" export:"true"`
+	TLS                    *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	DialerTimeout          types.Duration   `description:"Set a dialer timeout for Marathon." json:"dialerTimeout,omitempty" toml:"dialerTimeout,omitempty" yaml:"dialerTimeout,omitempty" export:"true"`
+	ResponseHeaderTimeout  types.Duration   `description:"Set a response header timeout for Marathon." json:"responseHeaderTimeout,omitempty" toml:"responseHeaderTimeout,omitempty" yaml:"responseHeaderTimeout,omitempty" export:"true"`
+	TLSHandshakeTimeout    types.Duration   `description:"Set a TLS handshake timeout for Marathon." json:"tlsHandshakeTimeout,omitempty" toml:"tlsHandshakeTimeout,omitempty" yaml:"tlsHandshakeTimeout,omitempty" export:"true"`
+	KeepAlive              types.Duration   `description:"Set a TCP Keep Alive time." json:"keepAlive,omitempty" toml:"keepAlive,omitempty" yaml:"keepAlive,omitempty" export:"true"`
+	ForceTaskHostname      bool             `description:"Force to use the task's hostname." json:"forceTaskHostname,omitempty" toml:"forceTaskHostname,omitempty" yaml:"forceTaskHostname,omitempty" export:"true"`
+	Basic                  *Basic           `description:"Enable basic authentication." json:"basic,omitempty" toml:"basic,omitempty" yaml:"basic,omitempty" export:"true"`
+	RespectReadinessChecks bool             `description:"Filter out tasks with non-successful readiness checks during deployments." json:"respectReadinessChecks,omitempty" toml:"respectReadinessChecks,omitempty" yaml:"respectReadinessChecks,omitempty" export:"true"`
 	readyChecker           *readinessChecker
 	marathonClient         marathon.Marathon
 	defaultRuleTpl         *template.Template
@@ -79,8 +79,8 @@ func (p *Provider) SetDefaults() {
 
 // Basic holds basic authentication specific configurations
 type Basic struct {
-	HTTPBasicAuthUser string `description:"Basic authentication User."`
-	HTTPBasicPassword string `description:"Basic authentication Password."`
+	HTTPBasicAuthUser string `description:"Basic authentication User." json:"httpBasicAuthUser,omitempty" toml:"httpBasicAuthUser,omitempty" yaml:"httpBasicAuthUser,omitempty"`
+	HTTPBasicPassword string `description:"Basic authentication Password." json:"httpBasicPassword,omitempty" toml:"httpBasicPassword,omitempty" yaml:"httpBasicPassword,omitempty"`
 }
 
 // Init the provider

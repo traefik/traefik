@@ -18,13 +18,13 @@ const Name = "jaeger"
 
 // Config provides configuration settings for a jaeger tracer
 type Config struct {
-	SamplingServerURL      string  `description:"Set the sampling server url." export:"false"`
-	SamplingType           string  `description:"Set the sampling type." export:"true"`
-	SamplingParam          float64 `description:"Set the sampling parameter." export:"true"`
-	LocalAgentHostPort     string  `description:"Set jaeger-agent's host:port that the reporter will used." export:"false"`
-	Gen128Bit              bool    `description:"Generate 128 bit span IDs." export:"true"`
-	Propagation            string  `description:"Which propgation format to use (jaeger/b3)." export:"true"`
-	TraceContextHeaderName string  `description:"Set the header to use for the trace-id." export:"true"`
+	SamplingServerURL      string  `description:"Set the sampling server url." json:"samplingServerURL,omitempty" toml:"samplingServerURL,omitempty" yaml:"samplingServerURL,omitempty"`
+	SamplingType           string  `description:"Set the sampling type." json:"samplingType,omitempty" toml:"samplingType,omitempty" yaml:"samplingType,omitempty" export:"true"`
+	SamplingParam          float64 `description:"Set the sampling parameter." json:"samplingParam,omitempty" toml:"samplingParam,omitempty" yaml:"samplingParam,omitempty" export:"true"`
+	LocalAgentHostPort     string  `description:"Set jaeger-agent's host:port that the reporter will used." json:"localAgentHostPort,omitempty" toml:"localAgentHostPort,omitempty" yaml:"localAgentHostPort,omitempty"`
+	Gen128Bit              bool    `description:"Generate 128 bit span IDs." json:"gen128Bit,omitempty" toml:"gen128Bit,omitempty" yaml:"gen128Bit,omitempty" export:"true"`
+	Propagation            string  `description:"Which propgation format to use (jaeger/b3)." json:"propagation,omitempty" toml:"propagation,omitempty" yaml:"propagation,omitempty" export:"true"`
+	TraceContextHeaderName string  `description:"Set the header to use for the trace-id." json:"traceContextHeaderName,omitempty" toml:"traceContextHeaderName,omitempty" yaml:"traceContextHeaderName,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.

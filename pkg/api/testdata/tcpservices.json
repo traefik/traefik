@@ -1,6 +1,6 @@
 [
 	{
-		"loadbalancer": {
+		"loadBalancer": {
 			"servers": [
 				{
 					"address": "127.0.0.1:2345"
@@ -15,7 +15,7 @@
 		]
 	},
 	{
-		"loadbalancer": {
+		"loadBalancer": {
 			"servers": [
 				{
 					"address": "127.0.0.2:2345"

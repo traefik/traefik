@@ -8,39 +8,39 @@ http:
       service: application-3
   services:
     application-1:
-      loadbalancer:
+      loadBalancer:
         servers:
           - url: 'http://172.17.0.1:80'
     application-2:
-      loadbalancer:
+      loadBalancer:
         servers:
           - url: 'http://172.17.0.2:80'
     application-3:
-      loadbalancer:
+      loadBalancer:
         servers:
           - url: 'http://172.17.0.3:80'
     application-4:
-      loadbalancer:
+      loadBalancer:
         servers:
           - url: 'http://172.17.0.4:80'
     application-5:
-      loadbalancer:
+      loadBalancer:
         servers:
           - url: 'http://172.17.0.5:80'
     application-6:
-      loadbalancer:
+      loadBalancer:
         servers:
           - url: 'http://172.17.0.6:80'
 
 tls:
   certificates:
-  - certfile: integration/fixtures/https/snitest1.com.cert
-    keyfile: integration/fixtures/https/snitest1.com.key
-  - certfile: integration/fixtures/https/snitest2.com.cert
-    keyfile: integration/fixtures/https/snitest2.com.key
-  - certfile: integration/fixtures/https/snitest3.com.cert
-    keyfile: integration/fixtures/https/snitest3.com.key
-  - certfile: integration/fixtures/https/snitest4.com.cert
-    keyfile: integration/fixtures/https/snitest4.com.key
-  - certfile: integration/fixtures/https/snitest5.com.cert
-    keyfile: integration/fixtures/https/snitest5.com.key
+  - certFile: integration/fixtures/https/snitest1.com.cert
+    keyFile: integration/fixtures/https/snitest1.com.key
+  - certFile: integration/fixtures/https/snitest2.com.cert
+    keyFile: integration/fixtures/https/snitest2.com.key
+  - certFile: integration/fixtures/https/snitest3.com.cert
+    keyFile: integration/fixtures/https/snitest3.com.key
+  - certFile: integration/fixtures/https/snitest4.com.cert
+    keyFile: integration/fixtures/https/snitest4.com.key
+  - certFile: integration/fixtures/https/snitest5.com.cert
+    keyFile: integration/fixtures/https/snitest5.com.key

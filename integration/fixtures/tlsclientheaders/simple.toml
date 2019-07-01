@@ -16,17 +16,18 @@
 
 [providers]
   [providers.docker]
-    endpoint = "unix:///var/run/docker.sock"
     watch = true
 
   [providers.file]
 
+## dynamic configuration ##
+
 [tls.options]
-  [tls.options.default.ClientCA]
+  [tls.options.default.clientCA]
     files = [ """{{ .RootCertContent }}""" ]
     optional = false
 
 [tls.stores]
-  [tls.stores.default.DefaultCertificate]
+  [tls.stores.default.defaultCertificate]
     certFile = """{{ .ServerCertContent }}"""
     keyFile  = """{{ .ServerKeyContent }}"""

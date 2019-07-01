@@ -1,13 +1,13 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [serversTransport]
-# Use certificate in net/internal/testcert.go
-rootCAs =  [ """
+  # Use certificate in net/internal/testcert.go
+  rootCAs =  [ """
 -----BEGIN CERTIFICATE-----
 MIICEzCCAXygAwIBAgIQMIMChMLGrR+QvmQvpwAU6zANBgkqhkiG9w0BAQsFADAS
 MRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw
@@ -26,21 +26,23 @@ fblo6RBxUQ==
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8081"
+    address = ":8081"
 
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
-    Service = "service1"
-    Rule = "Path(`/ping`)"
+    service = "service1"
+    rule = "Path(`/ping`)"
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
+    [http.services.service1.loadBalancer]
 
-      [[http.services.service1.LoadBalancer.Servers]]
-        URL = "{{ .BackendHost }}"
+      [[http.services.service1.loadBalancer.servers]]
+        url = "{{ .BackendHost }}"

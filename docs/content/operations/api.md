@@ -128,19 +128,19 @@ You can define a custom address/port like this:
 ```toml
 [entryPoints]
   [entryPoints.web]
-  address = ":80"
+    address = ":80"
 
   [entryPoints.foo]
-  address = ":8082"
+    address = ":8082"
 
   [entryPoints.bar]
-  address = ":8083"
+    address = ":8083"
 
 [ping]
-entryPoint = "foo"
+  entryPoint = "foo"
 
 [api]
-entryPoint = "bar"
+  entryPoint = "bar"
 ```
 
 In the above example, you would access a service at /foo, an api endpoint, or the health-check as follows:
@@ -160,9 +160,9 @@ To restrict access to the API handler, one can add authentication with the [basi
 
 ```toml
 [http.middlewares]
-  [http.middlewares.api-auth.basicauth]
-  users = [
-    "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-    "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-  ]
+  [http.middlewares.api-auth.basicAuth]
+    users = [
+      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+      "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+    ]
 ```

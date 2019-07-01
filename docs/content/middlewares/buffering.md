@@ -46,7 +46,7 @@ labels:
 # Sets the maximum request body to 2Mb
 [http.middlewares]
   [http.middlewares.limit.buffering]
-      maxRequestBodyBytes = 250000
+    maxRequestBodyBytes = 250000
 ```
 
 ## Configuration Options

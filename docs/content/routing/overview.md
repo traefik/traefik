@@ -38,10 +38,11 @@ Static configuration:
 ```
 
 ```yaml tab="YAML"
-entrypoints:
+entryPoints:
   web:
     # Listen on port 8081 for incoming requests
     address: :8081
+
 providers:
   # Enable the file provider to define routers / middlewares / services in a file
   file: {}
@@ -63,13 +64,13 @@ Dynamic configuration:
 
   [http.middlewares]
     # Define an authentication mechanism
-    [http.middlewares.test-user.basicauth]
+    [http.middlewares.test-user.basicAuth]
       users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"]
 
   [http.services]
     # Define how to reach an existing service on our infrastructure
-    [http.services.whoami.loadbalancer]
-      [[http.services.whoami.loadbalancer.servers]]
+    [http.services.whoami.loadBalancer]
+      [[http.services.whoami.loadBalancer.servers]]
         url = "http://private/whoami-service"
 ```
 
@@ -85,16 +86,18 @@ http:
       - test-user
       # If the rule matches, forward to the whoami service (declared below)
       service: whoami
+
   middlewares:
     # Define an authentication mechanism
     test-user:
       basicAuth:
         users:
         - test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/
+
   services:
     # Define how to reach an existing service on our infrastructure
     whoami:
-      loadbalancer:
+      loadBalancer:
         servers:
         - url: http://private/whoami-service
 ```
@@ -115,17 +118,17 @@ http:
         
         ```toml tab="TOML"
         [entryPoints]
-           [entryPoints.web]
-              # Listen on port 8081 for incoming requests
-              address = ":8081"
+          [entryPoints.web]
+            # Listen on port 8081 for incoming requests
+            address = ":8081"
 
         [providers]
-           # Enable the file provider to define routers / middlewares / services in a file
-           [providers.file]
+          # Enable the file provider to define routers / middlewares / services in a file
+          [providers.file]
         ```
         
         ```yaml tab="YAML"
-        entrypoints:
+        entryPoints:
           web:
             # Listen on port 8081 for incoming requests
             address: :8081
@@ -139,42 +142,43 @@ http:
         ```toml tab="TOML"
         # http routing section
         [http]
-            [http.routers]
-               # Define a connection between requests and services
-               [http.routers.to-whoami]
-                  rule = "Host(`domain`) && PathPrefix(`/whoami/`)"
-                  # If the rule matches, applies the middleware
-                  middlewares = ["test-user"]
-                  # If the rule matches, forward to the whoami service (declared below)
-                  service = "whoami"
+          [http.routers]
+            # Define a connection between requests and services
+            [http.routers.to-whoami]
+              rule = "Host(`domain`) && PathPrefix(`/whoami/`)"
+              # If the rule matches, applies the middleware
+              middlewares = ["test-user"]
+              # If the rule matches, forward to the whoami service (declared below)
+              service = "whoami"
 
-            [http.middlewares]
-               # Define an authentication mechanism
-               [http.middlewares.test-user.basicauth]
-                  users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"]
+          [http.middlewares]
+             # Define an authentication mechanism
+             [http.middlewares.test-user.basicAuth]
+               users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"]
 
-            [http.services]
-               # Define how to reach an existing service on our infrastructure
-               [http.services.whoami.loadbalancer]
-                  [[http.services.whoami.loadbalancer.servers]]
-                     url = "http://private/whoami-service"
+          [http.services]
+             # Define how to reach an existing service on our infrastructure
+             [http.services.whoami.loadBalancer]
+               [[http.services.whoami.loadBalancer.servers]]
+                 url = "http://private/whoami-service"
 
-           [tcp]
-              [tcp.routers]
-                 [tcp.routers.to-whoami-tcp]
-                     rule = "HostSNI(`whoami-tcp.traefik.io`)"
-                     service = "whoami-tcp"
-                     [tcp.routers.to-whoami-tcp.tls]
+        [tcp]
+          [tcp.routers]
+            [tcp.routers.to-whoami-tcp]
+              rule = "HostSNI(`whoami-tcp.traefik.io`)"
+              service = "whoami-tcp"
+              [tcp.routers.to-whoami-tcp.tls]
 
-              [tcp.services]
-                 [tcp.services.whoami-tcp.loadbalancer]
-                    [[tcp.services.whoami-tcp.loadbalancer.servers]]
-                       address = "xx.xx.xx.xx:xx"
+          [tcp.services]
+            [tcp.services.whoami-tcp.loadBalancer]
+              [[tcp.services.whoami-tcp.loadBalancer.servers]]
+                address = "xx.xx.xx.xx:xx"
         ```
         
         ```yaml tab="YAML"
         # http routing section
         http:
+
           routers:
             # Define a connection between requests and services
             to-whoami:
@@ -184,26 +188,30 @@ http:
               - test-user
               # If the rule matches, forward to the whoami service (declared below)
               service: whoami
+
           middlewares:
             # Define an authentication mechanism
             test-user:
               basicAuth:
                 users:
                 - test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/
+
           services:
             # Define how to reach an existing service on our infrastructure
             whoami:
-              loadbalancer:
+              loadBalancer:
                 servers:
                 - url: http://private/whoami-service
         tcp:
+
           routers:
             to-whoami-tcp:
               service: whoami-tcp
               rule: HostSNI(`whoami-tcp.traefik.io`)
+
           services:
             whoami-tcp:
-              loadbalancer:
+              loadBalancer:
                 servers:
                 - address: xx.xx.xx.xx:xx
         ```

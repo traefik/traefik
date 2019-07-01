@@ -1,34 +1,36 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8000"
+    address = ":8000"
 
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
-    Service = "service1"
-    Middlewares = [ "retry" ]
-    Rule = "PathPrefix(`/`)"
+    service = "service1"
+    middlewares = [ "retry" ]
+    rule = "PathPrefix(`/`)"
 
-[http.middlewares.retry.Retry]
-   Attempts = 3
+[http.middlewares.retry.retry]
+  attempts = 3
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
+    [http.services.service1.loadBalancer]
 
-      [[http.services.service1.LoadBalancer.Servers]]
-        URL = "http://{{.WhoamiEndpoint}}:8080"
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{.WhoamiEndpoint}}:8080"
 
-      [[http.services.service1.LoadBalancer.Servers]]
-        URL = "http://{{.WhoamiEndpoint}}:80"
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{.WhoamiEndpoint}}:80"

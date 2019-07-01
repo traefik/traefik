@@ -43,8 +43,8 @@ labels:
 ```toml tab="File"
 # Strip prefix /foobar and /fiibar
 [http.middlewares]
-  [http.middlewares.test-stripprefix.StripPrefix]
-     prefixes = ["/foobar", "/fiibar"]
+  [http.middlewares.test-stripprefix.stripPrefix]
+    prefixes = ["/foobar", "/fiibar"]
 ```
 
 ## Configuration Options

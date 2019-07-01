@@ -199,7 +199,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 			EntryPoint:  "MyEntryPoint",
 			Middlewares: []string{"m1", "m2"},
 		},
-		Datadog: &types.Datadog{
+		DataDog: &types.DataDog{
 			Address:      "localhost:8181",
 			PushInterval: 12,
 		},

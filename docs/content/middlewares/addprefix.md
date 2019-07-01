@@ -41,8 +41,8 @@ labels:
 ```toml tab="File"
 # Prefixing with /foo
 [http.middlewares]
-  [http.middlewares.add-foo.AddPrefix]
-     prefix = "/foo"
+  [http.middlewares.add-foo.addPrefix]
+    prefix = "/foo"
 ```
 
 ## Configuration Options

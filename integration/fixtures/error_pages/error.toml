@@ -1,35 +1,37 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8080"
+    address = ":8080"
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
-    Rule = "Host(`test.local`)"
+    rule = "Host(`test.local`)"
     service = "service1"
     middlewares = ["error"]
 
 [http.middlewares]
-    [http.middlewares.error.errors]
-        status = ["500-502", "503-599"]
-        service = "error"
-        query = "/50x.html"
+  [http.middlewares.error.errors]
+    status = ["500-502", "503-599"]
+    service = "error"
+    query = "/50x.html"
 
 [http.services]
-  [http.services.service1.loadbalancer]
+  [http.services.service1.loadBalancer]
     passHostHeader = true
-    [[http.services.service1.loadbalancer.servers]]
-        url = "http://{{.Server1}}:8989474"
+    [[http.services.service1.loadBalancer.servers]]
+      url = "http://{{.Server1}}:8989474"
 
-  [http.services.error.loadbalancer]
-    [[http.services.error.loadbalancer.servers]]
-        url = "http://{{.Server2}}:80"
+  [http.services.error.loadBalancer]
+    [[http.services.error.loadBalancer.servers]]
+      url = "http://{{.Server2}}:80"

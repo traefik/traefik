@@ -19,7 +19,7 @@ var _ provider.Provider = (*Provider)(nil)
 // Provider is a provider.Provider implementation that provides a Rest API.
 type Provider struct {
 	configurationChan chan<- config.Message
-	EntryPoint        string `description:"EntryPoint." export:"true"`
+	EntryPoint        string `description:"EntryPoint." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.

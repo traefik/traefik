@@ -54,7 +54,7 @@
 	},
 	"services": {
 		"foo-service@myprovider": {
-			"loadbalancer": {
+			"loadBalancer": {
 				"servers": [
 					{
 						"url": "http://127.0.0.1"
@@ -86,7 +86,7 @@
 	},
 	"tcpServices": {
 		"tcpfoo-service@myprovider": {
-			"loadbalancer": {
+			"loadBalancer": {
 				"servers": [
 					{
 						"address": "127.0.0.1"

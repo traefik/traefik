@@ -1,19 +1,20 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web-secure]
     address = ":4443"
 
-
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
@@ -22,11 +23,11 @@ level = "DEBUG"
     [http.routers.router1.tls]
 
 [http.services]
-  [http.services.service1.loadbalancer]
-    [[http.services.service1.loadbalancer.servers]]
-    url = "h2c://127.0.0.1:{{ .GRPCServerPort }}"
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "h2c://127.0.0.1:{{ .GRPCServerPort }}"
 
 [tls.stores]
-  [tls.stores.default.DefaultCertificate]
+  [tls.stores.default.defaultCertificate]
     certFile = """{{ .CertContent }}"""
     keyFile  = """{{ .KeyContent }}"""

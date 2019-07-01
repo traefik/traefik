@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web-secure]
@@ -12,7 +12,9 @@ level = "DEBUG"
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
@@ -27,8 +29,8 @@ level = "DEBUG"
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
-      [[http.services.service1.LoadBalancer.Servers]]
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
         url = "http://127.0.0.1:9010"
 
 [[tls.certificates]]
@@ -36,6 +38,6 @@ level = "DEBUG"
   keyFile = "fixtures/https/uppercase_wildcard.www.snitest.com.key"
 
 [tls.stores]
-  [tls.stores.default.DefaultCertificate]
+  [tls.stores.default.defaultCertificate]
     certFile = "fixtures/https/wildcard.snitest.com.cert"
     keyFile = "fixtures/https/wildcard.snitest.com.key"

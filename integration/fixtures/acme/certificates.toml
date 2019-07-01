@@ -1,6 +1,6 @@
 [http.services]
-  [http.services.test.loadbalancer]
-    [[http.services.test.loadbalancer.servers]]
+  [http.services.test.loadBalancer]
+    [[http.services.test.loadBalancer.servers]]
       url = "http://127.0.0.1:9010"
 
 [http.routers]

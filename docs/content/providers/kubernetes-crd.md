@@ -33,7 +33,7 @@ In this case, the endpoint is required.
 Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication and authorization of the associated kubeconfig.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   endpoint = "http://localhost:8080"
   # ...
 ```
@@ -50,7 +50,7 @@ _Optional, Default=empty_
 Bearer token used for the Kubernetes client configuration.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   token = "mytoken"
   # ...
 ```
@@ -68,7 +68,7 @@ Path to the certificate authority file.
 Used for the Kubernetes client configuration.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   certAuthFilePath = "/my/ca.crt"
   # ...
 ```
@@ -85,7 +85,7 @@ _Optional, Default: all namespaces (empty array)_
 Array of namespaces to watch.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   namespaces = ["default", "production"]
   # ...
 ```
@@ -105,7 +105,7 @@ A label selector can be defined to filter on specific Ingress objects only.
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   labelselector = "A and not B"
   # ...
 ```
@@ -125,7 +125,7 @@ If the parameter is non-empty, only Ingresses containing an annotation with the 
 Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   ingressClass = "traefik-internal"
   # ...
 ```
