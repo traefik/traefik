@@ -1677,7 +1677,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:62afa19ba5d4c75369a1d6446688e33ef3c04a40aeedd819cf044a509747b563"
+  digest = "1:4d0fb9f19b2af3461e900a526395330403b39d839f126b66312215f153892ccc"
   name = "golang.org/x/net"
   packages = [
     "bpf",
@@ -1685,6 +1685,7 @@
     "context/ctxhttp",
     "http/httpguts",
     "http2",
+    "http2/h2c",
     "http2/hpack",
     "idna",
     "internal/iana",
@@ -1699,7 +1700,7 @@
     "websocket",
   ]
   pruneopts = "NUT"
-  revision = "e514e69ffb8bc3c76a71ae40de0118d794855992"
+  revision = "da137c7871d730100384dbcf36e6f8fa493aef5b"
 
 [[projects]]
   branch = "master"
@@ -2301,9 +2302,8 @@
     "github.com/vulcand/oxy/roundrobin",
     "github.com/vulcand/oxy/utils",
     "github.com/vulcand/predicate",
-    "golang.org/x/net/http/httpguts",
     "golang.org/x/net/http2",
-    "golang.org/x/net/http2/hpack",
+    "golang.org/x/net/http2/h2c",
     "golang.org/x/net/websocket",
     "google.golang.org/grpc",
     "google.golang.org/grpc/credentials",

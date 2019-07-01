@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package h2c implements the h2c part of HTTP/2.
+// Package h2c implements the unencrypted "h2c" form of HTTP/2.
 //
-// The h2c protocol is the non-TLS secured version of HTTP/2 which is not
-// available from net/http.
+// The h2c protocol is the non-TLS version of HTTP/2 which is not available from
+// net/http or golang.org/x/net/http2.
 package h2c
 
 import (
@@ -16,13 +16,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/textproto"
 	"os"
 	"strings"
-
-	"github.com/containous/traefik/pkg/log"
 
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2"
@@ -40,44 +39,64 @@ func init() {
 	}
 }
 
-// Server implements net.Handler and enables h2c. Users who want h2c just need
-// to provide an http.Server.
-type Server struct {
-	*http.Server
+// h2cHandler is a Handler which implements h2c by hijacking the HTTP/1 traffic
+// that should be h2c traffic. There are two ways to begin a h2c connection
+// (RFC 7540 Section 3.2 and 3.4): (1) Starting with Prior Knowledge - this
+// works by starting an h2c connection with a string of bytes that is valid
+// HTTP/1, but unlikely to occur in practice and (2) Upgrading from HTTP/1 to
+// h2c - this works by using the HTTP/1 Upgrade header to request an upgrade to
+// h2c. When either of those situations occur we hijack the HTTP/1 connection,
+// convert it to a HTTP/2 connection and pass the net.Conn to http2.ServeConn.
+type h2cHandler struct {
+	Handler http.Handler
+	s       *http2.Server
 }
 
-// Serve Put a middleware around the original handler to handle h2c
-func (s Server) Serve(l net.Listener) error {
-	originalHandler := s.Server.Handler
-	if originalHandler == nil {
-		originalHandler = http.DefaultServeMux
+// NewHandler returns an http.Handler that wraps h, intercepting any h2c
+// traffic. If a request is an h2c connection, it's hijacked and redirected to
+// s.ServeConn. Otherwise the returned Handler just forwards requests to h. This
+// works because h2c is designed to be parseable as valid HTTP/1, but ignored by
+// any HTTP server that does not handle h2c. Therefore we leverage the HTTP/1
+// compatible parts of the Go http library to parse and recognize h2c requests.
+// Once a request is recognized as h2c, we hijack the connection and convert it
+// to an HTTP/2 connection which is understandable to s.ServeConn. (s.ServeConn
+// understands HTTP/2 except for the h2c part of it.)
+func NewHandler(h http.Handler, s *http2.Server) http.Handler {
+	return &h2cHandler{
+		Handler: h,
+		s:       s,
 	}
-	s.Server.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "PRI" && r.URL.Path == "*" && r.Proto == "HTTP/2.0" {
+}
+
+// ServeHTTP implement the h2c support that is enabled by h2c.GetH2CHandler.
+func (s h2cHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Handle h2c with prior knowledge (RFC 7540 Section 3.4)
+	if r.Method == "PRI" && len(r.Header) == 0 && r.URL.Path == "*" && r.Proto == "HTTP/2.0" {
+		if http2VerboseLogs {
+			log.Print("h2c: attempting h2c with prior knowledge.")
+		}
+		conn, err := initH2CWithPriorKnowledge(w)
+		if err != nil {
 			if http2VerboseLogs {
-				log.Debugf("Attempting h2c with prior knowledge.")
+				log.Printf("h2c: error h2c with prior knowledge: %v", err)
 			}
-			conn, err := initH2CWithPriorKnowledge(w)
-			if err != nil {
-				if http2VerboseLogs {
-					log.Debugf("Error h2c with prior knowledge: %v", err)
-				}
-				return
-			}
-			defer conn.Close()
-			h2cSrv := &http2.Server{}
-			h2cSrv.ServeConn(conn, &http2.ServeConnOpts{Handler: originalHandler})
 			return
 		}
-		if conn, err := h2cUpgrade(w, r); err == nil {
-			defer conn.Close()
-			h2cSrv := &http2.Server{}
-			h2cSrv.ServeConn(conn, &http2.ServeConnOpts{Handler: originalHandler})
-			return
-		}
-		originalHandler.ServeHTTP(w, r)
-	})
-	return s.Server.Serve(l)
+		defer conn.Close()
+
+		s.s.ServeConn(conn, &http2.ServeConnOpts{Handler: s.Handler})
+		return
+	}
+	// Handle Upgrade to h2c (RFC 7540 Section 3.2)
+	if conn, err := h2cUpgrade(w, r); err == nil {
+		defer conn.Close()
+
+		s.s.ServeConn(conn, &http2.ServeConnOpts{Handler: s.Handler})
+		return
+	}
+
+	s.Handler.ServeHTTP(w, r)
+	return
 }
 
 // initH2CWithPriorKnowledge implements creating a h2c connection with prior
@@ -88,25 +107,25 @@ func (s Server) Serve(l net.Listener) error {
 func initH2CWithPriorKnowledge(w http.ResponseWriter) (net.Conn, error) {
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
-		return nil, errors.New("hijack not supported")
+		panic("Hijack not supported.")
 	}
 	conn, rw, err := hijacker.Hijack()
 	if err != nil {
-		return nil, fmt.Errorf("hijack failed: %v", err)
+		panic(fmt.Sprintf("Hijack failed: %v", err))
 	}
 
-	expectedBody := "SM\r\n\r\n"
+	const expectedBody = "SM\r\n\r\n"
 
 	buf := make([]byte, len(expectedBody))
 	n, err := io.ReadFull(rw, buf)
 	if err != nil {
-		return nil, fmt.Errorf("fail to read body: %v", err)
+		return nil, fmt.Errorf("could not read from the buffer: %s", err)
 	}
 
-	if bytes.Equal(buf[0:n], []byte(expectedBody)) {
+	if string(buf[:n]) == expectedBody {
 		c := &rwConn{
 			Conn:      conn,
-			Reader:    io.MultiReader(bytes.NewBuffer([]byte(http2.ClientPreface)), rw),
+			Reader:    io.MultiReader(strings.NewReader(http2.ClientPreface), rw),
 			BufWriter: rw.Writer,
 		}
 		return c, nil
@@ -114,8 +133,8 @@ func initH2CWithPriorKnowledge(w http.ResponseWriter) (net.Conn, error) {
 
 	conn.Close()
 	if http2VerboseLogs {
-		log.Infof(
-			"Missing the request body portion of the client preface. Wanted: %v Got: %v",
+		log.Printf(
+			"h2c: missing the request body portion of the client preface. Wanted: %v Got: %v",
 			[]byte(expectedBody),
 			buf[0:n],
 		)
@@ -127,13 +146,13 @@ func initH2CWithPriorKnowledge(w http.ResponseWriter) (net.Conn, error) {
 // the supplied reader.
 func drainClientPreface(r io.Reader) error {
 	var buf bytes.Buffer
-	prefaceLen := int64(len([]byte(http2.ClientPreface)))
+	prefaceLen := int64(len(http2.ClientPreface))
 	n, err := io.CopyN(&buf, r, prefaceLen)
 	if err != nil {
 		return err
 	}
 	if n != prefaceLen || buf.String() != http2.ClientPreface {
-		return fmt.Errorf("client never sent: %s", http2.ClientPreface)
+		return fmt.Errorf("Client never sent: %s", http2.ClientPreface)
 	}
 	return nil
 }
@@ -152,7 +171,7 @@ func h2cUpgrade(w http.ResponseWriter, r *http.Request) (net.Conn, error) {
 
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
-		return nil, errors.New("hijack not supported")
+		return nil, errors.New("hijack not supported.")
 	}
 	conn, rw, err := hijacker.Hijack()
 	if err != nil {
@@ -277,7 +296,7 @@ func (c *rwConn) Write(p []byte) (int, error) {
 	return n, err
 }
 
-// settingsAckSwallowWriter is a writer that normally forwards bytes to it's
+// settingsAckSwallowWriter is a writer that normally forwards bytes to its
 // underlying Writer, but swallows the first SettingsAck frame that it sees.
 type settingsAckSwallowWriter struct {
 	Writer     *bufio.Writer
@@ -313,7 +332,7 @@ func (w *settingsAckSwallowWriter) Write(p []byte) (int, error) {
 			}
 			fSize := fh.Length + 9
 			if uint32(len(w.buf)) < fSize {
-				// Have not collected whole frame. Stop processing buf, and withhold on
+				// Have not collected whole frame. Stop processing buf, and withold on
 				// forward bytes to w.Writer until we get the full frame.
 				break
 			}
@@ -364,7 +383,7 @@ func getH2Settings(h http.Header) ([]http2.Setting, error) {
 	}
 	settings, err := decodeSettings(vals[0])
 	if err != nil {
-		return nil, fmt.Errorf("invalid HTTP2-Settings: %q", vals[0])
+		return nil, fmt.Errorf("Invalid HTTP2-Settings: %q", vals[0])
 	}
 	return settings, nil
 }
