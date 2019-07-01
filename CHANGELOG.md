@@ -1,5 +1,28 @@
 # Change Log
 
+## [v2.0.0-alpha8](https://github.com/containous/traefik/tree/v2.0.0-alpha8) (2019-07-01)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha7...v2.0.0-alpha8)
+
+**Enhancements:**
+- **[api]** Adding content-header to api endpoints ([#5019](https://github.com/containous/traefik/pull/5019) by [dalanmiller](https://github.com/dalanmiller))
+- **[file]** Support YAML for the dynamic configuration. ([#5024](https://github.com/containous/traefik/pull/5024) by [ldez](https://github.com/ldez))
+- **[logs]** Drop headers by default in access logs. ([#5034](https://github.com/containous/traefik/pull/5034) by [ldez](https://github.com/ldez))
+- **[middleware,k8s/crd]** Handle cross-provider middleware in kubernetes CRD ([#5009](https://github.com/containous/traefik/pull/5009) by [mpl](https://github.com/mpl))
+- **[server]** Use h2c from x/net to handle h2c requests ([#5045](https://github.com/containous/traefik/pull/5045) by [juliens](https://github.com/juliens))
+- **[server]** Make HTTP Keep-Alive timeout configurable for backend connections ([#4983](https://github.com/containous/traefik/pull/4983) by [mszabo-wikia](https://github.com/mszabo-wikia))
+- **[tls]** Define a TLS section to group TLS, TLSOptions, and TLSStores. ([#5031](https://github.com/containous/traefik/pull/5031) by [ldez](https://github.com/ldez))
+- **[tracing]** Improve tracing ([#5010](https://github.com/containous/traefik/pull/5010) by [mmatur](https://github.com/mmatur))
+
+**Bug fixes:**
+- **[cli]** Change the loading resource order ([#5007](https://github.com/containous/traefik/pull/5007) by [ldez](https://github.com/ldez))
+- **[logs]** fix: error log message. ([#5020](https://github.com/containous/traefik/pull/5020) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** doc/crd-acme: specify required kubectl version ([#5015](https://github.com/containous/traefik/pull/5015) by [mpl](https://github.com/mpl))
+- **[middleware]** Improve middleware documentation. ([#5003](https://github.com/containous/traefik/pull/5003) by [ldez](https://github.com/ldez))
+- **[server]** Add gRPC user guide ([#5042](https://github.com/containous/traefik/pull/5042) by [ldez](https://github.com/ldez))
+- Use the same case everywhere ([#5043](https://github.com/containous/traefik/pull/5043) by [ldez](https://github.com/ldez))
+
 ## [v2.0.0-alpha7](https://github.com/containous/traefik/tree/v2.0.0-alpha7) (2019-06-21)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha6...v2.0.0-alpha7)
 
