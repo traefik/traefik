@@ -10,13 +10,14 @@ import (
 
 	"github.com/armon/go-proxyproto"
 	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/h2c"
 	"github.com/containous/traefik/pkg/ip"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/middlewares/forwardedheaders"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/containous/traefik/pkg/tcp"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 type httpForwarder struct {
@@ -336,7 +337,10 @@ type httpServer struct {
 
 func createHTTPServer(ln net.Listener, configuration *static.EntryPoint, withH2c bool) (*httpServer, error) {
 	httpSwitcher := middlewares.NewHandlerSwitcher(buildDefaultHTTPRouter())
-	handler, err := forwardedheaders.NewXForwarded(
+
+	var handler http.Handler
+	var err error
+	handler, err = forwardedheaders.NewXForwarded(
 		configuration.ForwardedHeaders.Insecure,
 		configuration.ForwardedHeaders.TrustedIPs,
 		httpSwitcher)
@@ -344,18 +348,12 @@ func createHTTPServer(ln net.Listener, configuration *static.EntryPoint, withH2c
 		return nil, err
 	}
 
-	var serverHTTP stoppableServer
-
 	if withH2c {
-		serverHTTP = &h2c.Server{
-			Server: &http.Server{
-				Handler: handler,
-			},
-		}
-	} else {
-		serverHTTP = &http.Server{
-			Handler: handler,
-		}
+		handler = h2c.NewHandler(handler, &http2.Server{})
+	}
+
+	serverHTTP := &http.Server{
+		Handler: handler,
 	}
 
 	listener := newHTTPForwarder(ln)
