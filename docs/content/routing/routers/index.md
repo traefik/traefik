@@ -50,22 +50,46 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
     ```
 
 ??? example "Forwarding all (non-tls) requests on port 3306 to a database service"
-
-    ```toml
-      [entryPoints]
-        [entryPoints.mysql-default]
-          address = ":80"
-        [entryPoints.mysql-default]
-          address = ":3306"   
+    
+    ```toml tab="TOML"
+    ## Static configuration ##
+    
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+      [entryPoints.mysql-default]
+        address = ":3306"   
+    
+    ## Dynamic configuration ##
+    
+    [tcp]
+      [tcp.routers]
+        [tcp.routers.to-database]
+          entryPoints = ["mysql-default"]
+          # Catch every request (only available rule for non-tls routers. See below.)
+          rule = "HostSNI(`*`)"
+          service = "database"
     ```
     
-    ```toml
-      [tcp]
-        [tcp.routers]
-          [tcp.routers.to-database]
-            entryPoints = ["mysql-default"]
-            rule = "HostSNI(`*`)" # Catch every request (only available rule for non-tls routers. See below.)
-            service = "database"
+    ```yaml tab="YAML"
+    ## Static configuration ##
+    
+    entryPoints:
+      web:
+        address: ":80"
+      mysql-default:
+        address: ":3306"   
+    
+    ## Dynamic configuration ##
+    
+    tcp:
+      routers:
+        to-database:
+          entryPoints:
+          - "mysql-default"
+          # Catch every request (only available rule for non-tls routers. See below.)
+          rule: "HostSNI(`*`)"
+          service: database
     ```
 
 ## Configuring HTTP Routers
@@ -76,8 +100,10 @@ If not specified, HTTP routers will accept requests from all defined entry point
 If you want to limit the router scope to a set of entry points, set the `entryPoints` option.
 
 ??? example "Listens to Every EntryPoint"
-
-    ```toml
+    
+    ```toml tab="TOML"
+    ## Static configuration ##
+    
     [entryPoints]
       [entryPoints.web]
         # ...
@@ -85,19 +111,43 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
         # ...
       [entryPoints.other]
         # ...
-    ```
     
-    ```toml
+    
+    ## Dynamic configuration ##
+        
     [http.routers]
       [http.routers.Router-1]
-        # By default, routers listen to every entrypoints
+        # By default, routers listen to every entry points
         rule = "Host(`traefik.io`)"
         service = "service-1"
+    ```
+    
+    ```yaml tab="YAML"
+    ## Static configuration ##
+    
+    entryPoints:
+      web:
+        # ...
+      web-secure:
+        # ...
+      other:
+        # ...
+    
+    ## Dynamic configuration ##
+        
+    http:
+      routers:
+        Router-1:
+          # By default, routers listen to every entry points
+          rule: "Host(`traefik.io`)"
+          service: "service-1"
     ```
 
 ??? example "Listens to Specific EntryPoints"
-
-    ```toml
+    
+    ```toml tab="TOML"
+    ## Static configuration ##
+    
     [entryPoints]
       [entryPoints.web]
         # ...
@@ -105,14 +155,39 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
         # ...
       [entryPoints.other]
         # ...
-    ```
+        
+    ## Dynamic configuration ##
     
-    ```toml
     [http.routers]
       [http.routers.Router-1]
-        entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
+        # won't listen to entry point web
+        entryPoints = ["web-secure", "other"]
         rule = "Host(`traefik.io`)"
         service = "service-1"
+    ```
+    
+    ```yaml tab="YAML"
+    ## Static configuration ##
+    
+    entryPoints:
+      web:
+        # ...
+      web-secure:
+        # ...
+      other:
+        # ...
+        
+    ## Dynamic configuration ##
+    
+    http:
+      routers:
+        Router-1:
+          # won't listen to entry point web
+          entryPoints:
+          - "web-secure"
+          - "other"
+          rule: "Host(`traefik.io`)"
+          service: "service-1"
     ```
 
 ### Rule
@@ -196,7 +271,7 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
         rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
         service = "service-id"
         # will terminate the TLS request
-        [http.routers.Router-1.tls
+        [http.routers.Router-1.tls]
     ```
     
     ```yaml tab="YAML"
@@ -229,7 +304,7 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
             rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
             service = "service-id"
             # will terminate the TLS request
-            [http.routers.my-https-router.tls
+            [http.routers.my-https-router.tls]
 
           [http.routers.my-http-router]
             rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
@@ -262,7 +337,8 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
       [http.routers.Router-1]
         rule = "Host(`foo-domain`) && Path(`/foo-path/`)"
         service = "service-id"
-        [http.routers.Router-1.tls] # will terminate the TLS request
+        # will terminate the TLS request
+        [http.routers.Router-1.tls]
           options = "foo"
     
     [tls.options]
@@ -307,7 +383,9 @@ If you want to limit the router scope to a set of entry points, set the entry po
 
 ??? example "Listens to Every Entry Point"
 
-    ```toml
+    ```toml tab="TOML"
+    ## Static configuration ##
+    
     [entryPoints]
       [entryPoints.web]
         # ...
@@ -315,20 +393,46 @@ If you want to limit the router scope to a set of entry points, set the entry po
         # ...
       [entryPoints.other]
         # ...
-    ```
     
-    ```toml
+    ## Dynamic configuration ##
+    
     [tcp.routers]
       [tcp.routers.Router-1]
         # By default, routers listen to every entrypoints
         rule = "HostSNI(`traefik.io`)"
         service = "service-1"
-        [tcp.routers.Router-1.tls] # will route TLS requests (and ignore non tls requests)
+        # will route TLS requests (and ignore non tls requests)
+        [tcp.routers.Router-1.tls]
+    ```
+    
+    ```yaml tab="YAML"
+    ## Static configuration ##
+    
+    entryPoints:
+      web:
+        # ...
+      web-secure:
+        # ...
+      other:
+        # ...
+    
+    ## Dynamic configuration ##
+    
+    tcp:
+      routers:
+        Router-1:
+          # By default, routers listen to every entrypoints
+          rule: "HostSNI(`traefik.io`)"
+          service: "service-1"
+          # will route TLS requests (and ignore non tls requests)
+          tls: {}
     ```
 
 ??? example "Listens to Specific Entry Points"
-
-    ```toml
+    
+    ```toml tab="TOML"
+    ## Static configuration ##
+    
     [entryPoints]
       [entryPoints.web]
         # ...
@@ -336,15 +440,43 @@ If you want to limit the router scope to a set of entry points, set the entry po
         # ...
       [entryPoints.other]
         # ...
-    ```
-
-    ```toml
+        
+    ## Dynamic configuration ##
+    
     [tcp.routers]
       [tcp.routers.Router-1]
-        entryPoints = ["web-secure", "other"] # won't listen to entrypoint web
+        # won't listen to entry point web
+        entryPoints = ["web-secure", "other"]
         rule = "HostSNI(`traefik.io`)"
         service = "service-1"
-        [tcp.routers.Router-1.tls] # will route TLS requests (and ignore non tls requests)
+        # will route TLS requests (and ignore non tls requests)
+        [tcp.routers.Router-1.tls]
+    ```
+    
+    ```yaml tab="YAML"
+    ## Static configuration ##
+    
+    entryPoints:
+      web:
+        # ...
+      web-secure:
+        # ...
+      other:
+        # ...
+        
+    ## Dynamic configuration ##
+    
+    tcp:
+      routers:
+        Router-1:
+          # won't listen to entry point web
+          entryPoints:
+          - "web-secure"
+          - "other"
+          rule: "HostSNI(`traefik.io`)"
+          service: "service-1"
+          # will route TLS requests (and ignore non tls requests)
+          tls: {}
     ```
 
 ### Rule
