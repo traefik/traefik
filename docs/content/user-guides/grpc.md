@@ -15,7 +15,7 @@ This section explains how to use Traefik as reverse proxy for gRPC application.
 
 [api]
     
-[provider.file]
+[providers.file]
 
 ## dynamic configuration ##
 
@@ -28,8 +28,8 @@ This section explains how to use Traefik as reverse proxy for gRPC application.
     
   [http.services]
     [http.services.srv-grpc]
-      [http.services.srv-grpc.loadbalancer]
-        [[http.services.srv-grpc.loadbalancer.servers]]
+      [http.services.srv-grpc.loadBalancer]
+        [[http.services.srv-grpc.loadBalancer.servers]]
           url = "h2c://backend.local:8080"
 ```
 
@@ -55,7 +55,7 @@ http:
 
   services:
     srv-grpc:
-      loadbalancer:
+      loadBalancer:
         servers:
         - url: h2c://backend.local:8080
 ```
