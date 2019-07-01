@@ -92,7 +92,7 @@ labels:
     [http.middlewares.testHeader.headers.customRequestHeaders]
         X-Script-Name = "test" # Adds
         X-Custom-Request-Header = "" # Removes
-    [http.middlewares.testHeader.headers.chustomResponseHeaders]
+    [http.middlewares.testHeader.headers.customResponseHeaders]
         X-Custom-Response-Header = "" # Removes
 ```
 

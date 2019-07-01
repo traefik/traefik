@@ -61,7 +61,7 @@ The `users` option is an array of authorized users. Each user will be declared u
     
     If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
 
-### `uersFile`
+### `usersFile`
 
 The `usersFile` option is the path to an external file that contains the authorized users for the middleware.
 

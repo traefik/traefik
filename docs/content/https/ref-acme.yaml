@@ -27,14 +27,7 @@ acme:
   #
   # overrideCertificates: true
 
-  # Deprecated. Enable on demand certificate generation.
-  #
-  # Optional
-  # Default: false
-  #
-  # onDemand: true
-
-  # Enable certificate generation on frontends host rules.
+  # Enable certificate generation on routers host rules.
   #
   # Optional
   # Default: false
