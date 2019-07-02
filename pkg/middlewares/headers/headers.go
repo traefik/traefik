@@ -129,40 +129,9 @@ func NewHeader(next http.Handler, headers dynamic.Headers) *Header {
 }
 
 func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if s.hasCorsHeaders {
-		reqAcMethod := req.Header.Get("Access-Control-Request-Method")
-		reqAcHeaders := req.Header.Get("Access-Control-Request-Headers")
-		originHeader := req.Header.Get("Origin")
-
-		if reqAcMethod != "" && reqAcHeaders != "" && originHeader != "" && req.Method == http.MethodOptions {
-			// If the request is an OPTIONS request with an Access-Control-Request-Method header, and  Access-Control-Request-Headers headers,
-			// and Origin headers, then it is a CORS preflight request, and we need to build a custom response: https://www.w3.org/TR/cors/#preflight-request
-			if s.headers.AccessControlAllowCredentials {
-				rw.Header().Set("Access-Control-Allow-Credentials", "true")
-			}
-
-			allowHeaders := strings.Join(s.headers.AccessControlAllowHeaders, ",")
-			if allowHeaders != "" {
-				rw.Header().Set("Access-Control-Allow-Headers", allowHeaders)
-			}
-
-			allowMethods := strings.Join(s.headers.AccessControlAllowMethods, ",")
-			if allowMethods != "" {
-				rw.Header().Set("Access-Control-Allow-Methods", allowMethods)
-			}
-
-			allowOrigin := s.getAllowOrigin(originHeader)
-
-			if allowOrigin != "" {
-				rw.Header().Set("Access-Control-Allow-Origin", allowOrigin)
-			}
-
-			rw.Header().Set("Access-Control-Max-Age", strconv.Itoa(int(s.headers.AccessControlMaxAge)))
-
-			return
-		}
-		s.preRequestModifyCorsResponseHeaders(rw, req)
-
+	// Handle Cors headers and preflight if configured.
+	if isPreflight := s.processCorsHeaders(rw, req); isPreflight {
+		return
 	}
 
 	if s.hasCustomHeaders {
@@ -238,6 +207,49 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 
 	res.Header.Set("Vary", varyHeader)
 	return nil
+}
+
+// processCorsHeaders processes the incoming request, and returns if
+// it is a preflight request. If not a preflight, it handles
+// the preRequestModifyCorsResponseHeaders.
+func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) bool {
+	if !s.hasCorsHeaders {
+		return false
+	}
+
+	reqAcMethod := req.Header.Get("Access-Control-Request-Method")
+	reqAcHeaders := req.Header.Get("Access-Control-Request-Headers")
+	originHeader := req.Header.Get("Origin")
+
+	if reqAcMethod != "" && reqAcHeaders != "" && originHeader != "" && req.Method == http.MethodOptions {
+		// If the request is an OPTIONS request with an Access-Control-Request-Method header, and  Access-Control-Request-Headers headers,
+		// and Origin headers, then it is a CORS preflight request, and we need to build a custom response: https://www.w3.org/TR/cors/#preflight-request
+		if s.headers.AccessControlAllowCredentials {
+			rw.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
+
+		allowHeaders := strings.Join(s.headers.AccessControlAllowHeaders, ",")
+		if allowHeaders != "" {
+			rw.Header().Set("Access-Control-Allow-Headers", allowHeaders)
+		}
+
+		allowMethods := strings.Join(s.headers.AccessControlAllowMethods, ",")
+		if allowMethods != "" {
+			rw.Header().Set("Access-Control-Allow-Methods", allowMethods)
+		}
+
+		allowOrigin := s.getAllowOrigin(originHeader)
+
+		if allowOrigin != "" {
+			rw.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+		}
+
+		rw.Header().Set("Access-Control-Max-Age", strconv.Itoa(int(s.headers.AccessControlMaxAge)))
+		return true
+	}
+
+	s.preRequestModifyCorsResponseHeaders(rw, req)
+	return false
 }
 
 func (s *Header) getAllowOrigin(header string) string {
