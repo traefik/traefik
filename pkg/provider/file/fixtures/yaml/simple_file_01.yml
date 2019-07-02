@@ -1,0 +1,46 @@
+http:
+  routers:
+    router1:
+      service: application-1
+    router2:
+      service: application-2
+    router3:
+      service: application-3
+  services:
+    application-1:
+      loadBalancer:
+        servers:
+          - url: 'http://172.17.0.1:80'
+    application-2:
+      loadBalancer:
+        servers:
+          - url: 'http://172.17.0.2:80'
+    application-3:
+      loadBalancer:
+        servers:
+          - url: 'http://172.17.0.3:80'
+    application-4:
+      loadBalancer:
+        servers:
+          - url: 'http://172.17.0.4:80'
+    application-5:
+      loadBalancer:
+        servers:
+          - url: 'http://172.17.0.5:80'
+    application-6:
+      loadBalancer:
+        servers:
+          - url: 'http://172.17.0.6:80'
+
+tls:
+  certificates:
+  - certFile: integration/fixtures/https/snitest1.com.cert
+    keyFile: integration/fixtures/https/snitest1.com.key
+  - certFile: integration/fixtures/https/snitest2.com.cert
+    keyFile: integration/fixtures/https/snitest2.com.key
+  - certFile: integration/fixtures/https/snitest3.com.cert
+    keyFile: integration/fixtures/https/snitest3.com.key
+  - certFile: integration/fixtures/https/snitest4.com.cert
+    keyFile: integration/fixtures/https/snitest4.com.key
+  - certFile: integration/fixtures/https/snitest5.com.cert
+    keyFile: integration/fixtures/https/snitest5.com.key

@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.tcp]
@@ -13,28 +13,29 @@ level = "DEBUG"
 
 [providers.file]
 
-[tcp]
-    [tcp.routers]
-       [tcp.routers.to-whoami-no-tls]
-          entryPoints = ["tcp"]
-          rule="HostSNI(`*`)"
-          service = "whoami-no-tls"
+## dynamic configuration ##
 
-    [tcp.services]
-        [tcp.services.whoami-no-tls.loadbalancer]
-          [[tcp.services.whoami-no-tls.loadbalancer.servers]]
-            address = "localhost:8086"
+[tcp]
+  [tcp.routers]
+    [tcp.routers.to-whoami-no-tls]
+      entryPoints = ["tcp"]
+      rule = "HostSNI(`*`)"
+      service = "whoami-no-tls"
+
+  [tcp.services]
+    [tcp.services.whoami-no-tls.loadBalancer]
+      [[tcp.services.whoami-no-tls.loadBalancer.servers]]
+        address = "localhost:8086"
 
 [http]
-    [http.routers]
-       [http.routers.to-whoami]
-          entryPoints = ["tcp"]
-          rule="PathPrefix(`/`)"
-          service = "whoami"
-          [http.routers.to-whoami.tls]
+  [http.routers]
+    [http.routers.to-whoami]
+      entryPoints = ["tcp"]
+      rule="PathPrefix(`/`)"
+      service = "whoami"
+      [http.routers.to-whoami.tls]
 
-
-    [http.services]
-          [http.services.whoami.loadbalancer]
-            [[http.services.whoami.loadbalancer.servers]]
-              url = "http://localhost:8085"
+  [http.services]
+    [http.services.whoami.loadBalancer]
+      [[http.services.whoami.loadBalancer.servers]]
+        url = "http://localhost:8085"

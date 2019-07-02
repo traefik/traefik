@@ -55,8 +55,8 @@ labels:
 ```toml tab="File"
 # Latency Check
 [http.middlewares]
-   [http.middlewares.latency-check.circuitBreaker]
-      expression = "LatencyAtQuantileMS(50.0) > 100"
+  [http.middlewares.latency-check.circuitBreaker]
+    expression = "LatencyAtQuantileMS(50.0) > 100"
 ```
 
 ## Possible States
@@ -66,7 +66,7 @@ There are three possible states for your circuit breaker:
 - Close (your service operates normally)
 - Open (the fallback mechanism takes over your service)
 - Recovering (the circuit breaker tries to resume normal operations by progressively sending requests to your service)
-   
+
 ### Close
 
 While close, the circuit breaker only collects metrics to analyze the behavior of the requests.
@@ -95,7 +95,7 @@ The `expression` can check three different metrics:
 - The network error ratio (`NetworkErrorRatio`)
 - The status code ratio (`ResponseCodeRatio`)
 - The latency at quantile, in milliseconds (`LatencyAtQuantileMS`)
-   
+
 #### `NetworkErrorRatio`
 
 If you want the circuit breaker to trigger at a 30% ratio of network errors, the expression will be `NetworkErrorRatio() > 0.30`
@@ -151,7 +151,7 @@ Here is the list of supported operators:
 ### Fallback mechanism
 
 The fallback mechanism returns a `HTTP 503 Service Unavailable` to the client (instead of calling the target service). This behavior cannot be configured. 
-   
+
 ### `CheckPeriod`
 
 The interval used to evaluate `expression` and decide if the state of the circuit breaker must change. By default, `CheckPeriod` is 100Ms. This value cannot be configured.

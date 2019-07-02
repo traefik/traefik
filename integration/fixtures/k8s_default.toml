@@ -1,15 +1,14 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
-
-[log]
-level = "DEBUG"
-
-[entryPoints]
-  [entryPoints.web]
-     address = ":8000"
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [api]
 
-[Providers]
-   [Providers.Kubernetes]
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.kubernetes]

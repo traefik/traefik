@@ -1,0 +1,8 @@
+http:
+  services:
+{{ range $i, $e := until 20 }}
+    application-{{ $e }}:
+      loadBalancer:
+        servers:
+          - url: 'http://127.0.0.1'
+{{ end }}

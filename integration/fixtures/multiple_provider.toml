@@ -1,32 +1,31 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
-     address = ":8000"
+    address = ":8000"
 
 [api]
 
 [providers]
-   [providers.docker]
-      endpoint = "unix:///var/run/docker.sock"
-      watch = true
-      exposedByDefault = false
+  [providers.docker]
+    watch = true
+    exposedByDefault = false
 
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router-1]
-    Service = "service-test"
-    Rule = "PathPrefix(`/file`)"
+    service = "service-test"
+    rule = "PathPrefix(`/file`)"
 
 [http.services]
-  [http.services.service-test]
-    [http.services.service-test.LoadBalancer]
-
-      [[http.services.service-test.LoadBalancer.Servers]]
-        URL = "http://{{ .IP }}"
+  [http.services.service-test.loadBalancer]
+    [[http.services.service-test.loadBalancer.servers]]
+      url = "http://{{ .IP }}"

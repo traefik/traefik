@@ -40,7 +40,7 @@ labels:
 ```toml tab="File"
 # Enable gzip compression
 [http.middlewares]
-  [http.middlewares.test-compress.Compress]
+  [http.middlewares.test-compress.compress]
 ```
 
 ## Notes

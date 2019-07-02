@@ -1,7 +1,7 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [entryPoints]
   [entryPoints.web]
-     address = ":8000"
+    address = ":8000"

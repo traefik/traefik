@@ -32,22 +32,22 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint               string           `description:"Kubernetes server endpoint (required for external cluster client)."`
-	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)."`
-	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)."`
-	DisablePassHostHeaders bool             `description:"Kubernetes disable PassHost Headers." export:"true"`
-	Namespaces             []string         `description:"Kubernetes namespaces." export:"true"`
-	LabelSelector          string           `description:"Kubernetes Ingress label selector to use." export:"true"`
-	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for." export:"true"`
-	IngressEndpoint        *EndpointIngress `description:"Kubernetes Ingress Endpoint."`
+	Endpoint               string           `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
+	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	DisablePassHostHeaders bool             `description:"Kubernetes disable PassHost Headers." json:"disablePassHostHeaders,omitempty" toml:"disablePassHostHeaders,omitempty" yaml:"disablePassHostHeaders,omitempty" export:"true"`
+	Namespaces             []string         `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector          string           `description:"Kubernetes Ingress label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	IngressEndpoint        *EndpointIngress `description:"Kubernetes Ingress Endpoint." json:"ingressEndpoint,omitempty" toml:"ingressEndpoint,omitempty" yaml:"ingressEndpoint,omitempty"`
 	lastConfiguration      safe.Safe
 }
 
 // EndpointIngress holds the endpoint information for the Kubernetes provider
 type EndpointIngress struct {
-	IP               string `description:"IP used for Kubernetes Ingress endpoints."`
-	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints."`
-	PublishedService string `description:"Published Kubernetes Service to copy status from."`
+	IP               string `description:"IP used for Kubernetes Ingress endpoints." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
+	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
+	PublishedService string `description:"Published Kubernetes Service to copy status from." json:"publishedService,omitempty" toml:"publishedService,omitempty" yaml:"publishedService,omitempty"`
 }
 
 func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string) (*clientWrapper, error) {
@@ -257,7 +257,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	ingresses := client.GetIngresses()
 
-	tlsConfigs := make(map[string]*tls.Configuration)
+	tlsConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
 		ctx = log.With(ctx, log.Str("ingress", ingress.Name), log.Str("namespace", ingress.Namespace))
 
@@ -341,7 +341,13 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		}
 	}
 
-	conf.TLS = getTLSConfig(tlsConfigs)
+	certs := getTLSConfig(tlsConfigs)
+	if len(certs) > 0 {
+		conf.TLS = &config.TLSConfiguration{
+			Certificates: certs,
+		}
+	}
+
 	return conf
 }
 
@@ -350,7 +356,7 @@ func shouldProcessIngress(ingressClass string, ingressClassAnnotation string) bo
 		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
 }
 
-func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.Configuration) error {
+func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
 	for _, t := range ingress.Spec.TLS {
 		if t.SecretName == "" {
 			log.FromContext(ctx).Debugf("Skipping TLS sub-section: No secret name provided")
@@ -372,8 +378,8 @@ func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tls
 				return err
 			}
 
-			tlsConfigs[configKey] = &tls.Configuration{
-				Certificate: &tls.Certificate{
+			tlsConfigs[configKey] = &tls.CertAndStores{
+				Certificate: tls.Certificate{
 					CertFile: tls.FileOrContent(cert),
 					KeyFile:  tls.FileOrContent(key),
 				},
@@ -384,14 +390,14 @@ func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tls
 	return nil
 }
 
-func getTLSConfig(tlsConfigs map[string]*tls.Configuration) []*tls.Configuration {
+func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores {
 	var secretNames []string
 	for secretName := range tlsConfigs {
 		secretNames = append(secretNames, secretName)
 	}
 	sort.Strings(secretNames)
 
-	var configs []*tls.Configuration
+	var configs []*tls.CertAndStores
 	for _, secretName := range secretNames {
 		configs = append(configs, tlsConfigs[secretName])
 	}

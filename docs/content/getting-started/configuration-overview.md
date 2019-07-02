@@ -6,7 +6,7 @@ How the Magic Happens
 ![Configuration](../assets/img/static-dynamic-configuration.png)
 
 Configuration in Traefik can refer to two different things:
-   
+
 - The fully dynamic routing configuration (referred to as the _dynamic configuration_)
 - The startup configuration (referred to as the _static configuration_)
 
@@ -24,7 +24,7 @@ This configuration can change and is seamlessly hot-reloaded, without any reques
 Traefik gets its _dynamic configuration_ from [providers](../providers/overview.md): whether an orchestrator, a service registry, or a plain old configuration file. Since this configuration is specific to your infrastructure choices, we invite you to refer to the [dedicated section of this documentation](../providers/overview.md).
 
 !!! Note 
-   
+
     In the [Quick Start example](../getting-started/quick-start.md), the dynamic configuration comes from docker in the form of labels attached to your containers.
     
 !!! Note
@@ -49,7 +49,12 @@ Once positioned, this option sets (and resets) all the default values of the sub
     
 ### Configuration File
 
-At startup, Traefik searches for a file named `traefik.toml` in `/etc/traefik/`, `$XDG_CONFIG_HOME/`, `$HOME/.config/`, and `.` (_the working directory_).
+At startup, Traefik searches for a file named `traefik.toml` (or `traefik.yml` or `traefik.yaml`) in:
+
+- `/etc/traefik/`
+- `$XDG_CONFIG_HOME/`
+- `$HOME/.config/`
+- `.` (_the working directory_).
 
 You can override this using the `configFile` argument.
 

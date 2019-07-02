@@ -1,10 +1,10 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "ERROR"
-filePath = "traefik.log"
+  level = "ERROR"
+  filePath = "traefik.log"
 
 [accessLog]
   filePath = "access.log"
@@ -24,7 +24,7 @@ filePath = "traefik.log"
 [api]
 
 [providers]
-   [providers.docker]
-     exposedByDefault = false
-     defaultRule = "Host(`{{ normalize .Name }}.docker.local`)"
-     watch = true
+  [providers.docker]
+    exposedByDefault = false
+    defaultRule = "Host(`{{ normalize .Name }}.docker.local`)"
+    watch = true

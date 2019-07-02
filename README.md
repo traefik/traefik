@@ -104,7 +104,6 @@ A collection of contributions around Traefik can be found at [https://awesome.tr
 
 To get community support, you can:
 - join the Traefik community forum: [![Join the chat at https://community.containo.us/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.containo.us/)
-- use [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
 
 If you need commercial support, please contact [Containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
 

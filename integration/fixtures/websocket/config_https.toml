@@ -1,35 +1,38 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [serversTransport]
-insecureSkipVerify=true
+  insecureSkipVerify=true
 
 [entryPoints]
   [entryPoints.wss]
-  address = ":8000"
+    address = ":8000"
 
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
-    Service = "service1"
-    Rule = "Path(`/echo`,`/ws`)"
+    service = "service1"
+    rule = "Path(`/echo`,`/ws`)"
     [http.routers.router1.tls]
 
 [http.services]
   [http.services.service1]
-    [http.services.service1.LoadBalancer]
-      PassHostHeader = true
-      [[http.services.service1.LoadBalancer.Servers]]
-        URL = "{{ .WebsocketServer }}"
+    [http.services.service1.loadBalancer]
+      passHostHeader = true
+      [[http.services.service1.loadBalancer.servers]]
+        url = "{{ .WebsocketServer }}"
 
-[tlsStores.default.DefaultCertificate]
+[tls.stores]
+  [tls.stores.default.defaultCertificate]
     certFile = "resources/tls/local.cert"
     keyFile = "resources/tls/local.key"

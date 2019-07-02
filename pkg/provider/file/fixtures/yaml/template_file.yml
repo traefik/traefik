@@ -1,0 +1,6 @@
+http:
+{{ range $i, $e := until 20 }}
+  routers:
+    router{{ $e }}:
+      service: application-1
+{{ end }}

@@ -41,7 +41,7 @@ labels:
 ```toml tab="File"
 # Retry to send request 4 times
 [http.middlewares]
-  [http.middlewares.test-retry.Retry]
+  [http.middlewares.test-retry.retry]
      attempts = 4
 ```
 

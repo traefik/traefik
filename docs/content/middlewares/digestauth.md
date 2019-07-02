@@ -53,7 +53,7 @@ labels:
 
 ## Configuration Options
 
-### `Users`
+### `users`
 
 The `users` option is an array of authorized users. Each user will be declared using the `name:realm:encoded-password` format.
 
@@ -61,7 +61,7 @@ The `users` option is an array of authorized users. Each user will be declared u
     
     If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
 
-### `UsersFile`
+### `usersFile`
 
 The `usersFile` option is the path to an external file that contains the authorized users for the middleware.
 
@@ -78,11 +78,11 @@ The file content is a list of `name:realm:encoded-password`.
     
     If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
 
-### `Realm`
+### `realm`
 
 You can customize the realm for the authentication with the `realm` option. The default value is `traefik`. 
 
-### `HeaderField`
+### `headerField`
 
 You can customize the header field for the authenticated user using the `headerField`option.
 
@@ -121,6 +121,6 @@ labels:
   headerField = "X-WebAuth-User"
 ```
 
-### `RemoveHeader`
+### `removeHeader`
 
 Set the `removeHeader` option to `true` to remove the authorization header before forwarding the request to your service. (Default value is `false`.)

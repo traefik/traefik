@@ -702,11 +702,13 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: []*tls.Configuration{
-					{
-						Certificate: &tls.Certificate{
-							CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-							KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+				TLS: &config.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+							},
 						},
 					},
 				},
@@ -973,7 +975,7 @@ func TestGetTLS(t *testing.T) {
 		desc      string
 		ingress   *v1beta1.Ingress
 		client    Client
-		result    map[string]*tls.Configuration
+		result    map[string]*tls.CertAndStores
 		errResult string
 	}{
 		{
@@ -1080,15 +1082,15 @@ func TestGetTLS(t *testing.T) {
 					},
 				},
 			},
-			result: map[string]*tls.Configuration{
+			result: map[string]*tls.CertAndStores{
 				"testing/test-secret": {
-					Certificate: &tls.Certificate{
+					Certificate: tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),
 					},
 				},
 				"testing/test-secret2": {
-					Certificate: &tls.Certificate{
+					Certificate: tls.Certificate{
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),
 					},
@@ -1099,7 +1101,7 @@ func TestGetTLS(t *testing.T) {
 			desc:    "return nil when no secret is defined",
 			ingress: testIngressWithoutSecret,
 			client:  clientMock{},
-			result:  map[string]*tls.Configuration{},
+			result:  map[string]*tls.CertAndStores{},
 		},
 	}
 
@@ -1108,7 +1110,7 @@ func TestGetTLS(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			tlsConfigs := map[string]*tls.Configuration{}
+			tlsConfigs := map[string]*tls.CertAndStores{}
 			err := getTLS(context.Background(), test.ingress, test.client, tlsConfigs)
 
 			if test.errResult != "" {

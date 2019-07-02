@@ -33,7 +33,7 @@ In this case, the endpoint is required.
 Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication and authorization of the associated kubeconfig.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   endpoint = "http://localhost:8080"
   # ...
 ```
@@ -50,7 +50,7 @@ _Optional, Default=empty_
 Bearer token used for the Kubernetes client configuration.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   token = "mytoken"
   # ...
 ```
@@ -68,7 +68,7 @@ Path to the certificate authority file.
 Used for the Kubernetes client configuration.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   certAuthFilePath = "/my/ca.crt"
   # ...
 ```
@@ -85,7 +85,7 @@ _Optional, Default: all namespaces (empty array)_
 Array of namespaces to watch.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   namespaces = ["default", "production"]
   # ...
 ```
@@ -105,7 +105,7 @@ A label selector can be defined to filter on specific Ingress objects only.
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   labelselector = "A and not B"
   # ...
 ```
@@ -125,7 +125,7 @@ If the parameter is non-empty, only Ingresses containing an annotation with the 
 Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
 
 ```toml tab="File"
-[Providers.KubernetesCRD]
+[providers.kubernetesCRD]
   ingressClass = "traefik-internal"
   # ...
 ```
@@ -203,6 +203,7 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: stripprefix
+  namespace: foo
 
 spec:
   stripPrefix:
@@ -226,13 +227,21 @@ spec:
       port: 80
     middlewares:
     - name: stripprefix
+      namespace: foo
 ```
+
+!!! important "Cross-provider namespace"
+
+	As Kubernetes also has its own notion of namespace, one should not confuse the kubernetes namespace of a resource
+(in the reference to the middleware) with the [provider namespace](../middlewares/overview.md#provider-namespace),
+when the definition of the middleware is from another provider.
+In this context, specifying a namespace when referring to the resource does not make any sense, and will be ignored.
 
 More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
 
-### Traefik TLS Option Definition
+### TLS Option
 
-Additionally, to allow for the use of tls options in an IngressRoute, we defined the CRD below for the TLSOption kind.
+Additionally, to allow for the use of TLS options in an IngressRoute, we defined the CRD below for the TLSOption kind.
 More information about TLS Options is available in the dedicated [TLS Configuration Options](../../https/tls/#tls-options).
 
 ```yaml
@@ -272,8 +281,14 @@ spec:
       namespace: default
 ```
 
-!!! note "TLS Option reference and namespace"
+!!! important "References and namespaces"
+
     If the optional `namespace` attribute is not set, the configuration will be applied with the namespace of the IngressRoute.
+
+	Additionally, when the definition of the TLS option is from another provider,
+the cross-provider syntax (`middlewarename@provider`) should be used to refer to the TLS option,
+just as in the [middleware case](../middlewares/overview.md#provider-namespace).
+Specifying a namespace attribute in this case would not make any sense, and will be ignored.
 
 ### TLS
 

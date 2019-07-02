@@ -1,21 +1,21 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8000"
+    address = ":8000"
 
 [api]
 
 [providers]
-   [providers.docker]
-      exposedByDefault = false
-      defaultRule = "Host(`{{ normalize .Name }}.docker.local`)"
-      watch = true
+  [providers.docker]
+    exposedByDefault = false
+    defaultRule = "Host(`{{ normalize .Name }}.docker.local`)"
+    watch = true
 
 [hostResolver]
-cnameFlattening = true
+  cnameFlattening = true

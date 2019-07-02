@@ -4,6 +4,6 @@
     service = "service1"
 
 [http.services]
-  [http.services.service1.loadbalancer]
-    [[http.services.service1.loadbalancer.servers]]
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
       url = "http://172.17.0.2:80"

@@ -1,0 +1,244 @@
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: true
+serversTransport:
+  insecureSkipVerify: true
+  rootCAs:
+    - foobar
+    - foobar
+  maxIdleConnsPerHost: 42
+  forwardingTimeouts:
+    dialTimeout: 42000000000
+    responseHeaderTimeout: 42000000000
+    idleConnTimeout: 42000000000
+entryPoints:
+  EntryPoint0:
+    address: foobar
+    transport:
+      lifeCycle:
+        requestAcceptGraceTimeout: 42000000000
+        graceTimeOut: 42000000000
+      respondingTimeouts:
+        readTimeout: 42000000000
+        writeTimeout: 42000000000
+        idleTimeout: 42000000000
+    proxyProtocol:
+      insecure: true
+      trustedIPs:
+        - foobar
+        - foobar
+    forwardedHeaders:
+      insecure: true
+      trustedIPs:
+        - foobar
+        - foobar
+providers:
+  providersThrottleDuration: 42000000000
+  docker:
+    constraints: foobar
+    watch: true
+    endpoint: foobar
+    defaultRule: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+    exposedByDefault: true
+    useBindPortIP: true
+    swarmMode: true
+    network: foobar
+    swarmModeRefreshSeconds: 42000000000
+  file:
+    directory: foobar
+    watch: true
+    filename: foobar
+    debugLogGeneratedTemplate: true
+    traefikFile: foobar
+  marathon:
+    constraints: foobar
+    trace: true
+    watch: true
+    endpoint: foobar
+    defaultRule: foobar
+    exposedByDefault: true
+    dcosToken: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+    dialerTimeout: 42000000000
+    responseHeaderTimeout: 42000000000
+    tlsHandshakeTimeout: 42000000000
+    keepAlive: 42000000000
+    forceTaskHostname: true
+    basic:
+      httpBasicAuthUser: foobar
+      httpBasicPassword: foobar
+    respectReadinessChecks: true
+  kubernetes:
+    endpoint: foobar
+    token: foobar
+    certAuthFilePath: foobar
+    disablePassHostHeaders: true
+    namespaces:
+      - foobar
+      - foobar
+    labelSelector: foobar
+    ingressClass: foobar
+    ingressEndpoint:
+      ip: foobar
+      hostname: foobar
+      publishedService: foobar
+  kubernetesCRD:
+    endpoint: foobar
+    token: foobar
+    certAuthFilePath: foobar
+    disablePassHostHeaders: true
+    namespaces:
+      - foobar
+      - foobar
+    labelSelector: foobar
+    ingressClass: foobar
+  rest:
+    entryPoint: foobar
+  rancher:
+    constraints: foobar
+    watch: true
+    defaultRule: foobar
+    exposedByDefault: true
+    enableServiceHealthFilter: true
+    refreshSeconds: 42
+    intervalPoll: true
+    prefix: foobar
+api:
+  entryPoint: foobar
+  dashboard: true
+  statistics:
+    recentErrors: 42
+  middlewares:
+    - foobar
+    - foobar
+metrics:
+  prometheus:
+    buckets:
+      - 42
+      - 42
+    entryPoint: foobar
+    middlewares:
+      - foobar
+      - foobar
+  dataDog:
+    address: foobar
+    pushInterval: 10000000000
+  statsD:
+    address: foobar
+    pushInterval: 10000000000
+  influxDB:
+    address: foobar
+    protocol: foobar
+    pushInterval: 10000000000
+    database: foobar
+    retentionPolicy: foobar
+    username: foobar
+    password: foobar
+ping:
+  entryPoint: foobar
+  middlewares:
+    - foobar
+    - foobar
+log:
+  level: foobar
+  filePath: foobar
+  format: foobar
+accessLog:
+  filePath: foobar
+  format: foobar
+  filters:
+    statusCodes:
+      - foobar
+      - foobar
+    retryAttempts: true
+    minDuration: 42000000000
+  fields:
+    defaultMode: foobar
+    names:
+      name0: foobar
+      name1: foobar
+    headers:
+      defaultMode: foobar
+      names:
+        name0: foobar
+        name1: foobar
+  bufferingSize: 42
+tracing:
+  serviceName: foobar
+  spanNameLimit: 42
+  jaeger:
+    samplingServerURL: foobar
+    samplingType: foobar
+    samplingParam: 42
+    localAgentHostPort: foobar
+    gen128Bit: true
+    propagation: foobar
+    traceContextHeaderName: foobar
+  zipkin:
+    httpEndpoint: foobar
+    sameSpan: true
+    id128Bit: true
+    debug: true
+    sampleRate: 42
+  dataDog:
+    localAgentHostPort: foobar
+    globalTag: foobar
+    debug: true
+    prioritySampling: true
+    traceIDHeaderName: foobar
+    parentIDHeaderName: foobar
+    samplingPriorityHeaderName: foobar
+    bagagePrefixHeaderName: foobar
+  instana:
+    localAgentHost: foobar
+    localAgentPort: 42
+    logLevel: foobar
+  haystack:
+    localAgentHost: foobar
+    localAgentPort: 42
+    globalTag: foobar
+    traceIDHeaderName: foobar
+    parentIDHeaderName: foobar
+    spanIDHeaderName: foobar
+hostResolver:
+  cnameFlattening: true
+  resolvConfig: foobar
+  resolvDepth: 42
+acme:
+  email: foobar
+  acmeLogging: true
+  caServer: foobar
+  storage: foobar
+  entryPoint: foobar
+  keyType: foobar
+  onHostRule: true
+  dnsChallenge:
+    provider: foobar
+    delayBeforeCheck: 42000000000
+    resolvers:
+      - foobar
+      - foobar
+    disablePropagationCheck: true
+  httpChallenge:
+    entryPoint: foobar
+  tlsChallenge: {}
+  domains:
+    - main: foobar
+      sans:
+        - foobar
+        - foobar
+    - main: foobar
+      sans:
+        - foobar
+        - foobar

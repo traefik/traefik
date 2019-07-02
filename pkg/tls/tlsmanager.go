@@ -17,8 +17,8 @@ import (
 type Manager struct {
 	storesConfig  map[string]Store
 	stores        map[string]*CertificateStore
-	configs       map[string]TLS
-	certs         []*Configuration
+	configs       map[string]Options
+	certs         []*CertAndStores
 	TLSAlpnGetter func(string) (*tls.Certificate, error)
 	lock          sync.RWMutex
 }
@@ -29,7 +29,7 @@ func NewManager() *Manager {
 }
 
 // UpdateConfigs updates the TLS* configuration options
-func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]TLS, certs []*Configuration) {
+func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]Options, certs []*CertAndStores) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
@@ -153,7 +153,7 @@ func buildCertificateStore(tlsStore Store) (*CertificateStore, error) {
 }
 
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI
-func buildTLSConfig(tlsOption TLS) (*tls.Config, error) {
+func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 	conf := &tls.Config{}
 
 	// ensure http2 enabled

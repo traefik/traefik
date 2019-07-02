@@ -1,0 +1,281 @@
+http:
+  routers:
+    Router0:
+      entryPoints:
+        - foobar
+        - foobar
+      middlewares:
+        - foobar
+        - foobar
+      service: foobar
+      rule: foobar
+      priority: 42
+      tls: {}
+  middlewares:
+    Middleware0:
+      addPrefix:
+        prefix: foobar
+    Middleware1:
+      stripPrefix:
+        prefixes:
+          - foobar
+          - foobar
+    Middleware2:
+      stripPrefixRegex:
+        regex:
+          - foobar
+          - foobar
+    Middleware3:
+      replacePath:
+        path: foobar
+    Middleware4:
+      replacePathRegex:
+        regex: foobar
+        replacement: foobar
+    Middleware5:
+      chain:
+        middlewares:
+          - foobar
+          - foobar
+    Middleware6:
+      ipWhiteList:
+        sourceRange:
+          - foobar
+          - foobar
+    Middleware7:
+      ipWhiteList:
+        ipStrategy:
+          depth: 42
+          excludedIPs:
+            - foobar
+            - foobar
+    Middleware8:
+      headers:
+        customRequestHeaders:
+          name0: foobar
+          name1: foobar
+        customResponseHeaders:
+          name0: foobar
+          name1: foobar
+        accessControlAllowCredentials: true
+        accessControlAllowHeaders:
+          - foobar
+          - foobar
+        accessControlAllowMethods:
+          - foobar
+          - foobar
+        accessControlAllowOrigin: foobar
+        accessControlExposeHeaders:
+          - foobar
+          - foobar
+        accessControlMaxAge: 42
+        addVaryHeader: true
+        allowedHosts:
+          - foobar
+          - foobar
+        hostsProxyHeaders:
+          - foobar
+          - foobar
+        sslRedirect: true
+        sslTemporaryRedirect: true
+        sslHost: foobar
+        sslProxyHeaders:
+          name0: foobar
+          name1: foobar
+        sslForceHost: true
+        stsSeconds: 42
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        frameDeny: true
+        customFrameOptionsValue: foobar
+        contentTypeNosniff: true
+        browserXssFilter: true
+        customBrowserXSSValue: foobar
+        contentSecurityPolicy: foobar
+        publicKey: foobar
+        referrerPolicy: foobar
+        isDevelopment: true
+    Middleware9:
+      errors:
+        status:
+          - foobar
+          - foobar
+        service: foobar
+        query: foobar
+    Middleware10:
+      rateLimit:
+        rateSet:
+          Rate0:
+            period: 42000000000
+            average: 42
+            burst: 42
+          Rate1:
+            period: 42000000000
+            average: 42
+            burst: 42
+        extractorFunc: foobar
+    Middleware11:
+      redirectRegex:
+        regex: foobar
+        replacement: foobar
+        permanent: true
+    Middleware12:
+      redirectScheme:
+        scheme: foobar
+        port: foobar
+        permanent: true
+    Middleware13:
+      basicAuth:
+        users:
+          - foobar
+          - foobar
+        usersFile: foobar
+        realm: foobar
+        removeHeader: true
+        headerField: foobar
+    Middleware14:
+      digestAuth:
+        users:
+          - foobar
+          - foobar
+        usersFile: foobar
+        removeHeader: true
+        realm: foobar
+        headerField: foobar
+    Middleware15:
+      forwardAuth:
+        address: foobar
+        tls:
+          ca: foobar
+          caOptional: true
+          cert: foobar
+          key: foobar
+          insecureSkipVerify: true
+        trustForwardHeader: true
+        authResponseHeaders:
+          - foobar
+          - foobar
+    Middleware16:
+      maxConn:
+        amount: 42
+        extractorFunc: foobar
+    Middleware17:
+      buffering:
+        maxRequestBodyBytes: 42
+        memRequestBodyBytes: 42
+        maxResponseBodyBytes: 42
+        memResponseBodyBytes: 42
+        retryExpression: foobar
+    Middleware18:
+      circuitBreaker:
+        expression: foobar
+    Middleware19:
+      compress: {}
+    Middleware20:
+      passTLSClientCert:
+        pem: true
+        info:
+          notAfter: true
+          notBefore: true
+          sans: true
+          subject:
+            country: true
+            province: true
+            locality: true
+            organization: true
+            commonName: true
+            serialNumber: true
+            domainComponent: true
+          issuer:
+            country: true
+            province: true
+            locality: true
+            organization: true
+            commonName: true
+            serialNumber: true
+            domainComponent: true
+    Middleware21:
+      retry:
+        attemps: 42
+  services:
+    Service0:
+      loadBalancer:
+        stickiness:
+          cookieName: foobar
+        servers:
+          - url: foobar
+          - url: foobar
+        healthCheck:
+          scheme: foobar
+          path: foobar
+          port: 42
+          interval: foobar
+          timeout: foobar
+          hostname: foobar
+          headers:
+            name0: foobar
+            name1: foobar
+        passHostHeader: true
+        responseForwarding:
+          flushInterval: foobar
+tcp:
+  routers:
+    TCPRouter0:
+      entryPoints:
+        - foobar
+        - foobar
+      service: foobar
+      rule: foobar
+      tls:
+        passthrough: true
+  services:
+    TCPService0:
+      loadBalancer:
+        servers:
+          - address: foobar
+          - address: foobar
+tls:
+  certificates:
+    - certFile: foobar
+      keyFile: foobar
+      stores:
+        - foobar
+        - foobar
+    - certFile: foobar
+      keyFile: foobar
+      stores:
+        - foobar
+        - foobar
+  options:
+    TLS0:
+      minVersion: foobar
+      cipherSuites:
+        - foobar
+        - foobar
+      clientCA:
+        files:
+          - foobar
+          - foobar
+        optional: true
+      sniStrict: true
+    TLS1:
+      minVersion: foobar
+      cipherSuites:
+        - foobar
+        - foobar
+      clientCA:
+        files:
+          - foobar
+          - foobar
+        optional: true
+      sniStrict: true
+  stores:
+    Store0:
+      defaultCertificate:
+        certFile: foobar
+        keyFile: foobar
+    Store1:
+      defaultCertificate:
+        certFile: foobar
+        keyFile: foobar

@@ -895,7 +895,6 @@ func TestHandlerHTTP_API(t *testing.T) {
 			assert.JSONEq(t, string(data), string(contents))
 		})
 	}
-
 }
 
 func TestHandler_Configuration(t *testing.T) {

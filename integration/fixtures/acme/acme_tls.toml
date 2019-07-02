@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
@@ -40,20 +40,23 @@ level = "DEBUG"
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.services]
-  [http.services.test.loadbalancer]
-    [[http.services.test.loadbalancer.servers]]
-    url = "http://127.0.0.1:9010"
+  [http.services.test.loadBalancer]
+    [[http.services.test.loadBalancer.servers]]
+      url = "http://127.0.0.1:9010"
 
 [http.routers]
   [http.routers.test]
-  entryPoints = ["web-secure"]
-  rule = "Host(`traefik.acme.wtf`)"
-  service = "test"
-  [http.routers.test.tls]
+    entryPoints = ["web-secure"]
+    rule = "Host(`traefik.acme.wtf`)"
+    service = "test"
+    [http.routers.test.tls]
 
-[tlsStores.default.defaultCertificate]
-      certFile = "fixtures/acme/ssl/wildcard.crt"
-      keyFile = "fixtures/acme/ssl/wildcard.key"
+[tls.stores]
+  [tls.stores.default.defaultCertificate]
+    certFile = "fixtures/acme/ssl/wildcard.crt"
+    keyFile = "fixtures/acme/ssl/wildcard.key"

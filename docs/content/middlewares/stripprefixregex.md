@@ -41,7 +41,7 @@ labels:
 ```toml tab="File"
 # Replace the path by /foo
 [http.middlewares]
-  [http.middlewares.test-stripprefixregex.StripPrefixRegex]
+  [http.middlewares.test-stripprefixregex.stripPrefixRegex]
      regex: "^/foo/(.*)"
 ```
 
@@ -56,7 +56,7 @@ The StripPrefixRegex middleware will:
 
 !!! tip
     
-    Use a `StripPrefixRegex` middleware if your backend listens on the root path (`/`) but should be routeable on a specific prefix.
+    Use a `stripPrefixRegex` middleware if your backend listens on the root path (`/`) but should be routeable on a specific prefix.
 
 ### `regex`
 

@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.tcp]
@@ -13,58 +13,59 @@ level = "DEBUG"
 
 [providers.file]
 
+## dynamic configuration ##
+
 [http]
-    [http.routers]
-       [http.routers.my-router]
-          rule = "Path(`/test`)"
-          service = "whoami"
-          entrypoint=["tcp"]
-
+  [http.routers]
+    [http.routers.my-router]
+     rule = "Path(`/test`)"
+     service = "whoami"
+     entrypoint=["tcp"]
+     
     [http.routers.my-https-router]
-       entryPoints=["tcp"]
-       rule = "Path(`/whoami/`)"
-       service = "whoami"
-       [http.routers.my-https-router.tls]
+      entryPoints=["tcp"]
+      rule = "Path(`/whoami/`)"
+      service = "whoami"
+      [http.routers.my-https-router.tls]
 
-    [http.services]
-          [http.services.whoami.loadbalancer]
-            [[http.services.whoami.loadbalancer.servers]]
-              url = "http://localhost:8085"
+  [http.services]
+    [http.services.whoami.loadBalancer]
+      [[http.services.whoami.loadBalancer.servers]]
+        url = "http://localhost:8085"
 [tcp]
-    [tcp.routers]
-        [tcp.routers.to-whoami-a]
-            rule = "HostSNI(`whoami-a.test`)"
-            service = "whoami-a"
-            entryPoints = [ "tcp" ]
-            [tcp.routers.to-whoami-a.tls]
-                passthrough=true
+  [tcp.routers]
+    [tcp.routers.to-whoami-a]
+      rule = "HostSNI(`whoami-a.test`)"
+      service = "whoami-a"
+      entryPoints = [ "tcp" ]
+      [tcp.routers.to-whoami-a.tls]
+        passthrough=true
 
-        [tcp.routers.to-whoami-b]
-            rule = "HostSNI(`whoami-b.test`)"
-            service = "whoami-b"
-            entryPoints = [ "tcp" ]
-            [tcp.routers.to-whoami-b.tls]
-                passthrough=true
+    [tcp.routers.to-whoami-b]
+      rule = "HostSNI(`whoami-b.test`)"
+      service = "whoami-b"
+      entryPoints = [ "tcp" ]
+      [tcp.routers.to-whoami-b.tls]
+        passthrough=true
 
-        [tcp.routers.to-whoami-no-cert]
-            rule = "HostSNI(`whoami-c.test`)"
-            service = "whoami-no-cert"
-            entryPoints = [ "tcp" ]
-            [tcp.routers.to-whoami-no-cert.tls]
+    [tcp.routers.to-whoami-no-cert]
+      rule = "HostSNI(`whoami-c.test`)"
+      service = "whoami-no-cert"
+      entryPoints = [ "tcp" ]
+      [tcp.routers.to-whoami-no-cert.tls]
 
-        [tcp.services.whoami-a.loadbalancer]
-            [[tcp.services.whoami-a.loadbalancer.servers]]
-                address = "localhost:8081"
+    [tcp.services.whoami-a.loadBalancer]
+      [[tcp.services.whoami-a.loadBalancer.servers]]
+        address = "localhost:8081"
 
-        [tcp.services.whoami-b.loadbalancer]
-            [[tcp.services.whoami-b.loadbalancer.servers]]
-                address = "localhost:8082"
+    [tcp.services.whoami-b.loadBalancer]
+      [[tcp.services.whoami-b.loadBalancer.servers]]
+        address = "localhost:8082"
 
-        [tcp.services.whoami-no-cert.loadbalancer]
-            [[tcp.services.whoami-no-cert.loadbalancer.servers]]
-                address = "localhost:8083"
+    [tcp.services.whoami-no-cert.loadBalancer]
+      [[tcp.services.whoami-no-cert.loadBalancer.servers]]
+        address = "localhost:8083"
 
-[[tls]]
-  [tls.certificate]
+[[tls.certificates]]
   certFile = "fixtures/tcp/whoami-c.crt"
   keyFile = "fixtures/tcp/whoami-c.key"

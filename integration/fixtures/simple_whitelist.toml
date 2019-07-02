@@ -1,17 +1,17 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8000"
-  [entryPoints.web.ForwardedHeaders]
-    insecure=true
+    address = ":8000"
+    [entryPoints.web.ForwardedHeaders]
+      insecure=true
 
 [api]
 
 [providers]
-   [providers.docker]
+  [providers.docker]

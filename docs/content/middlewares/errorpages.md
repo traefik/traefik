@@ -52,7 +52,7 @@ labels:
 ```toml tab="File"
 # Custom Error Page for 5XX
 [http.middlewares]
-  [http.middlewares.test-errorpage.Errors]
+  [http.middlewares.test-errorpage.errors]
     status = ["500-599"]
     service = "serviceError"
     query = "/{status}.html"

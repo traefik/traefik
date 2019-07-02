@@ -13,7 +13,7 @@ See also [Marathon user guide](../user-guides/marathon.md).
 
     ```toml tab="File"
     [providers.marathon]
-    endpoint = "http://127.0.0.1:8080"
+      endpoint = "http://127.0.0.1:8080"
     ```
     
     ```txt tab="CLI"
@@ -58,9 +58,9 @@ _Optional_
 Enables Marathon basic authentication.
 
 ```toml tab="File"
-[marathon.basic]
-httpBasicAuthUser = "foo"
-httpBasicPassword = "bar"
+[providers.marathon.basic]
+  httpBasicAuthUser = "foo"
+  httpBasicPassword = "bar"
 ```
 
 ```txt tab="CLI"
@@ -79,8 +79,8 @@ If set, it overrides the Authorization header.
 
 ```toml tab="File"
 [providers.marathon]
-dcosToken = "xxxxxx"
-# ...
+  dcosToken = "xxxxxx"
+  # ...
 ```
 
 ```txt tab="CLI"
@@ -102,8 +102,8 @@ and the template has access to all the labels defined on this Marathon applicati
 
 ```toml tab="File"
 [providers.marathon]
-defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
-# ...
+  defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+  # ...
 ```
 
 ```txt tab="CLI"
@@ -133,8 +133,8 @@ You can optionally specify multiple endpoints:
 
 ```toml tab="File"
 [providers.marathon]
-endpoint = "http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"
-# ...
+  endpoint = "http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"
+  # ...
 ```
 
 ```txt tab="CLI"
@@ -247,11 +247,11 @@ _Optional_
 TLS client configuration. [tls/#Config](https://golang.org/pkg/crypto/tls/#Config).
 
 ```toml tab="File"
-[marathon.TLS]
-CA = "/etc/ssl/ca.crt"
-Cert = "/etc/ssl/marathon.cert"
-Key = "/etc/ssl/marathon.key"
-insecureSkipVerify = true
+[providers.marathon.tls]
+  ca = "/etc/ssl/ca.crt"
+  cert = "/etc/ssl/marathon.cert"
+  key = "/etc/ssl/marathon.key"
+  insecureSkipVerify = true
 ```
 
 ```txt tab="CLI"
@@ -296,23 +296,23 @@ and the router automatically gets a rule defined by defaultRule (if no rule for 
 ### Routers
 
 To update the configuration of the Router automatically attached to the application,
-add labels starting with `traefik.HTTP.Routers.{router-name-of-your-choice}.` and followed by the option you want to change.
-For example, to change the routing rule, you could add the label ```traefik.HTTP.Routers.Routername.Rule=Host(`my-domain`)```.
+add labels starting with `traefik.http.routers.{router-name-of-your-choice}.` and followed by the option you want to change.
+For example, to change the routing rule, you could add the label ```traefik.http.routers.routername.rule=Host(`my-domain`)```.
 
 Every [Router](../routing/routers/index.md) parameter can be updated this way.
 
 ### Services
 
 To update the configuration of the Service automatically attached to the container,
-add labels starting with `traefik.HTTP.Services.{service-name-of-your-choice}.`, followed by the option you want to change.
-For example, to change the passhostheader behavior, you'd add the label `traefik.HTTP.Services.Servicename.LoadBalancer.PassHostHeader=false`.
+add labels starting with `traefik.http.services.{service-name-of-your-choice}.`, followed by the option you want to change.
+For example, to change the passHostHeader behavior, you'd add the label `traefik.http.services.servicename.loadbalancer.passhostheader=false`.
 
 Every [Service](../routing/services/index.md) parameter can be updated this way.
 
 ### Middleware
 
-You can declare pieces of middleware using labels starting with `traefik.HTTP.Middlewares.{middleware-name-of-your-choice}.`, followed by the middleware type/options.
-For example, to declare a middleware [`redirectscheme`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.HTTP.Middlewares.my-redirect.RedirectScheme.Scheme: https`.
+You can declare pieces of middleware using labels starting with `traefik.http.middlewares.{middleware-name-of-your-choice}.`, followed by the middleware type/options.
+For example, to declare a middleware [`redirectscheme`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme: https`.
 
 ??? example "Declaring and Referencing a Middleware"
 

@@ -496,7 +496,6 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 			},
 			expected: &config.Configuration{
-
 				TCP: &config.TCPConfiguration{
 					Routers: map[string]*config.TCPRouter{
 						"foo": {

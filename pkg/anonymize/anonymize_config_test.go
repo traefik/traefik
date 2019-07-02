@@ -15,6 +15,7 @@ import (
 	"github.com/containous/traefik/pkg/provider/kubernetes/ingress"
 	traefiktls "github.com/containous/traefik/pkg/tls"
 	"github.com/containous/traefik/pkg/tracing/datadog"
+	"github.com/containous/traefik/pkg/tracing/haystack"
 	"github.com/containous/traefik/pkg/tracing/instana"
 	"github.com/containous/traefik/pkg/tracing/jaeger"
 	"github.com/containous/traefik/pkg/tracing/zipkin"
@@ -198,7 +199,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 			EntryPoint:  "MyEntryPoint",
 			Middlewares: []string{"m1", "m2"},
 		},
-		Datadog: &types.Datadog{
+		DataDog: &types.DataDog{
 			Address:      "localhost:8181",
 			PushInterval: 12,
 		},
@@ -223,7 +224,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 
 	config.Tracing = &static.Tracing{
-		Backend:       "myBackend",
 		ServiceName:   "myServiceName",
 		SpanNameLimit: 3,
 		Jaeger: &jaeger.Config{
@@ -252,6 +252,15 @@ func TestDo_globalConfiguration(t *testing.T) {
 			LocalAgentHost: "fff",
 			LocalAgentPort: 32,
 			LogLevel:       "ggg",
+		},
+		Haystack: &haystack.Config{
+			LocalAgentHost:          "fff",
+			LocalAgentPort:          32,
+			GlobalTag:               "eee",
+			TraceIDHeaderName:       "fff",
+			ParentIDHeaderName:      "ggg",
+			SpanIDHeaderName:        "hhh",
+			BaggagePrefixHeaderName: "iii",
 		},
 	}
 

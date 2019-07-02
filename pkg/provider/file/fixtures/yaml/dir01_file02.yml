@@ -1,0 +1,14 @@
+http:
+  services:
+    application-1:
+      loadBalancer:
+        servers:
+          - url: 'http://172.17.0.1:80'
+    application-2:
+      loadBalancer:
+        servers:
+          - url: 'http://172.17.0.2:80'
+    application-3:
+      loadBalancer:
+        servers:
+          - url: 'http://172.17.0.3:80'

@@ -1,12 +1,12 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [serversTransport]
-insecureSkipVerify = true
+  insecureSkipVerify = true
 
 [entryPoints]
   [entryPoints.web-secure]
@@ -15,7 +15,9 @@ insecureSkipVerify = true
 [api]
 
 [providers]
-   [providers.file]
+  [providers.file]
+
+## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
@@ -24,10 +26,11 @@ insecureSkipVerify = true
     [http.routers.router1.tls]
 
 [http.services]
-  [http.services.service1.loadbalancer]
-    [[http.services.service1.loadbalancer.servers]]
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
       url = "https://127.0.0.1:{{ .GRPCServerPort }}"
 
-[tlsStores.default.DefaultCertificate]
+[tls.stores]
+  [tls.stores.default.defaultCertificate]
     certFile = """{{ .CertContent }}"""
     keyFile  = """{{ .KeyContent }}"""

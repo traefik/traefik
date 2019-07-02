@@ -1,14 +1,14 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8000"
+    address = ":8000"
 
 [providers]
-   [providers.file]
-      directory = "fixtures/file/dir/"
+  [providers.file]
+    directory = "fixtures/file/dir/"

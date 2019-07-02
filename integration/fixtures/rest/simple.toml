@@ -1,9 +1,9 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
@@ -12,4 +12,4 @@ level = "DEBUG"
 [api]
 
 [providers]
-   [providers.rest]
+  [providers.rest]

@@ -38,17 +38,17 @@ var (
 
 // Configuration holds ACME configuration provided by users
 type Configuration struct {
-	Email         string         `description:"Email address used for registration."`
-	ACMELogging   bool           `description:"Enable debug logging of ACME actions."`
-	CAServer      string         `description:"CA server to use."`
-	Storage       string         `description:"Storage to use."`
-	EntryPoint    string         `description:"EntryPoint to use."`
-	KeyType       string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'."`
-	OnHostRule    bool           `description:"Enable certificate generation on router Host rules."`
-	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." label:"allowEmpty"`
-	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." label:"allowEmpty"`
-	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge." label:"allowEmpty"`
-	Domains       []types.Domain `description:"The list of domains for which certificates are generated on startup. Wildcard domains only accepted with DNSChallenge."`
+	Email         string         `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
+	ACMELogging   bool           `description:"Enable debug logging of ACME actions." json:"acmeLogging,omitempty" toml:"acmeLogging,omitempty" yaml:"acmeLogging,omitempty"`
+	CAServer      string         `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
+	Storage       string         `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty"`
+	EntryPoint    string         `description:"EntryPoint to use." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
+	KeyType       string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty"`
+	OnHostRule    bool           `description:"Enable certificate generation on router Host rules." json:"onHostRule,omitempty" toml:"onHostRule,omitempty" yaml:"onHostRule,omitempty"`
+	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty"`
+	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty"`
+	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge." json:"tlsChallenge,omitempty" toml:"tlsChallenge,omitempty" yaml:"tlsChallenge,omitempty" label:"allowEmpty"`
+	Domains       []types.Domain `description:"The list of domains for which certificates are generated on startup. Wildcard domains only accepted with DNSChallenge." json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty"`
 }
 
 // SetDefaults sets the default values.
@@ -60,22 +60,22 @@ func (a *Configuration) SetDefaults() {
 
 // Certificate is a struct which contains all data needed from an ACME certificate
 type Certificate struct {
-	Domain      types.Domain
-	Certificate []byte
-	Key         []byte
+	Domain      types.Domain `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty"`
+	Certificate []byte       `json:"certificate,omitempty" toml:"certificate,omitempty" yaml:"certificate,omitempty"`
+	Key         []byte       `json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty"`
 }
 
 // DNSChallenge contains DNS challenge Configuration
 type DNSChallenge struct {
-	Provider                string         `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
-	DelayBeforeCheck        types.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
-	Resolvers               []string       `description:"Use following DNS servers to resolve the FQDN authority."`
-	DisablePropagationCheck bool           `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]"`
+	Provider                string         `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty"`
+	DelayBeforeCheck        types.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty"`
+	Resolvers               []string       `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
+	DisablePropagationCheck bool           `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty"`
 }
 
 // HTTPChallenge contains HTTP challenge Configuration
 type HTTPChallenge struct {
-	EntryPoint string `description:"HTTP challenge EntryPoint"`
+	EntryPoint string `description:"HTTP challenge EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
 }
 
 // TLSChallenge contains TLS challenge Configuration
@@ -84,7 +84,7 @@ type TLSChallenge struct{}
 // Provider holds configurations of the provider.
 type Provider struct {
 	*Configuration
-	Store                  Store
+	Store                  Store `json:"store,omitempty" toml:"store,omitempty" yaml:"store,omitempty"`
 	certificates           []*Certificate
 	account                *Account
 	client                 *lego.Client
@@ -589,14 +589,20 @@ func (p *Provider) refreshCertificates() {
 				Middlewares: map[string]*config.Middleware{},
 				Services:    map[string]*config.Service{},
 			},
-			TLS: []*traefiktls.Configuration{},
+			TLS: &config.TLSConfiguration{},
 		},
 	}
 
 	for _, cert := range p.certificates {
-		cert := &traefiktls.Certificate{CertFile: traefiktls.FileOrContent(cert.Certificate), KeyFile: traefiktls.FileOrContent(cert.Key)}
-		conf.Configuration.TLS = append(conf.Configuration.TLS, &traefiktls.Configuration{Certificate: cert})
+		certConf := &traefiktls.CertAndStores{
+			Certificate: traefiktls.Certificate{
+				CertFile: traefiktls.FileOrContent(cert.Certificate),
+				KeyFile:  traefiktls.FileOrContent(cert.Key),
+			},
+		}
+		conf.Configuration.TLS.Certificates = append(conf.Configuration.TLS.Certificates, certConf)
 	}
+
 	p.configurationChan <- conf
 }
 

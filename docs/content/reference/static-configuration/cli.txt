@@ -477,6 +477,10 @@
     The amount of time to wait for a server's response headers after fully writing
     the request (including its body, if any). If zero, no timeout exists.
 
+--serverstransport.forwardingtimeouts.idleconntimeout  (Default: "90s")
+	The maximum period for which an idle HTTP keep-alive connection to a backend
+	server will remain open before closing itself.
+
 --serverstransport.insecureskipverify  (Default: "false")
     Disable SSL certificate verification.
 
@@ -489,9 +493,6 @@
 
 --tracing  (Default: "false")
     OpenTracing configuration.
-
---tracing.backend  (Default: "jaeger")
-    Selects the tracking backend ('jaeger','zipkin','datadog','instana').
 
 --tracing.datadog  (Default: "false")
     Settings for DataDog.
@@ -526,7 +527,7 @@
     Settings for Haystack.
 
 --tracing.haystack.baggageprefixheadername  (Default: "")
-    specifies the header name prefix that will be used to store baggage items in a
+    Specifies the header name prefix that will be used to store baggage items in a
     map.
 
 --tracing.haystack.globaltag  (Default: "")

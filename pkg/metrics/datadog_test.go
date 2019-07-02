@@ -16,7 +16,7 @@ func TestDatadog(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	datadogRegistry := RegisterDatadog(context.Background(), &types.Datadog{Address: ":18125", PushInterval: types.Duration(time.Second)})
+	datadogRegistry := RegisterDatadog(context.Background(), &types.DataDog{Address: ":18125", PushInterval: types.Duration(time.Second)})
 	defer StopDatadog()
 
 	if !datadogRegistry.IsEnabled() {

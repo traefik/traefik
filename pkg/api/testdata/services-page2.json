@@ -1,6 +1,6 @@
 [
 	{
-		"loadbalancer": {
+		"loadBalancer": {
 			"passHostHeader": false,
 			"servers": [
 				{

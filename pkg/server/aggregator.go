@@ -18,8 +18,10 @@ func mergeConfiguration(configurations config.Configurations) config.Configurati
 			Routers:  make(map[string]*config.TCPRouter),
 			Services: make(map[string]*config.TCPService),
 		},
-		TLSOptions: make(map[string]tls.TLS),
-		TLSStores:  make(map[string]tls.Store),
+		TLS: &config.TLSConfiguration{
+			Stores:  make(map[string]tls.Store),
+			Options: make(map[string]tls.Options),
+		},
 	}
 
 	var defaultTLSOptionProviders []string
@@ -44,30 +46,33 @@ func mergeConfiguration(configurations config.Configurations) config.Configurati
 				conf.TCP.Services[internal.MakeQualifiedName(provider, serviceName)] = service
 			}
 		}
-		conf.TLS = append(conf.TLS, configuration.TLS...)
 
-		for key, store := range configuration.TLSStores {
-			conf.TLSStores[key] = store
-		}
+		if configuration.TLS != nil {
+			conf.TLS.Certificates = append(conf.TLS.Certificates, configuration.TLS.Certificates...)
 
-		for tlsOptionsName, config := range configuration.TLSOptions {
-			if tlsOptionsName != "default" {
-				tlsOptionsName = internal.MakeQualifiedName(provider, tlsOptionsName)
-			} else {
-				defaultTLSOptionProviders = append(defaultTLSOptionProviders, provider)
+			for key, store := range configuration.TLS.Stores {
+				conf.TLS.Stores[key] = store
 			}
 
-			conf.TLSOptions[tlsOptionsName] = config
+			for tlsOptionsName, options := range configuration.TLS.Options {
+				if tlsOptionsName != "default" {
+					tlsOptionsName = internal.MakeQualifiedName(provider, tlsOptionsName)
+				} else {
+					defaultTLSOptionProviders = append(defaultTLSOptionProviders, provider)
+				}
+
+				conf.TLS.Options[tlsOptionsName] = options
+			}
 		}
 	}
 
 	if len(defaultTLSOptionProviders) == 0 {
-		conf.TLSOptions["default"] = tls.TLS{}
+		conf.TLS.Options["default"] = tls.Options{}
 	} else if len(defaultTLSOptionProviders) > 1 {
 		log.WithoutContext().Errorf("Default TLS Options defined multiple times in %v", defaultTLSOptionProviders)
 		// We do not set an empty tls.TLS{} as above so that we actually get a "cascading failure" later on,
 		// i.e. routers depending on this missing TLS option will fail to initialize as well.
-		delete(conf.TLSOptions, "default")
+		delete(conf.TLS.Options, "default")
 	}
 
 	return conf

@@ -1,21 +1,21 @@
 [global]
-checkNewVersion = false
-sendAnonymousUsage = false
+  checkNewVersion = false
+  sendAnonymousUsage = false
 
 [log]
-level = "DEBUG"
+  level = "DEBUG"
 
 [entryPoints]
   [entryPoints.web]
-  address = ":8000"
-[entryPoints.api]
-  address = ":9090"
+    address = ":8000"
+  [entryPoints.api]
+    address = ":9090"
 
 [api]
   entryPoint = "api"
 
 [providers]
-   [providers.marathon]
-      endpoint = "{{.MarathonURL}}"
-      watch = true
-      exposedByDefault = true
+  [providers.marathon]
+    endpoint = "{{.MarathonURL}}"
+    watch = true
+    exposedByDefault = true

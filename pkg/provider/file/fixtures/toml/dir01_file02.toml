@@ -1,0 +1,13 @@
+[http.services]
+
+[http.services.application-1.loadBalancer]
+  [[http.services.application-1.loadBalancer.servers]]
+    url = "http://172.17.0.1:80"
+
+[http.services.application-2.loadBalancer]
+  [[http.services.application-2.loadBalancer.servers]]
+    url = "http://172.17.0.2:80"
+
+[http.services.application-3.loadBalancer]
+  [[http.services.application-3.loadBalancer.servers]]
+    url = "http://172.17.0.3:80"

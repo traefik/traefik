@@ -14,13 +14,18 @@ version: '3'
 
 services:
   reverse-proxy:
-    image: traefik:v2.0 # The official v2.0 Traefik docker image
-    command: --api --providers.docker # Enables the web UI and tells Traefik to listen to docker
+    # The official v2.0 Traefik docker image
+    image: traefik:v2.0
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api --providers.docker
     ports:
-      - "80:80"     # The HTTP port
-      - "8080:8080" # The Web UI (enabled by --api)
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api)
+      - "8080:8080"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
 ```
 
 **That's it. Now you can launch Traefik!**
@@ -42,7 +47,8 @@ Edit your `docker-compose.yml` file and add the following at the end of your fil
 ```yaml
 # ...
   whoami:
-    image: containous/whoami # A container that exposes an API to show its IP address
+    # A container that exposes an API to show its IP address
+    image: containous/whoami
     labels:
       - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
 ```

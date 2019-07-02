@@ -11,25 +11,45 @@ The `Services` are responsible for configuring how to reach the actual services 
 
 ??? example "Declaring an HTTP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
 
-    ```toml
+    ```toml tab="TOML"
     [http.services]
-      [http.services.my-service.LoadBalancer]
-         
-         [[http.services.my-service.LoadBalancer.servers]]
-            url = "http://private-ip-server-1/"
-         [[http.services.my-service.LoadBalancer.servers]]
-            url = "http://private-ip-server-2/"
+      [http.services.my-service.loadBalancer]
+
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+    ```
+    
+    ```yaml tab="YAML"
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
     ```
 
 ??? example "Declaring a TCP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
 
-    ```toml
+    ```toml tab="TOML"
     [tcp.services]
-      [tcp.services.my-service.LoadBalancer]         
-         [[tcp.services.my-service.LoadBalancer.servers]]
-            address = "xx.xx.xx.xx:xx"
-         [[tcp.services.my-service.LoadBalancer.servers]]
-            address = "xx.xx.xx.xx:xx"
+      [tcp.services.my-service.loadBalancer]
+         [[tcp.services.my-service.loadBalancer.servers]]
+           address = "xx.xx.xx.xx:xx"
+         [[tcp.services.my-service.loadBalancer.servers]]
+           address = "xx.xx.xx.xx:xx"
+    ```
+    
+    ```yaml tab="YAML"
+    tcp:
+      services:
+        my-service:
+          loadBalancer:         
+            servers:
+            - address: "xx.xx.xx.xx:xx"
+            - address: "xx.xx.xx.xx:xx"
     ```
 
 ## Configuring HTTP Services
@@ -46,14 +66,24 @@ The load balancers are able to load balance the requests between multiple instan
 
 ??? example "Declaring a Service with Two Servers (with Load Balancing) -- Using the [File Provider](../../providers/file.md)"
 
-    ```toml
+    ```toml tab="TOML"
     [http.services]
-      [http.services.my-service.LoadBalancer]
-         
-         [[http.services.my-service.LoadBalancer.servers]]
-            url = "http://private-ip-server-1/"
-         [[http.services.my-service.LoadBalancer.servers]]
-            url = "http://private-ip-server-2/"
+      [http.services.my-service.loadBalancer]
+
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+    ```
+
+    ```yaml tab="YAML"
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
     ```
 
 #### Servers
@@ -68,11 +98,20 @@ The `url` option point to a specific instance.
 
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
 
-    ```toml
+    ```toml tab="TOML"
     [http.services]
-      [http.services.my-service.LoadBalancer]
-         [[http.services.my-service.LoadBalancer.servers]]
-            url = "http://private-ip-server-1/"
+      [http.services.my-service.loadBalancer]
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+    ```
+    
+    ```yaml tab="YAML"
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+              url: "http://private-ip-server-1/"
     ```
 
 #### Load-balancing
@@ -81,13 +120,23 @@ For now, only round robin load balancing is supported:
 
 ??? example "Load Balancing -- Using the [File Provider](../../providers/file.md)"
 
-    ```toml
+    ```toml tab="TOML"
     [http.services]
-      [http.services.my-service.LoadBalancer]
-         [[http.services.my-service.LoadBalancer.servers]]
-            url = "http://private-ip-server-1/"
-         [[http.services.my-service.LoadBalancer.servers]]
-            url = "http://private-ip-server-1/"
+      [http.services.my-service.loadBalancer]
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+    ```
+
+    ```yaml tab="YAML"
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
     ```
 
 #### Sticky sessions
@@ -109,39 +158,56 @@ On subsequent requests, the client is forwarded to the same server.
 
 ??? example "Adding Stickiness"
 
-    ```toml
+    ```toml tab="TOML"
     [http.services]
       [http.services.my-service]
-        [http.services.my-service.LoadBalancer.stickiness]
-          secureCookie = true
-          httpOnlyCookie = true
+        [http.services.my-service.loadBalancer.stickiness]
+    ```
+    
+    ```yaml tab="YAML"
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            stickiness: {}
     ```
 
 ??? example "Adding Stickiness with a Custom Cookie Name"
 
-    ```toml
+    ```toml tab="TOML"
     [http.services]
       [http.services.my-service]
-        [http.services.my-service.LoadBalancer.stickiness]
-           cookieName = "my_stickiness_cookie_name"
-           secureCookie = true
-           httpOnlyCookie = true
+        [http.services.my-service.loadBalancer.stickiness]
+          cookieName = "my_stickiness_cookie_name"
+          secureCookie = true
+          httpOnlyCookie = true
+    ```
+
+    ```yaml tab="YAML"
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            stickiness:
+              cookieName: my_stickiness_cookie_name
+              secureCookie: true
+              httpOnlyCookie: true
     ```
 
 #### Health Check
 
-Configure healthcheck to remove unhealthy servers from the load balancing rotation.
+Configure health check to remove unhealthy servers from the load balancing rotation.
 Traefik will consider your servers healthy as long as they return status codes between `2XX` and `3XX` to the health check requests (carried out every `interval`).
 
 Below are the available options for the health check mechanism:
 
-- `path` is appended to the server URL to set the healcheck endpoint.
-- `scheme`, if defined, will replace the server URL `scheme` for the healthcheck endpoint
-- `hostname`, if defined, will replace the server URL `hostname` for the healthcheck endpoint.
-- `port`, if defined, will replace the server URL `port` for the healthcheck endpoint.
-- `interval` defines the frequency of the healthcheck calls.
-- `timeout` defines the maximum duration Traefik will wait for a healthcheck request before considering the server failed (unhealthy).
-- `headers` defines custom headers to be sent to the healthcheck endpoint.
+- `path` is appended to the server URL to set the health check endpoint.
+- `scheme`, if defined, will replace the server URL `scheme` for the health check endpoint
+- `hostname`, if defined, will replace the server URL `hostname` for the health check endpoint.
+- `port`, if defined, will replace the server URL `port` for the health check endpoint.
+- `interval` defines the frequency of the health check calls.
+- `timeout` defines the maximum duration Traefik will wait for a health check request before considering the server failed (unhealthy).
+- `headers` defines custom headers to be sent to the health check endpoint.
 
 !!! note "Interval & Timeout Format"
 
@@ -153,50 +219,93 @@ Below are the available options for the health check mechanism:
     Traefik keeps monitoring the health of unhealthy servers. 
     If a server has recovered (returning `2xx` -> `3xx` responses again), it will be added back to the load balacer rotation pool.
 
-??? example "Custom Interval & Timeout -- Using the File Provider"
+??? example "Custom Interval & Timeout -- Using the [File Provider](../../providers/file.md)"
 
-    ```toml
+    ```toml tab="TOML"
     [http.services]
       [http.servicess.Service-1]
-        [http.services.Service-1.healthcheck]
-            path = "/health"
-            interval = "10s"
-            timeout = "3s"
+        [http.services.Service-1.loadBalancer.healthCheck]
+          path = "/health"
+          interval = "10s"
+          timeout = "3s"
     ```
 
-??? example "Custom Port -- Using the File Provider"
+    ```yaml tab="YAML"
+    http:
+      servicess:
+        Service-1:
+          loadBalancer:
+            healthCheck:
+              path: /health
+              interval: "10s"
+              timeout: "3s"
+    ```
 
-    ```toml
+??? example "Custom Port -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
     [http.services]
       [http.services.Service-1]
-        [http.services.Service-1.healthcheck]
-            path = "/health"
-            port = 8080
-    ```
-
-??? example "Custom Scheme -- Using the File Provider"
-
-    ```toml
-    [http.services]
-      [http.services.Service-1]
-        [http.services.Service-1.healthcheck]
-            path = "/health"
-            scheme = "http"
-    ```
-
-??? example "Additional HTTP Headers -- Using the File Provider"
-
-    ```toml
-    [http.services]
-        [http.services.Service-1]
-            [http.servicess.Service-1.healthcheck]
-                path = "/health"
-
-                [Service.Service-1.healthcheck.headers]
-                    My-Custom-Header = "foo"
-                    My-Header = "bar"
+        [http.services.Service-1.loadBalancer.healthCheck]
+          path = "/health"
+          port = 8080
     ```
     
+    ```yaml tab="YAML"
+    http:
+      services:
+        Service-1:
+          loadBalancer:
+            healthCheck:
+              path: /health
+              port: 8080
+    ```
+
+??? example "Custom Scheme -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    [http.services]
+      [http.services.Service-1]
+        [http.services.Service-1.loadBalancer.healthCheck]
+          path = "/health"
+          scheme = "http"
+    ```
+    
+    ```yaml tab="YAML"
+    http:
+      services:
+        Service-1:
+          loadBalancer:
+            healthCheck:
+              path: /health
+              scheme: http
+    ```
+
+??? example "Additional HTTP Headers -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    [http.services]
+      [http.services.Service-1]
+        [http.services.Service-1.loadBalancer.healthCheck]
+          path = "/health"
+
+          [http.services.Service-1.loadBalancer.healthCheck.headers]
+            My-Custom-Header = "foo"
+            My-Header = "bar"
+    ```
+    
+    ```yaml tab="YAML"
+    http:
+      services:
+        Service-1:
+          loadBalancer:
+            healthCheck:
+              path: /health
+              headers:
+                My-Custom-Header: foo
+                My-Header: bar
+    ```
+
 ## Configuring TCP Services
 
 ### General
@@ -211,13 +320,23 @@ The load balancers are able to load balance the requests between multiple instan
 
 ??? example "Declaring a Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
 
-    ```toml
+    ```toml tab="TOML"
     [tcp.services]
-      [tcp.services.my-service.LoadBalancer]
-         [[tcp.services.my-service.LoadBalancer.servers]]
-            address = "xx.xx.xx.xx:xx"
-         [[tcp.services.my-service.LoadBalancer.servers]]
-            address = "xx.xx.xx.xx:xx"
+      [tcp.services.my-service.loadBalancer]
+        [[tcp.services.my-service.loadBalancer.servers]]
+          address = "xx.xx.xx.xx:xx"
+        [[tcp.services.my-service.loadBalancer.servers]]
+           address = "xx.xx.xx.xx:xx"
+    ```
+
+    ```yaml tab="YAML"
+    tcp:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+            - address: "xx.xx.xx.xx:xx"
+            - address: "xx.xx.xx.xx:xx"
     ```
 
 #### Servers
@@ -227,9 +346,18 @@ The `address` option (IP:Port) point to a specific instance.
 
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
 
-    ```toml
+    ```toml tab="TOML"
     [tcp.services]
-      [tcp.services.my-service.LoadBalancer]
-         [[tcp.services.my-service.LoadBalancer.servers]]
-            address = "xx.xx.xx.xx:xx"
+      [tcp.services.my-service.loadBalancer]
+        [[tcp.services.my-service.loadBalancer.servers]]
+          address = "xx.xx.xx.xx:xx"
+    ```
+
+    ```yaml tab="YAML"
+    tcp:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+              address: "xx.xx.xx.xx:xx"
     ```
