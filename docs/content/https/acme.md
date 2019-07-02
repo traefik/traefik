@@ -17,7 +17,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
       [entryPoints.web]
         address = ":80"
     
-      [entryPoints.http-tls]
+      [entryPoints.web-secure]
         address = ":443"
     
     # every router with TLS enabled will now be able to use ACME for its certificates
@@ -36,7 +36,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
       web:
         address: ":80"
     
-      http-tls:
+      web-secure:
         address: ":443"
     
     # every router with TLS enabled will now be able to use ACME for its certificates
@@ -54,10 +54,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     
     ```toml tab="TOML"
     [entryPoints]
-      [entryPoints.web]
-        address = ":80"
-    
-      [entryPoints.http-tls]
+      [entryPoints.web-secure]
         address = ":443"
     
     [acme]
@@ -73,10 +70,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     
     ```yaml tab="YAML"
     entryPoints:
-      web:
-        address: ":80"
-    
-      http-tls:
+      web-secure:
         address: ":443"
     
     acme:
@@ -144,17 +138,31 @@ when using the `HTTP-01` challenge, `acme.httpChallenge.entryPoint` must be reac
 ??? example "Using an EntryPoint Called http for the `httpChallenge`"
 
     ```toml tab="TOML"
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+      
+      [entryPoints.web-secure]
+        address = ":443"
+    
     [acme]
       # ...
       [acme.httpChallenge]
-        entryPoint = "http"
+        entryPoint = "web"
     ```
 
     ```yaml tab="YAML"
+    entryPoints:
+      web:
+        address: ":80"
+    
+      web-secure:
+        address: ":443"
+    
     acme:
       # ...
       httpChallenge:
-        entryPoint: http
+        entryPoint: web
     ```
 
 !!! note

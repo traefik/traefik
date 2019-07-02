@@ -26,7 +26,7 @@ In the process, Traefik will make sure that the user is authenticated (using the
 
 Static configuration:
 
-```toml tab="TOML"
+```toml tab="File (TOML)"
 [entryPoints]
   [entryPoints.web]
     # Listen on port 8081 for incoming requests
@@ -37,7 +37,7 @@ Static configuration:
   [providers.file]
 ```
 
-```yaml tab="YAML"
+```yaml tab="File (YAML)"
 entryPoints:
   web:
     # Listen on port 8081 for incoming requests
@@ -46,6 +46,14 @@ entryPoints:
 providers:
   # Enable the file provider to define routers / middlewares / services in a file
   file: {}
+```
+
+```bash tab="CLI"
+# Listen on port 8081 for incoming requests
+--entryPoints.web.address=:8081
+
+# Enable the file provider to define routers / middlewares / services in a file
+--providers.file
 ```
 
 Dynamic configuration:
@@ -135,6 +143,14 @@ http:
         providers:
           # Enable the file provider to define routers / middlewares / services in a file
           file: {}
+        ```
+        
+        ```bash tab="CLI"
+        # Listen on port 8081 for incoming requests
+        --entryPoints.web.address=":8081"
+        
+        # Enable the file provider to define routers / middlewares / services in a file
+        --providers.file
         ```
         
         Dynamic configuration:

@@ -11,14 +11,17 @@ See also [Marathon user guide](../user-guides/marathon.md).
 
     Enabling the marathon provider
 
-    ```toml tab="File"
+    ```toml tab="File (TOML)"
     [providers.marathon]
-      endpoint = "http://127.0.0.1:8080"
     ```
     
-    ```txt tab="CLI"
+    ```yaml tab="File (YAML)"
+    providers:
+      marathon: {}
+    ```
+    
+    ```bash tab="CLI"
     --providers.marathon
-    --providers.marathon.endpoint="http://127.0.0.1:8080"
     ```
 
     Attaching labels to marathon applications
@@ -55,42 +58,73 @@ See also [Marathon user guide](../user-guides/marathon.md).
 
 _Optional_
 
-Enables Marathon basic authentication.
-
-```toml tab="File"
+```toml tab="File (TOML)"
 [providers.marathon.basic]
   httpBasicAuthUser = "foo"
   httpBasicPassword = "bar"
 ```
 
-```txt tab="CLI"
---providers.marathon
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    basic:
+      httpBasicAuthUser: foo
+      httpBasicPassword: bar
+```
+
+```bash tab="CLI"
 --providers.marathon.basic.httpbasicauthuser="foo"
 --providers.marathon.basic.httpbasicpassword="bar"
 ```
+
+Enables Marathon basic authentication.
 
 ### `dcosToken`
 
 _Optional_
 
-DCOSToken for DCOS environment.
-
-If set, it overrides the Authorization header.
-
-```toml tab="File"
+```toml tab="File (TOML)"
 [providers.marathon]
   dcosToken = "xxxxxx"
   # ...
 ```
 
-```txt tab="CLI"
---providers.marathon
+```toml tab="File (YAML)"
+providers:
+  marathon:
+    dcosToken: "xxxxxx"
+    # ...
+```
+
+```bash tab="CLI"
 --providers.marathon.dcosToken="xxxxxx"
 ```
+
+DCOSToken for DCOS environment.
+
+If set, it overrides the Authorization header.
 
 ### `defaultRule`
 
 _Optional, Default=```Host(`{{ normalize .Name }}`)```_
+
+```toml tab="File (TOML)"
+[providers.marathon]
+  defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    defaultRule: "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.marathon.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+# ...
+```
 
 For a given application if no routing rule was defined by a label, it is defined by this defaultRule instead.
 
@@ -100,20 +134,26 @@ augmented with the [sprig template functions](http://masterminds.github.io/sprig
 The app ID can be accessed as the Name identifier,
 and the template has access to all the labels defined on this Marathon application.
 
-```toml tab="File"
-[providers.marathon]
-  defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
-  # ...
-```
-
-```txt tab="CLI"
---providers.marathon
---providers.marathon.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
-```
-
 ### `dialerTimeout`
 
 _Optional, Default=5s_
+
+```toml tab="File (TOML)"
+[providers.marathon]
+  dialerTimeout = "10s"
+  # ...
+```
+
+```toml tab="File (YAML)"
+providers:
+  marathon:
+    dialerTimeout: "10s"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.marathon.dialerTimeout=10s
+```
 
 Overrides DialerTimeout.
 
@@ -127,32 +167,76 @@ or directly as a number of seconds.
 
 _Optional, Default=http://127.0.0.1:8080_
 
-Marathon server endpoint.
-
-You can optionally specify multiple endpoints:
-
-```toml tab="File"
+```toml tab="File (TOML)"
 [providers.marathon]
   endpoint = "http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"
   # ...
 ```
 
-```txt tab="CLI"
---providers.marathon
+```toml tab="File (YAML)"
+providers:
+  marathon:
+    endpoint: "http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"
+    # ...
+```
+
+```bash tab="CLI"
 --providers.marathon.endpoint="http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"
 ```
+
+Marathon server endpoint.
+
+You can optionally specify multiple endpoints:
 
 ### `exposedByDefault`
 
 _Optional, Default=true_
 
+```toml tab="File (TOML)"
+[providers.marathon]
+  exposedByDefault = false
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    exposedByDefault: false
+    # ...
+```
+
+```bash tab="CLI"
+--providers.marathon.exposedByDefault=false
+# ...
+```
+
 Exposes Marathon applications by default through Traefik.
 
 If set to false, applications that don't have a `traefik.enable=true` label will be ignored from the resulting routing configuration.
 
+See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+
 ### `constraints`
 
 _Optional, Default=""_
+
+```toml tab="File (TOML)"
+[providers.marathon]
+  constraints = "Label(`a.label.name`, `foo`)"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    constraints: "Label(`a.label.name`, `foo`)"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.marathon.constraints="Label(`a.label.name`, `foo`)"
+# ...
+```
 
 Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application.
 That is to say, if none of the application's labels match the expression, no route for the application is created.
@@ -204,9 +288,29 @@ In addition, to match against marathon constraints, the function `MarathonConstr
     constraints = "MarathonConstraint(`A:B:C`) && Label(`a.label.name`, `value`)"
     ```
 
+See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+
 ### `forceTaskHostname`
 
 _Optional, Default=false_
+
+```toml tab="File (TOML)"
+[providers.marathon]
+  forceTaskHostname = true
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    forceTaskHostname: true
+    # ...
+```
+
+```bash tab="CLI"
+--providers.marathon.forceTaskHostname=true
+# ...
+```
 
 By default, a task's IP address (as returned by the Marathon API) is used as backend server if an IP-per-task configuration can be found;
 otherwise, the name of the host running the task is used.
@@ -216,6 +320,24 @@ The latter behavior can be enforced by enabling this switch.
 
 _Optional, Default=10s_
 
+```toml tab="File (TOML)"
+[providers.marathon]
+  keepAlive = "30s"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    keepAlive: "30s"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.marathon.keepAlive=30s
+# ...
+```
+
 Set the TCP Keep Alive interval for the Marathon HTTP Client.
 Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration),
 or directly as a number of seconds.
@@ -223,6 +345,24 @@ or directly as a number of seconds.
 ### `respectReadinessChecks`
 
 _Optional, Default=false_
+
+```toml tab="File (TOML)"
+[providers.marathon]
+  respectReadinessChecks = true
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    respectReadinessChecks: true
+    # ...
+```
+
+```bash tab="CLI"
+--providers.marathon.respectReadinessChecks=true
+# ...
+```
 
 Applications may define readiness checks which are probed by Marathon during deployments periodically, and these check results are exposed via the API.
 Enabling respectReadinessChecks causes Traefik to filter out tasks whose readiness checks have not succeeded.
@@ -234,6 +374,24 @@ See the Marathon guide for details.
 
 _Optional, Default=60s_
 
+```toml tab="File (TOML)"
+[providers.marathon]
+  responseHeaderTimeout = "66s"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    responseHeaderTimeout: "66s"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.marathon.responseHeaderTimeout="66s"
+# ...
+```
+
 Overrides ResponseHeaderTimeout.
 Amount of time the Marathon provider should wait before timing out,
 when waiting for the first response header from a Marathon master.
@@ -244,9 +402,7 @@ Can be provided in a format supported by [time.ParseDuration](https://golang.org
 
 _Optional_
 
-TLS client configuration. [tls/#Config](https://golang.org/pkg/crypto/tls/#Config).
-
-```toml tab="File"
+```toml tab="File (TOML)"
 [providers.marathon.tls]
   ca = "/etc/ssl/ca.crt"
   cert = "/etc/ssl/marathon.cert"
@@ -254,19 +410,49 @@ TLS client configuration. [tls/#Config](https://golang.org/pkg/crypto/tls/#Confi
   insecureSkipVerify = true
 ```
 
-```txt tab="CLI"
---providers.marathon.tls
+```yaml tab="File (YAML)"
+providers:
+  marathon
+    tls:
+      ca: "/etc/ssl/ca.crt"
+      cert: "/etc/ssl/marathon.cert"
+      key: "/etc/ssl/marathon.key"
+      insecureSkipVerify:  true
+```
+
+```bash tab="CLI"
 --providers.marathon.tls.ca="/etc/ssl/ca.crt"
 --providers.marathon.tls.cert="/etc/ssl/marathon.cert"
 --providers.marathon.tls.key="/etc/ssl/marathon.key"
 --providers.marathon.tls.insecureskipverify=true
 ```
 
-### `TLSHandshakeTimeout`
+TLS client configuration. [tls/#Config](https://golang.org/pkg/crypto/tls/#Config).
+
+### `tlsHandshakeTimeout`
 
 _Optional, Default=5s_
 
+```toml tab="File (TOML)"
+[providers.marathon]
+  responseHeaderTimeout = "10s"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    responseHeaderTimeout: "10s"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.marathon.responseHeaderTimeout="10s"
+# ...
+```
+
 Overrides TLSHandshakeTimeout.
+
 Amount of time the Marathon provider should wait before timing out,
 when waiting for the TLS handshake to complete.
 Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration),
@@ -276,11 +462,47 @@ or directly as a number of seconds.
 
 _Optional, Default=false_
 
+```toml tab="File (TOML)"
+[providers.marathon]
+  trace = true
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    trace: true
+    # ...
+```
+
+```bash tab="CLI"
+--providers.marathon.trace=true
+# ...
+```
+
 Displays additional provider logs (if available).
 
 ### `watch`
 
 _Optional, Default=true_
+
+```toml tab="File (TOML)"
+[providers.marathon]
+  watch = false
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    watch: false
+    # ...
+```
+
+```bash tab="CLI"
+--providers.marathon.watch=false
+# ...
+```
 
 Enables watching for Marathon changes.
 
