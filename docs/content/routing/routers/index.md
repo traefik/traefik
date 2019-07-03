@@ -327,8 +327,14 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 
 #### `Options`
 
-The `Options` field enables fine-grained control of the TLS parameters.  
+The `Options` field enables fine-grained control of the TLS parameters.
 It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied only if a `Host` rule is defined.
+
+!!! note "Server Name Association"
+
+    Even though one might get the impression that a TLS options reference is mapped to a router, or a router rule, one should realize that it is actually mapped only to the host name found in the `Host` part of the rule. Of course, there could also be several `Host` parts in a rule, in which case the TLS options reference would be mapped to as many host names.
+
+    Another thing to keep in mind is: the TLS option is picked from the mapping mentioned above and based on the server name provided during the TLS handshake, and it all happens before routing actually occurs.
 
 ??? example "Configuring the TLS options"
 
@@ -368,6 +374,40 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
           - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           - TLS_RSA_WITH_AES_256_GCM_SHA384
     ```
+
+!!! important "Conflicting TLS Options"
+
+    Since a TLS options reference is mapped to a host name, if a configuration introduces a situation where the same host name (from a `Host` rule) gets matched with two TLS options references, a conflict occurs, such as in the example below:
+
+    ```toml tab="TOML"
+    [http.routers]
+      [http.routers.routerfoo]
+        rule = "Host(`snitest.com`) && Path(`/foo`)"
+        [http.routers.routerfoo.tls]
+          options="foo"
+
+    [http.routers]
+      [http.routers.routerbar]
+        rule = "Host(`snitest.com`) && Path(`/bar`)"
+        [http.routers.routerbar.tls]
+          options="bar"
+    ```
+
+    ```yaml tab="YAML"
+    http:
+      routers:
+        routerfoo:
+          rule: "Host(`snitest.com`) && Path(`/foo`)"
+          tls:
+            options: foo
+
+        routerbar:
+          rule: "Host(`snitest.com`) && Path(`/bar`)"
+          tls:
+            options: bar
+    ```
+
+    If that happens, both mappings are discarded, and the host name (`snitest.com` in this case) for these routers gets associated with the default TLS options instead.
 
 ## Configuring TCP Routers
 

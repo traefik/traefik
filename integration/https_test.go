@@ -195,6 +195,72 @@ func (s *HTTPSSuite) TestWithTLSOptions(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+// TestWithConflictingTLSOptions checks that routers with same SNI but different TLS options get fallbacked to the default TLS options.
+func (s *HTTPSSuite) TestWithConflictingTLSOptions(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_tls_options.toml"))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.net`)"))
+	c.Assert(err, checker.IsNil)
+
+	backend1 := startTestServer("9010", http.StatusNoContent)
+	backend2 := startTestServer("9020", http.StatusResetContent)
+	defer backend1.Close()
+	defer backend2.Close()
+
+	err = try.GetRequest(backend1.URL, 1*time.Second, try.StatusCodeIs(http.StatusNoContent))
+	c.Assert(err, checker.IsNil)
+	err = try.GetRequest(backend2.URL, 1*time.Second, try.StatusCodeIs(http.StatusResetContent))
+	c.Assert(err, checker.IsNil)
+
+	tr4 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MaxVersion:         tls.VersionTLS11,
+			ServerName:         "snitest.net",
+		},
+	}
+
+	trDefault := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MaxVersion:         tls.VersionTLS12,
+			ServerName:         "snitest.net",
+		},
+	}
+
+	// With valid TLS options and request
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = trDefault.TLSClientConfig.ServerName
+	req.Header.Set("Host", trDefault.TLSClientConfig.ServerName)
+	req.Header.Set("Accept", "*/*")
+
+	err = try.RequestWithTransport(req, 30*time.Second, trDefault, try.StatusCodeIs(http.StatusNoContent))
+	c.Assert(err, checker.IsNil)
+
+	// With a bad TLS version
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = tr4.TLSClientConfig.ServerName
+	req.Header.Set("Host", tr4.TLSClientConfig.ServerName)
+	req.Header.Set("Accept", "*/*")
+	client := http.Client{
+		Transport: tr4,
+	}
+	_, err = client.Do(req)
+	c.Assert(err, checker.NotNil)
+	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
+
+	// with unknown tls option
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(fmt.Sprintf("found different TLS options for routers on the same host %v, so using the default TLS option instead", tr4.TLSClientConfig.ServerName)))
+	c.Assert(err, checker.IsNil)
+}
+
 // TestWithSNIStrictNotMatchedRequest involves a client sending a SNI hostname of
 // "snitest.org", which does not match the CN of 'snitest.com.crt'. The test
 // verifies that traefik closes the connection.
