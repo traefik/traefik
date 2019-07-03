@@ -49,7 +49,7 @@ Once positioned, this option sets (and resets) all the default values of the sub
     
 ### Configuration File
 
-At startup, Traefik searches for a file named `traefik.toml` (or `traefik.yml` or `traefik.yaml`) in:
+At startup, Traefik searches for a file named `traefik.toml` (or `traefik.yml`) in:
 
 - `/etc/traefik/`
 - `$XDG_CONFIG_HOME/`
