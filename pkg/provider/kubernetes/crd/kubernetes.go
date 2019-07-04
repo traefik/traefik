@@ -278,7 +278,9 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 			}
 
 			protocol := "http"
-			if port == 443 || strings.HasPrefix(portSpec.Name, "https") {
+			if svc.Scheme != "" {
+				protocol = svc.Scheme
+			} else if port == 443 || strings.HasPrefix(portSpec.Name, "https") {
 				protocol = "https"
 			}
 

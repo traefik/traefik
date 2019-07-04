@@ -45,6 +45,7 @@ type TLSOptionRef struct {
 type Service struct {
 	Name        string       `json:"name"`
 	Port        int32        `json:"port"`
+	Scheme      string       `json:"scheme,omitempty"`
 	HealthCheck *HealthCheck `json:"healthCheck,omitempty"`
 	Strategy    string       `json:"strategy,omitempty"`
 }

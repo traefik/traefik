@@ -1338,6 +1338,43 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple Ingress Route, explicit https scheme",
+			paths: []string{"services.yml", "with_https_scheme.yml"},
+			expected: &config.Configuration{
+				TLS: &config.TLSConfiguration{},
+				TCP: &config.TCPConfiguration{
+					Routers:  map[string]*config.TCPRouter{},
+					Services: map[string]*config.TCPService{},
+				},
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"default/test.route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default/test.route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*config.Middleware{},
+					Services: map[string]*config.Service{
+						"default/test.route-6b204d94623b3df4370c": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL: "https://10.10.0.7:8443",
+									},
+									{
+										URL: "https://10.10.0.8:8443",
+									},
+								},
+								PassHostHeader: true,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "port selected by name (TODO)",
 		},
 	}
