@@ -11,7 +11,7 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: test.crd
+  name: test.route
   namespace: default
 
 spec:
