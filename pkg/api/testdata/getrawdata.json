@@ -9,7 +9,8 @@
 				"addPrefixTest@anotherprovider"
 			],
 			"service": "foo-service@myprovider",
-			"rule": "Host(`foo.bar`)"
+			"rule": "Host(`foo.bar`)",
+			"status": "enabled"
 		},
 		"test@myprovider": {
 			"entryPoints": [
@@ -20,7 +21,8 @@
 				"auth"
 			],
 			"service": "foo-service@myprovider",
-			"rule": "Host(`foo.bar.other`)"
+			"rule": "Host(`foo.bar.other`)",
+			"status": "enabled"
 		}
 	},
 	"middlewares": {
@@ -65,7 +67,8 @@
 			"usedBy": [
 				"bar@myprovider",
 				"test@myprovider"
-			]
+			],
+			"status": "enabled"
 		}
 	},
 	"tcpRouters": {

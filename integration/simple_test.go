@@ -524,3 +524,42 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.
 		}
 	}
 }
+
+func (s *SimpleSuite) TestRouterConfigErrors(c *check.C) {
+	cmd, output := s.traefikCmd(withConfigFile("fixtures/router_errors.toml"))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// All errors
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","found different TLS options for routers on the same host snitest.net, so using the default TLS option instead"]`))
+	c.Assert(err, checker.IsNil)
+
+	// router4 is enabled, but in warning state because its tls options conf was messed up
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
+	c.Assert(err, checker.IsNil)
+
+	// router5 is disabled because its middleware conf is broken
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router5@file", 1000*time.Millisecond, try.BodyContains())
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestServiceConfigErrors(c *check.C) {
+	cmd, output := s.traefikCmd(withConfigFile("fixtures/service_errors.toml"))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains(`["the service \"service1@file\" doesn't have any load balancer"]`))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services/service2@file", 1000*time.Millisecond, try.BodyContains(`"status":"enabled"`))
+	c.Assert(err, checker.IsNil)
+}

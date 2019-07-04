@@ -13,6 +13,7 @@
 		"serverStatus": {
 			"http://127.0.0.2": "UP"
 		},
+		"status": "enabled",
 		"usedBy": [
 			"foo@myprovider"
 		]

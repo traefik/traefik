@@ -42,7 +42,7 @@ type Manager struct {
 
 func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*dynamic.TCPRouterInfo {
 	if m.conf != nil {
-		return m.conf.GetTCPRoutersByEntrypoints(ctx, entryPoints)
+		return m.conf.GetTCPRoutersByEntryPoints(ctx, entryPoints)
 	}
 
 	return make(map[string]map[string]*dynamic.TCPRouterInfo)
@@ -50,7 +50,7 @@ func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[s
 
 func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*dynamic.RouterInfo {
 	if m.conf != nil {
-		return m.conf.GetRoutersByEntrypoints(ctx, entryPoints, tls)
+		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
 	}
 
 	return make(map[string]map[string]*dynamic.RouterInfo)
@@ -108,7 +108,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		domains, err := rules.ParseDomains(routerHTTPConfig.Rule)
 		if err != nil {
 			routerErr := fmt.Errorf("invalid rule %s, error: %v", routerHTTPConfig.Rule, err)
-			routerHTTPConfig.Err = routerErr.Error()
+			routerHTTPConfig.AddError(routerErr, true)
 			logger.Debug(routerErr)
 			continue
 		}
@@ -126,7 +126,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 				tlsConf, err := m.tlsManager.Get("default", tlsOptionsName)
 				if err != nil {
-					routerHTTPConfig.Err = err.Error()
+					routerHTTPConfig.AddError(err, true)
 					logger.Debug(err)
 					continue
 				}
@@ -156,11 +156,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		} else {
 			routers := make([]string, 0, len(tlsConfigs))
 			for _, v := range tlsConfigs {
-				// TODO: properly deal with critical errors VS non-critical errors
-				if configsHTTP[v.routerName].Err != "" {
-					configsHTTP[v.routerName].Err += "\n"
-				}
-				configsHTTP[v.routerName].Err += fmt.Sprintf("found different TLS options for routers on the same host %v, so using the default TLS option instead", hostSNI)
+				configsHTTP[v.routerName].AddError(fmt.Errorf("found different TLS options for routers on the same host %v, so using the default TLS option instead", hostSNI), false)
 				routers = append(routers, v.routerName)
 			}
 			logger.Warnf("Found different TLS options for routers on the same host %v, so using the default TLS options instead for these routers: %#v", hostSNI, routers)

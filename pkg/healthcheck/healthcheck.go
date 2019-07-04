@@ -248,7 +248,7 @@ type LbStatusUpdater struct {
 func (lb *LbStatusUpdater) RemoveServer(u *url.URL) error {
 	err := lb.BalancerHandler.RemoveServer(u)
 	if err == nil && lb.serviceInfo != nil {
-		lb.serviceInfo.UpdateStatus(u.String(), serverDown)
+		lb.serviceInfo.UpdateServerStatus(u.String(), serverDown)
 	}
 	return err
 }
@@ -258,7 +258,7 @@ func (lb *LbStatusUpdater) RemoveServer(u *url.URL) error {
 func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
 	err := lb.BalancerHandler.UpsertServer(u, options...)
 	if err == nil && lb.serviceInfo != nil {
-		lb.serviceInfo.UpdateStatus(u.String(), serverUp)
+		lb.serviceInfo.UpdateServerStatus(u.String(), serverUp)
 	}
 	return err
 }

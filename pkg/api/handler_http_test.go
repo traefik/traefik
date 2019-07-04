@@ -148,6 +148,7 @@ func TestHandler_HTTP(t *testing.T) {
 							Rule:        "Host(`foo.bar`)",
 							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
 						},
+						Status: "enabled",
 					},
 				},
 			},
@@ -211,7 +212,7 @@ func TestHandler_HTTP(t *testing.T) {
 							},
 							UsedBy: []string{"foo@myprovider", "test@myprovider"},
 						}
-						si.UpdateStatus("http://127.0.0.1", "UP")
+						si.UpdateServerStatus("http://127.0.0.1", "UP")
 						return si
 					}(),
 					"baz@myprovider": func() *dynamic.ServiceInfo {
@@ -227,7 +228,7 @@ func TestHandler_HTTP(t *testing.T) {
 							},
 							UsedBy: []string{"foo@myprovider"},
 						}
-						si.UpdateStatus("http://127.0.0.2", "UP")
+						si.UpdateServerStatus("http://127.0.0.2", "UP")
 						return si
 					}(),
 				},
@@ -256,7 +257,7 @@ func TestHandler_HTTP(t *testing.T) {
 							},
 							UsedBy: []string{"foo@myprovider", "test@myprovider"},
 						}
-						si.UpdateStatus("http://127.0.0.1", "UP")
+						si.UpdateServerStatus("http://127.0.0.1", "UP")
 						return si
 					}(),
 					"baz@myprovider": func() *dynamic.ServiceInfo {
@@ -272,7 +273,7 @@ func TestHandler_HTTP(t *testing.T) {
 							},
 							UsedBy: []string{"foo@myprovider"},
 						}
-						si.UpdateStatus("http://127.0.0.2", "UP")
+						si.UpdateServerStatus("http://127.0.0.2", "UP")
 						return si
 					}(),
 					"test@myprovider": func() *dynamic.ServiceInfo {
@@ -288,7 +289,7 @@ func TestHandler_HTTP(t *testing.T) {
 							},
 							UsedBy: []string{"foo@myprovider", "test@myprovider"},
 						}
-						si.UpdateStatus("http://127.0.0.4", "UP")
+						si.UpdateServerStatus("http://127.0.0.4", "UP")
 						return si
 					}(),
 				},
@@ -317,7 +318,7 @@ func TestHandler_HTTP(t *testing.T) {
 							},
 							UsedBy: []string{"foo@myprovider", "test@myprovider"},
 						}
-						si.UpdateStatus("http://127.0.0.1", "UP")
+						si.UpdateServerStatus("http://127.0.0.1", "UP")
 						return si
 					}(),
 				},
@@ -345,7 +346,7 @@ func TestHandler_HTTP(t *testing.T) {
 							},
 							UsedBy: []string{"foo@myprovider", "test@myprovider"},
 						}
-						si.UpdateStatus("http://127.0.0.1", "UP")
+						si.UpdateServerStatus("http://127.0.0.1", "UP")
 						return si
 					}(),
 				},
@@ -517,6 +518,8 @@ func TestHandler_HTTP(t *testing.T) {
 			t.Parallel()
 
 			rtConf := &test.conf
+			// To lazily initialize the Statuses.
+			rtConf.PopulateUsedBy()
 			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
 			router := mux.NewRouter()
 			handler.Append(router)

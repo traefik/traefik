@@ -10,7 +10,7 @@ import (
 )
 
 // all the Routers/Middlewares/Services are considered fully qualified
-func TestPopulateUsedby(t *testing.T) {
+func TestPopulateUsedBy(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		conf     *dynamic.RuntimeConfiguration
@@ -690,7 +690,7 @@ func TestPopulateUsedby(t *testing.T) {
 
 }
 
-func TestGetTCPRoutersByEntrypoints(t *testing.T) {
+func TestGetTCPRoutersByEntryPoints(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		conf        dynamic.Configuration
@@ -882,13 +882,13 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			runtimeConfig := dynamic.NewRuntimeConfig(test.conf)
-			actual := runtimeConfig.GetTCPRoutersByEntrypoints(context.Background(), test.entryPoints)
+			actual := runtimeConfig.GetTCPRoutersByEntryPoints(context.Background(), test.entryPoints)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
-func TestGetRoutersByEntrypoints(t *testing.T) {
+func TestGetRoutersByEntryPoints(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		conf        dynamic.Configuration
@@ -983,6 +983,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`bar.foo`)",
 						},
+						Status: "enabled",
 					},
 					"foobar": {
 						Router: &dynamic.Router{
@@ -990,6 +991,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 							Service:     "foobar-service@myprovider",
 							Rule:        "Host(`bar.foobar`)",
 						},
+						Status: "enabled",
 					},
 				},
 			},
@@ -1045,6 +1047,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`bar.foo`)",
 						},
+						Status: "enabled",
 					},
 					"foobar": {
 						Router: &dynamic.Router{
@@ -1052,6 +1055,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 							Service:     "foobar-service@myprovider",
 							Rule:        "Host(`bar.foobar`)",
 						},
+						Status: "enabled",
 					},
 				},
 				"webs": {
@@ -1062,6 +1066,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 							Service:     "bar-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
 						},
+						Status: "enabled",
 					},
 					"foobar": {
 						Router: &dynamic.Router{
@@ -1069,6 +1074,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 							Service:     "foobar-service@myprovider",
 							Rule:        "Host(`bar.foobar`)",
 						},
+						Status: "enabled",
 					},
 				},
 			},
@@ -1080,7 +1086,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			runtimeConfig := dynamic.NewRuntimeConfig(test.conf)
-			actual := runtimeConfig.GetRoutersByEntrypoints(context.Background(), test.entryPoints, false)
+			actual := runtimeConfig.GetRoutersByEntryPoints(context.Background(), test.entryPoints, false)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

@@ -10,7 +10,8 @@
 		"name": "bar@myprovider",
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar`)",
-		"service": "foo-service@myprovider"
+		"service": "foo-service@myprovider",
+		"status": "enabled"
 	},
 	{
 		"entryPoints": [
@@ -23,6 +24,7 @@
 		"name": "test@myprovider",
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar.other`)",
-		"service": "foo-service@myprovider"
+		"service": "foo-service@myprovider",
+		"status": "enabled"
 	}
 ]

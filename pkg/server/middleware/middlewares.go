@@ -66,19 +66,19 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 
 			var err error
 			if constructorContext, err = checkRecursion(constructorContext, middlewareName); err != nil {
-				b.configs[middlewareName].Err = err
+				b.configs[middlewareName].AddError(err)
 				return nil, err
 			}
 
 			constructor, err := b.buildConstructor(constructorContext, middlewareName)
 			if err != nil {
-				b.configs[middlewareName].Err = err
+				b.configs[middlewareName].AddError(err)
 				return nil, err
 			}
 
 			handler, err := constructor(next)
 			if err != nil {
-				b.configs[middlewareName].Err = err
+				b.configs[middlewareName].AddError(err)
 				return nil, err
 			}
 

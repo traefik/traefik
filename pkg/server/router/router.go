@@ -47,7 +47,7 @@ type Manager struct {
 
 func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*dynamic.RouterInfo {
 	if m.conf != nil {
-		return m.conf.GetRoutersByEntrypoints(ctx, entryPoints, tls)
+		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
 	}
 
 	return make(map[string]map[string]*dynamic.RouterInfo)
@@ -95,14 +95,14 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		handler, err := m.buildRouterHandler(ctxRouter, routerName, routerConfig)
 		if err != nil {
-			routerConfig.Err = err.Error()
+			routerConfig.AddError(err, true)
 			logger.Error(err)
 			continue
 		}
 
 		err = router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
 		if err != nil {
-			routerConfig.Err = err.Error()
+			routerConfig.AddError(err, true)
 			logger.Error(err)
 			continue
 		}

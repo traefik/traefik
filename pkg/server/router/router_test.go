@@ -709,7 +709,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 				}
 			}
 			for _, v := range rtConf.Routers {
-				if v.Err != "" {
+				if len(v.Err) > 0 {
 					allErrors++
 				}
 			}

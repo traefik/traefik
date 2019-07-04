@@ -58,13 +58,14 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 	// TODO Should handle multiple service types
 	// FIXME Check if the service is declared multiple times with different types
 	if conf.LoadBalancer == nil {
-		conf.Err = fmt.Errorf("the service %q doesn't have any load balancer", serviceName)
-		return nil, conf.Err
+		sErr := fmt.Errorf("the service %q doesn't have any load balancer", serviceName)
+		conf.AddError(sErr, true)
+		return nil, sErr
 	}
 
 	lb, err := m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
 	if err != nil {
-		conf.Err = err
+		conf.AddError(err, true)
 		return nil, err
 	}
 

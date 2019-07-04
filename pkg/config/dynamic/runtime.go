@@ -9,6 +9,12 @@ import (
 	"github.com/containous/traefik/pkg/log"
 )
 
+const (
+	statusEnabled  = "enabled"
+	statusDisabled = "disabled"
+	statusWarning  = "warning"
+)
+
 // RuntimeConfiguration holds the information about the currently running traefik instance.
 type RuntimeConfiguration struct {
 	Routers     map[string]*RouterInfo     `json:"routers,omitempty"`
@@ -31,7 +37,7 @@ func NewRuntimeConfig(conf Configuration) *RuntimeConfiguration {
 		if len(routers) > 0 {
 			runtimeConfig.Routers = make(map[string]*RouterInfo, len(routers))
 			for k, v := range routers {
-				runtimeConfig.Routers[k] = &RouterInfo{Router: v}
+				runtimeConfig.Routers[k] = &RouterInfo{Router: v, Status: statusEnabled}
 			}
 		}
 
@@ -39,7 +45,7 @@ func NewRuntimeConfig(conf Configuration) *RuntimeConfiguration {
 		if len(services) > 0 {
 			runtimeConfig.Services = make(map[string]*ServiceInfo, len(services))
 			for k, v := range services {
-				runtimeConfig.Services[k] = &ServiceInfo{Service: v}
+				runtimeConfig.Services[k] = &ServiceInfo{Service: v, Status: statusEnabled}
 			}
 		}
 
@@ -81,6 +87,11 @@ func (r *RuntimeConfiguration) PopulateUsedBy() {
 	logger := log.WithoutContext()
 
 	for routerName, routerInfo := range r.Routers {
+		// lazily initialize Status in case caller forgot to do it
+		if routerInfo.Status == "" {
+			routerInfo.Status = statusEnabled
+		}
+
 		providerName := getProviderName(routerName)
 		if providerName == "" {
 			logger.WithField(log.RouterName, routerName).Error("router name is not fully qualified")
@@ -102,7 +113,12 @@ func (r *RuntimeConfiguration) PopulateUsedBy() {
 		r.Services[serviceName].UsedBy = append(r.Services[serviceName].UsedBy, routerName)
 	}
 
-	for k := range r.Services {
+	for k, serviceInfo := range r.Services {
+		// lazily initialize Status in case caller forgot to do it
+		if serviceInfo.Status == "" {
+			serviceInfo.Status = statusEnabled
+		}
+
 		sort.Strings(r.Services[k].UsedBy)
 	}
 
@@ -138,8 +154,8 @@ func contains(entryPoints []string, entryPointName string) bool {
 	return false
 }
 
-// GetRoutersByEntrypoints returns all the http routers by entrypoints name and routers name
-func (r *RuntimeConfiguration) GetRoutersByEntrypoints(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*RouterInfo {
+// GetRoutersByEntryPoints returns all the http routers by entry points name and routers name
+func (r *RuntimeConfiguration) GetRoutersByEntryPoints(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*RouterInfo {
 	entryPointsRouters := make(map[string]map[string]*RouterInfo)
 
 	for rtName, rt := range r.Routers {
@@ -169,8 +185,8 @@ func (r *RuntimeConfiguration) GetRoutersByEntrypoints(ctx context.Context, entr
 	return entryPointsRouters
 }
 
-// GetTCPRoutersByEntrypoints returns all the tcp routers by entrypoints name and routers name
-func (r *RuntimeConfiguration) GetTCPRoutersByEntrypoints(ctx context.Context, entryPoints []string) map[string]map[string]*TCPRouterInfo {
+// GetTCPRoutersByEntryPoints returns all the tcp routers by entry points name and routers name
+func (r *RuntimeConfiguration) GetTCPRoutersByEntryPoints(ctx context.Context, entryPoints []string) map[string]map[string]*TCPRouterInfo {
 	entryPointsRouters := make(map[string]map[string]*TCPRouterInfo)
 
 	for rtName, rt := range r.TCPRouters {
@@ -199,8 +215,34 @@ func (r *RuntimeConfiguration) GetTCPRoutersByEntrypoints(ctx context.Context, e
 
 // RouterInfo holds information about a currently running HTTP router
 type RouterInfo struct {
-	*Router        // dynamic configuration
-	Err     string `json:"error,omitempty"` // initialization error
+	*Router // dynamic configuration
+	// Err contains all the errors that occurred during router's creation.
+	Err []string `json:"error,omitempty"`
+	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
+	// If not in "enabled" state, the reason for it should be in the list of Err.
+	// It is the caller's responsibility to set the initial status.
+	Status string `json:"status,omitempty"`
+}
+
+// AddError adds err to r.Err, if it does not already exist.
+// If critical is set, r is marked as disabled.
+func (r *RouterInfo) AddError(err error, critical bool) {
+	for _, value := range r.Err {
+		if value == err.Error() {
+			return
+		}
+	}
+
+	r.Err = append(r.Err, err.Error())
+	if critical {
+		r.Status = statusDisabled
+		return
+	}
+
+	// only set it to "warning" if not already in a worse state
+	if r.Status != statusDisabled {
+		r.Status = statusWarning
+	}
 }
 
 // TCPRouterInfo holds information about a currently running TCP router
@@ -211,45 +253,84 @@ type TCPRouterInfo struct {
 
 // MiddlewareInfo holds information about a currently running middleware
 type MiddlewareInfo struct {
-	*Middleware          // dynamic configuration
-	Err         error    `json:"error,omitempty"`  // initialization error
-	UsedBy      []string `json:"usedBy,omitempty"` // list of routers and services using that middleware
+	*Middleware // dynamic configuration
+	// Err contains all the errors that occurred during service creation.
+	Err    []string `json:"error,omitempty"`
+	UsedBy []string `json:"usedBy,omitempty"` // list of routers and services using that middleware
+}
+
+// AddError adds err to s.Err, if it does not already exist.
+// If critical is set, m is marked as disabled.
+func (m *MiddlewareInfo) AddError(err error) {
+	for _, value := range m.Err {
+		if value == err.Error() {
+			return
+		}
+	}
+
+	m.Err = append(m.Err, err.Error())
 }
 
 // ServiceInfo holds information about a currently running service
 type ServiceInfo struct {
-	*Service          // dynamic configuration
-	Err      error    `json:"error,omitempty"`  // initialization error
-	UsedBy   []string `json:"usedBy,omitempty"` // list of routers using that service
+	*Service // dynamic configuration
+	// Err contains all the errors that occurred during service creation.
+	Err []string `json:"error,omitempty"`
+	// Status reports whether the service is disabled, in a warning state, or all good (enabled).
+	// If not in "enabled" state, the reason for it should be in the list of Err.
+	// It is the caller's responsibility to set the initial status.
+	Status string   `json:"status,omitempty"`
+	UsedBy []string `json:"usedBy,omitempty"` // list of routers using that service
 
-	statusMu sync.RWMutex
-	status   map[string]string // keyed by server URL
+	serverStatusMu sync.RWMutex
+	serverStatus   map[string]string // keyed by server URL
 }
 
-// UpdateStatus sets the status of the server in the ServiceInfo.
-// It is the responsibility of the caller to check that s is not nil.
-func (s *ServiceInfo) UpdateStatus(server string, status string) {
-	s.statusMu.Lock()
-	defer s.statusMu.Unlock()
-
-	if s.status == nil {
-		s.status = make(map[string]string)
+// AddError adds err to s.Err, if it does not already exist.
+// If critical is set, s is marked as disabled.
+func (s *ServiceInfo) AddError(err error, critical bool) {
+	for _, value := range s.Err {
+		if value == err.Error() {
+			return
+		}
 	}
-	s.status[server] = status
+
+	s.Err = append(s.Err, err.Error())
+	if critical {
+		s.Status = statusDisabled
+		return
+	}
+
+	// only set it to "warning" if not already in a worse state
+	if s.Status != statusDisabled {
+		s.Status = statusWarning
+	}
+}
+
+// UpdateServerStatus sets the status of the server in the ServiceInfo.
+// It is the responsibility of the caller to check that s is not nil.
+func (s *ServiceInfo) UpdateServerStatus(server string, status string) {
+	s.serverStatusMu.Lock()
+	defer s.serverStatusMu.Unlock()
+
+	if s.serverStatus == nil {
+		s.serverStatus = make(map[string]string)
+	}
+	s.serverStatus[server] = status
 }
 
 // GetAllStatus returns all the statuses of all the servers in ServiceInfo.
 // It is the responsibility of the caller to check that s is not nil
 func (s *ServiceInfo) GetAllStatus() map[string]string {
-	s.statusMu.RLock()
-	defer s.statusMu.RUnlock()
+	s.serverStatusMu.RLock()
+	defer s.serverStatusMu.RUnlock()
 
-	if len(s.status) == 0 {
+	if len(s.serverStatus) == 0 {
 		return nil
 	}
 
-	allStatus := make(map[string]string, len(s.status))
-	for k, v := range s.status {
+	allStatus := make(map[string]string, len(s.serverStatus))
+	for k, v := range s.serverStatus {
 		allStatus[k] = v
 	}
 	return allStatus
