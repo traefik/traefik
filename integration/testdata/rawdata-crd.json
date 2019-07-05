@@ -1,24 +1,24 @@
 {
 	"routers": {
-		"default/test.crd-6b204d94623b3df4370c@kubernetescrd": {
+		"default/test.route-6b204d94623b3df4370c@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
-			"service": "default/test.crd-6b204d94623b3df4370c",
+			"service": "default/test.route-6b204d94623b3df4370c",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/bar`)",
 			"priority": 12,
 			"tls": {
 				"options": "default/mytlsoption"
 			}
 		},
-		"default/test2.crd-23c7f4c450289ee29016@kubernetescrd": {
+		"default/test2.route-23c7f4c450289ee29016@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
 			"middlewares": [
 				"default/stripprefix"
 			],
-			"service": "default/test2.crd-23c7f4c450289ee29016",
+			"service": "default/test2.route-23c7f4c450289ee29016",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/tobestripped`)"
 		}
 	},
@@ -30,12 +30,12 @@
 				]
 			},
 			"usedBy": [
-				"default/test2.crd-23c7f4c450289ee29016@kubernetescrd"
+				"default/test2.route-23c7f4c450289ee29016@kubernetescrd"
 			]
 		}
 	},
 	"services": {
-		"default/test.crd-6b204d94623b3df4370c@kubernetescrd": {
+		"default/test.route-6b204d94623b3df4370c@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
@@ -48,14 +48,14 @@
 				"passHostHeader": true
 			},
 			"usedBy": [
-				"default/test.crd-6b204d94623b3df4370c@kubernetescrd"
+				"default/test.route-6b204d94623b3df4370c@kubernetescrd"
 			],
 			"serverStatus": {
 				"http://10.42.0.3:80": "UP",
 				"http://10.42.0.5:80": "UP"
 			}
 		},
-		"default/test2.crd-23c7f4c450289ee29016@kubernetescrd": {
+		"default/test2.route-23c7f4c450289ee29016@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
@@ -68,7 +68,7 @@
 				"passHostHeader": true
 			},
 			"usedBy": [
-				"default/test2.crd-23c7f4c450289ee29016@kubernetescrd"
+				"default/test2.route-23c7f4c450289ee29016@kubernetescrd"
 			],
 			"serverStatus": {
 				"http://10.42.0.3:80": "UP",

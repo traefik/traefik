@@ -6,16 +6,13 @@ metadata:
 
 spec:
   entryPoints:
-    - web
+    - foo
 
   routes:
   - match: Host(`foo.com`) && PathPrefix(`/bar`)
     kind: Rule
     priority: 12
     services:
-    - name: whoami
-      port: 80
-
-  tls:
-    options:
-      name: mytlsoption
+    - name: whoami3
+      port: 8443
+      scheme: https

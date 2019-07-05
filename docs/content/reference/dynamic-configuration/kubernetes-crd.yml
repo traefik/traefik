@@ -97,6 +97,12 @@ spec:
       middlewares:
         - name: stripprefix
         - name: addprefix
+    - match: PathPrefix(`/misc`)
+      services:
+        - name: s3
+          port: 8443
+          # scheme allow to override the scheme for the service. (ex: https or h2c)
+          scheme: https
   # use an empty tls object for TLS with Let's Encrypt
   tls:
     secretName: supersecret
