@@ -278,10 +278,15 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 			}
 
 			protocol := "http"
-			if svc.Scheme != "" {
+			switch svc.Scheme {
+			case "http", "https", "h2c":
 				protocol = svc.Scheme
-			} else if port == 443 || strings.HasPrefix(portSpec.Name, "https") {
-				protocol = "https"
+			case "":
+				if port == 443 || strings.HasPrefix(portSpec.Name, "https") {
+					protocol = "https"
+				}
+			default:
+				return nil, fmt.Errorf("invalid scheme %q specified", svc.Scheme)
 			}
 
 			for _, addr := range subset.Addresses {
