@@ -4,36 +4,36 @@ global:
 serversTransport:
   insecureSkipVerify: true
   rootCAs:
-    - foobar
-    - foobar
+  - foobar
+  - foobar
   maxIdleConnsPerHost: 42
   forwardingTimeouts:
-    dialTimeout: 42000000000
-    responseHeaderTimeout: 42000000000
-    idleConnTimeout: 42000000000
+    dialTimeout: 42
+    responseHeaderTimeout: 42
+    idleConnTimeout: 42
 entryPoints:
   EntryPoint0:
     address: foobar
     transport:
       lifeCycle:
-        requestAcceptGraceTimeout: 42000000000
-        graceTimeOut: 42000000000
+        requestAcceptGraceTimeout: 42
+        graceTimeOut: 42
       respondingTimeouts:
-        readTimeout: 42000000000
-        writeTimeout: 42000000000
-        idleTimeout: 42000000000
+        readTimeout: 42
+        writeTimeout: 42
+        idleTimeout: 42
     proxyProtocol:
       insecure: true
       trustedIPs:
-        - foobar
-        - foobar
+      - foobar
+      - foobar
     forwardedHeaders:
       insecure: true
       trustedIPs:
-        - foobar
-        - foobar
+      - foobar
+      - foobar
 providers:
-  providersThrottleDuration: 42000000000
+  providersThrottleDuration: 42
   docker:
     constraints: foobar
     watch: true
@@ -49,13 +49,12 @@ providers:
     useBindPortIP: true
     swarmMode: true
     network: foobar
-    swarmModeRefreshSeconds: 42000000000
+    swarmModeRefreshSeconds: 42
   file:
     directory: foobar
     watch: true
     filename: foobar
     debugLogGeneratedTemplate: true
-    traefikFile: foobar
   marathon:
     constraints: foobar
     trace: true
@@ -70,10 +69,10 @@ providers:
       cert: foobar
       key: foobar
       insecureSkipVerify: true
-    dialerTimeout: 42000000000
-    responseHeaderTimeout: 42000000000
-    tlsHandshakeTimeout: 42000000000
-    keepAlive: 42000000000
+    dialerTimeout: 42
+    responseHeaderTimeout: 42
+    tlsHandshakeTimeout: 42
+    keepAlive: 42
     forceTaskHostname: true
     basic:
       httpBasicAuthUser: foobar
@@ -85,8 +84,8 @@ providers:
     certAuthFilePath: foobar
     disablePassHostHeaders: true
     namespaces:
-      - foobar
-      - foobar
+    - foobar
+    - foobar
     labelSelector: foobar
     ingressClass: foobar
     ingressEndpoint:
@@ -99,8 +98,8 @@ providers:
     certAuthFilePath: foobar
     disablePassHostHeaders: true
     namespaces:
-      - foobar
-      - foobar
+    - foobar
+    - foobar
     labelSelector: foobar
     ingressClass: foobar
   rest:
@@ -117,30 +116,31 @@ providers:
 api:
   entryPoint: foobar
   dashboard: true
+  debug: true
   statistics:
     recentErrors: 42
   middlewares:
-    - foobar
-    - foobar
+  - foobar
+  - foobar
 metrics:
   prometheus:
     buckets:
-      - 42
-      - 42
+    - 42
+    - 42
     entryPoint: foobar
     middlewares:
-      - foobar
-      - foobar
+    - foobar
+    - foobar
   dataDog:
     address: foobar
-    pushInterval: 10000000000
+    pushInterval: 42
   statsD:
     address: foobar
-    pushInterval: 10000000000
+    pushInterval: 42
   influxDB:
     address: foobar
     protocol: foobar
-    pushInterval: 10000000000
+    pushInterval: 42
     database: foobar
     retentionPolicy: foobar
     username: foobar
@@ -148,8 +148,8 @@ metrics:
 ping:
   entryPoint: foobar
   middlewares:
-    - foobar
-    - foobar
+  - foobar
+  - foobar
 log:
   level: foobar
   filePath: foobar
@@ -159,10 +159,10 @@ accessLog:
   format: foobar
   filters:
     statusCodes:
-      - foobar
-      - foobar
+    - foobar
+    - foobar
     retryAttempts: true
-    minDuration: 42000000000
+    minDuration: 42
   fields:
     defaultMode: foobar
     names:
@@ -211,6 +211,7 @@ tracing:
     traceIDHeaderName: foobar
     parentIDHeaderName: foobar
     spanIDHeaderName: foobar
+    baggagePrefixHeaderName: foobar
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
@@ -225,20 +226,20 @@ acme:
   onHostRule: true
   dnsChallenge:
     provider: foobar
-    delayBeforeCheck: 42000000000
+    delayBeforeCheck: 42
     resolvers:
-      - foobar
-      - foobar
+    - foobar
+    - foobar
     disablePropagationCheck: true
   httpChallenge:
     entryPoint: foobar
   tlsChallenge: {}
   domains:
-    - main: foobar
-      sans:
-        - foobar
-        - foobar
-    - main: foobar
-      sans:
-        - foobar
-        - foobar
+  - main: foobar
+    sans:
+    - foobar
+    - foobar
+  - main: foobar
+    sans:
+    - foobar
+    - foobar
