@@ -32,41 +32,81 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
-	config := dynamic.HTTPConfiguration{
-		Routers: map[string]*dynamic.Router{
-			"router1": {
-				EntryPoints: []string{"web"},
-				Middlewares: []string{},
-				Service:     "service1",
-				Rule:        "PathPrefix(`/`)",
-			},
-		},
-		Services: map[string]*dynamic.Service{
-			"service1": {
-				LoadBalancer: &dynamic.LoadBalancerService{
-					Servers: []dynamic.Server{
-						{
-							URL: "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
+	testCase := []struct {
+		desc      string
+		config    *config.Configuration
+		ruleMatch string
+	}{
+		{
+			desc: "deploy http configuration",
+			config: &config.Configuration{
+				HTTP: &config.HTTPConfiguration{
+					Routers: map[string]*config.Router{
+						"router1": {
+							EntryPoints: []string{"web"},
+							Middlewares: []string{},
+							Service:     "service1",
+							Rule:        "PathPrefix(`/`)",
+						},
+					},
+					Services: map[string]*config.Service{
+						"service1": {
+							LoadBalancer: &config.LoadBalancerService{
+								Servers: []config.Server{
+									{
+										URL: "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
+									},
+								},
+							},
 						},
 					},
 				},
 			},
+			ruleMatch: "PathPrefix(`/`)",
+		},
+		{
+			desc: "deploy tcp configuration",
+			config: &config.Configuration{
+				TCP: &config.TCPConfiguration{
+					Routers: map[string]*config.TCPRouter{
+						"router1": {
+							EntryPoints: []string{"web"},
+							Service:     "service1",
+							Rule:        "HostSNI(`*`)",
+						},
+					},
+					Services: map[string]*config.TCPService{
+						"service1": {
+							LoadBalancer: &config.TCPLoadBalancerService{
+								Servers: []config.TCPServer{
+									{
+										Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			ruleMatch: "HostSNI(`*`)",
 		},
 	}
 
-	json, err := json.Marshal(config)
-	c.Assert(err, checker.IsNil)
+	for _, test := range testCase {
+		json, err := json.Marshal(test.config)
+		c.Assert(err, checker.IsNil)
 
-	request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", bytes.NewReader(json))
-	c.Assert(err, checker.IsNil)
+		request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", bytes.NewReader(json))
+		c.Assert(err, checker.IsNil)
 
-	response, err := http.DefaultClient.Do(request)
-	c.Assert(err, checker.IsNil)
-	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+		response, err := http.DefaultClient.Do(request)
+		c.Assert(err, checker.IsNil)
+		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("PathPrefix(`/`)"))
-	c.Assert(err, checker.IsNil)
+		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains(test.ruleMatch))
+		c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
+		err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+		c.Assert(err, checker.IsNil)
+	}
 }
