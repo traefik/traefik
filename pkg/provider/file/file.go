@@ -32,7 +32,7 @@ type Provider struct {
 	Watch                     bool   `description:"Watch provider." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
 	Filename                  string `description:"Override default configuration template. For advanced users :)" json:"filename,omitempty" toml:"filename,omitempty" yaml:"filename,omitempty" export:"true"`
 	DebugLogGeneratedTemplate bool   `description:"Enable debug logging of generated configuration template." json:"debugLogGeneratedTemplate,omitempty" toml:"debugLogGeneratedTemplate,omitempty" yaml:"debugLogGeneratedTemplate,omitempty" export:"true"`
-	TraefikFile               string `description:"-" json:"traefikFile,omitempty" toml:"traefikFile,omitempty" yaml:"traefikFile,omitempty"`
+	TraefikFile               string `description:"-" json:"traefikFile,omitempty" toml:"-" yaml:"-"`
 }
 
 // SetDefaults sets the default values.

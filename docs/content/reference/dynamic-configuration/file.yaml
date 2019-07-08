@@ -2,54 +2,133 @@ http:
   routers:
     Router0:
       entryPoints:
-        - foobar
-        - foobar
+      - foobar
+      - foobar
       middlewares:
-        - foobar
-        - foobar
+      - foobar
+      - foobar
       service: foobar
       rule: foobar
       priority: 42
-      tls: {}
+      tls:
+        options: foobar
+    Router1:
+      entryPoints:
+      - foobar
+      - foobar
+      middlewares:
+      - foobar
+      - foobar
+      service: foobar
+      rule: foobar
+      priority: 42
+      tls:
+        options: foobar
+  services:
+    Service0:
+      loadBalancer:
+        stickiness:
+          cookieName: foobar
+          secureCookie: true
+          httpOnlyCookie: true
+        servers:
+        - url: foobar
+        - url: foobar
+        healthCheck:
+          scheme: foobar
+          path: foobar
+          port: 42
+          interval: foobar
+          timeout: foobar
+          hostname: foobar
+          headers:
+            name0: foobar
+            name1: foobar
+        passHostHeader: true
+        responseForwarding:
+          flushInterval: foobar
+    Service1:
+      loadBalancer:
+        stickiness:
+          cookieName: foobar
+          secureCookie: true
+          httpOnlyCookie: true
+        servers:
+        - url: foobar
+        - url: foobar
+        healthCheck:
+          scheme: foobar
+          path: foobar
+          port: 42
+          interval: foobar
+          timeout: foobar
+          hostname: foobar
+          headers:
+            name0: foobar
+            name1: foobar
+        passHostHeader: true
+        responseForwarding:
+          flushInterval: foobar
   middlewares:
-    Middleware0:
+    Middleware00:
       addPrefix:
         prefix: foobar
-    Middleware1:
-      stripPrefix:
-        prefixes:
-          - foobar
-          - foobar
-    Middleware2:
-      stripPrefixRegex:
-        regex:
-          - foobar
-          - foobar
-    Middleware3:
-      replacePath:
-        path: foobar
-    Middleware4:
-      replacePathRegex:
-        regex: foobar
-        replacement: foobar
-    Middleware5:
+    Middleware01:
+      basicAuth:
+        users:
+        - foobar
+        - foobar
+        usersFile: foobar
+        realm: foobar
+        removeHeader: true
+        headerField: foobar
+    Middleware02:
+      buffering:
+        maxRequestBodyBytes: 42
+        memRequestBodyBytes: 42
+        maxResponseBodyBytes: 42
+        memResponseBodyBytes: 42
+        retryExpression: foobar
+    Middleware03:
       chain:
         middlewares:
-          - foobar
-          - foobar
-    Middleware6:
-      ipWhiteList:
-        sourceRange:
-          - foobar
-          - foobar
-    Middleware7:
-      ipWhiteList:
-        ipStrategy:
-          depth: 42
-          excludedIPs:
-            - foobar
-            - foobar
-    Middleware8:
+        - foobar
+        - foobar
+    Middleware04:
+      circuitBreaker:
+        expression: foobar
+    Middleware05:
+      compress: {}
+    Middleware06:
+      digestAuth:
+        users:
+        - foobar
+        - foobar
+        usersFile: foobar
+        removeHeader: true
+        realm: foobar
+        headerField: foobar
+    Middleware07:
+      errors:
+        status:
+        - foobar
+        - foobar
+        service: foobar
+        query: foobar
+    Middleware08:
+      forwardAuth:
+        address: foobar
+        tls:
+          ca: foobar
+          caOptional: true
+          cert: foobar
+          key: foobar
+          insecureSkipVerify: true
+        trustForwardHeader: true
+        authResponseHeaders:
+        - foobar
+        - foobar
+    Middleware09:
       headers:
         customRequestHeaders:
           name0: foobar
@@ -59,23 +138,23 @@ http:
           name1: foobar
         accessControlAllowCredentials: true
         accessControlAllowHeaders:
-          - foobar
-          - foobar
+        - foobar
+        - foobar
         accessControlAllowMethods:
-          - foobar
-          - foobar
+        - foobar
+        - foobar
         accessControlAllowOrigin: foobar
         accessControlExposeHeaders:
-          - foobar
-          - foobar
+        - foobar
+        - foobar
         accessControlMaxAge: 42
         addVaryHeader: true
         allowedHosts:
-          - foobar
-          - foobar
+        - foobar
+        - foobar
         hostsProxyHeaders:
-          - foobar
-          - foobar
+        - foobar
+        - foobar
         sslRedirect: true
         sslTemporaryRedirect: true
         sslHost: foobar
@@ -96,83 +175,21 @@ http:
         publicKey: foobar
         referrerPolicy: foobar
         isDevelopment: true
-    Middleware9:
-      errors:
-        status:
-          - foobar
-          - foobar
-        service: foobar
-        query: foobar
     Middleware10:
-      rateLimit:
-        rateSet:
-          Rate0:
-            period: 42000000000
-            average: 42
-            burst: 42
-          Rate1:
-            period: 42000000000
-            average: 42
-            burst: 42
-        extractorFunc: foobar
+      ipWhiteList:
+        sourceRange:
+        - foobar
+        - foobar
+        ipStrategy:
+          depth: 42
+          excludedIPs:
+          - foobar
+          - foobar
     Middleware11:
-      redirectRegex:
-        regex: foobar
-        replacement: foobar
-        permanent: true
-    Middleware12:
-      redirectScheme:
-        scheme: foobar
-        port: foobar
-        permanent: true
-    Middleware13:
-      basicAuth:
-        users:
-          - foobar
-          - foobar
-        usersFile: foobar
-        realm: foobar
-        removeHeader: true
-        headerField: foobar
-    Middleware14:
-      digestAuth:
-        users:
-          - foobar
-          - foobar
-        usersFile: foobar
-        removeHeader: true
-        realm: foobar
-        headerField: foobar
-    Middleware15:
-      forwardAuth:
-        address: foobar
-        tls:
-          ca: foobar
-          caOptional: true
-          cert: foobar
-          key: foobar
-          insecureSkipVerify: true
-        trustForwardHeader: true
-        authResponseHeaders:
-          - foobar
-          - foobar
-    Middleware16:
       maxConn:
         amount: 42
         extractorFunc: foobar
-    Middleware17:
-      buffering:
-        maxRequestBodyBytes: 42
-        memRequestBodyBytes: 42
-        maxResponseBodyBytes: 42
-        memResponseBodyBytes: 42
-        retryExpression: foobar
-    Middleware18:
-      circuitBreaker:
-        expression: foobar
-    Middleware19:
-      compress: {}
-    Middleware20:
+    Middleware12:
       passTLSClientCert:
         pem: true
         info:
@@ -195,79 +212,112 @@ http:
             commonName: true
             serialNumber: true
             domainComponent: true
-    Middleware21:
+    Middleware13:
+      rateLimit:
+        rateSet:
+          Rate0:
+            period: 42ns
+            average: 42
+            burst: 42
+          Rate1:
+            period: 42ns
+            average: 42
+            burst: 42
+        extractorFunc: foobar
+    Middleware14:
+      redirectRegex:
+        regex: foobar
+        replacement: foobar
+        permanent: true
+    Middleware15:
+      redirectScheme:
+        scheme: foobar
+        port: foobar
+        permanent: true
+    Middleware16:
+      replacePath:
+        path: foobar
+    Middleware17:
+      replacePathRegex:
+        regex: foobar
+        replacement: foobar
+    Middleware18:
       retry:
-        attemps: 42
-  services:
-    Service0:
-      loadBalancer:
-        stickiness:
-          cookieName: foobar
-        servers:
-          - url: foobar
-          - url: foobar
-        healthCheck:
-          scheme: foobar
-          path: foobar
-          port: 42
-          interval: foobar
-          timeout: foobar
-          hostname: foobar
-          headers:
-            name0: foobar
-            name1: foobar
-        passHostHeader: true
-        responseForwarding:
-          flushInterval: foobar
+        attempts: 42
+    Middleware19:
+      stripPrefix:
+        prefixes:
+        - foobar
+        - foobar
+    Middleware20:
+      stripPrefixRegex:
+        regex:
+        - foobar
+        - foobar
 tcp:
   routers:
     TCPRouter0:
       entryPoints:
-        - foobar
-        - foobar
+      - foobar
+      - foobar
       service: foobar
       rule: foobar
       tls:
         passthrough: true
+        options: foobar
+    TCPRouter1:
+      entryPoints:
+      - foobar
+      - foobar
+      service: foobar
+      rule: foobar
+      tls:
+        passthrough: true
+        options: foobar
   services:
     TCPService0:
       loadBalancer:
         servers:
-          - address: foobar
-          - address: foobar
+        - address: foobar
+        - address: foobar
+    TCPService1:
+      loadBalancer:
+        servers:
+        - address: foobar
+        - address: foobar
 tls:
   certificates:
-    - certFile: foobar
-      keyFile: foobar
-      stores:
-        - foobar
-        - foobar
-    - certFile: foobar
-      keyFile: foobar
-      stores:
-        - foobar
-        - foobar
+  - certFile: foobar
+    keyFile: foobar
+    stores:
+    - foobar
+    - foobar
+  - certFile: foobar
+    keyFile: foobar
+    stores:
+    - foobar
+    - foobar
   options:
-    TLS0:
+    Options0:
       minVersion: foobar
       cipherSuites:
-        - foobar
-        - foobar
+      - foobar
+      - foobar
       clientCA:
         files:
-          - foobar
-          - foobar
+        - foobar
+        - foobar
         optional: true
       sniStrict: true
-    TLS1:
+    Options1:
       minVersion: foobar
       cipherSuites:
-        - foobar
-        - foobar
+      - foobar
+      - foobar
       clientCA:
         files:
-          - foobar
-          - foobar
+        - foobar
+        - foobar
         optional: true
       sniStrict: true
   stores:

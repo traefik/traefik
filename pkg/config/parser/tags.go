@@ -11,6 +11,7 @@ const (
 	TagLabelSliceAsStruct = "label-slice-as-struct"
 
 	// TagDescription is the documentation for the field.
+	// - "-": ignore the field.
 	TagDescription = "description"
 
 	// TagLabelAllowEmpty is related to TagLabel.

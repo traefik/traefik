@@ -52,7 +52,6 @@
     watch = true
     filename = "foobar"
     debugLogGeneratedTemplate = true
-    traefikFile = "foobar"
   [providers.marathon]
     constraints = "foobar"
     trace = true
@@ -111,6 +110,7 @@
 [api]
   entryPoint = "foobar"
   dashboard = true
+  debug = true
   middlewares = ["foobar", "foobar"]
   [api.statistics]
     recentErrors = 42
@@ -200,6 +200,7 @@
     traceIDHeaderName = "foobar"
     parentIDHeaderName = "foobar"
     spanIDHeaderName = "foobar"
+    baggagePrefixHeaderName = "foobar"
 
 [hostResolver]
   cnameFlattening = true

@@ -23,19 +23,11 @@ func (d *Duration) Set(s string) error {
 	return err
 }
 
-// Get returns the duration value.
-func (d *Duration) Get() interface{} { return time.Duration(*d) }
-
 // String returns a string representation of the duration value.
-func (d *Duration) String() string { return (*time.Duration)(d).String() }
-
-// SetValue sets the duration from the given Duration-asserted value.
-func (d *Duration) SetValue(val interface{}) {
-	*d = val.(Duration)
-}
+func (d Duration) String() string { return (time.Duration)(d).String() }
 
 // MarshalText serialize the given duration value into a text.
-func (d *Duration) MarshalText() ([]byte, error) {
+func (d Duration) MarshalText() ([]byte, error) {
 	return []byte(d.String()), nil
 }
 
@@ -46,8 +38,8 @@ func (d *Duration) UnmarshalText(text []byte) error {
 }
 
 // MarshalJSON serializes the given duration value.
-func (d *Duration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(time.Duration(*d))
+func (d Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(d))
 }
 
 // UnmarshalJSON deserializes the given text into a duration value.
