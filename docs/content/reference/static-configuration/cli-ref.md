@@ -300,39 +300,6 @@ Override default configuration template. For advanced users :)
 `--providers.file.watch`:  
 Watch provider. (Default: ```true```)
 
-`--providers.kubernetes`:  
-Enable Kubernetes backend with default settings. (Default: ```false```)
-
-`--providers.kubernetes.certauthfilepath`:  
-Kubernetes certificate authority file path (not needed for in-cluster client).
-
-`--providers.kubernetes.disablepasshostheaders`:  
-Kubernetes disable PassHost Headers. (Default: ```false```)
-
-`--providers.kubernetes.endpoint`:  
-Kubernetes server endpoint (required for external cluster client).
-
-`--providers.kubernetes.ingressclass`:  
-Value of kubernetes.io/ingress.class annotation to watch for.
-
-`--providers.kubernetes.ingressendpoint.hostname`:  
-Hostname used for Kubernetes Ingress endpoints.
-
-`--providers.kubernetes.ingressendpoint.ip`:  
-IP used for Kubernetes Ingress endpoints.
-
-`--providers.kubernetes.ingressendpoint.publishedservice`:  
-Published Kubernetes Service to copy status from.
-
-`--providers.kubernetes.labelselector`:  
-Kubernetes Ingress label selector to use.
-
-`--providers.kubernetes.namespaces`:  
-Kubernetes namespaces.
-
-`--providers.kubernetes.token`:  
-Kubernetes bearer token (not needed for in-cluster client).
-
 `--providers.kubernetescrd`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
@@ -355,6 +322,39 @@ Kubernetes label selector to use.
 Kubernetes namespaces.
 
 `--providers.kubernetescrd.token`:  
+Kubernetes bearer token (not needed for in-cluster client).
+
+`--providers.kubernetesingress`:  
+Enable Kubernetes backend with default settings. (Default: ```false```)
+
+`--providers.kubernetesingress.certauthfilepath`:  
+Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`--providers.kubernetesingress.disablepasshostheaders`:  
+Kubernetes disable PassHost Headers. (Default: ```false```)
+
+`--providers.kubernetesingress.endpoint`:  
+Kubernetes server endpoint (required for external cluster client).
+
+`--providers.kubernetesingress.ingressclass`:  
+Value of kubernetes.io/ingress.class annotation to watch for.
+
+`--providers.kubernetesingress.ingressendpoint.hostname`:  
+Hostname used for Kubernetes Ingress endpoints.
+
+`--providers.kubernetesingress.ingressendpoint.ip`:  
+IP used for Kubernetes Ingress endpoints.
+
+`--providers.kubernetesingress.ingressendpoint.publishedservice`:  
+Published Kubernetes Service to copy status from.
+
+`--providers.kubernetesingress.labelselector`:  
+Kubernetes Ingress label selector to use.
+
+`--providers.kubernetesingress.namespaces`:  
+Kubernetes namespaces.
+
+`--providers.kubernetesingress.token`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
 `--providers.marathon`:  

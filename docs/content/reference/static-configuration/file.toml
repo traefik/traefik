@@ -75,7 +75,7 @@
     [providers.marathon.basic]
       httpBasicAuthUser = "foobar"
       httpBasicPassword = "foobar"
-  [providers.kubernetes]
+  [providers.kubernetesIngress]
     endpoint = "foobar"
     token = "foobar"
     certAuthFilePath = "foobar"
@@ -83,7 +83,7 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
-    [providers.kubernetes.ingressEndpoint]
+    [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
       publishedService = "foobar"

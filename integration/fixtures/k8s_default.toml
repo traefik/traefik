@@ -11,4 +11,4 @@
   [entryPoints.web]
     address = ":8000"
 
-[providers.kubernetes]
+[providers.kubernetesIngress]

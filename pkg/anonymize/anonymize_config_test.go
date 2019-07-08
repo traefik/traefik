@@ -171,7 +171,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		SwarmModeRefreshSeconds: 42,
 	}
 
-	config.Providers.Kubernetes = &ingress.Provider{
+	config.Providers.KubernetesIngress = &ingress.Provider{
 		Endpoint:               "MyEndpoint",
 		Token:                  "MyToken",
 		CertAuthFilePath:       "MyCertAuthPath",

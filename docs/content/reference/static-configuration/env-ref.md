@@ -300,9 +300,6 @@ Override default configuration template. For advanced users :)
 `TRAEFIK_PROVIDERS_FILE_WATCH`:  
 Watch provider. (Default: ```true```)
 
-`TRAEFIK_PROVIDERS_KUBERNETES`:  
-Enable Kubernetes backend with default settings. (Default: ```false```)
-
 `TRAEFIK_PROVIDERS_KUBERNETESCRD`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
@@ -327,34 +324,37 @@ Kubernetes namespaces.
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
-`TRAEFIK_PROVIDERS_KUBERNETES_CERTAUTHFILEPATH`:  
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS`:  
+Enable Kubernetes backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
-`TRAEFIK_PROVIDERS_KUBERNETES_DISABLEPASSHOSTHEADERS`:  
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_DISABLEPASSHOSTHEADERS`:  
 Kubernetes disable PassHost Headers. (Default: ```false```)
 
-`TRAEFIK_PROVIDERS_KUBERNETES_ENDPOINT`:  
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
 
-`TRAEFIK_PROVIDERS_KUBERNETES_INGRESSCLASS`:  
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSCLASS`:  
 Value of kubernetes.io/ingress.class annotation to watch for.
 
-`TRAEFIK_PROVIDERS_KUBERNETES_INGRESSENDPOINT_HOSTNAME`:  
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSENDPOINT_HOSTNAME`:  
 Hostname used for Kubernetes Ingress endpoints.
 
-`TRAEFIK_PROVIDERS_KUBERNETES_INGRESSENDPOINT_IP`:  
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSENDPOINT_IP`:  
 IP used for Kubernetes Ingress endpoints.
 
-`TRAEFIK_PROVIDERS_KUBERNETES_INGRESSENDPOINT_PUBLISHEDSERVICE`:  
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSENDPOINT_PUBLISHEDSERVICE`:  
 Published Kubernetes Service to copy status from.
 
-`TRAEFIK_PROVIDERS_KUBERNETES_LABELSELECTOR`:  
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_LABELSELECTOR`:  
 Kubernetes Ingress label selector to use.
 
-`TRAEFIK_PROVIDERS_KUBERNETES_NAMESPACES`:  
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_NAMESPACES`:  
 Kubernetes namespaces.
 
-`TRAEFIK_PROVIDERS_KUBERNETES_TOKEN`:  
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
 `TRAEFIK_PROVIDERS_MARATHON`:  

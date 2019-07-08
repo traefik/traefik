@@ -79,7 +79,7 @@ providers:
       httpBasicAuthUser: foobar
       httpBasicPassword: foobar
     respectReadinessChecks: true
-  kubernetes:
+  kubernetesIngress:
     endpoint: foobar
     token: foobar
     certAuthFilePath: foobar
