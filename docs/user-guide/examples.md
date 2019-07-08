@@ -336,37 +336,37 @@ Pay attention to the **labels** section:
 
 ```
 home:
-image: abiosoft/caddy:0.10.14
-networks:
-  - ntw_front
-volumes:
-  - ./www/home/srv/:/srv/
-deploy:
-  mode: replicated
-  replicas: 2
-  #placement:
-  #  constraints: [node.role==manager]
-  restart_policy:
-    condition: on-failure
-    max_attempts: 5
-  resources:
-    limits:
-      cpus: '0.20'
-      memory: 9M
-    reservations:
-      cpus: '0.05'
-      memory: 9M
-  labels:
-  - "traefik.frontend.rule=PathPrefixStrip:/"
-  - "traefik.backend=home"
-  - "traefik.port=2015"
-  - "traefik.weight=10"
-  - "traefik.enable=true"
-  - "traefik.passHostHeader=true"
-  - "traefik.docker.network=ntw_front"
-  - "traefik.frontend.entryPoints=http"
-  - "traefik.backend.loadbalancer.swarm=true"
-  - "traefik.backend.loadbalancer.method=drr"
+  image: abiosoft/caddy:0.10.14
+  networks:
+    - ntw_front
+  volumes:
+    - ./www/home/srv/:/srv/
+  deploy:
+    mode: replicated
+    replicas: 2
+    #placement:
+    #  constraints: [node.role==manager]
+    restart_policy:
+      condition: on-failure
+      max_attempts: 5
+    resources:
+      limits:
+        cpus: '0.20'
+        memory: 9M
+      reservations:
+        cpus: '0.05'
+        memory: 9M
+    labels:
+      - "traefik.frontend.rule=PathPrefixStrip:/"
+      - "traefik.backend=home"
+      - "traefik.port=2015"
+      - "traefik.weight=10"
+      - "traefik.enable=true"
+      - "traefik.passHostHeader=true"
+      - "traefik.docker.network=ntw_front"
+      - "traefik.frontend.entryPoints=http"
+      - "traefik.backend.loadbalancer.swarm=true"
+      - "traefik.backend.loadbalancer.method=drr"
 ```
 
 Something more tricky using `regex`.
@@ -377,39 +377,39 @@ The double sign `$$` are variables managed by the docker compose file ([document
 
 ```
 portainer:
-image: portainer/portainer:1.16.5
-networks:
-  - ntw_front
-volumes:
-  - /var/run/docker.sock:/var/run/docker.sock
-deploy:
-  mode: replicated
-  replicas: 1
-  placement:
-    constraints: [node.role==manager]
-  restart_policy:
-    condition: on-failure
-    max_attempts: 5
-  resources:
-    limits:
-      cpus: '0.33'
-      memory: 20M
-    reservations:
-      cpus: '0.05'
-      memory: 10M
-  labels:
-    - "traefik.frontend.rule=PathPrefixStrip:/portainer"
-    - "traefik.backend=portainer"
-    - "traefik.port=9000"
-    - "traefik.weight=10"
-    - "traefik.enable=true"
-    - "traefik.passHostHeader=true"
-    - "traefik.docker.network=ntw_front"
-    - "traefik.frontend.entryPoints=http"
-    - "traefik.backend.loadbalancer.swarm=true"
-    - "traefik.backend.loadbalancer.method=drr"
-    # https://github.com/containous/traefik/issues/563#issuecomment-421360934
-    - "traefik.frontend.redirect.regex=^(.*)/portainer$$"
-    - "traefik.frontend.redirect.replacement=$$1/portainer/"
-    - "traefik.frontend.rule=PathPrefix:/portainer;ReplacePathRegex: ^/portainer/(.*) /$$1"
+  image: portainer/portainer:1.16.5
+  networks:
+    - ntw_front
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  deploy:
+    mode: replicated
+    replicas: 1
+    placement:
+      constraints: [node.role==manager]
+    restart_policy:
+      condition: on-failure
+      max_attempts: 5
+    resources:
+      limits:
+        cpus: '0.33'
+        memory: 20M
+      reservations:
+        cpus: '0.05'
+        memory: 10M
+    labels:
+      - "traefik.frontend.rule=PathPrefixStrip:/portainer"
+      - "traefik.backend=portainer"
+      - "traefik.port=9000"
+      - "traefik.weight=10"
+      - "traefik.enable=true"
+      - "traefik.passHostHeader=true"
+      - "traefik.docker.network=ntw_front"
+      - "traefik.frontend.entryPoints=http"
+      - "traefik.backend.loadbalancer.swarm=true"
+      - "traefik.backend.loadbalancer.method=drr"
+      # https://github.com/containous/traefik/issues/563#issuecomment-421360934
+      - "traefik.frontend.redirect.regex=^(.*)/portainer$$"
+      - "traefik.frontend.redirect.replacement=$$1/portainer/"
+      - "traefik.frontend.rule=PathPrefix:/portainer;ReplacePathRegex: ^/portainer/(.*) /$$1"
 ```
