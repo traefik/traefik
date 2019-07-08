@@ -194,7 +194,16 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 					{Name: "filename", Value: "foobar"},
 					{Name: "traefikFile", Value: "foobar"},
 					{Name: "watch", Value: "true"}}},
-				{Name: "kubernetes", Children: []*parser.Node{
+				{Name: "kubernetesCRD",
+					Children: []*parser.Node{
+						{Name: "certAuthFilePath", Value: "foobar"},
+						{Name: "disablePassHostHeaders", Value: "true"},
+						{Name: "endpoint", Value: "foobar"},
+						{Name: "ingressClass", Value: "foobar"},
+						{Name: "labelSelector", Value: "foobar"},
+						{Name: "namespaces", Value: "foobar,foobar"},
+						{Name: "token", Value: "foobar"}}},
+				{Name: "kubernetesIngress", Children: []*parser.Node{
 					{Name: "certAuthFilePath", Value: "foobar"},
 					{Name: "disablePassHostHeaders", Value: "true"},
 					{Name: "endpoint", Value: "foobar"},
@@ -206,15 +215,6 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 					{Name: "labelSelector", Value: "foobar"},
 					{Name: "namespaces", Value: "foobar,foobar"},
 					{Name: "token", Value: "foobar"}}},
-				{Name: "kubernetesCRD",
-					Children: []*parser.Node{
-						{Name: "certAuthFilePath", Value: "foobar"},
-						{Name: "disablePassHostHeaders", Value: "true"},
-						{Name: "endpoint", Value: "foobar"},
-						{Name: "ingressClass", Value: "foobar"},
-						{Name: "labelSelector", Value: "foobar"},
-						{Name: "namespaces", Value: "foobar,foobar"},
-						{Name: "token", Value: "foobar"}}},
 				{Name: "marathon", Children: []*parser.Node{
 					{Name: "basic", Children: []*parser.Node{
 						{Name: "httpBasicAuthUser", Value: "foobar"},
@@ -437,7 +437,16 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 					{Name: "filename", Value: "foobar"},
 					{Name: "traefikFile", Value: "foobar"},
 					{Name: "watch", Value: "true"}}},
-				{Name: "kubernetes", Children: []*parser.Node{
+				{Name: "kubernetesCRD",
+					Children: []*parser.Node{
+						{Name: "certAuthFilePath", Value: "foobar"},
+						{Name: "disablePassHostHeaders", Value: "true"},
+						{Name: "endpoint", Value: "foobar"},
+						{Name: "ingressClass", Value: "foobar"},
+						{Name: "labelSelector", Value: "foobar"},
+						{Name: "namespaces", Value: "foobar,foobar"},
+						{Name: "token", Value: "foobar"}}},
+				{Name: "kubernetesIngress", Children: []*parser.Node{
 					{Name: "certAuthFilePath", Value: "foobar"},
 					{Name: "disablePassHostHeaders", Value: "true"},
 					{Name: "endpoint", Value: "foobar"},
@@ -449,15 +458,6 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 					{Name: "labelSelector", Value: "foobar"},
 					{Name: "namespaces", Value: "foobar,foobar"},
 					{Name: "token", Value: "foobar"}}},
-				{Name: "kubernetesCRD",
-					Children: []*parser.Node{
-						{Name: "certAuthFilePath", Value: "foobar"},
-						{Name: "disablePassHostHeaders", Value: "true"},
-						{Name: "endpoint", Value: "foobar"},
-						{Name: "ingressClass", Value: "foobar"},
-						{Name: "labelSelector", Value: "foobar"},
-						{Name: "namespaces", Value: "foobar,foobar"},
-						{Name: "token", Value: "foobar"}}},
 				{Name: "marathon", Children: []*parser.Node{
 					{Name: "basic", Children: []*parser.Node{
 						{Name: "httpBasicAuthUser", Value: "foobar"},
