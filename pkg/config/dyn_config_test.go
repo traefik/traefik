@@ -27,4 +27,15 @@ func TestDeepCopy(t *testing.T) {
 	assert.NotEqual(t, reflect.ValueOf(cfgDeepCopy), reflect.ValueOf(cfg))
 	assert.Equal(t, reflect.TypeOf(cfgDeepCopy), reflect.TypeOf(cfg))
 	assert.Equal(t, cfgDeepCopy, cfg)
+
+	// Update cfg
+	cfg.HTTP.Routers["powpow"] = &Router{}
+
+	assert.Equal(t, reflect.ValueOf(cfgCopy), reflect.ValueOf(cfg))
+	assert.Equal(t, reflect.ValueOf(cfgCopy), reflect.ValueOf(cfg))
+	assert.Equal(t, cfgCopy, cfg)
+
+	assert.NotEqual(t, reflect.ValueOf(cfgDeepCopy), reflect.ValueOf(cfg))
+	assert.Equal(t, reflect.TypeOf(cfgDeepCopy), reflect.TypeOf(cfg))
+	assert.NotEqual(t, cfgDeepCopy, cfg)
 }
