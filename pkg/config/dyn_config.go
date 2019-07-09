@@ -6,14 +6,20 @@ import (
 	traefiktls "github.com/containous/traefik/pkg/tls"
 )
 
+// +k8s:deepcopy-gen=true
+
 // Message holds configuration information exchanged between parts of traefik.
 type Message struct {
 	ProviderName  string
 	Configuration *Configuration
 }
 
+// +k8s:deepcopy-gen=true
+
 // Configurations is for currentConfigurations Map.
 type Configurations map[string]*Configuration
+
+// +k8s:deepcopy-gen=true
 
 // Configuration is the root of the dynamic configuration
 type Configuration struct {
@@ -22,12 +28,16 @@ type Configuration struct {
 	TLS  *TLSConfiguration  `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // TLSConfiguration contains all the configuration parameters of a TLS connection.
 type TLSConfiguration struct {
 	Certificates []*traefiktls.CertAndStores   `json:"-"  toml:"certificates,omitempty" yaml:"certificates,omitempty" label:"-"`
 	Options      map[string]traefiktls.Options `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
 	Stores       map[string]traefiktls.Store   `json:"stores,omitempty" toml:"stores,omitempty" yaml:"stores,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // HTTPConfiguration contains all the HTTP configuration parameters.
 type HTTPConfiguration struct {
@@ -36,21 +46,29 @@ type HTTPConfiguration struct {
 	Services    map[string]*Service    `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // TCPConfiguration contains all the TCP configuration parameters.
 type TCPConfiguration struct {
 	Routers  map[string]*TCPRouter  `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty"`
 	Services map[string]*TCPService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // Service holds a service configuration (can only be of one type at the same time).
 type Service struct {
 	LoadBalancer *LoadBalancerService `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // TCPService holds a tcp service configuration (can only be of one type at the same time).
 type TCPService struct {
 	LoadBalancer *TCPLoadBalancerService `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // Router holds the router configuration.
 type Router struct {
@@ -62,10 +80,14 @@ type Router struct {
 	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // RouterTLSConfig holds the TLS configuration for a router
 type RouterTLSConfig struct {
 	Options string `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // TCPRouter holds the router configuration.
 type TCPRouter struct {
@@ -75,11 +97,15 @@ type TCPRouter struct {
 	TLS         *RouterTCPTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // RouterTCPTLSConfig holds the TLS configuration for a router
 type RouterTCPTLSConfig struct {
 	Passthrough bool   `json:"passthrough" toml:"passthrough" yaml:"passthrough"`
 	Options     string `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // LoadBalancerService holds the LoadBalancerService configuration.
 type LoadBalancerService struct {
@@ -89,6 +115,8 @@ type LoadBalancerService struct {
 	PassHostHeader     bool                `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader"`
 	ResponseForwarding *ResponseForwarding `json:"responseForwarding,omitempty" toml:"responseForwarding,omitempty" yaml:"responseForwarding,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // TCPLoadBalancerService holds the LoadBalancerService configuration.
 type TCPLoadBalancerService struct {
@@ -134,10 +162,14 @@ func (l *LoadBalancerService) SetDefaults() {
 	l.PassHostHeader = true
 }
 
+// +k8s:deepcopy-gen=true
+
 // ResponseForwarding holds configuration for the forward of the response.
 type ResponseForwarding struct {
 	FlushInterval string `json:"flushInterval,omitempty" toml:"flushInterval,omitempty" yaml:"flushInterval,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // Stickiness holds the stickiness configuration.
 type Stickiness struct {
@@ -146,12 +178,16 @@ type Stickiness struct {
 	HTTPOnlyCookie bool   `json:"httpOnlyCookie,omitempty" toml:"httpOnlyCookie,omitempty" yaml:"httpOnlyCookie,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // Server holds the server configuration.
 type Server struct {
 	URL    string `json:"url,omitempty" toml:"url,omitempty" yaml:"url,omitempty" label:"-"`
 	Scheme string `toml:"-" json:"-" yaml:"-"`
 	Port   string `toml:"-" json:"-" yaml:"-"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // TCPServer holds a TCP Server configuration
 type TCPServer struct {
@@ -163,6 +199,8 @@ type TCPServer struct {
 func (s *Server) SetDefaults() {
 	s.Scheme = "http"
 }
+
+// +k8s:deepcopy-gen=true
 
 // HealthCheck holds the HealthCheck configuration.
 type HealthCheck struct {

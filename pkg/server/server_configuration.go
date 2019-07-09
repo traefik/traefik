@@ -30,10 +30,7 @@ func (s *Server) loadConfiguration(configMsg config.Message) {
 	currentConfigurations := s.currentConfigurations.Get().(config.Configurations)
 
 	// Copy configurations to new map so we don't change current if LoadConfig fails
-	newConfigurations := make(config.Configurations)
-	for k, v := range currentConfigurations {
-		newConfigurations[k] = v
-	}
+	newConfigurations := currentConfigurations.DeepCopy()
 	newConfigurations[configMsg.ProviderName] = configMsg.Configuration
 
 	s.metricsRegistry.ConfigReloadsCounter().Add(1)
