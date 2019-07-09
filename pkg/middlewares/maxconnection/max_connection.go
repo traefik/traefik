@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
@@ -23,7 +23,7 @@ type maxConnection struct {
 }
 
 // New creates a max connection middleware.
-func New(ctx context.Context, next http.Handler, maxConns config.MaxConn, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, maxConns dynamic.MaxConn, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
 
 	extractFunc, err := utils.NewExtractor(maxConns.ExtractorFunc)

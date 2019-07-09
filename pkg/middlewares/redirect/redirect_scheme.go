@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares"
 )
 
@@ -15,7 +15,7 @@ const (
 )
 
 // NewRedirectScheme creates a new RedirectScheme middleware.
-func NewRedirectScheme(ctx context.Context, next http.Handler, conf config.RedirectScheme, name string) (http.Handler, error) {
+func NewRedirectScheme(ctx context.Context, next http.Handler, conf dynamic.RedirectScheme, name string) (http.Handler, error) {
 	logger := middlewares.GetLogger(ctx, name, typeSchemeName)
 	logger.Debug("Creating middleware")
 	logger.Debugf("Setting up redirection to %s %s", conf.Scheme, conf.Port)

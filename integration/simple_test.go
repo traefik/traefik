@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -440,8 +440,8 @@ func (s *SimpleSuite) TestMultiprovider(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("service"))
 	c.Assert(err, checker.IsNil)
 
-	config := config.HTTPConfiguration{
-		Routers: map[string]*config.Router{
+	config := dynamic.HTTPConfiguration{
+		Routers: map[string]*dynamic.Router{
 			"router1": {
 				EntryPoints: []string{"web"},
 				Middlewares: []string{"customheader@file"},

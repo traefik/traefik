@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/require"
 )
@@ -367,7 +367,7 @@ func TestTLSClientHeadersWithPEM(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		certContents   []string // set the request TLS attribute if defined
-		config         config.PassTLSClientCert
+		config         dynamic.PassTLSClientCert
 		expectedHeader string
 	}{
 		{
@@ -379,24 +379,24 @@ func TestTLSClientHeadersWithPEM(t *testing.T) {
 		},
 		{
 			desc:   "No TLS, with pem option true",
-			config: config.PassTLSClientCert{PEM: true},
+			config: dynamic.PassTLSClientCert{PEM: true},
 		},
 		{
 			desc:           "TLS with simple certificate, with pem option true",
 			certContents:   []string{minimalCheeseCrt},
-			config:         config.PassTLSClientCert{PEM: true},
+			config:         dynamic.PassTLSClientCert{PEM: true},
 			expectedHeader: getCleanCertContents([]string{minimalCert}),
 		},
 		{
 			desc:           "TLS with complete certificate, with pem option true",
 			certContents:   []string{minimalCheeseCrt},
-			config:         config.PassTLSClientCert{PEM: true},
+			config:         dynamic.PassTLSClientCert{PEM: true},
 			expectedHeader: getCleanCertContents([]string{minimalCheeseCrt}),
 		},
 		{
 			desc:           "TLS with two certificate, with pem option true",
 			certContents:   []string{minimalCert, minimalCheeseCrt},
-			config:         config.PassTLSClientCert{PEM: true},
+			config:         dynamic.PassTLSClientCert{PEM: true},
 			expectedHeader: getCleanCertContents([]string{minimalCert, minimalCheeseCrt}),
 		},
 	}
@@ -488,7 +488,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		certContents   []string // set the request TLS attribute if defined
-		config         config.PassTLSClientCert
+		config         dynamic.PassTLSClientCert
 		expectedHeader string
 	}{
 		{
@@ -500,9 +500,9 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 		},
 		{
 			desc: "No TLS, with subject info",
-			config: config.PassTLSClientCert{
-				Info: &config.TLSClientCertificateInfo{
-					Subject: &config.TLSCLientCertificateDNInfo{
+			config: dynamic.PassTLSClientCert{
+				Info: &dynamic.TLSClientCertificateInfo{
+					Subject: &dynamic.TLSCLientCertificateDNInfo{
 						CommonName:   true,
 						Organization: true,
 						Locality:     true,
@@ -515,22 +515,22 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 		},
 		{
 			desc: "No TLS, with pem option false with empty subject info",
-			config: config.PassTLSClientCert{
+			config: dynamic.PassTLSClientCert{
 				PEM: false,
-				Info: &config.TLSClientCertificateInfo{
-					Subject: &config.TLSCLientCertificateDNInfo{},
+				Info: &dynamic.TLSClientCertificateInfo{
+					Subject: &dynamic.TLSCLientCertificateDNInfo{},
 				},
 			},
 		},
 		{
 			desc:         "TLS with simple certificate, with all info",
 			certContents: []string{minimalCheeseCrt},
-			config: config.PassTLSClientCert{
-				Info: &config.TLSClientCertificateInfo{
+			config: dynamic.PassTLSClientCert{
+				Info: &dynamic.TLSClientCertificateInfo{
 					NotAfter:  true,
 					NotBefore: true,
 					Sans:      true,
-					Subject: &config.TLSCLientCertificateDNInfo{
+					Subject: &dynamic.TLSCLientCertificateDNInfo{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,
@@ -539,7 +539,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 						Province:        true,
 						SerialNumber:    true,
 					},
-					Issuer: &config.TLSCLientCertificateDNInfo{
+					Issuer: &dynamic.TLSCLientCertificateDNInfo{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,
@@ -555,14 +555,14 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 		{
 			desc:         "TLS with simple certificate, with some info",
 			certContents: []string{minimalCheeseCrt},
-			config: config.PassTLSClientCert{
-				Info: &config.TLSClientCertificateInfo{
+			config: dynamic.PassTLSClientCert{
+				Info: &dynamic.TLSClientCertificateInfo{
 					NotAfter: true,
 					Sans:     true,
-					Subject: &config.TLSCLientCertificateDNInfo{
+					Subject: &dynamic.TLSCLientCertificateDNInfo{
 						Organization: true,
 					},
-					Issuer: &config.TLSCLientCertificateDNInfo{
+					Issuer: &dynamic.TLSCLientCertificateDNInfo{
 						Country: true,
 					},
 				},
@@ -572,12 +572,12 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 		{
 			desc:         "TLS with complete certificate, with all info",
 			certContents: []string{completeCheeseCrt},
-			config: config.PassTLSClientCert{
-				Info: &config.TLSClientCertificateInfo{
+			config: dynamic.PassTLSClientCert{
+				Info: &dynamic.TLSClientCertificateInfo{
 					NotAfter:  true,
 					NotBefore: true,
 					Sans:      true,
-					Subject: &config.TLSCLientCertificateDNInfo{
+					Subject: &dynamic.TLSCLientCertificateDNInfo{
 						Country:         true,
 						Province:        true,
 						Locality:        true,
@@ -586,7 +586,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 						SerialNumber:    true,
 						DomainComponent: true,
 					},
-					Issuer: &config.TLSCLientCertificateDNInfo{
+					Issuer: &dynamic.TLSCLientCertificateDNInfo{
 						Country:         true,
 						Province:        true,
 						Locality:        true,
@@ -602,12 +602,12 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 		{
 			desc:         "TLS with 2 certificates, with all info",
 			certContents: []string{minimalCheeseCrt, completeCheeseCrt},
-			config: config.PassTLSClientCert{
-				Info: &config.TLSClientCertificateInfo{
+			config: dynamic.PassTLSClientCert{
+				Info: &dynamic.TLSClientCertificateInfo{
 					NotAfter:  true,
 					NotBefore: true,
 					Sans:      true,
-					Subject: &config.TLSCLientCertificateDNInfo{
+					Subject: &dynamic.TLSCLientCertificateDNInfo{
 						Country:         true,
 						Province:        true,
 						Locality:        true,
@@ -616,7 +616,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 						SerialNumber:    true,
 						DomainComponent: true,
 					},
-					Issuer: &config.TLSCLientCertificateDNInfo{
+					Issuer: &dynamic.TLSCLientCertificateDNInfo{
 						Country:         true,
 						Province:        true,
 						Locality:        true,

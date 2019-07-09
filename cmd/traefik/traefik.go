@@ -17,7 +17,7 @@ import (
 	cmdVersion "github.com/containous/traefik/cmd/version"
 	"github.com/containous/traefik/pkg/cli"
 	"github.com/containous/traefik/pkg/collector"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider/aggregator"
@@ -147,7 +147,7 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) error 
 	svr := server.NewServer(*staticConfiguration, providerAggregator, serverEntryPointsTCP, tlsManager)
 
 	if acmeProvider != nil && acmeProvider.OnHostRule {
-		acmeProvider.SetConfigListenerChan(make(chan config.Configuration))
+		acmeProvider.SetConfigListenerChan(make(chan dynamic.Configuration))
 		svr.AddListener(acmeProvider.ListenConfiguration)
 	}
 	ctx := cmd.ContextWithSignal(context.Background())

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,7 +55,7 @@ func TestTLSContent(t *testing.T) {
 
 func TestErrorWhenEmptyConfig(t *testing.T) {
 	provider := &Provider{}
-	configChan := make(chan config.Message)
+	configChan := make(chan dynamic.Message)
 	errorChan := make(chan struct{})
 	go func() {
 		err := provider.Provide(configChan, safe.NewPool(context.Background()))
@@ -78,7 +78,7 @@ func TestProvideWithoutWatch(t *testing.T) {
 		t.Run(test.desc+" without watch", func(t *testing.T) {
 			provider, clean := createProvider(t, test, false)
 			defer clean()
-			configChan := make(chan config.Message)
+			configChan := make(chan dynamic.Message)
 
 			provider.DebugLogGeneratedTemplate = true
 
@@ -107,7 +107,7 @@ func TestProvideWithWatch(t *testing.T) {
 		t.Run(test.desc+" with watch", func(t *testing.T) {
 			provider, clean := createProvider(t, test, true)
 			defer clean()
-			configChan := make(chan config.Message)
+			configChan := make(chan dynamic.Message)
 
 			go func() {
 				err := provider.Provide(configChan, safe.NewPool(context.Background()))

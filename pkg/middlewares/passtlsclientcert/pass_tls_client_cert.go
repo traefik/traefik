@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/tracing"
@@ -40,7 +40,7 @@ type DistinguishedNameOptions struct {
 	StateOrProvinceName bool
 }
 
-func newDistinguishedNameOptions(info *config.TLSCLientCertificateDNInfo) *DistinguishedNameOptions {
+func newDistinguishedNameOptions(info *dynamic.TLSCLientCertificateDNInfo) *DistinguishedNameOptions {
 	if info == nil {
 		return nil
 	}
@@ -65,7 +65,7 @@ type passTLSClientCert struct {
 }
 
 // New constructs a new PassTLSClientCert instance from supplied frontend header struct.
-func New(ctx context.Context, next http.Handler, config config.PassTLSClientCert, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCert, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
 
 	return &passTLSClientCert{
@@ -85,7 +85,7 @@ type tlsClientCertificateInfo struct {
 	issuer    *DistinguishedNameOptions
 }
 
-func newTLSClientInfo(info *config.TLSClientCertificateInfo) *tlsClientCertificateInfo {
+func newTLSClientInfo(info *dynamic.TLSClientCertificateInfo) *tlsClientCertificateInfo {
 	if info == nil {
 		return nil
 	}

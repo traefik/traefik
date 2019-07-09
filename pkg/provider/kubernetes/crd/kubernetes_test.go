@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/provider"
 	"github.com/containous/traefik/pkg/tls"
 	"github.com/stretchr/testify/assert"
@@ -17,44 +17,44 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 		desc         string
 		ingressClass string
 		paths        []string
-		expected     *config.Configuration
+		expected     *dynamic.Configuration
 	}{
 		{
 			desc: "Empty",
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "Simple Ingress Route, with foo entrypoint",
 			paths: []string{"tcp/services.yml", "tcp/simple.yml"},
-			expected: &config.Configuration{
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"default/test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -68,15 +68,15 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "One ingress Route with two different rules",
 			paths: []string{"tcp/services.yml", "tcp/with_two_rules.yml"},
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"default/test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-fdd3e9338e47a45efefc",
@@ -88,10 +88,10 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Rule:        "HostSNI(`bar.com`)",
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -104,8 +104,8 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							},
 						},
 						"default/test.route-f44ce589164e656d231c": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -119,30 +119,30 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "One ingress Route with two different services, their servers will merge",
 			paths: []string{"tcp/services.yml", "tcp/with_two_services.yml"},
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"default/test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -163,68 +163,68 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							},
 						}},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:         "Ingress class does not match",
 			paths:        []string{"tcp/services.yml", "tcp/simple.yml"},
 			ingressClass: "tchouk",
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "Route with empty rule value is ignored",
 			paths: []string{"tcp/services.yml", "tcp/with_no_rule_value.yml"},
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "check rule quoting validity",
 			paths: []string{"tcp/services.yml", "tcp/with_bad_host_rule.yml"},
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "TLS",
 			paths: []string{"tcp/services.yml", "tcp/with_tls.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
@@ -234,19 +234,19 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"default/test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
-							TLS:         &config.RouterTCPTLSConfig{},
+							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -260,32 +260,32 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
 		{
 			desc:  "TLS with passthrough",
 			paths: []string{"tcp/services.yml", "tcp/with_tls_passthrough.yml"},
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"default/test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
-							TLS: &config.RouterTCPTLSConfig{
+							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -299,19 +299,19 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "TLS with tls options",
 			paths: []string{"tcp/services.yml", "tcp/with_tls_options.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
 						"default/foo": {
 							MinVersion: "VersionTLS12",
@@ -330,21 +330,21 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"default/test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
-							TLS: &config.RouterTCPTLSConfig{
+							TLS: &dynamic.RouterTCPTLSConfig{
 								Options: "default/foo",
 							},
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -358,18 +358,18 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
 		{
 			desc:  "TLS with tls options and specific namespace",
 			paths: []string{"tcp/services.yml", "tcp/with_tls_options_and_specific_namespace.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
 						"myns/foo": {
 							MinVersion: "VersionTLS12",
@@ -388,21 +388,21 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"default/test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
-							TLS: &config.RouterTCPTLSConfig{
+							TLS: &dynamic.RouterTCPTLSConfig{
 								Options: "myns/foo",
 							},
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -416,18 +416,18 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
 		{
 			desc:  "TLS with bad tls options",
 			paths: []string{"tcp/services.yml", "tcp/with_bad_tls_options.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
 						"default/foo": {
 							MinVersion: "VersionTLS12",
@@ -445,21 +445,21 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"default/test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
-							TLS: &config.RouterTCPTLSConfig{
+							TLS: &dynamic.RouterTCPTLSConfig{
 								Options: "default/foo",
 							},
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -473,39 +473,39 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
 		{
 			desc:  "TLS with unknown tls options",
 			paths: []string{"tcp/services.yml", "tcp/with_unknown_tls_options.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
 						"default/foo": {
 							MinVersion: "VersionTLS12",
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"default/test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
-							TLS: &config.RouterTCPTLSConfig{
+							TLS: &dynamic.RouterTCPTLSConfig{
 								Options: "default/unknown",
 							},
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -519,39 +519,39 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
 		{
 			desc:  "TLS with unknown tls options namespace",
 			paths: []string{"tcp/services.yml", "tcp/with_unknown_tls_options_namespace.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
 						"default/foo": {
 							MinVersion: "VersionTLS12",
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"default/test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
-							TLS: &config.RouterTCPTLSConfig{
+							TLS: &dynamic.RouterTCPTLSConfig{
 								Options: "unknown/foo",
 							},
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -565,30 +565,30 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
 		{
 			desc:  "TLS with ACME",
 			paths: []string{"tcp/services.yml", "tcp/with_tls_acme.yml"},
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"default/test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-fdd3e9338e47a45efefc",
 							Rule:        "HostSNI(`foo.com`)",
-							TLS:         &config.RouterTCPTLSConfig{},
+							TLS:         &dynamic.RouterTCPTLSConfig{},
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
 										Port:    "",
@@ -602,12 +602,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 	}
@@ -634,33 +634,33 @@ func TestLoadIngressRoutes(t *testing.T) {
 		desc         string
 		ingressClass string
 		paths        []string
-		expected     *config.Configuration
+		expected     *dynamic.Configuration
 	}{
 		{
 			desc: "Empty",
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "Simple Ingress Route, with foo entrypoint",
 			paths: []string{"services.yml", "simple.yml"},
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-6b204d94623b3df4370c",
@@ -668,11 +668,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Priority:    12,
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -685,19 +685,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "Simple Ingress Route with middleware",
 			paths: []string{"services.yml", "with_middleware.yml"},
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test2.route-23c7f4c450289ee29016": {
 							EntryPoints: []string{"web"},
 							Service:     "default/test2.route-23c7f4c450289ee29016",
@@ -706,22 +706,22 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Middlewares: []string{"default/stripprefix", "foo/addprefix"},
 						},
 					},
-					Middlewares: map[string]*config.Middleware{
+					Middlewares: map[string]*dynamic.Middleware{
 						"default/stripprefix": {
-							StripPrefix: &config.StripPrefix{
+							StripPrefix: &dynamic.StripPrefix{
 								Prefixes: []string{"/tobestripped"},
 							},
 						},
 						"foo/addprefix": {
-							AddPrefix: &config.AddPrefix{
+							AddPrefix: &dynamic.AddPrefix{
 								Prefix: "/tobeadded",
 							},
 						},
 					},
-					Services: map[string]*config.Service{
+					Services: map[string]*dynamic.Service{
 						"default/test2.route-23c7f4c450289ee29016": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -734,20 +734,20 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "Simple Ingress Route with middleware crossprovider",
 			paths: []string{"services.yml", "with_middleware_crossprovider.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test2.route-23c7f4c450289ee29016": {
 							EntryPoints: []string{"web"},
 							Service:     "default/test2.route-23c7f4c450289ee29016",
@@ -756,22 +756,22 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Middlewares: []string{"default/stripprefix", "foo/addprefix", "basicauth@file", "redirect@file"},
 						},
 					},
-					Middlewares: map[string]*config.Middleware{
+					Middlewares: map[string]*dynamic.Middleware{
 						"default/stripprefix": {
-							StripPrefix: &config.StripPrefix{
+							StripPrefix: &dynamic.StripPrefix{
 								Prefixes: []string{"/tobestripped"},
 							},
 						},
 						"foo/addprefix": {
-							AddPrefix: &config.AddPrefix{
+							AddPrefix: &dynamic.AddPrefix{
 								Prefix: "/tobeadded",
 							},
 						},
 					},
-					Services: map[string]*config.Service{
+					Services: map[string]*dynamic.Service{
 						"default/test2.route-23c7f4c450289ee29016": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -789,13 +789,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:  "One ingress Route with two different rules",
 			paths: []string{"services.yml", "with_two_rules.yml"},
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
@@ -809,11 +809,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Priority:    12,
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -825,8 +825,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 							},
 						},
 						"default/test.route-77c62dfe9517144aeeaa": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -839,20 +839,20 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 				},
-				TLS: &config.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
 			desc:  "One ingress Route with two different services, their servers will merge",
 			paths: []string{"services.yml", "with_two_services.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-77c62dfe9517144aeeaa": {
 							EntryPoints: []string{"web"},
 							Service:     "default/test.route-77c62dfe9517144aeeaa",
@@ -860,11 +860,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Priority:    12,
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-77c62dfe9517144aeeaa": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -889,72 +889,72 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc:         "Ingress class",
 			paths:        []string{"services.yml", "simple.yml"},
 			ingressClass: "tchouk",
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
 		{
 			desc:  "Route with empty rule value is ignored",
 			paths: []string{"services.yml", "with_no_rule_value.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
 		{
 			desc:  "Route with kind not of a rule type (empty kind) is ignored",
 			paths: []string{"services.yml", "with_wrong_rule_kind.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
 		{
 			desc:  "check rule quoting validity",
 			paths: []string{"services.yml", "with_bad_host_rule.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
 		{
 			desc:  "TLS",
 			paths: []string{"services.yml", "with_tls.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
@@ -964,25 +964,25 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
 							Service:     "default/test.route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
-							TLS:         &config.RouterTLSConfig{},
+							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -1000,8 +1000,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:  "TLS with tls options",
 			paths: []string{"services.yml", "with_tls_options.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
 						"default/foo": {
 							MinVersion: "VersionTLS12",
@@ -1020,27 +1020,27 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
 							Service:     "default/test.route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
-							TLS: &config.RouterTLSConfig{
+							TLS: &dynamic.RouterTLSConfig{
 								Options: "default/foo",
 							},
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -1058,8 +1058,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:  "TLS with tls options and specific namespace",
 			paths: []string{"services.yml", "with_tls_options_and_specific_namespace.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
 						"myns/foo": {
 							MinVersion: "VersionTLS12",
@@ -1078,27 +1078,27 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
 							Service:     "default/test.route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
-							TLS: &config.RouterTLSConfig{
+							TLS: &dynamic.RouterTLSConfig{
 								Options: "myns/foo",
 							},
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -1116,8 +1116,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:  "TLS with bad tls options",
 			paths: []string{"services.yml", "with_bad_tls_options.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
 						"default/foo": {
 							MinVersion: "VersionTLS12",
@@ -1135,27 +1135,27 @@ func TestLoadIngressRoutes(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
 							Service:     "default/test.route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
-							TLS: &config.RouterTLSConfig{
+							TLS: &dynamic.RouterTLSConfig{
 								Options: "default/foo",
 							},
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -1173,35 +1173,35 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:  "TLS with unknown tls options",
 			paths: []string{"services.yml", "with_unknown_tls_options.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
 						"default/foo": {
 							MinVersion: "VersionTLS12",
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
 							Service:     "default/test.route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
-							TLS: &config.RouterTLSConfig{
+							TLS: &dynamic.RouterTLSConfig{
 								Options: "default/unknown",
 							},
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -1219,35 +1219,35 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:  "TLS with unknown tls options namespace",
 			paths: []string{"services.yml", "with_unknown_tls_options_namespace.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
 						"default/foo": {
 							MinVersion: "VersionTLS12",
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
 							Service:     "default/test.route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
-							TLS: &config.RouterTLSConfig{
+							TLS: &dynamic.RouterTLSConfig{
 								Options: "unknown/foo",
 							},
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -1265,27 +1265,27 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:  "TLS with ACME",
 			paths: []string{"services.yml", "with_tls_acme.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"web"},
 							Service:     "default/test.route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
-							TLS:         &config.RouterTLSConfig{},
+							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
@@ -1303,14 +1303,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:  "Simple Ingress Route, defaulting to https for servers",
 			paths: []string{"services.yml", "with_https_default.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-6b204d94623b3df4370c",
@@ -1318,11 +1318,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Priority:    12,
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "https://10.10.0.5:443",
 									},
@@ -1340,14 +1340,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:  "Simple Ingress Route, explicit https scheme",
 			paths: []string{"services.yml", "with_https_scheme.yml"},
-			expected: &config.Configuration{
-				TLS: &config.TLSConfiguration{},
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"default/test.route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"foo"},
 							Service:     "default/test.route-6b204d94623b3df4370c",
@@ -1355,11 +1355,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Priority:    12,
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "https://10.10.0.7:8443",
 									},

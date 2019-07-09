@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/server/internal"
 	"github.com/containous/traefik/pkg/tcp"
@@ -13,11 +13,11 @@ import (
 
 // Manager is the TCPHandlers factory
 type Manager struct {
-	configs map[string]*config.TCPServiceInfo
+	configs map[string]*dynamic.TCPServiceInfo
 }
 
 // NewManager creates a new manager
-func NewManager(conf *config.RuntimeConfiguration) *Manager {
+func NewManager(conf *dynamic.RuntimeConfiguration) *Manager {
 	return &Manager{
 		configs: conf.TCPServices,
 	}

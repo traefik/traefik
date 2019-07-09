@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/rules"
 	"github.com/containous/traefik/pkg/safe"
@@ -89,10 +89,10 @@ type Provider struct {
 	account                *Account
 	client                 *lego.Client
 	certsChan              chan *Certificate
-	configurationChan      chan<- config.Message
+	configurationChan      chan<- dynamic.Message
 	tlsManager             *traefiktls.Manager
 	clientMutex            sync.Mutex
-	configFromListenerChan chan config.Configuration
+	configFromListenerChan chan dynamic.Configuration
 	pool                   *safe.Pool
 	resolvingDomains       map[string]struct{}
 	resolvingDomainsMutex  sync.RWMutex
@@ -104,12 +104,12 @@ func (p *Provider) SetTLSManager(tlsManager *traefiktls.Manager) {
 }
 
 // SetConfigListenerChan initializes the configFromListenerChan
-func (p *Provider) SetConfigListenerChan(configFromListenerChan chan config.Configuration) {
+func (p *Provider) SetConfigListenerChan(configFromListenerChan chan dynamic.Configuration) {
 	p.configFromListenerChan = configFromListenerChan
 }
 
 // ListenConfiguration sets a new Configuration into the configFromListenerChan
-func (p *Provider) ListenConfiguration(config config.Configuration) {
+func (p *Provider) ListenConfiguration(config dynamic.Configuration) {
 	p.configFromListenerChan <- config
 }
 
@@ -187,7 +187,7 @@ func isAccountMatchingCaServer(ctx context.Context, accountURI string, serverURI
 
 // Provide allows the file provider to provide configurations to traefik
 // using the given Configuration channel.
-func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	ctx := log.With(context.Background(), log.Str(log.ProviderName, "acme"))
 
 	p.pool = pool
@@ -581,15 +581,15 @@ func (p *Provider) saveCertificates() error {
 }
 
 func (p *Provider) refreshCertificates() {
-	conf := config.Message{
+	conf := dynamic.Message{
 		ProviderName: "ACME",
-		Configuration: &config.Configuration{
-			HTTP: &config.HTTPConfiguration{
-				Routers:     map[string]*config.Router{},
-				Middlewares: map[string]*config.Middleware{},
-				Services:    map[string]*config.Service{},
+		Configuration: &dynamic.Configuration{
+			HTTP: &dynamic.HTTPConfiguration{
+				Routers:     map[string]*dynamic.Router{},
+				Middlewares: map[string]*dynamic.Middleware{},
+				Services:    map[string]*dynamic.Service{},
 			},
-			TLS: &config.TLSConfiguration{},
+			TLS: &dynamic.TLSConfiguration{},
 		},
 	}
 

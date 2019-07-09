@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/metrics"
@@ -27,19 +27,19 @@ import (
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
 	entryPointsTCP             TCPEntryPoints
-	configurationChan          chan config.Message
-	configurationValidatedChan chan config.Message
+	configurationChan          chan dynamic.Message
+	configurationValidatedChan chan dynamic.Message
 	signals                    chan os.Signal
 	stopChan                   chan bool
 	currentConfigurations      safe.Safe
-	providerConfigUpdateMap    map[string]chan config.Message
+	providerConfigUpdateMap    map[string]chan dynamic.Message
 	accessLoggerMiddleware     *accesslog.Handler
 	tracer                     *tracing.Tracing
 	routinesPool               *safe.Pool
 	defaultRoundTripper        http.RoundTripper
 	metricsRegistry            metrics.Registry
 	provider                   provider.Provider
-	configurationListeners     []func(config.Configuration)
+	configurationListeners     []func(dynamic.Configuration)
 	requestDecorator           *requestdecorator.RequestDecorator
 	providersThrottleDuration  time.Duration
 	tlsManager                 *tls.Manager
@@ -47,7 +47,7 @@ type Server struct {
 
 // RouteAppenderFactory the route appender factory interface
 type RouteAppenderFactory interface {
-	NewAppender(ctx context.Context, middlewaresBuilder *middleware.Builder, runtimeConfiguration *config.RuntimeConfiguration) types.RouteAppender
+	NewAppender(ctx context.Context, middlewaresBuilder *middleware.Builder, runtimeConfiguration *dynamic.RuntimeConfiguration) types.RouteAppender
 }
 
 func setupTracing(conf *static.Tracing) tracing.Backend {
@@ -104,14 +104,14 @@ func NewServer(staticConfiguration static.Configuration, provider provider.Provi
 
 	server.provider = provider
 	server.entryPointsTCP = entryPoints
-	server.configurationChan = make(chan config.Message, 100)
-	server.configurationValidatedChan = make(chan config.Message, 100)
+	server.configurationChan = make(chan dynamic.Message, 100)
+	server.configurationValidatedChan = make(chan dynamic.Message, 100)
 	server.signals = make(chan os.Signal, 1)
 	server.stopChan = make(chan bool, 1)
 	server.configureSignals()
-	currentConfigurations := make(config.Configurations)
+	currentConfigurations := make(dynamic.Configurations)
 	server.currentConfigurations.Set(currentConfigurations)
-	server.providerConfigUpdateMap = make(map[string]chan config.Message)
+	server.providerConfigUpdateMap = make(map[string]chan dynamic.Message)
 	server.tlsManager = tlsManager
 
 	if staticConfiguration.Providers != nil {
@@ -236,7 +236,7 @@ func (s *Server) Close() {
 
 func (s *Server) startTCPServers() {
 	// Use an empty configuration in order to initialize the default handlers with internal routes
-	routers := s.loadConfigurationTCP(config.Configurations{})
+	routers := s.loadConfigurationTCP(dynamic.Configurations{})
 	for entryPointName, router := range routers {
 		s.entryPointsTCP[entryPointName].switchRouter(router)
 	}
@@ -266,9 +266,9 @@ func (s *Server) listenProviders(stop chan bool) {
 }
 
 // AddListener adds a new listener function used when new configuration is provided
-func (s *Server) AddListener(listener func(config.Configuration)) {
+func (s *Server) AddListener(listener func(dynamic.Configuration)) {
 	if s.configurationListeners == nil {
-		s.configurationListeners = make([]func(config.Configuration), 0)
+		s.configurationListeners = make([]func(dynamic.Configuration), 0)
 	}
 	s.configurationListeners = append(s.configurationListeners, listener)
 }

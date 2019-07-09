@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares/emptybackendhandler"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/gorilla/websocket"
@@ -22,42 +22,42 @@ import (
 func TestRetry(t *testing.T) {
 	testCases := []struct {
 		desc                  string
-		config                config.Retry
+		config                dynamic.Retry
 		wantRetryAttempts     int
 		wantResponseStatus    int
 		amountFaultyEndpoints int
 	}{
 		{
 			desc:                  "no retry on success",
-			config:                config.Retry{Attempts: 1},
+			config:                dynamic.Retry{Attempts: 1},
 			wantRetryAttempts:     0,
 			wantResponseStatus:    http.StatusOK,
 			amountFaultyEndpoints: 0,
 		},
 		{
 			desc:                  "no retry when max request attempts is one",
-			config:                config.Retry{Attempts: 1},
+			config:                dynamic.Retry{Attempts: 1},
 			wantRetryAttempts:     0,
 			wantResponseStatus:    http.StatusInternalServerError,
 			amountFaultyEndpoints: 1,
 		},
 		{
 			desc:                  "one retry when one server is faulty",
-			config:                config.Retry{Attempts: 2},
+			config:                dynamic.Retry{Attempts: 2},
 			wantRetryAttempts:     1,
 			wantResponseStatus:    http.StatusOK,
 			amountFaultyEndpoints: 1,
 		},
 		{
 			desc:                  "two retries when two servers are faulty",
-			config:                config.Retry{Attempts: 3},
+			config:                dynamic.Retry{Attempts: 3},
 			wantRetryAttempts:     2,
 			wantResponseStatus:    http.StatusOK,
 			amountFaultyEndpoints: 2,
 		},
 		{
 			desc:                  "max attempts exhausted delivers the 5xx response",
-			config:                config.Retry{Attempts: 3},
+			config:                dynamic.Retry{Attempts: 3},
 			wantRetryAttempts:     2,
 			wantResponseStatus:    http.StatusInternalServerError,
 			amountFaultyEndpoints: 3,
@@ -124,7 +124,7 @@ func TestRetryEmptyServerList(t *testing.T) {
 	next := emptybackendhandler.New(loadBalancer)
 
 	retryListener := &countingRetryListener{}
-	retry, err := New(context.Background(), next, config.Retry{Attempts: 3}, retryListener, "traefikTest")
+	retry, err := New(context.Background(), next, dynamic.Retry{Attempts: 3}, retryListener, "traefikTest")
 	require.NoError(t, err)
 
 	recorder := httptest.NewRecorder()
@@ -172,7 +172,7 @@ func TestMultipleRetriesShouldNotLooseHeaders(t *testing.T) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
-	retry, err := New(context.Background(), next, config.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
+	retry, err := New(context.Background(), next, dynamic.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
 	require.NoError(t, err)
 
 	responseRecorder := httptest.NewRecorder()
@@ -218,7 +218,7 @@ func TestRetryWithFlush(t *testing.T) {
 		}
 	})
 
-	retry, err := New(context.Background(), next, config.Retry{Attempts: 1}, &countingRetryListener{}, "traefikTest")
+	retry, err := New(context.Background(), next, dynamic.Retry{Attempts: 1}, &countingRetryListener{}, "traefikTest")
 	require.NoError(t, err)
 
 	responseRecorder := httptest.NewRecorder()
@@ -293,7 +293,7 @@ func TestRetryWebsocket(t *testing.T) {
 			}
 
 			retryListener := &countingRetryListener{}
-			retryH, err := New(context.Background(), loadBalancer, config.Retry{Attempts: test.maxRequestAttempts}, retryListener, "traefikTest")
+			retryH, err := New(context.Background(), loadBalancer, dynamic.Retry{Attempts: test.maxRequestAttempts}, retryListener, "traefikTest")
 			require.NoError(t, err)
 
 			retryServer := httptest.NewServer(retryH)

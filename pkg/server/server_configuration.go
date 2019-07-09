@@ -9,7 +9,7 @@ import (
 
 	"github.com/containous/alice"
 	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
@@ -26,8 +26,8 @@ import (
 )
 
 // loadConfiguration manages dynamically routers, middlewares, servers and TLS configurations
-func (s *Server) loadConfiguration(configMsg config.Message) {
-	currentConfigurations := s.currentConfigurations.Get().(config.Configurations)
+func (s *Server) loadConfiguration(configMsg dynamic.Message) {
+	currentConfigurations := s.currentConfigurations.Get().(dynamic.Configurations)
 
 	// Copy configurations to new map so we don't change current if LoadConfig fails
 	newConfigurations := currentConfigurations.DeepCopy()
@@ -53,7 +53,7 @@ func (s *Server) loadConfiguration(configMsg config.Message) {
 
 // loadConfigurationTCP returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
-func (s *Server) loadConfigurationTCP(configurations config.Configurations) map[string]*tcpCore.Router {
+func (s *Server) loadConfigurationTCP(configurations dynamic.Configurations) map[string]*tcpCore.Router {
 	ctx := context.TODO()
 
 	var entryPoints []string
@@ -65,7 +65,7 @@ func (s *Server) loadConfigurationTCP(configurations config.Configurations) map[
 
 	s.tlsManager.UpdateConfigs(conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
 
-	rtConf := config.NewRuntimeConfig(conf)
+	rtConf := dynamic.NewRuntimeConfig(conf)
 	handlersNonTLS, handlersTLS := s.createHTTPHandlers(ctx, rtConf, entryPoints)
 	routersTCP := s.createTCPRouters(ctx, rtConf, entryPoints, handlersNonTLS, handlersTLS)
 	rtConf.PopulateUsedBy()
@@ -74,7 +74,7 @@ func (s *Server) loadConfigurationTCP(configurations config.Configurations) map[
 }
 
 // the given configuration must not be nil. its fields will get mutated.
-func (s *Server) createTCPRouters(ctx context.Context, configuration *config.RuntimeConfiguration, entryPoints []string, handlers map[string]http.Handler, handlersTLS map[string]http.Handler) map[string]*tcpCore.Router {
+func (s *Server) createTCPRouters(ctx context.Context, configuration *dynamic.RuntimeConfiguration, entryPoints []string, handlers map[string]http.Handler, handlersTLS map[string]http.Handler) map[string]*tcpCore.Router {
 	if configuration == nil {
 		return make(map[string]*tcpCore.Router)
 	}
@@ -87,7 +87,7 @@ func (s *Server) createTCPRouters(ctx context.Context, configuration *config.Run
 }
 
 // createHTTPHandlers returns, for the given configuration and entryPoints, the HTTP handlers for non-TLS connections, and for the TLS ones. the given configuration must not be nil. its fields will get mutated.
-func (s *Server) createHTTPHandlers(ctx context.Context, configuration *config.RuntimeConfiguration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
+func (s *Server) createHTTPHandlers(ctx context.Context, configuration *dynamic.RuntimeConfiguration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
 	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper)
 	middlewaresBuilder := middleware.NewBuilder(configuration.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(configuration.Middlewares)
@@ -150,15 +150,15 @@ func (s *Server) createHTTPHandlers(ctx context.Context, configuration *config.R
 	return routerHandlers, handlersTLS
 }
 
-func isEmptyConfiguration(conf *config.Configuration) bool {
+func isEmptyConfiguration(conf *dynamic.Configuration) bool {
 	if conf == nil {
 		return true
 	}
 	if conf.TCP == nil {
-		conf.TCP = &config.TCPConfiguration{}
+		conf.TCP = &dynamic.TCPConfiguration{}
 	}
 	if conf.HTTP == nil {
-		conf.HTTP = &config.HTTPConfiguration{}
+		conf.HTTP = &dynamic.HTTPConfiguration{}
 	}
 
 	return conf.HTTP.Routers == nil &&
@@ -169,9 +169,9 @@ func isEmptyConfiguration(conf *config.Configuration) bool {
 		conf.TCP.Services == nil
 }
 
-func (s *Server) preLoadConfiguration(configMsg config.Message) {
+func (s *Server) preLoadConfiguration(configMsg dynamic.Message) {
 	s.defaultConfigurationValues(configMsg.Configuration.HTTP)
-	currentConfigurations := s.currentConfigurations.Get().(config.Configurations)
+	currentConfigurations := s.currentConfigurations.Get().(dynamic.Configurations)
 
 	logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
 	if log.GetLevel() == logrus.DebugLevel {
@@ -191,7 +191,7 @@ func (s *Server) preLoadConfiguration(configMsg config.Message) {
 
 	providerConfigUpdateCh, ok := s.providerConfigUpdateMap[configMsg.ProviderName]
 	if !ok {
-		providerConfigUpdateCh = make(chan config.Message)
+		providerConfigUpdateCh = make(chan dynamic.Message)
 		s.providerConfigUpdateMap[configMsg.ProviderName] = providerConfigUpdateCh
 		s.routinesPool.Go(func(stop chan bool) {
 			s.throttleProviderConfigReload(s.providersThrottleDuration, s.configurationValidatedChan, providerConfigUpdateCh, stop)
@@ -201,7 +201,7 @@ func (s *Server) preLoadConfiguration(configMsg config.Message) {
 	providerConfigUpdateCh <- configMsg
 }
 
-func (s *Server) defaultConfigurationValues(configuration *config.HTTPConfiguration) {
+func (s *Server) defaultConfigurationValues(configuration *dynamic.HTTPConfiguration) {
 	// FIXME create a config hook
 }
 
@@ -223,7 +223,7 @@ func (s *Server) listenConfigurations(stop chan bool) {
 // It will immediately publish a new configuration and then only publish the next configuration after the throttle duration.
 // Note that in the case it receives N new configs in the timeframe of the throttle duration after publishing,
 // it will publish the last of the newly received configurations.
-func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish chan<- config.Message, in <-chan config.Message, stop chan bool) {
+func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish chan<- dynamic.Message, in <-chan dynamic.Message, stop chan bool) {
 	ring := channels.NewRingChannel(1)
 	defer ring.Close()
 
@@ -233,7 +233,7 @@ func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish ch
 			case <-stop:
 				return
 			case nextConfig := <-ring.Out():
-				if config, ok := nextConfig.(config.Message); ok {
+				if config, ok := nextConfig.(dynamic.Message); ok {
 					publish <- config
 					time.Sleep(throttle)
 				}

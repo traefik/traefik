@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/pkg/tracing"
@@ -29,7 +29,7 @@ type basicAuth struct {
 }
 
 // NewBasic creates a basicAuth middleware.
-func NewBasic(ctx context.Context, next http.Handler, authConfig config.BasicAuth, name string) (http.Handler, error) {
+func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAuth, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, basicTypeName).Debug("Creating middleware")
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, basicUserParser)
 	if err != nil {

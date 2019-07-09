@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +16,7 @@ import (
 func TestRedirectSchemeHandler(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		config         config.RedirectScheme
+		config         dynamic.RedirectScheme
 		method         string
 		url            string
 		secured        bool
@@ -26,13 +26,13 @@ func TestRedirectSchemeHandler(t *testing.T) {
 	}{
 		{
 			desc:          "Without scheme",
-			config:        config.RedirectScheme{},
+			config:        dynamic.RedirectScheme{},
 			url:           "http://foo",
 			errorExpected: true,
 		},
 		{
 			desc: "HTTP to HTTPS",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "http://foo",
@@ -41,7 +41,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP with port to HTTPS without port",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "http://foo:8080",
@@ -50,7 +50,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP without port to HTTPS with port",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "https",
 				Port:   "8443",
 			},
@@ -60,7 +60,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP with port to HTTPS with port",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "https",
 				Port:   "8443",
 			},
@@ -70,7 +70,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTPS with port to HTTPS with port",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "https",
 				Port:   "8443",
 			},
@@ -80,7 +80,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTPS with port to HTTPS without port",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "https://foo:8000",
@@ -89,7 +89,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "redirection to HTTPS without port from an URL already in https",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "https://foo:8000/theother",
@@ -98,7 +98,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTPS permanent",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme:    "https",
 				Port:      "8443",
 				Permanent: true,
@@ -109,7 +109,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "to HTTP 80",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "http",
 				Port:   "80",
 			},
@@ -119,7 +119,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to wss",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "wss",
 				Port:   "9443",
 			},
@@ -129,7 +129,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to wss without port",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "wss",
 			},
 			url:            "http://foo",
@@ -138,7 +138,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP with port to wss without port",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "wss",
 			},
 			url:            "http://foo:5678",
@@ -147,7 +147,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTPS without port",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "http://foo:443",
@@ -156,7 +156,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP port redirection",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "http",
 				Port:   "8181",
 			},
@@ -166,7 +166,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTPS with port 80 to HTTPS without port",
-			config: config.RedirectScheme{
+			config: dynamic.RedirectScheme{
 				Scheme: "https",
 			},
 			url:            "https://foo:80",

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/healthcheck"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
@@ -26,7 +26,7 @@ const (
 )
 
 // NewManager creates a new Manager
-func NewManager(configs map[string]*config.ServiceInfo, defaultRoundTripper http.RoundTripper) *Manager {
+func NewManager(configs map[string]*dynamic.ServiceInfo, defaultRoundTripper http.RoundTripper) *Manager {
 	return &Manager{
 		bufferPool:          newBufferPool(),
 		defaultRoundTripper: defaultRoundTripper,
@@ -40,7 +40,7 @@ type Manager struct {
 	bufferPool          httputil.BufferPool
 	defaultRoundTripper http.RoundTripper
 	balancers           map[string][]healthcheck.BalancerHandler
-	configs             map[string]*config.ServiceInfo
+	configs             map[string]*dynamic.ServiceInfo
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
@@ -74,7 +74,7 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 func (m *Manager) getLoadBalancerServiceHandler(
 	ctx context.Context,
 	serviceName string,
-	service *config.LoadBalancerService,
+	service *dynamic.LoadBalancerService,
 	responseModifier func(*http.Response) error,
 ) (http.Handler, error) {
 	fwd, err := buildProxy(service.PassHostHeader, service.ResponseForwarding, m.defaultRoundTripper, m.bufferPool, responseModifier)
@@ -134,7 +134,7 @@ func (m *Manager) LaunchHealthCheck() {
 	healthcheck.GetHealthCheck().SetBackendsConfiguration(context.TODO(), backendConfigs)
 }
 
-func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler, backend string, hc *config.HealthCheck) *healthcheck.Options {
+func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler, backend string, hc *dynamic.HealthCheck) *healthcheck.Options {
 	if hc == nil || hc.Path == "" {
 		return nil
 	}
@@ -183,7 +183,7 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler
 	}
 }
 
-func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, service *config.LoadBalancerService, fwd http.Handler) (healthcheck.BalancerHandler, error) {
+func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, service *dynamic.LoadBalancerService, fwd http.Handler) (healthcheck.BalancerHandler, error) {
 	logger := log.FromContext(ctx)
 	logger.Debug("Creating load-balancer")
 
@@ -210,7 +210,7 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 	return lb, nil
 }
 
-func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHandler, servers []config.Server) error {
+func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHandler, servers []dynamic.Server) error {
 	logger := log.FromContext(ctx)
 
 	for name, srv := range servers {

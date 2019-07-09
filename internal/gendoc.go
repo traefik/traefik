@@ -48,8 +48,8 @@ func genStaticConfDoc(outputFile string, prefix string, encodeFn func(interface{
 	w.writeln(`<!--
 CODE GENERATED AUTOMATICALLY
 THIS FILE MUST NOT BE EDITED BY HAND
--->
-`)
+-->`)
+	w.writeln()
 
 	for i, flat := range flats {
 		w.writeln("`" + prefix + strings.ReplaceAll(flat.Name, "[0]", "[n]") + "`:  ")

@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/go-kit/kit/metrics"
@@ -229,7 +229,7 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 }
 
 // NewLBStatusUpdater returns a new LbStatusUpdater
-func NewLBStatusUpdater(bh BalancerHandler, svinfo *config.ServiceInfo) *LbStatusUpdater {
+func NewLBStatusUpdater(bh BalancerHandler, svinfo *dynamic.ServiceInfo) *LbStatusUpdater {
 	return &LbStatusUpdater{
 		BalancerHandler: bh,
 		serviceInfo:     svinfo,
@@ -240,7 +240,7 @@ func NewLBStatusUpdater(bh BalancerHandler, svinfo *config.ServiceInfo) *LbStatu
 // so it can keep track of the status of a server in the ServiceInfo.
 type LbStatusUpdater struct {
 	BalancerHandler
-	serviceInfo *config.ServiceInfo // can be nil
+	serviceInfo *dynamic.ServiceInfo // can be nil
 }
 
 // RemoveServer removes the given server from the BalancerHandler,

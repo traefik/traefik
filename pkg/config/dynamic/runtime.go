@@ -1,4 +1,4 @@
-package config
+package dynamic
 
 import (
 	"context"

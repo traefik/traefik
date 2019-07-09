@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -32,8 +32,8 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
-	config := config.HTTPConfiguration{
-		Routers: map[string]*config.Router{
+	config := dynamic.HTTPConfiguration{
+		Routers: map[string]*dynamic.Router{
 			"router1": {
 				EntryPoints: []string{"web"},
 				Middlewares: []string{},
@@ -41,10 +41,10 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 				Rule:        "PathPrefix(`/`)",
 			},
 		},
-		Services: map[string]*config.Service{
+		Services: map[string]*dynamic.Service{
 			"service1": {
-				LoadBalancer: &config.LoadBalancerService{
-					Servers: []config.Server{
+				LoadBalancer: &dynamic.LoadBalancerService{
+					Servers: []dynamic.Server{
 						{
 							URL: "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
 						},

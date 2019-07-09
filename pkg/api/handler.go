@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/types"
@@ -25,46 +25,46 @@ const (
 const nextPageHeader = "X-Next-Page"
 
 type serviceInfoRepresentation struct {
-	*config.ServiceInfo
+	*dynamic.ServiceInfo
 	ServerStatus map[string]string `json:"serverStatus,omitempty"`
 }
 
 // RunTimeRepresentation is the configuration information exposed by the API handler.
 type RunTimeRepresentation struct {
-	Routers     map[string]*config.RouterInfo         `json:"routers,omitempty"`
-	Middlewares map[string]*config.MiddlewareInfo     `json:"middlewares,omitempty"`
+	Routers     map[string]*dynamic.RouterInfo        `json:"routers,omitempty"`
+	Middlewares map[string]*dynamic.MiddlewareInfo    `json:"middlewares,omitempty"`
 	Services    map[string]*serviceInfoRepresentation `json:"services,omitempty"`
-	TCPRouters  map[string]*config.TCPRouterInfo      `json:"tcpRouters,omitempty"`
-	TCPServices map[string]*config.TCPServiceInfo     `json:"tcpServices,omitempty"`
+	TCPRouters  map[string]*dynamic.TCPRouterInfo     `json:"tcpRouters,omitempty"`
+	TCPServices map[string]*dynamic.TCPServiceInfo    `json:"tcpServices,omitempty"`
 }
 
 type routerRepresentation struct {
-	*config.RouterInfo
+	*dynamic.RouterInfo
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
 
 type serviceRepresentation struct {
-	*config.ServiceInfo
+	*dynamic.ServiceInfo
 	ServerStatus map[string]string `json:"serverStatus,omitempty"`
 	Name         string            `json:"name,omitempty"`
 	Provider     string            `json:"provider,omitempty"`
 }
 
 type middlewareRepresentation struct {
-	*config.MiddlewareInfo
+	*dynamic.MiddlewareInfo
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
 
 type tcpRouterRepresentation struct {
-	*config.TCPRouterInfo
+	*dynamic.TCPRouterInfo
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
 
 type tcpServiceRepresentation struct {
-	*config.TCPServiceInfo
+	*dynamic.TCPServiceInfo
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
@@ -80,7 +80,7 @@ type Handler struct {
 	dashboard bool
 	debug     bool
 	// runtimeConfiguration is the data set used to create all the data representations exposed by the API.
-	runtimeConfiguration *config.RuntimeConfiguration
+	runtimeConfiguration *dynamic.RuntimeConfiguration
 	statistics           *types.Statistics
 	// stats                *thoasstats.Stats // FIXME stats
 	// StatsRecorder         *middlewares.StatsRecorder // FIXME stats
@@ -89,10 +89,10 @@ type Handler struct {
 
 // New returns a Handler defined by staticConfig, and if provided, by runtimeConfig.
 // It finishes populating the information provided in the runtimeConfig.
-func New(staticConfig static.Configuration, runtimeConfig *config.RuntimeConfiguration) *Handler {
+func New(staticConfig static.Configuration, runtimeConfig *dynamic.RuntimeConfiguration) *Handler {
 	rConfig := runtimeConfig
 	if rConfig == nil {
-		rConfig = &config.RuntimeConfiguration{}
+		rConfig = &dynamic.RuntimeConfiguration{}
 	}
 
 	return &Handler{
