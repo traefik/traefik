@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"reflect"
 	"testing"
 
@@ -11,11 +10,8 @@ import (
 )
 
 func TestDeepCopy(t *testing.T) {
-	content, err := ioutil.ReadFile("./fixtures/sample.toml")
-	require.NoError(t, err)
-
 	cfg := &Configuration{}
-	err = toml.Unmarshal(content, &cfg)
+	_, err := toml.DecodeFile("./fixtures/sample.toml", &cfg)
 	require.NoError(t, err)
 
 	cfgCopy := cfg
