@@ -2,12 +2,16 @@ package tls
 
 const certificateHeader = "-----BEGIN CERTIFICATE-----\n"
 
+// +k8s:deepcopy-gen=true
+
 // ClientCA defines traefik CA files for a entryPoint
 // and it indicates if they are mandatory or have just to be analyzed if provided.
 type ClientCA struct {
 	Files    []FileOrContent `json:"files,omitempty" toml:"files,omitempty" yaml:"files,omitempty"`
 	Optional bool            `json:"optional,omitempty" toml:"optional,omitempty" yaml:"optional,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // Options configures TLS for an entry point
 type Options struct {
@@ -17,10 +21,14 @@ type Options struct {
 	SniStrict    bool     `json:"sniStrict,omitempty" toml:"sniStrict,omitempty" yaml:"sniStrict,omitempty" export:"true"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // Store holds the options for a given Store
 type Store struct {
 	DefaultCertificate *Certificate `json:"defaultCertificate,omitempty" toml:"defaultCertificate,omitempty" yaml:"defaultCertificate,omitempty"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // CertAndStores allows mapping a TLS certificate to a list of entry points.
 type CertAndStores struct {
