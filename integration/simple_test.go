@@ -440,9 +440,9 @@ func (s *SimpleSuite) TestMultiprovider(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("service"))
 	c.Assert(err, checker.IsNil)
 
-	config := config.Configuration{
-		HTTP: &config.HTTPConfiguration{
-			Routers: map[string]*config.Router{
+	config := dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers: map[string]*dynamic.Router{
 				"router1": {
 					EntryPoints: []string{"web"},
 					Middlewares: []string{"customheader@file"},

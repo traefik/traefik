@@ -34,14 +34,14 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 
 	testCase := []struct {
 		desc      string
-		config    *config.Configuration
+		config    *dynamic.Configuration
 		ruleMatch string
 	}{
 		{
 			desc: "deploy http configuration",
-			config: &config.Configuration{
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+			config: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"router1": {
 							EntryPoints: []string{"web"},
 							Middlewares: []string{},
@@ -49,10 +49,10 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 							Rule:        "PathPrefix(`/`)",
 						},
 					},
-					Services: map[string]*config.Service{
+					Services: map[string]*dynamic.Service{
 						"service1": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
 									},
@@ -66,19 +66,19 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 		},
 		{
 			desc: "deploy tcp configuration",
-			config: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+			config: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"router1": {
 							EntryPoints: []string{"web"},
 							Service:     "service1",
 							Rule:        "HostSNI(`*`)",
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"service1": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
 									},
