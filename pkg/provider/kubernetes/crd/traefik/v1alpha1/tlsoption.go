@@ -19,22 +19,22 @@ type TLSOption struct {
 
 // TLSOptionSpec configures TLS for an entry point
 type TLSOptionSpec struct {
-	MinVersion   string   `json:"minversion"`
-	CipherSuites []string `json:"ciphersuites"`
-	ClientCA     ClientCA `json:"clientca"`
-	SniStrict    bool     `json:"snistrict"`
+	MinVersion   string     `json:"minversion"`
+	CipherSuites []string   `json:"ciphersuites"`
+	ClientAuth   ClientAuth `json:"clientauth"`
+	SniStrict    bool       `json:"snistrict"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// ClientCA defines traefik CA files for an entryPoint
-// and it indicates if they are mandatory or have just to be analyzed if provided
-type ClientCA struct {
+// ClientAuth defines the parameters of the client authentication part of the TLS connection, if any.
+type ClientAuth struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
 	SecretNames []string `json:"secretnames"`
-	// Optional indicates if ClientCA are mandatory or have just to be analyzed if provided
-	Optional bool `json:"optional"`
+	// ClientAuthType defines the client authentication type to apply.
+	// The available values are: "NoClientCert", "RequestClientCert", "VerifyClientCertIfGiven" and "RequireAndVerifyClientCert".
+	ClientAuthType string `json:"clientauthtype"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -303,22 +303,22 @@ tls:
       cipherSuites:
       - foobar
       - foobar
-      clientCA:
-        files:
+      clientAuth:
+        caFiles:
         - foobar
         - foobar
-        optional: true
+        clientauthtype: VerifyClientCertIfGiven
       sniStrict: true
     Options1:
       minVersion: foobar
       cipherSuites:
       - foobar
       - foobar
-      clientCA:
-        files:
+      clientAuth:
+        caFiles:
         - foobar
         - foobar
-        optional: true
+        clientauthtype: VerifyClientCertIfGiven
       sniStrict: true
   stores:
     Store0:

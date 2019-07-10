@@ -319,12 +319,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							ClientCA: tls.ClientCA{
-								Files: []tls.FileOrContent{
+							ClientAuth: tls.ClientAuth{
+								CAFiles: []tls.FileOrContent{
 									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
-								Optional: true,
+								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
 						},
@@ -377,12 +377,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							ClientCA: tls.ClientCA{
-								Files: []tls.FileOrContent{
+							ClientAuth: tls.ClientAuth{
+								CAFiles: []tls.FileOrContent{
 									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
-								Optional: true,
+								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
 						},
@@ -435,11 +435,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							ClientCA: tls.ClientCA{
-								Files: []tls.FileOrContent{
+							ClientAuth: tls.ClientAuth{
+								CAFiles: []tls.FileOrContent{
 									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
-								Optional: true,
+								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
 						},
@@ -1009,12 +1009,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							ClientCA: tls.ClientCA{
-								Files: []tls.FileOrContent{
+							ClientAuth: tls.ClientAuth{
+								CAFiles: []tls.FileOrContent{
 									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
-								Optional: true,
+								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
 						},
@@ -1067,12 +1067,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							ClientCA: tls.ClientCA{
-								Files: []tls.FileOrContent{
+							ClientAuth: tls.ClientAuth{
+								CAFiles: []tls.FileOrContent{
 									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
-								Optional: true,
+								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
 						},
@@ -1125,11 +1125,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 								"TLS_RSA_WITH_AES_256_GCM_SHA384",
 							},
-							ClientCA: tls.ClientCA{
-								Files: []tls.FileOrContent{
+							ClientAuth: tls.ClientAuth{
+								CAFiles: []tls.FileOrContent{
 									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								},
-								Optional: true,
+								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
 						},

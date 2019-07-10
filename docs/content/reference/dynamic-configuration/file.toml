@@ -275,16 +275,16 @@
       minVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
       sniStrict = true
-      [tls.options.Options0.clientCA]
-        files = ["foobar", "foobar"]
-        optional = true
+      [tls.options.Options0.clientAuth]
+        caFiles = ["foobar", "foobar"]
+        clientAuthType = "VerifyClientCertIfGiven"
     [tls.options.Options1]
       minVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
       sniStrict = true
-      [tls.options.Options1.clientCA]
-        files = ["foobar", "foobar"]
-        optional = true
+      [tls.options.Options1.clientAuth]
+        caFiles = ["foobar", "foobar"]
+        clientAuthType = "VerifyClientCertIfGiven"
   [tls.stores]
     [tls.stores.Store0]
       [tls.stores.Store0.defaultCertificate]
