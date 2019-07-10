@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +16,7 @@ import (
 func TestRedirectRegexHandler(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		config         config.RedirectRegex
+		config         dynamic.RedirectRegex
 		method         string
 		url            string
 		secured        bool
@@ -26,7 +26,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 	}{
 		{
 			desc: "simple redirection",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
 				Replacement: "https://${1}bar$2:443$4",
 			},
@@ -36,7 +36,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "use request header",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
 				Replacement: `https://${1}{{ .Request.Header.Get "X-Foo" }}$2:443$4`,
 			},
@@ -46,7 +46,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "URL doesn't match regex",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
 				Replacement: "https://${1}bar$2:443$4",
 			},
@@ -55,7 +55,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "invalid rewritten URL",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `^(.*)$`,
 				Replacement: "http://192.168.0.%31/",
 			},
@@ -64,7 +64,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "invalid regex",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `^(.*`,
 				Replacement: "$1",
 			},
@@ -73,7 +73,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTPS permanent",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `^http://`,
 				Replacement: "https://$1",
 				Permanent:   true,
@@ -84,7 +84,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTPS to HTTP permanent",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `https://foo`,
 				Replacement: "http://foo",
 				Permanent:   true,
@@ -96,7 +96,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTPS",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `http://foo:80`,
 				Replacement: "https://foo:443",
 			},
@@ -106,7 +106,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTPS to HTTP",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `https://foo:443`,
 				Replacement: "http://foo:80",
 			},
@@ -117,7 +117,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTP",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `http://foo:80`,
 				Replacement: "http://foo:88",
 			},
@@ -127,7 +127,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTP POST",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `^http://`,
 				Replacement: "https://$1",
 			},
@@ -138,7 +138,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		},
 		{
 			desc: "HTTP to HTTP POST permanent",
-			config: config.RedirectRegex{
+			config: dynamic.RedirectRegex{
 				Regex:       `^http://`,
 				Replacement: "https://$1",
 				Permanent:   true,

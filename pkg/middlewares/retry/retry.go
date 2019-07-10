@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/http/httptrace"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
@@ -42,7 +42,7 @@ type retry struct {
 }
 
 // New returns a new retry middleware.
-func New(ctx context.Context, next http.Handler, config config.Retry, listener Listener, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener Listener, name string) (http.Handler, error) {
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	logger.Debug("Creating middleware")
 

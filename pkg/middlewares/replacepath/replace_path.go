@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
@@ -24,7 +24,7 @@ type replacePath struct {
 }
 
 // New creates a new replace path middleware.
-func New(ctx context.Context, next http.Handler, config config.ReplacePath, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, config dynamic.ReplacePath, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
 
 	return &replacePath{

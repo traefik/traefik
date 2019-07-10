@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	th "github.com/containous/traefik/pkg/testhelpers"
 	"github.com/containous/traefik/pkg/types"
 	"github.com/prometheus/client_golang/prometheus"
@@ -276,8 +276,8 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{})
 	defer prometheus.Unregister(promState)
 
-	configurations := make(config.Configurations)
-	configurations["providerName"] = &config.Configuration{
+	configurations := make(dynamic.Configurations)
+	configurations["providerName"] = &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(
 				th.WithRouter("foo",

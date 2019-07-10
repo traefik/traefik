@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/containous/traefik/pkg/tracing"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,7 @@ import (
 func TestCustomRequestHeader(t *testing.T) {
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-	header := NewHeader(emptyHandler, config.Headers{
+	header := NewHeader(emptyHandler, dynamic.Headers{
 		CustomRequestHeaders: map[string]string{
 			"X-Custom-Request-Header": "test_request",
 		},
@@ -36,7 +36,7 @@ func TestCustomRequestHeader(t *testing.T) {
 func TestCustomRequestHeaderEmptyValue(t *testing.T) {
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-	header := NewHeader(emptyHandler, config.Headers{
+	header := NewHeader(emptyHandler, dynamic.Headers{
 		CustomRequestHeaders: map[string]string{
 			"X-Custom-Request-Header": "test_request",
 		},
@@ -50,7 +50,7 @@ func TestCustomRequestHeaderEmptyValue(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t, "test_request", req.Header.Get("X-Custom-Request-Header"))
 
-	header = NewHeader(emptyHandler, config.Headers{
+	header = NewHeader(emptyHandler, dynamic.Headers{
 		CustomRequestHeaders: map[string]string{
 			"X-Custom-Request-Header": "",
 		},
@@ -86,7 +86,7 @@ func TestSecureHeader(t *testing.T) {
 	}
 
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	header, err := New(context.Background(), emptyHandler, config.Headers{
+	header, err := New(context.Background(), emptyHandler, dynamic.Headers{
 		AllowedHosts: []string{"foo.com", "bar.com"},
 	}, "foo")
 	require.NoError(t, err)
@@ -119,7 +119,7 @@ func TestSSLForceHost(t *testing.T) {
 		{
 			desc: "http should return a 301",
 			host: "http://powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: newSecure(next, dynamic.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
@@ -129,7 +129,7 @@ func TestSSLForceHost(t *testing.T) {
 		{
 			desc: "http sub domain should return a 301",
 			host: "http://www.powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: newSecure(next, dynamic.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
@@ -139,7 +139,7 @@ func TestSSLForceHost(t *testing.T) {
 		{
 			desc: "https should return a 200",
 			host: "https://powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: newSecure(next, dynamic.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
@@ -149,7 +149,7 @@ func TestSSLForceHost(t *testing.T) {
 		{
 			desc: "https sub domain should return a 301",
 			host: "https://www.powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: newSecure(next, dynamic.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
@@ -159,7 +159,7 @@ func TestSSLForceHost(t *testing.T) {
 		{
 			desc: "http without force host and sub domain should return a 301",
 			host: "http://www.powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: newSecure(next, dynamic.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
@@ -169,7 +169,7 @@ func TestSSLForceHost(t *testing.T) {
 		{
 			desc: "https without force host and sub domain should return a 301",
 			host: "https://www.powpow.example.com",
-			secureMiddleware: newSecure(next, config.Headers{
+			secureMiddleware: newSecure(next, dynamic.Headers{
 				SSLRedirect:  true,
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
@@ -201,7 +201,7 @@ func TestCORSPreflights(t *testing.T) {
 	}{
 		{
 			desc: "Test Simple Preflight",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				AccessControlAllowMethods: []string{"GET", "OPTIONS", "PUT"},
 				AccessControlAllowOrigin:  "origin-list-or-null",
 				AccessControlMaxAge:       600,
@@ -219,7 +219,7 @@ func TestCORSPreflights(t *testing.T) {
 		},
 		{
 			desc: "Wildcard origin Preflight",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				AccessControlAllowMethods: []string{"GET", "OPTIONS", "PUT"},
 				AccessControlAllowOrigin:  "*",
 				AccessControlMaxAge:       600,
@@ -237,7 +237,7 @@ func TestCORSPreflights(t *testing.T) {
 		},
 		{
 			desc: "Allow Credentials Preflight",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				AccessControlAllowMethods:     []string{"GET", "OPTIONS", "PUT"},
 				AccessControlAllowOrigin:      "*",
 				AccessControlAllowCredentials: true,
@@ -257,7 +257,7 @@ func TestCORSPreflights(t *testing.T) {
 		},
 		{
 			desc: "Allow Headers Preflight",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				AccessControlAllowMethods: []string{"GET", "OPTIONS", "PUT"},
 				AccessControlAllowOrigin:  "*",
 				AccessControlAllowHeaders: []string{"origin", "X-Forwarded-For"},
@@ -293,14 +293,14 @@ func TestCORSPreflights(t *testing.T) {
 func TestEmptyHeaderObject(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-	_, err := New(context.Background(), next, config.Headers{}, "testing")
+	_, err := New(context.Background(), next, dynamic.Headers{}, "testing")
 	require.Errorf(t, err, "headers configuration not valid")
 }
 
 func TestCustomHeaderHandler(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-	header, _ := New(context.Background(), next, config.Headers{
+	header, _ := New(context.Background(), next, dynamic.Headers{
 		CustomRequestHeaders: map[string]string{
 			"X-Custom-Request-Header": "test_request",
 		},
@@ -342,7 +342,7 @@ func TestCORSResponses(t *testing.T) {
 	}{
 		{
 			desc: "Test Simple Request",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				AccessControlAllowOrigin: "origin-list-or-null",
 			}),
 			requestHeaders: map[string][]string{
@@ -354,7 +354,7 @@ func TestCORSResponses(t *testing.T) {
 		},
 		{
 			desc: "Wildcard origin Request",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				AccessControlAllowOrigin: "*",
 			}),
 			requestHeaders: map[string][]string{
@@ -366,7 +366,7 @@ func TestCORSResponses(t *testing.T) {
 		},
 		{
 			desc: "Empty origin Request",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				AccessControlAllowOrigin: "origin-list-or-null",
 			}),
 			requestHeaders: map[string][]string{},
@@ -376,13 +376,13 @@ func TestCORSResponses(t *testing.T) {
 		},
 		{
 			desc:           "Not Defined origin Request",
-			header:         NewHeader(emptyHandler, config.Headers{}),
+			header:         NewHeader(emptyHandler, dynamic.Headers{}),
 			requestHeaders: map[string][]string{},
 			expected:       map[string][]string{},
 		},
 		{
 			desc: "Allow Credentials Request",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				AccessControlAllowOrigin:      "*",
 				AccessControlAllowCredentials: true,
 			}),
@@ -396,7 +396,7 @@ func TestCORSResponses(t *testing.T) {
 		},
 		{
 			desc: "Expose Headers Request",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				AccessControlAllowOrigin:   "*",
 				AccessControlExposeHeaders: []string{"origin", "X-Forwarded-For"},
 			}),
@@ -410,7 +410,7 @@ func TestCORSResponses(t *testing.T) {
 		},
 		{
 			desc: "Test Simple Request with Vary Headers",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				AccessControlAllowOrigin: "origin-list-or-null",
 				AddVaryHeader:            true,
 			}),
@@ -424,7 +424,7 @@ func TestCORSResponses(t *testing.T) {
 		},
 		{
 			desc: "Test Simple Request with Vary Headers and non-empty response",
-			header: NewHeader(nonEmptyHandler, config.Headers{
+			header: NewHeader(nonEmptyHandler, dynamic.Headers{
 				AccessControlAllowOrigin: "origin-list-or-null",
 				AddVaryHeader:            true,
 			}),
@@ -462,7 +462,7 @@ func TestCustomResponseHeaders(t *testing.T) {
 	}{
 		{
 			desc: "Test Simple Response",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				CustomResponseHeaders: map[string]string{
 					"Testing":  "foo",
 					"Testing2": "bar",
@@ -475,7 +475,7 @@ func TestCustomResponseHeaders(t *testing.T) {
 		},
 		{
 			desc: "Deleting Custom Header",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				CustomResponseHeaders: map[string]string{
 					"Testing":  "foo",
 					"Testing2": "",

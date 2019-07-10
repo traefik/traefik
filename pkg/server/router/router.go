@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/pkg/middlewares/recovery"
@@ -22,7 +22,7 @@ const (
 )
 
 // NewManager Creates a new Manager
-func NewManager(conf *config.RuntimeConfiguration,
+func NewManager(conf *dynamic.RuntimeConfiguration,
 	serviceManager *service.Manager,
 	middlewaresBuilder *middleware.Builder,
 	modifierBuilder *responsemodifiers.Builder,
@@ -42,15 +42,15 @@ type Manager struct {
 	serviceManager     *service.Manager
 	middlewaresBuilder *middleware.Builder
 	modifierBuilder    *responsemodifiers.Builder
-	conf               *config.RuntimeConfiguration
+	conf               *dynamic.RuntimeConfiguration
 }
 
-func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*config.RouterInfo {
+func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*dynamic.RouterInfo {
 	if m.conf != nil {
 		return m.conf.GetRoutersByEntrypoints(ctx, entryPoints, tls)
 	}
 
-	return make(map[string]map[string]*config.RouterInfo)
+	return make(map[string]map[string]*dynamic.RouterInfo)
 }
 
 // BuildHandlers Builds handler for all entry points
@@ -83,7 +83,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	return entryPointHandlers
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*config.RouterInfo) (http.Handler, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*dynamic.RouterInfo) (http.Handler, error) {
 	router, err := rules.NewRouter()
 	if err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	return chain.Then(router)
 }
 
-func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, routerConfig *config.RouterInfo) (http.Handler, error) {
+func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, routerConfig *dynamic.RouterInfo) (http.Handler, error) {
 	if handler, ok := m.routerHandlers[routerName]; ok {
 		return handler, nil
 	}
@@ -141,7 +141,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 	return m.routerHandlers[routerName], nil
 }
 
-func (m *Manager) buildHTTPHandler(ctx context.Context, router *config.RouterInfo, routerName string) (http.Handler, error) {
+func (m *Manager) buildHTTPHandler(ctx context.Context, router *dynamic.RouterInfo, routerName string) (http.Handler, error) {
 	qualifiedNames := make([]string, len(router.Middlewares))
 	for i, name := range router.Middlewares {
 		qualifiedNames[i] = internal.GetQualifiedName(ctx, name)

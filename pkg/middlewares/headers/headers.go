@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
@@ -26,7 +26,7 @@ type headers struct {
 }
 
 // New creates a Headers middleware.
-func New(ctx context.Context, next http.Handler, config config.Headers, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, config dynamic.Headers, name string) (http.Handler, error) {
 	// HeaderMiddleware -> SecureMiddleWare -> next
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	logger.Debug("Creating middleware")
@@ -73,7 +73,7 @@ type secureHeader struct {
 }
 
 // newSecure constructs a new secure instance with supplied options.
-func newSecure(next http.Handler, headers config.Headers) *secureHeader {
+func newSecure(next http.Handler, headers dynamic.Headers) *secureHeader {
 	opt := secure.Options{
 		BrowserXssFilter:        headers.BrowserXSSFilter,
 		ContentTypeNosniff:      headers.ContentTypeNosniff,
@@ -111,11 +111,11 @@ func (s secureHeader) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 // provided to configure which features should be enabled, and the ability to override a few of the default values.
 type Header struct {
 	next    http.Handler
-	headers *config.Headers
+	headers *dynamic.Headers
 }
 
 // NewHeader constructs a new header instance from supplied frontend header struct.
-func NewHeader(next http.Handler, headers config.Headers) *Header {
+func NewHeader(next http.Handler, headers dynamic.Headers) *Header {
 	return &Header{
 		next:    next,
 		headers: &headers,

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
@@ -23,7 +23,7 @@ type rateLimiter struct {
 }
 
 // New creates rate limiter middleware.
-func New(ctx context.Context, next http.Handler, config config.RateLimit, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
 
 	extractFunc, err := utils.NewExtractor(config.ExtractorFunc)

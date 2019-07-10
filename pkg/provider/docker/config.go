@@ -7,7 +7,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/config/label"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
@@ -15,8 +15,8 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
-func (p *Provider) buildConfiguration(ctx context.Context, containersInspected []dockerData) *config.Configuration {
-	configurations := make(map[string]*config.Configuration)
+func (p *Provider) buildConfiguration(ctx context.Context, containersInspected []dockerData) *dynamic.Configuration {
+	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, container := range containersInspected {
 		containerName := getServiceName(container) + "-" + container.ID
@@ -73,13 +73,13 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 	return provider.Merge(ctx, configurations)
 }
 
-func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container dockerData, configuration *config.TCPConfiguration) error {
+func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.TCPConfiguration) error {
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
-		configuration.Services = make(map[string]*config.TCPService)
-		lb := &config.TCPLoadBalancerService{}
-		configuration.Services[serviceName] = &config.TCPService{
+		configuration.Services = make(map[string]*dynamic.TCPService)
+		lb := &dynamic.TCPLoadBalancerService{}
+		configuration.Services[serviceName] = &dynamic.TCPService{
 			LoadBalancer: lb,
 		}
 	}
@@ -94,14 +94,14 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 	return nil
 }
 
-func (p *Provider) buildServiceConfiguration(ctx context.Context, container dockerData, configuration *config.HTTPConfiguration) error {
+func (p *Provider) buildServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.HTTPConfiguration) error {
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
-		configuration.Services = make(map[string]*config.Service)
-		lb := &config.LoadBalancerService{}
+		configuration.Services = make(map[string]*dynamic.Service)
+		lb := &dynamic.LoadBalancerService{}
 		lb.SetDefaults()
-		configuration.Services[serviceName] = &config.Service{
+		configuration.Services[serviceName] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
 	}
@@ -142,7 +142,7 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 	return true
 }
 
-func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadBalancer *config.TCPLoadBalancerService) error {
+func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadBalancer *dynamic.TCPLoadBalancerService) error {
 	serverPort := ""
 	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
 		serverPort = loadBalancer.Servers[0].Port
@@ -153,9 +153,9 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 	}
 
 	if len(loadBalancer.Servers) == 0 {
-		server := config.TCPServer{}
+		server := dynamic.TCPServer{}
 
-		loadBalancer.Servers = []config.TCPServer{server}
+		loadBalancer.Servers = []dynamic.TCPServer{server}
 	}
 
 	if serverPort != "" {
@@ -171,7 +171,7 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 	return nil
 }
 
-func (p *Provider) addServer(ctx context.Context, container dockerData, loadBalancer *config.LoadBalancerService) error {
+func (p *Provider) addServer(ctx context.Context, container dockerData, loadBalancer *dynamic.LoadBalancerService) error {
 	serverPort := getLBServerPort(loadBalancer)
 	ip, port, err := p.getIPPort(ctx, container, serverPort)
 	if err != nil {
@@ -179,10 +179,10 @@ func (p *Provider) addServer(ctx context.Context, container dockerData, loadBala
 	}
 
 	if len(loadBalancer.Servers) == 0 {
-		server := config.Server{}
+		server := dynamic.Server{}
 		server.SetDefaults()
 
-		loadBalancer.Servers = []config.Server{server}
+		loadBalancer.Servers = []dynamic.Server{server}
 	}
 
 	if serverPort != "" {
@@ -291,7 +291,7 @@ func (p *Provider) getPortBinding(container dockerData, serverPort string) (*nat
 	return nil, fmt.Errorf("unable to find the external IP:Port for the container %q", container.Name)
 }
 
-func getLBServerPort(loadBalancer *config.LoadBalancerService) string {
+func getLBServerPort(loadBalancer *dynamic.LoadBalancerService) string {
 	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
 		return loadBalancer.Servers[0].Port
 	}

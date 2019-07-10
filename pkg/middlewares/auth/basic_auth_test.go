@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,13 +20,13 @@ func TestBasicAuthFail(t *testing.T) {
 		fmt.Fprintln(w, "traefik")
 	})
 
-	auth := config.BasicAuth{
+	auth := dynamic.BasicAuth{
 		Users: []string{"test"},
 	}
 	_, err := NewBasic(context.Background(), next, auth, "authName")
 	require.Error(t, err)
 
-	auth2 := config.BasicAuth{
+	auth2 := dynamic.BasicAuth{
 		Users: []string{"test:test"},
 	}
 	authMiddleware, err := NewBasic(context.Background(), next, auth2, "authTest")
@@ -49,7 +49,7 @@ func TestBasicAuthSuccess(t *testing.T) {
 		fmt.Fprintln(w, "traefik")
 	})
 
-	auth := config.BasicAuth{
+	auth := dynamic.BasicAuth{
 		Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 	}
 	authMiddleware, err := NewBasic(context.Background(), next, auth, "authName")
@@ -79,7 +79,7 @@ func TestBasicAuthUserHeader(t *testing.T) {
 		fmt.Fprintln(w, "traefik")
 	})
 
-	auth := config.BasicAuth{
+	auth := dynamic.BasicAuth{
 		Users:       []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		HeaderField: "X-Webauth-User",
 	}
@@ -110,7 +110,7 @@ func TestBasicAuthHeaderRemoved(t *testing.T) {
 		fmt.Fprintln(w, "traefik")
 	})
 
-	auth := config.BasicAuth{
+	auth := dynamic.BasicAuth{
 		RemoveHeader: true,
 		Users:        []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 	}
@@ -142,7 +142,7 @@ func TestBasicAuthHeaderPresent(t *testing.T) {
 		fmt.Fprintln(w, "traefik")
 	})
 
-	auth := config.BasicAuth{
+	auth := dynamic.BasicAuth{
 		Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 	}
 	middleware, err := NewBasic(context.Background(), next, auth, "authName")
@@ -226,7 +226,7 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 			require.NoError(t, err)
 
 			// Creates the configuration for our Authenticator
-			authenticatorConfiguration := config.BasicAuth{
+			authenticatorConfiguration := dynamic.BasicAuth{
 				Users:     test.givenUsers,
 				UsersFile: usersFile.Name(),
 				Realm:     test.realm,

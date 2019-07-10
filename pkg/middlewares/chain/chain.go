@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares"
 )
 
@@ -18,7 +18,7 @@ type chainBuilder interface {
 }
 
 // New creates a chain middleware
-func New(ctx context.Context, next http.Handler, config config.Chain, builder chainBuilder, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, config dynamic.Chain, builder chainBuilder, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
 
 	middlewareChain := builder.BuildChain(ctx, config.Middlewares)

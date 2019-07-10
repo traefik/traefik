@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/server/internal"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
@@ -26,15 +26,15 @@ func TestGetLoadBalancer(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		serviceName string
-		service     *config.LoadBalancerService
+		service     *dynamic.LoadBalancerService
 		fwd         http.Handler
 		expectError bool
 	}{
 		{
 			desc:        "Fails when provided an invalid URL",
 			serviceName: "test",
-			service: &config.LoadBalancerService{
-				Servers: []config.Server{
+			service: &dynamic.LoadBalancerService{
+				Servers: []dynamic.Server{
 					{
 						URL: ":",
 					},
@@ -46,15 +46,15 @@ func TestGetLoadBalancer(t *testing.T) {
 		{
 			desc:        "Succeeds when there are no servers",
 			serviceName: "test",
-			service:     &config.LoadBalancerService{},
+			service:     &dynamic.LoadBalancerService{},
 			fwd:         &MockForwarder{},
 			expectError: false,
 		},
 		{
 			desc:        "Succeeds when stickiness is set",
 			serviceName: "test",
-			service: &config.LoadBalancerService{
-				Stickiness: &config.Stickiness{},
+			service: &dynamic.LoadBalancerService{
+				Stickiness: &dynamic.Stickiness{},
 			},
 			fwd:         &MockForwarder{},
 			expectError: false,
@@ -113,7 +113,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		serviceName      string
-		service          *config.LoadBalancerService
+		service          *dynamic.LoadBalancerService
 		responseModifier func(*http.Response) error
 
 		expected []ExpectedResult
@@ -121,8 +121,8 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 		{
 			desc:        "Load balances between the two servers",
 			serviceName: "test",
-			service: &config.LoadBalancerService{
-				Servers: []config.Server{
+			service: &dynamic.LoadBalancerService{
+				Servers: []dynamic.Server{
 					{
 						URL: server1.URL,
 					},
@@ -145,8 +145,8 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 		{
 			desc:        "StatusBadGateway when the server is not reachable",
 			serviceName: "test",
-			service: &config.LoadBalancerService{
-				Servers: []config.Server{
+			service: &dynamic.LoadBalancerService{
+				Servers: []dynamic.Server{
 					{
 						URL: "http://foo",
 					},
@@ -161,8 +161,8 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 		{
 			desc:        "ServiceUnavailable when no servers are available",
 			serviceName: "test",
-			service: &config.LoadBalancerService{
-				Servers: []config.Server{},
+			service: &dynamic.LoadBalancerService{
+				Servers: []dynamic.Server{},
 			},
 			expected: []ExpectedResult{
 				{
@@ -173,9 +173,9 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 		{
 			desc:        "Always call the same server when stickiness is true",
 			serviceName: "test",
-			service: &config.LoadBalancerService{
-				Stickiness: &config.Stickiness{},
-				Servers: []config.Server{
+			service: &dynamic.LoadBalancerService{
+				Stickiness: &dynamic.Stickiness{},
+				Servers: []dynamic.Server{
 					{
 						URL: server1.URL,
 					},
@@ -198,9 +198,9 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 		{
 			desc:        "Sticky Cookie's options set correctly",
 			serviceName: "test",
-			service: &config.LoadBalancerService{
-				Stickiness: &config.Stickiness{HTTPOnlyCookie: true, SecureCookie: true},
-				Servers: []config.Server{
+			service: &dynamic.LoadBalancerService{
+				Stickiness: &dynamic.Stickiness{HTTPOnlyCookie: true, SecureCookie: true},
+				Servers: []dynamic.Server{
 					{
 						URL: server1.URL,
 					},
@@ -218,10 +218,10 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 		{
 			desc:        "PassHost passes the host instead of the IP",
 			serviceName: "test",
-			service: &config.LoadBalancerService{
-				Stickiness:     &config.Stickiness{},
+			service: &dynamic.LoadBalancerService{
+				Stickiness:     &dynamic.Stickiness{},
 				PassHostHeader: true,
-				Servers: []config.Server{
+				Servers: []dynamic.Server{
 					{
 						URL: serverPassHost.URL,
 					},
@@ -237,9 +237,9 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 		{
 			desc:        "PassHost doesn't passe the host instead of the IP",
 			serviceName: "test",
-			service: &config.LoadBalancerService{
-				Stickiness: &config.Stickiness{},
-				Servers: []config.Server{
+			service: &dynamic.LoadBalancerService{
+				Stickiness: &dynamic.Stickiness{},
+				Servers: []dynamic.Server{
 					{
 						URL: serverPassHostFalse.URL,
 					},
@@ -287,16 +287,16 @@ func TestManager_Build(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		serviceName  string
-		configs      map[string]*config.ServiceInfo
+		configs      map[string]*dynamic.ServiceInfo
 		providerName string
 	}{
 		{
 			desc:        "Simple service name",
 			serviceName: "serviceName",
-			configs: map[string]*config.ServiceInfo{
+			configs: map[string]*dynamic.ServiceInfo{
 				"serviceName": {
-					Service: &config.Service{
-						LoadBalancer: &config.LoadBalancerService{},
+					Service: &dynamic.Service{
+						LoadBalancer: &dynamic.LoadBalancerService{},
 					},
 				},
 			},
@@ -304,10 +304,10 @@ func TestManager_Build(t *testing.T) {
 		{
 			desc:        "Service name with provider",
 			serviceName: "serviceName@provider-1",
-			configs: map[string]*config.ServiceInfo{
+			configs: map[string]*dynamic.ServiceInfo{
 				"serviceName@provider-1": {
-					Service: &config.Service{
-						LoadBalancer: &config.LoadBalancerService{},
+					Service: &dynamic.Service{
+						LoadBalancer: &dynamic.LoadBalancerService{},
 					},
 				},
 			},
@@ -315,10 +315,10 @@ func TestManager_Build(t *testing.T) {
 		{
 			desc:        "Service name with provider in context",
 			serviceName: "serviceName",
-			configs: map[string]*config.ServiceInfo{
+			configs: map[string]*dynamic.ServiceInfo{
 				"serviceName@provider-1": {
-					Service: &config.Service{
-						LoadBalancer: &config.LoadBalancerService{},
+					Service: &dynamic.Service{
+						LoadBalancer: &dynamic.LoadBalancerService{},
 					},
 				},
 			},

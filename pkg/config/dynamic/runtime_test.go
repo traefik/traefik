@@ -1,10 +1,10 @@
-package config_test
+package dynamic_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,42 +13,42 @@ import (
 func TestPopulateUsedby(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		conf     *config.RuntimeConfiguration
-		expected config.RuntimeConfiguration
+		conf     *dynamic.RuntimeConfiguration
+		expected dynamic.RuntimeConfiguration
 	}{
 		{
 			desc:     "nil config",
 			conf:     nil,
-			expected: config.RuntimeConfiguration{},
+			expected: dynamic.RuntimeConfiguration{},
 		},
 		{
 			desc: "One service used by two routers",
-			conf: &config.RuntimeConfiguration{
-				Routers: map[string]*config.RouterInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				Routers: map[string]*dynamic.RouterInfo{
 					"foo@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
 					"bar@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
 				},
-				Services: map[string]*config.ServiceInfo{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
-						Service: &config.Service{
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{URL: "http://127.0.0.1:8085"},
 									{URL: "http://127.0.0.1:8086"},
 								},
-								HealthCheck: &config.HealthCheck{
+								HealthCheck: &dynamic.HealthCheck{
 									Interval: "500ms",
 									Path:     "/health",
 								},
@@ -57,12 +57,12 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				Routers: map[string]*config.RouterInfo{
+			expected: dynamic.RuntimeConfiguration{
+				Routers: map[string]*dynamic.RouterInfo{
 					"foo@myprovider": {},
 					"bar@myprovider": {},
 				},
-				Services: map[string]*config.ServiceInfo{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"bar@myprovider", "foo@myprovider"},
 					},
@@ -71,28 +71,28 @@ func TestPopulateUsedby(t *testing.T) {
 		},
 		{
 			desc: "One service used by two routers, but one router with wrong rule",
-			conf: &config.RuntimeConfiguration{
-				Services: map[string]*config.ServiceInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
-						Service: &config.Service{
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{URL: "http://127.0.0.1"},
 								},
 							},
 						},
 					},
 				},
-				Routers: map[string]*config.RouterInfo{
+				Routers: map[string]*dynamic.RouterInfo{
 					"foo@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "WrongRule(`bar.foo`)",
 						},
 					},
 					"bar@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
@@ -100,12 +100,12 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				Routers: map[string]*config.RouterInfo{
+			expected: dynamic.RuntimeConfiguration{
+				Routers: map[string]*dynamic.RouterInfo{
 					"foo@myprovider": {},
 					"bar@myprovider": {},
 				},
-				Services: map[string]*config.ServiceInfo{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"bar@myprovider", "foo@myprovider"},
 					},
@@ -114,17 +114,17 @@ func TestPopulateUsedby(t *testing.T) {
 		},
 		{
 			desc: "Broken Service used by one Router",
-			conf: &config.RuntimeConfiguration{
-				Services: map[string]*config.ServiceInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
-						Service: &config.Service{
+						Service: &dynamic.Service{
 							LoadBalancer: nil,
 						},
 					},
 				},
-				Routers: map[string]*config.RouterInfo{
+				Routers: map[string]*dynamic.RouterInfo{
 					"bar@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
@@ -132,11 +132,11 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				Routers: map[string]*config.RouterInfo{
+			expected: dynamic.RuntimeConfiguration{
+				Routers: map[string]*dynamic.RouterInfo{
 					"bar@myprovider": {},
 				},
-				Services: map[string]*config.ServiceInfo{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"bar@myprovider"},
 					},
@@ -145,12 +145,12 @@ func TestPopulateUsedby(t *testing.T) {
 		},
 		{
 			desc: "2 different Services each used by a disctinct router.",
-			conf: &config.RuntimeConfiguration{
-				Services: map[string]*config.ServiceInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
-						Service: &config.Service{
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:8085",
 									},
@@ -158,7 +158,7 @@ func TestPopulateUsedby(t *testing.T) {
 										URL: "http://127.0.0.1:8086",
 									},
 								},
-								HealthCheck: &config.HealthCheck{
+								HealthCheck: &dynamic.HealthCheck{
 									Interval: "500ms",
 									Path:     "/health",
 								},
@@ -166,9 +166,9 @@ func TestPopulateUsedby(t *testing.T) {
 						},
 					},
 					"bar-service@myprovider": {
-						Service: &config.Service{
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:8087",
 									},
@@ -176,7 +176,7 @@ func TestPopulateUsedby(t *testing.T) {
 										URL: "http://127.0.0.1:8088",
 									},
 								},
-								HealthCheck: &config.HealthCheck{
+								HealthCheck: &dynamic.HealthCheck{
 									Interval: "500ms",
 									Path:     "/health",
 								},
@@ -184,16 +184,16 @@ func TestPopulateUsedby(t *testing.T) {
 						},
 					},
 				},
-				Routers: map[string]*config.RouterInfo{
+				Routers: map[string]*dynamic.RouterInfo{
 					"foo@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
 					"bar@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "bar-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
@@ -201,12 +201,12 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				Routers: map[string]*config.RouterInfo{
+			expected: dynamic.RuntimeConfiguration{
+				Routers: map[string]*dynamic.RouterInfo{
 					"bar@myprovider": {},
 					"foo@myprovider": {},
 				},
-				Services: map[string]*config.ServiceInfo{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"foo@myprovider"},
 					},
@@ -218,12 +218,12 @@ func TestPopulateUsedby(t *testing.T) {
 		},
 		{
 			desc: "2 middlewares both used by 2 Routers",
-			conf: &config.RuntimeConfiguration{
-				Services: map[string]*config.ServiceInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
-						Service: &config.Service{
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1",
 									},
@@ -232,25 +232,25 @@ func TestPopulateUsedby(t *testing.T) {
 						},
 					},
 				},
-				Middlewares: map[string]*config.MiddlewareInfo{
+				Middlewares: map[string]*dynamic.MiddlewareInfo{
 					"auth@myprovider": {
-						Middleware: &config.Middleware{
-							BasicAuth: &config.BasicAuth{
+						Middleware: &dynamic.Middleware{
+							BasicAuth: &dynamic.BasicAuth{
 								Users: []string{"admin:admin"},
 							},
 						},
 					},
 					"addPrefixTest@myprovider": {
-						Middleware: &config.Middleware{
-							AddPrefix: &config.AddPrefix{
+						Middleware: &dynamic.Middleware{
+							AddPrefix: &dynamic.AddPrefix{
 								Prefix: "/toto",
 							},
 						},
 					},
 				},
-				Routers: map[string]*config.RouterInfo{
+				Routers: map[string]*dynamic.RouterInfo{
 					"bar@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
@@ -258,7 +258,7 @@ func TestPopulateUsedby(t *testing.T) {
 						},
 					},
 					"test@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar.other`)",
@@ -267,17 +267,17 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				Routers: map[string]*config.RouterInfo{
+			expected: dynamic.RuntimeConfiguration{
+				Routers: map[string]*dynamic.RouterInfo{
 					"bar@myprovider":  {},
 					"test@myprovider": {},
 				},
-				Services: map[string]*config.ServiceInfo{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
 				},
-				Middlewares: map[string]*config.MiddlewareInfo{
+				Middlewares: map[string]*dynamic.MiddlewareInfo{
 					"auth@myprovider": {
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
@@ -289,12 +289,12 @@ func TestPopulateUsedby(t *testing.T) {
 		},
 		{
 			desc: "Unknown middleware is not used by the Router",
-			conf: &config.RuntimeConfiguration{
-				Services: map[string]*config.ServiceInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
-						Service: &config.Service{
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1",
 									},
@@ -303,18 +303,18 @@ func TestPopulateUsedby(t *testing.T) {
 						},
 					},
 				},
-				Middlewares: map[string]*config.MiddlewareInfo{
+				Middlewares: map[string]*dynamic.MiddlewareInfo{
 					"auth@myprovider": {
-						Middleware: &config.Middleware{
-							BasicAuth: &config.BasicAuth{
+						Middleware: &dynamic.Middleware{
+							BasicAuth: &dynamic.BasicAuth{
 								Users: []string{"admin:admin"},
 							},
 						},
 					},
 				},
-				Routers: map[string]*config.RouterInfo{
+				Routers: map[string]*dynamic.RouterInfo{
 					"bar@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
@@ -323,8 +323,8 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				Services: map[string]*config.ServiceInfo{
+			expected: dynamic.RuntimeConfiguration{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"bar@myprovider"},
 					},
@@ -333,12 +333,12 @@ func TestPopulateUsedby(t *testing.T) {
 		},
 		{
 			desc: "Broken middleware is used by Router",
-			conf: &config.RuntimeConfiguration{
-				Services: map[string]*config.ServiceInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
-						Service: &config.Service{
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1",
 									},
@@ -347,18 +347,18 @@ func TestPopulateUsedby(t *testing.T) {
 						},
 					},
 				},
-				Middlewares: map[string]*config.MiddlewareInfo{
+				Middlewares: map[string]*dynamic.MiddlewareInfo{
 					"auth@myprovider": {
-						Middleware: &config.Middleware{
-							BasicAuth: &config.BasicAuth{
+						Middleware: &dynamic.Middleware{
+							BasicAuth: &dynamic.BasicAuth{
 								Users: []string{"badConf"},
 							},
 						},
 					},
 				},
-				Routers: map[string]*config.RouterInfo{
+				Routers: map[string]*dynamic.RouterInfo{
 					"bar@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
@@ -367,16 +367,16 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				Routers: map[string]*config.RouterInfo{
+			expected: dynamic.RuntimeConfiguration{
+				Routers: map[string]*dynamic.RouterInfo{
 					"bar@myprovider": {},
 				},
-				Services: map[string]*config.ServiceInfo{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"bar@myprovider"},
 					},
 				},
-				Middlewares: map[string]*config.MiddlewareInfo{
+				Middlewares: map[string]*dynamic.MiddlewareInfo{
 					"auth@myprovider": {
 						UsedBy: []string{"bar@myprovider"},
 					},
@@ -385,12 +385,12 @@ func TestPopulateUsedby(t *testing.T) {
 		},
 		{
 			desc: "2 middlewares from 2 disctinct providers both used by 2 Routers",
-			conf: &config.RuntimeConfiguration{
-				Services: map[string]*config.ServiceInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
-						Service: &config.Service{
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1",
 									},
@@ -399,32 +399,32 @@ func TestPopulateUsedby(t *testing.T) {
 						},
 					},
 				},
-				Middlewares: map[string]*config.MiddlewareInfo{
+				Middlewares: map[string]*dynamic.MiddlewareInfo{
 					"auth@myprovider": {
-						Middleware: &config.Middleware{
-							BasicAuth: &config.BasicAuth{
+						Middleware: &dynamic.Middleware{
+							BasicAuth: &dynamic.BasicAuth{
 								Users: []string{"admin:admin"},
 							},
 						},
 					},
 					"addPrefixTest@myprovider": {
-						Middleware: &config.Middleware{
-							AddPrefix: &config.AddPrefix{
+						Middleware: &dynamic.Middleware{
+							AddPrefix: &dynamic.AddPrefix{
 								Prefix: "/titi",
 							},
 						},
 					},
 					"addPrefixTest@anotherprovider": {
-						Middleware: &config.Middleware{
-							AddPrefix: &config.AddPrefix{
+						Middleware: &dynamic.Middleware{
+							AddPrefix: &dynamic.AddPrefix{
 								Prefix: "/toto",
 							},
 						},
 					},
 				},
-				Routers: map[string]*config.RouterInfo{
+				Routers: map[string]*dynamic.RouterInfo{
 					"bar@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
@@ -432,7 +432,7 @@ func TestPopulateUsedby(t *testing.T) {
 						},
 					},
 					"test@myprovider": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar.other`)",
@@ -441,17 +441,17 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				Routers: map[string]*config.RouterInfo{
+			expected: dynamic.RuntimeConfiguration{
+				Routers: map[string]*dynamic.RouterInfo{
 					"bar@myprovider":  {},
 					"test@myprovider": {},
 				},
-				Services: map[string]*config.ServiceInfo{
+				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
 				},
-				Middlewares: map[string]*config.MiddlewareInfo{
+				Middlewares: map[string]*dynamic.MiddlewareInfo{
 					"auth@myprovider": {
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
@@ -468,28 +468,28 @@ func TestPopulateUsedby(t *testing.T) {
 		// TCP tests from hereon
 		{
 			desc: "TCP, One service used by two routers",
-			conf: &config.RuntimeConfiguration{
-				TCPRouters: map[string]*config.TCPRouterInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				TCPRouters: map[string]*dynamic.TCPRouterInfo{
 					"foo@myprovider": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
 					"bar@myprovider": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
 						},
 					},
 				},
-				TCPServices: map[string]*config.TCPServiceInfo{
+				TCPServices: map[string]*dynamic.TCPServiceInfo{
 					"foo-service@myprovider": {
-						TCPService: &config.TCPService{
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1",
 										Port:    "8085",
@@ -504,12 +504,12 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				TCPRouters: map[string]*config.TCPRouterInfo{
+			expected: dynamic.RuntimeConfiguration{
+				TCPRouters: map[string]*dynamic.TCPRouterInfo{
 					"foo@myprovider": {},
 					"bar@myprovider": {},
 				},
-				TCPServices: map[string]*config.TCPServiceInfo{
+				TCPServices: map[string]*dynamic.TCPServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"bar@myprovider", "foo@myprovider"},
 					},
@@ -518,12 +518,12 @@ func TestPopulateUsedby(t *testing.T) {
 		},
 		{
 			desc: "TCP, One service used by two routers, but one router with wrong rule",
-			conf: &config.RuntimeConfiguration{
-				TCPServices: map[string]*config.TCPServiceInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				TCPServices: map[string]*dynamic.TCPServiceInfo{
 					"foo-service@myprovider": {
-						TCPService: &config.TCPService{
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1",
 									},
@@ -532,16 +532,16 @@ func TestPopulateUsedby(t *testing.T) {
 						},
 					},
 				},
-				TCPRouters: map[string]*config.TCPRouterInfo{
+				TCPRouters: map[string]*dynamic.TCPRouterInfo{
 					"foo@myprovider": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "WrongRule(`bar.foo`)",
 						},
 					},
 					"bar@myprovider": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
@@ -549,12 +549,12 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				TCPRouters: map[string]*config.TCPRouterInfo{
+			expected: dynamic.RuntimeConfiguration{
+				TCPRouters: map[string]*dynamic.TCPRouterInfo{
 					"foo@myprovider": {},
 					"bar@myprovider": {},
 				},
-				TCPServices: map[string]*config.TCPServiceInfo{
+				TCPServices: map[string]*dynamic.TCPServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"bar@myprovider", "foo@myprovider"},
 					},
@@ -563,17 +563,17 @@ func TestPopulateUsedby(t *testing.T) {
 		},
 		{
 			desc: "TCP, Broken Service used by one Router",
-			conf: &config.RuntimeConfiguration{
-				TCPServices: map[string]*config.TCPServiceInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				TCPServices: map[string]*dynamic.TCPServiceInfo{
 					"foo-service@myprovider": {
-						TCPService: &config.TCPService{
+						TCPService: &dynamic.TCPService{
 							LoadBalancer: nil,
 						},
 					},
 				},
-				TCPRouters: map[string]*config.TCPRouterInfo{
+				TCPRouters: map[string]*dynamic.TCPRouterInfo{
 					"bar@myprovider": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
@@ -581,11 +581,11 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				TCPRouters: map[string]*config.TCPRouterInfo{
+			expected: dynamic.RuntimeConfiguration{
+				TCPRouters: map[string]*dynamic.TCPRouterInfo{
 					"bar@myprovider": {},
 				},
-				TCPServices: map[string]*config.TCPServiceInfo{
+				TCPServices: map[string]*dynamic.TCPServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"bar@myprovider"},
 					},
@@ -594,12 +594,12 @@ func TestPopulateUsedby(t *testing.T) {
 		},
 		{
 			desc: "TCP, 2 different Services each used by a disctinct router.",
-			conf: &config.RuntimeConfiguration{
-				TCPServices: map[string]*config.TCPServiceInfo{
+			conf: &dynamic.RuntimeConfiguration{
+				TCPServices: map[string]*dynamic.TCPServiceInfo{
 					"foo-service@myprovider": {
-						TCPService: &config.TCPService{
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1",
 										Port:    "8085",
@@ -613,9 +613,9 @@ func TestPopulateUsedby(t *testing.T) {
 						},
 					},
 					"bar-service@myprovider": {
-						TCPService: &config.TCPService{
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1",
 										Port:    "8087",
@@ -629,16 +629,16 @@ func TestPopulateUsedby(t *testing.T) {
 						},
 					},
 				},
-				TCPRouters: map[string]*config.TCPRouterInfo{
+				TCPRouters: map[string]*dynamic.TCPRouterInfo{
 					"foo@myprovider": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
 					"bar@myprovider": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
 							Service:     "bar-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
@@ -646,12 +646,12 @@ func TestPopulateUsedby(t *testing.T) {
 					},
 				},
 			},
-			expected: config.RuntimeConfiguration{
-				TCPRouters: map[string]*config.TCPRouterInfo{
+			expected: dynamic.RuntimeConfiguration{
+				TCPRouters: map[string]*dynamic.TCPRouterInfo{
 					"bar@myprovider": {},
 					"foo@myprovider": {},
 				},
-				TCPServices: map[string]*config.TCPServiceInfo{
+				TCPServices: map[string]*dynamic.TCPServiceInfo{
 					"foo-service@myprovider": {
 						UsedBy: []string{"foo@myprovider"},
 					},
@@ -693,27 +693,27 @@ func TestPopulateUsedby(t *testing.T) {
 func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 	testCases := []struct {
 		desc        string
-		conf        config.Configuration
+		conf        dynamic.Configuration
 		entryPoints []string
-		expected    map[string]map[string]*config.TCPRouterInfo
+		expected    map[string]map[string]*dynamic.TCPRouterInfo
 	}{
 		{
 			desc:        "Empty Configuration without entrypoint",
-			conf:        config.Configuration{},
+			conf:        dynamic.Configuration{},
 			entryPoints: []string{""},
-			expected:    map[string]map[string]*config.TCPRouterInfo{},
+			expected:    map[string]map[string]*dynamic.TCPRouterInfo{},
 		},
 		{
 			desc:        "Empty Configuration with unknown entrypoints",
-			conf:        config.Configuration{},
+			conf:        dynamic.Configuration{},
 			entryPoints: []string{"foo"},
-			expected:    map[string]map[string]*config.TCPRouterInfo{},
+			expected:    map[string]map[string]*dynamic.TCPRouterInfo{},
 		},
 		{
 			desc: "Valid configuration with an unknown entrypoint",
-			conf: config.Configuration{
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+			conf: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -721,8 +721,8 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -732,13 +732,13 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"foo"},
-			expected:    map[string]map[string]*config.TCPRouterInfo{},
+			expected:    map[string]map[string]*dynamic.TCPRouterInfo{},
 		},
 		{
 			desc: "Valid configuration with a known entrypoint",
-			conf: config.Configuration{
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+			conf: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -756,8 +756,8 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -777,17 +777,17 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web"},
-			expected: map[string]map[string]*config.TCPRouterInfo{
+			expected: map[string]map[string]*dynamic.TCPRouterInfo{
 				"web": {
 					"foo": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
 					},
 					"foobar": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web", "webs"},
 							Service:     "foobar-service@myprovider",
 							Rule:        "HostSNI(`bar.foobar`)",
@@ -798,9 +798,9 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 		},
 		{
 			desc: "Valid configuration with multiple known entrypoints",
-			conf: config.Configuration{
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+			conf: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -818,8 +818,8 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -839,17 +839,17 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web", "webs"},
-			expected: map[string]map[string]*config.TCPRouterInfo{
+			expected: map[string]map[string]*dynamic.TCPRouterInfo{
 				"web": {
 					"foo": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
 					},
 					"foobar": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web", "webs"},
 							Service:     "foobar-service@myprovider",
 							Rule:        "HostSNI(`bar.foobar`)",
@@ -858,7 +858,7 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 				},
 				"webs": {
 					"bar": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 
 							EntryPoints: []string{"webs"},
 							Service:     "bar-service@myprovider",
@@ -866,7 +866,7 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 						},
 					},
 					"foobar": {
-						TCPRouter: &config.TCPRouter{
+						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web", "webs"},
 							Service:     "foobar-service@myprovider",
 							Rule:        "HostSNI(`bar.foobar`)",
@@ -881,7 +881,7 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			runtimeConfig := config.NewRuntimeConfig(test.conf)
+			runtimeConfig := dynamic.NewRuntimeConfig(test.conf)
 			actual := runtimeConfig.GetTCPRoutersByEntrypoints(context.Background(), test.entryPoints)
 			assert.Equal(t, test.expected, actual)
 		})
@@ -891,27 +891,27 @@ func TestGetTCPRoutersByEntrypoints(t *testing.T) {
 func TestGetRoutersByEntrypoints(t *testing.T) {
 	testCases := []struct {
 		desc        string
-		conf        config.Configuration
+		conf        dynamic.Configuration
 		entryPoints []string
-		expected    map[string]map[string]*config.RouterInfo
+		expected    map[string]map[string]*dynamic.RouterInfo
 	}{
 		{
 			desc:        "Empty Configuration without entrypoint",
-			conf:        config.Configuration{},
+			conf:        dynamic.Configuration{},
 			entryPoints: []string{""},
-			expected:    map[string]map[string]*config.RouterInfo{},
+			expected:    map[string]map[string]*dynamic.RouterInfo{},
 		},
 		{
 			desc:        "Empty Configuration with unknown entrypoints",
-			conf:        config.Configuration{},
+			conf:        dynamic.Configuration{},
 			entryPoints: []string{"foo"},
-			expected:    map[string]map[string]*config.RouterInfo{},
+			expected:    map[string]map[string]*dynamic.RouterInfo{},
 		},
 		{
 			desc: "Valid configuration with an unknown entrypoint",
-			conf: config.Configuration{
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+			conf: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -919,8 +919,8 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -930,13 +930,13 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"foo"},
-			expected:    map[string]map[string]*config.RouterInfo{},
+			expected:    map[string]map[string]*dynamic.RouterInfo{},
 		},
 		{
 			desc: "Valid configuration with a known entrypoint",
-			conf: config.Configuration{
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+			conf: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -954,8 +954,8 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -975,17 +975,17 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web"},
-			expected: map[string]map[string]*config.RouterInfo{
+			expected: map[string]map[string]*dynamic.RouterInfo{
 				"web": {
 					"foo": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
 					"foobar": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web", "webs"},
 							Service:     "foobar-service@myprovider",
 							Rule:        "Host(`bar.foobar`)",
@@ -996,9 +996,9 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 		},
 		{
 			desc: "Valid configuration with multiple known entrypoints",
-			conf: config.Configuration{
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+			conf: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -1016,8 +1016,8 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 						},
 					},
 				},
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"foo": {
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
@@ -1037,17 +1037,17 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web", "webs"},
-			expected: map[string]map[string]*config.RouterInfo{
+			expected: map[string]map[string]*dynamic.RouterInfo{
 				"web": {
 					"foo": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`bar.foo`)",
 						},
 					},
 					"foobar": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web", "webs"},
 							Service:     "foobar-service@myprovider",
 							Rule:        "Host(`bar.foobar`)",
@@ -1056,7 +1056,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 				},
 				"webs": {
 					"bar": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 
 							EntryPoints: []string{"webs"},
 							Service:     "bar-service@myprovider",
@@ -1064,7 +1064,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 						},
 					},
 					"foobar": {
-						Router: &config.Router{
+						Router: &dynamic.Router{
 							EntryPoints: []string{"web", "webs"},
 							Service:     "foobar-service@myprovider",
 							Rule:        "Host(`bar.foobar`)",
@@ -1079,7 +1079,7 @@ func TestGetRoutersByEntrypoints(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			runtimeConfig := config.NewRuntimeConfig(test.conf)
+			runtimeConfig := dynamic.NewRuntimeConfig(test.conf)
 			actual := runtimeConfig.GetRoutersByEntrypoints(context.Background(), test.entryPoints, false)
 			assert.Equal(t, test.expected, actual)
 		})

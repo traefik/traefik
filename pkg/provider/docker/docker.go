@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/job"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
@@ -146,7 +146,7 @@ func (p *Provider) createClient() (client.APIClient, error) {
 }
 
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "docker"))
 		logger := log.FromContext(ctxLog)
@@ -186,7 +186,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 			}
 
 			configuration := p.buildConfiguration(ctxLog, dockerDataList)
-			configurationChan <- config.Message{
+			configurationChan <- dynamic.Message{
 				ProviderName:  "docker",
 				Configuration: configuration,
 			}
@@ -213,7 +213,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 
 								configuration := p.buildConfiguration(ctx, services)
 								if configuration != nil {
-									configurationChan <- config.Message{
+									configurationChan <- dynamic.Message{
 										ProviderName:  "docker",
 										Configuration: configuration,
 									}
@@ -248,7 +248,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 
 						configuration := p.buildConfiguration(ctx, containers)
 						if configuration != nil {
-							message := config.Message{
+							message := dynamic.Message{
 								ProviderName:  "docker",
 								Configuration: configuration,
 							}

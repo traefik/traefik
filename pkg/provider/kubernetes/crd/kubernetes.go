@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/job"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
@@ -80,7 +80,7 @@ func (p *Provider) Init() error {
 
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, "kubernetescrd"))
 	logger := log.FromContext(ctxLog)
 	// Tell glog (used by client-go) to log into STDERR. Otherwise, we risk
@@ -124,7 +124,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 						logger.Debugf("Skipping Kubernetes event kind %T", event)
 					} else {
 						p.lastConfiguration.Set(conf)
-						configurationChan <- config.Message{
+						configurationChan <- dynamic.Message{
 							ProviderName:  "kubernetescrd",
 							Configuration: conf,
 						}
@@ -150,7 +150,7 @@ func checkStringQuoteValidity(value string) error {
 	return err
 }
 
-func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([]config.TCPServer, error) {
+func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([]dynamic.TCPServer, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
 		return nil, err
@@ -172,9 +172,9 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 		return nil, errors.New("service port not found")
 	}
 
-	var servers []config.TCPServer
+	var servers []dynamic.TCPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		servers = append(servers, config.TCPServer{
+		servers = append(servers, dynamic.TCPServer{
 			Address: fmt.Sprintf("%s:%d", service.Spec.ExternalName, portSpec.Port),
 		})
 	} else {
@@ -205,7 +205,7 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 			}
 
 			for _, addr := range subset.Addresses {
-				servers = append(servers, config.TCPServer{
+				servers = append(servers, dynamic.TCPServer{
 					Address: fmt.Sprintf("%s:%d", addr.IP, port),
 				})
 			}
@@ -215,7 +215,7 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 	return servers, nil
 }
 
-func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]config.Server, error) {
+func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]dynamic.Server, error) {
 	strategy := svc.Strategy
 	if strategy == "" {
 		strategy = "RoundRobin"
@@ -245,9 +245,9 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 		return nil, errors.New("service port not found")
 	}
 
-	var servers []config.Server
+	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		servers = append(servers, config.Server{
+		servers = append(servers, dynamic.Server{
 			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
 		})
 	} else {
@@ -290,7 +290,7 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]confi
 			}
 
 			for _, addr := range subset.Addresses {
-				servers = append(servers, config.Server{
+				servers = append(servers, dynamic.Server{
 					URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
 				})
 			}
@@ -347,11 +347,11 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	return tlsOptions
 }
 
-func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *config.HTTPConfiguration {
-	conf := &config.HTTPConfiguration{
-		Routers:     map[string]*config.Router{},
-		Middlewares: map[string]*config.Middleware{},
-		Services:    map[string]*config.Service{},
+func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
+	conf := &dynamic.HTTPConfiguration{
+		Routers:     map[string]*dynamic.Router{},
+		Middlewares: map[string]*dynamic.Middleware{},
+		Services:    map[string]*dynamic.Service{},
 	}
 
 	for _, ingressRoute := range client.GetIngressRoutes() {
@@ -388,7 +388,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				continue
 			}
 
-			var allServers []config.Server
+			var allServers []dynamic.Server
 			for _, service := range route.Services {
 				servers, err := loadServers(client, ingressRoute.Namespace, service)
 				if err != nil {
@@ -429,7 +429,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 
 			serviceName := makeID(ingressRoute.Namespace, key)
 
-			conf.Routers[serviceName] = &config.Router{
+			conf.Routers[serviceName] = &dynamic.Router{
 				Middlewares: mds,
 				Priority:    route.Priority,
 				EntryPoints: ingressRoute.Spec.EntryPoints,
@@ -438,7 +438,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			}
 
 			if ingressRoute.Spec.TLS != nil {
-				tlsConf := &config.RouterTLSConfig{}
+				tlsConf := &dynamic.RouterTLSConfig{}
 				if ingressRoute.Spec.TLS.Options != nil && len(ingressRoute.Spec.TLS.Options.Name) > 0 {
 					tlsOptionsName := ingressRoute.Spec.TLS.Options.Name
 					// Is a Kubernetes CRD reference, (i.e. not a cross-provider reference)
@@ -459,8 +459,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				conf.Routers[serviceName].TLS = tlsConf
 			}
 
-			conf.Services[serviceName] = &config.Service{
-				LoadBalancer: &config.LoadBalancerService{
+			conf.Services[serviceName] = &dynamic.Service{
+				LoadBalancer: &dynamic.LoadBalancerService{
 					Servers: allServers,
 					// TODO: support other strategies.
 					PassHostHeader: true,
@@ -472,10 +472,10 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	return conf
 }
 
-func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *config.TCPConfiguration {
-	conf := &config.TCPConfiguration{
-		Routers:  map[string]*config.TCPRouter{},
-		Services: map[string]*config.TCPService{},
+func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.TCPConfiguration {
+	conf := &dynamic.TCPConfiguration{
+		Routers:  map[string]*dynamic.TCPRouter{},
+		Services: map[string]*dynamic.TCPService{},
 	}
 
 	for _, ingressRouteTCP := range client.GetIngressRouteTCPs() {
@@ -508,7 +508,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				continue
 			}
 
-			var allServers []config.TCPServer
+			var allServers []dynamic.TCPServer
 			for _, service := range route.Services {
 				servers, err := loadTCPServers(client, ingressRouteTCP.Namespace, service)
 				if err != nil {
@@ -529,14 +529,14 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 			}
 
 			serviceName := makeID(ingressRouteTCP.Namespace, key)
-			conf.Routers[serviceName] = &config.TCPRouter{
+			conf.Routers[serviceName] = &dynamic.TCPRouter{
 				EntryPoints: ingressRouteTCP.Spec.EntryPoints,
 				Rule:        route.Match,
 				Service:     serviceName,
 			}
 
 			if ingressRouteTCP.Spec.TLS != nil {
-				conf.Routers[serviceName].TLS = &config.RouterTCPTLSConfig{
+				conf.Routers[serviceName].TLS = &dynamic.RouterTCPTLSConfig{
 					Passthrough: ingressRouteTCP.Spec.TLS.Passthrough,
 				}
 
@@ -560,8 +560,8 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				}
 			}
 
-			conf.Services[serviceName] = &config.TCPService{
-				LoadBalancer: &config.TCPLoadBalancerService{
+			conf.Services[serviceName] = &dynamic.TCPService{
+				LoadBalancer: &dynamic.TCPLoadBalancerService{
 					Servers: allServers,
 				},
 			}
@@ -571,12 +571,12 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 	return conf
 }
 
-func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *config.Configuration {
+func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *dynamic.Configuration {
 	tlsConfigs := make(map[string]*tls.CertAndStores)
-	conf := &config.Configuration{
+	conf := &dynamic.Configuration{
 		HTTP: p.loadIngressRouteConfiguration(ctx, client, tlsConfigs),
 		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
-		TLS: &config.TLSConfiguration{
+		TLS: &dynamic.TLSConfiguration{
 			Certificates: getTLSConfig(tlsConfigs),
 			Options:      buildTLSOptions(ctx, client),
 		},

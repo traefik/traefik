@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/containous/traefik/pkg/types"
@@ -189,7 +189,7 @@ func registerPromState(ctx context.Context) bool {
 // OnConfigurationUpdate receives the current configuration from Traefik.
 // It then converts the configuration to the optimized package internal format
 // and sets it to the promState.
-func OnConfigurationUpdate(configurations config.Configurations) {
+func OnConfigurationUpdate(configurations dynamic.Configurations) {
 	dynamicConfig := newDynamicConfig()
 
 	// FIXME metrics

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/config/static"
 	th "github.com/containous/traefik/pkg/testhelpers"
 	"github.com/containous/traefik/pkg/types"
@@ -29,7 +29,7 @@ func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 		}
 	}()
 
-	server.configurationChan <- config.Message{ProviderName: "kubernetes"}
+	server.configurationChan <- dynamic.Message{ProviderName: "kubernetes"}
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -49,7 +49,7 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 				// set the current configuration
 				// this is usually done in the processing part of the published configuration
 				// so we have to emulate the behavior here
-				currentConfigurations := server.currentConfigurations.Get().(config.Configurations)
+				currentConfigurations := server.currentConfigurations.Get().(dynamic.Configurations)
 				currentConfigurations[conf.ProviderName] = conf.Configuration
 				server.currentConfigurations.Set(currentConfigurations)
 
@@ -60,20 +60,20 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 			}
 		}
 	}()
-	conf := &config.Configuration{}
+	conf := &dynamic.Configuration{}
 	conf.HTTP = th.BuildConfiguration(
 		th.WithRouters(th.WithRouter("foo")),
 		th.WithLoadBalancerServices(th.WithService("bar")),
 	)
 
 	// provide a configuration
-	server.configurationChan <- config.Message{ProviderName: "kubernetes", Configuration: conf}
+	server.configurationChan <- dynamic.Message{ProviderName: "kubernetes", Configuration: conf}
 
 	// give some time so that the configuration can be processed
 	time.Sleep(20 * time.Millisecond)
 
 	// provide the same configuration a second time
-	server.configurationChan <- config.Message{ProviderName: "kubernetes", Configuration: conf}
+	server.configurationChan <- dynamic.Message{ProviderName: "kubernetes", Configuration: conf}
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -102,13 +102,13 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 		}
 	}()
 
-	conf := &config.Configuration{}
+	conf := &dynamic.Configuration{}
 	conf.HTTP = th.BuildConfiguration(
 		th.WithRouters(th.WithRouter("foo")),
 		th.WithLoadBalancerServices(th.WithService("bar")),
 	)
-	server.configurationChan <- config.Message{ProviderName: "kubernetes", Configuration: conf}
-	server.configurationChan <- config.Message{ProviderName: "marathon", Configuration: conf}
+	server.configurationChan <- dynamic.Message{ProviderName: "kubernetes", Configuration: conf}
+	server.configurationChan <- dynamic.Message{ProviderName: "marathon", Configuration: conf}
 
 	select {
 	case <-consumePublishedConfigsDone:
@@ -148,12 +148,12 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 
 	testCases := []struct {
 		desc               string
-		config             func(testServerURL string) *config.HTTPConfiguration
+		config             func(testServerURL string) *dynamic.HTTPConfiguration
 		expectedStatusCode int
 	}{
 		{
 			desc: "Ok",
-			config: func(testServerURL string) *config.HTTPConfiguration {
+			config: func(testServerURL string) *dynamic.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
@@ -169,14 +169,14 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "No Frontend",
-			config: func(testServerURL string) *config.HTTPConfiguration {
+			config: func(testServerURL string) *dynamic.HTTPConfiguration {
 				return th.BuildConfiguration()
 			},
 			expectedStatusCode: http.StatusNotFound,
 		},
 		{
 			desc: "Empty Backend LB",
-			config: func(testServerURL string) *config.HTTPConfiguration {
+			config: func(testServerURL string) *dynamic.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
@@ -190,7 +190,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "Empty Backend LB Sticky",
-			config: func(testServerURL string) *config.HTTPConfiguration {
+			config: func(testServerURL string) *dynamic.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
@@ -206,7 +206,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "Empty Backend LB",
-			config: func(testServerURL string) *config.HTTPConfiguration {
+			config: func(testServerURL string) *dynamic.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
@@ -220,7 +220,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 		},
 		{
 			desc: "Empty Backend LB Sticky",
-			config: func(testServerURL string) *config.HTTPConfiguration {
+			config: func(testServerURL string) *dynamic.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
 						th.WithEntryPoints("http"),
@@ -253,7 +253,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			}
 
 			srv := NewServer(globalConfig, nil, entryPointsConfig, nil)
-			rtConf := config.NewRuntimeConfig(config.Configuration{HTTP: test.config(testServer.URL)})
+			rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{HTTP: test.config(testServer.URL)})
 			entryPoints, _ := srv.createHTTPHandlers(context.Background(), rtConf, []string{"http"})
 
 			responseRecorder := &httptest.ResponseRecorder{}

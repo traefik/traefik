@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/middlewares/replacepath"
 	"github.com/containous/traefik/pkg/tracing"
@@ -27,7 +27,7 @@ type replacePathRegex struct {
 }
 
 // New creates a new replace path regex middleware.
-func New(ctx context.Context, next http.Handler, config config.ReplacePathRegex, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, config dynamic.ReplacePathRegex, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
 
 	exp, err := regexp.Compile(strings.TrimSpace(config.Regex))

@@ -3,7 +3,7 @@ package server
 import (
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/tls"
 	"github.com/stretchr/testify/assert"
 )
@@ -11,87 +11,87 @@ import (
 func TestAggregator(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		given    config.Configurations
-		expected *config.HTTPConfiguration
+		given    dynamic.Configurations
+		expected *dynamic.HTTPConfiguration
 	}{
 		{
 			desc:  "Nil returns an empty configuration",
 			given: nil,
-			expected: &config.HTTPConfiguration{
-				Routers:     make(map[string]*config.Router),
-				Middlewares: make(map[string]*config.Middleware),
-				Services:    make(map[string]*config.Service),
+			expected: &dynamic.HTTPConfiguration{
+				Routers:     make(map[string]*dynamic.Router),
+				Middlewares: make(map[string]*dynamic.Middleware),
+				Services:    make(map[string]*dynamic.Service),
 			},
 		},
 		{
 			desc: "Returns fully qualified elements from a mono-provider configuration map",
-			given: config.Configurations{
-				"provider-1": &config.Configuration{
-					HTTP: &config.HTTPConfiguration{
-						Routers: map[string]*config.Router{
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					HTTP: &dynamic.HTTPConfiguration{
+						Routers: map[string]*dynamic.Router{
 							"router-1": {},
 						},
-						Middlewares: map[string]*config.Middleware{
+						Middlewares: map[string]*dynamic.Middleware{
 							"middleware-1": {},
 						},
-						Services: map[string]*config.Service{
+						Services: map[string]*dynamic.Service{
 							"service-1": {},
 						},
 					},
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
+			expected: &dynamic.HTTPConfiguration{
+				Routers: map[string]*dynamic.Router{
 					"router-1@provider-1": {},
 				},
-				Middlewares: map[string]*config.Middleware{
+				Middlewares: map[string]*dynamic.Middleware{
 					"middleware-1@provider-1": {},
 				},
-				Services: map[string]*config.Service{
+				Services: map[string]*dynamic.Service{
 					"service-1@provider-1": {},
 				},
 			},
 		},
 		{
 			desc: "Returns fully qualified elements from a multi-provider configuration map",
-			given: config.Configurations{
-				"provider-1": &config.Configuration{
-					HTTP: &config.HTTPConfiguration{
-						Routers: map[string]*config.Router{
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					HTTP: &dynamic.HTTPConfiguration{
+						Routers: map[string]*dynamic.Router{
 							"router-1": {},
 						},
-						Middlewares: map[string]*config.Middleware{
+						Middlewares: map[string]*dynamic.Middleware{
 							"middleware-1": {},
 						},
-						Services: map[string]*config.Service{
+						Services: map[string]*dynamic.Service{
 							"service-1": {},
 						},
 					},
 				},
-				"provider-2": &config.Configuration{
-					HTTP: &config.HTTPConfiguration{
-						Routers: map[string]*config.Router{
+				"provider-2": &dynamic.Configuration{
+					HTTP: &dynamic.HTTPConfiguration{
+						Routers: map[string]*dynamic.Router{
 							"router-1": {},
 						},
-						Middlewares: map[string]*config.Middleware{
+						Middlewares: map[string]*dynamic.Middleware{
 							"middleware-1": {},
 						},
-						Services: map[string]*config.Service{
+						Services: map[string]*dynamic.Service{
 							"service-1": {},
 						},
 					},
 				},
 			},
-			expected: &config.HTTPConfiguration{
-				Routers: map[string]*config.Router{
+			expected: &dynamic.HTTPConfiguration{
+				Routers: map[string]*dynamic.Router{
 					"router-1@provider-1": {},
 					"router-1@provider-2": {},
 				},
-				Middlewares: map[string]*config.Middleware{
+				Middlewares: map[string]*dynamic.Middleware{
 					"middleware-1@provider-1": {},
 					"middleware-1@provider-2": {},
 				},
-				Services: map[string]*config.Service{
+				Services: map[string]*dynamic.Service{
 					"service-1@provider-1": {},
 					"service-1@provider-2": {},
 				},
@@ -113,7 +113,7 @@ func TestAggregator(t *testing.T) {
 func TestAggregator_tlsoptions(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		given    config.Configurations
+		given    dynamic.Configurations
 		expected map[string]tls.Options
 	}{
 		{
@@ -125,9 +125,9 @@ func TestAggregator_tlsoptions(t *testing.T) {
 		},
 		{
 			desc: "Returns fully qualified elements from a mono-provider configuration map",
-			given: config.Configurations{
-				"provider-1": &config.Configuration{
-					TLS: &config.TLSConfiguration{
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
 						Options: map[string]tls.Options{
 							"foo": {
 								MinVersion: "VersionTLS12",
@@ -145,9 +145,9 @@ func TestAggregator_tlsoptions(t *testing.T) {
 		},
 		{
 			desc: "Returns fully qualified elements from a multi-provider configuration map",
-			given: config.Configurations{
-				"provider-1": &config.Configuration{
-					TLS: &config.TLSConfiguration{
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
 						Options: map[string]tls.Options{
 							"foo": {
 								MinVersion: "VersionTLS13",
@@ -155,8 +155,8 @@ func TestAggregator_tlsoptions(t *testing.T) {
 						},
 					},
 				},
-				"provider-2": &config.Configuration{
-					TLS: &config.TLSConfiguration{
+				"provider-2": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
 						Options: map[string]tls.Options{
 							"foo": {
 								MinVersion: "VersionTLS12",
@@ -177,9 +177,9 @@ func TestAggregator_tlsoptions(t *testing.T) {
 		},
 		{
 			desc: "Create a valid default tls option when appears only in one provider",
-			given: config.Configurations{
-				"provider-1": &config.Configuration{
-					TLS: &config.TLSConfiguration{
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
 						Options: map[string]tls.Options{
 							"foo": {
 								MinVersion: "VersionTLS13",
@@ -190,8 +190,8 @@ func TestAggregator_tlsoptions(t *testing.T) {
 						},
 					},
 				},
-				"provider-2": &config.Configuration{
-					TLS: &config.TLSConfiguration{
+				"provider-2": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
 						Options: map[string]tls.Options{
 							"foo": {
 								MinVersion: "VersionTLS12",
@@ -214,9 +214,9 @@ func TestAggregator_tlsoptions(t *testing.T) {
 		},
 		{
 			desc: "No default tls option if it is defined in multiple providers",
-			given: config.Configurations{
-				"provider-1": &config.Configuration{
-					TLS: &config.TLSConfiguration{
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
 						Options: map[string]tls.Options{
 							"foo": {
 								MinVersion: "VersionTLS12",
@@ -227,8 +227,8 @@ func TestAggregator_tlsoptions(t *testing.T) {
 						},
 					},
 				},
-				"provider-2": &config.Configuration{
-					TLS: &config.TLSConfiguration{
+				"provider-2": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
 						Options: map[string]tls.Options{
 							"foo": {
 								MinVersion: "VersionTLS13",
@@ -251,9 +251,9 @@ func TestAggregator_tlsoptions(t *testing.T) {
 		},
 		{
 			desc: "Create a default TLS Options configuration if none was provided",
-			given: config.Configurations{
-				"provider-1": &config.Configuration{
-					TLS: &config.TLSConfiguration{
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
 						Options: map[string]tls.Options{
 							"foo": {
 								MinVersion: "VersionTLS12",
@@ -261,8 +261,8 @@ func TestAggregator_tlsoptions(t *testing.T) {
 						},
 					},
 				},
-				"provider-2": &config.Configuration{
-					TLS: &config.TLSConfiguration{
+				"provider-2": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
 						Options: map[string]tls.Options{
 							"foo": {
 								MinVersion: "VersionTLS13",

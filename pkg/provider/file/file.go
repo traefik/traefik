@@ -13,7 +13,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/sprig"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
 	"github.com/containous/traefik/pkg/safe"
@@ -48,7 +48,7 @@ func (p *Provider) Init() error {
 
 // Provide allows the file provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	configuration, err := p.BuildConfiguration()
 
 	if err != nil {
@@ -78,7 +78,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 
 // BuildConfiguration loads configuration either from file or a directory specified by 'Filename'/'Directory'
 // and returns a 'Configuration' object
-func (p *Provider) BuildConfiguration() (*config.Configuration, error) {
+func (p *Provider) BuildConfiguration() (*dynamic.Configuration, error) {
 	ctx := log.With(context.Background(), log.Str(log.ProviderName, providerName))
 
 	if len(p.Directory) > 0 {
@@ -96,7 +96,7 @@ func (p *Provider) BuildConfiguration() (*config.Configuration, error) {
 	return nil, errors.New("error using file configuration backend, no filename defined")
 }
 
-func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- config.Message, callback func(chan<- config.Message, fsnotify.Event)) error {
+func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- dynamic.Message, callback func(chan<- dynamic.Message, fsnotify.Event)) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return fmt.Errorf("error creating file watcher: %s", err)
@@ -139,7 +139,7 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 	return nil
 }
 
-func (p *Provider) watcherCallback(configurationChan chan<- config.Message, event fsnotify.Event) {
+func (p *Provider) watcherCallback(configurationChan chan<- dynamic.Message, event fsnotify.Event) {
 	watchItem := p.TraefikFile
 	if len(p.Directory) > 0 {
 		watchItem = p.Directory
@@ -163,16 +163,16 @@ func (p *Provider) watcherCallback(configurationChan chan<- config.Message, even
 	sendConfigToChannel(configurationChan, configuration)
 }
 
-func sendConfigToChannel(configurationChan chan<- config.Message, configuration *config.Configuration) {
-	configurationChan <- config.Message{
+func sendConfigToChannel(configurationChan chan<- dynamic.Message, configuration *dynamic.Configuration) {
+	configurationChan <- dynamic.Message{
 		ProviderName:  "file",
 		Configuration: configuration,
 	}
 }
 
-func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*config.Configuration, error) {
+func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*dynamic.Configuration, error) {
 	var err error
-	var configuration *config.Configuration
+	var configuration *dynamic.Configuration
 	if parseTemplate {
 		configuration, err = p.CreateConfiguration(filename, template.FuncMap{}, false)
 	} else {
@@ -189,7 +189,7 @@ func (p *Provider) loadFileConfig(filename string, parseTemplate bool) (*config.
 	return configuration, nil
 }
 
-func flattenCertificates(tlsConfig *config.TLSConfiguration) []*tls.CertAndStores {
+func flattenCertificates(tlsConfig *dynamic.TLSConfiguration) []*tls.CertAndStores {
 	var certs []*tls.CertAndStores
 	for _, cert := range tlsConfig.Certificates {
 		content, err := cert.Certificate.CertFile.Read()
@@ -212,7 +212,7 @@ func flattenCertificates(tlsConfig *config.TLSConfiguration) []*tls.CertAndStore
 	return certs
 }
 
-func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory string, configuration *config.Configuration) (*config.Configuration, error) {
+func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory string, configuration *dynamic.Configuration) (*dynamic.Configuration, error) {
 	logger := log.FromContext(ctx)
 
 	fileList, err := ioutil.ReadDir(directory)
@@ -221,17 +221,17 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 	}
 
 	if configuration == nil {
-		configuration = &config.Configuration{
-			HTTP: &config.HTTPConfiguration{
-				Routers:     make(map[string]*config.Router),
-				Middlewares: make(map[string]*config.Middleware),
-				Services:    make(map[string]*config.Service),
+		configuration = &dynamic.Configuration{
+			HTTP: &dynamic.HTTPConfiguration{
+				Routers:     make(map[string]*dynamic.Router),
+				Middlewares: make(map[string]*dynamic.Middleware),
+				Services:    make(map[string]*dynamic.Service),
 			},
-			TCP: &config.TCPConfiguration{
-				Routers:  make(map[string]*config.TCPRouter),
-				Services: make(map[string]*config.TCPService),
+			TCP: &dynamic.TCPConfiguration{
+				Routers:  make(map[string]*dynamic.TCPRouter),
+				Services: make(map[string]*dynamic.TCPService),
 			},
-			TLS: &config.TLSConfiguration{
+			TLS: &dynamic.TLSConfiguration{
 				Stores:  make(map[string]tls.Store),
 				Options: make(map[string]tls.Options),
 			},
@@ -256,7 +256,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 			continue
 		}
 
-		var c *config.Configuration
+		var c *dynamic.Configuration
 		c, err = p.loadFileConfig(filepath.Join(directory, item.Name()), true)
 		if err != nil {
 			return configuration, err
@@ -312,7 +312,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 	}
 
 	if len(configTLSMaps) > 0 {
-		configuration.TLS = &config.TLSConfiguration{}
+		configuration.TLS = &dynamic.TLSConfiguration{}
 	}
 
 	for conf := range configTLSMaps {
@@ -323,7 +323,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 }
 
 // CreateConfiguration creates a provider configuration from content using templating.
-func (p *Provider) CreateConfiguration(filename string, funcMap template.FuncMap, templateObjects interface{}) (*config.Configuration, error) {
+func (p *Provider) CreateConfiguration(filename string, funcMap template.FuncMap, templateObjects interface{}) (*dynamic.Configuration, error) {
 	tmplContent, err := readFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("error reading configuration file: %s - %s", filename, err)
@@ -360,7 +360,7 @@ func (p *Provider) CreateConfiguration(filename string, funcMap template.FuncMap
 }
 
 // DecodeConfiguration Decodes a *types.Configuration from a content.
-func (p *Provider) DecodeConfiguration(filename string) (*config.Configuration, error) {
+func (p *Provider) DecodeConfiguration(filename string) (*dynamic.Configuration, error) {
 	content, err := readFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("error reading configuration file: %s - %s", filename, err)
@@ -369,18 +369,18 @@ func (p *Provider) DecodeConfiguration(filename string) (*config.Configuration, 
 	return p.decodeConfiguration(filename, content)
 }
 
-func (p *Provider) decodeConfiguration(filePath string, content string) (*config.Configuration, error) {
-	configuration := &config.Configuration{
-		HTTP: &config.HTTPConfiguration{
-			Routers:     make(map[string]*config.Router),
-			Middlewares: make(map[string]*config.Middleware),
-			Services:    make(map[string]*config.Service),
+func (p *Provider) decodeConfiguration(filePath string, content string) (*dynamic.Configuration, error) {
+	configuration := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:     make(map[string]*dynamic.Router),
+			Middlewares: make(map[string]*dynamic.Middleware),
+			Services:    make(map[string]*dynamic.Service),
 		},
-		TCP: &config.TCPConfiguration{
-			Routers:  make(map[string]*config.TCPRouter),
-			Services: make(map[string]*config.TCPService),
+		TCP: &dynamic.TCPConfiguration{
+			Routers:  make(map[string]*dynamic.TCPRouter),
+			Services: make(map[string]*dynamic.TCPService),
 		},
-		TLS: &config.TLSConfiguration{
+		TLS: &dynamic.TLSConfiguration{
 			Stores:  make(map[string]tls.Store),
 			Options: make(map[string]tls.Options),
 		},
