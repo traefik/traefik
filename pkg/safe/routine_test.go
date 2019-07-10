@@ -193,9 +193,9 @@ func TestPoolCleanupWithGoPanicking(t *testing.T) {
 			},
 		},
 		{
-			desc: "AddGo() and Start()",
+			desc: "addGo() and Start()",
 			fn: func(p *Pool) {
-				p.AddGo(testRoutine)
+				p.addGo(testRoutine)
 				p.Start()
 			},
 		},
