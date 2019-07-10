@@ -173,7 +173,7 @@ func TestPoolStartWithStopChan(t *testing.T) {
 	}
 }
 
-func TestPoolStopWithGoPanicking(t *testing.T) {
+func TestPoolCleanupWithGoPanicking(t *testing.T) {
 	testRoutine := func(stop chan bool) {
 		panic("BOOM")
 	}
@@ -226,13 +226,13 @@ func TestPoolStopWithGoPanicking(t *testing.T) {
 
 			testDone := make(chan bool, 1)
 			go func() {
-				p.Stop()
+				p.Cleanup()
 				testDone <- true
 			}()
 
 			select {
 			case <-timer.C:
-				t.Fatalf("Pool.Stop() did not complete in time with a panicking goroutine")
+				t.Fatalf("Pool.Cleanup() did not complete in time with a panicking goroutine")
 			case <-testDone:
 				return
 			}
