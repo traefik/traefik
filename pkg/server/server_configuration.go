@@ -175,8 +175,22 @@ func (s *Server) preLoadConfiguration(configMsg dynamic.Message) {
 
 	logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
 	if log.GetLevel() == logrus.DebugLevel {
-		jsonConf, _ := json.Marshal(configMsg.Configuration)
-		logger.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
+		copyConf := configMsg.Configuration.DeepCopy()
+		if copyConf.TLS != nil {
+			copyConf.TLS.Certificates = nil
+
+			for _, v := range copyConf.TLS.Stores {
+				v.DefaultCertificate = nil
+			}
+		}
+
+		jsonConf, err := json.Marshal(copyConf)
+		if err != nil {
+			logger.Errorf("Could not marshal dynamic configuration: %v", err)
+			logger.Debugf("Configuration received from provider %s: [struct] %#v", configMsg.ProviderName, copyConf)
+		} else {
+			logger.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
+		}
 	}
 
 	if isEmptyConfiguration(configMsg.Configuration) {
