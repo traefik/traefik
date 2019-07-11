@@ -296,7 +296,7 @@ metadata:
   namespace: default
 
 spec:
-  minversion: VersionTLS12
+  minVersion: VersionTLS12
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

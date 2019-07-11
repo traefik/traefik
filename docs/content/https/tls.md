@@ -166,12 +166,12 @@ The `ClientAuth.clientAuthType` option governs the behaviour as follows:
 tls:
   options:
     default:
-      clientauth:
+      clientAuth:
         # in PEM format. each file can contain multiple CAs.
-        cafiles:
+        caFiles:
         - tests/clientca1.crt
         - tests/clientca2.crt
-        clientauthtype: RequireAndVerifyClientCert
+        clientAuthType: RequireAndVerifyClientCert
 ```
 
 ### Cipher Suites

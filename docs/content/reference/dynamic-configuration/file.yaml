@@ -307,7 +307,7 @@ tls:
         caFiles:
         - foobar
         - foobar
-        clientauthtype: VerifyClientCertIfGiven
+        clientAuthType: VerifyClientCertIfGiven
       sniStrict: true
     Options1:
       minVersion: foobar
@@ -318,7 +318,7 @@ tls:
         caFiles:
         - foobar
         - foobar
-        clientauthtype: VerifyClientCertIfGiven
+        clientAuthType: VerifyClientCertIfGiven
       sniStrict: true
   stores:
     Store0:
