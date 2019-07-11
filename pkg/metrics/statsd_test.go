@@ -36,16 +36,16 @@ func TestStatsD(t *testing.T) {
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
-		statsdRegistry.BackendReqsCounter().With("service", "test", "code", string(http.StatusOK), "method", http.MethodGet).Add(1)
-		statsdRegistry.BackendReqsCounter().With("service", "test", "code", string(http.StatusNotFound), "method", http.MethodGet).Add(1)
-		statsdRegistry.BackendRetriesCounter().With("service", "test").Add(1)
-		statsdRegistry.BackendRetriesCounter().With("service", "test").Add(1)
-		statsdRegistry.BackendReqDurationHistogram().With("service", "test", "code", string(http.StatusOK)).Observe(10000)
+		statsdRegistry.ServiceReqsCounter().With("service", "test", "code", string(http.StatusOK), "method", http.MethodGet).Add(1)
+		statsdRegistry.ServiceReqsCounter().With("service", "test", "code", string(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		statsdRegistry.ServiceRetriesCounter().With("service", "test").Add(1)
+		statsdRegistry.ServiceRetriesCounter().With("service", "test").Add(1)
+		statsdRegistry.ServiceReqDurationHistogram().With("service", "test", "code", string(http.StatusOK)).Observe(10000)
 		statsdRegistry.ConfigReloadsCounter().Add(1)
 		statsdRegistry.ConfigReloadsFailureCounter().Add(1)
 		statsdRegistry.EntrypointReqsCounter().With("entrypoint", "test").Add(1)
 		statsdRegistry.EntrypointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 		statsdRegistry.EntrypointOpenConnsGauge().With("entrypoint", "test").Set(1)
-		statsdRegistry.BackendServerUpGauge().With("backend:test", "url", "http://127.0.0.1").Set(1)
+		statsdRegistry.ServiceServerUpGauge().With("backend:test", "url", "http://127.0.0.1").Set(1)
 	})
 }

@@ -38,14 +38,14 @@ func TestInfluxDB(t *testing.T) {
 	}
 
 	msgBackend := udp.ReceiveString(t, func() {
-		influxDBRegistry.BackendReqsCounter().With("backend", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-		influxDBRegistry.BackendReqsCounter().With("backend", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-		influxDBRegistry.BackendRetriesCounter().With("backend", "test").Add(1)
-		influxDBRegistry.BackendRetriesCounter().With("backend", "test").Add(1)
-		influxDBRegistry.BackendReqDurationHistogram().With("backend", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
+		influxDBRegistry.ServiceReqsCounter().With("backend", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		influxDBRegistry.ServiceReqsCounter().With("backend", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		influxDBRegistry.ServiceRetriesCounter().With("backend", "test").Add(1)
+		influxDBRegistry.ServiceRetriesCounter().With("backend", "test").Add(1)
+		influxDBRegistry.ServiceReqDurationHistogram().With("backend", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 		influxDBRegistry.ConfigReloadsCounter().Add(1)
 		influxDBRegistry.ConfigReloadsFailureCounter().Add(1)
-		influxDBRegistry.BackendServerUpGauge().With("backend", "test", "url", "http://127.0.0.1").Set(1)
+		influxDBRegistry.ServiceServerUpGauge().With("backend", "test", "url", "http://127.0.0.1").Set(1)
 	})
 
 	assertMessage(t, msgBackend, expectedBackend)
@@ -97,14 +97,14 @@ func TestInfluxDBHTTP(t *testing.T) {
 		`(traefik\.backend\.server\.up,backend=test(?:[a-z=0-9A-Z,]+)?,url=http://127.0.0.1 value=1) [\d]{19}`,
 	}
 
-	influxDBRegistry.BackendReqsCounter().With("backend", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-	influxDBRegistry.BackendReqsCounter().With("backend", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-	influxDBRegistry.BackendRetriesCounter().With("backend", "test").Add(1)
-	influxDBRegistry.BackendRetriesCounter().With("backend", "test").Add(1)
-	influxDBRegistry.BackendReqDurationHistogram().With("backend", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
+	influxDBRegistry.ServiceReqsCounter().With("backend", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	influxDBRegistry.ServiceReqsCounter().With("backend", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+	influxDBRegistry.ServiceRetriesCounter().With("backend", "test").Add(1)
+	influxDBRegistry.ServiceRetriesCounter().With("backend", "test").Add(1)
+	influxDBRegistry.ServiceReqDurationHistogram().With("backend", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	influxDBRegistry.ConfigReloadsCounter().Add(1)
 	influxDBRegistry.ConfigReloadsFailureCounter().Add(1)
-	influxDBRegistry.BackendServerUpGauge().With("backend", "test", "url", "http://127.0.0.1").Set(1)
+	influxDBRegistry.ServiceServerUpGauge().With("backend", "test", "url", "http://127.0.0.1").Set(1)
 	msgBackend := <-c
 
 	assertMessage(t, *msgBackend, expectedBackend)

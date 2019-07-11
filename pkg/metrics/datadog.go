@@ -20,9 +20,9 @@ var datadogTicker *time.Ticker
 
 // Metric names consistent with https://github.com/DataDog/integrations-extras/pull/64
 const (
-	ddMetricsBackendReqsName      = "backend.request.total"
-	ddMetricsBackendLatencyName   = "backend.request.duration"
-	ddRetriesTotalName            = "backend.retries.total"
+	ddMetricsBackendReqsName      = "service.request.total"
+	ddMetricsBackendLatencyName   = "service.request.duration"
+	ddRetriesTotalName            = "service.retries.total"
 	ddConfigReloadsName           = "config.reload.total"
 	ddConfigReloadsFailureTagName = "failure"
 	ddLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
@@ -30,8 +30,8 @@ const (
 	ddEntrypointReqsName          = "entrypoint.request.total"
 	ddEntrypointReqDurationName   = "entrypoint.request.duration"
 	ddEntrypointOpenConnsName     = "entrypoint.connections.open"
-	ddOpenConnsName               = "backend.connections.open"
-	ddServerUpName                = "backend.server.up"
+	ddOpenConnsName               = "service.connections.open"
+	ddServerUpName                = "service.server.up"
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
@@ -49,11 +49,11 @@ func RegisterDatadog(ctx context.Context, config *types.DataDog) Registry {
 		entrypointReqsCounter:          datadogClient.NewCounter(ddEntrypointReqsName, 1.0),
 		entrypointReqDurationHistogram: datadogClient.NewHistogram(ddEntrypointReqDurationName, 1.0),
 		entrypointOpenConnsGauge:       datadogClient.NewGauge(ddEntrypointOpenConnsName),
-		backendReqsCounter:             datadogClient.NewCounter(ddMetricsBackendReqsName, 1.0),
-		backendReqDurationHistogram:    datadogClient.NewHistogram(ddMetricsBackendLatencyName, 1.0),
-		backendRetriesCounter:          datadogClient.NewCounter(ddRetriesTotalName, 1.0),
-		backendOpenConnsGauge:          datadogClient.NewGauge(ddOpenConnsName),
-		backendServerUpGauge:           datadogClient.NewGauge(ddServerUpName),
+		serviceReqsCounter:             datadogClient.NewCounter(ddMetricsBackendReqsName, 1.0),
+		serviceReqDurationHistogram:    datadogClient.NewHistogram(ddMetricsBackendLatencyName, 1.0),
+		serviceRetriesCounter:          datadogClient.NewCounter(ddRetriesTotalName, 1.0),
+		serviceOpenConnsGauge:          datadogClient.NewGauge(ddOpenConnsName),
+		serviceServerUpGauge:           datadogClient.NewGauge(ddServerUpName),
 	}
 
 	return registry

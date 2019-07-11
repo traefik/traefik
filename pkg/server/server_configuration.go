@@ -13,6 +13,7 @@ import (
 	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
+	"github.com/containous/traefik/pkg/middlewares/metrics"
 	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
 	"github.com/containous/traefik/pkg/middlewares/tracing"
 	"github.com/containous/traefik/pkg/responsemodifiers"
@@ -89,7 +90,7 @@ func (s *Server) createTCPRouters(ctx context.Context, configuration *runtime.Co
 
 // createHTTPHandlers returns, for the given configuration and entryPoints, the HTTP handlers for non-TLS connections, and for the TLS ones. the given configuration must not be nil. its fields will get mutated.
 func (s *Server) createHTTPHandlers(ctx context.Context, configuration *runtime.Configuration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
-	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper)
+	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper, s.metricsRegistry)
 	middlewaresBuilder := middleware.NewBuilder(configuration.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(configuration.Middlewares)
 	routerManager := router.NewManager(configuration, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -126,6 +127,10 @@ func (s *Server) createHTTPHandlers(ctx context.Context, configuration *runtime.
 
 		if s.tracer != nil {
 			chain = chain.Append(tracing.WrapEntryPointHandler(ctx, s.tracer, entryPointName))
+		}
+
+		if s.metricsRegistry.IsEnabled() {
+			chain = chain.Append(metrics.WrapEntryPointHandler(ctx, s.metricsRegistry, entryPointName))
 		}
 
 		chain = chain.Append(requestdecorator.WrapHandler(s.requestDecorator))

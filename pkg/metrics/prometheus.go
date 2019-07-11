@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"net/http"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -34,43 +35,48 @@ const (
 	entrypointReqDurationName = metricEntryPointPrefix + "request_duration_seconds"
 	entrypointOpenConnsName   = metricEntryPointPrefix + "open_connections"
 
-	// backend level.
+	// service level.
 
-	// MetricBackendPrefix prefix of all backend metric names
-	MetricBackendPrefix     = MetricNamePrefix + "backend_"
-	backendReqsTotalName    = MetricBackendPrefix + "requests_total"
-	backendReqDurationName  = MetricBackendPrefix + "request_duration_seconds"
-	backendOpenConnsName    = MetricBackendPrefix + "open_connections"
-	backendRetriesTotalName = MetricBackendPrefix + "retries_total"
-	backendServerUpName     = MetricBackendPrefix + "server_up"
+	// MetricServicePrefix prefix of all service metric names
+	MetricServicePrefix     = MetricNamePrefix + "service_"
+	serviceReqsTotalName    = MetricServicePrefix + "requests_total"
+	serviceReqDurationName  = MetricServicePrefix + "request_duration_seconds"
+	serviceOpenConnsName    = MetricServicePrefix + "open_connections"
+	serviceRetriesTotalName = MetricServicePrefix + "retries_total"
+	serviceServerUpName     = MetricServicePrefix + "server_up"
 )
 
 // promState holds all metric state internally and acts as the only Collector we register for Prometheus.
 //
 // This enables control to remove metrics that belong to outdated configuration.
 // As an example why this is required, consider Traefik learns about a new service.
-// It populates the 'traefik_server_backend_up' metric for it with a value of 1 (alive).
-// When the backend is undeployed now the metric is still there in the client library
+// It populates the 'traefik_server_service_up' metric for it with a value of 1 (alive).
+// When the service is undeployed now the metric is still there in the client library
 // and will be returned on the metrics endpoint until Traefik would be restarted.
 //
 // To solve this problem promState keeps track of Traefik's dynamic configuration.
-// Metrics that "belong" to a dynamic configuration part like backends or entrypoints
+// Metrics that "belong" to a dynamic configuration part like services or entrypoints
 // are removed after they were scraped at least once when the corresponding object
 // doesn't exist anymore.
 var promState = newPrometheusState()
+
+var promRegistry = stdprometheus.NewRegistry()
 
 // PrometheusHandler exposes Prometheus routes.
 type PrometheusHandler struct{}
 
 // Append adds Prometheus routes on a router.
 func (h PrometheusHandler) Append(router *mux.Router) {
-	router.Methods(http.MethodGet).Path("/metrics").Handler(promhttp.Handler())
+	router.Methods(http.MethodGet).Path("/metrics").Handler(promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{}))
 }
 
 // RegisterPrometheus registers all Prometheus metrics.
 // It must be called only once and failing to register the metrics will lead to a panic.
 func RegisterPrometheus(ctx context.Context, config *types.Prometheus) Registry {
 	standardRegistry := initStandardRegistry(config)
+
+	promRegistry.MustRegister(stdprometheus.NewProcessCollector(os.Getpid(), ""))
+	promRegistry.MustRegister(stdprometheus.NewGoCollector())
 
 	if !registerPromState(ctx) {
 		return nil
@@ -120,27 +126,27 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		Help: "How many open connections exist on an entrypoint, partitioned by method and protocol.",
 	}, []string{"method", "protocol", "entrypoint"})
 
-	backendReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
-		Name: backendReqsTotalName,
-		Help: "How many HTTP requests processed on a backend, partitioned by status code, protocol, and method.",
-	}, []string{"code", "method", "protocol", "backend"})
-	backendReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
-		Name:    backendReqDurationName,
-		Help:    "How long it took to process the request on a backend, partitioned by status code, protocol, and method.",
+	serviceReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+		Name: serviceReqsTotalName,
+		Help: "How many HTTP requests processed on a service, partitioned by status code, protocol, and method.",
+	}, []string{"code", "method", "protocol", "service"})
+	serviceReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
+		Name:    serviceReqDurationName,
+		Help:    "How long it took to process the request on a service, partitioned by status code, protocol, and method.",
 		Buckets: buckets,
-	}, []string{"code", "method", "protocol", "backend"})
-	backendOpenConns := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
-		Name: backendOpenConnsName,
-		Help: "How many open connections exist on a backend, partitioned by method and protocol.",
-	}, []string{"method", "protocol", "backend"})
-	backendRetries := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
-		Name: backendRetriesTotalName,
-		Help: "How many request retries happened on a backend.",
-	}, []string{"backend"})
-	backendServerUp := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
-		Name: backendServerUpName,
-		Help: "Backend server is up, described by gauge value of 0 or 1.",
-	}, []string{"backend", "url"})
+	}, []string{"code", "method", "protocol", "service"})
+	serviceOpenConns := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
+		Name: serviceOpenConnsName,
+		Help: "How many open connections exist on a service, partitioned by method and protocol.",
+	}, []string{"method", "protocol", "service"})
+	serviceRetries := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+		Name: serviceRetriesTotalName,
+		Help: "How many request retries happened on a service.",
+	}, []string{"service"})
+	serviceServerUp := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
+		Name: serviceServerUpName,
+		Help: "service server is up, described by gauge value of 0 or 1.",
+	}, []string{"service", "url"})
 
 	promState.describers = []func(chan<- *stdprometheus.Desc){
 		configReloads.cv.Describe,
@@ -150,11 +156,11 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		entrypointReqs.cv.Describe,
 		entrypointReqDurations.hv.Describe,
 		entrypointOpenConns.gv.Describe,
-		backendReqs.cv.Describe,
-		backendReqDurations.hv.Describe,
-		backendOpenConns.gv.Describe,
-		backendRetries.cv.Describe,
-		backendServerUp.gv.Describe,
+		serviceReqs.cv.Describe,
+		serviceReqDurations.hv.Describe,
+		serviceOpenConns.gv.Describe,
+		serviceRetries.cv.Describe,
+		serviceServerUp.gv.Describe,
 	}
 
 	return &standardRegistry{
@@ -166,16 +172,16 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		entrypointReqsCounter:          entrypointReqs,
 		entrypointReqDurationHistogram: entrypointReqDurations,
 		entrypointOpenConnsGauge:       entrypointOpenConns,
-		backendReqsCounter:             backendReqs,
-		backendReqDurationHistogram:    backendReqDurations,
-		backendOpenConnsGauge:          backendOpenConns,
-		backendRetriesCounter:          backendRetries,
-		backendServerUpGauge:           backendServerUp,
+		serviceReqsCounter:             serviceReqs,
+		serviceReqDurationHistogram:    serviceReqDurations,
+		serviceOpenConnsGauge:          serviceOpenConns,
+		serviceRetriesCounter:          serviceRetries,
+		serviceServerUpGauge:           serviceServerUp,
 	}
 }
 
 func registerPromState(ctx context.Context) bool {
-	if err := stdprometheus.Register(promState); err != nil {
+	if err := promRegistry.Register(promState); err != nil {
 		logger := log.FromContext(ctx)
 		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
 			logger.Errorf("Unable to register Traefik to Prometheus: %v", err)
@@ -192,21 +198,21 @@ func registerPromState(ctx context.Context) bool {
 func OnConfigurationUpdate(configurations dynamic.Configurations) {
 	dynamicConfig := newDynamicConfig()
 
-	// FIXME metrics
-	// for _, config := range configurations {
-	// 	for _, frontend := range config.Frontends {
-	// 		for _, entrypointName := range frontend.EntryPoints {
-	// 			dynamicConfig.entrypoints[entrypointName] = true
-	// 		}
-	// 	}
-	//
-	// 	for backendName, backend := range config.Backends {
-	// 		dynamicConfig.backends[backendName] = make(map[string]bool)
-	// 		for _, server := range backend.Servers {
-	// 			dynamicConfig.backends[backendName][server.URL] = true
-	// 		}
-	// 	}
-	// }
+	for _, config := range configurations {
+		for name, frontend := range config.HTTP.Routers {
+			dynamicConfig.routers[name] = true
+			for _, entrypointName := range frontend.EntryPoints {
+				dynamicConfig.entrypoints[entrypointName] = true
+			}
+		}
+
+		for serviceName, service := range config.HTTP.Services {
+			dynamicConfig.services[serviceName] = make(map[string]bool)
+			for _, server := range service.LoadBalancer.Servers {
+				dynamicConfig.services[serviceName][server.URL] = true
+			}
+		}
+	}
 
 	promState.SetDynamicConfig(dynamicConfig)
 }
@@ -283,11 +289,11 @@ func (ps *prometheusState) isOutdated(collector *collector) bool {
 		return true
 	}
 
-	if backendName, ok := labels["backend"]; ok {
-		if !ps.dynamicConfig.hasBackend(backendName) {
+	if serviceName, ok := labels["service"]; ok {
+		if !ps.dynamicConfig.hasService(serviceName) {
 			return true
 		}
-		if url, ok := labels["url"]; ok && !ps.dynamicConfig.hasServerURL(backendName, url) {
+		if url, ok := labels["url"]; ok && !ps.dynamicConfig.hasServerURL(serviceName, url) {
 			return true
 		}
 	}
@@ -298,17 +304,19 @@ func (ps *prometheusState) isOutdated(collector *collector) bool {
 func newDynamicConfig() *dynamicConfig {
 	return &dynamicConfig{
 		entrypoints: make(map[string]bool),
-		backends:    make(map[string]map[string]bool),
+		routers:     make(map[string]bool),
+		services:    make(map[string]map[string]bool),
 	}
 }
 
-// dynamicConfig holds the current configuration for entrypoints, backends,
+// dynamicConfig holds the current configuration for entrypoints, services,
 // and server URLs in an optimized way to check for existence. This provides
 // a performant way to check whether the collected metrics belong to the
 // current configuration or to an outdated one.
 type dynamicConfig struct {
 	entrypoints map[string]bool
-	backends    map[string]map[string]bool
+	routers     map[string]bool
+	services    map[string]map[string]bool
 }
 
 func (d *dynamicConfig) hasEntrypoint(entrypointName string) bool {
@@ -316,14 +324,19 @@ func (d *dynamicConfig) hasEntrypoint(entrypointName string) bool {
 	return ok
 }
 
-func (d *dynamicConfig) hasBackend(backendName string) bool {
-	_, ok := d.backends[backendName]
+func (d *dynamicConfig) hasRouter(routerName string) bool {
+	_, ok := d.routers[routerName]
 	return ok
 }
 
-func (d *dynamicConfig) hasServerURL(backendName, serverURL string) bool {
-	if backend, hasBackend := d.backends[backendName]; hasBackend {
-		_, ok := backend[serverURL]
+func (d *dynamicConfig) hasService(serviceName string) bool {
+	_, ok := d.services[serviceName]
+	return ok
+}
+
+func (d *dynamicConfig) hasServerURL(serviceName, serverURL string) bool {
+	if service, hasService := d.services[serviceName]; hasService {
+		_, ok := service[serverURL]
 		return ok
 	}
 	return false

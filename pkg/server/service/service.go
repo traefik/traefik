@@ -13,8 +13,10 @@ import (
 	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/healthcheck"
 	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/pkg/metrics"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/pkg/middlewares/emptybackendhandler"
+	metricsMiddle "github.com/containous/traefik/pkg/middlewares/metrics"
 	"github.com/containous/traefik/pkg/middlewares/pipelining"
 	"github.com/containous/traefik/pkg/server/cookie"
 	"github.com/containous/traefik/pkg/server/internal"
@@ -27,8 +29,9 @@ const (
 )
 
 // NewManager creates a new Manager
-func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry) *Manager {
 	return &Manager{
+		metricsRegistry:     metricsRegistry,
 		bufferPool:          newBufferPool(),
 		defaultRoundTripper: defaultRoundTripper,
 		balancers:           make(map[string][]healthcheck.BalancerHandler),
@@ -38,6 +41,7 @@ func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper htt
 
 // Manager The service manager
 type Manager struct {
+	metricsRegistry     metrics.Registry
 	bufferPool          httputil.BufferPool
 	defaultRoundTripper http.RoundTripper
 	balancers           map[string][]healthcheck.BalancerHandler
@@ -87,8 +91,12 @@ func (m *Manager) getLoadBalancerServiceHandler(
 	alHandler := func(next http.Handler) (http.Handler, error) {
 		return accesslog.NewFieldHandler(next, accesslog.ServiceName, serviceName, accesslog.AddServiceFields), nil
 	}
+	chain := alice.New()
+	if m.metricsRegistry != nil && m.metricsRegistry.IsEnabled() {
+		chain = chain.Append(metricsMiddle.WrapServiceHandler(ctx, m.metricsRegistry, serviceName))
+	}
 
-	handler, err := alice.New().Append(alHandler).Then(pipelining.New(ctx, fwd, "pipelining"))
+	handler, err := chain.Append(alHandler).Then(pipelining.New(ctx, fwd, "pipelining"))
 	if err != nil {
 		return nil, err
 	}

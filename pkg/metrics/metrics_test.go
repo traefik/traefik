@@ -11,14 +11,14 @@ func TestNewMultiRegistry(t *testing.T) {
 	registries := []Registry{newCollectingRetryMetrics(), newCollectingRetryMetrics()}
 	registry := NewMultiRegistry(registries)
 
-	registry.BackendReqsCounter().With("key", "requests").Add(1)
-	registry.BackendReqDurationHistogram().With("key", "durations").Observe(2)
-	registry.BackendRetriesCounter().With("key", "retries").Add(3)
+	registry.ServiceReqsCounter().With("key", "requests").Add(1)
+	registry.ServiceReqDurationHistogram().With("key", "durations").Observe(2)
+	registry.ServiceRetriesCounter().With("key", "retries").Add(3)
 
 	for _, collectingRegistry := range registries {
-		cReqsCounter := collectingRegistry.BackendReqsCounter().(*counterMock)
-		cReqDurationHistogram := collectingRegistry.BackendReqDurationHistogram().(*histogramMock)
-		cRetriesCounter := collectingRegistry.BackendRetriesCounter().(*counterMock)
+		cReqsCounter := collectingRegistry.ServiceReqsCounter().(*counterMock)
+		cReqDurationHistogram := collectingRegistry.ServiceReqDurationHistogram().(*histogramMock)
+		cRetriesCounter := collectingRegistry.ServiceRetriesCounter().(*counterMock)
 
 		wantCounterValue := float64(1)
 		if cReqsCounter.counterValue != wantCounterValue {
@@ -41,9 +41,9 @@ func TestNewMultiRegistry(t *testing.T) {
 
 func newCollectingRetryMetrics() Registry {
 	return &standardRegistry{
-		backendReqsCounter:          &counterMock{},
-		backendReqDurationHistogram: &histogramMock{},
-		backendRetriesCounter:       &counterMock{},
+		serviceReqsCounter:          &counterMock{},
+		serviceReqDurationHistogram: &histogramMock{},
+		serviceRetriesCounter:       &counterMock{},
 	}
 }
 

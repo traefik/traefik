@@ -38,16 +38,16 @@ func TestDatadog(t *testing.T) {
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
-		datadogRegistry.BackendReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-		datadogRegistry.BackendReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-		datadogRegistry.BackendReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
-		datadogRegistry.BackendRetriesCounter().With("service", "test").Add(1)
-		datadogRegistry.BackendRetriesCounter().With("service", "test").Add(1)
+		datadogRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		datadogRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		datadogRegistry.ServiceReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
+		datadogRegistry.ServiceRetriesCounter().With("service", "test").Add(1)
+		datadogRegistry.ServiceRetriesCounter().With("service", "test").Add(1)
 		datadogRegistry.ConfigReloadsCounter().Add(1)
 		datadogRegistry.ConfigReloadsFailureCounter().Add(1)
 		datadogRegistry.EntrypointReqsCounter().With("entrypoint", "test").Add(1)
 		datadogRegistry.EntrypointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 		datadogRegistry.EntrypointOpenConnsGauge().With("entrypoint", "test").Set(1)
-		datadogRegistry.BackendServerUpGauge().With("backend", "test", "url", "http://127.0.0.1", "one", "two").Set(1)
+		datadogRegistry.ServiceServerUpGauge().With("backend", "test", "url", "http://127.0.0.1", "one", "two").Set(1)
 	})
 }

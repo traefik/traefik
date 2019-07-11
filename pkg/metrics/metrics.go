@@ -21,12 +21,12 @@ type Registry interface {
 	EntrypointReqDurationHistogram() metrics.Histogram
 	EntrypointOpenConnsGauge() metrics.Gauge
 
-	// backend metrics
-	BackendReqsCounter() metrics.Counter
-	BackendReqDurationHistogram() metrics.Histogram
-	BackendOpenConnsGauge() metrics.Gauge
-	BackendRetriesCounter() metrics.Counter
-	BackendServerUpGauge() metrics.Gauge
+	// service metrics
+	ServiceReqsCounter() metrics.Counter
+	ServiceReqDurationHistogram() metrics.Histogram
+	ServiceOpenConnsGauge() metrics.Gauge
+	ServiceRetriesCounter() metrics.Counter
+	ServiceServerUpGauge() metrics.Gauge
 }
 
 // NewVoidRegistry is a noop implementation of metrics.Registry.
@@ -46,11 +46,11 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var entrypointReqsCounter []metrics.Counter
 	var entrypointReqDurationHistogram []metrics.Histogram
 	var entrypointOpenConnsGauge []metrics.Gauge
-	var backendReqsCounter []metrics.Counter
-	var backendReqDurationHistogram []metrics.Histogram
-	var backendOpenConnsGauge []metrics.Gauge
-	var backendRetriesCounter []metrics.Counter
-	var backendServerUpGauge []metrics.Gauge
+	var serviceReqsCounter []metrics.Counter
+	var serviceReqDurationHistogram []metrics.Histogram
+	var serviceOpenConnsGauge []metrics.Gauge
+	var serviceRetriesCounter []metrics.Counter
+	var serviceServerUpGauge []metrics.Gauge
 
 	for _, r := range registries {
 		if r.ConfigReloadsCounter() != nil {
@@ -74,20 +74,20 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.EntrypointOpenConnsGauge() != nil {
 			entrypointOpenConnsGauge = append(entrypointOpenConnsGauge, r.EntrypointOpenConnsGauge())
 		}
-		if r.BackendReqsCounter() != nil {
-			backendReqsCounter = append(backendReqsCounter, r.BackendReqsCounter())
+		if r.ServiceReqsCounter() != nil {
+			serviceReqsCounter = append(serviceReqsCounter, r.ServiceReqsCounter())
 		}
-		if r.BackendReqDurationHistogram() != nil {
-			backendReqDurationHistogram = append(backendReqDurationHistogram, r.BackendReqDurationHistogram())
+		if r.ServiceReqDurationHistogram() != nil {
+			serviceReqDurationHistogram = append(serviceReqDurationHistogram, r.ServiceReqDurationHistogram())
 		}
-		if r.BackendOpenConnsGauge() != nil {
-			backendOpenConnsGauge = append(backendOpenConnsGauge, r.BackendOpenConnsGauge())
+		if r.ServiceOpenConnsGauge() != nil {
+			serviceOpenConnsGauge = append(serviceOpenConnsGauge, r.ServiceOpenConnsGauge())
 		}
-		if r.BackendRetriesCounter() != nil {
-			backendRetriesCounter = append(backendRetriesCounter, r.BackendRetriesCounter())
+		if r.ServiceRetriesCounter() != nil {
+			serviceRetriesCounter = append(serviceRetriesCounter, r.ServiceRetriesCounter())
 		}
-		if r.BackendServerUpGauge() != nil {
-			backendServerUpGauge = append(backendServerUpGauge, r.BackendServerUpGauge())
+		if r.ServiceServerUpGauge() != nil {
+			serviceServerUpGauge = append(serviceServerUpGauge, r.ServiceServerUpGauge())
 		}
 	}
 
@@ -100,11 +100,11 @@ func NewMultiRegistry(registries []Registry) Registry {
 		entrypointReqsCounter:          multi.NewCounter(entrypointReqsCounter...),
 		entrypointReqDurationHistogram: multi.NewHistogram(entrypointReqDurationHistogram...),
 		entrypointOpenConnsGauge:       multi.NewGauge(entrypointOpenConnsGauge...),
-		backendReqsCounter:             multi.NewCounter(backendReqsCounter...),
-		backendReqDurationHistogram:    multi.NewHistogram(backendReqDurationHistogram...),
-		backendOpenConnsGauge:          multi.NewGauge(backendOpenConnsGauge...),
-		backendRetriesCounter:          multi.NewCounter(backendRetriesCounter...),
-		backendServerUpGauge:           multi.NewGauge(backendServerUpGauge...),
+		serviceReqsCounter:             multi.NewCounter(serviceReqsCounter...),
+		serviceReqDurationHistogram:    multi.NewHistogram(serviceReqDurationHistogram...),
+		serviceOpenConnsGauge:          multi.NewGauge(serviceOpenConnsGauge...),
+		serviceRetriesCounter:          multi.NewCounter(serviceRetriesCounter...),
+		serviceServerUpGauge:           multi.NewGauge(serviceServerUpGauge...),
 	}
 }
 
@@ -117,11 +117,11 @@ type standardRegistry struct {
 	entrypointReqsCounter          metrics.Counter
 	entrypointReqDurationHistogram metrics.Histogram
 	entrypointOpenConnsGauge       metrics.Gauge
-	backendReqsCounter             metrics.Counter
-	backendReqDurationHistogram    metrics.Histogram
-	backendOpenConnsGauge          metrics.Gauge
-	backendRetriesCounter          metrics.Counter
-	backendServerUpGauge           metrics.Gauge
+	serviceReqsCounter             metrics.Counter
+	serviceReqDurationHistogram    metrics.Histogram
+	serviceOpenConnsGauge          metrics.Gauge
+	serviceRetriesCounter          metrics.Counter
+	serviceServerUpGauge           metrics.Gauge
 }
 
 func (r *standardRegistry) IsEnabled() bool {
@@ -156,22 +156,22 @@ func (r *standardRegistry) EntrypointOpenConnsGauge() metrics.Gauge {
 	return r.entrypointOpenConnsGauge
 }
 
-func (r *standardRegistry) BackendReqsCounter() metrics.Counter {
-	return r.backendReqsCounter
+func (r *standardRegistry) ServiceReqsCounter() metrics.Counter {
+	return r.serviceReqsCounter
 }
 
-func (r *standardRegistry) BackendReqDurationHistogram() metrics.Histogram {
-	return r.backendReqDurationHistogram
+func (r *standardRegistry) ServiceReqDurationHistogram() metrics.Histogram {
+	return r.serviceReqDurationHistogram
 }
 
-func (r *standardRegistry) BackendOpenConnsGauge() metrics.Gauge {
-	return r.backendOpenConnsGauge
+func (r *standardRegistry) ServiceOpenConnsGauge() metrics.Gauge {
+	return r.serviceOpenConnsGauge
 }
 
-func (r *standardRegistry) BackendRetriesCounter() metrics.Counter {
-	return r.backendRetriesCounter
+func (r *standardRegistry) ServiceRetriesCounter() metrics.Counter {
+	return r.serviceRetriesCounter
 }
 
-func (r *standardRegistry) BackendServerUpGauge() metrics.Gauge {
-	return r.backendServerUpGauge
+func (r *standardRegistry) ServiceServerUpGauge() metrics.Gauge {
+	return r.serviceServerUpGauge
 }

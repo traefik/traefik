@@ -128,24 +128,24 @@ func TestPrometheus(t *testing.T) {
 		Set(1)
 
 	prometheusRegistry.
-		BackendReqsCounter().
-		With("backend", "backend1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		ServiceReqsCounter().
+		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
-		BackendReqDurationHistogram().
-		With("backend", "backend1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		ServiceReqDurationHistogram().
+		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Observe(10000)
 	prometheusRegistry.
-		BackendOpenConnsGauge().
-		With("backend", "backend1", "method", http.MethodGet, "protocol", "http").
+		ServiceOpenConnsGauge().
+		With("service", "service1", "method", http.MethodGet, "protocol", "http").
 		Set(1)
 	prometheusRegistry.
-		BackendRetriesCounter().
-		With("backend", "backend1").
+		ServiceRetriesCounter().
+		With("service", "service1").
 		Add(1)
 	prometheusRegistry.
-		BackendServerUpGauge().
-		With("backend", "backend1", "url", "http://127.0.0.10:80").
+		ServiceServerUpGauge().
+		With("service", "service1", "url", "http://127.0.0.10:80").
 		Set(1)
 
 	delayForTrackingCompletion()
@@ -203,48 +203,48 @@ func TestPrometheus(t *testing.T) {
 			assert: buildGaugeAssert(t, entrypointOpenConnsName, 1),
 		},
 		{
-			name: backendReqsTotalName,
+			name: serviceReqsTotalName,
 			labels: map[string]string{
 				"code":     "200",
 				"method":   http.MethodGet,
 				"protocol": "http",
-				"backend":  "backend1",
+				"service":  "service1",
 			},
-			assert: buildCounterAssert(t, backendReqsTotalName, 1),
+			assert: buildCounterAssert(t, serviceReqsTotalName, 1),
 		},
 		{
-			name: backendReqDurationName,
+			name: serviceReqDurationName,
 			labels: map[string]string{
 				"code":     "200",
 				"method":   http.MethodGet,
 				"protocol": "http",
-				"backend":  "backend1",
+				"service":  "service1",
 			},
-			assert: buildHistogramAssert(t, backendReqDurationName, 1),
+			assert: buildHistogramAssert(t, serviceReqDurationName, 1),
 		},
 		{
-			name: backendOpenConnsName,
+			name: serviceOpenConnsName,
 			labels: map[string]string{
 				"method":   http.MethodGet,
 				"protocol": "http",
-				"backend":  "backend1",
+				"service":  "service1",
 			},
-			assert: buildGaugeAssert(t, backendOpenConnsName, 1),
+			assert: buildGaugeAssert(t, serviceOpenConnsName, 1),
 		},
 		{
-			name: backendRetriesTotalName,
+			name: serviceRetriesTotalName,
 			labels: map[string]string{
-				"backend": "backend1",
+				"service": "service1",
 			},
-			assert: buildGreaterThanCounterAssert(t, backendRetriesTotalName, 1),
+			assert: buildGreaterThanCounterAssert(t, serviceRetriesTotalName, 1),
 		},
 		{
-			name: backendServerUpName,
+			name: serviceServerUpName,
 			labels: map[string]string{
-				"backend": "backend1",
+				"service": "service1",
 				"url":     "http://127.0.0.10:80",
 			},
-			assert: buildGaugeAssert(t, backendServerUpName, 1),
+			assert: buildGaugeAssert(t, serviceServerUpName, 1),
 		},
 	}
 
@@ -299,18 +299,18 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 		With("entrypoint", "entrypoint2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
-		BackendReqsCounter().
-		With("backend", "backend2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		ServiceReqsCounter().
+		With("service", "service2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
-		BackendServerUpGauge().
-		With("backend", "backend1", "url", "http://localhost:9999").
+		ServiceServerUpGauge().
+		With("service", "service1", "url", "http://localhost:9999").
 		Set(1)
 
 	delayForTrackingCompletion()
 
-	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
-	assertMetricsAbsent(t, mustScrape(), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
+	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName, serviceReqsTotalName, serviceServerUpName)
+	assertMetricsAbsent(t, mustScrape(), entrypointReqsTotalName, serviceReqsTotalName, serviceServerUpName)
 
 	// To verify that metrics belonging to active configurations are not removed
 	// here the counter examples.
@@ -333,34 +333,34 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 	defer prometheus.Unregister(promState)
 
 	labelNamesValues := []string{
-		"backend", "backend",
+		"service", "service",
 		"code", strconv.Itoa(http.StatusOK),
 		"method", http.MethodGet,
 		"protocol", "http",
 	}
 	prometheusRegistry.
-		BackendReqsCounter().
+		ServiceReqsCounter().
 		With(labelNamesValues...).
 		Add(3)
 
 	delayForTrackingCompletion()
 
 	metricsFamilies := mustScrape()
-	assertCounterValue(t, 3, findMetricFamily(backendReqsTotalName, metricsFamilies), labelNamesValues...)
+	assertCounterValue(t, 3, findMetricFamily(serviceReqsTotalName, metricsFamilies), labelNamesValues...)
 
 	// There is no dynamic configuration and so this metric will be deleted
 	// after the first scrape.
-	assertMetricsAbsent(t, mustScrape(), backendReqsTotalName)
+	assertMetricsAbsent(t, mustScrape(), serviceReqsTotalName)
 
 	prometheusRegistry.
-		BackendReqsCounter().
+		ServiceReqsCounter().
 		With(labelNamesValues...).
 		Add(1)
 
 	delayForTrackingCompletion()
 
 	metricsFamilies = mustScrape()
-	assertCounterValue(t, 1, findMetricFamily(backendReqsTotalName, metricsFamilies), labelNamesValues...)
+	assertCounterValue(t, 1, findMetricFamily(serviceReqsTotalName, metricsFamilies), labelNamesValues...)
 }
 
 // Tracking and gathering the metrics happens concurrently.

@@ -19,9 +19,9 @@ var statsdClient = statsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...inte
 var statsdTicker *time.Ticker
 
 const (
-	statsdMetricsBackendReqsName      = "backend.request.total"
-	statsdMetricsBackendLatencyName   = "backend.request.duration"
-	statsdRetriesTotalName            = "backend.retries.total"
+	statsdMetricsBackendReqsName      = "service.request.total"
+	statsdMetricsBackendLatencyName   = "service.request.duration"
+	statsdRetriesTotalName            = "service.retries.total"
 	statsdConfigReloadsName           = "config.reload.total"
 	statsdConfigReloadsFailureName    = statsdConfigReloadsName + ".failure"
 	statsdLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
@@ -29,8 +29,8 @@ const (
 	statsdEntrypointReqsName          = "entrypoint.request.total"
 	statsdEntrypointReqDurationName   = "entrypoint.request.duration"
 	statsdEntrypointOpenConnsName     = "entrypoint.connections.open"
-	statsdOpenConnsName               = "backend.connections.open"
-	statsdServerUpName                = "backend.server.up"
+	statsdOpenConnsName               = "service.connections.open"
+	statsdServerUpName                = "service.server.up"
 )
 
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
@@ -48,11 +48,11 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		entrypointReqsCounter:          statsdClient.NewCounter(statsdEntrypointReqsName, 1.0),
 		entrypointReqDurationHistogram: statsdClient.NewTiming(statsdEntrypointReqDurationName, 1.0),
 		entrypointOpenConnsGauge:       statsdClient.NewGauge(statsdEntrypointOpenConnsName),
-		backendReqsCounter:             statsdClient.NewCounter(statsdMetricsBackendReqsName, 1.0),
-		backendReqDurationHistogram:    statsdClient.NewTiming(statsdMetricsBackendLatencyName, 1.0),
-		backendRetriesCounter:          statsdClient.NewCounter(statsdRetriesTotalName, 1.0),
-		backendOpenConnsGauge:          statsdClient.NewGauge(statsdOpenConnsName),
-		backendServerUpGauge:           statsdClient.NewGauge(statsdServerUpName),
+		serviceReqsCounter:             statsdClient.NewCounter(statsdMetricsBackendReqsName, 1.0),
+		serviceReqDurationHistogram:    statsdClient.NewTiming(statsdMetricsBackendLatencyName, 1.0),
+		serviceRetriesCounter:          statsdClient.NewCounter(statsdRetriesTotalName, 1.0),
+		serviceOpenConnsGauge:          statsdClient.NewGauge(statsdOpenConnsName),
+		serviceServerUpGauge:           statsdClient.NewGauge(statsdServerUpName),
 	}
 }
 
