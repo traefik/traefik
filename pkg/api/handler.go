@@ -38,6 +38,11 @@ type RunTimeRepresentation struct {
 	TCPServices map[string]*dynamic.TCPServiceInfo    `json:"tcpServices,omitempty"`
 }
 
+type entrypPointReprentation struct {
+	*static.EntryPoint
+	Name string `json:"name,omitempty"`
+}
+
 type routerRepresentation struct {
 	*dynamic.RouterInfo
 	Name     string `json:"name,omitempty"`
@@ -81,6 +86,7 @@ type Handler struct {
 	debug     bool
 	// runtimeConfiguration is the data set used to create all the data representations exposed by the API.
 	runtimeConfiguration *dynamic.RuntimeConfiguration
+	staticConfig         static.Configuration
 	statistics           *types.Statistics
 	// stats                *thoasstats.Stats // FIXME stats
 	// StatsRecorder         *middlewares.StatsRecorder // FIXME stats
@@ -100,6 +106,7 @@ func New(staticConfig static.Configuration, runtimeConfig *dynamic.RuntimeConfig
 		statistics:           staticConfig.API.Statistics,
 		dashboardAssets:      staticConfig.API.DashboardAssets,
 		runtimeConfiguration: rConfig,
+		staticConfig:         staticConfig,
 		debug:                staticConfig.API.Debug,
 	}
 }
@@ -111,6 +118,9 @@ func (h Handler) Append(router *mux.Router) {
 	}
 
 	router.Methods(http.MethodGet).Path("/api/rawdata").HandlerFunc(h.getRuntimeConfiguration)
+
+	router.Methods(http.MethodGet).Path("/api/entrypoints").HandlerFunc(h.getEntryPoints)
+	router.Methods(http.MethodGet).Path("/api/entrypoints/{entryPointID}").HandlerFunc(h.getEntryPoint)
 
 	router.Methods(http.MethodGet).Path("/api/http/routers").HandlerFunc(h.getRouters)
 	router.Methods(http.MethodGet).Path("/api/http/routers/{routerID}").HandlerFunc(h.getRouter)
@@ -132,6 +142,59 @@ func (h Handler) Append(router *mux.Router) {
 
 	if h.dashboard {
 		DashboardHandler{Assets: h.dashboardAssets}.Append(router)
+	}
+}
+
+func (h Handler) getEntryPoints(rw http.ResponseWriter, request *http.Request) {
+	results := make([]entrypPointReprentation, 0, len(h.staticConfig.EntryPoints))
+
+	for name, ep := range h.staticConfig.EntryPoints {
+		results = append(results, entrypPointReprentation{
+			EntryPoint: ep,
+			Name:       name,
+		})
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Name < results[j].Name
+	})
+
+	pageInfo, err := pagination(request, len(results))
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
+
+	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
+	if err != nil {
+		log.FromContext(request.Context()).Error(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (h Handler) getEntryPoint(rw http.ResponseWriter, request *http.Request) {
+	entryPointID := mux.Vars(request)["entryPointID"]
+
+	ep, ok := h.staticConfig.EntryPoints[entryPointID]
+	if !ok {
+		http.NotFound(rw, request)
+		return
+	}
+
+	result := entrypPointReprentation{
+		EntryPoint: ep,
+		Name:       entryPointID,
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(rw).Encode(result)
+	if err != nil {
+		log.FromContext(request.Context()).Error(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
