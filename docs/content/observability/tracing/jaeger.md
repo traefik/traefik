@@ -13,7 +13,8 @@ To enable the Jaeger:
 ```
 
 !!! warning
-    Traefik is only able to send data over the compact thrift protocol to the [Jaeger agent](https://www.jaegertracing.io/docs/deployment/#agent).
+    Traefik is only able to send data over the compact thrift protocol to the [Jaeger agent](https://www.jaegertracing.io/docs/deployment/#agent)
+    or a [Jaeger collector](https://www.jaegertracing.io/docs/deployment/#collectors).
 
 #### `samplingServerURL`
 
@@ -143,4 +144,55 @@ This must be in lower-case to avoid mismatches when decoding incoming headers.
 ```bash tab="CLI"
 --tracing
 --tracing.jaeger.traceContextHeaderName="uber-trace-id"
+```
+
+#### `collectorEndpoint`
+
+_Optional, Default=""_
+
+Collector Endpoint instructs reporter to send spans to jaeger-collector at this URL.
+
+```toml tab="File"
+[tracing]
+  [tracing.jaeger]
+    collectorEndpoint = "http://127.0.0.1:14268/"
+```
+
+```bash tab="CLI"
+--tracing
+--tracing.jaeger.collectorEndpoint="http://127.0.0.1:14268/"
+```
+
+#### `user`
+
+_Optional, Default=""_
+
+User instructs reporter to include a user for basic http authentication when sending spans to jaeger-collector.
+
+```toml tab="File"
+[tracing]
+  [tracing.jaeger]
+    user = "my-user"
+```
+
+```bash tab="CLI"
+--tracing
+--tracing.jaeger.user="my-user"
+```
+
+#### `password`
+
+_Optional, Default=""_
+
+Password instructs reporter to include a password for basic http authentication when sending spans to jaeger-collector.
+
+```toml tab="File"
+[tracing]
+  [tracing.jaeger]
+    password = "my-password"
+```
+
+```bash tab="CLI"
+--tracing
+--tracing.jaeger.password="my-password"
 ```

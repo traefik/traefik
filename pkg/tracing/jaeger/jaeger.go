@@ -25,6 +25,9 @@ type Config struct {
 	Gen128Bit              bool    `description:"Generate 128 bit span IDs." json:"gen128Bit,omitempty" toml:"gen128Bit,omitempty" yaml:"gen128Bit,omitempty" export:"true"`
 	Propagation            string  `description:"Which propgation format to use (jaeger/b3)." json:"propagation,omitempty" toml:"propagation,omitempty" yaml:"propagation,omitempty" export:"true"`
 	TraceContextHeaderName string  `description:"Set the header to use for the trace-id." json:"traceContextHeaderName,omitempty" toml:"traceContextHeaderName,omitempty" yaml:"traceContextHeaderName,omitempty" export:"true"`
+	CollectorEndpoint      string  `description:"Instructs reporter to send spans to jaeger-collector at this URL." json:"collectorEndpoint,omitempty" toml:"collectorEndpoint,omitempty" yaml:"collectorEndpoint,omitempty"`
+	User                   string  `description:"User for basic http authentication when sending spans to jaeger-collector." json:"user,omitempty" toml:"user,omitempty" yaml:"user,omitempty"`
+	Password               string  `description:"Password for basic http authentication when sending spans to jaeger-collector." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty"`
 }
 
 // SetDefaults sets the default values.
@@ -36,6 +39,9 @@ func (c *Config) SetDefaults() {
 	c.Propagation = "jaeger"
 	c.Gen128Bit = false
 	c.TraceContextHeaderName = jaegercli.TraceContextHeaderName
+	c.CollectorEndpoint = ""
+	c.User = ""
+	c.Password = ""
 }
 
 // Setup sets up the tracer
@@ -49,6 +55,9 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 		Reporter: &jaegercfg.ReporterConfig{
 			LogSpans:           true,
 			LocalAgentHostPort: c.LocalAgentHostPort,
+			CollectorEndpoint:  c.CollectorEndpoint,
+			User:               c.User,
+			Password:           c.Password,
 		},
 		Headers: &jaeger.HeadersConfig{
 			TraceContextHeaderName: c.TraceContextHeaderName,
