@@ -1,0 +1,36 @@
+{
+	"features": {
+		"accessLog": false,
+		"metrics": "Prometheus",
+		"tracing": "Jaeger"
+	},
+	"http": {
+		"middlewares": {
+			"errors": 0,
+			"total": 0,
+			"warnings": 0
+		},
+		"routers": {
+			"errors": 0,
+			"total": 0,
+			"warnings": 0
+		},
+		"services": {
+			"errors": 0,
+			"total": 0,
+			"warnings": 0
+		}
+	},
+	"tcp": {
+		"routers": {
+			"errors": 0,
+			"total": 0,
+			"warnings": 0
+		},
+		"services": {
+			"errors": 0,
+			"total": 0,
+			"warnings": 0
+		}
+	}
+}

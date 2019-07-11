@@ -81,6 +81,7 @@ func (h Handler) Append(router *mux.Router) {
 	}
 
 	router.Methods(http.MethodGet).Path("/api/rawdata").HandlerFunc(h.getRuntimeConfiguration)
+	router.Methods(http.MethodGet).Path("/api/overview").HandlerFunc(h.getOverview)
 
 	router.Methods(http.MethodGet).Path("/api/entrypoints").HandlerFunc(h.getEntryPoints)
 	router.Methods(http.MethodGet).Path("/api/entrypoints/{entryPointID}").HandlerFunc(h.getEntryPoint)
