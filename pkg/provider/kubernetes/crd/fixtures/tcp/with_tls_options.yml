@@ -25,16 +25,16 @@ metadata:
   namespace: default
 
 spec:
-  minversion: VersionTLS12
-  snistrict: true
-  ciphersuites:
+  minVersion: VersionTLS12
+  sniStrict: true
+  cipherSuites:
     - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     - TLS_RSA_WITH_AES_256_GCM_SHA384
-  clientauth:
-    secretnames:
+  clientAuth:
+    secretNames:
       - secretCA1
       - secretCA2
-    clientauthtype: VerifyClientCertIfGiven
+    clientAuthType: VerifyClientCertIfGiven
 
 ---
 apiVersion: v1

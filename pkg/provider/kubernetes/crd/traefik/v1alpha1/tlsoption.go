@@ -19,10 +19,10 @@ type TLSOption struct {
 
 // TLSOptionSpec configures TLS for an entry point
 type TLSOptionSpec struct {
-	MinVersion   string     `json:"minversion"`
-	CipherSuites []string   `json:"ciphersuites"`
-	ClientAuth   ClientAuth `json:"clientauth"`
-	SniStrict    bool       `json:"snistrict"`
+	MinVersion   string     `json:"minVersion,omitempty"`
+	CipherSuites []string   `json:"cipherSuites,omitempty"`
+	ClientAuth   ClientAuth `json:"clientAuth,omitempty"`
+	SniStrict    bool       `json:"sniStrict,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -31,10 +31,10 @@ type TLSOptionSpec struct {
 type ClientAuth struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
-	SecretNames []string `json:"secretnames"`
+	SecretNames []string `json:"secretNames"`
 	// ClientAuthType defines the client authentication type to apply.
 	// The available values are: "NoClientCert", "RequestClientCert", "VerifyClientCertIfGiven" and "RequireAndVerifyClientCert".
-	ClientAuthType string `json:"clientauthtype"`
+	ClientAuthType string `json:"clientAuthType"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
