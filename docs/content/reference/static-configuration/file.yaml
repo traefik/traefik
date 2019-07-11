@@ -185,6 +185,9 @@ tracing:
     gen128Bit: true
     propagation: foobar
     traceContextHeaderName: foobar
+    collectorEndpoint: foobar
+    user: foobar
+    password: foobar
   zipkin:
     httpEndpoint: foobar
     sameSpan: true

@@ -540,11 +540,17 @@ Set instana-agent's log level. ('error','warn','info','debug') (Default: ```info
 `TRAEFIK_TRACING_JAEGER`:  
 Settings for Jaeger. (Default: ```false```)
 
+`TRAEFIK_TRACING_JAEGER_COLLECTORENDPOINT`:  
+Instructs reporter to send spans to jaeger-collector at this URL.
+
 `TRAEFIK_TRACING_JAEGER_GEN128BIT`:  
 Generate 128 bit span IDs. (Default: ```false```)
 
 `TRAEFIK_TRACING_JAEGER_LOCALAGENTHOSTPORT`:  
 Set jaeger-agent's host:port that the reporter will used. (Default: ```127.0.0.1:6831```)
+
+`TRAEFIK_TRACING_JAEGER_PASSWORD`:  
+Password for basic http authentication when sending spans to jaeger-collector.
 
 `TRAEFIK_TRACING_JAEGER_PROPAGATION`:  
 Which propgation format to use (jaeger/b3). (Default: ```jaeger```)
@@ -560,6 +566,9 @@ Set the sampling type. (Default: ```const```)
 
 `TRAEFIK_TRACING_JAEGER_TRACECONTEXTHEADERNAME`:  
 Set the header to use for the trace-id. (Default: ```uber-trace-id```)
+
+`TRAEFIK_TRACING_JAEGER_USER`:  
+User for basic http authentication when sending spans to jaeger-collector.
 
 `TRAEFIK_TRACING_SERVICENAME`:  
 Set the name for this service. (Default: ```traefik```)
