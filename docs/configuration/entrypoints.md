@@ -235,8 +235,10 @@ If you need to add or remove TLS certificates while Traefik is started, Dynamic 
 ## TLS Mutual Authentication
 
 TLS Mutual Authentication can be `optional` or not.
-If it's `optional`, Traefik will authorize connection with certificates not signed by a specified Certificate Authority (CA).
-Otherwise, Traefik will only accept clients that present a certificate signed by a specified Certificate Authority (CA).
+
+* If `optional = true`, if a certificate is provided, verifies if it is signed by a specified Certificate Authority (CA). Otherwise proceeds without any certificate.
+* If `optional = false`, Traefik will only accept clients that present a certificate signed by a specified Certificate Authority (CA).
+
 `ClientCAFiles` can be configured with multiple `CA:s` in the same file or use multiple files containing one or several `CA:s`.
 The `CA:s` has to be in PEM format.
 
