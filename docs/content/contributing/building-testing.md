@@ -123,7 +123,7 @@ If you happen to update the provider's templates (located in `/templates`), you 
 The [dep](https://github.com/golang/dep) command is not required for building;
 however, it is necessary if you need to update the dependencies (i.e., add, update, or remove third-party packages).
 
-You need [dep](https://github.com/golang/dep) >= 0.5.0.
+You need [dep](https://github.com/golang/dep) >= 0.5.4.
 
 If you want to add a dependency, use `dep ensure -add` to have [dep](https://github.com/golang/dep) put it into the vendor folder and update the dep manifest/lock files (`Gopkg.toml` and `Gopkg.lock`, respectively).
 
