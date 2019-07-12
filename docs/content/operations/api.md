@@ -111,6 +111,8 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | `/api/tcp/routers/{name}`      | Returns the information of the TCP router specified by `name`.                            |
 | `/api/tcp/services`            | Lists all the TCP services information.                                                   |
 | `/api/tcp/services/{name}`     | Returns the information of the TCP service specified by `name`.                           |
+| `/api/entrypoints`             | Lists all the entry points information.                                                   |
+| `/api/entrypoints/{name}`      | Returns the information of the entry point specified by `name`.                           |
 | `/api/version`                 | Returns information about Traefik version.                                                |
 | `/debug/vars`                  | See the [expvar](https://golang.org/pkg/expvar/) Go documentation.                        |
 | `/debug/pprof/`                | See the [pprof Index](https://golang.org/pkg/net/http/pprof/#Index) Go documentation.     |

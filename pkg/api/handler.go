@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -38,37 +37,6 @@ type RunTimeRepresentation struct {
 	TCPServices map[string]*dynamic.TCPServiceInfo    `json:"tcpServices,omitempty"`
 }
 
-type routerRepresentation struct {
-	*dynamic.RouterInfo
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
-}
-
-type serviceRepresentation struct {
-	*dynamic.ServiceInfo
-	ServerStatus map[string]string `json:"serverStatus,omitempty"`
-	Name         string            `json:"name,omitempty"`
-	Provider     string            `json:"provider,omitempty"`
-}
-
-type middlewareRepresentation struct {
-	*dynamic.MiddlewareInfo
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
-}
-
-type tcpRouterRepresentation struct {
-	*dynamic.TCPRouterInfo
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
-}
-
-type tcpServiceRepresentation struct {
-	*dynamic.TCPServiceInfo
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
-}
-
 type pageInfo struct {
 	startIndex int
 	endIndex   int
@@ -81,6 +49,7 @@ type Handler struct {
 	debug     bool
 	// runtimeConfiguration is the data set used to create all the data representations exposed by the API.
 	runtimeConfiguration *dynamic.RuntimeConfiguration
+	staticConfig         static.Configuration
 	statistics           *types.Statistics
 	// stats                *thoasstats.Stats // FIXME stats
 	// StatsRecorder         *middlewares.StatsRecorder // FIXME stats
@@ -100,6 +69,7 @@ func New(staticConfig static.Configuration, runtimeConfig *dynamic.RuntimeConfig
 		statistics:           staticConfig.API.Statistics,
 		dashboardAssets:      staticConfig.API.DashboardAssets,
 		runtimeConfiguration: rConfig,
+		staticConfig:         staticConfig,
 		debug:                staticConfig.API.Debug,
 	}
 }
@@ -111,6 +81,12 @@ func (h Handler) Append(router *mux.Router) {
 	}
 
 	router.Methods(http.MethodGet).Path("/api/rawdata").HandlerFunc(h.getRuntimeConfiguration)
+
+	// Experimental endpoint
+	router.Methods(http.MethodGet).Path("/api/overview").HandlerFunc(h.getOverview)
+
+	router.Methods(http.MethodGet).Path("/api/entrypoints").HandlerFunc(h.getEntryPoints)
+	router.Methods(http.MethodGet).Path("/api/entrypoints/{entryPointID}").HandlerFunc(h.getEntryPoint)
 
 	router.Methods(http.MethodGet).Path("/api/http/routers").HandlerFunc(h.getRouters)
 	router.Methods(http.MethodGet).Path("/api/http/routers/{routerID}").HandlerFunc(h.getRouter)
@@ -132,283 +108,6 @@ func (h Handler) Append(router *mux.Router) {
 
 	if h.dashboard {
 		DashboardHandler{Assets: h.dashboardAssets}.Append(router)
-	}
-}
-
-func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
-	results := make([]routerRepresentation, 0, len(h.runtimeConfiguration.Routers))
-
-	for name, rt := range h.runtimeConfiguration.Routers {
-		results = append(results, routerRepresentation{
-			RouterInfo: rt,
-			Name:       name,
-			Provider:   getProviderName(name),
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
-
-	pageInfo, err := pagination(request, len(results))
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
-
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
-	routerID := mux.Vars(request)["routerID"]
-
-	router, ok := h.runtimeConfiguration.Routers[routerID]
-	if !ok {
-		http.NotFound(rw, request)
-		return
-	}
-
-	result := routerRepresentation{
-		RouterInfo: router,
-		Name:       routerID,
-		Provider:   getProviderName(routerID),
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
-	results := make([]serviceRepresentation, 0, len(h.runtimeConfiguration.Services))
-
-	for name, si := range h.runtimeConfiguration.Services {
-		results = append(results, serviceRepresentation{
-			ServiceInfo:  si,
-			Name:         name,
-			Provider:     getProviderName(name),
-			ServerStatus: si.GetAllStatus(),
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
-
-	pageInfo, err := pagination(request, len(results))
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
-
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
-	serviceID := mux.Vars(request)["serviceID"]
-
-	service, ok := h.runtimeConfiguration.Services[serviceID]
-	if !ok {
-		http.NotFound(rw, request)
-		return
-	}
-
-	result := serviceRepresentation{
-		ServiceInfo:  service,
-		Name:         serviceID,
-		Provider:     getProviderName(serviceID),
-		ServerStatus: service.GetAllStatus(),
-	}
-
-	rw.Header().Add("Content-Type", "application/json")
-
-	err := json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
-	results := make([]middlewareRepresentation, 0, len(h.runtimeConfiguration.Middlewares))
-
-	for name, mi := range h.runtimeConfiguration.Middlewares {
-		results = append(results, middlewareRepresentation{
-			MiddlewareInfo: mi,
-			Name:           name,
-			Provider:       getProviderName(name),
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
-
-	pageInfo, err := pagination(request, len(results))
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
-
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getMiddleware(rw http.ResponseWriter, request *http.Request) {
-	middlewareID := mux.Vars(request)["middlewareID"]
-
-	middleware, ok := h.runtimeConfiguration.Middlewares[middlewareID]
-	if !ok {
-		http.NotFound(rw, request)
-		return
-	}
-
-	result := middlewareRepresentation{
-		MiddlewareInfo: middleware,
-		Name:           middlewareID,
-		Provider:       getProviderName(middlewareID),
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
-	results := make([]tcpRouterRepresentation, 0, len(h.runtimeConfiguration.TCPRouters))
-
-	for name, rt := range h.runtimeConfiguration.TCPRouters {
-		results = append(results, tcpRouterRepresentation{
-			TCPRouterInfo: rt,
-			Name:          name,
-			Provider:      getProviderName(name),
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
-
-	pageInfo, err := pagination(request, len(results))
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
-
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
-	routerID := mux.Vars(request)["routerID"]
-
-	router, ok := h.runtimeConfiguration.TCPRouters[routerID]
-	if !ok {
-		http.NotFound(rw, request)
-		return
-	}
-
-	result := tcpRouterRepresentation{
-		TCPRouterInfo: router,
-		Name:          routerID,
-		Provider:      getProviderName(routerID),
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
-	results := make([]tcpServiceRepresentation, 0, len(h.runtimeConfiguration.TCPServices))
-
-	for name, si := range h.runtimeConfiguration.TCPServices {
-		results = append(results, tcpServiceRepresentation{
-			TCPServiceInfo: si,
-			Name:           name,
-			Provider:       getProviderName(name),
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
-
-	pageInfo, err := pagination(request, len(results))
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
-
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
-	serviceID := mux.Vars(request)["serviceID"]
-
-	service, ok := h.runtimeConfiguration.TCPServices[serviceID]
-	if !ok {
-		http.NotFound(rw, request)
-		return
-	}
-
-	result := tcpServiceRepresentation{
-		TCPServiceInfo: service,
-		Name:           serviceID,
-		Provider:       getProviderName(serviceID),
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 

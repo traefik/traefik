@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"flag"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -11,28 +10,47 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/config/static"
+	"github.com/containous/traefik/pkg/provider/docker"
+	"github.com/containous/traefik/pkg/provider/file"
+	"github.com/containous/traefik/pkg/provider/kubernetes/crd"
+	"github.com/containous/traefik/pkg/provider/kubernetes/ingress"
+	"github.com/containous/traefik/pkg/provider/marathon"
+	"github.com/containous/traefik/pkg/provider/rancher"
+	"github.com/containous/traefik/pkg/provider/rest"
+	"github.com/containous/traefik/pkg/tracing/jaeger"
+	"github.com/containous/traefik/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var updateExpected = flag.Bool("update_expected", false, "Update expected files in testdata")
-
-func TestHandler_RawData(t *testing.T) {
+func TestHandler_Overview(t *testing.T) {
 	type expected struct {
 		statusCode int
-		json       string
+		jsonFile   string
 	}
 
 	testCases := []struct {
-		desc     string
-		path     string
-		conf     dynamic.RuntimeConfiguration
-		expected expected
+		desc       string
+		path       string
+		confStatic static.Configuration
+		confDyn    dynamic.RuntimeConfiguration
+		expected   expected
 	}{
 		{
-			desc: "Get rawdata",
-			path: "/api/rawdata",
-			conf: dynamic.RuntimeConfiguration{
+			desc:       "without data in the dynamic configuration",
+			path:       "/api/overview",
+			confStatic: static.Configuration{API: &static.API{}, Global: &static.Global{}},
+			confDyn:    dynamic.RuntimeConfiguration{},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/overview-empty.json",
+			},
+		},
+		{
+			desc:       "with data in the dynamic configuration",
+			path:       "/api/overview",
+			confStatic: static.Configuration{API: &static.API{}, Global: &static.Global{}},
+			confDyn: dynamic.RuntimeConfiguration{
 				Services: map[string]*dynamic.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
@@ -119,7 +137,48 @@ func TestHandler_RawData(t *testing.T) {
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
-				json:       "testdata/getrawdata.json",
+				jsonFile:   "testdata/overview-dynamic.json",
+			},
+		},
+		{
+			desc: "with providers",
+			path: "/api/overview",
+			confStatic: static.Configuration{
+				Global: &static.Global{},
+				API:    &static.API{},
+				Providers: &static.Providers{
+					Docker:            &docker.Provider{},
+					File:              &file.Provider{},
+					Marathon:          &marathon.Provider{},
+					KubernetesIngress: &ingress.Provider{},
+					KubernetesCRD:     &crd.Provider{},
+					Rest:              &rest.Provider{},
+					Rancher:           &rancher.Provider{},
+				},
+			},
+			confDyn: dynamic.RuntimeConfiguration{},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/overview-providers.json",
+			},
+		},
+		{
+			desc: "with features",
+			path: "/api/overview",
+			confStatic: static.Configuration{
+				Global: &static.Global{},
+				API:    &static.API{},
+				Metrics: &types.Metrics{
+					Prometheus: &types.Prometheus{},
+				},
+				Tracing: &static.Tracing{
+					Jaeger: &jaeger.Config{},
+				},
+			},
+			confDyn: dynamic.RuntimeConfiguration{},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/overview-features.json",
 			},
 		},
 	}
@@ -129,12 +188,7 @@ func TestHandler_RawData(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			// TODO: server status
-
-			rtConf := &test.conf
-
-			rtConf.PopulateUsedBy()
-			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
+			handler := New(test.confStatic, &test.confDyn)
 			router := mux.NewRouter()
 			handler.Append(router)
 
@@ -143,31 +197,32 @@ func TestHandler_RawData(t *testing.T) {
 			resp, err := http.DefaultClient.Get(server.URL + test.path)
 			require.NoError(t, err)
 
-			assert.Equal(t, test.expected.statusCode, resp.StatusCode)
-			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
+			require.Equal(t, test.expected.statusCode, resp.StatusCode)
 
+			if test.expected.jsonFile == "" {
+				return
+			}
+
+			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
 			contents, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
 
 			err = resp.Body.Close()
 			require.NoError(t, err)
 
-			if test.expected.json == "" {
-				return
-			}
 			if *updateExpected {
-				var rtRepr RunTimeRepresentation
-				err := json.Unmarshal(contents, &rtRepr)
+				var results interface{}
+				err := json.Unmarshal(contents, &results)
 				require.NoError(t, err)
 
-				newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
+				newJSON, err := json.MarshalIndent(results, "", "\t")
 				require.NoError(t, err)
 
-				err = ioutil.WriteFile(test.expected.json, newJSON, 0644)
+				err = ioutil.WriteFile(test.expected.jsonFile, newJSON, 0644)
 				require.NoError(t, err)
 			}
 
-			data, err := ioutil.ReadFile(test.expected.json)
+			data, err := ioutil.ReadFile(test.expected.jsonFile)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(data), string(contents))
 		})
