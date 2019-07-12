@@ -106,8 +106,9 @@ func (s secureHeader) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	s.secure.HandlerFuncWithNextForRequestOnly(rw, req, s.next.ServeHTTP)
 }
 
-// Header is a middleware that helps setup a few basic security features. A single headerOptions struct can be
-// provided to configure which features should be enabled, and the ability to override a few of the default values.
+// Header is a middleware that helps setup a few basic security features.
+// A single headerOptions struct can be provided to configure which features should be enabled,
+// and the ability to override a few of the default values.
 type Header struct {
 	next             http.Handler
 	hasCustomHeaders bool
@@ -179,9 +180,9 @@ func (s *Header) preRequestModifyCorsResponseHeaders(rw http.ResponseWriter, req
 	}
 }
 
-// PostRequestModifyResponseHeaders set or delete response headers
+// PostRequestModifyResponseHeaders set or delete response headers.
 // This method is called AFTER the response is generated from the backend
-// And can merge/override headers from the backend response
+// and can merge/override headers from the backend response.
 func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 	// Loop through Custom response headers
 	for header, value := range s.headers.CustomResponseHeaders {
@@ -209,9 +210,9 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 	return nil
 }
 
-// processCorsHeaders processes the incoming request, and returns if
-// it is a preflight request. If not a preflight, it handles
-// the preRequestModifyCorsResponseHeaders.
+// processCorsHeaders processes the incoming request,
+// and returns if it is a preflight request.
+// If not a preflight, it handles the preRequestModifyCorsResponseHeaders.
 func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) bool {
 	if !s.hasCorsHeaders {
 		return false
@@ -222,8 +223,10 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 	originHeader := req.Header.Get("Origin")
 
 	if reqAcMethod != "" && reqAcHeaders != "" && originHeader != "" && req.Method == http.MethodOptions {
-		// If the request is an OPTIONS request with an Access-Control-Request-Method header, and  Access-Control-Request-Headers headers,
-		// and Origin headers, then it is a CORS preflight request, and we need to build a custom response: https://www.w3.org/TR/cors/#preflight-request
+		// If the request is an OPTIONS request with an Access-Control-Request-Method header,
+		// and Access-Control-Request-Headers headers, and Origin headers,
+		// then it is a CORS preflight request,
+		// and we need to build a custom response: https://www.w3.org/TR/cors/#preflight-request
 		if s.headers.AccessControlAllowCredentials {
 			rw.Header().Set("Access-Control-Allow-Credentials", "true")
 		}

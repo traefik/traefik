@@ -171,15 +171,14 @@ func HasHeaderStruct(header http.Header) ResponseCondition {
 			if _, ok := res.Header[key]; !ok {
 				return fmt.Errorf("header %s not present in the response. Expected headers: %v Got response headers: %v", key, header, res.Header)
 			}
+
 			// Header exists in the response, test it.
-			eq := reflect.DeepEqual(header[key], res.Header[key])
-			if !eq {
+			if !reflect.DeepEqual(header[key], res.Header[key]) {
 				return fmt.Errorf("for header %s got values %v, wanted %v", key, res.Header[key], header[key])
 			}
 		}
 		return nil
 	}
-
 }
 
 // DoCondition is a retry condition function.
