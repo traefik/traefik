@@ -20,16 +20,16 @@ var datadogTicker *time.Ticker
 
 // Metric names consistent with https://github.com/DataDog/integrations-extras/pull/64
 const (
-	ddMetricsBackendReqsName      = "service.request.total"
-	ddMetricsBackendLatencyName   = "service.request.duration"
+	ddMetricsServiceReqsName      = "service.request.total"
+	ddMetricsServiceLatencyName   = "service.request.duration"
 	ddRetriesTotalName            = "service.retries.total"
 	ddConfigReloadsName           = "config.reload.total"
 	ddConfigReloadsFailureTagName = "failure"
 	ddLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
 	ddLastConfigReloadFailureName = "config.reload.lastFailureTimestamp"
-	ddEntrypointReqsName          = "entrypoint.request.total"
-	ddEntrypointReqDurationName   = "entrypoint.request.duration"
-	ddEntrypointOpenConnsName     = "entrypoint.connections.open"
+	ddEntryPointReqsName          = "entrypoint.request.total"
+	ddEntryPointReqDurationName   = "entrypoint.request.duration"
+	ddEntryPointOpenConnsName     = "entrypoint.connections.open"
 	ddOpenConnsName               = "service.connections.open"
 	ddServerUpName                = "service.server.up"
 )
@@ -46,11 +46,11 @@ func RegisterDatadog(ctx context.Context, config *types.DataDog) Registry {
 		configReloadsFailureCounter:    datadogClient.NewCounter(ddConfigReloadsName, 1.0).With(ddConfigReloadsFailureTagName, "true"),
 		lastConfigReloadSuccessGauge:   datadogClient.NewGauge(ddLastConfigReloadSuccessName),
 		lastConfigReloadFailureGauge:   datadogClient.NewGauge(ddLastConfigReloadFailureName),
-		entrypointReqsCounter:          datadogClient.NewCounter(ddEntrypointReqsName, 1.0),
-		entrypointReqDurationHistogram: datadogClient.NewHistogram(ddEntrypointReqDurationName, 1.0),
-		entrypointOpenConnsGauge:       datadogClient.NewGauge(ddEntrypointOpenConnsName),
-		serviceReqsCounter:             datadogClient.NewCounter(ddMetricsBackendReqsName, 1.0),
-		serviceReqDurationHistogram:    datadogClient.NewHistogram(ddMetricsBackendLatencyName, 1.0),
+		entryPointReqsCounter:          datadogClient.NewCounter(ddEntryPointReqsName, 1.0),
+		entryPointReqDurationHistogram: datadogClient.NewHistogram(ddEntryPointReqDurationName, 1.0),
+		entryPointOpenConnsGauge:       datadogClient.NewGauge(ddEntryPointOpenConnsName),
+		serviceReqsCounter:             datadogClient.NewCounter(ddMetricsServiceReqsName, 1.0),
+		serviceReqDurationHistogram:    datadogClient.NewHistogram(ddMetricsServiceLatencyName, 1.0),
 		serviceRetriesCounter:          datadogClient.NewCounter(ddRetriesTotalName, 1.0),
 		serviceOpenConnsGauge:          datadogClient.NewGauge(ddOpenConnsName),
 		serviceServerUpGauge:           datadogClient.NewGauge(ddServerUpName),

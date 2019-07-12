@@ -54,7 +54,7 @@ func (s *Server) loadConfiguration(configMsg dynamic.Message) {
 
 	if s.metricsRegistry.IsEnabled() {
 		var entrypoints []string
-		for key, _ := range s.entryPointsTCP {
+		for key := range s.entryPointsTCP {
 			entrypoints = append(entrypoints, key)
 		}
 		metrics.OnConfigurationUpdate(newConfigurations, entrypoints)

@@ -44,9 +44,9 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 
 	return &metricsMiddleware{
 		next:                 next,
-		reqsCounter:          registry.EntrypointReqsCounter(),
-		reqDurationHistogram: registry.EntrypointReqDurationHistogram(),
-		openConnsGauge:       registry.EntrypointOpenConnsGauge(),
+		reqsCounter:          registry.EntryPointReqsCounter(),
+		reqDurationHistogram: registry.EntryPointReqDurationHistogram(),
+		openConnsGauge:       registry.EntryPointOpenConnsGauge(),
 		baseLabels:           []string{"entrypoint", entryPointName},
 	}
 }

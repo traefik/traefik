@@ -17,9 +17,9 @@ type Registry interface {
 	LastConfigReloadFailureGauge() metrics.Gauge
 
 	// entry point metrics
-	EntrypointReqsCounter() metrics.Counter
-	EntrypointReqDurationHistogram() metrics.Histogram
-	EntrypointOpenConnsGauge() metrics.Gauge
+	EntryPointReqsCounter() metrics.Counter
+	EntryPointReqDurationHistogram() metrics.Histogram
+	EntryPointOpenConnsGauge() metrics.Gauge
 
 	// service metrics
 	ServiceReqsCounter() metrics.Counter
@@ -65,14 +65,14 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.LastConfigReloadFailureGauge() != nil {
 			lastConfigReloadFailureGauge = append(lastConfigReloadFailureGauge, r.LastConfigReloadFailureGauge())
 		}
-		if r.EntrypointReqsCounter() != nil {
-			entrypointReqsCounter = append(entrypointReqsCounter, r.EntrypointReqsCounter())
+		if r.EntryPointReqsCounter() != nil {
+			entrypointReqsCounter = append(entrypointReqsCounter, r.EntryPointReqsCounter())
 		}
-		if r.EntrypointReqDurationHistogram() != nil {
-			entrypointReqDurationHistogram = append(entrypointReqDurationHistogram, r.EntrypointReqDurationHistogram())
+		if r.EntryPointReqDurationHistogram() != nil {
+			entrypointReqDurationHistogram = append(entrypointReqDurationHistogram, r.EntryPointReqDurationHistogram())
 		}
-		if r.EntrypointOpenConnsGauge() != nil {
-			entrypointOpenConnsGauge = append(entrypointOpenConnsGauge, r.EntrypointOpenConnsGauge())
+		if r.EntryPointOpenConnsGauge() != nil {
+			entrypointOpenConnsGauge = append(entrypointOpenConnsGauge, r.EntryPointOpenConnsGauge())
 		}
 		if r.ServiceReqsCounter() != nil {
 			serviceReqsCounter = append(serviceReqsCounter, r.ServiceReqsCounter())
@@ -97,9 +97,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 		configReloadsFailureCounter:    multi.NewCounter(configReloadsFailureCounter...),
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		lastConfigReloadFailureGauge:   multi.NewGauge(lastConfigReloadFailureGauge...),
-		entrypointReqsCounter:          multi.NewCounter(entrypointReqsCounter...),
-		entrypointReqDurationHistogram: multi.NewHistogram(entrypointReqDurationHistogram...),
-		entrypointOpenConnsGauge:       multi.NewGauge(entrypointOpenConnsGauge...),
+		entryPointReqsCounter:          multi.NewCounter(entrypointReqsCounter...),
+		entryPointReqDurationHistogram: multi.NewHistogram(entrypointReqDurationHistogram...),
+		entryPointOpenConnsGauge:       multi.NewGauge(entrypointOpenConnsGauge...),
 		serviceReqsCounter:             multi.NewCounter(serviceReqsCounter...),
 		serviceReqDurationHistogram:    multi.NewHistogram(serviceReqDurationHistogram...),
 		serviceOpenConnsGauge:          multi.NewGauge(serviceOpenConnsGauge...),
@@ -114,9 +114,9 @@ type standardRegistry struct {
 	configReloadsFailureCounter    metrics.Counter
 	lastConfigReloadSuccessGauge   metrics.Gauge
 	lastConfigReloadFailureGauge   metrics.Gauge
-	entrypointReqsCounter          metrics.Counter
-	entrypointReqDurationHistogram metrics.Histogram
-	entrypointOpenConnsGauge       metrics.Gauge
+	entryPointReqsCounter          metrics.Counter
+	entryPointReqDurationHistogram metrics.Histogram
+	entryPointOpenConnsGauge       metrics.Gauge
 	serviceReqsCounter             metrics.Counter
 	serviceReqDurationHistogram    metrics.Histogram
 	serviceOpenConnsGauge          metrics.Gauge
@@ -144,16 +144,16 @@ func (r *standardRegistry) LastConfigReloadFailureGauge() metrics.Gauge {
 	return r.lastConfigReloadFailureGauge
 }
 
-func (r *standardRegistry) EntrypointReqsCounter() metrics.Counter {
-	return r.entrypointReqsCounter
+func (r *standardRegistry) EntryPointReqsCounter() metrics.Counter {
+	return r.entryPointReqsCounter
 }
 
-func (r *standardRegistry) EntrypointReqDurationHistogram() metrics.Histogram {
-	return r.entrypointReqDurationHistogram
+func (r *standardRegistry) EntryPointReqDurationHistogram() metrics.Histogram {
+	return r.entryPointReqDurationHistogram
 }
 
-func (r *standardRegistry) EntrypointOpenConnsGauge() metrics.Gauge {
-	return r.entrypointOpenConnsGauge
+func (r *standardRegistry) EntryPointOpenConnsGauge() metrics.Gauge {
+	return r.entryPointOpenConnsGauge
 }
 
 func (r *standardRegistry) ServiceReqsCounter() metrics.Counter {

@@ -6,10 +6,17 @@ import (
 
 // Metrics provides options to expose and send Traefik metrics to different third party monitoring systems
 type Metrics struct {
-	Prometheus *Prometheus `description:"Prometheus metrics exporter type." json:"prometheus,omitempty" toml:"prometheus,omitempty" yaml:"prometheus,omitempty" export:"true" label:"allowEmpty"`
-	DataDog    *DataDog    `description:"DataDog metrics exporter type." json:"dataDog,omitempty" toml:"dataDog,omitempty" yaml:"dataDog,omitempty" export:"true" label:"allowEmpty"`
-	StatsD     *Statsd     `description:"StatsD metrics exporter type." json:"statsD,omitempty" toml:"statsD,omitempty" yaml:"statsD,omitempty" export:"true" label:"allowEmpty"`
-	InfluxDB   *InfluxDB   `description:"InfluxDB metrics exporter type." json:"influxDB,omitempty" toml:"influxDB,omitempty" yaml:"influxDB,omitempty" label:"allowEmpty"`
+	OnEntryPoints bool        `description:"Enable metrics on entry points." json:"onEntryPoints,omitempty" toml:"onEntryPoints,omitempty" yaml:"onEntryPoints,omitempty" export:"true"`
+	OnServices    bool        `description:"Enable metrics on services." json:"onServices,omitempty" toml:"onServices,omitempty" yaml:"onServices,omitempty" export:"true"`
+	Prometheus    *Prometheus `description:"Prometheus metrics exporter type." json:"prometheus,omitempty" toml:"prometheus,omitempty" yaml:"prometheus,omitempty" export:"true" label:"allowEmpty"`
+	DataDog       *DataDog    `description:"DataDog metrics exporter type." json:"dataDog,omitempty" toml:"dataDog,omitempty" yaml:"dataDog,omitempty" export:"true" label:"allowEmpty"`
+	StatsD        *Statsd     `description:"StatsD metrics exporter type." json:"statsD,omitempty" toml:"statsD,omitempty" yaml:"statsD,omitempty" export:"true" label:"allowEmpty"`
+	InfluxDB      *InfluxDB   `description:"InfluxDB metrics exporter type." json:"influxDB,omitempty" toml:"influxDB,omitempty" yaml:"influxDB,omitempty" label:"allowEmpty"`
+}
+
+// SetDefaults sets the default values.
+func (p *Metrics) SetDefaults() {
+
 }
 
 // Prometheus can contain specific configuration used by the Prometheus Metrics exporter

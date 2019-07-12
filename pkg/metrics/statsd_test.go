@@ -24,15 +24,15 @@ func TestStatsD(t *testing.T) {
 
 	expected := []string{
 		// We are only validating counts, as it is nearly impossible to validate latency, since it varies every run
-		"traefik.backend.request.total:2.000000|c\n",
-		"traefik.backend.retries.total:2.000000|c\n",
-		"traefik.backend.request.duration:10000.000000|ms",
+		"traefik.service.request.total:2.000000|c\n",
+		"traefik.service.retries.total:2.000000|c\n",
+		"traefik.service.request.duration:10000.000000|ms",
 		"traefik.config.reload.total:1.000000|c\n",
 		"traefik.config.reload.total:1.000000|c\n",
 		"traefik.entrypoint.request.total:1.000000|c\n",
 		"traefik.entrypoint.request.duration:10000.000000|ms",
 		"traefik.entrypoint.connections.open:1.000000|g\n",
-		"traefik.backend.server.up:1.000000|g\n",
+		"traefik.service.server.up:1.000000|g\n",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
@@ -43,9 +43,9 @@ func TestStatsD(t *testing.T) {
 		statsdRegistry.ServiceReqDurationHistogram().With("service", "test", "code", string(http.StatusOK)).Observe(10000)
 		statsdRegistry.ConfigReloadsCounter().Add(1)
 		statsdRegistry.ConfigReloadsFailureCounter().Add(1)
-		statsdRegistry.EntrypointReqsCounter().With("entrypoint", "test").Add(1)
-		statsdRegistry.EntrypointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
-		statsdRegistry.EntrypointOpenConnsGauge().With("entrypoint", "test").Set(1)
-		statsdRegistry.ServiceServerUpGauge().With("backend:test", "url", "http://127.0.0.1").Set(1)
+		statsdRegistry.EntryPointReqsCounter().With("entrypoint", "test").Add(1)
+		statsdRegistry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
+		statsdRegistry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
+		statsdRegistry.ServiceServerUpGauge().With("service:test", "url", "http://127.0.0.1").Set(1)
 	})
 }

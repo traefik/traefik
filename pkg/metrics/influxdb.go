@@ -26,16 +26,16 @@ type influxDBWriter struct {
 var influxDBTicker *time.Ticker
 
 const (
-	influxDBMetricsBackendReqsName      = "traefik.service.requests.total"
-	influxDBMetricsBackendLatencyName   = "traefik.service.request.duration"
+	influxDBMetricsServiceReqsName      = "traefik.service.requests.total"
+	influxDBMetricsServiceLatencyName   = "traefik.service.request.duration"
 	influxDBRetriesTotalName            = "traefik.service.retries.total"
 	influxDBConfigReloadsName           = "traefik.config.reload.total"
 	influxDBConfigReloadsFailureName    = influxDBConfigReloadsName + ".failure"
 	influxDBLastConfigReloadSuccessName = "traefik.config.reload.lastSuccessTimestamp"
 	influxDBLastConfigReloadFailureName = "traefik.config.reload.lastFailureTimestamp"
-	influxDBEntrypointReqsName          = "traefik.entrypoint.requests.total"
-	influxDBEntrypointReqDurationName   = "traefik.entrypoint.request.duration"
-	influxDBEntrypointOpenConnsName     = "traefik.entrypoint.connections.open"
+	influxDBEntryPointReqsName          = "traefik.entrypoint.requests.total"
+	influxDBEntryPointReqDurationName   = "traefik.entrypoint.request.duration"
+	influxDBEntryPointOpenConnsName     = "traefik.entrypoint.connections.open"
 	influxDBOpenConnsName               = "traefik.service.connections.open"
 	influxDBServerUpName                = "traefik.service.server.up"
 )
@@ -60,11 +60,11 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		configReloadsFailureCounter:    influxDBClient.NewCounter(influxDBConfigReloadsFailureName),
 		lastConfigReloadSuccessGauge:   influxDBClient.NewGauge(influxDBLastConfigReloadSuccessName),
 		lastConfigReloadFailureGauge:   influxDBClient.NewGauge(influxDBLastConfigReloadFailureName),
-		entrypointReqsCounter:          influxDBClient.NewCounter(influxDBEntrypointReqsName),
-		entrypointReqDurationHistogram: influxDBClient.NewHistogram(influxDBEntrypointReqDurationName),
-		entrypointOpenConnsGauge:       influxDBClient.NewGauge(influxDBEntrypointOpenConnsName),
-		serviceReqsCounter:             influxDBClient.NewCounter(influxDBMetricsBackendReqsName),
-		serviceReqDurationHistogram:    influxDBClient.NewHistogram(influxDBMetricsBackendLatencyName),
+		entryPointReqsCounter:          influxDBClient.NewCounter(influxDBEntryPointReqsName),
+		entryPointReqDurationHistogram: influxDBClient.NewHistogram(influxDBEntryPointReqDurationName),
+		entryPointOpenConnsGauge:       influxDBClient.NewGauge(influxDBEntryPointOpenConnsName),
+		serviceReqsCounter:             influxDBClient.NewCounter(influxDBMetricsServiceReqsName),
+		serviceReqDurationHistogram:    influxDBClient.NewHistogram(influxDBMetricsServiceLatencyName),
 		serviceRetriesCounter:          influxDBClient.NewCounter(influxDBRetriesTotalName),
 		serviceOpenConnsGauge:          influxDBClient.NewGauge(influxDBOpenConnsName),
 		serviceServerUpGauge:           influxDBClient.NewGauge(influxDBServerUpName),

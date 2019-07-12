@@ -29,11 +29,11 @@ const (
 	configLastReloadSuccessName    = metricConfigPrefix + "last_reload_success"
 	configLastReloadFailureName    = metricConfigPrefix + "last_reload_failure"
 
-	// entrypoint
+	// entry point
 	metricEntryPointPrefix    = MetricNamePrefix + "entrypoint_"
-	entrypointReqsTotalName   = metricEntryPointPrefix + "requests_total"
-	entrypointReqDurationName = metricEntryPointPrefix + "request_duration_seconds"
-	entrypointOpenConnsName   = metricEntryPointPrefix + "open_connections"
+	entryPointReqsTotalName   = metricEntryPointPrefix + "requests_total"
+	entryPointReqDurationName = metricEntryPointPrefix + "request_duration_seconds"
+	entryPointOpenConnsName   = metricEntryPointPrefix + "open_connections"
 
 	// service level.
 
@@ -55,7 +55,7 @@ const (
 // and will be returned on the metrics endpoint until Traefik would be restarted.
 //
 // To solve this problem promState keeps track of Traefik's dynamic configuration.
-// Metrics that "belong" to a dynamic configuration part like services or entrypoints
+// Metrics that "belong" to a dynamic configuration part like services or entryPoints
 // are removed after they were scraped at least once when the corresponding object
 // doesn't exist anymore.
 var promState = newPrometheusState()
@@ -75,8 +75,16 @@ func (h PrometheusHandler) Append(router *mux.Router) {
 func RegisterPrometheus(ctx context.Context, config *types.Prometheus) Registry {
 	standardRegistry := initStandardRegistry(config)
 
-	promRegistry.MustRegister(stdprometheus.NewProcessCollector(stdprometheus.ProcessCollectorOpts{}))
-	promRegistry.MustRegister(stdprometheus.NewGoCollector())
+	if err := promRegistry.Register(stdprometheus.NewProcessCollector(stdprometheus.ProcessCollectorOpts{})); err != nil {
+		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
+			log.FromContext(ctx).Warn("ProcessCollector is already registered")
+		}
+	}
+	if err := promRegistry.Register(stdprometheus.NewGoCollector()); err != nil {
+		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
+			log.FromContext(ctx).Warn("GoCollector is already registered")
+		}
+	}
 
 	if !registerPromState(ctx) {
 		return nil
@@ -113,16 +121,16 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 	}, []string{})
 
 	entrypointReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
-		Name: entrypointReqsTotalName,
+		Name: entryPointReqsTotalName,
 		Help: "How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.",
 	}, []string{"code", "method", "protocol", "entrypoint"})
 	entrypointReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
-		Name:    entrypointReqDurationName,
+		Name:    entryPointReqDurationName,
 		Help:    "How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
 		Buckets: buckets,
 	}, []string{"code", "method", "protocol", "entrypoint"})
 	entrypointOpenConns := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
-		Name: entrypointOpenConnsName,
+		Name: entryPointOpenConnsName,
 		Help: "How many open connections exist on an entrypoint, partitioned by method and protocol.",
 	}, []string{"method", "protocol", "entrypoint"})
 
@@ -169,9 +177,9 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		configReloadsFailureCounter:    configReloadsFailures,
 		lastConfigReloadSuccessGauge:   lastConfigReloadSuccess,
 		lastConfigReloadFailureGauge:   lastConfigReloadFailure,
-		entrypointReqsCounter:          entrypointReqs,
-		entrypointReqDurationHistogram: entrypointReqDurations,
-		entrypointOpenConnsGauge:       entrypointOpenConns,
+		entryPointReqsCounter:          entrypointReqs,
+		entryPointReqDurationHistogram: entrypointReqDurations,
+		entryPointOpenConnsGauge:       entrypointOpenConns,
 		serviceReqsCounter:             serviceReqs,
 		serviceReqDurationHistogram:    serviceReqDurations,
 		serviceOpenConnsGauge:          serviceOpenConns,
@@ -199,10 +207,10 @@ func OnConfigurationUpdate(dynConf dynamic.Configurations, entryPoints []string)
 	dynamicConfig := newDynamicConfig()
 
 	for _, value := range entryPoints {
-		dynamicConfig.entrypoints[value] = true
+		dynamicConfig.entryPoints[value] = true
 	}
 	for key, config := range dynConf {
-		for name, _ := range config.HTTP.Routers {
+		for name := range config.HTTP.Routers {
 			dynamicConfig.routers[fmt.Sprintf("%s@%s", name, key)] = true
 		}
 
@@ -285,7 +293,7 @@ func (ps *prometheusState) Collect(ch chan<- stdprometheus.Metric) {
 func (ps *prometheusState) isOutdated(collector *collector) bool {
 	labels := collector.labels
 
-	if entrypointName, ok := labels["entrypoint"]; ok && !ps.dynamicConfig.hasEntrypoint(entrypointName) {
+	if entrypointName, ok := labels["entrypoint"]; ok && !ps.dynamicConfig.hasEntryPoint(entrypointName) {
 		return true
 	}
 
@@ -303,29 +311,24 @@ func (ps *prometheusState) isOutdated(collector *collector) bool {
 
 func newDynamicConfig() *dynamicConfig {
 	return &dynamicConfig{
-		entrypoints: make(map[string]bool),
+		entryPoints: make(map[string]bool),
 		routers:     make(map[string]bool),
 		services:    make(map[string]map[string]bool),
 	}
 }
 
-// dynamicConfig holds the current configuration for entrypoints, services,
+// dynamicConfig holds the current configuration for entryPoints, services,
 // and server URLs in an optimized way to check for existence. This provides
 // a performant way to check whether the collected metrics belong to the
 // current configuration or to an outdated one.
 type dynamicConfig struct {
-	entrypoints map[string]bool
+	entryPoints map[string]bool
 	routers     map[string]bool
 	services    map[string]map[string]bool
 }
 
-func (d *dynamicConfig) hasEntrypoint(entrypointName string) bool {
-	_, ok := d.entrypoints[entrypointName]
-	return ok
-}
-
-func (d *dynamicConfig) hasRouter(routerName string) bool {
-	_, ok := d.routers[routerName]
+func (d *dynamicConfig) hasEntryPoint(entrypointName string) bool {
+	_, ok := d.entryPoints[entrypointName]
 	return ok
 }
 

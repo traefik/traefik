@@ -19,16 +19,16 @@ var statsdClient = statsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...inte
 var statsdTicker *time.Ticker
 
 const (
-	statsdMetricsBackendReqsName      = "service.request.total"
-	statsdMetricsBackendLatencyName   = "service.request.duration"
+	statsdMetricsServiceReqsName      = "service.request.total"
+	statsdMetricsServiceLatencyName   = "service.request.duration"
 	statsdRetriesTotalName            = "service.retries.total"
 	statsdConfigReloadsName           = "config.reload.total"
 	statsdConfigReloadsFailureName    = statsdConfigReloadsName + ".failure"
 	statsdLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
 	statsdLastConfigReloadFailureName = "config.reload.lastFailureTimestamp"
-	statsdEntrypointReqsName          = "entrypoint.request.total"
-	statsdEntrypointReqDurationName   = "entrypoint.request.duration"
-	statsdEntrypointOpenConnsName     = "entrypoint.connections.open"
+	statsdEntryPointReqsName          = "entrypoint.request.total"
+	statsdEntryPointReqDurationName   = "entrypoint.request.duration"
+	statsdEntryPointOpenConnsName     = "entrypoint.connections.open"
 	statsdOpenConnsName               = "service.connections.open"
 	statsdServerUpName                = "service.server.up"
 )
@@ -45,11 +45,11 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		configReloadsFailureCounter:    statsdClient.NewCounter(statsdConfigReloadsFailureName, 1.0),
 		lastConfigReloadSuccessGauge:   statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
 		lastConfigReloadFailureGauge:   statsdClient.NewGauge(statsdLastConfigReloadFailureName),
-		entrypointReqsCounter:          statsdClient.NewCounter(statsdEntrypointReqsName, 1.0),
-		entrypointReqDurationHistogram: statsdClient.NewTiming(statsdEntrypointReqDurationName, 1.0),
-		entrypointOpenConnsGauge:       statsdClient.NewGauge(statsdEntrypointOpenConnsName),
-		serviceReqsCounter:             statsdClient.NewCounter(statsdMetricsBackendReqsName, 1.0),
-		serviceReqDurationHistogram:    statsdClient.NewTiming(statsdMetricsBackendLatencyName, 1.0),
+		entryPointReqsCounter:          statsdClient.NewCounter(statsdEntryPointReqsName, 1.0),
+		entryPointReqDurationHistogram: statsdClient.NewTiming(statsdEntryPointReqDurationName, 1.0),
+		entryPointOpenConnsGauge:       statsdClient.NewGauge(statsdEntryPointOpenConnsName),
+		serviceReqsCounter:             statsdClient.NewCounter(statsdMetricsServiceReqsName, 1.0),
+		serviceReqDurationHistogram:    statsdClient.NewTiming(statsdMetricsServiceLatencyName, 1.0),
 		serviceRetriesCounter:          statsdClient.NewCounter(statsdRetriesTotalName, 1.0),
 		serviceOpenConnsGauge:          statsdClient.NewGauge(statsdOpenConnsName),
 		serviceServerUpGauge:           statsdClient.NewGauge(statsdServerUpName),
