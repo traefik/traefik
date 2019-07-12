@@ -439,7 +439,7 @@ func TestCORSResponses(t *testing.T) {
 		},
 		{
 			desc: "Test Simple Request with Vary Headers and existing vary:origin response",
-			header: NewHeader(existingOriginHandler, config.Headers{
+			header: NewHeader(existingOriginHandler, dynamic.Headers{
 				AccessControlAllowOrigin: "origin-list-or-null",
 				AddVaryHeader:            true,
 			}),
@@ -453,7 +453,7 @@ func TestCORSResponses(t *testing.T) {
 		},
 		{
 			desc: "Test Simple CustomRequestHeaders Not Hijacked by CORS",
-			header: NewHeader(emptyHandler, config.Headers{
+			header: NewHeader(emptyHandler, dynamic.Headers{
 				CustomRequestHeaders: map[string]string{"foo": "bar"},
 			}),
 			requestHeaders: map[string][]string{
