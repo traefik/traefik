@@ -79,7 +79,7 @@ type pair struct{ label, value string }
 func (n *node) observe(lvs LabelValues, value float64) {
 	n.mtx.Lock()
 	defer n.mtx.Unlock()
-	if len(lvs) == 0 {
+	if len(lvs) <= 0 {
 		n.observations = append(n.observations, value)
 		return
 	}
@@ -101,7 +101,7 @@ func (n *node) observe(lvs LabelValues, value float64) {
 func (n *node) add(lvs LabelValues, delta float64) {
 	n.mtx.Lock()
 	defer n.mtx.Unlock()
-	if len(lvs) == 0 {
+	if len(lvs) <= 0 {
 		var value float64
 		if len(n.observations) > 0 {
 			value = last(n.observations) + delta

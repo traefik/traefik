@@ -2,6 +2,7 @@ package conn
 
 import (
 	"errors"
+	"math/rand"
 	"net"
 	"time"
 
@@ -103,7 +104,7 @@ func (m *Manager) loop() {
 		case conn = <-connc:
 			if conn == nil {
 				// didn't work
-				backoff = exponential(backoff) // wait longer
+				backoff = Exponential(backoff) // wait longer
 				reconnectc = m.after(backoff)  // try again
 			} else {
 				// worked!
@@ -132,12 +133,18 @@ func dial(d Dialer, network, address string, logger log.Logger) net.Conn {
 	return conn
 }
 
-func exponential(d time.Duration) time.Duration {
+// Exponential takes a duration and returns another one that is twice as long, +/- 50%. It is
+// used to provide backoff for operations that may fail and should avoid thundering herds.
+// See https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/ for rationale
+func Exponential(d time.Duration) time.Duration {
 	d *= 2
+	jitter := rand.Float64() + 0.5
+	d = time.Duration(int64(float64(d.Nanoseconds()) * jitter))
 	if d > time.Minute {
 		d = time.Minute
 	}
 	return d
+
 }
 
 // ErrConnectionUnavailable is returned by the Manager's Write method when the

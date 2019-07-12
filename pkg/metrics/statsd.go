@@ -66,7 +66,7 @@ func initStatsdTicker(ctx context.Context, config *types.Statsd) *time.Ticker {
 	report := time.NewTicker(time.Duration(config.PushInterval))
 
 	safe.Go(func() {
-		statsdClient.SendLoop(report.C, "udp", address)
+		statsdClient.SendLoop(ctx, report.C, "udp", address)
 	})
 
 	return report

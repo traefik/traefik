@@ -12,8 +12,10 @@ import (
 	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/pkg/metrics"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/pkg/middlewares/metrics"
+	metricsmiddleware "github.com/containous/traefik/pkg/middlewares/metrics"
 	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
 	"github.com/containous/traefik/pkg/middlewares/tracing"
 	"github.com/containous/traefik/pkg/responsemodifiers"
@@ -50,7 +52,13 @@ func (s *Server) loadConfiguration(configMsg dynamic.Message) {
 		listener(*configMsg.Configuration)
 	}
 
-	s.postLoadConfiguration()
+	if s.metricsRegistry.IsEnabled() {
+		var entrypoints []string
+		for key, _ := range s.entryPointsTCP {
+			entrypoints = append(entrypoints, key)
+		}
+		metrics.OnConfigurationUpdate(newConfigurations, entrypoints)
+	}
 }
 
 // loadConfigurationTCP returns a new gorilla.mux Route from the specified global configuration and the dynamic
@@ -130,7 +138,7 @@ func (s *Server) createHTTPHandlers(ctx context.Context, configuration *runtime.
 		}
 
 		if s.metricsRegistry.IsEnabled() {
-			chain = chain.Append(metrics.WrapEntryPointHandler(ctx, s.metricsRegistry, entryPointName))
+			chain = chain.Append(metricsmiddleware.WrapEntryPointHandler(ctx, s.metricsRegistry, entryPointName))
 		}
 
 		chain = chain.Append(requestdecorator.WrapHandler(s.requestDecorator))
@@ -269,15 +277,6 @@ func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish ch
 			ring.In() <- nextConfig
 		}
 	}
-}
-
-func (s *Server) postLoadConfiguration() {
-	// FIXME metrics
-	// if s.metricsRegistry.IsEnabled() {
-	// 	activeConfig := s.currentConfigurations.Get().(config.Configurations)
-	// 	metrics.OnConfigurationUpdate(activeConfig)
-	// }
-
 }
 
 func buildDefaultHTTPRouter() *mux.Router {

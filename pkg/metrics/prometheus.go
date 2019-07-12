@@ -2,8 +2,8 @@ package metrics
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -75,7 +75,7 @@ func (h PrometheusHandler) Append(router *mux.Router) {
 func RegisterPrometheus(ctx context.Context, config *types.Prometheus) Registry {
 	standardRegistry := initStandardRegistry(config)
 
-	promRegistry.MustRegister(stdprometheus.NewProcessCollector(os.Getpid(), ""))
+	promRegistry.MustRegister(stdprometheus.NewProcessCollector(stdprometheus.ProcessCollectorOpts{}))
 	promRegistry.MustRegister(stdprometheus.NewGoCollector())
 
 	if !registerPromState(ctx) {
@@ -195,21 +195,21 @@ func registerPromState(ctx context.Context) bool {
 // OnConfigurationUpdate receives the current configuration from Traefik.
 // It then converts the configuration to the optimized package internal format
 // and sets it to the promState.
-func OnConfigurationUpdate(configurations dynamic.Configurations) {
+func OnConfigurationUpdate(dynConf dynamic.Configurations, entryPoints []string) {
 	dynamicConfig := newDynamicConfig()
 
-	for _, config := range configurations {
-		for name, frontend := range config.HTTP.Routers {
-			dynamicConfig.routers[name] = true
-			for _, entrypointName := range frontend.EntryPoints {
-				dynamicConfig.entrypoints[entrypointName] = true
-			}
+	for _, value := range entryPoints {
+		dynamicConfig.entrypoints[value] = true
+	}
+	for key, config := range dynConf {
+		for name, _ := range config.HTTP.Routers {
+			dynamicConfig.routers[fmt.Sprintf("%s@%s", name, key)] = true
 		}
 
 		for serviceName, service := range config.HTTP.Services {
-			dynamicConfig.services[serviceName] = make(map[string]bool)
+			dynamicConfig.services[fmt.Sprintf("%s@%s", serviceName, key)] = make(map[string]bool)
 			for _, server := range service.LoadBalancer.Servers {
-				dynamicConfig.services[serviceName][server.URL] = true
+				dynamicConfig.services[fmt.Sprintf("%s@%s", serviceName, key)][server.URL] = true
 			}
 		}
 	}
@@ -492,7 +492,7 @@ func (h *histogram) Observe(value float64) {
 	labels := h.labelNamesValues.ToLabels()
 	collector := h.hv.With(labels)
 	collector.Observe(value)
-	h.collectors <- newCollector(h.name, labels, collector, func() {
+	h.collectors <- newCollector(h.name, labels, h.hv, func() {
 		h.hv.Delete(labels)
 	})
 }

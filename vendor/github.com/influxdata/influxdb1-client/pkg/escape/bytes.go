@@ -1,6 +1,6 @@
 // Package escape contains utilities for escaping parts of InfluxQL
 // and InfluxDB line protocol.
-package escape // import "github.com/influxdata/influxdb/pkg/escape"
+package escape // import "github.com/influxdata/influxdb1-client/pkg/escape"
 
 import (
 	"bytes"
@@ -78,7 +78,11 @@ func Unescape(in []byte) []byte {
 
 	i := 0
 	inLen := len(in)
-	var out []byte
+
+	// The output size will be no more than inLen. Preallocating the
+	// capacity of the output is faster and uses less memory than
+	// letting append() do its own (over)allocation.
+	out := make([]byte, 0, inLen)
 
 	for {
 		if i >= inLen {

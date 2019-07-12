@@ -13,7 +13,7 @@ import (
 	"github.com/containous/traefik/pkg/types"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/influx"
-	influxdb "github.com/influxdata/influxdb/client/v2"
+	influxdb "github.com/influxdata/influxdb1-client/v2"
 )
 
 var influxDBClient *influx.Influx
@@ -51,7 +51,7 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		influxDBClient = initInfluxDBClient(ctx, config)
 	}
 	if influxDBTicker == nil {
-		influxDBTicker = initInfluxDBTicker(config)
+		influxDBTicker = initInfluxDBTicker(ctx, config)
 	}
 
 	return &standardRegistry{
@@ -115,12 +115,12 @@ func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Inf
 }
 
 // initInfluxDBTicker initializes metrics pusher
-func initInfluxDBTicker(config *types.InfluxDB) *time.Ticker {
+func initInfluxDBTicker(ctx context.Context, config *types.InfluxDB) *time.Ticker {
 	report := time.NewTicker(time.Duration(config.PushInterval))
 
 	safe.Go(func() {
 		var buf bytes.Buffer
-		influxDBClient.WriteLoop(report.C, &influxDBWriter{buf: buf, config: config})
+		influxDBClient.WriteLoop(ctx, report.C, &influxDBWriter{buf: buf, config: config})
 	})
 
 	return report

@@ -1,4 +1,4 @@
-package models // import "github.com/influxdata/influxdb/models"
+package models // import "github.com/influxdata/influxdb1-client/models"
 
 import (
 	"reflect"
@@ -10,6 +10,12 @@ import (
 func parseIntBytes(b []byte, base int, bitSize int) (i int64, err error) {
 	s := unsafeBytesToString(b)
 	return strconv.ParseInt(s, base, bitSize)
+}
+
+// parseUintBytes is a zero-alloc wrapper around strconv.ParseUint.
+func parseUintBytes(b []byte, base int, bitSize int) (i uint64, err error) {
+	s := unsafeBytesToString(b)
+	return strconv.ParseUint(s, base, bitSize)
 }
 
 // parseFloatBytes is a zero-alloc wrapper around strconv.ParseFloat.

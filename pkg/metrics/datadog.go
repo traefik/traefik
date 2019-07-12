@@ -68,7 +68,7 @@ func initDatadogClient(ctx context.Context, config *types.DataDog) *time.Ticker 
 	report := time.NewTicker(time.Duration(config.PushInterval))
 
 	safe.Go(func() {
-		datadogClient.SendLoop(report.C, "udp", address)
+		datadogClient.SendLoop(ctx, report.C, "udp", address)
 	})
 
 	return report
