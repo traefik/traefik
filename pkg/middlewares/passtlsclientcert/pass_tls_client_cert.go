@@ -222,7 +222,7 @@ func (p *passTLSClientCert) modifyRequestHeaders(logger logrus.FieldLogger, r *h
 		if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
 			r.Header.Set(xForwardedTLSClientCert, getXForwardedTLSClientCert(logger, r.TLS.PeerCertificates))
 		} else {
-			logger.Warn("Try to extract certificate on a request without TLS")
+			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
 		}
 	}
 
@@ -231,7 +231,7 @@ func (p *passTLSClientCert) modifyRequestHeaders(logger logrus.FieldLogger, r *h
 			headerContent := p.getXForwardedTLSClientCertInfo(r.TLS.PeerCertificates)
 			r.Header.Set(xForwardedTLSClientCertInfo, url.QueryEscape(headerContent))
 		} else {
-			logger.Warn("Try to extract certificate on a request without TLS")
+			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
 		}
 	}
 }

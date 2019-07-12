@@ -23,9 +23,9 @@
 ## dynamic configuration ##
 
 [tls.options]
-  [tls.options.default.clientCA]
-    files = [ """{{ .RootCertContent }}""" ]
-    optional = false
+  [tls.options.default.clientAuth]
+    caFiles = [ """{{ .RootCertContent }}""" ]
+    clientAuthType = "RequireAndVerifyClientCert"
 
 [tls.stores]
   [tls.stores.default.defaultCertificate]

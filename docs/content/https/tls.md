@@ -139,35 +139,39 @@ tls:
       minVersion: VersionTLS13
 ```
 
-### Mutual Authentication
+### Client Authentication (mTLS)
 
-Traefik supports both optional and strict (which is the default) mutual authentication, though the `ClientCA.files` section.
-If present, connections from clients without a certificate will be rejected.
+Traefik supports mutual authentication, through the `ClientAuth` section.
 
-For clients with a certificate, the `optional` option governs the behaviour as follows:
+For authentication policies that require verification of the client certificate, the certificate authority for the certificate should be set in `ClientAuth.caFiles`.
+ 
+The `ClientAuth.clientAuthType` option governs the behaviour as follows:
 
-- When `optional = false`, Traefik accepts connections only from clients presenting a certificate signed by a CA listed in `ClientCA.files`.
-- When `optional = true`, Traefik authorizes connections from clients presenting a certificate signed by an unknown CA.
+- `NoClientCert`: disregards any client certificate.
+- `RequestClientCert`: asks for a certificate but proceeds anyway if none is provided.
+- `RequireAnyClientCert`: requires a certificate but does not verify if it is signed by a CA listed in `ClientAuth.caFiles`.
+- `VerifyClientCertIfGiven`: if a certificate is provided, verifies if it is signed by a CA listed in `ClientAuth.caFiles`. Otherwise proceeds without any certificate.
+- `RequireAndVerifyClientCert`: requires a certificate, which must be signed by a CA listed in `ClientAuth.caFiles`. 
 
 ```toml tab="TOML"
 [tls.options]
   [tls.options.default]
-    [tls.options.default.clientCA]
+    [tls.options.default.clientAuth]
       # in PEM format. each file can contain multiple CAs.
-      files = ["tests/clientca1.crt", "tests/clientca2.crt"]
-      optional = false
+      caFiles = ["tests/clientca1.crt", "tests/clientca2.crt"]
+      clientAuthType = "RequireAndVerifyClientCert"
 ```
 
 ```yaml tab="YAML"
 tls:
   options:
     default:
-      clientCA:
+      clientAuth:
         # in PEM format. each file can contain multiple CAs.
-        files:
+        caFiles:
         - tests/clientca1.crt
         - tests/clientca2.crt
-        optional: false
+        clientAuthType: RequireAndVerifyClientCert
 ```
 
 ### Cipher Suites

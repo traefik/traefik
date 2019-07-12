@@ -3,6 +3,7 @@ package tls
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -159,23 +160,45 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 	// ensure http2 enabled
 	conf.NextProtos = []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol}
 
-	if len(tlsOption.ClientCA.Files) > 0 {
+	if len(tlsOption.ClientAuth.CAFiles) > 0 {
 		pool := x509.NewCertPool()
-		for _, caFile := range tlsOption.ClientCA.Files {
+		for _, caFile := range tlsOption.ClientAuth.CAFiles {
 			data, err := caFile.Read()
 			if err != nil {
 				return nil, err
 			}
 			ok := pool.AppendCertsFromPEM(data)
 			if !ok {
-				return nil, fmt.Errorf("invalid certificate(s) in %s", caFile)
+				if caFile.IsPath() {
+					return nil, fmt.Errorf("invalid certificate(s) in %s", caFile)
+				}
+				return nil, errors.New("invalid certificate(s) content")
 			}
 		}
 		conf.ClientCAs = pool
-		if tlsOption.ClientCA.Optional {
+		conf.ClientAuth = tls.RequireAndVerifyClientCert
+	}
+
+	clientAuthType := tlsOption.ClientAuth.ClientAuthType
+	if len(clientAuthType) > 0 {
+		if conf.ClientCAs == nil && (clientAuthType == "VerifyClientCertIfGiven" ||
+			clientAuthType == "RequireAndVerifyClientCert") {
+			return nil, fmt.Errorf("invalid clientAuthType: %s, CAFiles is required", clientAuthType)
+		}
+
+		switch clientAuthType {
+		case "NoClientCert":
+			conf.ClientAuth = tls.NoClientCert
+		case "RequestClientCert":
+			conf.ClientAuth = tls.RequestClientCert
+		case "RequireAnyClientCert":
+			conf.ClientAuth = tls.RequireAnyClientCert
+		case "VerifyClientCertIfGiven":
 			conf.ClientAuth = tls.VerifyClientCertIfGiven
-		} else {
+		case "RequireAndVerifyClientCert":
 			conf.ClientAuth = tls.RequireAndVerifyClientCert
+		default:
+			return nil, fmt.Errorf("unknown client auth type %q", clientAuthType)
 		}
 	}
 

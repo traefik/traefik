@@ -313,7 +313,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 		logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOption.Name), log.Str("namespace", tlsOption.Namespace)))
 		var clientCAs []tls.FileOrContent
 
-		for _, secretName := range tlsOption.Spec.ClientCA.SecretNames {
+		for _, secretName := range tlsOption.Spec.ClientAuth.SecretNames {
 			secret, exists, err := client.GetSecret(tlsOption.Namespace, secretName)
 			if err != nil {
 				logger.Errorf("Failed to fetch secret %s/%s: %v", tlsOption.Namespace, secretName, err)
@@ -337,9 +337,9 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 		tlsOptions[makeID(tlsOption.Namespace, tlsOption.Name)] = tls.Options{
 			MinVersion:   tlsOption.Spec.MinVersion,
 			CipherSuites: tlsOption.Spec.CipherSuites,
-			ClientCA: tls.ClientCA{
-				Files:    clientCAs,
-				Optional: tlsOption.Spec.ClientCA.Optional,
+			ClientAuth: tls.ClientAuth{
+				CAFiles:        clientCAs,
+				ClientAuthType: tlsOption.Spec.ClientAuth.ClientAuthType,
 			},
 			SniStrict: tlsOption.Spec.SniStrict,
 		}
