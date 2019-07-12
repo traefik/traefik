@@ -6,7 +6,7 @@ RUN apk --update upgrade \
     && rm -rf /var/cache/apk/*
 
 # Download golangci-lint and misspell binary to bin folder in $GOPATH
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.15.0 \
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.17.1 \
     && go get github.com/client9/misspell/cmd/misspell
 
 # Download goreleaser binary to bin folder in $GOPATH
