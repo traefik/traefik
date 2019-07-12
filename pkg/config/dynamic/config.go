@@ -30,7 +30,7 @@ type Configuration struct {
 
 // TLSConfiguration contains all the configuration parameters of a TLS connection.
 type TLSConfiguration struct {
-	Certificates []*tls.CertAndStores   `json:"-"  toml:"certificates,omitempty" yaml:"certificates,omitempty" label:"-"`
+	Certificates []*tls.CertAndStores   `json:"certificates,omitempty"  toml:"certificates,omitempty" yaml:"certificates,omitempty" label:"-"`
 	Options      map[string]tls.Options `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
 	Stores       map[string]tls.Store   `json:"stores,omitempty" toml:"stores,omitempty" yaml:"stores,omitempty"`
 }
