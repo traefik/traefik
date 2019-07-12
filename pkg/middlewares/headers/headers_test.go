@@ -333,6 +333,7 @@ func TestGetTracingInformation(t *testing.T) {
 func TestCORSResponses(t *testing.T) {
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	nonEmptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Header().Set("Vary", "Testing") })
+	existingOriginHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Header().Set("Vary", "Origin") })
 
 	testCases := []struct {
 		desc           string
@@ -436,6 +437,32 @@ func TestCORSResponses(t *testing.T) {
 				"Vary":                        {"Testing,Origin"},
 			},
 		},
+		{
+			desc: "Test Simple Request with Vary Headers and existing vary:origin response",
+			header: NewHeader(existingOriginHandler, dynamic.Headers{
+				AccessControlAllowOrigin: "origin-list-or-null",
+				AddVaryHeader:            true,
+			}),
+			requestHeaders: map[string][]string{
+				"Origin": {"https://foo.bar.org"},
+			},
+			expected: map[string][]string{
+				"Access-Control-Allow-Origin": {"https://foo.bar.org"},
+				"Vary":                        {"Origin"},
+			},
+		},
+		{
+			desc: "Test Simple CustomRequestHeaders Not Hijacked by CORS",
+			header: NewHeader(emptyHandler, dynamic.Headers{
+				CustomRequestHeaders: map[string]string{"foo": "bar"},
+			}),
+			requestHeaders: map[string][]string{
+				"Access-Control-Request-Headers": {"origin"},
+				"Access-Control-Request-Method":  {"GET", "OPTIONS"},
+				"Origin":                         {"https://foo.bar.org"},
+			},
+			expected: map[string][]string{},
+		},
 	}
 
 	for _, test := range testCases {
@@ -445,7 +472,7 @@ func TestCORSResponses(t *testing.T) {
 
 			rw := httptest.NewRecorder()
 			test.header.ServeHTTP(rw, req)
-			err := test.header.ModifyResponseHeaders(rw.Result())
+			err := test.header.PostRequestModifyResponseHeaders(rw.Result())
 			require.NoError(t, err)
 			assert.Equal(t, test.expected, rw.Result().Header)
 		})
@@ -492,7 +519,7 @@ func TestCustomResponseHeaders(t *testing.T) {
 			req := testhelpers.MustNewRequest(http.MethodGet, "/foo", nil)
 			rw := httptest.NewRecorder()
 			test.header.ServeHTTP(rw, req)
-			err := test.header.ModifyResponseHeaders(rw.Result())
+			err := test.header.PostRequestModifyResponseHeaders(rw.Result())
 			require.NoError(t, err)
 			assert.Equal(t, test.expected, rw.Result().Header)
 		})
