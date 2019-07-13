@@ -5,6 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build --dest ../static",
+    "build:nc": "vue-cli-service build --no-clean --dest ../static",
     "lint": "vue-cli-service lint",
     "test:unit": "vue-cli-service test:unit"
   },

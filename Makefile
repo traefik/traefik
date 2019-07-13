@@ -58,7 +58,7 @@ build-webui-image:
 generate-webui: build-webui-image
 	if [ ! -d "static" ]; then \
 		mkdir -p static; \
-		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui npm run build; \
+		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui npm run build:nc; \
 		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ../static; \
 		echo 'For more informations show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md; \
 	fi
