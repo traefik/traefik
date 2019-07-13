@@ -98,6 +98,7 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 		Server string
 	}{whoami})
 	defer os.Remove(file)
+
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
@@ -223,7 +224,9 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd(withConfigFile("./fixtures/simple_auth.toml"))
+	file := s.adaptFile(c, "./fixtures/simple_auth.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
 	err := cmd.Start()
@@ -237,7 +240,7 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
+func (s *SimpleSuite) TestDefaultEntryPointHTTP(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -255,7 +258,7 @@ func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
+func (s *SimpleSuite) TestWithNonExistingEntryPoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -273,7 +276,7 @@ func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *SimpleSuite) TestMetricsPrometheusDefaultEntrypoint(c *check.C) {
+func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -419,7 +422,7 @@ func (s *SimpleSuite) TestXForwardedHeaders(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *SimpleSuite) TestMultiprovider(c *check.C) {
+func (s *SimpleSuite) TestMultiProvider(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -453,10 +456,10 @@ func (s *SimpleSuite) TestMultiprovider(c *check.C) {
 		},
 	}
 
-	json, err := json.Marshal(config)
+	jsonContent, err := json.Marshal(config)
 	c.Assert(err, checker.IsNil)
 
-	request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", bytes.NewReader(json))
+	request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", bytes.NewReader(jsonContent))
 	c.Assert(err, checker.IsNil)
 
 	response, err := http.DefaultClient.Do(request)

@@ -2,6 +2,7 @@ package integration
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
@@ -25,7 +26,9 @@ func (s *HeadersSuite) TestSimpleConfiguration(c *check.C) {
 }
 
 func (s *HeadersSuite) TestCorsResponses(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/headers/cors.toml"))
+	file := s.adaptFile(c, "fixtures/headers/cors.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 
 	err := cmd.Start()
