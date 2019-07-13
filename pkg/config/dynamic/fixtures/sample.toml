@@ -52,7 +52,6 @@
     watch = true
     filename = "foobar"
     debugLogGeneratedTemplate = true
-    traefikFile = "foobar"
   [providers.marathon]
     constraints = "foobar"
     trace = true

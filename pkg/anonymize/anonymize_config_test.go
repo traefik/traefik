@@ -149,7 +149,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 		Watch:                     true,
 		Filename:                  "file Filename",
 		DebugLogGeneratedTemplate: true,
-		TraefikFile:               "",
 	}
 
 	config.Providers.Docker = &docker.Provider{
