@@ -32,7 +32,6 @@ type Provider struct {
 	Watch                     bool   `description:"Watch provider." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
 	Filename                  string `description:"Override default configuration template. For advanced users :)" json:"filename,omitempty" toml:"filename,omitempty" yaml:"filename,omitempty" export:"true"`
 	DebugLogGeneratedTemplate bool   `description:"Enable debug logging of generated configuration template." json:"debugLogGeneratedTemplate,omitempty" toml:"debugLogGeneratedTemplate,omitempty" yaml:"debugLogGeneratedTemplate,omitempty" export:"true"`
-	TraefikFile               string `description:"-" json:"traefikFile,omitempty" toml:"-" yaml:"-"`
 }
 
 // SetDefaults sets the default values.
@@ -64,7 +63,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		case len(p.Filename) > 0:
 			watchItem = filepath.Dir(p.Filename)
 		default:
-			watchItem = filepath.Dir(p.TraefikFile)
+			return errors.New("error using file configuration provider, neither filename or directory defined")
 		}
 
 		if err := p.addWatcher(pool, watchItem, configurationChan, p.watcherCallback); err != nil {
@@ -89,11 +88,7 @@ func (p *Provider) BuildConfiguration() (*dynamic.Configuration, error) {
 		return p.loadFileConfig(p.Filename, true)
 	}
 
-	if len(p.TraefikFile) > 0 {
-		return p.loadFileConfig(p.TraefikFile, false)
-	}
-
-	return nil, errors.New("error using file configuration backend, no filename defined")
+	return nil, errors.New("error using file configuration provider, neither filename or directory defined")
 }
 
 func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- dynamic.Message, callback func(chan<- dynamic.Message, fsnotify.Event)) error {
@@ -116,15 +111,8 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 				return
 			case evt := <-watcher.Events:
 				if p.Directory == "" {
-					var filename string
-					if len(p.Filename) > 0 {
-						filename = p.Filename
-					} else {
-						filename = p.TraefikFile
-					}
-
 					_, evtFileName := filepath.Split(evt.Name)
-					_, confFileName := filepath.Split(filename)
+					_, confFileName := filepath.Split(p.Filename)
 					if evtFileName == confFileName {
 						callback(configurationChan, evt)
 					}
@@ -140,11 +128,9 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 }
 
 func (p *Provider) watcherCallback(configurationChan chan<- dynamic.Message, event fsnotify.Event) {
-	watchItem := p.TraefikFile
+	watchItem := p.Filename
 	if len(p.Directory) > 0 {
 		watchItem = p.Directory
-	} else if len(p.Filename) > 0 {
-		watchItem = p.Filename
 	}
 
 	logger := log.WithoutContext().WithField(log.ProviderName, providerName)

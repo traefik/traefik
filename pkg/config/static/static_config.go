@@ -149,7 +149,7 @@ func (t *Tracing) SetDefaults() {
 type Providers struct {
 	ProvidersThrottleDuration types.Duration     `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." json:"providersThrottleDuration,omitempty" toml:"providersThrottleDuration,omitempty" yaml:"providersThrottleDuration,omitempty" export:"true"`
 	Docker                    *docker.Provider   `description:"Enable Docker backend with default settings." json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" export:"true" label:"allowEmpty"`
-	File                      *file.Provider     `description:"Enable File backend with default settings." json:"file,omitempty" toml:"file,omitempty" yaml:"file,omitempty" export:"true" label:"allowEmpty"`
+	File                      *file.Provider     `description:"Enable File backend with default settings." json:"file,omitempty" toml:"file,omitempty" yaml:"file,omitempty" export:"true"`
 	Marathon                  *marathon.Provider `description:"Enable Marathon backend with default settings." json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty" export:"true" label:"allowEmpty"`
 	KubernetesIngress         *ingress.Provider  `description:"Enable Kubernetes backend with default settings." json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" export:"true" label:"allowEmpty"`
 	KubernetesCRD             *crd.Provider      `description:"Enable Kubernetes backend with default settings." json:"kubernetesCRD,omitempty" toml:"kubernetesCRD,omitempty" yaml:"kubernetesCRD,omitempty" export:"true" label:"allowEmpty"`
@@ -159,7 +159,7 @@ type Providers struct {
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
 // It also takes care of maintaining backwards compatibility.
-func (c *Configuration) SetEffectiveConfiguration(configFile string) {
+func (c *Configuration) SetEffectiveConfiguration() {
 	if len(c.EntryPoints) == 0 {
 		ep := &EntryPoint{Address: ":80"}
 		ep.SetDefaults()
@@ -183,10 +183,6 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 		if c.Providers.Docker.SwarmModeRefreshSeconds <= 0 {
 			c.Providers.Docker.SwarmModeRefreshSeconds = types.Duration(15 * time.Second)
 		}
-	}
-
-	if c.Providers.File != nil {
-		c.Providers.File.TraefikFile = configFile
 	}
 
 	if c.Providers.Rancher != nil {

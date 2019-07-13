@@ -24,7 +24,7 @@ func NewCmd(traefikConfiguration *static.Configuration, loaders []cli.ResourceLo
 
 func runCmd(traefikConfiguration *static.Configuration) func(_ []string) error {
 	return func(_ []string) error {
-		traefikConfiguration.SetEffectiveConfiguration("")
+		traefikConfiguration.SetEffectiveConfiguration()
 
 		resp, errPing := Do(*traefikConfiguration)
 		if resp != nil {

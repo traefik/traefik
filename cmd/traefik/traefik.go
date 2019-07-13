@@ -53,7 +53,7 @@ Complete documentation is available at https://traefik.io`,
 		Configuration: tConfig,
 		Resources:     loaders,
 		Run: func(_ []string) error {
-			return runCmd(&tConfig.Configuration, cli.GetConfigFile(loaders))
+			return runCmd(&tConfig.Configuration)
 		},
 	}
 
@@ -78,7 +78,7 @@ Complete documentation is available at https://traefik.io`,
 	os.Exit(0)
 }
 
-func runCmd(staticConfiguration *static.Configuration, configFile string) error {
+func runCmd(staticConfiguration *static.Configuration) error {
 	configureLogging(staticConfiguration)
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
@@ -87,7 +87,7 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) error 
 		log.WithoutContext().Errorf("Could not set roundrobin default weight: %v", err)
 	}
 
-	staticConfiguration.SetEffectiveConfiguration(configFile)
+	staticConfiguration.SetEffectiveConfiguration()
 	staticConfiguration.ValidateConfiguration()
 
 	log.WithoutContext().Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
