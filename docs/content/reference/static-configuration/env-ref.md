@@ -285,9 +285,6 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 `TRAEFIK_PROVIDERS_DOCKER_WATCH`:  
 Watch provider. (Default: ```true```)
 
-`TRAEFIK_PROVIDERS_FILE`:  
-Enable File backend with default settings. (Default: ```false```)
-
 `TRAEFIK_PROVIDERS_FILE_DEBUGLOGGENERATEDTEMPLATE`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
 

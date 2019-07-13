@@ -81,9 +81,6 @@ labels:
 
 ```toml tab="File"
 # As Toml Configuration File
-[providers]
-  [providers.file]
-
 [http.routers]
   [http.routers.router1]
     service = "myService"
@@ -128,9 +125,6 @@ and therefore this specification would be ignored even if present.
     Declaring the add-foo-prefix in the file provider.
 
     ```toml
-    [providers]
-      [providers.file]
-
     [http.middlewares]
       [http.middlewares.add-foo-prefix.addPrefix]
         prefix = "/foo"
