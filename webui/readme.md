@@ -61,7 +61,7 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 - [Node](https://nodejs.org)
 - [Yarn](https://yarnpkg.com/)
 - [Webpack](https://github.com/webpack/webpack)
-- [Angular](https://angular.io)
+- [Vue](https://vuejs.org/)
 - [Bulma](https://bulma.io)
 - [D3](https://d3js.org)
 - [D3 - Documentation](https://github.com/mbostock/d3/wiki)
