@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-export DOCKER_VERSION=17.03.1
+export DOCKER_VERSION=18.09.7
 
 source .semaphoreci/vars
 
