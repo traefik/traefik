@@ -11,6 +11,7 @@ import (
 
 	"github.com/containous/mux"
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,13 +27,13 @@ func TestHandler_HTTP(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		path     string
-		conf     dynamic.RuntimeConfiguration
+		conf     runtime.Configuration
 		expected expected
 	}{
 		{
 			desc: "all routers, but no config",
 			path: "/api/http/routers",
-			conf: dynamic.RuntimeConfiguration{},
+			conf: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusOK,
 				nextPage:   "1",
@@ -42,8 +43,8 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "all routers",
 			path: "/api/http/routers",
-			conf: dynamic.RuntimeConfiguration{
-				Routers: map[string]*dynamic.RouterInfo{
+			conf: runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
 					"test@myprovider": {
 						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
@@ -71,8 +72,8 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "all routers, pagination, 1 res per page, want page 2",
 			path: "/api/http/routers?page=2&per_page=1",
-			conf: dynamic.RuntimeConfiguration{
-				Routers: map[string]*dynamic.RouterInfo{
+			conf: runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
 					"bar@myprovider": {
 						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
@@ -107,7 +108,7 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "all routers, pagination, 19 results overall, 7 res per page, want page 3",
 			path: "/api/http/routers?page=3&per_page=7",
-			conf: dynamic.RuntimeConfiguration{
+			conf: runtime.Configuration{
 				Routers: generateHTTPRouters(19),
 			},
 			expected: expected{
@@ -119,7 +120,7 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "all routers, pagination, 5 results overall, 10 res per page, want page 2",
 			path: "/api/http/routers?page=2&per_page=10",
-			conf: dynamic.RuntimeConfiguration{
+			conf: runtime.Configuration{
 				Routers: generateHTTPRouters(5),
 			},
 			expected: expected{
@@ -129,7 +130,7 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "all routers, pagination, 10 results overall, 10 res per page, want page 2",
 			path: "/api/http/routers?page=2&per_page=10",
-			conf: dynamic.RuntimeConfiguration{
+			conf: runtime.Configuration{
 				Routers: generateHTTPRouters(10),
 			},
 			expected: expected{
@@ -139,8 +140,8 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "one router by id",
 			path: "/api/http/routers/bar@myprovider",
-			conf: dynamic.RuntimeConfiguration{
-				Routers: map[string]*dynamic.RouterInfo{
+			conf: runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
 					"bar@myprovider": {
 						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
@@ -160,8 +161,8 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "one router by id, that does not exist",
 			path: "/api/http/routers/foo@myprovider",
-			conf: dynamic.RuntimeConfiguration{
-				Routers: map[string]*dynamic.RouterInfo{
+			conf: runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
 					"bar@myprovider": {
 						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
@@ -179,7 +180,7 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "one router by id, but no config",
 			path: "/api/http/routers/foo@myprovider",
-			conf: dynamic.RuntimeConfiguration{},
+			conf: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusNotFound,
 			},
@@ -187,7 +188,7 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "all services, but no config",
 			path: "/api/http/services",
-			conf: dynamic.RuntimeConfiguration{},
+			conf: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusOK,
 				nextPage:   "1",
@@ -197,10 +198,10 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "all services",
 			path: "/api/http/services",
-			conf: dynamic.RuntimeConfiguration{
-				Services: map[string]*dynamic.ServiceInfo{
-					"bar@myprovider": func() *dynamic.ServiceInfo {
-						si := &dynamic.ServiceInfo{
+			conf: runtime.Configuration{
+				Services: map[string]*runtime.ServiceInfo{
+					"bar@myprovider": func() *runtime.ServiceInfo {
+						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.LoadBalancerService{
 									Servers: []dynamic.Server{
@@ -215,8 +216,8 @@ func TestHandler_HTTP(t *testing.T) {
 						si.UpdateServerStatus("http://127.0.0.1", "UP")
 						return si
 					}(),
-					"baz@myprovider": func() *dynamic.ServiceInfo {
-						si := &dynamic.ServiceInfo{
+					"baz@myprovider": func() *runtime.ServiceInfo {
+						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.LoadBalancerService{
 									Servers: []dynamic.Server{
@@ -242,10 +243,10 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "all services, 1 res per page, want page 2",
 			path: "/api/http/services?page=2&per_page=1",
-			conf: dynamic.RuntimeConfiguration{
-				Services: map[string]*dynamic.ServiceInfo{
-					"bar@myprovider": func() *dynamic.ServiceInfo {
-						si := &dynamic.ServiceInfo{
+			conf: runtime.Configuration{
+				Services: map[string]*runtime.ServiceInfo{
+					"bar@myprovider": func() *runtime.ServiceInfo {
+						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.LoadBalancerService{
 									Servers: []dynamic.Server{
@@ -260,8 +261,8 @@ func TestHandler_HTTP(t *testing.T) {
 						si.UpdateServerStatus("http://127.0.0.1", "UP")
 						return si
 					}(),
-					"baz@myprovider": func() *dynamic.ServiceInfo {
-						si := &dynamic.ServiceInfo{
+					"baz@myprovider": func() *runtime.ServiceInfo {
+						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.LoadBalancerService{
 									Servers: []dynamic.Server{
@@ -276,8 +277,8 @@ func TestHandler_HTTP(t *testing.T) {
 						si.UpdateServerStatus("http://127.0.0.2", "UP")
 						return si
 					}(),
-					"test@myprovider": func() *dynamic.ServiceInfo {
-						si := &dynamic.ServiceInfo{
+					"test@myprovider": func() *runtime.ServiceInfo {
+						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.LoadBalancerService{
 									Servers: []dynamic.Server{
@@ -303,10 +304,10 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "one service by id",
 			path: "/api/http/services/bar@myprovider",
-			conf: dynamic.RuntimeConfiguration{
-				Services: map[string]*dynamic.ServiceInfo{
-					"bar@myprovider": func() *dynamic.ServiceInfo {
-						si := &dynamic.ServiceInfo{
+			conf: runtime.Configuration{
+				Services: map[string]*runtime.ServiceInfo{
+					"bar@myprovider": func() *runtime.ServiceInfo {
+						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.LoadBalancerService{
 									Servers: []dynamic.Server{
@@ -331,10 +332,10 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "one service by id, that does not exist",
 			path: "/api/http/services/nono@myprovider",
-			conf: dynamic.RuntimeConfiguration{
-				Services: map[string]*dynamic.ServiceInfo{
-					"bar@myprovider": func() *dynamic.ServiceInfo {
-						si := &dynamic.ServiceInfo{
+			conf: runtime.Configuration{
+				Services: map[string]*runtime.ServiceInfo{
+					"bar@myprovider": func() *runtime.ServiceInfo {
+						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
 								LoadBalancer: &dynamic.LoadBalancerService{
 									Servers: []dynamic.Server{
@@ -358,7 +359,7 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "one service by id, but no config",
 			path: "/api/http/services/foo@myprovider",
-			conf: dynamic.RuntimeConfiguration{},
+			conf: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusNotFound,
 			},
@@ -366,7 +367,7 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "all middlewares, but no config",
 			path: "/api/http/middlewares",
-			conf: dynamic.RuntimeConfiguration{},
+			conf: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusOK,
 				nextPage:   "1",
@@ -376,8 +377,8 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "all middlewares",
 			path: "/api/http/middlewares",
-			conf: dynamic.RuntimeConfiguration{
-				Middlewares: map[string]*dynamic.MiddlewareInfo{
+			conf: runtime.Configuration{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
 					"auth@myprovider": {
 						Middleware: &dynamic.Middleware{
 							BasicAuth: &dynamic.BasicAuth{
@@ -413,8 +414,8 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "all middlewares, 1 res per page, want page 2",
 			path: "/api/http/middlewares?page=2&per_page=1",
-			conf: dynamic.RuntimeConfiguration{
-				Middlewares: map[string]*dynamic.MiddlewareInfo{
+			conf: runtime.Configuration{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
 					"auth@myprovider": {
 						Middleware: &dynamic.Middleware{
 							BasicAuth: &dynamic.BasicAuth{
@@ -450,8 +451,8 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "one middleware by id",
 			path: "/api/http/middlewares/auth@myprovider",
-			conf: dynamic.RuntimeConfiguration{
-				Middlewares: map[string]*dynamic.MiddlewareInfo{
+			conf: runtime.Configuration{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
 					"auth@myprovider": {
 						Middleware: &dynamic.Middleware{
 							BasicAuth: &dynamic.BasicAuth{
@@ -486,8 +487,8 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "one middleware by id, that does not exist",
 			path: "/api/http/middlewares/foo@myprovider",
-			conf: dynamic.RuntimeConfiguration{
-				Middlewares: map[string]*dynamic.MiddlewareInfo{
+			conf: runtime.Configuration{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
 					"auth@myprovider": {
 						Middleware: &dynamic.Middleware{
 							BasicAuth: &dynamic.BasicAuth{
@@ -505,7 +506,7 @@ func TestHandler_HTTP(t *testing.T) {
 		{
 			desc: "one middleware by id, but no config",
 			path: "/api/http/middlewares/foo@myprovider",
-			conf: dynamic.RuntimeConfiguration{},
+			conf: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusNotFound,
 			},
@@ -563,10 +564,10 @@ func TestHandler_HTTP(t *testing.T) {
 	}
 }
 
-func generateHTTPRouters(nbRouters int) map[string]*dynamic.RouterInfo {
-	routers := make(map[string]*dynamic.RouterInfo, nbRouters)
+func generateHTTPRouters(nbRouters int) map[string]*runtime.RouterInfo {
+	routers := make(map[string]*runtime.RouterInfo, nbRouters)
 	for i := 0; i < nbRouters; i++ {
-		routers[fmt.Sprintf("bar%2d@myprovider", i)] = &dynamic.RouterInfo{
+		routers[fmt.Sprintf("bar%2d@myprovider", i)] = &runtime.RouterInfo{
 			Router: &dynamic.Router{
 				EntryPoints: []string{"web"},
 				Service:     "foo-service@myprovider",

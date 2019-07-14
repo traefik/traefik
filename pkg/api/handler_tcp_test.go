@@ -9,6 +9,7 @@ import (
 
 	"github.com/containous/mux"
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,13 +25,13 @@ func TestHandler_TCP(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		path     string
-		conf     dynamic.RuntimeConfiguration
+		conf     runtime.Configuration
 		expected expected
 	}{
 		{
 			desc: "all TCP routers, but no config",
 			path: "/api/tcp/routers",
-			conf: dynamic.RuntimeConfiguration{},
+			conf: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusOK,
 				nextPage:   "1",
@@ -40,8 +41,8 @@ func TestHandler_TCP(t *testing.T) {
 		{
 			desc: "all TCP routers",
 			path: "/api/tcp/routers",
-			conf: dynamic.RuntimeConfiguration{
-				TCPRouters: map[string]*dynamic.TCPRouterInfo{
+			conf: runtime.Configuration{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
 					"test@myprovider": {
 						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
@@ -70,8 +71,8 @@ func TestHandler_TCP(t *testing.T) {
 		{
 			desc: "all TCP routers, pagination, 1 res per page, want page 2",
 			path: "/api/tcp/routers?page=2&per_page=1",
-			conf: dynamic.RuntimeConfiguration{
-				TCPRouters: map[string]*dynamic.TCPRouterInfo{
+			conf: runtime.Configuration{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
 					"bar@myprovider": {
 						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
@@ -104,8 +105,8 @@ func TestHandler_TCP(t *testing.T) {
 		{
 			desc: "one TCP router by id",
 			path: "/api/tcp/routers/bar@myprovider",
-			conf: dynamic.RuntimeConfiguration{
-				TCPRouters: map[string]*dynamic.TCPRouterInfo{
+			conf: runtime.Configuration{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
 					"bar@myprovider": {
 						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
@@ -123,8 +124,8 @@ func TestHandler_TCP(t *testing.T) {
 		{
 			desc: "one TCP router by id, that does not exist",
 			path: "/api/tcp/routers/foo@myprovider",
-			conf: dynamic.RuntimeConfiguration{
-				TCPRouters: map[string]*dynamic.TCPRouterInfo{
+			conf: runtime.Configuration{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
 					"bar@myprovider": {
 						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
@@ -141,7 +142,7 @@ func TestHandler_TCP(t *testing.T) {
 		{
 			desc: "one TCP router by id, but no config",
 			path: "/api/tcp/routers/bar@myprovider",
-			conf: dynamic.RuntimeConfiguration{},
+			conf: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusNotFound,
 			},
@@ -149,7 +150,7 @@ func TestHandler_TCP(t *testing.T) {
 		{
 			desc: "all tcp services, but no config",
 			path: "/api/tcp/services",
-			conf: dynamic.RuntimeConfiguration{},
+			conf: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusOK,
 				nextPage:   "1",
@@ -159,8 +160,8 @@ func TestHandler_TCP(t *testing.T) {
 		{
 			desc: "all tcp services",
 			path: "/api/tcp/services",
-			conf: dynamic.RuntimeConfiguration{
-				TCPServices: map[string]*dynamic.TCPServiceInfo{
+			conf: runtime.Configuration{
+				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"bar@myprovider": {
 						TCPService: &dynamic.TCPService{
 							LoadBalancer: &dynamic.TCPLoadBalancerService{
@@ -196,8 +197,8 @@ func TestHandler_TCP(t *testing.T) {
 		{
 			desc: "all tcp services, 1 res per page, want page 2",
 			path: "/api/tcp/services?page=2&per_page=1",
-			conf: dynamic.RuntimeConfiguration{
-				TCPServices: map[string]*dynamic.TCPServiceInfo{
+			conf: runtime.Configuration{
+				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"bar@myprovider": {
 						TCPService: &dynamic.TCPService{
 							LoadBalancer: &dynamic.TCPLoadBalancerService{
@@ -244,8 +245,8 @@ func TestHandler_TCP(t *testing.T) {
 		{
 			desc: "one tcp service by id",
 			path: "/api/tcp/services/bar@myprovider",
-			conf: dynamic.RuntimeConfiguration{
-				TCPServices: map[string]*dynamic.TCPServiceInfo{
+			conf: runtime.Configuration{
+				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"bar@myprovider": {
 						TCPService: &dynamic.TCPService{
 							LoadBalancer: &dynamic.TCPLoadBalancerService{
@@ -268,8 +269,8 @@ func TestHandler_TCP(t *testing.T) {
 		{
 			desc: "one tcp service by id, that does not exist",
 			path: "/api/tcp/services/nono@myprovider",
-			conf: dynamic.RuntimeConfiguration{
-				TCPServices: map[string]*dynamic.TCPServiceInfo{
+			conf: runtime.Configuration{
+				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"bar@myprovider": {
 						TCPService: &dynamic.TCPService{
 							LoadBalancer: &dynamic.TCPLoadBalancerService{
@@ -291,7 +292,7 @@ func TestHandler_TCP(t *testing.T) {
 		{
 			desc: "one tcp service by id, but no config",
 			path: "/api/tcp/services/foo@myprovider",
-			conf: dynamic.RuntimeConfiguration{},
+			conf: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusNotFound,
 			},

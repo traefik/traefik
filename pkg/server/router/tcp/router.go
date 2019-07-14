@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/rules"
 	"github.com/containous/traefik/pkg/server/internal"
@@ -16,7 +16,7 @@ import (
 )
 
 // NewManager Creates a new Manager
-func NewManager(conf *dynamic.RuntimeConfiguration,
+func NewManager(conf *runtime.Configuration,
 	serviceManager *tcpservice.Manager,
 	httpHandlers map[string]http.Handler,
 	httpsHandlers map[string]http.Handler,
@@ -37,23 +37,23 @@ type Manager struct {
 	httpHandlers   map[string]http.Handler
 	httpsHandlers  map[string]http.Handler
 	tlsManager     *traefiktls.Manager
-	conf           *dynamic.RuntimeConfiguration
+	conf           *runtime.Configuration
 }
 
-func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*dynamic.TCPRouterInfo {
+func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*runtime.TCPRouterInfo {
 	if m.conf != nil {
 		return m.conf.GetTCPRoutersByEntryPoints(ctx, entryPoints)
 	}
 
-	return make(map[string]map[string]*dynamic.TCPRouterInfo)
+	return make(map[string]map[string]*runtime.TCPRouterInfo)
 }
 
-func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*dynamic.RouterInfo {
+func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
 	if m.conf != nil {
 		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
 	}
 
-	return make(map[string]map[string]*dynamic.RouterInfo)
+	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
 // BuildHandlers builds the handlers for the given entrypoints
@@ -79,7 +79,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 	return entryPointHandlers
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*dynamic.TCPRouterInfo, configsHTTP map[string]*dynamic.RouterInfo, handlerHTTP http.Handler, handlerHTTPS http.Handler) (*tcp.Router, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP http.Handler, handlerHTTPS http.Handler) (*tcp.Router, error) {
 	router := &tcp.Router{}
 	router.HTTPHandler(handlerHTTP)
 	const defaultTLSConfigName = "default"

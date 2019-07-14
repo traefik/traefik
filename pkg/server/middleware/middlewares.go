@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/middlewares/addprefix"
 	"github.com/containous/traefik/pkg/middlewares/auth"
 	"github.com/containous/traefik/pkg/middlewares/buffering"
@@ -39,7 +39,7 @@ const (
 
 // Builder the middleware builder
 type Builder struct {
-	configs        map[string]*dynamic.MiddlewareInfo
+	configs        map[string]*runtime.MiddlewareInfo
 	serviceBuilder serviceBuilder
 }
 
@@ -48,7 +48,7 @@ type serviceBuilder interface {
 }
 
 // NewBuilder creates a new Builder
-func NewBuilder(configs map[string]*dynamic.MiddlewareInfo, serviceBuilder serviceBuilder) *Builder {
+func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder serviceBuilder) *Builder {
 	return &Builder{configs: configs, serviceBuilder: serviceBuilder}
 }
 

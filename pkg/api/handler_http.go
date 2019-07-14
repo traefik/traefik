@@ -7,25 +7,25 @@ import (
 	"strconv"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/log"
 )
 
 type routerRepresentation struct {
-	*dynamic.RouterInfo
+	*runtime.RouterInfo
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
 
 type serviceRepresentation struct {
-	*dynamic.ServiceInfo
+	*runtime.ServiceInfo
 	ServerStatus map[string]string `json:"serverStatus,omitempty"`
 	Name         string            `json:"name,omitempty"`
 	Provider     string            `json:"provider,omitempty"`
 }
 
 type middlewareRepresentation struct {
-	*dynamic.MiddlewareInfo
+	*runtime.MiddlewareInfo
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }

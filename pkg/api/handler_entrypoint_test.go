@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -198,7 +198,7 @@ func TestHandler_EntryPoints(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			handler := New(test.conf, &dynamic.RuntimeConfiguration{})
+			handler := New(test.conf, &runtime.Configuration{})
 			router := mux.NewRouter()
 			handler.Append(router)
 

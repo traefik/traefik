@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -443,7 +443,7 @@ func (th *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func TestLBStatusUpdater(t *testing.T) {
 	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
-	svInfo := &dynamic.ServiceInfo{}
+	svInfo := &runtime.ServiceInfo{}
 	lbsu := NewLBStatusUpdater(lb, svInfo)
 	newServer, err := url.Parse("http://foo.com")
 	assert.Nil(t, err)

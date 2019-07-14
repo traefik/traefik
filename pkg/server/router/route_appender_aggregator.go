@@ -6,7 +6,7 @@ import (
 	"github.com/containous/alice"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/pkg/api"
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/metrics"
@@ -20,7 +20,7 @@ type chainBuilder interface {
 
 // NewRouteAppenderAggregator Creates a new RouteAppenderAggregator
 func NewRouteAppenderAggregator(ctx context.Context, chainBuilder chainBuilder, conf static.Configuration,
-	entryPointName string, runtimeConfiguration *dynamic.RuntimeConfiguration) *RouteAppenderAggregator {
+	entryPointName string, runtimeConfiguration *runtime.Configuration) *RouteAppenderAggregator {
 	aggregator := &RouteAppenderAggregator{}
 
 	if conf.Providers != nil && conf.Providers.Rest != nil {

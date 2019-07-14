@@ -10,6 +10,7 @@ import (
 
 	"github.com/containous/alice"
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/healthcheck"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
@@ -26,7 +27,7 @@ const (
 )
 
 // NewManager creates a new Manager
-func NewManager(configs map[string]*dynamic.ServiceInfo, defaultRoundTripper http.RoundTripper) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper) *Manager {
 	return &Manager{
 		bufferPool:          newBufferPool(),
 		defaultRoundTripper: defaultRoundTripper,
@@ -40,7 +41,7 @@ type Manager struct {
 	bufferPool          httputil.BufferPool
 	defaultRoundTripper http.RoundTripper
 	balancers           map[string][]healthcheck.BalancerHandler
-	configs             map[string]*dynamic.ServiceInfo
+	configs             map[string]*runtime.ServiceInfo
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.

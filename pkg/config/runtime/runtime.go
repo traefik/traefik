@@ -1,4 +1,4 @@
-package dynamic
+package runtime
 
 import (
 	"context"
@@ -6,17 +6,19 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/log"
 )
 
+// Status of the router/service
 const (
-	RuntimeStatusEnabled  = "enabled"
-	RuntimeStatusDisabled = "disabled"
-	RuntimeStatusWarning  = "warning"
+	StatusEnabled  = "enabled"
+	StatusDisabled = "disabled"
+	StatusWarning  = "warning"
 )
 
-// RuntimeConfiguration holds the information about the currently running traefik instance.
-type RuntimeConfiguration struct {
+// Configuration holds the information about the currently running traefik instance.
+type Configuration struct {
 	Routers     map[string]*RouterInfo     `json:"routers,omitempty"`
 	Middlewares map[string]*MiddlewareInfo `json:"middlewares,omitempty"`
 	Services    map[string]*ServiceInfo    `json:"services,omitempty"`
@@ -24,20 +26,20 @@ type RuntimeConfiguration struct {
 	TCPServices map[string]*TCPServiceInfo `json:"tcpServices,omitempty"`
 }
 
-// NewRuntimeConfig returns a RuntimeConfiguration initialized with the given conf. It never returns nil.
-func NewRuntimeConfig(conf Configuration) *RuntimeConfiguration {
+// NewConfig returns a Configuration initialized with the given conf. It never returns nil.
+func NewConfig(conf dynamic.Configuration) *Configuration {
 	if conf.HTTP == nil && conf.TCP == nil {
-		return &RuntimeConfiguration{}
+		return &Configuration{}
 	}
 
-	runtimeConfig := &RuntimeConfiguration{}
+	runtimeConfig := &Configuration{}
 
 	if conf.HTTP != nil {
 		routers := conf.HTTP.Routers
 		if len(routers) > 0 {
 			runtimeConfig.Routers = make(map[string]*RouterInfo, len(routers))
 			for k, v := range routers {
-				runtimeConfig.Routers[k] = &RouterInfo{Router: v, Status: RuntimeStatusEnabled}
+				runtimeConfig.Routers[k] = &RouterInfo{Router: v, Status: StatusEnabled}
 			}
 		}
 
@@ -45,7 +47,7 @@ func NewRuntimeConfig(conf Configuration) *RuntimeConfiguration {
 		if len(services) > 0 {
 			runtimeConfig.Services = make(map[string]*ServiceInfo, len(services))
 			for k, v := range services {
-				runtimeConfig.Services[k] = &ServiceInfo{Service: v, Status: RuntimeStatusEnabled}
+				runtimeConfig.Services[k] = &ServiceInfo{Service: v, Status: StatusEnabled}
 			}
 		}
 
@@ -79,7 +81,7 @@ func NewRuntimeConfig(conf Configuration) *RuntimeConfiguration {
 
 // PopulateUsedBy populates all the UsedBy lists of the underlying fields of r,
 // based on the relations between the included services, routers, and middlewares.
-func (r *RuntimeConfiguration) PopulateUsedBy() {
+func (r *Configuration) PopulateUsedBy() {
 	if r == nil {
 		return
 	}
@@ -89,7 +91,7 @@ func (r *RuntimeConfiguration) PopulateUsedBy() {
 	for routerName, routerInfo := range r.Routers {
 		// lazily initialize Status in case caller forgot to do it
 		if routerInfo.Status == "" {
-			routerInfo.Status = RuntimeStatusEnabled
+			routerInfo.Status = StatusEnabled
 		}
 
 		providerName := getProviderName(routerName)
@@ -116,7 +118,7 @@ func (r *RuntimeConfiguration) PopulateUsedBy() {
 	for k, serviceInfo := range r.Services {
 		// lazily initialize Status in case caller forgot to do it
 		if serviceInfo.Status == "" {
-			serviceInfo.Status = RuntimeStatusEnabled
+			serviceInfo.Status = StatusEnabled
 		}
 
 		sort.Strings(r.Services[k].UsedBy)
@@ -155,7 +157,7 @@ func contains(entryPoints []string, entryPointName string) bool {
 }
 
 // GetRoutersByEntryPoints returns all the http routers by entry points name and routers name
-func (r *RuntimeConfiguration) GetRoutersByEntryPoints(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*RouterInfo {
+func (r *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*RouterInfo {
 	entryPointsRouters := make(map[string]map[string]*RouterInfo)
 
 	for rtName, rt := range r.Routers {
@@ -186,7 +188,7 @@ func (r *RuntimeConfiguration) GetRoutersByEntryPoints(ctx context.Context, entr
 }
 
 // GetTCPRoutersByEntryPoints returns all the tcp routers by entry points name and routers name
-func (r *RuntimeConfiguration) GetTCPRoutersByEntryPoints(ctx context.Context, entryPoints []string) map[string]map[string]*TCPRouterInfo {
+func (r *Configuration) GetTCPRoutersByEntryPoints(ctx context.Context, entryPoints []string) map[string]map[string]*TCPRouterInfo {
 	entryPointsRouters := make(map[string]map[string]*TCPRouterInfo)
 
 	for rtName, rt := range r.TCPRouters {
@@ -215,7 +217,7 @@ func (r *RuntimeConfiguration) GetTCPRoutersByEntryPoints(ctx context.Context, e
 
 // RouterInfo holds information about a currently running HTTP router
 type RouterInfo struct {
-	*Router // dynamic configuration
+	*dynamic.Router // dynamic configuration
 	// Err contains all the errors that occurred during router's creation.
 	Err []string `json:"error,omitempty"`
 	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
@@ -235,25 +237,25 @@ func (r *RouterInfo) AddError(err error, critical bool) {
 
 	r.Err = append(r.Err, err.Error())
 	if critical {
-		r.Status = RuntimeStatusDisabled
+		r.Status = StatusDisabled
 		return
 	}
 
 	// only set it to "warning" if not already in a worse state
-	if r.Status != RuntimeStatusDisabled {
-		r.Status = RuntimeStatusWarning
+	if r.Status != StatusDisabled {
+		r.Status = StatusWarning
 	}
 }
 
 // TCPRouterInfo holds information about a currently running TCP router
 type TCPRouterInfo struct {
-	*TCPRouter        // dynamic configuration
-	Err        string `json:"error,omitempty"` // initialization error
+	*dynamic.TCPRouter        // dynamic configuration
+	Err                string `json:"error,omitempty"` // initialization error
 }
 
 // MiddlewareInfo holds information about a currently running middleware
 type MiddlewareInfo struct {
-	*Middleware // dynamic configuration
+	*dynamic.Middleware // dynamic configuration
 	// Err contains all the errors that occurred during service creation.
 	Err    []string `json:"error,omitempty"`
 	UsedBy []string `json:"usedBy,omitempty"` // list of routers and services using that middleware
@@ -273,7 +275,7 @@ func (m *MiddlewareInfo) AddError(err error) {
 
 // ServiceInfo holds information about a currently running service
 type ServiceInfo struct {
-	*Service // dynamic configuration
+	*dynamic.Service // dynamic configuration
 	// Err contains all the errors that occurred during service creation.
 	Err []string `json:"error,omitempty"`
 	// Status reports whether the service is disabled, in a warning state, or all good (enabled).
@@ -297,13 +299,13 @@ func (s *ServiceInfo) AddError(err error, critical bool) {
 
 	s.Err = append(s.Err, err.Error())
 	if critical {
-		s.Status = RuntimeStatusDisabled
+		s.Status = StatusDisabled
 		return
 	}
 
 	// only set it to "warning" if not already in a worse state
-	if s.Status != RuntimeStatusDisabled {
-		s.Status = RuntimeStatusWarning
+	if s.Status != StatusDisabled {
+		s.Status = StatusWarning
 	}
 }
 
@@ -338,9 +340,9 @@ func (s *ServiceInfo) GetAllStatus() map[string]string {
 
 // TCPServiceInfo holds information about a currently running TCP service
 type TCPServiceInfo struct {
-	*TCPService          // dynamic configuration
-	Err         error    `json:"error,omitempty"`  // initialization error
-	UsedBy      []string `json:"usedBy,omitempty"` // list of routers using that service
+	*dynamic.TCPService          // dynamic configuration
+	Err                 error    `json:"error,omitempty"`  // initialization error
+	UsedBy              []string `json:"usedBy,omitempty"` // list of routers using that service
 }
 
 func getProviderName(elementName string) string {

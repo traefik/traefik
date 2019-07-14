@@ -7,18 +7,18 @@ import (
 	"strconv"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/log"
 )
 
 type tcpRouterRepresentation struct {
-	*dynamic.TCPRouterInfo
+	*runtime.TCPRouterInfo
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
 
 type tcpServiceRepresentation struct {
-	*dynamic.TCPServiceInfo
+	*runtime.TCPServiceInfo
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
