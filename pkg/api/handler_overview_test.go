@@ -55,13 +55,26 @@ func TestHandler_Overview(t *testing.T) {
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
 							LoadBalancer: &dynamic.LoadBalancerService{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://127.0.0.1",
-									},
-								},
+								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
 							},
 						},
+						Status: dynamic.RuntimeStatusEnabled,
+					},
+					"bar-service@myprovider": {
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
+							},
+						},
+						Status: dynamic.RuntimeStatusWarning,
+					},
+					"fii-service@myprovider": {
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
+							},
+						},
+						Status: dynamic.RuntimeStatusDisabled,
 					},
 				},
 				Middlewares: map[string]*dynamic.MiddlewareInfo{
@@ -85,6 +98,7 @@ func TestHandler_Overview(t *testing.T) {
 								Prefix: "/toto",
 							},
 						},
+						Err: []string{"error"},
 					},
 				},
 				Routers: map[string]*dynamic.RouterInfo{
@@ -95,6 +109,7 @@ func TestHandler_Overview(t *testing.T) {
 							Rule:        "Host(`foo.bar`)",
 							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
 						},
+						Status: dynamic.RuntimeStatusEnabled,
 					},
 					"test@myprovider": {
 						Router: &dynamic.Router{
@@ -103,6 +118,16 @@ func TestHandler_Overview(t *testing.T) {
 							Rule:        "Host(`foo.bar.other`)",
 							Middlewares: []string{"addPrefixTest", "auth"},
 						},
+						Status: dynamic.RuntimeStatusWarning,
+					},
+					"foo@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar.other`)",
+							Middlewares: []string{"addPrefixTest", "auth"},
+						},
+						Status: dynamic.RuntimeStatusDisabled,
 					},
 				},
 				TCPServices: map[string]*dynamic.TCPServiceInfo{

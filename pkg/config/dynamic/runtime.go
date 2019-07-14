@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	statusEnabled  = "enabled"
-	statusDisabled = "disabled"
-	statusWarning  = "warning"
+	RuntimeStatusEnabled  = "enabled"
+	RuntimeStatusDisabled = "disabled"
+	RuntimeStatusWarning  = "warning"
 )
 
 // RuntimeConfiguration holds the information about the currently running traefik instance.
@@ -37,7 +37,7 @@ func NewRuntimeConfig(conf Configuration) *RuntimeConfiguration {
 		if len(routers) > 0 {
 			runtimeConfig.Routers = make(map[string]*RouterInfo, len(routers))
 			for k, v := range routers {
-				runtimeConfig.Routers[k] = &RouterInfo{Router: v, Status: statusEnabled}
+				runtimeConfig.Routers[k] = &RouterInfo{Router: v, Status: RuntimeStatusEnabled}
 			}
 		}
 
@@ -45,7 +45,7 @@ func NewRuntimeConfig(conf Configuration) *RuntimeConfiguration {
 		if len(services) > 0 {
 			runtimeConfig.Services = make(map[string]*ServiceInfo, len(services))
 			for k, v := range services {
-				runtimeConfig.Services[k] = &ServiceInfo{Service: v, Status: statusEnabled}
+				runtimeConfig.Services[k] = &ServiceInfo{Service: v, Status: RuntimeStatusEnabled}
 			}
 		}
 
@@ -89,7 +89,7 @@ func (r *RuntimeConfiguration) PopulateUsedBy() {
 	for routerName, routerInfo := range r.Routers {
 		// lazily initialize Status in case caller forgot to do it
 		if routerInfo.Status == "" {
-			routerInfo.Status = statusEnabled
+			routerInfo.Status = RuntimeStatusEnabled
 		}
 
 		providerName := getProviderName(routerName)
@@ -116,7 +116,7 @@ func (r *RuntimeConfiguration) PopulateUsedBy() {
 	for k, serviceInfo := range r.Services {
 		// lazily initialize Status in case caller forgot to do it
 		if serviceInfo.Status == "" {
-			serviceInfo.Status = statusEnabled
+			serviceInfo.Status = RuntimeStatusEnabled
 		}
 
 		sort.Strings(r.Services[k].UsedBy)
@@ -235,13 +235,13 @@ func (r *RouterInfo) AddError(err error, critical bool) {
 
 	r.Err = append(r.Err, err.Error())
 	if critical {
-		r.Status = statusDisabled
+		r.Status = RuntimeStatusDisabled
 		return
 	}
 
 	// only set it to "warning" if not already in a worse state
-	if r.Status != statusDisabled {
-		r.Status = statusWarning
+	if r.Status != RuntimeStatusDisabled {
+		r.Status = RuntimeStatusWarning
 	}
 }
 
@@ -297,13 +297,13 @@ func (s *ServiceInfo) AddError(err error, critical bool) {
 
 	s.Err = append(s.Err, err.Error())
 	if critical {
-		s.Status = statusDisabled
+		s.Status = RuntimeStatusDisabled
 		return
 	}
 
 	// only set it to "warning" if not already in a worse state
-	if s.Status != statusDisabled {
-		s.Status = statusWarning
+	if s.Status != RuntimeStatusDisabled {
+		s.Status = RuntimeStatusWarning
 	}
 }
 

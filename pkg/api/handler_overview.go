@@ -62,30 +62,38 @@ func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
 
 func getHTTPRouterSection(routers map[string]*dynamic.RouterInfo) *section {
 	var countErrors int
+	var countWarnings int
 	for _, rt := range routers {
-		if rt.Err != "" {
+		switch rt.Status {
+		case dynamic.RuntimeStatusDisabled:
 			countErrors++
+		case dynamic.RuntimeStatusWarning:
+			countWarnings++
 		}
 	}
 
 	return &section{
 		Total:    len(routers),
-		Warnings: 0, // TODO
+		Warnings: countWarnings,
 		Errors:   countErrors,
 	}
 }
 
 func getHTTPServiceSection(services map[string]*dynamic.ServiceInfo) *section {
 	var countErrors int
+	var countWarnings int
 	for _, svc := range services {
-		if svc.Err != nil {
+		switch svc.Status {
+		case dynamic.RuntimeStatusDisabled:
 			countErrors++
+		case dynamic.RuntimeStatusWarning:
+			countWarnings++
 		}
 	}
 
 	return &section{
 		Total:    len(services),
-		Warnings: 0, // TODO
+		Warnings: countWarnings,
 		Errors:   countErrors,
 	}
 }
@@ -100,7 +108,7 @@ func getHTTPMiddlewareSection(middlewares map[string]*dynamic.MiddlewareInfo) *s
 
 	return &section{
 		Total:    len(middlewares),
-		Warnings: 0, // TODO
+		Warnings: 0,
 		Errors:   countErrors,
 	}
 }
