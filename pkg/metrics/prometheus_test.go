@@ -279,7 +279,7 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	// Reset state of global promState.
 	defer promState.reset()
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{})
+	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{OnEntryPoints: true, OnServices: true})
 	defer promRegistry.Unregister(promState)
 
 	configurations := make(dynamic.Configurations)
@@ -335,7 +335,7 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 	// Reset state of global promState.
 	defer promState.reset()
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{})
+	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{OnEntryPoints: true, OnServices: true})
 	defer promRegistry.Unregister(promState)
 
 	labelNamesValues := []string{
