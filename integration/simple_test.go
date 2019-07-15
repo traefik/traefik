@@ -526,7 +526,10 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.
 }
 
 func (s *SimpleSuite) TestRouterConfigErrors(c *check.C) {
-	cmd, output := s.traefikCmd(withConfigFile("fixtures/router_errors.toml"))
+	file := s.adaptFile(c, "fixtures/router_errors.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
 	err := cmd.Start()
@@ -547,7 +550,10 @@ func (s *SimpleSuite) TestRouterConfigErrors(c *check.C) {
 }
 
 func (s *SimpleSuite) TestServiceConfigErrors(c *check.C) {
-	cmd, output := s.traefikCmd(withConfigFile("fixtures/service_errors.toml"))
+	file := s.adaptFile(c, "fixtures/service_errors.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
 	err := cmd.Start()
