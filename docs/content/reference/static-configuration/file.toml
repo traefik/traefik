@@ -120,12 +120,18 @@
     buckets = [42.0, 42.0]
     entryPoint = "foobar"
     middlewares = ["foobar", "foobar"]
+    onEntryPoints = true
+    onServices = true
   [metrics.dataDog]
     address = "foobar"
     pushInterval = "10s"
+    onEntryPoints = true
+    onServices = true
   [metrics.statsD]
     address = "foobar"
     pushInterval = "10s"
+    onEntryPoints = true
+    onServices = true
   [metrics.influxDB]
     address = "foobar"
     protocol = "foobar"
@@ -134,6 +140,8 @@
     retentionPolicy = "foobar"
     username = "foobar"
     password = "foobar"
+    onEntryPoints = true
+    onServices = true
 
 [ping]
   entryPoint = "foobar"
