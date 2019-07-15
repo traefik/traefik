@@ -64,14 +64,14 @@ func NewConfig(conf dynamic.Configuration) *Configuration {
 		if len(conf.TCP.Routers) > 0 {
 			runtimeConfig.TCPRouters = make(map[string]*TCPRouterInfo, len(conf.TCP.Routers))
 			for k, v := range conf.TCP.Routers {
-				runtimeConfig.TCPRouters[k] = &TCPRouterInfo{TCPRouter: v}
+				runtimeConfig.TCPRouters[k] = &TCPRouterInfo{TCPRouter: v, Status: StatusEnabled}
 			}
 		}
 
 		if len(conf.TCP.Services) > 0 {
 			runtimeConfig.TCPServices = make(map[string]*TCPServiceInfo, len(conf.TCP.Services))
 			for k, v := range conf.TCP.Services {
-				runtimeConfig.TCPServices[k] = &TCPServiceInfo{TCPService: v}
+				runtimeConfig.TCPServices[k] = &TCPServiceInfo{TCPService: v, Status: StatusEnabled}
 			}
 		}
 	}
@@ -129,6 +129,11 @@ func (r *Configuration) PopulateUsedBy() {
 	}
 
 	for routerName, routerInfo := range r.TCPRouters {
+		// lazily initialize Status in case caller forgot to do it
+		if routerInfo.Status == "" {
+			routerInfo.Status = StatusEnabled
+		}
+
 		providerName := getProviderName(routerName)
 		if providerName == "" {
 			logger.WithField(log.RouterName, routerName).Error("tcp router name is not fully qualified")
@@ -142,7 +147,12 @@ func (r *Configuration) PopulateUsedBy() {
 		r.TCPServices[serviceName].UsedBy = append(r.TCPServices[serviceName].UsedBy, routerName)
 	}
 
-	for k := range r.TCPServices {
+	for k, serviceInfo := range r.TCPServices {
+		// lazily initialize Status in case caller forgot to do it
+		if serviceInfo.Status == "" {
+			serviceInfo.Status = StatusEnabled
+		}
+
 		sort.Strings(r.TCPServices[k].UsedBy)
 	}
 }
@@ -251,6 +261,10 @@ func (r *RouterInfo) AddError(err error, critical bool) {
 type TCPRouterInfo struct {
 	*dynamic.TCPRouter        // dynamic configuration
 	Err                string `json:"error,omitempty"` // initialization error
+	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
+	// If not in "enabled" state, the reason for it should be in the list of Err.
+	// It is the caller's responsibility to set the initial status.
+	Status string `json:"status,omitempty"`
 }
 
 // MiddlewareInfo holds information about a currently running middleware
@@ -340,9 +354,13 @@ func (s *ServiceInfo) GetAllStatus() map[string]string {
 
 // TCPServiceInfo holds information about a currently running TCP service
 type TCPServiceInfo struct {
-	*dynamic.TCPService          // dynamic configuration
-	Err                 error    `json:"error,omitempty"`  // initialization error
-	UsedBy              []string `json:"usedBy,omitempty"` // list of routers using that service
+	*dynamic.TCPService       // dynamic configuration
+	Err                 error `json:"error,omitempty"` // initialization error
+	// Status reports whether the service is disabled, in a warning state, or all good (enabled).
+	// If not in "enabled" state, the reason for it should be in the list of Err.
+	// It is the caller's responsibility to set the initial status.
+	Status string   `json:"status,omitempty"`
+	UsedBy []string `json:"usedBy,omitempty"` // list of routers using that service
 }
 
 func getProviderName(elementName string) string {

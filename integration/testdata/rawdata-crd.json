@@ -90,7 +90,8 @@
 			"tls": {
 				"passthrough": false,
 				"options": "default/mytlsoption"
-			}
+			},
+			"status": "enabled"
 		}
 	},
 	"tcpServices": {
@@ -105,6 +106,7 @@
 					}
 				]
 			},
+			"status": "enabled",
 			"usedBy": [
 				"default/test3.crd-673acf455cb2dab0b43a@kubernetescrd"
 			]

@@ -786,6 +786,7 @@ func TestGetTCPRoutersByEntryPoints(t *testing.T) {
 							Service:     "foo-service@myprovider",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
+						Status: "enabled",
 					},
 					"foobar": {
 						TCPRouter: &dynamic.TCPRouter{
@@ -793,6 +794,7 @@ func TestGetTCPRoutersByEntryPoints(t *testing.T) {
 							Service:     "foobar-service@myprovider",
 							Rule:        "HostSNI(`bar.foobar`)",
 						},
+						Status: "enabled",
 					},
 				},
 			},
@@ -848,6 +850,7 @@ func TestGetTCPRoutersByEntryPoints(t *testing.T) {
 							Service:     "foo-service@myprovider",
 							Rule:        "HostSNI(`bar.foo`)",
 						},
+						Status: "enabled",
 					},
 					"foobar": {
 						TCPRouter: &dynamic.TCPRouter{
@@ -855,6 +858,7 @@ func TestGetTCPRoutersByEntryPoints(t *testing.T) {
 							Service:     "foobar-service@myprovider",
 							Rule:        "HostSNI(`bar.foobar`)",
 						},
+						Status: "enabled",
 					},
 				},
 				"webs": {
@@ -865,6 +869,7 @@ func TestGetTCPRoutersByEntryPoints(t *testing.T) {
 							Service:     "bar-service@myprovider",
 							Rule:        "HostSNI(`foo.bar`)",
 						},
+						Status: "enabled",
 					},
 					"foobar": {
 						TCPRouter: &dynamic.TCPRouter{
@@ -872,6 +877,7 @@ func TestGetTCPRoutersByEntryPoints(t *testing.T) {
 							Service:     "foobar-service@myprovider",
 							Rule:        "HostSNI(`bar.foobar`)",
 						},
+						Status: "enabled",
 					},
 				},
 			},

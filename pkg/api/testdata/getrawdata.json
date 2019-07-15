@@ -64,11 +64,11 @@
 				],
 				"passHostHeader": false
 			},
+			"status": "enabled",
 			"usedBy": [
 				"bar@myprovider",
 				"test@myprovider"
-			],
-			"status": "enabled"
+			]
 		}
 	},
 	"tcpRouters": {
@@ -77,14 +77,16 @@
 				"web"
 			],
 			"service": "tcpfoo-service@myprovider",
-			"rule": "HostSNI(`foo.bar`)"
+			"rule": "HostSNI(`foo.bar`)",
+			"status": "enabled"
 		},
 		"tcptest@myprovider": {
 			"entryPoints": [
 				"web"
 			],
 			"service": "tcpfoo-service@myprovider",
-			"rule": "HostSNI(`foo.bar.other`)"
+			"rule": "HostSNI(`foo.bar.other`)",
+			"status": "enabled"
 		}
 	},
 	"tcpServices": {
@@ -96,6 +98,7 @@
 					}
 				]
 			},
+			"status": "enabled",
 			"usedBy": [
 				"tcpbar@myprovider",
 				"tcptest@myprovider"
