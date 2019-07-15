@@ -540,6 +540,15 @@ Set instana-agent's log level. ('error','warn','info','debug') (Default: ```info
 `--tracing.jaeger`:  
 Settings for Jaeger. (Default: ```false```)
 
+`--tracing.jaeger.collector.endpoint`:  
+Instructs reporter to send spans to jaeger-collector at this URL.
+
+`--tracing.jaeger.collector.password`:  
+Password for basic http authentication when sending spans to jaeger-collector.
+
+`--tracing.jaeger.collector.user`:  
+User for basic http authentication when sending spans to jaeger-collector.
+
 `--tracing.jaeger.gen128bit`:  
 Generate 128 bit span IDs. (Default: ```false```)
 
@@ -547,7 +556,7 @@ Generate 128 bit span IDs. (Default: ```false```)
 Set jaeger-agent's host:port that the reporter will used. (Default: ```127.0.0.1:6831```)
 
 `--tracing.jaeger.propagation`:  
-Which propgation format to use (jaeger/b3). (Default: ```jaeger```)
+Which propagation format to use (jaeger/b3). (Default: ```jaeger```)
 
 `--tracing.jaeger.samplingparam`:  
 Set the sampling parameter. (Default: ```1.000000```)
