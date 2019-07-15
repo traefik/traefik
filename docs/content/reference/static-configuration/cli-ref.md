@@ -183,10 +183,10 @@ DataDog metrics exporter type. (Default: ```false```)
 `--metrics.datadog.address`:  
 DataDog's address. (Default: ```localhost:8125```)
 
-`--metrics.datadog.onentrypoints`:
+`--metrics.datadog.onentrypoints`:  
 Enable metrics on entry points. (Default: ```true```)
 
-`--metrics.datadog.onservices`:
+`--metrics.datadog.onservices`:  
 Enable metrics on services. (Default: ```true```)
 
 `--metrics.datadog.pushinterval`:  
@@ -201,10 +201,10 @@ InfluxDB address. (Default: ```localhost:8089```)
 `--metrics.influxdb.database`:  
 InfluxDB database used when protocol is http.
 
-`--metrics.influxdb.onentrypoints`:
+`--metrics.influxdb.onentrypoints`:  
 Enable metrics on entry points. (Default: ```true```)
 
-`--metrics.influxdb.onservices`:
+`--metrics.influxdb.onservices`:  
 Enable metrics on services. (Default: ```true```)
 
 `--metrics.influxdb.password`:  
@@ -234,10 +234,10 @@ EntryPoint. (Default: ```traefik```)
 `--metrics.prometheus.middlewares`:  
 Middlewares.
 
-`--metrics.prometheus.onentrypoints`:
+`--metrics.prometheus.onentrypoints`:  
 Enable metrics on entry points. (Default: ```true```)
 
-`--metrics.prometheus.onservices`:
+`--metrics.prometheus.onservices`:  
 Enable metrics on services. (Default: ```true```)
 
 `--metrics.statsd`:  
@@ -246,10 +246,10 @@ StatsD metrics exporter type. (Default: ```false```)
 `--metrics.statsd.address`:  
 StatsD address. (Default: ```localhost:8125```)
 
-`--metrics.statsd.onentrypoints`:
+`--metrics.statsd.onentrypoints`:  
 Enable metrics on entry points. (Default: ```true```)
 
-`--metrics.statsd.onservices`:
+`--metrics.statsd.onservices`:  
 Enable metrics on services. (Default: ```true```)
 
 `--metrics.statsd.pushinterval`:  
