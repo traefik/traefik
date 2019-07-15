@@ -192,7 +192,6 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 					{Name: "debugLogGeneratedTemplate", Value: "true"},
 					{Name: "directory", Value: "foobar"},
 					{Name: "filename", Value: "foobar"},
-					{Name: "traefikFile", Value: "foobar"},
 					{Name: "watch", Value: "true"}}},
 				{Name: "kubernetesCRD",
 					Children: []*parser.Node{
@@ -435,7 +434,6 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 					{Name: "debugLogGeneratedTemplate", Value: "true"},
 					{Name: "directory", Value: "foobar"},
 					{Name: "filename", Value: "foobar"},
-					{Name: "traefikFile", Value: "foobar"},
 					{Name: "watch", Value: "true"}}},
 				{Name: "kubernetesCRD",
 					Children: []*parser.Node{

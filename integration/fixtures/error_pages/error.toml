@@ -9,8 +9,8 @@
   [entryPoints.web]
     address = ":8080"
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 

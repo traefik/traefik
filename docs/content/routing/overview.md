@@ -35,6 +35,7 @@ Static configuration:
 [providers]
   # Enable the file provider to define routers / middlewares / services in a file
   [providers.file]
+    filename = "dynamic_conf.toml"
 ```
 
 ```yaml tab="File (YAML)"
@@ -45,7 +46,8 @@ entryPoints:
 
 providers:
   # Enable the file provider to define routers / middlewares / services in a file
-  file: {}
+  file:
+    filename: dynamic_conf.yml
 ```
 
 ```bash tab="CLI"
@@ -53,7 +55,7 @@ providers:
 --entryPoints.web.address=:8081
 
 # Enable the file provider to define routers / middlewares / services in a file
---providers.file
+--providers.file.filename=dynamic_conf.toml
 ```
 
 Dynamic configuration:
@@ -124,7 +126,7 @@ http:
 
         Static configuration:
         
-        ```toml tab="TOML"
+        ```toml tab="File (TOML)"
         [entryPoints]
           [entryPoints.web]
             # Listen on port 8081 for incoming requests
@@ -133,16 +135,18 @@ http:
         [providers]
           # Enable the file provider to define routers / middlewares / services in a file
           [providers.file]
+            filename = "dynamic_conf.toml"
         ```
         
-        ```yaml tab="YAML"
+        ```yaml tab="File (YAML)"
         entryPoints:
           web:
             # Listen on port 8081 for incoming requests
             address: :8081
         providers:
           # Enable the file provider to define routers / middlewares / services in a file
-          file: {}
+          file:
+            filename: dynamic_conf.yml
         ```
         
         ```bash tab="CLI"
@@ -150,7 +154,7 @@ http:
         --entryPoints.web.address=":8081"
         
         # Enable the file provider to define routers / middlewares / services in a file
-        --providers.file
+        --providers.file.filename=dynamic_conf.toml
         ```
         
         Dynamic configuration:

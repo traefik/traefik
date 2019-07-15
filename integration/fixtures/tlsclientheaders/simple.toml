@@ -19,6 +19,7 @@
     watch = true
 
   [providers.file]
+    filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 

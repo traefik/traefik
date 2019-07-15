@@ -285,9 +285,6 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 `--providers.docker.watch`:  
 Watch provider. (Default: ```true```)
 
-`--providers.file`:  
-Enable File backend with default settings. (Default: ```false```)
-
 `--providers.file.debugloggeneratedtemplate`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
 

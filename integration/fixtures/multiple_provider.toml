@@ -17,6 +17,7 @@
     exposedByDefault = false
 
   [providers.file]
+    filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 

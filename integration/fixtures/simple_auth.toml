@@ -18,6 +18,9 @@
 [ping]
 
 [providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
 
 [http.middlewares]
   [http.middlewares.authentication.basicAuth]
