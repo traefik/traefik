@@ -119,6 +119,12 @@ nav:
   - 'Observability':
       - 'Logs': 'observability/logs.md'
       - 'Access Logs': 'observability/access-logs.md'
+      - 'Metrics':
+          - 'Overview': 'observability/metrics/overview.md'
+          - 'DataDog': 'observability/metrics/datadog.md'
+          - 'InfluxDB': 'observability/metrics/influxdb.md'
+          - 'Prometheus': 'observability/metrics/prometheus.md'
+          - 'StatsD': 'observability/metrics/statsd.md'
       - 'Tracing':
           - 'Overview': 'observability/tracing/overview.md'
           - 'Jaeger': 'observability/tracing/jaeger.md'
