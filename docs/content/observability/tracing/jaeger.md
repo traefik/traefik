@@ -13,7 +13,7 @@ To enable the Jaeger:
 ```
 
 !!! warning
-    Traefik is only able to send data over the compact thrift protocol to the [Jaeger agent](https://www.jaegertracing.io/docs/deployment/#agent)
+    Traefik is able to send data over the compact thrift protocol to the [Jaeger agent](https://www.jaegertracing.io/docs/deployment/#agent)
     or a [Jaeger collector](https://www.jaegertracing.io/docs/deployment/#collectors).
 
 #### `samplingServerURL`
@@ -155,12 +155,12 @@ Collector Endpoint instructs reporter to send spans to jaeger-collector at this 
 ```toml tab="File"
 [tracing]
   [tracing.jaeger]
-    collectorEndpoint = "http://127.0.0.1:14268/"
+    collectorEndpoint = "http://127.0.0.1:14268/api/traces?format=jaeger.thrift"
 ```
 
 ```bash tab="CLI"
 --tracing
---tracing.jaeger.collectorEndpoint="http://127.0.0.1:14268/"
+--tracing.jaeger.collectorEndpoint="http://127.0.0.1:14268/api/traces?format=jaeger.thrift"
 ```
 
 #### `user`

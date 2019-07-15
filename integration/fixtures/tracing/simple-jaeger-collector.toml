@@ -1,0 +1,75 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[api]
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[tracing]
+  servicename = "tracing"
+  [tracing.jaeger]
+    samplingType = "const"
+    samplingParam = 1.0
+    samplingServerURL = "http://{{.IP}}:5778/sampling"
+    collectorEndpoint = "http://{{.IP}}:14268/api/traces?format=jaeger.thrift"
+
+[providers]
+  [providers.file]
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    Service = "service1"
+    Middlewares = ["retry", "ratelimit"]
+    Rule = "Path(`/ratelimit`)"
+  [http.routers.router2]
+    Service = "service2"
+    Middlewares = ["retry"]
+    Rule = "Path(`/retry`)"
+  [http.routers.router3]
+    Service = "service3"
+    Middlewares = ["retry", "basic-auth"]
+    Rule = "Path(`/auth`)"
+
+[http.middlewares]
+  [http.middlewares.retry.retry]
+    attempts = 3
+  [http.middlewares.basic-auth.basicAuth]
+    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+  [http.middlewares.ratelimit.rateLimit]
+    extractorfunc = "client.ip"
+      [http.middlewares.ratelimit.rateLimit.rateSet.rateset1]
+        period = "60s"
+        average = 4
+        burst = 5
+      [http.middlewares.ratelimit.rateLimit.rateSet.rateset2]
+        period = "3s"
+        average = 1
+        burst = 2
+
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+      passHostHeader = true
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+
+  [http.services.service2]
+    passHostHeader = true
+    [http.services.service2.loadBalancer]
+      [[http.services.service2.loadBalancer.servers]]
+        url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+
+  [http.services.service3]
+    passHostHeader = true
+    [http.services.service3.loadBalancer]
+      [[http.services.service3.loadBalancer.servers]]
+        url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
