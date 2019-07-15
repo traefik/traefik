@@ -33,7 +33,6 @@ spec:
             - --entrypoints.web.Address=:8000
             - --entrypoints.websecure.Address=:4443
             - --providers.kubernetescrd
-            - --providers.kubernetescrd.trace
             - --acme
             - --acme.acmelogging
             - --acme.tlschallenge
