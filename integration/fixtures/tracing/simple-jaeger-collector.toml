@@ -19,8 +19,8 @@
     samplingServerURL = "http://{{.IP}}:5778/sampling"
     collectorEndpoint = "http://{{.IP}}:14268/api/traces?format=jaeger.thrift"
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 
