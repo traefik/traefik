@@ -39,21 +39,30 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		statsdTicker = initStatsdTicker(ctx, config)
 	}
 
-	return &standardRegistry{
-		enabled:                        true,
-		configReloadsCounter:           statsdClient.NewCounter(statsdConfigReloadsName, 1.0),
-		configReloadsFailureCounter:    statsdClient.NewCounter(statsdConfigReloadsFailureName, 1.0),
-		lastConfigReloadSuccessGauge:   statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
-		lastConfigReloadFailureGauge:   statsdClient.NewGauge(statsdLastConfigReloadFailureName),
-		entryPointReqsCounter:          statsdClient.NewCounter(statsdEntryPointReqsName, 1.0),
-		entryPointReqDurationHistogram: statsdClient.NewTiming(statsdEntryPointReqDurationName, 1.0),
-		entryPointOpenConnsGauge:       statsdClient.NewGauge(statsdEntryPointOpenConnsName),
-		serviceReqsCounter:             statsdClient.NewCounter(statsdMetricsServiceReqsName, 1.0),
-		serviceReqDurationHistogram:    statsdClient.NewTiming(statsdMetricsServiceLatencyName, 1.0),
-		serviceRetriesCounter:          statsdClient.NewCounter(statsdRetriesTotalName, 1.0),
-		serviceOpenConnsGauge:          statsdClient.NewGauge(statsdOpenConnsName),
-		serviceServerUpGauge:           statsdClient.NewGauge(statsdServerUpName),
+	registry := &standardRegistry{
+		configReloadsCounter:         statsdClient.NewCounter(statsdConfigReloadsName, 1.0),
+		configReloadsFailureCounter:  statsdClient.NewCounter(statsdConfigReloadsFailureName, 1.0),
+		lastConfigReloadSuccessGauge: statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
+		lastConfigReloadFailureGauge: statsdClient.NewGauge(statsdLastConfigReloadFailureName),
 	}
+
+	if config.OnEntryPoints {
+		registry.epEnabled = config.OnEntryPoints
+		registry.entryPointReqsCounter = statsdClient.NewCounter(statsdEntryPointReqsName, 1.0)
+		registry.entryPointReqDurationHistogram = statsdClient.NewTiming(statsdEntryPointReqDurationName, 1.0)
+		registry.entryPointOpenConnsGauge = statsdClient.NewGauge(statsdEntryPointOpenConnsName)
+	}
+
+	if config.OnServices {
+		registry.svcEnabled = config.OnServices
+		registry.serviceReqsCounter = statsdClient.NewCounter(statsdMetricsServiceReqsName, 1.0)
+		registry.serviceReqDurationHistogram = statsdClient.NewTiming(statsdMetricsServiceLatencyName, 1.0)
+		registry.serviceRetriesCounter = statsdClient.NewCounter(statsdRetriesTotalName, 1.0)
+		registry.serviceOpenConnsGauge = statsdClient.NewGauge(statsdOpenConnsName)
+		registry.serviceServerUpGauge = statsdClient.NewGauge(statsdServerUpName)
+	}
+
+	return registry
 }
 
 // initStatsdTicker initializes metrics pusher and creates a statsdClient if not created already

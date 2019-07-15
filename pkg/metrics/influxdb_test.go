@@ -20,11 +20,11 @@ func TestInfluxDB(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ":8089", PushInterval: types.Duration(time.Second)})
+	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ":8089", PushInterval: types.Duration(time.Second), OnEntryPoints: true, OnServices: true})
 	defer StopInfluxDB()
 
-	if !influxDBRegistry.IsEnabled() {
-		t.Fatalf("InfluxDB registry must be enabled")
+	if !influxDBRegistry.IsEpEnabled() || !influxDBRegistry.IsSvcEnabled() {
+		t.Fatalf("InfluxDB registry must be epEnabled")
 	}
 
 	expectedService := []string{
@@ -76,15 +76,15 @@ func TestInfluxDBHTTP(t *testing.T) {
 		}
 		bodyStr := string(body)
 		c <- &bodyStr
-		fmt.Fprintln(w, "ok")
+		_, _ = fmt.Fprintln(w, "ok")
 	}))
 	defer ts.Close()
 
-	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ts.URL, Protocol: "http", PushInterval: types.Duration(time.Second), Database: "test", RetentionPolicy: "autogen"})
+	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ts.URL, Protocol: "http", PushInterval: types.Duration(time.Second), Database: "test", RetentionPolicy: "autogen", OnEntryPoints: true, OnServices: true})
 	defer StopInfluxDB()
 
-	if !influxDBRegistry.IsEnabled() {
-		t.Fatalf("InfluxDB registry must be enabled")
+	if !influxDBRegistry.IsEpEnabled() || !influxDBRegistry.IsSvcEnabled() {
+		t.Fatalf("InfluxDB registry must be epEnabled")
 	}
 
 	expectedService := []string{

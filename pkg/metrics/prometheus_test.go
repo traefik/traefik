@@ -104,10 +104,10 @@ func TestPrometheus(t *testing.T) {
 	// Reset state of global promState.
 	defer promState.reset()
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{})
+	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{OnEntryPoints: true, OnServices: true})
 	defer promRegistry.Unregister(promState)
 
-	if !prometheusRegistry.IsEnabled() {
+	if !prometheusRegistry.IsEpEnabled() || !prometheusRegistry.IsSvcEnabled() {
 		t.Errorf("PrometheusRegistry should return true for IsEnabled()")
 	}
 

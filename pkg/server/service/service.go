@@ -92,7 +92,7 @@ func (m *Manager) getLoadBalancerServiceHandler(
 		return accesslog.NewFieldHandler(next, accesslog.ServiceName, serviceName, accesslog.AddServiceFields), nil
 	}
 	chain := alice.New()
-	if m.metricsRegistry != nil && m.metricsRegistry.IsEnabled() {
+	if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
 		chain = chain.Append(metricsMiddle.WrapServiceHandler(ctx, m.metricsRegistry, serviceName))
 	}
 

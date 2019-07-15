@@ -7,8 +7,10 @@ import (
 
 // Registry has to implemented by any system that wants to monitor and expose metrics.
 type Registry interface {
-	// IsEnabled shows whether metrics instrumentation is enabled.
-	IsEnabled() bool
+	// IsEpEnabled shows whether metrics instrumentation is enabled on entry points.
+	IsEpEnabled() bool
+	// IsSvcEnabled shows whether metrics instrumentation is enabled on services.
+	IsSvcEnabled() bool
 
 	// server metrics
 	ConfigReloadsCounter() metrics.Counter
@@ -43,9 +45,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var configReloadsFailureCounter []metrics.Counter
 	var lastConfigReloadSuccessGauge []metrics.Gauge
 	var lastConfigReloadFailureGauge []metrics.Gauge
-	var entrypointReqsCounter []metrics.Counter
-	var entrypointReqDurationHistogram []metrics.Histogram
-	var entrypointOpenConnsGauge []metrics.Gauge
+	var entryPointReqsCounter []metrics.Counter
+	var entryPointReqDurationHistogram []metrics.Histogram
+	var entryPointOpenConnsGauge []metrics.Gauge
 	var serviceReqsCounter []metrics.Counter
 	var serviceReqDurationHistogram []metrics.Histogram
 	var serviceOpenConnsGauge []metrics.Gauge
@@ -66,13 +68,13 @@ func NewMultiRegistry(registries []Registry) Registry {
 			lastConfigReloadFailureGauge = append(lastConfigReloadFailureGauge, r.LastConfigReloadFailureGauge())
 		}
 		if r.EntryPointReqsCounter() != nil {
-			entrypointReqsCounter = append(entrypointReqsCounter, r.EntryPointReqsCounter())
+			entryPointReqsCounter = append(entryPointReqsCounter, r.EntryPointReqsCounter())
 		}
 		if r.EntryPointReqDurationHistogram() != nil {
-			entrypointReqDurationHistogram = append(entrypointReqDurationHistogram, r.EntryPointReqDurationHistogram())
+			entryPointReqDurationHistogram = append(entryPointReqDurationHistogram, r.EntryPointReqDurationHistogram())
 		}
 		if r.EntryPointOpenConnsGauge() != nil {
-			entrypointOpenConnsGauge = append(entrypointOpenConnsGauge, r.EntryPointOpenConnsGauge())
+			entryPointOpenConnsGauge = append(entryPointOpenConnsGauge, r.EntryPointOpenConnsGauge())
 		}
 		if r.ServiceReqsCounter() != nil {
 			serviceReqsCounter = append(serviceReqsCounter, r.ServiceReqsCounter())
@@ -92,14 +94,15 @@ func NewMultiRegistry(registries []Registry) Registry {
 	}
 
 	return &standardRegistry{
-		enabled:                        len(registries) > 0,
+		epEnabled:                      len(entryPointReqsCounter) > 0 || len(entryPointReqDurationHistogram) > 0 || len(entryPointOpenConnsGauge) > 0,
+		svcEnabled:                     len(serviceReqsCounter) > 0 || len(serviceReqDurationHistogram) > 0 || len(serviceOpenConnsGauge) > 0 || len(serviceRetriesCounter) > 0 || len(serviceServerUpGauge) > 0,
 		configReloadsCounter:           multi.NewCounter(configReloadsCounter...),
 		configReloadsFailureCounter:    multi.NewCounter(configReloadsFailureCounter...),
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		lastConfigReloadFailureGauge:   multi.NewGauge(lastConfigReloadFailureGauge...),
-		entryPointReqsCounter:          multi.NewCounter(entrypointReqsCounter...),
-		entryPointReqDurationHistogram: multi.NewHistogram(entrypointReqDurationHistogram...),
-		entryPointOpenConnsGauge:       multi.NewGauge(entrypointOpenConnsGauge...),
+		entryPointReqsCounter:          multi.NewCounter(entryPointReqsCounter...),
+		entryPointReqDurationHistogram: multi.NewHistogram(entryPointReqDurationHistogram...),
+		entryPointOpenConnsGauge:       multi.NewGauge(entryPointOpenConnsGauge...),
 		serviceReqsCounter:             multi.NewCounter(serviceReqsCounter...),
 		serviceReqDurationHistogram:    multi.NewHistogram(serviceReqDurationHistogram...),
 		serviceOpenConnsGauge:          multi.NewGauge(serviceOpenConnsGauge...),
@@ -109,7 +112,8 @@ func NewMultiRegistry(registries []Registry) Registry {
 }
 
 type standardRegistry struct {
-	enabled                        bool
+	epEnabled                      bool
+	svcEnabled                     bool
 	configReloadsCounter           metrics.Counter
 	configReloadsFailureCounter    metrics.Counter
 	lastConfigReloadSuccessGauge   metrics.Gauge
@@ -124,8 +128,12 @@ type standardRegistry struct {
 	serviceServerUpGauge           metrics.Gauge
 }
 
-func (r *standardRegistry) IsEnabled() bool {
-	return r.enabled
+func (r *standardRegistry) IsEpEnabled() bool {
+	return r.epEnabled
+}
+
+func (r *standardRegistry) IsSvcEnabled() bool {
+	return r.svcEnabled
 }
 
 func (r *standardRegistry) ConfigReloadsCounter() metrics.Counter {

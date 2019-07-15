@@ -41,19 +41,26 @@ func RegisterDatadog(ctx context.Context, config *types.DataDog) Registry {
 	}
 
 	registry := &standardRegistry{
-		enabled:                        true,
-		configReloadsCounter:           datadogClient.NewCounter(ddConfigReloadsName, 1.0),
-		configReloadsFailureCounter:    datadogClient.NewCounter(ddConfigReloadsName, 1.0).With(ddConfigReloadsFailureTagName, "true"),
-		lastConfigReloadSuccessGauge:   datadogClient.NewGauge(ddLastConfigReloadSuccessName),
-		lastConfigReloadFailureGauge:   datadogClient.NewGauge(ddLastConfigReloadFailureName),
-		entryPointReqsCounter:          datadogClient.NewCounter(ddEntryPointReqsName, 1.0),
-		entryPointReqDurationHistogram: datadogClient.NewHistogram(ddEntryPointReqDurationName, 1.0),
-		entryPointOpenConnsGauge:       datadogClient.NewGauge(ddEntryPointOpenConnsName),
-		serviceReqsCounter:             datadogClient.NewCounter(ddMetricsServiceReqsName, 1.0),
-		serviceReqDurationHistogram:    datadogClient.NewHistogram(ddMetricsServiceLatencyName, 1.0),
-		serviceRetriesCounter:          datadogClient.NewCounter(ddRetriesTotalName, 1.0),
-		serviceOpenConnsGauge:          datadogClient.NewGauge(ddOpenConnsName),
-		serviceServerUpGauge:           datadogClient.NewGauge(ddServerUpName),
+		configReloadsCounter:         datadogClient.NewCounter(ddConfigReloadsName, 1.0),
+		configReloadsFailureCounter:  datadogClient.NewCounter(ddConfigReloadsName, 1.0).With(ddConfigReloadsFailureTagName, "true"),
+		lastConfigReloadSuccessGauge: datadogClient.NewGauge(ddLastConfigReloadSuccessName),
+		lastConfigReloadFailureGauge: datadogClient.NewGauge(ddLastConfigReloadFailureName),
+	}
+
+	if config.OnEntryPoints {
+		registry.epEnabled = config.OnEntryPoints
+		registry.entryPointReqsCounter = datadogClient.NewCounter(ddEntryPointReqsName, 1.0)
+		registry.entryPointReqDurationHistogram = datadogClient.NewHistogram(ddEntryPointReqDurationName, 1.0)
+		registry.entryPointOpenConnsGauge = datadogClient.NewGauge(ddEntryPointOpenConnsName)
+	}
+
+	if config.OnServices {
+		registry.svcEnabled = config.OnServices
+		registry.serviceReqsCounter = datadogClient.NewCounter(ddMetricsServiceReqsName, 1.0)
+		registry.serviceReqDurationHistogram = datadogClient.NewHistogram(ddMetricsServiceLatencyName, 1.0)
+		registry.serviceRetriesCounter = datadogClient.NewCounter(ddRetriesTotalName, 1.0)
+		registry.serviceOpenConnsGauge = datadogClient.NewGauge(ddOpenConnsName)
+		registry.serviceServerUpGauge = datadogClient.NewGauge(ddServerUpName)
 	}
 
 	return registry

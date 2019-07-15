@@ -54,21 +54,30 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		influxDBTicker = initInfluxDBTicker(ctx, config)
 	}
 
-	return &standardRegistry{
-		enabled:                        true,
-		configReloadsCounter:           influxDBClient.NewCounter(influxDBConfigReloadsName),
-		configReloadsFailureCounter:    influxDBClient.NewCounter(influxDBConfigReloadsFailureName),
-		lastConfigReloadSuccessGauge:   influxDBClient.NewGauge(influxDBLastConfigReloadSuccessName),
-		lastConfigReloadFailureGauge:   influxDBClient.NewGauge(influxDBLastConfigReloadFailureName),
-		entryPointReqsCounter:          influxDBClient.NewCounter(influxDBEntryPointReqsName),
-		entryPointReqDurationHistogram: influxDBClient.NewHistogram(influxDBEntryPointReqDurationName),
-		entryPointOpenConnsGauge:       influxDBClient.NewGauge(influxDBEntryPointOpenConnsName),
-		serviceReqsCounter:             influxDBClient.NewCounter(influxDBMetricsServiceReqsName),
-		serviceReqDurationHistogram:    influxDBClient.NewHistogram(influxDBMetricsServiceLatencyName),
-		serviceRetriesCounter:          influxDBClient.NewCounter(influxDBRetriesTotalName),
-		serviceOpenConnsGauge:          influxDBClient.NewGauge(influxDBOpenConnsName),
-		serviceServerUpGauge:           influxDBClient.NewGauge(influxDBServerUpName),
+	registry := &standardRegistry{
+		configReloadsCounter:         influxDBClient.NewCounter(influxDBConfigReloadsName),
+		configReloadsFailureCounter:  influxDBClient.NewCounter(influxDBConfigReloadsFailureName),
+		lastConfigReloadSuccessGauge: influxDBClient.NewGauge(influxDBLastConfigReloadSuccessName),
+		lastConfigReloadFailureGauge: influxDBClient.NewGauge(influxDBLastConfigReloadFailureName),
 	}
+
+	if config.OnEntryPoints {
+		registry.epEnabled = config.OnEntryPoints
+		registry.entryPointReqsCounter = influxDBClient.NewCounter(influxDBEntryPointReqsName)
+		registry.entryPointReqDurationHistogram = influxDBClient.NewHistogram(influxDBEntryPointReqDurationName)
+		registry.entryPointOpenConnsGauge = influxDBClient.NewGauge(influxDBEntryPointOpenConnsName)
+	}
+
+	if config.OnServices {
+		registry.svcEnabled = config.OnServices
+		registry.serviceReqsCounter = influxDBClient.NewCounter(influxDBMetricsServiceReqsName)
+		registry.serviceReqDurationHistogram = influxDBClient.NewHistogram(influxDBMetricsServiceLatencyName)
+		registry.serviceRetriesCounter = influxDBClient.NewCounter(influxDBRetriesTotalName)
+		registry.serviceOpenConnsGauge = influxDBClient.NewGauge(influxDBOpenConnsName)
+		registry.serviceServerUpGauge = influxDBClient.NewGauge(influxDBServerUpName)
+	}
+
+	return registry
 }
 
 // initInfluxDBTicker creates a influxDBClient

@@ -52,7 +52,7 @@ func (s *Server) loadConfiguration(configMsg dynamic.Message) {
 		listener(*configMsg.Configuration)
 	}
 
-	if s.metricsRegistry.IsEnabled() {
+	if s.metricsRegistry.IsEpEnabled() || s.metricsRegistry.IsSvcEnabled() {
 		var entrypoints []string
 		for key := range s.entryPointsTCP {
 			entrypoints = append(entrypoints, key)
@@ -137,7 +137,7 @@ func (s *Server) createHTTPHandlers(ctx context.Context, configuration *runtime.
 			chain = chain.Append(tracing.WrapEntryPointHandler(ctx, s.tracer, entryPointName))
 		}
 
-		if s.metricsRegistry.IsEnabled() {
+		if s.metricsRegistry.IsEpEnabled() {
 			chain = chain.Append(metricsmiddleware.WrapEntryPointHandler(ctx, s.metricsRegistry, entryPointName))
 		}
 

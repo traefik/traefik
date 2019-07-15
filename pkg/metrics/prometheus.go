@@ -120,72 +120,85 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		Help: "Last config reload failure",
 	}, []string{})
 
-	entrypointReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
-		Name: entryPointReqsTotalName,
-		Help: "How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.",
-	}, []string{"code", "method", "protocol", "entrypoint"})
-	entrypointReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
-		Name:    entryPointReqDurationName,
-		Help:    "How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
-		Buckets: buckets,
-	}, []string{"code", "method", "protocol", "entrypoint"})
-	entrypointOpenConns := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
-		Name: entryPointOpenConnsName,
-		Help: "How many open connections exist on an entrypoint, partitioned by method and protocol.",
-	}, []string{"method", "protocol", "entrypoint"})
-
-	serviceReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
-		Name: serviceReqsTotalName,
-		Help: "How many HTTP requests processed on a service, partitioned by status code, protocol, and method.",
-	}, []string{"code", "method", "protocol", "service"})
-	serviceReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
-		Name:    serviceReqDurationName,
-		Help:    "How long it took to process the request on a service, partitioned by status code, protocol, and method.",
-		Buckets: buckets,
-	}, []string{"code", "method", "protocol", "service"})
-	serviceOpenConns := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
-		Name: serviceOpenConnsName,
-		Help: "How many open connections exist on a service, partitioned by method and protocol.",
-	}, []string{"method", "protocol", "service"})
-	serviceRetries := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
-		Name: serviceRetriesTotalName,
-		Help: "How many request retries happened on a service.",
-	}, []string{"service"})
-	serviceServerUp := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
-		Name: serviceServerUpName,
-		Help: "service server is up, described by gauge value of 0 or 1.",
-	}, []string{"service", "url"})
-
 	promState.describers = []func(chan<- *stdprometheus.Desc){
 		configReloads.cv.Describe,
 		configReloadsFailures.cv.Describe,
 		lastConfigReloadSuccess.gv.Describe,
 		lastConfigReloadFailure.gv.Describe,
-		entrypointReqs.cv.Describe,
-		entrypointReqDurations.hv.Describe,
-		entrypointOpenConns.gv.Describe,
-		serviceReqs.cv.Describe,
-		serviceReqDurations.hv.Describe,
-		serviceOpenConns.gv.Describe,
-		serviceRetries.cv.Describe,
-		serviceServerUp.gv.Describe,
 	}
 
-	return &standardRegistry{
-		enabled:                        true,
-		configReloadsCounter:           configReloads,
-		configReloadsFailureCounter:    configReloadsFailures,
-		lastConfigReloadSuccessGauge:   lastConfigReloadSuccess,
-		lastConfigReloadFailureGauge:   lastConfigReloadFailure,
-		entryPointReqsCounter:          entrypointReqs,
-		entryPointReqDurationHistogram: entrypointReqDurations,
-		entryPointOpenConnsGauge:       entrypointOpenConns,
-		serviceReqsCounter:             serviceReqs,
-		serviceReqDurationHistogram:    serviceReqDurations,
-		serviceOpenConnsGauge:          serviceOpenConns,
-		serviceRetriesCounter:          serviceRetries,
-		serviceServerUpGauge:           serviceServerUp,
+	reg := &standardRegistry{
+		epEnabled:                    config.OnEntryPoints,
+		svcEnabled:                   config.OnServices,
+		configReloadsCounter:         configReloads,
+		configReloadsFailureCounter:  configReloadsFailures,
+		lastConfigReloadSuccessGauge: lastConfigReloadSuccess,
+		lastConfigReloadFailureGauge: lastConfigReloadFailure,
 	}
+
+	if config.OnEntryPoints {
+		entryPointReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: entryPointReqsTotalName,
+			Help: "How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.",
+		}, []string{"code", "method", "protocol", "entrypoint"})
+		entryPointReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
+			Name:    entryPointReqDurationName,
+			Help:    "How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
+			Buckets: buckets,
+		}, []string{"code", "method", "protocol", "entrypoint"})
+		entryPointOpenConns := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
+			Name: entryPointOpenConnsName,
+			Help: "How many open connections exist on an entrypoint, partitioned by method and protocol.",
+		}, []string{"method", "protocol", "entrypoint"})
+
+		promState.describers = append(promState.describers, []func(chan<- *stdprometheus.Desc){
+			entryPointReqs.cv.Describe,
+			entryPointReqDurations.hv.Describe,
+			entryPointOpenConns.gv.Describe,
+		}...)
+		reg.entryPointReqsCounter = entryPointReqs
+		reg.entryPointReqDurationHistogram = entryPointReqDurations
+		reg.entryPointOpenConnsGauge = entryPointOpenConns
+	}
+	if config.OnServices {
+		serviceReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: serviceReqsTotalName,
+			Help: "How many HTTP requests processed on a service, partitioned by status code, protocol, and method.",
+		}, []string{"code", "method", "protocol", "service"})
+		serviceReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
+			Name:    serviceReqDurationName,
+			Help:    "How long it took to process the request on a service, partitioned by status code, protocol, and method.",
+			Buckets: buckets,
+		}, []string{"code", "method", "protocol", "service"})
+		serviceOpenConns := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
+			Name: serviceOpenConnsName,
+			Help: "How many open connections exist on a service, partitioned by method and protocol.",
+		}, []string{"method", "protocol", "service"})
+		serviceRetries := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: serviceRetriesTotalName,
+			Help: "How many request retries happened on a service.",
+		}, []string{"service"})
+		serviceServerUp := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
+			Name: serviceServerUpName,
+			Help: "service server is up, described by gauge value of 0 or 1.",
+		}, []string{"service", "url"})
+
+		promState.describers = append(promState.describers, []func(chan<- *stdprometheus.Desc){
+			serviceReqs.cv.Describe,
+			serviceReqDurations.hv.Describe,
+			serviceOpenConns.gv.Describe,
+			serviceRetries.cv.Describe,
+			serviceServerUp.gv.Describe,
+		}...)
+
+		reg.serviceReqsCounter = serviceReqs
+		reg.serviceReqDurationHistogram = serviceReqDurations
+		reg.serviceOpenConnsGauge = serviceOpenConns
+		reg.serviceRetriesCounter = serviceRetries
+		reg.serviceServerUpGauge = serviceServerUp
+	}
+
+	return reg
 }
 
 func registerPromState(ctx context.Context) bool {
