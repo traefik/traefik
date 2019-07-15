@@ -148,5 +148,6 @@ nav:
           - 'Environment variables': 'reference/static-configuration/env.md'
       - 'Dynamic Configuration':
         - 'Docker': 'reference/dynamic-configuration/docker.md'
+        - 'Marathon': 'reference/dynamic-configuration/marathon.md'
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
         - 'File': 'reference/dynamic-configuration/file.md'
