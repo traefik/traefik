@@ -17,7 +17,8 @@
     samplingType = "const"
     samplingParam = 1.0
     samplingServerURL = "http://{{.IP}}:5778/sampling"
-    collectorEndpoint = "http://{{.IP}}:14268/api/traces?format=jaeger.thrift"
+    [tracing.jaeger.collector]
+      endpoint = "http://{{.IP}}:14268/api/traces?format=jaeger.thrift"
 
 [providers.file]
   filename = "{{ .SelfFilename }}"

@@ -146,7 +146,8 @@ This must be in lower-case to avoid mismatches when decoding incoming headers.
 --tracing.jaeger.traceContextHeaderName="uber-trace-id"
 ```
 
-#### `collectorEndpoint`
+### `collector`
+#### `endpoint`
 
 _Optional, Default=""_
 
@@ -154,13 +155,13 @@ Collector Endpoint instructs reporter to send spans to jaeger-collector at this 
 
 ```toml tab="File"
 [tracing]
-  [tracing.jaeger]
-    collectorEndpoint = "http://127.0.0.1:14268/api/traces?format=jaeger.thrift"
+  [tracing.jaeger.collector]
+    endpoint = "http://127.0.0.1:14268/api/traces?format=jaeger.thrift"
 ```
 
 ```bash tab="CLI"
 --tracing
---tracing.jaeger.collectorEndpoint="http://127.0.0.1:14268/api/traces?format=jaeger.thrift"
+--tracing.jaeger.collector.endpoint="http://127.0.0.1:14268/api/traces?format=jaeger.thrift"
 ```
 
 #### `user`
@@ -171,13 +172,13 @@ User instructs reporter to include a user for basic http authentication when sen
 
 ```toml tab="File"
 [tracing]
-  [tracing.jaeger]
+  [tracing.jaeger.collector]
     user = "my-user"
 ```
 
 ```bash tab="CLI"
 --tracing
---tracing.jaeger.user="my-user"
+--tracing.jaeger.collector.user="my-user"
 ```
 
 #### `password`
@@ -188,11 +189,11 @@ Password instructs reporter to include a password for basic http authentication 
 
 ```toml tab="File"
 [tracing]
-  [tracing.jaeger]
+  [tracing.jaeger.collector]
     password = "my-password"
 ```
 
 ```bash tab="CLI"
 --tracing
---tracing.jaeger.password="my-password"
+--tracing.jaeger.collector.password="my-password"
 ```
