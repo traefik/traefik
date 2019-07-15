@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	th "github.com/containous/traefik/pkg/testhelpers"
 	"github.com/containous/traefik/pkg/types"
@@ -253,7 +254,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			}
 
 			srv := NewServer(globalConfig, nil, entryPointsConfig, nil)
-			rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{HTTP: test.config(testServer.URL)})
+			rtConf := runtime.NewConfig(dynamic.Configuration{HTTP: test.config(testServer.URL)})
 			entryPoints, _ := srv.createHTTPHandlers(context.Background(), rtConf, []string{"http"})
 
 			responseRecorder := &httptest.ResponseRecorder{}

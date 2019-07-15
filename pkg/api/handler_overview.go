@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
 )
@@ -60,37 +60,45 @@ func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func getHTTPRouterSection(routers map[string]*dynamic.RouterInfo) *section {
+func getHTTPRouterSection(routers map[string]*runtime.RouterInfo) *section {
 	var countErrors int
+	var countWarnings int
 	for _, rt := range routers {
-		if rt.Err != "" {
+		switch rt.Status {
+		case runtime.StatusDisabled:
 			countErrors++
+		case runtime.StatusWarning:
+			countWarnings++
 		}
 	}
 
 	return &section{
 		Total:    len(routers),
-		Warnings: 0, // TODO
+		Warnings: countWarnings,
 		Errors:   countErrors,
 	}
 }
 
-func getHTTPServiceSection(services map[string]*dynamic.ServiceInfo) *section {
+func getHTTPServiceSection(services map[string]*runtime.ServiceInfo) *section {
 	var countErrors int
+	var countWarnings int
 	for _, svc := range services {
-		if svc.Err != nil {
+		switch svc.Status {
+		case runtime.StatusDisabled:
 			countErrors++
+		case runtime.StatusWarning:
+			countWarnings++
 		}
 	}
 
 	return &section{
 		Total:    len(services),
-		Warnings: 0, // TODO
+		Warnings: countWarnings,
 		Errors:   countErrors,
 	}
 }
 
-func getHTTPMiddlewareSection(middlewares map[string]*dynamic.MiddlewareInfo) *section {
+func getHTTPMiddlewareSection(middlewares map[string]*runtime.MiddlewareInfo) *section {
 	var countErrors int
 	for _, md := range middlewares {
 		if md.Err != nil {
@@ -100,12 +108,12 @@ func getHTTPMiddlewareSection(middlewares map[string]*dynamic.MiddlewareInfo) *s
 
 	return &section{
 		Total:    len(middlewares),
-		Warnings: 0, // TODO
+		Warnings: 0,
 		Errors:   countErrors,
 	}
 }
 
-func getTCPRouterSection(routers map[string]*dynamic.TCPRouterInfo) *section {
+func getTCPRouterSection(routers map[string]*runtime.TCPRouterInfo) *section {
 	var countErrors int
 	for _, rt := range routers {
 		if rt.Err != "" {
@@ -120,7 +128,7 @@ func getTCPRouterSection(routers map[string]*dynamic.TCPRouterInfo) *section {
 	}
 }
 
-func getTCPServiceSection(services map[string]*dynamic.TCPServiceInfo) *section {
+func getTCPServiceSection(services map[string]*runtime.TCPServiceInfo) *section {
 	var countErrors int
 	for _, svc := range services {
 		if svc.Err != nil {

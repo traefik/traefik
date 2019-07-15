@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
 	"github.com/containous/traefik/pkg/responsemodifiers"
@@ -298,7 +299,7 @@ func TestRouterManager_Get(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Services:    test.serviceConfig,
 					Routers:     test.routersConfig,
@@ -399,7 +400,7 @@ func TestAccessLog(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 
-			rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Services:    test.serviceConfig,
 					Routers:     test.routersConfig,
@@ -685,7 +686,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 			entryPoints := []string{"web"}
 
-			rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Services:    test.serviceConfig,
 					Routers:     test.routerConfig,
@@ -694,7 +695,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			})
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
-			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*dynamic.MiddlewareInfo{})
+			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
@@ -709,7 +710,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 				}
 			}
 			for _, v := range rtConf.Routers {
-				if v.Err != "" {
+				if len(v.Err) > 0 {
 					allErrors++
 				}
 			}
@@ -759,7 +760,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	}
 	entryPoints := []string{"web"}
 
-	rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+	rtConf := runtime.NewConfig(dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Services:    serviceConfig,
 			Routers:     routersConfig,
@@ -802,7 +803,7 @@ func BenchmarkService(b *testing.B) {
 		},
 	}
 
-	rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+	rtConf := runtime.NewConfig(dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Services: serviceConfig,
 		},

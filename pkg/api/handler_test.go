@@ -10,6 +10,7 @@ import (
 
 	"github.com/containous/mux"
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,14 +27,14 @@ func TestHandler_RawData(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		path     string
-		conf     dynamic.RuntimeConfiguration
+		conf     runtime.Configuration
 		expected expected
 	}{
 		{
 			desc: "Get rawdata",
 			path: "/api/rawdata",
-			conf: dynamic.RuntimeConfiguration{
-				Services: map[string]*dynamic.ServiceInfo{
+			conf: runtime.Configuration{
+				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
 							LoadBalancer: &dynamic.LoadBalancerService{
@@ -46,7 +47,7 @@ func TestHandler_RawData(t *testing.T) {
 						},
 					},
 				},
-				Middlewares: map[string]*dynamic.MiddlewareInfo{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
 					"auth@myprovider": {
 						Middleware: &dynamic.Middleware{
 							BasicAuth: &dynamic.BasicAuth{
@@ -69,7 +70,7 @@ func TestHandler_RawData(t *testing.T) {
 						},
 					},
 				},
-				Routers: map[string]*dynamic.RouterInfo{
+				Routers: map[string]*runtime.RouterInfo{
 					"bar@myprovider": {
 						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
@@ -87,7 +88,7 @@ func TestHandler_RawData(t *testing.T) {
 						},
 					},
 				},
-				TCPServices: map[string]*dynamic.TCPServiceInfo{
+				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"tcpfoo-service@myprovider": {
 						TCPService: &dynamic.TCPService{
 							LoadBalancer: &dynamic.TCPLoadBalancerService{
@@ -100,7 +101,7 @@ func TestHandler_RawData(t *testing.T) {
 						},
 					},
 				},
-				TCPRouters: map[string]*dynamic.TCPRouterInfo{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
 					"tcpbar@myprovider": {
 						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},

@@ -10,6 +10,7 @@ import (
 
 	"github.com/containous/alice"
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/healthcheck"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
@@ -26,7 +27,7 @@ const (
 )
 
 // NewManager creates a new Manager
-func NewManager(configs map[string]*dynamic.ServiceInfo, defaultRoundTripper http.RoundTripper) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper) *Manager {
 	return &Manager{
 		bufferPool:          newBufferPool(),
 		defaultRoundTripper: defaultRoundTripper,
@@ -40,7 +41,7 @@ type Manager struct {
 	bufferPool          httputil.BufferPool
 	defaultRoundTripper http.RoundTripper
 	balancers           map[string][]healthcheck.BalancerHandler
-	configs             map[string]*dynamic.ServiceInfo
+	configs             map[string]*runtime.ServiceInfo
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
@@ -58,13 +59,14 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 	// TODO Should handle multiple service types
 	// FIXME Check if the service is declared multiple times with different types
 	if conf.LoadBalancer == nil {
-		conf.Err = fmt.Errorf("the service %q doesn't have any load balancer", serviceName)
-		return nil, conf.Err
+		sErr := fmt.Errorf("the service %q doesn't have any load balancer", serviceName)
+		conf.AddError(sErr, true)
+		return nil, sErr
 	}
 
 	lb, err := m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
 	if err != nil {
-		conf.Err = err
+		conf.AddError(err, true)
 		return nil, err
 	}
 

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/middlewares/headers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -166,7 +167,7 @@ func TestBuilderBuild(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: test.conf,
 				},

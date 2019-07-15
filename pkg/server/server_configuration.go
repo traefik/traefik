@@ -10,6 +10,7 @@ import (
 	"github.com/containous/alice"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
@@ -65,7 +66,7 @@ func (s *Server) loadConfigurationTCP(configurations dynamic.Configurations) map
 
 	s.tlsManager.UpdateConfigs(conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
 
-	rtConf := dynamic.NewRuntimeConfig(conf)
+	rtConf := runtime.NewConfig(conf)
 	handlersNonTLS, handlersTLS := s.createHTTPHandlers(ctx, rtConf, entryPoints)
 	routersTCP := s.createTCPRouters(ctx, rtConf, entryPoints, handlersNonTLS, handlersTLS)
 	rtConf.PopulateUsedBy()
@@ -74,7 +75,7 @@ func (s *Server) loadConfigurationTCP(configurations dynamic.Configurations) map
 }
 
 // the given configuration must not be nil. its fields will get mutated.
-func (s *Server) createTCPRouters(ctx context.Context, configuration *dynamic.RuntimeConfiguration, entryPoints []string, handlers map[string]http.Handler, handlersTLS map[string]http.Handler) map[string]*tcpCore.Router {
+func (s *Server) createTCPRouters(ctx context.Context, configuration *runtime.Configuration, entryPoints []string, handlers map[string]http.Handler, handlersTLS map[string]http.Handler) map[string]*tcpCore.Router {
 	if configuration == nil {
 		return make(map[string]*tcpCore.Router)
 	}
@@ -87,7 +88,7 @@ func (s *Server) createTCPRouters(ctx context.Context, configuration *dynamic.Ru
 }
 
 // createHTTPHandlers returns, for the given configuration and entryPoints, the HTTP handlers for non-TLS connections, and for the TLS ones. the given configuration must not be nil. its fields will get mutated.
-func (s *Server) createHTTPHandlers(ctx context.Context, configuration *dynamic.RuntimeConfiguration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
+func (s *Server) createHTTPHandlers(ctx context.Context, configuration *runtime.Configuration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
 	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper)
 	middlewaresBuilder := middleware.NewBuilder(configuration.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(configuration.Middlewares)

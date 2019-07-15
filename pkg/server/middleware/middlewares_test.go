@@ -8,13 +8,14 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/server/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestBuilder_BuildChainNilConfig(t *testing.T) {
-	testConfig := map[string]*dynamic.MiddlewareInfo{
+	testConfig := map[string]*runtime.MiddlewareInfo{
 		"empty": {},
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil)
@@ -25,7 +26,7 @@ func TestBuilder_BuildChainNilConfig(t *testing.T) {
 }
 
 func TestBuilder_BuildChainNonExistentChain(t *testing.T) {
-	testConfig := map[string]*dynamic.MiddlewareInfo{
+	testConfig := map[string]*runtime.MiddlewareInfo{
 		"foobar": {},
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil)
@@ -264,7 +265,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 				ctx = internal.AddProviderInContext(ctx, "foobar@"+test.contextProvider)
 			}
 
-			rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: test.configuration,
 				},
@@ -315,7 +316,7 @@ func TestBuilder_buildConstructor(t *testing.T) {
 		},
 	}
 
-	rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+	rtConf := runtime.NewConfig(dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Middlewares: testConfig,
 		},

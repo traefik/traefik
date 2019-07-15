@@ -9,6 +9,7 @@ import (
 
 	"github.com/containous/mux"
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/provider/docker"
 	"github.com/containous/traefik/pkg/provider/file"
@@ -33,14 +34,14 @@ func TestHandler_Overview(t *testing.T) {
 		desc       string
 		path       string
 		confStatic static.Configuration
-		confDyn    dynamic.RuntimeConfiguration
+		confDyn    runtime.Configuration
 		expected   expected
 	}{
 		{
 			desc:       "without data in the dynamic configuration",
 			path:       "/api/overview",
 			confStatic: static.Configuration{API: &static.API{}, Global: &static.Global{}},
-			confDyn:    dynamic.RuntimeConfiguration{},
+			confDyn:    runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusOK,
 				jsonFile:   "testdata/overview-empty.json",
@@ -50,21 +51,34 @@ func TestHandler_Overview(t *testing.T) {
 			desc:       "with data in the dynamic configuration",
 			path:       "/api/overview",
 			confStatic: static.Configuration{API: &static.API{}, Global: &static.Global{}},
-			confDyn: dynamic.RuntimeConfiguration{
-				Services: map[string]*dynamic.ServiceInfo{
+			confDyn: runtime.Configuration{
+				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
 							LoadBalancer: &dynamic.LoadBalancerService{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://127.0.0.1",
-									},
-								},
+								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
 							},
 						},
+						Status: runtime.StatusEnabled,
+					},
+					"bar-service@myprovider": {
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
+							},
+						},
+						Status: runtime.StatusWarning,
+					},
+					"fii-service@myprovider": {
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.LoadBalancerService{
+								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
+							},
+						},
+						Status: runtime.StatusDisabled,
 					},
 				},
-				Middlewares: map[string]*dynamic.MiddlewareInfo{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
 					"auth@myprovider": {
 						Middleware: &dynamic.Middleware{
 							BasicAuth: &dynamic.BasicAuth{
@@ -85,9 +99,10 @@ func TestHandler_Overview(t *testing.T) {
 								Prefix: "/toto",
 							},
 						},
+						Err: []string{"error"},
 					},
 				},
-				Routers: map[string]*dynamic.RouterInfo{
+				Routers: map[string]*runtime.RouterInfo{
 					"bar@myprovider": {
 						Router: &dynamic.Router{
 							EntryPoints: []string{"web"},
@@ -95,6 +110,7 @@ func TestHandler_Overview(t *testing.T) {
 							Rule:        "Host(`foo.bar`)",
 							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
 						},
+						Status: runtime.StatusEnabled,
 					},
 					"test@myprovider": {
 						Router: &dynamic.Router{
@@ -103,9 +119,19 @@ func TestHandler_Overview(t *testing.T) {
 							Rule:        "Host(`foo.bar.other`)",
 							Middlewares: []string{"addPrefixTest", "auth"},
 						},
+						Status: runtime.StatusWarning,
+					},
+					"foo@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar.other`)",
+							Middlewares: []string{"addPrefixTest", "auth"},
+						},
+						Status: runtime.StatusDisabled,
 					},
 				},
-				TCPServices: map[string]*dynamic.TCPServiceInfo{
+				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"tcpfoo-service@myprovider": {
 						TCPService: &dynamic.TCPService{
 							LoadBalancer: &dynamic.TCPLoadBalancerService{
@@ -118,7 +144,7 @@ func TestHandler_Overview(t *testing.T) {
 						},
 					},
 				},
-				TCPRouters: map[string]*dynamic.TCPRouterInfo{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
 					"tcpbar@myprovider": {
 						TCPRouter: &dynamic.TCPRouter{
 							EntryPoints: []string{"web"},
@@ -156,7 +182,7 @@ func TestHandler_Overview(t *testing.T) {
 					Rancher:           &rancher.Provider{},
 				},
 			},
-			confDyn: dynamic.RuntimeConfiguration{},
+			confDyn: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusOK,
 				jsonFile:   "testdata/overview-providers.json",
@@ -175,7 +201,7 @@ func TestHandler_Overview(t *testing.T) {
 					Jaeger: &jaeger.Config{},
 				},
 			},
-			confDyn: dynamic.RuntimeConfiguration{},
+			confDyn: runtime.Configuration{},
 			expected: expected{
 				statusCode: http.StatusOK,
 				jsonFile:   "testdata/overview-features.json",
