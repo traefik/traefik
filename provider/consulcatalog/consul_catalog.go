@@ -492,7 +492,7 @@ func getServiceAddresses(services []*api.CatalogService) []string {
 
 func (p *Provider) healthyNodes(service string) (catalogUpdate, error) {
 	health := p.client.Health()
-	// You can't filter with assing only here, nodeFilter will do this later
+	// You can't filter with assigning passingOnly here, nodeFilter will do this later
 	data, _, err := health.Service(service, "", false, &api.QueryOptions{AllowStale: p.Stale})
 	if err != nil {
 		log.WithError(err).Errorf("Failed to fetch details of %s", service)
