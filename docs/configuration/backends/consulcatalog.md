@@ -37,6 +37,13 @@ stale = false
 #
 domain = "consul.localhost"
 
+# Removes a Consul node from all backends on any check in Warning on this node.
+#
+# Optional
+# Default: true
+#
+WarningIsCritical = true
+
 # Prefix for Consul catalog tags.
 #
 # Optional

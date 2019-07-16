@@ -34,6 +34,7 @@ type Provider struct {
 	Stale                 bool             `description:"Use stale consistency for catalog reads" export:"true"`
 	ExposedByDefault      bool             `description:"Expose Consul services by default" export:"true"`
 	Prefix                string           `description:"Prefix used for Consul catalog tags" export:"true"`
+	WarningIsCritical     bool             `description:"Removes a Consul node from all backends on any check in Warning on this node" export:"true"`
 	FrontEndRule          string           `description:"Frontend rule used for Consul services" export:"true"`
 	TLS                   *types.ClientTLS `description:"Enable TLS support" export:"true"`
 	client                *api.Client
@@ -299,7 +300,9 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 				for _, healthy := range healthyState {
 					key := fmt.Sprintf("%s-%s", healthy.Node, healthy.ServiceID)
 					_, failing := currentFailing[key]
-					if (healthy.Status == "passing" || healthy.Status == "warning") && !failing {
+					if healthy.Status == "passing" && !failing {
+						current[key] = append(current[key], healthy.Node)
+					} else if !p.WarningIsCritical && healthy.Status == "warning" && !failing {
 						current[key] = append(current[key], healthy.Node)
 					} else if strings.HasPrefix(healthy.CheckID, "_service_maintenance") || strings.HasPrefix(healthy.CheckID, "_node_maintenance") {
 						maintenance = append(maintenance, healthy.CheckID)
