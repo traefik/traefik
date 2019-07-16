@@ -115,30 +115,38 @@ func getHTTPMiddlewareSection(middlewares map[string]*runtime.MiddlewareInfo) *s
 
 func getTCPRouterSection(routers map[string]*runtime.TCPRouterInfo) *section {
 	var countErrors int
+	var countWarnings int
 	for _, rt := range routers {
-		if rt.Err != "" {
+		switch rt.Status {
+		case runtime.StatusDisabled:
 			countErrors++
+		case runtime.StatusWarning:
+			countWarnings++
 		}
 	}
 
 	return &section{
 		Total:    len(routers),
-		Warnings: 0, // TODO
+		Warnings: countWarnings,
 		Errors:   countErrors,
 	}
 }
 
 func getTCPServiceSection(services map[string]*runtime.TCPServiceInfo) *section {
 	var countErrors int
+	var countWarnings int
 	for _, svc := range services {
-		if svc.Err != nil {
+		switch svc.Status {
+		case runtime.StatusDisabled:
 			countErrors++
+		case runtime.StatusWarning:
+			countWarnings++
 		}
 	}
 
 	return &section{
 		Total:    len(services),
-		Warnings: 0, // TODO
+		Warnings: countWarnings,
 		Errors:   countErrors,
 	}
 }

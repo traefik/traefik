@@ -6,7 +6,18 @@
 		"name": "bar@myprovider",
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar`)",
-		"service": "foo-service@myprovider"
+		"service": "foo-service@myprovider",
+		"status": "warning"
+	},
+	{
+		"entryPoints": [
+			"web"
+		],
+		"name": "foo@myprovider",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar`)",
+		"service": "foo-service@myprovider",
+		"status": "disabled"
 	},
 	{
 		"entryPoints": [
@@ -16,6 +27,7 @@
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar.other`)",
 		"service": "foo-service@myprovider",
+		"status": "enabled",
 		"tls": {
 			"passthrough": false
 		}

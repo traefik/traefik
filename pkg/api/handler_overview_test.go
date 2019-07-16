@@ -142,6 +142,31 @@ func TestHandler_Overview(t *testing.T) {
 								},
 							},
 						},
+						Status: runtime.StatusEnabled,
+					},
+					"tcpbar-service@myprovider": {
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.2",
+									},
+								},
+							},
+						},
+						Status: runtime.StatusWarning,
+					},
+					"tcpfii-service@myprovider": {
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.2",
+									},
+								},
+							},
+						},
+						Status: runtime.StatusDisabled,
 					},
 				},
 				TCPRouters: map[string]*runtime.TCPRouterInfo{
@@ -151,6 +176,7 @@ func TestHandler_Overview(t *testing.T) {
 							Service:     "tcpfoo-service@myprovider",
 							Rule:        "HostSNI(`foo.bar`)",
 						},
+						Status: runtime.StatusEnabled,
 					},
 					"tcptest@myprovider": {
 						TCPRouter: &dynamic.TCPRouter{
@@ -158,6 +184,15 @@ func TestHandler_Overview(t *testing.T) {
 							Service:     "tcpfoo-service@myprovider",
 							Rule:        "HostSNI(`foo.bar.other`)",
 						},
+						Status: runtime.StatusWarning,
+					},
+					"tcpfoo@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "tcpfoo-service@myprovider",
+							Rule:        "HostSNI(`foo.bar.other`)",
+						},
+						Status: runtime.StatusDisabled,
 					},
 				},
 			},

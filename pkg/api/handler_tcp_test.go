@@ -52,6 +52,7 @@ func TestHandler_TCP(t *testing.T) {
 								Passthrough: false,
 							},
 						},
+						Status: runtime.StatusEnabled,
 					},
 					"bar@myprovider": {
 						TCPRouter: &dynamic.TCPRouter{
@@ -59,6 +60,15 @@ func TestHandler_TCP(t *testing.T) {
 							Service:     "foo-service@myprovider",
 							Rule:        "Host(`foo.bar`)",
 						},
+						Status: runtime.StatusWarning,
+					},
+					"foo@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+						},
+						Status: runtime.StatusDisabled,
 					},
 				},
 			},
@@ -173,6 +183,7 @@ func TestHandler_TCP(t *testing.T) {
 							},
 						},
 						UsedBy: []string{"foo@myprovider", "test@myprovider"},
+						Status: runtime.StatusEnabled,
 					},
 					"baz@myprovider": {
 						TCPService: &dynamic.TCPService{
@@ -185,6 +196,20 @@ func TestHandler_TCP(t *testing.T) {
 							},
 						},
 						UsedBy: []string{"foo@myprovider"},
+						Status: runtime.StatusWarning,
+					},
+					"foz@myprovider": {
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.2:2345",
+									},
+								},
+							},
+						},
+						UsedBy: []string{"foo@myprovider"},
+						Status: runtime.StatusDisabled,
 					},
 				},
 			},
