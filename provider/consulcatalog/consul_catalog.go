@@ -492,7 +492,8 @@ func getServiceAddresses(services []*api.CatalogService) []string {
 
 func (p *Provider) healthyNodes(service string) (catalogUpdate, error) {
 	health := p.client.Health()
-	data, _, err := health.Service(service, "", true, &api.QueryOptions{AllowStale: p.Stale})
+	// You can't filter with assing only here, nodeFilter will do this later
+	data, _, err := health.Service(service, "", false, &api.QueryOptions{AllowStale: p.Stale})
 	if err != nil {
 		log.WithError(err).Errorf("Failed to fetch details of %s", service)
 		return catalogUpdate{}, err
@@ -536,6 +537,11 @@ func (p *Provider) nodeFilter(service string, node *api.ServiceEntry) bool {
 		log.Debugf("Service %v pruned by '%v' constraint", service, failingConstraint.String())
 		return false
 	}
+
+	if p.hasFailingChecks(node) {
+		return false
+	}
+
 	return true
 }
 
@@ -568,6 +574,17 @@ func (p *Provider) getConstraintTags(tags []string) []string {
 	}
 
 	return values
+}
+
+func (p *Provider) hasFailingChecks(node *api.ServiceEntry) bool {
+
+	if node.Checks.AggregatedStatus() == "passing" {
+		return false
+	} else if !p.WarningIsCritical && node.Checks.AggregatedStatus() == "warning" {
+		return false
+	}
+
+	return true
 }
 
 func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceUpdate {
