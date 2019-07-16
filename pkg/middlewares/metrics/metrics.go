@@ -10,7 +10,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/containous/alice"
-
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/metrics"
 	"github.com/containous/traefik/pkg/middlewares"
