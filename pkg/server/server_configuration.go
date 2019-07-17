@@ -14,7 +14,6 @@ import (
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/metrics"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
-	"github.com/containous/traefik/pkg/middlewares/metrics"
 	metricsmiddleware "github.com/containous/traefik/pkg/middlewares/metrics"
 	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
 	"github.com/containous/traefik/pkg/middlewares/tracing"
