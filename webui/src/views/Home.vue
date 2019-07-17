@@ -1,25 +1,45 @@
 <template>
   <main class="home section">
-    <section class="container" v-if="entrypoints">
-      <h1 class="title is-4">Entrypoints</h1>
-      <nav class="level">
-        <div
-          class="level-item has-text-centered"
-          v-for="entrypoint in entrypoints"
-          :key="entrypoint.name"
-        >
-          <div>
-            <p class="heading">{{ entrypoint.name }}</p>
-            <p class="title">{{ entrypoint.address }}</p>
-          </div>
+    <section class="container panel">
+      <p class="panel-heading ">Work in progress...</p>
+      <div class="panel-block">
+        <div>
+          <p>
+            In the meantime, you can review your current configuration by using
+            the <a href="/api/rawdata">/api/rawdata</a> endpoint.
+          </p>
+          <p>
+            Also, please keep your <i class="fa fa-eye" /> on our
+            <a href="https://docs.traefik.io/v2.0/operations/dashboard/"
+              >documentation</a
+            >
+            to stay informed
+          </p>
         </div>
-      </nav>
+      </div>
+    </section>
+    <section class="container panel" v-if="entrypoints.length">
+      <p class="panel-heading ">Entrypoints</p>
+      <div class="panel-block">
+        <nav class="level">
+          <div
+            class="level-item has-text-centered"
+            v-for="entrypoint in entrypoints"
+            :key="entrypoint.name"
+          >
+            <div>
+              <p class="heading">{{ entrypoint.name }}</p>
+              <p class="title">{{ entrypoint.address }}</p>
+            </div>
+          </div>
+        </nav>
+      </div>
     </section>
     <section class="container">
       <div class="columns">
-        <section v-if="overview.http" class="column is-6">
-          <h1 class="title is-4">HTTP</h1>
-          <div class="columns">
+        <section v-if="overview.http" class="column is-6 panel">
+          <p class="panel-heading">HTTP</p>
+          <div class="columns panel-block">
             <div class="column is-4">
               <canvas id="http-routers" />
             </div>
@@ -31,10 +51,9 @@
             </div>
           </div>
         </section>
-        <section v-if="overview.tcp" class="column is-6">
-          <h1 class="title is-4">TCP</h1>
-
-          <div class="columns">
+        <section v-if="overview.tcp" class="column is-6 panel">
+          <p class="panel-heading">TCP</p>
+          <div class="columns panel-block">
             <div class="column is-4">
               <canvas id="tcp-routers" />
             </div>
@@ -46,19 +65,21 @@
       </div>
     </section>
 
-    <section class="container">
-      <h1 class="title is-4">Features</h1>
-      <div class="tile is-ancestor">
-        <div
-          class="tile is-parent"
-          v-for="(feature, key) of overview.features"
-          :key="key"
-        >
+    <section class="container panel" v-if="overview.features.length">
+      <p class="panel-heading">Features</p>
+      <div class="panel-block">
+        <div class="tile is-ancestor">
           <div
-            class="tile is-child notification"
-            :class="{ 'is-success': feature }"
+            class="tile is-parent"
+            v-for="(feature, key) of overview.features"
+            :key="key"
           >
-            <p class="title">{{ key }}</p>
+            <div
+              class="tile is-child notification"
+              :class="{ 'is-success': feature }"
+            >
+              <p class="title">{{ key }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -73,7 +94,9 @@ export default {
   name: "home",
   data: () => ({
     entrypoints: [],
-    overview: {},
+    overview: {
+      features: []
+    },
     charts: {
       http: {
         routers: null,
@@ -183,6 +206,6 @@ export default {
 
 <style lang="scss">
 .home section {
-  margin-bottom: 1rem;
+  margin-bottom: 3rem;
 }
 </style>
