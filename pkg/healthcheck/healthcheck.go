@@ -47,19 +47,20 @@ type metricsRegistry interface {
 
 // Options are the public health check options.
 type Options struct {
-	Headers   map[string]string
-	Hostname  string
-	Scheme    string
-	Path      string
-	Port      int
-	Transport http.RoundTripper
-	Interval  time.Duration
-	Timeout   time.Duration
-	LB        Balancer
+	Headers         map[string]string
+	Hostname        string
+	Scheme          string
+	Path            string
+	Port            int
+	Transport       http.RoundTripper
+	Interval        time.Duration
+	Timeout         time.Duration
+	LB              Balancer
+	FollowRedirects bool
 }
 
 func (opt Options) String() string {
-	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Port: %d Interval: %s Timeout: %s]", opt.Hostname, opt.Headers, opt.Path, opt.Port, opt.Interval, opt.Timeout)
+	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Port: %d Interval: %s Timeout: %s FollowRedirects: %v]", opt.Hostname, opt.Headers, opt.Path, opt.Port, opt.Interval, opt.Timeout, opt.FollowRedirects)
 }
 
 type backendURL struct {
@@ -234,9 +235,20 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 
 	req = backend.addHeadersAndHost(req)
 
-	client := http.Client{
-		Timeout:   backend.Options.Timeout,
-		Transport: backend.Options.Transport,
+	var client http.Client
+	if backend.FollowRedirects {
+		client = http.Client{
+			Timeout:   backend.Options.Timeout,
+			Transport: backend.Options.Transport,
+		}
+	} else {
+		client = http.Client{
+			Timeout:   backend.Options.Timeout,
+			Transport: backend.Options.Transport,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		}
 	}
 
 	resp, err := client.Do(req)

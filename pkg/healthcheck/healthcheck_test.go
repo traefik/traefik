@@ -469,3 +469,84 @@ func TestLBStatusUpdater(t *testing.T) {
 		break
 	}
 }
+
+type redirectServer struct {
+	called *bool
+}
+
+func (server *redirectServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	*server.called = true
+}
+
+type redirectBackend struct {
+	redirectURL string
+	done        func()
+}
+
+func (backend *redirectBackend) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("location", backend.redirectURL)
+	w.WriteHeader(http.StatusSeeOther)
+	backend.done()
+}
+
+func TestNotFollowingRedirects(t *testing.T) {
+	t.Run("do not follow redirect", func(t *testing.T) {
+		t.Parallel()
+
+		redirectServerCalled := false
+
+		redirectServer := &redirectServer{
+			called: &redirectServerCalled,
+		}
+
+		redirectTestServer := httptest.NewServer(redirectServer)
+		defer redirectTestServer.Close()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		redirectBackend := &redirectBackend{
+			redirectURL: redirectTestServer.URL,
+			done:        cancel,
+		}
+
+		ts := httptest.NewServer(redirectBackend)
+		defer ts.Close()
+
+		lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+		backend := NewBackendConfig(Options{
+			Path:            "/path",
+			Interval:        healthCheckInterval,
+			Timeout:         healthCheckTimeout,
+			LB:              lb,
+			FollowRedirects: false,
+		}, "backendName")
+
+		serverURL := testhelpers.MustParseURL(ts.URL)
+		lb.servers = append(lb.servers, serverURL)
+
+		collectingMetrics := testhelpers.NewCollectingHealthCheckMetrics()
+		check := HealthCheck{
+			Backends: make(map[string]*BackendConfig),
+			metrics:  collectingMetrics,
+		}
+
+		wg := sync.WaitGroup{}
+		wg.Add(1)
+
+		go func() {
+			check.execute(ctx, backend)
+			wg.Done()
+		}()
+
+		timeout := time.Duration(int(healthCheckInterval) + 500)
+		select {
+		case <-time.After(timeout):
+			t.Fatal("test did not complete in time")
+		case <-ctx.Done():
+			wg.Wait()
+		}
+
+		assert.False(t, redirectServerCalled, "HTTP redirect must not be followed")
+	})
+}
