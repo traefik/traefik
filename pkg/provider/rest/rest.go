@@ -19,12 +19,10 @@ var _ provider.Provider = (*Provider)(nil)
 // Provider is a provider.Provider implementation that provides a Rest API.
 type Provider struct {
 	configurationChan chan<- dynamic.Message
-	EntryPoint        string `description:"EntryPoint." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
-	p.EntryPoint = "traefik"
 }
 
 var templatesRenderer = render.New(render.Options{Directory: "nowhere"})

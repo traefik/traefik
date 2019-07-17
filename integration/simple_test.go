@@ -159,6 +159,7 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 }
 
 func (s *SimpleSuite) TestApiOnSameEntryPoint(c *check.C) {
+	c.Skip("Waiting for new api handler implementation")
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -221,6 +222,8 @@ func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 }
 
 func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
+	c.Skip("Waiting for new api handler implementation")
+
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 

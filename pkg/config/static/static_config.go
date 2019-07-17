@@ -85,17 +85,15 @@ type ServersTransport struct {
 
 // API holds the API configuration
 type API struct {
-	EntryPoint      string            `description:"The entry point that the API handler will be bound to." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
-	Dashboard       bool              `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
-	Debug           bool              `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
-	Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" export:"true" label:"allowEmpty"`
-	Middlewares     []string          `description:"Middleware list." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	DashboardAssets *assetfs.AssetFS  `json:"-" toml:"-" yaml:"-" label:"-"`
+	Dashboard bool `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
+	Debug     bool `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
+	// TODO: Re-enable statistics
+	// Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" export:"true" label:"allowEmpty"`
+	DashboardAssets *assetfs.AssetFS `json:"-" toml:"-" yaml:"-" label:"-"`
 }
 
 // SetDefaults sets the default values.
 func (a *API) SetDefaults() {
-	a.EntryPoint = "traefik"
 	a.Dashboard = true
 }
 
@@ -175,10 +173,10 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
-	if (c.API != nil && c.API.EntryPoint == DefaultInternalEntryPointName) ||
-		(c.Ping != nil && c.Ping.EntryPoint == DefaultInternalEntryPointName) ||
-		(c.Metrics != nil && c.Metrics.Prometheus != nil && c.Metrics.Prometheus.EntryPoint == DefaultInternalEntryPointName) ||
-		(c.Providers.Rest != nil && c.Providers.Rest.EntryPoint == DefaultInternalEntryPointName) {
+	if (c.API != nil) ||
+		(c.Ping != nil) ||
+		(c.Metrics != nil && c.Metrics.Prometheus != nil) ||
+		(c.Providers.Rest != nil) {
 		if _, ok := c.EntryPoints[DefaultInternalEntryPointName]; !ok {
 			ep := &EntryPoint{Address: ":8080"}
 			ep.SetDefaults()

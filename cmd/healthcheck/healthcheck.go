@@ -51,7 +51,7 @@ func Do(staticConfiguration static.Configuration) (*http.Response, error) {
 		return nil, errors.New("please enable `ping` to use health check")
 	}
 
-	pingEntryPoint, ok := staticConfiguration.EntryPoints[staticConfiguration.Ping.EntryPoint]
+	pingEntryPoint, ok := staticConfiguration.EntryPoints["traefik"]
 	if !ok {
 		return nil, errors.New("missing `ping` entrypoint")
 	}

@@ -119,8 +119,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 
 	config.API = &static.API{
-		EntryPoint: "traefik",
-		Dashboard:  true,
+		Dashboard: true,
 		DashboardAssets: &assetfs.AssetFS{
 			Asset: func(path string) ([]byte, error) {
 				return nil, nil
@@ -133,7 +132,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 			Prefix: "fii",
 		},
-		Middlewares: []string{"first", "second"},
 	}
 
 	config.Providers.File = &file.Provider{
@@ -186,9 +184,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 
 	config.Metrics = &types.Metrics{
 		Prometheus: &types.Prometheus{
-			Buckets:     []float64{0.1, 0.3, 1.2, 5},
-			EntryPoint:  "MyEntryPoint",
-			Middlewares: []string{"m1", "m2"},
+			Buckets: []float64{0.1, 0.3, 1.2, 5},
 		},
 		DataDog: &types.DataDog{
 			Address:      "localhost:8181",
@@ -209,10 +205,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 	}
 
-	config.Ping = &ping.Handler{
-		EntryPoint:  "MyEntryPoint",
-		Middlewares: []string{"m1", "m2", "m3"},
-	}
+	config.Ping = &ping.Handler{}
 
 	config.Tracing = &static.Tracing{
 		ServiceName:   "myServiceName",

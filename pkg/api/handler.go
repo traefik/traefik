@@ -11,7 +11,6 @@ import (
 	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/types"
 	"github.com/containous/traefik/pkg/version"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 )
@@ -50,7 +49,7 @@ type Handler struct {
 	// runtimeConfiguration is the data set used to create all the data representations exposed by the API.
 	runtimeConfiguration *runtime.Configuration
 	staticConfig         static.Configuration
-	statistics           *types.Statistics
+	// statistics           *types.Statistics
 	// stats                *thoasstats.Stats // FIXME stats
 	// StatsRecorder         *middlewares.StatsRecorder // FIXME stats
 	dashboardAssets *assetfs.AssetFS
@@ -65,8 +64,8 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 	}
 
 	return &Handler{
-		dashboard:            staticConfig.API.Dashboard,
-		statistics:           staticConfig.API.Statistics,
+		dashboard: staticConfig.API.Dashboard,
+		// statistics:           staticConfig.API.Statistics,
 		dashboardAssets:      staticConfig.API.DashboardAssets,
 		runtimeConfiguration: rConfig,
 		staticConfig:         staticConfig,
