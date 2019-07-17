@@ -1,7 +1,7 @@
 <template>
   <main class="home section">
     <section class="container panel">
-      <p class="panel-heading ">Work in progress...</p>
+      <p class="panel-heading ">🚧 Work in progress...</p>
       <div class="panel-block">
         <div>
           <p>
@@ -18,10 +18,11 @@
         </div>
       </div>
     </section>
+
     <section class="container panel" v-if="entrypoints.length">
       <p class="panel-heading ">Entrypoints</p>
       <div class="panel-block">
-        <nav class="level">
+        <nav class="level" :style="{ flex: '1 1' }">
           <div
             class="level-item has-text-centered"
             v-for="entrypoint in entrypoints"
@@ -35,37 +36,35 @@
         </nav>
       </div>
     </section>
-    <section class="container">
-      <div class="columns">
-        <section v-if="overview.http" class="column is-6 panel">
-          <p class="panel-heading">HTTP</p>
-          <div class="columns panel-block">
-            <div class="column is-4">
-              <canvas id="http-routers" />
-            </div>
-            <div class="column is-4">
-              <canvas id="http-middlewares" />
-            </div>
-            <div class="column is-4">
-              <canvas id="http-services" />
-            </div>
-          </div>
-        </section>
-        <section v-if="overview.tcp" class="column is-6 panel">
-          <p class="panel-heading">TCP</p>
-          <div class="columns panel-block">
-            <div class="column is-4">
-              <canvas id="tcp-routers" />
-            </div>
-            <div class="column is-4">
-              <canvas id="tcp-services" />
-            </div>
-          </div>
-        </section>
+
+    <section class="container" v-if="overview.http">
+      <p class="title is-4">HTTP</p>
+      <div class="tile is-child box columns">
+        <div class="column is-4">
+          <canvas id="http-routers" />
+        </div>
+        <div class="column is-4">
+          <canvas id="http-middlewares" />
+        </div>
+        <div class="column is-4">
+          <canvas id="http-services" />
+        </div>
       </div>
     </section>
 
-    <section class="container panel" v-if="overview.features.length">
+    <section class="container" v-if="overview.tcp">
+      <p class="title is-4">TCP</p>
+      <div class="tile is-child box columns">
+        <div class="column is-6">
+          <canvas id="tcp-routers" />
+        </div>
+        <div class="column is-6">
+          <canvas id="tcp-services" />
+        </div>
+      </div>
+    </section>
+
+    <section class="container panel">
       <p class="panel-heading">Features</p>
       <div class="panel-block">
         <div class="tile is-ancestor">
@@ -76,7 +75,7 @@
           >
             <div
               class="tile is-child notification"
-              :class="{ 'is-success': feature }"
+              :class="{ 'is-success': feature, 'is-danger': !feature }"
             >
               <p class="title">{{ key }}</p>
             </div>
@@ -89,6 +88,24 @@
 
 <script>
 import Chart from "chart.js";
+
+Chart.plugins.register({
+  afterDraw: function(chart) {
+    if (chart.data.datasets[0].data.reduce((acc, it) => acc + it, 0) === 0) {
+      var ctx = chart.chart.ctx;
+      var width = chart.chart.width;
+      var height = chart.chart.height
+      chart.clear();
+
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = "16px normal 'Helvetica Nueue'";
+      ctx.fillText(`No ${chart.options.title.text}`, width / 2, height / 2);
+      ctx.restore();
+    }
+  }
+});
 
 export default {
   name: "home",
@@ -113,7 +130,7 @@ export default {
   methods: {
     buildDoughnutChart(
       selector,
-      entity = { errors: 0, warnings: 0, total: 0 },
+      entity = { errors: 2, warnings: 2, total: 6 },
       name
     ) {
       return new Chart(this.$el.querySelector(selector), {
@@ -161,7 +178,7 @@ export default {
               middlewares: this.buildDoughnutChart(
                 "#http-middlewares",
                 this.overview.http.middlewares,
-                "Middleware"
+                "Middlewares"
               ),
               services: this.buildDoughnutChart(
                 "#http-services",
@@ -206,6 +223,6 @@ export default {
 
 <style lang="scss">
 .home section {
-  margin-bottom: 3rem;
+  margin-bottom: 1.5rem;
 }
 </style>
