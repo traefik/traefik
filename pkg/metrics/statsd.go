@@ -46,15 +46,15 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		lastConfigReloadFailureGauge: statsdClient.NewGauge(statsdLastConfigReloadFailureName),
 	}
 
-	if config.OnEntryPoints {
-		registry.epEnabled = config.OnEntryPoints
+	if config.AddEntryPointsLabels {
+		registry.epEnabled = config.AddEntryPointsLabels
 		registry.entryPointReqsCounter = statsdClient.NewCounter(statsdEntryPointReqsName, 1.0)
 		registry.entryPointReqDurationHistogram = statsdClient.NewTiming(statsdEntryPointReqDurationName, 1.0)
 		registry.entryPointOpenConnsGauge = statsdClient.NewGauge(statsdEntryPointOpenConnsName)
 	}
 
-	if config.OnServices {
-		registry.svcEnabled = config.OnServices
+	if config.AddServicesLabels {
+		registry.svcEnabled = config.AddServicesLabels
 		registry.serviceReqsCounter = statsdClient.NewCounter(statsdMetricsServiceReqsName, 1.0)
 		registry.serviceReqDurationHistogram = statsdClient.NewTiming(statsdMetricsServiceLatencyName, 1.0)
 		registry.serviceRetriesCounter = statsdClient.NewCounter(statsdRetriesTotalName, 1.0)

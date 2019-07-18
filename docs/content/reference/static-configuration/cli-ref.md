@@ -180,13 +180,13 @@ Log level set to traefik logs. (Default: ```ERROR```)
 `--metrics.datadog`:  
 DataDog metrics exporter type. (Default: ```false```)
 
+`--metrics.datadog.addentrypointslabels`:  
+Enable metrics on entry points. (Default: ```true```)
+
 `--metrics.datadog.address`:  
 DataDog's address. (Default: ```localhost:8125```)
 
-`--metrics.datadog.onentrypoints`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`--metrics.datadog.onservices`:  
+`--metrics.datadog.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
 
 `--metrics.datadog.pushinterval`:  
@@ -195,17 +195,17 @@ DataDog push interval. (Default: ```10```)
 `--metrics.influxdb`:  
 InfluxDB metrics exporter type. (Default: ```false```)
 
+`--metrics.influxdb.addentrypointslabels`:  
+Enable metrics on entry points. (Default: ```true```)
+
 `--metrics.influxdb.address`:  
 InfluxDB address. (Default: ```localhost:8089```)
 
+`--metrics.influxdb.addserviceslabels`:  
+Enable metrics on services. (Default: ```true```)
+
 `--metrics.influxdb.database`:  
 InfluxDB database used when protocol is http.
-
-`--metrics.influxdb.onentrypoints`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`--metrics.influxdb.onservices`:  
-Enable metrics on services. (Default: ```true```)
 
 `--metrics.influxdb.password`:  
 InfluxDB password (only with http).
@@ -225,6 +225,12 @@ InfluxDB username (only with http).
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)
 
+`--metrics.prometheus.addentrypointslabels`:  
+Enable metrics on entry points. (Default: ```true```)
+
+`--metrics.prometheus.addserviceslabels`:  
+Enable metrics on services. (Default: ```true```)
+
 `--metrics.prometheus.buckets`:  
 Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000```)
 
@@ -234,22 +240,16 @@ EntryPoint. (Default: ```traefik```)
 `--metrics.prometheus.middlewares`:  
 Middlewares.
 
-`--metrics.prometheus.onentrypoints`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`--metrics.prometheus.onservices`:  
-Enable metrics on services. (Default: ```true```)
-
 `--metrics.statsd`:  
 StatsD metrics exporter type. (Default: ```false```)
+
+`--metrics.statsd.addentrypointslabels`:  
+Enable metrics on entry points. (Default: ```true```)
 
 `--metrics.statsd.address`:  
 StatsD address. (Default: ```localhost:8125```)
 
-`--metrics.statsd.onentrypoints`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`--metrics.statsd.onservices`:  
+`--metrics.statsd.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
 
 `--metrics.statsd.pushinterval`:  

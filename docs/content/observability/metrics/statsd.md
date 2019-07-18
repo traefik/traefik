@@ -40,7 +40,7 @@ metrics:
 --metrics.statsd.address="localhost:8125"
 ```
 
-#### `onEntryPoints`
+#### `addEntryPointsLabels`
 
 _Optional, Default=true_
 
@@ -49,21 +49,21 @@ Enable metrics on entry points.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.statsd]
-    onEntryPoints = true
+    addEntryPointsLabels = true
 ```
 
 ```yaml tab="File (TOML)"
 metrics:
   statsd:
-    onEntryPoints: true
+    addEntryPointsLabels: true
 ```
 
 ```bash tab="CLI"
 --metrics
---metrics.statsd.onEntryPoints=true
+--metrics.statsd.addEntryPointsLabels=true
 ```
 
-#### `onServices`
+#### `addServicesLabels`
 
 _Optional, Default=true_
 
@@ -72,18 +72,18 @@ Enable metrics on services.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.statsd]
-    onServices = true
+    addServicesLabels = true
 ```
 
 ```yaml tab="File (TOML)"
 metrics:
   statsd:
-    onServices: true
+    addServicesLabels: true
 ```
 
 ```bash tab="CLI"
 --metrics
---metrics.statsd.onServices=true
+--metrics.statsd.addServicesLabels=true
 ```
 
 #### `pushInterval`

@@ -155,7 +155,7 @@ metrics:
 --metrics.influxdb.password=""
 ```
 
-#### `onEntryPoints`
+#### `addEntryPointsLabels`
 
 _Optional, Default=true_
 
@@ -164,21 +164,21 @@ Enable metrics on entry points.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxdb]
-    onEntryPoints = true
+    addEntryPointsLabels = true
 ```
 
 ```yaml tab="File (TOML)"
 metrics:
   influxdb:
-    onEntryPoints: true
+    addEntryPointsLabels: true
 ```
 
 ```bash tab="CLI"
 --metrics
---metrics.influxdb.onEntryPoints=true
+--metrics.influxdb.addEntryPointsLabels=true
 ```
 
-#### `onServices`
+#### `addServicesLabels`
 
 _Optional, Default=true_
 
@@ -187,18 +187,18 @@ Enable metrics on services.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxdb]
-    onServices = true
+    addServicesLabels = true
 ```
 
 ```yaml tab="File (TOML)"
 metrics:
   influxdb:
-    onServices: true
+    addServicesLabels: true
 ```
 
 ```bash tab="CLI"
 --metrics
---metrics.influxdb.onServices=true
+--metrics.influxdb.addServicesLabels=true
 ```
 
 #### `pushInterval`

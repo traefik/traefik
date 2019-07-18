@@ -131,18 +131,18 @@ metrics:
     middlewares:
     - foobar
     - foobar
-    onEntryPoints: true
-    onServices: true
+    addEntryPointsLabels: true
+    addServicesLabels: true
   dataDog:
     address: foobar
     pushInterval: 42
-    onEntryPoints: true
-    onServices: true
+    addEntryPointsLabels: true
+    addServicesLabels: true
   statsD:
     address: foobar
     pushInterval: 42
-    onEntryPoints: true
-    onServices: true
+    addEntryPointsLabels: true
+    addServicesLabels: true
   influxDB:
     address: foobar
     protocol: foobar
@@ -151,8 +151,8 @@ metrics:
     retentionPolicy: foobar
     username: foobar
     password: foobar
-    onEntryPoints: true
-    onServices: true
+    addEntryPointsLabels: true
+    addServicesLabels: true
 ping:
   entryPoint: foobar
   middlewares:

@@ -180,13 +180,13 @@ Log level set to traefik logs. (Default: ```ERROR```)
 `TRAEFIK_METRICS_DATADOG`:  
 DataDog metrics exporter type. (Default: ```false```)
 
+`TRAEFIK_METRICS_DATADOG_ADDENTRYPOINTSLABELS`:  
+Enable metrics on entry points. (Default: ```true```)
+
 `TRAEFIK_METRICS_DATADOG_ADDRESS`:  
 DataDog's address. (Default: ```localhost:8125```)
 
-`TRAEFIK_METRICS_DATADOG_ONENTRYPOINTS`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`TRAEFIK_METRICS_DATADOG_ONSERVICES`:  
+`TRAEFIK_METRICS_DATADOG_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
 `TRAEFIK_METRICS_DATADOG_PUSHINTERVAL`:  
@@ -195,17 +195,17 @@ DataDog push interval. (Default: ```10```)
 `TRAEFIK_METRICS_INFLUXDB`:  
 InfluxDB metrics exporter type. (Default: ```false```)
 
+`TRAEFIK_METRICS_INFLUXDB_ADDENTRYPOINTSLABELS`:  
+Enable metrics on entry points. (Default: ```true```)
+
 `TRAEFIK_METRICS_INFLUXDB_ADDRESS`:  
 InfluxDB address. (Default: ```localhost:8089```)
 
+`TRAEFIK_METRICS_INFLUXDB_ADDSERVICESLABELS`:  
+Enable metrics on services. (Default: ```true```)
+
 `TRAEFIK_METRICS_INFLUXDB_DATABASE`:  
 InfluxDB database used when protocol is http.
-
-`TRAEFIK_METRICS_INFLUXDB_ONENTRYPOINTS`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`TRAEFIK_METRICS_INFLUXDB_ONSERVICES`:  
-Enable metrics on services. (Default: ```true```)
 
 `TRAEFIK_METRICS_INFLUXDB_PASSWORD`:  
 InfluxDB password (only with http).
@@ -225,6 +225,12 @@ InfluxDB username (only with http).
 `TRAEFIK_METRICS_PROMETHEUS`:  
 Prometheus metrics exporter type. (Default: ```false```)
 
+`TRAEFIK_METRICS_PROMETHEUS_ADDENTRYPOINTSLABELS`:  
+Enable metrics on entry points. (Default: ```true```)
+
+`TRAEFIK_METRICS_PROMETHEUS_ADDSERVICESLABELS`:  
+Enable metrics on services. (Default: ```true```)
+
 `TRAEFIK_METRICS_PROMETHEUS_BUCKETS`:  
 Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000```)
 
@@ -234,22 +240,16 @@ EntryPoint. (Default: ```traefik```)
 `TRAEFIK_METRICS_PROMETHEUS_MIDDLEWARES`:  
 Middlewares.
 
-`TRAEFIK_METRICS_PROMETHEUS_ONENTRYPOINTS`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`TRAEFIK_METRICS_PROMETHEUS_ONSERVICES`:  
-Enable metrics on services. (Default: ```true```)
-
 `TRAEFIK_METRICS_STATSD`:  
 StatsD metrics exporter type. (Default: ```false```)
+
+`TRAEFIK_METRICS_STATSD_ADDENTRYPOINTSLABELS`:  
+Enable metrics on entry points. (Default: ```true```)
 
 `TRAEFIK_METRICS_STATSD_ADDRESS`:  
 StatsD address. (Default: ```localhost:8125```)
 
-`TRAEFIK_METRICS_STATSD_ONENTRYPOINTS`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`TRAEFIK_METRICS_STATSD_ONSERVICES`:  
+`TRAEFIK_METRICS_STATSD_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
 `TRAEFIK_METRICS_STATSD_PUSHINTERVAL`:  

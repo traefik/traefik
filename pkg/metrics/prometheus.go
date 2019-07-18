@@ -128,15 +128,15 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 	}
 
 	reg := &standardRegistry{
-		epEnabled:                    config.OnEntryPoints,
-		svcEnabled:                   config.OnServices,
+		epEnabled:                    config.AddEntryPointsLabels,
+		svcEnabled:                   config.AddServicesLabels,
 		configReloadsCounter:         configReloads,
 		configReloadsFailureCounter:  configReloadsFailures,
 		lastConfigReloadSuccessGauge: lastConfigReloadSuccess,
 		lastConfigReloadFailureGauge: lastConfigReloadFailure,
 	}
 
-	if config.OnEntryPoints {
+	if config.AddEntryPointsLabels {
 		entryPointReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: entryPointReqsTotalName,
 			Help: "How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.",
@@ -160,7 +160,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		reg.entryPointReqDurationHistogram = entryPointReqDurations
 		reg.entryPointOpenConnsGauge = entryPointOpenConns
 	}
-	if config.OnServices {
+	if config.AddServicesLabels {
 		serviceReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: serviceReqsTotalName,
 			Help: "How many HTTP requests processed on a service, partitioned by status code, protocol, and method.",

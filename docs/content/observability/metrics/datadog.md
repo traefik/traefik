@@ -35,7 +35,7 @@ metrics:
 --metrics.datadog.address="127.0.0.1:8125"
 ```
 
-#### `onEntryPoints`
+#### `addEntryPointsLabels`
 
 _Optional, Default=true_
 
@@ -44,21 +44,21 @@ Enable metrics on entry points.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.dataDog]
-    onEntryPoints = true
+    addEntryPointsLabels = true
 ```
 
 ```yaml tab="File (TOML)"
 metrics:
   dataDog:
-    onEntryPoints: true
+    addEntryPointsLabels: true
 ```
 
 ```bash tab="CLI"
 --metrics
---metrics.datadog.onEntryPoints=true
+--metrics.datadog.addEntryPointsLabels=true
 ```
 
-#### `onServices`
+#### `addServicesLabels`
 
 _Optional, Default=true_
 
@@ -67,18 +67,18 @@ Enable metrics on services.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.dataDog]
-    onServices = true
+    addServicesLabels = true
 ```
 
 ```yaml tab="File (TOML)"
 metrics:
   dataDog:
-    onServices: true
+    addServicesLabels: true
 ```
 
 ```bash tab="CLI"
 --metrics
---metrics.datadog.onServices=true
+--metrics.datadog.addServicesLabels=true
 ```
 
 #### `pushInterval`

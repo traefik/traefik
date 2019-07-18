@@ -15,7 +15,7 @@ func TestStatsD(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	statsdRegistry := RegisterStatsd(context.Background(), &types.Statsd{Address: ":18125", PushInterval: types.Duration(time.Second), OnEntryPoints: true, OnServices: true})
+	statsdRegistry := RegisterStatsd(context.Background(), &types.Statsd{Address: ":18125", PushInterval: types.Duration(time.Second), AddEntryPointsLabels: true, AddServicesLabels: true})
 	defer StopStatsd()
 
 	if !statsdRegistry.IsEpEnabled() || !statsdRegistry.IsSvcEnabled() {

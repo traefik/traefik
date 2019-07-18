@@ -92,7 +92,7 @@ metrics:
 --metrics.prometheus.middlewares="xxx,yyy"
 ```
 
-#### `onEntryPoints`
+#### `addEntryPointsLabels`
 
 _Optional, Default=true_
 
@@ -101,21 +101,21 @@ Enable metrics on entry points.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.prometheus]
-    onEntryPoints = true
+    addEntryPointsLabels = true
 ```
 
 ```yaml tab="File (TOML)"
 metrics:
   prometheus:
-    onEntryPoints: true
+    addEntryPointsLabels: true
 ```
 
 ```bash tab="CLI"
 --metrics
---metrics.prometheus.onEntryPoints=true
+--metrics.prometheus.addEntryPointsLabels=true
 ```
 
-#### `onServices`
+#### `addServicesLabels`
 
 _Optional, Default=true_
 
@@ -124,16 +124,16 @@ Enable metrics on services.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.prometheus]
-    onServices = true
+    addServicesLabels = true
 ```
 
 ```yaml tab="File (TOML)"
 metrics:
   prometheus:
-    onServices: true
+    addServicesLabels: true
 ```
 
 ```bash tab="CLI"
 --metrics
---metrics.prometheus.onServices=true
+--metrics.prometheus.addServicesLabels=true
 ```

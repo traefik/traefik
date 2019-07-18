@@ -47,15 +47,15 @@ func RegisterDatadog(ctx context.Context, config *types.DataDog) Registry {
 		lastConfigReloadFailureGauge: datadogClient.NewGauge(ddLastConfigReloadFailureName),
 	}
 
-	if config.OnEntryPoints {
-		registry.epEnabled = config.OnEntryPoints
+	if config.AddEntryPointsLabels {
+		registry.epEnabled = config.AddEntryPointsLabels
 		registry.entryPointReqsCounter = datadogClient.NewCounter(ddEntryPointReqsName, 1.0)
 		registry.entryPointReqDurationHistogram = datadogClient.NewHistogram(ddEntryPointReqDurationName, 1.0)
 		registry.entryPointOpenConnsGauge = datadogClient.NewGauge(ddEntryPointOpenConnsName)
 	}
 
-	if config.OnServices {
-		registry.svcEnabled = config.OnServices
+	if config.AddServicesLabels {
+		registry.svcEnabled = config.AddServicesLabels
 		registry.serviceReqsCounter = datadogClient.NewCounter(ddMetricsServiceReqsName, 1.0)
 		registry.serviceReqDurationHistogram = datadogClient.NewHistogram(ddMetricsServiceLatencyName, 1.0)
 		registry.serviceRetriesCounter = datadogClient.NewCounter(ddRetriesTotalName, 1.0)

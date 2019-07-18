@@ -61,15 +61,15 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		lastConfigReloadFailureGauge: influxDBClient.NewGauge(influxDBLastConfigReloadFailureName),
 	}
 
-	if config.OnEntryPoints {
-		registry.epEnabled = config.OnEntryPoints
+	if config.AddEntryPointsLabels {
+		registry.epEnabled = config.AddEntryPointsLabels
 		registry.entryPointReqsCounter = influxDBClient.NewCounter(influxDBEntryPointReqsName)
 		registry.entryPointReqDurationHistogram = influxDBClient.NewHistogram(influxDBEntryPointReqDurationName)
 		registry.entryPointOpenConnsGauge = influxDBClient.NewGauge(influxDBEntryPointOpenConnsName)
 	}
 
-	if config.OnServices {
-		registry.svcEnabled = config.OnServices
+	if config.AddServicesLabels {
+		registry.svcEnabled = config.AddServicesLabels
 		registry.serviceReqsCounter = influxDBClient.NewCounter(influxDBMetricsServiceReqsName)
 		registry.serviceReqDurationHistogram = influxDBClient.NewHistogram(influxDBMetricsServiceLatencyName)
 		registry.serviceRetriesCounter = influxDBClient.NewCounter(influxDBRetriesTotalName)
