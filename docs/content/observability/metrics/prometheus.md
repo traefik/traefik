@@ -48,7 +48,7 @@ metrics:
 
 _Optional, Default=traefik_
 
-Entry-point sued by prometheus to expose metrics.
+Entry-point used by prometheus to expose metrics.
 
 ```toml tab="File (TOML)"
 [metrics]
