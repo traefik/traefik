@@ -146,7 +146,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 			}
 
 			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok {
-				log.WithoutContext().Errorf("the router %s uses an non-existent resolver: %s", rtName, rt.TLS.CertResolver)
+				log.WithoutContext().Errorf("the router %s uses a non-existent resolver: %s", rtName, rt.TLS.CertResolver)
 			}
 		}
 	})
@@ -197,7 +197,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	return nil
 }
 
-// initACMEProvider create an acme provider from the ACME part of globalConfiguration
+// initACMEProvider creates an acme provider from the ACME part of globalConfiguration
 func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager) []*acme.Provider {
 	challengeStore := acme.NewLocalChallengeStore()
 	localStores := map[string]*acme.LocalStore{}
