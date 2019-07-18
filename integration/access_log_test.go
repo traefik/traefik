@@ -309,6 +309,8 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 }
 
 func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
+	c.Skip("RateLimit is disable for now")
+
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{

@@ -41,6 +41,8 @@ func (s *TracingSuite) startZipkin(c *check.C) {
 }
 
 func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
+	c.Skip("RateLimit is disable for now")
+
 	s.startZipkin(c)
 	defer s.composeProject.Stop(c, "zipkin")
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
@@ -155,6 +157,8 @@ func (s *TracingSuite) startJaeger(c *check.C) {
 }
 
 func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
+	c.Skip("RateLimit is disable for now")
+
 	s.startJaeger(c)
 	defer s.composeProject.Stop(c, "jaeger")
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{

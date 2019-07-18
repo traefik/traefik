@@ -3,10 +3,8 @@ package label
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -97,26 +95,26 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.province":         "true",
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.serialnumber":     "true",
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.pem":                          "true",
-		"traefik.http.middlewares.Middleware12.ratelimit.extractorfunc":                        "foobar",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.average":                "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.burst":                  "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.period":                 "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.average":                "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.burst":                  "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.period":                 "42",
-		"traefik.http.middlewares.Middleware13.redirectregex.permanent":                        "true",
-		"traefik.http.middlewares.Middleware13.redirectregex.regex":                            "foobar",
-		"traefik.http.middlewares.Middleware13.redirectregex.replacement":                      "foobar",
-		"traefik.http.middlewares.Middleware13b.redirectscheme.scheme":                         "https",
-		"traefik.http.middlewares.Middleware13b.redirectscheme.port":                           "80",
-		"traefik.http.middlewares.Middleware13b.redirectscheme.permanent":                      "true",
-		"traefik.http.middlewares.Middleware14.replacepath.path":                               "foobar",
-		"traefik.http.middlewares.Middleware15.replacepathregex.regex":                         "foobar",
-		"traefik.http.middlewares.Middleware15.replacepathregex.replacement":                   "foobar",
-		"traefik.http.middlewares.Middleware16.retry.attempts":                                 "42",
-		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":                           "foobar, fiibar",
-		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":                         "foobar, fiibar",
-		"traefik.http.middlewares.Middleware19.compress":                                       "true",
+		// "traefik.http.middlewares.Middleware12.ratelimit.extractorfunc":                        "foobar",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.average":                "42",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.burst":                  "42",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.period":                 "42",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.average":                "42",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.burst":                  "42",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.period":                 "42",
+		"traefik.http.middlewares.Middleware13.redirectregex.permanent":      "true",
+		"traefik.http.middlewares.Middleware13.redirectregex.regex":          "foobar",
+		"traefik.http.middlewares.Middleware13.redirectregex.replacement":    "foobar",
+		"traefik.http.middlewares.Middleware13b.redirectscheme.scheme":       "https",
+		"traefik.http.middlewares.Middleware13b.redirectscheme.port":         "80",
+		"traefik.http.middlewares.Middleware13b.redirectscheme.permanent":    "true",
+		"traefik.http.middlewares.Middleware14.replacepath.path":             "foobar",
+		"traefik.http.middlewares.Middleware15.replacepathregex.regex":       "foobar",
+		"traefik.http.middlewares.Middleware15.replacepathregex.replacement": "foobar",
+		"traefik.http.middlewares.Middleware16.retry.attempts":               "42",
+		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":         "foobar, fiibar",
+		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":       "foobar, fiibar",
+		"traefik.http.middlewares.Middleware19.compress":                     "true",
 
 		"traefik.http.routers.Router0.entrypoints": "foobar, fiibar",
 		"traefik.http.routers.Router0.middlewares": "foobar, fiibar",
@@ -306,23 +304,23 @@ func TestDecodeConfiguration(t *testing.T) {
 						},
 					},
 				},
-				"Middleware12": {
-					RateLimit: &dynamic.RateLimit{
-						RateSet: map[string]*dynamic.Rate{
-							"Rate0": {
-								Period:  types.Duration(42 * time.Second),
-								Average: 42,
-								Burst:   42,
-							},
-							"Rate1": {
-								Period:  types.Duration(42 * time.Second),
-								Average: 42,
-								Burst:   42,
-							},
-						},
-						ExtractorFunc: "foobar",
-					},
-				},
+				// "Middleware12": {
+				// 	RateLimit: &dynamic.RateLimit{
+				// 		RateSet: map[string]*dynamic.Rate{
+				// 			"Rate0": {
+				// 				Period:  types.Duration(42 * time.Second),
+				// 				Average: 42,
+				// 				Burst:   42,
+				// 			},
+				// 			"Rate1": {
+				// 				Period:  types.Duration(42 * time.Second),
+				// 				Average: 42,
+				// 				Burst:   42,
+				// 			},
+				// 		},
+				// 		ExtractorFunc: "foobar",
+				// 	},
+				// },
 				"Middleware13": {
 					RedirectRegex: &dynamic.RedirectRegex{
 						Regex:       "foobar",
@@ -702,23 +700,23 @@ func TestEncodeConfiguration(t *testing.T) {
 						},
 					},
 				},
-				"Middleware12": {
-					RateLimit: &dynamic.RateLimit{
-						RateSet: map[string]*dynamic.Rate{
-							"Rate0": {
-								Period:  types.Duration(42 * time.Nanosecond),
-								Average: 42,
-								Burst:   42,
-							},
-							"Rate1": {
-								Period:  types.Duration(42 * time.Nanosecond),
-								Average: 42,
-								Burst:   42,
-							},
-						},
-						ExtractorFunc: "foobar",
-					},
-				},
+				// "Middleware12": {
+				// 	RateLimit: &dynamic.RateLimit{
+				// 		RateSet: map[string]*dynamic.Rate{
+				// 			"Rate0": {
+				// 				Period:  types.Duration(42 * time.Nanosecond),
+				// 				Average: 42,
+				// 				Burst:   42,
+				// 			},
+				// 			"Rate1": {
+				// 				Period:  types.Duration(42 * time.Nanosecond),
+				// 				Average: 42,
+				// 				Burst:   42,
+				// 			},
+				// 		},
+				// 		ExtractorFunc: "foobar",
+				// 	},
+				// },
 				"Middleware13": {
 					RedirectRegex: &dynamic.RedirectRegex{
 						Regex:       "foobar",
@@ -1051,26 +1049,26 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.SerialNumber":     "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.DomainComponent":  "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.PEM":                          "true",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.ExtractorFunc":                        "foobar",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Average":                "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Burst":                  "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Period":                 "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Average":                "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Burst":                  "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Period":                 "42",
-		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Regex":                            "foobar",
-		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Replacement":                      "foobar",
-		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Permanent":                        "true",
-		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Scheme":                         "https",
-		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Port":                           "80",
-		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Permanent":                      "true",
-		"traefik.HTTP.Middlewares.Middleware14.ReplacePath.Path":                               "foobar",
-		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Regex":                         "foobar",
-		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Replacement":                   "foobar",
-		"traefik.HTTP.Middlewares.Middleware16.Retry.Attempts":                                 "42",
-		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":                           "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":                         "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware19.Compress":                                       "true",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.ExtractorFunc":                        "foobar",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Average":                "42",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Burst":                  "42",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Period":                 "42",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Average":                "42",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Burst":                  "42",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Period":                 "42",
+		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Regex":          "foobar",
+		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Replacement":    "foobar",
+		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Permanent":      "true",
+		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Scheme":       "https",
+		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Port":         "80",
+		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Permanent":    "true",
+		"traefik.HTTP.Middlewares.Middleware14.ReplacePath.Path":             "foobar",
+		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Regex":       "foobar",
+		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Replacement": "foobar",
+		"traefik.HTTP.Middlewares.Middleware16.Retry.Attempts":               "42",
+		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":         "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":       "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware19.Compress":                     "true",
 
 		"traefik.HTTP.Routers.Router0.EntryPoints": "foobar, fiibar",
 		"traefik.HTTP.Routers.Router0.Middlewares": "foobar, fiibar",

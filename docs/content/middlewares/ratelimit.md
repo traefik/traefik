@@ -1,5 +1,9 @@
 # RateLimit
 
+!!! warning
+    This middleware is disable for now.
+
+
 Protection from Too Many Calls
 {: .subtitle }
 
