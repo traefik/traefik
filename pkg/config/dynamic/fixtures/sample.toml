@@ -212,7 +212,6 @@
   storage = "foobar"
   entryPoint = "foobar"
   keyType = "foobar"
-  onHostRule = true
   [acme.dnsChallenge]
     provider = "foobar"
     delayBeforeCheck = 42

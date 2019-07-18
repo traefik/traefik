@@ -11,8 +11,8 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 ## Configuration Examples
 
 ??? example "Enabling ACME"
-
-    ```toml tab="TOML"
+    
+    ```toml tab="File (TOML)"
     [entryPoints]
       [entryPoints.web]
         address = ":80"
@@ -20,18 +20,15 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
       [entryPoints.web-secure]
         address = ":443"
     
-    # every router with TLS enabled will now be able to use ACME for its certificates
-    [acme]
+    [certificatesResolvers.sample.acme]
       email = "your-email@your-domain.org"
       storage = "acme.json"
-      # dynamic generation based on the Host() & HostSNI() matchers
-      onHostRule = true
       [acme.httpChallenge]
         # used during the challenge
         entryPoint = "web"
     ```
     
-    ```yaml tab="YAML"
+    ```yaml tab="File (YAML)"
     entryPoints:
       web:
         address: ":80"
@@ -39,50 +36,24 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
       web-secure:
         address: ":443"
     
-    # every router with TLS enabled will now be able to use ACME for its certificates
-    acme:
-      email: your-email@your-domain.org
-      storage: acme.json
-      # dynamic generation based on the Host() & HostSNI() matchers
-      onHostRule: true
-      httpChallenge:
-        # used during the challenge
-        entryPoint: web
-    ```
-
-??? example "Configuring Wildcard Certificates"
-    
-    ```toml tab="TOML"
-    [entryPoints]
-      [entryPoints.web-secure]
-        address = ":443"
-    
-    [acme]
-      email = "your-email@your-domain.org"
-      storage = "acme.json"
-      [acme.dnsChallenge]
-        provider = "xxx"
-    
-      [[acme.domains]]
-        main = "*.mydomain.com"
-        sans = ["mydomain.com"]
+    certificatesResolvers:
+      sample:
+        acme:
+          email: your-email@your-domain.org
+          storage: acme.json
+          httpChallenge:
+            # used during the challenge
+            entryPoint: web
     ```
     
-    ```yaml tab="YAML"
-    entryPoints:
-      web-secure:
-        address: ":443"
-    
-    acme:
-      email: your-email@your-domain.org
-      storage: acme.json
-      dnsChallenge:
-        provide: xxx
-    
-      domains:
-        - main: "*.mydomain.com"
-          sans:
-            - mydomain.com
+    ```bash tab="CLI"
+    --entryPoints.web.address=":80"
+    --entryPoints.websecure.address=":443"
+    # ...
+    --certificatesResolvers.sample.acme.email: your-email@your-domain.org
+    --certificatesResolvers.sample.acme.storage: acme.json
+    # used during the challenge
+    --certificatesResolvers.sample.acme.httpChallenge.entryPoint: web
     ```
 
 ??? note "Configuration Reference"
@@ -90,12 +61,16 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     There are many available options for ACME.
     For a quick glance at what's possible, browse the configuration reference:
     
-    ```toml tab="TOML"
+    ```toml tab="File (TOML)"
     --8<-- "content/https/ref-acme.toml"
     ```
     
-    ```yaml tab="YAML"
+    ```yaml tab="File (YAML)"
     --8<-- "content/https/ref-acme.yaml"
+    ```
+    
+    ```bash tab="CLI"
+    --8<-- "content/https/ref-acme.txt"
     ```
 
 ## Automatic Renewals
@@ -118,16 +93,25 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
 
 ??? example "Configuring the `tlsChallenge`"
 
-    ```toml tab="TOML"
-    [acme]
-      [acme.tlsChallenge]
+    ```toml tab="File (TOML)"
+    [certificatesResolvers.sample.acme]
+      # ...
+      [certificatesResolvers.sample.acme.tlsChallenge]
     ```
 
-    ```yaml tab="YAML"
-    acme:
-      tlsChallenge: {}
+    ```yaml tab="File (YAML)"
+    certificatesResolvers:
+      sample:
+        acme:
+          # ...
+          tlsChallenge: {}
     ```
     
+    ```bash tab="CLI"
+    # ...
+    --certificatesResolvers:.sample.acme.tlsChallenge
+    ```
+
 ### `httpChallenge`
 
 Use the `HTTP-01` challenge to generate and renew ACME certificates by provisioning an HTTP resource under a well-known URI.
@@ -137,7 +121,7 @@ when using the `HTTP-01` challenge, `acme.httpChallenge.entryPoint` must be reac
 
 ??? example "Using an EntryPoint Called http for the `httpChallenge`"
 
-    ```toml tab="TOML"
+    ```toml tab="File (TOML)"
     [entryPoints]
       [entryPoints.web]
         address = ":80"
@@ -145,13 +129,13 @@ when using the `HTTP-01` challenge, `acme.httpChallenge.entryPoint` must be reac
       [entryPoints.web-secure]
         address = ":443"
     
-    [acme]
+    [certificatesResolvers.sample.acme]
       # ...
-      [acme.httpChallenge]
+      [certificatesResolvers.sample.acme.httpChallenge]
         entryPoint = "web"
     ```
 
-    ```yaml tab="YAML"
+    ```yaml tab="File (YAML)"
     entryPoints:
       web:
         address: ":80"
@@ -159,10 +143,19 @@ when using the `HTTP-01` challenge, `acme.httpChallenge.entryPoint` must be reac
       web-secure:
         address: ":443"
     
-    acme:
-      # ...
-      httpChallenge:
-        entryPoint: web
+    certificatesResolvers:
+      sample:
+        acme:
+          # ...
+          httpChallenge:
+            entryPoint: web
+    ```
+    
+    ```bash tab="CLI"
+    --entryPoints.web.address=":80"
+    --entryPoints.websecure.address=":443"
+    # ...
+    --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
     ```
 
 !!! note
@@ -174,21 +167,30 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
 
 ??? example "Configuring a `dnsChallenge` with the DigitalOcean Provider"
 
-    ```toml tab="TOML"
-    [acme]
+    ```toml tab="File (TOML)"
+    [certificatesResolvers.sample.acme]
       # ...
-      [acme.dnsChallenge]
+      [certificatesResolvers.sample.acme.dnsChallenge]
         provider = "digitalocean"
         delayBeforeCheck = 0
     # ...
     ```
     
-    ```yaml tab="YAML"
-    acme:
-      # ...
-      dnsChallenge:
-        provider: digitalocean
-        delayBeforeCheck: 0
+    ```yaml tab="File (YAML)"
+    certificatesResolvers:
+      sample:
+        acme:
+          # ...
+          dnsChallenge:
+            provider: digitalocean
+            delayBeforeCheck: 0
+        # ...
+    ```
+    
+    ```bash tab="CLI"
+    # ...
+    --certificatesResolvers.sample.acme.dnsChallenge.provider=digitalocean
+    --certificatesResolvers.sample.acme.dnsChallenge.delayBeforeCheck=0
     # ...
     ```
 
@@ -238,7 +240,7 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 | [Lightsail](https://aws.amazon.com/lightsail/)              | `lightsail`    | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DNS_ZONE`                                                                                    | [Additional configuration](https://go-acme.github.io/lego/dns/lightsail)    |
 | [Linode](https://www.linode.com)                            | `linode`       | `LINODE_API_KEY`                                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/linode)       |
 | [Linode v4](https://www.linode.com)                         | `linodev4`     | `LINODE_TOKEN`                                                                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/linodev4)     |
-| manual                                                      | -              | none, but you need to run Traefik interactively [^4], turn on `acmeLogging` to see instructions and press <kbd>Enter</kbd>.                 |                                                                                               |
+| manual                                                      | -              | none, but you need to run Traefik interactively [^4], turn on debug log to see instructions and press <kbd>Enter</kbd>.                 |                                                                                               |
 | [MyDNS.jp](https://www.mydns.jp/)                           | `mydnsjp`      | `MYDNSJP_MASTER_ID`, `MYDNSJP_PASSWORD`                                                                                                     | [Additional configuration](https://go-acme.github.io/lego/dns/mydnsjp)      |
 | [Namecheap](https://www.namecheap.com)                      | `namecheap`    | `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/namecheap)    |
 | [name.com](https://www.name.com/)                           | `namedotcom`   | `NAMECOM_USERNAME`, `NAMECOM_API_TOKEN`, `NAMECOM_SERVER`                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/namedotcom)   |
@@ -276,22 +278,29 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 
 Use custom DNS servers to resolve the FQDN authority.
 
-```toml tab="TOML"
-[acme]
+```toml tab="File (TOML)"
+[certificatesResolvers.sample.acme]
   # ...
-  [acme.dnsChallenge]
+  [certificatesResolvers.sample.acme.dnsChallenge]
     # ...
     resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
 ```
 
-```yaml tab="YAML"
-acme:
-  # ...
-  dnsChallenge:
-    # ...
-    resolvers:
-    - "1.1.1.1:53"
-    - "8.8.8.8:53"
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  sample:
+    acme:
+      # ...
+      dnsChallenge:
+        # ...
+        resolvers:
+        - "1.1.1.1:53"
+        - "8.8.8.8:53"
+```
+
+```bash tab="CLI"
+# ...
+--certificatesResolvers.sample.acme.dnsChallenge.resolvers:="1.1.1.1:53,8.8.8.8:53"
 ```
 
 #### Wildcard Domains
@@ -299,140 +308,56 @@ acme:
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
 As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](#dnschallenge).
 
-```toml tab="TOML"
-[acme]
-  # ...
-  [[acme.domains]]
-    main = "*.local1.com"
-    sans = ["local1.com"]
-
-# ...
-```
-
-```yaml tab="YAML"
-acme:
-  # ...
-  domains:
-    - main: "*.local1.com"
-      sans:
-      - local1.com
-
-# ...
-```
-
-!!! note "Double Wildcard Certificates"
-    It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
-
-Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are executed.
-In this case the generated DNS TXT record for both domains is the same.
-Even though this behavior is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant,
-it can lead to problems as all DNS providers keep DNS records cached for a given time (TTL) and this TTL can be greater than the challenge timeout making the `DNS-01` challenge fail.
-
-The Traefik ACME client library [LEGO](https://github.com/go-acme/lego) supports some but not all DNS providers to work around this issue.
-The [Supported `provider` table](#providers) indicates if they allow generating certificates for a wildcard domain and its root domain.
-
-## Known Domains, SANs
-
-You can set SANs (alternative domains) for each main domain.
-Every domain must have A/AAAA records pointing to Traefik.
-Each domain & SAN will lead to a certificate request.
-
-```toml tab="TOML"
-[acme]
-  # ...
-  [[acme.domains]]
-    main = "local1.com"
-    sans = ["test1.local1.com", "test2.local1.com"]
-  [[acme.domains]]
-    main = "local2.com"
-  [[acme.domains]]
-    main = "*.local3.com"
-    sans = ["local3.com", "test1.test1.local3.com"]
-# ...
-```
-
-```yaml tab="YAML"
-acme:
-  # ...
-  domains:
-    - main: "local1.com"
-      sans:
-      - "test1.local1.com"
-      - "test2.local1.com"
-    - main: "local2.com"
-    - main: "*.local3.com"
-      sans:
-      - "local3.com"
-      - "test1.test1.local3.com"
-# ...
-```
-
-!!! important
-    The certificates for the domains listed in `acme.domains` are negotiated at Traefik startup only.
-
-!!! note
-    Wildcard certificates can only be verified through a `DNS-01` challenge.
-
 ## `caServer`
 
 ??? example "Using the Let's Encrypt staging server"
 
-    ```toml tab="TOML"
-    [acme]
+    ```toml tab="File (TOML)"
+    [certificatesResolvers.sample.acme]
       # ...
       caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
       # ...
     ```
     
-    ```yaml tab="YAML"
-    acme:
-      # ...
-      caServer: https://acme-staging-v02.api.letsencrypt.org/directory
-      # ...
+    ```yaml tab="File (YAML)"
+    certificatesResolvers:
+      sample:
+        acme:
+          # ...
+          caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+          # ...
     ```
 
-## `onHostRule`
-
-Enable certificate generation on [routers](../routing/routers/index.md) `Host` & `HostSNI` rules.
-
-This will request a certificate from Let's Encrypt for each router with a Host rule.
-
-```toml tab="TOML"
-[acme]
-  # ...
-  onHostRule = true
-  # ...
-```
-
-```yaml tab="YAML"
-acme:
-  # ...
-  onHostRule: true
-  # ...
-```
-
-!!! note "Multiple Hosts in a Rule"
-    The rule `Host(test1.traefik.io,test2.traefik.io)` will request a certificate with the main domain `test1.traefik.io` and SAN `test2.traefik.io`.
-
-!!! warning
-    `onHostRule` option can not be used to generate wildcard certificates. Refer to [wildcard generation](#wildcard-domains) for further information.
+    ```bash tab="CLI"
+    # ...
+    --certificatesResolvers.sample.acme.caServer="https://acme-staging-v02.api.letsencrypt.org/directory"
+    # ...
+    ```
 
 ## `storage`
 
 The `storage` option sets the location where your ACME certificates are saved to.
 
-```toml tab="TOML"
-[acme]
+```toml tab="File (TOML)"
+[certificatesResolvers.sample.acme]
   # ...
   storage = "acme.json"
   # ...
 ```
 
-```yaml tab="YAML"
-acme
-  # ...
-  storage: acme.json
-  # ...
+```toml tab="File (TOML)"
+certificatesResolvers:
+  sample:
+    acme:
+      # ...
+      storage: acme.json
+      # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesResolvers.sample.acme.storage=acme.json
+# ...
 ```
 
 The value can refer to some kinds of storage:

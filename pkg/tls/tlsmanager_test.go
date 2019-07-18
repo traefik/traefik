@@ -152,11 +152,21 @@ func TestManager_Get(t *testing.T) {
 
 func TestClientAuth(t *testing.T) {
 	tlsConfigs := map[string]Options{
-		"eca":  {ClientAuth: ClientAuth{}},
-		"ecat": {ClientAuth: ClientAuth{ClientAuthType: ""}},
-		"ncc":  {ClientAuth: ClientAuth{ClientAuthType: "NoClientCert"}},
-		"rcc":  {ClientAuth: ClientAuth{ClientAuthType: "RequestClientCert"}},
-		"racc": {ClientAuth: ClientAuth{ClientAuthType: "RequireAnyClientCert"}},
+		"eca": {
+			ClientAuth: ClientAuth{},
+		},
+		"ecat": {
+			ClientAuth: ClientAuth{ClientAuthType: ""},
+		},
+		"ncc": {
+			ClientAuth: ClientAuth{ClientAuthType: "NoClientCert"},
+		},
+		"rcc": {
+			ClientAuth: ClientAuth{ClientAuthType: "RequestClientCert"},
+		},
+		"racc": {
+			ClientAuth: ClientAuth{ClientAuthType: "RequireAnyClientCert"},
+		},
 		"vccig": {
 			ClientAuth: ClientAuth{
 				CAFiles:        []FileOrContent{localhostCert},
@@ -166,7 +176,9 @@ func TestClientAuth(t *testing.T) {
 		"vccigwca": {
 			ClientAuth: ClientAuth{ClientAuthType: "VerifyClientCertIfGiven"},
 		},
-		"ravcc": {ClientAuth: ClientAuth{ClientAuthType: "RequireAndVerifyClientCert"}},
+		"ravcc": {
+			ClientAuth: ClientAuth{ClientAuthType: "RequireAndVerifyClientCert"},
+		},
 		"ravccwca": {
 			ClientAuth: ClientAuth{
 				CAFiles:        []FileOrContent{localhostCert},
@@ -179,7 +191,9 @@ func TestClientAuth(t *testing.T) {
 				ClientAuthType: "RequireAndVerifyClientCert",
 			},
 		},
-		"ucat": {ClientAuth: ClientAuth{ClientAuthType: "Unknown"}},
+		"ucat": {
+			ClientAuth: ClientAuth{ClientAuthType: "Unknown"},
+		},
 	}
 
 	block, _ := pem.Decode([]byte(localhostCert))
@@ -191,6 +205,7 @@ func TestClientAuth(t *testing.T) {
 		tlsOptionsName     string
 		expectedClientAuth tls.ClientAuthType
 		expectedRawSubject []byte
+		expectedError      bool
 	}{
 		{
 			desc:               "Empty ClientAuth option should get a tls.NoClientCert (default value)",
@@ -223,14 +238,16 @@ func TestClientAuth(t *testing.T) {
 			expectedClientAuth: tls.VerifyClientCertIfGiven,
 		},
 		{
-			desc:               "VerifyClientCertIfGiven option without CAFiles  yields a default ClientAuthType (NoClientCert)",
+			desc:               "VerifyClientCertIfGiven option without CAFiles yields a default ClientAuthType (NoClientCert)",
 			tlsOptionsName:     "vccigwca",
 			expectedClientAuth: tls.NoClientCert,
+			expectedError:      true,
 		},
 		{
-			desc:               "RequireAndVerifyClientCert option without CAFiles  yields a default ClientAuthType (NoClientCert)",
+			desc:               "RequireAndVerifyClientCert option without CAFiles yields a default ClientAuthType (NoClientCert)",
 			tlsOptionsName:     "ravcc",
 			expectedClientAuth: tls.NoClientCert,
+			expectedError:      true,
 		},
 		{
 			desc:               "RequireAndVerifyClientCert option should get a tls.RequireAndVerifyClientCert as ClientAuthType with CA files",
@@ -242,11 +259,13 @@ func TestClientAuth(t *testing.T) {
 			desc:               "Unknown option yields a default ClientAuthType (NoClientCert)",
 			tlsOptionsName:     "ucat",
 			expectedClientAuth: tls.NoClientCert,
+			expectedError:      true,
 		},
 		{
 			desc:               "Bad CA certificate content yields a default ClientAuthType (NoClientCert)",
 			tlsOptionsName:     "ravccwbca",
 			expectedClientAuth: tls.NoClientCert,
+			expectedError:      true,
 		},
 	}
 
@@ -259,6 +278,12 @@ func TestClientAuth(t *testing.T) {
 			t.Parallel()
 
 			config, err := tlsManager.Get("default", test.tlsOptionsName)
+
+			if test.expectedError {
+				assert.Error(t, err)
+				return
+			}
+
 			assert.NoError(t, err)
 
 			if test.expectedRawSubject != nil {

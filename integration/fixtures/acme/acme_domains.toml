@@ -45,11 +45,14 @@
 [http.routers]
   [http.routers.test]
     entryPoints = ["web-secure"]
-    rule = "Host(`traefik.acme.wtf`)"
+    rule = "PathPrefix(`/`)"
     service = "test"
     [http.routers.test.tls]
-
-[tls.stores]
-  [tls.stores.default.defaultCertificate]
-    certFile = "fixtures/acme/ssl/wildcard.crt"
-    keyFile = "fixtures/acme/ssl/wildcard.key"
+      certResolver = "default"
+{{range .Domains}}
+  [[http.routers.test.tls.domains]]
+    main = "{{ .Main }}"
+    sans = [{{range .SANs }}
+      "{{.}}",
+      {{end}}]
+{{end}}

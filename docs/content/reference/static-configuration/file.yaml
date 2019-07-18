@@ -230,12 +230,10 @@ hostResolver:
   resolvDepth: 42
 acme:
   email: foobar
-  acmeLogging: true
   caServer: foobar
   storage: foobar
   entryPoint: foobar
   keyType: foobar
-  onHostRule: true
   dnsChallenge:
     provider: foobar
     delayBeforeCheck: 42

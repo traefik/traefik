@@ -214,30 +214,23 @@ hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
   resolvDepth: 42
-acme:
-  email: foobar
-  acmeLogging: true
-  caServer: foobar
-  storage: foobar
-  entryPoint: foobar
-  keyType: foobar
-  onHostRule: true
-  dnsChallenge:
-    provider: foobar
-    delayBeforeCheck: 42
-    resolvers:
-      - foobar
-      - foobar
-    disablePropagationCheck: true
-  httpChallenge:
-    entryPoint: foobar
-  tlsChallenge: {}
-  domains:
-    - main: foobar
-      sans:
-        - foobar
-        - foobar
-    - main: foobar
-      sans:
-        - foobar
-        - foobar
+
+certificatesResolvers:
+  default:
+    acme:
+      email: foobar
+      acmeLogging: true
+      caServer: foobar
+      storage: foobar
+      entryPoint: foobar
+      keyType: foobar
+      dnsChallenge:
+        provider: foobar
+        delayBeforeCheck: 42
+        resolvers:
+          - foobar
+          - foobar
+        disablePropagationCheck: true
+      httpChallenge:
+        entryPoint: foobar
+      tlsChallenge: {}

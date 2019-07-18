@@ -11,4 +11,8 @@ REPO_ROOT=${HACK_DIR}/..
   --go-header-file "${HACK_DIR}"/boilerplate.go.tmpl \
   "$@"
 
-deepcopy-gen  --input-dirs github.com/containous/traefik/pkg/config/dynamic --input-dirs github.com/containous/traefik/pkg/tls -O zz_generated.deepcopy --go-header-file "${HACK_DIR}"/boilerplate.go.tmpl
+deepcopy-gen \
+--input-dirs github.com/containous/traefik/pkg/config/dynamic \
+--input-dirs github.com/containous/traefik/pkg/tls \
+--input-dirs github.com/containous/traefik/pkg/types \
+-O zz_generated.deepcopy --go-header-file "${HACK_DIR}"/boilerplate.go.tmpl

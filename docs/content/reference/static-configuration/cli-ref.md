@@ -36,60 +36,6 @@ Keep access logs with status codes in the specified range.
 `--accesslog.format`:  
 Access log format: json | common (Default: ```common```)
 
-`--acme.acmelogging`:  
-Enable debug logging of ACME actions. (Default: ```false```)
-
-`--acme.caserver`:  
-CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
-
-`--acme.dnschallenge`:  
-Activate DNS-01 Challenge. (Default: ```false```)
-
-`--acme.dnschallenge.delaybeforecheck`:  
-Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
-
-`--acme.dnschallenge.disablepropagationcheck`:  
-Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
-
-`--acme.dnschallenge.provider`:  
-Use a DNS-01 based challenge provider rather than HTTPS.
-
-`--acme.dnschallenge.resolvers`:  
-Use following DNS servers to resolve the FQDN authority.
-
-`--acme.domains`:  
-The list of domains for which certificates are generated on startup. Wildcard domains only accepted with DNSChallenge.
-
-`--acme.domains[n].main`:  
-Default subject name.
-
-`--acme.domains[n].sans`:  
-Subject alternative names.
-
-`--acme.email`:  
-Email address used for registration.
-
-`--acme.entrypoint`:  
-EntryPoint to use.
-
-`--acme.httpchallenge`:  
-Activate HTTP-01 Challenge. (Default: ```false```)
-
-`--acme.httpchallenge.entrypoint`:  
-HTTP challenge EntryPoint
-
-`--acme.keytype`:  
-KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. (Default: ```RSA4096```)
-
-`--acme.onhostrule`:  
-Enable certificate generation on router Host rules. (Default: ```false```)
-
-`--acme.storage`:  
-Storage to use. (Default: ```acme.json```)
-
-`--acme.tlschallenge`:  
-Activate TLS-ALPN-01 Challenge. (Default: ```true```)
-
 `--api`:  
 Enable api/dashboard. (Default: ```false```)
 
@@ -110,6 +56,45 @@ Enable more detailed statistics. (Default: ```false```)
 
 `--api.statistics.recenterrors`:  
 Number of recent errors logged. (Default: ```10```)
+
+`--certificatesresolvers.<name>`:  
+Certificates resolvers configuration. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.caserver`:  
+CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge`:  
+Activate DNS-01 Challenge. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.delaybeforecheck`:  
+Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.disablepropagationcheck`:  
+Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.provider`:  
+Use a DNS-01 based challenge provider rather than HTTPS.
+
+`--certificatesresolvers.<name>.acme.dnschallenge.resolvers`:  
+Use following DNS servers to resolve the FQDN authority.
+
+`--certificatesresolvers.<name>.acme.email`:  
+Email address used for registration.
+
+`--certificatesresolvers.<name>.acme.httpchallenge`:  
+Activate HTTP-01 Challenge. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.httpchallenge.entrypoint`:  
+HTTP challenge EntryPoint
+
+`--certificatesresolvers.<name>.acme.keytype`:  
+KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. (Default: ```RSA4096```)
+
+`--certificatesresolvers.<name>.acme.storage`:  
+Storage to use. (Default: ```acme.json```)
+
+`--certificatesresolvers.<name>.acme.tlschallenge`:  
+Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 
 `--entrypoints.<name>`:  
 Entry points definition. (Default: ```false```)

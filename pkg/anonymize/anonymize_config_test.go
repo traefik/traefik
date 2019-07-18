@@ -89,23 +89,18 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 		},
 	}
-	config.ACME = &acme.Configuration{
-		Email:        "acme Email",
-		ACMELogging:  true,
-		CAServer:     "CAServer",
-		Storage:      "Storage",
-		EntryPoint:   "EntryPoint",
-		KeyType:      "MyKeyType",
-		OnHostRule:   true,
-		DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
-		HTTPChallenge: &acmeprovider.HTTPChallenge{
-			EntryPoint: "MyEntryPoint",
-		},
-		TLSChallenge: &acmeprovider.TLSChallenge{},
-		Domains: []types.Domain{
-			{
-				Main: "Domains Main",
-				SANs: []string{"Domains acme SANs 1", "Domains acme SANs 2", "Domains acme SANs 3"},
+	config.CertificatesResolvers = map[string]static.CertificateResolver{
+		"default": {
+			ACME: &acme.Configuration{
+				Email:        "acme Email",
+				CAServer:     "CAServer",
+				Storage:      "Storage",
+				KeyType:      "MyKeyType",
+				DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
+				HTTPChallenge: &acmeprovider.HTTPChallenge{
+					EntryPoint: "MyEntryPoint",
+				},
+				TLSChallenge: &acmeprovider.TLSChallenge{},
 			},
 		},
 	}
@@ -126,9 +121,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.API = &static.API{
 		EntryPoint: "traefik",
 		Dashboard:  true,
-		Statistics: &types.Statistics{
-			RecentErrors: 111,
-		},
 		DashboardAssets: &assetfs.AssetFS{
 			Asset: func(path string) ([]byte, error) {
 				return nil, nil

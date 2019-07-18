@@ -438,7 +438,10 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			}
 
 			if ingressRoute.Spec.TLS != nil {
-				tlsConf := &dynamic.RouterTLSConfig{}
+				tlsConf := &dynamic.RouterTLSConfig{
+					CertResolver: ingressRoute.Spec.TLS.CertResolver,
+				}
+
 				if ingressRoute.Spec.TLS.Options != nil && len(ingressRoute.Spec.TLS.Options.Name) > 0 {
 					tlsOptionsName := ingressRoute.Spec.TLS.Options.Name
 					// Is a Kubernetes CRD reference, (i.e. not a cross-provider reference)
@@ -537,7 +540,8 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 			if ingressRouteTCP.Spec.TLS != nil {
 				conf.Routers[serviceName].TLS = &dynamic.RouterTCPTLSConfig{
-					Passthrough: ingressRouteTCP.Spec.TLS.Passthrough,
+					Passthrough:  ingressRouteTCP.Spec.TLS.Passthrough,
+					CertResolver: ingressRouteTCP.Spec.TLS.CertResolver,
 				}
 
 				if ingressRouteTCP.Spec.TLS.Options != nil && len(ingressRouteTCP.Spec.TLS.Options.Name) > 0 {

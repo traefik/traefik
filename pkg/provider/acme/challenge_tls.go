@@ -12,7 +12,7 @@ import (
 var _ challenge.Provider = (*challengeTLSALPN)(nil)
 
 type challengeTLSALPN struct {
-	Store Store
+	Store ChallengeStore
 }
 
 func (c *challengeTLSALPN) Present(domain, token, keyAuth string) error {
@@ -37,7 +37,7 @@ func (c *challengeTLSALPN) CleanUp(domain, token, keyAuth string) error {
 
 // GetTLSALPNCertificate Get the temp certificate for ACME TLS-ALPN-O1 challenge.
 func (p *Provider) GetTLSALPNCertificate(domain string) (*tls.Certificate, error) {
-	cert, err := p.Store.GetTLSChallenge(domain)
+	cert, err := p.ChallengeStore.GetTLSChallenge(domain)
 	if err != nil {
 		return nil, err
 	}

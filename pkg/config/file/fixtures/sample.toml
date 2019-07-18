@@ -205,30 +205,21 @@
   resolvConfig = "foobar"
   resolvDepth = 42
 
-[acme]
+[certificatesResolvers.default.acme]
   email = "foobar"
   acmeLogging = true
   caServer = "foobar"
   storage = "foobar"
   entryPoint = "foobar"
   keyType = "foobar"
-  onHostRule = true
-  [acme.dnsChallenge]
+  [certificatesResolvers.default.acme.dnsChallenge]
     provider = "foobar"
     delayBeforeCheck = 42
     resolvers = ["foobar", "foobar"]
     disablePropagationCheck = true
-  [acme.httpChallenge]
+  [certificatesResolvers.default.acme.httpChallenge]
     entryPoint = "foobar"
-  [acme.tlsChallenge]
-
-  [[acme.domains]]
-    main = "foobar"
-    sans = ["foobar", "foobar"]
-
-  [[acme.domains]]
-    main = "foobar"
-    sans = ["foobar", "foobar"]
+  [certificatesResolvers.default.acme.tlsChallenge]
 
 ## Dynamic configuration
 
