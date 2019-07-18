@@ -39,7 +39,7 @@
 
     <section class="container" v-if="overview.http">
       <p class="title is-4">HTTP</p>
-      <div class="tile is-child box columns">
+      <div class="tile is-child box columns is-height-limited">
         <div class="column is-4">
           <canvas id="http-routers" />
         </div>
@@ -54,11 +54,11 @@
 
     <section class="container" v-if="overview.tcp">
       <p class="title is-4">TCP</p>
-      <div class="tile is-child box columns">
-        <div class="column is-6">
+      <div class="tile is-child box columns is-height-limited">
+        <div class="column is-4">
           <canvas id="tcp-routers" />
         </div>
-        <div class="column is-6">
+        <div class="column is-4">
           <canvas id="tcp-services" />
         </div>
       </div>
