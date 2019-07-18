@@ -20,9 +20,8 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 
     * Prefer a fixed version than the latest that could be an unexpected version.
     ex: `traefik:v2.0.0`
-    * Docker images comes in 2 flavors: scratch based or alpine based
-
-!!! tip "All the orchestrator using docker images could fetch the official Traefik docker image"
+    * Docker images comes in 2 flavors: scratch based or alpine based.
+    * All the orchestrator using docker images could fetch the official Traefik docker image.
 
 ## Use the Binary Distribution
 
@@ -59,10 +58,10 @@ Grab the latest binary from the [releases](https://github.com/containous/traefik
     Expand-Archive traefik_${traefik_version}_windows_${arch}.zip
     ```
 
-And run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
+And run it:
 
 ```bash
-./traefik
+./traefik --help
 ```
 
 ## Compile your Binary from the Sources
