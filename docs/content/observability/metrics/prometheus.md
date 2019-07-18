@@ -76,7 +76,7 @@ Middlewares.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.prometheus]
-    middlewares = "[xxx,yyy]"
+    middlewares = ["xxx", "yyy"]
 ```
 
 ```yaml tab="File (TOML)"
