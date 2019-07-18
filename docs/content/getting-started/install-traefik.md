@@ -1,15 +1,14 @@
 # Install Traefik
 
-The first step, before using all the awesome features of Traefik, is to install it.
-There are 3 main ways to install Traefik, you can:
+You can install Traefik with the following flavors:
 
-* [Use the official Docker Image](./#from-official-docker-image)
+* [Use the official Docker image](./#from-official-docker-image)
 * [Use the Prebuild binary](./#from-prebuilt-binary)
 * [Compile your binary from the sources](./#from-the-sources)
 
 ## From Official Docker Image
 
-Choose one of the [official tiny Docker image](https://hub.docker.com/_/traefik) and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
+Choose one of the [official Docker image](https://hub.docker.com/_/traefik) and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
 
 ```shell
 docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik:v2.0
@@ -55,7 +54,7 @@ Grab the latest binary from the [releases](https://github.com/containous/traefik
     ```
 
     ```bash tab="macOS"
-    tar -zxvf -a256 ./traefik_${traefik_version}_darwin_amd64.tar.gz
+    tar -zxvf ./traefik_${traefik_version}_darwin_amd64.tar.gz
     ```
 
     ```powershell tab="Windows PowerShell"
