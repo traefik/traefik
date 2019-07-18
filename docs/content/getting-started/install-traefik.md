@@ -26,7 +26,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 Grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
 
 ```bash
-./traefik --configFile=traefik.toml
+./traefik
 ```
 
 ??? tip "Check the integrity of the downloaded file"
