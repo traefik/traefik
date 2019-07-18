@@ -39,7 +39,7 @@ spec:
             - --certresolver.default.acme.storage=acme.json
             # Please note that this is the staging Let's Encrypt server.
             # Once you get things working, you should remove that whole line altogether.
-            - --certresolver.default.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+            - --certificatesresolvers.default.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
           ports:
             - name: web
               containerPort: 8000
