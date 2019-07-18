@@ -33,10 +33,10 @@ spec:
             - --entrypoints.web.Address=:8000
             - --entrypoints.websecure.Address=:4443
             - --providers.kubernetescrd
-            - --certresolver.default.acme.tlschallenge
-            - --certresolver.default.acme.email=foo@you.com
-            - --certresolver.default.acme.entrypoint=websecure
-            - --certresolver.default.acme.storage=acme.json
+            - --certificatesresolvers.default.acme.tlschallenge
+            - --certificatesresolvers.default.acme.email=foo@you.com
+            - --certificatesresolvers.default.acme.entrypoint=websecure
+            - --certificatesresolvers.default.acme.storage=acme.json
             # Please note that this is the staging Let's Encrypt server.
             # Once you get things working, you should remove that whole line altogether.
             - --certificatesresolvers.default.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
