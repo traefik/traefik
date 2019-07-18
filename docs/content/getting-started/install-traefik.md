@@ -2,11 +2,11 @@
 
 You can install Traefik with the following flavors:
 
-* [Use the official Docker image](./#from-official-docker-image)
-* [Use the Prebuild binary](./#from-prebuilt-binary)
-* [Compile your binary from the sources](./#from-the-sources)
+* [Use the official Docker image](./#use-the-official-docker-image)
+* [Use the binary distribution](./#use-the-binary-distribution)
+* [Compile your binary from the sources](./#compile-your-binary-from-the-sources)
 
-## From Official Docker Image
+## Use the Official Docker Image
 
 Choose one of the [official Docker image](https://hub.docker.com/_/traefik) and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
 
@@ -17,18 +17,16 @@ docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.to
 For more details, go to the [Docker provider documentation](../providers/docker.md)
 
 !!! tip
-    Prefer a fixed version than the latest that could be an unexpected version.
+
+    * Prefer a fixed version than the latest that could be an unexpected version.
     ex: `traefik:v2.0.0`
+    * Docker images comes in 2 flavors: scratch based or alpine based
 
 !!! tip "All the orchestrator using docker images could fetch the official Traefik docker image"
 
-## From Prebuilt Binary
+## Use the Binary Distribution
 
-Grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
-
-```bash
-./traefik
-```
+Grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page.
 
 ??? tip "Check the integrity of the downloaded file"
 
@@ -61,6 +59,12 @@ Grab the latest binary from the [releases](https://github.com/containous/traefik
     Expand-Archive traefik_${traefik_version}_windows_${arch}.zip
     ```
 
-## From the Sources
+And run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
+
+```bash
+./traefik
+```
+
+## Compile your Binary from the Sources
 
 All the details are available in the [Contributing Guide](../contributing/building-testing.md)
