@@ -12,12 +12,14 @@ There are 3 main ways to install Traefik, you can:
 Choose one of the [official tiny Docker image](https://hub.docker.com/_/traefik) and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
 
 ```shell
-docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik
+docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik:v2.0
 ```
 
 For more details, go to the [Docker provider documentation](../providers/docker.md)
 
-!!! tip "Prefer a fixed version than the latest that could be an unexpected version."
+!!! tip
+    Prefer a fixed version than the latest that could be an unexpected version.
+    ex: `traefik:v2.0.0`
 
 !!! tip "All the orchestrator using docker images could fetch the official Traefik docker image"
 
