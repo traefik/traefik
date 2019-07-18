@@ -295,9 +295,31 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				configTLSMaps[conf] = struct{}{}
 			}
 		}
+
+		for name, conf := range c.TLS.Options {
+			if _, exists := configuration.TLS.Options[name]; exists {
+				logger.Warnf("TLS options %v already configured, skipping", name)
+			} else {
+				if configuration.TLS.Options == nil {
+					configuration.TLS.Options = map[string]tls.Options{}
+				}
+				configuration.TLS.Options[name] = conf
+			}
+		}
+
+		for name, conf := range c.TLS.Stores {
+			if _, exists := configuration.TLS.Stores[name]; exists {
+				logger.Warnf("TLS store %v already configured, skipping", name)
+			} else {
+				if configuration.TLS.Stores == nil {
+					configuration.TLS.Stores = map[string]tls.Store{}
+				}
+				configuration.TLS.Stores[name] = conf
+			}
+		}
 	}
 
-	if len(configTLSMaps) > 0 {
+	if len(configTLSMaps) > 0 && configuration.TLS == nil {
 		configuration.TLS = &dynamic.TLSConfiguration{}
 	}
 

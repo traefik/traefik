@@ -17,12 +17,13 @@ import (
 )
 
 type ProvideTestCase struct {
-	desc               string
-	directoryPaths     []string
-	filePath           string
-	expectedNumRouter  int
-	expectedNumService int
-	expectedNumTLSConf int
+	desc                  string
+	directoryPaths        []string
+	filePath              string
+	expectedNumRouter     int
+	expectedNumService    int
+	expectedNumTLSConf    int
+	expectedNumTLSOptions int
 }
 
 func TestTLSContent(t *testing.T) {
@@ -94,6 +95,7 @@ func TestProvideWithoutWatch(t *testing.T) {
 				assert.Len(t, conf.Configuration.HTTP.Routers, test.expectedNumRouter)
 				require.NotNil(t, conf.Configuration.TLS)
 				assert.Len(t, conf.Configuration.TLS.Certificates, test.expectedNumTLSConf)
+				assert.Len(t, conf.Configuration.TLS.Options, test.expectedNumTLSOptions)
 			case <-timeout:
 				t.Errorf("timeout while waiting for config")
 			}
@@ -192,9 +194,10 @@ func getTestCases() []ProvideTestCase {
 				"./fixtures/toml/dir01_file02.toml",
 				"./fixtures/toml/dir01_file03.toml",
 			},
-			expectedNumRouter:  2,
-			expectedNumService: 3,
-			expectedNumTLSConf: 4,
+			expectedNumRouter:     2,
+			expectedNumService:    3,
+			expectedNumTLSConf:    4,
+			expectedNumTLSOptions: 1,
 		},
 		{
 			desc: "simple directory yaml",
@@ -203,9 +206,10 @@ func getTestCases() []ProvideTestCase {
 				"./fixtures/yaml/dir01_file02.yml",
 				"./fixtures/yaml/dir01_file03.yml",
 			},
-			expectedNumRouter:  2,
-			expectedNumService: 3,
-			expectedNumTLSConf: 4,
+			expectedNumRouter:     2,
+			expectedNumService:    3,
+			expectedNumTLSConf:    4,
+			expectedNumTLSOptions: 1,
 		},
 		{
 			desc: "template in directory",
