@@ -12,7 +12,9 @@ import (
 	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/pkg/metrics"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
+	metricsmiddleware "github.com/containous/traefik/pkg/middlewares/metrics"
 	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
 	"github.com/containous/traefik/pkg/middlewares/tracing"
 	"github.com/containous/traefik/pkg/responsemodifiers"
@@ -49,7 +51,13 @@ func (s *Server) loadConfiguration(configMsg dynamic.Message) {
 		listener(*configMsg.Configuration)
 	}
 
-	s.postLoadConfiguration()
+	if s.metricsRegistry.IsEpEnabled() || s.metricsRegistry.IsSvcEnabled() {
+		var entrypoints []string
+		for key := range s.entryPointsTCP {
+			entrypoints = append(entrypoints, key)
+		}
+		metrics.OnConfigurationUpdate(newConfigurations, entrypoints)
+	}
 }
 
 // loadConfigurationTCP returns a new gorilla.mux Route from the specified global configuration and the dynamic
@@ -89,7 +97,7 @@ func (s *Server) createTCPRouters(ctx context.Context, configuration *runtime.Co
 
 // createHTTPHandlers returns, for the given configuration and entryPoints, the HTTP handlers for non-TLS connections, and for the TLS ones. the given configuration must not be nil. its fields will get mutated.
 func (s *Server) createHTTPHandlers(ctx context.Context, configuration *runtime.Configuration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
-	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper)
+	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper, s.metricsRegistry)
 	middlewaresBuilder := middleware.NewBuilder(configuration.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(configuration.Middlewares)
 	routerManager := router.NewManager(configuration, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -126,6 +134,10 @@ func (s *Server) createHTTPHandlers(ctx context.Context, configuration *runtime.
 
 		if s.tracer != nil {
 			chain = chain.Append(tracing.WrapEntryPointHandler(ctx, s.tracer, entryPointName))
+		}
+
+		if s.metricsRegistry.IsEpEnabled() {
+			chain = chain.Append(metricsmiddleware.WrapEntryPointHandler(ctx, s.metricsRegistry, entryPointName))
 		}
 
 		chain = chain.Append(requestdecorator.WrapHandler(s.requestDecorator))
@@ -264,15 +276,6 @@ func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish ch
 			ring.In() <- nextConfig
 		}
 	}
-}
-
-func (s *Server) postLoadConfiguration() {
-	// FIXME metrics
-	// if s.metricsRegistry.IsEnabled() {
-	// 	activeConfig := s.currentConfigurations.Get().(config.Configurations)
-	// 	metrics.OnConfigurationUpdate(activeConfig)
-	// }
-
 }
 
 func buildDefaultHTTPRouter() *mux.Router {

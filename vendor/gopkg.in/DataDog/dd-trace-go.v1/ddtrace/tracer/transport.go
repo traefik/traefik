@@ -10,13 +10,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gopkg.in/DataDog/dd-trace-go.v1/internal/version"
 )
 
 var (
-	// TODO(gbbr): find a more effective way to keep this up to date,
-	// e.g. via `go generate`
-	tracerVersion = "v1.13.1"
-
 	// We copy the transport to avoid using the default one, as it might be
 	// augmented with tracing and we don't want these calls to be recorded.
 	// See https://golang.org/pkg/net/http/#DefaultTransport .
@@ -84,7 +82,7 @@ func newHTTPTransport(addr string, roundTripper http.RoundTripper) *httpTranspor
 		"Datadog-Meta-Lang":             "go",
 		"Datadog-Meta-Lang-Version":     strings.TrimPrefix(runtime.Version(), "go"),
 		"Datadog-Meta-Lang-Interpreter": runtime.Compiler + "-" + runtime.GOARCH + "-" + runtime.GOOS,
-		"Datadog-Meta-Tracer-Version":   tracerVersion,
+		"Datadog-Meta-Tracer-Version":   version.Tag,
 		"Content-Type":                  "application/msgpack",
 	}
 	return &httpTransport{

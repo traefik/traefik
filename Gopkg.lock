@@ -701,7 +701,7 @@
   version = "v1.41.0"
 
 [[projects]]
-  digest = "1:9e53c5e9ee65a2c587d6ade11761ef2f976abfcd9599c5016b7046e63c1f7fb2"
+  digest = "1:bed40e7a58536b77890de9fc4911a1322a31cd2495bbcad8446d182063eb1ae4"
   name = "github.com/go-kit/kit"
   packages = [
     "log",
@@ -716,8 +716,8 @@
     "util/conn",
   ]
   pruneopts = "NUT"
-  revision = "ca4112baa34cb55091301bdc13b1420a122b1b9e"
-  version = "v0.7.0"
+  revision = "150a65a7ec6156b4b640c1fd55f26fd3d475d656"
+  version = "v0.9.0"
 
 [[projects]]
   digest = "1:341a7df38da99fe91ed40e4008c13cc5d02dcc98ed1a094360cb7d5df26d6d26"
@@ -734,14 +734,6 @@
   pruneopts = "NUT"
   revision = "d4920dcf5b7689548a6db640278a9b35a5b48ec6"
   version = "v1.9.1"
-
-[[projects]]
-  digest = "1:8cf58169eb0a8c009ed3a4c36486980d602ab4cc4e478130493d6cd0404f889b"
-  name = "github.com/go-stack/stack"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "54be5f394ed2c3e19dac9134a40a95ba5a017f7b"
-  version = "v1.5.4"
 
 [[projects]]
   digest = "1:6689652ec1f6e30455551da19c707f2bfac75e4df5c7bbe3f0ad7b49b9aa2cfc"
@@ -938,16 +930,16 @@
   version = "0.2.4"
 
 [[projects]]
-  digest = "1:9813d5a93abcc5690fa5830bf7186c835493516986be7a2b11b46e7b12e13317"
-  name = "github.com/influxdata/influxdb"
+  branch = "master"
+  digest = "1:50708c8fc92aec981df5c446581cf9f90ba9e2a5692118e0ce75d4534aaa14a2"
+  name = "github.com/influxdata/influxdb1-client"
   packages = [
-    "client/v2",
     "models",
     "pkg/escape",
+    "v2",
   ]
   pruneopts = "NUT"
-  revision = "2d474a3089bcfce6b472779be9470a1f0ef3d5e4"
-  version = "v1.3.7"
+  revision = "8ff2fc3824fcb533795f9a2f233275f0bb18d6c5"
 
 [[projects]]
   digest = "1:78efd72f12ed0244e5fbe82bd0ecdbaf3e21402ee9176525ef1138a2fc0d3b17"
@@ -1362,14 +1354,16 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:d05ebef91c056e176dc4dfe905002bd3dd7b1dc8703b53bf6e88761053236a75"
+  digest = "1:097cc61836050f45cbb712ae3bb45d66fba464c16b8fac09907fa3c1f753eff6"
   name = "github.com/prometheus/client_golang"
   packages = [
     "prometheus",
+    "prometheus/internal",
     "prometheus/promhttp",
   ]
   pruneopts = "NUT"
-  revision = "08fd2e12372a66e68e30523c7642e0cbc3e4fbde"
+  revision = "4ab88e80c249ed361d3299e2930427d9ac43ef8d"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:32d10bdfa8f09ecf13598324dba86ab891f11db3c538b6a34d1c3b5b99d7c36b"
@@ -1379,7 +1373,7 @@
   revision = "6f3806018612930941127f2a7c6c453ba2c527d2"
 
 [[projects]]
-  digest = "1:65f12bb82877d6e049a41b5feec5f79f11e3e0ea5748f677d68f206ac408c403"
+  digest = "1:d03ca24670416dc8fccc78b05d6736ec655416ca7db0a028e8fb92cfdfe3b55e"
   name = "github.com/prometheus/common"
   packages = [
     "expfmt",
@@ -1387,17 +1381,19 @@
     "model",
   ]
   pruneopts = "NUT"
-  revision = "49fee292b27bfff7f354ee0f64e1bc4850462edf"
+  revision = "31bed53e4047fd6c510e43a941f90cb31be0972a"
+  version = "v0.6.0"
 
 [[projects]]
-  digest = "1:60d19aad385900a8aa4a755524e68965fcb31b444ec30e673812e06c98674f2e"
+  digest = "1:19305fc369377c111c865a7a01e11c675c57c52a932353bbd4ea360bd5b72d99"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
-    "xfs",
+    "internal/fs",
   ]
   pruneopts = "NUT"
-  revision = "a1dba9ce8baed984a2495b658c82687f8157b98f"
+  revision = "3f98efb27840a48a7a2898ec80be07674d19f9c8"
+  version = "v0.0.3"
 
 [[projects]]
   branch = "containous-fork"
@@ -1857,7 +1853,7 @@
   version = "v1.20.1"
 
 [[projects]]
-  digest = "1:b49eceff862a3048ec28dad1fce40bcbdc1703119dbad35d7e5f1beb4f9a4527"
+  digest = "1:d732242a429138da899dfecea82b3c65b4157bdf0b5317c229d9c559b6c3450e"
   name = "gopkg.in/DataDog/dd-trace-go.v1"
   packages = [
     "ddtrace",
@@ -1866,10 +1862,12 @@
     "ddtrace/opentracer",
     "ddtrace/tracer",
     "internal/globalconfig",
+    "internal/log",
+    "internal/version",
   ]
   pruneopts = "NUT"
-  revision = "c19e9e56d5b5b71b6507ce1b0ec06d85aa3705a1"
-  version = "v1.14.0"
+  revision = "8d2998bc69008aa4553846ac9a044aa730bd4ce4"
+  version = "v1.15.0"
 
 [[projects]]
   digest = "1:c970218a20933dd0a2eb2006de922217fa9276f57d25009b2a934eb1c50031cc"
@@ -2263,7 +2261,7 @@
     "github.com/google/go-github/github",
     "github.com/gorilla/websocket",
     "github.com/hashicorp/go-version",
-    "github.com/influxdata/influxdb/client/v2",
+    "github.com/influxdata/influxdb1-client/v2",
     "github.com/instana/go-sensor",
     "github.com/libkermit/compose/check",
     "github.com/libkermit/docker",

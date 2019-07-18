@@ -19,18 +19,18 @@ var statsdClient = statsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...inte
 var statsdTicker *time.Ticker
 
 const (
-	statsdMetricsBackendReqsName      = "backend.request.total"
-	statsdMetricsBackendLatencyName   = "backend.request.duration"
-	statsdRetriesTotalName            = "backend.retries.total"
+	statsdMetricsServiceReqsName      = "service.request.total"
+	statsdMetricsServiceLatencyName   = "service.request.duration"
+	statsdRetriesTotalName            = "service.retries.total"
 	statsdConfigReloadsName           = "config.reload.total"
 	statsdConfigReloadsFailureName    = statsdConfigReloadsName + ".failure"
 	statsdLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
 	statsdLastConfigReloadFailureName = "config.reload.lastFailureTimestamp"
-	statsdEntrypointReqsName          = "entrypoint.request.total"
-	statsdEntrypointReqDurationName   = "entrypoint.request.duration"
-	statsdEntrypointOpenConnsName     = "entrypoint.connections.open"
-	statsdOpenConnsName               = "backend.connections.open"
-	statsdServerUpName                = "backend.server.up"
+	statsdEntryPointReqsName          = "entrypoint.request.total"
+	statsdEntryPointReqDurationName   = "entrypoint.request.duration"
+	statsdEntryPointOpenConnsName     = "entrypoint.connections.open"
+	statsdOpenConnsName               = "service.connections.open"
+	statsdServerUpName                = "service.server.up"
 )
 
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
@@ -39,21 +39,30 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		statsdTicker = initStatsdTicker(ctx, config)
 	}
 
-	return &standardRegistry{
-		enabled:                        true,
-		configReloadsCounter:           statsdClient.NewCounter(statsdConfigReloadsName, 1.0),
-		configReloadsFailureCounter:    statsdClient.NewCounter(statsdConfigReloadsFailureName, 1.0),
-		lastConfigReloadSuccessGauge:   statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
-		lastConfigReloadFailureGauge:   statsdClient.NewGauge(statsdLastConfigReloadFailureName),
-		entrypointReqsCounter:          statsdClient.NewCounter(statsdEntrypointReqsName, 1.0),
-		entrypointReqDurationHistogram: statsdClient.NewTiming(statsdEntrypointReqDurationName, 1.0),
-		entrypointOpenConnsGauge:       statsdClient.NewGauge(statsdEntrypointOpenConnsName),
-		backendReqsCounter:             statsdClient.NewCounter(statsdMetricsBackendReqsName, 1.0),
-		backendReqDurationHistogram:    statsdClient.NewTiming(statsdMetricsBackendLatencyName, 1.0),
-		backendRetriesCounter:          statsdClient.NewCounter(statsdRetriesTotalName, 1.0),
-		backendOpenConnsGauge:          statsdClient.NewGauge(statsdOpenConnsName),
-		backendServerUpGauge:           statsdClient.NewGauge(statsdServerUpName),
+	registry := &standardRegistry{
+		configReloadsCounter:         statsdClient.NewCounter(statsdConfigReloadsName, 1.0),
+		configReloadsFailureCounter:  statsdClient.NewCounter(statsdConfigReloadsFailureName, 1.0),
+		lastConfigReloadSuccessGauge: statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
+		lastConfigReloadFailureGauge: statsdClient.NewGauge(statsdLastConfigReloadFailureName),
 	}
+
+	if config.AddEntryPointsLabels {
+		registry.epEnabled = config.AddEntryPointsLabels
+		registry.entryPointReqsCounter = statsdClient.NewCounter(statsdEntryPointReqsName, 1.0)
+		registry.entryPointReqDurationHistogram = statsdClient.NewTiming(statsdEntryPointReqDurationName, 1.0)
+		registry.entryPointOpenConnsGauge = statsdClient.NewGauge(statsdEntryPointOpenConnsName)
+	}
+
+	if config.AddServicesLabels {
+		registry.svcEnabled = config.AddServicesLabels
+		registry.serviceReqsCounter = statsdClient.NewCounter(statsdMetricsServiceReqsName, 1.0)
+		registry.serviceReqDurationHistogram = statsdClient.NewTiming(statsdMetricsServiceLatencyName, 1.0)
+		registry.serviceRetriesCounter = statsdClient.NewCounter(statsdRetriesTotalName, 1.0)
+		registry.serviceOpenConnsGauge = statsdClient.NewGauge(statsdOpenConnsName)
+		registry.serviceServerUpGauge = statsdClient.NewGauge(statsdServerUpName)
+	}
+
+	return registry
 }
 
 // initStatsdTicker initializes metrics pusher and creates a statsdClient if not created already
@@ -66,7 +75,7 @@ func initStatsdTicker(ctx context.Context, config *types.Statsd) *time.Ticker {
 	report := time.NewTicker(time.Duration(config.PushInterval))
 
 	safe.Go(func() {
-		statsdClient.SendLoop(report.C, "udp", address)
+		statsdClient.SendLoop(ctx, report.C, "udp", address)
 	})
 
 	return report

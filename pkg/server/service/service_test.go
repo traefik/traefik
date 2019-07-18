@@ -80,7 +80,7 @@ func TestGetLoadBalancer(t *testing.T) {
 }
 
 func TestGetLoadBalancerServiceHandler(t *testing.T) {
-	sm := NewManager(nil, http.DefaultTransport)
+	sm := NewManager(nil, http.DefaultTransport, nil)
 
 	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "first")
@@ -332,7 +332,7 @@ func TestManager_Build(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			manager := NewManager(test.configs, http.DefaultTransport)
+			manager := NewManager(test.configs, http.DefaultTransport, nil)
 
 			ctx := context.Background()
 			if len(test.providerName) > 0 {

@@ -1,10 +1,11 @@
 package tracer
 
 import (
-	"log"
 	"time"
 
 	"golang.org/x/sys/windows"
+
+	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
 )
 
 // This method is more precise than the go1.8 time.Now on Windows
@@ -26,10 +27,9 @@ var now func() int64
 // precise implementation based on time.Now()
 func init() {
 	if err := windows.LoadGetSystemTimePreciseAsFileTime(); err != nil {
-		log.Printf("Unable to load high precison timer, defaulting to time.Now()")
+		log.Warn("Unable to load high precison timer, defaulting to time.Now()")
 		now = lowPrecisionNow
 	} else {
-		log.Printf("Using high precision timer")
 		now = highPrecisionNow
 	}
 }

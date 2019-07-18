@@ -7,8 +7,10 @@ import (
 
 // Registry has to implemented by any system that wants to monitor and expose metrics.
 type Registry interface {
-	// IsEnabled shows whether metrics instrumentation is enabled.
-	IsEnabled() bool
+	// IsEpEnabled shows whether metrics instrumentation is enabled on entry points.
+	IsEpEnabled() bool
+	// IsSvcEnabled shows whether metrics instrumentation is enabled on services.
+	IsSvcEnabled() bool
 
 	// server metrics
 	ConfigReloadsCounter() metrics.Counter
@@ -17,16 +19,16 @@ type Registry interface {
 	LastConfigReloadFailureGauge() metrics.Gauge
 
 	// entry point metrics
-	EntrypointReqsCounter() metrics.Counter
-	EntrypointReqDurationHistogram() metrics.Histogram
-	EntrypointOpenConnsGauge() metrics.Gauge
+	EntryPointReqsCounter() metrics.Counter
+	EntryPointReqDurationHistogram() metrics.Histogram
+	EntryPointOpenConnsGauge() metrics.Gauge
 
-	// backend metrics
-	BackendReqsCounter() metrics.Counter
-	BackendReqDurationHistogram() metrics.Histogram
-	BackendOpenConnsGauge() metrics.Gauge
-	BackendRetriesCounter() metrics.Counter
-	BackendServerUpGauge() metrics.Gauge
+	// service metrics
+	ServiceReqsCounter() metrics.Counter
+	ServiceReqDurationHistogram() metrics.Histogram
+	ServiceOpenConnsGauge() metrics.Gauge
+	ServiceRetriesCounter() metrics.Counter
+	ServiceServerUpGauge() metrics.Gauge
 }
 
 // NewVoidRegistry is a noop implementation of metrics.Registry.
@@ -43,14 +45,14 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var configReloadsFailureCounter []metrics.Counter
 	var lastConfigReloadSuccessGauge []metrics.Gauge
 	var lastConfigReloadFailureGauge []metrics.Gauge
-	var entrypointReqsCounter []metrics.Counter
-	var entrypointReqDurationHistogram []metrics.Histogram
-	var entrypointOpenConnsGauge []metrics.Gauge
-	var backendReqsCounter []metrics.Counter
-	var backendReqDurationHistogram []metrics.Histogram
-	var backendOpenConnsGauge []metrics.Gauge
-	var backendRetriesCounter []metrics.Counter
-	var backendServerUpGauge []metrics.Gauge
+	var entryPointReqsCounter []metrics.Counter
+	var entryPointReqDurationHistogram []metrics.Histogram
+	var entryPointOpenConnsGauge []metrics.Gauge
+	var serviceReqsCounter []metrics.Counter
+	var serviceReqDurationHistogram []metrics.Histogram
+	var serviceOpenConnsGauge []metrics.Gauge
+	var serviceRetriesCounter []metrics.Counter
+	var serviceServerUpGauge []metrics.Gauge
 
 	for _, r := range registries {
 		if r.ConfigReloadsCounter() != nil {
@@ -65,67 +67,73 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.LastConfigReloadFailureGauge() != nil {
 			lastConfigReloadFailureGauge = append(lastConfigReloadFailureGauge, r.LastConfigReloadFailureGauge())
 		}
-		if r.EntrypointReqsCounter() != nil {
-			entrypointReqsCounter = append(entrypointReqsCounter, r.EntrypointReqsCounter())
+		if r.EntryPointReqsCounter() != nil {
+			entryPointReqsCounter = append(entryPointReqsCounter, r.EntryPointReqsCounter())
 		}
-		if r.EntrypointReqDurationHistogram() != nil {
-			entrypointReqDurationHistogram = append(entrypointReqDurationHistogram, r.EntrypointReqDurationHistogram())
+		if r.EntryPointReqDurationHistogram() != nil {
+			entryPointReqDurationHistogram = append(entryPointReqDurationHistogram, r.EntryPointReqDurationHistogram())
 		}
-		if r.EntrypointOpenConnsGauge() != nil {
-			entrypointOpenConnsGauge = append(entrypointOpenConnsGauge, r.EntrypointOpenConnsGauge())
+		if r.EntryPointOpenConnsGauge() != nil {
+			entryPointOpenConnsGauge = append(entryPointOpenConnsGauge, r.EntryPointOpenConnsGauge())
 		}
-		if r.BackendReqsCounter() != nil {
-			backendReqsCounter = append(backendReqsCounter, r.BackendReqsCounter())
+		if r.ServiceReqsCounter() != nil {
+			serviceReqsCounter = append(serviceReqsCounter, r.ServiceReqsCounter())
 		}
-		if r.BackendReqDurationHistogram() != nil {
-			backendReqDurationHistogram = append(backendReqDurationHistogram, r.BackendReqDurationHistogram())
+		if r.ServiceReqDurationHistogram() != nil {
+			serviceReqDurationHistogram = append(serviceReqDurationHistogram, r.ServiceReqDurationHistogram())
 		}
-		if r.BackendOpenConnsGauge() != nil {
-			backendOpenConnsGauge = append(backendOpenConnsGauge, r.BackendOpenConnsGauge())
+		if r.ServiceOpenConnsGauge() != nil {
+			serviceOpenConnsGauge = append(serviceOpenConnsGauge, r.ServiceOpenConnsGauge())
 		}
-		if r.BackendRetriesCounter() != nil {
-			backendRetriesCounter = append(backendRetriesCounter, r.BackendRetriesCounter())
+		if r.ServiceRetriesCounter() != nil {
+			serviceRetriesCounter = append(serviceRetriesCounter, r.ServiceRetriesCounter())
 		}
-		if r.BackendServerUpGauge() != nil {
-			backendServerUpGauge = append(backendServerUpGauge, r.BackendServerUpGauge())
+		if r.ServiceServerUpGauge() != nil {
+			serviceServerUpGauge = append(serviceServerUpGauge, r.ServiceServerUpGauge())
 		}
 	}
 
 	return &standardRegistry{
-		enabled:                        len(registries) > 0,
+		epEnabled:                      len(entryPointReqsCounter) > 0 || len(entryPointReqDurationHistogram) > 0 || len(entryPointOpenConnsGauge) > 0,
+		svcEnabled:                     len(serviceReqsCounter) > 0 || len(serviceReqDurationHistogram) > 0 || len(serviceOpenConnsGauge) > 0 || len(serviceRetriesCounter) > 0 || len(serviceServerUpGauge) > 0,
 		configReloadsCounter:           multi.NewCounter(configReloadsCounter...),
 		configReloadsFailureCounter:    multi.NewCounter(configReloadsFailureCounter...),
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		lastConfigReloadFailureGauge:   multi.NewGauge(lastConfigReloadFailureGauge...),
-		entrypointReqsCounter:          multi.NewCounter(entrypointReqsCounter...),
-		entrypointReqDurationHistogram: multi.NewHistogram(entrypointReqDurationHistogram...),
-		entrypointOpenConnsGauge:       multi.NewGauge(entrypointOpenConnsGauge...),
-		backendReqsCounter:             multi.NewCounter(backendReqsCounter...),
-		backendReqDurationHistogram:    multi.NewHistogram(backendReqDurationHistogram...),
-		backendOpenConnsGauge:          multi.NewGauge(backendOpenConnsGauge...),
-		backendRetriesCounter:          multi.NewCounter(backendRetriesCounter...),
-		backendServerUpGauge:           multi.NewGauge(backendServerUpGauge...),
+		entryPointReqsCounter:          multi.NewCounter(entryPointReqsCounter...),
+		entryPointReqDurationHistogram: multi.NewHistogram(entryPointReqDurationHistogram...),
+		entryPointOpenConnsGauge:       multi.NewGauge(entryPointOpenConnsGauge...),
+		serviceReqsCounter:             multi.NewCounter(serviceReqsCounter...),
+		serviceReqDurationHistogram:    multi.NewHistogram(serviceReqDurationHistogram...),
+		serviceOpenConnsGauge:          multi.NewGauge(serviceOpenConnsGauge...),
+		serviceRetriesCounter:          multi.NewCounter(serviceRetriesCounter...),
+		serviceServerUpGauge:           multi.NewGauge(serviceServerUpGauge...),
 	}
 }
 
 type standardRegistry struct {
-	enabled                        bool
+	epEnabled                      bool
+	svcEnabled                     bool
 	configReloadsCounter           metrics.Counter
 	configReloadsFailureCounter    metrics.Counter
 	lastConfigReloadSuccessGauge   metrics.Gauge
 	lastConfigReloadFailureGauge   metrics.Gauge
-	entrypointReqsCounter          metrics.Counter
-	entrypointReqDurationHistogram metrics.Histogram
-	entrypointOpenConnsGauge       metrics.Gauge
-	backendReqsCounter             metrics.Counter
-	backendReqDurationHistogram    metrics.Histogram
-	backendOpenConnsGauge          metrics.Gauge
-	backendRetriesCounter          metrics.Counter
-	backendServerUpGauge           metrics.Gauge
+	entryPointReqsCounter          metrics.Counter
+	entryPointReqDurationHistogram metrics.Histogram
+	entryPointOpenConnsGauge       metrics.Gauge
+	serviceReqsCounter             metrics.Counter
+	serviceReqDurationHistogram    metrics.Histogram
+	serviceOpenConnsGauge          metrics.Gauge
+	serviceRetriesCounter          metrics.Counter
+	serviceServerUpGauge           metrics.Gauge
 }
 
-func (r *standardRegistry) IsEnabled() bool {
-	return r.enabled
+func (r *standardRegistry) IsEpEnabled() bool {
+	return r.epEnabled
+}
+
+func (r *standardRegistry) IsSvcEnabled() bool {
+	return r.svcEnabled
 }
 
 func (r *standardRegistry) ConfigReloadsCounter() metrics.Counter {
@@ -144,34 +152,34 @@ func (r *standardRegistry) LastConfigReloadFailureGauge() metrics.Gauge {
 	return r.lastConfigReloadFailureGauge
 }
 
-func (r *standardRegistry) EntrypointReqsCounter() metrics.Counter {
-	return r.entrypointReqsCounter
+func (r *standardRegistry) EntryPointReqsCounter() metrics.Counter {
+	return r.entryPointReqsCounter
 }
 
-func (r *standardRegistry) EntrypointReqDurationHistogram() metrics.Histogram {
-	return r.entrypointReqDurationHistogram
+func (r *standardRegistry) EntryPointReqDurationHistogram() metrics.Histogram {
+	return r.entryPointReqDurationHistogram
 }
 
-func (r *standardRegistry) EntrypointOpenConnsGauge() metrics.Gauge {
-	return r.entrypointOpenConnsGauge
+func (r *standardRegistry) EntryPointOpenConnsGauge() metrics.Gauge {
+	return r.entryPointOpenConnsGauge
 }
 
-func (r *standardRegistry) BackendReqsCounter() metrics.Counter {
-	return r.backendReqsCounter
+func (r *standardRegistry) ServiceReqsCounter() metrics.Counter {
+	return r.serviceReqsCounter
 }
 
-func (r *standardRegistry) BackendReqDurationHistogram() metrics.Histogram {
-	return r.backendReqDurationHistogram
+func (r *standardRegistry) ServiceReqDurationHistogram() metrics.Histogram {
+	return r.serviceReqDurationHistogram
 }
 
-func (r *standardRegistry) BackendOpenConnsGauge() metrics.Gauge {
-	return r.backendOpenConnsGauge
+func (r *standardRegistry) ServiceOpenConnsGauge() metrics.Gauge {
+	return r.serviceOpenConnsGauge
 }
 
-func (r *standardRegistry) BackendRetriesCounter() metrics.Counter {
-	return r.backendRetriesCounter
+func (r *standardRegistry) ServiceRetriesCounter() metrics.Counter {
+	return r.serviceRetriesCounter
 }
 
-func (r *standardRegistry) BackendServerUpGauge() metrics.Gauge {
-	return r.backendServerUpGauge
+func (r *standardRegistry) ServiceServerUpGauge() metrics.Gauge {
+	return r.serviceServerUpGauge
 }

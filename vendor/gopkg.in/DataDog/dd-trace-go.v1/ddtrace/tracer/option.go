@@ -1,7 +1,6 @@
 package tracer
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 	"gopkg.in/DataDog/dd-trace-go.v1/internal/globalconfig"
+	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
 )
 
 // config holds the tracer configuration.
@@ -43,6 +43,10 @@ type config struct {
 	// hostname is automatically assigned when the DD_TRACE_REPORT_HOSTNAME is set to true,
 	// and is added as a special tag to the root span of traces.
 	hostname string
+
+	// logger specifies the logger to use when printing errors. If not specified, the "log" package
+	// will be used.
+	logger ddtrace.Logger
 }
 
 // StartOption represents a function that can be provided as a parameter to Start.
@@ -58,8 +62,15 @@ func defaults(c *config) {
 		var err error
 		c.hostname, err = os.Hostname()
 		if err != nil {
-			log.Printf("%sunable to look up hostname: %v\n", errorPrefix, err)
+			log.Warn("unable to look up hostname: %v", err)
 		}
+	}
+}
+
+// WithLogger sets logger as the tracer's error printer.
+func WithLogger(logger ddtrace.Logger) StartOption {
+	return func(c *config) {
+		c.logger = logger
 	}
 }
 

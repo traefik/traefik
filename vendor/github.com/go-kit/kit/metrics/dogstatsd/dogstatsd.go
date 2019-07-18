@@ -11,8 +11,10 @@
 package dogstatsd
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"math/rand"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -72,7 +74,7 @@ func (d *Dogstatsd) NewCounter(name string, sampleRate float64) *Counter {
 	d.rates.Set(name, sampleRate)
 	return &Counter{
 		name: name,
-		obs:  d.counters.Observe,
+		obs:  sampleObservations(d.counters.Observe, sampleRate),
 	}
 }
 
@@ -94,7 +96,7 @@ func (d *Dogstatsd) NewTiming(name string, sampleRate float64) *Timing {
 	d.rates.Set(name, sampleRate)
 	return &Timing{
 		name: name,
-		obs:  d.timings.Observe,
+		obs:  sampleObservations(d.timings.Observe, sampleRate),
 	}
 }
 
@@ -104,29 +106,34 @@ func (d *Dogstatsd) NewHistogram(name string, sampleRate float64) *Histogram {
 	d.rates.Set(name, sampleRate)
 	return &Histogram{
 		name: name,
-		obs:  d.histograms.Observe,
+		obs:  sampleObservations(d.histograms.Observe, sampleRate),
 	}
 }
 
 // WriteLoop is a helper method that invokes WriteTo to the passed writer every
-// time the passed channel fires. This method blocks until the channel is
-// closed, so clients probably want to run it in its own goroutine. For typical
+// time the passed channel fires. This method blocks until ctx is canceled,
+// so clients probably want to run it in its own goroutine. For typical
 // usage, create a time.Ticker and pass its C channel to this method.
-func (d *Dogstatsd) WriteLoop(c <-chan time.Time, w io.Writer) {
-	for range c {
-		if _, err := d.WriteTo(w); err != nil {
-			d.logger.Log("during", "WriteTo", "err", err)
+func (d *Dogstatsd) WriteLoop(ctx context.Context, c <-chan time.Time, w io.Writer) {
+	for {
+		select {
+		case <-c:
+			if _, err := d.WriteTo(w); err != nil {
+				d.logger.Log("during", "WriteTo", "err", err)
+			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
 
 // SendLoop is a helper method that wraps WriteLoop, passing a managed
 // connection to the network and address. Like WriteLoop, this method blocks
-// until the channel is closed, so clients probably want to start it in its own
+// until ctx is canceled, so clients probably want to start it in its own
 // goroutine. For typical usage, create a time.Ticker and pass its C channel to
 // this method.
-func (d *Dogstatsd) SendLoop(c <-chan time.Time, network, address string) {
-	d.WriteLoop(c, conn.NewDefaultManager(network, address, d.logger))
+func (d *Dogstatsd) SendLoop(ctx context.Context, c <-chan time.Time, network, address string) {
+	d.WriteLoop(ctx, c, conn.NewDefaultManager(network, address, d.logger))
 }
 
 // WriteTo flushes the buffered content of the metrics to the writer, in
@@ -232,6 +239,19 @@ func (d *Dogstatsd) tagValues(labelValues []string) string {
 }
 
 type observeFunc func(name string, lvs lv.LabelValues, value float64)
+
+// sampleObservations returns a modified observeFunc that samples observations.
+func sampleObservations(obs observeFunc, sampleRate float64) observeFunc {
+	if sampleRate >= 1 {
+		return obs
+	}
+	return func(name string, lvs lv.LabelValues, value float64) {
+		if rand.Float64() > sampleRate {
+			return
+		}
+		obs(name, lvs, value)
+	}
+}
 
 // Counter is a DogStatsD counter. Observations are forwarded to a Dogstatsd
 // object, and aggregated (summed) per timeseries.
