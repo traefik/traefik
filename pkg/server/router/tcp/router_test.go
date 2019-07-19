@@ -232,12 +232,11 @@ func TestRuntimeConfiguration(t *testing.T) {
 				}
 			}
 			for _, v := range conf.TCPRouters {
-				if v.Err != "" {
+				if len(v.Err) > 0 {
 					allErrors++
 				}
 			}
 			assert.Equal(t, test.expectedError, allErrors)
 		})
 	}
-
 }
