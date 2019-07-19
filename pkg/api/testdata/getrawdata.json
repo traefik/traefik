@@ -30,6 +30,7 @@
 			"addPrefix": {
 				"prefix": "/toto"
 			},
+			"status": "enabled",
 			"usedBy": [
 				"bar@myprovider"
 			]
@@ -38,6 +39,7 @@
 			"addPrefix": {
 				"prefix": "/titi"
 			},
+			"status": "enabled",
 			"usedBy": [
 				"test@myprovider"
 			]
@@ -48,6 +50,7 @@
 					"admin:admin"
 				]
 			},
+			"status": "enabled",
 			"usedBy": [
 				"bar@myprovider",
 				"test@myprovider"

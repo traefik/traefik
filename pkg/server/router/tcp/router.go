@@ -3,6 +3,7 @@ package tcp
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -169,9 +170,16 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		ctxRouter := log.With(internal.AddProviderInContext(ctx, routerName), log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctxRouter)
 
+		if routerConfig.Service == "" {
+			err := errors.New("the service is missing on the router")
+			routerConfig.AddError(err, true)
+			logger.Error(err)
+			continue
+		}
+
 		handler, err := m.serviceManager.BuildTCP(ctxRouter, routerConfig.Service)
 		if err != nil {
-			routerConfig.Err = err.Error()
+			routerConfig.AddError(err, true)
 			logger.Error(err)
 			continue
 		}
@@ -179,7 +187,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		domains, err := rules.ParseHostSNI(routerConfig.Rule)
 		if err != nil {
 			routerErr := fmt.Errorf("unknown rule %s", routerConfig.Rule)
-			routerConfig.Err = routerErr.Error()
+			routerConfig.AddError(routerErr, true)
 			logger.Debug(routerErr)
 			continue
 		}
@@ -203,7 +211,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 					tlsConf, err := m.tlsManager.Get("default", tlsOptionsName)
 					if err != nil {
-						routerConfig.Err = err.Error()
+						routerConfig.AddError(err, true)
 						logger.Debug(err)
 						continue
 					}

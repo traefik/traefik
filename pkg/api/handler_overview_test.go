@@ -85,6 +85,7 @@ func TestHandler_Overview(t *testing.T) {
 								Users: []string{"admin:admin"},
 							},
 						},
+						Status: runtime.StatusEnabled,
 					},
 					"addPrefixTest@myprovider": {
 						Middleware: &dynamic.Middleware{
@@ -99,7 +100,8 @@ func TestHandler_Overview(t *testing.T) {
 								Prefix: "/toto",
 							},
 						},
-						Err: []string{"error"},
+						Err:    []string{"error"},
+						Status: runtime.StatusDisabled,
 					},
 				},
 				Routers: map[string]*runtime.RouterInfo{

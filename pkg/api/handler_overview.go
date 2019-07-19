@@ -100,15 +100,19 @@ func getHTTPServiceSection(services map[string]*runtime.ServiceInfo) *section {
 
 func getHTTPMiddlewareSection(middlewares map[string]*runtime.MiddlewareInfo) *section {
 	var countErrors int
-	for _, md := range middlewares {
-		if md.Err != nil {
+	var countWarnings int
+	for _, mid := range middlewares {
+		switch mid.Status {
+		case runtime.StatusDisabled:
 			countErrors++
+		case runtime.StatusWarning:
+			countWarnings++
 		}
 	}
 
 	return &section{
 		Total:    len(middlewares),
-		Warnings: 0,
+		Warnings: countWarnings,
 		Errors:   countErrors,
 	}
 }

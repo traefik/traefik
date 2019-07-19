@@ -31,6 +31,7 @@
 					"/tobestripped"
 				]
 			},
+			"status": "enabled",
 			"usedBy": [
 				"default/test2.route-23c7f4c450289ee29016@kubernetescrd"
 			]
