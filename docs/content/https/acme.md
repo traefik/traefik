@@ -117,7 +117,7 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
 Use the `HTTP-01` challenge to generate and renew ACME certificates by provisioning an HTTP resource under a well-known URI.
 
 As described on the Let's Encrypt [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72),
-when using the `HTTP-01` challenge, `acme.httpChallenge.entryPoint` must be reachable by Let's Encrypt through port 80.
+when using the `HTTP-01` challenge, `certificatesResolvers.sample.acme.httpChallenge.entryPoint` must be reachable by Let's Encrypt through port 80.
 
 ??? example "Using an EntryPoint Called http for the `httpChallenge`"
 
