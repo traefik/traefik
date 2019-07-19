@@ -20,7 +20,6 @@ import (
 	"github.com/containous/traefik/pkg/middlewares/ipwhitelist"
 	"github.com/containous/traefik/pkg/middlewares/maxconnection"
 	"github.com/containous/traefik/pkg/middlewares/passtlsclientcert"
-	"github.com/containous/traefik/pkg/middlewares/ratelimiter"
 	"github.com/containous/traefik/pkg/middlewares/redirect"
 	"github.com/containous/traefik/pkg/middlewares/replacepath"
 	"github.com/containous/traefik/pkg/middlewares/replacepathregex"
@@ -232,15 +231,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// TODO: disable temporarily (rateLimit)
 	// RateLimit
-	if config.RateLimit != nil {
-		if middleware != nil {
-			return nil, badConf
-		}
-		middleware = func(next http.Handler) (http.Handler, error) {
-			return ratelimiter.New(ctx, next, *config.RateLimit, middlewareName)
-		}
-	}
+	// if config.RateLimit != nil {
+	// 	if middleware != nil {
+	// 		return nil, badConf
+	// 	}
+	// 	middleware = func(next http.Handler) (http.Handler, error) {
+	// 		return ratelimiter.New(ctx, next, *config.RateLimit, middlewareName)
+	// 	}
+	// }
 
 	// RedirectRegex
 	if config.RedirectRegex != nil {

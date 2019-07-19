@@ -628,11 +628,6 @@ func (in *Middleware) DeepCopyInto(out *Middleware) {
 		*out = new(ErrorPage)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.RateLimit != nil {
-		in, out := &in.RateLimit, &out.RateLimit
-		*out = new(RateLimit)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.RedirectRegex != nil {
 		in, out := &in.RedirectRegex, &out.RedirectRegex
 		*out = new(RedirectRegex)
