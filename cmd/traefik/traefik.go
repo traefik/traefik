@@ -20,6 +20,7 @@ import (
 	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/pkg/provider/acme"
 	"github.com/containous/traefik/pkg/provider/aggregator"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/containous/traefik/pkg/server"
@@ -88,7 +89,9 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	}
 
 	staticConfiguration.SetEffectiveConfiguration()
-	staticConfiguration.ValidateConfiguration()
+	if err := staticConfiguration.ValidateConfiguration(); err != nil {
+		return err
+	}
 
 	log.WithoutContext().Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
 
@@ -112,15 +115,9 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	providerAggregator := aggregator.NewProviderAggregator(*staticConfiguration.Providers)
 
-	acmeProvider, err := staticConfiguration.InitACMEProvider()
-	if err != nil {
-		log.WithoutContext().Errorf("Unable to initialize ACME provider: %v", err)
-	} else if acmeProvider != nil {
-		if err := providerAggregator.AddProvider(acmeProvider); err != nil {
-			log.WithoutContext().Errorf("Unable to add ACME provider to the providers list: %v", err)
-			acmeProvider = nil
-		}
-	}
+	tlsManager := traefiktls.NewManager()
+
+	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager)
 
 	serverEntryPointsTCP := make(server.TCPEntryPoints)
 	for entryPointName, config := range staticConfiguration.EntryPoints {
@@ -129,27 +126,31 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		if err != nil {
 			return fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
 		}
-		serverEntryPointsTCP[entryPointName].RouteAppenderFactory = router.NewRouteAppenderFactory(*staticConfiguration, entryPointName, acmeProvider)
+		serverEntryPointsTCP[entryPointName].RouteAppenderFactory = router.NewRouteAppenderFactory(*staticConfiguration, entryPointName, acmeProviders)
 
-	}
-
-	tlsManager := traefiktls.NewManager()
-
-	if acmeProvider != nil {
-		acmeProvider.SetTLSManager(tlsManager)
-		if acmeProvider.TLSChallenge != nil &&
-			acmeProvider.HTTPChallenge == nil &&
-			acmeProvider.DNSChallenge == nil {
-			tlsManager.TLSAlpnGetter = acmeProvider.GetTLSALPNCertificate
-		}
 	}
 
 	svr := server.NewServer(*staticConfiguration, providerAggregator, serverEntryPointsTCP, tlsManager)
 
-	if acmeProvider != nil && acmeProvider.OnHostRule {
-		acmeProvider.SetConfigListenerChan(make(chan dynamic.Configuration))
-		svr.AddListener(acmeProvider.ListenConfiguration)
+	resolverNames := map[string]struct{}{}
+
+	for _, p := range acmeProviders {
+		resolverNames[p.ResolverName] = struct{}{}
+		svr.AddListener(p.ListenConfiguration)
 	}
+
+	svr.AddListener(func(config dynamic.Configuration) {
+		for rtName, rt := range config.HTTP.Routers {
+			if rt.TLS == nil || rt.TLS.CertResolver == "" {
+				continue
+			}
+
+			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok {
+				log.WithoutContext().Errorf("the router %s uses a non-existent resolver: %s", rtName, rt.TLS.CertResolver)
+			}
+		}
+	})
+
 	ctx := cmd.ContextWithSignal(context.Background())
 
 	if staticConfiguration.Ping != nil {
@@ -194,6 +195,40 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	log.WithoutContext().Info("Shutting down")
 	logrus.Exit(0)
 	return nil
+}
+
+// initACMEProvider creates an acme provider from the ACME part of globalConfiguration
+func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager) []*acme.Provider {
+	challengeStore := acme.NewLocalChallengeStore()
+	localStores := map[string]*acme.LocalStore{}
+
+	var resolvers []*acme.Provider
+	for name, resolver := range c.CertificatesResolvers {
+		if resolver.ACME != nil {
+			if localStores[resolver.ACME.Storage] == nil {
+				localStores[resolver.ACME.Storage] = acme.NewLocalStore(resolver.ACME.Storage)
+			}
+
+			p := &acme.Provider{
+				Configuration:  resolver.ACME,
+				Store:          localStores[resolver.ACME.Storage],
+				ChallengeStore: challengeStore,
+				ResolverName:   name,
+			}
+
+			if err := providerAggregator.AddProvider(p); err != nil {
+				log.WithoutContext().Errorf("Unable to add ACME provider to the providers list: %v", err)
+				continue
+			}
+			p.SetTLSManager(tlsManager)
+			if p.TLSChallenge != nil {
+				tlsManager.TLSAlpnGetter = p.GetTLSALPNCertificate
+			}
+			p.SetConfigListenerChan(make(chan dynamic.Configuration))
+			resolvers = append(resolvers, p)
+		}
+	}
+	return resolvers
 }
 
 func configureLogging(staticConfiguration *static.Configuration) {

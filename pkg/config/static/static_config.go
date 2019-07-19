@@ -1,7 +1,8 @@
 package static
 
 import (
-	"errors"
+	"fmt"
+	stdlog "log"
 	"strings"
 	"time"
 
@@ -23,7 +24,8 @@ import (
 	"github.com/containous/traefik/pkg/tracing/zipkin"
 	"github.com/containous/traefik/pkg/types"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
-	"github.com/go-acme/lego/challenge/dns01"
+	legolog "github.com/go-acme/lego/log"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -59,6 +61,11 @@ type Configuration struct {
 
 	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening." json:"hostResolver,omitempty" toml:"hostResolver,omitempty" yaml:"hostResolver,omitempty" label:"allowEmpty" export:"true"`
 
+	CertificatesResolvers map[string]CertificateResolver `description:"Certificates resolvers configuration." json:"certificatesResolvers,omitempty" toml:"certificatesResolvers,omitempty" yaml:"certificatesResolvers,omitempty" export:"true"`
+}
+
+// CertificateResolver contains the configuration for the different types of certificates resolver.
+type CertificateResolver struct {
 	ACME *acmeprovider.Configuration `description:"Enable ACME (Let's Encrypt): automatic SSL." json:"acme,omitempty" toml:"acme,omitempty" yaml:"acme,omitempty" export:"true"`
 }
 
@@ -194,64 +201,35 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	c.initACMEProvider()
 }
 
-// FIXME handle on new configuration ACME struct
 func (c *Configuration) initACMEProvider() {
-	if c.ACME != nil {
-		c.ACME.CAServer = getSafeACMECAServer(c.ACME.CAServer)
-
-		if c.ACME.DNSChallenge != nil && c.ACME.HTTPChallenge != nil {
-			log.Warn("Unable to use DNS challenge and HTTP challenge at the same time. Fallback to DNS challenge.")
-			c.ACME.HTTPChallenge = nil
-		}
-
-		if c.ACME.DNSChallenge != nil && c.ACME.TLSChallenge != nil {
-			log.Warn("Unable to use DNS challenge and TLS challenge at the same time. Fallback to DNS challenge.")
-			c.ACME.TLSChallenge = nil
-		}
-
-		if c.ACME.HTTPChallenge != nil && c.ACME.TLSChallenge != nil {
-			log.Warn("Unable to use HTTP challenge and TLS challenge at the same time. Fallback to TLS challenge.")
-			c.ACME.HTTPChallenge = nil
+	for _, resolver := range c.CertificatesResolvers {
+		if resolver.ACME != nil {
+			resolver.ACME.CAServer = getSafeACMECAServer(resolver.ACME.CAServer)
 		}
 	}
-}
 
-// InitACMEProvider create an acme provider from the ACME part of globalConfiguration
-func (c *Configuration) InitACMEProvider() (*acmeprovider.Provider, error) {
-	if c.ACME != nil {
-		if len(c.ACME.Storage) == 0 {
-			return nil, errors.New("unable to initialize ACME provider with no storage location for the certificates")
-		}
-		return &acmeprovider.Provider{
-			Configuration: c.ACME,
-		}, nil
-	}
-	return nil, nil
+	legolog.Logger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "legolog: ", 0)
 }
 
 // ValidateConfiguration validate that configuration is coherent
-func (c *Configuration) ValidateConfiguration() {
-	if c.ACME != nil {
-		for _, domain := range c.ACME.Domains {
-			if domain.Main != dns01.UnFqdn(domain.Main) {
-				log.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
-			}
-			for _, san := range domain.SANs {
-				if san != dns01.UnFqdn(san) {
-					log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
-				}
-			}
+func (c *Configuration) ValidateConfiguration() error {
+	var acmeEmail string
+	for name, resolver := range c.CertificatesResolvers {
+		if resolver.ACME == nil {
+			continue
 		}
+
+		if len(resolver.ACME.Storage) == 0 {
+			return fmt.Errorf("unable to initialize certificates resolver %q with no storage location for the certificates", name)
+		}
+
+		if acmeEmail != "" && resolver.ACME.Email != acmeEmail {
+			return fmt.Errorf("unable to initialize certificates resolver %q, all the acme resolvers must use the same email", name)
+		}
+		acmeEmail = resolver.ACME.Email
 	}
-	// FIXME Validate store config?
-	// if c.ACME != nil {
-	// if _, ok := c.EntryPoints[c.ACME.EntryPoint]; !ok {
-	// 	log.Fatalf("Unknown entrypoint %q for ACME configuration", c.ACME.EntryPoint)
-	// }
-	// else if c.EntryPoints[c.ACME.EntryPoint].TLS == nil {
-	// 	log.Fatalf("Entrypoint %q has no TLS configuration for ACME configuration", c.ACME.EntryPoint)
-	// }
-	// }
+
+	return nil
 }
 
 func getSafeACMECAServer(caServerSrc string) string {

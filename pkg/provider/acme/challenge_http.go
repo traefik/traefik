@@ -17,7 +17,7 @@ import (
 var _ challenge.ProviderTimeout = (*challengeHTTP)(nil)
 
 type challengeHTTP struct {
-	Store Store
+	Store ChallengeStore
 }
 
 // Present presents a challenge to obtain new ACME certificate.
@@ -52,7 +52,7 @@ func (p *Provider) Append(router *mux.Router) {
 					domain = req.Host
 				}
 
-				tokenValue := getTokenValue(ctx, token, domain, p.Store)
+				tokenValue := getTokenValue(ctx, token, domain, p.ChallengeStore)
 				if len(tokenValue) > 0 {
 					rw.WriteHeader(http.StatusOK)
 					_, err = rw.Write(tokenValue)
@@ -66,7 +66,7 @@ func (p *Provider) Append(router *mux.Router) {
 		}))
 }
 
-func getTokenValue(ctx context.Context, token, domain string, store Store) []byte {
+func getTokenValue(ctx context.Context, token, domain string, store ChallengeStore) []byte {
 	logger := log.FromContext(ctx)
 	logger.Debugf("Retrieving the ACME challenge for token %v...", token)
 

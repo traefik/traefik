@@ -74,17 +74,22 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
+	var tlsConfig *tls.Config
+	var err error
+
 	config, ok := m.configs[configName]
 	if !ok {
-		return nil, fmt.Errorf("unknown TLS options: %s", configName)
+		err = fmt.Errorf("unknown TLS options: %s", configName)
+		tlsConfig = &tls.Config{}
 	}
 
 	store := m.getStore(storeName)
 
-	tlsConfig, err := buildTLSConfig(config)
-	if err != nil {
-		log.Error(err)
-		tlsConfig = &tls.Config{}
+	if err == nil {
+		tlsConfig, err = buildTLSConfig(config)
+		if err != nil {
+			tlsConfig = &tls.Config{}
+		}
 	}
 
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
@@ -113,7 +118,8 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 		log.WithoutContext().Debugf("Serving default certificate for request: %q", domainToCheck)
 		return store.DefaultCertificate, nil
 	}
-	return tlsConfig, nil
+
+	return tlsConfig, err
 }
 
 func (m *Manager) getStore(storeName string) *CertificateStore {
@@ -143,7 +149,7 @@ func buildCertificateStore(tlsStore Store) (*CertificateStore, error) {
 		}
 		certificateStore.DefaultCertificate = cert
 	} else {
-		log.Debug("No default certificate, generate one")
+		log.Debug("No default certificate, generating one")
 		cert, err := generate.DefaultCertificate()
 		if err != nil {
 			return certificateStore, err

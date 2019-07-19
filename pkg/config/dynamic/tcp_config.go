@@ -1,6 +1,10 @@
 package dynamic
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/containous/traefik/pkg/types"
+)
 
 // +k8s:deepcopy-gen=true
 
@@ -31,8 +35,10 @@ type TCPRouter struct {
 
 // RouterTCPTLSConfig holds the TLS configuration for a router
 type RouterTCPTLSConfig struct {
-	Passthrough bool   `json:"passthrough" toml:"passthrough" yaml:"passthrough"`
-	Options     string `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
+	Passthrough  bool           `json:"passthrough" toml:"passthrough" yaml:"passthrough"`
+	Options      string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
+	CertResolver string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty"`
+	Domains      []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

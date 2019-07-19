@@ -79,6 +79,11 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 	return entryPointHandlers
 }
 
+type nameAndConfig struct {
+	routerName string // just so we have it as additional information when logging
+	TLSConfig  *tls.Config
+}
+
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP http.Handler, handlerHTTPS http.Handler) (*tcp.Router, error) {
 	router := &tcp.Router{}
 	router.HTTPHandler(handlerHTTP)
@@ -86,15 +91,11 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 	defaultTLSConf, err := m.tlsManager.Get("default", defaultTLSConfigName)
 	if err != nil {
-		return nil, err
+		log.FromContext(ctx).Errorf("Error during the build of the default TLS configuration: %v", err)
 	}
 
 	router.HTTPSHandler(handlerHTTPS, defaultTLSConf)
 
-	type nameAndConfig struct {
-		routerName string // just so we have it as additional information when logging
-		TLSConfig  *tls.Config
-	}
 	// Keyed by domain, then by options reference.
 	tlsOptionsForHostSNI := map[string]map[string]nameAndConfig{}
 	for routerHTTPName, routerHTTPConfig := range configsHTTP {
@@ -156,7 +157,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		} else {
 			routers := make([]string, 0, len(tlsConfigs))
 			for _, v := range tlsConfigs {
-				configsHTTP[v.routerName].AddError(fmt.Errorf("found different TLS options for routers on the same host %v, so using the default TLS option instead", hostSNI), false)
+				configsHTTP[v.routerName].AddError(fmt.Errorf("found different TLS options for routers on the same host %v, so using the default TLS options instead", hostSNI), false)
 				routers = append(routers, v.routerName)
 			}
 			logger.Warnf("Found different TLS options for routers on the same host %v, so using the default TLS options instead for these routers: %#v", hostSNI, routers)

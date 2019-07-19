@@ -37,19 +37,15 @@
 
 ## dynamic configuration ##
 
-[http.services]
-  [http.services.test.loadBalancer]
-    [[http.services.test.loadBalancer.servers]]
-      url = "http://127.0.0.1:9010"
+[tcp.services]
+  [tcp.services.test.loadBalancer]
+    [[tcp.services.test.loadBalancer.servers]]
+      address = "127.0.0.1:9010"
 
-[http.routers]
-  [http.routers.test]
+[tcp.routers]
+  [tcp.routers.test]
     entryPoints = ["web-secure"]
-    rule = "Host(`traefik.acme.wtf`)"
+    rule = "HostSNI(`traefik.acme.wtf`)"
     service = "test"
-    [http.routers.test.tls]
-
-[tls.stores]
-  [tls.stores.default.defaultCertificate]
-    certFile = "fixtures/acme/ssl/wildcard.crt"
-    keyFile = "fixtures/acme/ssl/wildcard.key"
+    [tcp.routers.test.tls]
+      certResolver  = "default"

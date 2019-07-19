@@ -36,60 +36,6 @@ Keep access logs with status codes in the specified range.
 `TRAEFIK_ACCESSLOG_FORMAT`:  
 Access log format: json | common (Default: ```common```)
 
-`TRAEFIK_ACME_ACMELOGGING`:  
-Enable debug logging of ACME actions. (Default: ```false```)
-
-`TRAEFIK_ACME_CASERVER`:  
-CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
-
-`TRAEFIK_ACME_DNSCHALLENGE`:  
-Activate DNS-01 Challenge. (Default: ```false```)
-
-`TRAEFIK_ACME_DNSCHALLENGE_DELAYBEFORECHECK`:  
-Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
-
-`TRAEFIK_ACME_DNSCHALLENGE_DISABLEPROPAGATIONCHECK`:  
-Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
-
-`TRAEFIK_ACME_DNSCHALLENGE_PROVIDER`:  
-Use a DNS-01 based challenge provider rather than HTTPS.
-
-`TRAEFIK_ACME_DNSCHALLENGE_RESOLVERS`:  
-Use following DNS servers to resolve the FQDN authority.
-
-`TRAEFIK_ACME_DOMAINS`:  
-The list of domains for which certificates are generated on startup. Wildcard domains only accepted with DNSChallenge.
-
-`TRAEFIK_ACME_DOMAINS[n]_MAIN`:  
-Default subject name.
-
-`TRAEFIK_ACME_DOMAINS[n]_SANS`:  
-Subject alternative names.
-
-`TRAEFIK_ACME_EMAIL`:  
-Email address used for registration.
-
-`TRAEFIK_ACME_ENTRYPOINT`:  
-EntryPoint to use.
-
-`TRAEFIK_ACME_HTTPCHALLENGE`:  
-Activate HTTP-01 Challenge. (Default: ```false```)
-
-`TRAEFIK_ACME_HTTPCHALLENGE_ENTRYPOINT`:  
-HTTP challenge EntryPoint
-
-`TRAEFIK_ACME_KEYTYPE`:  
-KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. (Default: ```RSA4096```)
-
-`TRAEFIK_ACME_ONHOSTRULE`:  
-Enable certificate generation on router Host rules. (Default: ```false```)
-
-`TRAEFIK_ACME_STORAGE`:  
-Storage to use. (Default: ```acme.json```)
-
-`TRAEFIK_ACME_TLSCHALLENGE`:  
-Activate TLS-ALPN-01 Challenge. (Default: ```true```)
-
 `TRAEFIK_API`:  
 Enable api/dashboard. (Default: ```false```)
 
@@ -110,6 +56,45 @@ Enable more detailed statistics. (Default: ```false```)
 
 `TRAEFIK_API_STATISTICS_RECENTERRORS`:  
 Number of recent errors logged. (Default: ```10```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>`:  
+Certificates resolvers configuration. (Default: ```false```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CASERVER`:  
+CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE`:  
+Activate DNS-01 Challenge. (Default: ```false```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_DELAYBEFORECHECK`:  
+Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_DISABLEPROPAGATIONCHECK`:  
+Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_PROVIDER`:  
+Use a DNS-01 based challenge provider rather than HTTPS.
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_RESOLVERS`:  
+Use following DNS servers to resolve the FQDN authority.
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_EMAIL`:  
+Email address used for registration.
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_HTTPCHALLENGE`:  
+Activate HTTP-01 Challenge. (Default: ```false```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_HTTPCHALLENGE_ENTRYPOINT`:  
+HTTP challenge EntryPoint
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_KEYTYPE`:  
+KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. (Default: ```RSA4096```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_STORAGE`:  
+Storage to use. (Default: ```acme.json```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_TLSCHALLENGE`:  
+Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>`:  
 Entry points definition. (Default: ```false```)

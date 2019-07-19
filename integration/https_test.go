@@ -265,7 +265,7 @@ func (s *HTTPSSuite) TestWithConflictingTLSOptions(c *check.C) {
 	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
 
 	// with unknown tls option
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(fmt.Sprintf("found different TLS options for routers on the same host %v, so using the default TLS option instead", tr4.TLSClientConfig.ServerName)))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(fmt.Sprintf("found different TLS options for routers on the same host %v, so using the default TLS options instead", tr4.TLSClientConfig.ServerName)))
 	c.Assert(err, checker.IsNil)
 }
 

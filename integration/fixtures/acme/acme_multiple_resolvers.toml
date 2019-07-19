@@ -48,8 +48,11 @@
     rule = "Host(`traefik.acme.wtf`)"
     service = "test"
     [http.routers.test.tls]
+      certResolver = "default"
 
-[tls.stores]
-  [tls.stores.default.defaultCertificate]
-    certFile = "fixtures/acme/ssl/wildcard.crt"
-    keyFile = "fixtures/acme/ssl/wildcard.key"
+  [http.routers.tchouk]
+    entryPoints = ["web-secure"]
+    rule = "Host(`tchouk.acme.wtf`)"
+    service = "test"
+    [http.routers.tchouk.tls]
+      certResolver = "tchouk"
