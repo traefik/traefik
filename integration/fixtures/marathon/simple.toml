@@ -8,11 +8,10 @@
 [entryPoints]
   [entryPoints.web]
     address = ":8000"
-  [entryPoints.api]
+  [entryPoints.traefik]
     address = ":9090"
 
 [api]
-  entryPoint = "api"
 
 [providers]
   [providers.marathon]

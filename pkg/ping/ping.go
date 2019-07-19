@@ -10,14 +10,11 @@ import (
 
 // Handler expose ping routes.
 type Handler struct {
-	EntryPoint  string   `description:"Ping entryPoint." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
-	Middlewares []string `description:"Middleware list." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	terminating bool
 }
 
 // SetDefaults sets the default values.
 func (h *Handler) SetDefaults() {
-	h.EntryPoint = "traefik"
 }
 
 // WithContext causes the ping endpoint to serve non 200 responses.
