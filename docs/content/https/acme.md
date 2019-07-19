@@ -345,7 +345,7 @@ The `storage` option sets the location where your ACME certificates are saved to
   # ...
 ```
 
-```toml tab="File (TOML)"
+```yaml tab="File (YAML)"
 certificatesResolvers:
   sample:
     acme:
