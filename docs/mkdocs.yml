@@ -76,7 +76,7 @@ nav:
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
-#     - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
+      - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
       - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
       - 'Marathon': 'providers/marathon.md'
