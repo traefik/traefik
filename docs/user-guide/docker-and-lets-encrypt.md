@@ -108,6 +108,28 @@ onHostRule = true
 entryPoint = "http"
 ```
 
+Alternatively, the `TOML` file above can also be translated into command line switches. 
+This is the `command` value of the `traefik` service in the `docker-compose.yml` manifest:
+
+```yaml
+command:
+  - --debug=false
+  - --logLevel=ERROR
+  - --defaultentrypoints=https,http
+  - --entryPoints=Name:http Address::80 Redirect.EntryPoint:https
+  - --entryPoints=Name:https Address::443 TLS
+  - --retry
+  - --docker.endpoint=unix:///var/run/docker.sock
+  - --docker.domain=my-awesome-app.org
+  - --docker.watch=true
+  - --docker.exposedbydefault=false
+  - --acme.email=your-email-here@my-awesome-app.org
+  - --acme.storage=acme.json
+  - --acme.entryPoint=https
+  - --acme.onHostRule=true
+  - --acme.httpchallenge.entrypoint=http
+```
+
 This is the minimum configuration required to do the following:
 
 - Log `ERROR`-level messages (or more severe) to the console, but silence `DEBUG`-level messages
