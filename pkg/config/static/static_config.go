@@ -215,16 +215,18 @@ func (c *Configuration) initACMEProvider() {
 func (c *Configuration) ValidateConfiguration() error {
 	var acmeEmail string
 	for name, resolver := range c.CertificatesResolvers {
-		if resolver.ACME != nil {
-			if len(resolver.ACME.Storage) == 0 {
-				return fmt.Errorf("unable to initialize certificates resolver %q with no storage location for the certificates", name)
-			}
-
-			if acmeEmail != "" && resolver.ACME.Email != acmeEmail {
-				return fmt.Errorf("unable to initialize certificates resolver %q, all the acme resolvers must use the same email", name)
-			}
-			acmeEmail = resolver.ACME.Email
+		if resolver.ACME == nil {
+			continue
 		}
+
+		if len(resolver.ACME.Storage) == 0 {
+			return fmt.Errorf("unable to initialize certificates resolver %q with no storage location for the certificates", name)
+		}
+
+		if acmeEmail != "" && resolver.ACME.Email != acmeEmail {
+			return fmt.Errorf("unable to initialize certificates resolver %q, all the acme resolvers must use the same email", name)
+		}
+		acmeEmail = resolver.ACME.Email
 	}
 
 	return nil

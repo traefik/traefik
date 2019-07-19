@@ -1,18 +1,18 @@
 package acme
 
-// StoredData represents the data managed by Store
+// StoredData represents the data managed by Store.
 type StoredData struct {
 	Account      *Account
 	Certificates []*CertAndStore
 }
 
-// StoredChallengeData represents the data managed by Store
+// StoredChallengeData represents the data managed by ChallengeStore.
 type StoredChallengeData struct {
 	HTTPChallenges map[string]map[string][]byte
 	TLSChallenges  map[string]*Certificate
 }
 
-// Store is a generic interface that represents a storage
+// Store is a generic interface that represents a storage.
 type Store interface {
 	GetAccount(string) (*Account, error)
 	SaveAccount(string, *Account) error

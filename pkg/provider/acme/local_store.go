@@ -17,8 +17,9 @@ var _ Store = (*LocalStore)(nil)
 type LocalStore struct {
 	saveDataChan chan map[string]*StoredData
 	filename     string
-	storedData   map[string]*StoredData
-	lock         sync.RWMutex
+
+	lock       sync.RWMutex
+	storedData map[string]*StoredData
 }
 
 // NewLocalStore initializes a new LocalStore with a file name
@@ -156,7 +157,7 @@ func (s *LocalStore) SaveCertificates(resolverName string, certificates []*CertA
 	return nil
 }
 
-// LocalChallengeStore implementation of the ChallengeStore in memory.
+// LocalChallengeStore is an implementation of the ChallengeStore in memory.
 type LocalChallengeStore struct {
 	storedData *StoredChallengeData
 	lock       sync.RWMutex
