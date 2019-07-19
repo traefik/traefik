@@ -45,18 +45,6 @@ Activate dashboard. (Default: ```true```)
 `--api.debug`:  
 Enable additional endpoints for debugging and profiling. (Default: ```false```)
 
-`--api.entrypoint`:  
-The entry point that the API handler will be bound to. (Default: ```traefik```)
-
-`--api.middlewares`:  
-Middleware list.
-
-`--api.statistics`:  
-Enable more detailed statistics. (Default: ```false```)
-
-`--api.statistics.recenterrors`:  
-Number of recent errors logged. (Default: ```10```)
-
 `--certificatesresolvers.<name>`:  
 Certificates resolvers configuration. (Default: ```false```)
 
@@ -219,12 +207,6 @@ Enable metrics on services. (Default: ```true```)
 `--metrics.prometheus.buckets`:  
 Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000```)
 
-`--metrics.prometheus.entrypoint`:  
-EntryPoint. (Default: ```traefik```)
-
-`--metrics.prometheus.middlewares`:  
-Middlewares.
-
 `--metrics.statsd`:  
 StatsD metrics exporter type. (Default: ```false```)
 
@@ -241,13 +223,7 @@ Enable metrics on services. (Default: ```true```)
 StatsD push interval. (Default: ```10```)
 
 `--ping`:  
-Enable ping. (Default: ```false```)
-
-`--ping.entrypoint`:  
-Ping entryPoint. (Default: ```traefik```)
-
-`--ping.middlewares`:  
-Middleware list.
+Enable ping. (Default: ```true```)
 
 `--providers.docker`:  
 Enable Docker backend with default settings. (Default: ```false```)
@@ -457,10 +433,7 @@ Defines the polling interval in seconds. (Default: ```15```)
 Watch provider. (Default: ```true```)
 
 `--providers.rest`:  
-Enable Rest backend with default settings. (Default: ```false```)
-
-`--providers.rest.entrypoint`:  
-EntryPoint. (Default: ```traefik```)
+Enable Rest backend with default settings. (Default: ```true```)
 
 `--serverstransport.forwardingtimeouts.dialtimeout`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
