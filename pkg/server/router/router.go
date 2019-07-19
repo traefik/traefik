@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/containous/alice"
@@ -147,6 +148,10 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		qualifiedNames[i] = internal.GetQualifiedName(ctx, name)
 	}
 	rm := m.modifierBuilder.Build(ctx, qualifiedNames)
+
+	if router.Service == "" {
+		return nil, errors.New("the service is missing on the router")
+	}
 
 	sHandler, err := m.serviceManager.BuildHTTP(ctx, router.Service, rm)
 	if err != nil {

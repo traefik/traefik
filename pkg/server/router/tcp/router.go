@@ -169,6 +169,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		ctxRouter := log.With(internal.AddProviderInContext(ctx, routerName), log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctxRouter)
 
+		if routerConfig.Service == "" {
+			msg := "the service is missing on the router"
+			routerConfig.Err = msg
+			logger.Error(msg)
+			continue
+		}
+
 		handler, err := m.serviceManager.BuildTCP(ctxRouter, routerConfig.Service)
 		if err != nil {
 			routerConfig.Err = err.Error()
