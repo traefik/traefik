@@ -95,6 +95,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.province":         "true",
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.serialnumber":     "true",
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.pem":                          "true",
+		// TODO: disable temporarily (rateLimit)
 		// "traefik.http.middlewares.Middleware12.ratelimit.extractorfunc":                        "foobar",
 		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.average":                "42",
 		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.burst":                  "42",
@@ -304,6 +305,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						},
 					},
 				},
+				// TODO: disable temporarily (rateLimit)
 				// "Middleware12": {
 				// 	RateLimit: &dynamic.RateLimit{
 				// 		RateSet: map[string]*dynamic.Rate{
@@ -700,6 +702,7 @@ func TestEncodeConfiguration(t *testing.T) {
 						},
 					},
 				},
+				// TODO: disable temporarily (rateLimit)
 				// "Middleware12": {
 				// 	RateLimit: &dynamic.RateLimit{
 				// 		RateSet: map[string]*dynamic.Rate{
@@ -1049,6 +1052,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.SerialNumber":     "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.DomainComponent":  "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.PEM":                          "true",
+		// TODO: disable temporarily (rateLimit)
 		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.ExtractorFunc":                        "foobar",
 		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Average":                "42",
 		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Burst":                  "42",

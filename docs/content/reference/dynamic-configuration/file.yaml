@@ -212,18 +212,6 @@ http:
             commonName: true
             serialNumber: true
             domainComponent: true
-    Middleware13:
-      rateLimit:
-        rateSet:
-          Rate0:
-            period: 42ns
-            average: 42
-            burst: 42
-          Rate1:
-            period: 42ns
-            average: 42
-            burst: 42
-        extractorFunc: foobar
     Middleware14:
       redirectRegex:
         regex: foobar

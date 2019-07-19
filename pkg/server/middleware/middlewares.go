@@ -231,7 +231,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
-	// TODO: disable temporarily
+	// TODO: disable temporarily (rateLimit)
 	// RateLimit
 	// if config.RateLimit != nil {
 	// 	if middleware != nil {

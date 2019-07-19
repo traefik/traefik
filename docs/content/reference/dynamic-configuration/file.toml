@@ -186,18 +186,6 @@
             commonName = true
             serialNumber = true
             domainComponent = true
-    [http.middlewares.Middleware13]
-      [http.middlewares.Middleware13.rateLimit]
-        extractorFunc = "foobar"
-        [http.middlewares.Middleware13.rateLimit.rateSet]
-          [http.middlewares.Middleware13.rateLimit.rateSet.Rate0]
-            period = "42ns"
-            average = 42
-            burst = 42
-          [http.middlewares.Middleware13.rateLimit.rateSet.Rate1]
-            period = "42ns"
-            average = 42
-            burst = 42
     [http.middlewares.Middleware14]
       [http.middlewares.Middleware14.redirectRegex]
         regex = "foobar"
