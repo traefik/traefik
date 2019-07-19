@@ -7,9 +7,17 @@ Checking the Health of Your Traefik Instances
 
 ??? example "Enabling /ping"
 
-    ```toml
-    [ping]
-    ```
+```toml tab="File (TOML)"
+[ping]
+```
+
+```yaml tab="File (YAML)"
+ping: {}
+```
+
+```bash tab="CLI"
+--ping
+```
 
 | Path    | Method        | Description                                                                                         |
 |---------|---------------|-----------------------------------------------------------------------------------------------------|

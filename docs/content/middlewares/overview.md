@@ -79,8 +79,8 @@ labels:
   - "traefik.http.router.router1.middlewares=foo-add-prefix@rancher"
 ```
 
-```toml tab="File"
-# As Toml Configuration File
+```toml tab="File (TOML)"
+# As TOML Configuration File
 [http.routers]
   [http.routers.router1]
     service = "myService"
@@ -97,6 +97,28 @@ labels:
 
       [[http.services.service1.loadBalancer.servers]]
         url = "http://127.0.0.1:80"
+```
+
+```yaml tab="File (YAML)"
+# As YAML Configuration File
+http:
+  routers:
+    router1:
+      service: myService
+      middlewares:
+      - "foo-add-prefix"
+      rule: "Host(`example.com`)"
+
+  middlewares:
+    foo-add-prefix:
+      addPrefix:
+        prefix: "/foo"
+
+  services:
+    service1:
+      loadBalancer:
+        servers:
+        - url: "http://127.0.0.1:80"
 ```
 
 ## Provider Namespace
@@ -124,10 +146,18 @@ and therefore this specification would be ignored even if present.
 
     Declaring the add-foo-prefix in the file provider.
 
-    ```toml
+    ```toml tab="File (TOML)"
     [http.middlewares]
       [http.middlewares.add-foo-prefix.addPrefix]
         prefix = "/foo"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    http:
+      middlewares:
+        add-foo-prefix:
+          addPrefix:
+            prefix: "/foo"
     ```
 
     Using the add-foo-prefix middleware from other providers:

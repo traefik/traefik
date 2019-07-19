@@ -287,10 +287,6 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 !!! note "HTTPS & ACME"
 
     In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
-    
-!!! note "Passthrough"
-
-    On TCP routers, you can configure a passthrough option so that Traefik doesn't terminate the TLS connection.
 
 !!! important "Routers for HTTP & HTTPS"
 
@@ -463,7 +459,7 @@ http:
 ```
 
 [ACME v2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
-As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](./../../https/acme.md#dnschallenge).
+As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](../../https/acme.md#dnschallenge).
 
 Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are executed.
 In this case the generated DNS TXT record for both domains is the same.
@@ -471,10 +467,10 @@ Even though this behavior is [DNS RFC](https://community.letsencrypt.org/t/wildc
 it can lead to problems as all DNS providers keep DNS records cached for a given time (TTL) and this TTL can be greater than the challenge timeout making the `DNS-01` challenge fail.
 
 The Traefik ACME client library [LEGO](https://github.com/go-acme/lego) supports some but not all DNS providers to work around this issue.
-The [Supported `provider` table](./../../https/acme.md#providers) indicates if they allow generating certificates for a wildcard domain and its root domain.
+The [Supported `provider` table](../../https/acme.md#providers) indicates if they allow generating certificates for a wildcard domain and its root domain.
 
 !!! note
-    Wildcard certificates can only be verified through a `DNS-01` challenge.
+    Wildcard certificates can only be verified through a [`DNS-01` challenge](../../https/acme.md#dnschallenge).
 
 !!! note "Double Wildcard Certificates"
     It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).

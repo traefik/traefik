@@ -38,16 +38,35 @@ To enable the dashboard, you need to enable Traefik's API.
     
     {!more-on-command-line.md!}
 
-??? example "Using the Configuration File"
-
-    ```toml
-    [api] 
+??? Enabling
+    
+    ```toml tab="File (TOML)"
+    [api]
       # Dashboard
       #
       # Optional
       # Default: true
       #
       dashboard = true
+    ```
+    
+    ```yaml tab="File (YAML)"
+    api:
+      # Dashboard
+      #
+      # Optional
+      # Default: true
+      #
+      dashboard: true
+    ```
+    
+    ```bash tab="CLI"
+    # Dashboard
+    #
+    # Optional
+    # Default: true
+    #
+    --api.dashboard
     ```
     
     {!more-on-configuration-file.md!}

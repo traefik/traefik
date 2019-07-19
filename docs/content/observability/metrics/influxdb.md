@@ -7,7 +7,7 @@ To enable the InfluxDB:
   [metrics.influxdb]
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   influxdb: {}
 ```
@@ -29,7 +29,7 @@ Address instructs exporter to send metrics to influxdb at this address.
     address = "localhost:8089"
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   influxdb:
     address: localhost:8089
@@ -52,7 +52,7 @@ InfluxDB's address protocol (udp or http).
     protocol = "upd"
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   influxdb:
     protocol: udp
@@ -75,7 +75,7 @@ InfluxDB database used when protocol is http.
     database = ""
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   influxdb:
     database: ""
@@ -98,7 +98,7 @@ InfluxDB retention policy used when protocol is http.
     retentionPolicy = ""
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   influxdb:
     retentionPolicy: ""
@@ -121,7 +121,7 @@ InfluxDB username (only with http).
     username = ""
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   influxdb:
     username: ""
@@ -144,7 +144,7 @@ InfluxDB password (only with http).
     password = ""
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   influxdb:
     password: ""
@@ -167,7 +167,7 @@ Enable metrics on entry points.
     addEntryPointsLabels = true
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   influxdb:
     addEntryPointsLabels: true
@@ -190,7 +190,7 @@ Enable metrics on services.
     addServicesLabels = true
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   influxdb:
     addServicesLabels: true
@@ -213,7 +213,7 @@ The interval used by the exporter to push metrics to influxdb.
     pushInterval = 10s
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   influxdb:
     pushInterval: 10s

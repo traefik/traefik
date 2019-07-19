@@ -102,8 +102,7 @@ providers:
     - foobar
     labelSelector: foobar
     ingressClass: foobar
-  rest:
-    entryPoint: foobar
+  rest: {}
   rancher:
     constraints: foobar
     watch: true
@@ -114,23 +113,13 @@ providers:
     intervalPoll: true
     prefix: foobar
 api:
-  entryPoint: foobar
   dashboard: true
   debug: true
-  statistics:
-    recentErrors: 42
-  middlewares:
-  - foobar
-  - foobar
 metrics:
   prometheus:
     buckets:
     - 42
     - 42
-    entryPoint: foobar
-    middlewares:
-    - foobar
-    - foobar
     addEntryPointsLabels: true
     addServicesLabels: true
   dataDog:
@@ -153,11 +142,7 @@ metrics:
     password: foobar
     addEntryPointsLabels: true
     addServicesLabels: true
-ping:
-  entryPoint: foobar
-  middlewares:
-  - foobar
-  - foobar
+ping: {}
 log:
   level: foobar
   filePath: foobar
@@ -228,28 +213,36 @@ hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
   resolvDepth: 42
-acme:
-  email: foobar
-  caServer: foobar
-  storage: foobar
-  entryPoint: foobar
-  keyType: foobar
-  dnsChallenge:
-    provider: foobar
-    delayBeforeCheck: 42
-    resolvers:
-    - foobar
-    - foobar
-    disablePropagationCheck: true
-  httpChallenge:
-    entryPoint: foobar
-  tlsChallenge: {}
-  domains:
-  - main: foobar
-    sans:
-    - foobar
-    - foobar
-  - main: foobar
-    sans:
-    - foobar
-    - foobar
+certificatesResolvers:
+  CertificateResolver0:
+    acme:
+      email: foobar
+      caServer: foobar
+      storage: foobar
+      keyType: foobar
+      dnsChallenge:
+        provider: foobar
+        delayBeforeCheck: 42
+        resolvers:
+        - foobar
+        - foobar
+        disablePropagationCheck: true
+      httpChallenge:
+        entryPoint: foobar
+      tlsChallenge: {}
+  CertificateResolver1:
+    acme:
+      email: foobar
+      caServer: foobar
+      storage: foobar
+      keyType: foobar
+      dnsChallenge:
+        provider: foobar
+        delayBeforeCheck: 42
+        resolvers:
+        - foobar
+        - foobar
+        disablePropagationCheck: true
+      httpChallenge:
+        entryPoint: foobar
+      tlsChallenge: {}

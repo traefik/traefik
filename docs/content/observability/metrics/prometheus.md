@@ -7,7 +7,7 @@ To enable the Prometheus:
   [metrics.prometheus]
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   prometheus: {}
 ```
@@ -29,7 +29,7 @@ Buckets for latency metrics.
     buckets = [0.1,0.3,1.2,5.0]
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   prometheus:
     buckets:
@@ -56,7 +56,7 @@ Enable metrics on entry points.
     addEntryPointsLabels = true
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   prometheus:
     addEntryPointsLabels: true
@@ -79,7 +79,7 @@ Enable metrics on services.
     addServicesLabels = true
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   prometheus:
     addServicesLabels: true

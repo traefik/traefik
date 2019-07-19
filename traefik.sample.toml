@@ -1,6 +1,7 @@
 ################################################################
 #
-# Configuration sample for Traefik v2
+# Configuration sample for Traefik v2.
+#
 # For Traefik v1: https://github.com/containous/traefik/blob/v1.7/traefik.sample.toml
 #
 ################################################################
@@ -22,7 +23,10 @@
 # Default:
 [entryPoints]
   [entryPoints.web]
-  address = ":80"
+    address = ":80"
+
+  [entryPoints.websecure]
+    address = ":443"
 
 ################################################################
 # Traefik logs configuration
@@ -35,27 +39,27 @@
 #
 [log]
 
-# Log level
-#
-# Optional
-# Default: "ERROR"
-#
-# level = "DEBUG"
+  # Log level
+  #
+  # Optional
+  # Default: "ERROR"
+  #
+  # level = "DEBUG"
 
-# Sets the filepath for the traefik log. If not specified, stdout will be used.
-# Intermediate directories are created if necessary.
-#
-# Optional
-# Default: os.Stdout
-#
-# filePath = "log/traefik.log"
+  # Sets the filepath for the traefik log. If not specified, stdout will be used.
+  # Intermediate directories are created if necessary.
+  #
+  # Optional
+  # Default: os.Stdout
+  #
+  # filePath = "log/traefik.log"
 
-# Format is either "json" or "common".
-#
-# Optional
-# Default: "common"
-#
-# format = "common"
+  # Format is either "json" or "common".
+  #
+  # Optional
+  # Default: "common"
+  #
+  # format = "json"
 
 ################################################################
 # Access logs configuration
@@ -69,20 +73,20 @@
 #
 # [accessLog]
 
-# Sets the file path for the access log. If not specified, stdout will be used.
-# Intermediate directories are created if necessary.
-#
-# Optional
-# Default: os.Stdout
-#
-# filePath = "/path/to/log/log.txt"
+  # Sets the file path for the access log. If not specified, stdout will be used.
+  # Intermediate directories are created if necessary.
+  #
+  # Optional
+  # Default: os.Stdout
+  #
+  # filePath = "/path/to/log/log.txt"
 
-# Format is either "json" or "common".
-#
-# Optional
-# Default: "common"
-#
-# format = "common"
+  # Format is either "json" or "common".
+  #
+  # Optional
+  # Default: "common"
+  #
+  # format = "json"
 
 ################################################################
 # API and dashboard configuration
@@ -126,23 +130,23 @@
 # Enable Docker configuration backend
 [providers.docker]
 
-# Docker server endpoint. Can be a tcp or a unix socket endpoint.
-#
-# Required
-# Default: "unix:///var/run/docker.sock"
-#
-# endpoint = "tcp://10.10.10.10:2375"
+  # Docker server endpoint. Can be a tcp or a unix socket endpoint.
+  #
+  # Required
+  # Default: "unix:///var/run/docker.sock"
+  #
+  # endpoint = "tcp://10.10.10.10:2375"
 
-# Default host rule.
-#
-# Optional
-# Default: ""
-#
-# DefaultRule = "Host(`{{ normalize .Name }}.docker.localhost`)"
+  # Default host rule.
+  #
+  # Optional
+  # Default: "Host(`{{ normalize .Name }}`)"
+  #
+  # defaultRule = "Host(`{{ normalize .Name }}.docker.localhost`)"
 
-# Expose containers by default in traefik
-#
-# Optional
-# Default: true
-#
-# exposedByDefault = true
+  # Expose containers by default in traefik
+  #
+  # Optional
+  # Default: true
+  #
+  # exposedByDefault = false

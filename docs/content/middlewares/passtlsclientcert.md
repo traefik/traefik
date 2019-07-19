@@ -39,11 +39,20 @@ labels:
 - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header.
 [http.middlewares]
   [http.middlewares.test-passtlsclientcert.passTLSClientCert]
     pem = true
+```
+
+```yaml tab="File (YAML)"
+# Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header.
+http:
+  middlewares:
+    test-passtlsclientcert:
+      passTLSClientCert:
+        pem: true
 ```
 
 ??? example "Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header"
@@ -144,7 +153,7 @@ labels:
     }
     ```
 
-    ```toml tab="File"
+    ```toml tab="File (TOML)"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
     [http.middlewares]
       [http.middlewares.test-passtlsclientcert.passTLSClientCert]
@@ -168,6 +177,34 @@ labels:
             commonName = true
             serialNumber = true
             domainComponent = true
+    ```
+
+    ```yaml tab="File (YAML)"
+    # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
+    http:
+      middlewares:
+        test-passtlsclientcert:
+          passTLSClientCert:
+            info:
+              notAfter: true
+              notBefore: true
+              sans: true
+              subject:
+                country: true
+                province: true
+                locality: true
+                organization: true
+                commonName: true
+                serialNumber: true
+                domainComponent: true
+              issuer:
+                country: true
+                province: true
+                locality: true
+                organization: true
+                commonName: true
+                serialNumber: true
+                domainComponent: true
     ```
 
 ## Configuration Options

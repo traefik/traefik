@@ -9,22 +9,27 @@ Understanding how you use Traefik is very important to us: it helps us improve t
 For this very reason, the sendAnonymousUsage option is mandatory: we want you to take time to consider whether or not you wish to share anonymous data with us so we can benefit from your experience and use cases.
 
 !!! warning
-    During the alpha stage only, leaving this option unset will not prevent Traefik from running but will generate an error log indicating that it enables data collection by default.
+    During the beta stage only, leaving this option unset will not prevent Traefik from running but will generate an error log indicating that it enables data collection by default.
 
-??? example "Enabling Data Collection with TOML"
-
-    ```toml
+!!! example "Enabling Data Collection"
+    
+    ```toml tab="File (TOML)"
     [global]
       # Send anonymous usage data
       sendAnonymousUsage = true
     ```
-
-??? example "Enabling Data Collection with the CLI"
-
-    ```bash
-    ./traefik --sendAnonymousUsage=true
+    
+    ```yaml tab="File (YAML)"
+    global:
+      # Send anonymous usage data
+      sendAnonymousUsage: true
     ```
     
+    ```bash tab="CLI"
+    # Send anonymous usage data
+    --global.sendAnonymousUsage
+    ```
+
 ## Collected Data
 
 This feature comes from the public proposal [here](https://github.com/containous/traefik/issues/2369).
