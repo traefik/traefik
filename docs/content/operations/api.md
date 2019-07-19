@@ -1,5 +1,8 @@
 # API
 
+!!! important
+    In the beta version, you can't configure middlewares (basic authentication or white listing) anymore, but as security is important, this will change before the RC version.
+
 Traefik exposes a number of information through an API handler, such as the configuration of all routers, services, middlewares, etc.
 
 As with all features of Traefik, this handler can be enabled with the [static configuration](../getting-started/configuration-overview.md#the-static-configuration).
@@ -19,7 +22,7 @@ would be to apply the following protection mechanisms:
   keeping it restricted to internal networks
   (as in the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), applied to networks).
 
-!!! warning
+!!! important
     In the beta version, you can't configure middlewares (basic authentication or white listing) anymore, but as security is important, this will change before the RC version.
 
 ## Configuration
