@@ -215,7 +215,7 @@ The table below lists all the available matchers:
 | ```HeadersRegexp(`key`, `regexp`)```                                 | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
 | ```Host(`domain-1`, ...)```                                          | Check if the request domain targets one of the given `domains`.                                                |
 | ```HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
-| `Method(`methods`, ...)`                                             | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
+| ```Method(`GET`, ...)```                                             | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
 | ```Path(`path`, `/articles/{category}/{id:[0-9]+}`, ...)```          | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
 | ```PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
 | ```Query(`foo=bar`, `bar=baz`)```                                    | Match` Query String parameters. It accepts a sequence of key=value pairs.                                      |
