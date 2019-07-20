@@ -18,8 +18,8 @@
             <p>
               Also, please keep your <i class="fa fa-eye" /> on our
               <a href="https://docs.traefik.io/v2.0/operations/dashboard/"
-                >documentation</a
-              >
+                >documentation<i class="fas fa-external-link-alt"
+              /></a>
               to stay informed
             </p>
           </h2>
@@ -88,7 +88,7 @@
       <p class="title is-4">Features</p>
       <div class="tile is-child box columns">
         <div class="tile is-ancestor">
-          <FeatureTile
+          <Tile
             v-for="(feature, key) of overview.features"
             :key="key"
             :title="key"
@@ -97,34 +97,38 @@
         </div>
       </div>
     </section>
+
+    <section class="container">
+      <p class="title is-4">Providers</p>
+      <div class="tile is-child box columns">
+        <div class="tile is-ancestor">
+          <Tile
+            v-for="provider of overview.providers"
+            :key="provider"
+            :title="provider"
+            :modifier="{ 'is-info': provider, 'is-3': provider }"
+          />
+        </div>
+      </div>
+    </section>
   </main>
 </template>
 
 <script>
-import FeatureTile from "../components/Tile";
+import Tile from "../components/Tile";
 import EntityStateDoughnut from "../components/EntityStateDoughnut";
 
 export default {
   name: "home",
   components: {
-    FeatureTile,
+    Tile,
     EntityStateDoughnut
   },
   data: () => ({
     entrypoints: [],
     overview: {
-      features: []
-    },
-    charts: {
-      http: {
-        routers: null,
-        middlewares: null,
-        services: null
-      },
-      tcp: {
-        routers: null,
-        services: null
-      }
+      features: [],
+      providers: []
     },
     interval: null
   }),
