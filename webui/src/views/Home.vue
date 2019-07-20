@@ -9,7 +9,11 @@
           <h2 class="subtitle">
             <p>
               In the meantime, you can review your current configuration by
-              using the <a href="/api/rawdata">/api/rawdata</a> endpoint.
+              using the
+              <a href="/api/rawdata"
+                >/api/rawdata <i class="fas fa-external-link-alt"
+              /></a>
+              endpoint.
             </p>
             <p>
               Also, please keep your <i class="fa fa-eye" /> on our
