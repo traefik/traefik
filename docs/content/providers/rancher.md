@@ -55,6 +55,8 @@ Attach labels to your services and let Traefik do the rest!
     --8<-- "content/providers/rancher.txt"
     ```
 
+List of all available labels for the [dynamic](../reference/dynamic-configuration/rancher.md) configuration references.
+
 ### `exposedByDefault`
 
 _Optional, Default=true_
