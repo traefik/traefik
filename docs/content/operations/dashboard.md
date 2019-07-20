@@ -29,57 +29,39 @@ By default, the dashboard is available on `/` on port `:8080`.
 
 To enable the dashboard, you need to enable Traefik's API.
 
-??? example "Using the Command Line"
+```toml tab="File (TOML)"
+[api]
+  # Dashboard
+  #
+  # Optional
+  # Default: true
+  #
+  dashboard = true
+```
 
-    | Option          | Values          |         Default Value |
-    | --------------- | --------------- | --------------------: |
-    | --api           | \[true\|false\] |                 false |
-    | --api.dashboard | \[true\|false\] | true when api is true |
-    
-    {!more-on-command-line.md!}
+```yaml tab="File (YAML)"
+api:
+  # Dashboard
+  #
+  # Optional
+  # Default: true
+  #
+  dashboard: true
+```
 
-??? Enabling
-    
-    ```toml tab="File (TOML)"
-    [api]
-      # Dashboard
-      #
-      # Optional
-      # Default: true
-      #
-      dashboard = true
-    ```
-    
-    ```yaml tab="File (YAML)"
-    api:
-      # Dashboard
-      #
-      # Optional
-      # Default: true
-      #
-      dashboard: true
-    ```
-    
-    ```bash tab="CLI"
-    # Dashboard
-    #
-    # Optional
-    # Default: true
-    #
-    --api.dashboard
-    ```
-    
-    {!more-on-configuration-file.md!}
+```bash tab="CLI"
+# Dashboard
+#
+# Optional
+# Default: true
+#
+--api.dashboard
+```
 
-??? example "Using a Key/Value Store"
+{!more-on-command-line.md!}
 
-    | Key           | Values          |         Default Value |
-    | ------------- | --------------- | --------------------: |
-    | api           | \[true\|false\] |                 false |
-    | api.dashboard | \[true\|false\] | true when api is true |
-    
-    {!more-on-key-value-store.md!}
-    
+{!more-on-configuration-file.md!}
+
 !!! tip "Did You Know?"
     The API provides more features than the Dashboard. 
     To learn more about it, refer to the `Traefik's API documentation`(TODO: add doc and link).
