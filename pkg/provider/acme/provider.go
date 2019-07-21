@@ -115,8 +115,7 @@ func (p *Provider) ListenConfiguration(config dynamic.Configuration) {
 
 // Init for compatibility reason the BaseProvider implements an empty Init
 func (p *Provider) Init() error {
-
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, "acme"))
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.ResolverName+".acme"))
 	logger := log.FromContext(ctx)
 
 	if len(p.Configuration.Storage) == 0 {
@@ -167,7 +166,7 @@ func isAccountMatchingCaServer(ctx context.Context, accountURI string, serverURI
 // Provide allows the file provider to provide configurations to traefik
 // using the given Configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, "acme."+p.ResolverName))
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.ResolverName+".acme"))
 
 	p.pool = pool
 
@@ -199,7 +198,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	p.clientMutex.Lock()
 	defer p.clientMutex.Unlock()
 
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, "acme"))
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.ResolverName+".acme"))
 	logger := log.FromContext(ctx)
 
 	if p.client != nil {
@@ -371,7 +370,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 								domain := domains[i]
 								safe.Go(func() {
 									if _, err := p.resolveCertificate(ctx, domain, tlsStore); err != nil {
-										log.WithoutContext().WithField(log.ProviderName, "acme."+p.ResolverName).
+										log.WithoutContext().WithField(log.ProviderName, p.ResolverName+".acme").
 											Errorf("Unable to obtain ACME certificate for domains %q : %v", strings.Join(domain.ToStrArray(), ","), err)
 									}
 								})
@@ -400,7 +399,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 							domain := domains[i]
 							safe.Go(func() {
 								if _, err := p.resolveCertificate(ctx, domain, tlsStore); err != nil {
-									log.WithoutContext().WithField(log.ProviderName, "acme."+p.ResolverName).
+									log.WithoutContext().WithField(log.ProviderName, p.ResolverName+".acme").
 										Errorf("Unable to obtain ACME certificate for domains %q : %v", strings.Join(domain.ToStrArray(), ","), err)
 								}
 							})
@@ -593,7 +592,7 @@ func (p *Provider) saveCertificates() error {
 
 func (p *Provider) refreshCertificates() {
 	conf := dynamic.Message{
-		ProviderName: "acme." + p.ResolverName,
+		ProviderName: p.ResolverName + ".acme",
 		Configuration: &dynamic.Configuration{
 			HTTP: &dynamic.HTTPConfiguration{
 				Routers:     map[string]*dynamic.Router{},
