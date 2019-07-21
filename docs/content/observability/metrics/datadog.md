@@ -13,8 +13,7 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
---metrics.datadog
+--metrics.datadog=true
 ```
 
 #### `address`
@@ -36,7 +35,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.datadog.address="127.0.0.1:8125"
 ```
 
@@ -59,7 +57,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.datadog.addEntryPointsLabels=true
 ```
 
@@ -82,7 +79,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.datadog.addServicesLabels=true
 ```
 
@@ -105,7 +101,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.datadog.pushInterval=10s
 ```
 

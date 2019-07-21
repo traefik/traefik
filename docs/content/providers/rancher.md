@@ -28,7 +28,7 @@ Attach labels to your services and let Traefik do the rest!
     ```
     
     ```bash tab="CLI"
-    --providers.rancher
+    --providers.rancher=true
     ```
 
     Attaching labels to services

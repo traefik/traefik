@@ -1,5 +1,4 @@
 # Enable Rancher Provider.
---providers.rancher
 
 # Expose Rancher services by default in Traefik.
 --providers.rancher.exposedByDefault=true

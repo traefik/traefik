@@ -38,7 +38,7 @@ api: {}
 ```
 
 ```bash tab="CLI"
---api
+--api=true
 ```
 
 ### `dashboard`
@@ -58,7 +58,7 @@ api:
 ```
 
 ```bash tab="CLI"
---api.dashboard
+--api.dashboard=true
 ```
 
 ### `debug`

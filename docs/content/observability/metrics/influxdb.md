@@ -13,8 +13,7 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
---metrics.influxdb
+--metrics.influxdb=true
 ```
 
 #### `address`
@@ -36,7 +35,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.influxdb.address="localhost:8089"
 ```
 
@@ -59,7 +57,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.influxdb.protocol="udp"
 ```
 
@@ -82,7 +79,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.influxdb.database=""
 ```
 
@@ -105,7 +101,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.influxdb.retentionPolicy=""
 ```
 
@@ -128,7 +123,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.influxdb.username=""
 ```
 
@@ -151,7 +145,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.influxdb.password=""
 ```
 
@@ -174,7 +167,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.influxdb.addEntryPointsLabels=true
 ```
 
@@ -197,7 +189,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.influxdb.addServicesLabels=true
 ```
 
@@ -220,6 +211,5 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.influxdb.pushInterval=10s
 ```

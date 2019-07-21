@@ -13,8 +13,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
---tracing.zipkin
+--tracing.zipkin=true
 ```
 
 #### `httpEndpoint`
@@ -36,7 +35,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.zipkin.httpEndpoint="http://localhost:9411/api/v1/spans"
 ```
 
@@ -59,7 +57,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.zipkin.debug=true
 ```
 
@@ -82,7 +79,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.zipkin.sameSpan=true
 ```
 
@@ -105,7 +101,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.zipkin.id128Bit=false
 ```
 
@@ -128,6 +123,5 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.zipkin.sampleRate="0.2"
 ```

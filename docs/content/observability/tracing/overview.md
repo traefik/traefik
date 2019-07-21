@@ -30,7 +30,7 @@ tracing: {}
 ```
 
 ```bash tab="CLI"
---tracing
+--tracing=true
 ```
 
 ### Common Options
@@ -52,7 +52,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.serviceName="traefik"
 ```
 
@@ -76,6 +75,5 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.spanNameLimit=150
 ```

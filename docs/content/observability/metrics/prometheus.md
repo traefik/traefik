@@ -13,8 +13,7 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
---metrics.prometheus
+--metrics.prometheus=true
 ```
 
 #### `buckets`
@@ -40,7 +39,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.prometheus.buckets=0.100000, 0.300000, 1.200000, 5.000000
 ```
 
@@ -63,7 +61,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.prometheus.addEntryPointsLabels=true
 ```
 
@@ -86,6 +83,5 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.prometheus.addServicesLabels=true
 ```

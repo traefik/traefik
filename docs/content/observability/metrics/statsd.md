@@ -13,8 +13,7 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
---metrics.statsd
+--metrics.statsd=true
 ```
 
 #### `address`
@@ -36,7 +35,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.statsd.address="localhost:8125"
 ```
 
@@ -59,7 +57,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.statsd.addEntryPointsLabels=true
 ```
 
@@ -82,7 +79,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.statsd.addServicesLabels=true
 ```
 
@@ -105,6 +101,5 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.statsd.pushInterval=10s
 ```

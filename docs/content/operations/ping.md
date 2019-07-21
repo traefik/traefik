@@ -16,7 +16,7 @@ ping: {}
 ```
 
 ```bash tab="CLI"
---ping
+--ping=true
 ```
 
 | Path    | Method        | Description                                                                                         |

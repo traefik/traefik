@@ -26,7 +26,7 @@ Attach labels to your containers and let Traefik do the rest!
     ```
     
     ```bash tab="CLI"
-    --providers.docker
+    --providers.docker=true
     ```
 
     Attaching labels to containers (in your docker compose file)
@@ -65,7 +65,7 @@ Attach labels to your containers and let Traefik do the rest!
     
     ```bash tab="CLI"
     --providers.docker.endpoint="tcp://127.0.0.1:2375"
-    --providers.docker.swarmMode
+    --providers.docker.swarmMode=true
     ```
 
     Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
@@ -331,7 +331,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.docker.swarmMode
+--providers.docker.swarmMode=true
 # ...
 ```
 

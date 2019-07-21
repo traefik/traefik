@@ -109,7 +109,7 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
     
     ```bash tab="CLI"
     # ...
-    --certificatesResolvers.sample.acme.tlsChallenge
+    --certificatesResolvers.sample.acme.tlsChallenge=true
     ```
 
 ### `httpChallenge`

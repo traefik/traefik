@@ -22,5 +22,5 @@ metrics: {}
 ```
 
 ```bash tab="CLI"
---metrics
+--metrics=true
 ```

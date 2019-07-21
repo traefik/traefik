@@ -18,7 +18,7 @@ accessLog: {}
 ```
 
 ```bash tab="CLI"
---accesslog
+--accesslog=true
 ```
 
 ### `filePath`
@@ -61,7 +61,7 @@ accessLog:
 
 ```bash tab="CLI"
 # Configuring a buffer of 100 lines
---accesslog
+--accesslog=true
 --accesslog.filepath="/path/to/access.log"
 --accesslog.bufferingsize=100
 ```
@@ -104,7 +104,7 @@ accessLog:
 
 ```bash tab="CLI"
 # Configuring Multiple Filters
---accesslog
+--accesslog=true
 --accesslog.filepath="/path/to/access.log"
 --accesslog.format="json"
 --accesslog.filters.statuscodes="200, 300-302"
@@ -165,7 +165,7 @@ accessLog:
 
 ```bash tab="CLI"
 # Limiting the Logs to Specific Fields
---accesslog
+--accesslog=true
 --accesslog.filepath="/path/to/access.log"
 --accesslog.format="json"
 --accesslog.fields.defaultmode="keep"

@@ -13,8 +13,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
---tracing.haystack
+--tracing.haystack=true
 ```
 
 #### `localAgentHost`
@@ -36,7 +35,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.haystack.localAgentHost="127.0.0.1"
 ```
 
@@ -59,7 +57,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.haystack.localAgentPort=42699
 ```
 
@@ -82,7 +79,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.haystack.globalTag="sample:test"
 ```
 
@@ -105,7 +101,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.haystack.traceIDHeaderName="sample"
 ```
 
@@ -128,7 +123,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.haystack.parentIDHeaderName="sample"
 ```
 
@@ -151,7 +145,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.haystack.spanIDHeaderName=sample:test
 ```
 
@@ -175,6 +168,5 @@ tracing:
 
 
 ```bash tab="CLI"
---tracing
 --tracing.haystack.baggagePrefixHeaderName="sample"
 ```

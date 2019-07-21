@@ -55,7 +55,7 @@ api:
 # Optional
 # Default: true
 #
---api.dashboard
+--api.dashboard=true
 ```
 
 {!more-on-command-line.md!}

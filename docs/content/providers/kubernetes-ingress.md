@@ -20,7 +20,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress
+--providers.kubernetesingress=true
 ```
 
 The provider then watches for incoming ingresses events, such as the example below, and derives the corresponding dynamic configuration from it, which in turn will create the resulting routers, services, handlers, etc.
