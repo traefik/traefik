@@ -42,7 +42,7 @@ func (p *Provider) Append(router *mux.Router) {
 		Handler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			vars := mux.Vars(req)
 
-			ctx := log.With(context.Background(), log.Str(log.ProviderName, "acme"))
+			ctx := log.With(context.Background(), log.Str(log.ProviderName, p.ResolverName+".acme"))
 			logger := log.FromContext(ctx)
 
 			if token, ok := vars["token"]; ok {
