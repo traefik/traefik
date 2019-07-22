@@ -7,9 +7,13 @@ To enable the DataDog:
   [metrics.dataDog]
 ```
 
+```yaml tab="File (YAML)"
+metrics:
+  dataDog: {}
+```
+
 ```bash tab="CLI"
---metrics
---metrics.datadog
+--metrics.datadog=true
 ```
 
 #### `address`
@@ -24,14 +28,13 @@ Address instructs exporter to send metrics to datadog-agent at this address.
     address = "127.0.0.1:8125"
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   dataDog:
     address: 127.0.0.1:8125
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.datadog.address="127.0.0.1:8125"
 ```
 
@@ -47,14 +50,13 @@ Enable metrics on entry points.
     addEntryPointsLabels = true
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   dataDog:
     addEntryPointsLabels: true
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.datadog.addEntryPointsLabels=true
 ```
 
@@ -70,14 +72,13 @@ Enable metrics on services.
     addServicesLabels = true
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   dataDog:
     addServicesLabels: true
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.datadog.addServicesLabels=true
 ```
 
@@ -93,14 +94,13 @@ The interval used by the exporter to push metrics to datadog-agent.
     pushInterval = 10s
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   dataDog:
     pushInterval: 10s
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.datadog.pushInterval=10s
 ```
 

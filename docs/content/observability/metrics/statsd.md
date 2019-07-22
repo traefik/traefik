@@ -7,14 +7,13 @@ To enable the Statsd:
   [metrics.statsd]
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   statsd: {}
 ```
 
 ```bash tab="CLI"
---metrics
---metrics.statsd
+--metrics.statsd=true
 ```
 
 #### `address`
@@ -29,14 +28,13 @@ Address instructs exporter to send metrics to statsd at this address.
     address = "localhost:8125"
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   statsd:
     address: localhost:8125
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.statsd.address="localhost:8125"
 ```
 
@@ -52,14 +50,13 @@ Enable metrics on entry points.
     addEntryPointsLabels = true
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   statsd:
     addEntryPointsLabels: true
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.statsd.addEntryPointsLabels=true
 ```
 
@@ -75,14 +72,13 @@ Enable metrics on services.
     addServicesLabels = true
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   statsd:
     addServicesLabels: true
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.statsd.addServicesLabels=true
 ```
 
@@ -98,13 +94,12 @@ The interval used by the exporter to push metrics to statsD.
     pushInterval = 10s
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   statsd:
     pushInterval: 10s
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.statsd.pushInterval=10s
 ```

@@ -69,7 +69,7 @@ labels:
 - "traefik.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Forward authentication to authserver.com
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
@@ -82,6 +82,24 @@ labels:
       caOptional = true
       cert = "path/to/foo.cert"
       key = "path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+# Forward authentication to authserver.com
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://authserver.com/auth"
+        trustForwardHeader: true
+        authResponseHeaders:
+        - "X-Auth-User"
+        - "X-Secret"
+        tls:
+          ca: "path/to/local.crt"
+          caOptional: true
+          cert: "path/to/foo.cert"
+          key: "path/to/foo.key"
 ```
 
 ## Configuration Options

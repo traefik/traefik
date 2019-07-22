@@ -38,11 +38,20 @@ labels:
 - "traefik.http.middlewares.test-retry.retry.attempts=4"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Retry to send request 4 times
 [http.middlewares]
   [http.middlewares.test-retry.retry]
      attempts = 4
+```
+
+```yaml tab="File (YAML)"
+# Retry to send request 4 times
+http:
+  middlewares:
+    test-retry:
+      retry:
+       attempts: 4
 ```
 
 ## Configuration Options

@@ -13,8 +13,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
---tracing.instana
+--tracing.instana=true
 ```
 
 #### `localAgentHost`
@@ -36,7 +35,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.instana.localAgentHost="127.0.0.1"
 ```
 
@@ -59,7 +57,6 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.instana.localAgentPort=42699
 ```
 
@@ -89,6 +86,5 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing
 --tracing.instana.logLevel="info"
 ```

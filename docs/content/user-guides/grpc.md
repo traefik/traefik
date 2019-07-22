@@ -34,7 +34,7 @@ api: {}
 ```yaml tab="CLI"
 --entryPoints.web.address=":80"
 --providers.file.filename=dynamic_conf.toml
---api
+--api=true
 ```
 
 `dynamic_conf.{toml,yml}`:
@@ -157,7 +157,7 @@ api: {}
 # For secure connection on backend.local
 --serversTransport.rootCAs=./backend.cert
 --providers.file.filename=dynamic_conf.toml
---api
+--api=true
 ```
 
 `dynamic_conf.{toml,yml}`:

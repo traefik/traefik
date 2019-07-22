@@ -17,10 +17,10 @@ To enable metrics:
 [metrics]
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics: {}
 ```
 
 ```bash tab="CLI"
---metrics
+--metrics=true
 ```

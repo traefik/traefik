@@ -1,5 +1,5 @@
 # Enable Rancher Provider.
---providers.rancher
+--providers.rancher=true
 
 # Expose Rancher services by default in Traefik.
 --providers.rancher.exposedByDefault=true
@@ -11,7 +11,7 @@
 --providers.rancher.enableServiceHealthFilter=true
 
 # Defines the polling interval (in seconds).
---providers.rancher.refreshSeconds=true
+--providers.rancher.refreshSeconds=15
 
 # Poll the Rancher metadata service for changes every `rancher.refreshSeconds`, which is less accurate
 --providers.rancher.intervalPoll=false

@@ -1,0 +1,2 @@
+"traefik.enable": "true",
+"traefik.marathon.ipaddressidx": "42",

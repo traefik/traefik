@@ -29,12 +29,16 @@ would be to apply the following protection mechanisms:
 
 To enable the API handler:
 
-```toml tab="File"
+```toml tab="File (TOML)"
 [api]
 ```
 
+```yaml tab="File (YAML)"
+api: {}
+```
+
 ```bash tab="CLI"
---api
+--api=true
 ```
 
 ### `dashboard`
@@ -43,13 +47,18 @@ _Optional, Default=true_
 
 Enable the dashboard. More about the dashboard features [here](./dashboard.md).
 
-```toml tab="File"
+```toml tab="File (TOML)"
 [api]
   dashboard = true
 ```
 
+```yaml tab="File (YAML)"
+api:
+  dashboard: true
+```
+
 ```bash tab="CLI"
---api.dashboard
+--api.dashboard=true
 ```
 
 ### `debug`
@@ -58,9 +67,14 @@ _Optional, Default=false_
 
 Enable additional endpoints for debugging and profiling, served under `/debug/`.
 
-```toml tab="File"
+```toml tab="File (TOML)"
 [api]
   debug = true
+```
+
+```yaml tab="File (YAML)"
+api:
+  debug: true
 ```
 
 ```bash tab="CLI"

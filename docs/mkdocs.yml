@@ -146,7 +146,7 @@ nav:
       - 'Data Collection': 'contributing/data-collection.md'
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'
-  - 'Glossary': 'glossary.md'
+#  - 'Glossary': 'glossary.md'
   - 'References':
       - 'Static Configuration':
           - 'Overview': 'reference/static-configuration/overview.md'
@@ -154,7 +154,8 @@ nav:
           - 'CLI': 'reference/static-configuration/cli.md'
           - 'Environment variables': 'reference/static-configuration/env.md'
       - 'Dynamic Configuration':
-        - 'Docker': 'reference/dynamic-configuration/docker.md'
-        - 'Marathon': 'reference/dynamic-configuration/marathon.md'
-        - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
         - 'File': 'reference/dynamic-configuration/file.md'
+        - 'Docker': 'reference/dynamic-configuration/docker.md'
+        - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
+        - 'Marathon': 'reference/dynamic-configuration/marathon.md'
+        - 'Rancher': 'reference/dynamic-configuration/rancher.md'

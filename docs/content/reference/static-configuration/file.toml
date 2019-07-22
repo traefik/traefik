@@ -96,7 +96,6 @@
     labelSelector = "foobar"
     ingressClass = "foobar"
   [providers.rest]
-    entryPoint = "foobar"
   [providers.rancher]
     constraints = "foobar"
     watch = true
@@ -108,18 +107,12 @@
     prefix = "foobar"
 
 [api]
-  entryPoint = "foobar"
   dashboard = true
   debug = true
-  middlewares = ["foobar", "foobar"]
-  [api.statistics]
-    recentErrors = 42
 
 [metrics]
   [metrics.prometheus]
     buckets = [42.0, 42.0]
-    entryPoint = "foobar"
-    middlewares = ["foobar", "foobar"]
     addEntryPointsLabels = true
     addServicesLabels = true
   [metrics.dataDog]
@@ -144,8 +137,6 @@
     addServicesLabels = true
 
 [ping]
-  entryPoint = "foobar"
-  middlewares = ["foobar", "foobar"]
 
 [log]
   level = "foobar"
@@ -219,25 +210,32 @@
   resolvConfig = "foobar"
   resolvDepth = 42
 
-[acme]
-  email = "foobar"
-  caServer = "foobar"
-  storage = "foobar"
-  entryPoint = "foobar"
-  keyType = "foobar"
-  [acme.dnsChallenge]
-    provider = "foobar"
-    delayBeforeCheck = 42
-    resolvers = ["foobar", "foobar"]
-    disablePropagationCheck = true
-  [acme.httpChallenge]
-    entryPoint = "foobar"
-  [acme.tlsChallenge]
-
-  [[acme.domains]]
-    main = "foobar"
-    sans = ["foobar", "foobar"]
-
-  [[acme.domains]]
-    main = "foobar"
-    sans = ["foobar", "foobar"]
+[certificatesResolvers]
+  [certificatesResolvers.CertificateResolver0]
+    [certificatesResolvers.CertificateResolver0.acme]
+      email = "foobar"
+      caServer = "foobar"
+      storage = "foobar"
+      keyType = "foobar"
+      [certificatesResolvers.CertificateResolver0.acme.dnsChallenge]
+        provider = "foobar"
+        delayBeforeCheck = 42
+        resolvers = ["foobar", "foobar"]
+        disablePropagationCheck = true
+      [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
+        entryPoint = "foobar"
+      [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
+  [certificatesResolvers.CertificateResolver1]
+    [certificatesResolvers.CertificateResolver1.acme]
+      email = "foobar"
+      caServer = "foobar"
+      storage = "foobar"
+      keyType = "foobar"
+      [certificatesResolvers.CertificateResolver1.acme.dnsChallenge]
+        provider = "foobar"
+        delayBeforeCheck = 42
+        resolvers = ["foobar", "foobar"]
+        disablePropagationCheck = true
+      [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
+        entryPoint = "foobar"
+      [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]

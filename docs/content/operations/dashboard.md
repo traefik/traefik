@@ -29,38 +29,39 @@ By default, the dashboard is available on `/` on port `:8080`.
 
 To enable the dashboard, you need to enable Traefik's API.
 
-??? example "Using the Command Line"
+```toml tab="File (TOML)"
+[api]
+  # Dashboard
+  #
+  # Optional
+  # Default: true
+  #
+  dashboard = true
+```
 
-    | Option          | Values          |         Default Value |
-    | --------------- | --------------- | --------------------: |
-    | --api           | \[true\|false\] |                 false |
-    | --api.dashboard | \[true\|false\] | true when api is true |
-    
-    {!more-on-command-line.md!}
+```yaml tab="File (YAML)"
+api:
+  # Dashboard
+  #
+  # Optional
+  # Default: true
+  #
+  dashboard: true
+```
 
-??? example "Using the Configuration File"
+```bash tab="CLI"
+# Dashboard
+#
+# Optional
+# Default: true
+#
+--api.dashboard=true
+```
 
-    ```toml
-    [api] 
-      # Dashboard
-      #
-      # Optional
-      # Default: true
-      #
-      dashboard = true
-    ```
-    
-    {!more-on-configuration-file.md!}
+{!more-on-command-line.md!}
 
-??? example "Using a Key/Value Store"
+{!more-on-configuration-file.md!}
 
-    | Key           | Values          |         Default Value |
-    | ------------- | --------------- | --------------------: |
-    | api           | \[true\|false\] |                 false |
-    | api.dashboard | \[true\|false\] | true when api is true |
-    
-    {!more-on-key-value-store.md!}
-    
 !!! tip "Did You Know?"
     The API provides more features than the Dashboard. 
     To learn more about it, refer to the `Traefik's API documentation`(TODO: add doc and link).

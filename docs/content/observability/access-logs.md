@@ -9,12 +9,16 @@ By default, logs are written to stdout, in text format.
 
 To enable the access logs:
 
-```toml tab="File"
+```toml tab="File (TOML)"
 [accessLog]
 ```
 
+```yaml tab="File (YAML)"
+accessLog: {}
+```
+
 ```bash tab="CLI"
---accesslog
+--accesslog=true
 ```
 
 ### `filePath`
@@ -41,16 +45,23 @@ To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.
 This option represents the number of log lines Traefik will keep in memory before writing them to the selected output.
 In some cases, this option can greatly help performances.
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Configuring a buffer of 100 lines
 [accessLog]
   filePath = "/path/to/access.log"
   bufferingSize = 100
 ```
 
+```yaml tab="File (YAML)"
+# Configuring a buffer of 100 lines
+accessLog:
+  filePath: "/path/to/access.log"
+  bufferingSize: 100
+```
+
 ```bash tab="CLI"
 # Configuring a buffer of 100 lines
---accesslog
+--accesslog=true
 --accesslog.filepath="/path/to/access.log"
 --accesslog.bufferingsize=100
 ```
@@ -66,11 +77,11 @@ The available filters are:
 - `retryAttempts`, to keep the access logs when at least one retry has happened
 - `minDuration`, to keep access logs when requests take longer than the specified duration
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Configuring Multiple Filters
 [accessLog]
-filePath = "/path/to/access.log"
-format = "json"
+  filePath = "/path/to/access.log"
+  format = "json"
 
   [accessLog.filters]    
     statusCodes = ["200", "300-302"]
@@ -78,9 +89,22 @@ format = "json"
     minDuration = "10ms"
 ```
 
+```yaml tab="File (YAML)"
+# Configuring Multiple Filters
+accessLog:
+  filePath: "/path/to/access.log"
+  format: json
+  filters:    
+    statusCodes:
+    - "200"
+    - "300-302"
+    retryAttempts: true
+    minDuration: "10ms"
+```
+
 ```bash tab="CLI"
 # Configuring Multiple Filters
---accesslog
+--accesslog=true
 --accesslog.filepath="/path/to/access.log"
 --accesslog.format="json"
 --accesslog.filters.statuscodes="200, 300-302"
@@ -100,7 +124,7 @@ Each field can be set to:
 
 The `defaultMode` for `fields.header` is `drop`.
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Limiting the Logs to Specific Fields
 [accessLog]
   filePath = "/path/to/access.log"
@@ -121,9 +145,27 @@ The `defaultMode` for `fields.header` is `drop`.
         "Content-Type" = "keep"
 ```
 
+```yaml tab="File (YAML)"
+# Limiting the Logs to Specific Fields
+accessLog:
+  filePath: "/path/to/access.log"
+  format: json
+  fields:
+    defaultMode: keep
+    fields:
+      names:
+        ClientUsername: drop
+      headers:
+        defaultMode: keep
+        names:
+        - User-Agent: redact
+        - Authorization: drop
+        - Content-Type: keep
+```
+
 ```bash tab="CLI"
 # Limiting the Logs to Specific Fields
---accesslog
+--accesslog=true
 --accesslog.filepath="/path/to/access.log"
 --accesslog.format="json"
 --accesslog.fields.defaultmode="keep"

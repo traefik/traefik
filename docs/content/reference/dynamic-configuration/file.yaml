@@ -12,6 +12,16 @@ http:
       priority: 42
       tls:
         options: foobar
+        certResolver: foobar
+        domains:
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
     Router1:
       entryPoints:
       - foobar
@@ -24,6 +34,16 @@ http:
       priority: 42
       tls:
         options: foobar
+        certResolver: foobar
+        domains:
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
   services:
     Service0:
       loadBalancer:
@@ -212,32 +232,32 @@ http:
             commonName: true
             serialNumber: true
             domainComponent: true
-    Middleware14:
+    Middleware13:
       redirectRegex:
         regex: foobar
         replacement: foobar
         permanent: true
-    Middleware15:
+    Middleware14:
       redirectScheme:
         scheme: foobar
         port: foobar
         permanent: true
-    Middleware16:
+    Middleware15:
       replacePath:
         path: foobar
-    Middleware17:
+    Middleware16:
       replacePathRegex:
         regex: foobar
         replacement: foobar
-    Middleware18:
+    Middleware17:
       retry:
         attempts: 42
-    Middleware19:
+    Middleware18:
       stripPrefix:
         prefixes:
         - foobar
         - foobar
-    Middleware20:
+    Middleware19:
       stripPrefixRegex:
         regex:
         - foobar
@@ -253,6 +273,16 @@ tcp:
       tls:
         passthrough: true
         options: foobar
+        certResolver: foobar
+        domains:
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
     TCPRouter1:
       entryPoints:
       - foobar
@@ -262,6 +292,16 @@ tcp:
       tls:
         passthrough: true
         options: foobar
+        certResolver: foobar
+        domains:
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
   services:
     TCPService0:
       loadBalancer:
@@ -295,7 +335,7 @@ tls:
         caFiles:
         - foobar
         - foobar
-        clientAuthType: VerifyClientCertIfGiven
+        clientAuthType: foobar
       sniStrict: true
     Options1:
       minVersion: foobar
@@ -306,7 +346,7 @@ tls:
         caFiles:
         - foobar
         - foobar
-        clientAuthType: VerifyClientCertIfGiven
+        clientAuthType: foobar
       sniStrict: true
   stores:
     Store0:

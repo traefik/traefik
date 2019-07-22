@@ -42,12 +42,22 @@ labels:
 - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$1"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Redirect with domain replacement
 [http.middlewares]
   [http.middlewares.test-redirectregex.redirectRegex]
     regex = "^http://localhost/(.*)"
     replacement = "http://mydomain/$1"
+```
+
+```yaml tab="File (YAML)"
+# Redirect with domain replacement
+http:
+  middlewares:
+    test-redirectregex:
+      redirectRegex:
+        regex: "^http://localhost/(.*)"
+        replacement: "http://mydomain/$1"
 ```
 
 ## Configuration Options

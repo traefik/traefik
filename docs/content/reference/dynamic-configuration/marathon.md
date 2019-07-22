@@ -3,8 +3,9 @@
 Dynamic configuration with Marathon Labels
 {: .subtitle }
 
-```yaml
-labels:
---8<-- "content/reference/dynamic-configuration/marathon.yml"
---8<-- "content/reference/dynamic-configuration/labels.yml"
+```json
+"labels": {
+  --8<-- "content/reference/dynamic-configuration/marathon.json"
+  --8<-- "content/reference/dynamic-configuration/marathon-labels.json"
+}
 ```

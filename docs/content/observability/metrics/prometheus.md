@@ -7,14 +7,13 @@ To enable the Prometheus:
   [metrics.prometheus]
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   prometheus: {}
 ```
 
 ```bash tab="CLI"
---metrics
---metrics.prometheus
+--metrics.prometheus=true
 ```
 
 #### `buckets`
@@ -29,7 +28,7 @@ Buckets for latency metrics.
     buckets = [0.1,0.3,1.2,5.0]
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   prometheus:
     buckets:
@@ -40,7 +39,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.prometheus.buckets=0.100000, 0.300000, 1.200000, 5.000000
 ```
 
@@ -56,14 +54,13 @@ Enable metrics on entry points.
     addEntryPointsLabels = true
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   prometheus:
     addEntryPointsLabels: true
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.prometheus.addEntryPointsLabels=true
 ```
 
@@ -79,13 +76,12 @@ Enable metrics on services.
     addServicesLabels = true
 ```
 
-```yaml tab="File (TOML)"
+```yaml tab="File (YAML)"
 metrics:
   prometheus:
     addServicesLabels: true
 ```
 
 ```bash tab="CLI"
---metrics
 --metrics.prometheus.addServicesLabels=true
 ```

@@ -49,13 +49,28 @@ labels:
 - "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Custom Error Page for 5XX
 [http.middlewares]
   [http.middlewares.test-errorpage.errors]
     status = ["500-599"]
     service = "serviceError"
     query = "/{status}.html"
+
+[http.services]
+  # ... definition of error-handler-service and my-service
+```
+
+```yaml tab="File (YAML)"
+# Custom Error Page for 5XX
+http:
+  middlewares:
+    test-errorpage:
+      errors:
+        status:
+        - "500-599"
+        service: serviceError
+        query: "/{status}.html"
 
 [http.services]
   # ... definition of error-handler-service and my-service
