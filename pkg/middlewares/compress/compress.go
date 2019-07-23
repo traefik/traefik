@@ -35,9 +35,7 @@ func New(ctx context.Context, next http.Handler, name string) (http.Handler, err
 
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
-	if strings.HasPrefix(contentType, "application/grpc") {
-		c.next.ServeHTTP(rw, req)
-	} else if strings.HasPrefix(contentType, "text/event-stream") {
+	if strings.HasPrefix(contentType, "application/grpc") || strings.HasPrefix(contentType, "text/event-stream") {
 		c.next.ServeHTTP(rw, req)
 	} else {
 		gzipHandler(c.next, middlewares.GetLogger(req.Context(), c.name, typeName)).ServeHTTP(rw, req)
