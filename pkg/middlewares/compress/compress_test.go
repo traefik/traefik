@@ -108,6 +108,28 @@ func TestShouldNotCompressWhenGRPC(t *testing.T) {
 	assert.EqualValues(t, rw.Body.Bytes(), baseBody)
 }
 
+func TestShouldNotCompressWhenSSE(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, gzipValue)
+	req.Header.Add(contentTypeHeader, "text/event-stream")
+
+	baseBody := generateBytes(gziphandler.DefaultMinSize)
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(baseBody)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	handler := &compress{next: next}
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Empty(t, rw.Header().Get(acceptEncodingHeader))
+	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+	assert.EqualValues(t, rw.Body.Bytes(), baseBody)
+}
+
 func TestIntegrationShouldNotCompress(t *testing.T) {
 	fakeCompressedBody := generateBytes(100000)
 
