@@ -29,7 +29,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.Headers, name st
 	// HeaderMiddleware -> SecureMiddleWare -> next
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	logger.Debug("Creating middleware")
-
 	hasSecureHeaders := config.HasSecureHeadersDefined()
 	hasCustomHeaders := config.HasCustomHeadersDefined()
 	hasCorsHeaders := config.HasCorsHeadersDefined()
@@ -94,6 +93,7 @@ func newSecure(next http.Handler, headers dynamic.Headers) *secureHeader {
 		HostsProxyHeaders:       headers.HostsProxyHeaders,
 		SSLProxyHeaders:         headers.SSLProxyHeaders,
 		STSSeconds:              headers.STSSeconds,
+		FeaturePolicy:           headers.FeaturePolicy,
 	}
 
 	return &secureHeader{

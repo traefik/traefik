@@ -30,6 +30,7 @@ func buildHeaders(hdrs *dynamic.Headers) func(*http.Response) error {
 		HostsProxyHeaders:       hdrs.HostsProxyHeaders,
 		SSLProxyHeaders:         hdrs.SSLProxyHeaders,
 		STSSeconds:              hdrs.STSSeconds,
+		FeaturePolicy:           hdrs.FeaturePolicy,
 	}
 
 	return func(resp *http.Response) error {

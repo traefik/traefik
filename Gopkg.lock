@@ -1554,11 +1554,11 @@
 
 [[projects]]
   branch = "v1"
-  digest = "1:60888cead16f066c948c078258b27f2885dce91cb6aadacf545b62a1ae1d08cb"
+  digest = "1:ca2fa30e83e743bf24f13fbfa883e228955748ab59785b6ae9bd8a55a05bd157"
   name = "github.com/unrolled/secure"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "a1cf62cc2159fff407728f118c41aece76c397fa"
+  revision = "716474489ad3d350e961ec6de19a6ab24e40f006"
 
 [[projects]]
   digest = "1:a68c3f55d44d225da4f22ffbed2d8572d267cb19aaa1d60537769034ac66bc01"
@@ -2239,6 +2239,7 @@
     "github.com/docker/go-connections/sockets",
     "github.com/eapache/channels",
     "github.com/elazarl/go-bindata-assetfs",
+    "github.com/fatih/structs",
     "github.com/gambol99/go-marathon",
     "github.com/go-acme/lego/certcrypto",
     "github.com/go-acme/lego/certificate",
