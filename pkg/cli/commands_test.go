@@ -665,6 +665,23 @@ func Test_execute_configuration_file(t *testing.T) {
 		},
 	}
 	assert.Equal(t, expected, element)
+
+	// check with `configfile` in lower case
+	args = []string{"", "sub1", "--configfile=./fixtures/config.toml"}
+
+	err = execute(rootCmd, args, true)
+	require.NoError(t, err)
+
+	expected = &Yo{
+		Foo: "bar",
+		Fii: "bir",
+		Fuu: "test",
+		Yi: &Yi{
+			Foo: "foo",
+			Fii: "fii",
+		},
+	}
+	assert.Equal(t, expected, element)
 }
 
 func Test_execute_help(t *testing.T) {

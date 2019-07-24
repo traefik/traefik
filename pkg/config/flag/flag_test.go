@@ -137,6 +137,20 @@ func TestDecode(t *testing.T) {
 			},
 		},
 		{
+			desc: "map string case sensitive",
+			args: []string{"--foo.caseSensitiveName=barBoo"},
+			element: &struct {
+				Foo map[string]string
+			}{},
+			expected: &struct {
+				Foo map[string]string
+			}{
+				Foo: map[string]string{
+					"caseSensitiveName": "barBoo",
+				},
+			},
+		},
+		{
 			desc: "map struct",
 			args: []string{"--foo.name.value=bar"},
 			element: &struct {

@@ -30,6 +30,16 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			desc: "bool value capitalized",
+			args: []string{"--Foo"},
+			element: &struct {
+				Foo bool
+			}{},
+			expected: map[string]string{
+				"traefik.Foo": "true",
+			},
+		},
+		{
 			desc: "equal",
 			args: []string{"--foo=bar"},
 			element: &struct {
@@ -40,6 +50,16 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			desc: "equal",
+			args: []string{"--Foo=Bar"},
+			element: &struct {
+				Foo string
+			}{},
+			expected: map[string]string{
+				"traefik.Foo": "Bar",
+			},
+		},
+		{
 			desc: "space separated",
 			args: []string{"--foo", "bar"},
 			element: &struct {
@@ -47,6 +67,16 @@ func TestParse(t *testing.T) {
 			}{},
 			expected: map[string]string{
 				"traefik.foo": "bar",
+			},
+		},
+		{
+			desc: "space separated capitalized",
+			args: []string{"--Foo", "Bar"},
+			element: &struct {
+				Foo string
+			}{},
+			expected: map[string]string{
+				"traefik.Foo": "Bar",
 			},
 		},
 		{
@@ -89,6 +119,16 @@ func TestParse(t *testing.T) {
 			}{},
 			expected: map[string]string{
 				"traefik.foo.name": "bar",
+			},
+		},
+		{
+			desc: "map string capitalized",
+			args: []string{"--foo.Name=Bar"},
+			element: &struct {
+				Foo map[string]string
+			}{},
+			expected: map[string]string{
+				"traefik.foo.Name": "Bar",
 			},
 		},
 		{
@@ -197,6 +237,50 @@ func TestParse(t *testing.T) {
 			}{},
 			expected: map[string]string{
 				"traefik.foo": "true",
+			},
+		},
+		{
+			desc: "map string case sensitive",
+			args: []string{"--foo.caseSensitiveName=barBoo"},
+			element: &struct {
+				Foo map[string]string
+			}{},
+			expected: map[string]string{
+				"traefik.foo.caseSensitiveName": "barBoo",
+			},
+		},
+		{
+			desc: "map struct with sub-map case senstitive",
+			args: []string{"--foo.Name1.bar.name2.value=firstValue", "--foo.naMe1.bar.name2.value=secondValue"},
+			element: &struct {
+				Foo map[string]struct {
+					Bar map[string]struct{ Value string }
+				}
+			}{},
+			expected: map[string]string{
+				"traefik.foo.Name1.bar.name2.value": "secondValue",
+			},
+		},
+		{
+			desc: "map struct with sub-map and different case",
+			args: []string{"--foo.Name1.bar.name2.value=firstValue", "--foo.naMe1.bar.name2.value=secondValue"},
+			element: &struct {
+				Foo map[string]struct {
+					Bar map[string]struct{ Value string }
+				}
+			}{},
+			expected: map[string]string{
+				"traefik.foo.Name1.bar.name2.value": "secondValue",
+			},
+		},
+		{
+			desc: "slice with several flags 2 and different cases.",
+			args: []string{"--foo", "bar", "--Foo", "baz"},
+			element: &struct {
+				Foo []string
+			}{},
+			expected: map[string]string{
+				"traefik.foo": "bar,baz",
 			},
 		},
 	}
