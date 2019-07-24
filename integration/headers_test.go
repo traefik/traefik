@@ -134,7 +134,6 @@ func (s *HeadersSuite) TestSecureHeadersResponses(c *check.C) {
 		desc     string
 		expected http.Header
 		reqHost  string
-		method   string
 	}{
 		{
 			desc: "Feature-Policy Set",
