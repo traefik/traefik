@@ -194,6 +194,7 @@ http:
         contentSecurityPolicy: foobar
         publicKey: foobar
         referrerPolicy: foobar
+        featurePolicy: foobar
         isDevelopment: true
     Middleware10:
       ipWhiteList:

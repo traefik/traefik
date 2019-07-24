@@ -161,6 +161,7 @@
         contentSecurityPolicy = "foobar"
         publicKey = "foobar"
         referrerPolicy = "foobar"
+        featurePolicy = "foobar"
         isDevelopment = true
         [http.middlewares.Middleware09.headers.customRequestHeaders]
           name0 = "foobar"
