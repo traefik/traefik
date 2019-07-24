@@ -506,11 +506,14 @@ func (h *histogram) With(labelValues ...string) metrics.Histogram {
 
 func (h *histogram) Observe(value float64) {
 	labels := h.labelNamesValues.ToLabels()
-	collector := h.hv.With(labels)
-	collector.Observe(value)
-	h.collectors <- newCollector(h.name, labels, h.hv, func() {
-		h.hv.Delete(labels)
-	})
+	observer := h.hv.With(labels)
+	observer.Observe(value)
+	// Do a type assertion to be sure that prometheus will be able to call the Collect method.
+	if collector, ok := observer.(stdprometheus.Histogram); ok {
+		h.collectors <- newCollector(h.name, labels, collector, func() {
+			h.hv.Delete(labels)
+		})
+	}
 }
 
 func (h *histogram) Describe(ch chan<- *stdprometheus.Desc) {
