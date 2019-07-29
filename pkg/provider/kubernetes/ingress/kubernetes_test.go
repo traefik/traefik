@@ -688,6 +688,11 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							Rule:    "Host(`example.com`)",
 							Service: "testing/example-com/80",
 						},
+						"example-com-tls": {
+							Rule:    "Host(`example.com`)",
+							Service: "testing/example-com/80",
+							TLS:     &dynamic.RouterTLSConfig{},
+						},
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/example-com/80": {
