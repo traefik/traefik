@@ -1,9 +1,6 @@
 # RateLimit
 
-!!! warning
-    This middleware is disable for now.
-
-Protection from Too Many Calls
+To Control the Number of Requests Going to a Service
 {: .subtitle }
 
 ![RateLimit](../assets/img/middleware/ratelimit.png)
@@ -13,124 +10,346 @@ The RateLimit middleware ensures that services will receive a _fair_ number of r
 ## Configuration Example
 
 ```yaml tab="Docker"
-# Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
-# These can "burst" up to 10 and 200 in each period, respectively.
+# Here, an average of 100 requests per second is allowed.
+# In addition, a burst of 50 requests is allowed.
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.extractorfunc=client.ip"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.period=10s"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.average=100"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.burst=200"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.period=3s"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.average=5"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.burst=10"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
   		
 ```
 
 ```yaml tab="Kubernetes"
-# Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
-# These can "burst" up to 10 and 200 in each period, respectively.
+# Here, an average of 100 requests per second is allowed.
+# In addition, a burst of 50 requests is allowed.
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-    extractorFunc: client.ip
-    rateSet:
-      rate0:
-          period: 10s
-          average: 100
-          burst: 200
-      rate1:
-          period: 3s
-          average: 5
-          burst: 10
+      average: 100
+      burst: 50
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.extractorfunc": "client.ip",
-  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.period": "10s",
-  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.average": "100",
-  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.burst": "200",
-  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.period": "3s",
-  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.average": "5",
-  "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.burst": "10"
+  "traefik.http.middlewares.test-ratelimit.ratelimit.average": "100",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.burst": "50"
 }
 ```
 
 ```yaml tab="Rancher"
-# Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
-# These can "burst" up to 10 and 200 in each period, respectively.
+# Here, an average of 100 requests per second is allowed.
+# In addition, a burst of 50 requests is allowed.
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.extractorfunc=client.ip"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.period=10s"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.average=100"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate0.burst=200"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.period=3s"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.average=5"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.rateset.rate1.burst=10"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
   		
 ```
 
 ```toml tab="File (TOML)"
-# Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
-# These can "burst" up to 10 and 200 in each period, respectively.
+# Here, an average of 100 requests per second is allowed.
+# In addition, a burst of 50 requests is allowed.
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
-    extractorFunc = "client.ip"
-    
-    [http.middlewares.test-ratelimit.rateLimit.rateSet.rate0]
-      period = "10s"
-      average = 100
-      burst = 200
-    
-    [http.middlewares.test-ratelimit.rateLimit.rateSet.rate1]
-      period = "3s"
-      average = 5
-      burst = 10
+    average = 100
+    burst = 50
 ```
 
 ```yaml tab="File (YAML)"
-# Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
-# These can "burst" up to 10 and 200 in each period, respectively.
+# Here, an average of 100 requests per second is allowed.
+# In addition, a burst of 50 requests is allowed.
 http:
   middlewares:
     test-ratelimit:
       rateLimit:
-        extractorFunc: "client.ip"
-        rateSet:
-          rate0:
-            period: "10s"
-            average: 100
-            burst: 200
-          rate1:
-            period: "3s"
-            average: 5
-            burst: 10
+        average: 100
+        burst: 50
 ```
 
 ## Configuration Options
 
-### `extractorFunc`
+### `average`
+
+Average is the maximum rate, in requests/s, allowed for the given source.
+It defaults to 0, which means no rate limiting.
+
+```yaml tab="Docker"
+labels:
+- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  		
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+      average: 100
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-ratelimit.ratelimit.average": "100",
+}
+```
+
+```yaml tab="Rancher"
+labels:
+- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  		
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    average = 100
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        average: 100
+```
+
+### `burst`
+
+Burst is the maximum number of requests allowed to go through in the same
+arbitrarily small period of time. It defaults to 1.
+
+```yaml tab="Docker"
+labels:
+- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
+  		
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+      burst: 100
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-ratelimit.ratelimit.burst": "100",
+}
+```
+
+```yaml tab="Rancher"
+labels:
+- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
+  		
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    burst = 100
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        burst: 100
+```
+
+### `sourceCriterion`
  
-The `extractorFunc` option defines the strategy used to categorize requests.
+SourceCriterion defines what criterion is used to group requests as originating
+from a common source. The precedence order is ipStrategy, then requestHeaderName,
+then requestHost.
+If none are set, the default is to use the request's remote address field (as an
+ipStrategy).
 
-The possible values are:
+#### `sourceCriterion.ipStrategy`
 
-- `request.host` categorizes requests based on the request host.
-- `client.ip` categorizes requests based on the client ip.
-- `request.header.ANY_HEADER` categorizes requests based on the provided `ANY_HEADER` value.
+The `ipStrategy` option defines two parameters that sets how Traefik will determine the client IP: `depth`, and `excludedIPs`.
 
-### `rateSet`
+##### `ipStrategy.depth`
 
-You can combine multiple rate limits. 
-The rate limit will trigger with the first reached limit.
+The `depth` option tells Traefik to use the `X-Forwarded-For` header and take the IP located at the `depth` position (starting from the right).
 
-Each rate limit has 3 options, `period`, `average`, and `burst`.
+!!! note "Example of Depth & X-Forwarded-For"
 
-The rate limit will allow an average of `average` requests every `period`, with a maximum of `burst` request on that period.
+    If `depth` was equal to 2, and the request `X-Forwarded-For` header was `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP would be `"10.0.0.1"` (at depth 4) but the IP used as the criterion would be `"12.0.0.1"` (`depth=2`).
 
-!!! note "Period Format"
+        | `X-Forwarded-For`                       | `depth` | clientIP     |
+        |-----------------------------------------|---------|--------------|
+        | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `1`     | `"13.0.0.1"` |
+        | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
+        | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
-    Period is to be given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
+!!! note
+
+    - If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP will be empty.
+    - `depth` is ignored if its value is is lesser than or equal to 0.
+
+##### `ipStrategy.excludedIPs`
+
+`excludedIPs` tells Traefik to scan the `X-Forwarded-For` header and pick the first IP not in the list.
+
+!!! note "Example of ExcludedIPs & X-Forwarded-For"
+
+    | `X-Forwarded-For`                       | `excludedIPs`         | clientIP     |
+    |-----------------------------------------|-----------------------|--------------|
+    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"12.0.0.1,13.0.0.1"` | `"11.0.0.1"` |
+    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
+    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"10.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
+    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
+    | `"10.0.0.1,11.0.0.1"`                   | `"10.0.0.1,11.0.0.1"` | `""`         |
+
+!!! important
+    If `depth` is specified, `excludedIPs` is ignored.
+
+```yaml tab="Docker"
+labels:
+    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    sourceCriterion:
+      ipStrategy:
+        excludedIPs:
+        - 127.0.0.1/32
+        - 192.168.1.7
+```
+
+```yaml tab="Rancher"
+labels:
+    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+```
+
+```json tab="Marathon"
+"labels": {
+    "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
+}
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.sourceCriterion.ipStrategy]
+      excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        sourceCriterion:
+          ipStrategy:
+            excludedIPs:
+            - "127.0.0.1/32"
+            - "192.168.1.7"
+```
+
+#### `sourceCriterion.requestHeaderName`
+
+requests having the same value for the given header are grouped as coming from the same source.
+
+```yaml tab="Docker"
+labels:
+    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+	sourceCriterion:
+      requestHeaderName: username
+```
+
+```yaml tab="Rancher"
+labels:
+    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
+```
+
+```json tab="Marathon"
+"labels": {
+    "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername": "username"
+}
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.sourceCriterion]
+      requestHeaderName = "username"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        sourceCriterion:
+          requestHeaderName: username
+```
+
+#### `sourceCriterion.requestHost`
+
+whether to consider the request host as the source.
+
+```yaml tab="Docker"
+labels:
+    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    sourceCriterion:
+      requestHost: true
+```
+
+```yaml tab="Rancher"
+labels:
+    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
+```
+
+```json tab="Marathon"
+"labels": {
+    "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost": "true"
+}
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    [http.middlewares.test-ratelimit.rateLimit.sourceCriterion]
+      requestHost = true
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        sourceCriterion:
+          requestHost: true
+```

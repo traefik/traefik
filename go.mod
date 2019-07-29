@@ -57,6 +57,7 @@ require (
 	github.com/libkermit/docker-check v0.0.0-20171122104347-1113af38e591
 	github.com/looplab/fsm v0.1.0 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
+	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
 	github.com/miekg/dns v1.1.15
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/hashstructure v1.0.0
@@ -90,6 +91,7 @@ require (
 	github.com/vulcand/predicate v1.1.0
 	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
 	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a // indirect
+	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7 // indirect
 	google.golang.org/grpc v1.22.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.16.1

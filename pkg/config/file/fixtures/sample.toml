@@ -287,9 +287,14 @@
           key = "foobar"
           insecureSkipVerify = true
     [http.middlewares.Middleware16]
-      [http.middlewares.Middleware16.maxConn]
+      [http.middlewares.Middleware16.inFlightReq]
         amount = 42
-        extractorFunc = "foobar"
+        [http.middlewares.Middleware16.inFlightReq.sourceCriterion]
+          requestHeaderName = "foobar"
+          requestHost = true
+          [http.middlewares.Middleware16.inFlightReq.sourceCriterion.ipStrategy]
+            depth = 42
+            excludedIPs = ["foobar", "foobar"]
     [http.middlewares.Middleware17]
       [http.middlewares.Middleware17.buffering]
         maxRequestBodyBytes = 42

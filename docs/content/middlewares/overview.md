@@ -208,7 +208,7 @@ and therefore this specification would be ignored even if present.
 | [ForwardAuth](forwardauth.md)             | Authentication delegation                         | Security, Authentication    |
 | [Headers](headers.md)                     | Add / Update headers                              | Security                    |
 | [IPWhiteList](ipwhitelist.md)             | Limit the allowed client IPs                      | Security, Request lifecycle |
-| [MaxConnection](maxconnection.md)         | Limit the number of simultaneous connections      | Security, Request lifecycle |
+| [InFlightReq](inflightreq.md)             | Limit the number of simultaneous connections      | Security, Request lifecycle |
 | [PassTLSClientCert](passtlsclientcert.md) | Adding Client Certificates in a Header            | Security                    |
 | [RateLimit](ratelimit.md)                 | Limit the call frequency                          | Security, Request lifecycle |
 | [RedirectScheme](redirectscheme.md)       | Redirect easily the client elsewhere              | Request lifecycle           |
