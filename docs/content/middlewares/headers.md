@@ -370,6 +370,10 @@ The `publicKey` implements HPKP to prevent MITM attacks with forged certificates
 
 The `referrerPolicy` allows sites to control when browsers will pass the Referer header to other sites.
 
+### `featurePolicy`
+
+The `featurePolicy` allows sites to control browser features.
+
 ### `isDevelopment`
 
 Set `isDevelopment` to true when developing.

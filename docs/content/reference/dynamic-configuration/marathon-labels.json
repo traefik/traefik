@@ -51,6 +51,7 @@
 "traefik.http.middlewares.middleware09.headers.isdevelopment": "true",
 "traefik.http.middlewares.middleware09.headers.publickey": "foobar",
 "traefik.http.middlewares.middleware09.headers.referrerpolicy": "foobar",
+"traefik.http.middlewares.middleware09.headers.featurepolicy": "foobar",
 "traefik.http.middlewares.middleware09.headers.sslforcehost": "true",
 "traefik.http.middlewares.middleware09.headers.sslhost": "foobar",
 "traefik.http.middlewares.middleware09.headers.sslproxyheaders.name0": "foobar",
