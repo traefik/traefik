@@ -68,6 +68,7 @@ spec:
   ports:
     - name: web-secure
       port: 443
+      targetPort: 8443
   selector:
     app: containous
     task: whoami2
@@ -85,7 +86,7 @@ subsets:
       - ip: 10.10.0.6
     ports:
       - name: web-secure
-        port: 443
+        port: 8443
 
 ---
 apiVersion: v1

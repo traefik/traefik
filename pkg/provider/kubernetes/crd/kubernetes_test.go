@@ -1324,10 +1324,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 							LoadBalancer: &dynamic.LoadBalancerService{
 								Servers: []dynamic.Server{
 									{
-										URL: "https://10.10.0.5:443",
+										URL: "https://10.10.0.5:8443",
 									},
 									{
-										URL: "https://10.10.0.6:443",
+										URL: "https://10.10.0.6:8443",
 									},
 								},
 								PassHostHeader: true,

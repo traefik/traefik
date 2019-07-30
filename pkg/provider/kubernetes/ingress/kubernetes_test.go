@@ -732,10 +732,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
-										URL: "https://10.10.0.1:443",
+										URL: "https://10.10.0.1:8443",
 									},
 									{
-										URL: "https://10.21.0.1:443",
+										URL: "https://10.21.0.1:8443",
 									},
 								},
 							},
