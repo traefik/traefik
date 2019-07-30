@@ -140,6 +140,7 @@ nav:
       - 'Docker-compose':
         - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
         - 'HTTPS With Let''s Encrypt':
+          - 'TLS Challenge': 'user-guides/docker-compose/acme-tls/index.md'
           - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
           - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
   - 'Contributing':
