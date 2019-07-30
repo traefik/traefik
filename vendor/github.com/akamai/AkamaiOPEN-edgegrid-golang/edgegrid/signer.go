@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -30,6 +31,26 @@ func AddRequestHeader(config Config, req *http.Request) *http.Request {
 
 	if req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", "application/json")
+	}
+
+	_, AkamaiCliEnvOK := os.LookupEnv("AKAMAI_CLI")
+	AkamaiCliVersionEnv, AkamaiCliVersionEnvOK := os.LookupEnv("AKAMAI_CLI_VERSION")
+	AkamaiCliCommandEnv, AkamaiCliCommandEnvOK := os.LookupEnv("AKAMAI_CLI_COMMAND")
+	AkamaiCliCommandVersionEnv, AkamaiCliCommandVersionEnvOK := os.LookupEnv("AKAMAI_CLI_COMMAND_VERSION")
+
+	if AkamaiCliEnvOK && AkamaiCliVersionEnvOK {
+		if req.Header.Get("User-Agent") != "" {
+			req.Header.Set("User-Agent", req.Header.Get("User-Agent")+" AkamaiCLI/"+AkamaiCliVersionEnv)
+		} else {
+			req.Header.Set("User-Agent", "AkamaiCLI/"+AkamaiCliVersionEnv)
+		}
+	}
+	if AkamaiCliCommandEnvOK && AkamaiCliCommandVersionEnvOK {
+		if req.Header.Get("User-Agent") != "" {
+			req.Header.Set("User-Agent", req.Header.Get("User-Agent")+" AkamaiCLI-"+AkamaiCliCommandEnv+"/"+AkamaiCliCommandVersionEnv)
+		} else {
+			req.Header.Set("User-Agent", "AkamaiCLI-"+AkamaiCliCommandEnv+"/"+AkamaiCliCommandVersionEnv)
+		}
 	}
 
 	req.Header.Set("Authorization", createAuthHeader(config, req, timestamp, nonce))

@@ -1,6 +1,7 @@
 package dnspod
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	// "time"
@@ -30,26 +31,26 @@ type DomainInfo struct {
 }
 
 type Domain struct {
-	ID               int    `json:"id,omitempty"`
-	Name             string `json:"name,omitempty"`
-	PunyCode         string `json:"punycode,omitempty"`
-	Grade            string `json:"grade,omitempty"`
-	GradeTitle       string `json:"grade_title,omitempty"`
-	Status           string `json:"status,omitempty"`
-	ExtStatus        string `json:"ext_status,omitempty"`
-	Records          string `json:"records,omitempty"`
-	GroupID          string `json:"group_id,omitempty"`
-	IsMark           string `json:"is_mark,omitempty"`
-	Remark           string `json:"remark,omitempty"`
-	IsVIP            string `json:"is_vip,omitempty"`
-	SearchenginePush string `json:"searchengine_push,omitempty"`
-	UserID           string `json:"user_id,omitempty"`
-	CreatedOn        string `json:"created_on,omitempty"`
-	UpdatedOn        string `json:"updated_on,omitempty"`
-	TTL              string `json:"ttl,omitempty"`
-	CNameSpeedUp     string `json:"cname_speedup,omitempty"`
-	Owner            string `json:"owner,omitempty"`
-	AuthToAnquanBao  bool   `json:"auth_to_anquanbao,omitempty"`
+	ID               json.Number `json:"id,omitempty"`
+	Name             string      `json:"name,omitempty"`
+	PunyCode         string      `json:"punycode,omitempty"`
+	Grade            string      `json:"grade,omitempty"`
+	GradeTitle       string      `json:"grade_title,omitempty"`
+	Status           string      `json:"status,omitempty"`
+	ExtStatus        string      `json:"ext_status,omitempty"`
+	Records          string      `json:"records,omitempty"`
+	GroupID          json.Number `json:"group_id,omitempty"`
+	IsMark           string      `json:"is_mark,omitempty"`
+	Remark           string      `json:"remark,omitempty"`
+	IsVIP            string      `json:"is_vip,omitempty"`
+	SearchenginePush string      `json:"searchengine_push,omitempty"`
+	UserID           string      `json:"user_id,omitempty"`
+	CreatedOn        string      `json:"created_on,omitempty"`
+	UpdatedOn        string      `json:"updated_on,omitempty"`
+	TTL              string      `json:"ttl,omitempty"`
+	CNameSpeedUp     string      `json:"cname_speedup,omitempty"`
+	Owner            string      `json:"owner,omitempty"`
+	AuthToAnquanBao  bool        `json:"auth_to_anquanbao,omitempty"`
 }
 
 type domainListWrapper struct {
@@ -113,7 +114,7 @@ func (s *DomainsService) Create(domainAttributes Domain) (Domain, *Response, err
 
 	payload := newPayLoad(s.client.CommonParams)
 	payload.Set("domain", domainAttributes.Name)
-	payload.Set("group_id", domainAttributes.GroupID)
+	payload.Set("group_id", domainAttributes.GroupID.String())
 	payload.Set("is_mark", domainAttributes.IsMark)
 
 	res, err := s.client.post(path, payload, &returnedDomain)

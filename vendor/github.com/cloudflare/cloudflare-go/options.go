@@ -28,11 +28,11 @@ func Headers(headers http.Header) Option {
 	}
 }
 
-// Organization allows you to apply account-level changes (Load Balancing, Railguns)
-// to an organization instead.
+// UsingOrganization allows you to apply account-level changes (Load Balancing,
+// Railguns) to an organization instead.
 func UsingOrganization(orgID string) Option {
 	return func(api *API) error {
-		api.organizationID = orgID
+		api.OrganizationID = orgID
 		return nil
 	}
 }
@@ -69,6 +69,17 @@ func UsingRetryPolicy(maxRetries int, minRetryDelaySecs int, maxRetryDelaySecs i
 func UsingLogger(logger Logger) Option {
 	return func(api *API) error {
 		api.logger = logger
+		return nil
+	}
+}
+
+// UserAgent can be set if you want to send a software name and version for HTTP access logs.
+// It is recommended to set it in order to help future Customer Support diagnostics
+// and prevent collateral damage by sharing generic User-Agent string with abusive users.
+// E.g. "my-software/1.2.3". By default generic Go User-Agent is used.
+func UserAgent(userAgent string) Option {
+	return func(api *API) error {
+		api.UserAgent = userAgent
 		return nil
 	}
 }

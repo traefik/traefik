@@ -1,6 +1,7 @@
 package cloudflare
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"time"
@@ -57,7 +58,7 @@ type originCACertificateResponseRevoke struct {
 // API reference: https://api.cloudflare.com/#cloudflare-ca-create-certificate
 func (api *API) CreateOriginCertificate(certificate OriginCACertificate) (*OriginCACertificate, error) {
 	uri := "/certificates"
-	res, err := api.makeRequestWithAuthType("POST", uri, certificate, AuthUserService)
+	res, err := api.makeRequestWithAuthType(context.TODO(), "POST", uri, certificate, AuthUserService)
 
 	if err != nil {
 		return nil, errors.Wrap(err, errMakeRequestError)
@@ -89,7 +90,7 @@ func (api *API) OriginCertificates(options OriginCACertificateListOptions) ([]Or
 		v.Set("zone_id", options.ZoneID)
 	}
 	uri := "/certificates" + "?" + v.Encode()
-	res, err := api.makeRequestWithAuthType("GET", uri, nil, AuthUserService)
+	res, err := api.makeRequestWithAuthType(context.TODO(), "GET", uri, nil, AuthUserService)
 
 	if err != nil {
 		return nil, errors.Wrap(err, errMakeRequestError)
@@ -117,7 +118,7 @@ func (api *API) OriginCertificates(options OriginCACertificateListOptions) ([]Or
 // API reference: https://api.cloudflare.com/#cloudflare-ca-certificate-details
 func (api *API) OriginCertificate(certificateID string) (*OriginCACertificate, error) {
 	uri := "/certificates/" + certificateID
-	res, err := api.makeRequestWithAuthType("GET", uri, nil, AuthUserService)
+	res, err := api.makeRequestWithAuthType(context.TODO(), "GET", uri, nil, AuthUserService)
 
 	if err != nil {
 		return nil, errors.Wrap(err, errMakeRequestError)
@@ -145,7 +146,7 @@ func (api *API) OriginCertificate(certificateID string) (*OriginCACertificate, e
 // API reference: https://api.cloudflare.com/#cloudflare-ca-revoke-certificate
 func (api *API) RevokeOriginCertificate(certificateID string) (*OriginCACertificateID, error) {
 	uri := "/certificates/" + certificateID
-	res, err := api.makeRequestWithAuthType("DELETE", uri, nil, AuthUserService)
+	res, err := api.makeRequestWithAuthType(context.TODO(), "DELETE", uri, nil, AuthUserService)
 
 	if err != nil {
 		return nil, errors.Wrap(err, errMakeRequestError)

@@ -21,8 +21,8 @@ const (
 	// ErrCodeBlockedException for service response error code
 	// "BlockedException".
 	//
-	// Your AWS account has been blocked. Contact AWS Support (http://aws.amazon.com/contact-us/)
-	// for more information.
+	// Your AWS account has been blocked. For more information, contact AWS Support
+	// (http://aws.amazon.com/contact-us/).
 	ErrCodeBlockedException = "BlockedException"
 
 	// ErrCodeClientException for service response error code
@@ -36,17 +36,17 @@ const (
 	// ErrCodeClusterContainsContainerInstancesException for service response error code
 	// "ClusterContainsContainerInstancesException".
 	//
-	// You cannot delete a cluster that has registered container instances. You
-	// must first deregister the container instances before you can delete the cluster.
-	// For more information, see DeregisterContainerInstance.
+	// You cannot delete a cluster that has registered container instances. First,
+	// deregister the container instances before you can delete the cluster. For
+	// more information, see DeregisterContainerInstance.
 	ErrCodeClusterContainsContainerInstancesException = "ClusterContainsContainerInstancesException"
 
 	// ErrCodeClusterContainsServicesException for service response error code
 	// "ClusterContainsServicesException".
 	//
-	// You cannot delete a cluster that contains services. You must first update
-	// the service to reduce its desired task count to 0 and then delete the service.
-	// For more information, see UpdateService and DeleteService.
+	// You cannot delete a cluster that contains services. First, update the service
+	// to reduce its desired task count to 0 and then delete the service. For more
+	// information, see UpdateService and DeleteService.
 	ErrCodeClusterContainsServicesException = "ClusterContainsServicesException"
 
 	// ErrCodeClusterContainsTasksException for service response error code
@@ -59,7 +59,7 @@ const (
 	// "ClusterNotFoundException".
 	//
 	// The specified cluster could not be found. You can view your available clusters
-	// with ListClusters. Amazon ECS clusters are region-specific.
+	// with ListClusters. Amazon ECS clusters are Region-specific.
 	ErrCodeClusterNotFoundException = "ClusterNotFoundException"
 
 	// ErrCodeInvalidParameterException for service response error code
@@ -89,7 +89,7 @@ const (
 	// ErrCodePlatformTaskDefinitionIncompatibilityException for service response error code
 	// "PlatformTaskDefinitionIncompatibilityException".
 	//
-	// The specified platform version does not satisfy the task definition’s required
+	// The specified platform version does not satisfy the task definition's required
 	// capabilities.
 	ErrCodePlatformTaskDefinitionIncompatibilityException = "PlatformTaskDefinitionIncompatibilityException"
 
@@ -98,6 +98,12 @@ const (
 	//
 	// The specified platform version does not exist.
 	ErrCodePlatformUnknownException = "PlatformUnknownException"
+
+	// ErrCodeResourceNotFoundException for service response error code
+	// "ResourceNotFoundException".
+	//
+	// The specified resource could not be found.
+	ErrCodeResourceNotFoundException = "ResourceNotFoundException"
 
 	// ErrCodeServerException for service response error code
 	// "ServerException".
@@ -116,7 +122,7 @@ const (
 	// "ServiceNotFoundException".
 	//
 	// The specified service could not be found. You can view your available services
-	// with ListServices. Amazon ECS services are cluster-specific and region-specific.
+	// with ListServices. Amazon ECS services are cluster-specific and Region-specific.
 	ErrCodeServiceNotFoundException = "ServiceNotFoundException"
 
 	// ErrCodeTargetNotFoundException for service response error code
@@ -124,13 +130,21 @@ const (
 	//
 	// The specified target could not be found. You can view your available container
 	// instances with ListContainerInstances. Amazon ECS container instances are
-	// cluster-specific and region-specific.
+	// cluster-specific and Region-specific.
 	ErrCodeTargetNotFoundException = "TargetNotFoundException"
+
+	// ErrCodeTaskSetNotFoundException for service response error code
+	// "TaskSetNotFoundException".
+	//
+	// The specified task set could not be found. You can view your available container
+	// instances with DescribeTaskSets. Task sets are specific to each cluster,
+	// service and Region.
+	ErrCodeTaskSetNotFoundException = "TaskSetNotFoundException"
 
 	// ErrCodeUnsupportedFeatureException for service response error code
 	// "UnsupportedFeatureException".
 	//
-	// The specified task is not supported in this region.
+	// The specified task is not supported in this Region.
 	ErrCodeUnsupportedFeatureException = "UnsupportedFeatureException"
 
 	// ErrCodeUpdateInProgressException for service response error code

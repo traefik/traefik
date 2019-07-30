@@ -17,13 +17,14 @@ package signers
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/responses"
-	"github.com/jmespath/go-jmespath"
-	"net/http"
-	"strconv"
+	jmespath "github.com/jmespath/go-jmespath"
 )
 
 type SignerKeyPair struct {
@@ -70,28 +71,33 @@ func (*SignerKeyPair) GetVersion() string {
 	return "1.0"
 }
 
-func (signer *SignerKeyPair) GetAccessKeyId() (accessKeyId string, err error) {
+func (signer *SignerKeyPair) ensureCredential() error {
 	if signer.sessionCredential == nil || signer.needUpdateCredential() {
-		err = signer.updateCredential()
+		return signer.updateCredential()
 	}
-	if err != nil && (signer.sessionCredential == nil || len(signer.sessionCredential.AccessKeyId) <= 0) {
-		return "", err
+	return nil
+}
+
+func (signer *SignerKeyPair) GetAccessKeyId() (accessKeyId string, err error) {
+	err = signer.ensureCredential()
+	if err != nil {
+		return
 	}
-	return signer.sessionCredential.AccessKeyId, err
+	if signer.sessionCredential == nil || len(signer.sessionCredential.AccessKeyId) <= 0 {
+		accessKeyId = ""
+		return
+	}
+
+	accessKeyId = signer.sessionCredential.AccessKeyId
+	return
 }
 
 func (signer *SignerKeyPair) GetExtraParam() map[string]string {
-	if signer.sessionCredential == nil || signer.needUpdateCredential() {
-		signer.updateCredential()
-	}
-	if signer.sessionCredential == nil || len(signer.sessionCredential.AccessKeyId) <= 0 {
-		return make(map[string]string)
-	}
 	return make(map[string]string)
 }
 
 func (signer *SignerKeyPair) Sign(stringToSign, secretSuffix string) string {
-	secret := signer.sessionCredential.AccessKeyId + secretSuffix
+	secret := signer.sessionCredential.AccessKeySecret + secretSuffix
 	return ShaHmac1(stringToSign, secret)
 }
 
@@ -101,14 +107,15 @@ func (signer *SignerKeyPair) buildCommonRequest() (request *requests.CommonReque
 	request.Version = "2015-04-01"
 	request.ApiName = "GenerateSessionAccessKey"
 	request.Scheme = requests.HTTPS
+	request.SetDomain("sts.ap-northeast-1.aliyuncs.com")
 	request.QueryParams["PublicKeyId"] = signer.credential.PublicKeyId
 	request.QueryParams["DurationSeconds"] = strconv.Itoa(signer.credentialExpiration)
 	return
 }
 
-func (signerKeyPair *SignerKeyPair) refreshApi(request *requests.CommonRequest) (response *responses.CommonResponse, err error) {
-	signerV2, err := NewSignerV2(signerKeyPair.credential)
-	return signerKeyPair.commonApi(request, signerV2)
+func (signer *SignerKeyPair) refreshApi(request *requests.CommonRequest) (response *responses.CommonResponse, err error) {
+	signerV2 := NewSignerV2(signer.credential)
+	return signer.commonApi(request, signerV2)
 }
 
 func (signer *SignerKeyPair) refreshCredential(response *responses.CommonResponse) (err error) {
@@ -120,18 +127,15 @@ func (signer *SignerKeyPair) refreshCredential(response *responses.CommonRespons
 	var data interface{}
 	err = json.Unmarshal(response.GetHttpContentBytes(), &data)
 	if err != nil {
-		fmt.Println("refresh KeyPair err, json.Unmarshal fail", err)
-		return
+		return fmt.Errorf("refresh KeyPair err, json.Unmarshal fail: %s", err.Error())
 	}
 	accessKeyId, err := jmespath.Search("SessionAccessKey.SessionAccessKeyId", data)
 	if err != nil {
-		fmt.Println("refresh KeyPair err, fail to get SessionAccessKeyId", err)
-		return
+		return fmt.Errorf("refresh KeyPair err, fail to get SessionAccessKeyId: %s", err.Error())
 	}
 	accessKeySecret, err := jmespath.Search("SessionAccessKey.SessionAccessKeySecret", data)
 	if err != nil {
-		fmt.Println("refresh KeyPair err, fail to get SessionAccessKeySecret", err)
-		return
+		return fmt.Errorf("refresh KeyPair err, fail to get SessionAccessKeySecret: %s", err.Error())
 	}
 	if accessKeyId == nil || accessKeySecret == nil {
 		return
@@ -141,8 +145,4 @@ func (signer *SignerKeyPair) refreshCredential(response *responses.CommonRespons
 		AccessKeySecret: accessKeySecret.(string),
 	}
 	return
-}
-
-func (signer *SignerKeyPair) Shutdown() {
-
 }

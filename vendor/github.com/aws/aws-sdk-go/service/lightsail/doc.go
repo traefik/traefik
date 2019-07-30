@@ -5,10 +5,10 @@
 //
 // Amazon Lightsail is the easiest way to get started with AWS for developers
 // who just need virtual private servers. Lightsail includes everything you
-// need to launch your project quickly - a virtual machine, SSD-based storage,
-// data transfer, DNS management, and a static IP - for a low, predictable price.
-// You manage those Lightsail servers through the Lightsail console or by using
-// the API or command-line interface (CLI).
+// need to launch your project quickly - a virtual machine, a managed database,
+// SSD-based storage, data transfer, DNS management, and a static IP - for a
+// low, predictable price. You manage those Lightsail servers through the Lightsail
+// console or by using the API or command-line interface (CLI).
 //
 // For more information about Lightsail concepts and tasks, see the Lightsail
 // Dev Guide (https://lightsail.aws.amazon.com/ls/docs/all).

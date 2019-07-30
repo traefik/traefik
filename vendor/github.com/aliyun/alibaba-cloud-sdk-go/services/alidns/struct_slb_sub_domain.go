@@ -18,7 +18,7 @@ package alidns
 // SlbSubDomain is a nested struct in alidns response
 type SlbSubDomain struct {
 	SubDomain   string `json:"SubDomain" xml:"SubDomain"`
-	RecordCount int    `json:"RecordCount" xml:"RecordCount"`
+	RecordCount int64  `json:"RecordCount" xml:"RecordCount"`
 	Open        bool   `json:"Open" xml:"Open"`
 	Type        string `json:"Type" xml:"Type"`
 }

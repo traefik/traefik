@@ -80,22 +80,6 @@ func (d DomainRecord) GetUpdateOptions() (du DomainRecordUpdateOptions) {
 	return
 }
 
-func copyInt(iPtr *int) *int {
-	if iPtr == nil {
-		return nil
-	}
-	var t = *iPtr
-	return &t
-}
-
-func copyString(sPtr *string) *string {
-	if sPtr == nil {
-		return nil
-	}
-	var t = *sPtr
-	return &t
-}
-
 // DomainRecordsPagedResponse represents a paginated DomainRecord API response
 type DomainRecordsPagedResponse struct {
 	*PageOptions

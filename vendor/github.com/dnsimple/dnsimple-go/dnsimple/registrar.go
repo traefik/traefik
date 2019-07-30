@@ -62,7 +62,7 @@ type DomainPremiumPriceOptions struct {
 	Action string `url:"action,omitempty"`
 }
 
-// Gets the premium price for a domain.
+// GetDomainPremiumPrice gets the premium price for a domain.
 //
 // You must specify an action to get the price for. Valid actions are:
 // - registration

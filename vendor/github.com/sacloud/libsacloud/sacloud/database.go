@@ -260,7 +260,7 @@ type SlaveDatabaseValue struct {
 func NewCreatePostgreSQLDatabaseValue() *CreateDatabaseValue {
 	return &CreateDatabaseValue{
 		DatabaseName:    "postgres",
-		DatabaseVersion: "10",
+		DatabaseVersion: "11",
 	}
 }
 
@@ -268,7 +268,7 @@ func NewCreatePostgreSQLDatabaseValue() *CreateDatabaseValue {
 func NewCreateMariaDBDatabaseValue() *CreateDatabaseValue {
 	return &CreateDatabaseValue{
 		DatabaseName:    "MariaDB",
-		DatabaseVersion: "10.2",
+		DatabaseVersion: "10.3",
 	}
 }
 
@@ -442,7 +442,7 @@ func NewSlaveDatabaseValue(values *SlaveDatabaseValue) *Database {
 				},
 			},
 			// Plan
-			propPlanID: propPlanID{Plan: &Resource{ID: int64(values.Plan)}},
+			propPlanID: propPlanID{Plan: &Resource{ID: int64(values.Plan) + 1}},
 		},
 		// Settings
 		Settings: &DatabaseSettings{

@@ -26,10 +26,10 @@ func (signer *SignerV2) GetExtraParam() map[string]string {
 	return nil
 }
 
-func NewSignerV2(credential *credentials.RsaKeyPairCredential) (*SignerV2, error) {
+func NewSignerV2(credential *credentials.RsaKeyPairCredential) *SignerV2 {
 	return &SignerV2{
 		credential: credential,
-	}, nil
+	}
 }
 
 func (*SignerV2) GetName() string {
@@ -51,8 +51,4 @@ func (signer *SignerV2) GetAccessKeyId() (accessKeyId string, err error) {
 func (signer *SignerV2) Sign(stringToSign, secretSuffix string) string {
 	secret := signer.credential.PrivateKey
 	return Sha256WithRsa(stringToSign, secret)
-}
-
-func (signer *SignerV2) Shutdown() {
-
 }

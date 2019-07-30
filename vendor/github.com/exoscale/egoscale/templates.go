@@ -13,6 +13,7 @@ type Template struct {
 	Format                string            `json:"format,omitempty" doc:"the format of the template."`
 	HostID                *UUID             `json:"hostid,omitempty" doc:"the ID of the secondary storage host for the template"`
 	HostName              string            `json:"hostname,omitempty" doc:"the name of the secondary storage host for the template"`
+	Hypervisor            string            `json:"hypervisor,omitempty" doc:"the target hypervisor for the template"`
 	ID                    *UUID             `json:"id,omitempty" doc:"the template ID"`
 	IsDynamicallyScalable bool              `json:"isdynamicallyscalable,omitempty" doc:"true if template contains XS/VMWare tools inorder to support dynamic scaling of VM cpu/memory"`
 	IsExtractable         bool              `json:"isextractable,omitempty" doc:"true if the template is extractable, false otherwise"`
@@ -20,8 +21,10 @@ type Template struct {
 	IsPublic              bool              `json:"ispublic,omitempty" doc:"true if this template is a public template, false otherwise"`
 	IsReady               bool              `json:"isready,omitempty" doc:"true if the template is ready to be deployed from, false otherwise."`
 	Name                  string            `json:"name,omitempty" doc:"the template name"`
-	OsTypeID              *UUID             `json:"ostypeid,omitempty" doc:"the ID of the OS type for this template."`
-	OsTypeName            string            `json:"ostypename,omitempty" doc:"the name of the OS type for this template."`
+	OsCategoryID          *UUID             `json:"oscategoryid,omitempty" doc:"the ID of the OS category for this template"`
+	OsCategoryName        string            `json:"oscategoryname,omitempty" doc:"the name of the OS category for this template"`
+	OsTypeID              *UUID             `json:"ostypeid,omitempty" doc:"the ID of the OS type for this template"`
+	OsTypeName            string            `json:"ostypename,omitempty" doc:"the name of the OS type for this template"`
 	PasswordEnabled       bool              `json:"passwordenabled,omitempty" doc:"true if the reset password feature is enabled, false otherwise"`
 	Removed               string            `json:"removed,omitempty" doc:"the date this template was removed"`
 	Size                  int64             `json:"size,omitempty" doc:"the size of the template"`
@@ -117,4 +120,44 @@ type ListOSCategories struct {
 type ListOSCategoriesResponse struct {
 	Count      int          `json:"count"`
 	OSCategory []OSCategory `json:"oscategory"`
+}
+
+// DeleteTemplate deletes a template by ID
+type DeleteTemplate struct {
+	_  bool  `name:"deleteTemplate" description:"Deletes a template"`
+	ID *UUID `json:"id" doc:"the ID of the template"`
+}
+
+// Response returns the struct to unmarshal
+func (DeleteTemplate) Response() interface{} {
+	return new(AsyncJobResult)
+}
+
+// AsyncResponse returns the struct to unmarshal the async job
+func (DeleteTemplate) AsyncResponse() interface{} {
+	return new(BooleanResponse)
+}
+
+// RegisterCustomTemplate registers a new template
+type RegisterCustomTemplate struct {
+	_               bool              `name:"registerCustomTemplate" description:"Register a new template."`
+	Checksum        string            `json:"checksum" doc:"the MD5 checksum value of this template"`
+	Details         map[string]string `json:"details,omitempty" doc:"Template details in key/value pairs"`
+	Displaytext     string            `json:"displaytext" doc:"the display text of the template"`
+	Name            string            `json:"name" doc:"the name of the template"`
+	PasswordEnabled *bool             `json:"passwordenabled,omitempty" doc:"true if the template supports the password reset feature; default is false"`
+	SSHKeyEnabled   *bool             `json:"sshkeyenabled,omitempty" doc:"true if the template supports the sshkey upload feature; default is false"`
+	TemplateTag     string            `json:"templatetag,omitempty" doc:"the tag for this template"`
+	URL             string            `json:"url" doc:"the URL of where the template is hosted"`
+	ZoneID          *UUID             `json:"zoneid" doc:"the ID of the zone the template is to be hosted on"`
+}
+
+// Response returns the struct to unmarshal
+func (RegisterCustomTemplate) Response() interface{} {
+	return new(AsyncJobResult)
+}
+
+// AsyncResponse returns the struct to unmarshal the async job
+func (RegisterCustomTemplate) AsyncResponse() interface{} {
+	return new([]Template)
 }

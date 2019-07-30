@@ -19,5 +19,5 @@ package alidns
 type DomainGroup struct {
 	GroupId     string `json:"GroupId" xml:"GroupId"`
 	GroupName   string `json:"GroupName" xml:"GroupName"`
-	DomainCount int    `json:"DomainCount" xml:"DomainCount"`
+	DomainCount int64  `json:"DomainCount" xml:"DomainCount"`
 }

@@ -25,6 +25,7 @@ type LoadBalancerPool struct {
 	CheckRegions []string `json:"check_regions"`
 }
 
+// LoadBalancerOrigin represents a Load Balancer origin's properties.
 type LoadBalancerOrigin struct {
 	Name    string  `json:"name"`
 	Address string  `json:"address"`
@@ -34,35 +35,69 @@ type LoadBalancerOrigin struct {
 
 // LoadBalancerMonitor represents a load balancer monitor's properties.
 type LoadBalancerMonitor struct {
-	ID            string              `json:"id,omitempty"`
-	CreatedOn     *time.Time          `json:"created_on,omitempty"`
-	ModifiedOn    *time.Time          `json:"modified_on,omitempty"`
-	Type          string              `json:"type"`
-	Description   string              `json:"description"`
-	Method        string              `json:"method"`
-	Path          string              `json:"path"`
-	Header        map[string][]string `json:"header"`
-	Timeout       int                 `json:"timeout"`
-	Retries       int                 `json:"retries"`
-	Interval      int                 `json:"interval"`
-	ExpectedBody  string              `json:"expected_body"`
-	ExpectedCodes string              `json:"expected_codes"`
+	ID              string              `json:"id,omitempty"`
+	CreatedOn       *time.Time          `json:"created_on,omitempty"`
+	ModifiedOn      *time.Time          `json:"modified_on,omitempty"`
+	Type            string              `json:"type"`
+	Description     string              `json:"description"`
+	Method          string              `json:"method"`
+	Path            string              `json:"path"`
+	Header          map[string][]string `json:"header"`
+	Timeout         int                 `json:"timeout"`
+	Retries         int                 `json:"retries"`
+	Interval        int                 `json:"interval"`
+	Port            uint16              `json:"port,omitempty"`
+	ExpectedBody    string              `json:"expected_body"`
+	ExpectedCodes   string              `json:"expected_codes"`
+	FollowRedirects bool                `json:"follow_redirects"`
+	AllowInsecure   bool                `json:"allow_insecure"`
+	ProbeZone       string              `json:"probe_zone"`
 }
 
 // LoadBalancer represents a load balancer's properties.
 type LoadBalancer struct {
-	ID           string              `json:"id,omitempty"`
-	CreatedOn    *time.Time          `json:"created_on,omitempty"`
-	ModifiedOn   *time.Time          `json:"modified_on,omitempty"`
-	Description  string              `json:"description"`
-	Name         string              `json:"name"`
-	TTL          int                 `json:"ttl,omitempty"`
-	FallbackPool string              `json:"fallback_pool"`
-	DefaultPools []string            `json:"default_pools"`
-	RegionPools  map[string][]string `json:"region_pools"`
-	PopPools     map[string][]string `json:"pop_pools"`
-	Proxied      bool                `json:"proxied"`
-	Persistence  string              `json:"session_affinity,omitempty"`
+	ID             string              `json:"id,omitempty"`
+	CreatedOn      *time.Time          `json:"created_on,omitempty"`
+	ModifiedOn     *time.Time          `json:"modified_on,omitempty"`
+	Description    string              `json:"description"`
+	Name           string              `json:"name"`
+	TTL            int                 `json:"ttl,omitempty"`
+	FallbackPool   string              `json:"fallback_pool"`
+	DefaultPools   []string            `json:"default_pools"`
+	RegionPools    map[string][]string `json:"region_pools"`
+	PopPools       map[string][]string `json:"pop_pools"`
+	Proxied        bool                `json:"proxied"`
+	Enabled        *bool               `json:"enabled,omitempty"`
+	Persistence    string              `json:"session_affinity,omitempty"`
+	PersistenceTTL int                 `json:"session_affinity_ttl,omitempty"`
+
+	// SteeringPolicy controls pool selection logic.
+	// "off" select pools in DefaultPools order
+	// "geo" select pools based on RegionPools/PopPools
+	// "dynamic_latency" select pools based on RTT (requires health checks)
+	// "random" selects pools in a random order
+	// "" maps to "geo" if RegionPools or PopPools have entries otherwise "off"
+	SteeringPolicy string `json:"steering_policy,omitempty"`
+}
+
+// LoadBalancerOriginHealth represents the health of the origin.
+type LoadBalancerOriginHealth struct {
+	Healthy       bool     `json:"healthy,omitempty"`
+	RTT           Duration `json:"rtt,omitempty"`
+	FailureReason string   `json:"failure_reason,omitempty"`
+	ResponseCode  int      `json:"response_code,omitempty"`
+}
+
+// LoadBalancerPoolPopHealth represents the health of the pool for given PoP.
+type LoadBalancerPoolPopHealth struct {
+	Healthy bool                                  `json:"healthy,omitempty"`
+	Origins []map[string]LoadBalancerOriginHealth `json:"origins,omitempty"`
+}
+
+// LoadBalancerPoolHealth represents the healthchecks from different PoPs for a pool.
+type LoadBalancerPoolHealth struct {
+	ID        string                               `json:"pool_id,omitempty"`
+	PopHealth map[string]LoadBalancerPoolPopHealth `json:"pop_health,omitempty"`
 }
 
 // loadBalancerPoolResponse represents the response from the load balancer pool endpoints.
@@ -102,6 +137,12 @@ type loadBalancerListResponse struct {
 	Response
 	Result     []LoadBalancer `json:"result"`
 	ResultInfo ResultInfo     `json:"result_info"`
+}
+
+// loadBalancerPoolHealthResponse represents the response from the Pool Health Details endpoint.
+type loadBalancerPoolHealthResponse struct {
+	Response
+	Result LoadBalancerPoolHealth `json:"result"`
 }
 
 // CreateLoadBalancerPool creates a new load balancer pool.
@@ -325,6 +366,22 @@ func (api *API) ModifyLoadBalancer(zoneID string, lb LoadBalancer) (LoadBalancer
 	var r loadBalancerResponse
 	if err := json.Unmarshal(res, &r); err != nil {
 		return LoadBalancer{}, errors.Wrap(err, errUnmarshalError)
+	}
+	return r.Result, nil
+}
+
+// PoolHealthDetails fetches the latest healtcheck details for a single pool.
+//
+// API reference: https://api.cloudflare.com/#load-balancer-pools-pool-health-details
+func (api *API) PoolHealthDetails(poolID string) (LoadBalancerPoolHealth, error) {
+	uri := api.userBaseURL("/user") + "/load_balancers/pools/" + poolID + "/health"
+	res, err := api.makeRequest("GET", uri, nil)
+	if err != nil {
+		return LoadBalancerPoolHealth{}, errors.Wrap(err, errMakeRequestError)
+	}
+	var r loadBalancerPoolHealthResponse
+	if err := json.Unmarshal(res, &r); err != nil {
+		return LoadBalancerPoolHealth{}, errors.Wrap(err, errUnmarshalError)
 	}
 	return r.Result, nil
 }

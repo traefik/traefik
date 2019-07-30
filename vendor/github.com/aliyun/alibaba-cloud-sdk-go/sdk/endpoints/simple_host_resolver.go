@@ -14,9 +14,17 @@
 
 package endpoints
 
+// SimpleHostResolver the simple host resolver type
 type SimpleHostResolver struct {
 }
 
+// GetName get the resolver name: "simple host resolver"
+func (resolver *SimpleHostResolver) GetName() (name string) {
+	name = "simple host resolver"
+	return
+}
+
+// TryResolve if the Domain exist in param, use it as endpoint
 func (resolver *SimpleHostResolver) TryResolve(param *ResolveParam) (endpoint string, support bool, err error) {
 	if support = len(param.Domain) > 0; support {
 		endpoint = param.Domain

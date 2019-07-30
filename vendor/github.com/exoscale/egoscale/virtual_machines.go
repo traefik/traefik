@@ -314,8 +314,9 @@ func (DeployVirtualMachine) AsyncResponse() interface{} {
 
 // StartVirtualMachine (Async) represents the creation of the virtual machine
 type StartVirtualMachine struct {
-	ID *UUID `json:"id" doc:"The ID of the virtual machine"`
-	_  bool  `name:"startVirtualMachine" description:"Starts a virtual machine."`
+	ID            *UUID  `json:"id" doc:"The ID of the virtual machine"`
+	RescueProfile string `json:"rescueprofile,omitempty" doc:"An optional rescue profile to use when booting"`
+	_             bool   `name:"startVirtualMachine" description:"Starts a virtual machine."`
 }
 
 // Response returns the struct to unmarshal

@@ -82,7 +82,7 @@ func (client *Client) runstatusRequest(ctx context.Context, uri string, structPa
 
 	hdr.Add("Authorization", fmt.Sprintf("Exoscale-HMAC-SHA256 %s:%s", client.APIKey, signature))
 	hdr.Add("Exoscale-Date", time)
-	hdr.Add("User-Agent", fmt.Sprintf("exoscale/egoscale (%v)", Version))
+	hdr.Add("User-Agent", UserAgent)
 	hdr.Add("Accept", "application/json")
 	if params != "" {
 		hdr.Add("Content-Type", "application/json")

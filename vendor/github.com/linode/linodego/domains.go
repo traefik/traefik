@@ -39,6 +39,9 @@ type Domain struct {
 	// The list of IPs that may perform a zone transfer for this Domain. This is potentially dangerous, and should be set to an empty list unless you intend to use it.
 	AXfrIPs []string `json:"axfr_ips"`
 
+	// An array of tags applied to this object. Tags are for organizational purposes only.
+	Tags []string `json:"tags"`
+
 	// The amount of time in seconds that may pass before this Domain is no longer authoritative. Valid values are 300, 3600, 7200, 14400, 28800, 57600, 86400, 172800, 345600, 604800, 1209600, and 2419200 - any other value will be rounded to the nearest valid value.
 	ExpireSec int `json:"expire_sec"`
 
@@ -80,6 +83,9 @@ type DomainCreateOptions struct {
 
 	// The list of IPs that may perform a zone transfer for this Domain. This is potentially dangerous, and should be set to an empty list unless you intend to use it.
 	AXfrIPs []string `json:"axfr_ips,omitempty"`
+
+	// An array of tags applied to this object. Tags are for organizational purposes only.
+	Tags []string `json:"tags"`
 
 	// The amount of time in seconds that may pass before this Domain is no longer authoritative. Valid values are 300, 3600, 7200, 14400, 28800, 57600, 86400, 172800, 345600, 604800, 1209600, and 2419200 - any other value will be rounded to the nearest valid value.
 	ExpireSec int `json:"expire_sec,omitempty"`
@@ -123,6 +129,9 @@ type DomainUpdateOptions struct {
 	// The list of IPs that may perform a zone transfer for this Domain. This is potentially dangerous, and should be set to an empty list unless you intend to use it.
 	AXfrIPs []string `json:"axfr_ips,omitempty"`
 
+	// An array of tags applied to this object. Tags are for organizational purposes only.
+	Tags []string `json:"tags"`
+
 	// The amount of time in seconds that may pass before this Domain is no longer authoritative. Valid values are 300, 3600, 7200, 14400, 28800, 57600, 86400, 172800, 345600, 604800, 1209600, and 2419200 - any other value will be rounded to the nearest valid value.
 	ExpireSec int `json:"expire_sec,omitempty"`
 
@@ -164,6 +173,7 @@ func (d Domain) GetUpdateOptions() (du DomainUpdateOptions) {
 	du.RetrySec = d.RetrySec
 	du.MasterIPs = d.MasterIPs
 	du.AXfrIPs = d.AXfrIPs
+	du.Tags = d.Tags
 	du.ExpireSec = d.ExpireSec
 	du.RefreshSec = d.RefreshSec
 	du.TTLSec = d.TTLSec

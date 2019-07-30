@@ -16,6 +16,8 @@ type Stackscript struct {
 	Username          string            `json:"username"`
 	Label             string            `json:"label"`
 	Description       string            `json:"description"`
+	Ordinal           int               `json:"ordinal"`
+	LogoURL           string            `json:"logo_url"`
 	Images            []string          `json:"images"`
 	DeploymentsTotal  int               `json:"deployments_total"`
 	DeploymentsActive int               `json:"deployments_active"`

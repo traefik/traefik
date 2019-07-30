@@ -76,23 +76,23 @@ func (client *Client) DescribeRecordLogsWithCallback(request *DescribeRecordLogs
 // DescribeRecordLogsRequest is the request struct for api DescribeRecordLogs
 type DescribeRecordLogsRequest struct {
 	*requests.RpcRequest
-	Lang         string           `position:"Query" name:"Lang"`
+	EndDate      string           `position:"Query" name:"endDate"`
 	UserClientIp string           `position:"Query" name:"UserClientIp"`
 	DomainName   string           `position:"Query" name:"DomainName"`
-	PageNumber   requests.Integer `position:"Query" name:"PageNumber"`
 	PageSize     requests.Integer `position:"Query" name:"PageSize"`
+	Lang         string           `position:"Query" name:"Lang"`
 	KeyWord      string           `position:"Query" name:"KeyWord"`
 	StartDate    string           `position:"Query" name:"StartDate"`
-	EndDate      string           `position:"Query" name:"endDate"`
+	PageNumber   requests.Integer `position:"Query" name:"PageNumber"`
 }
 
 // DescribeRecordLogsResponse is the response struct for api DescribeRecordLogs
 type DescribeRecordLogsResponse struct {
 	*responses.BaseResponse
 	RequestId  string     `json:"RequestId" xml:"RequestId"`
-	TotalCount int        `json:"TotalCount" xml:"TotalCount"`
-	PageNumber int        `json:"PageNumber" xml:"PageNumber"`
-	PageSize   int        `json:"PageSize" xml:"PageSize"`
+	TotalCount int64      `json:"TotalCount" xml:"TotalCount"`
+	PageNumber int64      `json:"PageNumber" xml:"PageNumber"`
+	PageSize   int64      `json:"PageSize" xml:"PageSize"`
 	RecordLogs RecordLogs `json:"RecordLogs" xml:"RecordLogs"`
 }
 
@@ -101,7 +101,7 @@ func CreateDescribeRecordLogsRequest() (request *DescribeRecordLogsRequest) {
 	request = &DescribeRecordLogsRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Alidns", "2015-01-09", "DescribeRecordLogs", "", "")
+	request.InitWithApiInfo("Alidns", "2015-01-09", "DescribeRecordLogs", "Alidns", "openAPI")
 	return
 }
 

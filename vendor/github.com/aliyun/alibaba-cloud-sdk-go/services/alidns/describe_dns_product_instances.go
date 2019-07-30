@@ -76,20 +76,20 @@ func (client *Client) DescribeDnsProductInstancesWithCallback(request *DescribeD
 // DescribeDnsProductInstancesRequest is the request struct for api DescribeDnsProductInstances
 type DescribeDnsProductInstancesRequest struct {
 	*requests.RpcRequest
-	Lang         string           `position:"Query" name:"Lang"`
 	UserClientIp string           `position:"Query" name:"UserClientIp"`
-	PageNumber   requests.Integer `position:"Query" name:"PageNumber"`
 	PageSize     requests.Integer `position:"Query" name:"PageSize"`
+	Lang         string           `position:"Query" name:"Lang"`
 	VersionCode  string           `position:"Query" name:"VersionCode"`
+	PageNumber   requests.Integer `position:"Query" name:"PageNumber"`
 }
 
 // DescribeDnsProductInstancesResponse is the response struct for api DescribeDnsProductInstances
 type DescribeDnsProductInstancesResponse struct {
 	*responses.BaseResponse
 	RequestId   string      `json:"RequestId" xml:"RequestId"`
-	TotalCount  int         `json:"TotalCount" xml:"TotalCount"`
-	PageNumber  int         `json:"PageNumber" xml:"PageNumber"`
-	PageSize    int         `json:"PageSize" xml:"PageSize"`
+	TotalCount  int64       `json:"TotalCount" xml:"TotalCount"`
+	PageNumber  int64       `json:"PageNumber" xml:"PageNumber"`
+	PageSize    int64       `json:"PageSize" xml:"PageSize"`
 	DnsProducts DnsProducts `json:"DnsProducts" xml:"DnsProducts"`
 }
 
@@ -98,7 +98,7 @@ func CreateDescribeDnsProductInstancesRequest() (request *DescribeDnsProductInst
 	request = &DescribeDnsProductInstancesRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Alidns", "2015-01-09", "DescribeDnsProductInstances", "", "")
+	request.InitWithApiInfo("Alidns", "2015-01-09", "DescribeDnsProductInstances", "Alidns", "openAPI")
 	return
 }
 

@@ -76,11 +76,11 @@ func (client *Client) ChangeDomainOfDnsProductWithCallback(request *ChangeDomain
 // ChangeDomainOfDnsProductRequest is the request struct for api ChangeDomainOfDnsProduct
 type ChangeDomainOfDnsProductRequest struct {
 	*requests.RpcRequest
-	Lang         string           `position:"Query" name:"Lang"`
-	UserClientIp string           `position:"Query" name:"UserClientIp"`
 	InstanceId   string           `position:"Query" name:"InstanceId"`
 	NewDomain    string           `position:"Query" name:"NewDomain"`
+	UserClientIp string           `position:"Query" name:"UserClientIp"`
 	Force        requests.Boolean `position:"Query" name:"Force"`
+	Lang         string           `position:"Query" name:"Lang"`
 }
 
 // ChangeDomainOfDnsProductResponse is the response struct for api ChangeDomainOfDnsProduct
@@ -95,7 +95,7 @@ func CreateChangeDomainOfDnsProductRequest() (request *ChangeDomainOfDnsProductR
 	request = &ChangeDomainOfDnsProductRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Alidns", "2015-01-09", "ChangeDomainOfDnsProduct", "", "")
+	request.InitWithApiInfo("Alidns", "2015-01-09", "ChangeDomainOfDnsProduct", "Alidns", "openAPI")
 	return
 }
 

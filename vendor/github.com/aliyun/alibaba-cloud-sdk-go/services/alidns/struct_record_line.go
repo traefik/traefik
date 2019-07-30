@@ -17,8 +17,8 @@ package alidns
 
 // RecordLine is a nested struct in alidns response
 type RecordLine struct {
-	LineName        string `json:"LineName" xml:"LineName"`
-	FatherCode      string `json:"FatherCode" xml:"FatherCode"`
 	LineDisplayName string `json:"LineDisplayName" xml:"LineDisplayName"`
 	LineCode        string `json:"LineCode" xml:"LineCode"`
+	LineName        string `json:"LineName" xml:"LineName"`
+	FatherCode      string `json:"FatherCode" xml:"FatherCode"`
 }

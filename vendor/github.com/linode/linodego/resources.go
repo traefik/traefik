@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/go-resty/resty"
+	"gopkg.in/resty.v1"
 )
 
 const (
@@ -18,6 +18,7 @@ const (
 	instanceIPsName           = "ips"
 	instanceSnapshotsName     = "snapshots"
 	instanceVolumesName       = "instancevolumes"
+	instanceStatsName         = "instancestats"
 	ipaddressesName           = "ipaddresses"
 	ipv6poolsName             = "ipv6pools"
 	ipv6rangesName            = "ipv6ranges"
@@ -33,15 +34,21 @@ const (
 	nodebalancersName         = "nodebalancers"
 	nodebalancerconfigsName   = "nodebalancerconfigs"
 	nodebalancernodesName     = "nodebalancernodes"
+	notificationsName         = "notifications"
+	oauthClientsName          = "oauthClients"
 	sshkeysName               = "sshkeys"
 	ticketsName               = "tickets"
+	tokensName                = "tokens"
 	accountName               = "account"
+	accountSettingsName       = "accountsettings"
 	eventsName                = "events"
 	invoicesName              = "invoices"
 	invoiceItemsName          = "invoiceitems"
 	profileName               = "profile"
 	managedName               = "managed"
-	// notificationsName = "notifications"
+	tagsName                  = "tags"
+	usersName                 = "users"
+	paymentsName              = "payments"
 
 	stackscriptsEndpoint          = "linode/stackscripts"
 	imagesEndpoint                = "images"
@@ -51,9 +58,10 @@ const (
 	instanceSnapshotsEndpoint     = "linode/instances/{{ .ID }}/backups"
 	instanceIPsEndpoint           = "linode/instances/{{ .ID }}/ips"
 	instanceVolumesEndpoint       = "linode/instances/{{ .ID }}/volumes"
-	ipaddressesEndpoint           = "network/ips"
-	ipv6poolsEndpoint             = "network/ipv6/pools"
-	ipv6rangesEndpoint            = "network/ipv6/ranges"
+	instanceStatsEndpoint         = "linode/instances/{{ .ID }}/stats"
+	ipaddressesEndpoint           = "networking/ips"
+	ipv6poolsEndpoint             = "networking/ipv6/pools"
+	ipv6rangesEndpoint            = "networking/ipv6/ranges"
 	regionsEndpoint               = "regions"
 	volumesEndpoint               = "volumes"
 	kernelsEndpoint               = "linode/kernels"
@@ -72,13 +80,19 @@ const (
 	nodebalancernodesEndpoint   = "nodebalancers/{{ .ID }}/configs/{{ .SecondID }}/nodes"
 	sshkeysEndpoint             = "profile/sshkeys"
 	ticketsEndpoint             = "support/tickets"
+	tokensEndpoint              = "profile/tokens"
 	accountEndpoint             = "account"
+	accountSettingsEndpoint     = "account/settings"
 	eventsEndpoint              = "account/events"
 	invoicesEndpoint            = "account/invoices"
 	invoiceItemsEndpoint        = "account/invoices/{{ .ID }}/items"
 	profileEndpoint             = "profile"
 	managedEndpoint             = "managed"
-	// notificationsEndpoint       = "account/notifications"
+	tagsEndpoint                = "tags"
+	usersEndpoint               = "account/users"
+	notificationsEndpoint       = "account/notifications"
+	oauthClientsEndpoint        = "account/oauth-clients"
+	paymentsEndpoint            = "account/payments"
 )
 
 // Resource represents a linode API resource
@@ -118,14 +132,15 @@ func (r Resource) render(data ...interface{}) (string, error) {
 	buf := bytes.NewBufferString(out)
 
 	var substitutions interface{}
-	if len(data) == 1 {
+	switch len(data) {
+	case 1:
 		substitutions = struct{ ID interface{} }{data[0]}
-	} else if len(data) == 2 {
+	case 2:
 		substitutions = struct {
 			ID       interface{}
 			SecondID interface{}
 		}{data[0], data[1]}
-	} else {
+	default:
 		return "", NewError("Too many arguments to render template (expected 1 or 2)")
 	}
 	if err := r.endpointTemplate.Execute(buf, substitutions); err != nil {
