@@ -139,8 +139,9 @@ nav:
       - 'Marathon': 'user-guides/marathon.md'
       - 'Docker-compose':
         - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
-        - 'With Let''s Encrypt':
+        - 'HTTPS With Let''s Encrypt':
           - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
+          - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'
