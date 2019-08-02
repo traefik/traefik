@@ -85,8 +85,8 @@ defaultEntryPoints = ["http", "https"]
 For more information about the CLI, see the documentation about [Traefik command](/basics/#traefik).
 
 ```shell
---entryPoints='Name:http Address::80'
---entryPoints='Name:https Address::443 TLS'
+--entryPoints=Name:http Address::80
+--entryPoints=Name:https Address::443 TLS
 ```
 
 !!! note
