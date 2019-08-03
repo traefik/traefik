@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/safe"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/types"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/influx"
 	influxdb "github.com/influxdata/influxdb1-client/v2"

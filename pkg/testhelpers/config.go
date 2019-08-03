@@ -1,7 +1,7 @@
 package testhelpers
 
 import (
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 )
 
 // BuildConfiguration is a helper to create a configuration.

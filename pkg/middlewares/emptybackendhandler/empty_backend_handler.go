@@ -3,7 +3,7 @@ package emptybackendhandler
 import (
 	"net/http"
 
-	"github.com/containous/traefik/pkg/healthcheck"
+	"github.com/containous/traefik/v2/pkg/healthcheck"
 )
 
 // EmptyBackend is a middleware that checks whether the current Backend

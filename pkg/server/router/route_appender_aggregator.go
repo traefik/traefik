@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/containous/alice"
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/api"
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/metrics"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/api"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/metrics"
+	"github.com/containous/traefik/v2/pkg/types"
+	"github.com/gorilla/mux"
 )
 
 // chainBuilder The contract of the middleware builder

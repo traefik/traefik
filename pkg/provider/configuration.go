@@ -10,8 +10,8 @@ import (
 	"unicode"
 
 	"github.com/Masterminds/sprig"
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 // Merge Merges multiple configurations.

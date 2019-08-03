@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 // Router is a TCP router

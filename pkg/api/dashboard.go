@@ -3,9 +3,9 @@ package api
 import (
 	"net/http"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
+	"github.com/gorilla/mux"
 )
 
 // DashboardHandler expose dashboard routes

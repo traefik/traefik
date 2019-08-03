@@ -7,8 +7,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/safe"
 )
 
 var _ Store = (*LocalStore)(nil)

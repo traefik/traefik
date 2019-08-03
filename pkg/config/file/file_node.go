@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/containous/traefik/pkg/config/parser"
+	"github.com/containous/traefik/v2/pkg/config/parser"
 	"gopkg.in/yaml.v2"
 )
 

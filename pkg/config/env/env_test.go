@@ -3,8 +3,8 @@ package env
 import (
 	"testing"
 
-	"github.com/containous/traefik/pkg/config/generator"
-	"github.com/containous/traefik/pkg/config/parser"
+	"github.com/containous/traefik/v2/pkg/config/generator"
+	"github.com/containous/traefik/v2/pkg/config/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

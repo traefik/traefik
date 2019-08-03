@@ -3,7 +3,7 @@ package marathon
 import (
 	"errors"
 
-	"github.com/containous/traefik/pkg/provider/marathon/mocks"
+	"github.com/containous/traefik/v2/pkg/provider/marathon/mocks"
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/mock"
 )

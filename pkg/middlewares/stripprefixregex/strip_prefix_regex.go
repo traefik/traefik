@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/containous/traefik/pkg/middlewares/stripprefix"
-	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/middlewares/stripprefix"
+	"github.com/containous/traefik/v2/pkg/tracing"
+	"github.com/gorilla/mux"
 	"github.com/opentracing/opentracing-go/ext"
 )
 

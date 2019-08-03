@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/mux"
+	"github.com/gorilla/mux"
 )
 
 // Handler expose ping routes.

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
