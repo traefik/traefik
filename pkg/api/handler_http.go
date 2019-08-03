@@ -6,9 +6,9 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/gorilla/mux"
 )
 
 type routerRepresentation struct {

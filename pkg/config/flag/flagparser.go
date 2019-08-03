@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config/parser"
+	"github.com/containous/traefik/v2/pkg/config/parser"
 )
 
 // Parse parses the command-line flag arguments into a map,

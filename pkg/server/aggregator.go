@@ -1,10 +1,10 @@
 package server
 
 import (
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/server/internal"
-	"github.com/containous/traefik/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/tls"
 )
 
 func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configuration {

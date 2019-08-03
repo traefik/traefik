@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
 )
 

@@ -3,7 +3,7 @@ package middlewares
 import (
 	"context"
 
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/sirupsen/logrus"
 )
 

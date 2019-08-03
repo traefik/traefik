@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
-	"github.com/containous/traefik/pkg/provider/kubernetes/k8s"
+	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"github.com/containous/traefik/v2/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	v1beta12 "k8s.io/api/extensions/v1beta1"

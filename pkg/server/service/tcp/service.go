@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/server/internal"
-	"github.com/containous/traefik/pkg/tcp"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/tcp"
 )
 
 // Manager is the TCPHandlers factory

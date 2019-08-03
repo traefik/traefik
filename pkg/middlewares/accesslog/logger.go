@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 

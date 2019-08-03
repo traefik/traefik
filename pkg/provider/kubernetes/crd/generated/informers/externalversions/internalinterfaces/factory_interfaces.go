@@ -29,7 +29,7 @@ package internalinterfaces
 import (
 	time "time"
 
-	versioned "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/clientset/versioned"
+	versioned "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	cache "k8s.io/client-go/tools/cache"

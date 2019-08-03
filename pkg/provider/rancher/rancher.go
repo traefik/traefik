@@ -6,12 +6,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/cenkalti/backoff"
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/job"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/safe"
+	"github.com/cenkalti/backoff/v3"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/job"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
+	"github.com/containous/traefik/v2/pkg/safe"
 	rancher "github.com/rancher/go-rancher-metadata/metadata"
 )
 

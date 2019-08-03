@@ -6,9 +6,9 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/gorilla/mux"
 )
 
 type entryPointRepresentation struct {
