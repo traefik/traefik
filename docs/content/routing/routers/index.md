@@ -746,7 +746,7 @@ tcp:
       rule: "HostSNI(`snitest.com`)"
       tls:
         certResolver: "bar"
-      domains:
-      - main: "snitest.com"
-        sans: "*.snitest.com"
+        domains:
+        - main: "snitest.com"
+          sans: "*.snitest.com"
 ```
