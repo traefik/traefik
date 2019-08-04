@@ -107,7 +107,7 @@ func (in *IngressRoute) DeepCopyObject() runtime.Object {
 func (in *IngressRouteList) DeepCopyInto(out *IngressRouteList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]IngressRoute, len(*in))
@@ -200,7 +200,7 @@ func (in *IngressRouteTCP) DeepCopyObject() runtime.Object {
 func (in *IngressRouteTCPList) DeepCopyInto(out *IngressRouteTCPList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]IngressRouteTCP, len(*in))
@@ -293,7 +293,7 @@ func (in *Middleware) DeepCopyObject() runtime.Object {
 func (in *MiddlewareList) DeepCopyInto(out *MiddlewareList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]Middleware, len(*in))
@@ -476,7 +476,7 @@ func (in *TLSOption) DeepCopyObject() runtime.Object {
 func (in *TLSOptionList) DeepCopyInto(out *TLSOptionList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]TLSOption, len(*in))

@@ -127,7 +127,7 @@ func (c *FakeMiddlewares) DeleteCollection(options *v1.DeleteOptions, listOption
 // Patch applies the patch and returns the patched middleware.
 func (c *FakeMiddlewares) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Middleware, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(middlewaresResource, c.ns, name, data, subresources...), &v1alpha1.Middleware{})
+		Invokes(testing.NewPatchSubresourceAction(middlewaresResource, c.ns, name, pt, data, subresources...), &v1alpha1.Middleware{})
 
 	if obj == nil {
 		return nil, err

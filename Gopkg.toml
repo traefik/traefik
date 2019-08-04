@@ -203,19 +203,19 @@ required = [
 
 [[constraint]]
   name = "k8s.io/client-go"
-  version = "8.0.0" # 8.0.0
+  version = "kubernetes-1.15.1" # kubernetes-1.15.1
 
 [[constraint]]
   name = "k8s.io/code-generator"
-  version = "kubernetes-1.11.7"
+  version = "kubernetes-1.15.1" # "kubernetes-1.15.1"
 
 [[constraint]]
   name = "k8s.io/api"
-  version = "kubernetes-1.11.7" # "kubernetes-1.11.7"
+  version = "kubernetes-1.15.1" # "kubernetes-1.15.1"
 
 [[constraint]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.11.7" # "kubernetes-1.11.7"
+  version = "kubernetes-1.15.1" # "kubernetes-1.15.1"
 
 [[override]]
   name = "github.com/json-iterator/go"
@@ -283,3 +283,7 @@ required = [
 [[constraint]]
   name = "github.com/ExpediaDotCom/haystack-client-go"
   version = "0.2.3"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  version = "v2.2.2"
