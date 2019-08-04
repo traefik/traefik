@@ -75,18 +75,18 @@ func Load(configDir string) (*configfile.ConfigFile, error) {
 	if _, err := os.Stat(filename); err == nil {
 		file, err := os.Open(filename)
 		if err != nil {
-			return configFile, errors.Errorf("%s - %v", filename, err)
+			return configFile, errors.Wrap(err, filename)
 		}
 		defer file.Close()
 		err = configFile.LoadFromReader(file)
 		if err != nil {
-			err = errors.Errorf("%s - %v", filename, err)
+			err = errors.Wrap(err, filename)
 		}
 		return configFile, err
 	} else if !os.IsNotExist(err) {
 		// if file is there but we can't stat it for any reason other
 		// than it doesn't exist then stop
-		return configFile, errors.Errorf("%s - %v", filename, err)
+		return configFile, errors.Wrap(err, filename)
 	}
 
 	// Can't find latest config file so check for the old one
@@ -96,12 +96,12 @@ func Load(configDir string) (*configfile.ConfigFile, error) {
 	}
 	file, err := os.Open(confFile)
 	if err != nil {
-		return configFile, errors.Errorf("%s - %v", confFile, err)
+		return configFile, errors.Wrap(err, filename)
 	}
 	defer file.Close()
 	err = configFile.LegacyLoadFromReader(file)
 	if err != nil {
-		return configFile, errors.Errorf("%s - %v", confFile, err)
+		return configFile, errors.Wrap(err, filename)
 	}
 	return configFile, nil
 }

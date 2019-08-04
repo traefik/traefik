@@ -1,6 +1,7 @@
-package client
+package client // import "github.com/docker/docker/client"
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -8,9 +9,8 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
-	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
-	"golang.org/x/net/context"
 )
 
 // ServiceCreate creates a new Service.
@@ -136,7 +136,7 @@ func imageWithDigestString(image string, dgst digest.Digest) string {
 
 // imageWithTagString takes an image string, and returns a tagged image
 // string, adding a 'latest' tag if one was not provided. It returns an
-// emptry string if a canonical reference was provided
+// empty string if a canonical reference was provided
 func imageWithTagString(image string) string {
 	namedRef, err := reference.ParseNormalizedNamed(image)
 	if err == nil {

@@ -1,4 +1,4 @@
-package jsonmessage
+package jsonmessage // import "github.com/docker/docker/pkg/jsonmessage"
 
 import (
 	"encoding/json"
@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	gotty "github.com/Nvveen/Gotty"
+	"github.com/Nvveen/Gotty"
 	"github.com/docker/docker/pkg/term"
-	units "github.com/docker/go-units"
+	"github.com/docker/go-units"
 )
 
 // RFC3339NanoFixed is time.RFC3339Nano with nanoseconds padded using zeros to
@@ -40,21 +40,17 @@ type JSONProgress struct {
 	// If true, don't show xB/yB
 	HideCounts bool   `json:"hidecounts,omitempty"`
 	Units      string `json:"units,omitempty"`
+	nowFunc    func() time.Time
+	winSize    int
 }
 
 func (p *JSONProgress) String() string {
 	var (
-		width       = 200
+		width       = p.width()
 		pbBox       string
 		numbersBox  string
 		timeLeftBox string
 	)
-
-	ws, err := term.GetWinsize(p.terminalFd)
-	if err == nil {
-		width = int(ws.Width)
-	}
-
 	if p.Current <= 0 && p.Total <= 0 {
 		return ""
 	}
@@ -103,7 +99,7 @@ func (p *JSONProgress) String() string {
 	}
 
 	if p.Current > 0 && p.Start > 0 && percentage < 50 {
-		fromStart := time.Now().UTC().Sub(time.Unix(p.Start, 0))
+		fromStart := p.now().Sub(time.Unix(p.Start, 0))
 		perEntry := fromStart / time.Duration(p.Current)
 		left := time.Duration(p.Total-p.Current) * perEntry
 		left = (left / time.Second) * time.Second
@@ -113,6 +109,28 @@ func (p *JSONProgress) String() string {
 		}
 	}
 	return pbBox + numbersBox + timeLeftBox
+}
+
+// shim for testing
+func (p *JSONProgress) now() time.Time {
+	if p.nowFunc == nil {
+		p.nowFunc = func() time.Time {
+			return time.Now().UTC()
+		}
+	}
+	return p.nowFunc()
+}
+
+// shim for testing
+func (p *JSONProgress) width() int {
+	if p.winSize != 0 {
+		return p.winSize
+	}
+	ws, err := term.GetWinsize(p.terminalFd)
+	if err == nil {
+		return int(ws.Width)
+	}
+	return 200
 }
 
 // JSONMessage defines a message struct. It describes
@@ -227,7 +245,7 @@ func (jm *JSONMessage) Display(out io.Writer, termInfo termInfo) error {
 // DisplayJSONMessagesStream displays a json message stream from `in` to `out`, `isTerminal`
 // describes if `out` is a terminal. If this is the case, it will print `\n` at the end of
 // each line and move the cursor while displaying.
-func DisplayJSONMessagesStream(in io.Reader, out io.Writer, terminalFd uintptr, isTerminal bool, auxCallback func(*json.RawMessage)) error {
+func DisplayJSONMessagesStream(in io.Reader, out io.Writer, terminalFd uintptr, isTerminal bool, auxCallback func(JSONMessage)) error {
 	var (
 		dec = json.NewDecoder(in)
 		ids = make(map[string]int)
@@ -259,7 +277,7 @@ func DisplayJSONMessagesStream(in io.Reader, out io.Writer, terminalFd uintptr, 
 
 		if jm.Aux != nil {
 			if auxCallback != nil {
-				auxCallback(jm.Aux)
+				auxCallback(jm)
 			}
 			continue
 		}
@@ -312,6 +330,6 @@ type stream interface {
 }
 
 // DisplayJSONMessagesToStream prints json messages to the output stream
-func DisplayJSONMessagesToStream(in io.Reader, stream stream, auxCallback func(*json.RawMessage)) error {
+func DisplayJSONMessagesToStream(in io.Reader, stream stream, auxCallback func(JSONMessage)) error {
 	return DisplayJSONMessagesStream(in, stream, stream.FD(), stream.IsTerminal(), auxCallback)
 }

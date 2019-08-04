@@ -1,18 +1,18 @@
-package registry
+package registry // import "github.com/docker/docker/registry"
 
 import (
+	"context"
 	"crypto/tls"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 
-	"golang.org/x/net/context"
-
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/client/auth"
 	"github.com/docker/docker/api/types"
 	registrytypes "github.com/docker/docker/api/types/registry"
+	"github.com/docker/docker/errdefs"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -117,12 +117,12 @@ func (s *DefaultService) Auth(ctx context.Context, authConfig *types.AuthConfig,
 	}
 	u, err := url.Parse(serverAddress)
 	if err != nil {
-		return "", "", validationError{errors.Errorf("unable to parse server address: %v", err)}
+		return "", "", errdefs.InvalidParameter(errors.Errorf("unable to parse server address: %v", err))
 	}
 
 	endpoints, err := s.LookupPushEndpoints(u.Host)
 	if err != nil {
-		return "", "", validationError{err}
+		return "", "", errdefs.InvalidParameter(err)
 	}
 
 	for _, endpoint := range endpoints {
@@ -199,7 +199,7 @@ func (s *DefaultService) Search(ctx context.Context, term string, limit int, aut
 			},
 		}
 
-		modifiers := DockerHeaders(userAgent, nil)
+		modifiers := Headers(userAgent, nil)
 		v2Client, foundV2, err := v2AuthHTTPClient(endpoint.URL, endpoint.client.Transport, modifiers, creds, scopes)
 		if err != nil {
 			if fErr, ok := err.(fallbackError); ok {

@@ -357,7 +357,7 @@
   version = "v0.21.0"
 
 [[projects]]
-  digest = "1:cf7cba074c4d2f8e2a5cc2f10b1f6762c86cff2e39917b9f9a6dbd7df57fe9c9"
+  digest = "1:0dc6b5da1a067f7d9e56498cf18b5364d1db45f2c57b5ba3c3bad785a6688c88"
   name = "github.com/docker/cli"
   packages = [
     "cli/command/image/build",
@@ -367,15 +367,16 @@
     "opts",
   ]
   pruneopts = "NUT"
-  revision = "6b63d7b96a41055baddc3fa71f381c7f60bd5d8e"
+  revision = "ec2ecc1c8b0cecbbedb24953b8fb2a24de2fb389"
+  version = "v18.09.8"
 
 [[projects]]
-  digest = "1:85d8985e29b9a55ed2ede89e90c4418cf7e7b0e539cf0e00088f2bd9754c028c"
+  digest = "1:26a1d70717dac8c37ae869d86103b9d72b71a6faf383a5e9b5b7e602c9b9743b"
   name = "github.com/docker/distribution"
   packages = [
     ".",
-    "context",
     "digestset",
+    "metrics",
     "reference",
     "registry/api/errcode",
     "registry/api/v2",
@@ -385,13 +386,13 @@
     "registry/client/transport",
     "registry/storage/cache",
     "registry/storage/cache/memory",
-    "uuid",
   ]
   pruneopts = "NUT"
-  revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
+  revision = "2461543d988979529609e8cb6fca9ca190dc48da"
+  version = "v2.7.1"
 
 [[projects]]
-  digest = "1:2e4c2b6359d0344ddafb04133bea7a6ff1b8d4db1ab6ee02a43dab1f6b25b337"
+  digest = "1:ee46d910505730aa678be5e847bc3069f3b7d77af7f95675263d0870f4676b27"
   name = "github.com/docker/docker"
   packages = [
     "api",
@@ -413,6 +414,7 @@
     "builder/dockerignore",
     "builder/remotecontext/git",
     "client",
+    "errdefs",
     "pkg/archive",
     "pkg/fileutils",
     "pkg/homedir",
@@ -437,15 +439,16 @@
     "registry/resumable",
   ]
   pruneopts = "NUT"
-  revision = "7848b8beb9d38a98a78b75f78e05f8d2255f9dfe"
+  revision = "456712c5b8d9d92c047f6a7d7cff270527ecac28"
+  source = "github.com/docker/engine"
+  version = "v18.09.8"
 
 [[projects]]
-  digest = "1:82d43dbea74bc51ed1a8beab6dc3ea09185da574e7ab6a96e3804e9b9d55fd2a"
+  digest = "1:8866486038791fe65ea1abf660041423954b1f3fb99ea6a0ad8424422e943458"
   name = "github.com/docker/docker-credential-helpers"
   packages = [
     "client",
     "credentials",
-    "pass",
   ]
   pruneopts = "NUT"
   revision = "d68f9aeca33f5fd3f08eeae5e9d175edf4e731d1"
@@ -464,6 +467,14 @@
   version = "v0.3.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:c49ecccb8abda39a5a48a99267d6abfdf37f59f1c7fdbcbe04b3b9afc3ab625d"
+  name = "github.com/docker/go-metrics"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "b84716841b82eab644a0c64fc8b42d480e49add5"
+
+[[projects]]
   digest = "1:9d8fe33c2e1aa01c76db67f285ffdb7dbdb5c5d90d9deb296526d67b9798ce7b"
   name = "github.com/docker/go-units"
   packages = ["."]
@@ -471,8 +482,8 @@
   revision = "9e638d38cf6977a37a8ea0078f3ee75a7cdb2dd1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:9b26bdc6b9952f728f61f510a48875c38974591c69b0afa77dcfe466c6162e9e"
+  branch = "feature/update-engine"
+  digest = "1:7d2d7cc40349c463e8231c93fcaa897f02b2c785c7be93bf81ed37431d78a0fb"
   name = "github.com/docker/libcompose"
   packages = [
     "config",
@@ -497,7 +508,8 @@
     "yaml",
   ]
   pruneopts = "NUT"
-  revision = "57bd716502dcbe1799f026148016022b0f3b989c"
+  revision = "2982bc454ad376cc507d48e49deb410a028172f7"
+  source = "github.com/ldez/libcompose"
 
 [[projects]]
   digest = "1:5f4c34ef3ef56be4a7f57cc43d8d219930cbcc82fdff174518703200ad165c0e"

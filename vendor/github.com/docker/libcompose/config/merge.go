@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"reflect"
@@ -11,6 +12,7 @@ import (
 	"github.com/docker/docker/pkg/urlutil"
 	"github.com/docker/libcompose/utils"
 	composeYaml "github.com/docker/libcompose/yaml"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -25,14 +27,37 @@ var (
 	}
 )
 
-// CreateConfig unmarshals bytes to config and creates config based on version
+func getComposeMajorVersion(version string) (int, error) {
+	if version == "" {
+		return 1, nil
+	}
+	parts := strings.Split(version, ".")
+	if len(parts) == 1 {
+		return strconv.Atoi(version)
+	} else if len(parts) == 2 {
+		return strconv.Atoi(parts[0])
+	} else {
+		return -1, fmt.Errorf("Invalid version string, expected single integer or dot delimited int.int. Got: %s", version)
+	}
+}
+
+// CreateConfig unmarshals bytes of a YAML manifest file and returns a new
+// Config. Initialize any defaults that can't be parsed (but are optional)
+// across various file formats. Most of these can remain unused.
+//
+// This function only handles parsing YAML in the general case. Any other file
+// format validation should be handled by the caller.
 func CreateConfig(bytes []byte) (*Config, error) {
 	var config Config
 	if err := yaml.Unmarshal(bytes, &config); err != nil {
 		return nil, err
 	}
 
-	if config.Version != "2" {
+	major, err := getComposeMajorVersion(config.Version)
+	if err != nil {
+		return nil, err
+	}
+	if major < 2 {
 		var baseRawServices RawServiceMap
 		if err := yaml.Unmarshal(bytes, &baseRawServices); err != nil {
 			return nil, err
@@ -102,14 +127,22 @@ func Merge(existingServices *ServiceConfigs, environmentLookup EnvironmentLookup
 		}
 	}
 
+	major, err := getComposeMajorVersion(config.Version)
+	if err != nil {
+		return "", nil, nil, nil, err
+	}
+
 	var serviceConfigs map[string]*ServiceConfig
-	if config.Version == "2" {
+	switch major {
+	case 3:
+		logrus.Fatal("Note: Compose file version 3 is not yet implemented")
+	case 2:
 		var err error
 		serviceConfigs, err = MergeServicesV2(existingServices, environmentLookup, resourceLookup, file, baseRawServices, options)
 		if err != nil {
 			return "", nil, nil, nil, err
 		}
-	} else {
+	default:
 		serviceConfigsV1, err := MergeServicesV1(existingServices, environmentLookup, resourceLookup, file, baseRawServices, options)
 		if err != nil {
 			return "", nil, nil, nil, err

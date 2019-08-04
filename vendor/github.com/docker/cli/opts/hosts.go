@@ -77,6 +77,8 @@ func parseDockerDaemonHost(addr string) (string, error) {
 		return parseSimpleProtoAddr("npipe", addrParts[1], DefaultNamedPipe)
 	case "fd":
 		return addr, nil
+	case "ssh":
+		return addr, nil
 	default:
 		return "", fmt.Errorf("Invalid bind address format: %s", addr)
 	}

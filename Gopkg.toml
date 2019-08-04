@@ -235,23 +235,26 @@ required = [
 
 [[constraint]]
  name = "github.com/docker/docker"
- revision = "7848b8beb9d38a98a78b75f78e05f8d2255f9dfe"
+ source = "github.com/docker/engine"
+ version = "v18.09.8"
 
 [[override]]
  name = "github.com/docker/docker"
- revision = "7848b8beb9d38a98a78b75f78e05f8d2255f9dfe"
+ source = "github.com/docker/engine"
+ version = "v18.09.8"
 
 [[override]]
  name = "github.com/docker/cli"
- revision = "6b63d7b96a41055baddc3fa71f381c7f60bd5d8e"
+ version = "v18.09.8"
 
 [[override]]
  name = "github.com/docker/distribution"
- revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
+ version = "v2.7.1"
 
 [[override]]
-  branch = "master"
+  branch = "feature/update-engine"
   name = "github.com/docker/libcompose"
+  source = "github.com/ldez/libcompose"
 
 [[override]]
   name = "github.com/Nvveen/Gotty"
