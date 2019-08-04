@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/docker/cli/cli/config/configfile"
+	clitypes "github.com/docker/cli/cli/config/types"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/registry"
 )
@@ -29,7 +30,7 @@ func (c *ConfigLookup) Lookup(repoInfo *registry.RepositoryInfo) types.AuthConfi
 	if c.ConfigFile == nil || repoInfo == nil || repoInfo.Index == nil {
 		return types.AuthConfig{}
 	}
-	return registry.ResolveAuthConfig(c.ConfigFile.AuthConfigs, repoInfo.Index)
+	return registry.ResolveAuthConfig(convert(c.ConfigFile.AuthConfigs), repoInfo.Index)
 }
 
 // All uses a Docker config file to get all authentication information
@@ -37,5 +38,25 @@ func (c *ConfigLookup) All() map[string]types.AuthConfig {
 	if c.ConfigFile == nil {
 		return map[string]types.AuthConfig{}
 	}
-	return c.ConfigFile.AuthConfigs
+	return convert(c.ConfigFile.AuthConfigs)
+}
+
+func convert(acs map[string]clitypes.AuthConfig) map[string]types.AuthConfig {
+	if acs == nil {
+		return nil
+	}
+
+	result := map[string]types.AuthConfig{}
+	for k, v := range acs {
+		result[k] = types.AuthConfig{
+			Username:      v.Username,
+			Password:      v.Password,
+			Auth:          v.Auth,
+			Email:         v.Email,
+			ServerAddress: v.ServerAddress,
+			IdentityToken: v.IdentityToken,
+			RegistryToken: v.RegistryToken,
+		}
+	}
+	return result
 }

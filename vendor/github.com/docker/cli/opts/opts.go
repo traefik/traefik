@@ -267,10 +267,24 @@ func validateDomain(val string) (string, error) {
 }
 
 // ValidateLabel validates that the specified string is a valid label, and returns it.
-// Labels are in the form on key=value.
+//
+// Labels are in the form of key=value; key must be a non-empty string, and not
+// contain whitespaces. A value is optional (defaults to an empty string if omitted).
+//
+// Leading whitespace is removed during validation but values are kept as-is
+// otherwise, so any string value is accepted for both, which includes whitespace
+// (for values) and quotes (surrounding, or embedded in key or value).
+//
+// TODO discuss if quotes (and other special characters) should be valid or invalid for keys
+// TODO discuss if leading/trailing whitespace in keys should be preserved (and valid)
 func ValidateLabel(val string) (string, error) {
-	if strings.Count(val, "=") < 1 {
-		return "", fmt.Errorf("bad attribute format: %s", val)
+	arr := strings.SplitN(val, "=", 2)
+	key := strings.TrimLeft(arr[0], whiteSpaces)
+	if key == "" {
+		return "", fmt.Errorf("invalid label '%s': empty name", val)
+	}
+	if strings.ContainsAny(key, whiteSpaces) {
+		return "", fmt.Errorf("label '%s' contains whitespaces", key)
 	}
 	return val, nil
 }

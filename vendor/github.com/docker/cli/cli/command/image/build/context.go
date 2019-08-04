@@ -41,6 +41,12 @@ func ValidateContextDirectory(srcPath string, excludes []string) error {
 	if err != nil {
 		return err
 	}
+
+	pm, err := fileutils.NewPatternMatcher(excludes)
+	if err != nil {
+		return err
+	}
+
 	return filepath.Walk(contextRoot, func(filePath string, f os.FileInfo, err error) error {
 		if err != nil {
 			if os.IsPermission(err) {
@@ -55,7 +61,7 @@ func ValidateContextDirectory(srcPath string, excludes []string) error {
 		// skip this directory/file if it's not in the path, it won't get added to the context
 		if relFilePath, err := filepath.Rel(contextRoot, filePath); err != nil {
 			return err
-		} else if skip, err := fileutils.Matches(relFilePath, excludes); err != nil {
+		} else if skip, err := filepathMatches(pm, relFilePath); err != nil {
 			return err
 		} else if skip {
 			if f.IsDir() {
@@ -81,6 +87,15 @@ func ValidateContextDirectory(srcPath string, excludes []string) error {
 	})
 }
 
+func filepathMatches(matcher *fileutils.PatternMatcher, file string) (bool, error) {
+	file = filepath.Clean(file)
+	if file == "." {
+		// Don't let them exclude everything, kind of silly.
+		return false, nil
+	}
+	return matcher.Matches(file)
+}
+
 // DetectArchiveReader detects whether the input stream is an archive or a
 // Dockerfile and returns a buffered version of input, safe to consume in lieu
 // of input. If an archive is detected, isArchive is set to true, and to false
@@ -89,7 +104,7 @@ func ValidateContextDirectory(srcPath string, excludes []string) error {
 func DetectArchiveReader(input io.ReadCloser) (rc io.ReadCloser, isArchive bool, err error) {
 	buf := bufio.NewReader(input)
 
-	magic, err := buf.Peek(archiveHeaderSize)
+	magic, err := buf.Peek(archiveHeaderSize * 2)
 	if err != nil && err != io.EOF {
 		return nil, false, errors.Errorf("failed to peek context header from STDIN: %v", err)
 	}

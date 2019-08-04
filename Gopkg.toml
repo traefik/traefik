@@ -236,30 +236,28 @@ required = [
 [[constraint]]
  name = "github.com/docker/docker"
  source = "github.com/docker/engine"
- version = "v18.09.8"
+ version = "v19.03.1"
 
 [[override]]
  name = "github.com/docker/docker"
  source = "github.com/docker/engine"
- version = "v18.09.8"
+ version = "v19.03.1"
 
 [[override]]
  name = "github.com/docker/cli"
- version = "v18.09.8"
+ version = "v19.03.1"
 
 [[override]]
  name = "github.com/docker/distribution"
  version = "v2.7.1"
 
 [[override]]
-  branch = "feature/update-engine"
+  branch = "master"
   name = "github.com/docker/libcompose"
-  source = "github.com/ldez/libcompose"
 
 [[override]]
-  name = "github.com/Nvveen/Gotty"
-  revision = "a8b993ba6abdb0e0c12b0125c603323a71c7790c"
-  source = "github.com/ijc25/Gotty"
+  name = "github.com/xeipuuv/gojsonschema"
+  version = "v1.1.0"
 
 [[override]]
   # ALWAYS keep this override

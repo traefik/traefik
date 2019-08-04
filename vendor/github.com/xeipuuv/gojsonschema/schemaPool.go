@@ -28,82 +28,188 @@ package gojsonschema
 
 import (
 	"errors"
+	"fmt"
+	"reflect"
 
 	"github.com/xeipuuv/gojsonreference"
 )
 
 type schemaPoolDocument struct {
 	Document interface{}
+	Draft    *Draft
 }
 
 type schemaPool struct {
 	schemaPoolDocuments map[string]*schemaPoolDocument
-	standaloneDocument  interface{}
 	jsonLoaderFactory   JSONLoaderFactory
+	autoDetect          *bool
 }
 
-func newSchemaPool(f JSONLoaderFactory) *schemaPool {
+func (p *schemaPool) parseReferences(document interface{}, ref gojsonreference.JsonReference, pooled bool) error {
 
-	p := &schemaPool{}
-	p.schemaPoolDocuments = make(map[string]*schemaPoolDocument)
-	p.standaloneDocument = nil
-	p.jsonLoaderFactory = f
+	var (
+		draft     *Draft
+		err       error
+		reference = ref.String()
+	)
+	// Only the root document should be added to the schema pool if pooled is true
+	if _, ok := p.schemaPoolDocuments[reference]; pooled && ok {
+		return fmt.Errorf("Reference already exists: \"%s\"", reference)
+	}
 
-	return p
+	if *p.autoDetect {
+		_, draft, err = parseSchemaURL(document)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = p.parseReferencesRecursive(document, ref, draft)
+
+	if pooled {
+		p.schemaPoolDocuments[reference] = &schemaPoolDocument{Document: document, Draft: draft}
+	}
+
+	return err
 }
 
-func (p *schemaPool) SetStandaloneDocument(document interface{}) {
-	p.standaloneDocument = document
-}
+func (p *schemaPool) parseReferencesRecursive(document interface{}, ref gojsonreference.JsonReference, draft *Draft) error {
+	// parseReferencesRecursive parses a JSON document and resolves all $id and $ref references.
+	// For $ref references it takes into account the $id scope it is in and replaces
+	// the reference by the absolute resolved reference
 
-func (p *schemaPool) GetStandaloneDocument() (document interface{}) {
-	return p.standaloneDocument
+	// When encountering errors it fails silently. Error handling is done when the schema
+	// is syntactically parsed and any error encountered here should also come up there.
+	switch m := document.(type) {
+	case []interface{}:
+		for _, v := range m {
+			p.parseReferencesRecursive(v, ref, draft)
+		}
+	case map[string]interface{}:
+		localRef := &ref
+
+		keyID := KEY_ID_NEW
+		if existsMapKey(m, KEY_ID) {
+			keyID = KEY_ID
+		}
+		if existsMapKey(m, keyID) && isKind(m[keyID], reflect.String) {
+			jsonReference, err := gojsonreference.NewJsonReference(m[keyID].(string))
+			if err == nil {
+				localRef, err = ref.Inherits(jsonReference)
+				if err == nil {
+					if _, ok := p.schemaPoolDocuments[localRef.String()]; ok {
+						return fmt.Errorf("Reference already exists: \"%s\"", localRef.String())
+					}
+					p.schemaPoolDocuments[localRef.String()] = &schemaPoolDocument{Document: document, Draft: draft}
+				}
+			}
+		}
+
+		if existsMapKey(m, KEY_REF) && isKind(m[KEY_REF], reflect.String) {
+			jsonReference, err := gojsonreference.NewJsonReference(m[KEY_REF].(string))
+			if err == nil {
+				absoluteRef, err := localRef.Inherits(jsonReference)
+				if err == nil {
+					m[KEY_REF] = absoluteRef.String()
+				}
+			}
+		}
+
+		for k, v := range m {
+			// const and enums should be interpreted literally, so ignore them
+			if k == KEY_CONST || k == KEY_ENUM {
+				continue
+			}
+			// Something like a property or a dependency is not a valid schema, as it might describe properties named "$ref", "$id" or "const", etc
+			// Therefore don't treat it like a schema.
+			if k == KEY_PROPERTIES || k == KEY_DEPENDENCIES || k == KEY_PATTERN_PROPERTIES {
+				if child, ok := v.(map[string]interface{}); ok {
+					for _, v := range child {
+						p.parseReferencesRecursive(v, *localRef, draft)
+					}
+				}
+			} else {
+				p.parseReferencesRecursive(v, *localRef, draft)
+			}
+		}
+	}
+	return nil
 }
 
 func (p *schemaPool) GetDocument(reference gojsonreference.JsonReference) (*schemaPoolDocument, error) {
+
+	var (
+		spd   *schemaPoolDocument
+		draft *Draft
+		ok    bool
+		err   error
+	)
 
 	if internalLogEnabled {
 		internalLog("Get Document ( %s )", reference.String())
 	}
 
-	var err error
+	// Create a deep copy, so we can remove the fragment part later on without altering the original
+	refToUrl, _ := gojsonreference.NewJsonReference(reference.String())
 
-	// It is not possible to load anything that is not canonical...
-	if !reference.IsCanonical() {
-		return nil, errors.New(formatErrorDescription(
-			Locale.ReferenceMustBeCanonical(),
-			ErrorDetails{"reference": reference},
-		))
-	}
+	// First check if the given fragment is a location independent identifier
+	// http://json-schema.org/latest/json-schema-core.html#rfc.section.8.2.3
 
-	refToUrl := reference
-	refToUrl.GetUrl().Fragment = ""
-
-	var spd *schemaPoolDocument
-
-	// Try to find the requested document in the pool
-	for k := range p.schemaPoolDocuments {
-		if k == refToUrl.String() {
-			spd = p.schemaPoolDocuments[k]
-		}
-	}
-
-	if spd != nil {
+	if spd, ok = p.schemaPoolDocuments[refToUrl.String()]; ok {
 		if internalLogEnabled {
 			internalLog(" From pool")
 		}
 		return spd, nil
 	}
 
+	// If the given reference is not a location independent identifier,
+	// strip the fragment and look for a document with it's base URI
+
+	refToUrl.GetUrl().Fragment = ""
+
+	if cachedSpd, ok := p.schemaPoolDocuments[refToUrl.String()]; ok {
+		document, _, err := reference.GetPointer().Get(cachedSpd.Document)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if internalLogEnabled {
+			internalLog(" From pool")
+		}
+
+		spd = &schemaPoolDocument{Document: document, Draft: cachedSpd.Draft}
+		p.schemaPoolDocuments[reference.String()] = spd
+
+		return spd, nil
+	}
+
+	// It is not possible to load anything remotely that is not canonical...
+	if !reference.IsCanonical() {
+		return nil, errors.New(formatErrorDescription(
+			Locale.ReferenceMustBeCanonical(),
+			ErrorDetails{"reference": reference.String()},
+		))
+	}
+
 	jsonReferenceLoader := p.jsonLoaderFactory.New(reference.String())
 	document, err := jsonReferenceLoader.LoadJSON()
+
 	if err != nil {
 		return nil, err
 	}
 
-	spd = &schemaPoolDocument{Document: document}
-	// add the document to the pool for potential later use
-	p.schemaPoolDocuments[refToUrl.String()] = spd
+	// add the whole document to the pool for potential re-use
+	p.parseReferences(document, refToUrl, true)
 
-	return spd, nil
+	_, draft, _ = parseSchemaURL(document)
+
+	// resolve the potential fragment and also cache it
+	document, _, err = reference.GetPointer().Get(document)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &schemaPoolDocument{Document: document, Draft: draft}, nil
 }

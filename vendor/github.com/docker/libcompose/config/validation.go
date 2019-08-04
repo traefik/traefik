@@ -201,7 +201,7 @@ func generateErrorMessages(serviceMap RawServiceMap, schema map[string]interface
 			if err.Context().String() == "(root)" {
 				switch err.Type() {
 				case "additional_property_not_allowed":
-					validationErrors = append(validationErrors, fmt.Sprintf("Invalid service name '%s' - only [a-zA-Z0-9\\._\\-] characters are allowed", err.Field()))
+					validationErrors = append(validationErrors, fmt.Sprintf("Invalid service name '%s' - only [a-zA-Z0-9\\._\\-] characters are allowed", err.Details()["property"]))
 				default:
 					validationErrors = append(validationErrors, err.Description())
 				}
@@ -213,7 +213,7 @@ func generateErrorMessages(serviceMap RawServiceMap, schema map[string]interface
 
 				switch err.Type() {
 				case "additional_property_not_allowed":
-					validationErrors = append(validationErrors, unsupportedConfigMessage(key, result.Errors()[i+1]))
+					validationErrors = append(validationErrors, unsupportedConfigMessage(result.Errors()[i].Details()["property"].(string), result.Errors()[i]))
 				case "number_one_of":
 					validationErrors = append(validationErrors, fmt.Sprintf("Service '%s' configuration key '%s' %s", serviceName, key, oneOfMessage(serviceMap, schema, err, result.Errors()[i+1])))
 

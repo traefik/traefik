@@ -102,20 +102,20 @@
   version = "v0.4.2"
 
 [[projects]]
+  digest = "1:6b6d999be55cc0e0704ed0ac4532175f1f71639fbda6d143dc86ac5a5d3bc87f"
+  name = "github.com/Microsoft/hcsshim"
+  packages = ["osversion"]
+  pruneopts = "NUT"
+  revision = "f92b8fb9c92e17da496af5a69e3ee13fbe9916e1"
+  version = "v0.8.6"
+
+[[projects]]
   branch = "master"
   digest = "1:d484472e9af62758e3963ee4d8112d5da58cd61833d71e3c1d25165a96d4518a"
   name = "github.com/NYTimes/gziphandler"
   packages = ["."]
   pruneopts = "NUT"
   revision = "289a3b81f5aedc99f8d6eb0f67827c142f1310d8"
-
-[[projects]]
-  digest = "1:1b532462adeb680f8526152d0bc1baa203ce6b63b13070b9f9bd5812ef74dfce"
-  name = "github.com/Nvveen/Gotty"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "a8b993ba6abdb0e0c12b0125c603323a71c7790c"
-  source = "github.com/ijc25/Gotty"
 
 [[projects]]
   branch = "master"
@@ -278,11 +278,16 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fc8dbcc2a5de7c093e167828ebbdf551641761d2ad75431d3a167d467a264115"
+  digest = "1:835fc727705e8cf858ea44ad9bd872ff826d1c6b019598e0f9a64c9b942a947b"
   name = "github.com/containerd/continuity"
-  packages = ["pathdriver"]
+  packages = [
+    "fs",
+    "pathdriver",
+    "syscallx",
+    "sysx",
+  ]
   pruneopts = "NUT"
-  revision = "b2b946a77f5973f420514090d6f6dd58b08303f0"
+  revision = "aaeac12a7ffcd198ae25440a9dff125c2e2703a7"
 
 [[projects]]
   branch = "containous-fork"
@@ -357,18 +362,19 @@
   version = "v0.21.0"
 
 [[projects]]
-  digest = "1:0dc6b5da1a067f7d9e56498cf18b5364d1db45f2c57b5ba3c3bad785a6688c88"
+  digest = "1:067906552492b3c4a94057ba33279ad1af906a701be3b7d6a92a9478c25fc24f"
   name = "github.com/docker/cli"
   packages = [
     "cli/command/image/build",
     "cli/config",
     "cli/config/configfile",
     "cli/config/credentials",
+    "cli/config/types",
     "opts",
   ]
   pruneopts = "NUT"
-  revision = "ec2ecc1c8b0cecbbedb24953b8fb2a24de2fb389"
-  version = "v18.09.8"
+  revision = "5b38d82aa0767e32f53b5821a9a5044f20eeef29"
+  version = "v19.03.1"
 
 [[projects]]
   digest = "1:26a1d70717dac8c37ae869d86103b9d72b71a6faf383a5e9b5b7e602c9b9743b"
@@ -392,7 +398,7 @@
   version = "v2.7.1"
 
 [[projects]]
-  digest = "1:ee46d910505730aa678be5e847bc3069f3b7d77af7f95675263d0870f4676b27"
+  digest = "1:c2ec28361058cb8c28c4a9b9a505fb403e227b1476f24a3006de5135643dd0bb"
   name = "github.com/docker/docker"
   packages = [
     "api",
@@ -439,9 +445,9 @@
     "registry/resumable",
   ]
   pruneopts = "NUT"
-  revision = "456712c5b8d9d92c047f6a7d7cff270527ecac28"
+  revision = "fa8dd90ceb7bcb9d554d27e0b9087ab83e54bd2b"
   source = "github.com/docker/engine"
-  version = "v18.09.8"
+  version = "v19.03.1"
 
 [[projects]]
   digest = "1:8866486038791fe65ea1abf660041423954b1f3fb99ea6a0ad8424422e943458"
@@ -482,8 +488,8 @@
   revision = "9e638d38cf6977a37a8ea0078f3ee75a7cdb2dd1"
 
 [[projects]]
-  branch = "feature/update-engine"
-  digest = "1:7d2d7cc40349c463e8231c93fcaa897f02b2c785c7be93bf81ed37431d78a0fb"
+  branch = "master"
+  digest = "1:374db732c8336336840f94794cb57aa9bb55d5840e76dae8142a7d15272cc126"
   name = "github.com/docker/libcompose"
   packages = [
     "config",
@@ -508,8 +514,7 @@
     "yaml",
   ]
   pruneopts = "NUT"
-  revision = "2982bc454ad376cc507d48e49deb410a028172f7"
-  source = "github.com/ldez/libcompose"
+  revision = "eac9fe1b8b032d757f9e281a19a62195622a5a11"
 
 [[projects]]
   digest = "1:5f4c34ef3ef56be4a7f57cc43d8d219930cbcc82fdff174518703200ad165c0e"
@@ -1180,6 +1185,14 @@
   version = "1.0.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:946bf1e858c4884cc82907463b0579dfd3b84e1b541bd49808d2bcfcb9452be0"
+  name = "github.com/morikuni/aec"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "39771216ff4c63d11f5e604076f9c45e8be1067b"
+
+[[projects]]
   digest = "1:7bb97a5f80a2429fa605e176e16cf682cbb5ac681f421a06efb4e3b8efae6e5f"
   name = "github.com/mvdan/xurls"
   packages = ["."]
@@ -1622,11 +1635,12 @@
   revision = "e02fc20de94c78484cd5ffb007f8af96be030a45"
 
 [[projects]]
-  digest = "1:60e24d485a33cb9bffc041de6a5f1596b8ef8d9a9bb9e9f3834c72fd5a96e76a"
+  digest = "1:5185937abbca299da07bcbeb4e38dfa186c09fbf60042c3d07e0073a0634a78f"
   name = "github.com/xeipuuv/gojsonschema"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
+  revision = "f971f3cd73b2899de6923801c147f075263e0c50"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:aafe0319af5410fb19a23a575ea6ee4b14253e122ef87f936bac65ea1e6b280c"
@@ -1724,6 +1738,14 @@
   ]
   pruneopts = "NUT"
   revision = "ec22f46f877b4505e0117eeaab541714644fdd28"
+
+[[projects]]
+  branch = "master"
+  digest = "1:b521f10a2d8fa85c04a8ef4e62f2d1e14d303599a55d64dabf9f5a02f84d35eb"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  pruneopts = "NUT"
+  revision = "112230192c580c3556b8cee6403af37a4fc5f28c"
 
 [[projects]]
   digest = "1:51bfac9fe01b6a949bfed6db70b00bada281f0d64e5296ec644163aa977bfee0"
