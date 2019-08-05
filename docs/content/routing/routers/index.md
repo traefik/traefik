@@ -453,9 +453,9 @@ http:
       rule: "Host(`snitest.com`) && Path(`/bar`)"
       tls:
         certResolver: "bar"
-      domains:
-      - main: "snitest.com"
-        sans: "*.snitest.com"
+        domains:
+        - main: "snitest.com"
+          sans: "*.snitest.com"
 ```
 
 [ACME v2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
@@ -746,7 +746,7 @@ tcp:
       rule: "HostSNI(`snitest.com`)"
       tls:
         certResolver: "bar"
-      domains:
-      - main: "snitest.com"
-        sans: "*.snitest.com"
+        domains:
+        - main: "snitest.com"
+          sans: "*.snitest.com"
 ```
