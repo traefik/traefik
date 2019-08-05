@@ -76,20 +76,20 @@ func (client *Client) DescribeDomainGroupsWithCallback(request *DescribeDomainGr
 // DescribeDomainGroupsRequest is the request struct for api DescribeDomainGroups
 type DescribeDomainGroupsRequest struct {
 	*requests.RpcRequest
-	Lang         string           `position:"Query" name:"Lang"`
 	UserClientIp string           `position:"Query" name:"UserClientIp"`
+	PageSize     requests.Integer `position:"Query" name:"PageSize"`
+	Lang         string           `position:"Query" name:"Lang"`
 	KeyWord      string           `position:"Query" name:"KeyWord"`
 	PageNumber   requests.Integer `position:"Query" name:"PageNumber"`
-	PageSize     requests.Integer `position:"Query" name:"PageSize"`
 }
 
 // DescribeDomainGroupsResponse is the response struct for api DescribeDomainGroups
 type DescribeDomainGroupsResponse struct {
 	*responses.BaseResponse
 	RequestId    string       `json:"RequestId" xml:"RequestId"`
-	TotalCount   int          `json:"TotalCount" xml:"TotalCount"`
-	PageNumber   int          `json:"PageNumber" xml:"PageNumber"`
-	PageSize     int          `json:"PageSize" xml:"PageSize"`
+	TotalCount   int64        `json:"TotalCount" xml:"TotalCount"`
+	PageNumber   int64        `json:"PageNumber" xml:"PageNumber"`
+	PageSize     int64        `json:"PageSize" xml:"PageSize"`
 	DomainGroups DomainGroups `json:"DomainGroups" xml:"DomainGroups"`
 }
 
@@ -98,7 +98,7 @@ func CreateDescribeDomainGroupsRequest() (request *DescribeDomainGroupsRequest) 
 	request = &DescribeDomainGroupsRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Alidns", "2015-01-09", "DescribeDomainGroups", "", "")
+	request.InitWithApiInfo("Alidns", "2015-01-09", "DescribeDomainGroups", "Alidns", "openAPI")
 	return
 }
 

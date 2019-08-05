@@ -1,6 +1,7 @@
 package dynamodbattribute
 
 import (
+	"encoding/base64"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -16,7 +17,7 @@ import (
 // 			Value int
 // 		}
 //
-// 		func (u *exampleUnmarshaler) UnmarshalDynamoDBAttributeValue(av *dynamodb.AttributeValue) error {
+// 		func (u *ExampleUnmarshaler) UnmarshalDynamoDBAttributeValue(av *dynamodb.AttributeValue) error {
 // 			if av.N == nil {
 // 				return nil
 // 			}
@@ -26,7 +27,7 @@ import (
 // 				return err
 // 			}
 //
-// 			u.Value = n
+// 			u.Value = int(n)
 // 			return nil
 // 		}
 type Unmarshaler interface {
@@ -538,6 +539,16 @@ func (d *Decoder) decodeString(s *string, v reflect.Value, fieldTag tag) error {
 	switch v.Kind() {
 	case reflect.String:
 		v.SetString(*s)
+	case reflect.Slice:
+		// To maintain backwards compatibility with the ConvertFrom family of methods
+		// which converted []byte into base64-encoded strings if the input was typed
+		if v.Type() == byteSliceType {
+			decoded, err := base64.StdEncoding.DecodeString(*s)
+			if err != nil {
+				return &UnmarshalError{Err: err, Value: "string", Type: v.Type()}
+			}
+			v.SetBytes(decoded)
+		}
 	case reflect.Interface:
 		// Ensure type aliasing is handled properly
 		v.Set(reflect.ValueOf(*s).Convert(v.Type()))
@@ -727,9 +738,9 @@ func (e *InvalidUnmarshalError) Message() string {
 	return "cannot unmarshal to nil value, " + e.Type.String()
 }
 
-// An UnmarshalError wraps an error that occured while unmarshaling a DynamoDB
+// An UnmarshalError wraps an error that occurred while unmarshaling a DynamoDB
 // AttributeValue element into a Go type. This is different from UnmarshalTypeError
-// in that it wraps the underlying error that occured.
+// in that it wraps the underlying error that occurred.
 type UnmarshalError struct {
 	Err   error
 	Value string

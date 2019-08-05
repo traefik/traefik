@@ -20,17 +20,14 @@ var (
 	archiveLatestStableCentOS6Tags                         = []string{"distro-centos", "distro-ver-6.10"}
 	archiveLatestStableUbuntuTags                          = []string{"current-stable", "distro-ubuntu"}
 	archiveLatestStableDebianTags                          = []string{"current-stable", "distro-debian"}
-	archiveLatestStableVyOSTags                            = []string{"current-stable", "distro-vyos"}
 	archiveLatestStableCoreOSTags                          = []string{"current-stable", "distro-coreos"}
 	archiveLatestStableRancherOSTags                       = []string{"current-stable", "distro-rancheros"}
+	archiveLatestStableK3OSTags                            = []string{"current-stable", "distro-k3os"}
 	archiveLatestStableKusanagiTags                        = []string{"current-stable", "pkg-kusanagi"}
 	archiveLatestStableSophosUTMTags                       = []string{"current-stable", "pkg-sophosutm"}
 	archiveLatestStableFreeBSDTags                         = []string{"current-stable", "distro-freebsd"}
 	archiveLatestStableNetwiserTags                        = []string{"current-stable", "pkg-netwiserve"}
 	archiveLatestStableOPNsenseTags                        = []string{"current-stable", "distro-opnsense"}
-	archiveLatestStableWindows2012Tags                     = []string{"os-windows", "distro-ver-2012.2"}
-	archiveLatestStableWindows2012RDSTags                  = []string{"os-windows", "distro-ver-2012.2", "windows-rds"}
-	archiveLatestStableWindows2012RDSOfficeTags            = []string{"os-windows", "distro-ver-2012.2", "windows-rds", "with-office"}
 	archiveLatestStableWindows2016Tags                     = []string{"os-windows", "distro-ver-2016"}
 	archiveLatestStableWindows2016RDSTags                  = []string{"os-windows", "distro-ver-2016", "windows-rds"}
 	archiveLatestStableWindows2016RDSOfficeTags            = []string{"os-windows", "distro-ver-2016", "windows-rds", "with-office"}
@@ -58,17 +55,14 @@ func NewArchiveAPI(client *Client) *ArchiveAPI {
 		ostype.CentOS6:                             api.FindLatestStableCentOS6,
 		ostype.Ubuntu:                              api.FindLatestStableUbuntu,
 		ostype.Debian:                              api.FindLatestStableDebian,
-		ostype.VyOS:                                api.FindLatestStableVyOS,
 		ostype.CoreOS:                              api.FindLatestStableCoreOS,
 		ostype.RancherOS:                           api.FindLatestStableRancherOS,
+		ostype.K3OS:                                api.FindLatestStableK3OS,
 		ostype.Kusanagi:                            api.FindLatestStableKusanagi,
 		ostype.SophosUTM:                           api.FindLatestStableSophosUTM,
 		ostype.FreeBSD:                             api.FindLatestStableFreeBSD,
 		ostype.Netwiser:                            api.FindLatestStableNetwiser,
 		ostype.OPNsense:                            api.FindLatestStableOPNsense,
-		ostype.Windows2012:                         api.FindLatestStableWindows2012,
-		ostype.Windows2012RDS:                      api.FindLatestStableWindows2012RDS,
-		ostype.Windows2012RDSOffice:                api.FindLatestStableWindows2012RDSOffice,
 		ostype.Windows2016:                         api.FindLatestStableWindows2016,
 		ostype.Windows2016RDS:                      api.FindLatestStableWindows2016RDS,
 		ostype.Windows2016RDSOffice:                api.FindLatestStableWindows2016RDSOffice,
@@ -245,11 +239,6 @@ func (api *ArchiveAPI) FindLatestStableUbuntu() (*sacloud.Archive, error) {
 	return api.findByOSTags(archiveLatestStableUbuntuTags)
 }
 
-// FindLatestStableVyOS 安定版最新のVyOSパブリックアーカイブを取得
-func (api *ArchiveAPI) FindLatestStableVyOS() (*sacloud.Archive, error) {
-	return api.findByOSTags(archiveLatestStableVyOSTags)
-}
-
 // FindLatestStableCoreOS 安定版最新のCoreOSパブリックアーカイブを取得
 func (api *ArchiveAPI) FindLatestStableCoreOS() (*sacloud.Archive, error) {
 	return api.findByOSTags(archiveLatestStableCoreOSTags)
@@ -258,6 +247,11 @@ func (api *ArchiveAPI) FindLatestStableCoreOS() (*sacloud.Archive, error) {
 // FindLatestStableRancherOS 安定版最新のRancherOSパブリックアーカイブを取得
 func (api *ArchiveAPI) FindLatestStableRancherOS() (*sacloud.Archive, error) {
 	return api.findByOSTags(archiveLatestStableRancherOSTags)
+}
+
+// FindLatestStableK3OS 安定版最新のk3OSパブリックアーカイブを取得
+func (api *ArchiveAPI) FindLatestStableK3OS() (*sacloud.Archive, error) {
+	return api.findByOSTags(archiveLatestStableK3OSTags)
 }
 
 // FindLatestStableKusanagi 安定版最新のKusanagiパブリックアーカイブを取得
@@ -283,27 +277,6 @@ func (api *ArchiveAPI) FindLatestStableNetwiser() (*sacloud.Archive, error) {
 // FindLatestStableOPNsense 安定版最新のOPNsenseパブリックアーカイブを取得
 func (api *ArchiveAPI) FindLatestStableOPNsense() (*sacloud.Archive, error) {
 	return api.findByOSTags(archiveLatestStableOPNsenseTags)
-}
-
-// FindLatestStableWindows2012 安定版最新のWindows2012パブリックアーカイブを取得
-func (api *ArchiveAPI) FindLatestStableWindows2012() (*sacloud.Archive, error) {
-	return api.findByOSTags(archiveLatestStableWindows2012Tags, map[string]interface{}{
-		"Name": "Windows Server 2012 R2 Datacenter Edition",
-	})
-}
-
-// FindLatestStableWindows2012RDS 安定版最新のWindows2012RDSパブリックアーカイブを取得
-func (api *ArchiveAPI) FindLatestStableWindows2012RDS() (*sacloud.Archive, error) {
-	return api.findByOSTags(archiveLatestStableWindows2012RDSTags, map[string]interface{}{
-		"Name": "Windows Server 2012 R2 for RDS",
-	})
-}
-
-// FindLatestStableWindows2012RDSOffice 安定版最新のWindows2012RDS(Office)パブリックアーカイブを取得
-func (api *ArchiveAPI) FindLatestStableWindows2012RDSOffice() (*sacloud.Archive, error) {
-	return api.findByOSTags(archiveLatestStableWindows2012RDSOfficeTags, map[string]interface{}{
-		"Name": "Windows Server 2012 R2 for RDS(MS Office付)",
-	})
 }
 
 // FindLatestStableWindows2016 安定版最新のWindows2016パブリックアーカイブを取得

@@ -8,7 +8,7 @@ const (
 	// "BackupInUseException".
 	//
 	// There is another ongoing conflicting backup control plane operation on the
-	// table. The backups is either being created, deleted or restored to a table.
+	// table. The backup is either being created, deleted or restored to a table.
 	ErrCodeBackupInUseException = "BackupInUseException"
 
 	// ErrCodeBackupNotFoundException for service response error code
@@ -41,6 +41,13 @@ const (
 	// The specified global table does not exist.
 	ErrCodeGlobalTableNotFoundException = "GlobalTableNotFoundException"
 
+	// ErrCodeIdempotentParameterMismatchException for service response error code
+	// "IdempotentParameterMismatchException".
+	//
+	// DynamoDB rejected the request because you retried a request with a different
+	// payload but with an idempotent token that was already used.
+	ErrCodeIdempotentParameterMismatchException = "IdempotentParameterMismatchException"
+
 	// ErrCodeIndexNotFoundException for service response error code
 	// "IndexNotFoundException".
 	//
@@ -70,18 +77,18 @@ const (
 	// ErrCodeLimitExceededException for service response error code
 	// "LimitExceededException".
 	//
-	// Up to 50 CreateBackup operations are allowed per second, per account. There
-	// is no limit to the number of daily on-demand backups that can be taken.
+	// There is no limit to the number of daily on-demand backups that can be taken.
 	//
-	// Up to 10 simultaneous table operations are allowed per account. These operations
+	// Up to 50 simultaneous table operations are allowed per account. These operations
 	// include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 	// and RestoreTableToPointInTime.
 	//
-	// For tables with secondary indexes, only one of those tables can be in the
-	// CREATING state at any point in time. Do not attempt to create more than one
-	// such table simultaneously.
+	// The only exception is when you are creating a table with one or more secondary
+	// indexes. You can have up to 25 such requests running at a time; however,
+	// if the table or index specifications are complex, DynamoDB might temporarily
+	// reduce the number of concurrent operations.
 	//
-	// The total limit of tables in the ACTIVE state is 250.
+	// There is a soft account limit of 256 tables.
 	ErrCodeLimitExceededException = "LimitExceededException"
 
 	// ErrCodePointInTimeRecoveryUnavailableException for service response error code
@@ -97,7 +104,7 @@ const (
 	// requests that receive this exception. Your request is eventually successful,
 	// unless your retry queue is too large to finish. Reduce the frequency of requests
 	// and use exponential backoff. For more information, go to Error Retries and
-	// Exponential Backoff (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
+	// Exponential Backoff (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
 	// in the Amazon DynamoDB Developer Guide.
 	ErrCodeProvisionedThroughputExceededException = "ProvisionedThroughputExceededException"
 
@@ -112,6 +119,14 @@ const (
 	//
 	// The specified replica is no longer part of the global table.
 	ErrCodeReplicaNotFoundException = "ReplicaNotFoundException"
+
+	// ErrCodeRequestLimitExceeded for service response error code
+	// "RequestLimitExceeded".
+	//
+	// Throughput exceeds the current throughput limit for your account. Please
+	// contact AWS Support at AWS Support (https://aws.amazon.com/support) to request
+	// a limit increase.
+	ErrCodeRequestLimitExceeded = "RequestLimitExceeded"
 
 	// ErrCodeResourceInUseException for service response error code
 	// "ResourceInUseException".
@@ -146,4 +161,110 @@ const (
 	// A source table with the name TableName does not currently exist within the
 	// subscriber's account.
 	ErrCodeTableNotFoundException = "TableNotFoundException"
+
+	// ErrCodeTransactionCanceledException for service response error code
+	// "TransactionCanceledException".
+	//
+	// The entire transaction request was canceled.
+	//
+	// DynamoDB cancels a TransactWriteItems request under the following circumstances:
+	//
+	//    * A condition in one of the condition expressions is not met.
+	//
+	//    * A table in the TransactWriteItems request is in a different account
+	//    or region.
+	//
+	//    * More than one action in the TransactWriteItems operation targets the
+	//    same item.
+	//
+	//    * There is insufficient provisioned capacity for the transaction to be
+	//    completed.
+	//
+	//    * An item size becomes too large (larger than 400 KB), or a local secondary
+	//    index (LSI) becomes too large, or a similar validation error occurs because
+	//    of changes made by the transaction.
+	//
+	//    * The aggregate size of the items in the transaction exceeds 4 MBs.
+	//
+	//    * There is a user error, such as an invalid data format.
+	//
+	// DynamoDB cancels a TransactGetItems request under the following circumstances:
+	//
+	//    * There is an ongoing TransactGetItems operation that conflicts with a
+	//    concurrent PutItem, UpdateItem, DeleteItem or TransactWriteItems request.
+	//    In this case the TransactGetItems operation fails with a TransactionCanceledException.
+	//
+	//    * A table in the TransactGetItems request is in a different account or
+	//    region.
+	//
+	//    * There is insufficient provisioned capacity for the transaction to be
+	//    completed.
+	//
+	//    * The aggregate size of the items in the transaction exceeds 4 MBs.
+	//
+	//    * There is a user error, such as an invalid data format.
+	//
+	// If using Java, DynamoDB lists the cancellation reasons on the CancellationReasons
+	// property. This property is not set for other languages. Transaction cancellation
+	// reasons are ordered in the order of requested items, if an item has no error
+	// it will have NONE code and Null message.
+	//
+	// Cancellation reason codes and possible error messages:
+	//
+	//    * No Errors: Code: NONE Message: null
+	//
+	//    * Conditional Check Failed: Code: ConditionalCheckFailed Message: The
+	//    conditional request failed.
+	//
+	//    * Item Collection Size Limit Exceeded: Code: ItemCollectionSizeLimitExceeded
+	//    Message: Collection size exceeded.
+	//
+	//    * Transaction Conflict: Code: TransactionConflict Message: Transaction
+	//    is ongoing for the item.
+	//
+	//    * Provisioned Throughput Exceeded: Code: ProvisionedThroughputExceeded
+	//    Messages: The level of configured provisioned throughput for the table
+	//    was exceeded. Consider increasing your provisioning level with the UpdateTable
+	//    API. This Message is received when provisioned throughput is exceeded
+	//    is on a provisioned DynamoDB table. The level of configured provisioned
+	//    throughput for one or more global secondary indexes of the table was exceeded.
+	//    Consider increasing your provisioning level for the under-provisioned
+	//    global secondary indexes with the UpdateTable API. This message is returned
+	//    when provisioned throughput is exceeded is on a provisioned GSI.
+	//
+	//    * Throttling Error: Code: ThrottlingError Messages: Throughput exceeds
+	//    the current capacity of your table or index. DynamoDB is automatically
+	//    scaling your table or index so please try again shortly. If exceptions
+	//    persist, check if you have a hot key: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html.
+	//    This message is returned when writes get throttled on an On-Demand table
+	//    as DynamoDB is automatically scaling the table. Throughput exceeds the
+	//    current capacity for one or more global secondary indexes. DynamoDB is
+	//    automatically scaling your index so please try again shortly. This message
+	//    is returned when when writes get throttled on an On-Demand GSI as DynamoDB
+	//    is automatically scaling the GSI.
+	//
+	//    * Validation Error: Code: ValidationError Messages: One or more parameter
+	//    values were invalid. The update expression attempted to update the secondary
+	//    index key beyond allowed size limits. The update expression attempted
+	//    to update the secondary index key to unsupported type. An operand in the
+	//    update expression has an incorrect data type. Item size to update has
+	//    exceeded the maximum allowed size. Number overflow. Attempting to store
+	//    a number with magnitude larger than supported range. Type mismatch for
+	//    attribute to update. Nesting Levels have exceeded supported limits. The
+	//    document path provided in the update expression is invalid for update.
+	//    The provided expression refers to an attribute that does not exist in
+	//    the item.
+	ErrCodeTransactionCanceledException = "TransactionCanceledException"
+
+	// ErrCodeTransactionConflictException for service response error code
+	// "TransactionConflictException".
+	//
+	// Operation was rejected because there is an ongoing transaction for the item.
+	ErrCodeTransactionConflictException = "TransactionConflictException"
+
+	// ErrCodeTransactionInProgressException for service response error code
+	// "TransactionInProgressException".
+	//
+	// The transaction with the given request token is already in progress.
+	ErrCodeTransactionInProgressException = "TransactionInProgressException"
 )

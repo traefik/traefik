@@ -100,7 +100,7 @@ func (s *TldsService) GetTld(tld string) (*tldResponse, error) {
 	return tldResponse, nil
 }
 
-// GetTld fetches the extended attributes of a TLD.
+// GetTldExtendedAttributes fetches the extended attributes of a TLD.
 //
 // See https://developer.dnsimple.com/v2/tlds/#get
 func (s *TldsService) GetTldExtendedAttributes(tld string) (*tldExtendedAttributesResponse, error) {

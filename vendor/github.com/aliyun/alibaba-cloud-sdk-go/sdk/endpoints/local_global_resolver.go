@@ -16,11 +16,17 @@ package endpoints
 
 import (
 	"fmt"
-	"github.com/jmespath/go-jmespath"
 	"strings"
+
+	"github.com/jmespath/go-jmespath"
 )
 
 type LocalGlobalResolver struct {
+}
+
+func (resolver *LocalGlobalResolver) GetName() (name string) {
+	name = "local global resolver"
+	return
 }
 
 func (resolver *LocalGlobalResolver) TryResolve(param *ResolveParam) (endpoint string, support bool, err error) {
@@ -30,7 +36,7 @@ func (resolver *LocalGlobalResolver) TryResolve(param *ResolveParam) (endpoint s
 	if err == nil && endpointData != nil && len(endpointData.([]interface{})) > 0 {
 		endpoint = endpointData.([]interface{})[0].(string)
 		support = len(endpoint) > 0
-		return endpoint, support, nil
+		return
 	}
 	support = false
 	return

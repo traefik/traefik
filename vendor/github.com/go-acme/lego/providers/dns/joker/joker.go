@@ -18,6 +18,8 @@ type Config struct {
 	Debug              bool
 	BaseURL            string
 	APIKey             string
+	Username           string
+	Password           string
 	PropagationTimeout time.Duration
 	PollingInterval    time.Duration
 	TTL                int
@@ -50,11 +52,17 @@ type DNSProvider struct {
 func NewDNSProvider() (*DNSProvider, error) {
 	values, err := env.Get("JOKER_API_KEY")
 	if err != nil {
-		return nil, fmt.Errorf("joker: %v", err)
+		var errU error
+		values, errU = env.Get("JOKER_USERNAME", "JOKER_PASSWORD")
+		if errU != nil {
+			return nil, fmt.Errorf("joker: %v or %v", errU, err)
+		}
 	}
 
 	config := NewDefaultConfig()
 	config.APIKey = values["JOKER_API_KEY"]
+	config.Username = values["JOKER_USERNAME"]
+	config.Password = values["JOKER_PASSWORD"]
 
 	return NewDNSProviderConfig(config)
 }
@@ -66,7 +74,9 @@ func NewDNSProviderConfig(config *Config) (*DNSProvider, error) {
 	}
 
 	if config.APIKey == "" {
-		return nil, fmt.Errorf("joker: credentials missing")
+		if config.Username == "" || config.Password == "" {
+			return nil, fmt.Errorf("joker: credentials missing")
+		}
 	}
 
 	if !strings.HasSuffix(config.BaseURL, "/") {

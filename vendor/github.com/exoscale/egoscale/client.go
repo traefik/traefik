@@ -9,9 +9,17 @@ import (
 	"net/http/httputil"
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
 	"time"
 )
+
+// UserAgent is the "User-Agent" HTTP request header added to outgoing HTTP requests.
+var UserAgent = fmt.Sprintf("egoscale/%s (%s; %s/%s)",
+	Version,
+	runtime.Version(),
+	runtime.GOOS,
+	runtime.GOARCH)
 
 // Taggable represents a resource to which tags can be attached
 //

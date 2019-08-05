@@ -196,6 +196,15 @@ func (api *ProxyLBAPI) DeleteCertificates(id int64) (bool, error) {
 	return api.baseAPI.modify(method, uri, nil)
 }
 
+// RenewLetsEncryptCert 証明書更新
+func (api *ProxyLBAPI) RenewLetsEncryptCert(id int64) (bool, error) {
+	var (
+		method = "PUT"
+		uri    = fmt.Sprintf("%s/%d/proxylb/letsencryptrenew", api.getResourceURL(), id)
+	)
+	return api.baseAPI.modify(method, uri, nil)
+}
+
 type proxyLBHealthResponse struct {
 	*sacloud.ResultFlagValue
 	ProxyLB *sacloud.ProxyLBStatus `json:",omitempty"`

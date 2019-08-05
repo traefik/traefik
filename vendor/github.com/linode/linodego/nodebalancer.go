@@ -28,6 +28,9 @@ type NodeBalancer struct {
 	// Information about the amount of transfer this NodeBalancer has had so far this month.
 	Transfer NodeBalancerTransfer `json:"transfer"`
 
+	// An array of tags applied to this object. Tags are for organizational purposes only.
+	Tags []string `json:"tags"`
+
 	Created *time.Time `json:"-"`
 	Updated *time.Time `json:"-"`
 }
@@ -48,12 +51,14 @@ type NodeBalancerCreateOptions struct {
 	Region             string                             `json:"region,omitempty"`
 	ClientConnThrottle *int                               `json:"client_conn_throttle,omitempty"`
 	Configs            []*NodeBalancerConfigCreateOptions `json:"configs,omitempty"`
+	Tags               []string                           `json:"tags"`
 }
 
 // NodeBalancerUpdateOptions are the options permitted for UpdateNodeBalancer
 type NodeBalancerUpdateOptions struct {
-	Label              *string `json:"label,omitempty"`
-	ClientConnThrottle *int    `json:"client_conn_throttle,omitempty"`
+	Label              *string   `json:"label,omitempty"`
+	ClientConnThrottle *int      `json:"client_conn_throttle,omitempty"`
+	Tags               *[]string `json:"tags,omitempty"`
 }
 
 // GetCreateOptions converts a NodeBalancer to NodeBalancerCreateOptions for use in CreateNodeBalancer
@@ -62,6 +67,7 @@ func (i NodeBalancer) GetCreateOptions() NodeBalancerCreateOptions {
 		Label:              i.Label,
 		Region:             i.Region,
 		ClientConnThrottle: &i.ClientConnThrottle,
+		Tags:               i.Tags,
 	}
 }
 
@@ -70,6 +76,7 @@ func (i NodeBalancer) GetUpdateOptions() NodeBalancerUpdateOptions {
 	return NodeBalancerUpdateOptions{
 		Label:              i.Label,
 		ClientConnThrottle: &i.ClientConnThrottle,
+		Tags:               &i.Tags,
 	}
 }
 

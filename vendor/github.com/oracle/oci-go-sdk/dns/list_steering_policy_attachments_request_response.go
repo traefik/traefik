@@ -1,4 +1,4 @@
-// Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2016, 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 // Code generated. DO NOT EDIT.
 
 package dns
@@ -27,11 +27,11 @@ type ListSteeringPolicyAttachmentsRequest struct {
 	DisplayName *string `mandatory:"false" contributesTo:"query" name:"displayName"`
 
 	// Search by steering policy OCID.
-	// Will match any resource whose steering policy id matches the provided value.
+	// Will match any resource whose steering policy ID matches the provided value.
 	SteeringPolicyId *string `mandatory:"false" contributesTo:"query" name:"steeringPolicyId"`
 
 	// Search by zone OCID.
-	// Will match any resource whose zone id matches the provided value.
+	// Will match any resource whose zone ID matches the provided value.
 	ZoneId *string `mandatory:"false" contributesTo:"query" name:"zoneId"`
 
 	// Search by domain.
@@ -53,7 +53,7 @@ type ListSteeringPolicyAttachmentsRequest struct {
 	// The state of a resource.
 	LifecycleState SteeringPolicyAttachmentSummaryLifecycleStateEnum `mandatory:"false" contributesTo:"query" name:"lifecycleState" omitEmpty:"true"`
 
-	// The field by which to sort steering policy attachments.
+	// The field by which to sort steering policy attachments. If unspecified, defaults to `timeCreated`.
 	SortBy ListSteeringPolicyAttachmentsSortByEnum `mandatory:"false" contributesTo:"query" name:"sortBy" omitEmpty:"true"`
 
 	// The order to sort the resources.
@@ -93,7 +93,7 @@ type ListSteeringPolicyAttachmentsResponse struct {
 
 	// For list pagination. When this header appears in the response, additional pages
 	// of results remain. For important details about how pagination works,
-	// see List Pagination (https://docs.us-phoenix-1.oraclecloud.com/iaas/Content/API/Concepts/usingapi.htm#nine).
+	// see List Pagination (https://docs.cloud.oracle.com/iaas/Content/API/Concepts/usingapi.htm#nine).
 	OpcNextPage *string `presentIn:"header" name:"opc-next-page"`
 
 	// The total number of items that match the query.

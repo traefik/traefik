@@ -15,9 +15,11 @@
 package requests
 
 import (
-	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils"
+	"fmt"
 	"io"
 	"strings"
+
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils"
 )
 
 type RpcRequest struct {
@@ -47,16 +49,12 @@ func (request *RpcRequest) BuildQueries() string {
 	return request.queries
 }
 
-func (request *RpcRequest) GetQueries() string {
-	return request.queries
-}
-
 func (request *RpcRequest) BuildUrl() string {
-	return strings.ToLower(request.Scheme) + "://" + request.Domain + ":" + request.Port + request.BuildQueries()
-}
-
-func (request *RpcRequest) GetUrl() string {
-	return strings.ToLower(request.Scheme) + "://" + request.Domain + request.GetQueries()
+	url := fmt.Sprintf("%s://%s", strings.ToLower(request.Scheme), request.Domain)
+	if len(request.Port) > 0 {
+		url = fmt.Sprintf("%s:%s", url, request.Port)
+	}
+	return url + request.BuildQueries()
 }
 
 func (request *RpcRequest) GetVersion() string {

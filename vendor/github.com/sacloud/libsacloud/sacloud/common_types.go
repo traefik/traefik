@@ -168,6 +168,16 @@ var (
 	}
 )
 
+// ECommitment サーバプランCPUコミットメント
+type ECommitment string
+
+var (
+	// ECommitmentStandard 通常
+	ECommitmentStandard = ECommitment("standard")
+	// ECommitmentDedicatedCPU コア専有
+	ECommitmentDedicatedCPU = ECommitment("dedicatedcpu")
+)
+
 // SakuraCloudResources さくらのクラウド上のリソース種別一覧
 type SakuraCloudResources struct {
 	Server          *Server             `json:",omitempty"`     // サーバー

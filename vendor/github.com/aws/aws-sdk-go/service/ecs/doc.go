@@ -10,7 +10,7 @@
 // tasks using the Fargate launch type. For more control, you can host your
 // tasks on a cluster of Amazon Elastic Compute Cloud (Amazon EC2) instances
 // that you manage by using the EC2 launch type. For more information about
-// launch types, see Amazon ECS Launch Types (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_types.html).
+// launch types, see Amazon ECS Launch Types (https://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_types.html).
 //
 // Amazon ECS lets you launch and stop container-based applications with simple
 // API calls, allows you to get the state of your cluster from a centralized

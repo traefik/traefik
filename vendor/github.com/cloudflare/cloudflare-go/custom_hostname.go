@@ -8,13 +8,22 @@ import (
 	"github.com/pkg/errors"
 )
 
+// CustomHostnameSSLSettings represents the SSL settings for a custom hostname.
+type CustomHostnameSSLSettings struct {
+	HTTP2         string   `json:"http2,omitempty"`
+	TLS13         string   `json:"tls_1_3,omitempty"`
+	MinTLSVersion string   `json:"min_tls_version,omitempty"`
+	Ciphers       []string `json:"ciphers,omitempty"`
+}
+
 // CustomHostnameSSL represents the SSL section in a given custom hostname.
 type CustomHostnameSSL struct {
-	Status      string `json:"status,omitempty"`
-	Method      string `json:"method,omitempty"`
-	Type        string `json:"type,omitempty"`
-	CnameTarget string `json:"cname_target,omitempty"`
-	CnameName   string `json:"cname_name,omitempty"`
+	Status      string                    `json:"status,omitempty"`
+	Method      string                    `json:"method,omitempty"`
+	Type        string                    `json:"type,omitempty"`
+	CnameTarget string                    `json:"cname_target,omitempty"`
+	CnameName   string                    `json:"cname,omitempty"`
+	Settings    CustomHostnameSSLSettings `json:"settings,omitempty"`
 }
 
 // CustomMetadata defines custom metadata for the hostname. This requires logic to be implemented by Cloudflare to act on the data provided.
@@ -28,7 +37,7 @@ type CustomHostname struct {
 	CustomMetadata CustomMetadata    `json:"custom_metadata,omitempty"`
 }
 
-// CustomHostNameResponse represents a response from the Custom Hostnames endpoints.
+// CustomHostnameResponse represents a response from the Custom Hostnames endpoints.
 type CustomHostnameResponse struct {
 	Result CustomHostname `json:"result"`
 	Response
@@ -41,14 +50,16 @@ type CustomHostnameListResponse struct {
 	ResultInfo `json:"result_info"`
 }
 
-// Modify SSL configuration for the given custom hostname in the given zone.
+// UpdateCustomHostnameSSL modifies SSL configuration for the given custom
+// hostname in the given zone.
 //
 // API reference: https://api.cloudflare.com/#custom-hostname-for-a-zone-update-custom-hostname-configuration
 func (api *API) UpdateCustomHostnameSSL(zoneID string, customHostnameID string, ssl CustomHostnameSSL) (CustomHostname, error) {
 	return CustomHostname{}, errors.New("Not implemented")
 }
 
-// Delete a custom hostname (and any issued SSL certificates)
+// DeleteCustomHostname deletes a custom hostname (and any issued SSL
+// certificates).
 //
 // API reference: https://api.cloudflare.com/#custom-hostname-for-a-zone-delete-a-custom-hostname-and-any-issued-ssl-certificates-
 func (api *API) DeleteCustomHostname(zoneID string, customHostnameID string) error {

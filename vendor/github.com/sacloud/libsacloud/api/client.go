@@ -108,6 +108,7 @@ func (c *Client) isOkStatus(code int) bool {
 		411: false,
 		413: false,
 		415: false,
+		423: false,
 		500: false,
 		503: false,
 	}
@@ -257,7 +258,7 @@ func (c *retryableHTTPClient) Do(req *request) (*http.Response, error) {
 		}
 
 		res, err := c.Client.Do(req.Request)
-		if res != nil && res.StatusCode != 503 {
+		if res != nil && res.StatusCode != 503 && res.StatusCode != 423 {
 			return res, err
 		}
 		if res != nil && res.Body != nil {

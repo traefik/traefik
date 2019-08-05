@@ -23,7 +23,7 @@ const (
 	//    the same name as an existing hosted zone or that's the parent or child
 	//    of an existing hosted zone, and you specified a delegation set that shares
 	//    one or more name servers with the existing hosted zone. For more information,
-	//    see CreateReusableDelegationSet.
+	//    see CreateReusableDelegationSet (https://docs.aws.amazon.com/Route53/latest/APIReference/API_CreateReusableDelegationSet.html).
 	//
 	//    * Private hosted zone: You specified an Amazon VPC that you're already
 	//    using for another hosted zone, and the domain that you specified for one
@@ -66,8 +66,8 @@ const (
 	// You can create a hosted zone that has the same name as an existing hosted
 	// zone (example.com is common), but there is a limit to the number of hosted
 	// zones that have the same name. If you get this error, Amazon Route 53 has
-	// reached that limit. If you own the domain name and Amazon Route 53 generates
-	// this error, contact Customer Support.
+	// reached that limit. If you own the domain name and Route 53 generates this
+	// error, contact Customer Support.
 	ErrCodeDelegationSetNotAvailable = "DelegationSetNotAvailable"
 
 	// ErrCodeDelegationSetNotReusable for service response error code
@@ -212,8 +212,9 @@ const (
 	// reached the limit on reusable delegation sets that it can create or because
 	// you've reached the limit on the number of Amazon VPCs that you can associate
 	// with a private hosted zone. To get the current limit on the number of reusable
-	// delegation sets, see GetAccountLimit. To get the current limit on the number
-	// of Amazon VPCs that you can associate with a private hosted zone, see GetHostedZoneLimit.
+	// delegation sets, see GetAccountLimit (https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetAccountLimit.html).
+	// To get the current limit on the number of Amazon VPCs that you can associate
+	// with a private hosted zone, see GetHostedZoneLimit (https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetHostedZoneLimit.html).
 	// To request a higher limit, create a case (http://aws.amazon.com/route53-request)
 	// with the AWS Support Center.
 	ErrCodeLimitsExceeded = "LimitsExceeded"
@@ -239,14 +240,13 @@ const (
 	// ErrCodeNoSuchGeoLocation for service response error code
 	// "NoSuchGeoLocation".
 	//
-	// Amazon Route 53 doesn't support the specified geolocation.
+	// Amazon Route 53 doesn't support the specified geographic location.
 	ErrCodeNoSuchGeoLocation = "NoSuchGeoLocation"
 
 	// ErrCodeNoSuchHealthCheck for service response error code
 	// "NoSuchHealthCheck".
 	//
-	// No health check exists with the ID that you specified in the DeleteHealthCheck
-	// request.
+	// No health check exists with the specified ID.
 	ErrCodeNoSuchHealthCheck = "NoSuchHealthCheck"
 
 	// ErrCodeNoSuchHostedZone for service response error code
@@ -285,8 +285,8 @@ const (
 	//
 	// If Amazon Route 53 can't process a request before the next request arrives,
 	// it will reject subsequent requests for the same hosted zone and return an
-	// HTTP 400 error (Bad request). If Amazon Route 53 returns this error repeatedly
-	// for the same request, we recommend that you wait, in intervals of increasing
+	// HTTP 400 error (Bad request). If Route 53 returns this error repeatedly for
+	// the same request, we recommend that you wait, in intervals of increasing
 	// duration, before you try the request again.
 	ErrCodePriorRequestNotComplete = "PriorRequestNotComplete"
 
@@ -316,10 +316,11 @@ const (
 	// This health check can't be created because the current account has reached
 	// the limit on the number of active health checks.
 	//
-	// For information about default limits, see Limits (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
+	// For information about default limits, see Limits (https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
 	// in the Amazon Route 53 Developer Guide.
 	//
-	// For information about how to get the current limit for an account, see GetAccountLimit.
+	// For information about how to get the current limit for an account, see GetAccountLimit
+	// (https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetAccountLimit.html).
 	// To request a higher limit, create a case (http://aws.amazon.com/route53-request)
 	// with the AWS Support Center.
 	//
@@ -336,14 +337,14 @@ const (
 	// the limit on the number of hosted zones that can be associated with a reusable
 	// delegation set.
 	//
-	// For information about default limits, see Limits (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
+	// For information about default limits, see Limits (https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
 	// in the Amazon Route 53 Developer Guide.
 	//
 	// To get the current limit on hosted zones that can be created by an account,
-	// see GetAccountLimit.
+	// see GetAccountLimit (https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetAccountLimit.html).
 	//
 	// To get the current limit on hosted zones that can be associated with a reusable
-	// delegation set, see GetReusableDelegationSetLimit.
+	// delegation set, see GetReusableDelegationSetLimit (https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetReusableDelegationSetLimit.html).
 	//
 	// To request a higher limit, create a case (http://aws.amazon.com/route53-request)
 	// with the AWS Support Center.
@@ -355,10 +356,10 @@ const (
 	// This traffic policy can't be created because the current account has reached
 	// the limit on the number of traffic policies.
 	//
-	// For information about default limits, see Limits (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
+	// For information about default limits, see Limits (https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
 	// in the Amazon Route 53 Developer Guide.
 	//
-	// To get the current limit for an account, see GetAccountLimit.
+	// To get the current limit for an account, see GetAccountLimit (https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetAccountLimit.html).
 	//
 	// To request a higher limit, create a case (http://aws.amazon.com/route53-request)
 	// with the AWS Support Center.
@@ -370,10 +371,11 @@ const (
 	// This traffic policy instance can't be created because the current account
 	// has reached the limit on the number of traffic policy instances.
 	//
-	// For information about default limits, see Limits (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
+	// For information about default limits, see Limits (https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
 	// in the Amazon Route 53 Developer Guide.
 	//
-	// For information about how to get the current limit for an account, see GetAccountLimit.
+	// For information about how to get the current limit for an account, see GetAccountLimit
+	// (https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetAccountLimit.html).
 	//
 	// To request a higher limit, create a case (http://aws.amazon.com/route53-request)
 	// with the AWS Support Center.
@@ -386,10 +388,10 @@ const (
 	// of 1000 on the number of versions that you can create for the current traffic
 	// policy.
 	//
-	// To create more traffic policy versions, you can use GetTrafficPolicy to get
-	// the traffic policy document for a specified traffic policy version, and then
-	// use CreateTrafficPolicy to create a new traffic policy using the traffic
-	// policy document.
+	// To create more traffic policy versions, you can use GetTrafficPolicy (https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetTrafficPolicy.html)
+	// to get the traffic policy document for a specified traffic policy version,
+	// and then use CreateTrafficPolicy (https://docs.aws.amazon.com/Route53/latest/APIReference/API_CreateTrafficPolicy.html)
+	// to create a new traffic policy using the traffic policy document.
 	ErrCodeTooManyTrafficPolicyVersionsForCurrentPolicy = "TooManyTrafficPolicyVersionsForCurrentPolicy"
 
 	// ErrCodeTooManyVPCAssociationAuthorizations for service response error code

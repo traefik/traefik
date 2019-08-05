@@ -10,7 +10,7 @@ import (
 // Image represents a deployable Image object for use with Linode Instances
 type Image struct {
 	CreatedStr  string `json:"created"`
-	UpdatedStr  string `json:"updated"`
+	ExpiryStr   string `json:"expiry"`
 	ID          string `json:"id"`
 	CreatedBy   string `json:"created_by"`
 	Label       string `json:"label"`
@@ -22,7 +22,7 @@ type Image struct {
 	Deprecated  bool   `json:"deprecated"`
 
 	Created *time.Time `json:"-"`
-	Updated *time.Time `json:"-"`
+	Expiry  *time.Time `json:"-"`
 }
 
 // ImageCreateOptions fields are those accepted by CreateImage
@@ -40,7 +40,12 @@ type ImageUpdateOptions struct {
 
 func (i *Image) fixDates() *Image {
 	i.Created, _ = parseDates(i.CreatedStr)
-	i.Updated, _ = parseDates(i.UpdatedStr)
+
+	if len(i.ExpiryStr) > 0 {
+		i.Expiry, _ = parseDates(i.ExpiryStr)
+	} else {
+		i.Expiry = nil
+	}
 	return i
 }
 
@@ -94,7 +99,7 @@ func (c *Client) GetImage(ctx context.Context, id string) (*Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	return r.Result().(*Image), nil
+	return r.Result().(*Image).fixDates(), nil
 }
 
 // CreateImage creates a Image

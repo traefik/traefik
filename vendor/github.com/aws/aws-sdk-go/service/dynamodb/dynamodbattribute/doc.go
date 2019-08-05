@@ -81,7 +81,7 @@
 // The ConvertTo, ConvertToList, ConvertToMap, ConvertFrom, ConvertFromMap
 // and ConvertFromList methods have been deprecated. The Marshal and Unmarshal
 // functions should be used instead. The ConvertTo|From marshallers do not
-// support BinarySet, NumberSet, nor StringSets, and will incorrect marshal
+// support BinarySet, NumberSet, nor StringSets, and will incorrectly marshal
 // binary data fields in structs as base64 strings.
 //
 // The Marshal and Unmarshal functions correct this behavior, and removes
@@ -90,6 +90,12 @@
 // the json.Marshaler and json.Unmarshaler interfaces have been removed and
 // replaced with have been replaced with dynamodbattribute.Marshaler and
 // dynamodbattribute.Unmarshaler interfaces.
+//
+// The Unmarshal functions are backwards compatible with data marshalled by
+// ConvertTo*, but the reverse is not true: objects marshalled using Marshal
+// are not necessarily usable by ConvertFrom*. This backward compatibility is
+// intended to assist with incremental upgrading of data following a switch
+// away from the Convert* family of functions.
 //
 // `time.Time` is marshaled as RFC3339 format.
 package dynamodbattribute

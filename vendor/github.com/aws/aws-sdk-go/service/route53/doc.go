@@ -3,6 +3,9 @@
 // Package route53 provides the client and types for making API
 // requests to Amazon Route 53.
 //
+// Amazon Route 53 is a highly available and scalable Domain Name System (DNS)
+// web service.
+//
 // See https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01 for more information on this service.
 //
 // See route53 package documentation for more information.

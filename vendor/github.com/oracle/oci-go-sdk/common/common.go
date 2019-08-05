@@ -24,6 +24,10 @@ const (
 	RegionFRA Region = "eu-frankfurt-1"
 	//RegionLHR region LHR
 	RegionLHR Region = "uk-london-1"
+	//RegionAPTokyo1 region for tokyo
+	RegionAPTokyo1 Region = "ap-tokyo-1"
+	//RegionAPSeoul1 region for seoul
+	RegionAPSeoul1 Region = "ap-seoul-1"
 
 	//RegionUSLangley1 region for langley
 	RegionUSLangley1 Region = "us-langley-1"
@@ -50,10 +54,11 @@ var regionRealm = map[Region]string{
 	RegionFRA:        "oc1",
 	RegionLHR:        "oc1",
 	RegionCAToronto1: "oc1",
+	RegionAPTokyo1:   "oc1",
+	RegionAPSeoul1:   "oc1",
 
-	RegionUSLangley1: "oc2",
-	RegionUSLuke1:    "oc2",
-
+	RegionUSLangley1:    "oc2",
+	RegionUSLuke1:       "oc2",
 	RegionUSGovAshburn1: "oc3",
 	RegionUSGovChicago1: "oc3",
 	RegionUSGovPhoenix1: "oc3",
@@ -108,6 +113,10 @@ func StringToRegion(stringRegion string) (r Region) {
 		r = RegionFRA
 	case "lhr", "uk-london-1":
 		r = RegionLHR
+	case "ap-tokyo-1":
+		r = RegionAPTokyo1
+	case "ap-seoul-1":
+		r = RegionAPSeoul1
 	case "us-langley-1":
 		r = RegionUSLangley1
 	case "us-luke-1":

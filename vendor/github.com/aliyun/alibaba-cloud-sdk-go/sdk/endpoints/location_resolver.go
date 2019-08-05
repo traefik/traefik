@@ -15,28 +15,51 @@ package endpoints
 
 import (
 	"encoding/json"
-	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"sync"
 	"time"
+
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 )
 
 const (
+	// EndpointCacheExpireTime ...
 	EndpointCacheExpireTime = 3600 //Seconds
 )
 
-var lastClearTimePerProduct = struct {
+// Cache caches endpoint for specific product and region
+type Cache struct {
 	sync.RWMutex
-	cache map[string]int64
-}{cache: make(map[string]int64)}
+	cache map[string]interface{}
+}
 
-var endpointCache = struct {
-	sync.RWMutex
-	cache map[string]string
-}{cache: make(map[string]string)}
+// Get ...
+func (c *Cache) Get(k string) (v interface{}) {
+	c.RLock()
+	v = c.cache[k]
+	c.RUnlock()
+	return
+}
 
+// Set ...
+func (c *Cache) Set(k string, v interface{}) {
+	c.Lock()
+	c.cache[k] = v
+	c.Unlock()
+}
+
+var lastClearTimePerProduct = &Cache{cache: make(map[string]interface{})}
+var endpointCache = &Cache{cache: make(map[string]interface{})}
+
+// LocationResolver ...
 type LocationResolver struct {
 }
 
+func (resolver *LocationResolver) GetName() (name string) {
+	name = "location resolver"
+	return
+}
+
+// TryResolve resolves endpoint giving product and region
 func (resolver *LocationResolver) TryResolve(param *ResolveParam) (endpoint string, support bool, err error) {
 	if len(param.LocationProduct) <= 0 {
 		support = false
@@ -45,8 +68,10 @@ func (resolver *LocationResolver) TryResolve(param *ResolveParam) (endpoint stri
 
 	//get from cache
 	cacheKey := param.Product + "#" + param.RegionId
-	if endpointCache.cache != nil && len(endpointCache.cache[cacheKey]) > 0 && !CheckCacheIsExpire(cacheKey) {
-		endpoint = endpointCache.cache[cacheKey]
+	var ok bool
+	endpoint, ok = endpointCache.Get(cacheKey).(string)
+
+	if ok && len(endpoint) > 0 && !CheckCacheIsExpire(cacheKey) {
 		support = true
 		return
 	}
@@ -57,7 +82,7 @@ func (resolver *LocationResolver) TryResolve(param *ResolveParam) (endpoint stri
 	getEndpointRequest.Product = "Location"
 	getEndpointRequest.Version = "2015-06-12"
 	getEndpointRequest.ApiName = "DescribeEndpoints"
-	getEndpointRequest.Domain = "location.aliyuncs.com"
+	getEndpointRequest.Domain = "location-readonly.aliyuncs.com"
 	getEndpointRequest.Method = "GET"
 	getEndpointRequest.Scheme = requests.HTTPS
 
@@ -70,13 +95,23 @@ func (resolver *LocationResolver) TryResolve(param *ResolveParam) (endpoint stri
 	}
 
 	response, err := param.CommonApi(getEndpointRequest)
-	var getEndpointResponse GetEndpointResponse
+	if err != nil {
+		support = false
+		return
+	}
+
 	if !response.IsSuccess() {
 		support = false
 		return
 	}
 
-	json.Unmarshal([]byte(response.GetHttpContentString()), &getEndpointResponse)
+	var getEndpointResponse GetEndpointResponse
+	err = json.Unmarshal([]byte(response.GetHttpContentString()), &getEndpointResponse)
+	if err != nil {
+		support = false
+		return
+	}
+
 	if !getEndpointResponse.Success || getEndpointResponse.Endpoints == nil {
 		support = false
 		return
@@ -87,12 +122,8 @@ func (resolver *LocationResolver) TryResolve(param *ResolveParam) (endpoint stri
 	}
 	if len(getEndpointResponse.Endpoints.Endpoint[0].Endpoint) > 0 {
 		endpoint = getEndpointResponse.Endpoints.Endpoint[0].Endpoint
-		endpointCache.Lock()
-		endpointCache.cache[cacheKey] = endpoint
-		endpointCache.Unlock()
-		lastClearTimePerProduct.Lock()
-		lastClearTimePerProduct.cache[cacheKey] = time.Now().Unix()
-		lastClearTimePerProduct.Unlock()
+		endpointCache.Set(cacheKey, endpoint)
+		lastClearTimePerProduct.Set(cacheKey, time.Now().Unix())
 		support = true
 		return
 	}
@@ -101,13 +132,16 @@ func (resolver *LocationResolver) TryResolve(param *ResolveParam) (endpoint stri
 	return
 }
 
+// CheckCacheIsExpire ...
 func CheckCacheIsExpire(cacheKey string) bool {
-	lastClearTime := lastClearTimePerProduct.cache[cacheKey]
+	lastClearTime, ok := lastClearTimePerProduct.Get(cacheKey).(int64)
+	if !ok {
+		return true
+	}
+
 	if lastClearTime <= 0 {
 		lastClearTime = time.Now().Unix()
-		lastClearTimePerProduct.Lock()
-		lastClearTimePerProduct.cache[cacheKey] = lastClearTime
-		lastClearTimePerProduct.Unlock()
+		lastClearTimePerProduct.Set(cacheKey, lastClearTime)
 	}
 
 	now := time.Now().Unix()
@@ -119,18 +153,21 @@ func CheckCacheIsExpire(cacheKey string) bool {
 	return false
 }
 
+// GetEndpointResponse ...
 type GetEndpointResponse struct {
 	Endpoints *EndpointsObj
 	RequestId string
 	Success   bool
 }
 
+// EndpointsObj ...
 type EndpointsObj struct {
 	Endpoint []EndpointObj
 }
 
+// EndpointObj ...
 type EndpointObj struct {
-	Protocols   map[string]string
+	// Protocols   map[string]string
 	Type        string
 	Namespace   string
 	Id          string
