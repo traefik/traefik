@@ -55,9 +55,12 @@ export default {
   }),
   computed: {
     parsedVersion() {
-      return this.version.Version === "dev"
-        ? "master"
-        : this.version.Version.match(/^v?(\d+\.\d+)/)[1];
+      if (this.version.Version === "dev") {
+        return "master";
+      } else {
+        const matches = this.version.Version.match(/^(v?\d+\.\d+)/);
+        return matches ? matches[1] : null;
+      }
     },
     documentationUrl() {
       return `https://docs.traefik.io/${this.parsedVersion}`;
