@@ -137,9 +137,9 @@ nav:
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
       - 'Marathon': 'user-guides/marathon.md'
-      - 'Docker-compose':
+      - 'Docker':
         - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
-        - 'HTTPS With Let''s Encrypt':
+        - 'HTTPS with Let''s Encrypt':
           - 'TLS Challenge': 'user-guides/docker-compose/acme-tls/index.md'
           - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
           - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'

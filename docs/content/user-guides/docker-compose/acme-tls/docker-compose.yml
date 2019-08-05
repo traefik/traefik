@@ -8,7 +8,6 @@ services:
     command:
       #- "--log.level=DEBUG"
       - "--api=true"
-      - "--global.sendanonymoususage=false"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.websecure.address=:443"
@@ -17,8 +16,8 @@ services:
       - "--certificatesresolvers.mytlschallenge.acme.email=postmaster@mydomain.com"
       - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
     ports:
-      - "0.0.0.0:443:443"
-      - "127.0.0.1:8080:8080"
+      - "443:443"
+      - "8080:8080"
     volumes:
       - "./letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"

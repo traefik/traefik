@@ -5,16 +5,16 @@ This will also be used as a starting point for the the other docker-compose guid
 
 ## Setup
 
-- Edit a **docker-compose.yml** file with the following content :
+- Edit a `docker-compose.yml` file with the following content:
 
 ```yaml
 --8<-- "content/user-guides/docker-compose/basic-example/docker-compose.yml"
 ```
 
-- Replace `whoami.localhost` by your **own domain** within the *traefik.http.routers.whoami.rule* label of the *whoami* service.
+- Replace `whoami.localhost` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
 - Run `docker-compose up -d` within the folder where you created the previous file.
 - Wait a bit and visit `http://your_own_domain` to confirm everything went fine.
-	You should see the output of the whoami service. Something similar to :
+	You should see the output of the whoami service. Something similar to:
 	
 	```text
 	Hostname: d7f919e54651
@@ -35,44 +35,56 @@ This will also be used as a starting point for the the other docker-compose guid
 
 ## Details
 
-- As an example we use [whoami](https://github.com/containous/whoami) (a tiny Go webserver that prints os information and HTTP request to output) which was used to define our *simple-service* container.
+- As an example we use [whoami](https://github.com/containous/whoami) (a tiny Go server that prints os information and HTTP request to output) which was used to define our `simple-service` container.
 
-- We define an entrypoint, along with the exposure of the matching port within docker-compose, which basically allow us to "open and accept" http traffic : 
-
-```yaml
-command:
-	- "--entrypoints.web.address=:80" # Traefik will listen to incoming request on the port 80 (http)
-
-ports:
-	- "0.0.0.0:80:80" # We allow any http requests from any ips to reach our Traefik container
-```
-
-- We expose the Traefik API to be able to check the configuration if needed :
+- We define an entry point, along with the exposure of the matching port within docker-compose, which basically allow us to "open and accept" HTTP traffic: 
 
 ```yaml
 command:
-	- "--api=true" # Traefik will listen on port 8080 by default for API request.
+  # Traefik will listen to incoming request on the port 80 (HTTP)
+  - "--entrypoints.web.address=:80"
 
 ports:
-	- "127.0.0.1:8080:8080" # We allow only request from localhost to avoid exposing ourself too much.
+  - "80:80"
 ```
 
-> If you are working on a remote server, you can use the following command to display configuration (require *curl* & *jq*) :  
-> `curl -s 127.0.0.1:8080/api/rawdata | jq .`
+- We expose the Traefik API to be able to check the configuration if needed:
 
-- We allow Traefik to gather configuration from docker :
+```yaml
+command:
+  # Traefik will listen on port 8080 by default for API request.
+  - "--api=true"
+
+ports:
+  - "8080:8080"
+```
+
+!!! Note
+
+    If you are working on a remote server, you can use the following command to display configuration (require `curl` & `jq`): 
+     
+    ```bash
+    curl -s 127.0.0.1:8080/api/rawdata | jq .
+    ```
+
+- We allow Traefik to gather configuration from Docker:
 
 ```yaml
 traefik:
-	command:
-		- "--providers.docker=true" # Enabling docker provider
-		- "--providers.docker.exposedbydefault=false" # Do not expose containers unless explicitly told so
-	volumes:
-		- "/var/run/docker.sock:/var/run/docker.sock:ro" # Give Traefik Read Only access to the docker api
+  command:
+    # Enabling docker provider
+    - "--providers.docker=true"
+    # Do not expose containers unless explicitly told so
+    - "--providers.docker.exposedbydefault=false"
+  volumes:
+    - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
 whoami:
-	labels:
-		- "traefik.enable=true" # Explicitly tell Traefik to expose this container
-		- "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)" # The domain the service will respond to
-		- "traefik.http.routers.whoami.entrypoints=web" # Allow request only from the predefined entrypoint named "web"
+  labels:
+    # Explicitly tell Traefik to expose this container
+    - "traefik.enable=true"
+    # The domain the service will respond to
+    - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+    # Allow request only from the predefined entry point named "web"
+    - "traefik.http.routers.whoami.entrypoints=web"
 ```
