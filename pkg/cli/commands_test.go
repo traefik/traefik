@@ -625,46 +625,62 @@ func Test_execute_configuration(t *testing.T) {
 }
 
 func Test_execute_configuration_file(t *testing.T) {
-	rootCmd := &Command{
-		Name:          "root",
-		Description:   "This is a test",
-		Configuration: nil,
-		Run: func(_ []string) error {
-			return nil
+	testCases := []struct {
+		desc string
+		args []string
+	}{
+		{
+			desc: "configFile arg in camel case",
+			args: []string{"", "sub1", "--configFile=./fixtures/config.toml"},
+		},
+		{
+			desc: "configfile arg in lower case",
+			args: []string{"", "sub1", "--configfile=./fixtures/config.toml"},
 		},
 	}
 
-	element := &Yo{
-		Fuu: "test",
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			rootCmd := &Command{
+				Name:          "root",
+				Description:   "This is a test",
+				Configuration: nil,
+				Run: func(_ []string) error {
+					return nil
+				},
+			}
+
+			element := &Yo{
+				Fuu: "test",
+			}
+
+			sub1 := &Command{
+				Name:          "sub1",
+				Description:   "sub1",
+				Configuration: element,
+				Resources:     []ResourceLoader{&FileLoader{}, &FlagLoader{}},
+				Run: func(args []string) error {
+					return nil
+				},
+			}
+			err := rootCmd.AddCommand(sub1)
+			require.NoError(t, err)
+
+			err = execute(rootCmd, test.args, true)
+			require.NoError(t, err)
+
+			expected := &Yo{
+				Foo: "bar",
+				Fii: "bir",
+				Fuu: "test",
+				Yi: &Yi{
+					Foo: "foo",
+					Fii: "fii",
+				},
+			}
+			assert.Equal(t, expected, element)
+		})
 	}
-
-	sub1 := &Command{
-		Name:          "sub1",
-		Description:   "sub1",
-		Configuration: element,
-		Resources:     []ResourceLoader{&FileLoader{}, &FlagLoader{}},
-		Run: func(args []string) error {
-			return nil
-		},
-	}
-	err := rootCmd.AddCommand(sub1)
-	require.NoError(t, err)
-
-	args := []string{"", "sub1", "--configFile=./fixtures/config.toml"}
-
-	err = execute(rootCmd, args, true)
-	require.NoError(t, err)
-
-	expected := &Yo{
-		Foo: "bar",
-		Fii: "bir",
-		Fuu: "test",
-		Yi: &Yi{
-			Foo: "foo",
-			Fii: "fii",
-		},
-	}
-	assert.Equal(t, expected, element)
 }
 
 func Test_execute_help(t *testing.T) {

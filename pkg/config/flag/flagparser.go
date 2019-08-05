@@ -16,6 +16,7 @@ func Parse(args []string, element interface{}) (map[string]string, error) {
 		flagTypes: getFlagTypes(element),
 		args:      args,
 		values:    make(map[string]string),
+		keys:      make(map[string]string),
 	}
 
 	for {
@@ -35,6 +36,7 @@ type flagSet struct {
 	flagTypes map[string]reflect.Kind
 	args      []string
 	values    map[string]string
+	keys      map[string]string
 }
 
 func (f *flagSet) parseOne() (bool, error) {
@@ -78,7 +80,8 @@ func (f *flagSet) parseOne() (bool, error) {
 		return true, nil
 	}
 
-	if f.flagTypes[name] == reflect.Bool || f.flagTypes[name] == reflect.Ptr {
+	n := strings.ToLower(name)
+	if f.flagTypes[n] == reflect.Bool || f.flagTypes[n] == reflect.Ptr {
 		f.setValue(name, "true")
 		return true, nil
 	}
@@ -98,13 +101,20 @@ func (f *flagSet) parseOne() (bool, error) {
 }
 
 func (f *flagSet) setValue(name string, value string) {
-	n := strings.ToLower(parser.DefaultRootName + "." + name)
-	v, ok := f.values[n]
+	srcKey := parser.DefaultRootName + "." + name
+	neutralKey := strings.ToLower(srcKey)
 
-	if ok && f.flagTypes[name] == reflect.Slice {
-		f.values[n] = v + "," + value
+	key, ok := f.keys[neutralKey]
+	if !ok {
+		f.keys[neutralKey] = srcKey
+		key = srcKey
+	}
+
+	v, ok := f.values[key]
+	if ok && f.flagTypes[strings.ToLower(name)] == reflect.Slice {
+		f.values[key] = v + "," + value
 		return
 	}
 
-	f.values[n] = value
+	f.values[key] = value
 }
