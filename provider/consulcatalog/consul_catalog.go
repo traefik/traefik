@@ -34,7 +34,7 @@ type Provider struct {
 	Stale                 bool             `description:"Use stale consistency for catalog reads" export:"true"`
 	ExposedByDefault      bool             `description:"Expose Consul services by default" export:"true"`
 	Prefix                string           `description:"Prefix used for Consul catalog tags" export:"true"`
-	WarningIsCritical     bool             `description:"Removes a Consul node from all backends on any check in Warning on this node" export:"true"`
+	StrictChecks          bool             `description:"Keep a Consul node only if all checks status are passing" export:"true"`
 	FrontEndRule          string           `description:"Frontend rule used for Consul services" export:"true"`
 	TLS                   *types.ClientTLS `description:"Enable TLS support" export:"true"`
 	client                *api.Client
@@ -302,7 +302,7 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 					_, failing := currentFailing[key]
 					if healthy.Status == "passing" && !failing {
 						current[key] = append(current[key], healthy.Node)
-					} else if !p.WarningIsCritical && healthy.Status == "warning" && !failing {
+					} else if !p.StrictChecks && healthy.Status == "warning" && !failing {
 						current[key] = append(current[key], healthy.Node)
 					} else if strings.HasPrefix(healthy.CheckID, "_service_maintenance") || strings.HasPrefix(healthy.CheckID, "_node_maintenance") {
 						maintenance = append(maintenance, healthy.CheckID)
@@ -538,11 +538,7 @@ func (p *Provider) nodeFilter(service string, node *api.ServiceEntry) bool {
 		return false
 	}
 
-	if p.hasFailingChecks(node) {
-		return false
-	}
-
-	return true
+	return p.hasPassingChecks(node)
 }
 
 func (p *Provider) isServiceEnabled(node *api.ServiceEntry) bool {
@@ -576,15 +572,9 @@ func (p *Provider) getConstraintTags(tags []string) []string {
 	return values
 }
 
-func (p *Provider) hasFailingChecks(node *api.ServiceEntry) bool {
-
-	if node.Checks.AggregatedStatus() == "passing" {
-		return false
-	} else if !p.WarningIsCritical && node.Checks.AggregatedStatus() == "warning" {
-		return false
-	}
-
-	return true
+func (p *Provider) hasPassingChecks(node *api.ServiceEntry) bool {
+	status := node.Checks.AggregatedStatus()
+	return status == "passing" || !p.StrictChecks && status == "warning"
 }
 
 func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceUpdate {
