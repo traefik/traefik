@@ -35,7 +35,10 @@ func (f *FileLoader) Load(args []string, cmd *Command) (bool, error) {
 	}
 
 	if f.ConfigFileFlag != "" {
-		configFileFlag = "traefik." + strings.ToLower(f.ConfigFileFlag)
+		configFileFlag = "traefik." + f.ConfigFileFlag
+		if _, ok := ref[strings.ToLower(configFileFlag)]; ok {
+			configFileFlag = "traefik." + strings.ToLower(f.ConfigFileFlag)
+		}
 	}
 
 	configFile, err := loadConfigFiles(ref[configFileFlag], cmd.Configuration)

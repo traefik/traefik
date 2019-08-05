@@ -101,17 +101,16 @@ func (f *flagSet) parseOne() (bool, error) {
 }
 
 func (f *flagSet) setValue(name string, value string) {
-	s := parser.DefaultRootName + "." + name
-	n := strings.ToLower(parser.DefaultRootName + "." + name)
+	srcKey := parser.DefaultRootName + "." + name
+	neutralKey := strings.ToLower(srcKey)
 
-	key, ok := f.keys[n]
+	key, ok := f.keys[neutralKey]
 	if !ok {
-		f.keys[n] = s
-		key = s
+		f.keys[neutralKey] = srcKey
+		key = srcKey
 	}
 
 	v, ok := f.values[key]
-
 	if ok && f.flagTypes[strings.ToLower(name)] == reflect.Slice {
 		f.values[key] = v + "," + value
 		return
