@@ -180,7 +180,7 @@
 
 [[constraint]]
   name = "github.com/go-acme/lego"
-  version = "2.7.1"
+  version = "2.7.2"
 
 [[constraint]]
   name = "github.com/golang/protobuf"

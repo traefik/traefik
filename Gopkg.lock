@@ -64,7 +64,7 @@
   revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
 
 [[projects]]
-  digest = "1:70ea1932c1ff085cdc54d7cff66adb89f883e465ba0567bce8ff5af8d677025a"
+  digest = "1:847ae8f26c6796f0dbed826b7bc0297eae976fa2b24045e3e2ddb26846378a65"
   name = "github.com/Azure/go-autorest"
   packages = [
     "autorest",
@@ -79,8 +79,8 @@
     "tracing",
   ]
   pruneopts = "NUT"
-  revision = "2913f263500c4a5b23dada1b46ccd22ac972315f"
-  version = "v12.3.0"
+  revision = "ba1147dc57f993013ef255c128ca1cac8a557409"
+  version = "v12.4.1"
 
 [[projects]]
   branch = "master"
@@ -233,7 +233,7 @@
   version = "v0.7.4"
 
 [[projects]]
-  digest = "1:f371effbfdb5f3da011306a0b06d43477602f8c9ea91d7d1e6da1cc699eb0944"
+  digest = "1:cd8348ab7b1ce85f965157e966791bb13514ea933902ecd1c010b5c529657f3d"
   name = "github.com/aliyun/alibaba-cloud-sdk-go"
   packages = [
     "sdk",
@@ -249,8 +249,8 @@
     "services/alidns",
   ]
   pruneopts = "NUT"
-  revision = "f1ebdf6d04b994bac98e7dde6ebcd2922a9e37c3"
-  version = "1.60.77"
+  revision = "26f0a5c2d5dc6d4a73c62651d146bdd51dc3bdde"
+  version = "1.60.84"
 
 [[projects]]
   digest = "1:b39cf81d5f440b9c0757a25058432d33af867e5201109bf53621356d9dab4b73"
@@ -269,7 +269,7 @@
   revision = "48572f11356f1843b694f21a290d4f1006bc5e47"
 
 [[projects]]
-  digest = "1:e755b41bdf499d7fe068fb4af56c35455c8be8a31be94bd00f76071c426e87b1"
+  digest = "1:bd56ffde8e12e9faca92f3ac54347c665d931856fba8784007b02e004fbcc30d"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -316,8 +316,8 @@
     "service/sts/stsiface",
   ]
   pruneopts = "NUT"
-  revision = "384f4536edd1f4b59cf0c03ab3b346aba4c1c9cc"
-  version = "v1.21.7"
+  revision = "f3fe96892dc0e8e8e9862456e1455e62e4cb55d4"
+  version = "v1.21.9"
 
 [[projects]]
   branch = "master"
@@ -762,7 +762,7 @@
   revision = "73d445a93680fa1a78ae23a5839bad48f32ba1ee"
 
 [[projects]]
-  digest = "1:444dc18bb529e25fb32b934fc18fbb26e6dd88a85d3efa672e0b2b91991ed9f3"
+  digest = "1:896402a6d43c4fb1e21512e7473a51e7fd2b03a4e1a420a730a4b712d20e5d6a"
   name = "github.com/go-acme/lego"
   packages = [
     "acme",
@@ -852,8 +852,8 @@
     "registration",
   ]
   pruneopts = "NUT"
-  revision = "b6808bf0d9ceb7a5d96a0605502ae42d963e7002"
-  version = "v2.7.1"
+  revision = "295dd66f2aa549685e3d6b95c1813881a7807158"
+  version = "v2.7.2"
 
 [[projects]]
   branch = "fork-containous"
@@ -1525,8 +1525,8 @@
   name = "github.com/nrdcg/namesilo"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "a9d275011759a070d795b7d0ea99cc590915823f"
-  version = "v0.2.0"
+  revision = "1b10d027904464789f889ee4cd76af15c3bf4943"
+  version = "v0.2.1"
 
 [[projects]]
   branch = "master"
@@ -1987,7 +1987,7 @@
   revision = "0c8571ac0ce161a5feb57375a9cdf148c98c0f70"
 
 [[projects]]
-  digest = "1:58f2854b50ff8862eb6a347f20dedaac83e1166f4040472e17bc37736841a12f"
+  digest = "1:a6f0a3485a3edbe3d66a5036d5dd8be1da89b8e077d98bf8a95ccfdad854d6cf"
   name = "go.opencensus.io"
   packages = [
     ".",
@@ -2010,8 +2010,8 @@
     "trace/tracestate",
   ]
   pruneopts = "NUT"
-  revision = "43463a80402d8447b7fce0d2c58edf1687ff0b58"
-  version = "v0.19.3"
+  revision = "df6e2001952312404b06f5f6f03fcb4aec1648e5"
+  version = "v0.21.0"
 
 [[projects]]
   branch = "master"

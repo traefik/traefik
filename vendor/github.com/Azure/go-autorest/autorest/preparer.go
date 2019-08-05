@@ -16,6 +16,7 @@ package autorest
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -37,6 +38,27 @@ const (
 	headerContentType      = "Content-Type"
 	headerUserAgent        = "User-Agent"
 )
+
+// used as a key type in context.WithValue()
+type ctxPrepareDecorators struct{}
+
+// WithPrepareDecorators adds the specified PrepareDecorators to the provided context.
+// If no PrepareDecorators are provided the context is unchanged.
+func WithPrepareDecorators(ctx context.Context, prepareDecorator []PrepareDecorator) context.Context {
+	if len(prepareDecorator) == 0 {
+		return ctx
+	}
+	return context.WithValue(ctx, ctxPrepareDecorators{}, prepareDecorator)
+}
+
+// GetPrepareDecorators returns the PrepareDecorators in the provided context or the provided default PrepareDecorators.
+func GetPrepareDecorators(ctx context.Context, defaultPrepareDecorators ...PrepareDecorator) []PrepareDecorator {
+	inCtx := ctx.Value(ctxPrepareDecorators{})
+	if pd, ok := inCtx.([]PrepareDecorator); ok {
+		return pd
+	}
+	return defaultPrepareDecorators
+}
 
 // Preparer is the interface that wraps the Prepare method.
 //

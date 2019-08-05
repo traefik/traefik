@@ -30,7 +30,11 @@ import (
 type ctxSendDecorators struct{}
 
 // WithSendDecorators adds the specified SendDecorators to the provided context.
+// If no SendDecorators are provided the context is unchanged.
 func WithSendDecorators(ctx context.Context, sendDecorator []SendDecorator) context.Context {
+	if len(sendDecorator) == 0 {
+		return ctx
+	}
 	return context.WithValue(ctx, ctxSendDecorators{}, sendDecorator)
 }
 

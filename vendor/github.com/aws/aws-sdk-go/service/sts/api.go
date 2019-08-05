@@ -760,15 +760,15 @@ func (c *STS) GetAccessKeyInfoRequest(input *GetAccessKeyInfoInput) (req *reques
 // key IDs beginning with ASIA are temporary credentials that are created using
 // STS operations. If the account in the response belongs to you, you can sign
 // in as the root user and review your root user access keys. Then, you can
-// pull a credentials report (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report)
+// pull a credentials report (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html)
 // to learn which IAM user owns the keys. To learn who requested the temporary
 // credentials for an ASIA access key, view the STS events in your CloudTrail
-// logs (https://docs.aws.amazon.com/IAM/latest/UserGuide/cloudtrail-integration).
+// logs (https://docs.aws.amazon.com/IAM/latest/UserGuide/cloudtrail-integration.html).
 //
 // This operation does not indicate the state of the access key. The key might
 // be active, inactive, or deleted. Active keys might not have permissions to
-// perform an operation. Providing a deleted keys might return an error that
-// the key doesn't exist.
+// perform an operation. Providing a deleted access key might return an error
+// that the key doesn't exist.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -842,8 +842,15 @@ func (c *STS) GetCallerIdentityRequest(input *GetCallerIdentityInput) (req *requ
 
 // GetCallerIdentity API operation for AWS Security Token Service.
 //
-// Returns details about the IAM identity whose credentials are used to call
-// the API.
+// Returns details about the IAM user or role whose credentials are used to
+// call the operation.
+//
+// No permissions are required to perform this operation. If an administrator
+// adds a policy to your IAM user or role that explicitly denies access to the
+// sts:GetCallerIdentity action, you can still perform this operation. Permissions
+// are not required because the same information is returned when an IAM user
+// or role is denied access. To view an example response, see I Am Not Authorized
+// to Perform: iam:DeleteVirtualMFADevice (https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_general.html#troubleshoot_general_access-denied-delete-mfa).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2447,7 +2454,7 @@ type GetFederationTokenInput struct {
 	// use as managed session policies. The plain text that you use for both inline
 	// and managed session policies shouldn't exceed 2048 characters. You can provide
 	// up to 10 managed policy ARNs. For more information about ARNs, see Amazon
-	// Resource Names (ARNs) and AWS Service Namespaces (general/latest/gr/aws-arns-and-namespaces.html)
+	// Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
 	// in the AWS General Reference.
 	//
 	// This parameter is optional. However, if you do not pass any session policies,

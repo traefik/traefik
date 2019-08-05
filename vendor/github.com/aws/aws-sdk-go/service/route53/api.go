@@ -11404,10 +11404,10 @@ type ListResourceRecordSetsInput struct {
 	// of maxitems resource record sets.
 	MaxItems *string `location:"querystring" locationName:"maxitems" type:"string"`
 
-	// Weighted resource record sets only: If results were truncated for a given
-	// DNS name and type, specify the value of NextRecordIdentifier from the previous
-	// response to get the next resource record set that has the current DNS name
-	// and type.
+	// Resource record sets that have a routing policy other than simple: If results
+	// were truncated for a given DNS name and type, specify the value of NextRecordIdentifier
+	// from the previous response to get the next resource record set that has the
+	// current DNS name and type.
 	StartRecordIdentifier *string `location:"querystring" locationName:"identifier" min:"1" type:"string"`
 
 	// The first name in the lexicographic ordering of resource record sets that
@@ -15026,6 +15026,9 @@ const (
 	// CloudWatchRegionApEast1 is a CloudWatchRegion enum value
 	CloudWatchRegionApEast1 = "ap-east-1"
 
+	// CloudWatchRegionMeSouth1 is a CloudWatchRegion enum value
+	CloudWatchRegionMeSouth1 = "me-south-1"
+
 	// CloudWatchRegionApSouth1 is a CloudWatchRegion enum value
 	CloudWatchRegionApSouth1 = "ap-south-1"
 
@@ -15257,6 +15260,9 @@ const (
 	// ResourceRecordSetRegionApEast1 is a ResourceRecordSetRegion enum value
 	ResourceRecordSetRegionApEast1 = "ap-east-1"
 
+	// ResourceRecordSetRegionMeSouth1 is a ResourceRecordSetRegion enum value
+	ResourceRecordSetRegionMeSouth1 = "me-south-1"
+
 	// ResourceRecordSetRegionApSouth1 is a ResourceRecordSetRegion enum value
 	ResourceRecordSetRegionApSouth1 = "ap-south-1"
 )
@@ -15318,6 +15324,9 @@ const (
 
 	// VPCRegionApEast1 is a VPCRegion enum value
 	VPCRegionApEast1 = "ap-east-1"
+
+	// VPCRegionMeSouth1 is a VPCRegion enum value
+	VPCRegionMeSouth1 = "me-south-1"
 
 	// VPCRegionApSoutheast1 is a VPCRegion enum value
 	VPCRegionApSoutheast1 = "ap-southeast-1"
