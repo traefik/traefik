@@ -37,6 +37,15 @@ stale = false
 #
 domain = "consul.localhost"
 
+# Keep a Consul node only if all checks status are passing
+# If true, only the Consul nodes with checks status 'passing' will be kept.
+# if false, only the Consul nodes with checks status 'passing' or 'warning' will be kept.
+#
+# Optional
+# Default: true
+#
+strictChecks = true
+
 # Prefix for Consul catalog tags.
 #
 # Optional
