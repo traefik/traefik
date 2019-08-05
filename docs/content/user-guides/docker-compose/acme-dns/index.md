@@ -1,7 +1,7 @@
 # Docker-compose with let's encrypt: DNS Challenge
 
 This guide aim to demonstrate how to create a certificate with the let's encrypt DNS challenge to use https on a simple service exposed with Traefik.  
-Please also read the [docker-compose: Basic Example](../basic-example) for details on how to expose such a service.  
+Please also read the [basic example](../basic-example) for details on how to expose such a service.  
 
 ## Prerequisite
 
@@ -12,7 +12,7 @@ For the DNS challenge, you'll need:
 !!! info "Variables may vary depending on the Provider."
 	 Please note this guide may vary depending on the provider you use.
 	 The only things changing are the names of the variables you will need to define in order to configure your provider so it can create DNS records.  
-	 Please refer the list of Providers given right above and replace all the OVH variables with the ones described in this documentation.  
+	 Please refer the [list of providers](../../../https/acme.md#providers) given right above and replace all the environment variables with the ones described in this documentation.
 
 ## Setup
 

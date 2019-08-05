@@ -1,7 +1,7 @@
 # Docker-compose with let's encrypt : HTTP Challenge
 
 This guide aim to demonstrate how to create a certificate with the let's encrypt HTTP challenge to use https on a simple service exposed with Traefik.  
-Please also read the [docker-compose: Basic Example](../basic-example) for details on how to expose such a service.  
+Please also read the [basic example](../basic-example) for details on how to expose such a service.  
 
 ## Prerequisite
 
