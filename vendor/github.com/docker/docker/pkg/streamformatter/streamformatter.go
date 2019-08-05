@@ -1,5 +1,5 @@
 // Package streamformatter provides helper functions to format a stream.
-package streamformatter
+package streamformatter // import "github.com/docker/docker/pkg/streamformatter"
 
 import (
 	"encoding/json"
@@ -94,7 +94,7 @@ func NewProgressOutput(out io.Writer) progress.Output {
 	return &progressOutput{sf: &rawProgressFormatter{}, out: out, newLines: true}
 }
 
-// NewJSONProgressOutput returns a progress.Output that that formats output
+// NewJSONProgressOutput returns a progress.Output that formats output
 // using JSON objects
 func NewJSONProgressOutput(out io.Writer, newLines bool) progress.Output {
 	return &progressOutput{sf: &jsonProgressFormatter{}, out: out, newLines: newLines}
@@ -139,14 +139,14 @@ type AuxFormatter struct {
 }
 
 // Emit emits the given interface as an aux progress message
-func (sf *AuxFormatter) Emit(aux interface{}) error {
+func (sf *AuxFormatter) Emit(id string, aux interface{}) error {
 	auxJSONBytes, err := json.Marshal(aux)
 	if err != nil {
 		return err
 	}
 	auxJSON := new(json.RawMessage)
 	*auxJSON = auxJSONBytes
-	msgJSON, err := json.Marshal(&jsonmessage.JSONMessage{Aux: auxJSON})
+	msgJSON, err := json.Marshal(&jsonmessage.JSONMessage{ID: id, Aux: auxJSON})
 	if err != nil {
 		return err
 	}

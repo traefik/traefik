@@ -1,13 +1,9 @@
-// +build windows
-
-package archive
+package archive // import "github.com/docker/docker/pkg/archive"
 
 import (
 	"archive/tar"
-	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/longpath"
@@ -28,16 +24,8 @@ func getWalkRoot(srcPath string, include string) string {
 // CanonicalTarNameForPath returns platform-specific filepath
 // to canonical posix-style path for tar archival. p is relative
 // path.
-func CanonicalTarNameForPath(p string) (string, error) {
-	// windows: convert windows style relative path with backslashes
-	// into forward slashes. Since windows does not allow '/' or '\'
-	// in file names, it is mostly safe to replace however we must
-	// check just in case
-	if strings.Contains(p, "/") {
-		return "", fmt.Errorf("Windows path contains forward slash: %s", p)
-	}
-	return strings.Replace(p, string(os.PathSeparator), "/", -1), nil
-
+func CanonicalTarNameForPath(p string) string {
+	return filepath.ToSlash(p)
 }
 
 // chmodTarEntry is used to adjust the file permissions used in tar header based
@@ -73,7 +61,7 @@ func handleLChmod(hdr *tar.Header, path string, hdrInfo os.FileInfo) error {
 	return nil
 }
 
-func getFileUIDGID(stat interface{}) (idtools.IDPair, error) {
+func getFileUIDGID(stat interface{}) (idtools.Identity, error) {
 	// no notion of file ownership mapping yet on Windows
-	return idtools.IDPair{0, 0}, nil
+	return idtools.Identity{UID: 0, GID: 0}, nil
 }

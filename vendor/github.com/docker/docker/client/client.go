@@ -23,7 +23,7 @@ For example, to list running containers (the equivalent of "docker ps"):
 	)
 
 	func main() {
-		cli, err := client.NewEnvClient()
+		cli, err := client.NewClientWithOpts(client.FromEnv)
 		if err != nil {
 			panic(err)
 		}
@@ -39,24 +39,22 @@ For example, to list running containers (the equivalent of "docker ps"):
 	}
 
 */
-package client
+package client // import "github.com/docker/docker/client"
 
 import (
-	"errors"
+	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/docker/docker/api"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/go-connections/sockets"
-	"github.com/docker/go-connections/tlsconfig"
-	"golang.org/x/net/context"
+	"github.com/pkg/errors"
 )
 
 // ErrRedirect is the error returned by checkRedirect when the request is non-GET.
@@ -83,13 +81,22 @@ type Client struct {
 	customHTTPHeaders map[string]string
 	// manualOverride is set to true when the version was set by users.
 	manualOverride bool
+
+	// negotiateVersion indicates if the client should automatically negotiate
+	// the API version to use when making requests. API version negotiation is
+	// performed on the first request, after which negotiated is set to "true"
+	// so that subsequent requests do not re-negotiate.
+	negotiateVersion bool
+
+	// negotiated indicates that API version negotiation took place
+	negotiated bool
 }
 
 // CheckRedirect specifies the policy for dealing with redirect responses:
 // If the request is non-GET return `ErrRedirect`. Otherwise use the last response.
 //
 // Go 1.8 changes behavior for HTTP redirects (specifically 301, 307, and 308) in the client .
-// The Docker client (and by extension docker API client) can be made to to send a request
+// The Docker client (and by extension docker API client) can be made to send a request
 // like POST /containers//start where what would normally be in the name section of the URL is empty.
 // This triggers an HTTP 301 from the daemon.
 // In go 1.8 this 301 will be converted to a GET request, and ends up getting a 404 from the daemon.
@@ -102,99 +109,62 @@ func CheckRedirect(req *http.Request, via []*http.Request) error {
 	return ErrRedirect
 }
 
-// NewEnvClient initializes a new API client based on environment variables.
-// Use DOCKER_HOST to set the url to the docker server.
-// Use DOCKER_API_VERSION to set the version of the API to reach, leave empty for latest.
-// Use DOCKER_CERT_PATH to load the TLS certificates from.
-// Use DOCKER_TLS_VERIFY to enable or disable TLS verification, off by default.
-func NewEnvClient() (*Client, error) {
-	var client *http.Client
-	if dockerCertPath := os.Getenv("DOCKER_CERT_PATH"); dockerCertPath != "" {
-		options := tlsconfig.Options{
-			CAFile:             filepath.Join(dockerCertPath, "ca.pem"),
-			CertFile:           filepath.Join(dockerCertPath, "cert.pem"),
-			KeyFile:            filepath.Join(dockerCertPath, "key.pem"),
-			InsecureSkipVerify: os.Getenv("DOCKER_TLS_VERIFY") == "",
-		}
-		tlsc, err := tlsconfig.Client(options)
-		if err != nil {
-			return nil, err
-		}
-
-		client = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: tlsc,
-			},
-			CheckRedirect: CheckRedirect,
-		}
-	}
-
-	host := os.Getenv("DOCKER_HOST")
-	if host == "" {
-		host = DefaultDockerHost
-	}
-	version := os.Getenv("DOCKER_API_VERSION")
-	if version == "" {
-		version = api.DefaultVersion
-	}
-
-	cli, err := NewClient(host, version, client, nil)
-	if err != nil {
-		return cli, err
-	}
-	if os.Getenv("DOCKER_API_VERSION") != "" {
-		cli.manualOverride = true
-	}
-	return cli, nil
-}
-
-// NewClient initializes a new API client for the given host and API version.
-// It uses the given http client as transport.
+// NewClientWithOpts initializes a new API client with default values. It takes functors
+// to modify values when creating it, like `NewClientWithOpts(WithVersion(…))`
 // It also initializes the custom http headers to add to each request.
 //
 // It won't send any version information if the version number is empty. It is
 // highly recommended that you set a version or your client may break if the
 // server is upgraded.
-func NewClient(host string, version string, client *http.Client, httpHeaders map[string]string) (*Client, error) {
-	hostURL, err := ParseHostURL(host)
+func NewClientWithOpts(ops ...Opt) (*Client, error) {
+	client, err := defaultHTTPClient(DefaultDockerHost)
 	if err != nil {
 		return nil, err
 	}
+	c := &Client{
+		host:    DefaultDockerHost,
+		version: api.DefaultVersion,
+		client:  client,
+		proto:   defaultProto,
+		addr:    defaultAddr,
+	}
 
-	if client != nil {
-		if _, ok := client.Transport.(http.RoundTripper); !ok {
-			return nil, fmt.Errorf("unable to verify TLS configuration, invalid transport %v", client.Transport)
-		}
-	} else {
-		transport := new(http.Transport)
-		sockets.ConfigureTransport(transport, hostURL.Scheme, hostURL.Host)
-		client = &http.Client{
-			Transport:     transport,
-			CheckRedirect: CheckRedirect,
+	for _, op := range ops {
+		if err := op(c); err != nil {
+			return nil, err
 		}
 	}
 
-	scheme := "http"
-	tlsConfig := resolveTLSConfig(client.Transport)
-	if tlsConfig != nil {
-		// TODO(stevvooe): This isn't really the right way to write clients in Go.
-		// `NewClient` should probably only take an `*http.Client` and work from there.
-		// Unfortunately, the model of having a host-ish/url-thingy as the connection
-		// string has us confusing protocol and transport layers. We continue doing
-		// this to avoid breaking existing clients but this should be addressed.
-		scheme = "https"
+	if _, ok := c.client.Transport.(http.RoundTripper); !ok {
+		return nil, fmt.Errorf("unable to verify TLS configuration, invalid transport %v", c.client.Transport)
+	}
+	if c.scheme == "" {
+		c.scheme = "http"
+
+		tlsConfig := resolveTLSConfig(c.client.Transport)
+		if tlsConfig != nil {
+			// TODO(stevvooe): This isn't really the right way to write clients in Go.
+			// `NewClient` should probably only take an `*http.Client` and work from there.
+			// Unfortunately, the model of having a host-ish/url-thingy as the connection
+			// string has us confusing protocol and transport layers. We continue doing
+			// this to avoid breaking existing clients but this should be addressed.
+			c.scheme = "https"
+		}
 	}
 
-	// TODO: store URL instead of proto/addr/basePath
-	return &Client{
-		scheme:            scheme,
-		host:              host,
-		proto:             hostURL.Scheme,
-		addr:              hostURL.Host,
-		basePath:          hostURL.Path,
-		client:            client,
-		version:           version,
-		customHTTPHeaders: httpHeaders,
+	return c, nil
+}
+
+func defaultHTTPClient(host string) (*http.Client, error) {
+	url, err := ParseHostURL(host)
+	if err != nil {
+		return nil, err
+	}
+	transport := new(http.Transport)
+	sockets.ConfigureTransport(transport, url.Scheme, url.Host)
+	return &http.Client{
+		Transport:     transport,
+		CheckRedirect: CheckRedirect,
 	}, nil
 }
 
@@ -208,8 +178,11 @@ func (cli *Client) Close() error {
 
 // getAPIPath returns the versioned request path to call the api.
 // It appends the query parameters to the path if they are not empty.
-func (cli *Client) getAPIPath(p string, query url.Values) string {
+func (cli *Client) getAPIPath(ctx context.Context, p string, query url.Values) string {
 	var apiPath string
+	if cli.negotiateVersion && !cli.negotiated {
+		cli.NegotiateAPIVersion(ctx)
+	}
 	if cli.version != "" {
 		v := strings.TrimPrefix(cli.version, "v")
 		apiPath = path.Join(cli.basePath, "/v"+v, p)
@@ -225,19 +198,31 @@ func (cli *Client) ClientVersion() string {
 }
 
 // NegotiateAPIVersion queries the API and updates the version to match the
-// API version. Any errors are silently ignored.
+// API version. Any errors are silently ignored. If a manual override is in place,
+// either through the `DOCKER_API_VERSION` environment variable, or if the client
+// was initialized with a fixed version (`opts.WithVersion(xx)`), no negotiation
+// will be performed.
 func (cli *Client) NegotiateAPIVersion(ctx context.Context) {
-	ping, _ := cli.Ping(ctx)
-	cli.NegotiateAPIVersionPing(ping)
+	if !cli.manualOverride {
+		ping, _ := cli.Ping(ctx)
+		cli.negotiateAPIVersionPing(ping)
+	}
 }
 
 // NegotiateAPIVersionPing updates the client version to match the Ping.APIVersion
-// if the ping version is less than the default version.
+// if the ping version is less than the default version.  If a manual override is
+// in place, either through the `DOCKER_API_VERSION` environment variable, or if
+// the client was initialized with a fixed version (`opts.WithVersion(xx)`), no
+// negotiation is performed.
 func (cli *Client) NegotiateAPIVersionPing(p types.Ping) {
-	if cli.manualOverride {
-		return
+	if !cli.manualOverride {
+		cli.negotiateAPIVersionPing(p)
 	}
+}
 
+// negotiateAPIVersionPing queries the API and updates the version to match the
+// API version. Any errors are silently ignored.
+func (cli *Client) negotiateAPIVersionPing(p types.Ping) {
 	// try the latest version before versioning headers existed
 	if p.APIVersion == "" {
 		p.APIVersion = "1.24"
@@ -252,6 +237,12 @@ func (cli *Client) NegotiateAPIVersionPing(p types.Ping) {
 	if versions.LessThan(p.APIVersion, cli.version) {
 		cli.version = p.APIVersion
 	}
+
+	// Store the results, so that automatic API version negotiation (if enabled)
+	// won't be performed on the next request.
+	if cli.negotiateVersion {
+		cli.negotiated = true
+	}
 }
 
 // DaemonHost returns the host address used by the client
@@ -259,15 +250,9 @@ func (cli *Client) DaemonHost() string {
 	return cli.host
 }
 
-// ParseHost parses a url string, validates the strings is a host url, and returns
-// the parsed host as: protocol, address, and base path
-// Deprecated: use ParseHostURL
-func ParseHost(host string) (string, string, string, error) {
-	hostURL, err := ParseHostURL(host)
-	if err != nil {
-		return "", "", "", err
-	}
-	return hostURL.Scheme, hostURL.Host, hostURL.Path, nil
+// HTTPClient returns a copy of the HTTP client bound to the server
+func (cli *Client) HTTPClient() *http.Client {
+	return &*cli.client
 }
 
 // ParseHostURL parses a url string, validates the string is a host url, and
@@ -305,6 +290,20 @@ func (cli *Client) CustomHTTPHeaders() map[string]string {
 }
 
 // SetCustomHTTPHeaders that will be set on every HTTP request made by the client.
+// Deprecated: use WithHTTPHeaders when creating the client.
 func (cli *Client) SetCustomHTTPHeaders(headers map[string]string) {
 	cli.customHTTPHeaders = headers
+}
+
+// Dialer returns a dialer for a raw stream connection, with HTTP/1.1 header, that can be used for proxying the daemon connection.
+// Used by `docker dial-stdio` (docker/cli#889).
+func (cli *Client) Dialer() func(context.Context) (net.Conn, error) {
+	return func(ctx context.Context) (net.Conn, error) {
+		if transport, ok := cli.client.Transport.(*http.Transport); ok {
+			if transport.DialContext != nil && transport.TLSClientConfig == nil {
+				return transport.DialContext(ctx, cli.proto, cli.addr)
+			}
+		}
+		return fallbackDial(cli.proto, cli.addr, resolveTLSConfig(cli.client.Transport))
+	}
 }

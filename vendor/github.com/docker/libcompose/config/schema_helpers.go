@@ -32,15 +32,19 @@ type (
 	portsFormatChecker       struct{}
 )
 
-func (checker environmentFormatChecker) IsFormat(input string) bool {
+func (checker environmentFormatChecker) IsFormat(input interface{}) bool {
 	// If the value is a boolean, a warning should be given
 	// However, we can't determine type since gojsonschema converts the value to a string
 	// Adding a function with an interface{} parameter to gojsonschema is probably the best way to handle this
 	return true
 }
 
-func (checker portsFormatChecker) IsFormat(input string) bool {
-	_, _, err := nat.ParsePortSpecs([]string{input})
+func (checker portsFormatChecker) IsFormat(input interface{}) bool {
+	in, ok := input.(string)
+	if !ok {
+		return true
+	}
+	_, _, err := nat.ParsePortSpecs([]string{in})
 	return err == nil
 }
 

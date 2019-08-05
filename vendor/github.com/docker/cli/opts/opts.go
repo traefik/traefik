@@ -10,6 +10,7 @@ import (
 
 	"github.com/docker/docker/api/types/filters"
 	units "github.com/docker/go-units"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -266,10 +267,24 @@ func validateDomain(val string) (string, error) {
 }
 
 // ValidateLabel validates that the specified string is a valid label, and returns it.
-// Labels are in the form on key=value.
+//
+// Labels are in the form of key=value; key must be a non-empty string, and not
+// contain whitespaces. A value is optional (defaults to an empty string if omitted).
+//
+// Leading whitespace is removed during validation but values are kept as-is
+// otherwise, so any string value is accepted for both, which includes whitespace
+// (for values) and quotes (surrounding, or embedded in key or value).
+//
+// TODO discuss if quotes (and other special characters) should be valid or invalid for keys
+// TODO discuss if leading/trailing whitespace in keys should be preserved (and valid)
 func ValidateLabel(val string) (string, error) {
-	if strings.Count(val, "=") < 1 {
-		return "", fmt.Errorf("bad attribute format: %s", val)
+	arr := strings.SplitN(val, "=", 2)
+	key := strings.TrimLeft(arr[0], whiteSpaces)
+	if key == "" {
+		return "", fmt.Errorf("invalid label '%s': empty name", val)
+	}
+	if strings.ContainsAny(key, whiteSpaces) {
+		return "", fmt.Errorf("label '%s' contains whitespaces", key)
 	}
 	return val, nil
 }
@@ -306,6 +321,17 @@ func ValidateSysctl(val string) (string, error) {
 	return "", fmt.Errorf("sysctl '%s' is not whitelisted", val)
 }
 
+// ValidateProgressOutput errors out if an invalid value is passed to --progress
+func ValidateProgressOutput(val string) error {
+	valid := []string{"auto", "plain", "tty"}
+	for _, s := range valid {
+		if s == val {
+			return nil
+		}
+	}
+	return fmt.Errorf("invalid value %q passed to --progress, valid values are: %s", val, strings.Join(valid, ", "))
+}
+
 // FilterOpt is a flag type for validating filters
 type FilterOpt struct {
 	filter filters.Args
@@ -317,7 +343,7 @@ func NewFilterOpt() FilterOpt {
 }
 
 func (o *FilterOpt) String() string {
-	repr, err := filters.ToParam(o.filter)
+	repr, err := filters.ToJSON(o.filter)
 	if err != nil {
 		return "invalid filters"
 	}
@@ -326,9 +352,18 @@ func (o *FilterOpt) String() string {
 
 // Set sets the value of the opt by parsing the command line value
 func (o *FilterOpt) Set(value string) error {
-	var err error
-	o.filter, err = filters.ParseFlag(value, o.filter)
-	return err
+	if value == "" {
+		return nil
+	}
+	if !strings.Contains(value, "=") {
+		return errors.New("bad format of filter (expected name=value)")
+	}
+	f := strings.SplitN(value, "=", 2)
+	name := strings.ToLower(strings.TrimSpace(f[0]))
+	value = strings.TrimSpace(f[1])
+
+	o.filter.Add(name, value)
+	return nil
 }
 
 // Type returns the option type

@@ -13,7 +13,6 @@ import (
 	"github.com/docker/distribution/registry/client"
 	"github.com/docker/distribution/registry/client/auth/challenge"
 	"github.com/docker/distribution/registry/client/transport"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -69,7 +68,6 @@ func NewAuthorizer(manager challenge.Manager, handlers ...AuthenticationHandler)
 type endpointAuthorizer struct {
 	challenges challenge.Manager
 	handlers   []AuthenticationHandler
-	transport  http.RoundTripper
 }
 
 func (ea *endpointAuthorizer) ModifyRequest(req *http.Request) error {
@@ -122,7 +120,6 @@ type clock interface {
 }
 
 type tokenHandler struct {
-	header    http.Header
 	creds     CredentialStore
 	transport http.RoundTripper
 	clock     clock
@@ -135,6 +132,8 @@ type tokenHandler struct {
 	tokenLock       sync.Mutex
 	tokenCache      string
 	tokenExpiration time.Time
+
+	logger Logger
 }
 
 // Scope is a type which is serializable to a string
@@ -176,6 +175,18 @@ func (rs RegistryScope) String() string {
 	return fmt.Sprintf("registry:%s:%s", rs.Name, strings.Join(rs.Actions, ","))
 }
 
+// Logger defines the injectable logging interface, used on TokenHandlers.
+type Logger interface {
+	Debugf(format string, args ...interface{})
+}
+
+func logDebugf(logger Logger, format string, args ...interface{}) {
+	if logger == nil {
+		return
+	}
+	logger.Debugf(format, args...)
+}
+
 // TokenHandlerOptions is used to configure a new token handler
 type TokenHandlerOptions struct {
 	Transport   http.RoundTripper
@@ -185,6 +196,7 @@ type TokenHandlerOptions struct {
 	ForceOAuth    bool
 	ClientID      string
 	Scopes        []Scope
+	Logger        Logger
 }
 
 // An implementation of clock for providing real time data.
@@ -220,6 +232,7 @@ func NewTokenHandlerWithOptions(options TokenHandlerOptions) AuthenticationHandl
 		clientID:      options.ClientID,
 		scopes:        options.Scopes,
 		clock:         realClock{},
+		logger:        options.Logger,
 	}
 
 	return handler
@@ -264,6 +277,9 @@ func (th *tokenHandler) getToken(params map[string]string, additionalScopes ...s
 	}
 	var addedScopes bool
 	for _, scope := range additionalScopes {
+		if hasScope(scopes, scope) {
+			continue
+		}
 		scopes = append(scopes, scope)
 		addedScopes = true
 	}
@@ -285,6 +301,15 @@ func (th *tokenHandler) getToken(params map[string]string, additionalScopes ...s
 	}
 
 	return th.tokenCache, nil
+}
+
+func hasScope(scopes []string, scope string) bool {
+	for _, s := range scopes {
+		if s == scope {
+			return true
+		}
+	}
+	return false
 }
 
 type postTokenResponse struct {
@@ -348,7 +373,7 @@ func (th *tokenHandler) fetchTokenWithOAuth(realm *url.URL, refreshToken, servic
 	if tr.ExpiresIn < minimumTokenLifetimeSeconds {
 		// The default/minimum lifetime.
 		tr.ExpiresIn = minimumTokenLifetimeSeconds
-		logrus.Debugf("Increasing token expiration to: %d seconds", tr.ExpiresIn)
+		logDebugf(th.logger, "Increasing token expiration to: %d seconds", tr.ExpiresIn)
 	}
 
 	if tr.IssuedAt.IsZero() {
@@ -439,7 +464,7 @@ func (th *tokenHandler) fetchTokenWithBasicAuth(realm *url.URL, service string, 
 	if tr.ExpiresIn < minimumTokenLifetimeSeconds {
 		// The default/minimum lifetime.
 		tr.ExpiresIn = minimumTokenLifetimeSeconds
-		logrus.Debugf("Increasing token expiration to: %d seconds", tr.ExpiresIn)
+		logDebugf(th.logger, "Increasing token expiration to: %d seconds", tr.ExpiresIn)
 	}
 
 	if tr.IssuedAt.IsZero() {

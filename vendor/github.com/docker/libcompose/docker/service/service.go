@@ -411,6 +411,20 @@ func (s *Service) NetworkConnect(ctx context.Context, c *container.Container, ne
 		aliases = []string{s.Name()}
 	}
 	aliases = append(aliases, net.Aliases...)
+	if len(net.Aliases) >= 1 {
+		logrus.Infof("connect")
+		client.NetworkConnect(ctx, net.RealName, containerID, &network.EndpointSettings{
+			Aliases:   aliases,
+			Links:     links,
+			IPAddress: net.IPv4Address,
+			IPAMConfig: &network.EndpointIPAMConfig{
+				IPv4Address: net.IPv4Address,
+				IPv6Address: net.IPv6Address,
+			},
+		})
+		logrus.Infof("disconnect")
+		client.NetworkDisconnect(ctx, net.RealName, containerID, true)
+	}
 	return client.NetworkConnect(ctx, net.RealName, containerID, &network.EndpointSettings{
 		Aliases:   aliases,
 		Links:     links,

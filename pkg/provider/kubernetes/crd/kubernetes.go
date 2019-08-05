@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
-	"flag"
 	"fmt"
 	"os"
 	"reflect"
@@ -83,14 +82,6 @@ func (p *Provider) Init() error {
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, "kubernetescrd"))
 	logger := log.FromContext(ctxLog)
-	// Tell glog (used by client-go) to log into STDERR. Otherwise, we risk
-	// certain kinds of API errors getting logged into a directory not
-	// available in a `FROM scratch` Docker container, causing glog to abort
-	// hard with an exit code > 0.
-	err := flag.Set("logtostderr", "true")
-	if err != nil {
-		return err
-	}
 
 	logger.Debugf("Using label selector: %q", p.LabelSelector)
 	k8sClient, err := p.newK8sClient(ctxLog, p.LabelSelector)

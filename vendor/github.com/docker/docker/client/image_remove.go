@@ -1,11 +1,11 @@
-package client
+package client // import "github.com/docker/docker/client"
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 
 	"github.com/docker/docker/api/types"
-	"golang.org/x/net/context"
 )
 
 // ImageRemove removes an image from the docker host.
@@ -21,11 +21,11 @@ func (cli *Client) ImageRemove(ctx context.Context, imageID string, options type
 
 	var dels []types.ImageDeleteResponseItem
 	resp, err := cli.delete(ctx, "/images/"+imageID, query, nil)
+	defer ensureReaderClosed(resp)
 	if err != nil {
 		return dels, wrapResponseError(err, resp, "image", imageID)
 	}
 
 	err = json.NewDecoder(resp.body).Decode(&dels)
-	ensureReaderClosed(resp)
 	return dels, err
 }

@@ -36,8 +36,6 @@ import (
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface
-	// Deprecated: please explicitly pick a version if possible.
-	Traefik() traefikv1alpha1.TraefikV1alpha1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -49,12 +47,6 @@ type Clientset struct {
 
 // TraefikV1alpha1 retrieves the TraefikV1alpha1Client
 func (c *Clientset) TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface {
-	return c.traefikV1alpha1
-}
-
-// Deprecated: Traefik retrieves the default version of TraefikClient.
-// Please explicitly pick a version.
-func (c *Clientset) Traefik() traefikv1alpha1.TraefikV1alpha1Interface {
 	return c.traefikV1alpha1
 }
 

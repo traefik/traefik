@@ -1,4 +1,4 @@
-package container
+package container // import "github.com/docker/docker/api/types/container"
 
 import (
 	"strings"
@@ -19,6 +19,27 @@ type Isolation string
 func (i Isolation) IsDefault() bool {
 	return strings.ToLower(string(i)) == "default" || string(i) == ""
 }
+
+// IsHyperV indicates the use of a Hyper-V partition for isolation
+func (i Isolation) IsHyperV() bool {
+	return strings.ToLower(string(i)) == "hyperv"
+}
+
+// IsProcess indicates the use of process isolation
+func (i Isolation) IsProcess() bool {
+	return strings.ToLower(string(i)) == "process"
+}
+
+const (
+	// IsolationEmpty is unspecified (same behavior as default)
+	IsolationEmpty = Isolation("")
+	// IsolationDefault is the default isolation mode on current daemon
+	IsolationDefault = Isolation("default")
+	// IsolationProcess is process isolation mode
+	IsolationProcess = Isolation("process")
+	// IsolationHyperV is HyperV isolation mode
+	IsolationHyperV = Isolation("hyperv")
+)
 
 // IpcMode represents the container ipc stack.
 type IpcMode string
@@ -223,6 +244,16 @@ func (n PidMode) Container() string {
 	return ""
 }
 
+// DeviceRequest represents a request for devices from a device driver.
+// Used by GPU device drivers.
+type DeviceRequest struct {
+	Driver       string            // Name of device driver
+	Count        int               // Number of devices to request (-1 = All)
+	DeviceIDs    []string          // List of device IDs as recognizable by the device driver
+	Capabilities [][]string        // An OR list of AND lists of device capabilities (e.g. "gpu")
+	Options      map[string]string // Options to pass onto the device driver
+}
+
 // DeviceMapping represents the device mapping between the host and the container.
 type DeviceMapping struct {
 	PathOnHost        string
@@ -306,13 +337,14 @@ type Resources struct {
 	CpusetMems           string          // CpusetMems 0-2, 0,1
 	Devices              []DeviceMapping // List of devices to map inside the container
 	DeviceCgroupRules    []string        // List of rule to be added to the device cgroup
-	DiskQuota            int64           // Disk limit (in bytes)
+	DeviceRequests       []DeviceRequest // List of device requests for device drivers
 	KernelMemory         int64           // Kernel memory limit (in bytes)
+	KernelMemoryTCP      int64           // Hard limit for kernel TCP buffer memory (in bytes)
 	MemoryReservation    int64           // Memory soft limit (in bytes)
 	MemorySwap           int64           // Total memory usage (memory + swap); set `-1` to enable unlimited swap
 	MemorySwappiness     *int64          // Tuning container memory swappiness behaviour
 	OomKillDisable       *bool           // Whether to disable OOM Killer or not
-	PidsLimit            int64           // Setting pids limit for a container
+	PidsLimit            *int64          // Setting PIDs limit for a container; Set `0` or `-1` for unlimited, or `null` to not change.
 	Ulimits              []*units.Ulimit // List of ulimits to be set in the container
 
 	// Applicable to Windows
@@ -348,9 +380,10 @@ type HostConfig struct {
 	// Applicable to UNIX platforms
 	CapAdd          strslice.StrSlice // List of kernel capabilities to add to the container
 	CapDrop         strslice.StrSlice // List of kernel capabilities to remove from the container
-	DNS             []string          `json:"Dns"`        // List of DNS server to lookup
-	DNSOptions      []string          `json:"DnsOptions"` // List of DNSOption to look for
-	DNSSearch       []string          `json:"DnsSearch"`  // List of DNSSearch to look for
+	Capabilities    []string          `json:"Capabilities"` // List of kernel capabilities to be available for container (this overrides the default set)
+	DNS             []string          `json:"Dns"`          // List of DNS server to lookup
+	DNSOptions      []string          `json:"DnsOptions"`   // List of DNSOption to look for
+	DNSSearch       []string          `json:"DnsSearch"`    // List of DNSSearch to look for
 	ExtraHosts      []string          // List of extra hosts
 	GroupAdd        []string          // List of additional groups that the container process will run as
 	IpcMode         IpcMode           // IPC namespace to use for the container
@@ -379,6 +412,12 @@ type HostConfig struct {
 
 	// Mounts specs used by the container
 	Mounts []mount.Mount `json:",omitempty"`
+
+	// MaskedPaths is the list of paths to be masked inside the container (this overrides the default set of paths)
+	MaskedPaths []string
+
+	// ReadonlyPaths is the list of paths to be set as read-only inside the container (this overrides the default set of paths)
+	ReadonlyPaths []string
 
 	// Run a custom init inside the container, if null, use the daemon's configured settings
 	Init *bool `json:",omitempty"`
