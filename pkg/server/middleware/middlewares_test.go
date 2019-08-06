@@ -7,14 +7,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/server/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestBuilder_BuildChainNilConfig(t *testing.T) {
-	testConfig := map[string]*config.MiddlewareInfo{
+	testConfig := map[string]*runtime.MiddlewareInfo{
 		"empty": {},
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil)
@@ -25,7 +26,7 @@ func TestBuilder_BuildChainNilConfig(t *testing.T) {
 }
 
 func TestBuilder_BuildChainNonExistentChain(t *testing.T) {
-	testConfig := map[string]*config.MiddlewareInfo{
+	testConfig := map[string]*runtime.MiddlewareInfo{
 		"foobar": {},
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil)
@@ -39,7 +40,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 	testCases := []struct {
 		desc            string
 		buildChain      []string
-		configuration   map[string]*config.Middleware
+		configuration   map[string]*dynamic.Middleware
 		expected        map[string]string
 		contextProvider string
 		expectedError   error
@@ -47,9 +48,9 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		{
 			desc:       "Simple middleware",
 			buildChain: []string{"middleware-1"},
-			configuration: map[string]*config.Middleware{
+			configuration: map[string]*dynamic.Middleware{
 				"middleware-1": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-1": "value-middleware-1"},
 					},
 				},
@@ -59,14 +60,14 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		{
 			desc:       "Middleware that references a chain",
 			buildChain: []string{"middleware-chain-1"},
-			configuration: map[string]*config.Middleware{
+			configuration: map[string]*dynamic.Middleware{
 				"middleware-1": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-1": "value-middleware-1"},
 					},
 				},
 				"middleware-chain-1": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"middleware-1"},
 					},
 				},
@@ -76,9 +77,9 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		{
 			desc:       "Should suffix the middlewareName with the provider in the context",
 			buildChain: []string{"middleware-1"},
-			configuration: map[string]*config.Middleware{
+			configuration: map[string]*dynamic.Middleware{
 				"middleware-1@provider-1": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-1@provider-1": "value-middleware-1"},
 					},
 				},
@@ -89,9 +90,9 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		{
 			desc:       "Should not suffix a qualified middlewareName with the provider in the context",
 			buildChain: []string{"middleware-1@provider-1"},
-			configuration: map[string]*config.Middleware{
+			configuration: map[string]*dynamic.Middleware{
 				"middleware-1@provider-1": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-1@provider-1": "value-middleware-1"},
 					},
 				},
@@ -102,14 +103,14 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		{
 			desc:       "Should be context aware if a chain references another middleware",
 			buildChain: []string{"middleware-chain-1@provider-1"},
-			configuration: map[string]*config.Middleware{
+			configuration: map[string]*dynamic.Middleware{
 				"middleware-1@provider-1": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-1": "value-middleware-1"},
 					},
 				},
 				"middleware-chain-1@provider-1": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"middleware-1"},
 					},
 				},
@@ -119,29 +120,29 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		{
 			desc:       "Should handle nested chains with different context",
 			buildChain: []string{"middleware-chain-1@provider-1", "middleware-chain-1"},
-			configuration: map[string]*config.Middleware{
+			configuration: map[string]*dynamic.Middleware{
 				"middleware-1@provider-1": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-1": "value-middleware-1"},
 					},
 				},
 				"middleware-2@provider-1": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{"middleware-2": "value-middleware-2"},
 					},
 				},
 				"middleware-chain-1@provider-1": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"middleware-1"},
 					},
 				},
 				"middleware-chain-2@provider-1": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"middleware-2"},
 					},
 				},
 				"middleware-chain-1@provider-2": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"middleware-2@provider-1", "middleware-chain-2@provider-1"},
 					},
 				},
@@ -152,22 +153,22 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		{
 			desc:       "Detects recursion in Middleware chain",
 			buildChain: []string{"m1"},
-			configuration: map[string]*config.Middleware{
+			configuration: map[string]*dynamic.Middleware{
 				"ok": {
-					Retry: &config.Retry{},
+					Retry: &dynamic.Retry{},
 				},
 				"m1": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"m2"},
 					},
 				},
 				"m2": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"ok", "m3"},
 					},
 				},
 				"m3": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"m1"},
 					},
 				},
@@ -177,22 +178,22 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		{
 			desc:       "Detects recursion in Middleware chain",
 			buildChain: []string{"m1@provider"},
-			configuration: map[string]*config.Middleware{
+			configuration: map[string]*dynamic.Middleware{
 				"ok@provider2": {
-					Retry: &config.Retry{},
+					Retry: &dynamic.Retry{},
 				},
 				"m1@provider": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"m2@provider2"},
 					},
 				},
 				"m2@provider2": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"ok", "m3@provider"},
 					},
 				},
 				"m3@provider": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"m1"},
 					},
 				},
@@ -201,12 +202,12 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		},
 		{
 			buildChain: []string{"ok", "m0"},
-			configuration: map[string]*config.Middleware{
+			configuration: map[string]*dynamic.Middleware{
 				"ok": {
-					Retry: &config.Retry{},
+					Retry: &dynamic.Retry{},
 				},
 				"m0": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"m0"},
 					},
 				},
@@ -216,24 +217,24 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		{
 			desc:       "Detects MiddlewareChain that references a Chain that references a Chain with a missing middleware",
 			buildChain: []string{"m0"},
-			configuration: map[string]*config.Middleware{
+			configuration: map[string]*dynamic.Middleware{
 				"m0": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"m1"},
 					},
 				},
 				"m1": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"m2"},
 					},
 				},
 				"m2": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"m3"},
 					},
 				},
 				"m3": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"m2"},
 					},
 				},
@@ -243,9 +244,9 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		{
 			desc:       "--",
 			buildChain: []string{"m0"},
-			configuration: map[string]*config.Middleware{
+			configuration: map[string]*dynamic.Middleware{
 				"m0": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"m0"},
 					},
 				},
@@ -264,8 +265,8 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 				ctx = internal.AddProviderInContext(ctx, "foobar@"+test.contextProvider)
 			}
 
-			rtConf := config.NewRuntimeConfig(config.Configuration{
-				HTTP: &config.HTTPConfiguration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: test.configuration,
 				},
 			})
@@ -292,31 +293,31 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 }
 
 func TestBuilder_buildConstructor(t *testing.T) {
-	testConfig := map[string]*config.Middleware{
+	testConfig := map[string]*dynamic.Middleware{
 		"cb-empty": {
-			CircuitBreaker: &config.CircuitBreaker{
+			CircuitBreaker: &dynamic.CircuitBreaker{
 				Expression: "",
 			},
 		},
 		"cb-foo": {
-			CircuitBreaker: &config.CircuitBreaker{
+			CircuitBreaker: &dynamic.CircuitBreaker{
 				Expression: "NetworkErrorRatio() > 0.5",
 			},
 		},
 		"ap-empty": {
-			AddPrefix: &config.AddPrefix{
+			AddPrefix: &dynamic.AddPrefix{
 				Prefix: "",
 			},
 		},
 		"ap-foo": {
-			AddPrefix: &config.AddPrefix{
+			AddPrefix: &dynamic.AddPrefix{
 				Prefix: "foo/",
 			},
 		},
 	}
 
-	rtConf := config.NewRuntimeConfig(config.Configuration{
-		HTTP: &config.HTTPConfiguration{
+	rtConf := runtime.NewConfig(dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
 			Middlewares: testConfig,
 		},
 	})

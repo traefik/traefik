@@ -71,11 +71,12 @@ nav:
       - 'Concepts' : 'getting-started/concepts.md'
       - 'Quick Start': 'getting-started/quick-start.md'
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
+      - 'Install Traefik': 'getting-started/install-traefik.md'
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
-#     - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
+      - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
       - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
       - 'Marathon': 'providers/marathon.md'
@@ -119,6 +120,12 @@ nav:
   - 'Observability':
       - 'Logs': 'observability/logs.md'
       - 'Access Logs': 'observability/access-logs.md'
+      - 'Metrics':
+          - 'Overview': 'observability/metrics/overview.md'
+          - 'DataDog': 'observability/metrics/datadog.md'
+          - 'InfluxDB': 'observability/metrics/influxdb.md'
+          - 'Prometheus': 'observability/metrics/prometheus.md'
+          - 'StatsD': 'observability/metrics/statsd.md'
       - 'Tracing':
           - 'Overview': 'observability/tracing/overview.md'
           - 'Jaeger': 'observability/tracing/jaeger.md'
@@ -130,6 +137,12 @@ nav:
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
       - 'Marathon': 'user-guides/marathon.md'
+      - 'Docker':
+        - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
+        - 'HTTPS with Let''s Encrypt':
+          - 'TLS Challenge': 'user-guides/docker-compose/acme-tls/index.md'
+          - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
+          - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'
@@ -139,7 +152,7 @@ nav:
       - 'Data Collection': 'contributing/data-collection.md'
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'
-  - 'Glossary': 'glossary.md'
+#  - 'Glossary': 'glossary.md'
   - 'References':
       - 'Static Configuration':
           - 'Overview': 'reference/static-configuration/overview.md'
@@ -147,6 +160,8 @@ nav:
           - 'CLI': 'reference/static-configuration/cli.md'
           - 'Environment variables': 'reference/static-configuration/env.md'
       - 'Dynamic Configuration':
+        - 'File': 'reference/dynamic-configuration/file.md'
         - 'Docker': 'reference/dynamic-configuration/docker.md'
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
-        - 'File': 'reference/dynamic-configuration/file.md'
+        - 'Marathon': 'reference/dynamic-configuration/marathon.md'
+        - 'Rancher': 'reference/dynamic-configuration/rancher.md'

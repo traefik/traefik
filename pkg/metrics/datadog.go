@@ -20,18 +20,18 @@ var datadogTicker *time.Ticker
 
 // Metric names consistent with https://github.com/DataDog/integrations-extras/pull/64
 const (
-	ddMetricsBackendReqsName      = "backend.request.total"
-	ddMetricsBackendLatencyName   = "backend.request.duration"
-	ddRetriesTotalName            = "backend.retries.total"
+	ddMetricsServiceReqsName      = "service.request.total"
+	ddMetricsServiceLatencyName   = "service.request.duration"
+	ddRetriesTotalName            = "service.retries.total"
 	ddConfigReloadsName           = "config.reload.total"
 	ddConfigReloadsFailureTagName = "failure"
 	ddLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
 	ddLastConfigReloadFailureName = "config.reload.lastFailureTimestamp"
-	ddEntrypointReqsName          = "entrypoint.request.total"
-	ddEntrypointReqDurationName   = "entrypoint.request.duration"
-	ddEntrypointOpenConnsName     = "entrypoint.connections.open"
-	ddOpenConnsName               = "backend.connections.open"
-	ddServerUpName                = "backend.server.up"
+	ddEntryPointReqsName          = "entrypoint.request.total"
+	ddEntryPointReqDurationName   = "entrypoint.request.duration"
+	ddEntryPointOpenConnsName     = "entrypoint.connections.open"
+	ddOpenConnsName               = "service.connections.open"
+	ddServerUpName                = "service.server.up"
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
@@ -41,19 +41,26 @@ func RegisterDatadog(ctx context.Context, config *types.DataDog) Registry {
 	}
 
 	registry := &standardRegistry{
-		enabled:                        true,
-		configReloadsCounter:           datadogClient.NewCounter(ddConfigReloadsName, 1.0),
-		configReloadsFailureCounter:    datadogClient.NewCounter(ddConfigReloadsName, 1.0).With(ddConfigReloadsFailureTagName, "true"),
-		lastConfigReloadSuccessGauge:   datadogClient.NewGauge(ddLastConfigReloadSuccessName),
-		lastConfigReloadFailureGauge:   datadogClient.NewGauge(ddLastConfigReloadFailureName),
-		entrypointReqsCounter:          datadogClient.NewCounter(ddEntrypointReqsName, 1.0),
-		entrypointReqDurationHistogram: datadogClient.NewHistogram(ddEntrypointReqDurationName, 1.0),
-		entrypointOpenConnsGauge:       datadogClient.NewGauge(ddEntrypointOpenConnsName),
-		backendReqsCounter:             datadogClient.NewCounter(ddMetricsBackendReqsName, 1.0),
-		backendReqDurationHistogram:    datadogClient.NewHistogram(ddMetricsBackendLatencyName, 1.0),
-		backendRetriesCounter:          datadogClient.NewCounter(ddRetriesTotalName, 1.0),
-		backendOpenConnsGauge:          datadogClient.NewGauge(ddOpenConnsName),
-		backendServerUpGauge:           datadogClient.NewGauge(ddServerUpName),
+		configReloadsCounter:         datadogClient.NewCounter(ddConfigReloadsName, 1.0),
+		configReloadsFailureCounter:  datadogClient.NewCounter(ddConfigReloadsName, 1.0).With(ddConfigReloadsFailureTagName, "true"),
+		lastConfigReloadSuccessGauge: datadogClient.NewGauge(ddLastConfigReloadSuccessName),
+		lastConfigReloadFailureGauge: datadogClient.NewGauge(ddLastConfigReloadFailureName),
+	}
+
+	if config.AddEntryPointsLabels {
+		registry.epEnabled = config.AddEntryPointsLabels
+		registry.entryPointReqsCounter = datadogClient.NewCounter(ddEntryPointReqsName, 1.0)
+		registry.entryPointReqDurationHistogram = datadogClient.NewHistogram(ddEntryPointReqDurationName, 1.0)
+		registry.entryPointOpenConnsGauge = datadogClient.NewGauge(ddEntryPointOpenConnsName)
+	}
+
+	if config.AddServicesLabels {
+		registry.svcEnabled = config.AddServicesLabels
+		registry.serviceReqsCounter = datadogClient.NewCounter(ddMetricsServiceReqsName, 1.0)
+		registry.serviceReqDurationHistogram = datadogClient.NewHistogram(ddMetricsServiceLatencyName, 1.0)
+		registry.serviceRetriesCounter = datadogClient.NewCounter(ddRetriesTotalName, 1.0)
+		registry.serviceOpenConnsGauge = datadogClient.NewGauge(ddOpenConnsName)
+		registry.serviceServerUpGauge = datadogClient.NewGauge(ddServerUpName)
 	}
 
 	return registry
@@ -68,7 +75,7 @@ func initDatadogClient(ctx context.Context, config *types.DataDog) *time.Ticker 
 	report := time.NewTicker(time.Duration(config.PushInterval))
 
 	safe.Go(func() {
-		datadogClient.SendLoop(report.C, "udp", address)
+		datadogClient.SendLoop(ctx, report.C, "udp", address)
 	})
 
 	return report

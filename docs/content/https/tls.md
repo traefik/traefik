@@ -35,7 +35,7 @@ tls:
 !!! important "File Provider Only"
 
     In the above example, we've used the [file provider](../providers/file.md) to handle these definitions.
-    In its current alpha version, it is the only available method to configure the certificates (as well as the options and the stores).
+    In its current beta version, it is the only available method to configure the certificates (as well as the options and the stores).
 
 ## Certificates Stores
 
@@ -52,9 +52,9 @@ tls:
     default: {}
 ```
 
-!!! important "Alpha restriction"
+!!! important "Beta restriction"
 
-    During the alpha version, any store definition other than the default one (named `default`) will be ignored,
+    During the beta version, any store definition other than the default one (named `default`) will be ignored,
     and there is thefore only one globally available TLS store.
 
 In the `tls.certificates` section, a list of stores can then be specified to indicate where the certificates should be stored:
@@ -85,9 +85,9 @@ tls:
     keyFile: /path/to/other-domain.key
 ```
 
-!!! important "Alpha restriction"
+!!! important "Beta restriction"
 
-    During the alpha version, the `stores` list will actually be ignored and automatically set to `["default"]`.
+    During the beta version, the `stores` list will actually be ignored and automatically set to `["default"]`.
 
 ### Default Certificate
 
@@ -139,35 +139,39 @@ tls:
       minVersion: VersionTLS13
 ```
 
-### Mutual Authentication
+### Client Authentication (mTLS)
 
-Traefik supports both optional and strict (which is the default) mutual authentication, though the `ClientCA.files` section.
-If present, connections from clients without a certificate will be rejected.
+Traefik supports mutual authentication, through the `ClientAuth` section.
 
-For clients with a certificate, the `optional` option governs the behaviour as follows:
+For authentication policies that require verification of the client certificate, the certificate authority for the certificate should be set in `ClientAuth.caFiles`.
+ 
+The `ClientAuth.clientAuthType` option governs the behaviour as follows:
 
-- When `optional = false`, Traefik accepts connections only from clients presenting a certificate signed by a CA listed in `ClientCA.files`.
-- When `optional = true`, Traefik authorizes connections from clients presenting a certificate signed by an unknown CA.
+- `NoClientCert`: disregards any client certificate.
+- `RequestClientCert`: asks for a certificate but proceeds anyway if none is provided.
+- `RequireAnyClientCert`: requires a certificate but does not verify if it is signed by a CA listed in `ClientAuth.caFiles`.
+- `VerifyClientCertIfGiven`: if a certificate is provided, verifies if it is signed by a CA listed in `ClientAuth.caFiles`. Otherwise proceeds without any certificate.
+- `RequireAndVerifyClientCert`: requires a certificate, which must be signed by a CA listed in `ClientAuth.caFiles`. 
 
 ```toml tab="TOML"
 [tls.options]
   [tls.options.default]
-    [tls.options.default.clientCA]
+    [tls.options.default.clientAuth]
       # in PEM format. each file can contain multiple CAs.
-      files = ["tests/clientca1.crt", "tests/clientca2.crt"]
-      optional = false
+      caFiles = ["tests/clientca1.crt", "tests/clientca2.crt"]
+      clientAuthType = "RequireAndVerifyClientCert"
 ```
 
 ```yaml tab="YAML"
 tls:
   options:
     default:
-      clientCA:
+      clientAuth:
         # in PEM format. each file can contain multiple CAs.
-        files:
+        caFiles:
         - tests/clientca1.crt
         - tests/clientca2.crt
-        optional: false
+        clientAuthType: RequireAndVerifyClientCert
 ```
 
 ### Cipher Suites

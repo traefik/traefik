@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/pkg/tracing"
@@ -29,7 +29,7 @@ type digestAuth struct {
 }
 
 // NewDigest creates a digest auth middleware.
-func NewDigest(ctx context.Context, next http.Handler, authConfig config.DigestAuth, name string) (http.Handler, error) {
+func NewDigest(ctx context.Context, next http.Handler, authConfig dynamic.DigestAuth, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, digestTypeName).Debug("Creating middleware")
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, digestUserParser)
 	if err != nil {

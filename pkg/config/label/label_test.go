@@ -3,10 +3,8 @@ package label
 import (
 	"fmt"
 	"testing"
-	"time"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,6 +63,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware8.headers.isdevelopment":                           "true",
 		"traefik.http.middlewares.Middleware8.headers.publickey":                               "foobar",
 		"traefik.http.middlewares.Middleware8.headers.referrerpolicy":                          "foobar",
+		"traefik.http.middlewares.Middleware8.headers.featurepolicy":                           "foobar",
 		"traefik.http.middlewares.Middleware8.headers.sslforcehost":                            "true",
 		"traefik.http.middlewares.Middleware8.headers.sslhost":                                 "foobar",
 		"traefik.http.middlewares.Middleware8.headers.sslproxyheaders.name0":                   "foobar",
@@ -97,26 +96,27 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.province":         "true",
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.serialnumber":     "true",
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.pem":                          "true",
-		"traefik.http.middlewares.Middleware12.ratelimit.extractorfunc":                        "foobar",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.average":                "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.burst":                  "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.period":                 "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.average":                "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.burst":                  "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.period":                 "42",
-		"traefik.http.middlewares.Middleware13.redirectregex.permanent":                        "true",
-		"traefik.http.middlewares.Middleware13.redirectregex.regex":                            "foobar",
-		"traefik.http.middlewares.Middleware13.redirectregex.replacement":                      "foobar",
-		"traefik.http.middlewares.Middleware13b.redirectscheme.scheme":                         "https",
-		"traefik.http.middlewares.Middleware13b.redirectscheme.port":                           "80",
-		"traefik.http.middlewares.Middleware13b.redirectscheme.permanent":                      "true",
-		"traefik.http.middlewares.Middleware14.replacepath.path":                               "foobar",
-		"traefik.http.middlewares.Middleware15.replacepathregex.regex":                         "foobar",
-		"traefik.http.middlewares.Middleware15.replacepathregex.replacement":                   "foobar",
-		"traefik.http.middlewares.Middleware16.retry.attempts":                                 "42",
-		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":                           "foobar, fiibar",
-		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":                         "foobar, fiibar",
-		"traefik.http.middlewares.Middleware19.compress":                                       "true",
+		// TODO: disable temporarily (rateLimit)
+		// "traefik.http.middlewares.Middleware12.ratelimit.extractorfunc":                        "foobar",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.average":                "42",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.burst":                  "42",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.period":                 "42",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.average":                "42",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.burst":                  "42",
+		// "traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.period":                 "42",
+		"traefik.http.middlewares.Middleware13.redirectregex.permanent":      "true",
+		"traefik.http.middlewares.Middleware13.redirectregex.regex":          "foobar",
+		"traefik.http.middlewares.Middleware13.redirectregex.replacement":    "foobar",
+		"traefik.http.middlewares.Middleware13b.redirectscheme.scheme":       "https",
+		"traefik.http.middlewares.Middleware13b.redirectscheme.port":         "80",
+		"traefik.http.middlewares.Middleware13b.redirectscheme.permanent":    "true",
+		"traefik.http.middlewares.Middleware14.replacepath.path":             "foobar",
+		"traefik.http.middlewares.Middleware15.replacepathregex.regex":       "foobar",
+		"traefik.http.middlewares.Middleware15.replacepathregex.replacement": "foobar",
+		"traefik.http.middlewares.Middleware16.retry.attempts":               "42",
+		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":         "foobar, fiibar",
+		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":       "foobar, fiibar",
+		"traefik.http.middlewares.Middleware19.compress":                     "true",
 
 		"traefik.http.routers.Router0.entrypoints": "foobar, fiibar",
 		"traefik.http.routers.Router0.middlewares": "foobar, fiibar",
@@ -175,9 +175,9 @@ func TestDecodeConfiguration(t *testing.T) {
 	configuration, err := DecodeConfiguration(labels)
 	require.NoError(t, err)
 
-	expected := &config.Configuration{
-		TCP: &config.TCPConfiguration{
-			Routers: map[string]*config.TCPRouter{
+	expected := &dynamic.Configuration{
+		TCP: &dynamic.TCPConfiguration{
+			Routers: map[string]*dynamic.TCPRouter{
 				"Router0": {
 					EntryPoints: []string{
 						"foobar",
@@ -185,7 +185,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 					Service: "foobar",
 					Rule:    "foobar",
-					TLS: &config.RouterTCPTLSConfig{
+					TLS: &dynamic.RouterTCPTLSConfig{
 						Passthrough: false,
 						Options:     "foo",
 					},
@@ -197,16 +197,16 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 					Service: "foobar",
 					Rule:    "foobar",
-					TLS: &config.RouterTCPTLSConfig{
+					TLS: &dynamic.RouterTCPTLSConfig{
 						Passthrough: false,
 						Options:     "foo",
 					},
 				},
 			},
-			Services: map[string]*config.TCPService{
+			Services: map[string]*dynamic.TCPService{
 				"Service0": {
-					LoadBalancer: &config.TCPLoadBalancerService{
-						Servers: []config.TCPServer{
+					LoadBalancer: &dynamic.TCPLoadBalancerService{
+						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",
 							},
@@ -214,8 +214,8 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Service1": {
-					LoadBalancer: &config.TCPLoadBalancerService{
-						Servers: []config.TCPServer{
+					LoadBalancer: &dynamic.TCPLoadBalancerService{
+						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",
 							},
@@ -224,8 +224,8 @@ func TestDecodeConfiguration(t *testing.T) {
 				},
 			},
 		},
-		HTTP: &config.HTTPConfiguration{
-			Routers: map[string]*config.Router{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers: map[string]*dynamic.Router{
 				"Router0": {
 					EntryPoints: []string{
 						"foobar",
@@ -238,7 +238,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					Service:  "foobar",
 					Rule:     "foobar",
 					Priority: 42,
-					TLS:      &config.RouterTLSConfig{},
+					TLS:      &dynamic.RouterTLSConfig{},
 				},
 				"Router1": {
 					EntryPoints: []string{
@@ -254,14 +254,14 @@ func TestDecodeConfiguration(t *testing.T) {
 					Priority: 42,
 				},
 			},
-			Middlewares: map[string]*config.Middleware{
+			Middlewares: map[string]*dynamic.Middleware{
 				"Middleware0": {
-					AddPrefix: &config.AddPrefix{
+					AddPrefix: &dynamic.AddPrefix{
 						Prefix: "foobar",
 					},
 				},
 				"Middleware1": {
-					BasicAuth: &config.BasicAuth{
+					BasicAuth: &dynamic.BasicAuth{
 						Users: []string{
 							"foobar",
 							"fiibar",
@@ -273,18 +273,18 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware10": {
-					MaxConn: &config.MaxConn{
+					MaxConn: &dynamic.MaxConn{
 						Amount:        42,
 						ExtractorFunc: "foobar",
 					},
 				},
 				"Middleware11": {
-					PassTLSClientCert: &config.PassTLSClientCert{
+					PassTLSClientCert: &dynamic.PassTLSClientCert{
 						PEM: true,
-						Info: &config.TLSClientCertificateInfo{
+						Info: &dynamic.TLSClientCertificateInfo{
 							NotAfter:  true,
 							NotBefore: true,
-							Subject: &config.TLSCLientCertificateDNInfo{
+							Subject: &dynamic.TLSCLientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -293,7 +293,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								SerialNumber:    true,
 								DomainComponent: true,
 							},
-							Issuer: &config.TLSCLientCertificateDNInfo{
+							Issuer: &dynamic.TLSCLientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -306,55 +306,56 @@ func TestDecodeConfiguration(t *testing.T) {
 						},
 					},
 				},
-				"Middleware12": {
-					RateLimit: &config.RateLimit{
-						RateSet: map[string]*config.Rate{
-							"Rate0": {
-								Period:  types.Duration(42 * time.Second),
-								Average: 42,
-								Burst:   42,
-							},
-							"Rate1": {
-								Period:  types.Duration(42 * time.Second),
-								Average: 42,
-								Burst:   42,
-							},
-						},
-						ExtractorFunc: "foobar",
-					},
-				},
+				// TODO: disable temporarily (rateLimit)
+				// "Middleware12": {
+				// 	RateLimit: &dynamic.RateLimit{
+				// 		RateSet: map[string]*dynamic.Rate{
+				// 			"Rate0": {
+				// 				Period:  types.Duration(42 * time.Second),
+				// 				Average: 42,
+				// 				Burst:   42,
+				// 			},
+				// 			"Rate1": {
+				// 				Period:  types.Duration(42 * time.Second),
+				// 				Average: 42,
+				// 				Burst:   42,
+				// 			},
+				// 		},
+				// 		ExtractorFunc: "foobar",
+				// 	},
+				// },
 				"Middleware13": {
-					RedirectRegex: &config.RedirectRegex{
+					RedirectRegex: &dynamic.RedirectRegex{
 						Regex:       "foobar",
 						Replacement: "foobar",
 						Permanent:   true,
 					},
 				},
 				"Middleware13b": {
-					RedirectScheme: &config.RedirectScheme{
+					RedirectScheme: &dynamic.RedirectScheme{
 						Scheme:    "https",
 						Port:      "80",
 						Permanent: true,
 					},
 				},
 				"Middleware14": {
-					ReplacePath: &config.ReplacePath{
+					ReplacePath: &dynamic.ReplacePath{
 						Path: "foobar",
 					},
 				},
 				"Middleware15": {
-					ReplacePathRegex: &config.ReplacePathRegex{
+					ReplacePathRegex: &dynamic.ReplacePathRegex{
 						Regex:       "foobar",
 						Replacement: "foobar",
 					},
 				},
 				"Middleware16": {
-					Retry: &config.Retry{
+					Retry: &dynamic.Retry{
 						Attempts: 42,
 					},
 				},
 				"Middleware17": {
-					StripPrefix: &config.StripPrefix{
+					StripPrefix: &dynamic.StripPrefix{
 						Prefixes: []string{
 							"foobar",
 							"fiibar",
@@ -362,7 +363,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware18": {
-					StripPrefixRegex: &config.StripPrefixRegex{
+					StripPrefixRegex: &dynamic.StripPrefixRegex{
 						Regex: []string{
 							"foobar",
 							"fiibar",
@@ -370,10 +371,10 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware19": {
-					Compress: &config.Compress{},
+					Compress: &dynamic.Compress{},
 				},
 				"Middleware2": {
-					Buffering: &config.Buffering{
+					Buffering: &dynamic.Buffering{
 						MaxRequestBodyBytes:  42,
 						MemRequestBodyBytes:  42,
 						MaxResponseBodyBytes: 42,
@@ -382,7 +383,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware3": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{
 							"foobar",
 							"fiibar",
@@ -390,12 +391,12 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware4": {
-					CircuitBreaker: &config.CircuitBreaker{
+					CircuitBreaker: &dynamic.CircuitBreaker{
 						Expression: "foobar",
 					},
 				},
 				"Middleware5": {
-					DigestAuth: &config.DigestAuth{
+					DigestAuth: &dynamic.DigestAuth{
 						Users: []string{
 							"foobar",
 							"fiibar",
@@ -407,7 +408,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware6": {
-					Errors: &config.ErrorPage{
+					Errors: &dynamic.ErrorPage{
 						Status: []string{
 							"foobar",
 							"fiibar",
@@ -417,9 +418,9 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware7": {
-					ForwardAuth: &config.ForwardAuth{
+					ForwardAuth: &dynamic.ForwardAuth{
 						Address: "foobar",
-						TLS: &config.ClientTLS{
+						TLS: &dynamic.ClientTLS{
 							CA:                 "foobar",
 							CAOptional:         true,
 							Cert:               "foobar",
@@ -434,7 +435,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware8": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
@@ -487,16 +488,17 @@ func TestDecodeConfiguration(t *testing.T) {
 						ContentSecurityPolicy:   "foobar",
 						PublicKey:               "foobar",
 						ReferrerPolicy:          "foobar",
+						FeaturePolicy:           "foobar",
 						IsDevelopment:           true,
 					},
 				},
 				"Middleware9": {
-					IPWhiteList: &config.IPWhiteList{
+					IPWhiteList: &dynamic.IPWhiteList{
 						SourceRange: []string{
 							"foobar",
 							"fiibar",
 						},
-						IPStrategy: &config.IPStrategy{
+						IPStrategy: &dynamic.IPStrategy{
 							Depth: 42,
 							ExcludedIPs: []string{
 								"foobar",
@@ -506,21 +508,21 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			Services: map[string]*config.Service{
+			Services: map[string]*dynamic.Service{
 				"Service0": {
-					LoadBalancer: &config.LoadBalancerService{
-						Stickiness: &config.Stickiness{
+					LoadBalancer: &dynamic.LoadBalancerService{
+						Stickiness: &dynamic.Stickiness{
 							CookieName:     "foobar",
 							SecureCookie:   true,
 							HTTPOnlyCookie: false,
 						},
-						Servers: []config.Server{
+						Servers: []dynamic.Server{
 							{
 								Scheme: "foobar",
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &config.HealthCheck{
+						HealthCheck: &dynamic.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -533,20 +535,20 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						ResponseForwarding: &config.ResponseForwarding{
+						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
 					},
 				},
 				"Service1": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.LoadBalancerService{
+						Servers: []dynamic.Server{
 							{
 								Scheme: "foobar",
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &config.HealthCheck{
+						HealthCheck: &dynamic.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -559,7 +561,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						ResponseForwarding: &config.ResponseForwarding{
+						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
 					},
@@ -572,9 +574,9 @@ func TestDecodeConfiguration(t *testing.T) {
 }
 
 func TestEncodeConfiguration(t *testing.T) {
-	configuration := &config.Configuration{
-		TCP: &config.TCPConfiguration{
-			Routers: map[string]*config.TCPRouter{
+	configuration := &dynamic.Configuration{
+		TCP: &dynamic.TCPConfiguration{
+			Routers: map[string]*dynamic.TCPRouter{
 				"Router0": {
 					EntryPoints: []string{
 						"foobar",
@@ -582,7 +584,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 					Service: "foobar",
 					Rule:    "foobar",
-					TLS: &config.RouterTCPTLSConfig{
+					TLS: &dynamic.RouterTCPTLSConfig{
 						Passthrough: false,
 						Options:     "foo",
 					},
@@ -594,16 +596,16 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 					Service: "foobar",
 					Rule:    "foobar",
-					TLS: &config.RouterTCPTLSConfig{
+					TLS: &dynamic.RouterTCPTLSConfig{
 						Passthrough: false,
 						Options:     "foo",
 					},
 				},
 			},
-			Services: map[string]*config.TCPService{
+			Services: map[string]*dynamic.TCPService{
 				"Service0": {
-					LoadBalancer: &config.TCPLoadBalancerService{
-						Servers: []config.TCPServer{
+					LoadBalancer: &dynamic.TCPLoadBalancerService{
+						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",
 							},
@@ -611,8 +613,8 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Service1": {
-					LoadBalancer: &config.TCPLoadBalancerService{
-						Servers: []config.TCPServer{
+					LoadBalancer: &dynamic.TCPLoadBalancerService{
+						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",
 							},
@@ -621,8 +623,8 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 			},
 		},
-		HTTP: &config.HTTPConfiguration{
-			Routers: map[string]*config.Router{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers: map[string]*dynamic.Router{
 				"Router0": {
 					EntryPoints: []string{
 						"foobar",
@@ -635,7 +637,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					Service:  "foobar",
 					Rule:     "foobar",
 					Priority: 42,
-					TLS:      &config.RouterTLSConfig{},
+					TLS:      &dynamic.RouterTLSConfig{},
 				},
 				"Router1": {
 					EntryPoints: []string{
@@ -651,14 +653,14 @@ func TestEncodeConfiguration(t *testing.T) {
 					Priority: 42,
 				},
 			},
-			Middlewares: map[string]*config.Middleware{
+			Middlewares: map[string]*dynamic.Middleware{
 				"Middleware0": {
-					AddPrefix: &config.AddPrefix{
+					AddPrefix: &dynamic.AddPrefix{
 						Prefix: "foobar",
 					},
 				},
 				"Middleware1": {
-					BasicAuth: &config.BasicAuth{
+					BasicAuth: &dynamic.BasicAuth{
 						Users: []string{
 							"foobar",
 							"fiibar",
@@ -670,18 +672,18 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware10": {
-					MaxConn: &config.MaxConn{
+					MaxConn: &dynamic.MaxConn{
 						Amount:        42,
 						ExtractorFunc: "foobar",
 					},
 				},
 				"Middleware11": {
-					PassTLSClientCert: &config.PassTLSClientCert{
+					PassTLSClientCert: &dynamic.PassTLSClientCert{
 						PEM: true,
-						Info: &config.TLSClientCertificateInfo{
+						Info: &dynamic.TLSClientCertificateInfo{
 							NotAfter:  true,
 							NotBefore: true,
-							Subject: &config.TLSCLientCertificateDNInfo{
+							Subject: &dynamic.TLSCLientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -690,7 +692,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								SerialNumber:    true,
 								DomainComponent: true,
 							},
-							Issuer: &config.TLSCLientCertificateDNInfo{
+							Issuer: &dynamic.TLSCLientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -702,55 +704,56 @@ func TestEncodeConfiguration(t *testing.T) {
 						},
 					},
 				},
-				"Middleware12": {
-					RateLimit: &config.RateLimit{
-						RateSet: map[string]*config.Rate{
-							"Rate0": {
-								Period:  types.Duration(42 * time.Nanosecond),
-								Average: 42,
-								Burst:   42,
-							},
-							"Rate1": {
-								Period:  types.Duration(42 * time.Nanosecond),
-								Average: 42,
-								Burst:   42,
-							},
-						},
-						ExtractorFunc: "foobar",
-					},
-				},
+				// TODO: disable temporarily (rateLimit)
+				// "Middleware12": {
+				// 	RateLimit: &dynamic.RateLimit{
+				// 		RateSet: map[string]*dynamic.Rate{
+				// 			"Rate0": {
+				// 				Period:  types.Duration(42 * time.Nanosecond),
+				// 				Average: 42,
+				// 				Burst:   42,
+				// 			},
+				// 			"Rate1": {
+				// 				Period:  types.Duration(42 * time.Nanosecond),
+				// 				Average: 42,
+				// 				Burst:   42,
+				// 			},
+				// 		},
+				// 		ExtractorFunc: "foobar",
+				// 	},
+				// },
 				"Middleware13": {
-					RedirectRegex: &config.RedirectRegex{
+					RedirectRegex: &dynamic.RedirectRegex{
 						Regex:       "foobar",
 						Replacement: "foobar",
 						Permanent:   true,
 					},
 				},
 				"Middleware13b": {
-					RedirectScheme: &config.RedirectScheme{
+					RedirectScheme: &dynamic.RedirectScheme{
 						Scheme:    "https",
 						Port:      "80",
 						Permanent: true,
 					},
 				},
 				"Middleware14": {
-					ReplacePath: &config.ReplacePath{
+					ReplacePath: &dynamic.ReplacePath{
 						Path: "foobar",
 					},
 				},
 				"Middleware15": {
-					ReplacePathRegex: &config.ReplacePathRegex{
+					ReplacePathRegex: &dynamic.ReplacePathRegex{
 						Regex:       "foobar",
 						Replacement: "foobar",
 					},
 				},
 				"Middleware16": {
-					Retry: &config.Retry{
+					Retry: &dynamic.Retry{
 						Attempts: 42,
 					},
 				},
 				"Middleware17": {
-					StripPrefix: &config.StripPrefix{
+					StripPrefix: &dynamic.StripPrefix{
 						Prefixes: []string{
 							"foobar",
 							"fiibar",
@@ -758,7 +761,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware18": {
-					StripPrefixRegex: &config.StripPrefixRegex{
+					StripPrefixRegex: &dynamic.StripPrefixRegex{
 						Regex: []string{
 							"foobar",
 							"fiibar",
@@ -766,10 +769,10 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware19": {
-					Compress: &config.Compress{},
+					Compress: &dynamic.Compress{},
 				},
 				"Middleware2": {
-					Buffering: &config.Buffering{
+					Buffering: &dynamic.Buffering{
 						MaxRequestBodyBytes:  42,
 						MemRequestBodyBytes:  42,
 						MaxResponseBodyBytes: 42,
@@ -778,7 +781,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware3": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{
 							"foobar",
 							"fiibar",
@@ -786,12 +789,12 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware4": {
-					CircuitBreaker: &config.CircuitBreaker{
+					CircuitBreaker: &dynamic.CircuitBreaker{
 						Expression: "foobar",
 					},
 				},
 				"Middleware5": {
-					DigestAuth: &config.DigestAuth{
+					DigestAuth: &dynamic.DigestAuth{
 						Users: []string{
 							"foobar",
 							"fiibar",
@@ -803,7 +806,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware6": {
-					Errors: &config.ErrorPage{
+					Errors: &dynamic.ErrorPage{
 						Status: []string{
 							"foobar",
 							"fiibar",
@@ -813,9 +816,9 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware7": {
-					ForwardAuth: &config.ForwardAuth{
+					ForwardAuth: &dynamic.ForwardAuth{
 						Address: "foobar",
-						TLS: &config.ClientTLS{
+						TLS: &dynamic.ClientTLS{
 							CA:                 "foobar",
 							CAOptional:         true,
 							Cert:               "foobar",
@@ -830,7 +833,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware8": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
@@ -883,16 +886,17 @@ func TestEncodeConfiguration(t *testing.T) {
 						ContentSecurityPolicy:   "foobar",
 						PublicKey:               "foobar",
 						ReferrerPolicy:          "foobar",
+						FeaturePolicy:           "foobar",
 						IsDevelopment:           true,
 					},
 				},
 				"Middleware9": {
-					IPWhiteList: &config.IPWhiteList{
+					IPWhiteList: &dynamic.IPWhiteList{
 						SourceRange: []string{
 							"foobar",
 							"fiibar",
 						},
-						IPStrategy: &config.IPStrategy{
+						IPStrategy: &dynamic.IPStrategy{
 							Depth: 42,
 							ExcludedIPs: []string{
 								"foobar",
@@ -902,20 +906,20 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			Services: map[string]*config.Service{
+			Services: map[string]*dynamic.Service{
 				"Service0": {
-					LoadBalancer: &config.LoadBalancerService{
-						Stickiness: &config.Stickiness{
+					LoadBalancer: &dynamic.LoadBalancerService{
+						Stickiness: &dynamic.Stickiness{
 							CookieName:     "foobar",
 							HTTPOnlyCookie: true,
 						},
-						Servers: []config.Server{
+						Servers: []dynamic.Server{
 							{
 								Scheme: "foobar",
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &config.HealthCheck{
+						HealthCheck: &dynamic.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -928,20 +932,20 @@ func TestEncodeConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						ResponseForwarding: &config.ResponseForwarding{
+						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
 					},
 				},
 				"Service1": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.LoadBalancerService{
+						Servers: []dynamic.Server{
 							{
 								Scheme: "foobar",
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &config.HealthCheck{
+						HealthCheck: &dynamic.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -954,7 +958,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						ResponseForwarding: &config.ResponseForwarding{
+						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
 					},
@@ -1019,6 +1023,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware8.Headers.IsDevelopment":                           "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.PublicKey":                               "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.ReferrerPolicy":                          "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.FeaturePolicy":                           "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLForceHost":                            "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLHost":                                 "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLProxyHeaders.name0":                   "foobar",
@@ -1051,26 +1056,27 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.SerialNumber":     "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.DomainComponent":  "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.PEM":                          "true",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.ExtractorFunc":                        "foobar",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Average":                "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Burst":                  "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Period":                 "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Average":                "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Burst":                  "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Period":                 "42",
-		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Regex":                            "foobar",
-		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Replacement":                      "foobar",
-		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Permanent":                        "true",
-		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Scheme":                         "https",
-		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Port":                           "80",
-		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Permanent":                      "true",
-		"traefik.HTTP.Middlewares.Middleware14.ReplacePath.Path":                               "foobar",
-		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Regex":                         "foobar",
-		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Replacement":                   "foobar",
-		"traefik.HTTP.Middlewares.Middleware16.Retry.Attempts":                                 "42",
-		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":                           "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":                         "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware19.Compress":                                       "true",
+		// TODO: disable temporarily (rateLimit)
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.ExtractorFunc":                        "foobar",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Average":                "42",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Burst":                  "42",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Period":                 "42",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Average":                "42",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Burst":                  "42",
+		// "traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Period":                 "42",
+		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Regex":          "foobar",
+		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Replacement":    "foobar",
+		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Permanent":      "true",
+		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Scheme":       "https",
+		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Port":         "80",
+		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Permanent":    "true",
+		"traefik.HTTP.Middlewares.Middleware14.ReplacePath.Path":             "foobar",
+		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Regex":       "foobar",
+		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Replacement": "foobar",
+		"traefik.HTTP.Middlewares.Middleware16.Retry.Attempts":               "42",
+		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":         "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":       "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware19.Compress":                     "true",
 
 		"traefik.HTTP.Routers.Router0.EntryPoints": "foobar, fiibar",
 		"traefik.HTTP.Routers.Router0.Middlewares": "foobar, fiibar",

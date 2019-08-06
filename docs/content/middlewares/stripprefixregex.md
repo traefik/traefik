@@ -38,11 +38,20 @@ labels:
 - "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=^/foo/(.*)",
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Replace the path by /foo
 [http.middlewares]
   [http.middlewares.test-stripprefixregex.stripPrefixRegex]
-     regex: "^/foo/(.*)"
+     regex = "^/foo/(.*)"
+```
+
+```yaml tab="File (YAML)"
+# Replace the path by /foo
+http:
+  middlewares:
+    test-stripprefixregex:
+      stripPrefixRegex:
+       regex: "^/foo/(.*)"
 ```
 
 ## Configuration Options

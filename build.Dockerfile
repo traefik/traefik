@@ -6,15 +6,15 @@ RUN apk --update upgrade \
     && rm -rf /var/cache/apk/*
 
 # Download golangci-lint and misspell binary to bin folder in $GOPATH
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.15.0 \
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.17.1 \
     && go get github.com/client9/misspell/cmd/misspell
 
 # Download goreleaser binary to bin folder in $GOPATH
 RUN curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
 
 # Which docker version to test on
-ARG DOCKER_VERSION=17.03.2
-ARG DEP_VERSION=0.5.0
+ARG DOCKER_VERSION=18.09.7
+ARG DEP_VERSION=0.5.4
 
 # Download go-bindata binary to bin folder in $GOPATH
 RUN mkdir -p /usr/local/bin \
@@ -28,7 +28,7 @@ RUN mkdir -p /usr/local/bin \
 
 # Download docker
 RUN mkdir -p /usr/local/bin \
-    && curl -fL https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}-ce.tgz \
+    && curl -fL https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz \
     | tar -xzC /usr/local/bin --transform 's#^.+/##x'
 
 WORKDIR /go/src/github.com/containous/traefik

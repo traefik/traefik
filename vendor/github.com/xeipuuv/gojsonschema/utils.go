@@ -29,17 +29,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/big"
 	"reflect"
-	"strconv"
 )
 
-func isKind(what interface{}, kind reflect.Kind) bool {
+func isKind(what interface{}, kinds ...reflect.Kind) bool {
 	target := what
 	if isJsonNumber(what) {
 		// JSON Numbers are strings!
 		target = *mustBeNumber(what)
 	}
-	return reflect.ValueOf(target).Kind() == kind
+	targetKind := reflect.ValueOf(target).Kind()
+	for _, kind := range kinds {
+		if targetKind == kind {
+			return true
+		}
+	}
+	return false
 }
 
 func existsMapKey(m map[string]interface{}, k string) bool {
@@ -56,6 +62,16 @@ func isStringInSlice(s []string, what string) bool {
 	return false
 }
 
+// indexStringInSlice returns the index of the first instance of 'what' in s or -1 if it is not found in s.
+func indexStringInSlice(s []string, what string) int {
+	for i := range s {
+		if s[i] == what {
+			return i
+		}
+	}
+	return -1
+}
+
 func marshalToJsonString(value interface{}) (*string, error) {
 
 	mBytes, err := json.Marshal(value)
@@ -65,6 +81,28 @@ func marshalToJsonString(value interface{}) (*string, error) {
 
 	sBytes := string(mBytes)
 	return &sBytes, nil
+}
+
+func marshalWithoutNumber(value interface{}) (*string, error) {
+
+	// The JSON is decoded using https://golang.org/pkg/encoding/json/#Decoder.UseNumber
+	// This means the numbers are internally still represented as strings and therefore 1.00 is unequal to 1
+	// One way to eliminate these differences is to decode and encode the JSON one more time without Decoder.UseNumber
+	// so that these differences in representation are removed
+
+	jsonString, err := marshalToJsonString(value)
+	if err != nil {
+		return nil, err
+	}
+
+	var document interface{}
+
+	err = json.Unmarshal([]byte(*jsonString), &document)
+	if err != nil {
+		return nil, err
+	}
+
+	return marshalToJsonString(document)
 }
 
 func isJsonNumber(what interface{}) bool {
@@ -78,21 +116,13 @@ func isJsonNumber(what interface{}) bool {
 	return false
 }
 
-func checkJsonNumber(what interface{}) (isValidFloat64 bool, isValidInt64 bool, isValidInt32 bool) {
+func checkJsonInteger(what interface{}) (isInt bool) {
 
 	jsonNumber := what.(json.Number)
 
-	f64, errFloat64 := jsonNumber.Float64()
-	s64 := strconv.FormatFloat(f64, 'f', -1, 64)
-	_, errInt64 := strconv.ParseInt(s64, 10, 64)
+	bigFloat, isValidNumber := new(big.Rat).SetString(string(jsonNumber))
 
-	isValidFloat64 = errFloat64 == nil
-	isValidInt64 = errInt64 == nil
-
-	_, errInt32 := strconv.ParseInt(s64, 10, 32)
-	isValidInt32 = isValidInt64 && errInt32 == nil
-
-	return
+	return isValidNumber && bigFloat.IsInt()
 
 }
 
@@ -117,9 +147,9 @@ func mustBeInteger(what interface{}) *int {
 
 		number := what.(json.Number)
 
-		_, _, isValidInt32 := checkJsonNumber(number)
+		isInt := checkJsonInteger(number)
 
-		if isValidInt32 {
+		if isInt {
 
 			int64Value, err := number.Int64()
 			if err != nil {
@@ -138,15 +168,13 @@ func mustBeInteger(what interface{}) *int {
 	return nil
 }
 
-func mustBeNumber(what interface{}) *float64 {
+func mustBeNumber(what interface{}) *big.Rat {
 
 	if isJsonNumber(what) {
-
 		number := what.(json.Number)
-		float64Value, err := number.Float64()
-
-		if err == nil {
-			return &float64Value
+		float64Value, success := new(big.Rat).SetString(string(number))
+		if success {
+			return float64Value
 		} else {
 			return nil
 		}

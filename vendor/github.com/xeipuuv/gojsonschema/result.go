@@ -40,10 +40,12 @@ type (
 		Field() string
 		SetType(string)
 		Type() string
-		SetContext(*jsonContext)
-		Context() *jsonContext
+		SetContext(*JsonContext)
+		Context() *JsonContext
 		SetDescription(string)
 		Description() string
+		SetDescriptionFormat(string)
+		DescriptionFormat() string
 		SetValue(interface{})
 		Value() interface{}
 		SetDetails(ErrorDetails)
@@ -55,11 +57,12 @@ type (
 	// ResultErrorFields implements the ResultError interface, so custom errors
 	// can be defined by just embedding this type
 	ResultErrorFields struct {
-		errorType   string       // A string with the type of error (i.e. invalid_type)
-		context     *jsonContext // Tree like notation of the part that failed the validation. ex (root).a.b ...
-		description string       // A human readable error message
-		value       interface{}  // Value given by the JSON file that is the source of the error
-		details     ErrorDetails
+		errorType         string       // A string with the type of error (i.e. invalid_type)
+		context           *JsonContext // Tree like notation of the part that failed the validation. ex (root).a.b ...
+		description       string       // A human readable error message
+		descriptionFormat string       // A format for human readable error message
+		value             interface{}  // Value given by the JSON file that is the source of the error
+		details           ErrorDetails
 	}
 
 	Result struct {
@@ -73,12 +76,6 @@ type (
 // Field outputs the field name without the root context
 // i.e. firstName or person.firstName instead of (root).firstName or (root).person.firstName
 func (v *ResultErrorFields) Field() string {
-	if p, ok := v.Details()["property"]; ok {
-		if str, isString := p.(string); isString {
-			return str
-		}
-	}
-
 	return strings.TrimPrefix(v.context.String(), STRING_ROOT_SCHEMA_PROPERTY+".")
 }
 
@@ -90,11 +87,11 @@ func (v *ResultErrorFields) Type() string {
 	return v.errorType
 }
 
-func (v *ResultErrorFields) SetContext(context *jsonContext) {
+func (v *ResultErrorFields) SetContext(context *JsonContext) {
 	v.context = context
 }
 
-func (v *ResultErrorFields) Context() *jsonContext {
+func (v *ResultErrorFields) Context() *JsonContext {
 	return v.context
 }
 
@@ -104,6 +101,14 @@ func (v *ResultErrorFields) SetDescription(description string) {
 
 func (v *ResultErrorFields) Description() string {
 	return v.description
+}
+
+func (v *ResultErrorFields) SetDescriptionFormat(descriptionFormat string) {
+	v.descriptionFormat = descriptionFormat
+}
+
+func (v *ResultErrorFields) DescriptionFormat() string {
+	return v.descriptionFormat
 }
 
 func (v *ResultErrorFields) SetValue(value interface{}) {
@@ -155,7 +160,19 @@ func (v *Result) Errors() []ResultError {
 	return v.errors
 }
 
-func (v *Result) addError(err ResultError, context *jsonContext, value interface{}, details ErrorDetails) {
+// Add a fully filled error to the error set
+// SetDescription() will be called with the result of the parsed err.DescriptionFormat()
+func (v *Result) AddError(err ResultError, details ErrorDetails) {
+	if _, exists := details["context"]; !exists && err.Context() != nil {
+		details["context"] = err.Context().String()
+	}
+
+	err.SetDescription(formatErrorDescription(err.DescriptionFormat(), details))
+
+	v.errors = append(v.errors, err)
+}
+
+func (v *Result) addInternalError(err ResultError, context *JsonContext, value interface{}, details ErrorDetails) {
 	newError(err, context, value, Locale, details)
 	v.errors = append(v.errors, err)
 	v.score -= 2 // results in a net -1 when added to the +1 we get at the end of the validation function

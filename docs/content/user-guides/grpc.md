@@ -6,17 +6,40 @@ This section explains how to use Traefik as reverse proxy for gRPC application.
 
 ### Traefik Configuration
 
-```toml tab="TOML"
-## static configuration ##
+Static configuration:
 
+```toml tab="File (TOML)"
 [entryPoints]
-  [entryPoints.http]
+  [entryPoints.web]
     address = ":80"
 
 [api]
     
 [providers.file]
+  filename = "dynamic_conf.toml"
+```
 
+```yaml tab="File (YAML)"
+entryPoints:
+  web:
+    address: :80
+
+providers:
+  file:
+    filename: dynamic_conf.yml
+
+api: {}
+```
+
+```yaml tab="CLI"
+--entryPoints.web.address=":80"
+--providers.file.filename=dynamic_conf.toml
+--api=true
+```
+
+`dynamic_conf.{toml,yml}`:
+
+```toml tab="TOML"
 ## dynamic configuration ##
 
 [http]
@@ -34,17 +57,6 @@ This section explains how to use Traefik as reverse proxy for gRPC application.
 ```
 
 ```yaml tab="YAML"
-## static configuration ##
-
-entryPoints:
-  http:
-    address: :80
-
-providers:
-  file: {}
-
-api: {}
-
 ## dynamic configuration ##
 
 http:
@@ -105,11 +117,11 @@ Common Name (e.g. server FQDN or YOUR name) []: frontend.local
 
 At last, we configure our Traefik instance to use both self-signed certificates.
 
-```toml tab="TOML"
-## static configuration ##
+Static configuration:
 
+```toml tab="File (TOML)"
 [entryPoints]
-  [entryPoints.https]
+  [entryPoints.websecure]
     address = ":4443"
 
 
@@ -120,7 +132,37 @@ At last, we configure our Traefik instance to use both self-signed certificates.
 [api]
 
 [provider.file]
+  filename = "dynamic_conf.toml"
+```
 
+```yaml tab="File (YAML)"
+entryPoints:
+  websecure:
+    address: :4443
+
+serversTransport:
+  # For secure connection on backend.local
+  rootCAs:
+  - ./backend.cert
+
+providers:
+  file:
+    filename: dynamic_conf.yml
+
+api: {}
+```
+
+```yaml tab="CLI"
+--entryPoints.websecure.address=":4443"
+# For secure connection on backend.local
+--serversTransport.rootCAs=./backend.cert
+--providers.file.filename=dynamic_conf.toml
+--api=true
+```
+
+`dynamic_conf.{toml,yml}`:
+
+```toml tab="TOML"
 ## dynamic configuration ##
 
 [http]
@@ -146,22 +188,6 @@ At last, we configure our Traefik instance to use both self-signed certificates.
 ```
 
 ```yaml tab="YAML"
-## static configuration ##
-
-entryPoints:
-  https:
-    address: :4443
-
-serversTransport:
-  # For secure connection on backend.local
-  rootCAs:
-  - ./backend.cert
-
-providers:
-  file: {}
-
-api: {}
-
 ## dynamic configuration ##
 
 http:

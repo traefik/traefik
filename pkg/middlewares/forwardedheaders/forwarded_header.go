@@ -10,14 +10,18 @@ import (
 )
 
 const (
-	xForwardedProto  = "X-Forwarded-Proto"
-	xForwardedFor    = "X-Forwarded-For"
-	xForwardedHost   = "X-Forwarded-Host"
-	xForwardedPort   = "X-Forwarded-Port"
-	xForwardedServer = "X-Forwarded-Server"
-	xRealIP          = "X-Real-Ip"
-	connection       = "Connection"
-	upgrade          = "Upgrade"
+	xForwardedProto             = "X-Forwarded-Proto"
+	xForwardedFor               = "X-Forwarded-For"
+	xForwardedHost              = "X-Forwarded-Host"
+	xForwardedPort              = "X-Forwarded-Port"
+	xForwardedServer            = "X-Forwarded-Server"
+	xForwardedURI               = "X-Forwarded-Uri"
+	xForwardedMethod            = "X-Forwarded-Method"
+	xForwardedTLSClientCert     = "X-Forwarded-Tls-Client-Cert"
+	xForwardedTLSClientCertInfo = "X-Forwarded-Tls-Client-Cert-Info"
+	xRealIP                     = "X-Real-Ip"
+	connection                  = "Connection"
+	upgrade                     = "Upgrade"
 )
 
 var xHeaders = []string{
@@ -26,6 +30,10 @@ var xHeaders = []string{
 	xForwardedHost,
 	xForwardedPort,
 	xForwardedServer,
+	xForwardedURI,
+	xForwardedMethod,
+	xForwardedTLSClientCert,
+	xForwardedTLSClientCertInfo,
 	xRealIP,
 }
 

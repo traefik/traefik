@@ -44,7 +44,7 @@ func Test_getRootFieldNames(t *testing.T) {
 
 func Test_decodeFileToNode_compare(t *testing.T) {
 	nodeToml, err := decodeFileToNode("./fixtures/sample.toml",
-		"Global", "ServersTransport", "EntryPoints", "Providers", "API", "Metrics", "Ping", "Log", "AccessLog", "Tracing", "HostResolver", "ACME")
+		"Global", "ServersTransport", "EntryPoints", "Providers", "API", "Metrics", "Ping", "Log", "AccessLog", "Tracing", "HostResolver", "CertificatesResolvers")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +59,7 @@ func Test_decodeFileToNode_compare(t *testing.T) {
 
 func Test_decodeFileToNode_Toml(t *testing.T) {
 	node, err := decodeFileToNode("./fixtures/sample.toml",
-		"Global", "ServersTransport", "EntryPoints", "Providers", "API", "Metrics", "Ping", "Log", "AccessLog", "Tracing", "HostResolver", "ACME")
+		"Global", "ServersTransport", "EntryPoints", "Providers", "API", "Metrics", "Ping", "Log", "AccessLog", "Tracing", "HostResolver", "CertificatesResolvers")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,42 +85,35 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 					{Name: "retryAttempts", Value: "true"},
 					{Name: "statusCodes", Value: "foobar,foobar"}}},
 				{Name: "format", Value: "foobar"}}},
-			{Name: "acme",
-				Children: []*parser.Node{
-					{Name: "acmeLogging", Value: "true"},
-					{Name: "caServer", Value: "foobar"},
-					{Name: "dnsChallenge", Children: []*parser.Node{
-						{Name: "delayBeforeCheck", Value: "42"},
-						{Name: "disablePropagationCheck", Value: "true"},
-						{Name: "provider", Value: "foobar"},
-						{Name: "resolvers", Value: "foobar,foobar"},
-					}},
-					{Name: "domains", Children: []*parser.Node{
-						{Name: "[0]", Children: []*parser.Node{
-							{Name: "main", Value: "foobar"},
-							{Name: "sans", Value: "foobar,foobar"},
-						}},
-						{Name: "[1]", Children: []*parser.Node{
-							{Name: "main", Value: "foobar"},
-							{Name: "sans", Value: "foobar,foobar"},
-						}},
-					}},
-					{Name: "email", Value: "foobar"},
-					{Name: "entryPoint", Value: "foobar"},
-					{Name: "httpChallenge", Children: []*parser.Node{
-						{Name: "entryPoint", Value: "foobar"}}},
-					{Name: "keyType", Value: "foobar"},
-					{Name: "onHostRule", Value: "true"},
-					{Name: "storage", Value: "foobar"},
-					{Name: "tlsChallenge"},
-				},
-			},
 			{Name: "api", Children: []*parser.Node{
 				{Name: "dashboard", Value: "true"},
 				{Name: "entryPoint", Value: "foobar"},
 				{Name: "middlewares", Value: "foobar,foobar"},
 				{Name: "statistics", Children: []*parser.Node{
 					{Name: "recentErrors", Value: "42"}}}}},
+			{Name: "certificatesResolvers", Children: []*parser.Node{
+				{Name: "default", Children: []*parser.Node{
+					{Name: "acme",
+						Children: []*parser.Node{
+							{Name: "acmeLogging", Value: "true"},
+							{Name: "caServer", Value: "foobar"},
+							{Name: "dnsChallenge", Children: []*parser.Node{
+								{Name: "delayBeforeCheck", Value: "42"},
+								{Name: "disablePropagationCheck", Value: "true"},
+								{Name: "provider", Value: "foobar"},
+								{Name: "resolvers", Value: "foobar,foobar"},
+							}},
+							{Name: "email", Value: "foobar"},
+							{Name: "entryPoint", Value: "foobar"},
+							{Name: "httpChallenge", Children: []*parser.Node{
+								{Name: "entryPoint", Value: "foobar"}}},
+							{Name: "keyType", Value: "foobar"},
+							{Name: "storage", Value: "foobar"},
+							{Name: "tlsChallenge"},
+						},
+					},
+				}},
+			}},
 			{Name: "entryPoints", Children: []*parser.Node{
 				{Name: "EntryPoint0", Children: []*parser.Node{
 					{Name: "address", Value: "foobar"},
@@ -192,9 +185,17 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 					{Name: "debugLogGeneratedTemplate", Value: "true"},
 					{Name: "directory", Value: "foobar"},
 					{Name: "filename", Value: "foobar"},
-					{Name: "traefikFile", Value: "foobar"},
 					{Name: "watch", Value: "true"}}},
-				{Name: "kubernetes", Children: []*parser.Node{
+				{Name: "kubernetesCRD",
+					Children: []*parser.Node{
+						{Name: "certAuthFilePath", Value: "foobar"},
+						{Name: "disablePassHostHeaders", Value: "true"},
+						{Name: "endpoint", Value: "foobar"},
+						{Name: "ingressClass", Value: "foobar"},
+						{Name: "labelSelector", Value: "foobar"},
+						{Name: "namespaces", Value: "foobar,foobar"},
+						{Name: "token", Value: "foobar"}}},
+				{Name: "kubernetesIngress", Children: []*parser.Node{
 					{Name: "certAuthFilePath", Value: "foobar"},
 					{Name: "disablePassHostHeaders", Value: "true"},
 					{Name: "endpoint", Value: "foobar"},
@@ -206,15 +207,6 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 					{Name: "labelSelector", Value: "foobar"},
 					{Name: "namespaces", Value: "foobar,foobar"},
 					{Name: "token", Value: "foobar"}}},
-				{Name: "kubernetesCRD",
-					Children: []*parser.Node{
-						{Name: "certAuthFilePath", Value: "foobar"},
-						{Name: "disablePassHostHeaders", Value: "true"},
-						{Name: "endpoint", Value: "foobar"},
-						{Name: "ingressClass", Value: "foobar"},
-						{Name: "labelSelector", Value: "foobar"},
-						{Name: "namespaces", Value: "foobar,foobar"},
-						{Name: "token", Value: "foobar"}}},
 				{Name: "marathon", Children: []*parser.Node{
 					{Name: "basic", Children: []*parser.Node{
 						{Name: "httpBasicAuthUser", Value: "foobar"},
@@ -328,42 +320,35 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 					{Name: "retryAttempts", Value: "true"},
 					{Name: "statusCodes", Value: "foobar,foobar"}}},
 				{Name: "format", Value: "foobar"}}},
-			{Name: "acme",
-				Children: []*parser.Node{
-					{Name: "acmeLogging", Value: "true"},
-					{Name: "caServer", Value: "foobar"},
-					{Name: "dnsChallenge", Children: []*parser.Node{
-						{Name: "delayBeforeCheck", Value: "42"},
-						{Name: "disablePropagationCheck", Value: "true"},
-						{Name: "provider", Value: "foobar"},
-						{Name: "resolvers", Value: "foobar,foobar"},
-					}},
-					{Name: "domains", Children: []*parser.Node{
-						{Name: "[0]", Children: []*parser.Node{
-							{Name: "main", Value: "foobar"},
-							{Name: "sans", Value: "foobar,foobar"},
-						}},
-						{Name: "[1]", Children: []*parser.Node{
-							{Name: "main", Value: "foobar"},
-							{Name: "sans", Value: "foobar,foobar"},
-						}},
-					}},
-					{Name: "email", Value: "foobar"},
-					{Name: "entryPoint", Value: "foobar"},
-					{Name: "httpChallenge", Children: []*parser.Node{
-						{Name: "entryPoint", Value: "foobar"}}},
-					{Name: "keyType", Value: "foobar"},
-					{Name: "onHostRule", Value: "true"},
-					{Name: "storage", Value: "foobar"},
-					{Name: "tlsChallenge"},
-				},
-			},
 			{Name: "api", Children: []*parser.Node{
 				{Name: "dashboard", Value: "true"},
 				{Name: "entryPoint", Value: "foobar"},
 				{Name: "middlewares", Value: "foobar,foobar"},
 				{Name: "statistics", Children: []*parser.Node{
 					{Name: "recentErrors", Value: "42"}}}}},
+			{Name: "certificatesResolvers", Children: []*parser.Node{
+				{Name: "default", Children: []*parser.Node{
+					{Name: "acme",
+						Children: []*parser.Node{
+							{Name: "acmeLogging", Value: "true"},
+							{Name: "caServer", Value: "foobar"},
+							{Name: "dnsChallenge", Children: []*parser.Node{
+								{Name: "delayBeforeCheck", Value: "42"},
+								{Name: "disablePropagationCheck", Value: "true"},
+								{Name: "provider", Value: "foobar"},
+								{Name: "resolvers", Value: "foobar,foobar"},
+							}},
+							{Name: "email", Value: "foobar"},
+							{Name: "entryPoint", Value: "foobar"},
+							{Name: "httpChallenge", Children: []*parser.Node{
+								{Name: "entryPoint", Value: "foobar"}}},
+							{Name: "keyType", Value: "foobar"},
+							{Name: "storage", Value: "foobar"},
+							{Name: "tlsChallenge"},
+						},
+					},
+				}},
+			}},
 			{Name: "entryPoints", Children: []*parser.Node{
 				{Name: "EntryPoint0", Children: []*parser.Node{
 					{Name: "address", Value: "foobar"},
@@ -435,9 +420,17 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 					{Name: "debugLogGeneratedTemplate", Value: "true"},
 					{Name: "directory", Value: "foobar"},
 					{Name: "filename", Value: "foobar"},
-					{Name: "traefikFile", Value: "foobar"},
 					{Name: "watch", Value: "true"}}},
-				{Name: "kubernetes", Children: []*parser.Node{
+				{Name: "kubernetesCRD",
+					Children: []*parser.Node{
+						{Name: "certAuthFilePath", Value: "foobar"},
+						{Name: "disablePassHostHeaders", Value: "true"},
+						{Name: "endpoint", Value: "foobar"},
+						{Name: "ingressClass", Value: "foobar"},
+						{Name: "labelSelector", Value: "foobar"},
+						{Name: "namespaces", Value: "foobar,foobar"},
+						{Name: "token", Value: "foobar"}}},
+				{Name: "kubernetesIngress", Children: []*parser.Node{
 					{Name: "certAuthFilePath", Value: "foobar"},
 					{Name: "disablePassHostHeaders", Value: "true"},
 					{Name: "endpoint", Value: "foobar"},
@@ -449,15 +442,6 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 					{Name: "labelSelector", Value: "foobar"},
 					{Name: "namespaces", Value: "foobar,foobar"},
 					{Name: "token", Value: "foobar"}}},
-				{Name: "kubernetesCRD",
-					Children: []*parser.Node{
-						{Name: "certAuthFilePath", Value: "foobar"},
-						{Name: "disablePassHostHeaders", Value: "true"},
-						{Name: "endpoint", Value: "foobar"},
-						{Name: "ingressClass", Value: "foobar"},
-						{Name: "labelSelector", Value: "foobar"},
-						{Name: "namespaces", Value: "foobar,foobar"},
-						{Name: "token", Value: "foobar"}}},
 				{Name: "marathon", Children: []*parser.Node{
 					{Name: "basic", Children: []*parser.Node{
 						{Name: "httpBasicAuthUser", Value: "foobar"},

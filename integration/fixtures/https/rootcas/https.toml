@@ -30,8 +30,8 @@ fblo6RBxUQ==
 
 [api]
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 

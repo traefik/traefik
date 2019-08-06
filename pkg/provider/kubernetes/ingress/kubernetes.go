@@ -3,7 +3,6 @@ package ingress
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"math"
 	"os"
@@ -14,7 +13,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/job"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/safe"
@@ -92,17 +91,9 @@ func (p *Provider) Init() error {
 
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, "kubernetes"))
 	logger := log.FromContext(ctxLog)
-	// Tell glog (used by client-go) to log into STDERR. Otherwise, we risk
-	// certain kinds of API errors getting logged into a directory not
-	// available in a `FROM scratch` Docker container, causing glog to abort
-	// hard with an exit code > 0.
-	err := flag.Set("logtostderr", "true")
-	if err != nil {
-		return err
-	}
 
 	logger.Debugf("Using Ingress label selector: %q", p.LabelSelector)
 	k8sClient, err := p.newK8sClient(ctxLog, p.LabelSelector)
@@ -138,7 +129,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 						logger.Debugf("Skipping Kubernetes event kind %T", event)
 					} else {
 						p.lastConfiguration.Set(conf)
-						configurationChan <- config.Message{
+						configurationChan <- dynamic.Message{
 							ProviderName:  "kubernetes",
 							Configuration: conf,
 						}
@@ -164,7 +155,7 @@ func checkStringQuoteValidity(value string) error {
 	return err
 }
 
-func loadService(client Client, namespace string, backend v1beta1.IngressBackend) (*config.Service, error) {
+func loadService(client Client, namespace string, backend v1beta1.IngressBackend) (*dynamic.Service, error) {
 	service, exists, err := client.GetService(namespace, backend.ServiceName)
 	if err != nil {
 		return nil, err
@@ -174,7 +165,7 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 		return nil, errors.New("service not found")
 	}
 
-	var servers []config.Server
+	var servers []dynamic.Server
 	var portName string
 	var portSpec corev1.ServicePort
 	var match bool
@@ -193,7 +184,7 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		servers = append(servers, config.Server{
+		servers = append(servers, dynamic.Server{
 			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
 		})
 	} else {
@@ -230,29 +221,29 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 			}
 
 			for _, addr := range subset.Addresses {
-				servers = append(servers, config.Server{
+				servers = append(servers, dynamic.Server{
 					URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
 				})
 			}
 		}
 	}
 
-	return &config.Service{
-		LoadBalancer: &config.LoadBalancerService{
+	return &dynamic.Service{
+		LoadBalancer: &dynamic.LoadBalancerService{
 			Servers:        servers,
 			PassHostHeader: true,
 		},
 	}, nil
 }
 
-func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Client) *config.Configuration {
-	conf := &config.Configuration{
-		HTTP: &config.HTTPConfiguration{
-			Routers:     map[string]*config.Router{},
-			Middlewares: map[string]*config.Middleware{},
-			Services:    map[string]*config.Service{},
+func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Client) *dynamic.Configuration {
+	conf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:     map[string]*dynamic.Router{},
+			Middlewares: map[string]*dynamic.Middleware{},
+			Services:    map[string]*dynamic.Service{},
 		},
-		TCP: &config.TCPConfiguration{},
+		TCP: &dynamic.TCPConfiguration{},
 	}
 
 	ingresses := client.GetIngresses()
@@ -286,7 +277,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				conf.HTTP.Routers["/"] = &config.Router{
+				conf.HTTP.Routers["/"] = &dynamic.Router{
 					Rule:     "PathPrefix(`/`)",
 					Priority: math.MinInt32,
 					Service:  "default-backend",
@@ -327,7 +318,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					rules = append(rules, "PathPrefix(`"+p.Path+"`)")
 				}
 
-				conf.HTTP.Routers[strings.Replace(rule.Host, ".", "-", -1)+p.Path] = &config.Router{
+				conf.HTTP.Routers[strings.Replace(rule.Host, ".", "-", -1)+p.Path] = &dynamic.Router{
 					Rule:    strings.Join(rules, " && "),
 					Service: serviceName,
 				}
@@ -343,7 +334,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	certs := getTLSConfig(tlsConfigs)
 	if len(certs) > 0 {
-		conf.TLS = &config.TLSConfiguration{
+		conf.TLS = &dynamic.TLSConfiguration{
 			Certificates: certs,
 		}
 	}

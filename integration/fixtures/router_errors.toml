@@ -1,0 +1,45 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web-secure]
+    address = ":4443"
+
+[api]
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router4]
+    service = "service1"
+    rule = "Host(`snitest.net`)"
+    [http.routers.router4.tls]
+      options = "foo"
+
+  [http.routers.router5]
+    service = "service1"
+    rule = "Host(`snitest.net`)"
+    middlewares = [ "unknown" ]
+    [http.routers.router5.tls]
+      options = "baz"
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://127.0.0.1:9010"
+
+[tls.options]
+
+  [tls.options.foo]
+    minversion = "VersionTLS11"
+
+  [tls.options.baz]
+    minversion = "VersionTLS11"

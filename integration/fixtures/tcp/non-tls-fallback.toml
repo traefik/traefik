@@ -12,6 +12,9 @@
 [api]
 
 [providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
 
 [tcp]
   [tcp.routers]

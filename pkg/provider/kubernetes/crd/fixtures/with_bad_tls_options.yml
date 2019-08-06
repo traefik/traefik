@@ -25,23 +25,23 @@ metadata:
   namespace: default
 
 spec:
-  minversion: VersionTLS12
-  snistrict: true
-  ciphersuites:
+  minVersion: VersionTLS12
+  sniStrict: true
+  cipherSuites:
     - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     - TLS_RSA_WITH_AES_256_GCM_SHA384
-  clientca:
-    secretnames:
+  clientAuth:
+    secretNames:
       - secretCA1
       - secretUnknown
       - emptySecret
-    optional: true
+    clientAuthType: VerifyClientCertIfGiven
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: test.crd
+  name: test.route
   namespace: default
 
 spec:

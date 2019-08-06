@@ -2,15 +2,15 @@
 package label
 
 import (
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/config/parser"
 )
 
 // DecodeConfiguration converts the labels to a configuration.
-func DecodeConfiguration(labels map[string]string) (*config.Configuration, error) {
-	conf := &config.Configuration{
-		HTTP: &config.HTTPConfiguration{},
-		TCP:  &config.TCPConfiguration{},
+func DecodeConfiguration(labels map[string]string) (*dynamic.Configuration, error) {
+	conf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{},
+		TCP:  &dynamic.TCPConfiguration{},
 	}
 
 	err := parser.Decode(labels, conf, parser.DefaultRootName, "traefik.http", "traefik.tcp")
@@ -22,7 +22,7 @@ func DecodeConfiguration(labels map[string]string) (*config.Configuration, error
 }
 
 // EncodeConfiguration converts a configuration to labels.
-func EncodeConfiguration(conf *config.Configuration) (map[string]string, error) {
+func EncodeConfiguration(conf *dynamic.Configuration) (map[string]string, error) {
 	return parser.Encode(conf, parser.DefaultRootName)
 }
 

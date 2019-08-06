@@ -13,6 +13,7 @@
 		"serverStatus": {
 			"http://127.0.0.1": "UP"
 		},
+		"status": "enabled",
 		"usedBy": [
 			"foo@myprovider",
 			"test@myprovider"
@@ -32,6 +33,7 @@
 		"serverStatus": {
 			"http://127.0.0.2": "UP"
 		},
+		"status": "enabled",
 		"usedBy": [
 			"foo@myprovider"
 		]

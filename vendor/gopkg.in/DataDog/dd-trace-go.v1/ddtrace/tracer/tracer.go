@@ -1,8 +1,6 @@
 package tracer
 
 import (
-	"errors"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -10,6 +8,7 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/internal"
+	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
 )
 
 var _ ddtrace.Tracer = (*tracer)(nil)
@@ -28,11 +27,9 @@ type tracer struct {
 
 	flushAllReq    chan chan<- struct{}
 	flushTracesReq chan struct{}
-	flushErrorsReq chan struct{}
 	exitReq        chan struct{}
 
 	payloadQueue chan []*span
-	errorBuffer  chan error
 
 	// stopped is a channel that will be closed when the worker has exited.
 	stopped chan struct{}
@@ -75,6 +72,7 @@ func Start(opts ...StartOption) {
 // Stop stops the started tracer. Subsequent calls are valid but become no-op.
 func Stop() {
 	internal.SetGlobalTracer(&internal.NoopTracer{})
+	log.Flush()
 }
 
 // Span is an alias for ddtrace.Span. It is here to allow godoc to group methods returning
@@ -102,13 +100,8 @@ func Inject(ctx ddtrace.SpanContext, carrier interface{}) error {
 	return internal.GetGlobalTracer().Inject(ctx, carrier)
 }
 
-const (
-	// payloadQueueSize is the buffer size of the trace channel.
-	payloadQueueSize = 1000
-
-	// errorBufferSize is the buffer size of the error channel.
-	errorBufferSize = 200
-)
+// payloadQueueSize is the buffer size of the trace channel.
+const payloadQueueSize = 1000
 
 func newTracer(opts ...StartOption) *tracer {
 	c := new(config)
@@ -122,15 +115,19 @@ func newTracer(opts ...StartOption) *tracer {
 	if c.propagator == nil {
 		c.propagator = NewPropagator(nil)
 	}
+	if c.logger != nil {
+		log.UseLogger(c.logger)
+	}
+	if c.debug {
+		log.SetLevel(log.LevelDebug)
+	}
 	t := &tracer{
 		config:           c,
 		payload:          newPayload(),
 		flushAllReq:      make(chan chan<- struct{}),
 		flushTracesReq:   make(chan struct{}, 1),
-		flushErrorsReq:   make(chan struct{}, 1),
 		exitReq:          make(chan struct{}),
 		payloadQueue:     make(chan []*span, payloadQueueSize),
-		errorBuffer:      make(chan error, errorBufferSize),
 		stopped:          make(chan struct{}),
 		prioritySampling: newPrioritySampler(),
 		pid:              strconv.Itoa(os.Getpid()),
@@ -161,10 +158,7 @@ func (t *tracer) worker() {
 			done <- struct{}{}
 
 		case <-t.flushTracesReq:
-			t.flushTraces()
-
-		case <-t.flushErrorsReq:
-			t.flushErrors()
+			t.flush()
 
 		case <-t.exitReq:
 			t.flush()
@@ -182,36 +176,11 @@ func (t *tracer) pushTrace(trace []*span) {
 	select {
 	case t.payloadQueue <- trace:
 	default:
-		t.pushError(&dataLossError{
-			context: errors.New("payload queue full, dropping trace"),
-			count:   len(trace),
-		})
+		log.Error("payload queue full, dropping %d traces", len(trace))
 	}
 	if t.syncPush != nil {
 		// only in tests
 		<-t.syncPush
-	}
-}
-
-func (t *tracer) pushError(err error) {
-	select {
-	case <-t.stopped:
-		return
-	default:
-	}
-	if len(t.errorBuffer) >= cap(t.errorBuffer)/2 { // starts being full, anticipate, try and flush soon
-		select {
-		case t.flushErrorsReq <- struct{}{}:
-		default: // a flush was already requested, skip
-		}
-	}
-	select {
-	case t.errorBuffer <- err:
-	default:
-		// OK, if we get this, our error error buffer is full,
-		// we can assume it is filled with meaningful messages which
-		// are going to be logged and hopefully read, nothing better
-		// we can do, blocking would make things worse.
 	}
 }
 
@@ -313,33 +282,21 @@ func (t *tracer) Extract(carrier interface{}) (ddtrace.SpanContext, error) {
 	return t.config.propagator.Extract(carrier)
 }
 
-// flushTraces will push any currently buffered traces to the server.
-func (t *tracer) flushTraces() {
+// flush will push any currently buffered traces to the server.
+func (t *tracer) flush() {
 	if t.payload.itemCount() == 0 {
 		return
 	}
 	size, count := t.payload.size(), t.payload.itemCount()
-	if t.config.debug {
-		log.Printf("Sending payload: size: %d traces: %d\n", size, count)
-	}
+	log.Debug("Sending payload: size: %d traces: %d\n", size, count)
 	rc, err := t.config.transport.send(t.payload)
 	if err != nil {
-		t.pushError(&dataLossError{context: err, count: count})
+		log.Error("lost %d traces: %v", count, err)
 	}
 	if err == nil {
 		t.prioritySampling.readRatesJSON(rc) // TODO: handle error?
 	}
 	t.payload.reset()
-}
-
-// flushErrors will process log messages that were queued
-func (t *tracer) flushErrors() {
-	logErrors(t.errorBuffer)
-}
-
-func (t *tracer) flush() {
-	t.flushTraces()
-	t.flushErrors()
 }
 
 // forceFlush forces a flush of data (traces and services) to the agent.
@@ -355,7 +312,7 @@ func (t *tracer) forceFlush() {
 // larger than the threshold as a result, it sends a flush request.
 func (t *tracer) pushPayload(trace []*span) {
 	if err := t.payload.push(trace); err != nil {
-		t.pushError(&traceEncodingError{context: err})
+		log.Error("error encoding msgpack: %v", err)
 	}
 	if t.payload.size() > payloadSizeLimit {
 		// getting large

@@ -1,4 +1,0 @@
-whoami1:
-  image: containous/whoami
-  ports:
-    - "8881:80"

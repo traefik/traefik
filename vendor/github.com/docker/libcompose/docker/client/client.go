@@ -10,7 +10,6 @@ import (
 	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/homedir"
-	"github.com/docker/go-connections/sockets"
 	"github.com/docker/go-connections/tlsconfig"
 	"github.com/docker/libcompose/version"
 )
@@ -87,27 +86,23 @@ func Create(c Options) (client.APIClient, error) {
 		if err != nil {
 			return nil, err
 		}
-		tr := &http.Transport{
-			TLSClientConfig: config,
-		}
-		proto, addr, _, err := client.ParseHost(c.Host)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := sockets.ConfigureTransport(tr, proto, addr); err != nil {
-			return nil, err
-		}
 
 		httpClient = &http.Client{
-			Transport: tr,
+			Transport: &http.Transport{
+				TLSClientConfig: config,
+			},
 		}
 	}
 
 	customHeaders := map[string]string{}
 	customHeaders["User-Agent"] = fmt.Sprintf("Libcompose-Client/%s (%s)", version.VERSION, runtime.GOOS)
 
-	client, err := client.NewClient(c.Host, apiVersion, httpClient, customHeaders)
+	client, err := client.NewClientWithOpts(
+		client.WithHTTPClient(httpClient),
+		client.WithHost(c.Host),
+		client.WithVersion(apiVersion),
+		client.WithHTTPHeaders(customHeaders),
+	)
 	if err != nil {
 		return nil, err
 	}

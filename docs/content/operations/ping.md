@@ -7,23 +7,17 @@ Checking the Health of Your Traefik Instances
 
 ??? example "Enabling /ping"
 
-    ```toml
-    [ping]
-    ```
+```toml tab="File (TOML)"
+[ping]
+```
 
-??? example "Enabling /ping on a dedicated EntryPoint"
-    
-    ```toml
-    [entryPoints]
-      [entryPoints.web]
-        address = ":80"
-      
-      [entryPoints.ping]
-        address = ":8082"
-    
-    [ping]
-      entryPoint = "ping"
-    ```
+```yaml tab="File (YAML)"
+ping: {}
+```
+
+```bash tab="CLI"
+--ping=true
+```
 
 | Path    | Method        | Description                                                                                         |
 |---------|---------------|-----------------------------------------------------------------------------------------------------|
@@ -32,5 +26,3 @@ Checking the Health of Your Traefik Instances
 ## Configuration Options
 
 The `/ping` health-check URL is enabled with the command-line `--ping` or config file option `[ping]`.
-
-You can customize the `entryPoint` where the `/ping` is active with the `entryPoint` option (default value: `traefik`)

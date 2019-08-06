@@ -215,7 +215,7 @@ The table below lists all the available matchers:
 | ```HeadersRegexp(`key`, `regexp`)```                                 | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
 | ```Host(`domain-1`, ...)```                                          | Check if the request domain targets one of the given `domains`.                                                |
 | ```HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
-| `Method(methods, ...)`                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
+| ```Method(`GET`, ...)```                                             | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
 | ```Path(`path`, `/articles/{category}/{id:[0-9]+}`, ...)```          | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
 | ```PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
 | ```Query(`foo=bar`, `bar=baz`)```                                    | Match` Query String parameters. It accepts a sequence of key=value pairs.                                      |
@@ -287,10 +287,6 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
 !!! note "HTTPS & ACME"
 
     In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
-    
-!!! note "Passthrough"
-
-    On TCP routers, you can configure a passthrough option so that Traefik doesn't terminate the TLS connection.
 
 !!! important "Routers for HTTP & HTTPS"
 
@@ -325,10 +321,16 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
               service: service-id
         ```
 
-#### `Options`
+#### `options`
 
-The `Options` field enables fine-grained control of the TLS parameters.  
+The `options` field enables fine-grained control of the TLS parameters.
 It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied only if a `Host` rule is defined.
+
+!!! note "Server Name Association"
+
+    Even though one might get the impression that a TLS options reference is mapped to a router, or a router rule, one should realize that it is actually mapped only to the host name found in the `Host` part of the rule. Of course, there could also be several `Host` parts in a rule, in which case the TLS options reference would be mapped to as many host names.
+
+    Another thing to keep in mind is: the TLS option is picked from the mapping mentioned above and based on the server name provided during the TLS handshake, and it all happens before routing actually occurs.
 
 ??? example "Configuring the TLS options"
 
@@ -368,6 +370,110 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
           - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           - TLS_RSA_WITH_AES_256_GCM_SHA384
     ```
+
+!!! important "Conflicting TLS Options"
+
+    Since a TLS options reference is mapped to a host name, if a configuration introduces a situation where the same host name (from a `Host` rule) gets matched with two TLS options references, a conflict occurs, such as in the example below:
+
+    ```toml tab="TOML"
+    [http.routers]
+      [http.routers.routerfoo]
+        rule = "Host(`snitest.com`) && Path(`/foo`)"
+        [http.routers.routerfoo.tls]
+          options = "foo"
+
+    [http.routers]
+      [http.routers.routerbar]
+        rule = "Host(`snitest.com`) && Path(`/bar`)"
+        [http.routers.routerbar.tls]
+          options = "bar"
+    ```
+
+    ```yaml tab="YAML"
+    http:
+      routers:
+        routerfoo:
+          rule: "Host(`snitest.com`) && Path(`/foo`)"
+          tls:
+            options: foo
+
+        routerbar:
+          rule: "Host(`snitest.com`) && Path(`/bar`)"
+          tls:
+            options: bar
+    ```
+
+    If that happens, both mappings are discarded, and the host name (`snitest.com` in this case) for these routers gets associated with the default TLS options instead.
+
+#### `certResolver`
+
+If `certResolver` is defined, Traefik will try to generate certificates based on routers `Host` & `HostSNI` rules.
+
+```toml tab="TOML"
+[http.routers]
+  [http.routers.routerfoo]
+    rule = "Host(`snitest.com`) && Path(`/foo`)"
+    [http.routers.routerfoo.tls]
+      certResolver = "foo"
+```
+
+```yaml tab="YAML"
+http:
+  routers:
+    routerfoo:
+      rule: "Host(`snitest.com`) && Path(`/foo`)"
+      tls:
+        certResolver: foo
+```
+
+!!! note "Multiple Hosts in a Rule"
+    The rule `Host(test1.traefik.io,test2.traefik.io)` will request a certificate with the main domain `test1.traefik.io` and SAN `test2.traefik.io`.
+
+#### `domains`
+
+You can set SANs (alternative domains) for each main domain.
+Every domain must have A/AAAA records pointing to Traefik.
+Each domain & SAN will lead to a certificate request.
+
+```toml tab="TOML"
+[http.routers]
+  [http.routers.routerbar]
+    rule = "Host(`snitest.com`) && Path(`/bar`)"
+    [http.routers.routerbar.tls]
+      certResolver = "bar"
+      [[http.routers.routerbar.tls.domains]]
+        main = "snitest.com"
+        sans = "*.snitest.com"
+```
+
+```yaml tab="YAML"
+http:
+  routers:
+    routerbar:
+      rule: "Host(`snitest.com`) && Path(`/bar`)"
+      tls:
+        certResolver: "bar"
+        domains:
+        - main: "snitest.com"
+          sans: "*.snitest.com"
+```
+
+[ACME v2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
+As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](../../https/acme.md#dnschallenge).
+
+Most likely the root domain should receive a certificate too, so it needs to be specified as SAN and 2 `DNS-01` challenges are executed.
+In this case the generated DNS TXT record for both domains is the same.
+Even though this behavior is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant,
+it can lead to problems as all DNS providers keep DNS records cached for a given time (TTL) and this TTL can be greater than the challenge timeout making the `DNS-01` challenge fail.
+
+The Traefik ACME client library [LEGO](https://github.com/go-acme/lego) supports some but not all DNS providers to work around this issue.
+The [Supported `provider` table](../../https/acme.md#providers) indicates if they allow generating certificates for a wildcard domain and its root domain.
+
+!!! note
+    Wildcard certificates can only be verified through a [`DNS-01` challenge](../../https/acme.md#dnschallenge).
+
+!!! note "Double Wildcard Certificates"
+    It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
 
 ## Configuring TCP Routers
 
@@ -553,9 +659,9 @@ Services are the target for the router.
 
     In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
 
-#### `Options`
+#### `options`
 
-The `Options` field enables fine-grained control of the TLS parameters.  
+The `options` field enables fine-grained control of the TLS parameters.  
 It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied only if a `HostSNI` rule is defined.
 
 ??? example "Configuring the tls options"
@@ -596,3 +702,51 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
           - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
           - "TLS_RSA_WITH_AES_256_GCM_SHA384"
     ```
+
+#### `certResolver`
+
+See [`certResolver` for HTTP router](./index.md#certresolver) for more information.
+
+```toml tab="TOML"
+[tcp.routers]
+  [tcp.routers.routerfoo]
+    rule = "HostSNI(`snitest.com`)"
+    [tcp.routers.routerfoo.tls]
+      certResolver = "foo"
+```
+
+```yaml tab="YAML"
+tcp:
+  routers:
+    routerfoo:
+      rule: "HostSNI(`snitest.com`)"
+      tls:
+        certResolver: foo
+```
+
+#### `domains`
+
+See [`domains` for HTTP router](./index.md#domains) for more information.
+
+```toml tab="TOML"
+[tcp.routers]
+  [tcp.routers.routerbar]
+    rule = "HostSNI(`snitest.com`)"
+    [tcp.routers.routerbar.tls]
+      certResolver = "bar"
+      [[tcp.routers.routerbar.tls.domains]]
+        main = "snitest.com"
+        sans = "*.snitest.com"
+```
+
+```yaml tab="YAML"
+tcp:
+  routers:
+    routerbar:
+      rule: "HostSNI(`snitest.com`)"
+      tls:
+        certResolver: "bar"
+        domains:
+        - main: "snitest.com"
+          sans: "*.snitest.com"
+```

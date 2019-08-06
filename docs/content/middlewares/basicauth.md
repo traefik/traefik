@@ -44,7 +44,7 @@ labels:
   - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Declaring the user list
 [http.middlewares]
   [http.middlewares.test-auth.basicAuth]
@@ -52,6 +52,17 @@ labels:
     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
     "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
   ]
+```
+
+```yaml tab="File (YAML)"
+# Declaring the user list
+http:
+  middlewares:
+    test-auth:
+      basicAuth:
+        users:
+        - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" 
+        - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ## Configuration Options
@@ -119,10 +130,19 @@ spec:
 }
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 [http.middlewares.my-auth.basicAuth]
   # ...
   headerField = "X-WebAuth-User"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    my-auth:
+      basicAuth:
+        # ...
+        headerField: "X-WebAuth-User"
 ```
 
 ### `removeHeader`

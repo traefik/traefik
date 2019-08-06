@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +25,7 @@ func TestForwardAuthFail(t *testing.T) {
 	}))
 	defer server.Close()
 
-	middleware, err := NewForward(context.Background(), next, config.ForwardAuth{
+	middleware, err := NewForward(context.Background(), next, dynamic.ForwardAuth{
 		Address: server.URL,
 	}, "authTest")
 	require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 		fmt.Fprintln(w, "traefik")
 	})
 
-	auth := config.ForwardAuth{
+	auth := dynamic.ForwardAuth{
 		Address:             server.URL,
 		AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Group"},
 	}
@@ -96,7 +96,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 		fmt.Fprintln(w, "traefik")
 	})
 
-	auth := config.ForwardAuth{
+	auth := dynamic.ForwardAuth{
 		Address: authTs.URL,
 	}
 	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
@@ -147,7 +147,7 @@ func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "traefik")
 	})
-	auth := config.ForwardAuth{
+	auth := dynamic.ForwardAuth{
 		Address: authTs.URL,
 	}
 	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
@@ -193,7 +193,7 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 		fmt.Fprintln(w, "traefik")
 	})
 
-	auth := config.ForwardAuth{
+	auth := dynamic.ForwardAuth{
 		Address: authTs.URL,
 	}
 	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")

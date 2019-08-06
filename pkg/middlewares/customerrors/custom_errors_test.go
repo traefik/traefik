@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
@@ -17,14 +17,14 @@ import (
 func TestHandler(t *testing.T) {
 	testCases := []struct {
 		desc                string
-		errorPage           *config.ErrorPage
+		errorPage           *dynamic.ErrorPage
 		backendCode         int
 		backendErrorHandler http.HandlerFunc
 		validate            func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			desc:        "no error",
-			errorPage:   &config.ErrorPage{Service: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
 			backendCode: http.StatusOK,
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintln(w, "My error page.")
@@ -36,7 +36,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			desc:        "in the range",
-			errorPage:   &config.ErrorPage{Service: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
 			backendCode: http.StatusInternalServerError,
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintln(w, "My error page.")
@@ -49,7 +49,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			desc:        "not in the range",
-			errorPage:   &config.ErrorPage{Service: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
 			backendCode: http.StatusBadGateway,
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintln(w, "My error page.")
@@ -62,7 +62,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			desc:        "query replacement",
-			errorPage:   &config.ErrorPage{Service: "error", Query: "/{status}", Status: []string{"503-503"}},
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/{status}", Status: []string{"503-503"}},
 			backendCode: http.StatusServiceUnavailable,
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.RequestURI == "/503" {
@@ -79,7 +79,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			desc:        "Single code",
-			errorPage:   &config.ErrorPage{Service: "error", Query: "/{status}", Status: []string{"503"}},
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/{status}", Status: []string{"503"}},
 			backendCode: http.StatusServiceUnavailable,
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.RequestURI == "/503" {

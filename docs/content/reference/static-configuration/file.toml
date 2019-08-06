@@ -52,7 +52,6 @@
     watch = true
     filename = "foobar"
     debugLogGeneratedTemplate = true
-    traefikFile = "foobar"
   [providers.marathon]
     constraints = "foobar"
     trace = true
@@ -76,7 +75,7 @@
     [providers.marathon.basic]
       httpBasicAuthUser = "foobar"
       httpBasicPassword = "foobar"
-  [providers.kubernetes]
+  [providers.kubernetesIngress]
     endpoint = "foobar"
     token = "foobar"
     certAuthFilePath = "foobar"
@@ -84,7 +83,7 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
-    [providers.kubernetes.ingressEndpoint]
+    [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
       publishedService = "foobar"
@@ -97,7 +96,6 @@
     labelSelector = "foobar"
     ingressClass = "foobar"
   [providers.rest]
-    entryPoint = "foobar"
   [providers.rancher]
     constraints = "foobar"
     watch = true
@@ -109,23 +107,24 @@
     prefix = "foobar"
 
 [api]
-  entryPoint = "foobar"
   dashboard = true
-  middlewares = ["foobar", "foobar"]
-  [api.statistics]
-    recentErrors = 42
+  debug = true
 
 [metrics]
   [metrics.prometheus]
     buckets = [42.0, 42.0]
-    entryPoint = "foobar"
-    middlewares = ["foobar", "foobar"]
+    addEntryPointsLabels = true
+    addServicesLabels = true
   [metrics.dataDog]
     address = "foobar"
     pushInterval = "10s"
+    addEntryPointsLabels = true
+    addServicesLabels = true
   [metrics.statsD]
     address = "foobar"
     pushInterval = "10s"
+    addEntryPointsLabels = true
+    addServicesLabels = true
   [metrics.influxDB]
     address = "foobar"
     protocol = "foobar"
@@ -134,10 +133,10 @@
     retentionPolicy = "foobar"
     username = "foobar"
     password = "foobar"
+    addEntryPointsLabels = true
+    addServicesLabels = true
 
 [ping]
-  entryPoint = "foobar"
-  middlewares = ["foobar", "foobar"]
 
 [log]
   level = "foobar"
@@ -174,6 +173,10 @@
     gen128Bit = true
     propagation = "foobar"
     traceContextHeaderName = "foobar"
+    [tracing.jaeger.collector]
+      endpoint = "foobar"
+      user = "foobar"
+      password = "foobar"
   [tracing.zipkin]
     httpEndpoint = "foobar"
     sameSpan = true
@@ -200,33 +203,39 @@
     traceIDHeaderName = "foobar"
     parentIDHeaderName = "foobar"
     spanIDHeaderName = "foobar"
+    baggagePrefixHeaderName = "foobar"
 
 [hostResolver]
   cnameFlattening = true
   resolvConfig = "foobar"
   resolvDepth = 42
 
-[acme]
-  email = "foobar"
-  acmeLogging = true
-  caServer = "foobar"
-  storage = "foobar"
-  entryPoint = "foobar"
-  keyType = "foobar"
-  onHostRule = true
-  [acme.dnsChallenge]
-    provider = "foobar"
-    delayBeforeCheck = 42
-    resolvers = ["foobar", "foobar"]
-    disablePropagationCheck = true
-  [acme.httpChallenge]
-    entryPoint = "foobar"
-  [acme.tlsChallenge]
-
-  [[acme.domains]]
-    main = "foobar"
-    sans = ["foobar", "foobar"]
-
-  [[acme.domains]]
-    main = "foobar"
-    sans = ["foobar", "foobar"]
+[certificatesResolvers]
+  [certificatesResolvers.CertificateResolver0]
+    [certificatesResolvers.CertificateResolver0.acme]
+      email = "foobar"
+      caServer = "foobar"
+      storage = "foobar"
+      keyType = "foobar"
+      [certificatesResolvers.CertificateResolver0.acme.dnsChallenge]
+        provider = "foobar"
+        delayBeforeCheck = 42
+        resolvers = ["foobar", "foobar"]
+        disablePropagationCheck = true
+      [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
+        entryPoint = "foobar"
+      [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
+  [certificatesResolvers.CertificateResolver1]
+    [certificatesResolvers.CertificateResolver1.acme]
+      email = "foobar"
+      caServer = "foobar"
+      storage = "foobar"
+      keyType = "foobar"
+      [certificatesResolvers.CertificateResolver1.acme.dnsChallenge]
+        provider = "foobar"
+        delayBeforeCheck = 42
+        resolvers = ["foobar", "foobar"]
+        disablePropagationCheck = true
+      [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
+        entryPoint = "foobar"
+      [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]

@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	th "github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +38,7 @@ func TestReuseService(t *testing.T) {
 				th.WithRouterMiddlewares("basicauth")),
 		),
 		th.WithMiddlewares(th.WithMiddleware("basicauth",
-			th.WithBasicAuth(&config.BasicAuth{Users: []string{"foo:bar"}}),
+			th.WithBasicAuth(&dynamic.BasicAuth{Users: []string{"foo:bar"}}),
 		)),
 		th.WithLoadBalancerServices(th.WithService("bar",
 			th.WithServers(th.WithServer(testServer.URL))),
@@ -46,7 +47,7 @@ func TestReuseService(t *testing.T) {
 
 	srv := NewServer(staticConfig, nil, entryPoints, nil)
 
-	rtConf := config.NewRuntimeConfig(config.Configuration{HTTP: dynamicConfigs})
+	rtConf := runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs})
 	entrypointsHandlers, _ := srv.createHTTPHandlers(context.Background(), rtConf, []string{"http"})
 
 	// Test that the /ok path returns a status 200.
@@ -67,8 +68,8 @@ func TestReuseService(t *testing.T) {
 
 func TestThrottleProviderConfigReload(t *testing.T) {
 	throttleDuration := 30 * time.Millisecond
-	publishConfig := make(chan config.Message)
-	providerConfig := make(chan config.Message)
+	publishConfig := make(chan dynamic.Message)
+	providerConfig := make(chan dynamic.Message)
 	stop := make(chan bool)
 	defer func() {
 		stop <- true
@@ -96,7 +97,7 @@ func TestThrottleProviderConfigReload(t *testing.T) {
 
 	// publish 5 new configs, one new config each 10 milliseconds
 	for i := 0; i < 5; i++ {
-		providerConfig <- config.Message{}
+		providerConfig <- dynamic.Message{}
 		time.Sleep(10 * time.Millisecond)
 	}
 

@@ -9,5 +9,6 @@
 	"name": "bar@myprovider",
 	"provider": "myprovider",
 	"rule": "Host(`foo.bar`)",
-	"service": "foo-service@myprovider"
+	"service": "foo-service@myprovider",
+	"status": "enabled"
 }

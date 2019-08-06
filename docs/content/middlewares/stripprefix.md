@@ -40,11 +40,22 @@ labels:
 - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar, /fiibar"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Strip prefix /foobar and /fiibar
 [http.middlewares]
   [http.middlewares.test-stripprefix.stripPrefix]
     prefixes = ["/foobar", "/fiibar"]
+```
+
+```yaml tab="File (YAML)"
+# Strip prefix /foobar and /fiibar
+http:
+  middlewares:
+    test-stripprefix:
+      stripPrefix:
+        prefixes:
+        - "/foobar"
+        - "/fiibar"
 ```
 
 ## Configuration Options

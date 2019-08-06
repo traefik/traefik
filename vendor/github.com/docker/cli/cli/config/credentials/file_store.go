@@ -1,13 +1,15 @@
 package credentials
 
 import (
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/registry"
+	"strings"
+
+	"github.com/docker/cli/cli/config/types"
 )
 
 type store interface {
 	Save() error
 	GetAuthConfigs() map[string]types.AuthConfig
+	GetFilename() string
 }
 
 // fileStore implements a credentials store using
@@ -34,7 +36,7 @@ func (c *fileStore) Get(serverAddress string) (types.AuthConfig, error) {
 		// Maybe they have a legacy config file, we will iterate the keys converting
 		// them to the new format and testing
 		for r, ac := range c.file.GetAuthConfigs() {
-			if serverAddress == registry.ConvertToHostname(r) {
+			if serverAddress == ConvertToHostname(r) {
 				return ac, nil
 			}
 		}
@@ -52,4 +54,28 @@ func (c *fileStore) GetAll() (map[string]types.AuthConfig, error) {
 func (c *fileStore) Store(authConfig types.AuthConfig) error {
 	c.file.GetAuthConfigs()[authConfig.ServerAddress] = authConfig
 	return c.file.Save()
+}
+
+func (c *fileStore) GetFilename() string {
+	return c.file.GetFilename()
+}
+
+func (c *fileStore) IsFileStore() bool {
+	return true
+}
+
+// ConvertToHostname converts a registry url which has http|https prepended
+// to just an hostname.
+// Copied from github.com/docker/docker/registry.ConvertToHostname to reduce dependencies.
+func ConvertToHostname(url string) string {
+	stripped := url
+	if strings.HasPrefix(url, "http://") {
+		stripped = strings.TrimPrefix(url, "http://")
+	} else if strings.HasPrefix(url, "https://") {
+		stripped = strings.TrimPrefix(url, "https://")
+	}
+
+	nameParts := strings.SplitN(stripped, "/", 2)
+
+	return nameParts[0]
 }

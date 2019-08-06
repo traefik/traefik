@@ -12,7 +12,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	traefiktls "github.com/containous/traefik/pkg/tls"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
@@ -25,7 +25,9 @@ type HTTPSSuite struct{ BaseSuite }
 // "snitest.com", which happens to match the CN of 'snitest.com.crt'. The test
 // verifies that traefik presents the correct certificate.
 func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni.toml"))
+	file := s.adaptFile(c, "fixtures/https/https_sni.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -59,7 +61,9 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
 // SNI hostnames of "snitest.org" and "snitest.com". The test verifies
 // that traefik routes the requests to the expected backends.
 func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni.toml"))
+	file := s.adaptFile(c, "fixtures/https/https_sni.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -113,7 +117,9 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 
 // TestWithTLSOptions  verifies that traefik routes the requests with the associated tls options.
 func (s *HTTPSSuite) TestWithTLSOptions(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_tls_options.toml"))
+	file := s.adaptFile(c, "fixtures/https/https_tls_options.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -195,11 +201,81 @@ func (s *HTTPSSuite) TestWithTLSOptions(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+// TestWithConflictingTLSOptions checks that routers with same SNI but different TLS options get fallbacked to the default TLS options.
+func (s *HTTPSSuite) TestWithConflictingTLSOptions(c *check.C) {
+	file := s.adaptFile(c, "fixtures/https/https_tls_options.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.net`)"))
+	c.Assert(err, checker.IsNil)
+
+	backend1 := startTestServer("9010", http.StatusNoContent)
+	backend2 := startTestServer("9020", http.StatusResetContent)
+	defer backend1.Close()
+	defer backend2.Close()
+
+	err = try.GetRequest(backend1.URL, 1*time.Second, try.StatusCodeIs(http.StatusNoContent))
+	c.Assert(err, checker.IsNil)
+	err = try.GetRequest(backend2.URL, 1*time.Second, try.StatusCodeIs(http.StatusResetContent))
+	c.Assert(err, checker.IsNil)
+
+	tr4 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MaxVersion:         tls.VersionTLS11,
+			ServerName:         "snitest.net",
+		},
+	}
+
+	trDefault := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MaxVersion:         tls.VersionTLS12,
+			ServerName:         "snitest.net",
+		},
+	}
+
+	// With valid TLS options and request
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = trDefault.TLSClientConfig.ServerName
+	req.Header.Set("Host", trDefault.TLSClientConfig.ServerName)
+	req.Header.Set("Accept", "*/*")
+
+	err = try.RequestWithTransport(req, 30*time.Second, trDefault, try.StatusCodeIs(http.StatusNoContent))
+	c.Assert(err, checker.IsNil)
+
+	// With a bad TLS version
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = tr4.TLSClientConfig.ServerName
+	req.Header.Set("Host", tr4.TLSClientConfig.ServerName)
+	req.Header.Set("Accept", "*/*")
+	client := http.Client{
+		Transport: tr4,
+	}
+	_, err = client.Do(req)
+	c.Assert(err, checker.NotNil)
+	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
+
+	// with unknown tls option
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(fmt.Sprintf("found different TLS options for routers on the same host %v, so using the default TLS options instead", tr4.TLSClientConfig.ServerName)))
+	c.Assert(err, checker.IsNil)
+}
+
 // TestWithSNIStrictNotMatchedRequest involves a client sending a SNI hostname of
 // "snitest.org", which does not match the CN of 'snitest.com.crt'. The test
 // verifies that traefik closes the connection.
 func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_strict.toml"))
+	file := s.adaptFile(c, "fixtures/https/https_sni_strict.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -223,7 +299,9 @@ func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest(c *check.C) {
 // "snitest.org", which does not match the CN of 'snitest.com.crt'. The test
 // verifies that traefik returns the default certificate.
 func (s *HTTPSSuite) TestWithDefaultCertificate(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_default_cert.toml"))
+	file := s.adaptFile(c, "fixtures/https/https_sni_default_cert.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -257,7 +335,9 @@ func (s *HTTPSSuite) TestWithDefaultCertificate(c *check.C) {
 // which does not match the CN of 'snitest.com.crt'. The test
 // verifies that traefik returns the default certificate.
 func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_default_cert.toml"))
+	file := s.adaptFile(c, "fixtures/https/https_sni_default_cert.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -291,7 +371,9 @@ func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI(c *check.C) {
 // 'wildcard.snitest.com.crt', and `www.snitest.com.crt`. The test
 // verifies that traefik returns the non-wildcard certificate.
 func (s *HTTPSSuite) TestWithOverlappingStaticCertificate(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_default_cert.toml"))
+	file := s.adaptFile(c, "fixtures/https/https_sni_default_cert.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -326,7 +408,9 @@ func (s *HTTPSSuite) TestWithOverlappingStaticCertificate(c *check.C) {
 // 'wildcard.snitest.com.crt', and `www.snitest.com.crt`. The test
 // verifies that traefik returns the non-wildcard certificate.
 func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/dynamic_https_sni_default_cert.toml"))
+	file := s.adaptFile(c, "fixtures/https/dynamic_https_sni_default_cert.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -359,7 +443,9 @@ func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate(c *check.C) {
 // TestWithClientCertificateAuthentication
 // The client can send a certificate signed by a CA trusted by the server but it's optional
 func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/clientca/https_1ca1config.toml"))
+	file := s.adaptFile(c, "fixtures/https/clientca/https_1ca1config.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -415,7 +501,9 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 // TestWithClientCertificateAuthentication
 // Use two CA:s and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/clientca/https_2ca1config.toml"))
+	file := s.adaptFile(c, "fixtures/https/clientca/https_2ca1config.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -476,7 +564,9 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check
 // TestWithClientCertificateAuthentication
 // Use two CA:s in two different files and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleFiles(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/clientca/https_2ca2config.toml"))
+	file := s.adaptFile(c, "fixtures/https/clientca/https_2ca2config.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -711,7 +801,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Change certificates configuration file content
-	modifyCertificateConfFileContent(c, tr1.TLSClientConfig.ServerName, dynamicConfFileName, "https")
+	modifyCertificateConfFileContent(c, tr1.TLSClientConfig.ServerName, dynamicConfFileName)
 
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
 	c.Assert(err, checker.IsNil)
@@ -780,14 +870,14 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 	c.Assert(err, checker.IsNil)
 
 	// Change certificates configuration file content
-	modifyCertificateConfFileContent(c, "", dynamicConfFileName, "https02")
+	modifyCertificateConfFileContent(c, "", dynamicConfFileName)
 
 	err = try.RequestWithTransport(req, 30*time.Second, tr2, try.HasCn("TRAEFIK DEFAULT CERT"), try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 }
 
 // modifyCertificateConfFileContent replaces the content of a HTTPS configuration file.
-func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, entryPoint string) {
+func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName string) {
 	file, err := os.OpenFile("./"+confFileName, os.O_WRONLY, os.ModeExclusive)
 	c.Assert(err, checker.IsNil)
 	defer func() {
@@ -798,8 +888,8 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 
 	// If certificate file is not provided, just truncate the configuration file
 	if len(certFileName) > 0 {
-		tlsConf := config.Configuration{
-			TLS: &config.TLSConfiguration{
+		tlsConf := dynamic.Configuration{
+			TLS: &dynamic.TLSConfiguration{
 				Certificates: []*traefiktls.CertAndStores{{
 					Certificate: traefiktls.Certificate{
 						CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
@@ -818,8 +908,10 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, en
 	}
 }
 
-func (s *HTTPSSuite) TestEntrypointHttpsRedirectAndPathModification(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_redirect.toml"))
+func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification(c *check.C) {
+	file := s.adaptFile(c, "fixtures/https/https_redirect.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -920,7 +1012,9 @@ func (s *HTTPSSuite) TestEntrypointHttpsRedirectAndPathModification(c *check.C) 
 // "bar.www.snitest.com", which matches the DNS SAN of '*.WWW.SNITEST.COM'. The test
 // verifies that traefik presents the correct certificate.
 func (s *HTTPSSuite) TestWithSNIDynamicCaseInsensitive(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni_case_insensitive_dynamic.toml"))
+	file := s.adaptFile(c, "fixtures/https/https_sni_case_insensitive_dynamic.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)

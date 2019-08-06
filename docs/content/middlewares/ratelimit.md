@@ -1,5 +1,8 @@
 # RateLimit
 
+!!! warning
+    This middleware is disable for now.
+
 Protection from Too Many Calls
 {: .subtitle }
 
@@ -70,12 +73,12 @@ labels:
   		
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
 # These can "burst" up to 10 and 200 in each period, respectively.
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
-    extractorfunc = "client.ip"
+    extractorFunc = "client.ip"
     
     [http.middlewares.test-ratelimit.rateLimit.rateSet.rate0]
       period = "10s"
@@ -88,11 +91,30 @@ labels:
       burst = 10
 ```
 
+```yaml tab="File (YAML)"
+# Here, an average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.
+# These can "burst" up to 10 and 200 in each period, respectively.
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        extractorFunc: "client.ip"
+        rateSet:
+          rate0:
+            period: "10s"
+            average: 100
+            burst: 200
+          rate1:
+            period: "3s"
+            average: 5
+            burst: 10
+```
+
 ## Configuration Options
 
-### `extractorfunc`
+### `extractorFunc`
  
-The `extractorfunc` option defines the strategy used to categorize requests.
+The `extractorFunc` option defines the strategy used to categorize requests.
 
 The possible values are:
 

@@ -76,6 +76,9 @@ func (m *MountOpt) Set(value string) error {
 			case "volume-nocopy":
 				volumeOptions().NoCopy = true
 				continue
+			case "bind-nonrecursive":
+				bindOptions().NonRecursive = true
+				continue
 			}
 		}
 
@@ -100,6 +103,11 @@ func (m *MountOpt) Set(value string) error {
 			mount.Consistency = mounttypes.Consistency(strings.ToLower(value))
 		case "bind-propagation":
 			bindOptions().Propagation = mounttypes.Propagation(strings.ToLower(value))
+		case "bind-nonrecursive":
+			bindOptions().NonRecursive, err = strconv.ParseBool(value)
+			if err != nil {
+				return fmt.Errorf("invalid value for %s: %s", key, value)
+			}
 		case "volume-nocopy":
 			volumeOptions().NoCopy, err = strconv.ParseBool(value)
 			if err != nil {

@@ -55,7 +55,6 @@ providers:
     watch: true
     filename: foobar
     debugLogGeneratedTemplate: true
-    traefikFile: foobar
   marathon:
     constraints: foobar
     trace: true
@@ -79,7 +78,7 @@ providers:
       httpBasicAuthUser: foobar
       httpBasicPassword: foobar
     respectReadinessChecks: true
-  kubernetes:
+  kubernetesIngress:
     endpoint: foobar
     token: foobar
     certAuthFilePath: foobar
@@ -215,30 +214,23 @@ hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
   resolvDepth: 42
-acme:
-  email: foobar
-  acmeLogging: true
-  caServer: foobar
-  storage: foobar
-  entryPoint: foobar
-  keyType: foobar
-  onHostRule: true
-  dnsChallenge:
-    provider: foobar
-    delayBeforeCheck: 42
-    resolvers:
-      - foobar
-      - foobar
-    disablePropagationCheck: true
-  httpChallenge:
-    entryPoint: foobar
-  tlsChallenge: {}
-  domains:
-    - main: foobar
-      sans:
-        - foobar
-        - foobar
-    - main: foobar
-      sans:
-        - foobar
-        - foobar
+
+certificatesResolvers:
+  default:
+    acme:
+      email: foobar
+      acmeLogging: true
+      caServer: foobar
+      storage: foobar
+      entryPoint: foobar
+      keyType: foobar
+      dnsChallenge:
+        provider: foobar
+        delayBeforeCheck: 42
+        resolvers:
+          - foobar
+          - foobar
+        disablePropagationCheck: true
+      httpChallenge:
+        entryPoint: foobar
+      tlsChallenge: {}

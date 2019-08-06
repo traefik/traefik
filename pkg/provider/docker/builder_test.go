@@ -134,7 +134,7 @@ func taskState(state swarm.TaskState) func(*swarm.TaskStatus) {
 
 func taskContainerStatus(id string) func(*swarm.TaskStatus) {
 	return func(status *swarm.TaskStatus) {
-		status.ContainerStatus = swarm.ContainerStatus{
+		status.ContainerStatus = &swarm.ContainerStatus{
 			ContainerID: id,
 		}
 	}

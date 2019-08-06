@@ -1,12 +1,13 @@
 // +build !windows
 
-package archive
+package archive // import "github.com/docker/docker/pkg/archive"
 
 import (
 	"archive/tar"
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/docker/docker/pkg/idtools"
@@ -26,14 +27,14 @@ func fixVolumePathPrefix(srcPath string) string {
 // can't use filepath.Join(srcPath,include) because this will clean away
 // a trailing "." or "/" which may be important.
 func getWalkRoot(srcPath string, include string) string {
-	return srcPath + string(filepath.Separator) + include
+	return strings.TrimSuffix(srcPath, string(filepath.Separator)) + string(filepath.Separator) + include
 }
 
 // CanonicalTarNameForPath returns platform-specific filepath
 // to canonical posix-style path for tar archival. p is relative
 // path.
-func CanonicalTarNameForPath(p string) (string, error) {
-	return p, nil // already unix-style
+func CanonicalTarNameForPath(p string) string {
+	return p // already unix-style
 }
 
 // chmodTarEntry is used to adjust the file permissions used in tar header based
@@ -68,13 +69,13 @@ func getInodeFromStat(stat interface{}) (inode uint64, err error) {
 	return
 }
 
-func getFileUIDGID(stat interface{}) (idtools.IDPair, error) {
+func getFileUIDGID(stat interface{}) (idtools.Identity, error) {
 	s, ok := stat.(*syscall.Stat_t)
 
 	if !ok {
-		return idtools.IDPair{}, errors.New("cannot convert stat value to syscall.Stat_t")
+		return idtools.Identity{}, errors.New("cannot convert stat value to syscall.Stat_t")
 	}
-	return idtools.IDPair{UID: int(s.Uid), GID: int(s.Gid)}, nil
+	return idtools.Identity{UID: int(s.Uid), GID: int(s.Gid)}, nil
 }
 
 // handleTarTypeBlockCharFifo is an OS-specific helper function used by

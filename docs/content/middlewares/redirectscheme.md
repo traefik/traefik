@@ -38,11 +38,20 @@ labels:
 - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Redirect to https
 [http.middlewares]
   [http.middlewares.test-redirectscheme.redirectScheme]
     scheme = "https"
+```
+
+```yaml tab="File (YAML)"
+# Redirect to https
+http:
+  middlewares:
+    test-redirectscheme:
+      redirectScheme:
+        scheme: https
 ```
 
 ## Configuration Options

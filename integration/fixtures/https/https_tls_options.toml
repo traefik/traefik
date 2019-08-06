@@ -11,8 +11,8 @@
 
 [api]
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 
@@ -34,6 +34,18 @@
     rule = "Host(`snitest.org`)"
     [http.routers.router3.tls]
       options = "unknown"
+
+  [http.routers.router4]
+    service = "service1"
+    rule = "Host(`snitest.net`)"
+    [http.routers.router4.tls]
+      options = "foo"
+
+  [http.routers.router5]
+    service = "service1"
+    rule = "Host(`snitest.net`)"
+    [http.routers.router5.tls]
+      options = "baz"
 
 [http.services]
   [http.services.service1]
@@ -57,7 +69,13 @@
 [tls.options]
 
   [tls.options.foo]
-    minversion = "VersionTLS11"
+    minVersion = "VersionTLS11"
+
+  [tls.options.baz]
+    minVersion = "VersionTLS11"
 
   [tls.options.bar]
-    minversion = "VersionTLS12"
+    minVersion = "VersionTLS12"
+
+  [tls.options.default]
+    minVersion = "VersionTLS12"

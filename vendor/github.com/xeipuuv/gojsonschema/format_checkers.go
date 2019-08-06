@@ -2,17 +2,18 @@ package gojsonschema
 
 import (
 	"net"
+	"net/mail"
 	"net/url"
-	"reflect"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
 type (
 	// FormatChecker is the interface all formatters added to FormatCheckerChain must implement
 	FormatChecker interface {
-		IsFormat(input string) bool
+		IsFormat(input interface{}) bool
 	}
 
 	// FormatCheckerChain holds the formatters
@@ -52,11 +53,18 @@ type (
 	// http://tools.ietf.org/html/rfc3339#section-5.6
 	DateTimeFormatChecker struct{}
 
+	DateFormatChecker struct{}
+
+	TimeFormatChecker struct{}
+
 	// URIFormatChecker validates a URI with a valid Scheme per RFC3986
 	URIFormatChecker struct{}
 
 	// URIReferenceFormatChecker validates a URI or relative-reference per RFC3986
 	URIReferenceFormatChecker struct{}
+
+	// URITemplateFormatChecker validates a URI template per RFC6570
+	URITemplateFormatChecker struct{}
 
 	// HostnameFormatChecker validates a hostname is in the correct format
 	HostnameFormatChecker struct{}
@@ -66,6 +74,12 @@ type (
 
 	// RegexFormatChecker validates a regex is in the correct format
 	RegexFormatChecker struct{}
+
+	// JSONPointerFormatChecker validates a JSON Pointer per RFC6901
+	JSONPointerFormatChecker struct{}
+
+	// RelativeJSONPointerFormatChecker validates a relative JSON Pointer is in the correct format
+	RelativeJSONPointerFormatChecker struct{}
 )
 
 var (
@@ -73,45 +87,65 @@ var (
 	// so library users can add custom formatters
 	FormatCheckers = FormatCheckerChain{
 		formatters: map[string]FormatChecker{
-			"date-time": 	 DateTimeFormatChecker{},
-			"hostname":  	 HostnameFormatChecker{},
-			"email":     	 EmailFormatChecker{},
-			"ipv4":      	 IPV4FormatChecker{},
-			"ipv6":      	 IPV6FormatChecker{},
-			"uri":       	 URIFormatChecker{},
-			"uri-reference": URIReferenceFormatChecker{},
-			"uuid":      	 UUIDFormatChecker{},
-			"regex":     	 RegexFormatChecker{},
+			"date":                  DateFormatChecker{},
+			"time":                  TimeFormatChecker{},
+			"date-time":             DateTimeFormatChecker{},
+			"hostname":              HostnameFormatChecker{},
+			"email":                 EmailFormatChecker{},
+			"idn-email":             EmailFormatChecker{},
+			"ipv4":                  IPV4FormatChecker{},
+			"ipv6":                  IPV6FormatChecker{},
+			"uri":                   URIFormatChecker{},
+			"uri-reference":         URIReferenceFormatChecker{},
+			"iri":                   URIFormatChecker{},
+			"iri-reference":         URIReferenceFormatChecker{},
+			"uri-template":          URITemplateFormatChecker{},
+			"uuid":                  UUIDFormatChecker{},
+			"regex":                 RegexFormatChecker{},
+			"json-pointer":          JSONPointerFormatChecker{},
+			"relative-json-pointer": RelativeJSONPointerFormatChecker{},
 		},
 	}
-
-	// Regex credit: https://github.com/asaskevich/govalidator
-	rxEmail = regexp.MustCompile("^(((([a-zA-Z]|\\d|[!#\\$%&'\\*\\+\\-\\/=\\?\\^_`{\\|}~]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])+(\\.([a-zA-Z]|\\d|[!#\\$%&'\\*\\+\\-\\/=\\?\\^_`{\\|}~]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])+)*)|((\\x22)((((\\x20|\\x09)*(\\x0d\\x0a))?(\\x20|\\x09)+)?(([\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f]|\\x21|[\\x23-\\x5b]|[\\x5d-\\x7e]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])|(\\([\\x01-\\x09\\x0b\\x0c\\x0d-\\x7f]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}]))))*(((\\x20|\\x09)*(\\x0d\\x0a))?(\\x20|\\x09)+)?(\\x22)))@((([a-zA-Z]|\\d|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])|(([a-zA-Z]|\\d|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])([a-zA-Z]|\\d|-|\\.|_|~|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])*([a-zA-Z]|\\d|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])))\\.)+(([a-zA-Z]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])|(([a-zA-Z]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])([a-zA-Z]|\\d|-|\\.|_|~|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])*([a-zA-Z]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])))\\.?$")
 
 	// Regex credit: https://www.socketloop.com/tutorials/golang-validate-hostname
 	rxHostname = regexp.MustCompile(`^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$`)
 
+	// Use a regex to make sure curly brackets are balanced properly after validating it as a AURI
+	rxURITemplate = regexp.MustCompile("^([^{]*({[^}]*})?)*$")
+
 	rxUUID = regexp.MustCompile("^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$")
+
+	rxJSONPointer = regexp.MustCompile("^(?:/(?:[^~/]|~0|~1)*)*$")
+
+	rxRelJSONPointer = regexp.MustCompile("^(?:0|[1-9][0-9]*)(?:#|(?:/(?:[^~/]|~0|~1)*)*)$")
+
+	lock = new(sync.Mutex)
 )
 
 // Add adds a FormatChecker to the FormatCheckerChain
 // The name used will be the value used for the format key in your json schema
 func (c *FormatCheckerChain) Add(name string, f FormatChecker) *FormatCheckerChain {
+	lock.Lock()
 	c.formatters[name] = f
+	lock.Unlock()
 
 	return c
 }
 
 // Remove deletes a FormatChecker from the FormatCheckerChain (if it exists)
 func (c *FormatCheckerChain) Remove(name string) *FormatCheckerChain {
+	lock.Lock()
 	delete(c.formatters, name)
+	lock.Unlock()
 
 	return c
 }
 
 // Has checks to see if the FormatCheckerChain holds a FormatChecker with the given name
 func (c *FormatCheckerChain) Has(name string) bool {
+	lock.Lock()
 	_, ok := c.formatters[name]
+	lock.Unlock()
 
 	return ok
 }
@@ -125,32 +159,52 @@ func (c *FormatCheckerChain) IsFormat(name string, input interface{}) bool {
 		return false
 	}
 
-	if !isKind(input, reflect.String) {
+	return f.IsFormat(input)
+}
+
+func (f EmailFormatChecker) IsFormat(input interface{}) bool {
+
+	asString, ok := input.(string)
+	if ok == false {
 		return false
 	}
 
-	inputString := input.(string)
+	_, err := mail.ParseAddress(asString)
 
-	return f.IsFormat(inputString)
-}
-
-func (f EmailFormatChecker) IsFormat(input string) bool {
-	return rxEmail.MatchString(input)
+	return err == nil
 }
 
 // Credit: https://github.com/asaskevich/govalidator
-func (f IPV4FormatChecker) IsFormat(input string) bool {
-	ip := net.ParseIP(input)
-	return ip != nil && strings.Contains(input, ".")
+func (f IPV4FormatChecker) IsFormat(input interface{}) bool {
+
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	ip := net.ParseIP(asString)
+	return ip != nil && strings.Contains(asString, ".")
 }
 
 // Credit: https://github.com/asaskevich/govalidator
-func (f IPV6FormatChecker) IsFormat(input string) bool {
-	ip := net.ParseIP(input)
-	return ip != nil && strings.Contains(input, ":")
+func (f IPV6FormatChecker) IsFormat(input interface{}) bool {
+
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	ip := net.ParseIP(asString)
+	return ip != nil && strings.Contains(asString, ":")
 }
 
-func (f DateTimeFormatChecker) IsFormat(input string) bool {
+func (f DateTimeFormatChecker) IsFormat(input interface{}) bool {
+
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
 	formats := []string{
 		"15:04:05",
 		"15:04:05Z07:00",
@@ -160,7 +214,7 @@ func (f DateTimeFormatChecker) IsFormat(input string) bool {
 	}
 
 	for _, format := range formats {
-		if _, err := time.Parse(format, input); err == nil {
+		if _, err := time.Parse(format, asString); err == nil {
 			return true
 		}
 	}
@@ -168,36 +222,122 @@ func (f DateTimeFormatChecker) IsFormat(input string) bool {
 	return false
 }
 
-func (f URIFormatChecker) IsFormat(input string) bool {
-	u, err := url.Parse(input)
+func (f DateFormatChecker) IsFormat(input interface{}) bool {
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+	_, err := time.Parse("2006-01-02", asString)
+	return err == nil
+}
+
+func (f TimeFormatChecker) IsFormat(input interface{}) bool {
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	if _, err := time.Parse("15:04:05Z07:00", asString); err == nil {
+		return true
+	}
+
+	_, err := time.Parse("15:04:05", asString)
+	return err == nil
+}
+
+func (f URIFormatChecker) IsFormat(input interface{}) bool {
+
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	u, err := url.Parse(asString)
+
 	if err != nil || u.Scheme == "" {
 		return false
 	}
 
-	return true
+	return !strings.Contains(asString, `\`)
 }
 
-func (f URIReferenceFormatChecker) IsFormat(input string) bool {
-	_, err := url.Parse(input)
-	return err == nil
+func (f URIReferenceFormatChecker) IsFormat(input interface{}) bool {
+
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	_, err := url.Parse(asString)
+	return err == nil && !strings.Contains(asString, `\`)
 }
 
-func (f HostnameFormatChecker) IsFormat(input string) bool {
-	return rxHostname.MatchString(input) && len(input) < 256
+func (f URITemplateFormatChecker) IsFormat(input interface{}) bool {
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	u, err := url.Parse(asString)
+	if err != nil || strings.Contains(asString, `\`) {
+		return false
+	}
+
+	return rxURITemplate.MatchString(u.Path)
 }
 
-func (f UUIDFormatChecker) IsFormat(input string) bool {
-	return rxUUID.MatchString(input)
+func (f HostnameFormatChecker) IsFormat(input interface{}) bool {
+
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	return rxHostname.MatchString(asString) && len(asString) < 256
+}
+
+func (f UUIDFormatChecker) IsFormat(input interface{}) bool {
+
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	return rxUUID.MatchString(asString)
 }
 
 // IsFormat implements FormatChecker interface.
-func (f RegexFormatChecker) IsFormat(input string) bool {
-	if input == "" {
+func (f RegexFormatChecker) IsFormat(input interface{}) bool {
+
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	if asString == "" {
 		return true
 	}
-	_, err := regexp.Compile(input)
+	_, err := regexp.Compile(asString)
 	if err != nil {
 		return false
 	}
 	return true
+}
+
+func (f JSONPointerFormatChecker) IsFormat(input interface{}) bool {
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	return rxJSONPointer.MatchString(asString)
+}
+
+func (f RelativeJSONPointerFormatChecker) IsFormat(input interface{}) bool {
+	asString, ok := input.(string)
+	if ok == false {
+		return false
+	}
+
+	return rxRelJSONPointer.MatchString(asString)
 }

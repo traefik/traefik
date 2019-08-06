@@ -17,8 +17,8 @@
     httpEndpoint = "http://{{.IP}}:9411/api/v1/spans"
     debug = true
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 

@@ -3,12 +3,12 @@ package responsemodifiers
 import (
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/middlewares/headers"
 	"github.com/unrolled/secure"
 )
 
-func buildHeaders(hdrs *config.Headers) func(*http.Response) error {
+func buildHeaders(hdrs *dynamic.Headers) func(*http.Response) error {
 	opt := secure.Options{
 		BrowserXssFilter:        hdrs.BrowserXSSFilter,
 		ContentTypeNosniff:      hdrs.ContentTypeNosniff,
@@ -30,11 +30,12 @@ func buildHeaders(hdrs *config.Headers) func(*http.Response) error {
 		HostsProxyHeaders:       hdrs.HostsProxyHeaders,
 		SSLProxyHeaders:         hdrs.SSLProxyHeaders,
 		STSSeconds:              hdrs.STSSeconds,
+		FeaturePolicy:           hdrs.FeaturePolicy,
 	}
 
 	return func(resp *http.Response) error {
 		if hdrs.HasCustomHeadersDefined() || hdrs.HasCorsHeadersDefined() {
-			err := headers.NewHeader(nil, *hdrs).ModifyResponseHeaders(resp)
+			err := headers.NewHeader(nil, *hdrs).PostRequestModifyResponseHeaders(resp)
 			if err != nil {
 				return err
 			}

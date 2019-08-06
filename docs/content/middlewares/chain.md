@@ -108,7 +108,7 @@ labels:
 - "http.services.service1.loadbalancer.server.port=80"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # ...    
 [http.routers]
   [http.routers.router1]
@@ -134,4 +134,44 @@ labels:
     [http.services.service1.loadBalancer]
       [[http.services.service1.loadBalancer.servers]]
         url = "http://127.0.0.1:80"
+```
+
+```yaml tab="File (YAML)"
+# ...    
+http:
+  routers:
+    router1:
+      service: service1
+      middlewares:
+      - secured
+      rule: "Host(`mydomain`)"
+
+  middlewares:
+    secured:
+      chain:
+        middlewares:
+        - https-only
+        - known-ips
+        - auth-users
+
+    auth-users:
+      basicAuth:
+        users:
+        - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+
+    https-only:
+      redirectScheme:
+        scheme: https
+
+    known-ips:
+      ipWhiteList:
+        sourceRange:
+        - "192.168.1.7"
+        - "127.0.0.1/32"
+
+  services:
+    service1:
+      loadBalancer:
+        servers:
+        - url: "http://127.0.0.1:80"
 ```

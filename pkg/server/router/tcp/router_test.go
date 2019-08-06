@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/server/service/tcp"
 	"github.com/containous/traefik/pkg/tls"
 	"github.com/stretchr/testify/assert"
@@ -13,17 +14,17 @@ import (
 func TestRuntimeConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc          string
-		serviceConfig map[string]*config.TCPServiceInfo
-		routerConfig  map[string]*config.TCPRouterInfo
+		serviceConfig map[string]*runtime.TCPServiceInfo
+		routerConfig  map[string]*runtime.TCPRouterInfo
 		expectedError int
 	}{
 		{
 			desc: "No error",
-			serviceConfig: map[string]*config.TCPServiceInfo{
+			serviceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
-					TCPService: &config.TCPService{
-						LoadBalancer: &config.TCPLoadBalancerService{
-							Servers: []config.TCPServer{
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPLoadBalancerService{
+							Servers: []dynamic.TCPServer{
 								{
 									Port:    "8085",
 									Address: "127.0.0.1:8085",
@@ -37,25 +38,25 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			routerConfig: map[string]*config.TCPRouterInfo{
+			routerConfig: map[string]*runtime.TCPRouterInfo{
 				"foo": {
-					TCPRouter: &config.TCPRouter{
+					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "HostSNI(`bar.foo`)",
-						TLS: &config.RouterTCPTLSConfig{
+						TLS: &dynamic.RouterTCPTLSConfig{
 							Passthrough: false,
 							Options:     "foo",
 						},
 					},
 				},
 				"bar": {
-					TCPRouter: &config.TCPRouter{
+					TCPRouter: &dynamic.TCPRouter{
 
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "HostSNI(`foo.bar`)",
-						TLS: &config.RouterTCPTLSConfig{
+						TLS: &dynamic.RouterTCPTLSConfig{
 							Passthrough: false,
 							Options:     "bar",
 						},
@@ -66,11 +67,11 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "One router with wrong rule",
-			serviceConfig: map[string]*config.TCPServiceInfo{
+			serviceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
-					TCPService: &config.TCPService{
-						LoadBalancer: &config.TCPLoadBalancerService{
-							Servers: []config.TCPServer{
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPLoadBalancerService{
+							Servers: []dynamic.TCPServer{
 								{
 									Address: "127.0.0.1:80",
 								},
@@ -79,9 +80,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			routerConfig: map[string]*config.TCPRouterInfo{
+			routerConfig: map[string]*runtime.TCPRouterInfo{
 				"foo": {
-					TCPRouter: &config.TCPRouter{
+					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "WrongRule(`bar.foo`)",
@@ -89,7 +90,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 
 				"bar": {
-					TCPRouter: &config.TCPRouter{
+					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "HostSNI(`foo.bar`)",
@@ -100,11 +101,11 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "All router with wrong rule",
-			serviceConfig: map[string]*config.TCPServiceInfo{
+			serviceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
-					TCPService: &config.TCPService{
-						LoadBalancer: &config.TCPLoadBalancerService{
-							Servers: []config.TCPServer{
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPLoadBalancerService{
+							Servers: []dynamic.TCPServer{
 								{
 									Address: "127.0.0.1:80",
 								},
@@ -113,16 +114,16 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			routerConfig: map[string]*config.TCPRouterInfo{
+			routerConfig: map[string]*runtime.TCPRouterInfo{
 				"foo": {
-					TCPRouter: &config.TCPRouter{
+					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "WrongRule(`bar.foo`)",
 					},
 				},
 				"bar": {
-					TCPRouter: &config.TCPRouter{
+					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "WrongRule(`foo.bar`)",
@@ -133,11 +134,11 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "Router with unknown service",
-			serviceConfig: map[string]*config.TCPServiceInfo{
+			serviceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
-					TCPService: &config.TCPService{
-						LoadBalancer: &config.TCPLoadBalancerService{
-							Servers: []config.TCPServer{
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPLoadBalancerService{
+							Servers: []dynamic.TCPServer{
 								{
 									Address: "127.0.0.1:80",
 								},
@@ -146,16 +147,16 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			routerConfig: map[string]*config.TCPRouterInfo{
+			routerConfig: map[string]*runtime.TCPRouterInfo{
 				"foo": {
-					TCPRouter: &config.TCPRouter{
+					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
 						Service:     "wrong-service",
 						Rule:        "HostSNI(`bar.foo`)",
 					},
 				},
 				"bar": {
-					TCPRouter: &config.TCPRouter{
+					TCPRouter: &dynamic.TCPRouter{
 
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
@@ -167,16 +168,16 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "Router with broken service",
-			serviceConfig: map[string]*config.TCPServiceInfo{
+			serviceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
-					TCPService: &config.TCPService{
+					TCPService: &dynamic.TCPService{
 						LoadBalancer: nil,
 					},
 				},
 			},
-			routerConfig: map[string]*config.TCPRouterInfo{
+			routerConfig: map[string]*runtime.TCPRouterInfo{
 				"bar": {
-					TCPRouter: &config.TCPRouter{
+					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "HostSNI(`foo.bar`)",
@@ -195,7 +196,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 			entryPoints := []string{"web"}
 
-			conf := &config.RuntimeConfiguration{
+			conf := &runtime.Configuration{
 				TCPServices: test.serviceConfig,
 				TCPRouters:  test.routerConfig,
 			}
@@ -231,12 +232,11 @@ func TestRuntimeConfiguration(t *testing.T) {
 				}
 			}
 			for _, v := range conf.TCPRouters {
-				if v.Err != "" {
+				if len(v.Err) > 0 {
 					allErrors++
 				}
 			}
 			assert.Equal(t, test.expectedError, allErrors)
 		})
 	}
-
 }

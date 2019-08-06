@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/provider"
 	"github.com/containous/traefik/pkg/safe"
@@ -18,13 +18,11 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that provides a Rest API.
 type Provider struct {
-	configurationChan chan<- config.Message
-	EntryPoint        string `description:"EntryPoint." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
+	configurationChan chan<- dynamic.Message
 }
 
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
-	p.EntryPoint = "traefik"
 }
 
 var templatesRenderer = render.New(render.Options{Directory: "nowhere"})
@@ -48,7 +46,7 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 				return
 			}
 
-			configuration := new(config.HTTPConfiguration)
+			configuration := new(dynamic.Configuration)
 			body, _ := ioutil.ReadAll(request.Body)
 
 			if err := json.Unmarshal(body, configuration); err != nil {
@@ -57,9 +55,7 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 				return
 			}
 
-			p.configurationChan <- config.Message{ProviderName: "rest", Configuration: &config.Configuration{
-				HTTP: configuration,
-			}}
+			p.configurationChan <- dynamic.Message{ProviderName: "rest", Configuration: configuration}
 			if err := templatesRenderer.JSON(response, http.StatusOK, configuration); err != nil {
 				log.WithoutContext().Error(err)
 			}
@@ -68,7 +64,7 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	p.configurationChan = configurationChan
 	return nil
 }

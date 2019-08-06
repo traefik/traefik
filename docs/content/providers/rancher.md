@@ -18,8 +18,17 @@ Attach labels to your services and let Traefik do the rest!
 
     Enabling the rancher provider
 
-    ```toml
+    ```toml tab="File (TOML)"
     [providers.rancher]
+    ```
+    
+    ```yaml tab="File (YAML)"
+    providers:
+      rancher: {}
+    ```
+    
+    ```bash tab="CLI"
+    --providers.rancher=true
     ```
 
     Attaching labels to services
@@ -34,20 +43,68 @@ Attach labels to your services and let Traefik do the rest!
 ??? tip "Browse the Reference"
     If you're in a hurry, maybe you'd rather go through the configuration reference:
     
-    ```toml
+    ```toml tab="File (TOML)"
     --8<-- "content/providers/rancher.toml"
     ```
+    
+    ```yaml tab="File (YAML)"
+    --8<-- "content/providers/rancher.yml"
+    ```
+    
+    ```bash tab="CLI"
+    --8<-- "content/providers/rancher.txt"
+    ```
 
-### `ExposedByDefault`
+List of all available labels for the [dynamic](../reference/dynamic-configuration/rancher.md) configuration references.
+
+### `exposedByDefault`
 
 _Optional, Default=true_
+
+```toml tab="File (TOML)"
+[providers.rancher]
+  exposedByDefault = false
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  rancher:
+    exposedByDefault: false
+    # ...
+```
+
+```bash tab="CLI"
+--providers.rancher.exposedByDefault=false
+# ...
+```
 
 Expose Rancher services by default in Traefik.
 If set to false, services that don't have a `traefik.enable=true` label will be ignored from the resulting routing configuration.
 
-### `DefaultRule`
+See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+
+### `defaultRule`
 
 _Optional, Default=```Host(`{{ normalize .Name }}`)```_
+
+```toml tab="File (TOML)"
+[providers.rancher]
+  defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  rancher:
+    defaultRule: "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.rancher.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+# ...
+```
 
 The default host rule for all services.
 
@@ -57,47 +114,126 @@ augmented with the [sprig template functions](http://masterminds.github.io/sprig
 The service name can be accessed as the `Name` identifier,
 and the template has access to all the labels defined on this container.
 
-```toml tab="File"
-[providers.rancher]
-  defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
-  # ...
-```
-
-```txt tab="CLI"
---providers.rancher
---providers.rancher.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
-```
-
 This option can be overridden on a container basis with the `traefik.http.routers.Router1.rule` label.
 
-### `EnableServiceHealthFilter`
+### `enableServiceHealthFilter`
 
 _Optional, Default=true_
 
+```toml tab="File (TOML)"
+[providers.rancher]
+  enableServiceHealthFilter = false
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  rancher:
+    enableServiceHealthFilter: false
+    # ...
+```
+
+```bash tab="CLI"
+--providers.rancher.enableServiceHealthFilter=false
+# ...
+```
+
 Filter services with unhealthy states and inactive states.
 
-### `RefreshSeconds`
+### `refreshSeconds`
 
 _Optional, Default=15_
 
+```toml tab="File (TOML)"
+[providers.rancher]
+  refreshSeconds = 30
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  rancher:
+    refreshSeconds: 30
+    # ...
+```
+
+```bash tab="CLI"
+--providers.rancher.refreshSeconds=30
+# ...
+```
+
 Defines the polling interval (in seconds).
 
-### `IntervalPoll`
+### `intervalPoll`
 
 _Optional, Default=false_
+
+```toml tab="File (TOML)"
+[providers.rancher]
+  intervalPoll = true
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  rancher:
+    intervalPoll: true
+    # ...
+```
+
+```bash tab="CLI"
+--providers.rancher.intervalPoll=true
+# ...
+```
 
 Poll the Rancher metadata service for changes every `rancher.refreshSeconds`,
 which is less accurate than the default long polling technique which will provide near instantaneous updates to Traefik.
 
-### `Prefix`
+### `prefix`
 
 _Optional, Default=/latest_
+
+```toml tab="File (TOML)"
+[providers.rancher]
+  prefix = "/test"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  rancher:
+    prefix: "/test"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.rancher.prefix="/test"
+# ...
+```
 
 Prefix used for accessing the Rancher metadata service
 
 ### `constraints`
 
 _Optional, Default=""_
+
+```toml tab="File (TOML)"
+[providers.rancher]
+  constraints = "Label(`a.label.name`, `foo`)"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  rancher:
+    constraints: "Label(`a.label.name`, `foo`)"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.rancher.constraints="Label(`a.label.name`, `foo`)"
+# ...
+```
 
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 That is to say, if none of the container's labels match the expression, no route for the container is created.
@@ -136,6 +272,8 @@ The expression syntax is based on the `Label("key", "value")`, and `LabelRegexp(
     # Includes only containers having a label with key `a.label.name` and a value matching the `a.+` regular expression.
     constraints = "LabelRegexp(`a.label.name`, `a.+`)"
     ```
+
+See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
 
 ## Routing Configuration Options
 

@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/pkg/config/dynamic"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ import (
 func TestStripPrefix(t *testing.T) {
 	testCases := []struct {
 		desc               string
-		config             config.StripPrefix
+		config             dynamic.StripPrefix
 		path               string
 		expectedStatusCode int
 		expectedPath       string
@@ -24,7 +24,7 @@ func TestStripPrefix(t *testing.T) {
 	}{
 		{
 			desc: "no prefixes configured",
-			config: config.StripPrefix{
+			config: dynamic.StripPrefix{
 				Prefixes: []string{},
 			},
 			path:               "/noprefixes",
@@ -32,7 +32,7 @@ func TestStripPrefix(t *testing.T) {
 		},
 		{
 			desc: "wildcard (.*) requests",
-			config: config.StripPrefix{
+			config: dynamic.StripPrefix{
 				Prefixes: []string{"/"},
 			},
 			path:               "/",
@@ -42,7 +42,7 @@ func TestStripPrefix(t *testing.T) {
 		},
 		{
 			desc: "prefix and path matching",
-			config: config.StripPrefix{
+			config: dynamic.StripPrefix{
 				Prefixes: []string{"/stat"},
 			},
 			path:               "/stat",
@@ -52,7 +52,7 @@ func TestStripPrefix(t *testing.T) {
 		},
 		{
 			desc: "path prefix on exactly matching path",
-			config: config.StripPrefix{
+			config: dynamic.StripPrefix{
 				Prefixes: []string{"/stat/"},
 			},
 			path:               "/stat/",
@@ -62,7 +62,7 @@ func TestStripPrefix(t *testing.T) {
 		},
 		{
 			desc: "path prefix on matching longer path",
-			config: config.StripPrefix{
+			config: dynamic.StripPrefix{
 				Prefixes: []string{"/stat/"},
 			},
 			path:               "/stat/us",
@@ -72,7 +72,7 @@ func TestStripPrefix(t *testing.T) {
 		},
 		{
 			desc: "path prefix on mismatching path",
-			config: config.StripPrefix{
+			config: dynamic.StripPrefix{
 				Prefixes: []string{"/stat/"},
 			},
 			path:               "/status",
@@ -80,7 +80,7 @@ func TestStripPrefix(t *testing.T) {
 		},
 		{
 			desc: "general prefix on matching path",
-			config: config.StripPrefix{
+			config: dynamic.StripPrefix{
 				Prefixes: []string{"/stat"},
 			},
 			path:               "/stat/",
@@ -90,7 +90,7 @@ func TestStripPrefix(t *testing.T) {
 		},
 		{
 			desc: "earlier prefix matching",
-			config: config.StripPrefix{
+			config: dynamic.StripPrefix{
 
 				Prefixes: []string{"/stat", "/stat/us"},
 			},
@@ -101,7 +101,7 @@ func TestStripPrefix(t *testing.T) {
 		},
 		{
 			desc: "later prefix matching",
-			config: config.StripPrefix{
+			config: dynamic.StripPrefix{
 				Prefixes: []string{"/mismatch", "/stat"},
 			},
 			path:               "/stat",
@@ -111,7 +111,7 @@ func TestStripPrefix(t *testing.T) {
 		},
 		{
 			desc: "prefix matching within slash boundaries",
-			config: config.StripPrefix{
+			config: dynamic.StripPrefix{
 				Prefixes: []string{"/stat"},
 			},
 			path:               "/status",
@@ -121,7 +121,7 @@ func TestStripPrefix(t *testing.T) {
 		},
 		{
 			desc: "raw path is also stripped",
-			config: config.StripPrefix{
+			config: dynamic.StripPrefix{
 				Prefixes: []string{"/stat"},
 			},
 			path:               "/stat/a%2Fb",

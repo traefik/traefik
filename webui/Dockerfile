@@ -14,4 +14,3 @@ COPY . $WEBUI_DIR/
 EXPOSE 8080
 
 RUN yarn lint
-RUN yarn format --check

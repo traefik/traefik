@@ -4,9 +4,10 @@
 package influx
 
 import (
+	"context"
 	"time"
 
-	influxdb "github.com/influxdata/influxdb/client/v2"
+	influxdb "github.com/influxdata/influxdb1-client/v2"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
@@ -88,10 +89,15 @@ type BatchPointsWriter interface {
 // time the passed channel fires. This method blocks until the channel is
 // closed, so clients probably want to run it in its own goroutine. For typical
 // usage, create a time.Ticker and pass its C channel to this method.
-func (in *Influx) WriteLoop(c <-chan time.Time, w BatchPointsWriter) {
-	for range c {
-		if err := in.WriteTo(w); err != nil {
-			in.logger.Log("during", "WriteTo", "err", err)
+func (in *Influx) WriteLoop(ctx context.Context, c <-chan time.Time, w BatchPointsWriter) {
+	for {
+		select {
+		case <-c:
+			if err := in.WriteTo(w); err != nil {
+				in.logger.Log("during", "WriteTo", "err", err)
+			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
