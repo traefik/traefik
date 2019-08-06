@@ -137,6 +137,12 @@ nav:
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
       - 'Marathon': 'user-guides/marathon.md'
+      - 'Docker':
+        - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
+        - 'HTTPS with Let''s Encrypt':
+          - 'TLS Challenge': 'user-guides/docker-compose/acme-tls/index.md'
+          - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
+          - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'
