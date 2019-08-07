@@ -153,16 +153,14 @@ func (hc *HealthCheck) checkBackend(backend *BackendConfig) {
 	for _, url := range enabledURLs {
 		serverUpMetricValue := float64(1)
 		if err := checkHealth(url, backend); err != nil {
-			var weight int
-			var gotWeight bool
+			weight := 1
 			rr, ok := backend.LB.(*roundrobin.RoundRobin)
 			if ok {
+				var gotWeight bool
 				weight, gotWeight = rr.ServerWeight(url)
 				if !gotWeight {
 					weight = 1
 				}
-			} else {
-				weight = 1
 			}
 			log.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Weight: %d Reason: %s", backend.name, url.String(), weight, err)
 			backend.LB.RemoveServer(url)
