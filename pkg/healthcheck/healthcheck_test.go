@@ -115,7 +115,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			if test.startHealthy {
 				lb.servers = append(lb.servers, serverURL)
 			} else {
-				backend.disabledURLs = append(backend.disabledURLs, serverURL)
+				backend.disabledURLs = append(backend.disabledURLs, backendURL{url: serverURL, weight: 1})
 			}
 
 			collectingMetrics := testhelpers.NewCollectingHealthCheckMetrics()
