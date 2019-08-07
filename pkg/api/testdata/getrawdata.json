@@ -9,7 +9,8 @@
 				"addPrefixTest@anotherprovider"
 			],
 			"service": "foo-service@myprovider",
-			"rule": "Host(`foo.bar`)"
+			"rule": "Host(`foo.bar`)",
+			"status": "enabled"
 		},
 		"test@myprovider": {
 			"entryPoints": [
@@ -20,7 +21,8 @@
 				"auth"
 			],
 			"service": "foo-service@myprovider",
-			"rule": "Host(`foo.bar.other`)"
+			"rule": "Host(`foo.bar.other`)",
+			"status": "enabled"
 		}
 	},
 	"middlewares": {
@@ -28,6 +30,7 @@
 			"addPrefix": {
 				"prefix": "/toto"
 			},
+			"status": "enabled",
 			"usedBy": [
 				"bar@myprovider"
 			]
@@ -36,6 +39,7 @@
 			"addPrefix": {
 				"prefix": "/titi"
 			},
+			"status": "enabled",
 			"usedBy": [
 				"test@myprovider"
 			]
@@ -46,6 +50,7 @@
 					"admin:admin"
 				]
 			},
+			"status": "enabled",
 			"usedBy": [
 				"bar@myprovider",
 				"test@myprovider"
@@ -62,6 +67,7 @@
 				],
 				"passHostHeader": false
 			},
+			"status": "enabled",
 			"usedBy": [
 				"bar@myprovider",
 				"test@myprovider"
@@ -74,14 +80,16 @@
 				"web"
 			],
 			"service": "tcpfoo-service@myprovider",
-			"rule": "HostSNI(`foo.bar`)"
+			"rule": "HostSNI(`foo.bar`)",
+			"status": "enabled"
 		},
 		"tcptest@myprovider": {
 			"entryPoints": [
 				"web"
 			],
 			"service": "tcpfoo-service@myprovider",
-			"rule": "HostSNI(`foo.bar.other`)"
+			"rule": "HostSNI(`foo.bar.other`)",
+			"status": "enabled"
 		}
 	},
 	"tcpServices": {
@@ -93,6 +101,7 @@
 					}
 				]
 			},
+			"status": "enabled",
 			"usedBy": [
 				"tcpbar@myprovider",
 				"tcptest@myprovider"

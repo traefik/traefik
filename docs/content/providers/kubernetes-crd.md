@@ -3,12 +3,7 @@
 The Kubernetes Ingress Controller, The Custom Resource Way.
 {: .subtitle }
 
-<!--
- TODO (Link "Kubernetes Ingress controller" to ./kubernetes-ingress.md)
- -->
-
-The Traefik Kubernetes provider used to be a Kubernetes Ingress controller in the strict sense of the term; that is to say,
-it would manage access to a cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
+Traefik used to support Kubernetes only through the [Kubernetes Ingress provider](./kubernetes-ingress.md), which is a Kubernetes Ingress controller in the strict sense of the term.
 
 However, as the community expressed the need to benefit from Traefik features without resorting to (lots of) annotations,
 we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (alias CRD in the following) for an IngressRoute type, defined below, in order to provide a better way to configure access to a Kubernetes cluster.
@@ -296,7 +291,7 @@ metadata:
   namespace: default
 
 spec:
-  minversion: VersionTLS12
+  minVersion: VersionTLS12
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

@@ -42,11 +42,20 @@ labels:
 - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=250000"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Sets the maximum request body to 2Mb
 [http.middlewares]
   [http.middlewares.limit.buffering]
     maxRequestBodyBytes = 250000
+```
+
+```yaml tab="File (YAML)"
+# Sets the maximum request body to 2Mb
+http:
+  middlewares:
+    limit:
+      buffering:
+        maxRequestBodyBytes: 250000
 ```
 
 ## Configuration Options
@@ -77,7 +86,7 @@ You can have the Buffering middleware replay the request with the help of the `r
 
 !!! example "Retries once in case of a network error"
     
-    ```
+    ```toml
     retryExpression = "IsNetworkError() && Attempts() < 2"
     ```
     

@@ -8,6 +8,15 @@
       priority = 42
       [http.routers.Router0.tls]
         options = "foobar"
+        certResolver = "foobar"
+
+        [[http.routers.Router0.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+
+        [[http.routers.Router0.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
     [http.routers.Router1]
       entryPoints = ["foobar", "foobar"]
       middlewares = ["foobar", "foobar"]
@@ -16,6 +25,15 @@
       priority = 42
       [http.routers.Router1.tls]
         options = "foobar"
+        certResolver = "foobar"
+
+        [[http.routers.Router1.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+
+        [[http.routers.Router1.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
   [http.services]
     [http.services.Service0]
       [http.services.Service0.loadBalancer]
@@ -143,6 +161,7 @@
         contentSecurityPolicy = "foobar"
         publicKey = "foobar"
         referrerPolicy = "foobar"
+        featurePolicy = "foobar"
         isDevelopment = true
         [http.middlewares.Middleware09.headers.customRequestHeaders]
           name0 = "foobar"
@@ -187,42 +206,30 @@
             serialNumber = true
             domainComponent = true
     [http.middlewares.Middleware13]
-      [http.middlewares.Middleware13.rateLimit]
-        extractorFunc = "foobar"
-        [http.middlewares.Middleware13.rateLimit.rateSet]
-          [http.middlewares.Middleware13.rateLimit.rateSet.Rate0]
-            period = "42ns"
-            average = 42
-            burst = 42
-          [http.middlewares.Middleware13.rateLimit.rateSet.Rate1]
-            period = "42ns"
-            average = 42
-            burst = 42
-    [http.middlewares.Middleware14]
-      [http.middlewares.Middleware14.redirectRegex]
+      [http.middlewares.Middleware13.redirectRegex]
         regex = "foobar"
         replacement = "foobar"
         permanent = true
-    [http.middlewares.Middleware15]
-      [http.middlewares.Middleware15.redirectScheme]
+    [http.middlewares.Middleware14]
+      [http.middlewares.Middleware14.redirectScheme]
         scheme = "foobar"
         port = "foobar"
         permanent = true
-    [http.middlewares.Middleware16]
-      [http.middlewares.Middleware16.replacePath]
+    [http.middlewares.Middleware15]
+      [http.middlewares.Middleware15.replacePath]
         path = "foobar"
-    [http.middlewares.Middleware17]
-      [http.middlewares.Middleware17.replacePathRegex]
+    [http.middlewares.Middleware16]
+      [http.middlewares.Middleware16.replacePathRegex]
         regex = "foobar"
         replacement = "foobar"
-    [http.middlewares.Middleware18]
-      [http.middlewares.Middleware18.retry]
+    [http.middlewares.Middleware17]
+      [http.middlewares.Middleware17.retry]
         attempts = 42
-    [http.middlewares.Middleware19]
-      [http.middlewares.Middleware19.stripPrefix]
+    [http.middlewares.Middleware18]
+      [http.middlewares.Middleware18.stripPrefix]
         prefixes = ["foobar", "foobar"]
-    [http.middlewares.Middleware20]
-      [http.middlewares.Middleware20.stripPrefixRegex]
+    [http.middlewares.Middleware19]
+      [http.middlewares.Middleware19.stripPrefixRegex]
         regex = ["foobar", "foobar"]
 
 [tcp]
@@ -234,6 +241,15 @@
       [tcp.routers.TCPRouter0.tls]
         passthrough = true
         options = "foobar"
+        certResolver = "foobar"
+
+        [[tcp.routers.TCPRouter0.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+
+        [[tcp.routers.TCPRouter0.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
     [tcp.routers.TCPRouter1]
       entryPoints = ["foobar", "foobar"]
       service = "foobar"
@@ -241,6 +257,15 @@
       [tcp.routers.TCPRouter1.tls]
         passthrough = true
         options = "foobar"
+        certResolver = "foobar"
+
+        [[tcp.routers.TCPRouter1.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+
+        [[tcp.routers.TCPRouter1.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
   [tcp.services]
     [tcp.services.TCPService0]
       [tcp.services.TCPService0.loadBalancer]
@@ -275,16 +300,16 @@
       minVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
       sniStrict = true
-      [tls.options.Options0.clientCA]
-        files = ["foobar", "foobar"]
-        optional = true
+      [tls.options.Options0.clientAuth]
+        caFiles = ["foobar", "foobar"]
+        clientAuthType = "foobar"
     [tls.options.Options1]
       minVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
       sniStrict = true
-      [tls.options.Options1.clientCA]
-        files = ["foobar", "foobar"]
-        optional = true
+      [tls.options.Options1.clientAuth]
+        caFiles = ["foobar", "foobar"]
+        clientAuthType = "foobar"
   [tls.stores]
     [tls.stores.Store0]
       [tls.stores.Store0.defaultCertificate]

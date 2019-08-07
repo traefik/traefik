@@ -1,0 +1,36 @@
+{
+	"features": {
+		"accessLog": false,
+		"metrics": "",
+		"tracing": ""
+	},
+	"http": {
+		"middlewares": {
+			"errors": 1,
+			"total": 3,
+			"warnings": 0
+		},
+		"routers": {
+			"errors": 1,
+			"total": 3,
+			"warnings": 1
+		},
+		"services": {
+			"errors": 1,
+			"total": 3,
+			"warnings": 1
+		}
+	},
+	"tcp": {
+		"routers": {
+			"errors": 1,
+			"total": 3,
+			"warnings": 1
+		},
+		"services": {
+			"errors": 1,
+			"total": 3,
+			"warnings": 1
+		}
+	}
+}

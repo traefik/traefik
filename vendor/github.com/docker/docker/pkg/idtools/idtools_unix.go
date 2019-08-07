@@ -1,6 +1,6 @@
 // +build !windows
 
-package idtools
+package idtools // import "github.com/docker/docker/pkg/idtools"
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 
 	"github.com/docker/docker/pkg/system"
 	"github.com/opencontainers/runc/libcontainer/user"
@@ -20,21 +21,25 @@ var (
 	getentCmd string
 )
 
-func mkdirAs(path string, mode os.FileMode, ownerUID, ownerGID int, mkAll, chownExisting bool) error {
+func mkdirAs(path string, mode os.FileMode, owner Identity, mkAll, chownExisting bool) error {
 	// make an array containing the original path asked for, plus (for mkAll == true)
 	// all path components leading up to the complete path that don't exist before we MkdirAll
 	// so that we can chown all of them properly at the end.  If chownExisting is false, we won't
 	// chown the full directory path if it exists
+
 	var paths []string
 
 	stat, err := system.Stat(path)
 	if err == nil {
+		if !stat.IsDir() {
+			return &os.PathError{Op: "mkdir", Path: path, Err: syscall.ENOTDIR}
+		}
 		if !chownExisting {
 			return nil
 		}
 
 		// short-circuit--we were called with an existing directory and chown was requested
-		return lazyChown(path, ownerUID, ownerGID, stat)
+		return lazyChown(path, owner.UID, owner.GID, stat)
 	}
 
 	if os.IsNotExist(err) {
@@ -54,7 +59,7 @@ func mkdirAs(path string, mode os.FileMode, ownerUID, ownerGID int, mkAll, chown
 				paths = append(paths, dirPath)
 			}
 		}
-		if err := system.MkdirAll(path, mode, ""); err != nil && !os.IsExist(err) {
+		if err := system.MkdirAll(path, mode, ""); err != nil {
 			return err
 		}
 	} else {
@@ -65,7 +70,7 @@ func mkdirAs(path string, mode os.FileMode, ownerUID, ownerGID int, mkAll, chown
 	// even if it existed, we will chown the requested path + any subpaths that
 	// didn't exist when we called MkdirAll
 	for _, pathComponent := range paths {
-		if err := lazyChown(pathComponent, ownerUID, ownerGID, nil); err != nil {
+		if err := lazyChown(pathComponent, owner.UID, owner.GID, nil); err != nil {
 			return err
 		}
 	}
@@ -74,7 +79,7 @@ func mkdirAs(path string, mode os.FileMode, ownerUID, ownerGID int, mkAll, chown
 
 // CanAccess takes a valid (existing) directory and a uid, gid pair and determines
 // if that uid, gid pair has access (execute bit) to the directory
-func CanAccess(path string, pair IDPair) bool {
+func CanAccess(path string, pair Identity) bool {
 	statInfo, err := system.Stat(path)
 	if err != nil {
 		return false

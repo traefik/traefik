@@ -10,8 +10,11 @@ import (
 	"github.com/containous/alice"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/pkg/metrics"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
+	metricsmiddleware "github.com/containous/traefik/pkg/middlewares/metrics"
 	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
 	"github.com/containous/traefik/pkg/middlewares/tracing"
 	"github.com/containous/traefik/pkg/responsemodifiers"
@@ -48,7 +51,13 @@ func (s *Server) loadConfiguration(configMsg dynamic.Message) {
 		listener(*configMsg.Configuration)
 	}
 
-	s.postLoadConfiguration()
+	if s.metricsRegistry.IsEpEnabled() || s.metricsRegistry.IsSvcEnabled() {
+		var entrypoints []string
+		for key := range s.entryPointsTCP {
+			entrypoints = append(entrypoints, key)
+		}
+		metrics.OnConfigurationUpdate(newConfigurations, entrypoints)
+	}
 }
 
 // loadConfigurationTCP returns a new gorilla.mux Route from the specified global configuration and the dynamic
@@ -65,7 +74,7 @@ func (s *Server) loadConfigurationTCP(configurations dynamic.Configurations) map
 
 	s.tlsManager.UpdateConfigs(conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
 
-	rtConf := dynamic.NewRuntimeConfig(conf)
+	rtConf := runtime.NewConfig(conf)
 	handlersNonTLS, handlersTLS := s.createHTTPHandlers(ctx, rtConf, entryPoints)
 	routersTCP := s.createTCPRouters(ctx, rtConf, entryPoints, handlersNonTLS, handlersTLS)
 	rtConf.PopulateUsedBy()
@@ -74,7 +83,7 @@ func (s *Server) loadConfigurationTCP(configurations dynamic.Configurations) map
 }
 
 // the given configuration must not be nil. its fields will get mutated.
-func (s *Server) createTCPRouters(ctx context.Context, configuration *dynamic.RuntimeConfiguration, entryPoints []string, handlers map[string]http.Handler, handlersTLS map[string]http.Handler) map[string]*tcpCore.Router {
+func (s *Server) createTCPRouters(ctx context.Context, configuration *runtime.Configuration, entryPoints []string, handlers map[string]http.Handler, handlersTLS map[string]http.Handler) map[string]*tcpCore.Router {
 	if configuration == nil {
 		return make(map[string]*tcpCore.Router)
 	}
@@ -87,8 +96,8 @@ func (s *Server) createTCPRouters(ctx context.Context, configuration *dynamic.Ru
 }
 
 // createHTTPHandlers returns, for the given configuration and entryPoints, the HTTP handlers for non-TLS connections, and for the TLS ones. the given configuration must not be nil. its fields will get mutated.
-func (s *Server) createHTTPHandlers(ctx context.Context, configuration *dynamic.RuntimeConfiguration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
-	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper)
+func (s *Server) createHTTPHandlers(ctx context.Context, configuration *runtime.Configuration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
+	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper, s.metricsRegistry)
 	middlewaresBuilder := middleware.NewBuilder(configuration.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(configuration.Middlewares)
 	routerManager := router.NewManager(configuration, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -125,6 +134,10 @@ func (s *Server) createHTTPHandlers(ctx context.Context, configuration *dynamic.
 
 		if s.tracer != nil {
 			chain = chain.Append(tracing.WrapEntryPointHandler(ctx, s.tracer, entryPointName))
+		}
+
+		if s.metricsRegistry.IsEpEnabled() {
+			chain = chain.Append(metricsmiddleware.WrapEntryPointHandler(ctx, s.metricsRegistry, entryPointName))
 		}
 
 		chain = chain.Append(requestdecorator.WrapHandler(s.requestDecorator))
@@ -175,8 +188,22 @@ func (s *Server) preLoadConfiguration(configMsg dynamic.Message) {
 
 	logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
 	if log.GetLevel() == logrus.DebugLevel {
-		jsonConf, _ := json.Marshal(configMsg.Configuration)
-		logger.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
+		copyConf := configMsg.Configuration.DeepCopy()
+		if copyConf.TLS != nil {
+			copyConf.TLS.Certificates = nil
+
+			for _, v := range copyConf.TLS.Stores {
+				v.DefaultCertificate = nil
+			}
+		}
+
+		jsonConf, err := json.Marshal(copyConf)
+		if err != nil {
+			logger.Errorf("Could not marshal dynamic configuration: %v", err)
+			logger.Debugf("Configuration received from provider %s: [struct] %#v", configMsg.ProviderName, copyConf)
+		} else {
+			logger.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
+		}
 	}
 
 	if isEmptyConfiguration(configMsg.Configuration) {
@@ -249,15 +276,6 @@ func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish ch
 			ring.In() <- nextConfig
 		}
 	}
-}
-
-func (s *Server) postLoadConfiguration() {
-	// FIXME metrics
-	// if s.metricsRegistry.IsEnabled() {
-	// 	activeConfig := s.currentConfigurations.Get().(config.Configurations)
-	// 	metrics.OnConfigurationUpdate(activeConfig)
-	// }
-
 }
 
 func buildDefaultHTTPRouter() *mux.Router {

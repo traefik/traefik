@@ -2,4 +2,6 @@
 
 package credentials
 
-const defaultCredentialsStore = ""
+func defaultCredentialsStore() string {
+	return ""
+}

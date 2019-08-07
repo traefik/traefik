@@ -119,3 +119,9 @@ type StartSpanConfig struct {
 	// then this will also set the TraceID to the same value.
 	SpanID uint64
 }
+
+// Logger implementations are able to log given messages that the tracer might output.
+type Logger interface {
+	// Log prints the given message.
+	Log(msg string)
+}

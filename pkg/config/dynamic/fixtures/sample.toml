@@ -52,7 +52,6 @@
     watch = true
     filename = "foobar"
     debugLogGeneratedTemplate = true
-    traefikFile = "foobar"
   [providers.marathon]
     constraints = "foobar"
     trace = true
@@ -213,7 +212,6 @@
   storage = "foobar"
   entryPoint = "foobar"
   keyType = "foobar"
-  onHostRule = true
   [acme.dnsChallenge]
     provider = "foobar"
     delayBeforeCheck = 42
@@ -386,6 +384,7 @@
         contentSecurityPolicy = "foobar"
         publicKey = "foobar"
         referrerPolicy = "foobar"
+        featurePolicy = "foobar"
         isDevelopment = true
         [http.middlewares.Middleware8.headers.customRequestHeaders]
           name0 = "foobar"

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	th "github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +47,7 @@ func TestReuseService(t *testing.T) {
 
 	srv := NewServer(staticConfig, nil, entryPoints, nil)
 
-	rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{HTTP: dynamicConfigs})
+	rtConf := runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs})
 	entrypointsHandlers, _ := srv.createHTTPHandlers(context.Background(), rtConf, []string{"http"})
 
 	// Test that the /ok path returns a status 200.

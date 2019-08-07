@@ -12,6 +12,16 @@ http:
       priority: 42
       tls:
         options: foobar
+        certResolver: foobar
+        domains:
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
     Router1:
       entryPoints:
       - foobar
@@ -24,6 +34,16 @@ http:
       priority: 42
       tls:
         options: foobar
+        certResolver: foobar
+        domains:
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
   services:
     Service0:
       loadBalancer:
@@ -174,6 +194,7 @@ http:
         contentSecurityPolicy: foobar
         publicKey: foobar
         referrerPolicy: foobar
+        featurePolicy: foobar
         isDevelopment: true
     Middleware10:
       ipWhiteList:
@@ -213,43 +234,31 @@ http:
             serialNumber: true
             domainComponent: true
     Middleware13:
-      rateLimit:
-        rateSet:
-          Rate0:
-            period: 42ns
-            average: 42
-            burst: 42
-          Rate1:
-            period: 42ns
-            average: 42
-            burst: 42
-        extractorFunc: foobar
-    Middleware14:
       redirectRegex:
         regex: foobar
         replacement: foobar
         permanent: true
-    Middleware15:
+    Middleware14:
       redirectScheme:
         scheme: foobar
         port: foobar
         permanent: true
-    Middleware16:
+    Middleware15:
       replacePath:
         path: foobar
-    Middleware17:
+    Middleware16:
       replacePathRegex:
         regex: foobar
         replacement: foobar
-    Middleware18:
+    Middleware17:
       retry:
         attempts: 42
-    Middleware19:
+    Middleware18:
       stripPrefix:
         prefixes:
         - foobar
         - foobar
-    Middleware20:
+    Middleware19:
       stripPrefixRegex:
         regex:
         - foobar
@@ -265,6 +274,16 @@ tcp:
       tls:
         passthrough: true
         options: foobar
+        certResolver: foobar
+        domains:
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
     TCPRouter1:
       entryPoints:
       - foobar
@@ -274,6 +293,16 @@ tcp:
       tls:
         passthrough: true
         options: foobar
+        certResolver: foobar
+        domains:
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
   services:
     TCPService0:
       loadBalancer:
@@ -303,22 +332,22 @@ tls:
       cipherSuites:
       - foobar
       - foobar
-      clientCA:
-        files:
+      clientAuth:
+        caFiles:
         - foobar
         - foobar
-        optional: true
+        clientAuthType: foobar
       sniStrict: true
     Options1:
       minVersion: foobar
       cipherSuites:
       - foobar
       - foobar
-      clientCA:
-        files:
+      clientAuth:
+        caFiles:
         - foobar
         - foobar
-        optional: true
+        clientAuthType: foobar
       sniStrict: true
   stores:
     Store0:

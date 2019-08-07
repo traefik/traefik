@@ -19,12 +19,10 @@ var _ provider.Provider = (*Provider)(nil)
 // Provider is a provider.Provider implementation that provides a Rest API.
 type Provider struct {
 	configurationChan chan<- dynamic.Message
-	EntryPoint        string `description:"EntryPoint." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
-	p.EntryPoint = "traefik"
 }
 
 var templatesRenderer = render.New(render.Options{Directory: "nowhere"})
@@ -48,7 +46,7 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 				return
 			}
 
-			configuration := new(dynamic.HTTPConfiguration)
+			configuration := new(dynamic.Configuration)
 			body, _ := ioutil.ReadAll(request.Body)
 
 			if err := json.Unmarshal(body, configuration); err != nil {
@@ -57,9 +55,7 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 				return
 			}
 
-			p.configurationChan <- dynamic.Message{ProviderName: "rest", Configuration: &dynamic.Configuration{
-				HTTP: configuration,
-			}}
+			p.configurationChan <- dynamic.Message{ProviderName: "rest", Configuration: configuration}
 			if err := templatesRenderer.JSON(response, http.StatusOK, configuration); err != nil {
 				log.WithoutContext().Error(err)
 			}

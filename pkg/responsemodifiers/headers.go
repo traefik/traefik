@@ -30,11 +30,12 @@ func buildHeaders(hdrs *dynamic.Headers) func(*http.Response) error {
 		HostsProxyHeaders:       hdrs.HostsProxyHeaders,
 		SSLProxyHeaders:         hdrs.SSLProxyHeaders,
 		STSSeconds:              hdrs.STSSeconds,
+		FeaturePolicy:           hdrs.FeaturePolicy,
 	}
 
 	return func(resp *http.Response) error {
 		if hdrs.HasCustomHeadersDefined() || hdrs.HasCorsHeadersDefined() {
-			err := headers.NewHeader(nil, *hdrs).ModifyResponseHeaders(resp)
+			err := headers.NewHeader(nil, *hdrs).PostRequestModifyResponseHeaders(resp)
 			if err != nil {
 				return err
 			}

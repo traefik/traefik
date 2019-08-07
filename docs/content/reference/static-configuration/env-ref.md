@@ -36,60 +36,6 @@ Keep access logs with status codes in the specified range.
 `TRAEFIK_ACCESSLOG_FORMAT`:  
 Access log format: json | common (Default: ```common```)
 
-`TRAEFIK_ACME_ACMELOGGING`:  
-Enable debug logging of ACME actions. (Default: ```false```)
-
-`TRAEFIK_ACME_CASERVER`:  
-CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
-
-`TRAEFIK_ACME_DNSCHALLENGE`:  
-Activate DNS-01 Challenge. (Default: ```false```)
-
-`TRAEFIK_ACME_DNSCHALLENGE_DELAYBEFORECHECK`:  
-Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
-
-`TRAEFIK_ACME_DNSCHALLENGE_DISABLEPROPAGATIONCHECK`:  
-Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
-
-`TRAEFIK_ACME_DNSCHALLENGE_PROVIDER`:  
-Use a DNS-01 based challenge provider rather than HTTPS.
-
-`TRAEFIK_ACME_DNSCHALLENGE_RESOLVERS`:  
-Use following DNS servers to resolve the FQDN authority.
-
-`TRAEFIK_ACME_DOMAINS`:  
-The list of domains for which certificates are generated on startup. Wildcard domains only accepted with DNSChallenge.
-
-`TRAEFIK_ACME_DOMAINS[n]_MAIN`:  
-Default subject name.
-
-`TRAEFIK_ACME_DOMAINS[n]_SANS`:  
-Subject alternative names.
-
-`TRAEFIK_ACME_EMAIL`:  
-Email address used for registration.
-
-`TRAEFIK_ACME_ENTRYPOINT`:  
-EntryPoint to use.
-
-`TRAEFIK_ACME_HTTPCHALLENGE`:  
-Activate HTTP-01 Challenge. (Default: ```false```)
-
-`TRAEFIK_ACME_HTTPCHALLENGE_ENTRYPOINT`:  
-HTTP challenge EntryPoint
-
-`TRAEFIK_ACME_KEYTYPE`:  
-KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. (Default: ```RSA4096```)
-
-`TRAEFIK_ACME_ONHOSTRULE`:  
-Enable certificate generation on router Host rules. (Default: ```false```)
-
-`TRAEFIK_ACME_STORAGE`:  
-Storage to use. (Default: ```acme.json```)
-
-`TRAEFIK_ACME_TLSCHALLENGE`:  
-Activate TLS-ALPN-01 Challenge. (Default: ```true```)
-
 `TRAEFIK_API`:  
 Enable api/dashboard. (Default: ```false```)
 
@@ -99,17 +45,44 @@ Activate dashboard. (Default: ```true```)
 `TRAEFIK_API_DEBUG`:  
 Enable additional endpoints for debugging and profiling. (Default: ```false```)
 
-`TRAEFIK_API_ENTRYPOINT`:  
-The entry point that the API handler will be bound to. (Default: ```traefik```)
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>`:  
+Certificates resolvers configuration. (Default: ```false```)
 
-`TRAEFIK_API_MIDDLEWARES`:  
-Middleware list.
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CASERVER`:  
+CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
 
-`TRAEFIK_API_STATISTICS`:  
-Enable more detailed statistics. (Default: ```false```)
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE`:  
+Activate DNS-01 Challenge. (Default: ```false```)
 
-`TRAEFIK_API_STATISTICS_RECENTERRORS`:  
-Number of recent errors logged. (Default: ```10```)
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_DELAYBEFORECHECK`:  
+Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_DISABLEPROPAGATIONCHECK`:  
+Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_PROVIDER`:  
+Use a DNS-01 based challenge provider rather than HTTPS.
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_RESOLVERS`:  
+Use following DNS servers to resolve the FQDN authority.
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_EMAIL`:  
+Email address used for registration.
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_HTTPCHALLENGE`:  
+Activate HTTP-01 Challenge. (Default: ```false```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_HTTPCHALLENGE_ENTRYPOINT`:  
+HTTP challenge EntryPoint
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_KEYTYPE`:  
+KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. (Default: ```RSA4096```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_STORAGE`:  
+Storage to use. (Default: ```acme.json```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_TLSCHALLENGE`:  
+Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>`:  
 Entry points definition. (Default: ```false```)
@@ -180,8 +153,14 @@ Log level set to traefik logs. (Default: ```ERROR```)
 `TRAEFIK_METRICS_DATADOG`:  
 DataDog metrics exporter type. (Default: ```false```)
 
+`TRAEFIK_METRICS_DATADOG_ADDENTRYPOINTSLABELS`:  
+Enable metrics on entry points. (Default: ```true```)
+
 `TRAEFIK_METRICS_DATADOG_ADDRESS`:  
 DataDog's address. (Default: ```localhost:8125```)
+
+`TRAEFIK_METRICS_DATADOG_ADDSERVICESLABELS`:  
+Enable metrics on services. (Default: ```true```)
 
 `TRAEFIK_METRICS_DATADOG_PUSHINTERVAL`:  
 DataDog push interval. (Default: ```10```)
@@ -189,8 +168,14 @@ DataDog push interval. (Default: ```10```)
 `TRAEFIK_METRICS_INFLUXDB`:  
 InfluxDB metrics exporter type. (Default: ```false```)
 
+`TRAEFIK_METRICS_INFLUXDB_ADDENTRYPOINTSLABELS`:  
+Enable metrics on entry points. (Default: ```true```)
+
 `TRAEFIK_METRICS_INFLUXDB_ADDRESS`:  
 InfluxDB address. (Default: ```localhost:8089```)
+
+`TRAEFIK_METRICS_INFLUXDB_ADDSERVICESLABELS`:  
+Enable metrics on services. (Default: ```true```)
 
 `TRAEFIK_METRICS_INFLUXDB_DATABASE`:  
 InfluxDB database used when protocol is http.
@@ -213,32 +198,32 @@ InfluxDB username (only with http).
 `TRAEFIK_METRICS_PROMETHEUS`:  
 Prometheus metrics exporter type. (Default: ```false```)
 
+`TRAEFIK_METRICS_PROMETHEUS_ADDENTRYPOINTSLABELS`:  
+Enable metrics on entry points. (Default: ```true```)
+
+`TRAEFIK_METRICS_PROMETHEUS_ADDSERVICESLABELS`:  
+Enable metrics on services. (Default: ```true```)
+
 `TRAEFIK_METRICS_PROMETHEUS_BUCKETS`:  
 Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000```)
-
-`TRAEFIK_METRICS_PROMETHEUS_ENTRYPOINT`:  
-EntryPoint. (Default: ```traefik```)
-
-`TRAEFIK_METRICS_PROMETHEUS_MIDDLEWARES`:  
-Middlewares.
 
 `TRAEFIK_METRICS_STATSD`:  
 StatsD metrics exporter type. (Default: ```false```)
 
+`TRAEFIK_METRICS_STATSD_ADDENTRYPOINTSLABELS`:  
+Enable metrics on entry points. (Default: ```true```)
+
 `TRAEFIK_METRICS_STATSD_ADDRESS`:  
 StatsD address. (Default: ```localhost:8125```)
+
+`TRAEFIK_METRICS_STATSD_ADDSERVICESLABELS`:  
+Enable metrics on services. (Default: ```true```)
 
 `TRAEFIK_METRICS_STATSD_PUSHINTERVAL`:  
 StatsD push interval. (Default: ```10```)
 
 `TRAEFIK_PING`:  
-Enable ping. (Default: ```false```)
-
-`TRAEFIK_PING_ENTRYPOINT`:  
-Ping entryPoint. (Default: ```traefik```)
-
-`TRAEFIK_PING_MIDDLEWARES`:  
-Middleware list.
+Enable ping. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_DOCKER`:  
 Enable Docker backend with default settings. (Default: ```false```)
@@ -284,9 +269,6 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 
 `TRAEFIK_PROVIDERS_DOCKER_WATCH`:  
 Watch provider. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_FILE`:  
-Enable File backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_FILE_DEBUGLOGGENERATEDTEMPLATE`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
@@ -451,10 +433,7 @@ Defines the polling interval in seconds. (Default: ```15```)
 Watch provider. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_REST`:  
-Enable Rest backend with default settings. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_REST_ENTRYPOINT`:  
-EntryPoint. (Default: ```traefik```)
+Enable Rest backend with default settings. (Default: ```true```)
 
 `TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_DIALTIMEOUT`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
@@ -543,6 +522,15 @@ Set instana-agent's log level. ('error','warn','info','debug') (Default: ```info
 `TRAEFIK_TRACING_JAEGER`:  
 Settings for Jaeger. (Default: ```false```)
 
+`TRAEFIK_TRACING_JAEGER_COLLECTOR_ENDPOINT`:  
+Instructs reporter to send spans to jaeger-collector at this URL.
+
+`TRAEFIK_TRACING_JAEGER_COLLECTOR_PASSWORD`:  
+Password for basic http authentication when sending spans to jaeger-collector.
+
+`TRAEFIK_TRACING_JAEGER_COLLECTOR_USER`:  
+User for basic http authentication when sending spans to jaeger-collector.
+
 `TRAEFIK_TRACING_JAEGER_GEN128BIT`:  
 Generate 128 bit span IDs. (Default: ```false```)
 
@@ -550,7 +538,7 @@ Generate 128 bit span IDs. (Default: ```false```)
 Set jaeger-agent's host:port that the reporter will used. (Default: ```127.0.0.1:6831```)
 
 `TRAEFIK_TRACING_JAEGER_PROPAGATION`:  
-Which propgation format to use (jaeger/b3). (Default: ```jaeger```)
+Which propagation format to use (jaeger/b3). (Default: ```jaeger```)
 
 `TRAEFIK_TRACING_JAEGER_SAMPLINGPARAM`:  
 Set the sampling parameter. (Default: ```1.000000```)

@@ -36,60 +36,6 @@ Keep access logs with status codes in the specified range.
 `--accesslog.format`:  
 Access log format: json | common (Default: ```common```)
 
-`--acme.acmelogging`:  
-Enable debug logging of ACME actions. (Default: ```false```)
-
-`--acme.caserver`:  
-CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
-
-`--acme.dnschallenge`:  
-Activate DNS-01 Challenge. (Default: ```false```)
-
-`--acme.dnschallenge.delaybeforecheck`:  
-Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
-
-`--acme.dnschallenge.disablepropagationcheck`:  
-Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
-
-`--acme.dnschallenge.provider`:  
-Use a DNS-01 based challenge provider rather than HTTPS.
-
-`--acme.dnschallenge.resolvers`:  
-Use following DNS servers to resolve the FQDN authority.
-
-`--acme.domains`:  
-The list of domains for which certificates are generated on startup. Wildcard domains only accepted with DNSChallenge.
-
-`--acme.domains[n].main`:  
-Default subject name.
-
-`--acme.domains[n].sans`:  
-Subject alternative names.
-
-`--acme.email`:  
-Email address used for registration.
-
-`--acme.entrypoint`:  
-EntryPoint to use.
-
-`--acme.httpchallenge`:  
-Activate HTTP-01 Challenge. (Default: ```false```)
-
-`--acme.httpchallenge.entrypoint`:  
-HTTP challenge EntryPoint
-
-`--acme.keytype`:  
-KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. (Default: ```RSA4096```)
-
-`--acme.onhostrule`:  
-Enable certificate generation on router Host rules. (Default: ```false```)
-
-`--acme.storage`:  
-Storage to use. (Default: ```acme.json```)
-
-`--acme.tlschallenge`:  
-Activate TLS-ALPN-01 Challenge. (Default: ```true```)
-
 `--api`:  
 Enable api/dashboard. (Default: ```false```)
 
@@ -99,17 +45,44 @@ Activate dashboard. (Default: ```true```)
 `--api.debug`:  
 Enable additional endpoints for debugging and profiling. (Default: ```false```)
 
-`--api.entrypoint`:  
-The entry point that the API handler will be bound to. (Default: ```traefik```)
+`--certificatesresolvers.<name>`:  
+Certificates resolvers configuration. (Default: ```false```)
 
-`--api.middlewares`:  
-Middleware list.
+`--certificatesresolvers.<name>.acme.caserver`:  
+CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
 
-`--api.statistics`:  
-Enable more detailed statistics. (Default: ```false```)
+`--certificatesresolvers.<name>.acme.dnschallenge`:  
+Activate DNS-01 Challenge. (Default: ```false```)
 
-`--api.statistics.recenterrors`:  
-Number of recent errors logged. (Default: ```10```)
+`--certificatesresolvers.<name>.acme.dnschallenge.delaybeforecheck`:  
+Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. (Default: ```0```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.disablepropagationcheck`:  
+Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.dnschallenge.provider`:  
+Use a DNS-01 based challenge provider rather than HTTPS.
+
+`--certificatesresolvers.<name>.acme.dnschallenge.resolvers`:  
+Use following DNS servers to resolve the FQDN authority.
+
+`--certificatesresolvers.<name>.acme.email`:  
+Email address used for registration.
+
+`--certificatesresolvers.<name>.acme.httpchallenge`:  
+Activate HTTP-01 Challenge. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.httpchallenge.entrypoint`:  
+HTTP challenge EntryPoint
+
+`--certificatesresolvers.<name>.acme.keytype`:  
+KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. (Default: ```RSA4096```)
+
+`--certificatesresolvers.<name>.acme.storage`:  
+Storage to use. (Default: ```acme.json```)
+
+`--certificatesresolvers.<name>.acme.tlschallenge`:  
+Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 
 `--entrypoints.<name>`:  
 Entry points definition. (Default: ```false```)
@@ -180,8 +153,14 @@ Log level set to traefik logs. (Default: ```ERROR```)
 `--metrics.datadog`:  
 DataDog metrics exporter type. (Default: ```false```)
 
+`--metrics.datadog.addentrypointslabels`:  
+Enable metrics on entry points. (Default: ```true```)
+
 `--metrics.datadog.address`:  
 DataDog's address. (Default: ```localhost:8125```)
+
+`--metrics.datadog.addserviceslabels`:  
+Enable metrics on services. (Default: ```true```)
 
 `--metrics.datadog.pushinterval`:  
 DataDog push interval. (Default: ```10```)
@@ -189,8 +168,14 @@ DataDog push interval. (Default: ```10```)
 `--metrics.influxdb`:  
 InfluxDB metrics exporter type. (Default: ```false```)
 
+`--metrics.influxdb.addentrypointslabels`:  
+Enable metrics on entry points. (Default: ```true```)
+
 `--metrics.influxdb.address`:  
 InfluxDB address. (Default: ```localhost:8089```)
+
+`--metrics.influxdb.addserviceslabels`:  
+Enable metrics on services. (Default: ```true```)
 
 `--metrics.influxdb.database`:  
 InfluxDB database used when protocol is http.
@@ -213,32 +198,32 @@ InfluxDB username (only with http).
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)
 
+`--metrics.prometheus.addentrypointslabels`:  
+Enable metrics on entry points. (Default: ```true```)
+
+`--metrics.prometheus.addserviceslabels`:  
+Enable metrics on services. (Default: ```true```)
+
 `--metrics.prometheus.buckets`:  
 Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000```)
-
-`--metrics.prometheus.entrypoint`:  
-EntryPoint. (Default: ```traefik```)
-
-`--metrics.prometheus.middlewares`:  
-Middlewares.
 
 `--metrics.statsd`:  
 StatsD metrics exporter type. (Default: ```false```)
 
+`--metrics.statsd.addentrypointslabels`:  
+Enable metrics on entry points. (Default: ```true```)
+
 `--metrics.statsd.address`:  
 StatsD address. (Default: ```localhost:8125```)
+
+`--metrics.statsd.addserviceslabels`:  
+Enable metrics on services. (Default: ```true```)
 
 `--metrics.statsd.pushinterval`:  
 StatsD push interval. (Default: ```10```)
 
 `--ping`:  
-Enable ping. (Default: ```false```)
-
-`--ping.entrypoint`:  
-Ping entryPoint. (Default: ```traefik```)
-
-`--ping.middlewares`:  
-Middleware list.
+Enable ping. (Default: ```true```)
 
 `--providers.docker`:  
 Enable Docker backend with default settings. (Default: ```false```)
@@ -284,9 +269,6 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 
 `--providers.docker.watch`:  
 Watch provider. (Default: ```true```)
-
-`--providers.file`:  
-Enable File backend with default settings. (Default: ```false```)
 
 `--providers.file.debugloggeneratedtemplate`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
@@ -451,10 +433,7 @@ Defines the polling interval in seconds. (Default: ```15```)
 Watch provider. (Default: ```true```)
 
 `--providers.rest`:  
-Enable Rest backend with default settings. (Default: ```false```)
-
-`--providers.rest.entrypoint`:  
-EntryPoint. (Default: ```traefik```)
+Enable Rest backend with default settings. (Default: ```true```)
 
 `--serverstransport.forwardingtimeouts.dialtimeout`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
@@ -543,6 +522,15 @@ Set instana-agent's log level. ('error','warn','info','debug') (Default: ```info
 `--tracing.jaeger`:  
 Settings for Jaeger. (Default: ```false```)
 
+`--tracing.jaeger.collector.endpoint`:  
+Instructs reporter to send spans to jaeger-collector at this URL.
+
+`--tracing.jaeger.collector.password`:  
+Password for basic http authentication when sending spans to jaeger-collector.
+
+`--tracing.jaeger.collector.user`:  
+User for basic http authentication when sending spans to jaeger-collector.
+
 `--tracing.jaeger.gen128bit`:  
 Generate 128 bit span IDs. (Default: ```false```)
 
@@ -550,7 +538,7 @@ Generate 128 bit span IDs. (Default: ```false```)
 Set jaeger-agent's host:port that the reporter will used. (Default: ```127.0.0.1:6831```)
 
 `--tracing.jaeger.propagation`:  
-Which propgation format to use (jaeger/b3). (Default: ```jaeger```)
+Which propagation format to use (jaeger/b3). (Default: ```jaeger```)
 
 `--tracing.jaeger.samplingparam`:  
 Set the sampling parameter. (Default: ```1.000000```)

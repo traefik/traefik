@@ -11,8 +11,8 @@
 
 [api]
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 
@@ -69,13 +69,13 @@
 [tls.options]
 
   [tls.options.foo]
-    minversion = "VersionTLS11"
+    minVersion = "VersionTLS11"
 
   [tls.options.baz]
-    minversion = "VersionTLS11"
+    minVersion = "VersionTLS11"
 
   [tls.options.bar]
-    minversion = "VersionTLS12"
+    minVersion = "VersionTLS12"
 
   [tls.options.default]
-    minversion = "VersionTLS12"
+    minVersion = "VersionTLS12"

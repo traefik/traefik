@@ -9,6 +9,7 @@
 package statsd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -89,24 +90,29 @@ func (s *Statsd) NewTiming(name string, sampleRate float64) *Timing {
 }
 
 // WriteLoop is a helper method that invokes WriteTo to the passed writer every
-// time the passed channel fires. This method blocks until the channel is
-// closed, so clients probably want to run it in its own goroutine. For typical
+// time the passed channel fires. This method blocks until ctx is canceled,
+// so clients probably want to run it in its own goroutine. For typical
 // usage, create a time.Ticker and pass its C channel to this method.
-func (s *Statsd) WriteLoop(c <-chan time.Time, w io.Writer) {
-	for range c {
-		if _, err := s.WriteTo(w); err != nil {
-			s.logger.Log("during", "WriteTo", "err", err)
+func (s *Statsd) WriteLoop(ctx context.Context, c <-chan time.Time, w io.Writer) {
+	for {
+		select {
+		case <-c:
+			if _, err := s.WriteTo(w); err != nil {
+				s.logger.Log("during", "WriteTo", "err", err)
+			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
 
 // SendLoop is a helper method that wraps WriteLoop, passing a managed
 // connection to the network and address. Like WriteLoop, this method blocks
-// until the channel is closed, so clients probably want to start it in its own
+// until ctx is canceled, so clients probably want to start it in its own
 // goroutine. For typical usage, create a time.Ticker and pass its C channel to
 // this method.
-func (s *Statsd) SendLoop(c <-chan time.Time, network, address string) {
-	s.WriteLoop(c, conn.NewDefaultManager(network, address, s.logger))
+func (s *Statsd) SendLoop(ctx context.Context, c <-chan time.Time, network, address string) {
+	s.WriteLoop(ctx, c, conn.NewDefaultManager(network, address, s.logger))
 }
 
 // WriteTo flushes the buffered content of the metrics to the writer, in

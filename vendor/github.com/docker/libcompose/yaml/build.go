@@ -13,6 +13,12 @@ type Build struct {
 	Context    string
 	Dockerfile string
 	Args       map[string]*string
+	CacheFrom  []*string
+	Labels     map[string]*string
+	// TODO: ShmSize (can be a string or int?) for v3.5
+	Target string
+	// Note: as of Sep 2018 this is undocumented but supported by docker-compose
+	Network string
 }
 
 // MarshalYAML implements the Marshaller interface.
@@ -26,6 +32,18 @@ func (b Build) MarshalYAML() (interface{}, error) {
 	}
 	if len(b.Args) > 0 {
 		m["args"] = b.Args
+	}
+	if len(b.CacheFrom) > 0 {
+		m["cache_from"] = b.CacheFrom
+	}
+	if len(b.Labels) > 0 {
+		m["labels"] = b.Labels
+	}
+	if b.Target != "" {
+		m["target"] = b.Target
+	}
+	if b.Network != "" {
+		m["network"] = b.Network
 	}
 	return m, nil
 }
@@ -52,6 +70,22 @@ func (b *Build) UnmarshalYAML(unmarshal func(interface{}) error) error {
 					return err
 				}
 				b.Args = args
+			case "cache_from":
+				cacheFrom, err := handleBuildCacheFrom(mapValue)
+				if err != nil {
+					return err
+				}
+				b.CacheFrom = cacheFrom
+			case "labels":
+				labels, err := handleBuildLabels(mapValue)
+				if err != nil {
+					return err
+				}
+				b.Labels = labels
+			case "target":
+				b.Target = mapValue.(string)
+			case "network":
+				b.Network = mapValue.(string)
 			default:
 				// Ignore unknown keys
 				continue
@@ -67,15 +101,44 @@ func handleBuildArgs(value interface{}) (map[string]*string, error) {
 	var args map[string]*string
 	switch v := value.(type) {
 	case map[interface{}]interface{}:
-		return handleBuildArgMap(v)
+		return handleBuildOptionMap(v)
 	case []interface{}:
-		return handleBuildArgSlice(v)
+		return handleBuildArgsSlice(v)
 	default:
 		return args, fmt.Errorf("Failed to unmarshal Build args: %#v", value)
 	}
 }
 
-func handleBuildArgSlice(s []interface{}) (map[string]*string, error) {
+func handleBuildCacheFrom(value interface{}) ([]*string, error) {
+	var cacheFrom []*string
+	switch v := value.(type) {
+	case []interface{}:
+		return handleBuildCacheFromSlice(v)
+	default:
+		return cacheFrom, fmt.Errorf("Failed to unmarshal Build cache_from: %#v", value)
+	}
+}
+
+func handleBuildLabels(value interface{}) (map[string]*string, error) {
+	var labels map[string]*string
+	switch v := value.(type) {
+	case map[interface{}]interface{}:
+		return handleBuildOptionMap(v)
+	default:
+		return labels, fmt.Errorf("Failed to unmarshal Build labels: %#v", value)
+	}
+}
+
+func handleBuildCacheFromSlice(s []interface{}) ([]*string, error) {
+	var args = []*string{}
+	for _, arg := range s {
+		strArg := arg.(string)
+		args = append(args, &strArg)
+	}
+	return args, nil
+}
+
+func handleBuildArgsSlice(s []interface{}) (map[string]*string, error) {
 	var args = map[string]*string{}
 	for _, arg := range s {
 		// check if a value is provided
@@ -93,7 +156,8 @@ func handleBuildArgSlice(s []interface{}) (map[string]*string, error) {
 	return args, nil
 }
 
-func handleBuildArgMap(m map[interface{}]interface{}) (map[string]*string, error) {
+// Used for args and labels
+func handleBuildOptionMap(m map[interface{}]interface{}) (map[string]*string, error) {
 	args := map[string]*string{}
 	for mapKey, mapValue := range m {
 		var argValue string

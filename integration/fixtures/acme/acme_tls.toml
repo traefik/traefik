@@ -11,36 +11,29 @@
   [entryPoints.web-secure]
     address = "{{ .PortHTTPS }}"
 
-[acme]
+{{range $name, $resolvers := .Acme }}
+
+[certificatesResolvers.{{ $name }}.acme]
   email = "test@traefik.io"
   storage = "/tmp/acme.json"
-#  entryPoint = "https"
-  acmeLogging = true
-  onHostRule = {{ .Acme.OnHostRule }}
-  keyType = "{{ .Acme.KeyType }}"
-  caServer = "{{ .Acme.CAServer }}"
+  keyType = "{{ $resolvers.ACME.KeyType }}"
+  caServer = "{{ $resolvers.ACME.CAServer }}"
 
-  {{if .Acme.HTTPChallenge }}
-  [acme.httpChallenge]
-    entryPoint = "{{ .Acme.HTTPChallenge.EntryPoint }}"
+  {{if $resolvers.ACME.HTTPChallenge }}
+  [certificatesResolvers.{{ $name }}.acme.httpChallenge]
+    entryPoint = "{{ $resolvers.ACME.HTTPChallenge.EntryPoint }}"
   {{end}}
 
-  {{if .Acme.TLSChallenge }}
-  [acme.tlsChallenge]
+  {{if $resolvers.ACME.TLSChallenge }}
+  [certificatesResolvers.{{ $name }}.acme.tlsChallenge]
   {{end}}
 
-  {{range .Acme.Domains}}
-  [[acme.domains]]
-    main = "{{ .Main }}"
-    sans = [{{range .SANs }}
-      "{{.}}",
-      {{end}}]
-  {{end}}
+{{end}}
 
 [api]
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 

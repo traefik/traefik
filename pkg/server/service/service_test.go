@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/server/internal"
 	"github.com/containous/traefik/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
@@ -79,7 +80,7 @@ func TestGetLoadBalancer(t *testing.T) {
 }
 
 func TestGetLoadBalancerServiceHandler(t *testing.T) {
-	sm := NewManager(nil, http.DefaultTransport)
+	sm := NewManager(nil, http.DefaultTransport, nil)
 
 	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "first")
@@ -287,13 +288,13 @@ func TestManager_Build(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		serviceName  string
-		configs      map[string]*dynamic.ServiceInfo
+		configs      map[string]*runtime.ServiceInfo
 		providerName string
 	}{
 		{
 			desc:        "Simple service name",
 			serviceName: "serviceName",
-			configs: map[string]*dynamic.ServiceInfo{
+			configs: map[string]*runtime.ServiceInfo{
 				"serviceName": {
 					Service: &dynamic.Service{
 						LoadBalancer: &dynamic.LoadBalancerService{},
@@ -304,7 +305,7 @@ func TestManager_Build(t *testing.T) {
 		{
 			desc:        "Service name with provider",
 			serviceName: "serviceName@provider-1",
-			configs: map[string]*dynamic.ServiceInfo{
+			configs: map[string]*runtime.ServiceInfo{
 				"serviceName@provider-1": {
 					Service: &dynamic.Service{
 						LoadBalancer: &dynamic.LoadBalancerService{},
@@ -315,7 +316,7 @@ func TestManager_Build(t *testing.T) {
 		{
 			desc:        "Service name with provider in context",
 			serviceName: "serviceName",
-			configs: map[string]*dynamic.ServiceInfo{
+			configs: map[string]*runtime.ServiceInfo{
 				"serviceName@provider-1": {
 					Service: &dynamic.Service{
 						LoadBalancer: &dynamic.LoadBalancerService{},
@@ -331,7 +332,7 @@ func TestManager_Build(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			manager := NewManager(test.configs, http.DefaultTransport)
+			manager := NewManager(test.configs, http.DefaultTransport, nil)
 
 			ctx := context.Background()
 			if len(test.providerName) > 0 {

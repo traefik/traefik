@@ -102,8 +102,7 @@ providers:
     - foobar
     labelSelector: foobar
     ingressClass: foobar
-  rest:
-    entryPoint: foobar
+  rest: {}
   rancher:
     constraints: foobar
     watch: true
@@ -114,29 +113,25 @@ providers:
     intervalPoll: true
     prefix: foobar
 api:
-  entryPoint: foobar
   dashboard: true
   debug: true
-  statistics:
-    recentErrors: 42
-  middlewares:
-  - foobar
-  - foobar
 metrics:
   prometheus:
     buckets:
     - 42
     - 42
-    entryPoint: foobar
-    middlewares:
-    - foobar
-    - foobar
+    addEntryPointsLabels: true
+    addServicesLabels: true
   dataDog:
     address: foobar
     pushInterval: 42
+    addEntryPointsLabels: true
+    addServicesLabels: true
   statsD:
     address: foobar
     pushInterval: 42
+    addEntryPointsLabels: true
+    addServicesLabels: true
   influxDB:
     address: foobar
     protocol: foobar
@@ -145,11 +140,9 @@ metrics:
     retentionPolicy: foobar
     username: foobar
     password: foobar
-ping:
-  entryPoint: foobar
-  middlewares:
-  - foobar
-  - foobar
+    addEntryPointsLabels: true
+    addServicesLabels: true
+ping: {}
 log:
   level: foobar
   filePath: foobar
@@ -185,6 +178,10 @@ tracing:
     gen128Bit: true
     propagation: foobar
     traceContextHeaderName: foobar
+    collector:
+      endpoint: foobar
+      user: foobar
+      password: foobar
   zipkin:
     httpEndpoint: foobar
     sameSpan: true
@@ -216,30 +213,36 @@ hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
   resolvDepth: 42
-acme:
-  email: foobar
-  acmeLogging: true
-  caServer: foobar
-  storage: foobar
-  entryPoint: foobar
-  keyType: foobar
-  onHostRule: true
-  dnsChallenge:
-    provider: foobar
-    delayBeforeCheck: 42
-    resolvers:
-    - foobar
-    - foobar
-    disablePropagationCheck: true
-  httpChallenge:
-    entryPoint: foobar
-  tlsChallenge: {}
-  domains:
-  - main: foobar
-    sans:
-    - foobar
-    - foobar
-  - main: foobar
-    sans:
-    - foobar
-    - foobar
+certificatesResolvers:
+  CertificateResolver0:
+    acme:
+      email: foobar
+      caServer: foobar
+      storage: foobar
+      keyType: foobar
+      dnsChallenge:
+        provider: foobar
+        delayBeforeCheck: 42
+        resolvers:
+        - foobar
+        - foobar
+        disablePropagationCheck: true
+      httpChallenge:
+        entryPoint: foobar
+      tlsChallenge: {}
+  CertificateResolver1:
+    acme:
+      email: foobar
+      caServer: foobar
+      storage: foobar
+      keyType: foobar
+      dnsChallenge:
+        provider: foobar
+        delayBeforeCheck: 42
+        resolvers:
+        - foobar
+        - foobar
+        disablePropagationCheck: true
+      httpChallenge:
+        entryPoint: foobar
+      tlsChallenge: {}

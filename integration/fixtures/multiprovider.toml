@@ -15,6 +15,7 @@
   [providers.rest]
 
   [providers.file]
+    filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 

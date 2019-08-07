@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/safe"
 	"github.com/go-kit/kit/metrics"
@@ -229,7 +229,7 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 }
 
 // NewLBStatusUpdater returns a new LbStatusUpdater
-func NewLBStatusUpdater(bh BalancerHandler, svinfo *dynamic.ServiceInfo) *LbStatusUpdater {
+func NewLBStatusUpdater(bh BalancerHandler, svinfo *runtime.ServiceInfo) *LbStatusUpdater {
 	return &LbStatusUpdater{
 		BalancerHandler: bh,
 		serviceInfo:     svinfo,
@@ -240,7 +240,7 @@ func NewLBStatusUpdater(bh BalancerHandler, svinfo *dynamic.ServiceInfo) *LbStat
 // so it can keep track of the status of a server in the ServiceInfo.
 type LbStatusUpdater struct {
 	BalancerHandler
-	serviceInfo *dynamic.ServiceInfo // can be nil
+	serviceInfo *runtime.ServiceInfo // can be nil
 }
 
 // RemoveServer removes the given server from the BalancerHandler,
@@ -248,7 +248,7 @@ type LbStatusUpdater struct {
 func (lb *LbStatusUpdater) RemoveServer(u *url.URL) error {
 	err := lb.BalancerHandler.RemoveServer(u)
 	if err == nil && lb.serviceInfo != nil {
-		lb.serviceInfo.UpdateStatus(u.String(), serverDown)
+		lb.serviceInfo.UpdateServerStatus(u.String(), serverDown)
 	}
 	return err
 }
@@ -258,7 +258,7 @@ func (lb *LbStatusUpdater) RemoveServer(u *url.URL) error {
 func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
 	err := lb.BalancerHandler.UpsertServer(u, options...)
 	if err == nil && lb.serviceInfo != nil {
-		lb.serviceInfo.UpdateStatus(u.String(), serverUp)
+		lb.serviceInfo.UpdateServerStatus(u.String(), serverUp)
 	}
 	return err
 }

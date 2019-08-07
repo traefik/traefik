@@ -2,6 +2,7 @@ package integration
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
@@ -11,12 +12,6 @@ import (
 
 // Headers test suites
 type HeadersSuite struct{ BaseSuite }
-
-func (s *HeadersSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "headers")
-
-	s.composeProject.Start(c)
-}
 
 func (s *HeadersSuite) TestSimpleConfiguration(c *check.C) {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/headers/basic.toml"))
@@ -31,17 +26,27 @@ func (s *HeadersSuite) TestSimpleConfiguration(c *check.C) {
 }
 
 func (s *HeadersSuite) TestCorsResponses(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/headers/cors.toml"))
+	file := s.adaptFile(c, "fixtures/headers/cors.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
+	backend := startTestServer("9000", http.StatusOK)
+	defer backend.Close()
+
+	err = try.GetRequest(backend.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
 	testCase := []struct {
 		desc           string
 		requestHeaders http.Header
 		expected       http.Header
+		reqHost        string
+		method         string
 	}{
 		{
 			desc: "simple access control allow origin",
@@ -52,33 +57,9 @@ func (s *HeadersSuite) TestCorsResponses(c *check.C) {
 				"Access-Control-Allow-Origin": {"https://foo.bar.org"},
 				"Vary":                        {"Origin"},
 			},
+			reqHost: "test.localhost",
+			method:  http.MethodGet,
 		},
-	}
-
-	for _, test := range testCase {
-		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
-		c.Assert(err, checker.IsNil)
-		req.Host = "test.localhost"
-		req.Header = test.requestHeaders
-
-		err = try.Request(req, 500*time.Millisecond, try.HasBody(), try.HasHeaderStruct(test.expected))
-		c.Assert(err, checker.IsNil)
-	}
-}
-
-func (s *HeadersSuite) TestCorsPreflightResponses(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/headers/cors.toml"))
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	testCase := []struct {
-		desc           string
-		requestHeaders http.Header
-		expected       http.Header
-	}{
 		{
 			desc: "simple preflight request",
 			requestHeaders: http.Header{
@@ -91,16 +72,84 @@ func (s *HeadersSuite) TestCorsPreflightResponses(c *check.C) {
 				"Access-Control-Max-Age":       {"100"},
 				"Access-Control-Allow-Methods": {"GET,OPTIONS,PUT"},
 			},
+			reqHost: "test.localhost",
+			method:  http.MethodOptions,
+		},
+		{
+			desc: "preflight Options request with no cors configured",
+			requestHeaders: http.Header{
+				"Access-Control-Request-Headers": {"origin"},
+				"Access-Control-Request-Method":  {"GET", "OPTIONS"},
+				"Origin":                         {"https://foo.bar.org"},
+			},
+			expected: http.Header{
+				"X-Custom-Response-Header": {"True"},
+			},
+			reqHost: "test2.localhost",
+			method:  http.MethodOptions,
+		},
+		{
+			desc: "preflight Get request with no cors configured",
+			requestHeaders: http.Header{
+				"Access-Control-Request-Headers": {"origin"},
+				"Access-Control-Request-Method":  {"GET", "OPTIONS"},
+				"Origin":                         {"https://foo.bar.org"},
+			},
+			expected: http.Header{
+				"X-Custom-Response-Header": {"True"},
+			},
+			reqHost: "test2.localhost",
+			method:  http.MethodGet,
 		},
 	}
 
 	for _, test := range testCase {
-		req, err := http.NewRequest(http.MethodOptions, "http://127.0.0.1:8000/", nil)
+		req, err := http.NewRequest(test.method, "http://127.0.0.1:8000/", nil)
 		c.Assert(err, checker.IsNil)
-		req.Host = "test.localhost"
+		req.Host = test.reqHost
 		req.Header = test.requestHeaders
 
-		err = try.Request(req, 500*time.Millisecond, try.HasBody(), try.HasHeaderStruct(test.expected))
+		err = try.Request(req, 500*time.Millisecond, try.HasHeaderStruct(test.expected))
+		c.Assert(err, checker.IsNil)
+	}
+}
+
+func (s *HeadersSuite) TestSecureHeadersResponses(c *check.C) {
+	file := s.adaptFile(c, "fixtures/headers/secure.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	backend := startTestServer("9000", http.StatusOK)
+	defer backend.Close()
+
+	err = try.GetRequest(backend.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	testCase := []struct {
+		desc     string
+		expected http.Header
+		reqHost  string
+	}{
+		{
+			desc: "Feature-Policy Set",
+			expected: http.Header{
+				"Feature-Policy": {"vibrate 'none';"},
+			},
+			reqHost: "test.localhost",
+		},
+	}
+
+	for _, test := range testCase {
+		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+		c.Assert(err, checker.IsNil)
+		req.Host = test.reqHost
+
+		err = try.Request(req, 500*time.Millisecond, try.HasHeaderStruct(test.expected))
 		c.Assert(err, checker.IsNil)
 	}
 }

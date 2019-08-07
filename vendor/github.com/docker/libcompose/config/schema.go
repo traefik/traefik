@@ -219,7 +219,11 @@ var servicesSchemaDataV2 = `{
               "properties": {
                 "context": {"type": "string"},
                 "dockerfile": {"type": "string"},
-                "args": {"$ref": "#/definitions/list_or_dict"}
+                "args": {"$ref": "#/definitions/list_or_dict"},
+                "cache_from": {"$ref": "#/definitions/list_of_strings"},
+                "labels": {"$ref": "#/definitions/list_or_dict"},
+                "network": {"type": "string"},
+                "target": {"type": "string"}
               },
               "additionalProperties": false
             }

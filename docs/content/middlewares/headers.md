@@ -16,7 +16,7 @@ Add the `X-Script-Name` header to the proxied request and the `X-Custom-Response
 ```yaml tab="Docker"
 labels:
 - "traefik.http.middlewares.testHeader.headers.customrequestheaders.X-Script-Name=test"
-- "traefik.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=True"
+- "traefik.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=value"
 ```
 
 ```yaml tab="Kubernetes"
@@ -29,29 +29,40 @@ spec:
     customRequestHeaders:
       X-Script-Name: "test"
     customResponseHeaders:
-      X-Custom-Response-Header: "True"
+      X-Custom-Response-Header: "value"
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
-  "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header": "True"
+  "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header": "value"
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
 - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=True"
+- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     [http.middlewares.testHeader.headers.customRequestHeaders]
         X-Script-Name = "test"
     [http.middlewares.testHeader.headers.customResponseHeaders]
-        X-Custom-Response-Header = "True"
+        X-Custom-Response-Header = "value"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    testHeader:
+      headers:
+        customRequestHeaders:
+          X-Script-Name: "test"
+        customResponseHeaders:
+          X-Custom-Response-Header: "value"
 ```
 
 ### Adding and Removing Headers
@@ -86,7 +97,7 @@ labels:
 }
 ```
 
-```toml tab="File"    
+```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     [http.middlewares.testHeader.headers.customRequestHeaders]
@@ -94,6 +105,18 @@ labels:
         X-Custom-Request-Header = "" # Removes
     [http.middlewares.testHeader.headers.customResponseHeaders]
         X-Custom-Response-Header = "" # Removes
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    testHeader:
+      headers:
+        customRequestHeaders:
+          X-Script-Name: "test" # Adds
+          X-Custom-Request-Header: "" # Removes
+        customResponseHeaders:
+          X-Custom-Response-Header: "" # Removes
 ```
 
 ### Using Security Headers
@@ -131,11 +154,20 @@ labels:
 }
 ```
 
-```toml tab="File"    
+```toml tab="File (TOML)"    
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     FrameDeny = true
     SSLRedirect = true
+```
+
+```yaml tab="File (YAML)"  
+http:
+  middlewares:
+    testHeader:
+      headers:
+        FrameDeny: true
+        SSLRedirect: true
 ```
 
 ### CORS Headers
@@ -184,13 +216,27 @@ labels:
 }
 ```
 
-```toml tab="File"    
+```toml tab="File (TOML)"    
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
     accessControlAllowOrigin = "origin-list-or-null"
     accessControlMaxAge = 100
     addVaryHeader = true
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    testHeader:
+      headers:
+        accessControlAllowMethod:
+        - GET
+        - OPTIONS
+        - PUT
+        accessControlAllowOrigin: "origin-list-or-null"
+        accessControlMaxAge: 100
+        addVaryHeader: true
 ```
 
 ## Configuration Options
@@ -323,6 +369,10 @@ The `publicKey` implements HPKP to prevent MITM attacks with forged certificates
 ### `referrerPolicy`
 
 The `referrerPolicy` allows sites to control when browsers will pass the Referer header to other sites.
+
+### `featurePolicy`
+
+The `featurePolicy` allows sites to control browser features.
 
 ### `isDevelopment`
 

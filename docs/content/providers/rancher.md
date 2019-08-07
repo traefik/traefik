@@ -28,7 +28,7 @@ Attach labels to your services and let Traefik do the rest!
     ```
     
     ```bash tab="CLI"
-    --providers.rancher
+    --providers.rancher=true
     ```
 
     Attaching labels to services
@@ -54,6 +54,8 @@ Attach labels to your services and let Traefik do the rest!
     ```bash tab="CLI"
     --8<-- "content/providers/rancher.txt"
     ```
+
+List of all available labels for the [dynamic](../reference/dynamic-configuration/rancher.md) configuration references.
 
 ### `exposedByDefault`
 

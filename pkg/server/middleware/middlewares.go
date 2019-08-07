@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/middlewares/addprefix"
 	"github.com/containous/traefik/pkg/middlewares/auth"
 	"github.com/containous/traefik/pkg/middlewares/buffering"
@@ -20,7 +20,6 @@ import (
 	"github.com/containous/traefik/pkg/middlewares/ipwhitelist"
 	"github.com/containous/traefik/pkg/middlewares/maxconnection"
 	"github.com/containous/traefik/pkg/middlewares/passtlsclientcert"
-	"github.com/containous/traefik/pkg/middlewares/ratelimiter"
 	"github.com/containous/traefik/pkg/middlewares/redirect"
 	"github.com/containous/traefik/pkg/middlewares/replacepath"
 	"github.com/containous/traefik/pkg/middlewares/replacepathregex"
@@ -39,7 +38,7 @@ const (
 
 // Builder the middleware builder
 type Builder struct {
-	configs        map[string]*dynamic.MiddlewareInfo
+	configs        map[string]*runtime.MiddlewareInfo
 	serviceBuilder serviceBuilder
 }
 
@@ -48,7 +47,7 @@ type serviceBuilder interface {
 }
 
 // NewBuilder creates a new Builder
-func NewBuilder(configs map[string]*dynamic.MiddlewareInfo, serviceBuilder serviceBuilder) *Builder {
+func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder serviceBuilder) *Builder {
 	return &Builder{configs: configs, serviceBuilder: serviceBuilder}
 }
 
@@ -66,19 +65,19 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 
 			var err error
 			if constructorContext, err = checkRecursion(constructorContext, middlewareName); err != nil {
-				b.configs[middlewareName].Err = err
+				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
 
 			constructor, err := b.buildConstructor(constructorContext, middlewareName)
 			if err != nil {
-				b.configs[middlewareName].Err = err
+				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
 
 			handler, err := constructor(next)
 			if err != nil {
-				b.configs[middlewareName].Err = err
+				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
 
@@ -232,15 +231,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// TODO: disable temporarily (rateLimit)
 	// RateLimit
-	if config.RateLimit != nil {
-		if middleware != nil {
-			return nil, badConf
-		}
-		middleware = func(next http.Handler) (http.Handler, error) {
-			return ratelimiter.New(ctx, next, *config.RateLimit, middlewareName)
-		}
-	}
+	// if config.RateLimit != nil {
+	// 	if middleware != nil {
+	// 		return nil, badConf
+	// 	}
+	// 	middleware = func(next http.Handler) (http.Handler, error) {
+	// 		return ratelimiter.New(ctx, next, *config.RateLimit, middlewareName)
+	// 	}
+	// }
 
 	// RedirectRegex
 	if config.RedirectRegex != nil {

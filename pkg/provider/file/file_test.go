@@ -17,13 +17,13 @@ import (
 )
 
 type ProvideTestCase struct {
-	desc               string
-	directoryPaths     []string
-	filePath           string
-	traefikFilePath    string
-	expectedNumRouter  int
-	expectedNumService int
-	expectedNumTLSConf int
+	desc                  string
+	directoryPaths        []string
+	filePath              string
+	expectedNumRouter     int
+	expectedNumService    int
+	expectedNumTLSConf    int
+	expectedNumTLSOptions int
 }
 
 func TestTLSContent(t *testing.T) {
@@ -95,6 +95,7 @@ func TestProvideWithoutWatch(t *testing.T) {
 				assert.Len(t, conf.Configuration.HTTP.Routers, test.expectedNumRouter)
 				require.NotNil(t, conf.Configuration.TLS)
 				assert.Len(t, conf.Configuration.TLS.Certificates, test.expectedNumTLSConf)
+				assert.Len(t, conf.Configuration.TLS.Options, test.expectedNumTLSOptions)
 			case <-timeout:
 				t.Errorf("timeout while waiting for config")
 			}
@@ -128,11 +129,6 @@ func TestProvideWithWatch(t *testing.T) {
 
 			if len(test.filePath) > 0 {
 				err := copyFile(test.filePath, provider.Filename)
-				require.NoError(t, err)
-			}
-
-			if len(test.traefikFilePath) > 0 {
-				err := copyFile(test.traefikFilePath, provider.TraefikFile)
 				require.NoError(t, err)
 			}
 
@@ -182,36 +178,6 @@ func getTestCases() []ProvideTestCase {
 			expectedNumTLSConf: 5,
 		},
 		{
-			desc:               "simple file and a traefik file",
-			filePath:           "./fixtures/toml/simple_file_02.toml",
-			traefikFilePath:    "./fixtures/toml/simple_traefik_file_01.toml",
-			expectedNumRouter:  4,
-			expectedNumService: 8,
-			expectedNumTLSConf: 4,
-		},
-		{
-			desc:               "simple file and a traefik file yaml",
-			filePath:           "./fixtures/yaml/simple_file_02.yml",
-			traefikFilePath:    "./fixtures/yaml/simple_traefik_file_01.yml",
-			expectedNumRouter:  4,
-			expectedNumService: 8,
-			expectedNumTLSConf: 4,
-		},
-		{
-			desc:               "simple traefik file",
-			traefikFilePath:    "./fixtures/toml/simple_traefik_file_02.toml",
-			expectedNumRouter:  2,
-			expectedNumService: 3,
-			expectedNumTLSConf: 4,
-		},
-		{
-			desc:               "simple traefik file yaml",
-			traefikFilePath:    "./fixtures/yaml/simple_traefik_file_02.yml",
-			expectedNumRouter:  2,
-			expectedNumService: 3,
-			expectedNumTLSConf: 4,
-		},
-		{
 			desc:              "template file",
 			filePath:          "./fixtures/toml/template_file.toml",
 			expectedNumRouter: 20,
@@ -222,22 +188,16 @@ func getTestCases() []ProvideTestCase {
 			expectedNumRouter: 20,
 		},
 		{
-			desc:               "simple traefik file with templating",
-			traefikFilePath:    "./fixtures/toml/simple_traefik_file_with_templating.toml",
-			expectedNumRouter:  2,
-			expectedNumService: 3,
-			expectedNumTLSConf: 4,
-		},
-		{
 			desc: "simple directory",
 			directoryPaths: []string{
 				"./fixtures/toml/dir01_file01.toml",
 				"./fixtures/toml/dir01_file02.toml",
 				"./fixtures/toml/dir01_file03.toml",
 			},
-			expectedNumRouter:  2,
-			expectedNumService: 3,
-			expectedNumTLSConf: 4,
+			expectedNumRouter:     2,
+			expectedNumService:    3,
+			expectedNumTLSConf:    4,
+			expectedNumTLSOptions: 1,
 		},
 		{
 			desc: "simple directory yaml",
@@ -246,9 +206,10 @@ func getTestCases() []ProvideTestCase {
 				"./fixtures/yaml/dir01_file02.yml",
 				"./fixtures/yaml/dir01_file03.yml",
 			},
-			expectedNumRouter:  2,
-			expectedNumService: 3,
-			expectedNumTLSConf: 4,
+			expectedNumRouter:     2,
+			expectedNumService:    3,
+			expectedNumTLSConf:    4,
+			expectedNumTLSOptions: 1,
 		},
 		{
 			desc: "template in directory",
@@ -302,21 +263,6 @@ func createProvider(t *testing.T, test ProvideTestCase, watch bool) (*Provider, 
 		}
 
 		provider.Filename = file.Name()
-	}
-
-	if len(test.traefikFilePath) > 0 {
-		var file *os.File
-		if watch {
-			var err error
-			file, err = ioutil.TempFile(tempDir, "temp*"+filepath.Ext(test.traefikFilePath))
-			require.NoError(t, err)
-		} else {
-			var err error
-			file, err = createTempFile(test.traefikFilePath, tempDir)
-			require.NoError(t, err)
-		}
-
-		provider.TraefikFile = file.Name()
 	}
 
 	return provider, func() {

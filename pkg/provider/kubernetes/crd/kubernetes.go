@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
-	"flag"
 	"fmt"
 	"os"
 	"reflect"
@@ -83,14 +82,6 @@ func (p *Provider) Init() error {
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, "kubernetescrd"))
 	logger := log.FromContext(ctxLog)
-	// Tell glog (used by client-go) to log into STDERR. Otherwise, we risk
-	// certain kinds of API errors getting logged into a directory not
-	// available in a `FROM scratch` Docker container, causing glog to abort
-	// hard with an exit code > 0.
-	err := flag.Set("logtostderr", "true")
-	if err != nil {
-		return err
-	}
 
 	logger.Debugf("Using label selector: %q", p.LabelSelector)
 	k8sClient, err := p.newK8sClient(ctxLog, p.LabelSelector)
@@ -313,7 +304,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 		logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOption.Name), log.Str("namespace", tlsOption.Namespace)))
 		var clientCAs []tls.FileOrContent
 
-		for _, secretName := range tlsOption.Spec.ClientCA.SecretNames {
+		for _, secretName := range tlsOption.Spec.ClientAuth.SecretNames {
 			secret, exists, err := client.GetSecret(tlsOption.Namespace, secretName)
 			if err != nil {
 				logger.Errorf("Failed to fetch secret %s/%s: %v", tlsOption.Namespace, secretName, err)
@@ -337,9 +328,9 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 		tlsOptions[makeID(tlsOption.Namespace, tlsOption.Name)] = tls.Options{
 			MinVersion:   tlsOption.Spec.MinVersion,
 			CipherSuites: tlsOption.Spec.CipherSuites,
-			ClientCA: tls.ClientCA{
-				Files:    clientCAs,
-				Optional: tlsOption.Spec.ClientCA.Optional,
+			ClientAuth: tls.ClientAuth{
+				CAFiles:        clientCAs,
+				ClientAuthType: tlsOption.Spec.ClientAuth.ClientAuthType,
 			},
 			SniStrict: tlsOption.Spec.SniStrict,
 		}
@@ -438,7 +429,10 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			}
 
 			if ingressRoute.Spec.TLS != nil {
-				tlsConf := &dynamic.RouterTLSConfig{}
+				tlsConf := &dynamic.RouterTLSConfig{
+					CertResolver: ingressRoute.Spec.TLS.CertResolver,
+				}
+
 				if ingressRoute.Spec.TLS.Options != nil && len(ingressRoute.Spec.TLS.Options.Name) > 0 {
 					tlsOptionsName := ingressRoute.Spec.TLS.Options.Name
 					// Is a Kubernetes CRD reference, (i.e. not a cross-provider reference)
@@ -537,7 +531,8 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 			if ingressRouteTCP.Spec.TLS != nil {
 				conf.Routers[serviceName].TLS = &dynamic.RouterTCPTLSConfig{
-					Passthrough: ingressRouteTCP.Spec.TLS.Passthrough,
+					Passthrough:  ingressRouteTCP.Spec.TLS.Passthrough,
+					CertResolver: ingressRouteTCP.Spec.TLS.CertResolver,
 				}
 
 				if ingressRouteTCP.Spec.TLS.Options != nil && len(ingressRouteTCP.Spec.TLS.Options.Name) > 0 {

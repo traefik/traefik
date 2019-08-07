@@ -22,7 +22,7 @@ whoami:
     # Create a middleware named `foo-add-prefix`
     - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
     # Apply the middleware named `foo-add-prefix` to the router named `router1`
-    - "traefik.http.router.router1.middlewares=foo-add-prefix@docker"
+    - "traefik.http.routers.router1.middlewares=foo-add-prefix@docker"
 ```
 
 ```yaml tab="Kubernetes"
@@ -79,11 +79,8 @@ labels:
   - "traefik.http.router.router1.middlewares=foo-add-prefix@rancher"
 ```
 
-```toml tab="File"
-# As Toml Configuration File
-[providers]
-  [providers.file]
-
+```toml tab="File (TOML)"
+# As TOML Configuration File
 [http.routers]
   [http.routers.router1]
     service = "myService"
@@ -100,6 +97,28 @@ labels:
 
       [[http.services.service1.loadBalancer.servers]]
         url = "http://127.0.0.1:80"
+```
+
+```yaml tab="File (YAML)"
+# As YAML Configuration File
+http:
+  routers:
+    router1:
+      service: myService
+      middlewares:
+      - "foo-add-prefix"
+      rule: "Host(`example.com`)"
+
+  middlewares:
+    foo-add-prefix:
+      addPrefix:
+        prefix: "/foo"
+
+  services:
+    service1:
+      loadBalancer:
+        servers:
+        - url: "http://127.0.0.1:80"
 ```
 
 ## Provider Namespace
@@ -127,13 +146,18 @@ and therefore this specification would be ignored even if present.
 
     Declaring the add-foo-prefix in the file provider.
 
-    ```toml
-    [providers]
-      [providers.file]
-
+    ```toml tab="File (TOML)"
     [http.middlewares]
       [http.middlewares.add-foo-prefix.addPrefix]
         prefix = "/foo"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    http:
+      middlewares:
+        add-foo-prefix:
+          addPrefix:
+            prefix: "/foo"
     ```
 
     Using the add-foo-prefix middleware from other providers:

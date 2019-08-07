@@ -68,7 +68,7 @@ func (v *Volume) EnsureItExists(ctx context.Context) error {
 
 func (v *Volume) create(ctx context.Context) error {
 	fmt.Printf("Creating volume %q with driver %q\n", v.fullName(), v.driver)
-	_, err := v.client.VolumeCreate(ctx, volume.VolumesCreateBody{
+	_, err := v.client.VolumeCreate(ctx, volume.VolumeCreateBody{
 		Name:       v.fullName(),
 		Driver:     v.driver,
 		DriverOpts: v.driverOptions,

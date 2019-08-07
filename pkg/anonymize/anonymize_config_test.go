@@ -89,23 +89,18 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 		},
 	}
-	config.ACME = &acme.Configuration{
-		Email:        "acme Email",
-		ACMELogging:  true,
-		CAServer:     "CAServer",
-		Storage:      "Storage",
-		EntryPoint:   "EntryPoint",
-		KeyType:      "MyKeyType",
-		OnHostRule:   true,
-		DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
-		HTTPChallenge: &acmeprovider.HTTPChallenge{
-			EntryPoint: "MyEntryPoint",
-		},
-		TLSChallenge: &acmeprovider.TLSChallenge{},
-		Domains: []types.Domain{
-			{
-				Main: "Domains Main",
-				SANs: []string{"Domains acme SANs 1", "Domains acme SANs 2", "Domains acme SANs 3"},
+	config.CertificatesResolvers = map[string]static.CertificateResolver{
+		"default": {
+			ACME: &acme.Configuration{
+				Email:        "acme Email",
+				CAServer:     "CAServer",
+				Storage:      "Storage",
+				KeyType:      "MyKeyType",
+				DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
+				HTTPChallenge: &acmeprovider.HTTPChallenge{
+					EntryPoint: "MyEntryPoint",
+				},
+				TLSChallenge: &acmeprovider.TLSChallenge{},
 			},
 		},
 	}
@@ -124,11 +119,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 
 	config.API = &static.API{
-		EntryPoint: "traefik",
-		Dashboard:  true,
-		Statistics: &types.Statistics{
-			RecentErrors: 111,
-		},
+		Dashboard: true,
 		DashboardAssets: &assetfs.AssetFS{
 			Asset: func(path string) ([]byte, error) {
 				return nil, nil
@@ -141,7 +132,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 			Prefix: "fii",
 		},
-		Middlewares: []string{"first", "second"},
 	}
 
 	config.Providers.File = &file.Provider{
@@ -149,7 +139,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 		Watch:                     true,
 		Filename:                  "file Filename",
 		DebugLogGeneratedTemplate: true,
-		TraefikFile:               "",
 	}
 
 	config.Providers.Docker = &docker.Provider{
@@ -195,9 +184,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 
 	config.Metrics = &types.Metrics{
 		Prometheus: &types.Prometheus{
-			Buckets:     []float64{0.1, 0.3, 1.2, 5},
-			EntryPoint:  "MyEntryPoint",
-			Middlewares: []string{"m1", "m2"},
+			Buckets: []float64{0.1, 0.3, 1.2, 5},
 		},
 		DataDog: &types.DataDog{
 			Address:      "localhost:8181",
@@ -218,10 +205,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 	}
 
-	config.Ping = &ping.Handler{
-		EntryPoint:  "MyEntryPoint",
-		Middlewares: []string{"m1", "m2", "m3"},
-	}
+	config.Ping = &ping.Handler{}
 
 	config.Tracing = &static.Tracing{
 		ServiceName:   "myServiceName",

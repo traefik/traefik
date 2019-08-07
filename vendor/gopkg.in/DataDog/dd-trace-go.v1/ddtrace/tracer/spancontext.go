@@ -5,6 +5,7 @@ import (
 
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/internal"
+	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
 )
 
 var _ ddtrace.SpanContext = (*spanContext)(nil)
@@ -199,10 +200,7 @@ func (t *trace) push(sp *span) {
 		// capacity is reached, we will not be able to complete this trace.
 		t.full = true
 		t.spans = nil // GC
-		if tr, ok := internal.GetGlobalTracer().(*tracer); ok {
-			// we have a tracer we can submit errors too.
-			tr.pushError(&spanBufferFullError{})
-		}
+		log.Error("trace buffer full (%d), dropping trace", traceMaxSize)
 		return
 	}
 	if v, ok := sp.Metrics[keySamplingPriority]; ok {

@@ -37,11 +37,20 @@ labels:
 - "traefik.http.middlewares.test-maxconn.maxconn.amount=10"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Limiting to 10 simultaneous connections
 [http.middlewares]
   [http.middlewares.test-maxconn.maxConn]
     amount = 10 
+```
+
+```yaml tab="File (YAML)"
+# Limiting to 10 simultaneous connections
+http:
+  middlewares:
+    test-maxconn:
+      maxConn:
+        amount: 10 
 ```
 
 ## Configuration Options
@@ -49,11 +58,11 @@ labels:
 ### `amount`
 
 The `amount` option defines the maximum amount of allowed simultaneous connections.
-The middleware will return an `HTTP 429 Too Many Requests` if there are already `amount` requests in progress (based on the same `extractorfunc` strategy).
+The middleware will return an `HTTP 429 Too Many Requests` if there are already `amount` requests in progress (based on the same `extractorFunc` strategy).
 
-### extractorfunc
+### `extractorFunc`
 
-The `extractorfunc` defines the strategy used to categorize requests.
+The `extractorFunc` defines the strategy used to categorize requests.
 
 The possible values are:
 

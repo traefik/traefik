@@ -9,6 +9,7 @@
 		},
 		"name": "bar@myprovider",
 		"provider": "myprovider",
+		"status": "enabled",
 		"usedBy": [
 			"foo@myprovider",
 			"test@myprovider"
@@ -24,6 +25,22 @@
 		},
 		"name": "baz@myprovider",
 		"provider": "myprovider",
+		"status": "warning",
+		"usedBy": [
+			"foo@myprovider"
+		]
+	},
+	{
+		"loadBalancer": {
+			"servers": [
+				{
+					"address": "127.0.0.2:2345"
+				}
+			]
+		},
+		"name": "foz@myprovider",
+		"provider": "myprovider",
+		"status": "disabled",
 		"usedBy": [
 			"foo@myprovider"
 		]

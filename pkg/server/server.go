@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/config/static"
 	"github.com/containous/traefik/pkg/log"
 	"github.com/containous/traefik/pkg/metrics"
@@ -47,7 +48,7 @@ type Server struct {
 
 // RouteAppenderFactory the route appender factory interface
 type RouteAppenderFactory interface {
-	NewAppender(ctx context.Context, middlewaresBuilder *middleware.Builder, runtimeConfiguration *dynamic.RuntimeConfiguration) types.RouteAppender
+	NewAppender(ctx context.Context, middlewaresBuilder *middleware.Builder, runtimeConfiguration *runtime.Configuration) types.RouteAppender
 }
 
 func setupTracing(conf *static.Tracing) tracing.Backend {

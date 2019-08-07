@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 	"github.com/containous/traefik/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
 	"github.com/containous/traefik/pkg/responsemodifiers"
@@ -298,14 +299,14 @@ func TestRouterManager_Get(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Services:    test.serviceConfig,
 					Routers:     test.routersConfig,
 					Middlewares: test.middlewaresConfig,
 				},
 			})
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -399,14 +400,14 @@ func TestAccessLog(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 
-			rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Services:    test.serviceConfig,
 					Routers:     test.routersConfig,
 					Middlewares: test.middlewaresConfig,
 				},
 			})
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -685,16 +686,16 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 			entryPoints := []string{"web"}
 
-			rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Services:    test.serviceConfig,
 					Routers:     test.routerConfig,
 					Middlewares: test.middlewareConfig,
 				},
 			})
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
-			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*dynamic.MiddlewareInfo{})
+			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
@@ -709,7 +710,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 				}
 			}
 			for _, v := range rtConf.Routers {
-				if v.Err != "" {
+				if len(v.Err) > 0 {
 					allErrors++
 				}
 			}
@@ -759,14 +760,14 @@ func BenchmarkRouterServe(b *testing.B) {
 	}
 	entryPoints := []string{"web"}
 
-	rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+	rtConf := runtime.NewConfig(dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Services:    serviceConfig,
 			Routers:     routersConfig,
 			Middlewares: map[string]*dynamic.Middleware{},
 		},
 	})
-	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res})
+	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -802,12 +803,12 @@ func BenchmarkService(b *testing.B) {
 		},
 	}
 
-	rtConf := dynamic.NewRuntimeConfig(dynamic.Configuration{
+	rtConf := runtime.NewConfig(dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Services: serviceConfig,
 		},
 	})
-	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res})
+	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil)
 	w := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 

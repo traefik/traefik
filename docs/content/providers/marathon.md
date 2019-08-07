@@ -21,7 +21,7 @@ See also [Marathon user guide](../user-guides/marathon.md).
     ```
     
     ```bash tab="CLI"
-    --providers.marathon
+    --providers.marathon=true
     ```
 
     Attaching labels to marathon applications

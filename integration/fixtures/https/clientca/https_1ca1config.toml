@@ -11,8 +11,8 @@
 
 [api]
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 
@@ -47,6 +47,6 @@
   keyFile = "fixtures/https/snitest.org.key"
 
 [tls.options]
-  [tls.options.default.ClientCA]
-    files = ["fixtures/https/clientca/ca1.crt"]
-    optional = true
+  [tls.options.default.clientAuth]
+    caFiles = ["fixtures/https/clientca/ca1.crt"]
+    clientAuthType = "VerifyClientCertIfGiven"

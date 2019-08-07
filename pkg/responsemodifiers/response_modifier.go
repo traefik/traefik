@@ -4,17 +4,17 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/pkg/config/runtime"
 )
 
 // NewBuilder creates a builder.
-func NewBuilder(configs map[string]*dynamic.MiddlewareInfo) *Builder {
+func NewBuilder(configs map[string]*runtime.MiddlewareInfo) *Builder {
 	return &Builder{configs: configs}
 }
 
 // Builder holds builder configuration.
 type Builder struct {
-	configs map[string]*dynamic.MiddlewareInfo
+	configs map[string]*runtime.MiddlewareInfo
 }
 
 // Build Builds the response modifier.

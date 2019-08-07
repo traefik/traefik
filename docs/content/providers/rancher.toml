@@ -11,7 +11,7 @@
   enableServiceHealthFilter = true
 
   # Defines the polling interval (in seconds).
-  refreshSeconds = true
+  refreshSeconds = 15
 
   # Poll the Rancher metadata service for changes every `rancher.refreshSeconds`, which is less accurate
   intervalPoll = false
