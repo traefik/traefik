@@ -56,11 +56,16 @@ func (opt Options) String() string {
 	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Port: %d Interval: %s Timeout: %s]", opt.Hostname, opt.Headers, opt.Path, opt.Port, opt.Interval, opt.Timeout)
 }
 
+type backendURL struct {
+	url    *url.URL
+	weight int
+}
+
 // BackendConfig HealthCheck configuration for a backend
 type BackendConfig struct {
 	Options
 	name         string
-	disabledURLs []*url.URL
+	disabledURLs []backendURL
 }
 
 func (b *BackendConfig) newRequest(serverURL *url.URL) (*http.Request, error) {
@@ -135,21 +140,22 @@ func (hc *HealthCheck) execute(ctx context.Context, backend *BackendConfig) {
 
 func (hc *HealthCheck) checkBackend(backend *BackendConfig) {
 	enabledURLs := backend.LB.Servers()
-	var newDisabledURLs []*url.URL
+	var newDisabledURLs []backendURL
 	// FIXME re enable metrics
 	for _, disableURL := range backend.disabledURLs {
 		// FIXME serverUpMetricValue := float64(0)
-		if err := checkHealth(disableURL, backend); err == nil {
-			log.Warnf("Health check up: Returning to server list. Backend: %q URL: %q", backend.name, disableURL.String())
-			if err = backend.LB.UpsertServer(disableURL, roundrobin.Weight(1)); err != nil {
+		if err := checkHealth(disableURL.url, backend); err == nil {
+			log.Warnf("Health check up: Returning to server list. Backend: %q URL: %q Weight: %d",
+				backend.name, disableURL.url.String(), disableURL.weight)
+			if err = backend.LB.UpsertServer(disableURL.url, roundrobin.Weight(disableURL.weight)); err != nil {
 				log.Error(err)
 			}
 			// FIXME serverUpMetricValue = 1
 		} else {
-			log.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disableURL.String(), err)
+			log.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disableURL.url.String(), err)
 			newDisabledURLs = append(newDisabledURLs, disableURL)
 		}
-		// FIXME labelValues := []string{"backend", backend.name, "url", disableURL.String()}
+		// FIXME labelValues := []string{"backend", backend.name, "url", backendurl.url.String()}
 		// FIXME hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 	backend.disabledURLs = newDisabledURLs
@@ -158,11 +164,20 @@ func (hc *HealthCheck) checkBackend(backend *BackendConfig) {
 	for _, enableURL := range enabledURLs {
 		// FIXME serverUpMetricValue := float64(1)
 		if err := checkHealth(enableURL, backend); err != nil {
-			log.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Reason: %s", backend.name, enableURL.String(), err)
+			weight := 1
+			rr, ok := backend.LB.(*roundrobin.RoundRobin)
+			if ok {
+				var gotWeight bool
+				weight, gotWeight = rr.ServerWeight(enableURL)
+				if !gotWeight {
+					weight = 1
+				}
+			}
+			log.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Weight: %d Reason: %s", backend.name, enableURL.String(), weight, err)
 			if err := backend.LB.RemoveServer(enableURL); err != nil {
 				log.Error(err)
 			}
-			backend.disabledURLs = append(backend.disabledURLs, enableURL)
+			backend.disabledURLs = append(backend.disabledURLs, backendURL{enableURL, weight})
 			// FIXME serverUpMetricValue = 0
 		}
 		// FIXME labelValues := []string{"backend", backend.name, "url", enableURL.String()}
