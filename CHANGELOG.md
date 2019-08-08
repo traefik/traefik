@@ -1,5 +1,31 @@
 # Change Log
 
+## [v1.7.13](https://github.com/containous/traefik/tree/v1.7.13) (2019-08-07)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.12...v1.7.13)
+
+**Bug fixes:**
+- **[acme]** Update lego ([#5166](https://github.com/containous/traefik/pull/5166) by [dabeck](https://github.com/dabeck))
+- **[consulcatalog]** warning should not be a fail status ([#4537](https://github.com/containous/traefik/pull/4537) by [saez0pub](https://github.com/saez0pub))
+- **[docker]** Update docker api version ([#4909](https://github.com/containous/traefik/pull/4909) by [dtomcej](https://github.com/dtomcej))
+- **[dynamodb]** Use dynamodbav tags to override json tags. ([#5002](https://github.com/containous/traefik/pull/5002) by [ldez](https://github.com/ldez))
+- **[healthcheck]** Wrr loadbalancer honors old weight on recovered servers ([#5051](https://github.com/containous/traefik/pull/5051) by [DougWagner](https://github.com/DougWagner))
+- **[k8s]** Check for multiport services on Global Backend Ingress ([#5021](https://github.com/containous/traefik/pull/5021) by [dtomcej](https://github.com/dtomcej))
+- **[logs]** Allows logs to use local time zone instead of UTC ([#4954](https://github.com/containous/traefik/pull/4954) by [dduportal](https://github.com/dduportal))
+- **[middleware]** Clear TLS client headers if TLSMutualAuth is optional ([#4963](https://github.com/containous/traefik/pull/4963) by [stffabi](https://github.com/stffabi))
+- **[tls]** Add missing KeyUsages for default generated certificate ([#5150](https://github.com/containous/traefik/pull/5150) by [dtomcej](https://github.com/dtomcej))
+
+**Documentation:**
+- **[acme]** Fixed doc link for AlibabaCloud ([#5109](https://github.com/containous/traefik/pull/5109) by [ddymko](https://github.com/ddymko))
+- **[docker]** Add example for CLI ([#5131](https://github.com/containous/traefik/pull/5131) by [alvarezbruned](https://github.com/alvarezbruned))
+- **[docker]** Use the latest stable version of traefik in the docs ([#4927](https://github.com/containous/traefik/pull/4927) by [kolaente](https://github.com/kolaente))
+- **[logs]** Update documentation to clarify the default format for logs ([#4953](https://github.com/containous/traefik/pull/4953) by [dduportal](https://github.com/dduportal))
+- **[rancher]** Add remarks about Rancher 2 ([#4999](https://github.com/containous/traefik/pull/4999) by [ldez](https://github.com/ldez))
+- **[tls]** Fixes the TLS Mutual Authentication documentation ([#5085](https://github.com/containous/traefik/pull/5085) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Format YAML example on user guide ([#5067](https://github.com/containous/traefik/pull/5067) by [gurayyildirim](https://github.com/gurayyildirim))
+- Update Slack support channel references to Discourse community forum ([#5014](https://github.com/containous/traefik/pull/5014) by [dduportal](https://github.com/dduportal))
+- Updating Service Fabric documentation ([#5160](https://github.com/containous/traefik/pull/5160) by [gheibia](https://github.com/gheibia))
+- Improve API / Dashboard wording in documentation ([#4929](https://github.com/containous/traefik/pull/4929) by [dduportal](https://github.com/dduportal))
+
 ## [v1.7.12](https://github.com/containous/traefik/tree/v1.7.12) (2019-05-29)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.11...v1.7.12)
 
