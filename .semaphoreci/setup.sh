@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
-set -e
-
+# For personnal CI
+# mv /home/runner/workspace/src/github.com/<username>/ /home/runner/workspace/src/github.com/containous/
+# cd /home/runner/workspace/src/github.com/containous/traefik/
 for s in apache2 cassandra elasticsearch memcached mysql mongod postgresql sphinxsearch rethinkdb rabbitmq-server redis-server; do sudo service $s stop; done
 sudo swapoff -a
 sudo dd if=/dev/zero of=/swapfile bs=1M count=3072
@@ -20,3 +20,8 @@ if [ -n "$SHOULD_TEST" ]; then   docker version; fi
 if [ -f "./.semaphoreci/golang.sh" ]; then ./.semaphoreci/golang.sh; fi
 if [ -f "./.semaphoreci/golang.sh" ]; then export GOROOT="/usr/local/golang/1.12/go"; fi
 if [ -f "./.semaphoreci/golang.sh" ]; then export GOTOOLDIR="/usr/local/golang/1.12/go/pkg/tool/linux_amd64"; fi
+if [ -f "./go.mod" ]; then export GO111MODULE=on; fi
+if [ -f "./go.mod" ]; then export GOPROXY=https://proxy.golang.org; fi
+if [ -f "./go.mod" ]; then go mod download; fi
+sudo rm -rf /usr/local/golang/1.4.3/ /usr/local/golang/1.5.4/ /usr/local/golang/1.6.4 /usr/local/golang/1.7.6 /usr/local/golang/1.8.6 /usr/local/golang/1.9.7 /usr/local/golang/1.10.3
+df

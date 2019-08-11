@@ -24,6 +24,12 @@ RUN mkdir -p /usr/local/bin \
     && chmod +x /usr/local/bin/go-bindata
 
 WORKDIR /go/src/github.com/containous/traefik
+
+# Download go modules
+COPY go.mod .
+COPY go.sum .
+RUN GO111MODULE=on GOPROXY=https://proxy.golang.org go mod download
+
 COPY . /go/src/github.com/containous/traefik
 
 RUN rm -rf /go/src/github.com/containous/traefik/static/

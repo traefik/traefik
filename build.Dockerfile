@@ -5,31 +5,33 @@ RUN apk --update upgrade \
     && update-ca-certificates \
     && rm -rf /var/cache/apk/*
 
-# Download golangci-lint and misspell binary to bin folder in $GOPATH
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.17.1 \
-    && go get github.com/client9/misspell/cmd/misspell
-
-# Download goreleaser binary to bin folder in $GOPATH
-RUN curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
-
 # Which docker version to test on
 ARG DOCKER_VERSION=18.09.7
-ARG DEP_VERSION=0.5.4
-
-# Download go-bindata binary to bin folder in $GOPATH
-RUN mkdir -p /usr/local/bin \
-    && curl -fsSL -o /usr/local/bin/go-bindata https://github.com/containous/go-bindata/releases/download/v1.0.0/go-bindata \
-    && chmod +x /usr/local/bin/go-bindata
-
-# Download dep binary to bin folder in $GOPATH
-RUN mkdir -p /usr/local/bin \
-    && curl -fsSL -o /usr/local/bin/dep https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 \
-    && chmod +x /usr/local/bin/dep
 
 # Download docker
 RUN mkdir -p /usr/local/bin \
     && curl -fL https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz \
     | tar -xzC /usr/local/bin --transform 's#^.+/##x'
 
+# Download go-bindata binary to bin folder in $GOPATH
+RUN mkdir -p /usr/local/bin \
+    && curl -fsSL -o /usr/local/bin/go-bindata https://github.com/containous/go-bindata/releases/download/v1.0.0/go-bindata \
+    && chmod +x /usr/local/bin/go-bindata
+
+# Download golangci-lint binary to bin folder in $GOPATH
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.17.1
+
+# Download golangci-lint and misspell binary to bin folder in $GOPATH
+RUN GO111MODULE=off go get github.com/client9/misspell/cmd/misspell
+
+# Download goreleaser binary to bin folder in $GOPATH
+RUN curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
+
 WORKDIR /go/src/github.com/containous/traefik
+
+# Download go modules
+COPY go.mod .
+COPY go.sum .
+RUN GO111MODULE=on GOPROXY=https://proxy.golang.org go mod download
+
 COPY . /go/src/github.com/containous/traefik
