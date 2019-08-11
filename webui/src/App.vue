@@ -59,7 +59,7 @@ export default {
         return "master";
       } else {
         const matches = this.version.Version.match(/^(v?\d+\.\d+)/);
-        return matches ? matches[1] : null;
+        return matches ? matches[1] : "master";
       }
     },
     documentationUrl() {
