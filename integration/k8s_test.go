@@ -16,6 +16,7 @@ import (
 
 	"github.com/containous/traefik/v2/integration/try"
 	"github.com/containous/traefik/v2/pkg/api"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	checker "github.com/vdemeester/shakers"
@@ -30,7 +31,7 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "k8s")
 	s.composeProject.Start(c)
 
-	abs, err := filepath.Abs("./fixtures/k8s/kubeconfig.yaml")
+	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
 	c.Assert(err, checker.IsNil)
 
 	err = try.Do(60*time.Second, try.DoCondition(func() error {
@@ -46,17 +47,19 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 func (s *K8sSuite) TearDownSuite(c *check.C) {
 	s.composeProject.Stop(c)
 
-	err := os.Remove("./fixtures/k8s/kubeconfig.yaml")
-	if err != nil {
-		c.Log(err)
+	generatedFiles := []string{
+		"./fixtures/k8s/config.skip/kubeconfig.yaml",
+		"./fixtures/k8s/config.skip/k3s.log",
+		"./fixtures/k8s/coredns.yaml",
+		"./fixtures/k8s/rolebindings.yaml",
+		"./fixtures/k8s/traefik.yaml",
 	}
-	err = os.Remove("./fixtures/k8s/coredns.yaml")
-	if err != nil {
-		c.Log(err)
-	}
-	err = os.Remove("./fixtures/k8s/traefik.yaml")
-	if err != nil {
-		c.Log(err)
+
+	for _, filename := range generatedFiles {
+		err := os.Remove(filename)
+		if err != nil {
+			log.WithoutContext().Warning(err)
+		}
 	}
 }
 
@@ -83,6 +86,9 @@ func (s *K8sSuite) TestCRDConfiguration(c *check.C) {
 }
 
 func testConfiguration(c *check.C, path string) {
+	err := try.GetRequest("http://127.0.0.1:8080/api/entrypoints", 20*time.Second, try.BodyContains(`"name":"web"`))
+	c.Assert(err, checker.IsNil)
+
 	expectedJSON := filepath.FromSlash(path)
 
 	if *updateExpected {
@@ -93,7 +99,7 @@ func testConfiguration(c *check.C, path string) {
 	}
 
 	var buf bytes.Buffer
-	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 20*time.Second, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 40*time.Second, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
 
 	if !*updateExpected {
 		if err != nil {

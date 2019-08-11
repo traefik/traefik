@@ -31,7 +31,7 @@ func (s *TCPSuite) TestMixed(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("Path(`/test`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("Path(`/test`)"))
 	c.Assert(err, checker.IsNil)
 
 	// Traefik passes through, termination handled by whoami-a
@@ -81,7 +81,7 @@ func (s *TCPSuite) TestTLSOptions(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-c.test`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-c.test`)"))
 	c.Assert(err, checker.IsNil)
 
 	// Check that we can use a client tls version <= 1.1 with hostSNI 'whoami-c.test'
@@ -111,7 +111,7 @@ func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	c.Assert(err, checker.IsNil)
 
 	// Traefik passes through, termination handled by whoami-a
@@ -145,7 +145,7 @@ func (s *TCPSuite) TestNonTlsTcp(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	c.Assert(err, checker.IsNil)
 
 	// Traefik will forward every requests on the given port to whoami-no-tls
@@ -165,7 +165,7 @@ func (s *TCPSuite) TestCatchAllNoTLS(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	c.Assert(err, checker.IsNil)
 
 	// Traefik will forward every requests on the given port to whoami-no-tls
@@ -185,7 +185,7 @@ func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	c.Assert(err, checker.IsNil)
 
 	req := httptest.NewRequest(http.MethodGet, "https://127.0.0.1:8093/test", nil)
