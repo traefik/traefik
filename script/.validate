@@ -5,7 +5,7 @@ if [ -z "${VALIDATE_UPSTREAM:-}" ]; then
 	# are running more than one validate bundlescript
 
 	VALIDATE_REPO='https://github.com/containous/traefik.git'
-	VALIDATE_BRANCH='master'
+	VALIDATE_BRANCH='v1.7'
 
         # Should not be needed for now O:)
 	# if [ "$TRAVIS" = 'true' -a "$TRAVIS_PULL_REQUEST" != 'false' ]; then

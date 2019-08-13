@@ -1,4 +1,4 @@
-FROM golang:1.11-alpine
+FROM golang:1.12-alpine
 
 RUN apk --update upgrade \
     && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \
@@ -6,7 +6,6 @@ RUN apk --update upgrade \
     && rm -rf /var/cache/apk/*
 
 RUN go get golang.org/x/lint/golint \
-&& go get github.com/kisielk/errcheck \
 && go get github.com/client9/misspell/cmd/misspell
 
 # Which docker version to test on
