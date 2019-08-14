@@ -17,7 +17,6 @@ require (
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
 	github.com/abronan/valkeyrie v0.0.0-20190802193736-ed4c4a229894
 	github.com/armon/go-proxyproto v0.0.0-20190211145416-68259f75880e
-	github.com/aws/aws-sdk-go v1.21.9 // indirect
 	github.com/cenkalti/backoff/v3 v3.0.0
 	github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc // indirect
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
@@ -40,7 +39,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.0 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
-	github.com/go-acme/lego/v3 v3.0.0
+	github.com/go-acme/lego/v3 v3.0.1
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.9.0
 	github.com/golang/protobuf v1.3.2
@@ -95,7 +94,6 @@ require (
 	gopkg.in/DataDog/dd-trace-go.v1 v1.16.1
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
-	gopkg.in/ns1/ns1-go.v2 v2.0.0-20190730140822-b51389932cbc // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	gotest.tools v2.2.0+incompatible // indirect
 	k8s.io/api v0.0.0-20190718183219-b59d8169aab5
@@ -118,13 +116,4 @@ replace (
 	github.com/mailgun/minheap => github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
 	github.com/mailgun/multibuf => github.com/containous/multibuf v0.0.0-20190809014333-8b6c9a7e6bba
 	github.com/rancher/go-rancher-metadata => github.com/containous/go-rancher-metadata v0.0.0-20190402144056-c6a65f8b7a28
-)
-
-// related to invalid pseudo version used by some dependencies
-// https://github.com/cloudflare/cloudflare-go/pull/334
-// https://github.com/cloudflare/cloudflare-go/pull/333
-// https://github.com/go-acme/lego/pull/945
-replace (
-	golang.org/x/lint => golang.org/x/lint v0.0.0-20190409202823-959b441ac422
-	golang.org/x/time => golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 )
