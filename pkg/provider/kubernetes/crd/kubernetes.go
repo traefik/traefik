@@ -273,7 +273,7 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]dynam
 			case "http", "https", "h2c":
 				protocol = svc.Scheme
 			case "":
-				if port == 443 || strings.HasPrefix(portSpec.Name, "https") {
+				if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
 					protocol = "https"
 				}
 			default:

@@ -8,8 +8,8 @@ subsets:
 - addresses:
   - ip: 10.10.0.1
   ports:
-  - port: 443
+  - port: 8443
 - addresses:
   - ip: 10.21.0.1
   ports:
-  - port: 443
+  - port: 8443
