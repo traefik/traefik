@@ -1,5 +1,12 @@
 # Change Log
 
+## [v1.7.14](https://github.com/containous/traefik/tree/v1.7.14) (2019-08-14)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.13...v1.7.14)
+
+**Bug fixes:**
+- Update to go1.12.8 ([#5201](https://github.com/containous/traefik/pull/5201) by [ldez](https://github.com/ldez)). HTTP/2 Denial of Service [CVE-2019-9512](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-9512) and [CVE-2019-9514](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-9514)
+- **[server]** Make hijackConnectionTracker.Close thread safe ([#5194](https://github.com/containous/traefik/pull/5194) by [jlevesy](https://github.com/jlevesy))
+
 ## [v1.7.13](https://github.com/containous/traefik/tree/v1.7.13) (2019-08-07)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.12...v1.7.13)
 
