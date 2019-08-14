@@ -323,6 +323,15 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					Service: serviceName,
 				}
 
+				if len(ingress.Spec.TLS) > 0 {
+					// TLS enabled for this ingress, add TLS router
+					conf.HTTP.Routers[strings.Replace(rule.Host, ".", "-", -1)+p.Path+"-tls"] = &dynamic.Router{
+						Rule:    strings.Join(rules, " && "),
+						Service: serviceName,
+						TLS:     &dynamic.RouterTLSConfig{},
+					}
+
+				}
 				conf.HTTP.Services[serviceName] = service
 			}
 			err := p.updateIngressStatus(ingress, client)
