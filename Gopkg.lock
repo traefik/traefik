@@ -262,11 +262,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:35d20140aeb30f9ae04b481f20020fd06c9742339a64a55c1a5a5bfddd740564"
+  digest = "1:661a29880e546f59fa5c17211369379eb6431d382021431959adc13d66c89461"
   name = "github.com/armon/go-proxyproto"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "48572f11356f1843b694f21a290d4f1006bc5e47"
+  revision = "68259f75880e8bcc207a49de82466957646af353"
 
 [[projects]]
   digest = "1:bd56ffde8e12e9faca92f3ac54347c665d931856fba8784007b02e004fbcc30d"
