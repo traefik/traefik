@@ -1,8 +1,8 @@
 package metrics
 
 import (
+	"strings"
 	"time"
-    "strings"
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
@@ -32,18 +32,18 @@ const (
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
 func RegisterDatadog(config *types.Datadog) Registry {
-    tags := ParseTags(config.Tags)
+	tags := ParseTags(config.Tags)
 
-    if len(tags) == 0 {
-        log.Warnf("Unable to parse %s into Tags, ignoring", config.Tags)
-    } else {
-        log.Infof("Added tags %v to Datadog client", tags)
-    }
+	if len(tags) == 0 {
+		log.Warnf("Unable to parse %s into Tags, ignoring", config.Tags)
+	} else {
+		log.Infof("Added tags %v to Datadog client", tags)
+	}
 
-    datadogClient = dogstatsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
-        log.Info(keyvals)
-        return nil
-    }), tags...)
+	datadogClient = dogstatsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
+		log.Info(keyvals)
+		return nil
+	}), tags...)
 
 	if datadogTicker == nil {
 		datadogTicker = initDatadogClient(config)
@@ -89,17 +89,17 @@ func initDatadogClient(config *types.Datadog) *time.Ticker {
 }
 
 func ParseTags(tags string) []string {
-  keyValueTags := make([]string, 0)
+	keyValueTags := make([]string, 0)
 
-  for _, kv := range strings.Split(tags, ",") {
-    vals := strings.Split(kv, ":")
-    // Ensure there is a key and a value
-    if len(vals) == 2 {
-      keyValueTags = append(keyValueTags, vals[0], vals[1])
-    }
-  }
+	for _, kv := range strings.Split(tags, ",") {
+		vals := strings.Split(kv, ":")
+		// Ensure there is a key and a value
+		if len(vals) == 2 {
+			keyValueTags = append(keyValueTags, vals[0], vals[1])
+		}
+	}
 
-  return keyValueTags
+	return keyValueTags
 }
 
 // StopDatadog stops internal datadogTicker which controls the pushing of metrics to DD Agent and resets it to `nil`.
