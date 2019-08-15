@@ -15,7 +15,7 @@ func TestDatadog(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	datadogRegistry := RegisterDatadog(&types.Datadog{Address: ":18125", PushInterval: "1s"})
+    datadogRegistry := RegisterDatadog(&types.Datadog{Address: ":18125", PushInterval: "1s", Tags: "env:dev"})
 	defer StopDatadog()
 
 	if !datadogRegistry.IsEnabled() {
@@ -24,16 +24,16 @@ func TestDatadog(t *testing.T) {
 
 	expected := []string{
 		// We are only validating counts, as it is nearly impossible to validate latency, since it varies every run
-		"traefik.backend.request.total:1.000000|c|#service:test,code:404,method:GET\n",
-		"traefik.backend.request.total:1.000000|c|#service:test,code:200,method:GET\n",
-		"traefik.backend.retries.total:2.000000|c|#service:test\n",
-		"traefik.backend.request.duration:10000.000000|h|#service:test,code:200\n",
-		"traefik.config.reload.total:1.000000|c\n",
-		"traefik.config.reload.total:1.000000|c|#failure:true\n",
-		"traefik.entrypoint.request.total:1.000000|c|#entrypoint:test\n",
-		"traefik.entrypoint.request.duration:10000.000000|h|#entrypoint:test\n",
-		"traefik.entrypoint.connections.open:1.000000|g|#entrypoint:test\n",
-		"traefik.backend.server.up:1.000000|g|#backend:test,url:http://127.0.0.1,one:two\n",
+        "traefik.backend.request.total:1.000000|c|#env:dev,service:test,code:404,method:GET\n",
+        "traefik.backend.request.total:1.000000|c|#env:dev,service:test,code:200,method:GET\n",
+        "traefik.backend.retries.total:2.000000|c|#env:dev,service:test\n",
+        "traefik.backend.request.duration:10000.000000|h|#env:dev,service:test,code:200\n",
+        "traefik.config.reload.total:1.000000|c|#env:dev\n",
+        "traefik.config.reload.total:1.000000|c|#env:dev,failure:true\n",
+        "traefik.entrypoint.request.total:1.000000|c|#env:dev,entrypoint:test\n",
+        "traefik.entrypoint.request.duration:10000.000000|h|#env:dev,entrypoint:test\n",
+        "traefik.entrypoint.connections.open:1.000000|g|#env:dev,entrypoint:test\n",
+        "traefik.backend.server.up:1.000000|g|#env:dev,backend:test,url:http://127.0.0.1,one:two\n",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
@@ -46,7 +46,7 @@ func TestDatadog(t *testing.T) {
 		datadogRegistry.ConfigReloadsFailureCounter().Add(1)
 		datadogRegistry.EntrypointReqsCounter().With("entrypoint", "test").Add(1)
 		datadogRegistry.EntrypointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
-		datadogRegistry.EntrypointOpenConnsGauge().With("entrypoint", "test").Set(1)
+        datadogRegistry.EntrypointOpenConnsGauge().With("entrypoint", "test").Set(1)
 		datadogRegistry.BackendServerUpGauge().With("backend", "test", "url", "http://127.0.0.1", "one", "two").Set(1)
 	})
 }

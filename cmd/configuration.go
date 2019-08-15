@@ -266,6 +266,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			EntryPoint: configuration.DefaultInternalEntryPointName,
 		},
 		Datadog: &types.Datadog{
+            Tags:         "",
 			Address:      "localhost:8125",
 			PushInterval: "10s",
 		},
