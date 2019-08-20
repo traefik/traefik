@@ -6,7 +6,7 @@ The Traefik Command Line
 ## General
 
 ```bash
-traefik [command] [flags] [arguments]
+traefik [command] [flags]
 ```
 
 Use `traefik [command] --help` for help on any command.
@@ -40,7 +40,7 @@ or any other health check orchestration mechanism.
 Usage:
 
 ```bash
-traefik healthcheck [command] [flags] [arguments]
+traefik healthcheck [command] [flags]
 ```
 
 Example:

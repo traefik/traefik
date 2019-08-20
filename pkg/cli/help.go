@@ -14,7 +14,7 @@ import (
 
 const tmplHelp = `{{ .Cmd.Name }}	{{ .Cmd.Description }}
 
-Usage: {{ .Cmd.Name }} [command] [flags] [arguments]
+Usage: {{ .Cmd.Name }} [command] [flags]
 
 Use "{{ .Cmd.Name }} [command] --help" for help on any command.
 {{if .SubCommands }}
