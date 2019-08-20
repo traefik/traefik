@@ -13,7 +13,7 @@ RegexRedirect redirect a request from an url to another with regex matching and 
 # Redirect with domain replacement
 labels:
 - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$1"
+- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
 ```
 
 ```yaml tab="Kubernetes"
@@ -25,13 +25,13 @@ metadata:
 spec:
   redirectRegex:
     regex: ^http://localhost/(.*)
-    replacement: http://mydomain/$1
+    replacement: http://mydomain/${1}
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-redirectregex.redirectregex.regex": "^http://localhost/(.*)",
-  "traefik.http.middlewares.test-redirectregex.redirectregex.replacement": "http://mydomain/$1"
+  "traefik.http.middlewares.test-redirectregex.redirectregex.replacement": "http://mydomain/${1}"
 }
 ```
 
@@ -39,7 +39,7 @@ spec:
 # Redirect with domain replacement
 labels:
 - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$1"
+- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/${1}"
 ```
 
 ```toml tab="File (TOML)"
@@ -47,7 +47,7 @@ labels:
 [http.middlewares]
   [http.middlewares.test-redirectregex.redirectRegex]
     regex = "^http://localhost/(.*)"
-    replacement = "http://mydomain/$1"
+    replacement = "http://mydomain/${1}"
 ```
 
 ```yaml tab="File (YAML)"
@@ -57,7 +57,7 @@ http:
     test-redirectregex:
       redirectRegex:
         regex: "^http://localhost/(.*)"
-        replacement: "http://mydomain/$1"
+        replacement: "http://mydomain/${1}"
 ```
 
 ## Configuration Options
@@ -80,5 +80,5 @@ The `regex` option is the regular expression to match and capture elements from 
     
 ### `replacement`
 
-The `replacement` option defines how to modify the URl to have the new target URL.
+The `replacement` option defines how to modify the URL to have the new target URL.
  
