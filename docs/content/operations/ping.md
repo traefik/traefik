@@ -29,6 +29,9 @@ You can customize the `entryPoint` where the `/ping` is active with the `entryPo
 |---------|---------------|-----------------------------------------------------------------------------------------------------|
 | `/ping` | `GET`, `HEAD` | A simple endpoint to check for Traefik process liveness. Return a code `200` with the content: `OK` |
 
+!!! note
+    The [`cli`](../cli/) comes with a `healthcheck` command which can be used for calling this endpoint.
+
 ### `entryPoint`
 
 Enabling /ping on a dedicated EntryPoint.
