@@ -98,7 +98,7 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.A
 
 	if len(conf.Services) == 0 {
 		conf.Services = make(map[string]*dynamic.Service)
-		lb := &dynamic.LoadBalancerService{}
+		lb := &dynamic.ServersLoadBalancer{}
 		lb.SetDefaults()
 		conf.Services[appName] = &dynamic.Service{
 			LoadBalancer: lb,

@@ -199,7 +199,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 						th.WithRule(routeRule)),
 					),
 					th.WithLoadBalancerServices(th.WithService("bar",
-						th.WithStickiness("test")),
+						th.WithSticky("test")),
 					),
 				)
 			},
@@ -229,7 +229,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 						th.WithRule(routeRule)),
 					),
 					th.WithLoadBalancerServices(th.WithService("bar",
-						th.WithStickiness("test")),
+						th.WithSticky("test")),
 					),
 				)
 			},

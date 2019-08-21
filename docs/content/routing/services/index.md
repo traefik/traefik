@@ -161,7 +161,7 @@ On subsequent requests, the client is forwarded to the same server.
     ```toml tab="TOML"
     [http.services]
       [http.services.my-service]
-        [http.services.my-service.loadBalancer.stickiness]
+        [http.services.my-service.loadBalancer.sticky.cookie]
     ```
     
     ```yaml tab="YAML"
@@ -169,18 +169,19 @@ On subsequent requests, the client is forwarded to the same server.
       services:
         my-service:
           loadBalancer:
-            stickiness: {}
+            sticky:
+             cookie: {}
     ```
 
-??? example "Adding Stickiness with a Custom Cookie Name"
+??? example "Adding Stickiness with a Custom Options"
 
     ```toml tab="TOML"
     [http.services]
       [http.services.my-service]
-        [http.services.my-service.loadBalancer.stickiness]
-          cookieName = "my_stickiness_cookie_name"
-          secureCookie = true
-          httpOnlyCookie = true
+        [http.services.my-service.loadBalancer.sticky.cookie]
+          name = "my_sticky_cookie_name"
+          secure = true
+          httpOnly = true
     ```
 
     ```yaml tab="YAML"
@@ -188,10 +189,11 @@ On subsequent requests, the client is forwarded to the same server.
       services:
         my-service:
           loadBalancer:
-            stickiness:
-              cookieName: my_stickiness_cookie_name
-              secureCookie: true
-              httpOnlyCookie: true
+            sticky:
+              cookie:
+                name: my_sticky_cookie_name
+                secure: true
+                httpOnly: true
     ```
 
 #### Health Check

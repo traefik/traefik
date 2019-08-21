@@ -38,10 +38,10 @@
     [http.services.Service0]
       [http.services.Service0.loadBalancer]
         passHostHeader = true
-        [http.services.Service0.loadBalancer.stickiness]
-          cookieName = "foobar"
-          secureCookie = true
-          httpOnlyCookie = true
+        [http.services.Service0.loadBalancer.sticky.cookie]
+          name = "foobar"
+          secure = true
+          httpOnly = true
 
         [[http.services.Service0.loadBalancer.servers]]
           url = "foobar"
@@ -63,10 +63,10 @@
     [http.services.Service1]
       [http.services.Service1.loadBalancer]
         passHostHeader = true
-        [http.services.Service1.loadBalancer.stickiness]
-          cookieName = "foobar"
-          secureCookie = true
-          httpOnlyCookie = true
+        [http.services.Service1.loadBalancer.sticky.cookie]
+          name = "foobar"
+          secure = true
+          httpOnly = true
 
         [[http.services.Service1.loadBalancer.servers]]
           url = "foobar"

@@ -671,7 +671,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -720,7 +720,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"default/test2.route-23c7f4c450289ee29016": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -770,7 +770,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"default/test2.route-23c7f4c450289ee29016": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -812,7 +812,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -825,7 +825,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							},
 						},
 						"default/test.route-77c62dfe9517144aeeaa": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -843,7 +843,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "One ingress Route with two different services, their servers will merge",
+			desc:  "One ingress Route with two different services",
 			paths: []string{"services.yml", "with_two_services.yml"},
 			expected: &dynamic.Configuration{
 				TLS: &dynamic.TLSConfiguration{},
@@ -863,7 +863,21 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-77c62dfe9517144aeeaa": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default/test.route-77c62dfe9517144aeeaa-whoami-80",
+										Weight: 1,
+									},
+									{
+										Name:   "default/test.route-77c62dfe9517144aeeaa-whoami2-8080",
+										Weight: 1,
+									},
+								},
+							},
+						},
+						"default/test.route-77c62dfe9517144aeeaa-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -871,6 +885,77 @@ func TestLoadIngressRoutes(t *testing.T) {
 									{
 										URL: "http://10.10.0.2:80",
 									},
+								},
+								PassHostHeader: true,
+							},
+						},
+						"default/test.route-77c62dfe9517144aeeaa-whoami2-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.3:8080",
+									},
+									{
+										URL: "http://10.10.0.4:8080",
+									},
+								},
+								PassHostHeader: true,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "One ingress Route with two different services, with weights",
+			paths: []string{"services.yml", "with_two_services_weight.yml"},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default/test.route-77c62dfe9517144aeeaa": {
+							EntryPoints: []string{"web"},
+							Service:     "default/test.route-77c62dfe9517144aeeaa",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/foo`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default/test.route-77c62dfe9517144aeeaa": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default/test.route-77c62dfe9517144aeeaa-whoami-80",
+										Weight: 10,
+									},
+									{
+										Name:   "default/test.route-77c62dfe9517144aeeaa-whoami2-8080",
+										Weight: 0,
+									},
+								},
+							},
+						},
+						"default/test.route-77c62dfe9517144aeeaa-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: true,
+							},
+						},
+						"default/test.route-77c62dfe9517144aeeaa-whoami2-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.3:8080",
 									},
@@ -981,7 +1066,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1039,7 +1124,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1097,7 +1182,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1154,7 +1239,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1200,7 +1285,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1246,7 +1331,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1284,7 +1369,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
@@ -1321,7 +1406,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "https://10.10.0.5:8443",
@@ -1358,7 +1443,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default/test.route-6b204d94623b3df4370c": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "https://10.10.0.7:8443",

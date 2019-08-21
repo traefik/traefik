@@ -47,10 +47,11 @@ http:
   services:
     Service0:
       loadBalancer:
-        stickiness:
-          cookieName: foobar
-          secureCookie: true
-          httpOnlyCookie: true
+        sticky:
+          cookie:
+            name: foobar
+            secure: true
+            httpOnly: true
         servers:
         - url: foobar
         - url: foobar
@@ -69,10 +70,11 @@ http:
           flushInterval: foobar
     Service1:
       loadBalancer:
-        stickiness:
-          cookieName: foobar
-          secureCookie: true
-          httpOnlyCookie: true
+        sticky:
+          cookie:
+            name: foobar
+            secure: true
+            httpOnly: true
         servers:
         - url: foobar
         - url: foobar

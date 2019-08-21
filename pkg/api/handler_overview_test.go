@@ -55,7 +55,7 @@ func TestHandler_Overview(t *testing.T) {
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
 							},
 						},
@@ -63,7 +63,7 @@ func TestHandler_Overview(t *testing.T) {
 					},
 					"bar-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
 							},
 						},
@@ -71,7 +71,7 @@ func TestHandler_Overview(t *testing.T) {
 					},
 					"fii-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
 							},
 						},

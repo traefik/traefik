@@ -50,7 +50,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -84,7 +84,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -118,7 +118,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -148,7 +148,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -177,7 +177,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/example-com/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -208,7 +208,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -242,7 +242,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -276,7 +276,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -317,7 +317,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -362,7 +362,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -375,7 +375,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							},
 						},
 						"testing/service2/8082": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -428,7 +428,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"default-backend": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -458,7 +458,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -488,7 +488,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/tchouk": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -518,7 +518,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/tchouk": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -552,7 +552,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/tchouk": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -565,7 +565,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							},
 						},
 						"testing/service1/carotte": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -599,7 +599,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/tchouk": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -612,7 +612,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							},
 						},
 						"toto/service1/tchouk": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -664,7 +664,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/8080": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -696,7 +696,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/example-com/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -733,7 +733,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/443": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -763,7 +763,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/8443": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -794,7 +794,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/8443": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -825,7 +825,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"default-backend": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{
@@ -855,7 +855,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"testing/service1/80": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: true,
 								Servers: []dynamic.Server{
 									{

@@ -395,6 +395,11 @@ func (in *Service) DeepCopyInto(out *Service) {
 		*out = new(HealthCheck)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Weight != nil {
+		in, out := &in.Weight, &out.Weight
+		*out = new(int)
+		**out = **in
+	}
 	return
 }
 
