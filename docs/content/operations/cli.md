@@ -44,7 +44,7 @@ or any other health check orchestration mechanism.
 Usage:
 
 ```bash
-traefik healthcheck --ping
+traefik healthcheck [command] [flags] [arguments]
 ```
 
 Example:
