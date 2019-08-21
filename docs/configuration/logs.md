@@ -105,10 +105,10 @@ logLevel = "ERROR"
 
 ## Access Logs
 
-Access logs are written when `[accessLog]` is defined.
-By default it will write to stdout and produce logs in the textual [Common Log Format (CLF)](#clf-common-log-format), extended with additional fields.
+Access logs are written when the entry `[accessLog]` is defined (or the command line flag `--accesslog`).
+By default it writes to stdout and produces logs in the textual [Common Log Format (CLF)](#clf-common-log-format), extended with additional fields.
 
-To enable access logs using the default settings just add the `[accessLog]` entry:
+To enable access logs using the default settings, add the `[accessLog]` entry in your `traefik.toml` configuration file:
 
 ```toml
 [accessLog]
@@ -175,21 +175,41 @@ format = "json"  # Default: "common"
   minDuration = "10ms"
 ```
 
-To customize logs format, you must switch to the JSON format:
+### CLF - Common Log Format
+
+By default, Traefik use the CLF (`common`) as access log format.
+
+```html
+<remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms
+```
+
+### Customize Fields
+
+You can customize the fields written in the access logs.
+The list of available fields is found below: [List of All Available Fields](#list-of-all-available-fields).
+
+Each field has a "mode" which defines if it is written or not in the access log lines.
+The possible values for the mode are:
+
+* `keep`: the field and its value are written on the access log line. This is the default behavior.
+* `drop`: the field is not written at all on the access log.
+
+To customize the fields, you must:
+
+* Switch to the JSON format (mandatory)
+* Define the "default mode" for all fields (default is `keep`)
+* OR Define the fields which does not follow the default mode
 
 ```toml
 [accessLog]
-filePath = "/path/to/access.log"
-format = "json" # Default: "common"
-
-  [accessLog.filters]
-
-  # statusCodes keep only access logs with status codes in the specified range
-  #
-  # Optional
-  # Default: []
-  #
-  statusCodes = ["200", "300-302"]
+# Access Log Format
+#
+# Optional
+# Default: "common"
+#
+# Accepted values "common", "json"
+#
+format = "json"
 
   [accessLog.fields]
 
@@ -206,6 +226,43 @@ format = "json" # Default: "common"
   [accessLog.fields.names]
     "ClientUsername" = "drop"
     # ...
+```
+
+### Customize Headers
+
+Access logs prints the headers of each request, as fields of the access log line.
+You can customize which and how the headers are printed, likewise the other fileds (see ["Customize Fields" section](#customize-fields)).
+
+Each header has a "mode" which defines how it is written in the access log lines.
+The possible values for the mode are:
+
+* `keep`: the header and its value are written on the access log line. This is the default behavior.
+* `drop`: the header is not written at all on the access log.
+* `redacted`: the header is written, but its value is redacted to avoid leaking sensitive information.
+
+To customize the headers, you must:
+
+* Switch to the JSON format (mandatory)
+* Define the "default mode" for all headers (default is `keep`)
+* OR Define the headers which does not follow the default mode
+
+!!! important
+    The headers are written with the prefix `request_` in the access log.
+    This prefix must not be included when specifying a header in the TOML configuration.
+
+    * Do: `"User-Agent" = "drop"`
+    * Don't: `"redacted_User-Agent" = "drop"`
+
+```toml
+[accessLog]
+# Access Log Format
+#
+# Optional
+# Default: "common"
+#
+# Accepted values "common", "json"
+#
+format = "json"
 
   [accessLog.fields.headers]
     # defaultMode
@@ -224,7 +281,7 @@ format = "json" # Default: "common"
       # ...
 ```
 
-### List of all available fields
+### List of All Available Fields
 
 | Field                   | Description                                                                                                                                                         |
 |-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -259,6 +316,8 @@ format = "json" # Default: "common"
 | `Overhead`              | The processing time overhead caused by Traefik.                                                                                                                     |
 | `RetryAttempts`         | The amount of attempts the request was retried.                                                                                                                     |
 
+### Depreciation Notice
+
 Deprecated way (before 1.4):
 
 !!! danger "DEPRECATED"
@@ -270,14 +329,6 @@ Deprecated way (before 1.4):
 # DEPRECATED - see [accessLog]
 #
 accessLogsFile = "log/access.log"
-```
-
-### CLF - Common Log Format
-
-By default, Traefik use the CLF (`common`) as access log format.
-
-```html
-<remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms
 ```
 
 ## Log Rotation
