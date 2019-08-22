@@ -45,7 +45,7 @@ type RouterTCPTLSConfig struct {
 
 // TCPLoadBalancerService holds the LoadBalancerService configuration.
 type TCPLoadBalancerService struct {
-	Servers []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" label-slice-as-struct:"server"`
+	Servers []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
 }
 
 // Mergeable tells if the given service is mergeable.
