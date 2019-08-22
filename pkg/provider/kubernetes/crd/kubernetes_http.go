@@ -81,9 +81,10 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				serviceKey := fmt.Sprintf("%s-%s-%d", serviceName, service.Name, service.Port)
 				conf.Services[serviceKey] = balancerServerHTTP
 
-				srv := dynamic.WRRService{Name: serviceKey, Weight: 1}
+				srv := dynamic.WRRService{Name: serviceKey}
+				srv.SetDefaults()
 				if service.Weight != nil {
-					srv.Weight = *service.Weight
+					srv.Weight = service.Weight
 				}
 
 				if conf.Services[serviceName] == nil {

@@ -12,6 +12,8 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
+func Int(v int) *int { return &v }
+
 func TestLoadIngressRouteTCPs(t *testing.T) {
 	testCases := []struct {
 		desc         string
@@ -867,11 +869,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default/test.route-77c62dfe9517144aeeaa-whoami-80",
-										Weight: 1,
+										Weight: func(i int) *int { return &i }(1),
 									},
 									{
 										Name:   "default/test.route-77c62dfe9517144aeeaa-whoami2-8080",
-										Weight: 1,
+										Weight: func(i int) *int { return &i }(1),
 									},
 								},
 							},
@@ -931,11 +933,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default/test.route-77c62dfe9517144aeeaa-whoami-80",
-										Weight: 10,
+										Weight: Int(10),
 									},
 									{
 										Name:   "default/test.route-77c62dfe9517144aeeaa-whoami2-8080",
-										Weight: 0,
+										Weight: Int(0),
 									},
 								},
 							},

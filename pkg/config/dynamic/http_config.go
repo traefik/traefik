@@ -57,7 +57,13 @@ type WeightedRoundRobin struct {
 // WRRService holds the WRRService for WeightedRoundRobin LoadBalancer.
 type WRRService struct {
 	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
-	Weight int    `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty"`
+	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty"`
+}
+
+// SetDefaults Default values for a ServersLoadBalancer.
+func (w *WRRService) SetDefaults() {
+	defaultWeight := 1
+	w.Weight = &defaultWeight
 }
 
 // +k8s:deepcopy-gen=true

@@ -145,6 +145,10 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // AddService adds a handler.
-func (b *Balancer) AddService(name string, handler http.Handler, weight int) {
-	b.handlers = append(b.handlers, &namedHandler{Handler: handler, name: name, weight: weight})
+func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
+	w := 1
+	if weight != nil {
+		w = *weight
+	}
+	b.handlers = append(b.handlers, &namedHandler{Handler: handler, name: name, weight: w})
 }
