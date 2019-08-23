@@ -164,7 +164,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryCrd.Traefik().V1alpha1().TLSOptions().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TraefikServices().Informer().AddEventHandler(eventHandler)
 
-		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns))
+		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, informers.WithNamespace(ns))
 		factoryKube.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
