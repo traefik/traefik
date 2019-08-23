@@ -145,6 +145,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // AddService adds a handler.
+// It is not thread safe with ServeHTTP.
 func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	w := 1
 	if weight != nil {

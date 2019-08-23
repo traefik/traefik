@@ -84,7 +84,7 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 			return nil, err
 		}
 	default:
-		sErr := fmt.Errorf("the service %q doesn't have any load balancer", serviceName)
+		sErr := fmt.Errorf("the service %q does not have any type defined", serviceName)
 		conf.AddError(sErr, true)
 		return nil, sErr
 	}

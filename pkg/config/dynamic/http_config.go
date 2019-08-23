@@ -46,7 +46,7 @@ type RouterTLSConfig struct {
 
 // +k8s:deepcopy-gen=true
 
-// WeightedRoundRobin holds the WeightedRoundRobin LoadBalancer.
+// WeightedRoundRobin is a weighted round robin load-balancer of services.
 type WeightedRoundRobin struct {
 	Services []WRRService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty"`
 	Sticky   *Sticky      `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty"`
@@ -54,7 +54,7 @@ type WeightedRoundRobin struct {
 
 // +k8s:deepcopy-gen=true
 
-// WRRService holds the WRRService for WeightedRoundRobin LoadBalancer.
+// WRRService is a reference to a service load-balanced with weighted round robin.
 type WRRService struct {
 	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
 	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty"`

@@ -167,7 +167,7 @@ On subsequent requests, the client is forwarded to the same server.
              cookie: {}
     ```
 
-??? example "Adding Stickiness with a Custom Options"
+??? example "Adding Stickiness with custom Options"
 
     ```toml tab="TOML"
     [http.services]
