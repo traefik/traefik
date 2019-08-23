@@ -28,7 +28,7 @@ Successfully tagged traefik-webui:latest
 [...]
 docker build  -t "traefik-dev:4475--feature-documentation" -f build.Dockerfile .
 Sending build context to Docker daemon    279MB
-Step 1/10 : FROM golang:1.12-alpine
+Step 1/10 : FROM golang:1.13rc1-alpine
  ---> f4bfb3d22bda
 [...]
 Successfully built 5c3c1a911277
@@ -60,7 +60,7 @@ PRE_TARGET= make test-unit
 
 Requirements:
 
-- `go` v1.12+
+- `go` v1.13+
 - environment variable `GO111MODULE=on`
 
 !!! tip "Source Directory"

@@ -31,12 +31,12 @@
   [http.services.service1]
     [http.services.service1.loadBalancer]
       [[http.services.service1.loadBalancer.servers]]
-        url = "http://127.0.0.1:9010"
+        url = "{{ .Server1 }}"
 
   [http.services.service2]
     [http.services.service2.loadBalancer]
       [[http.services.service2.loadBalancer.servers]]
-        url = "http://127.0.0.1:9020"
+        url = "{{ .Server2 }}"
 
 [[tls.certificates]]
   certFile = "fixtures/https/snitest.com.cert"

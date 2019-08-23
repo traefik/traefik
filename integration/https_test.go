@@ -501,7 +501,21 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 // TestWithClientCertificateAuthentication
 // Use two CA:s and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check.C) {
-	file := s.adaptFile(c, "fixtures/https/clientca/https_2ca1config.toml", struct{}{})
+	server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { rw.Write([]byte("server1")) }))
+	server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { rw.Write([]byte("server2")) }))
+	defer func() {
+		server1.Close()
+		server2.Close()
+	}()
+
+	file := s.adaptFile(c, "fixtures/https/clientca/https_2ca1config.toml", struct {
+		Server1 string
+		Server2 string
+	}{
+		Server1: server1.URL,
+		Server2: server2.URL,
+	})
+
 	defer os.Remove(file)
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
@@ -513,24 +527,32 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
 	c.Assert(err, checker.IsNil)
 
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "snitest.com"
+
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 		ServerName:         "snitest.com",
 		Certificates:       []tls.Certificate{},
 	}
-	// Connection without client certificate should fail
-	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
 
-	// Connect with client signed by ca1
+	client := http.Client{
+		Transport: &http.Transport{TLSClientConfig: tlsConfig},
+		Timeout:   1 * time.Second,
+	}
+
+	// Connection without client certificate should fail
+	_, err = client.Do(req)
+	c.Assert(err, checker.NotNil)
+
 	cert, err := tls.LoadX509KeyPair("fixtures/https/clientca/client1.crt", "fixtures/https/clientca/client1.key")
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
-
-	conn.Close()
+	// Connect with client signed by ca1
+	_, err = client.Do(req)
+	c.Assert(err, checker.IsNil)
 
 	// Connect with client signed by ca2
 	tlsConfig = &tls.Config{
@@ -538,14 +560,19 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check
 		ServerName:         "snitest.com",
 		Certificates:       []tls.Certificate{},
 	}
+
 	cert, err = tls.LoadX509KeyPair("fixtures/https/clientca/client2.crt", "fixtures/https/clientca/client2.key")
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+	client = http.Client{
+		Transport: &http.Transport{TLSClientConfig: tlsConfig},
+		Timeout:   1 * time.Second,
+	}
 
-	conn.Close()
+	// Connect with client signed by ca1
+	_, err = client.Do(req)
+	c.Assert(err, checker.IsNil)
 
 	// Connect with client signed by ca3 should fail
 	tlsConfig = &tls.Config{
@@ -553,18 +580,38 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check
 		ServerName:         "snitest.com",
 		Certificates:       []tls.Certificate{},
 	}
+
 	cert, err = tls.LoadX509KeyPair("fixtures/https/clientca/client3.crt", "fixtures/https/clientca/client3.key")
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
+	client = http.Client{
+		Transport: &http.Transport{TLSClientConfig: tlsConfig},
+		Timeout:   1 * time.Second,
+	}
+
+	// Connect with client signed by ca1
+	_, err = client.Do(req)
+	c.Assert(err, checker.NotNil)
 }
 
 // TestWithClientCertificateAuthentication
 // Use two CA:s in two different files and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleFiles(c *check.C) {
-	file := s.adaptFile(c, "fixtures/https/clientca/https_2ca2config.toml", struct{}{})
+	server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { rw.Write([]byte("server1")) }))
+	server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { rw.Write([]byte("server2")) }))
+	defer func() {
+		server1.Close()
+		server2.Close()
+	}()
+
+	file := s.adaptFile(c, "fixtures/https/clientca/https_2ca2config.toml", struct {
+		Server1 string
+		Server2 string
+	}{
+		Server1: server1.URL,
+		Server2: server2.URL,
+	})
 	defer os.Remove(file)
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
@@ -576,24 +623,32 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleF
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
 	c.Assert(err, checker.IsNil)
 
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "snitest.com"
+
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 		ServerName:         "snitest.com",
 		Certificates:       []tls.Certificate{},
 	}
+
+	client := http.Client{
+		Transport: &http.Transport{TLSClientConfig: tlsConfig},
+		Timeout:   1 * time.Second,
+	}
+
 	// Connection without client certificate should fail
-	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
+	_, err = client.Do(req)
+	c.Assert(err, checker.NotNil)
 
 	// Connect with client signed by ca1
 	cert, err := tls.LoadX509KeyPair("fixtures/https/clientca/client1.crt", "fixtures/https/clientca/client1.key")
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
-
-	conn.Close()
+	_, err = client.Do(req)
+	c.Assert(err, checker.IsNil)
 
 	// Connect with client signed by ca2
 	tlsConfig = &tls.Config{
@@ -601,13 +656,18 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleF
 		ServerName:         "snitest.com",
 		Certificates:       []tls.Certificate{},
 	}
+
 	cert, err = tls.LoadX509KeyPair("fixtures/https/clientca/client2.crt", "fixtures/https/clientca/client2.key")
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
-	conn.Close()
+	client = http.Client{
+		Transport: &http.Transport{TLSClientConfig: tlsConfig},
+		Timeout:   1 * time.Second,
+	}
+
+	_, err = client.Do(req)
+	c.Assert(err, checker.IsNil)
 
 	// Connect with client signed by ca3 should fail
 	tlsConfig = &tls.Config{
@@ -615,12 +675,18 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleF
 		ServerName:         "snitest.com",
 		Certificates:       []tls.Certificate{},
 	}
+
 	cert, err = tls.LoadX509KeyPair("fixtures/https/clientca/client3.crt", "fixtures/https/clientca/client3.key")
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
+	client = http.Client{
+		Transport: &http.Transport{TLSClientConfig: tlsConfig},
+		Timeout:   1 * time.Second,
+	}
+
+	_, err = client.Do(req)
+	c.Assert(err, checker.NotNil)
 }
 
 func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend(c *check.C) {
