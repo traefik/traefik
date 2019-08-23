@@ -54,7 +54,7 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 - Go to the directory `webui`
 - Edit files in `webui/src`
 - Run in development mode :
-  - `yarn serve`
+  - `yarn run dev`
 
 ## Libraries
 

@@ -1,10 +1,12 @@
+.quasar
 .DS_Store
+.thumbs.db
 node_modules
 /dist
-
-# local env files
-.env.local
-.env.*.local
+/src-cordova/node_modules
+/src-cordova/platforms
+/src-cordova/plugins
+/src-cordova/www
 
 # Log files
 npm-debug.log*
@@ -19,3 +21,7 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+# local env files
+.env.local
+.env.*.local

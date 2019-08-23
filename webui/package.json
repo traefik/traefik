@@ -1,37 +1,49 @@
 {
-  "name": "webui-v2",
+  "name": "traefik-ui",
   "version": "0.1.0",
+  "description": "Traefik UI",
+  "productName": "Traefik",
+  "cordovaId": "us.containo.traefik",
+  "author": "Jorge <jorge@basgrani.com>",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build --dest ../static",
-    "build:nc": "vue-cli-service build --no-clean --dest ../static",
-    "lint": "vue-cli-service lint",
-    "test:unit": "vue-cli-service test:unit"
+    "lint": "eslint --ext .js,.vue src",
+    "test": "echo \"No test specified\" && exit 0",
+    "dev": "export APP_ENV='development' && quasar dev -m pwa",
+    "build-quasar": "quasar build -m pwa",
+    "build-staging": "export APP_PUBLIC_PATH='' && export APP_DIST_DIR='dist/pwa' && export NODE_ENV='production' && export APP_ENV='development' && npm run build-quasar",
+    "build": "export NODE_ENV='production' && export APP_ENV='production' && npm run build-quasar"
   },
   "dependencies": {
-    "bulma": "^0.7.5",
+    "@quasar/extras": "^1.0.0",
+    "axios": "^0.19.0",
+    "bowser": "^2.5.2",
     "chart.js": "^2.8.0",
-    "core-js": "^2.6.5",
-    "vue": "^2.6.10",
-    "vue-router": "^3.0.3",
-    "vuex": "^3.0.1"
+    "connect-history-api-fallback": "^1.6.0",
+    "express": "^4.17.1",
+    "lodash": "^4.17.15",
+    "moment": "^2.24.0",
+    "quasar": "^1.0.0",
+    "vh-check": "^2.0.5",
+    "vue-chartjs": "^3.4.2",
+    "vuex-map-fields": "^1.3.4"
   },
   "devDependencies": {
-    "@fortawesome/fontawesome-free": "^5.9.0",
-    "@vue/cli-plugin-babel": "^3.9.0",
-    "@vue/cli-plugin-eslint": "^3.9.0",
-    "@vue/cli-plugin-unit-jest": "^3.9.0",
-    "@vue/cli-service": "^3.9.0",
-    "@vue/eslint-config-prettier": "^4.0.1",
-    "@vue/test-utils": "1.0.0-beta.29",
-    "babel-core": "7.0.0-bridge.0",
+    "@quasar/app": "^1.0.0",
+    "@vue/eslint-config-standard": "^4.0.0",
     "babel-eslint": "^10.0.1",
-    "babel-jest": "^23.6.0",
-    "eslint": "^5.16.0",
+    "eslint": "^5.10.0",
+    "eslint-loader": "^2.1.1",
     "eslint-plugin-vue": "^5.0.0",
-    "node-sass": "^4.9.0",
-    "sass-loader": "^7.1.0",
-    "vue-template-compiler": "^2.6.10"
-  }
+    "node-sass": "^4.12.0",
+    "sass-loader": "^7.1.0"
+  },
+  "engines": {
+    "node": ">= 8.9.0",
+    "npm": ">= 5.6.0",
+    "yarn": ">= 1.6.0"
+  },
+  "browserslist": [
+    "last 1 version, not dead, ie >= 11"
+  ]
 }
