@@ -35,7 +35,6 @@ spec:
             - --providers.kubernetescrd
             - --certificatesresolvers.default.acme.tlschallenge
             - --certificatesresolvers.default.acme.email=foo@you.com
-            - --certificatesresolvers.default.acme.entrypoint=websecure
             - --certificatesresolvers.default.acme.storage=acme.json
             # Please note that this is the staging Let's Encrypt server.
             # Once you get things working, you should remove that whole line altogether.
