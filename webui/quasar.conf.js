@@ -114,7 +114,7 @@ module.exports = function (ctx) {
 
     build: {
       publicPath: process.env.APP_PUBLIC_PATH || '/dashboard',
-      distDir: process.env.APP_DIST_DIR || '../static',
+      distDir: process.env.APP_DIST_DIR || '../static/public',
       env: process.env.APP_ENV === 'development'
         ? { // staging:
           APP_ENV: JSON.stringify(process.env.APP_ENV),
