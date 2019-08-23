@@ -114,11 +114,10 @@ module.exports = function (ctx) {
 
     build: {
       publicPath: process.env.APP_PUBLIC_PATH || '/dashboard',
-      distDir: process.env.APP_DIST_DIR || '../static/public',
       env: process.env.APP_ENV === 'development'
         ? { // staging:
           APP_ENV: JSON.stringify(process.env.APP_ENV),
-          APP_API: JSON.stringify(process.env.APP_API || 'http://jorge.dockeree.containous.cloud:8080/api')
+          APP_API: JSON.stringify(process.env.APP_API || '/api')
         }
         : { // production:
           APP_ENV: JSON.stringify(process.env.APP_ENV),
