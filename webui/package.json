@@ -11,7 +11,7 @@
     "test": "echo \"No test specified\" && exit 0",
     "dev": "export APP_ENV='development' && quasar dev -m pwa",
     "build-quasar": "quasar build -m pwa",
-    "build-staging": "export APP_PUBLIC_PATH='' && export APP_DIST_DIR='dist/pwa' && export NODE_ENV='production' && export APP_ENV='development' && npm run build-quasar",
+    "build-staging": "export NODE_ENV='production' && export APP_ENV='development' && npm run build-quasar",
     "build": "export NODE_ENV='production' && export APP_ENV='production' && npm run build-quasar && npm run transfer pwa",
     "build:nc": "npm run build"
   },
