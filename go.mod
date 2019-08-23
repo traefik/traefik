@@ -89,6 +89,7 @@ require (
 	github.com/vulcand/oxy v1.0.0
 	github.com/vulcand/predicate v1.1.0
 	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
+	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a // indirect
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7 // indirect
 	google.golang.org/grpc v1.22.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.16.1
