@@ -220,8 +220,8 @@ type IPStrategy struct {
 	// TODO(mpl): I think we should make RemoteAddr an explicit field. For one thing, it would yield better documentation.
 }
 
-// Get an IP selection strategy
-// if nil return the RemoteAddr strategy
+// Get an IP selection strategy.
+// If nil return the RemoteAddr strategy
 // else return a strategy base on the configuration using the X-Forwarded-For Header.
 // Depth override the ExcludedIPs
 func (s *IPStrategy) Get() (ip.Strategy, error) {
@@ -258,8 +258,7 @@ type IPWhiteList struct {
 
 // +k8s:deepcopy-gen=true
 
-// InFlightReq limits the number of requests being processed and served
-// concurrently.
+// InFlightReq limits the number of requests being processed and served concurrently.
 type InFlightReq struct {
 	Amount          int64            `json:"amount,omitempty" toml:"amount,omitempty" yaml:"amount,omitempty"`
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty"`
@@ -282,8 +281,8 @@ type PassTLSClientCert struct {
 
 // +k8s:deepcopy-gen=true
 
-// SourceCriterion defines what criterion is used to group requests as originating
-// from a common source. The precedence order is IPStrategy, then RequestHeaderName.
+// SourceCriterion defines what criterion is used to group requests as originating from a common source.
+// The precedence order is IPStrategy, then RequestHeaderName.
 // If none are set, the default is to use the request's remote address field.
 type SourceCriterion struct {
 	IPStrategy        *IPStrategy `json:"ipStrategy" toml:"ipStrategy, omitempty"`
@@ -298,8 +297,8 @@ type RateLimit struct {
 	// Average is the maximum rate, in requests/s, allowed for the given source.
 	// It defaults to 0, which means no rate limiting.
 	Average int64 `json:"average,omitempty" toml:"average,omitempty" yaml:"average,omitempty"`
-	// Burst is the maximum number of requests allowed to arrive in the same
-	// arbitrarily small period of time. It defaults to 1.
+	// Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
+	// It defaults to 1.
 	Burst           int64            `json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty"`
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty"`
 }
@@ -409,30 +408,30 @@ type ClientTLS struct {
 }
 
 // CreateTLSConfig creates a TLS config from ClientTLS structures.
-func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
-	if clientTLS == nil {
+func (c *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
+	if c == nil {
 		return nil, nil
 	}
 
 	var err error
 	caPool := x509.NewCertPool()
 	clientAuth := tls.NoClientCert
-	if clientTLS.CA != "" {
+	if c.CA != "" {
 		var ca []byte
-		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
-			ca, err = ioutil.ReadFile(clientTLS.CA)
+		if _, errCA := os.Stat(c.CA); errCA == nil {
+			ca, err = ioutil.ReadFile(c.CA)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read CA. %s", err)
 			}
 		} else {
-			ca = []byte(clientTLS.CA)
+			ca = []byte(c.CA)
 		}
 
 		if !caPool.AppendCertsFromPEM(ca) {
 			return nil, fmt.Errorf("failed to parse CA")
 		}
 
-		if clientTLS.CAOptional {
+		if c.CAOptional {
 			clientAuth = tls.VerifyClientCertIfGiven
 		} else {
 			clientAuth = tls.RequireAndVerifyClientCert
@@ -440,16 +439,16 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 	}
 
 	cert := tls.Certificate{}
-	_, errKeyIsFile := os.Stat(clientTLS.Key)
+	_, errKeyIsFile := os.Stat(c.Key)
 
-	if !clientTLS.InsecureSkipVerify && (len(clientTLS.Cert) == 0 || len(clientTLS.Key) == 0) {
+	if !c.InsecureSkipVerify && (len(c.Cert) == 0 || len(c.Key) == 0) {
 		return nil, fmt.Errorf("TLS Certificate or Key file must be set when TLS configuration is created")
 	}
 
-	if len(clientTLS.Cert) > 0 && len(clientTLS.Key) > 0 {
-		if _, errCertIsFile := os.Stat(clientTLS.Cert); errCertIsFile == nil {
+	if len(c.Cert) > 0 && len(c.Key) > 0 {
+		if _, errCertIsFile := os.Stat(c.Cert); errCertIsFile == nil {
 			if errKeyIsFile == nil {
-				cert, err = tls.LoadX509KeyPair(clientTLS.Cert, clientTLS.Key)
+				cert, err = tls.LoadX509KeyPair(c.Cert, c.Key)
 				if err != nil {
 					return nil, fmt.Errorf("failed to load TLS keypair: %v", err)
 				}
@@ -458,7 +457,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 			}
 		} else {
 			if errKeyIsFile != nil {
-				cert, err = tls.X509KeyPair([]byte(clientTLS.Cert), []byte(clientTLS.Key))
+				cert, err = tls.X509KeyPair([]byte(c.Cert), []byte(c.Key))
 				if err != nil {
 					return nil, fmt.Errorf("failed to load TLS keypair: %v", err)
 
@@ -472,7 +471,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 	return &tls.Config{
 		Certificates:       []tls.Certificate{cert},
 		RootCAs:            caPool,
-		InsecureSkipVerify: clientTLS.InsecureSkipVerify,
+		InsecureSkipVerify: c.InsecureSkipVerify,
 		ClientAuth:         clientAuth,
 	}, nil
 }

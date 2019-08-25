@@ -24,8 +24,8 @@ type inFlightReq struct {
 
 // New creates a max request middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.InFlightReq, name string) (http.Handler, error) {
-	logctx := log.With(ctx, log.Str(log.MiddlewareName, name), log.Str(log.MiddlewareType, typeName))
-	log.FromContext(logctx).Debug("Creating middleware")
+	ctxLog := log.With(ctx, log.Str(log.MiddlewareName, name), log.Str(log.MiddlewareType, typeName))
+	log.FromContext(ctxLog).Debug("Creating middleware")
 
 	if config.SourceCriterion == nil ||
 		config.SourceCriterion.IPStrategy == nil &&
@@ -35,7 +35,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.InFlightReq, nam
 		}
 	}
 
-	sourceMatcher, err := middlewares.GetSourceExtractor(logctx, config.SourceCriterion)
+	sourceMatcher, err := middlewares.GetSourceExtractor(ctxLog, config.SourceCriterion)
 	if err != nil {
 		return nil, fmt.Errorf("error creating requests limiter: %v", err)
 	}

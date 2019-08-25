@@ -11,8 +11,8 @@ import (
 	"github.com/vulcand/oxy/utils"
 )
 
-// GetSourceExtractor returns the SourceExtractor function corresponding to the
-// given sourceMatcher. It defaults to a RemoteAddrStrategy IPStrategy if need be.
+// GetSourceExtractor returns the SourceExtractor function corresponding to the given sourceMatcher.
+// It defaults to a RemoteAddrStrategy IPStrategy if need be.
 func GetSourceExtractor(ctx context.Context, sourceMatcher *dynamic.SourceCriterion) (utils.SourceExtractor, error) {
 	if sourceMatcher == nil ||
 		sourceMatcher.IPStrategy == nil &&
@@ -28,6 +28,7 @@ func GetSourceExtractor(ctx context.Context, sourceMatcher *dynamic.SourceCriter
 		if err != nil {
 			return nil, err
 		}
+
 		logger.Debug("Using IPStrategy")
 		return utils.ExtractorFunc(func(req *http.Request) (string, int64, error) {
 			return strategy.GetIP(req), 1, nil

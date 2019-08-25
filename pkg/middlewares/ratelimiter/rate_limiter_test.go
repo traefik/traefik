@@ -49,18 +49,20 @@ func TestNewRateLimiter(t *testing.T) {
 
 			h, err := New(context.Background(), next, test.config, "rate-limiter")
 			require.NoError(t, err)
+
 			rtl, _ := h.(*rateLimiter)
 			if test.expectedMaxDelay != 0 {
 				assert.Equal(t, test.expectedMaxDelay, rtl.maxDelay)
 			}
+
 			if test.expectedSourceIP != "" {
 				extractor, ok := rtl.sourceMatcher.(utils.ExtractorFunc)
-				if !ok {
-					t.Fatal("Not an ExtractorFunc")
-				}
+				require.True(t, ok, "Not an ExtractorFunc")
+
 				req := http.Request{
 					RemoteAddr: fmt.Sprintf("%s:1234", test.expectedSourceIP),
 				}
+
 				ip, _, err := extractor(&req)
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedSourceIP, ip)
@@ -110,19 +112,24 @@ func TestRateLimit(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				reqCount++
 			})
+
 			h, err := New(context.Background(), next, test.config, "rate-limiter")
 			require.NoError(t, err)
+
 			start := time.Now()
 			for {
 				if reqCount >= test.reqCount {
 					break
 				}
+
 				req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 				req.RemoteAddr = "127.0.0.1:1234"
 				w := httptest.NewRecorder()
+
 				h.ServeHTTP(w, req)
 				// TODO(mpl): predict and count the 200 VS the 429?
 			}
+
 			stop := time.Now()
 			elapsed := stop.Sub(start)
 			if test.config.Average == 0 {
@@ -131,14 +138,17 @@ func TestRateLimit(t *testing.T) {
 				}
 				return
 			}
+
 			// Assume allowed burst is initially consumed in an infinitesimal period of time
 			var expectedDuration time.Duration
 			if test.config.Average != 0 {
 				expectedDuration = time.Duration((int64(test.reqCount)-test.config.Burst+1)/test.config.Average) * time.Second
 			}
+
 			// Allow for a 1% leeway
 			minDuration := expectedDuration * 98 / 100
 			maxDuration := expectedDuration * 102 / 100
+
 			if elapsed < minDuration {
 				t.Fatalf("rate was faster than expected: %d requests in %v", reqCount, elapsed)
 			}
