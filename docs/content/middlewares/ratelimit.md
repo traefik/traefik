@@ -15,7 +15,6 @@ The RateLimit middleware ensures that services will receive a _fair_ number of r
 labels:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
-  		
 ```
 
 ```yaml tab="Kubernetes"
@@ -44,7 +43,6 @@ spec:
 labels:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
-  		
 ```
 
 ```toml tab="File (TOML)"
@@ -77,7 +75,6 @@ It defaults to 0, which means no rate limiting.
 ```yaml tab="Docker"
 labels:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-  		
 ```
 
 ```yaml tab="Kubernetes"
@@ -99,7 +96,6 @@ spec:
 ```yaml tab="Rancher"
 labels:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-  		
 ```
 
 ```toml tab="File (TOML)"
@@ -118,13 +114,12 @@ http:
 
 ### `burst`
 
-Burst is the maximum number of requests allowed to go through in the same
-arbitrarily small period of time. It defaults to 1.
+Burst is the maximum number of requests allowed to go through in the same arbitrarily small period of time.
+It defaults to 1.
 
 ```yaml tab="Docker"
 labels:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
-  		
 ```
 
 ```yaml tab="Kubernetes"
@@ -165,11 +160,9 @@ http:
 
 ### `sourceCriterion`
  
-SourceCriterion defines what criterion is used to group requests as originating
-from a common source. The precedence order is ipStrategy, then requestHeaderName,
-then requestHost.
-If none are set, the default is to use the request's remote address field (as an
-ipStrategy).
+SourceCriterion defines what criterion is used to group requests as originating from a common source.
+The precedence order is `ipStrategy`, then `requestHeaderName`, then `requestHost`.
+If none are set, the default is to use the request's remote address field (as an `ipStrategy`).
 
 #### `sourceCriterion.ipStrategy`
 
@@ -179,24 +172,25 @@ The `ipStrategy` option defines two parameters that sets how Traefik will determ
 
 The `depth` option tells Traefik to use the `X-Forwarded-For` header and take the IP located at the `depth` position (starting from the right).
 
+- If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP will be empty.
+- `depth` is ignored if its value is is lesser than or equal to 0.
+
 !!! note "Example of Depth & X-Forwarded-For"
 
     If `depth` was equal to 2, and the request `X-Forwarded-For` header was `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP would be `"10.0.0.1"` (at depth 4) but the IP used as the criterion would be `"12.0.0.1"` (`depth=2`).
 
-        | `X-Forwarded-For`                       | `depth` | clientIP     |
-        |-----------------------------------------|---------|--------------|
-        | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `1`     | `"13.0.0.1"` |
-        | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
-        | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
-
-!!! note
-
-    - If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP will be empty.
-    - `depth` is ignored if its value is is lesser than or equal to 0.
+    | `X-Forwarded-For`                       | `depth` | clientIP     |
+    |-----------------------------------------|---------|--------------|
+    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `1`     | `"13.0.0.1"` |
+    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
+    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
 ##### `ipStrategy.excludedIPs`
 
 `excludedIPs` tells Traefik to scan the `X-Forwarded-For` header and pick the first IP not in the list.
+
+!!! important
+    If `depth` is specified, `excludedIPs` is ignored.
 
 !!! note "Example of ExcludedIPs & X-Forwarded-For"
 
@@ -208,12 +202,9 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
     | `"10.0.0.1,11.0.0.1"`                   | `"10.0.0.1,11.0.0.1"` | `""`         |
 
-!!! important
-    If `depth` is specified, `excludedIPs` is ignored.
-
 ```yaml tab="Docker"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="Kubernetes"
@@ -232,12 +223,12 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```json tab="Marathon"
 "labels": {
-    "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
+  "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
 }
 ```
 
@@ -262,11 +253,11 @@ http:
 
 #### `sourceCriterion.requestHeaderName`
 
-requests having the same value for the given header are grouped as coming from the same source.
+Requests having the same value for the given header are grouped as coming from the same source.
 
 ```yaml tab="Docker"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
 ```
 
 ```yaml tab="Kubernetes"
@@ -282,12 +273,12 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
 ```
 
 ```json tab="Marathon"
 "labels": {
-    "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername": "username"
+  "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername": "username"
 }
 ```
 
@@ -309,11 +300,11 @@ http:
 
 #### `sourceCriterion.requestHost`
 
-whether to consider the request host as the source.
+Whether to consider the request host as the source.
 
 ```yaml tab="Docker"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -329,12 +320,12 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
 ```
 
 ```json tab="Marathon"
 "labels": {
-    "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost": "true"
+  "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost": "true"
 }
 ```
 
