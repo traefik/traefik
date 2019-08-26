@@ -122,7 +122,10 @@ func (m *Manager) getLoadBalancerMirrorServiceHandler(ctx context.Context, servi
 		if err != nil {
 			return nil, err
 		}
-		handler.AddMirror(mirrorHandler, mirrorConfig.Percent)
+		err = handler.AddMirror(mirrorHandler, mirrorConfig.Percent)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return handler, nil
 }

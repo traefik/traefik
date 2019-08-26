@@ -18,12 +18,15 @@ func TestMirroringOn100(t *testing.T) {
 	})
 	pool := safe.NewPool(context.Background())
 	mirror := New(handler, pool)
-	mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		atomic.AddInt32(&countMirror1, 1)
 	}), 10)
-	mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	assert.NoError(t, err)
+
+	err = mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		atomic.AddInt32(&countMirror2, 1)
 	}), 50)
+	assert.NoError(t, err)
 
 	for i := 0; i < 100; i++ {
 		mirror.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
@@ -44,12 +47,15 @@ func TestMirroringOn10(t *testing.T) {
 	})
 	pool := safe.NewPool(context.Background())
 	mirror := New(handler, pool)
-	mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		atomic.AddInt32(&countMirror1, 1)
 	}), 10)
-	mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	assert.NoError(t, err)
+
+	err = mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		atomic.AddInt32(&countMirror2, 1)
 	}), 50)
+	assert.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
 		mirror.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
@@ -61,4 +67,13 @@ func TestMirroringOn10(t *testing.T) {
 	val2 := atomic.LoadInt32(&countMirror2)
 	assert.Equal(t, 1, int(val1))
 	assert.Equal(t, 5, int(val2))
+}
+
+func TestInvalidPercent(t *testing.T) {
+	mirror := New(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), safe.NewPool(context.Background()))
+	err := mirror.AddMirror(nil, -1)
+	assert.Error(t, err)
+
+	err = mirror.AddMirror(nil, 101)
+	assert.Error(t, err)
 }

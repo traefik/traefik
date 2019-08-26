@@ -2,6 +2,7 @@ package mirror
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync"
 
@@ -69,8 +70,12 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 // AddMirror adds on httpHandler to mirror on.
-func (m *Mirroring) AddMirror(handler http.Handler, percent int) {
+func (m *Mirroring) AddMirror(handler http.Handler, percent int) error {
+	if percent < 0 || percent >= 100 {
+		return errors.New("percent must be between 0 and 100")
+	}
 	m.mirrorHandlers = append(m.mirrorHandlers, &mirrorHandler{Handler: handler, percent: percent})
+	return nil
 }
 
 type blackholeResponseWriter struct{}
