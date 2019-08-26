@@ -93,27 +93,33 @@ export default {
     },
     getSuccess (inPercent = false) {
       const num = this.data.total - (this.data.errors + this.data.warnings)
+      let result = 0
       if (inPercent) {
-        return Helps.getPercent(num, this.data.total).toFixed(0)
+        result = Helps.getPercent(num, this.data.total).toFixed(0)
       } else {
-        return num
+        result = num
       }
+      return isNaN(result) ? 0 : result
     },
     getWarnings (inPercent = false) {
       const num = this.data.warnings
+      let result = 0
       if (inPercent) {
-        return Helps.getPercent(num, this.data.total).toFixed(0)
+        result = Helps.getPercent(num, this.data.total).toFixed(0)
       } else {
-        return num
+        result = num
       }
+      return isNaN(result) ? 0 : result
     },
     getErrors (inPercent = false) {
       const num = this.data.errors
+      let result = 0
       if (inPercent) {
-        return Helps.getPercent(num, this.data.total).toFixed(0)
+        result = Helps.getPercent(num, this.data.total).toFixed(0)
       } else {
-        return num
+        result = num
       }
+      return isNaN(result) ? 0 : result
     },
     getData () {
       return [this.getSuccess(), this.getWarnings(), this.getErrors()]
