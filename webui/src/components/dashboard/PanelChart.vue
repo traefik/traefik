@@ -5,9 +5,6 @@
         <div class="col">
           <div class="text-h6 text-weight-bold">{{getName()}}</div>
         </div>
-        <!--div class="col-auto">
-          <q-btn :to="getUrl()" color="accent" dense flat icon-right="eva-arrow-forward-outline" no-caps label="Explore" size="md" class="text-weight-bold"/>
-        </div-->
       </div>
     </q-card-section>
     <q-card-section>
