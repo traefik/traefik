@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/integration/try"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -51,7 +51,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 					},
 					Services: map[string]*dynamic.Service{
 						"service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",

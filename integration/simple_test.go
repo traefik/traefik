@@ -2,17 +2,20 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/integration/try"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -563,7 +566,7 @@ func (s *SimpleSuite) TestServiceConfigErrors(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains(`["the service \"service1@file\" doesn't have any load balancer"]`))
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains(`["the service \"service1@file\" does not have any type defined"]`))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
@@ -571,4 +574,210 @@ func (s *SimpleSuite) TestServiceConfigErrors(c *check.C) {
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/services/service2@file", 1000*time.Millisecond, try.BodyContains(`"status":"enabled"`))
 	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestWRR(c *check.C) {
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	server1 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	server2 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+
+	file := s.adaptFile(c, "fixtures/wrr.toml", struct {
+		Server1 string
+		Server2 string
+	}{Server1: "http://" + server1, Server2: "http://" + server2})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("service1", "service2"))
+	c.Assert(err, checker.IsNil)
+
+	repartition := map[string]int{}
+	for i := 0; i < 4; i++ {
+		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+		c.Assert(err, checker.IsNil)
+
+		response, err := http.DefaultClient.Do(req)
+		c.Assert(err, checker.IsNil)
+		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+
+		body, err := ioutil.ReadAll(response.Body)
+		c.Assert(err, checker.IsNil)
+
+		if strings.Contains(string(body), server1) {
+			repartition[server1]++
+		}
+		if strings.Contains(string(body), server2) {
+			repartition[server2]++
+		}
+	}
+
+	c.Assert(repartition[server1], checker.Equals, 3)
+	c.Assert(repartition[server2], checker.Equals, 1)
+}
+
+func (s *SimpleSuite) TestWRRSticky(c *check.C) {
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	server1 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	server2 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+
+	file := s.adaptFile(c, "fixtures/wrr_sticky.toml", struct {
+		Server1 string
+		Server2 string
+	}{Server1: "http://" + server1, Server2: "http://" + server2})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("service1", "service2"))
+	c.Assert(err, checker.IsNil)
+
+	repartition := map[string]int{}
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+	c.Assert(err, checker.IsNil)
+	for i := 0; i < 4; i++ {
+
+		response, err := http.DefaultClient.Do(req)
+		c.Assert(err, checker.IsNil)
+		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+
+		for _, cookie := range response.Cookies() {
+			req.AddCookie(cookie)
+		}
+
+		body, err := ioutil.ReadAll(response.Body)
+		c.Assert(err, checker.IsNil)
+
+		if strings.Contains(string(body), server1) {
+			repartition[server1]++
+		}
+		if strings.Contains(string(body), server2) {
+			repartition[server2]++
+		}
+	}
+
+	c.Assert(repartition[server1], checker.Equals, 4)
+	c.Assert(repartition[server2], checker.Equals, 0)
+}
+
+func (s *SimpleSuite) TestMirror(c *check.C) {
+	var count, countMirror1, countMirror2 int32
+
+	main := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		atomic.AddInt32(&count, 1)
+	}))
+
+	mirror1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		atomic.AddInt32(&countMirror1, 1)
+	}))
+
+	mirror2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		atomic.AddInt32(&countMirror2, 1)
+	}))
+
+	mainServer := main.URL
+	mirror1Server := mirror1.URL
+	mirror2Server := mirror2.URL
+
+	file := s.adaptFile(c, "fixtures/mirror.toml", struct {
+		MainServer    string
+		Mirror1Server string
+		Mirror2Server string
+	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
+	c.Assert(err, checker.IsNil)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+	c.Assert(err, checker.IsNil)
+	for i := 0; i < 10; i++ {
+		response, err := http.DefaultClient.Do(req)
+		c.Assert(err, checker.IsNil)
+		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+	}
+
+	countTotal := atomic.LoadInt32(&count)
+	val1 := atomic.LoadInt32(&countMirror1)
+	val2 := atomic.LoadInt32(&countMirror2)
+
+	c.Assert(countTotal, checker.Equals, int32(10))
+	c.Assert(val1, checker.Equals, int32(1))
+	c.Assert(val2, checker.Equals, int32(5))
+}
+
+func (s *SimpleSuite) TestMirrorCanceled(c *check.C) {
+	var count, countMirror1, countMirror2 int32
+
+	main := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		atomic.AddInt32(&count, 1)
+		time.Sleep(time.Second * 2)
+	}))
+
+	mirror1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		atomic.AddInt32(&countMirror1, 1)
+	}))
+
+	mirror2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		atomic.AddInt32(&countMirror2, 1)
+	}))
+
+	mainServer := main.URL
+	mirror1Server := mirror1.URL
+	mirror2Server := mirror2.URL
+
+	file := s.adaptFile(c, "fixtures/mirror.toml", struct {
+		MainServer    string
+		Mirror1Server string
+		Mirror2Server string
+	}{MainServer: mainServer, Mirror1Server: mirror1Server, Mirror2Server: mirror2Server})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
+	c.Assert(err, checker.IsNil)
+
+	for i := 0; i < 5; i++ {
+		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+		c.Assert(err, checker.IsNil)
+
+		newCtx, _ := context.WithTimeout(req.Context(), time.Second)
+		req = req.WithContext(newCtx)
+		http.DefaultClient.Do(req)
+	}
+
+	countTotal := atomic.LoadInt32(&count)
+	val1 := atomic.LoadInt32(&countMirror1)
+	val2 := atomic.LoadInt32(&countMirror2)
+
+	c.Assert(countTotal, checker.Equals, int32(5))
+	c.Assert(val1, checker.Equals, int32(0))
+	c.Assert(val2, checker.Equals, int32(0))
 }

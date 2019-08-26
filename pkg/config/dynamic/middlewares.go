@@ -7,31 +7,29 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/containous/traefik/pkg/ip"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/ip"
 )
 
 // +k8s:deepcopy-gen=true
 
 // Middleware holds the Middleware configuration.
 type Middleware struct {
-	AddPrefix        *AddPrefix        `json:"addPrefix,omitempty" toml:"addPrefix,omitempty" yaml:"addPrefix,omitempty"`
-	StripPrefix      *StripPrefix      `json:"stripPrefix,omitempty" toml:"stripPrefix,omitempty" yaml:"stripPrefix,omitempty"`
-	StripPrefixRegex *StripPrefixRegex `json:"stripPrefixRegex,omitempty" toml:"stripPrefixRegex,omitempty" yaml:"stripPrefixRegex,omitempty"`
-	ReplacePath      *ReplacePath      `json:"replacePath,omitempty" toml:"replacePath,omitempty" yaml:"replacePath,omitempty"`
-	ReplacePathRegex *ReplacePathRegex `json:"replacePathRegex,omitempty" toml:"replacePathRegex,omitempty" yaml:"replacePathRegex,omitempty"`
-	Chain            *Chain            `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty"`
-	IPWhiteList      *IPWhiteList      `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty"`
-	Headers          *Headers          `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty"`
-	Errors           *ErrorPage        `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty"`
-	// TODO: disable temporarily
-	// RateLimit         *RateLimit         `json:"rateLimit,omitempty" toml:"rateLimit,omitempty" yaml:"rateLimit,omitempty"`
+	AddPrefix         *AddPrefix         `json:"addPrefix,omitempty" toml:"addPrefix,omitempty" yaml:"addPrefix,omitempty"`
+	StripPrefix       *StripPrefix       `json:"stripPrefix,omitempty" toml:"stripPrefix,omitempty" yaml:"stripPrefix,omitempty"`
+	StripPrefixRegex  *StripPrefixRegex  `json:"stripPrefixRegex,omitempty" toml:"stripPrefixRegex,omitempty" yaml:"stripPrefixRegex,omitempty"`
+	ReplacePath       *ReplacePath       `json:"replacePath,omitempty" toml:"replacePath,omitempty" yaml:"replacePath,omitempty"`
+	ReplacePathRegex  *ReplacePathRegex  `json:"replacePathRegex,omitempty" toml:"replacePathRegex,omitempty" yaml:"replacePathRegex,omitempty"`
+	Chain             *Chain             `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty"`
+	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty"`
+	Headers           *Headers           `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty"`
+	Errors            *ErrorPage         `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty"`
+	RateLimit         *RateLimit         `json:"rateLimit,omitempty" toml:"rateLimit,omitempty" yaml:"rateLimit,omitempty"`
 	RedirectRegex     *RedirectRegex     `json:"redirectRegex,omitempty" toml:"redirectRegex,omitempty" yaml:"redirectRegex,omitempty"`
 	RedirectScheme    *RedirectScheme    `json:"redirectScheme,omitempty" toml:"redirectScheme,omitempty" yaml:"redirectScheme,omitempty"`
 	BasicAuth         *BasicAuth         `json:"basicAuth,omitempty" toml:"basicAuth,omitempty" yaml:"basicAuth,omitempty"`
 	DigestAuth        *DigestAuth        `json:"digestAuth,omitempty" toml:"digestAuth,omitempty" yaml:"digestAuth,omitempty"`
 	ForwardAuth       *ForwardAuth       `json:"forwardAuth,omitempty" toml:"forwardAuth,omitempty" yaml:"forwardAuth,omitempty"`
-	MaxConn           *MaxConn           `json:"maxConn,omitempty" toml:"maxConn,omitempty" yaml:"maxConn,omitempty"`
+	InFlightReq       *InFlightReq       `json:"inFlightReq,omitempty" toml:"inFlightReq,omitempty" yaml:"inFlightReq,omitempty"`
 	Buffering         *Buffering         `json:"buffering,omitempty" toml:"buffering,omitempty" yaml:"buffering,omitempty"`
 	CircuitBreaker    *CircuitBreaker    `json:"circuitBreaker,omitempty" toml:"circuitBreaker,omitempty" yaml:"circuitBreaker,omitempty"`
 	Compress          *Compress          `json:"compress,omitempty" toml:"compress,omitempty" yaml:"compress,omitempty" label:"allowEmpty"`
@@ -219,10 +217,11 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 type IPStrategy struct {
 	Depth       int      `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
 	ExcludedIPs []string `json:"excludedIPs,omitempty" toml:"excludedIPs,omitempty" yaml:"excludedIPs,omitempty"`
+	// TODO(mpl): I think we should make RemoteAddr an explicit field. For one thing, it would yield better documentation.
 }
 
-// Get an IP selection strategy
-// if nil return the RemoteAddr strategy
+// Get an IP selection strategy.
+// If nil return the RemoteAddr strategy
 // else return a strategy base on the configuration using the X-Forwarded-For Header.
 // Depth override the ExcludedIPs
 func (s *IPStrategy) Get() (ip.Strategy, error) {
@@ -259,15 +258,17 @@ type IPWhiteList struct {
 
 // +k8s:deepcopy-gen=true
 
-// MaxConn holds maximum connection configuration.
-type MaxConn struct {
-	Amount        int64  `json:"amount,omitempty" toml:"amount,omitempty" yaml:"amount,omitempty"`
-	ExtractorFunc string `json:"extractorFunc,omitempty" toml:"extractorFunc,omitempty" yaml:"extractorFunc,omitempty"`
+// InFlightReq limits the number of requests being processed and served concurrently.
+type InFlightReq struct {
+	Amount          int64            `json:"amount,omitempty" toml:"amount,omitempty" yaml:"amount,omitempty"`
+	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty"`
 }
 
-// SetDefaults Default values for a MaxConn.
-func (m *MaxConn) SetDefaults() {
-	m.ExtractorFunc = "request.host"
+// SetDefaults Default values for a InFlightReq.
+func (i *InFlightReq) SetDefaults() {
+	i.SourceCriterion = &SourceCriterion{
+		RequestHost: true,
+	}
 }
 
 // +k8s:deepcopy-gen=true
@@ -280,25 +281,34 @@ type PassTLSClientCert struct {
 
 // +k8s:deepcopy-gen=true
 
-// Rate holds the rate limiting configuration for a specific time period.
-type Rate struct {
-	Period  types.Duration `json:"period,omitempty" toml:"period,omitempty" yaml:"period,omitempty"`
-	Average int64          `json:"average,omitempty" toml:"average,omitempty" yaml:"average,omitempty"`
-	Burst   int64          `json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty"`
+// SourceCriterion defines what criterion is used to group requests as originating from a common source.
+// The precedence order is IPStrategy, then RequestHeaderName.
+// If none are set, the default is to use the request's remote address field.
+type SourceCriterion struct {
+	IPStrategy        *IPStrategy `json:"ipStrategy" toml:"ipStrategy, omitempty"`
+	RequestHeaderName string      `json:"requestHeaderName,omitempty" toml:"requestHeaderName,omitempty" yaml:"requestHeaderName,omitempty"`
+	RequestHost       bool        `json:"requestHost,omitempty" toml:"requestHost,omitempty" yaml:"requestHost,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// RateLimit holds the rate limiting configuration for a given frontend.
+// RateLimit holds the rate limiting configuration for a given router.
 type RateLimit struct {
-	RateSet map[string]*Rate `json:"rateSet,omitempty" toml:"rateSet,omitempty" yaml:"rateSet,omitempty"`
-	// FIXME replace by ipStrategy see oxy and replace
-	ExtractorFunc string `json:"extractorFunc,omitempty" toml:"extractorFunc,omitempty" yaml:"extractorFunc,omitempty"`
+	// Average is the maximum rate, in requests/s, allowed for the given source.
+	// It defaults to 0, which means no rate limiting.
+	Average int64 `json:"average,omitempty" toml:"average,omitempty" yaml:"average,omitempty"`
+	// Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
+	// It defaults to 1.
+	Burst           int64            `json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty"`
+	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty"`
 }
 
-// SetDefaults Default values for a MaxConn.
+// SetDefaults sets the default values on a RateLimit.
 func (r *RateLimit) SetDefaults() {
-	r.ExtractorFunc = "request.host"
+	r.Burst = 1
+	r.SourceCriterion = &SourceCriterion{
+		IPStrategy: &IPStrategy{},
+	}
 }
 
 // +k8s:deepcopy-gen=true
@@ -398,30 +408,30 @@ type ClientTLS struct {
 }
 
 // CreateTLSConfig creates a TLS config from ClientTLS structures.
-func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
-	if clientTLS == nil {
+func (c *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
+	if c == nil {
 		return nil, nil
 	}
 
 	var err error
 	caPool := x509.NewCertPool()
 	clientAuth := tls.NoClientCert
-	if clientTLS.CA != "" {
+	if c.CA != "" {
 		var ca []byte
-		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
-			ca, err = ioutil.ReadFile(clientTLS.CA)
+		if _, errCA := os.Stat(c.CA); errCA == nil {
+			ca, err = ioutil.ReadFile(c.CA)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read CA. %s", err)
 			}
 		} else {
-			ca = []byte(clientTLS.CA)
+			ca = []byte(c.CA)
 		}
 
 		if !caPool.AppendCertsFromPEM(ca) {
 			return nil, fmt.Errorf("failed to parse CA")
 		}
 
-		if clientTLS.CAOptional {
+		if c.CAOptional {
 			clientAuth = tls.VerifyClientCertIfGiven
 		} else {
 			clientAuth = tls.RequireAndVerifyClientCert
@@ -429,16 +439,16 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 	}
 
 	cert := tls.Certificate{}
-	_, errKeyIsFile := os.Stat(clientTLS.Key)
+	_, errKeyIsFile := os.Stat(c.Key)
 
-	if !clientTLS.InsecureSkipVerify && (len(clientTLS.Cert) == 0 || len(clientTLS.Key) == 0) {
+	if !c.InsecureSkipVerify && (len(c.Cert) == 0 || len(c.Key) == 0) {
 		return nil, fmt.Errorf("TLS Certificate or Key file must be set when TLS configuration is created")
 	}
 
-	if len(clientTLS.Cert) > 0 && len(clientTLS.Key) > 0 {
-		if _, errCertIsFile := os.Stat(clientTLS.Cert); errCertIsFile == nil {
+	if len(c.Cert) > 0 && len(c.Key) > 0 {
+		if _, errCertIsFile := os.Stat(c.Cert); errCertIsFile == nil {
 			if errKeyIsFile == nil {
-				cert, err = tls.LoadX509KeyPair(clientTLS.Cert, clientTLS.Key)
+				cert, err = tls.LoadX509KeyPair(c.Cert, c.Key)
 				if err != nil {
 					return nil, fmt.Errorf("failed to load TLS keypair: %v", err)
 				}
@@ -447,7 +457,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 			}
 		} else {
 			if errKeyIsFile != nil {
-				cert, err = tls.X509KeyPair([]byte(clientTLS.Cert), []byte(clientTLS.Key))
+				cert, err = tls.X509KeyPair([]byte(c.Cert), []byte(c.Key))
 				if err != nil {
 					return nil, fmt.Errorf("failed to load TLS keypair: %v", err)
 
@@ -461,7 +471,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 	return &tls.Config{
 		Certificates:       []tls.Certificate{cert},
 		RootCAs:            caPool,
-		InsecureSkipVerify: clientTLS.InsecureSkipVerify,
+		InsecureSkipVerify: c.InsecureSkipVerify,
 		ClientAuth:         clientAuth,
 	}, nil
 }

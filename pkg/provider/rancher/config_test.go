@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +43,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -95,7 +95,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -105,7 +105,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 						"Test2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.2:80",
@@ -157,7 +157,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -170,7 +170,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 						"Test2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://128.0.0.1:80",
@@ -214,7 +214,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -302,7 +302,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -372,7 +372,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -425,7 +425,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -467,7 +467,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -652,7 +652,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",

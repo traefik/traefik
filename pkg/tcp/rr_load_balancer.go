@@ -4,7 +4,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 // RRLoadBalancer is a naive RoundRobin load balancer for TCP services

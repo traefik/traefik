@@ -1,28 +1,23 @@
 <template>
-  <div id="app">
-    <nav class="navbar" role="navigation" aria-label="main navigation">
-      <div class="navbar-brand">
-        <a class="navbar-item" href="/dashboard">
-          <img
-            src="./assets/images/traefik_logo@3x.svg"
-            alt="Traefik Webui"
-            width="112"
-            height="28"
-          />
-        </a>
-      </div>
-    </nav>
+  <div id="q-app">
     <router-view />
   </div>
 </template>
 
-<style lang="sass">
+<script>
+import { APP } from './_helpers/APP'
 
-@import 'styles/typography'
-@import 'styles/colors'
+export default {
+  name: 'App',
+  beforeCreate () {
+    // Set vue instance
+    APP.vue = () => this.$root
 
-html
-  font-family: $open-sans
-  height: 100%
-  background: $background
+    // debug
+    console.log('Quasar -> ', this.$q.version)
+  }
+}
+</script>
+
+<style>
 </style>

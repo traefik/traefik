@@ -11,7 +11,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X github.com/containous/traefik/pkg/version.Version={{.Version}} -X github.com/containous/traefik/pkg/version.Codename={{.Env.CODENAME}}  -X github.com/containous/traefik/pkg/version.BuildDate={{.Date}}
+      - -s -w -X github.com/containous/traefik/v2/pkg/version.Version={{.Version}} -X github.com/containous/traefik/v2/pkg/version.Codename={{.Env.CODENAME}} -X github.com/containous/traefik/v2/pkg/version.BuildDate={{.Date}}
 
     goos:
       - linux
@@ -40,16 +40,16 @@ builds:
 changelog:
   skip: true
 
-archive:
-  name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm
-    }}v{{ .Arm }}{{ end }}'
-  format: tar.gz
-  format_overrides:
-    - goos: windows
-      format: zip
-  files:
-    - LICENSE.md
-    - CHANGELOG.md
+archives:
+  - id: traefik
+    name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE.md
+      - CHANGELOG.md
 
 checksum:
   name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"

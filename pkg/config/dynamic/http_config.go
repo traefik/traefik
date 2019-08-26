@@ -3,7 +3,7 @@ package dynamic
 import (
 	"reflect"
 
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true
@@ -19,7 +19,9 @@ type HTTPConfiguration struct {
 
 // Service holds a service configuration (can only be of one type at the same time).
 type Service struct {
-	LoadBalancer *LoadBalancerService `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty"`
+	LoadBalancer *ServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty"`
+	Weighted     *WeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-"`
+	Mirroring    *Mirroring           `json:"mirroring,omitempty" toml:"mirroring,omitempty" yaml:"mirroring,omitempty" label:"-"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -45,9 +47,63 @@ type RouterTLSConfig struct {
 
 // +k8s:deepcopy-gen=true
 
-// LoadBalancerService holds the LoadBalancerService configuration.
-type LoadBalancerService struct {
-	Stickiness         *Stickiness         `json:"stickiness,omitempty" toml:"stickiness,omitempty" yaml:"stickiness,omitempty" label:"allowEmpty"`
+// Mirroring holds the Mirroring configuration.
+type Mirroring struct {
+	Service string          `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
+	Mirrors []MirrorService `json:"mirrors,omitempty" toml:"mirrors,omitempty" yaml:"mirrors,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// MirrorService holds the MirrorService configuration.
+type MirrorService struct {
+	Name    string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+	Percent int    `json:"percent,omitempty" toml:"percent,omitempty" yaml:"percent,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// WeightedRoundRobin is a weighted round robin load-balancer of services.
+type WeightedRoundRobin struct {
+	Services []WRRService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty"`
+	Sticky   *Sticky      `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// WRRService is a reference to a service load-balanced with weighted round robin.
+type WRRService struct {
+	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty"`
+}
+
+// SetDefaults Default values for a ServersLoadBalancer.
+func (w *WRRService) SetDefaults() {
+	defaultWeight := 1
+	w.Weight = &defaultWeight
+}
+
+// +k8s:deepcopy-gen=true
+
+// Sticky holds the sticky configuration.
+type Sticky struct {
+	Cookie *Cookie `json:"cookie,omitempty" toml:"cookie,omitempty" yaml:"cookie,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Cookie holds the sticky configuration based on cookie.
+type Cookie struct {
+	Name     string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+	Secure   bool   `json:"secure,omitempty" toml:"secure,omitempty" yaml:"secure,omitempty"`
+	HTTPOnly bool   `json:"httpOnly,omitempty" toml:"httpOnly,omitempty" yaml:"httpOnly,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ServersLoadBalancer holds the ServersLoadBalancer configuration.
+type ServersLoadBalancer struct {
+	Sticky             *Sticky             `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" label:"allowEmpty"`
 	Servers            []Server            `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
 	HealthCheck        *HealthCheck        `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty"`
 	PassHostHeader     bool                `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader"`
@@ -55,7 +111,7 @@ type LoadBalancerService struct {
 }
 
 // Mergeable tells if the given service is mergeable.
-func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool {
+func (l *ServersLoadBalancer) Mergeable(loadBalancer *ServersLoadBalancer) bool {
 	savedServers := l.Servers
 	defer func() {
 		l.Servers = savedServers
@@ -71,8 +127,8 @@ func (l *LoadBalancerService) Mergeable(loadBalancer *LoadBalancerService) bool 
 	return reflect.DeepEqual(l, loadBalancer)
 }
 
-// SetDefaults Default values for a LoadBalancerService.
-func (l *LoadBalancerService) SetDefaults() {
+// SetDefaults Default values for a ServersLoadBalancer.
+func (l *ServersLoadBalancer) SetDefaults() {
 	l.PassHostHeader = true
 }
 
@@ -81,15 +137,6 @@ func (l *LoadBalancerService) SetDefaults() {
 // ResponseForwarding holds configuration for the forward of the response.
 type ResponseForwarding struct {
 	FlushInterval string `json:"flushInterval,omitempty" toml:"flushInterval,omitempty" yaml:"flushInterval,omitempty"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// Stickiness holds the stickiness configuration.
-type Stickiness struct {
-	CookieName     string `json:"cookieName,omitempty" toml:"cookieName,omitempty" yaml:"cookieName,omitempty"`
-	SecureCookie   bool   `json:"secureCookie,omitempty" toml:"secureCookie,omitempty" yaml:"secureCookie,omitempty"`
-	HTTPOnlyCookie bool   `json:"httpOnlyCookie,omitempty" toml:"httpOnlyCookie,omitempty" yaml:"httpOnlyCookie,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

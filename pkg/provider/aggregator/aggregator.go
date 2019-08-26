@@ -3,12 +3,12 @@ package aggregator
 import (
 	"encoding/json"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/provider/file"
-	"github.com/containous/traefik/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
+	"github.com/containous/traefik/v2/pkg/provider/file"
+	"github.com/containous/traefik/v2/pkg/safe"
 )
 
 // ProviderAggregator aggregates providers.

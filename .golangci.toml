@@ -37,6 +37,7 @@
     "gochecknoinits",
     "gochecknoglobals",
     "bodyclose", # Too many false-positive and panics.
+    "typecheck", # v1.17.1 and Go1.13 => bug
   ]
 
 [issues]
@@ -65,7 +66,7 @@
     text = "Error return value of `rw.Write` is not checked"
  [[issues.exclude-rules]]
     path = "pkg/middlewares/recovery/recovery.go"
-    text = "`logger` can be `github.com/containous/traefik/vendor/github.com/stretchr/testify/assert.TestingT`"
+    text = "`logger` can be `github.com/stretchr/testify/assert.TestingT`"
  [[issues.exclude-rules]]
     path = "pkg/provider/docker/builder_test.go"
     text = "(U1000: func )?`(.+)` is unused"

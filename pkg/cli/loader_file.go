@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config/file"
-	"github.com/containous/traefik/pkg/config/flag"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/config/file"
+	"github.com/containous/traefik/v2/pkg/config/flag"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 // FileLoader loads a configuration from a file.

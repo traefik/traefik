@@ -7,11 +7,11 @@ import (
 	"net"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/config/label"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/provider/constraints"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/label"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
+	"github.com/containous/traefik/v2/pkg/provider/constraints"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -99,7 +99,7 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.Service)
-		lb := &dynamic.LoadBalancerService{}
+		lb := &dynamic.ServersLoadBalancer{}
 		lb.SetDefaults()
 		configuration.Services[serviceName] = &dynamic.Service{
 			LoadBalancer: lb,
@@ -171,7 +171,7 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 	return nil
 }
 
-func (p *Provider) addServer(ctx context.Context, container dockerData, loadBalancer *dynamic.LoadBalancerService) error {
+func (p *Provider) addServer(ctx context.Context, container dockerData, loadBalancer *dynamic.ServersLoadBalancer) error {
 	serverPort := getLBServerPort(loadBalancer)
 	ip, port, err := p.getIPPort(ctx, container, serverPort)
 	if err != nil {
@@ -291,7 +291,7 @@ func (p *Provider) getPortBinding(container dockerData, serverPort string) (*nat
 	return nil, fmt.Errorf("unable to find the external IP:Port for the container %q", container.Name)
 }
 
-func getLBServerPort(loadBalancer *dynamic.LoadBalancerService) string {
+func getLBServerPort(loadBalancer *dynamic.ServersLoadBalancer) string {
 	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
 		return loadBalancer.Servers[0].Port
 	}

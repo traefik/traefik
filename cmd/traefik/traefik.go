@@ -11,35 +11,27 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/autogen/genstatic"
-	"github.com/containous/traefik/cmd"
-	"github.com/containous/traefik/cmd/healthcheck"
-	cmdVersion "github.com/containous/traefik/cmd/version"
-	"github.com/containous/traefik/pkg/cli"
-	"github.com/containous/traefik/pkg/collector"
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider/acme"
-	"github.com/containous/traefik/pkg/provider/aggregator"
-	"github.com/containous/traefik/pkg/safe"
-	"github.com/containous/traefik/pkg/server"
-	"github.com/containous/traefik/pkg/server/router"
-	traefiktls "github.com/containous/traefik/pkg/tls"
-	"github.com/containous/traefik/pkg/version"
+	"github.com/containous/traefik/v2/autogen/genstatic"
+	"github.com/containous/traefik/v2/cmd"
+	"github.com/containous/traefik/v2/cmd/healthcheck"
+	cmdVersion "github.com/containous/traefik/v2/cmd/version"
+	"github.com/containous/traefik/v2/pkg/cli"
+	"github.com/containous/traefik/v2/pkg/collector"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider/acme"
+	"github.com/containous/traefik/v2/pkg/provider/aggregator"
+	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/server"
+	"github.com/containous/traefik/v2/pkg/server/router"
+	traefiktls "github.com/containous/traefik/v2/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/version"
 	"github.com/coreos/go-systemd/daemon"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/roundrobin"
 )
-
-func init() {
-	goDebug := os.Getenv("GODEBUG")
-	if len(goDebug) > 0 {
-		goDebug += ","
-	}
-	os.Setenv("GODEBUG", goDebug+"tls13=1")
-}
 
 func main() {
 	// traefik config inits

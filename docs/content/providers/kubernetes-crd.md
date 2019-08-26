@@ -198,11 +198,13 @@ spec:
     # "Parameter", etc, to support simpler forms of rule matching, but for now we
     # only support "Rule".
     kind: Rule
-    # Priority disambiguates rules of the same length, for route matching.
+    # (optional) Priority disambiguates rules of the same length, for route matching.
     priority: 12
     services:
     - name: whoami
       port: 80
+      # (default 1) A weight used by the weighted round-robin strategy (WRR).  
+      weight: 1
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stvp/go-udp-testing"
 )
 

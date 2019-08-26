@@ -1,0 +1,22 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+  - match: Host(`foo.com`) && PathPrefix(`/foo`)
+    kind: Rule
+    priority: 12
+    services:
+    - name: whoami
+      port: 80
+      weight: 10
+    - name: whoami2
+      port: 8080
+      weight: 0
+

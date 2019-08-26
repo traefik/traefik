@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 // TraceNameHashLength defines the number of characters to use from the head of the generated hash.

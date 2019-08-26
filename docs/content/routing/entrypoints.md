@@ -128,7 +128,11 @@ entryPoints:
 
 ## ProxyProtocol
 
-Traefik supports [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt).
+Traefik supports [ProxyProtocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2.
+
+If proxyprotocol header parsing is enabled for the entry point, this entry point can accept connections with or without proxyprotocol headers.
+
+If the proxyprotocol header is passed, then the version is determined automatically.
 
 ??? example "Enabling Proxy Protocol with Trusted IPs" 
 

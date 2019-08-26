@@ -8,23 +8,23 @@ import (
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/metrics"
-	"github.com/containous/traefik/pkg/middlewares/accesslog"
-	metricsmiddleware "github.com/containous/traefik/pkg/middlewares/metrics"
-	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
-	"github.com/containous/traefik/pkg/middlewares/tracing"
-	"github.com/containous/traefik/pkg/responsemodifiers"
-	"github.com/containous/traefik/pkg/server/middleware"
-	"github.com/containous/traefik/pkg/server/router"
-	routertcp "github.com/containous/traefik/pkg/server/router/tcp"
-	"github.com/containous/traefik/pkg/server/service"
-	"github.com/containous/traefik/pkg/server/service/tcp"
-	tcpCore "github.com/containous/traefik/pkg/tcp"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/metrics"
+	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
+	metricsmiddleware "github.com/containous/traefik/v2/pkg/middlewares/metrics"
+	"github.com/containous/traefik/v2/pkg/middlewares/requestdecorator"
+	"github.com/containous/traefik/v2/pkg/middlewares/tracing"
+	"github.com/containous/traefik/v2/pkg/responsemodifiers"
+	"github.com/containous/traefik/v2/pkg/server/middleware"
+	"github.com/containous/traefik/v2/pkg/server/router"
+	routertcp "github.com/containous/traefik/v2/pkg/server/router/tcp"
+	"github.com/containous/traefik/v2/pkg/server/service"
+	"github.com/containous/traefik/v2/pkg/server/service/tcp"
+	tcpCore "github.com/containous/traefik/v2/pkg/tcp"
 	"github.com/eapache/channels"
+	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
@@ -97,7 +97,7 @@ func (s *Server) createTCPRouters(ctx context.Context, configuration *runtime.Co
 
 // createHTTPHandlers returns, for the given configuration and entryPoints, the HTTP handlers for non-TLS connections, and for the TLS ones. the given configuration must not be nil. its fields will get mutated.
 func (s *Server) createHTTPHandlers(ctx context.Context, configuration *runtime.Configuration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
-	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper, s.metricsRegistry)
+	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper, s.metricsRegistry, s.routinesPool)
 	middlewaresBuilder := middleware.NewBuilder(configuration.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(configuration.Middlewares)
 	routerManager := router.NewManager(configuration, serviceManager, middlewaresBuilder, responseModifierFactory)

@@ -54,13 +54,7 @@ The `Services` are responsible for configuring how to reach the actual services 
 
 ## Configuring HTTP Services
 
-### General
-
-Currently, `LoadBalancer` is the only supported kind of HTTP `Service` (see below).
-However, since Traefik is an ever evolving project, other kind of HTTP Services will be available in the future,
-reason why you have to specify it. 
-
-### Load Balancer
+### Servers Load Balancer
 
 The load balancers are able to load balance the requests between multiple instances of your programs. 
 
@@ -161,7 +155,7 @@ On subsequent requests, the client is forwarded to the same server.
     ```toml tab="TOML"
     [http.services]
       [http.services.my-service]
-        [http.services.my-service.loadBalancer.stickiness]
+        [http.services.my-service.loadBalancer.sticky.cookie]
     ```
     
     ```yaml tab="YAML"
@@ -169,18 +163,19 @@ On subsequent requests, the client is forwarded to the same server.
       services:
         my-service:
           loadBalancer:
-            stickiness: {}
+            sticky:
+             cookie: {}
     ```
 
-??? example "Adding Stickiness with a Custom Cookie Name"
+??? example "Adding Stickiness with custom Options"
 
     ```toml tab="TOML"
     [http.services]
       [http.services.my-service]
-        [http.services.my-service.loadBalancer.stickiness]
-          cookieName = "my_stickiness_cookie_name"
-          secureCookie = true
-          httpOnlyCookie = true
+        [http.services.my-service.loadBalancer.sticky.cookie]
+          name = "my_sticky_cookie_name"
+          secure = true
+          httpOnly = true
     ```
 
     ```yaml tab="YAML"
@@ -188,10 +183,11 @@ On subsequent requests, the client is forwarded to the same server.
       services:
         my-service:
           loadBalancer:
-            stickiness:
-              cookieName: my_stickiness_cookie_name
-              secureCookie: true
-              httpOnlyCookie: true
+            sticky:
+              cookie:
+                name: my_sticky_cookie_name
+                secure: true
+                httpOnly: true
     ```
 
 #### Health Check
@@ -305,6 +301,104 @@ Below are the available options for the health check mechanism:
                 My-Custom-Header: foo
                 My-Header: bar
     ```
+
+### Weighted Round Robin (service)
+
+The WRR is able to load balance the requests between multiple services based on weights.
+
+This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
+
+This strategy can be defined only with [File](../../providers/file.md).
+
+```toml tab="TOML"
+[http.services]
+  [http.services.canary]
+    [[http.services.canary.weighted.services]]
+      name = "appv1"
+      weight = 3
+    [[http.services.canary.weighted.services]]
+      name = "appv2"
+      weight = 1
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
+```yaml tab="YAML"
+http:
+  services:
+    canary:
+      weighted:
+        services:
+        - name: appv1
+          weight: 3
+        - name: appv2
+          weight: 1
+
+    appv1:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    appv2:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+### Mirroring (service)
+
+The mirroring is able to mirror requests sent to a service to other services.
+
+This strategy can be defined only with [File](../../providers/file.md).
+
+```toml tab="TOML"
+[http.services]
+  [http.services.mirroring]
+    [http.services.mirroring.mirroring]
+      service = "app"
+    [[http.services.mirroring.mirroring.mirrors]]
+      name = "mirror"
+      percent = 10
+
+  [http.services.app]
+    [http.services.app.loadBalancer]
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.mirror]
+    [http.services.mirror.loadBalancer]
+      [[http.services.mirror.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
+```yaml tab="YAML"
+http:
+  services:
+    mirroring:
+      mirroring:
+        service: app
+        mirrors:
+        - name: mirror
+          percent: 10
+
+    app:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    mirror:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-2/"
+```
 
 ## Configuring TCP Services
 

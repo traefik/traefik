@@ -4,7 +4,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 // Proxy forwards a TCP request to a TCP service

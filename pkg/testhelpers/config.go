@@ -1,7 +1,7 @@
 package testhelpers
 
 import (
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 )
 
 // BuildConfiguration is a helper to create a configuration.
@@ -50,11 +50,11 @@ func WithServiceName(serviceName string) func(*dynamic.Router) {
 }
 
 // WithLoadBalancerServices is a helper to create a configuration.
-func WithLoadBalancerServices(opts ...func(service *dynamic.LoadBalancerService) string) func(*dynamic.HTTPConfiguration) {
+func WithLoadBalancerServices(opts ...func(service *dynamic.ServersLoadBalancer) string) func(*dynamic.HTTPConfiguration) {
 	return func(c *dynamic.HTTPConfiguration) {
 		c.Services = make(map[string]*dynamic.Service)
 		for _, opt := range opts {
-			b := &dynamic.LoadBalancerService{}
+			b := &dynamic.ServersLoadBalancer{}
 			name := opt(b)
 			c.Services[name] = &dynamic.Service{
 				LoadBalancer: b,
@@ -64,8 +64,8 @@ func WithLoadBalancerServices(opts ...func(service *dynamic.LoadBalancerService)
 }
 
 // WithService is a helper to create a configuration.
-func WithService(name string, opts ...func(*dynamic.LoadBalancerService)) func(*dynamic.LoadBalancerService) string {
-	return func(r *dynamic.LoadBalancerService) string {
+func WithService(name string, opts ...func(*dynamic.ServersLoadBalancer)) func(*dynamic.ServersLoadBalancer) string {
+	return func(r *dynamic.ServersLoadBalancer) string {
 		for _, opt := range opts {
 			opt(r)
 		}
@@ -117,8 +117,8 @@ func WithRule(rule string) func(*dynamic.Router) {
 }
 
 // WithServers is a helper to create a configuration.
-func WithServers(opts ...func(*dynamic.Server)) func(*dynamic.LoadBalancerService) {
-	return func(b *dynamic.LoadBalancerService) {
+func WithServers(opts ...func(*dynamic.Server)) func(*dynamic.ServersLoadBalancer) {
+	return func(b *dynamic.ServersLoadBalancer) {
 		for _, opt := range opts {
 			server := dynamic.Server{}
 			opt(&server)
@@ -137,11 +137,11 @@ func WithServer(url string, opts ...func(*dynamic.Server)) func(*dynamic.Server)
 	}
 }
 
-// WithStickiness is a helper to create a configuration.
-func WithStickiness(cookieName string) func(*dynamic.LoadBalancerService) {
-	return func(b *dynamic.LoadBalancerService) {
-		b.Stickiness = &dynamic.Stickiness{
-			CookieName: cookieName,
+// WithSticky is a helper to create a configuration.
+func WithSticky(cookieName string) func(*dynamic.ServersLoadBalancer) {
+	return func(b *dynamic.ServersLoadBalancer) {
+		b.Sticky = &dynamic.Sticky{
+			Cookie: &dynamic.Cookie{Name: cookieName},
 		}
 	}
 }

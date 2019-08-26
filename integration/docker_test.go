@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/v2/integration/try"
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/go-check/check"
 	d "github.com/libkermit/docker"

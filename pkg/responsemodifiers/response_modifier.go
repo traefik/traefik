@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
 )
 
 // NewBuilder creates a builder.

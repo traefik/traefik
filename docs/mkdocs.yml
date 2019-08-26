@@ -102,7 +102,7 @@ nav:
       - 'ForwardAuth': 'middlewares/forwardauth.md'
       - 'Headers': 'middlewares/headers.md'
       - 'IpWhitelist': 'middlewares/ipwhitelist.md'
-      - 'Maxconn': 'middlewares/maxconnection.md'
+      - 'InFlightReq': 'middlewares/inflightreq.md'
       - 'PassTLSClientCert': 'middlewares/passtlsclientcert.md'
       - 'RateLimit': 'middlewares/ratelimit.md'
       - 'RedirectRegex': 'middlewares/redirectregex.md'

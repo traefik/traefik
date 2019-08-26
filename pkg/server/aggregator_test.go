@@ -3,8 +3,8 @@ package server
 import (
 	"testing"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/stretchr/testify/assert"
 )
 

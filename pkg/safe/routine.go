@@ -6,8 +6,8 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/cenkalti/backoff"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/cenkalti/backoff/v3"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 type routine struct {
@@ -59,9 +59,20 @@ func (p *Pool) GoCtx(goroutine routineCtx) {
 	p.routinesCtx = append(p.routinesCtx, goroutine)
 	p.waitGroup.Add(1)
 	Go(func() {
+		defer p.waitGroup.Done()
 		goroutine(p.ctx)
-		p.waitGroup.Done()
 	})
+	p.lock.Unlock()
+}
+
+// addGo adds a recoverable goroutine, and can be stopped with stop chan
+func (p *Pool) addGo(goroutine func(stop chan bool)) {
+	p.lock.Lock()
+	newRoutine := routine{
+		goroutine: goroutine,
+		stop:      make(chan bool, 1),
+	}
+	p.routines = append(p.routines, newRoutine)
 	p.lock.Unlock()
 }
 
@@ -75,8 +86,8 @@ func (p *Pool) Go(goroutine func(stop chan bool)) {
 	p.routines = append(p.routines, newRoutine)
 	p.waitGroup.Add(1)
 	Go(func() {
+		defer p.waitGroup.Done()
 		goroutine(newRoutine.stop)
-		p.waitGroup.Done()
 	})
 	p.lock.Unlock()
 }
@@ -112,16 +123,16 @@ func (p *Pool) Start() {
 		p.waitGroup.Add(1)
 		p.routines[i].stop = make(chan bool, 1)
 		Go(func() {
+			defer p.waitGroup.Done()
 			p.routines[i].goroutine(p.routines[i].stop)
-			p.waitGroup.Done()
 		})
 	}
 
 	for _, routine := range p.routinesCtx {
 		p.waitGroup.Add(1)
 		Go(func() {
+			defer p.waitGroup.Done()
 			routine(p.ctx)
-			p.waitGroup.Done()
 		})
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
@@ -56,7 +56,7 @@ func TestDefaultRule(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -105,7 +105,7 @@ func TestDefaultRule(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -156,7 +156,7 @@ func TestDefaultRule(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -200,7 +200,7 @@ func TestDefaultRule(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -244,7 +244,7 @@ func TestDefaultRule(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -293,7 +293,7 @@ func TestDefaultRule(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -376,7 +376,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -444,7 +444,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -454,7 +454,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 						"Test2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.2:80",
@@ -520,7 +520,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -573,7 +573,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -625,7 +625,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -669,7 +669,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -726,7 +726,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -773,7 +773,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -783,7 +783,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 						"Service2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -990,7 +990,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1007,13 +1007,13 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with MaxConn in label (default value)",
+			desc: "one container with InFlightReq in label (default value)",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1042,7 +1042,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1054,9 +1054,11 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"Middleware1": {
-							MaxConn: &dynamic.MaxConn{
-								Amount:        42,
-								ExtractorFunc: "request.host",
+							InFlightReq: &dynamic.InFlightReq{
+								Amount: 42,
+								SourceCriterion: &dynamic.SourceCriterion{
+									RequestHost: true,
+								},
 							},
 						},
 					},
@@ -1071,7 +1073,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1090,7 +1092,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1119,15 +1121,17 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"Middleware1": {
-							MaxConn: &dynamic.MaxConn{
-								Amount:        42,
-								ExtractorFunc: "request.host",
+							InFlightReq: &dynamic.InFlightReq{
+								Amount: 42,
+								SourceCriterion: &dynamic.SourceCriterion{
+									RequestHost: true,
+								},
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1151,7 +1155,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1170,7 +1174,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "41",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1200,7 +1204,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1224,7 +1228,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1243,7 +1247,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "41",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1262,7 +1266,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "40",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "40",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1292,7 +1296,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1363,7 +1367,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1450,7 +1454,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1526,7 +1530,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1592,7 +1596,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1602,7 +1606,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 						"Test2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.2:80",
@@ -1652,7 +1656,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1703,7 +1707,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "h2c://127.0.0.1:8080",
@@ -1749,7 +1753,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -1759,7 +1763,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 						"Service2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:8080",
@@ -1809,7 +1813,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{},
@@ -1974,7 +1978,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -2035,7 +2039,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Services: map[string]*dynamic.Service{
 						"Test": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
@@ -2278,7 +2282,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",

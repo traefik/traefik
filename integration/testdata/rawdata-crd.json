@@ -82,11 +82,11 @@
 		}
 	},
 	"tcpRouters": {
-		"default/test3.crd-673acf455cb2dab0b43a@kubernetescrd": {
+		"default/test3.route-673acf455cb2dab0b43a@kubernetescrd": {
 			"entryPoints": [
 				"footcp"
 			],
-			"service": "default/test3.crd-673acf455cb2dab0b43a",
+			"service": "default/test3.route-673acf455cb2dab0b43a",
 			"rule": "HostSNI(`*`)",
 			"tls": {
 				"passthrough": false,
@@ -96,7 +96,7 @@
 		}
 	},
 	"tcpServices": {
-		"default/test3.crd-673acf455cb2dab0b43a@kubernetescrd": {
+		"default/test3.route-673acf455cb2dab0b43a@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
@@ -109,7 +109,7 @@
 			},
 			"status": "enabled",
 			"usedBy": [
-				"default/test3.crd-673acf455cb2dab0b43a@kubernetescrd"
+				"default/test3.route-673acf455cb2dab0b43a@kubernetescrd"
 			]
 		}
 	}

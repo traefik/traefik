@@ -27,8 +27,8 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
-	v1alpha1 "github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
+	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	rest "k8s.io/client-go/rest"
 )
 

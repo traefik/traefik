@@ -2,19 +2,19 @@
 
 set -e
 
-curl -O https://dl.google.com/go/go1.12.linux-amd64.tar.gz
+curl -O https://dl.google.com/go/go"${GO_VERSION}".linux-amd64.tar.gz
 
-tar -xvf go1.12.linux-amd64.tar.gz
-rm -rf go1.12.linux-amd64.tar.gz
+tar -xvf go"${GO_VERSION}".linux-amd64.tar.gz
+rm -rf go"${GO_VERSION}".linux-amd64.tar.gz
 
-sudo mkdir -p /usr/local/golang/1.12/go
-sudo mv go /usr/local/golang/1.12/
+sudo mkdir -p /usr/local/golang/"${GO_VERSION}"/go
+sudo mv go /usr/local/golang/"${GO_VERSION}"/
 
 sudo rm /usr/local/bin/go
-sudo chmod +x /usr/local/golang/1.12/go/bin/go
-sudo ln -s /usr/local/golang/1.12/go/bin/go /usr/local/bin/go
+sudo chmod +x /usr/local/golang/"${GO_VERSION}"/go/bin/go
+sudo ln -s /usr/local/golang/"${GO_VERSION}"/go/bin/go /usr/local/bin/go
 
-export GOROOT="/usr/local/golang/1.12/go"
-export GOTOOLDIR="/usr/local/golang/1.12/go/pkg/tool/linux_amd64"
+export GOROOT="/usr/local/golang/${GO_VERSION}/go"
+export GOTOOLDIR="/usr/local/golang/${GO_VERSION}/go/pkg/tool/linux_amd64"
 
 go version

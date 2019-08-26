@@ -1,0 +1,109 @@
+@import "./fonts";
+@import "./variables";
+@import "./mixins";
+
+// width
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+// Track
+::-webkit-scrollbar-track {
+  border-left: 1px solid #404141;
+  background: #2E2E2E;
+}
+
+// Handle
+::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: #6D6D6D;
+}
+
+// Handle on hover
+::-webkit-scrollbar-thumb:hover {
+  background: #979797;
+}
+
+body {
+  /* If you need to support browser without CSS var support (<= IE11) */
+  min-height: calc(100vh - var(--vh-offset, 0px));
+  /* enable vh fix */
+
+  font-family: 'Nunito', 'Roboto', sans-serif;
+
+  background-color: $app-bg;
+}
+
+// Custom colors
+.text-app-grey {
+  color: $app-text-grey;
+}
+
+// Helps
+.xs-text-center {
+  @include respond-to(sm, max) {
+    text-align: center;
+  }
+}
+
+// Commons
+.q-icon.eva{
+  margin-bottom: 1.5px;
+}
+
+.app-title {
+  font-size: 20px;
+  font-weight: 700;
+  .q-icon {
+    font-size: 24px;
+  }
+  &-label {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  .q-icon + &-label {
+    margin-left: 8px;
+  }
+}
+
+// Boxed
+.app-boxed {
+  margin-left: auto;
+  margin-right: auto;
+  &-md {
+    max-width: 100%;
+    @include respond-to(sm) {
+      max-width: 600px;
+    }
+  }
+  &-lg {
+    max-width: 100%;
+    @include respond-to(md) {
+      max-width: 1024px;
+    }
+  }
+  &-xl {
+    max-width: 100%;
+    @include respond-to(lg) {
+      max-width: 1440px;
+    }
+  }
+}
+
+// Section
+.app-section {
+  display: block;
+  &-wrap {
+    display: block;
+  }
+}
+
+// Toolbar
+.q-toolbar {
+  padding: 0 16px;
+}
+
+// Card
+.q-card {
+  border-radius: 8px;
+}

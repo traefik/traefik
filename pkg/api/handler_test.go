@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,7 +37,7 @@ func TestHandler_RawData(t *testing.T) {
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1",

@@ -1,6 +1,7 @@
 package ip
 
 import (
+	"net"
 	"net/http"
 	"strings"
 )
@@ -17,9 +18,13 @@ type Strategy interface {
 // RemoteAddrStrategy a strategy that always return the remote address
 type RemoteAddrStrategy struct{}
 
-// GetIP return the selected IP
+// GetIP returns the selected IP
 func (s *RemoteAddrStrategy) GetIP(req *http.Request) string {
-	return req.RemoteAddr
+	ip, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		return req.RemoteAddr
+	}
+	return ip
 }
 
 // DepthStrategy a strategy based on the depth inside the X-Forwarded-For from right to left

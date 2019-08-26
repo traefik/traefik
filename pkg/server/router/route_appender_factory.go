@@ -3,11 +3,11 @@ package router
 import (
 	"context"
 
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/provider/acme"
-	"github.com/containous/traefik/pkg/server/middleware"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/provider/acme"
+	"github.com/containous/traefik/v2/pkg/server/middleware"
+	"github.com/containous/traefik/v2/pkg/types"
 )
 
 // NewRouteAppenderFactory Creates a new RouteAppenderFactory

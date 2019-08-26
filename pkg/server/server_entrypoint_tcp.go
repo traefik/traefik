@@ -8,14 +8,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/armon/go-proxyproto"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/ip"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/containous/traefik/pkg/middlewares/forwardedheaders"
-	"github.com/containous/traefik/pkg/safe"
-	"github.com/containous/traefik/pkg/tcp"
+	proxyprotocol "github.com/c0va23/go-proxyprotocol"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/ip"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/middlewares/forwardedheaders"
+	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/tcp"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -240,10 +240,9 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 
 	log.FromContext(ctx).Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
 
-	return &proxyproto.Listener{
-		Listener:    listener,
-		SourceCheck: sourceCheck,
-	}, nil
+	return proxyprotocol.NewDefaultListener(listener).
+		WithSourceChecker(sourceCheck).
+		WithLogger(log.FromContext(ctx)), nil
 }
 
 func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {

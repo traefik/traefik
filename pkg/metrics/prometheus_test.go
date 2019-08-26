@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
-	th "github.com/containous/traefik/pkg/testhelpers"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	th "github.com/containous/traefik/v2/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"

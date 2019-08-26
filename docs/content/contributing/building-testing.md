@@ -28,7 +28,7 @@ Successfully tagged traefik-webui:latest
 [...]
 docker build  -t "traefik-dev:4475--feature-documentation" -f build.Dockerfile .
 Sending build context to Docker daemon    279MB
-Step 1/10 : FROM golang:1.12-alpine
+Step 1/10 : FROM golang:1.13rc1-alpine
  ---> f4bfb3d22bda
 [...]
 Successfully built 5c3c1a911277
@@ -58,7 +58,10 @@ PRE_TARGET= make test-unit
 
 ### Method 2: Using `go`
 
-You need `go` v1.12+.
+Requirements:
+
+- `go` v1.13+
+- environment variable `GO111MODULE=on`
 
 !!! tip "Source Directory"
 
@@ -100,7 +103,7 @@ Beforehand, you need to get `go-bindata` (the first time) in order to be able to
 cd ~/go/src/github.com/containous/traefik
 
 # Get go-bindata. (Important: the ellipses are required.)
-go get github.com/containous/go-bindata/...
+GO111MODULE=off go get github.com/containous/go-bindata/...
 
 # Let's build
 
@@ -117,29 +120,6 @@ You will find the Traefik executable (`traefik`) in the `~/go/src/github.com/con
 ### Updating the templates
 
 If you happen to update the provider's templates (located in `/templates`), you must run `go generate` to update the `autogen` package.
-
-### Setting up dependency management
-
-The [dep](https://github.com/golang/dep) command is not required for building;
-however, it is necessary if you need to update the dependencies (i.e., add, update, or remove third-party packages).
-
-You need [dep](https://github.com/golang/dep) >= 0.5.4.
-
-If you want to add a dependency, use `dep ensure -add` to have [dep](https://github.com/golang/dep) put it into the vendor folder and update the dep manifest/lock files (`Gopkg.toml` and `Gopkg.lock`, respectively).
-
-A following `make dep-prune` run should be triggered to trim down the size of the vendor folder.
-The final result must be committed into VCS.
-
-Here's a full example using dep to add a new dependency:
-
-```bash
-# install the new main dependency github.com/foo/bar and minimize vendor size
-$ dep ensure -add github.com/foo/bar
-# generate (Only required to integrate other components such as web dashboard)
-$ go generate
-# Standard go build
-$ go build ./cmd/traefik
-```
 
 ## Testing
 

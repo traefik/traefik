@@ -7,19 +7,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/provider/docker"
-	"github.com/containous/traefik/pkg/provider/file"
-	"github.com/containous/traefik/pkg/provider/kubernetes/crd"
-	"github.com/containous/traefik/pkg/provider/kubernetes/ingress"
-	"github.com/containous/traefik/pkg/provider/marathon"
-	"github.com/containous/traefik/pkg/provider/rancher"
-	"github.com/containous/traefik/pkg/provider/rest"
-	"github.com/containous/traefik/pkg/tracing/jaeger"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/provider/docker"
+	"github.com/containous/traefik/v2/pkg/provider/file"
+	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd"
+	"github.com/containous/traefik/v2/pkg/provider/kubernetes/ingress"
+	"github.com/containous/traefik/v2/pkg/provider/marathon"
+	"github.com/containous/traefik/v2/pkg/provider/rancher"
+	"github.com/containous/traefik/v2/pkg/provider/rest"
+	"github.com/containous/traefik/v2/pkg/tracing/jaeger"
+	"github.com/containous/traefik/v2/pkg/types"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,7 +55,7 @@ func TestHandler_Overview(t *testing.T) {
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
 							},
 						},
@@ -63,7 +63,7 @@ func TestHandler_Overview(t *testing.T) {
 					},
 					"bar-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
 							},
 						},
@@ -71,7 +71,7 @@ func TestHandler_Overview(t *testing.T) {
 					},
 					"fii-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{{URL: "http://127.0.0.1"}},
 							},
 						},

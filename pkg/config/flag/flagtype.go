@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config/parser"
+	"github.com/containous/traefik/v2/pkg/config/parser"
 )
 
 func getFlagTypes(element interface{}) map[string]reflect.Kind {

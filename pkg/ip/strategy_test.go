@@ -16,7 +16,7 @@ func TestRemoteAddrStrategy_GetIP(t *testing.T) {
 	}{
 		{
 			desc:     "Use RemoteAddr",
-			expected: "192.0.2.1:1234",
+			expected: "192.0.2.1",
 		},
 	}
 

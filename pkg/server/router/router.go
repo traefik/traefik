@@ -6,16 +6,16 @@ import (
 	"net/http"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/middlewares/accesslog"
-	"github.com/containous/traefik/pkg/middlewares/recovery"
-	"github.com/containous/traefik/pkg/middlewares/tracing"
-	"github.com/containous/traefik/pkg/responsemodifiers"
-	"github.com/containous/traefik/pkg/rules"
-	"github.com/containous/traefik/pkg/server/internal"
-	"github.com/containous/traefik/pkg/server/middleware"
-	"github.com/containous/traefik/pkg/server/service"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
+	"github.com/containous/traefik/v2/pkg/middlewares/recovery"
+	"github.com/containous/traefik/v2/pkg/middlewares/tracing"
+	"github.com/containous/traefik/v2/pkg/responsemodifiers"
+	"github.com/containous/traefik/v2/pkg/rules"
+	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/middleware"
+	"github.com/containous/traefik/v2/pkg/server/service"
 )
 
 const (

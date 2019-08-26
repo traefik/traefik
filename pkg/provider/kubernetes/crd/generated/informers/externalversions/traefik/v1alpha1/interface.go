@@ -27,7 +27,7 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	internalinterfaces "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

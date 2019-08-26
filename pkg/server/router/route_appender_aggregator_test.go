@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/containous/alice"
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/ping"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/ping"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
 

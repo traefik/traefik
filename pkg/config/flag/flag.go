@@ -2,7 +2,7 @@
 package flag
 
 import (
-	"github.com/containous/traefik/pkg/config/parser"
+	"github.com/containous/traefik/v2/pkg/config/parser"
 )
 
 // Decode decodes the given flag arguments into the given element.

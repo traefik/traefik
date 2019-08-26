@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/v2/integration/try"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -21,10 +21,11 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
 	gatewayIP := s.composeProject.Container(c, "haproxy").NetworkSettings.Gateway
 	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
 	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+
 	file := s.adaptFile(c, "fixtures/proxy-protocol/with.toml", struct {
 		HaproxyIP string
 		WhoamiIP  string
-	}{haproxyIP, whoamiIP})
+	}{HaproxyIP: haproxyIP, WhoamiIP: whoamiIP})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -33,18 +34,43 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://"+haproxyIP+"/whoami", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("X-Forwarded-For: "+gatewayIP))
-	display(c)
+	err = try.GetRequest("http://"+haproxyIP+"/whoami", 500*time.Millisecond,
+		try.StatusCodeIs(http.StatusOK),
+		try.BodyContains("X-Forwarded-For: "+gatewayIP))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
+	gatewayIP := s.composeProject.Container(c, "haproxy").NetworkSettings.Gateway
+	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
+	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+
+	file := s.adaptFile(c, "fixtures/proxy-protocol/with.toml", struct {
+		HaproxyIP string
+		WhoamiIP  string
+	}{HaproxyIP: haproxyIP, WhoamiIP: whoamiIP})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://"+haproxyIP+":81/whoami", 500*time.Millisecond,
+		try.StatusCodeIs(http.StatusOK),
+		try.BodyContains("X-Forwarded-For: "+gatewayIP))
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
 	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
 	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+
 	file := s.adaptFile(c, "fixtures/proxy-protocol/without.toml", struct {
 		HaproxyIP string
 		WhoamiIP  string
-	}{haproxyIP, whoamiIP})
+	}{HaproxyIP: haproxyIP, WhoamiIP: whoamiIP})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -53,7 +79,30 @@ func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://"+haproxyIP+"/whoami", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("X-Forwarded-For: "+haproxyIP))
-	display(c)
+	err = try.GetRequest("http://"+haproxyIP+"/whoami", 500*time.Millisecond,
+		try.StatusCodeIs(http.StatusOK),
+		try.BodyContains("X-Forwarded-For: "+haproxyIP))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ProxyProtocolSuite) TestProxyProtocolV2NotTrusted(c *check.C) {
+	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
+	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+
+	file := s.adaptFile(c, "fixtures/proxy-protocol/without.toml", struct {
+		HaproxyIP string
+		WhoamiIP  string
+	}{HaproxyIP: haproxyIP, WhoamiIP: whoamiIP})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://"+haproxyIP+":81/whoami", 500*time.Millisecond,
+		try.StatusCodeIs(http.StatusOK),
+		try.BodyContains("X-Forwarded-For: "+haproxyIP))
 	c.Assert(err, checker.IsNil)
 }

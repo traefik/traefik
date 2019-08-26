@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )

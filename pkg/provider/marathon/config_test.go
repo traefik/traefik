@@ -5,7 +5,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,7 +56,7 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"app": {LoadBalancer: &dynamic.LoadBalancerService{
+						"app": {LoadBalancer: &dynamic.ServersLoadBalancer{
 							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:80",
@@ -110,7 +110,7 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"app": {LoadBalancer: &dynamic.LoadBalancerService{
+						"app": {LoadBalancer: &dynamic.ServersLoadBalancer{
 							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:80",
@@ -156,7 +156,7 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"app": {LoadBalancer: &dynamic.LoadBalancerService{
+						"app": {LoadBalancer: &dynamic.ServersLoadBalancer{
 							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:80",
@@ -200,7 +200,7 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"Service1": {LoadBalancer: &dynamic.LoadBalancerService{
+						"Service1": {LoadBalancer: &dynamic.ServersLoadBalancer{
 							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:8080",
@@ -249,7 +249,7 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"Service1": {LoadBalancer: &dynamic.LoadBalancerService{
+						"Service1": {LoadBalancer: &dynamic.ServersLoadBalancer{
 							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:8080",
@@ -300,7 +300,7 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"foo": {LoadBalancer: &dynamic.LoadBalancerService{
+						"foo": {LoadBalancer: &dynamic.ServersLoadBalancer{
 							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:8080",
@@ -308,7 +308,7 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 							PassHostHeader: true,
 						}},
-						"bar": {LoadBalancer: &dynamic.LoadBalancerService{
+						"bar": {LoadBalancer: &dynamic.ServersLoadBalancer{
 							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:8081",
@@ -343,7 +343,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -382,7 +382,7 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"Service1": {LoadBalancer: &dynamic.LoadBalancerService{
+						"Service1": {LoadBalancer: &dynamic.ServersLoadBalancer{
 							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:80",
@@ -420,7 +420,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -451,7 +451,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -495,7 +495,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -529,7 +529,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -539,7 +539,7 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"Service2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -595,13 +595,13 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "42"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "42"),
 				)),
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -621,15 +621,17 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"Middleware1": {
-							MaxConn: &dynamic.MaxConn{
-								Amount:        42,
-								ExtractorFunc: "request.host",
+							InFlightReq: &dynamic.InFlightReq{
+								Amount: 42,
+								SourceCriterion: &dynamic.SourceCriterion{
+									RequestHost: true,
+								},
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -639,7 +641,7 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"app2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -659,13 +661,13 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "42"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "41"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "41"),
 				)),
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -686,7 +688,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -696,7 +698,7 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"app2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -734,7 +736,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -744,7 +746,7 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"app2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -789,7 +791,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -830,7 +832,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -840,7 +842,7 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"app2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -877,7 +879,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -915,7 +917,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "h2c://localhost:90",
@@ -948,7 +950,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -958,7 +960,7 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"Service2": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:8080",
@@ -1123,7 +1125,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -1161,7 +1163,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -1198,7 +1200,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"a_b_app": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
@@ -1362,7 +1364,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"bar": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",

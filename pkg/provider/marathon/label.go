@@ -3,7 +3,7 @@ package marathon
 import (
 	"math"
 
-	"github.com/containous/traefik/pkg/config/label"
+	"github.com/containous/traefik/v2/pkg/config/label"
 	"github.com/gambol99/go-marathon"
 )
 

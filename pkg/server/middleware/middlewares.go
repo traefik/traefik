@@ -8,26 +8,27 @@ import (
 	"strings"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/middlewares/addprefix"
-	"github.com/containous/traefik/pkg/middlewares/auth"
-	"github.com/containous/traefik/pkg/middlewares/buffering"
-	"github.com/containous/traefik/pkg/middlewares/chain"
-	"github.com/containous/traefik/pkg/middlewares/circuitbreaker"
-	"github.com/containous/traefik/pkg/middlewares/compress"
-	"github.com/containous/traefik/pkg/middlewares/customerrors"
-	"github.com/containous/traefik/pkg/middlewares/headers"
-	"github.com/containous/traefik/pkg/middlewares/ipwhitelist"
-	"github.com/containous/traefik/pkg/middlewares/maxconnection"
-	"github.com/containous/traefik/pkg/middlewares/passtlsclientcert"
-	"github.com/containous/traefik/pkg/middlewares/redirect"
-	"github.com/containous/traefik/pkg/middlewares/replacepath"
-	"github.com/containous/traefik/pkg/middlewares/replacepathregex"
-	"github.com/containous/traefik/pkg/middlewares/retry"
-	"github.com/containous/traefik/pkg/middlewares/stripprefix"
-	"github.com/containous/traefik/pkg/middlewares/stripprefixregex"
-	"github.com/containous/traefik/pkg/middlewares/tracing"
-	"github.com/containous/traefik/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/middlewares/addprefix"
+	"github.com/containous/traefik/v2/pkg/middlewares/auth"
+	"github.com/containous/traefik/v2/pkg/middlewares/buffering"
+	"github.com/containous/traefik/v2/pkg/middlewares/chain"
+	"github.com/containous/traefik/v2/pkg/middlewares/circuitbreaker"
+	"github.com/containous/traefik/v2/pkg/middlewares/compress"
+	"github.com/containous/traefik/v2/pkg/middlewares/customerrors"
+	"github.com/containous/traefik/v2/pkg/middlewares/headers"
+	"github.com/containous/traefik/v2/pkg/middlewares/inflightreq"
+	"github.com/containous/traefik/v2/pkg/middlewares/ipwhitelist"
+	"github.com/containous/traefik/v2/pkg/middlewares/passtlsclientcert"
+	"github.com/containous/traefik/v2/pkg/middlewares/ratelimiter"
+	"github.com/containous/traefik/v2/pkg/middlewares/redirect"
+	"github.com/containous/traefik/v2/pkg/middlewares/replacepath"
+	"github.com/containous/traefik/v2/pkg/middlewares/replacepathregex"
+	"github.com/containous/traefik/v2/pkg/middlewares/retry"
+	"github.com/containous/traefik/v2/pkg/middlewares/stripprefix"
+	"github.com/containous/traefik/v2/pkg/middlewares/stripprefixregex"
+	"github.com/containous/traefik/v2/pkg/middlewares/tracing"
+	"github.com/containous/traefik/v2/pkg/server/internal"
 )
 
 type middlewareStackType int
@@ -122,7 +123,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	// Buffering
-	if config.Buffering != nil && config.MaxConn.Amount != 0 {
+	if config.Buffering != nil && config.InFlightReq.Amount != 0 {
 		if middleware != nil {
 			return nil, badConf
 		}
@@ -211,13 +212,13 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
-	// MaxConn
-	if config.MaxConn != nil && config.MaxConn.Amount != 0 {
+	// InFlightReq
+	if config.InFlightReq != nil && config.InFlightReq.Amount != 0 {
 		if middleware != nil {
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return maxconnection.New(ctx, next, *config.MaxConn, middlewareName)
+			return inflightreq.New(ctx, next, *config.InFlightReq, middlewareName)
 		}
 	}
 
@@ -231,16 +232,15 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
-	// TODO: disable temporarily (rateLimit)
 	// RateLimit
-	// if config.RateLimit != nil {
-	// 	if middleware != nil {
-	// 		return nil, badConf
-	// 	}
-	// 	middleware = func(next http.Handler) (http.Handler, error) {
-	// 		return ratelimiter.New(ctx, next, *config.RateLimit, middlewareName)
-	// 	}
-	// }
+	if config.RateLimit != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return ratelimiter.New(ctx, next, *config.RateLimit, middlewareName)
+		}
+	}
 
 	// RedirectRegex
 	if config.RedirectRegex != nil {
