@@ -6,8 +6,8 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/cenkalti/backoff"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/cenkalti/backoff/v3"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 type routine struct {

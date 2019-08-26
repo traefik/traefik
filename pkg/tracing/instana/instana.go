@@ -3,7 +3,7 @@ package instana
 import (
 	"io"
 
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
 )

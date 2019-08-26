@@ -3,7 +3,7 @@ package marathon
 import (
 	"time"
 
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/gambol99/go-marathon"
 )
 

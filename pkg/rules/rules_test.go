@@ -5,9 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
-	"github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/middlewares/requestdecorator"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

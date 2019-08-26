@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -142,8 +142,8 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.responseforwarding.flushinterval": "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.scheme":                    "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.port":                      "8080",
-		"traefik.http.services.Service0.loadbalancer.stickiness.cookiename":            "foobar",
-		"traefik.http.services.Service0.loadbalancer.stickiness.securecookie":          "true",
+		"traefik.http.services.Service0.loadbalancer.sticky.cookie.name":               "foobar",
+		"traefik.http.services.Service0.loadbalancer.sticky.cookie.secure":             "true",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name0":        "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name1":        "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.hostname":             "foobar",
@@ -156,8 +156,8 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.responseforwarding.flushinterval": "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.scheme":                    "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.port":                      "8080",
-		"traefik.http.services.Service1.loadbalancer.stickiness":                       "false",
-		"traefik.http.services.Service1.loadbalancer.stickiness.cookiename":            "fui",
+		"traefik.http.services.Service1.loadbalancer.sticky":                           "false",
+		"traefik.http.services.Service1.loadbalancer.sticky.cookie.name":               "fui",
 		"traefik.tcp.routers.Router0.rule":                                             "foobar",
 		"traefik.tcp.routers.Router0.entrypoints":                                      "foobar, fiibar",
 		"traefik.tcp.routers.Router0.service":                                          "foobar",
@@ -510,11 +510,13 @@ func TestDecodeConfiguration(t *testing.T) {
 			},
 			Services: map[string]*dynamic.Service{
 				"Service0": {
-					LoadBalancer: &dynamic.LoadBalancerService{
-						Stickiness: &dynamic.Stickiness{
-							CookieName:     "foobar",
-							SecureCookie:   true,
-							HTTPOnlyCookie: false,
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Sticky: &dynamic.Sticky{
+							Cookie: &dynamic.Cookie{
+								Name:     "foobar",
+								Secure:   true,
+								HTTPOnly: false,
+							},
 						},
 						Servers: []dynamic.Server{
 							{
@@ -541,7 +543,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Service1": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								Scheme: "foobar",
@@ -908,10 +910,12 @@ func TestEncodeConfiguration(t *testing.T) {
 			},
 			Services: map[string]*dynamic.Service{
 				"Service0": {
-					LoadBalancer: &dynamic.LoadBalancerService{
-						Stickiness: &dynamic.Stickiness{
-							CookieName:     "foobar",
-							HTTPOnlyCookie: true,
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Sticky: &dynamic.Sticky{
+							Cookie: &dynamic.Cookie{
+								Name:     "foobar",
+								HTTPOnly: true,
+							},
 						},
 						Servers: []dynamic.Server{
 							{
@@ -938,7 +942,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Service1": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								Scheme: "foobar",
@@ -1101,9 +1105,9 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.ResponseForwarding.FlushInterval": "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Port":                      "8080",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Scheme":                    "foobar",
-		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.CookieName":            "foobar",
-		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.HTTPOnlyCookie":        "true",
-		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.SecureCookie":          "false",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Name":               "foobar",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.HTTPOnly":           "true",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Secure":             "false",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name1":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Hostname":             "foobar",

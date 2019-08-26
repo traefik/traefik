@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/middlewares"
 )
 
 const (

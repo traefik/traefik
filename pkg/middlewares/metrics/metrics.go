@@ -10,10 +10,10 @@ import (
 	"unicode/utf8"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/metrics"
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/containous/traefik/pkg/middlewares/retry"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/metrics"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/middlewares/retry"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 )
 

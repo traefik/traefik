@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/rules"
-	"github.com/containous/traefik/pkg/server/internal"
-	tcpservice "github.com/containous/traefik/pkg/server/service/tcp"
-	"github.com/containous/traefik/pkg/tcp"
-	traefiktls "github.com/containous/traefik/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/rules"
+	"github.com/containous/traefik/v2/pkg/server/internal"
+	tcpservice "github.com/containous/traefik/v2/pkg/server/service/tcp"
+	"github.com/containous/traefik/v2/pkg/tcp"
+	traefiktls "github.com/containous/traefik/v2/pkg/tls"
 )
 
 // NewManager Creates a new Manager

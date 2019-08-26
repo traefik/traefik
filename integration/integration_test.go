@@ -14,7 +14,7 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/fatih/structs"
 	"github.com/go-check/check"
 	compose "github.com/libkermit/compose/check"
@@ -119,17 +119,32 @@ func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func(*check.C)) {
 	cmd, out := s.cmdTraefik(args...)
 	return cmd, func(c *check.C) {
 		if c.Failed() || *showLog {
+			s.displayLogK3S(c)
 			s.displayTraefikLog(c, out)
 		}
 	}
 }
 
+func (s *BaseSuite) displayLogK3S(c *check.C) {
+	filePath := "./fixtures/k8s/config.skip/k3s.log"
+	if _, err := os.Stat(filePath); err == nil {
+		content, errR := ioutil.ReadFile(filePath)
+		if errR != nil {
+			log.WithoutContext().Error(errR)
+		}
+		log.WithoutContext().Println(string(content))
+	}
+	log.WithoutContext().Println()
+	log.WithoutContext().Println("################################")
+	log.WithoutContext().Println()
+}
+
 func (s *BaseSuite) displayTraefikLog(c *check.C, output *bytes.Buffer) {
 	if output == nil || output.Len() == 0 {
-		log.Infof("%s: No Traefik logs.", c.TestName())
+		log.WithoutContext().Infof("%s: No Traefik logs.", c.TestName())
 	} else {
-		log.Infof("%s: Traefik logs: ", c.TestName())
-		log.Infof(output.String())
+		log.WithoutContext().Infof("%s: Traefik logs: ", c.TestName())
+		log.WithoutContext().Infof(output.String())
 	}
 }
 

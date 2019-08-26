@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -9,17 +10,18 @@ import (
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/healthcheck"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/metrics"
-	"github.com/containous/traefik/pkg/middlewares/accesslog"
-	"github.com/containous/traefik/pkg/middlewares/emptybackendhandler"
-	metricsMiddle "github.com/containous/traefik/pkg/middlewares/metrics"
-	"github.com/containous/traefik/pkg/middlewares/pipelining"
-	"github.com/containous/traefik/pkg/server/cookie"
-	"github.com/containous/traefik/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/healthcheck"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/metrics"
+	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
+	"github.com/containous/traefik/v2/pkg/middlewares/emptybackendhandler"
+	metricsMiddle "github.com/containous/traefik/v2/pkg/middlewares/metrics"
+	"github.com/containous/traefik/v2/pkg/middlewares/pipelining"
+	"github.com/containous/traefik/v2/pkg/server/cookie"
+	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/wrr"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -60,27 +62,58 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 		return nil, fmt.Errorf("the service %q does not exist", serviceName)
 	}
 
-	// TODO Should handle multiple service types
-	// FIXME Check if the service is declared multiple times with different types
-	if conf.LoadBalancer == nil {
-		sErr := fmt.Errorf("the service %q doesn't have any load balancer", serviceName)
-		conf.AddError(sErr, true)
-		return nil, sErr
+	if conf.LoadBalancer != nil && conf.Weighted != nil {
+		return nil, errors.New("cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 	}
 
-	lb, err := m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
-	if err != nil {
-		conf.AddError(err, true)
-		return nil, err
+	var lb http.Handler
+
+	switch {
+	case conf.LoadBalancer != nil:
+		var err error
+		lb, err = m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
+	case conf.Weighted != nil:
+		var err error
+		lb, err = m.getLoadBalancerWRRServiceHandler(ctx, serviceName, conf.Weighted, responseModifier)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
+	default:
+		sErr := fmt.Errorf("the service %q does not have any type defined", serviceName)
+		conf.AddError(sErr, true)
+		return nil, sErr
 	}
 
 	return lb, nil
 }
 
+func (m *Manager) getLoadBalancerWRRServiceHandler(ctx context.Context, serviceName string, config *dynamic.WeightedRoundRobin, responseModifier func(*http.Response) error) (http.Handler, error) {
+	// TODO Handle accesslog and metrics with multiple service name
+	if config.Sticky != nil && config.Sticky.Cookie != nil {
+		config.Sticky.Cookie.Name = cookie.GetName(config.Sticky.Cookie.Name, serviceName)
+	}
+
+	balancer := wrr.New(config.Sticky)
+	for _, service := range config.Services {
+		serviceHandler, err := m.BuildHTTP(ctx, service.Name, responseModifier)
+		if err != nil {
+			return nil, err
+		}
+
+		balancer.AddService(service.Name, serviceHandler, service.Weight)
+	}
+	return balancer, nil
+}
+
 func (m *Manager) getLoadBalancerServiceHandler(
 	ctx context.Context,
 	serviceName string,
-	service *dynamic.LoadBalancerService,
+	service *dynamic.ServersLoadBalancer,
 	responseModifier func(*http.Response) error,
 ) (http.Handler, error) {
 	fwd, err := buildProxy(service.PassHostHeader, service.ResponseForwarding, m.defaultRoundTripper, m.bufferPool, responseModifier)
@@ -193,16 +226,16 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler
 	}
 }
 
-func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, service *dynamic.LoadBalancerService, fwd http.Handler) (healthcheck.BalancerHandler, error) {
+func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, service *dynamic.ServersLoadBalancer, fwd http.Handler) (healthcheck.BalancerHandler, error) {
 	logger := log.FromContext(ctx)
 	logger.Debug("Creating load-balancer")
 
 	var options []roundrobin.LBOption
 
 	var cookieName string
-	if stickiness := service.Stickiness; stickiness != nil {
-		cookieName = cookie.GetName(stickiness.CookieName, serviceName)
-		opts := roundrobin.CookieOptions{HTTPOnly: stickiness.HTTPOnlyCookie, Secure: stickiness.SecureCookie}
+	if service.Sticky != nil && service.Sticky.Cookie != nil {
+		cookieName = cookie.GetName(service.Sticky.Cookie.Name, serviceName)
+		opts := roundrobin.CookieOptions{HTTPOnly: service.Sticky.Cookie.HTTPOnly, Secure: service.Sticky.Cookie.Secure}
 		options = append(options, roundrobin.EnableStickySession(roundrobin.NewStickySessionWithOptions(cookieName, opts)))
 		logger.Debugf("Sticky session cookie name: %v", cookieName)
 	}

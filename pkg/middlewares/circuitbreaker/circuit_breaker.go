@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/vulcand/oxy/cbreaker"
 )

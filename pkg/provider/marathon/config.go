@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/config/label"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/provider/constraints"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/label"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
+	"github.com/containous/traefik/v2/pkg/provider/constraints"
 	"github.com/gambol99/go-marathon"
 )
 
@@ -98,7 +98,7 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.A
 
 	if len(conf.Services) == 0 {
 		conf.Services = make(map[string]*dynamic.Service)
-		lb := &dynamic.LoadBalancerService{}
+		lb := &dynamic.ServersLoadBalancer{}
 		lb.SetDefaults()
 		conf.Services[appName] = &dynamic.Service{
 			LoadBalancer: lb,

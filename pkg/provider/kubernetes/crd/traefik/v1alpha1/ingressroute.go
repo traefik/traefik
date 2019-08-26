@@ -49,6 +49,7 @@ type Service struct {
 	Scheme      string       `json:"scheme,omitempty"`
 	HealthCheck *HealthCheck `json:"healthCheck,omitempty"`
 	Strategy    string       `json:"strategy,omitempty"`
+	Weight      *int         `json:"weight,omitempty"`
 }
 
 // MiddlewareRef is a ref to the Middleware resources.

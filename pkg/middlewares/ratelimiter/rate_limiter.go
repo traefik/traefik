@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/vulcand/oxy/ratelimit"
 	"github.com/vulcand/oxy/utils"

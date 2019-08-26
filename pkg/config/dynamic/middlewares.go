@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/containous/traefik/pkg/ip"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/ip"
+	"github.com/containous/traefik/v2/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true

@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff"
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/job"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/safe"
-	"github.com/containous/traefik/pkg/tls"
+	"github.com/cenkalti/backoff/v3"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/job"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -216,7 +216,7 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 			}
 
 			protocol := "http"
-			if port == 443 || strings.HasPrefix(portName, "https") {
+			if portSpec.Port == 443 || strings.HasPrefix(portName, "https") {
 				protocol = "https"
 			}
 
@@ -229,7 +229,7 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 	}
 
 	return &dynamic.Service{
-		LoadBalancer: &dynamic.LoadBalancerService{
+		LoadBalancer: &dynamic.ServersLoadBalancer{
 			Servers:        servers,
 			PassHostHeader: true,
 		},
@@ -323,6 +323,15 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					Service: serviceName,
 				}
 
+				if len(ingress.Spec.TLS) > 0 {
+					// TLS enabled for this ingress, add TLS router
+					conf.HTTP.Routers[strings.Replace(rule.Host, ".", "-", -1)+p.Path+"-tls"] = &dynamic.Router{
+						Rule:    strings.Join(rules, " && "),
+						Service: serviceName,
+						TLS:     &dynamic.RouterTLSConfig{},
+					}
+
+				}
 				conf.HTTP.Services[serviceName] = service
 			}
 			err := p.updateIngressStatus(ingress, client)

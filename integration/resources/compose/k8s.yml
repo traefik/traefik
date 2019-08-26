@@ -1,18 +1,18 @@
 server:
-  image: rancher/k3s:v0.5.0
-  command: server --disable-agent --no-deploy traefik
+  image: rancher/k3s:v0.8.0
+  command: server --disable-agent --no-deploy traefik --log /output/k3s.log
   environment:
     - K3S_CLUSTER_SECRET=somethingtotallyrandom
     - K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml
     - K3S_KUBECONFIG_MODE=666
   volumes:
-    - ../../fixtures/k8s:/output
+    - ../../fixtures/k8s/config.skip:/output
     - ../../fixtures/k8s:/var/lib/rancher/k3s/server/manifests
   ports:
     - 6443:6443
 
 node:
-  image: rancher/k3s:v0.5.0
+  image: rancher/k3s:v0.8.0
   privileged: true
   links:
     - server

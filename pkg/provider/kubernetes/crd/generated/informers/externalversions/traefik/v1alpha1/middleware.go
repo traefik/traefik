@@ -29,10 +29,10 @@ package v1alpha1
 import (
 	time "time"
 
-	versioned "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/clientset/versioned"
-	internalinterfaces "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/listers/traefik/v1alpha1"
-	traefikv1alpha1 "github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	versioned "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
+	internalinterfaces "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/listers/traefik/v1alpha1"
+	traefikv1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

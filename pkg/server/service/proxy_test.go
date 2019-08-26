@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
 )
 
 type staticTransport struct {

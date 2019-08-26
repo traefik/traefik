@@ -3,7 +3,7 @@ package generator
 import (
 	"testing"
 
-	"github.com/containous/traefik/pkg/config/parser"
+	"github.com/containous/traefik/v2/pkg/config/parser"
 	"github.com/stretchr/testify/assert"
 )
 

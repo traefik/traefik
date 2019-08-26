@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -203,7 +203,7 @@ func TestHandler_HTTP(t *testing.T) {
 					"bar@myprovider": func() *runtime.ServiceInfo {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
-								LoadBalancer: &dynamic.LoadBalancerService{
+								LoadBalancer: &dynamic.ServersLoadBalancer{
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.1",
@@ -219,7 +219,7 @@ func TestHandler_HTTP(t *testing.T) {
 					"baz@myprovider": func() *runtime.ServiceInfo {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
-								LoadBalancer: &dynamic.LoadBalancerService{
+								LoadBalancer: &dynamic.ServersLoadBalancer{
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.2",
@@ -248,7 +248,7 @@ func TestHandler_HTTP(t *testing.T) {
 					"bar@myprovider": func() *runtime.ServiceInfo {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
-								LoadBalancer: &dynamic.LoadBalancerService{
+								LoadBalancer: &dynamic.ServersLoadBalancer{
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.1",
@@ -264,7 +264,7 @@ func TestHandler_HTTP(t *testing.T) {
 					"baz@myprovider": func() *runtime.ServiceInfo {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
-								LoadBalancer: &dynamic.LoadBalancerService{
+								LoadBalancer: &dynamic.ServersLoadBalancer{
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.2",
@@ -280,7 +280,7 @@ func TestHandler_HTTP(t *testing.T) {
 					"test@myprovider": func() *runtime.ServiceInfo {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
-								LoadBalancer: &dynamic.LoadBalancerService{
+								LoadBalancer: &dynamic.ServersLoadBalancer{
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.3",
@@ -309,7 +309,7 @@ func TestHandler_HTTP(t *testing.T) {
 					"bar@myprovider": func() *runtime.ServiceInfo {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
-								LoadBalancer: &dynamic.LoadBalancerService{
+								LoadBalancer: &dynamic.ServersLoadBalancer{
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.1",
@@ -337,7 +337,7 @@ func TestHandler_HTTP(t *testing.T) {
 					"bar@myprovider": func() *runtime.ServiceInfo {
 						si := &runtime.ServiceInfo{
 							Service: &dynamic.Service{
-								LoadBalancer: &dynamic.LoadBalancerService{
+								LoadBalancer: &dynamic.ServersLoadBalancer{
 									Servers: []dynamic.Server{
 										{
 											URL: "http://127.0.0.1",

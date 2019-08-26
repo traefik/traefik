@@ -3,7 +3,7 @@ package dynamic
 import (
 	"reflect"
 
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true
@@ -45,7 +45,7 @@ type RouterTCPTLSConfig struct {
 
 // TCPLoadBalancerService holds the LoadBalancerService configuration.
 type TCPLoadBalancerService struct {
-	Servers []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" label-slice-as-struct:"server"`
+	Servers []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
 }
 
 // Mergeable tells if the given service is mergeable.

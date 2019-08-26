@@ -1,11 +1,10 @@
 package runtime_test
 
 import (
-	"context"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,7 +43,7 @@ func TestPopulateUsedBy(t *testing.T) {
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{URL: "http://127.0.0.1:8085"},
 									{URL: "http://127.0.0.1:8086"},
@@ -76,7 +75,7 @@ func TestPopulateUsedBy(t *testing.T) {
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{URL: "http://127.0.0.1"},
 								},
@@ -150,7 +149,7 @@ func TestPopulateUsedBy(t *testing.T) {
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:8085",
@@ -168,7 +167,7 @@ func TestPopulateUsedBy(t *testing.T) {
 					},
 					"bar-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:8087",
@@ -223,7 +222,7 @@ func TestPopulateUsedBy(t *testing.T) {
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1",
@@ -294,7 +293,7 @@ func TestPopulateUsedBy(t *testing.T) {
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1",
@@ -338,7 +337,7 @@ func TestPopulateUsedBy(t *testing.T) {
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1",
@@ -390,7 +389,7 @@ func TestPopulateUsedBy(t *testing.T) {
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1",
@@ -689,412 +688,4 @@ func TestPopulateUsedBy(t *testing.T) {
 		})
 	}
 
-}
-
-func TestGetTCPRoutersByEntryPoints(t *testing.T) {
-	testCases := []struct {
-		desc        string
-		conf        dynamic.Configuration
-		entryPoints []string
-		expected    map[string]map[string]*runtime.TCPRouterInfo
-	}{
-		{
-			desc:        "Empty Configuration without entrypoint",
-			conf:        dynamic.Configuration{},
-			entryPoints: []string{""},
-			expected:    map[string]map[string]*runtime.TCPRouterInfo{},
-		},
-		{
-			desc:        "Empty Configuration with unknown entrypoints",
-			conf:        dynamic.Configuration{},
-			entryPoints: []string{"foo"},
-			expected:    map[string]map[string]*runtime.TCPRouterInfo{},
-		},
-		{
-			desc: "Valid configuration with an unknown entrypoint",
-			conf: dynamic.Configuration{
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "Host(`bar.foo`)",
-						},
-					},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers: map[string]*dynamic.TCPRouter{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "HostSNI(`bar.foo`)",
-						},
-					},
-				},
-			},
-			entryPoints: []string{"foo"},
-			expected:    map[string]map[string]*runtime.TCPRouterInfo{},
-		},
-		{
-			desc: "Valid configuration with a known entrypoint",
-			conf: dynamic.Configuration{
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "Host(`bar.foo`)",
-						},
-						"bar": {
-							EntryPoints: []string{"webs"},
-							Service:     "bar-service@myprovider",
-							Rule:        "Host(`foo.bar`)",
-						},
-						"foobar": {
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "Host(`bar.foobar`)",
-						},
-					},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers: map[string]*dynamic.TCPRouter{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "HostSNI(`bar.foo`)",
-						},
-						"bar": {
-							EntryPoints: []string{"webs"},
-							Service:     "bar-service@myprovider",
-							Rule:        "HostSNI(`foo.bar`)",
-						},
-						"foobar": {
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "HostSNI(`bar.foobar`)",
-						},
-					},
-				},
-			},
-			entryPoints: []string{"web"},
-			expected: map[string]map[string]*runtime.TCPRouterInfo{
-				"web": {
-					"foo": {
-						TCPRouter: &dynamic.TCPRouter{
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "HostSNI(`bar.foo`)",
-						},
-						Status: "enabled",
-					},
-					"foobar": {
-						TCPRouter: &dynamic.TCPRouter{
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "HostSNI(`bar.foobar`)",
-						},
-						Status: "enabled",
-					},
-				},
-			},
-		},
-		{
-			desc: "Valid configuration with multiple known entrypoints",
-			conf: dynamic.Configuration{
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "Host(`bar.foo`)",
-						},
-						"bar": {
-							EntryPoints: []string{"webs"},
-							Service:     "bar-service@myprovider",
-							Rule:        "Host(`foo.bar`)",
-						},
-						"foobar": {
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "Host(`bar.foobar`)",
-						},
-					},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers: map[string]*dynamic.TCPRouter{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "HostSNI(`bar.foo`)",
-						},
-						"bar": {
-							EntryPoints: []string{"webs"},
-							Service:     "bar-service@myprovider",
-							Rule:        "HostSNI(`foo.bar`)",
-						},
-						"foobar": {
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "HostSNI(`bar.foobar`)",
-						},
-					},
-				},
-			},
-			entryPoints: []string{"web", "webs"},
-			expected: map[string]map[string]*runtime.TCPRouterInfo{
-				"web": {
-					"foo": {
-						TCPRouter: &dynamic.TCPRouter{
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "HostSNI(`bar.foo`)",
-						},
-						Status: "enabled",
-					},
-					"foobar": {
-						TCPRouter: &dynamic.TCPRouter{
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "HostSNI(`bar.foobar`)",
-						},
-						Status: "enabled",
-					},
-				},
-				"webs": {
-					"bar": {
-						TCPRouter: &dynamic.TCPRouter{
-
-							EntryPoints: []string{"webs"},
-							Service:     "bar-service@myprovider",
-							Rule:        "HostSNI(`foo.bar`)",
-						},
-						Status: "enabled",
-					},
-					"foobar": {
-						TCPRouter: &dynamic.TCPRouter{
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "HostSNI(`bar.foobar`)",
-						},
-						Status: "enabled",
-					},
-				},
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-			runtimeConfig := runtime.NewConfig(test.conf)
-			actual := runtimeConfig.GetTCPRoutersByEntryPoints(context.Background(), test.entryPoints)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestGetRoutersByEntryPoints(t *testing.T) {
-	testCases := []struct {
-		desc        string
-		conf        dynamic.Configuration
-		entryPoints []string
-		expected    map[string]map[string]*runtime.RouterInfo
-	}{
-		{
-			desc:        "Empty Configuration without entrypoint",
-			conf:        dynamic.Configuration{},
-			entryPoints: []string{""},
-			expected:    map[string]map[string]*runtime.RouterInfo{},
-		},
-		{
-			desc:        "Empty Configuration with unknown entrypoints",
-			conf:        dynamic.Configuration{},
-			entryPoints: []string{"foo"},
-			expected:    map[string]map[string]*runtime.RouterInfo{},
-		},
-		{
-			desc: "Valid configuration with an unknown entrypoint",
-			conf: dynamic.Configuration{
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "Host(`bar.foo`)",
-						},
-					},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers: map[string]*dynamic.TCPRouter{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "HostSNI(`bar.foo`)",
-						},
-					},
-				},
-			},
-			entryPoints: []string{"foo"},
-			expected:    map[string]map[string]*runtime.RouterInfo{},
-		},
-		{
-			desc: "Valid configuration with a known entrypoint",
-			conf: dynamic.Configuration{
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "Host(`bar.foo`)",
-						},
-						"bar": {
-							EntryPoints: []string{"webs"},
-							Service:     "bar-service@myprovider",
-							Rule:        "Host(`foo.bar`)",
-						},
-						"foobar": {
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "Host(`bar.foobar`)",
-						},
-					},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers: map[string]*dynamic.TCPRouter{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "HostSNI(`bar.foo`)",
-						},
-						"bar": {
-							EntryPoints: []string{"webs"},
-							Service:     "bar-service@myprovider",
-							Rule:        "HostSNI(`foo.bar`)",
-						},
-						"foobar": {
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "HostSNI(`bar.foobar`)",
-						},
-					},
-				},
-			},
-			entryPoints: []string{"web"},
-			expected: map[string]map[string]*runtime.RouterInfo{
-				"web": {
-					"foo": {
-						Router: &dynamic.Router{
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "Host(`bar.foo`)",
-						},
-						Status: "enabled",
-					},
-					"foobar": {
-						Router: &dynamic.Router{
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "Host(`bar.foobar`)",
-						},
-						Status: "enabled",
-					},
-				},
-			},
-		},
-		{
-			desc: "Valid configuration with multiple known entrypoints",
-			conf: dynamic.Configuration{
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "Host(`bar.foo`)",
-						},
-						"bar": {
-							EntryPoints: []string{"webs"},
-							Service:     "bar-service@myprovider",
-							Rule:        "Host(`foo.bar`)",
-						},
-						"foobar": {
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "Host(`bar.foobar`)",
-						},
-					},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers: map[string]*dynamic.TCPRouter{
-						"foo": {
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "HostSNI(`bar.foo`)",
-						},
-						"bar": {
-							EntryPoints: []string{"webs"},
-							Service:     "bar-service@myprovider",
-							Rule:        "HostSNI(`foo.bar`)",
-						},
-						"foobar": {
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "HostSNI(`bar.foobar`)",
-						},
-					},
-				},
-			},
-			entryPoints: []string{"web", "webs"},
-			expected: map[string]map[string]*runtime.RouterInfo{
-				"web": {
-					"foo": {
-						Router: &dynamic.Router{
-							EntryPoints: []string{"web"},
-							Service:     "foo-service@myprovider",
-							Rule:        "Host(`bar.foo`)",
-						},
-						Status: "enabled",
-					},
-					"foobar": {
-						Router: &dynamic.Router{
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "Host(`bar.foobar`)",
-						},
-						Status: "enabled",
-					},
-				},
-				"webs": {
-					"bar": {
-						Router: &dynamic.Router{
-
-							EntryPoints: []string{"webs"},
-							Service:     "bar-service@myprovider",
-							Rule:        "Host(`foo.bar`)",
-						},
-						Status: "enabled",
-					},
-					"foobar": {
-						Router: &dynamic.Router{
-							EntryPoints: []string{"web", "webs"},
-							Service:     "foobar-service@myprovider",
-							Rule:        "Host(`bar.foobar`)",
-						},
-						Status: "enabled",
-					},
-				},
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-			runtimeConfig := runtime.NewConfig(test.conf)
-			actual := runtimeConfig.GetRoutersByEntryPoints(context.Background(), test.entryPoints, false)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
 }

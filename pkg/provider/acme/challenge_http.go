@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cenkalti/backoff"
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/safe"
-	"github.com/go-acme/lego/challenge"
-	"github.com/go-acme/lego/challenge/http01"
+	"github.com/cenkalti/backoff/v3"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/go-acme/lego/v3/challenge"
+	"github.com/go-acme/lego/v3/challenge/http01"
+	"github.com/gorilla/mux"
 )
 
 var _ challenge.ProviderTimeout = (*challengeHTTP)(nil)

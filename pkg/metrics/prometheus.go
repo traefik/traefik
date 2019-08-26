@@ -8,12 +8,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/safe"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/go-kit/kit/metrics"
+	"github.com/gorilla/mux"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )

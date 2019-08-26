@@ -128,15 +128,6 @@ docs-serve:
 generate-crd:
 	./script/update-generated-crd-code.sh
 
-## Download dependencies
-dep-ensure:
-	dep ensure -v
-	./script/prune-dep.sh
-
-## Clean vendor directory
-dep-prune:
-	./script/prune-dep.sh
-
 ## Create packages for the release
 release-packages: generate-webui build-dev-image
 	rm -rf dist
@@ -156,5 +147,5 @@ fmt:
 
 run-dev:
 	go generate
-	go build ./cmd/traefik
+	GO111MODULE=on go build ./cmd/traefik
 	./traefik

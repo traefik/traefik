@@ -7,7 +7,7 @@ import (
 	"regexp"
 
 	"github.com/mitchellh/copystructure"
-	"github.com/mvdan/xurls"
+	"mvdan.cc/xurls/v2"
 )
 
 const (
@@ -39,7 +39,7 @@ func Do(baseConfig interface{}, indent bool) (string, error) {
 
 func doOnJSON(input string) string {
 	mailExp := regexp.MustCompile(`\w[-._\w]*\w@\w[-._\w]*\w\.\w{2,3}"`)
-	return xurls.Relaxed.ReplaceAllString(mailExp.ReplaceAllString(input, maskLarge+"\""), maskLarge)
+	return xurls.Relaxed().ReplaceAllString(mailExp.ReplaceAllString(input, maskLarge+"\""), maskLarge)
 }
 
 func doOnStruct(field reflect.Value) error {

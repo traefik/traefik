@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/containous/traefik/pkg/anonymize"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/version"
+	"github.com/containous/traefik/v2/pkg/anonymize"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/version"
 	"github.com/mitchellh/hashstructure"
 )
 

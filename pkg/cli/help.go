@@ -7,9 +7,9 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	"github.com/containous/traefik/pkg/config/flag"
-	"github.com/containous/traefik/pkg/config/generator"
-	"github.com/containous/traefik/pkg/config/parser"
+	"github.com/containous/traefik/v2/pkg/config/flag"
+	"github.com/containous/traefik/v2/pkg/config/generator"
+	"github.com/containous/traefik/v2/pkg/config/parser"
 )
 
 const tmplHelp = `{{ .Cmd.Name }}	{{ .Cmd.Description }}

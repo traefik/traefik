@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/pkg/api"
-	"github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/v2/integration/try"
+	"github.com/containous/traefik/v2/pkg/api"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )

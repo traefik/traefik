@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vulcand/oxy/roundrobin"
@@ -115,7 +115,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			if test.startHealthy {
 				lb.servers = append(lb.servers, serverURL)
 			} else {
-				backend.disabledURLs = append(backend.disabledURLs, serverURL)
+				backend.disabledURLs = append(backend.disabledURLs, backendURL{url: serverURL, weight: 1})
 			}
 
 			collectingMetrics := testhelpers.NewCollectingHealthCheckMetrics()

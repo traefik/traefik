@@ -27,8 +27,8 @@ THE SOFTWARE.
 package traefik
 
 import (
-	internalinterfaces "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/informers/externalversions/traefik/v1alpha1"
+	internalinterfaces "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/traefik/v1alpha1"
 )
 
 // Interface provides access to each of this group's versions.

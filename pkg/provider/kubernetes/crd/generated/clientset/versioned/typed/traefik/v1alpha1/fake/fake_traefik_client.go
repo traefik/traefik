@@ -27,7 +27,7 @@ THE SOFTWARE.
 package fake
 
 import (
-	v1alpha1 "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1alpha1"
+	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1alpha1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

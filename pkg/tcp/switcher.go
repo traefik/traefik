@@ -3,7 +3,7 @@ package tcp
 import (
 	"net"
 
-	"github.com/containous/traefik/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/safe"
 )
 
 // HandlerSwitcher is a TCP handler switcher

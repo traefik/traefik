@@ -6,12 +6,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config/env"
-	"github.com/containous/traefik/pkg/config/flag"
-	"github.com/containous/traefik/pkg/config/generator"
-	"github.com/containous/traefik/pkg/config/parser"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/config/env"
+	"github.com/containous/traefik/v2/pkg/config/flag"
+	"github.com/containous/traefik/v2/pkg/config/generator"
+	"github.com/containous/traefik/v2/pkg/config/parser"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 func main() {

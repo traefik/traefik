@@ -1,7 +1,7 @@
 package dynamic
 
 import (
-	"github.com/containous/traefik/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/tls"
 )
 
 // +k8s:deepcopy-gen=true

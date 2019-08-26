@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config/runtime"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/version"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/version"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
+	"github.com/gorilla/mux"
 )
 
 const (

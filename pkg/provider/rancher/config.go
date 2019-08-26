@@ -7,11 +7,11 @@ import (
 	"net"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config/dynamic"
-	"github.com/containous/traefik/pkg/config/label"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/provider/constraints"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/label"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
+	"github.com/containous/traefik/v2/pkg/provider/constraints"
 )
 
 func (p *Provider) buildConfiguration(ctx context.Context, services []rancherData) *dynamic.Configuration {
@@ -96,7 +96,7 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, service ranche
 
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.Service)
-		lb := &dynamic.LoadBalancerService{}
+		lb := &dynamic.ServersLoadBalancer{}
 		lb.SetDefaults()
 		configuration.Services[serviceName] = &dynamic.Service{
 			LoadBalancer: lb,
@@ -183,7 +183,7 @@ func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBa
 
 }
 
-func (p *Provider) addServers(ctx context.Context, service rancherData, loadBalancer *dynamic.LoadBalancerService) error {
+func (p *Provider) addServers(ctx context.Context, service rancherData, loadBalancer *dynamic.ServersLoadBalancer) error {
 	log.FromContext(ctx).Debugf("Trying to add servers for service  %s \n", service.Name)
 
 	serverPort := getLBServerPort(loadBalancer)
@@ -216,7 +216,7 @@ func (p *Provider) addServers(ctx context.Context, service rancherData, loadBala
 	return nil
 }
 
-func getLBServerPort(loadBalancer *dynamic.LoadBalancerService) string {
+func getLBServerPort(loadBalancer *dynamic.ServersLoadBalancer) string {
 	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
 		return loadBalancer.Servers[0].Port
 	}

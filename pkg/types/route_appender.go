@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/containous/mux"
+	"github.com/gorilla/mux"
 )
 
 // RouteAppender appends routes on a router (/api, /ping ...)
