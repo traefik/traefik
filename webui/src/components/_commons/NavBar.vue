@@ -43,14 +43,13 @@ export default {
     },
     parsedVersion () {
       if (this.version === undefined) {
-        return ''
+        return 'master'
       }
       if (this.version === 'dev') {
         return 'master'
-      } else {
-        const matches = this.version.match(/^(v?\d+\.\d+)/)
-        return matches ? matches[1] : 'master'
       }
+      const matches = this.version.match(/^(v?\d+\.\d+)/)
+      return matches ? 'v'+matches[1] : 'master'
     },
     name () {
       return config.productName
