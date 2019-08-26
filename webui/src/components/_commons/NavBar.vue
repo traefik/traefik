@@ -49,7 +49,7 @@ export default {
         return 'master'
       }
       const matches = this.version.match(/^(v?\d+\.\d+)/)
-      return matches ? 'v'+matches[1] : 'master'
+      return matches ? 'v' + matches[1] : 'master'
     },
     name () {
       return config.productName
