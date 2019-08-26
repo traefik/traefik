@@ -20,7 +20,7 @@ type Mirroring struct {
 	total uint64
 }
 
-// New return new instance of *Mirroring.
+// New returns a new instance of *Mirroring.
 func New(handler http.Handler, pool *safe.Pool) *Mirroring {
 	return &Mirroring{
 		routinePool: pool,
