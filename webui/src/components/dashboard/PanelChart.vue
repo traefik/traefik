@@ -83,6 +83,9 @@ export default {
         },
         animation: {
           duration: 1000
+        },
+        tooltips: {
+          enabled: true
         }
       }
     }
@@ -128,20 +131,33 @@ export default {
       return [this.getSuccess(), this.getWarnings(), this.getErrors()]
     },
     getChartdata () {
-      return {
-        datasets: [{
-          backgroundColor: [
-            '#00a697',
-            '#db7d11',
-            '#ff0039'
-          ],
-          data: this.getData()
-        }],
-        labels: [
-          'Success',
-          'Warnings',
-          'Errors'
-        ]
+      if (this.getData()[0] === 0 && this.getData()[1] === 0 && this.getData()[2] === 0) {
+        this.options.tooltips.enabled = false
+        return {
+          datasets: [{
+            backgroundColor: [
+              '#f2f3f5'
+            ],
+            data: [1]
+          }]
+        }
+      } else {
+        this.options.tooltips.enabled = true
+        return {
+          datasets: [{
+            backgroundColor: [
+              '#00a697',
+              '#db7d11',
+              '#ff0039'
+            ],
+            data: this.getData()
+          }],
+          labels: [
+            'Success',
+            'Warnings',
+            'Errors'
+          ]
+        }
       }
     }
   }
