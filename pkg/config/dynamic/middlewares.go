@@ -265,8 +265,8 @@ type InFlightReq struct {
 }
 
 // SetDefaults Default values for a InFlightReq.
-func (m *InFlightReq) SetDefaults() {
-	m.SourceCriterion = &SourceCriterion{
+func (i *InFlightReq) SetDefaults() {
+	i.SourceCriterion = &SourceCriterion{
 		RequestHost: true,
 	}
 }

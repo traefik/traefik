@@ -48,10 +48,10 @@ func New(ctx context.Context, next http.Handler, config dynamic.InFlightReq, nam
 	return &inFlightReq{handler: handler, name: name}, nil
 }
 
-func (mc *inFlightReq) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return mc.name, tracing.SpanKindNoneEnum
+func (i *inFlightReq) GetTracingInformation() (string, ext.SpanKindEnum) {
+	return i.name, tracing.SpanKindNoneEnum
 }
 
-func (mc *inFlightReq) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	mc.handler.ServeHTTP(rw, req)
+func (i *inFlightReq) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	i.handler.ServeHTTP(rw, req)
 }

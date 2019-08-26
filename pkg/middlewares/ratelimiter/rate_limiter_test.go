@@ -145,7 +145,7 @@ func TestRateLimit(t *testing.T) {
 				expectedDuration = time.Duration((int64(test.reqCount)-test.config.Burst+1)/test.config.Average) * time.Second
 			}
 
-			// Allow for a 1% leeway
+			// Allow for a 2% leeway
 			minDuration := expectedDuration * 98 / 100
 			maxDuration := expectedDuration * 102 / 100
 
