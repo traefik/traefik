@@ -35,56 +35,47 @@
           main = "foobar"
           sans = ["foobar", "foobar"]
   [http.services]
-    [http.services.Service0]
-      [http.services.Service0.loadBalancer]
+    [http.services.Service01]
+      [http.services.Service01.loadBalancer]
         passHostHeader = true
-        [http.services.Service0.loadBalancer.stickiness]
-          cookieName = "foobar"
-          secureCookie = true
-          httpOnlyCookie = true
+        [http.services.Service01.loadBalancer.sticky]
+          [http.services.Service01.loadBalancer.sticky.cookie]
+            name = "foobar"
+            secure = true
+            httpOnly = true
 
-        [[http.services.Service0.loadBalancer.servers]]
+        [[http.services.Service01.loadBalancer.servers]]
           url = "foobar"
 
-        [[http.services.Service0.loadBalancer.servers]]
+        [[http.services.Service01.loadBalancer.servers]]
           url = "foobar"
-        [http.services.Service0.loadBalancer.healthCheck]
+        [http.services.Service01.loadBalancer.healthCheck]
           scheme = "foobar"
           path = "foobar"
           port = 42
           interval = "foobar"
           timeout = "foobar"
           hostname = "foobar"
-          [http.services.Service0.loadBalancer.healthCheck.headers]
+          [http.services.Service01.loadBalancer.healthCheck.headers]
             name0 = "foobar"
             name1 = "foobar"
-        [http.services.Service0.loadBalancer.responseForwarding]
+        [http.services.Service01.loadBalancer.responseForwarding]
           flushInterval = "foobar"
-    [http.services.Service1]
-      [http.services.Service1.loadBalancer]
-        passHostHeader = true
-        [http.services.Service1.loadBalancer.stickiness]
-          cookieName = "foobar"
-          secureCookie = true
-          httpOnlyCookie = true
+    [http.services.Service02]
+      [http.services.Service02.weighted]
 
-        [[http.services.Service1.loadBalancer.servers]]
-          url = "foobar"
+        [[http.services.Service02.weighted.services]]
+          name = "foobar"
+          weight = 42
 
-        [[http.services.Service1.loadBalancer.servers]]
-          url = "foobar"
-        [http.services.Service1.loadBalancer.healthCheck]
-          scheme = "foobar"
-          path = "foobar"
-          port = 42
-          interval = "foobar"
-          timeout = "foobar"
-          hostname = "foobar"
-          [http.services.Service1.loadBalancer.healthCheck.headers]
-            name0 = "foobar"
-            name1 = "foobar"
-        [http.services.Service1.loadBalancer.responseForwarding]
-          flushInterval = "foobar"
+        [[http.services.Service02.weighted.services]]
+          name = "foobar"
+          weight = 42
+        [http.services.Service02.weighted.sticky]
+          [http.services.Service02.weighted.sticky.cookie]
+            name = "foobar"
+            secure = true
+            httpOnly = true
   [http.middlewares]
     [http.middlewares.Middleware00]
       [http.middlewares.Middleware00.addPrefix]

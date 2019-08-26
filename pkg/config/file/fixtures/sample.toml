@@ -396,8 +396,8 @@
     [http.services.Service0]
       [http.services.Service0.loadBalancer]
         passHostHeader = true
-        [http.services.Service0.loadBalancer.stickiness]
-          cookieName = "foobar"
+        [http.services.Service0.loadBalancer.sticky.cookie]
+          name = "foobar"
 
         [[http.services.Service0.loadBalancer.servers]]
           url = "foobar"

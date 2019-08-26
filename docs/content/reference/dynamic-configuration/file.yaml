@@ -45,12 +45,13 @@ http:
           - foobar
           - foobar
   services:
-    Service0:
+    Service01:
       loadBalancer:
-        stickiness:
-          cookieName: foobar
-          secureCookie: true
-          httpOnlyCookie: true
+        sticky:
+          cookie:
+            name: foobar
+            secure: true
+            httpOnly: true
         servers:
         - url: foobar
         - url: foobar
@@ -67,28 +68,18 @@ http:
         passHostHeader: true
         responseForwarding:
           flushInterval: foobar
-    Service1:
-      loadBalancer:
-        stickiness:
-          cookieName: foobar
-          secureCookie: true
-          httpOnlyCookie: true
-        servers:
-        - url: foobar
-        - url: foobar
-        healthCheck:
-          scheme: foobar
-          path: foobar
-          port: 42
-          interval: foobar
-          timeout: foobar
-          hostname: foobar
-          headers:
-            name0: foobar
-            name1: foobar
-        passHostHeader: true
-        responseForwarding:
-          flushInterval: foobar
+    Service02:
+      weighted:
+        services:
+        - name: foobar
+          weight: 42
+        - name: foobar
+          weight: 42
+        sticky:
+          cookie:
+            name: foobar
+            secure: true
+            httpOnly: true
   middlewares:
     Middleware00:
       addPrefix:

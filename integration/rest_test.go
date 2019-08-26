@@ -51,7 +51,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 					},
 					Services: map[string]*dynamic.Service{
 						"service1": {
-							LoadBalancer: &dynamic.LoadBalancerService{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",

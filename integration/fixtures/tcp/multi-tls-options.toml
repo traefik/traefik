@@ -34,7 +34,6 @@
 
     [tcp.services.whoami-no-cert]
       [tcp.services.whoami-no-cert.loadBalancer]
-        method = "wrr"
         [[tcp.services.whoami-no-cert.loadBalancer.servers]]
         address = "localhost:8083"
 

@@ -48,7 +48,7 @@ func TestRouterManager_Get(t *testing.T) {
 			},
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -85,7 +85,7 @@ func TestRouterManager_Get(t *testing.T) {
 			},
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -108,7 +108,7 @@ func TestRouterManager_Get(t *testing.T) {
 			},
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -132,7 +132,7 @@ func TestRouterManager_Get(t *testing.T) {
 			},
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -173,7 +173,7 @@ func TestRouterManager_Get(t *testing.T) {
 			},
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -213,7 +213,7 @@ func TestRouterManager_Get(t *testing.T) {
 			},
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service@provider-1": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -236,7 +236,7 @@ func TestRouterManager_Get(t *testing.T) {
 			},
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service@provider-2": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -260,7 +260,7 @@ func TestRouterManager_Get(t *testing.T) {
 			},
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service@provider-1": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -355,7 +355,7 @@ func TestAccessLog(t *testing.T) {
 			},
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -383,7 +383,7 @@ func TestAccessLog(t *testing.T) {
 			},
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
@@ -448,7 +448,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			desc: "No error",
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1:8085",
@@ -482,7 +482,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			desc: "One router with wrong rule",
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -509,7 +509,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			desc: "All router with wrong rule",
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -536,7 +536,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			desc: "Router with unknown service",
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -579,7 +579,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			desc: "Router with middleware",
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -619,7 +619,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			desc: "Router with unknown middleware",
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -650,7 +650,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			desc: "Router with broken middleware",
 			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &dynamic.LoadBalancerService{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
@@ -749,7 +749,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	}
 	serviceConfig := map[string]*dynamic.Service{
 		"foo-service": {
-			LoadBalancer: &dynamic.LoadBalancerService{
+			LoadBalancer: &dynamic.ServersLoadBalancer{
 				Servers: []dynamic.Server{
 					{
 						URL: server.URL,
@@ -793,7 +793,7 @@ func BenchmarkService(b *testing.B) {
 
 	serviceConfig := map[string]*dynamic.Service{
 		"foo-service": {
-			LoadBalancer: &dynamic.LoadBalancerService{
+			LoadBalancer: &dynamic.ServersLoadBalancer{
 				Servers: []dynamic.Server{
 					{
 						URL: "tchouck",
