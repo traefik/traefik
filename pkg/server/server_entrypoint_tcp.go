@@ -240,11 +240,9 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 
 	log.FromContext(ctx).Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
 
-	proxyprotocolListner := proxyprotocol.NewDefaultListener(listener).
+	return proxyprotocol.NewDefaultListener(listener).
 		WithSourceChecker(sourceCheck).
-		WithLogger(log.FromContext(ctx))
-
-	return proxyprotocolListner, nil
+		WithLogger(log.FromContext(ctx)), nil
 }
 
 func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {
