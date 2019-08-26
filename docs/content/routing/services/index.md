@@ -355,7 +355,7 @@ http:
 
 ### Mirroring (service)
 
-The mirroring is able to mirror request sent to a service to other services.
+The mirroring is able to mirror requests sent to a service to other services.
 
 This strategy can be defined only with [File](../../providers/file.md).
 

@@ -61,6 +61,10 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			if handler.count*100 < total*uint64(handler.percent) {
 				handler.count++
 				handler.lock.Unlock()
+				// When a request served by m.handler is successful, req.Context will be cancelled,
+				// which would trigger a cancellation of the ongoing mirrored requests.
+				// Therefore, we give a new, non-cancellable context  to each of the mirrored calls,
+				// so they can terminate by themselves.
 				handler.ServeHTTP(m.rw, req.WithContext(contextStopPropagation{req.Context()}))
 			} else {
 				handler.lock.Unlock()
@@ -69,7 +73,7 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// AddMirror adds on httpHandler to mirror on.
+// AddMirror adds an httpHandler to mirror to.
 func (m *Mirroring) AddMirror(handler http.Handler, percent int) error {
 	if percent < 0 || percent >= 100 {
 		return errors.New("percent must be between 0 and 100")
