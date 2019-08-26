@@ -595,13 +595,13 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "42"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "42"),
 				)),
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -621,9 +621,11 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"Middleware1": {
-							MaxConn: &dynamic.MaxConn{
-								Amount:        42,
-								ExtractorFunc: "request.host",
+							InFlightReq: &dynamic.InFlightReq{
+								Amount: 42,
+								SourceCriterion: &dynamic.SourceCriterion{
+									RequestHost: true,
+								},
 							},
 						},
 					},
@@ -659,13 +661,13 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "42"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "41"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "41"),
 				)),
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{

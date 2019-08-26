@@ -198,9 +198,14 @@ http:
           - foobar
           - foobar
     Middleware11:
-      maxConn:
+      inFlightReq:
         amount: 42
-        extractorFunc: foobar
+        sourceCriterion:
+          ipStrategy:
+            depth: 42
+            excludedIPs: [ foobar, foobar ]
+          requestHeaderName: foobar
+          requestHost: true
     Middleware12:
       passTLSClientCert:
         pem: true
@@ -254,6 +259,16 @@ http:
         regex:
         - foobar
         - foobar
+    Middleware20:
+      rateLimit:
+        average: 42
+        burst: 42
+        sourceCriterion:
+          ipStrategy:
+            depth: 42
+            excludedIPs: [ foobar, foobar ]
+          requestHeaderName: foobar
+          requestHost: true
 tcp:
   routers:
     TCPRouter0:

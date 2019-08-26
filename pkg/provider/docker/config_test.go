@@ -1007,13 +1007,13 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with MaxConn in label (default value)",
+			desc: "one container with InFlightReq in label (default value)",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1054,9 +1054,11 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"Middleware1": {
-							MaxConn: &dynamic.MaxConn{
-								Amount:        42,
-								ExtractorFunc: "request.host",
+							InFlightReq: &dynamic.InFlightReq{
+								Amount: 42,
+								SourceCriterion: &dynamic.SourceCriterion{
+									RequestHost: true,
+								},
 							},
 						},
 					},
@@ -1071,7 +1073,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1090,7 +1092,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1119,9 +1121,11 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"Middleware1": {
-							MaxConn: &dynamic.MaxConn{
-								Amount:        42,
-								ExtractorFunc: "request.host",
+							InFlightReq: &dynamic.InFlightReq{
+								Amount: 42,
+								SourceCriterion: &dynamic.SourceCriterion{
+									RequestHost: true,
+								},
 							},
 						},
 					},
@@ -1151,7 +1155,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1170,7 +1174,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "41",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1224,7 +1228,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1243,7 +1247,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "41",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1262,7 +1266,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "40",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "40",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -1809,7 +1813,7 @@ func Test_buildConfiguration(t *testing.T) {
 					ServiceName: "Test",
 					Name:        "Test",
 					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.maxconn.amount": "42",
+						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{},

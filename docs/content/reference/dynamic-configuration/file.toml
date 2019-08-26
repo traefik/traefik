@@ -170,9 +170,14 @@
           depth = 42
           excludedIPs = ["foobar", "foobar"]
     [http.middlewares.Middleware11]
-      [http.middlewares.Middleware11.maxConn]
+      [http.middlewares.Middleware11.inFlightReq]
         amount = 42
-        extractorFunc = "foobar"
+        [http.middlewares.Middleware11.inFlightReq.sourceCriterion]
+          requestHeaderName = "foobar"
+          requestHost = true
+          [http.middlewares.Middleware11.inFlightReq.sourceCriterion.ipStrategy]
+            depth = 42
+            excludedIPs = ["foobar", "foobar"]
     [http.middlewares.Middleware12]
       [http.middlewares.Middleware12.passTLSClientCert]
         pem = true

@@ -54,8 +54,7 @@ func init() {
 		check.Suite(&LogRotationSuite{})
 		check.Suite(&MarathonSuite{})
 		check.Suite(&MarathonSuite15{})
-		// TODO: disable temporarily
-		// check.Suite(&RateLimitSuite{})
+		check.Suite(&RateLimitSuite{})
 		check.Suite(&RestSuite{})
 		check.Suite(&RetrySuite{})
 		check.Suite(&SimpleSuite{})
