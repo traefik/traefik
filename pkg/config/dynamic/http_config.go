@@ -21,6 +21,7 @@ type HTTPConfiguration struct {
 type Service struct {
 	LoadBalancer *ServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty"`
 	Weighted     *WeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-"`
+	Mirroring    *Mirroring           `json:"mirroring,omitempty" toml:"mirroring,omitempty" yaml:"mirroring,omitempty" label:"-"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -42,6 +43,22 @@ type RouterTLSConfig struct {
 	Options      string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
 	CertResolver string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty"`
 	Domains      []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Mirroring holds the Mirroring configuration.
+type Mirroring struct {
+	Service string          `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
+	Mirrors []MirrorService `json:"mirrors,omitempty" toml:"mirrors,omitempty" yaml:"mirrors,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// MirrorService holds the MirrorService configuration.
+type MirrorService struct {
+	Name    string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+	Percent int    `json:"percent,omitempty" toml:"percent,omitempty" yaml:"percent,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

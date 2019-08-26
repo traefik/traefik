@@ -353,6 +353,53 @@ http:
         - url: "http://private-ip-server-2/"
 ```
 
+### Mirroring (service)
+
+The mirroring is able to mirror requests sent to a service to other services.
+
+This strategy can be defined only with [File](../../providers/file.md).
+
+```toml tab="TOML"
+[http.services]
+  [http.services.mirroring]
+    [http.services.mirroring.mirroring]
+      service = "app"
+    [[http.services.mirroring.mirroring.mirrors]]
+      name = "mirror"
+      percent = 10
+
+  [http.services.app]
+    [http.services.app.loadBalancer]
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.mirror]
+    [http.services.mirror.loadBalancer]
+      [[http.services.mirror.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
+```yaml tab="YAML"
+http:
+  services:
+    mirroring:
+      mirroring:
+        service: app
+        mirrors:
+        - name: mirror
+          percent: 10
+
+    app:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    mirror:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
 ## Configuring TCP Services
 
 ### General
