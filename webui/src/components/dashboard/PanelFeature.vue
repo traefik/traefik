@@ -13,8 +13,8 @@
           outline
           color="primary"
           text-color="white"
-          v-bind:class="['feature-chip', {'feature-chip-string':isString()}, {'feature-chip-boolean':isBoolean()}, {'feature-chip-boolean-true':isTrue()}]">
-          {{getVal()}}
+          v-bind:class="['feature-chip', {'feature-chip-string':isString}, {'feature-chip-boolean':isBoolean}, {'feature-chip-boolean-true':isTrue}]">
+          {{getVal}}
         </q-chip>
       </div>
     </q-card-section>
@@ -25,7 +25,7 @@
 export default {
   name: 'PanelFeature',
   props: ['featureKey', 'featureVal'],
-  methods: {
+  computed: {
     isString () {
       return this.$_.isString(this.featureVal)
     },
@@ -33,7 +33,7 @@ export default {
       return this.$_.isBoolean(this.featureVal) || this.featureVal === ''
     },
     isTrue () {
-      return this.isBoolean() && this.featureVal === true
+      return this.isBoolean && this.featureVal === true
     },
     getVal () {
       if (this.featureVal === true) {

@@ -3,7 +3,7 @@
     <q-card-section>
       <div class="row items-center no-wrap">
         <div class="col">
-          <div class="text-h6 text-weight-bold">{{getName()}}</div>
+          <div class="text-h6 text-weight-bold">{{getName}}</div>
         </div>
       </div>
     </q-card-section>
@@ -87,13 +87,15 @@ export default {
       }
     }
   },
-  methods: {
+  computed: {
     getName () {
       return Helps.capFirstLetter(this.name)
     },
     getUrl () {
-      return `/${this.type}/${this.getName().toLowerCase()}`
-    },
+      return `/${this.type}/${this.getName.toLowerCase()}`
+    }
+  },
+  methods: {
     getSuccess (inPercent = false) {
       const num = this.data.total - (this.data.errors + this.data.warnings)
       let result = 0
