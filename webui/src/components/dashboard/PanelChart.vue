@@ -80,6 +80,9 @@ export default {
       options: {
         legend: {
           display: false
+        },
+        animation: {
+          duration: 1000
         }
       }
     }
