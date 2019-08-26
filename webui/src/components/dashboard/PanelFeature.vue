@@ -30,7 +30,7 @@ export default {
       return this.$_.isString(this.featureVal)
     },
     isBoolean () {
-      return this.$_.isBoolean(this.featureVal)
+      return this.$_.isBoolean(this.featureVal) || this.featureVal === ''
     },
     isTrue () {
       return this.isBoolean() && this.featureVal === true
@@ -38,7 +38,7 @@ export default {
     getVal () {
       if (this.featureVal === true) {
         return 'ON'
-      } else if (this.featureVal === false) {
+      } else if (this.featureVal === false || this.featureVal === '') {
         return 'OFF'
       } else {
         return this.featureVal

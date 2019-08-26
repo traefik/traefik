@@ -121,7 +121,6 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
-import Helps from '../../_helpers/Helps'
 import PageDefault from '../../components/_commons/PageDefault'
 import SkeletonBox from '../../components/_commons/SkeletonBox'
 import PanelEntry from '../../components/dashboard/PanelEntry'
@@ -159,7 +158,7 @@ export default {
       return this.overviewAll.items.tcp
     },
     allFeatures () {
-      return Helps.removeEmptyObjects(this.overviewAll.items.features)
+      return this.overviewAll.items.features
     },
     allProviders () {
       return this.overviewAll.items.providers
