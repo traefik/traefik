@@ -11,7 +11,7 @@
           </q-tabs>
           <q-space />
           <q-btn type="a" :href="`https://docs.traefik.io/${parsedVersion}`" target="_blank" stretch flat no-caps label="Documentation" class="btn-menu" />
-          <q-btn v-if="version" type="a" href="https://github.com/containous/traefik/" target="_blank" stretch flat no-caps :label="`${name} ${version}`" class="btn-menu" />
+          <q-btn v-if="version" type="a" href="https://github.com/containous/traefik/" target="_blank" stretch flat no-caps :label="`${name} v${version}`" class="btn-menu" />
         </q-toolbar>
       </div>
     </section>
