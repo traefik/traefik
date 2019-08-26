@@ -33,14 +33,6 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 )
 
-func init() {
-	goDebug := os.Getenv("GODEBUG")
-	if len(goDebug) > 0 {
-		goDebug += ","
-	}
-	os.Setenv("GODEBUG", goDebug+"tls13=1")
-}
-
 func main() {
 	// traefik config inits
 	tConfig := cmd.NewTraefikConfiguration()
