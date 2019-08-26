@@ -12,8 +12,8 @@
             <q-route-tab to="/tcp" icon="eva-globe-2-outline" no-caps label="TCP" /-->
           </q-tabs>
           <q-space />
-          <q-btn type="a" href="https://docs.traefik.io/" target="_blank" stretch flat no-caps label="Documentation" class="btn-menu" />
-          <q-btn v-if="version" type="a" href="https://github.com/containous/traefik/" target="_blank" stretch flat no-caps :label="`${name} v${version}`" class="btn-menu" />
+          <q-btn type="a" :href="`https://docs.traefik.io/${parsedVersion}`" target="_blank" stretch flat no-caps label="Documentation" class="btn-menu" />
+          <q-btn v-if="version" type="a" href="https://github.com/containous/traefik/" target="_blank" stretch flat no-caps :label="`${name} ${version}`" class="btn-menu" />
         </q-toolbar>
       </div>
     </section>
@@ -40,6 +40,17 @@ export default {
     ...mapGetters('core', { coreVersion: 'version' }),
     version () {
       return this.coreVersion.Version
+    },
+    parsedVersion () {
+      if (this.version === undefined) {
+        return ''
+      }
+      if (this.version === 'dev') {
+        return 'master'
+      } else {
+        const matches = this.version.match(/^(v?\d+\.\d+)/)
+        return matches ? matches[1] : 'master'
+      }
     },
     name () {
       return config.productName
