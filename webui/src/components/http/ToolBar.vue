@@ -17,7 +17,6 @@
 <script>
 export default {
   name: 'HTTPToolBar',
-  props: ['id'],
   data () {
     return {
     }

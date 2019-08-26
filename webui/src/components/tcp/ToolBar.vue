@@ -14,7 +14,6 @@
 <script>
 export default {
   name: 'TCPToolBar',
-  props: ['id'],
   data () {
     return {
     }
