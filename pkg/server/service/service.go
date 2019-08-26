@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"reflect"
 	"time"
 
 	"github.com/containous/alice"
@@ -19,8 +20,10 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/emptybackendhandler"
 	metricsMiddle "github.com/containous/traefik/v2/pkg/middlewares/metrics"
 	"github.com/containous/traefik/v2/pkg/middlewares/pipelining"
+	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/server/cookie"
 	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/mirror"
 	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/wrr"
 	"github.com/vulcand/oxy/roundrobin"
 )
@@ -31,8 +34,9 @@ const (
 )
 
 // NewManager creates a new Manager
-func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry, routinePool *safe.Pool) *Manager {
 	return &Manager{
+		routinePool:         routinePool,
 		metricsRegistry:     metricsRegistry,
 		bufferPool:          newBufferPool(),
 		defaultRoundTripper: defaultRoundTripper,
@@ -43,6 +47,7 @@ func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper htt
 
 // Manager The service manager
 type Manager struct {
+	routinePool         *safe.Pool
 	metricsRegistry     metrics.Registry
 	bufferPool          httputil.BufferPool
 	defaultRoundTripper http.RoundTripper
@@ -62,7 +67,14 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 		return nil, fmt.Errorf("the service %q does not exist", serviceName)
 	}
 
-	if conf.LoadBalancer != nil && conf.Weighted != nil {
+	value := reflect.ValueOf(*conf.Service)
+	var count int
+	for i := 0; i < value.NumField(); i++ {
+		if !value.Field(i).IsNil() {
+			count++
+		}
+	}
+	if count > 1 {
 		return nil, errors.New("cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 	}
 
@@ -83,6 +95,13 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 			conf.AddError(err, true)
 			return nil, err
 		}
+	case conf.Mirroring != nil:
+		var err error
+		lb, err = m.getLoadBalancerMirrorServiceHandler(ctx, serviceName, conf.Mirroring, responseModifier)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
 	default:
 		sErr := fmt.Errorf("the service %q does not have any type defined", serviceName)
 		conf.AddError(sErr, true)
@@ -90,6 +109,22 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 	}
 
 	return lb, nil
+}
+
+func (m *Manager) getLoadBalancerMirrorServiceHandler(ctx context.Context, serviceName string, config *dynamic.Mirroring, responseModifier func(*http.Response) error) (http.Handler, error) {
+	serviceHandler, err := m.BuildHTTP(ctx, config.Service, responseModifier)
+	if err != nil {
+		return nil, err
+	}
+	handler := mirror.New(serviceHandler, m.routinePool)
+	for _, mirrorConfig := range config.Mirrors {
+		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name, responseModifier)
+		if err != nil {
+			return nil, err
+		}
+		handler.AddMirror(mirrorHandler, mirrorConfig.Percent)
+	}
+	return handler, nil
 }
 
 func (m *Manager) getLoadBalancerWRRServiceHandler(ctx context.Context, serviceName string, config *dynamic.WeightedRoundRobin, responseModifier func(*http.Response) error) (http.Handler, error) {
