@@ -116,12 +116,14 @@ func (m *Manager) getLoadBalancerMirrorServiceHandler(ctx context.Context, servi
 	if err != nil {
 		return nil, err
 	}
+
 	handler := mirror.New(serviceHandler, m.routinePool)
 	for _, mirrorConfig := range config.Mirrors {
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name, responseModifier)
 		if err != nil {
 			return nil, err
 		}
+
 		err = handler.AddMirror(mirrorHandler, mirrorConfig.Percent)
 		if err != nil {
 			return nil, err

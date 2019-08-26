@@ -354,9 +354,9 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 			},
 		},
 	}, http.DefaultTransport, nil, nil)
+
 	_, err := manager.BuildHTTP(context.Background(), "test@file", nil)
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
-
 }
 
 // FIXME Add healthcheck tests
