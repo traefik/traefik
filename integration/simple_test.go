@@ -546,6 +546,10 @@ func (s *SimpleSuite) TestRouterConfigErrors(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","found different TLS options for routers on the same host snitest.net, so using the default TLS options instead"]`))
 	c.Assert(err, checker.IsNil)
 
+	// router3 has an error because it uses an unknown entrypoint
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router3@file", 1000*time.Millisecond, try.BodyContains(`entryPoint \"unknown-entrypoint\" doesn't exist`, "no valid entryPoints for this router"))
+	c.Assert(err, checker.IsNil)
+
 	// router4 is enabled, but in warning state because its tls options conf was messed up
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router4@file", 1000*time.Millisecond, try.BodyContains(`"status":"warning"`))
 	c.Assert(err, checker.IsNil)
