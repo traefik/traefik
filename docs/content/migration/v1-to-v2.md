@@ -82,19 +82,6 @@ Then any router can refer to an instance of the wanted middleware.
       - "traefik.frontend.auth.basic.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
     ```
     
-    ```json tab="Marathon"
-    "labels": {
-      - "traefik.frontend.rule":"Host:test.localhost;PathPrefix:/test"
-      - "traefik.frontend.auth.basic.users":"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-    }
-    ```
-    
-    ```yaml tab="Rancher"
-    labels:
-      - "traefik.frontend.rule=Host:test.localhost;PathPrefix:/test"
-      - "traefik.frontend.auth.basic.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-    ```
-    
     ### v2
     
     ```toml tab="File (TOML)"
@@ -179,51 +166,9 @@ Then any router can refer to an instance of the wanted middleware.
           namespace: foo
     ```
     
-    ```yaml tab="K8s Ingress"
-    apiVersion: extensions/v1beta1
-    kind: Ingress
-    metadata:
-      name: traefik
-      namespace: kube-system
-      annotations:
-        kubernetes.io/ingress.class: traefik
-        traefik.ingress.kubernetes.io/rule-type: PathPrefix
-    spec:
-      rules:
-      - host: test.locahost
-        http:
-          paths:
-          - path: /test
-            backend:
-              serviceName: server0
-              servicePort: 80
-          - path: /test
-            backend:
-              serviceName: server1
-              servicePort: 80
-    ```
-    
     ```yaml tab="Docker"
     labels:
       - "traefik.http.routers.router0.rule=Host(`bar.com`) && PathPrefix(`/test`)"
-      - "traefik.http.routers.router0.service=my-service"
-      - "traefik.http.routers.router0.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-    ```
-    
-    ```json tab="Marathon"
-    "labels": {
-      "traefik.http.routers.router0.rule":"Host(`bar.com`) && PathPrefix(`/test`)",
-      "traefik.http.routers.router0.service":"my-service",
-      "traefik.http.routers.router0.middlewares":"auth",
-      "traefik.http.middlewares.auth.basicauth.users":["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/","test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-    }
-    ```
-    
-    ```yaml tab="Rancher"
-    labels:
-      - "traefik.http.routers.router0.rule=Host(`bar.com`) && PathPrefix(`/test`)"
-      - "traefik.http.routers.router0.service=my-service"
       - "traefik.http.routers.router0.middlewares=auth"
       - "traefik.http.middlewares.auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
     ```
@@ -363,47 +308,8 @@ TLS parameters used to be specified, in the static configuration, as an entryPoi
           namespace: default
     ```
     
-    ```yaml tab="K8s Ingress"
-    apiVersion: extensions/v1beta1
-    kind: Ingress
-    metadata:
-      name: traefik-web-ui
-      namespace: kube-system
-      annotations:
-        kubernetes.io/ingress.class: traefik
-    spec:
-      rules:
-      - host: bar.com
-        http:
-          paths:
-          - backend:
-              serviceName: traefik-web-ui
-              servicePort: 80
-      tls:
-       - secretName: traefik-ui-tls-cert
-    ```
-    
     ```yaml tab="Docker"
     labels:
-      - "traefik.http.routers.router0.rule=Host(`bar.com`)"
-      - "traefik.http.routers.router0.service=service-id"
-      # myTLSOptions must be defined by another provider, in this instance in the File Provider.
-      # see the cross provider section
-      - "traefik.http.routers.router0.tls.options=myTLSOptions@file"
-    ```
-    
-    ```json tab="Marathon"
-    "labels": {
-        "traefik.http.routers.router0.rule":"Host(`bar.com`)",
-        "traefik.http.routers.router0.service":"service-id",
-        "traefik.http.routers.router0.tls.options":"myTLSOptions@file"
-    }
-    ```
-    
-    ```yaml tab="Rancher"
-    labels:
-      - "traefik.http.routers.router0.rule=Host(`bar.com`)"
-      - "traefik.http.routers.router0.service=service-id"
       # myTLSOptions must be defined by another provider, in this instance in the File Provider.
       # see the cross provider section
       - "traefik.http.routers.router0.tls.options=myTLSOptions@file"
@@ -433,6 +339,23 @@ TLS parameters used to be specified, in the static configuration, as an entryPoi
 
 	TODO
 
-## Discontinued providers
+## Providers
 
-`BoltDB, Consul, Consul Catalog, DynamoDB, ECS, Etcd, Eureka, Mesos, Azure Service Fabric, Zookeeper.`
+Supported providers, for now:
+
+- [ ] Azure Service Fabric
+- [ ] BoltDB
+- [ ] Consul
+- [ ] Consul Catalog
+- [x] Docker
+- [ ] DynamoDB
+- [ ] ECS
+- [ ] Etcd
+- [ ] Eureka
+- [x] File
+- [x] Kubernetes Ingress (without annotations)
+- [x] Kubernetes IngressRoute
+- [x] Marathon
+- [ ] Mesos
+- [x] Rest
+- [ ] Zookeeper
