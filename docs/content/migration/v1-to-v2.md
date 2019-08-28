@@ -22,6 +22,36 @@ Then any router can refer to an instance of the wanted middleware.
 
     ### v1
     
+    ```yaml tab="Docker"
+    labels:
+      - "traefik.frontend.rule=Host:test.localhost;PathPrefix:/test"
+      - "traefik.frontend.auth.basic.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+    ```
+
+    ```yaml tab="K8s Ingress"
+    apiVersion: extensions/v1beta1
+    kind: Ingress
+    metadata:
+      name: traefik
+      namespace: kube-system
+      annotations:
+        kubernetes.io/ingress.class: traefik
+        traefik.ingress.kubernetes.io/rule-type: PathPrefix
+    spec:
+      rules:
+      - host: test.locahost
+        http:
+          paths:
+          - path: /test
+            backend:
+              serviceName: server0
+              servicePort: 80
+          - path: /test
+            backend:
+              serviceName: server1
+              servicePort: 80
+    ```
+
     ```toml tab="File (TOML)"
     [frontends]
       [frontends.frontend1]
@@ -51,84 +81,16 @@ Then any router can refer to an instance of the wanted middleware.
         [backends.backend1.loadBalancer]
           method = "wrr"
     ```
-
-    ```yaml tab="K8s Ingress"
-    apiVersion: extensions/v1beta1
-    kind: Ingress
-    metadata:
-      name: traefik
-      namespace: kube-system
-      annotations:
-        kubernetes.io/ingress.class: traefik
-        traefik.ingress.kubernetes.io/rule-type: PathPrefix
-    spec:
-      rules:
-      - host: test.locahost
-        http:
-          paths:
-          - path: /test
-            backend:
-              serviceName: server0
-              servicePort: 80
-          - path: /test
-            backend:
-              serviceName: server1
-              servicePort: 80
-    ```
-    
-    ```yaml tab="Docker"
-    labels:
-      - "traefik.frontend.rule=Host:test.localhost;PathPrefix:/test"
-      - "traefik.frontend.auth.basic.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-    ```
     
     ### v2
     
-    ```toml tab="File (TOML)"
-    [http.routers]
-      [http.routers.router0]
-        rule = "Host(`test.localhost`) && PathPrefix(`/test`)"
-        middlewares = ["auth"]
-        service = "my-service"
-    
-    [http.services]
-      [[http.services.my-service.loadBalancer.servers]]
-        url = "http://10.10.10.1:80"
-      [[http.services.my-service.loadBalancer.servers]]
-        url = "http://10.10.10.2:80"
-    
-    [http.middlewares]
-      [http.middlewares.auth.basicAuth]
-        users = [
-          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
-          "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-        ]
+    ```yaml tab="Docker"
+    labels:
+      - "traefik.http.routers.router0.rule=Host(`bar.com`) && PathPrefix(`/test`)"
+      - "traefik.http.routers.router0.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
     ```
-    
-    ```yaml tab="File (YAML)"
-    http:
-      routers:
-        router0:
-          rule: "Host(`test.localhost`) && PathPrefix(`/test`)"
-          service: my-service
-          middlewares:
-          - auth
-    
-      services:
-        my-service:
-          loadBalancer:
-            servers:
-            - url: http://10.10.10.1:80
-            - url: http://10.10.10.2:80
-    
-      middlewares:
-        auth:
-          basicAuth:
-            users:
-            - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
-            - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-    ```
-    
+
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the Middleware and IngressRoute kinds.  
     # https://docs.traefik.io/v2.0/providers/kubernetes-crd/#traefik-ingressroute-definition
@@ -165,12 +127,50 @@ Then any router can refer to an instance of the wanted middleware.
         - name: basicauth
           namespace: foo
     ```
+
+    ```toml tab="File (TOML)"
+    [http.routers]
+      [http.routers.router0]
+        rule = "Host(`test.localhost`) && PathPrefix(`/test`)"
+        middlewares = ["auth"]
+        service = "my-service"
     
-    ```yaml tab="Docker"
-    labels:
-      - "traefik.http.routers.router0.rule=Host(`bar.com`) && PathPrefix(`/test`)"
-      - "traefik.http.routers.router0.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+    [http.services]
+      [[http.services.my-service.loadBalancer.servers]]
+        url = "http://10.10.10.1:80"
+      [[http.services.my-service.loadBalancer.servers]]
+        url = "http://10.10.10.2:80"
+    
+    [http.middlewares]
+      [http.middlewares.auth.basicAuth]
+        users = [
+          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
+          "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+        ]
+    ```
+
+    ```yaml tab="File (YAML)"
+    http:
+      routers:
+        router0:
+          rule: "Host(`test.localhost`) && PathPrefix(`/test`)"
+          service: my-service
+          middlewares:
+          - auth
+    
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+            - url: http://10.10.10.1:80
+            - url: http://10.10.10.2:80
+    
+      middlewares:
+        auth:
+          basicAuth:
+            users:
+            - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+            - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
     ```
 
 ## TLS configuration is now dynamic, per router.
@@ -196,26 +196,6 @@ TLS parameters used to be specified, in the static configuration, as an entryPoi
           [[entryPoints.web-secure.tls.certificates]]
             certFile = "path/to/my.cert"
             keyFile = "path/to/my.key"
-    ```
-    
-    ```yaml tab="K8s Ingress"
-    apiVersion: extensions/v1beta1
-    kind: Ingress
-    metadata:
-      name: traefik-web-ui
-      namespace: kube-system
-      annotations:
-        kubernetes.io/ingress.class: traefik
-    spec:
-      rules:
-      - host: bar.com
-        http:
-          paths:
-          - backend:
-              serviceName: traefik-web-ui
-              servicePort: 80
-      tls:
-       - secretName: traefik-ui-tls-cert
     ```
     
     ```bash tab="CLI"
