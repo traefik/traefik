@@ -54,7 +54,7 @@ func CheckNewVersion() {
 		return
 	}
 	client := github.NewClient(nil)
-	updateURL, err := url.Parse("https://update.traefik.io")
+	updateURL, err := url.Parse("https://update.traefik.io/")
 	if err != nil {
 		log.Warnf("Error checking new version: %s", err)
 		return
