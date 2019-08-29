@@ -14,6 +14,20 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type apiError struct {
+	Message string `json:"message"`
+}
+
+func writeError(rw http.ResponseWriter, msg string, code int) {
+	data, err := json.Marshal(apiError{Message: msg})
+	if err != nil {
+		http.Error(rw, msg, code)
+		return
+	}
+
+	http.Error(rw, string(data), code)
+}
+
 type serviceInfoRepresentation struct {
 	*runtime.ServiceInfo
 	ServerStatus map[string]string `json:"serverStatus,omitempty"`

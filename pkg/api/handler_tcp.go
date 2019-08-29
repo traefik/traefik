@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
@@ -57,39 +58,40 @@ func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 		return results[i].Name < results[j].Name
 	})
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	pageInfo, err := pagination(request, len(results))
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		writeError(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json")
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
 	routerID := mux.Vars(request)["routerID"]
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	router, ok := h.runtimeConfiguration.TCPRouters[routerID]
 	if !ok {
-		http.NotFound(rw, request)
+		writeError(rw, fmt.Sprintf("router not found: %s", routerID), http.StatusNotFound)
 		return
 	}
 
 	result := newTCPRouterRepresentation(routerID, router)
 
-	rw.Header().Set("Content-Type", "application/json")
-
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -108,39 +110,40 @@ func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 		return results[i].Name < results[j].Name
 	})
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	pageInfo, err := pagination(request, len(results))
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		writeError(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json")
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
 	serviceID := mux.Vars(request)["serviceID"]
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	service, ok := h.runtimeConfiguration.TCPServices[serviceID]
 	if !ok {
-		http.NotFound(rw, request)
+		writeError(rw, fmt.Sprintf("service not found: %s", serviceID), http.StatusNotFound)
 		return
 	}
 
 	result := newTCPServiceRepresentation(serviceID, service)
 
-	rw.Header().Set("Content-Type", "application/json")
-
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 

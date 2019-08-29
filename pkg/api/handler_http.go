@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
@@ -75,39 +76,40 @@ func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 		return results[i].Name < results[j].Name
 	})
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	pageInfo, err := pagination(request, len(results))
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		writeError(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json")
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
 	routerID := mux.Vars(request)["routerID"]
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	router, ok := h.runtimeConfiguration.Routers[routerID]
 	if !ok {
-		http.NotFound(rw, request)
+		writeError(rw, fmt.Sprintf("router not found: %s", routerID), http.StatusNotFound)
 		return
 	}
 
 	result := newRouterRepresentation(routerID, router)
 
-	rw.Header().Set("Content-Type", "application/json")
-
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -126,39 +128,40 @@ func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 		return results[i].Name < results[j].Name
 	})
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	pageInfo, err := pagination(request, len(results))
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		writeError(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json")
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
 	serviceID := mux.Vars(request)["serviceID"]
 
+	rw.Header().Add("Content-Type", "application/json")
+
 	service, ok := h.runtimeConfiguration.Services[serviceID]
 	if !ok {
-		http.NotFound(rw, request)
+		writeError(rw, fmt.Sprintf("service not found: %s", serviceID), http.StatusNotFound)
 		return
 	}
 
 	result := newServiceRepresentation(serviceID, service)
 
-	rw.Header().Add("Content-Type", "application/json")
-
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -177,39 +180,40 @@ func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
 		return results[i].Name < results[j].Name
 	})
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	pageInfo, err := pagination(request, len(results))
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		writeError(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json")
 	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func (h Handler) getMiddleware(rw http.ResponseWriter, request *http.Request) {
 	middlewareID := mux.Vars(request)["middlewareID"]
 
+	rw.Header().Set("Content-Type", "application/json")
+
 	middleware, ok := h.runtimeConfiguration.Middlewares[middlewareID]
 	if !ok {
-		http.NotFound(rw, request)
+		writeError(rw, fmt.Sprintf("middleware not found: %s", middlewareID), http.StatusNotFound)
 		return
 	}
 
 	result := newMiddlewareRepresentation(middlewareID, middleware)
 
-	rw.Header().Set("Content-Type", "application/json")
-
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 

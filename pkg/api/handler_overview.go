@@ -56,7 +56,7 @@ func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
