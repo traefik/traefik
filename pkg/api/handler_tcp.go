@@ -17,21 +17,37 @@ type tcpRouterRepresentation struct {
 	Provider string `json:"provider,omitempty"`
 }
 
+func newTCPRouterRepresentation(name string, rt *runtime.TCPRouterInfo) tcpRouterRepresentation {
+	return tcpRouterRepresentation{
+		TCPRouterInfo: rt,
+		Name:          name,
+		Provider:      getProviderName(name),
+	}
+}
+
 type tcpServiceRepresentation struct {
 	*runtime.TCPServiceInfo
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
 
+func newTCPServiceRepresentation(name string, si *runtime.TCPServiceInfo) tcpServiceRepresentation {
+	return tcpServiceRepresentation{
+		TCPServiceInfo: si,
+		Name:           name,
+		Provider:       getProviderName(name),
+	}
+}
+
 func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 	results := make([]tcpRouterRepresentation, 0, len(h.runtimeConfiguration.TCPRouters))
 
+	criterion := newSearchCriterion(request.URL.Query())
+
 	for name, rt := range h.runtimeConfiguration.TCPRouters {
-		results = append(results, tcpRouterRepresentation{
-			TCPRouterInfo: rt,
-			Name:          name,
-			Provider:      getProviderName(name),
-		})
+		if keepTCPRouter(name, rt, criterion) {
+			results = append(results, newTCPRouterRepresentation(name, rt))
+		}
 	}
 
 	sort.Slice(results, func(i, j int) bool {
@@ -63,11 +79,7 @@ func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	result := tcpRouterRepresentation{
-		TCPRouterInfo: router,
-		Name:          routerID,
-		Provider:      getProviderName(routerID),
-	}
+	result := newTCPRouterRepresentation(routerID, router)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -81,12 +93,12 @@ func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
 func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 	results := make([]tcpServiceRepresentation, 0, len(h.runtimeConfiguration.TCPServices))
 
+	criterion := newSearchCriterion(request.URL.Query())
+
 	for name, si := range h.runtimeConfiguration.TCPServices {
-		results = append(results, tcpServiceRepresentation{
-			TCPServiceInfo: si,
-			Name:           name,
-			Provider:       getProviderName(name),
-		})
+		if keepTCPService(name, si, criterion) {
+			results = append(results, newTCPServiceRepresentation(name, si))
+		}
 	}
 
 	sort.Slice(results, func(i, j int) bool {
@@ -118,11 +130,7 @@ func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	result := tcpServiceRepresentation{
-		TCPServiceInfo: service,
-		Name:           serviceID,
-		Provider:       getProviderName(serviceID),
-	}
+	result := newTCPServiceRepresentation(serviceID, service)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -131,4 +139,20 @@ func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
 		log.FromContext(request.Context()).Error(err)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func keepTCPRouter(name string, item *runtime.TCPRouterInfo, criterion *searchCriterion) bool {
+	if criterion == nil {
+		return true
+	}
+
+	return criterion.withStatus(item.Status) && criterion.searchIn(item.Rule, name)
+}
+
+func keepTCPService(name string, item *runtime.TCPServiceInfo, criterion *searchCriterion) bool {
+	if criterion == nil {
+		return true
+	}
+
+	return criterion.withStatus(item.Status) && criterion.searchIn(name)
 }

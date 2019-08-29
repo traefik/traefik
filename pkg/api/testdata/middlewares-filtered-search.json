@@ -1,0 +1,24 @@
+[
+	{
+		"addPrefix": {
+			"prefix": "/toto"
+		},
+		"name": "addPrefixTest@anotherprovider",
+		"provider": "anotherprovider",
+		"status": "enabled",
+		"usedBy": [
+			"bar@myprovider"
+		]
+	},
+	{
+		"addPrefix": {
+			"prefix": "/titi"
+		},
+		"name": "addPrefixTest@myprovider",
+		"provider": "myprovider",
+		"status": "disabled",
+		"usedBy": [
+			"test@myprovider"
+		]
+	}
+]

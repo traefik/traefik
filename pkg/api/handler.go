@@ -2,9 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
@@ -14,13 +12,6 @@ import (
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
 )
-
-const (
-	defaultPerPage = 100
-	defaultPage    = 1
-)
-
-const nextPageHeader = "X-Next-Page"
 
 type serviceInfoRepresentation struct {
 	*runtime.ServiceInfo
@@ -34,12 +25,6 @@ type RunTimeRepresentation struct {
 	Services    map[string]*serviceInfoRepresentation `json:"services,omitempty"`
 	TCPRouters  map[string]*runtime.TCPRouterInfo     `json:"tcpRouters,omitempty"`
 	TCPServices map[string]*runtime.TCPServiceInfo    `json:"tcpServices,omitempty"`
-}
-
-type pageInfo struct {
-	startIndex int
-	endIndex   int
-	nextPage   int
 }
 
 // Handler serves the configuration and status of Traefik on API endpoints.
@@ -134,48 +119,6 @@ func (h Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.R
 		log.FromContext(request.Context()).Error(err)
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
-}
-
-func pagination(request *http.Request, max int) (pageInfo, error) {
-	perPage, err := getIntParam(request, "per_page", defaultPerPage)
-	if err != nil {
-		return pageInfo{}, err
-	}
-
-	page, err := getIntParam(request, "page", defaultPage)
-	if err != nil {
-		return pageInfo{}, err
-	}
-
-	startIndex := (page - 1) * perPage
-	if startIndex != 0 && startIndex >= max {
-		return pageInfo{}, fmt.Errorf("invalid request: page: %d, per_page: %d", page, perPage)
-	}
-
-	endIndex := startIndex + perPage
-	if endIndex >= max {
-		endIndex = max
-	}
-
-	nextPage := 1
-	if page*perPage < max {
-		nextPage = page + 1
-	}
-
-	return pageInfo{startIndex: startIndex, endIndex: endIndex, nextPage: nextPage}, nil
-}
-
-func getIntParam(request *http.Request, key string, defaultValue int) (int, error) {
-	raw := request.URL.Query().Get(key)
-	if raw == "" {
-		return defaultValue, nil
-	}
-
-	value, err := strconv.Atoi(raw)
-	if err != nil || value <= 0 {
-		return 0, fmt.Errorf("invalid request: %s: %d", key, value)
-	}
-	return value, nil
 }
 
 func getProviderName(id string) string {

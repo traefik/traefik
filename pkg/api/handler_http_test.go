@@ -138,6 +138,68 @@ func TestHandler_HTTP(t *testing.T) {
 			},
 		},
 		{
+			desc: "routers filtered by status",
+			path: "/api/http/routers?status=enabled",
+			conf: runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
+					"test@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar.other`)",
+							Middlewares: []string{"addPrefixTest", "auth"},
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"bar@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/routers-filtered-status.json",
+			},
+		},
+		{
+			desc: "routers filtered by search",
+			path: "/api/http/routers?search=fii",
+			conf: runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
+					"test@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "fii-service@myprovider",
+							Rule:        "Host(`fii.bar.other`)",
+							Middlewares: []string{"addPrefixTest", "auth"},
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"bar@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/routers-filtered-search.json",
+			},
+		},
+		{
 			desc: "one router by id",
 			path: "/api/http/routers/bar@myprovider",
 			conf: runtime.Configuration{
@@ -302,6 +364,100 @@ func TestHandler_HTTP(t *testing.T) {
 			},
 		},
 		{
+			desc: "services filtered by status",
+			path: "/api/http/services?status=enabled",
+			conf: runtime.Configuration{
+				Services: map[string]*runtime.ServiceInfo{
+					"bar@myprovider": func() *runtime.ServiceInfo {
+						si := &runtime.ServiceInfo{
+							Service: &dynamic.Service{
+								LoadBalancer: &dynamic.ServersLoadBalancer{
+									Servers: []dynamic.Server{
+										{
+											URL: "http://127.0.0.1",
+										},
+									},
+								},
+							},
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
+							Status: runtime.StatusEnabled,
+						}
+						si.UpdateServerStatus("http://127.0.0.1", "UP")
+						return si
+					}(),
+					"baz@myprovider": func() *runtime.ServiceInfo {
+						si := &runtime.ServiceInfo{
+							Service: &dynamic.Service{
+								LoadBalancer: &dynamic.ServersLoadBalancer{
+									Servers: []dynamic.Server{
+										{
+											URL: "http://127.0.0.2",
+										},
+									},
+								},
+							},
+							UsedBy: []string{"foo@myprovider"},
+							Status: runtime.StatusDisabled,
+						}
+						si.UpdateServerStatus("http://127.0.0.2", "UP")
+						return si
+					}(),
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/services-filtered-status.json",
+			},
+		},
+		{
+			desc: "services filtered by search",
+			path: "/api/http/services?search=baz",
+			conf: runtime.Configuration{
+				Services: map[string]*runtime.ServiceInfo{
+					"bar@myprovider": func() *runtime.ServiceInfo {
+						si := &runtime.ServiceInfo{
+							Service: &dynamic.Service{
+								LoadBalancer: &dynamic.ServersLoadBalancer{
+									Servers: []dynamic.Server{
+										{
+											URL: "http://127.0.0.1",
+										},
+									},
+								},
+							},
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
+							Status: runtime.StatusEnabled,
+						}
+						si.UpdateServerStatus("http://127.0.0.1", "UP")
+						return si
+					}(),
+					"baz@myprovider": func() *runtime.ServiceInfo {
+						si := &runtime.ServiceInfo{
+							Service: &dynamic.Service{
+								LoadBalancer: &dynamic.ServersLoadBalancer{
+									Servers: []dynamic.Server{
+										{
+											URL: "http://127.0.0.2",
+										},
+									},
+								},
+							},
+							UsedBy: []string{"foo@myprovider"},
+							Status: runtime.StatusDisabled,
+						}
+						si.UpdateServerStatus("http://127.0.0.2", "UP")
+						return si
+					}(),
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/services-filtered-search.json",
+			},
+		},
+		{
 			desc: "one service by id",
 			path: "/api/http/services/bar@myprovider",
 			conf: runtime.Configuration{
@@ -409,6 +565,86 @@ func TestHandler_HTTP(t *testing.T) {
 				statusCode: http.StatusOK,
 				nextPage:   "1",
 				jsonFile:   "testdata/middlewares.json",
+			},
+		},
+		{
+			desc: "middlewares filtered by status",
+			path: "/api/http/middlewares?status=enabled",
+			conf: runtime.Configuration{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
+					"auth@myprovider": {
+						Middleware: &dynamic.Middleware{
+							BasicAuth: &dynamic.BasicAuth{
+								Users: []string{"admin:admin"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+					"addPrefixTest@myprovider": {
+						Middleware: &dynamic.Middleware{
+							AddPrefix: &dynamic.AddPrefix{
+								Prefix: "/titi",
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+						Status: runtime.StatusDisabled,
+					},
+					"addPrefixTest@anotherprovider": {
+						Middleware: &dynamic.Middleware{
+							AddPrefix: &dynamic.AddPrefix{
+								Prefix: "/toto",
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/middlewares-filtered-status.json",
+			},
+		},
+		{
+			desc: "middlewares filtered by search",
+			path: "/api/http/middlewares?search=addprefixtest",
+			conf: runtime.Configuration{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
+					"auth@myprovider": {
+						Middleware: &dynamic.Middleware{
+							BasicAuth: &dynamic.BasicAuth{
+								Users: []string{"admin:admin"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+					"addPrefixTest@myprovider": {
+						Middleware: &dynamic.Middleware{
+							AddPrefix: &dynamic.AddPrefix{
+								Prefix: "/titi",
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+						Status: runtime.StatusDisabled,
+					},
+					"addPrefixTest@anotherprovider": {
+						Middleware: &dynamic.Middleware{
+							AddPrefix: &dynamic.AddPrefix{
+								Prefix: "/toto",
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/middlewares-filtered-search.json",
 			},
 		},
 		{
