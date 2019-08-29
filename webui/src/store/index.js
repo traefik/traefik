@@ -3,6 +3,7 @@ import Vuex from 'vuex'
 
 import core from './core'
 import entrypoints from './entrypoints'
+import http from './http'
 
 Vue.use(Vuex)
 
@@ -15,7 +16,8 @@ export default function (/* { ssrContext } */) {
   const Store = new Vuex.Store({
     modules: {
       core,
-      entrypoints
+      entrypoints,
+      http
     },
 
     // enable strict mode (adds overhead!)
