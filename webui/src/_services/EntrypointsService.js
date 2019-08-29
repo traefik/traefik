@@ -10,6 +10,15 @@ function getAll () {
     })
 }
 
+function getByName (name) {
+  return APP.api.get(`${apiBase}/${name}`)
+    .then(body => {
+      console.log('Success -> EntrypointsService -> getByName', body.data)
+      return body.data
+    })
+}
+
 export default {
-  getAll
+  getAll,
+  getByName
 }

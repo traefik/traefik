@@ -8,7 +8,7 @@
         </div>
         <div class="row items-center q-col-gutter-lg">
           <div class="col-12">
-            <main-table :data="allRouters.items" :request="onGetAll" :loading="loading" :pagination.sync="pagination" :filter="filter"/>
+            <main-table :data="allRouters.items" :request="onGetAll" :loading="loading" :pagination.sync="pagination" :filter="filter" type="http-routers"/>
           </div>
         </div>
       </div>

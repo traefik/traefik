@@ -12,3 +12,16 @@ export function getAll ({ commit }) {
       return Promise.reject(error)
     })
 }
+
+export function getByName ({ commit }, name) {
+  commit('getByNameRequest')
+  return entrypointsService.getByName(name)
+    .then(body => {
+      commit('getByNameSuccess', body)
+      return body
+    })
+    .catch(error => {
+      commit('getByNameFailure', error)
+      return Promise.reject(error)
+    })
+}
