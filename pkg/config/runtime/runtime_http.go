@@ -21,7 +21,7 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 		logger := log.FromContext(log.With(ctx, log.Str(log.RouterName, rtName)))
 		eps := rt.EntryPoints
 		if len(eps) == 0 {
-			logger.Debugf("No entrypoint defined for this router, using the defaults ones instead: %+v", entryPoints)
+			logger.Debugf("No entrypoint defined for this router, using the default one(s) instead: %+v", entryPoints)
 			eps = entryPoints
 		}
 		entryPointsCount := 0
@@ -41,7 +41,7 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 			entryPointsRouters[entryPointName][rtName] = rt
 		}
 		if entryPointsCount == 0 {
-			rt.AddError(fmt.Errorf("no valid entryPoints for this router"), true)
+			rt.AddError(fmt.Errorf("no valid entryPoint for this router"), true)
 			logger.Error("no valid entryPoints for this router")
 		}
 	}
