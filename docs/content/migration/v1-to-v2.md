@@ -176,7 +176,9 @@ Then any router can refer to an instance of the wanted middleware.
 
 ## TLS configuration is now dynamic, per router.
 
-TLS parameters used to be specified, in the static configuration, as an entryPoint field. With Traefik v2, a new dynamic TLS section at the root contains all the desired TLS configurations. Then, a router's TLS field can refer to one of the TLS configurations defined at the root, hence defining the TLS configuration for that router.
+TLS parameters used to be specified in the static configuration, as an entryPoint field.
+With Traefik v2, a new dynamic TLS section at the root contains all the desired TLS configurations.
+Then, a router's TLS field can refer to one of the TLS configurations defined at the root, hence defining the TLS configuration for that router.
 
 !!! example "TLS on web-secure entryPoint becomes TLS option on Router-1"
 
