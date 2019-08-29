@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/google/go-github/v27/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/gorilla/mux"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/unrolled/render"
@@ -54,7 +54,7 @@ func CheckNewVersion() {
 		return
 	}
 	client := github.NewClient(nil)
-	updateURL, err := url.Parse("https://update.traefik.io")
+	updateURL, err := url.Parse("https://update.traefik.io/")
 	if err != nil {
 		log.Warnf("Error checking new version: %s", err)
 		return

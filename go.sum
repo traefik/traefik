@@ -218,8 +218,8 @@ github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c/go.mod h1:lNA+9X1NB3Z
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
 github.com/google/go-cmp v0.3.0 h1:crn/baboCvb5fXaQ0IJ1SGTsTVrWpDsCWC8EGETZijY=
 github.com/google/go-cmp v0.3.0/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
-github.com/google/go-github/v27 v27.0.4 h1:N/EEqsvJLgqTbepTiMBz+12KhwLovv6YvwpRezd+4Fg=
-github.com/google/go-github/v27 v27.0.4/go.mod h1:/0Gr8pJ55COkmv+S/yPKCczSkUPIM/LnFyubufRNIS0=
+github.com/google/go-github/v28 v28.0.0 h1:+UjHI4+1W/vsXR4jJBWt0ZA74XHbvt5yBAvsf1M3bgM=
+github.com/google/go-github/v28 v28.0.0/go.mod h1:+5GboIspo7F0NG2qsvfYh7en6F3EK37uyqv+c35AR3s=
 github.com/google/go-querystring v1.0.0 h1:Xkwi/a1rcvNg1PPYe5vI8GbeBY/jrVuDX5ASuANWTrk=
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
 github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf h1:+RRA9JqSOZFfKrOeqr2z77+8R2RKyh8PG66dcu1V0ck=
