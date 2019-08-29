@@ -300,9 +300,9 @@ func TestHandler_HTTP(t *testing.T) {
 								Services: nil,
 								Sticky: &dynamic.Sticky{
 									Cookie: &dynamic.Cookie{
-										Name:     "",
-										Secure:   false,
-										HTTPOnly: false,
+										Name:     "chocolat",
+										Secure:   true,
+										HTTPOnly: true,
 									},
 								},
 							},

@@ -50,7 +50,11 @@
 		],
 		"weighted": {
 			"sticky": {
-				"cookie": {}
+				"cookie": {
+					"httpOnly": true,
+					"name": "chocolat",
+					"secure": true
+				}
 			}
 		}
 	},
