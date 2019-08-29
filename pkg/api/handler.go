@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
@@ -123,4 +124,17 @@ func (h Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.R
 
 func getProviderName(id string) string {
 	return strings.SplitN(id, "@", 2)[1]
+}
+
+func extractType(element interface{}) string {
+	v := reflect.ValueOf(element).Elem()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		if field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct {
+			if !field.IsNil() {
+				return v.Type().Field(i).Name
+			}
+		}
+	}
+	return ""
 }

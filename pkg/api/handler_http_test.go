@@ -294,6 +294,45 @@ func TestHandler_HTTP(t *testing.T) {
 						si.UpdateServerStatus("http://127.0.0.2", "UP")
 						return si
 					}(),
+					"canary@myprovider": {
+						Service: &dynamic.Service{
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: nil,
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "",
+										Secure:   false,
+										HTTPOnly: false,
+									},
+								},
+							},
+						},
+						Status: runtime.StatusEnabled,
+						UsedBy: []string{"foo@myprovider"},
+					},
+					"mirror@myprovider": {
+						Service: &dynamic.Service{
+							Mirroring: &dynamic.Mirroring{
+								Service: "one@myprovider",
+								Mirrors: []dynamic.MirrorService{
+									{
+										Name:    "two@myprovider",
+										Percent: 10,
+									},
+									{
+										Name:    "three@myprovider",
+										Percent: 15,
+									},
+									{
+										Name:    "four@myprovider",
+										Percent: 80,
+									},
+								},
+							},
+						},
+						Status: runtime.StatusEnabled,
+						UsedBy: []string{"foo@myprovider"},
+					},
 				},
 			},
 			expected: expected{

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -30,6 +31,7 @@ type serviceRepresentation struct {
 	ServerStatus map[string]string `json:"serverStatus,omitempty"`
 	Name         string            `json:"name,omitempty"`
 	Provider     string            `json:"provider,omitempty"`
+	Type         string            `json:"type,omitempty"`
 }
 
 func newServiceRepresentation(name string, si *runtime.ServiceInfo) serviceRepresentation {
@@ -38,6 +40,7 @@ func newServiceRepresentation(name string, si *runtime.ServiceInfo) serviceRepre
 		Name:         name,
 		Provider:     getProviderName(name),
 		ServerStatus: si.GetAllStatus(),
+		Type:         strings.ToLower(extractType(si.Service)),
 	}
 }
 
@@ -45,6 +48,7 @@ type middlewareRepresentation struct {
 	*runtime.MiddlewareInfo
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
+	Type     string `json:"type,omitempty"`
 }
 
 func newMiddlewareRepresentation(name string, mi *runtime.MiddlewareInfo) middlewareRepresentation {
@@ -52,6 +56,7 @@ func newMiddlewareRepresentation(name string, mi *runtime.MiddlewareInfo) middle
 		MiddlewareInfo: mi,
 		Name:           name,
 		Provider:       getProviderName(name),
+		Type:           strings.ToLower(extractType(mi.Middleware)),
 	}
 }
 

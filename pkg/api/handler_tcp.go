@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -29,6 +30,7 @@ type tcpServiceRepresentation struct {
 	*runtime.TCPServiceInfo
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
+	Type     string `json:"type,omitempty"`
 }
 
 func newTCPServiceRepresentation(name string, si *runtime.TCPServiceInfo) tcpServiceRepresentation {
@@ -36,6 +38,7 @@ func newTCPServiceRepresentation(name string, si *runtime.TCPServiceInfo) tcpSer
 		TCPServiceInfo: si,
 		Name:           name,
 		Provider:       getProviderName(name),
+		Type:           strings.ToLower(extractType(si.TCPService)),
 	}
 }
 

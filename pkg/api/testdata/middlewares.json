@@ -6,6 +6,7 @@
 		"name": "addPrefixTest@anotherprovider",
 		"provider": "anotherprovider",
 		"status": "enabled",
+		"type": "addprefix",
 		"usedBy": [
 			"bar@myprovider"
 		]
@@ -17,6 +18,7 @@
 		"name": "addPrefixTest@myprovider",
 		"provider": "myprovider",
 		"status": "enabled",
+		"type": "addprefix",
 		"usedBy": [
 			"test@myprovider"
 		]
@@ -30,6 +32,7 @@
 		"name": "auth@myprovider",
 		"provider": "myprovider",
 		"status": "enabled",
+		"type": "basicauth",
 		"usedBy": [
 			"bar@myprovider",
 			"test@myprovider"
