@@ -14,7 +14,8 @@ During the transition from v1 to v2, a number of internal pieces and components 
 As such, the combination of core notions such as frontends and backends has been replaced with the combination of routers, services, and middlewares.
 
 Typically, a router replaces a frontend, and a service assumes the role of a backend, with each router referring to a service.
-However, even though a backend was in charge of applying any desired modification on the fly to the incoming request, the router defers that responsibility to another component.
+However, even though a backend was in charge of applying any desired modification on the fly to the incoming request,
+the router defers that responsibility to another component.
 Instead, a dedicated middleware is now defined for each kind of such modification.
 Then any router can refer to an instance of the wanted middleware.
 
