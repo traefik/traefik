@@ -17,6 +17,11 @@
 ## dynamic configuration ##
 
 [http.routers]
+  [http.routers.router3]
+    entrypoints=["unknown-entrypoint"]
+    service = "service1"
+    rule = "Host(`mydomain.com`)"
+
   [http.routers.router4]
     service = "service1"
     rule = "Host(`snitest.net`)"
