@@ -39,6 +39,10 @@ body {
   color: $app-text-grey;
 }
 
+.bg-app-toggle {
+  background-color: rgba( $accent, .1 );
+}
+
 // Helps
 .xs-text-center {
   @include respond-to(sm, max) {

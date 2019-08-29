@@ -11,8 +11,6 @@
       <div class="text-h3 text-center text-weight-bold">
         <q-chip
           outline
-          color="primary"
-          text-color="white"
           v-bind:class="['feature-chip', {'feature-chip-string':isString}, {'feature-chip-boolean':isBoolean}, {'feature-chip-boolean-true':isTrue}]">
           {{getVal}}
         </q-chip>
@@ -56,21 +54,22 @@ export default {
     border-width: 2px;
     height: 56px;
     padding: 12px 24px;
+    color: $primary;
     &-string{
       border-color: $app-text-grey;
       font-size: 24px;
-      color: $app-text-grey !important;
+      color: $app-text-grey;
       background-color: rgba( $app-text-grey, .1 );
     }
     &-boolean{
       font-size: 40px;
       font-weight: 700;
       border-color: $negative;
-      color: $negative !important;
+      color: $negative;
       background-color: rgba( $negative, .1 );
       &-true{
         border-color: $positive;
-        color: $positive !important;
+        color: $positive;
         background-color: rgba( $positive, .1 );
       }
     }
