@@ -1,5 +1,5 @@
 <template>
-  <q-card flat bordered>
+  <q-card flat bordered v-bind:class="['panel-entry', {'panel-entry-detail':type === 'detail'}, {'panel-entry-focus':focus}]">
     <q-card-section>
       <div class="row items-center no-wrap">
         <div class="col">
@@ -16,10 +16,28 @@
 <script>
 export default {
   name: 'PanelEntry',
-  props: ['address', 'name']
+  props: ['address', 'name', 'type', 'focus']
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+  @import "../../css/sass/variables";
 
+  .panel-entry {
+    &-detail{
+      .text-subtitle2 {
+        font-size: 11px;
+        line-height: 11px;
+        text-align: left;
+      }
+      .text-h3 {
+        font-size: 16px;
+        text-align: left;
+        line-height: 16px;
+      }
+    }
+    &-focus {
+      border: solid 2px $accent;
+    }
+  }
 </style>

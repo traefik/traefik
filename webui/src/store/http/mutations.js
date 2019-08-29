@@ -16,3 +16,22 @@ export function getAllRoutersFailure (state, error) {
 export function getAllRoutersClear (state) {
   state.allRouters = {}
 }
+
+// ----------------------------
+// Get Routers By Name
+// ----------------------------
+export function getRouterByNameRequest (state) {
+  state.routerByName.loading = true
+}
+
+export function getRouterByNameSuccess (state, body) {
+  state.routerByName = { item: body, loading: false }
+}
+
+export function getRouterByNameFailure (state, error) {
+  state.routerByName = { error }
+}
+
+export function getRouterByNameClear (state) {
+  state.routerByName = {}
+}

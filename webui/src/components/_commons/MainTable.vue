@@ -15,7 +15,7 @@
       table-header-class="table-header">
 
       <template v-slot:body="props">
-        <q-tr :props="props">
+        <q-tr :props="props" class="cursor-pointer" @click.native="$router.push({ path: `/${getPath}/${props.row.name}`})">
           <q-td key="status" :props="props">
             <avatar-state :state="props.row.status | status "/>
           </q-td>
@@ -115,6 +115,13 @@ export default {
       set (newValue) {
         this.$emit('update:pagination', newValue)
       }
+    },
+    getPath () {
+      let path = ''
+      if (this.type === 'http-routers') {
+        path = 'http/routers'
+      }
+      return path
     }
   },
   methods: {

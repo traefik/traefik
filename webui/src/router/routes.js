@@ -33,6 +33,18 @@ const routes = [
         }
       },
       {
+        path: 'routers/:name',
+        name: 'httpRoutersDetail',
+        components: {
+          default: () => import('pages/http/RoutersDetail.vue'),
+          NavBar: () => import('components/http/ToolBar.vue')
+        },
+        props: { default: true, NavBar: true },
+        meta: {
+          title: 'HTTP Routers Detail'
+        }
+      },
+      {
         path: 'services',
         name: 'httpServices',
         components: {

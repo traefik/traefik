@@ -1,4 +1,4 @@
 export default {
   allRouters: {},
-  byName: {}
+  routerByName: {}
 }
