@@ -42,7 +42,7 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 		}
 		if entryPointsCount == 0 {
 			rt.AddError(fmt.Errorf("no valid entryPoint for this router"), true)
-			logger.Error("no valid entryPoints for this router")
+			logger.Error("no valid entryPoint for this router")
 		}
 	}
 
