@@ -231,7 +231,7 @@ format = "json"
 ### Customize Headers
 
 Access logs prints the headers of each request, as fields of the access log line.
-You can customize which and how the headers are printed, likewise the other fileds (see ["Customize Fields" section](#customize-fields)).
+You can customize which and how the headers are printed, likewise the other fields (see ["Customize Fields" section](#customize-fields)).
 
 Each header has a "mode" which defines how it is written in the access log lines.
 The possible values for the mode are:
