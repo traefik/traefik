@@ -144,7 +144,6 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 				conf.Routers[serviceName].TLS = tlsConf
 			}
-
 		}
 	}
 

@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
@@ -49,9 +50,27 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 			rt.AddError(fmt.Errorf("no valid entryPoint for this router"), true)
 			logger.Error("no valid entryPoint for this router")
 		}
+
+		rt.Using = unique(rt.Using)
 	}
 
 	return entryPointsRouters
+}
+
+func unique(src []string) []string {
+	var uniq []string
+
+	set := make(map[string]struct{})
+	for _, v := range src {
+		if _, exist := set[v]; !exist {
+			set[v] = struct{}{}
+			uniq = append(uniq, v)
+		}
+	}
+
+	sort.Strings(uniq)
+
+	return uniq
 }
 
 // RouterInfo holds information about a currently running HTTP router.
