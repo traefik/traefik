@@ -11,3 +11,10 @@ export function allRouters (state) {
 export function routerByName (state) {
   return state.routerByName
 }
+
+// ----------------------------
+// Middleware by Name
+// ----------------------------
+export function middlewareByName (state) {
+  return state.middlewareByName
+}

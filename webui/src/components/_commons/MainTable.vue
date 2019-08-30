@@ -24,7 +24,7 @@
               v-if="props.row.rule"
               outline
               dense
-              class="chip-table chip-table-rule">
+              class="app-chip app-chip-rule">
               {{ props.row.rule }}
             </q-chip>
           </q-td>
@@ -34,7 +34,7 @@
                 v-for="(entryPoints, index) in props.row.entryPoints" :key="index"
                 outline
                 dense
-                class="chip-table chip-table-entry-points">
+                class="app-chip app-chip-entry-points">
                 {{ entryPoints }}
               </q-chip>
             </div>
@@ -44,7 +44,7 @@
               v-if="props.row.name"
               outline
               dense
-              class="chip-table chip-table-name">
+              class="app-chip app-chip-name">
               {{ props.row.name }}
             </q-chip>
           </q-td>
@@ -176,27 +176,6 @@ export default {
           }
         }
       }
-    }
-  }
-
-  .chip-table {
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    &-rule {
-      color: $accent;
-      border: solid 1px $accent;
-      background-color: rgba($accent, 0.1);
-    }
-    &-entry-points {
-      color: $app-text-green;
-      border: solid 1px $app-text-green;
-      background-color: rgba($app-text-green, 0.1);
-    }
-    &-name {
-      color: $app-text-purple;
-      border: solid 1px $app-text-purple;
-      background-color: rgba($app-text-purple, 0.1);
     }
   }
 

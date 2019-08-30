@@ -1,4 +1,5 @@
 export default {
   allRouters: {},
-  routerByName: {}
+  routerByName: {},
+  middlewareByName: {}
 }

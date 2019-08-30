@@ -13,9 +13,30 @@ const Boot = {
         },
         env () {
           return APP.config.env
+        },
+        appThumbStyle () {
+          return {
+            right: '2px',
+            borderRadius: '2px',
+            backgroundColor: '#dcdcdc',
+            width: '6px',
+            opacity: 0.75
+          }
         }
       },
       methods: {
+        middlewareLabel (item) {
+          // TODO - add all types to middlewares
+          // fake function
+          let label = ''
+          if (item.redirectScheme) {
+            label = 'redirectScheme'
+          }
+          if (item.basicAuth) {
+            label = 'basicAuth'
+          }
+          return label
+        }
       },
       filters: {
       },

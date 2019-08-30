@@ -1,9 +1,9 @@
 <template>
-  <q-card flat bordered v-bind:class="['panel-entry', {'panel-entry-detail':type === 'detail'}, {'panel-entry-focus':focus}]">
+  <q-card flat bordered v-bind:class="['panel-entry', {'panel-entry-detail':type === 'detail'}, {'panel-entry-focus':focus}, {'panel-entry-ex-size':exSize}]">
     <q-card-section>
       <div class="row items-center no-wrap">
         <div class="col">
-          <div class="text-subtitle2 text-uppercase text-center text-app-grey" style="letter-spacing: 3px;">{{name}}</div>
+          <div class="text-subtitle2">{{name}}</div>
         </div>
       </div>
     </q-card-section>
@@ -16,7 +16,7 @@
 <script>
 export default {
   name: 'PanelEntry',
-  props: ['address', 'name', 'type', 'focus']
+  props: ['address', 'name', 'type', 'focus', 'exSize']
 }
 </script>
 
@@ -24,9 +24,17 @@ export default {
   @import "../../css/sass/variables";
 
   .panel-entry {
+    .text-subtitle2 {
+      font-weight: 600;
+      letter-spacing: 3px;
+      color: $app-text-grey;
+      text-transform: uppercase;
+      text-align: center;
+    }
     &-detail{
       .text-subtitle2 {
         font-size: 11px;
+        font-weight: 600;
         line-height: 11px;
         text-align: left;
       }
@@ -38,6 +46,11 @@ export default {
     }
     &-focus {
       border: solid 2px $accent;
+    }
+    &-ex-size{
+      .text-h3 {
+        font-size: 22px;
+      }
     }
   }
 </style>

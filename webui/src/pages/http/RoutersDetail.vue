@@ -14,7 +14,7 @@
               <div class="col-12 col-md-8">
                 <div class="row items-start q-col-gutter-md">
                   <div v-for="(entryPoint, index) in entryPoints" :key="index" class="col-12">
-                    <panel-entry type="detail" :name="entryPoint.name" :address="entryPoint.address"/>
+                    <panel-entry type="detail" exSize="true" :name="entryPoint.name" :address="entryPoint.address"/>
                   </div>
                 </div>
               </div>
@@ -34,6 +34,25 @@
                 <div class="row items-start q-col-gutter-md">
                   <div class="col-12">
                     <panel-entry focus="true" type="detail" name="router" :address="routerByName.item.name"/>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4 xs-hide sm-hide">
+                <q-icon name="eva-arrow-forward-outline" class="arrow"></q-icon>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="middlewares.length" class="col-12 col-md-3 q-mb-lg path-block">
+            <div class="row no-wrap items-center q-mb-lg app-title">
+              <q-icon name="eva-layers"></q-icon>
+              <div class="app-title-label">HTTP Middlewares</div>
+            </div>
+            <div class="row items-start q-col-gutter-lg">
+              <div class="col-12 col-md-8">
+                <div class="row items-start q-col-gutter-md">
+                  <div v-for="(middleware, index) in middlewares" :key="index" class="col-12">
+                    <panel-entry type="detail" name="Middleware" :address="middlewareLabel(middleware)"/>
                   </div>
                 </div>
               </div>
@@ -70,6 +89,69 @@
       </div>
     </section>
 
+    <section class="app-section">
+      <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-xl q-pb-xl">
+        <div v-if="!loading" class="row items-start q-col-gutter-md">
+
+          <div v-if="routerByName.item" class="col-12 col-md-4 q-mb-lg path-block">
+            <div class="row no-wrap items-center q-mb-lg app-title">
+              <q-icon name="eva-info"></q-icon>
+              <div class="app-title-label">Router Details</div>
+            </div>
+            <div class="row items-start q-col-gutter-lg">
+              <div class="col-12">
+                <div class="row items-start q-col-gutter-md">
+                  <div class="col-12">
+                    <panel-router-details :data="routerByName.item" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="routerByName.item.tls && routerByName.item.tls.options" class="col-12 col-md-4 q-mb-lg path-block">
+            <div class="row no-wrap items-center q-mb-lg app-title">
+              <q-icon name="eva-shield"></q-icon>
+              <div class="app-title-label">TLS</div>
+            </div>
+            <div class="row items-start q-col-gutter-lg">
+              <div class="col-12">
+                <div class="row items-start q-col-gutter-md">
+                  <div class="col-12">
+                    <panel-t-l-s :data="routerByName.item.tls"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="middlewares.length" class="col-12 col-md-4 q-mb-lg path-block">
+            <div class="row no-wrap items-center q-mb-lg app-title">
+              <q-icon name="eva-layers"></q-icon>
+              <div class="app-title-label">Middlewares</div>
+            </div>
+            <div class="row items-start q-col-gutter-lg">
+              <div class="col-12">
+                <div class="row items-start q-col-gutter-md">
+                  <div class="col-12">
+                    <panel-middlewares :data="middlewares"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div v-else class="row items-start">
+          <div class="col-12">
+            <p v-for="n in 4" :key="n" class="flex">
+              <SkeletonBox :min-width="15" :max-width="15" style="margin-right: 2%"/> <SkeletonBox :min-width="50" :max-width="83"/>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </page-default>
 </template>
 
@@ -78,6 +160,9 @@ import { mapActions, mapGetters } from 'vuex'
 import PageDefault from '../../components/_commons/PageDefault'
 import SkeletonBox from '../../components/_commons/SkeletonBox'
 import PanelEntry from '../../components/dashboard/PanelEntry'
+import PanelRouterDetails from '../../components/_commons/PanelRouterDetails'
+import PanelTLS from '../../components/_commons/PanelTLS'
+import PanelMiddlewares from '../../components/_commons/PanelMiddlewares'
 
 export default {
   name: 'PageHTTPRoutersDetail',
@@ -85,12 +170,16 @@ export default {
   components: {
     PageDefault,
     SkeletonBox,
-    PanelEntry
+    PanelEntry,
+    PanelRouterDetails,
+    PanelTLS,
+    PanelMiddlewares
   },
   data () {
     return {
       loading: true,
       entryPoints: [],
+      middlewares: [],
       timeOutGetAll: null
     }
   },
@@ -98,7 +187,7 @@ export default {
     ...mapGetters('http', { routerByName: 'routerByName' })
   },
   methods: {
-    ...mapActions('http', { getRouterByName: 'getRouterByName' }),
+    ...mapActions('http', { getRouterByName: 'getRouterByName', getMiddlewareByName: 'getMiddlewareByName' }),
     ...mapActions('entrypoints', { getEntrypointsByName: 'getByName' }),
     refreshAll () {
       if (this.routerByName.loading) {
@@ -125,6 +214,22 @@ export default {
                   })
                   .catch(error => {
                     console.log('Error -> entrypoints/byName', error)
+                  })
+              }
+            }
+          }
+          // Get middlewares
+          if (body.middlewares) {
+            for (const middleware in body.middlewares) {
+              if (body.middlewares.hasOwnProperty(middleware)) {
+                this.getMiddlewareByName(body.middlewares[middleware])
+                  .then(body => {
+                    if (body) {
+                      this.middlewares.push(body)
+                    }
+                  })
+                  .catch(error => {
+                    console.log('Error -> middlewares/byName', error)
                   })
               }
             }
