@@ -88,6 +88,7 @@ providers:
     - foobar
     labelSelector: foobar
     ingressClass: foobar
+    throttleDuration: 10s
     ingressEndpoint:
       ip: foobar
       hostname: foobar
@@ -102,6 +103,7 @@ providers:
     - foobar
     labelSelector: foobar
     ingressClass: foobar
+    throttleDuration: 10s
   rest:
     insecure: true
   rancher:

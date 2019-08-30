@@ -305,6 +305,27 @@ providers:
 
 Published Kubernetes Service to copy status from.
 
+### `throttleDuration`
+
+_Optional, Default: 0 (no throttling)_
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  throttleDuration = "10s"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    throttleDuration: "10s"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.throttleDuration="10s"
+```
+
 ## Further
 
 If one wants to know more about the various aspects of the Ingress spec that Traefik supports, many examples of Ingresses definitions are located in the tests [data](https://github.com/containous/traefik/tree/v2.0/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
