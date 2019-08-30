@@ -46,7 +46,7 @@ Activate dashboard. (Default: ```true```)
 Enable additional endpoints for debugging and profiling. (Default: ```false```)
 
 `--api.insecure`:  
-Activate API on an insecure entryPoints named traefik. (Default: ```false```)
+Activate API directly on the entryPoint named traefik. (Default: ```false```)
 
 `--certificatesresolvers.<name>`:  
 Certificates resolvers configuration. (Default: ```false```)
@@ -312,6 +312,9 @@ Kubernetes label selector to use.
 `--providers.kubernetescrd.namespaces`:  
 Kubernetes namespaces.
 
+`--providers.kubernetescrd.throttleduration`:  
+Ingress refresh throttle duration (Default: ```0```)
+
 `--providers.kubernetescrd.token`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
@@ -344,6 +347,9 @@ Kubernetes Ingress label selector to use.
 
 `--providers.kubernetesingress.namespaces`:  
 Kubernetes namespaces.
+
+`--providers.kubernetesingress.throttleduration`:  
+Ingress refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetesingress.token`:  
 Kubernetes bearer token (not needed for in-cluster client).
@@ -445,7 +451,7 @@ Watch provider. (Default: ```true```)
 Enable Rest backend with default settings. (Default: ```false```)
 
 `--providers.rest.insecure`:  
-Activate REST Provider on an insecure entryPoints named traefik. (Default: ```false```)
+Activate REST Provider directly on the entryPoint named traefik. (Default: ```false```)
 
 `--serverstransport.forwardingtimeouts.dialtimeout`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)

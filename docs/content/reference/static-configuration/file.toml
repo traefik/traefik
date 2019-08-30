@@ -83,6 +83,7 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
+    throttleDuration = "10s"
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -95,6 +96,7 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
+    throttleDuration = "10s"
   [providers.rest]
     insecure = true
   [providers.rancher]

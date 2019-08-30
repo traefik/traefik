@@ -168,6 +168,27 @@ Value of `kubernetes.io/ingress.class` annotation that identifies Ingress object
 If the parameter is non-empty, only Ingresses containing an annotation with the same value are processed.
 Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
 
+### `throttleDuration`
+
+_Optional, Default: 0 (no throttling)_
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  throttleDuration = "10s"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    throttleDuration: "10s"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.throttleDuration="10s"
+```
+
 ## Resource Configuration
 
 If you're in a hurry, maybe you'd rather go through the [dynamic](../reference/dynamic-configuration/kubernetes-crd.md) configuration reference.

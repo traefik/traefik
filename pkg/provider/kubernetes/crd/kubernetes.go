@@ -20,6 +20,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -31,13 +32,14 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint               string   `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token                  string   `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
-	CertAuthFilePath       string   `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	DisablePassHostHeaders bool     `description:"Kubernetes disable PassHost Headers." json:"disablePassHostHeaders,omitempty" toml:"disablePassHostHeaders,omitempty" yaml:"disablePassHostHeaders,omitempty" export:"true"`
-	Namespaces             []string `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	LabelSelector          string   `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	IngressClass           string   `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	Endpoint               string         `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token                  string         `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
+	CertAuthFilePath       string         `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	DisablePassHostHeaders bool           `description:"Kubernetes disable PassHost Headers." json:"disablePassHostHeaders,omitempty" toml:"disablePassHostHeaders,omitempty" yaml:"disablePassHostHeaders,omitempty" export:"true"`
+	Namespaces             []string       `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector          string         `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	IngressClass           string         `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	ThrottleDuration       types.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
 	lastConfiguration      safe.Safe
 }
 
@@ -95,6 +97,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			stopWatch := make(chan struct{}, 1)
 			defer close(stopWatch)
 			eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
+
 			if err != nil {
 				logger.Errorf("Error watching kubernetes events: %v", err)
 				timer := time.NewTimer(1 * time.Second)
@@ -105,11 +108,20 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					return nil
 				}
 			}
+
+			throttleDuration := time.Duration(p.ThrottleDuration)
+			eventsChanToRead := throttleEvents(ctxLog, throttleDuration, stop, eventsChan)
+
 			for {
 				select {
 				case <-stop:
 					return nil
-				case event := <-eventsChan:
+				case event := <-eventsChanToRead:
+					// Note that event is the *first* event that came in during this
+					// throttling interval -- if we're hitting our throttle, we may have
+					// dropped events. This is fine, because we don't treat different
+					// event types differently. But if we do in the future, we'll need to
+					// track more information about the dropped events.
 					conf := p.loadConfigurationFromCRD(ctxLog, k8sClient)
 
 					if reflect.DeepEqual(p.lastConfiguration.Get(), conf) {
@@ -121,6 +133,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							Configuration: conf,
 						}
 					}
+
+					// If we're throttling, we sleep here for the throttle duration to
+					// enforce that we don't refresh faster than our throttle. time.Sleep
+					// returns immediately if p.ThrottleDuration is 0 (no throttle).
+					time.Sleep(throttleDuration)
 				}
 			}
 		}
@@ -586,4 +603,37 @@ func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, e
 	}
 
 	return cert, nil
+}
+
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop chan bool, eventsChan <-chan interface{}) chan interface{} {
+	if throttleDuration == 0 {
+		return nil
+	}
+	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling)
+	eventsChanBuffered := make(chan interface{}, 1)
+
+	// Run a goroutine that reads events from eventChan and does a
+	// non-blocking write to pendingEvent. This guarantees that writing to
+	// eventChan will never block, and that pendingEvent will have
+	// something in it if there's been an event since we read from that channel.
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case nextEvent := <-eventsChan:
+				select {
+				case eventsChanBuffered <- nextEvent:
+				default:
+					// We already have an event in eventsChanBuffered, so we'll
+					// do a refresh as soon as our throttle allows us to. It's fine
+					// to drop the event and keep whatever's in the buffer -- we
+					// don't do different things for different events
+					log.FromContext(ctx).Debugf("Dropping event kind %T due to throttling", nextEvent)
+				}
+			}
+		}
+	}()
+
+	return eventsChanBuffered
 }
