@@ -9,7 +9,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/log"
 )
 
-// GetRoutersByEntryPoints returns all the http routers by entry points name and routers name
+// GetRoutersByEntryPoints returns all the http routers by entry points name and routers name.
 func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*RouterInfo {
 	entryPointsRouters := make(map[string]map[string]*RouterInfo)
 
@@ -19,11 +19,13 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 		}
 
 		logger := log.FromContext(log.With(ctx, log.Str(log.RouterName, rtName)))
+
 		eps := rt.EntryPoints
 		if len(eps) == 0 {
-			logger.Debugf("No entrypoint defined for this router, using the default one(s) instead: %+v", entryPoints)
+			logger.Debugf("No entryPoint defined for this router, using the default one(s) instead: %+v", entryPoints)
 			eps = entryPoints
 		}
+
 		entryPointsCount := 0
 		for _, entryPointName := range eps {
 			if !contains(entryPoints, entryPointName) {
@@ -33,13 +35,15 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 				continue
 			}
 
-			entryPointsCount++
 			if _, ok := entryPointsRouters[entryPointName]; !ok {
 				entryPointsRouters[entryPointName] = make(map[string]*RouterInfo)
 			}
 
+			entryPointsCount++
+
 			entryPointsRouters[entryPointName][rtName] = rt
 		}
+
 		if entryPointsCount == 0 {
 			rt.AddError(fmt.Errorf("no valid entryPoint for this router"), true)
 			logger.Error("no valid entryPoint for this router")
@@ -49,7 +53,7 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 	return entryPointsRouters
 }
 
-// RouterInfo holds information about a currently running HTTP router
+// RouterInfo holds information about a currently running HTTP router.
 type RouterInfo struct {
 	*dynamic.Router // dynamic configuration
 	// Err contains all the errors that occurred during router's creation.
@@ -81,13 +85,13 @@ func (r *RouterInfo) AddError(err error, critical bool) {
 	}
 }
 
-// MiddlewareInfo holds information about a currently running middleware
+// MiddlewareInfo holds information about a currently running middleware.
 type MiddlewareInfo struct {
 	*dynamic.Middleware // dynamic configuration
 	// Err contains all the errors that occurred during service creation.
 	Err    []string `json:"error,omitempty"`
 	Status string   `json:"status,omitempty"`
-	UsedBy []string `json:"usedBy,omitempty"` // list of routers and services using that middleware
+	UsedBy []string `json:"usedBy,omitempty"` // list of routers and services using that middleware.
 }
 
 // AddError adds err to s.Err, if it does not already exist.
@@ -111,7 +115,7 @@ func (m *MiddlewareInfo) AddError(err error, critical bool) {
 	}
 }
 
-// ServiceInfo holds information about a currently running service
+// ServiceInfo holds information about a currently running service.
 type ServiceInfo struct {
 	*dynamic.Service // dynamic configuration
 	// Err contains all the errors that occurred during service creation.
