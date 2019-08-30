@@ -23,7 +23,16 @@ function getRouterByName (name) {
     })
 }
 
+function getMiddlewareByName (name) {
+  return APP.api.get(`${apiBase}/middlewares/${name}`)
+    .then(body => {
+      console.log('Success -> HttpService -> getMiddlewareByName', body.data)
+      return body.data
+    })
+}
+
 export default {
   getAllRouters,
-  getRouterByName
+  getRouterByName,
+  getMiddlewareByName
 }

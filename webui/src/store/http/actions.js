@@ -25,3 +25,16 @@ export function getRouterByName ({ commit }, name) {
       return Promise.reject(error)
     })
 }
+
+export function getMiddlewareByName ({ commit }, name) {
+  commit('getMiddlewareByNameRequest')
+  return HttpService.getMiddlewareByName(name)
+    .then(body => {
+      commit('getMiddlewareByNameSuccess', body)
+      return body
+    })
+    .catch(error => {
+      commit('getMiddlewareByNameFailure', error)
+      return Promise.reject(error)
+    })
+}

@@ -1,8 +1,8 @@
-import entrypointsService from '../../_services/EntrypointsService'
+import EntrypointsService from '../../_services/EntrypointsService'
 
 export function getAll ({ commit }) {
   commit('getAllRequest')
-  return entrypointsService.getAll()
+  return EntrypointsService.getAll()
     .then(body => {
       commit('getAllSuccess', body)
       return body
@@ -15,7 +15,7 @@ export function getAll ({ commit }) {
 
 export function getByName ({ commit }, name) {
   commit('getByNameRequest')
-  return entrypointsService.getByName(name)
+  return EntrypointsService.getByName(name)
     .then(body => {
       commit('getByNameSuccess', body)
       return body
