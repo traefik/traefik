@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -796,6 +797,8 @@ func TestHandler_HTTP(t *testing.T) {
 			rtConf := &test.conf
 			// To lazily initialize the Statuses.
 			rtConf.PopulateUsedBy()
+			rtConf.GetRoutersByEntryPoints(context.Background(), []string{"web"}, false)
+
 			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
 			router := mux.NewRouter()
 			handler.Append(router)

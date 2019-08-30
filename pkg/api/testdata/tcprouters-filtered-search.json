@@ -7,6 +7,9 @@
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar`)",
 		"service": "foo-service@myprovider",
-		"status": "warning"
+		"status": "warning",
+		"using": [
+			"web"
+		]
 	}
 ]

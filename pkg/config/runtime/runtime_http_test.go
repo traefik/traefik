@@ -104,6 +104,7 @@ func TestGetRoutersByEntryPoints(t *testing.T) {
 							Rule:        "Host(`bar.foo`)",
 						},
 						Status: "enabled",
+						Using:  []string{"web"},
 					},
 					"foobar": {
 						Router: &dynamic.Router{
@@ -113,6 +114,7 @@ func TestGetRoutersByEntryPoints(t *testing.T) {
 						},
 						Status: "warning",
 						Err:    []string{`entryPoint "webs" doesn't exist`},
+						Using:  []string{"web"},
 					},
 				},
 			},
@@ -169,6 +171,7 @@ func TestGetRoutersByEntryPoints(t *testing.T) {
 							Rule:        "Host(`bar.foo`)",
 						},
 						Status: "enabled",
+						Using:  []string{"web"},
 					},
 					"foobar": {
 						Router: &dynamic.Router{
@@ -177,6 +180,7 @@ func TestGetRoutersByEntryPoints(t *testing.T) {
 							Rule:        "Host(`bar.foobar`)",
 						},
 						Status: "enabled",
+						Using:  []string{"web", "webs"},
 					},
 				},
 				"webs": {
@@ -188,6 +192,7 @@ func TestGetRoutersByEntryPoints(t *testing.T) {
 							Rule:        "Host(`foo.bar`)",
 						},
 						Status: "enabled",
+						Using:  []string{"webs"},
 					},
 					"foobar": {
 						Router: &dynamic.Router{
@@ -196,6 +201,7 @@ func TestGetRoutersByEntryPoints(t *testing.T) {
 							Rule:        "Host(`bar.foobar`)",
 						},
 						Status: "enabled",
+						Using:  []string{"web", "webs"},
 					},
 				},
 			},

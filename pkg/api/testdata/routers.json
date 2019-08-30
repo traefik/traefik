@@ -11,7 +11,10 @@
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar`)",
 		"service": "foo-service@myprovider",
-		"status": "enabled"
+		"status": "enabled",
+		"using": [
+			"web"
+		]
 	},
 	{
 		"entryPoints": [
@@ -25,6 +28,9 @@
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar.other`)",
 		"service": "foo-service@myprovider",
-		"status": "enabled"
+		"status": "enabled",
+		"using": [
+			"web"
+		]
 	}
 ]

@@ -7,7 +7,10 @@
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar14`)",
 		"service": "foo-service@myprovider",
-		"status": "enabled"
+		"status": "enabled",
+		"using": [
+			"web"
+		]
 	},
 	{
 		"entryPoints": [
@@ -17,7 +20,10 @@
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar15`)",
 		"service": "foo-service@myprovider",
-		"status": "enabled"
+		"status": "enabled",
+		"using": [
+			"web"
+		]
 	},
 	{
 		"entryPoints": [
@@ -27,7 +33,10 @@
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar16`)",
 		"service": "foo-service@myprovider",
-		"status": "enabled"
+		"status": "enabled",
+		"using": [
+			"web"
+		]
 	},
 	{
 		"entryPoints": [
@@ -37,7 +46,10 @@
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar17`)",
 		"service": "foo-service@myprovider",
-		"status": "enabled"
+		"status": "enabled",
+		"using": [
+			"web"
+		]
 	},
 	{
 		"entryPoints": [
@@ -47,6 +59,9 @@
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar18`)",
 		"service": "foo-service@myprovider",
-		"status": "enabled"
+		"status": "enabled",
+		"using": [
+			"web"
+		]
 	}
 ]

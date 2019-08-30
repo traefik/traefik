@@ -11,6 +11,9 @@
 		"provider": "myprovider",
 		"rule": "Host(`foo.bar.other`)",
 		"service": "foo-service@myprovider",
-		"status": "enabled"
+		"status": "enabled",
+		"using": [
+			"web"
+		]
 	}
 ]

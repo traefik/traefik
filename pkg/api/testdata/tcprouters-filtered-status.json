@@ -10,6 +10,9 @@
 		"status": "enabled",
 		"tls": {
 			"passthrough": false
-		}
+		},
+		"using": [
+			"web"
+		]
 	}
 ]

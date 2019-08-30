@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -514,6 +515,10 @@ func TestHandler_TCP(t *testing.T) {
 			t.Parallel()
 
 			rtConf := &test.conf
+			// To lazily initialize the Statuses.
+			rtConf.PopulateUsedBy()
+			rtConf.GetTCPRoutersByEntryPoints(context.Background(), []string{"web"})
+
 			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
 			router := mux.NewRouter()
 			handler.Append(router)
