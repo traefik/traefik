@@ -9,6 +9,34 @@ The `Services` are responsible for configuring how to reach the actual services 
 
 ## Configuration Example
 
+??? example "Specify the port that traefik will use to connect to the service"
+
+    ```yaml tab="Docker"
+    # Sets the port traefik will use to connect to the container
+    labels:
+    - "traefik.http.services.my-service.loadbalancer.server.port=12345"
+    ```
+
+    ```toml tab="File (TOML)"
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        [[http.services.my-service.loadBalancer.server]]
+          port = "12345"
+    ```
+
+    ```yaml tab="File (YAML)"
+    http:
+      services:
+        my-service:
+          loadbalancer:
+            server:
+              port=12345
+    ```
+
+!!! important
+    Traefik automatically uses the first port exposed in the container, this configuration will override that behavior.
+    This is useful for when traefik is connecting to the wrong port and you are receiveing a 502 gateway error.
+
 ??? example "Declaring an HTTP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
@@ -59,7 +87,7 @@ The `Services` are responsible for configuring how to reach the actual services 
 
 ### Servers Load Balancer
 
-The load balancers are able to load balance the requests between multiple instances of your programs. 
+The load balancers are able to load balance the requests between multiple instances of your programs. This is the default service used by traefik to communicate with your container, even if you choose not to load balance your containers.
 
 ??? example "Declaring a Service with Two Servers (with Load Balancing) -- Using the [File Provider](../../providers/file.md)"
 
