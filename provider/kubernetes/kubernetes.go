@@ -140,38 +140,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				}
 			}
 
-			eventsChanToRead := eventsChan
 			throttleDuration := time.Duration(p.ThrottleDuration)
-			if throttleDuration > 0 {
-				// Create a buffered channel to hold the pending event (if we're
-				// delaying processing the event due to throttling)
-				eventsChanBuffered := make(chan interface{}, 1)
-				eventsChanToRead = eventsChanBuffered
-
-				// Run a goroutine that reads events from eventChan and does a
-				// non-blocking write to pendingEvent. This guarantees that writing to
-				// eventChan will never block, and that pendingEvent will have
-				// something in it if there's been an event since we read from that
-				// channel
-				go func() {
-					for {
-						select {
-						case <-stop:
-							return
-						case nextEvent := <-eventsChan:
-							select {
-							case eventsChanBuffered <- nextEvent:
-							default:
-								// We already have an event in eventsChanBuffered, so we'll
-								// do a refresh as soon as our throttle allows us to. It's fine
-								// to drop the event and keep whatever's in the buffer -- we
-								// don't do different things for different events
-								log.Debugf("Dropping event kind %T due to throttling", nextEvent)
-							}
-						}
-					}
-				}()
-			}
+			eventsChanToRead := throttleEvents(throttleDuration, stop, eventsChan)
 
 			for {
 				select {
@@ -644,6 +614,39 @@ func (p *Provider) addGlobalBackend(cl Client, i *extensionsv1beta1.Ingress, tem
 	}
 
 	return nil
+}
+
+func throttleEvents(throttleDuration time.Duration, stop chan bool, eventsChan <-chan interface{}) chan interface{} {
+	if throttleDuration == 0 {
+		return nil
+	}
+	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling)
+	eventsChanBuffered := make(chan interface{}, 1)
+
+	// Run a goroutine that reads events from eventChan and does a
+	// non-blocking write to pendingEvent. This guarantees that writing to
+	// eventChan will never block, and that pendingEvent will have
+	// something in it if there's been an event since we read from that channel.
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case nextEvent := <-eventsChan:
+				select {
+				case eventsChanBuffered <- nextEvent:
+				default:
+					// We already have an event in eventsChanBuffered, so we'll
+					// do a refresh as soon as our throttle allows us to. It's fine
+					// to drop the event and keep whatever's in the buffer -- we
+					// don't do different things for different events
+					log.Debugf("Dropping event kind %T due to throttling", nextEvent)
+				}
+			}
+		}
+	}()
+
+	return eventsChanBuffered
 }
 
 func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.Ingress) (string, error) {
