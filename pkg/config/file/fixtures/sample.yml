@@ -130,7 +130,7 @@ metrics:
     middlewares:
       - foobar
       - foobar
-  dataDog:
+  datadog:
     address: foobar
     pushInterval: 10s
   statsD:
@@ -190,7 +190,7 @@ tracing:
     id128Bit: true
     debug: true
     sampleRate: 42
-  dataDog:
+  datadog:
     localAgentHostPort: foobar
     globalTag: foobar
     debug: true

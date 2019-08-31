@@ -151,19 +151,19 @@ Traefik log format: json | common (Default: ```common```)
 Log level set to traefik logs. (Default: ```ERROR```)
 
 `TRAEFIK_METRICS_DATADOG`:  
-DataDog metrics exporter type. (Default: ```false```)
+Datadog metrics exporter type. (Default: ```false```)
 
 `TRAEFIK_METRICS_DATADOG_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
 
 `TRAEFIK_METRICS_DATADOG_ADDRESS`:  
-DataDog's address. (Default: ```localhost:8125```)
+Datadog's address. (Default: ```localhost:8125```)
 
 `TRAEFIK_METRICS_DATADOG_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
 `TRAEFIK_METRICS_DATADOG_PUSHINTERVAL`:  
-DataDog push interval. (Default: ```10```)
+Datadog push interval. (Default: ```10```)
 
 `TRAEFIK_METRICS_INFLUXDB`:  
 InfluxDB metrics exporter type. (Default: ```false```)
@@ -457,13 +457,13 @@ Add cert file for self-signed certificate.
 OpenTracing configuration. (Default: ```false```)
 
 `TRAEFIK_TRACING_DATADOG`:  
-Settings for DataDog. (Default: ```false```)
+Settings for Datadog. (Default: ```false```)
 
 `TRAEFIK_TRACING_DATADOG_BAGAGEPREFIXHEADERNAME`:  
 Specifies the header name prefix that will be used to store baggage items in a map.
 
 `TRAEFIK_TRACING_DATADOG_DEBUG`:  
-Enable DataDog debug. (Default: ```false```)
+Enable Datadog debug. (Default: ```false```)
 
 `TRAEFIK_TRACING_DATADOG_GLOBALTAG`:  
 Key:Value tag to be set on all the spans.

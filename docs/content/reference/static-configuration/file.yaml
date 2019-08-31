@@ -122,7 +122,7 @@ metrics:
     - 42
     addEntryPointsLabels: true
     addServicesLabels: true
-  dataDog:
+  datadog:
     address: foobar
     pushInterval: 42
     addEntryPointsLabels: true
@@ -188,7 +188,7 @@ tracing:
     id128Bit: true
     debug: true
     sampleRate: 42
-  dataDog:
+  datadog:
     localAgentHostPort: foobar
     globalTag: foobar
     debug: true

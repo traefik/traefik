@@ -66,11 +66,11 @@ func setupTracing(conf *static.Tracing) tracing.Backend {
 		}
 	}
 
-	if conf.DataDog != nil {
+	if conf.Datadog != nil {
 		if backend != nil {
-			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create DataDog backend.")
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Datadog backend.")
 		} else {
-			backend = conf.DataDog
+			backend = conf.Datadog
 		}
 	}
 
@@ -307,11 +307,11 @@ func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 		}
 	}
 
-	if metricsConfig.DataDog != nil {
+	if metricsConfig.Datadog != nil {
 		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "datadog"))
-		registries = append(registries, metrics.RegisterDatadog(ctx, metricsConfig.DataDog))
-		log.FromContext(ctx).Debugf("Configured DataDog metrics: pushing to %s once every %s",
-			metricsConfig.DataDog.Address, metricsConfig.DataDog.PushInterval)
+		registries = append(registries, metrics.RegisterDatadog(ctx, metricsConfig.Datadog))
+		log.FromContext(ctx).Debugf("Configured Datadog metrics: pushing to %s once every %s",
+			metricsConfig.Datadog.Address, metricsConfig.Datadog.PushInterval)
 	}
 
 	if metricsConfig.StatsD != nil {
