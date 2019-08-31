@@ -110,13 +110,16 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			}
 
 			throttleDuration := time.Duration(p.ThrottleDuration)
-			eventsChanToRead := throttleEvents(ctxLog, throttleDuration, stop, eventsChan)
+			throttledChan := throttleEvents(ctxLog, throttleDuration, stop, eventsChan)
+			if throttledChan != nil {
+				eventsChan = throttledChan
+			}
 
 			for {
 				select {
 				case <-stop:
 					return nil
-				case event := <-eventsChanToRead:
+				case event := <-eventsChan:
 					// Note that event is the *first* event that came in during this
 					// throttling interval -- if we're hitting our throttle, we may have
 					// dropped events. This is fine, because we don't treat different
