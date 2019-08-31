@@ -23,7 +23,8 @@ metadata:
   name: test-stripprefixregex
 spec:
   stripPrefixRegex:
-    regex: "^/foo/(.*)"
+    regex:
+    - "^/foo/(.*)"
 ```
 
 ```json tab="Marathon"
@@ -42,7 +43,7 @@ labels:
 # Replace the path by /foo
 [http.middlewares]
   [http.middlewares.test-stripprefixregex.stripPrefixRegex]
-     regex = "^/foo/(.*)"
+    regex = ["^/foo/(.*)"]
 ```
 
 ```yaml tab="File (YAML)"
@@ -51,7 +52,8 @@ http:
   middlewares:
     test-stripprefixregex:
       stripPrefixRegex:
-       regex: "^/foo/(.*)"
+        regex:
+        - "^/foo/(.*)"
 ```
 
 ## Configuration Options
