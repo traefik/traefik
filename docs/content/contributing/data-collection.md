@@ -9,7 +9,7 @@ Understanding how you use Traefik is very important to us: it helps us improve t
 For this very reason, the sendAnonymousUsage option is mandatory: we want you to take time to consider whether or not you wish to share anonymous data with us so we can benefit from your experience and use cases.
 
 !!! warning
-    During the beta stage only, leaving this option unset will not prevent Traefik from running but will generate an error log indicating that it enables data collection by default.
+    Before the GA, leaving this option unset will not prevent Traefik from running but will generate an error log indicating that it enables data collection by default.
 
 !!! example "Enabling Data Collection"
     
