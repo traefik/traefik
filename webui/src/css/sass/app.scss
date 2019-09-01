@@ -117,6 +117,13 @@ body {
   border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
+  &-wrap {
+    height: 100%;
+    flex-wrap: wrap;
+    .q-chip__content{
+      white-space: normal;
+    }
+  }
   &-rule {
     color: $accent;
     border: solid 1px $accent;
@@ -146,5 +153,10 @@ body {
     color: $app-text-green-2;
     border: solid 1px $app-text-green-2;
     background-color: rgba($app-text-green-2, 0.1);
+  }
+  &-interval {
+    color: $app-text-marine;
+    border: solid 1px $app-text-marine;
+    background-color: rgba($app-text-grey, 0.1);
   }
 }

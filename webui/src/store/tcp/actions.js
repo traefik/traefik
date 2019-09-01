@@ -1,8 +1,8 @@
-import HttpService from '../../_services/HttpService'
+import TcpService from '../../_services/TcpService'
 
 export function getAllRouters ({ commit }, params) {
   commit('getAllRoutersRequest')
-  return HttpService.getAllRouters(params)
+  return TcpService.getAllRouters(params)
     .then(body => {
       commit('getAllRoutersSuccess', body)
       return body
@@ -15,7 +15,7 @@ export function getAllRouters ({ commit }, params) {
 
 export function getRouterByName ({ commit }, name) {
   commit('getRouterByNameRequest')
-  return HttpService.getRouterByName(name)
+  return TcpService.getRouterByName(name)
     .then(body => {
       commit('getRouterByNameSuccess', body)
       return body
@@ -28,7 +28,7 @@ export function getRouterByName ({ commit }, name) {
 
 export function getAllServices ({ commit }, params) {
   commit('getAllServicesRequest')
-  return HttpService.getAllServices(params)
+  return TcpService.getAllServices(params)
     .then(body => {
       commit('getAllServicesSuccess', body)
       return body
@@ -41,39 +41,13 @@ export function getAllServices ({ commit }, params) {
 
 export function getServiceByName ({ commit }, name) {
   commit('getServiceByNameRequest')
-  return HttpService.getServiceByName(name)
+  return TcpService.getServiceByName(name)
     .then(body => {
       commit('getServiceByNameSuccess', body)
       return body
     })
     .catch(error => {
       commit('getServiceByNameFailure', error)
-      return Promise.reject(error)
-    })
-}
-
-export function getAllMiddlewares ({ commit }, params) {
-  commit('getAllMiddlewaresRequest')
-  return HttpService.getAllMiddlewares(params)
-    .then(body => {
-      commit('getAllMiddlewaresSuccess', body)
-      return body
-    })
-    .catch(error => {
-      commit('getAllMiddlewaresFailure', error)
-      return Promise.reject(error)
-    })
-}
-
-export function getMiddlewareByName ({ commit }, name) {
-  commit('getMiddlewareByNameRequest')
-  return HttpService.getMiddlewareByName(name)
-    .then(body => {
-      commit('getMiddlewareByNameSuccess', body)
-      return body
-    })
-    .catch(error => {
-      commit('getMiddlewareByNameFailure', error)
       return Promise.reject(error)
     })
 }

@@ -33,15 +33,16 @@ const routes = [
         }
       },
       {
-        path: 'routers/:name',
-        name: 'httpRoutersDetail',
+        path: 'routers/:name/:type',
+        name: 'httpRouterDetail',
         components: {
-          default: () => import('pages/http/RoutersDetail.vue'),
+          default: () => import('pages/_commons/RouterDetail.vue'),
           NavBar: () => import('components/http/ToolBar.vue')
         },
         props: { default: true, NavBar: true },
         meta: {
-          title: 'HTTP Routers Detail'
+          protocol: 'http',
+          title: 'HTTP Router Detail'
         }
       },
       {
@@ -54,6 +55,19 @@ const routes = [
         props: { default: true, NavBar: true },
         meta: {
           title: 'HTTP Services'
+        }
+      },
+      {
+        path: 'services/:name/:type',
+        name: 'httpServiceDetail',
+        components: {
+          default: () => import('pages/_commons/ServiceDetail.vue'),
+          NavBar: () => import('components/http/ToolBar.vue')
+        },
+        props: { default: true, NavBar: true },
+        meta: {
+          protocol: 'http',
+          title: 'HTTP Service Detail'
         }
       },
       {

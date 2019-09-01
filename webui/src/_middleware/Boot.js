@@ -25,20 +25,20 @@ const Boot = {
         }
       },
       methods: {
-        middlewareLabel (item) {
+      },
+      filters: {
+        middlewareTypeLabel (value) {
           // TODO - add all types to middlewares
-          // fake function
-          let label = ''
-          if (item.redirectScheme) {
+          // fake function, remplace for optimized function
+          let label = value
+          if (value === 'redirectscheme') {
             label = 'redirectScheme'
           }
-          if (item.basicAuth) {
+          if (value === 'basicauth') {
             label = 'basicAuth'
           }
           return label
         }
-      },
-      filters: {
       },
       created () {
       }
