@@ -25,17 +25,3 @@ export function allServices (state) {
 export function serviceByName (state) {
   return state.serviceByName
 }
-
-// ----------------------------
-// all Middlewares
-// ----------------------------
-export function allMiddlewares (state) {
-  return state.allMiddlewares
-}
-
-// ----------------------------
-// Middleware by Name
-// ----------------------------
-export function middlewareByName (state) {
-  return state.middlewareByName
-}

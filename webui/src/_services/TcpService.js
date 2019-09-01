@@ -1,6 +1,6 @@
 import { APP } from '../_helpers/APP'
 
-const apiBase = '/http'
+const apiBase = '/tcp'
 
 function getAllRouters (params) {
   return APP.api.get(`${apiBase}/routers?search=${params.query}&status=${params.status}`)
@@ -44,32 +44,9 @@ function getServiceByName (name) {
     })
 }
 
-function getAllMiddlewares (params) {
-  return APP.api.get(`${apiBase}/middlewares?search=${params.query}&status=${params.status}`)
-    .then(body => {
-      const total = body.data ? body.data.length : 0
-      return APP.api.get(`${apiBase}/middlewares?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
-        .then(body => {
-          console.log('Success -> HttpService -> getAllMiddlewares', body.data)
-          // TODO - suggestion: add the total-pages in api response to optimize the query
-          return { data: body.data || [], total }
-        })
-    })
-}
-
-function getMiddlewareByName (name) {
-  return APP.api.get(`${apiBase}/middlewares/${name}`)
-    .then(body => {
-      console.log('Success -> HttpService -> getMiddlewareByName', body.data)
-      return body.data
-    })
-}
-
 export default {
   getAllRouters,
   getRouterByName,
   getAllServices,
-  getServiceByName,
-  getAllMiddlewares,
-  getMiddlewareByName
+  getServiceByName
 }

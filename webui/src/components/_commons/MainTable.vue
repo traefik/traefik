@@ -15,7 +15,7 @@
       table-header-class="table-header">
 
       <template v-slot:body="props">
-        <q-tr :props="props" class="cursor-pointer" @click.native="$router.push({ path: `/${getPath}/${props.row.name}`})">
+        <q-tr :props="props" class="cursor-pointer" @click.native="$router.push({ path: `/${getPath}/${props.row.name}/${getType(props.row)}`})">
           <q-td key="status" :props="props">
             <avatar-state :state="props.row.status | status "/>
           </q-td>
@@ -48,6 +48,18 @@
               {{ props.row.name }}
             </q-chip>
           </q-td>
+          <q-td key="type" :props="props">
+            <q-chip
+              v-if="props.row.type"
+              outline
+              dense
+              class="app-chip app-chip-entry-points">
+              {{ props.row.type | middlewareTypeLabel}}
+            </q-chip>
+          </q-td>
+          <q-td key="servers" :props="props">
+            <span class="servers-label">{{ props.row | servers }}</span>
+          </q-td>
           <q-td key="provider" :props="props">
             <q-avatar class="provider-logo">
               <q-icon :name="`img:statics/providers/${props.row.provider}.svg`" />
@@ -71,7 +83,10 @@ export default {
   },
   data () {
     return {
-      visibleColumns: ['status', 'rule', 'entryPoints', 'name', 'provider'],
+      visibleColumnsHttpRouters: ['status', 'rule', 'entryPoints', 'name', 'provider'],
+      visibleColumnsHttpServices: ['status', 'name', 'type', 'servers', 'provider'],
+      visibleColumnsHttpMiddlewares: ['status', 'name', 'type', 'provider'],
+      visibleColumns: ['status', 'name', 'provider'],
       columns: [
         {
           name: 'status',
@@ -99,6 +114,18 @@ export default {
           field: row => row.name
         },
         {
+          name: 'type',
+          align: 'left',
+          label: 'Type',
+          field: row => row.type
+        },
+        {
+          name: 'servers',
+          align: 'right',
+          label: 'Servers',
+          field: row => row.servers
+        },
+        {
           name: 'provider',
           align: 'right',
           label: 'Provider',
@@ -117,15 +144,13 @@ export default {
       }
     },
     getPath () {
-      let path = ''
-      if (this.type === 'http-routers') {
-        path = 'http/routers'
-      }
-      return path
+      return this.type.replace('-', '/', 'gi')
     }
   },
   methods: {
-
+    getType (item) {
+      return item.type || 'default'
+    }
   },
   filters: {
     status (value) {
@@ -137,10 +162,25 @@ export default {
         status = 'negative'
       }
       return status
+    },
+    servers (value) {
+      let servers = 0
+      if (value.loadBalancer && value.loadBalancer.servers) {
+        servers = value.loadBalancer.servers.length
+      }
+      return servers
     }
   },
   created () {
-
+    if (this.type === 'http-routers' || this.type === 'tcp-routers') {
+      this.visibleColumns = this.visibleColumnsHttpRouters
+    }
+    if (this.type === 'http-services' || this.type === 'tcp-services') {
+      this.visibleColumns = this.visibleColumnsHttpServices
+    }
+    if (this.type === 'http-middlewares') {
+      this.visibleColumns = this.visibleColumnsHttpMiddlewares
+    }
   }
 }
 </script>
@@ -177,6 +217,11 @@ export default {
         }
       }
     }
+  }
+
+  .servers-label{
+    font-size: 14px;
+    font-weight: 600;
   }
 
   .provider-logo {

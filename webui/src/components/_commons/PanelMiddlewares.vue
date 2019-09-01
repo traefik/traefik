@@ -3,7 +3,7 @@
     <q-scroll-area :thumb-style="appThumbStyle" style="height:100%;">
       <div v-for="(middleware, index) in data" :key="index">
         <q-card-section class="app-title">
-          <div class="app-title-label">{{middlewareLabel(middleware)}}</div>
+          <div class="app-title-label">{{middleware.type | middlewareTypeLabel}}</div>
         </q-card-section>
         <q-card-section>
           <div class="row items-start no-wrap">
@@ -11,7 +11,7 @@
               <div class="text-subtitle2">STATUS</div>
               <div class="block-right-text">
                 <avatar-state :state="middleware.status | status "/>
-                <div v-bind:class="['block-right-text-label', `block-right-text-label-${data.status}`]">{{middleware.status | statusLabel}}</div>
+                <div v-bind:class="['block-right-text-label', `block-right-text-label-${middleware.status}`]">{{middleware.status | statusLabel}}</div>
               </div>
             </div>
             <div class="col">

@@ -52,7 +52,7 @@
               <div class="col-12 col-md-8">
                 <div class="row items-start q-col-gutter-md">
                   <div v-for="(middleware, index) in middlewares" :key="index" class="col-12">
-                    <panel-entry type="detail" name="Middleware" :address="middlewareLabel(middleware)"/>
+                    <panel-entry type="detail" name="Middleware" :address="middleware.type | middlewareTypeLabel"/>
                   </div>
                 </div>
               </div>
@@ -165,8 +165,8 @@ import PanelTLS from '../../components/_commons/PanelTLS'
 import PanelMiddlewares from '../../components/_commons/PanelMiddlewares'
 
 export default {
-  name: 'PageHTTPRoutersDetail',
-  props: ['name'],
+  name: 'PageHTTPRouterDetail',
+  props: ['name', 'type'],
   components: {
     PageDefault,
     SkeletonBox,
@@ -184,10 +184,19 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('http', { routerByName: 'routerByName' })
+    ...mapGetters('http', { http_routerByName: 'routerByName' }),
+    protocol () {
+      return this.$route.meta.protocol
+    },
+    routerByName () {
+      return this[`${this.protocol}_routerByName`]
+    },
+    getRouterByName () {
+      return this[`${this.protocol}_getRouterByName`]
+    }
   },
   methods: {
-    ...mapActions('http', { getRouterByName: 'getRouterByName', getMiddlewareByName: 'getMiddlewareByName' }),
+    ...mapActions('http', { http_getRouterByName: 'getRouterByName', getMiddlewareByName: 'getMiddlewareByName' }),
     ...mapActions('entrypoints', { getEntrypointsByName: 'getByName' }),
     refreshAll () {
       if (this.routerByName.loading) {
@@ -240,12 +249,11 @@ export default {
           }, 300)
         })
         .catch(error => {
-          console.log('Error -> http/routers/byName', error)
+          console.log('Error -> routers/byName', error)
         })
     }
   },
   created () {
-    console.log(this.name)
     this.refreshAll()
   },
   mounted () {

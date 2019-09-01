@@ -53,6 +53,7 @@ export default {
       if (this.allRouters.loading) {
         return
       }
+      this.pagination.page = 1
       this.onGetAll({
         pagination: this.pagination,
         filter: this.filter
