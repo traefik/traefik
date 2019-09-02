@@ -35,7 +35,6 @@ func (c *Configuration) GetTCPRoutersByEntryPoints(ctx context.Context, entryPoi
 			}
 
 			entryPointsCount++
-			fmt.Println("dklskmlqsdkmk")
 			rt.Using = append(rt.Using, entryPointName)
 
 			entryPointsRouters[entryPointName][rtName] = rt
