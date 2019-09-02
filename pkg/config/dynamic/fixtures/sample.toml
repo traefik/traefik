@@ -119,7 +119,7 @@
     buckets = [42.0, 42.0]
     entryPoint = "foobar"
     middlewares = ["foobar", "foobar"]
-  [metrics.dataDog]
+  [metrics.datadog]
     address = "foobar"
     pushInterval = "10s"
   [metrics.statsD]
@@ -179,7 +179,7 @@
     id128Bit = true
     debug = true
     sampleRate = 42.0
-  [tracing.dataDog]
+  [tracing.datadog]
     localAgentHostPort = "foobar"
     globalTag = "foobar"
     debug = true
