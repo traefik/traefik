@@ -35,7 +35,7 @@ tls:
 !!! important "File Provider Only"
 
     In the above example, we've used the [file provider](../providers/file.md) to handle these definitions.
-    In its current beta version, it is the only available method to configure the certificates (as well as the options and the stores).
+    It is the only available method to configure the certificates (as well as the options and the stores).
 
 ## Certificates Stores
 
@@ -52,9 +52,9 @@ tls:
     default: {}
 ```
 
-!!! important "Beta restriction"
+!!! important "Restriction"
 
-    During the beta version, any store definition other than the default one (named `default`) will be ignored,
+    Any store definition other than the default one (named `default`) will be ignored,
     and there is thefore only one globally available TLS store.
 
 In the `tls.certificates` section, a list of stores can then be specified to indicate where the certificates should be stored:
@@ -85,9 +85,9 @@ tls:
     keyFile: /path/to/other-domain.key
 ```
 
-!!! important "Beta restriction"
+!!! important "Restriction"
 
-    During the beta version, the `stores` list will actually be ignored and automatically set to `["default"]`.
+    The `stores` list will actually be ignored and automatically set to `["default"]`.
 
 ### Default Certificate
 

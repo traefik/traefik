@@ -1,7 +1,7 @@
 # API
 
 !!! important
-    In the beta version, you can't configure middlewares (basic authentication or white listing) anymore, but as security is important, this will change before the RC version.
+    In the RC version, you can't configure middlewares (basic authentication or white listing) anymore, but as security is important, this will change before the GA version.
 
 Traefik exposes a number of information through an API handler, such as the configuration of all routers, services, middlewares, etc.
 
