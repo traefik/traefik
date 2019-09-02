@@ -29,9 +29,9 @@
             </q-chip>
           </q-td>
           <q-td key="entryPoints" :props="props">
-            <div v-if="props.row.entryPoints">
+            <div v-if="props.row.using">
               <q-chip
-                v-for="(entryPoints, index) in props.row.entryPoints" :key="index"
+                v-for="(entryPoints, index) in props.row.using" :key="index"
                 outline
                 dense
                 class="app-chip app-chip-entry-points">

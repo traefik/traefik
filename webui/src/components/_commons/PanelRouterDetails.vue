@@ -47,12 +47,12 @@
           </div>
         </div>
       </q-card-section>
-      <q-card-section v-if="data.entryPoints">
+      <q-card-section v-if="data.using">
         <div class="row items-start no-wrap">
           <div class="col">
             <div class="text-subtitle2">ENTRYPOINTS</div>
             <q-chip
-              v-for="(entryPoint, index) in data.entryPoints" :key="index"
+              v-for="(entryPoint, index) in data.using" :key="index"
               outline
               dense
               class="app-chip app-chip-entry-points">
