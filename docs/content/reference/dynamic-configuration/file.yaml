@@ -69,6 +69,14 @@ http:
         responseForwarding:
           flushInterval: foobar
     Service02:
+      mirroring:
+        service: foobar
+        mirrors:
+        - name: foobar
+          percent: 42
+        - name: foobar
+          percent: 42
+    Service03:
       weighted:
         services:
         - name: foobar
@@ -201,9 +209,11 @@ http:
       inFlightReq:
         amount: 42
         sourceCriterion:
-          ipStrategy:
+          ipstrategy:
             depth: 42
-            excludedIPs: [ foobar, foobar ]
+            excludedIPs:
+            - foobar
+            - foobar
           requestHeaderName: foobar
           requestHost: true
     Middleware12:
@@ -230,45 +240,47 @@ http:
             serialNumber: true
             domainComponent: true
     Middleware13:
-      redirectRegex:
-        regex: foobar
-        replacement: foobar
-        permanent: true
-    Middleware14:
-      redirectScheme:
-        scheme: foobar
-        port: foobar
-        permanent: true
-    Middleware15:
-      replacePath:
-        path: foobar
-    Middleware16:
-      replacePathRegex:
-        regex: foobar
-        replacement: foobar
-    Middleware17:
-      retry:
-        attempts: 42
-    Middleware18:
-      stripPrefix:
-        prefixes:
-        - foobar
-        - foobar
-    Middleware19:
-      stripPrefixRegex:
-        regex:
-        - foobar
-        - foobar
-    Middleware20:
       rateLimit:
         average: 42
         burst: 42
         sourceCriterion:
-          ipStrategy:
+          ipstrategy:
             depth: 42
-            excludedIPs: [ foobar, foobar ]
+            excludedIPs:
+            - foobar
+            - foobar
           requestHeaderName: foobar
           requestHost: true
+    Middleware14:
+      redirectRegex:
+        regex: foobar
+        replacement: foobar
+        permanent: true
+    Middleware15:
+      redirectScheme:
+        scheme: foobar
+        port: foobar
+        permanent: true
+    Middleware16:
+      replacePath:
+        path: foobar
+    Middleware17:
+      replacePathRegex:
+        regex: foobar
+        replacement: foobar
+    Middleware18:
+      retry:
+        attempts: 42
+    Middleware19:
+      stripPrefix:
+        prefixes:
+        - foobar
+        - foobar
+    Middleware20:
+      stripPrefixRegex:
+        regex:
+        - foobar
+        - foobar
 tcp:
   routers:
     TCPRouter0:
