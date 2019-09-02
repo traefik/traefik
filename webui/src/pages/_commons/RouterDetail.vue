@@ -212,10 +212,10 @@ export default {
             return
           }
           // Get entryPoints
-          if (body.entryPoints) {
-            for (const entryPoint in body.entryPoints) {
-              if (body.entryPoints.hasOwnProperty(entryPoint)) {
-                this.getEntrypointsByName(body.entryPoints[entryPoint])
+          if (body.using) {
+            for (const entryPoint in body.using) {
+              if (body.using.hasOwnProperty(entryPoint)) {
+                this.getEntrypointsByName(body.using[entryPoint])
                   .then(body => {
                     if (body) {
                       this.entryPoints.push(body)
