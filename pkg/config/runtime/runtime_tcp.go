@@ -2,24 +2,30 @@ package runtime
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
 )
 
-// GetTCPRoutersByEntryPoints returns all the tcp routers by entry points name and routers name
+// GetTCPRoutersByEntryPoints returns all the tcp routers by entry points name and routers name.
 func (c *Configuration) GetTCPRoutersByEntryPoints(ctx context.Context, entryPoints []string) map[string]map[string]*TCPRouterInfo {
 	entryPointsRouters := make(map[string]map[string]*TCPRouterInfo)
 
 	for rtName, rt := range c.TCPRouters {
+		logger := log.FromContext(log.With(ctx, log.Str(log.RouterName, rtName)))
+
 		eps := rt.EntryPoints
 		if len(eps) == 0 {
+			logger.Debugf("No entryPoint defined for this router, using the default one(s) instead: %+v", entryPoints)
 			eps = entryPoints
 		}
 
+		entryPointsCount := 0
 		for _, entryPointName := range eps {
 			if !contains(entryPoints, entryPointName) {
-				log.FromContext(log.With(ctx, log.Str(log.EntryPointName, entryPointName))).
+				rt.AddError(fmt.Errorf("entryPoint %q doesn't exist", entryPointName), false)
+				logger.WithField(log.EntryPointName, entryPointName).
 					Errorf("entryPoint %q doesn't exist", entryPointName)
 				continue
 			}
@@ -28,21 +34,30 @@ func (c *Configuration) GetTCPRoutersByEntryPoints(ctx context.Context, entryPoi
 				entryPointsRouters[entryPointName] = make(map[string]*TCPRouterInfo)
 			}
 
+			entryPointsCount++
+			rt.Using = append(rt.Using, entryPointName)
+
 			entryPointsRouters[entryPointName][rtName] = rt
+		}
+
+		if entryPointsCount == 0 {
+			rt.AddError(fmt.Errorf("no valid entryPoint for this router"), true)
+			logger.Error("no valid entryPoint for this router")
 		}
 	}
 
 	return entryPointsRouters
 }
 
-// TCPRouterInfo holds information about a currently running TCP router
+// TCPRouterInfo holds information about a currently running TCP router.
 type TCPRouterInfo struct {
 	*dynamic.TCPRouter          // dynamic configuration
 	Err                []string `json:"error,omitempty"` // initialization error
 	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
 	// If not in "enabled" state, the reason for it should be in the list of Err.
 	// It is the caller's responsibility to set the initial status.
-	Status string `json:"status,omitempty"`
+	Status string   `json:"status,omitempty"`
+	Using  []string `json:"using,omitempty"` // Effective entry points used by that router.
 }
 
 // AddError adds err to r.Err, if it does not already exist.
@@ -66,7 +81,7 @@ func (r *TCPRouterInfo) AddError(err error, critical bool) {
 	}
 }
 
-// TCPServiceInfo holds information about a currently running TCP service
+// TCPServiceInfo holds information about a currently running TCP service.
 type TCPServiceInfo struct {
 	*dynamic.TCPService          // dynamic configuration
 	Err                 []string `json:"error,omitempty"` // initialization error

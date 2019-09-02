@@ -3,16 +3,17 @@
 		"loadBalancer": {
 			"servers": [
 				{
-					"address": "127.0.0.2:2345"
+					"address": "127.0.0.1:2345"
 				}
 			]
 		},
-		"name": "baz@myprovider",
+		"name": "bar@myprovider",
 		"provider": "myprovider",
 		"status": "enabled",
 		"type": "loadbalancer",
 		"usedBy": [
-			"foo@myprovider"
+			"foo@myprovider",
+			"test@myprovider"
 		]
 	}
 ]

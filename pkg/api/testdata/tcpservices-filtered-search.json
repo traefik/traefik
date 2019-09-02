@@ -9,7 +9,7 @@
 		},
 		"name": "baz@myprovider",
 		"provider": "myprovider",
-		"status": "enabled",
+		"status": "warning",
 		"type": "loadbalancer",
 		"usedBy": [
 			"foo@myprovider"

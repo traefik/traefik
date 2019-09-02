@@ -3,9 +3,13 @@
 		"entryPoints": [
 			"web"
 		],
-		"name": "baz@myprovider",
+		"middlewares": [
+			"addPrefixTest",
+			"auth"
+		],
+		"name": "test@myprovider",
 		"provider": "myprovider",
-		"rule": "Host(`toto.bar`)",
+		"rule": "Host(`foo.bar.other`)",
 		"service": "foo-service@myprovider",
 		"status": "enabled",
 		"using": [

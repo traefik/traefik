@@ -12,18 +12,6 @@
 		]
 	},
 	{
-		"addPrefix": {
-			"prefix": "/titi"
-		},
-		"name": "addPrefixTest@myprovider",
-		"provider": "myprovider",
-		"status": "enabled",
-		"type": "addprefix",
-		"usedBy": [
-			"test@myprovider"
-		]
-	},
-	{
 		"basicAuth": {
 			"users": [
 				"admin:admin"

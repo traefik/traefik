@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -113,6 +114,86 @@ func TestHandler_TCP(t *testing.T) {
 			},
 		},
 		{
+			desc: "TCP routers filtered by status",
+			path: "/api/tcp/routers?status=enabled",
+			conf: runtime.Configuration{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
+					"test@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar.other`)",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: false,
+							},
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"bar@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+						},
+						Status: runtime.StatusWarning,
+					},
+					"foo@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/tcprouters-filtered-status.json",
+			},
+		},
+		{
+			desc: "TCP routers filtered by search",
+			path: "/api/tcp/routers?search=bar@my",
+			conf: runtime.Configuration{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
+					"test@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar.other`)",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: false,
+							},
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"bar@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+						},
+						Status: runtime.StatusWarning,
+					},
+					"foo@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/tcprouters-filtered-search.json",
+			},
+		},
+		{
 			desc: "one TCP router by id",
 			path: "/api/tcp/routers/bar@myprovider",
 			conf: runtime.Configuration{
@@ -217,6 +298,110 @@ func TestHandler_TCP(t *testing.T) {
 				statusCode: http.StatusOK,
 				nextPage:   "1",
 				jsonFile:   "testdata/tcpservices.json",
+			},
+		},
+		{
+			desc: "tcp services filtered by status",
+			path: "/api/tcp/services?status=enabled",
+			conf: runtime.Configuration{
+				TCPServices: map[string]*runtime.TCPServiceInfo{
+					"bar@myprovider": {
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.1:2345",
+									},
+								},
+							},
+						},
+						UsedBy: []string{"foo@myprovider", "test@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+					"baz@myprovider": {
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.2:2345",
+									},
+								},
+							},
+						},
+						UsedBy: []string{"foo@myprovider"},
+						Status: runtime.StatusWarning,
+					},
+					"foz@myprovider": {
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.2:2345",
+									},
+								},
+							},
+						},
+						UsedBy: []string{"foo@myprovider"},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/tcpservices-filtered-status.json",
+			},
+		},
+		{
+			desc: "tcp services filtered by search",
+			path: "/api/tcp/services?search=baz@my",
+			conf: runtime.Configuration{
+				TCPServices: map[string]*runtime.TCPServiceInfo{
+					"bar@myprovider": {
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.1:2345",
+									},
+								},
+							},
+						},
+						UsedBy: []string{"foo@myprovider", "test@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+					"baz@myprovider": {
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.2:2345",
+									},
+								},
+							},
+						},
+						UsedBy: []string{"foo@myprovider"},
+						Status: runtime.StatusWarning,
+					},
+					"foz@myprovider": {
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.2:2345",
+									},
+								},
+							},
+						},
+						UsedBy: []string{"foo@myprovider"},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/tcpservices-filtered-search.json",
 			},
 		},
 		{
@@ -330,6 +515,10 @@ func TestHandler_TCP(t *testing.T) {
 			t.Parallel()
 
 			rtConf := &test.conf
+			// To lazily initialize the Statuses.
+			rtConf.PopulateUsedBy()
+			rtConf.GetTCPRoutersByEntryPoints(context.Background(), []string{"web"})
+
 			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
 			router := mux.NewRouter()
 			handler.Append(router)

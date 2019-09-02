@@ -8,6 +8,8 @@
 	},
 	"name": "bar@myprovider",
 	"provider": "myprovider",
+	"status": "enabled",
+	"type": "loadbalancer",
 	"usedBy": [
 		"foo@myprovider",
 		"test@myprovider"

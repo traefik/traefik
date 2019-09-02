@@ -17,24 +17,9 @@
 		},
 		"name": "addPrefixTest@myprovider",
 		"provider": "myprovider",
-		"status": "enabled",
+		"status": "disabled",
 		"type": "addprefix",
 		"usedBy": [
-			"test@myprovider"
-		]
-	},
-	{
-		"basicAuth": {
-			"users": [
-				"admin:admin"
-			]
-		},
-		"name": "auth@myprovider",
-		"provider": "myprovider",
-		"status": "enabled",
-		"type": "basicauth",
-		"usedBy": [
-			"bar@myprovider",
 			"test@myprovider"
 		]
 	}

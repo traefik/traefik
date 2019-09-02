@@ -1,15 +1,19 @@
 [
 	{
 		"loadBalancer": {
+			"passHostHeader": false,
 			"servers": [
 				{
-					"address": "127.0.0.2:2345"
+					"url": "http://127.0.0.2"
 				}
 			]
 		},
 		"name": "baz@myprovider",
 		"provider": "myprovider",
-		"status": "enabled",
+		"serverStatus": {
+			"http://127.0.0.2": "UP"
+		},
+		"status": "disabled",
 		"type": "loadbalancer",
 		"usedBy": [
 			"foo@myprovider"

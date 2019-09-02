@@ -10,6 +10,7 @@
 		"name": "bar@myprovider",
 		"provider": "myprovider",
 		"status": "enabled",
+		"type": "loadbalancer",
 		"usedBy": [
 			"foo@myprovider",
 			"test@myprovider"
@@ -26,6 +27,7 @@
 		"name": "baz@myprovider",
 		"provider": "myprovider",
 		"status": "warning",
+		"type": "loadbalancer",
 		"usedBy": [
 			"foo@myprovider"
 		]
@@ -41,6 +43,7 @@
 		"name": "foz@myprovider",
 		"provider": "myprovider",
 		"status": "disabled",
+		"type": "loadbalancer",
 		"usedBy": [
 			"foo@myprovider"
 		]
