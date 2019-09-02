@@ -123,7 +123,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	// Buffering
-	if config.Buffering != nil && config.InFlightReq.Amount != 0 {
+	if config.Buffering != nil {
 		if middleware != nil {
 			return nil, badConf
 		}
@@ -213,7 +213,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	// InFlightReq
-	if config.InFlightReq != nil && config.InFlightReq.Amount != 0 {
+	if config.InFlightReq != nil {
 		if middleware != nil {
 			return nil, badConf
 		}

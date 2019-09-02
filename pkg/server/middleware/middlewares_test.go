@@ -314,6 +314,14 @@ func TestBuilder_buildConstructor(t *testing.T) {
 				Prefix: "foo/",
 			},
 		},
+		"buff-foo": {
+			Buffering: &dynamic.Buffering{
+				MaxRequestBodyBytes:  1,
+				MemRequestBodyBytes:  2,
+				MaxResponseBodyBytes: 3,
+				MemResponseBodyBytes: 5,
+			},
+		},
 	}
 
 	rtConf := runtime.NewConfig(dynamic.Configuration{
@@ -336,6 +344,11 @@ func TestBuilder_buildConstructor(t *testing.T) {
 		{
 			desc:          "Should create a circuit breaker with a valid expression",
 			middlewareID:  "cb-foo",
+			expectedError: false,
+		},
+		{
+			desc:          "Should create a buffering middleware",
+			middlewareID:  "buff-foo",
 			expectedError: false,
 		},
 		{
