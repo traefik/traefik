@@ -14,8 +14,7 @@
 [tracing]
   servicename = "tracing"
   [tracing.zipkin]
-    httpEndpoint = "http://{{.IP}}:9411/api/v1/spans"
-    debug = true
+    httpEndpoint = "http://{{.IP}}:9411/api/v2/spans"
 
 [providers.file]
   filename = "{{ .SelfFilename }}"
