@@ -26,6 +26,10 @@ func TestStripPrefixRegex(t *testing.T) {
 		expectedHeader     string
 	}{
 		{
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/a/test",
+		},
+		{
 			path:               "/a/test",
 			expectedStatusCode: http.StatusOK,
 			expectedPath:       "/a/test",
