@@ -53,6 +53,9 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 		parts := exp.FindStringSubmatch(req.URL.Path)
 		if len(parts) > 0 && len(parts[0]) > 0 {
 			prefix := parts[0]
+			if !strings.HasPrefix(req.URL.Path, prefix) {
+				continue
+			}
 
 			req.Header.Add(stripprefix.ForwardedPrefixHeader, prefix)
 
