@@ -477,7 +477,7 @@ You can declare TCP Routers and/or Services using labels.
            # ...
            labels:
              - traefik.tcp.routers.my-router.rule="HostSNI(`my-host.com`)"
-             - traefik.tcp.routers.my-router.rule.tls="true"
+             - traefik.tcp.routers.my-router.tls="true"
              - traefik.tcp.services.my-service.loadbalancer.server.port="4123"
     ```
 
