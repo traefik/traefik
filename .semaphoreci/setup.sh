@@ -21,7 +21,7 @@ if [ -n "$SHOULD_TEST" ]; then docker version; fi
 
 export GO_VERSION=1.12
 if [ -f "./go.mod" ]; then GO_VERSION="$(grep '^go .*' go.mod | awk '{print $2}')"; export GO_VERSION; fi
-if [ "${GO_VERSION}" == '1.13' ]; then export GO_VERSION=1.13rc1; fi
+if [ "${GO_VERSION}" == '1.13' ]; then export GO_VERSION=1.13rc2; fi
 echo "Selected Go version: ${GO_VERSION}"
 
 if [ -f "./.semaphoreci/golang.sh" ]; then ./.semaphoreci/golang.sh; fi
