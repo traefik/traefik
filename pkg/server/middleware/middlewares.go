@@ -102,6 +102,10 @@ func checkRecursion(ctx context.Context, middlewareName string) (context.Context
 // it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (alice.Constructor, error) {
 	config := b.configs[middlewareName]
+	if config == nil || config.Middleware == nil {
+		return nil, fmt.Errorf("invalid middleware %q configuration", middlewareName)
+	}
+
 	var middleware alice.Constructor
 	badConf := errors.New("cannot create middleware: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
 
@@ -314,7 +318,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	if middleware == nil {
-		return nil, errors.New("middleware does not exist")
+		return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
 	}
 
 	return tracing.Wrap(ctx, middleware), nil

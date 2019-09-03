@@ -369,7 +369,6 @@ func TestBuilder_buildConstructor(t *testing.T) {
 			t.Parallel()
 
 			constructor, err := middlewaresBuilder.buildConstructor(context.Background(), test.middlewareID)
-
 			require.NoError(t, err)
 
 			middleware, err2 := constructor(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
