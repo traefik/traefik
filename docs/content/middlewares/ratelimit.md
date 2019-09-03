@@ -3,8 +3,6 @@
 To Control the Number of Requests Going to a Service
 {: .subtitle }
 
-![RateLimit](../assets/img/middleware/ratelimit.png)
-
 The RateLimit middleware ensures that services will receive a _fair_ number of requests, and allows you define what is fair.
 
 ## Configuration Example
