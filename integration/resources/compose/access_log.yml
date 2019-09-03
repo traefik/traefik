@@ -55,19 +55,17 @@ frontendRedirect:
     - traefik.http.middlewares.redirecthttp.redirectScheme.scheme=http
     - traefik.http.middlewares.redirecthttp.redirectScheme.port=8000
     - traefik.http.services.service3.loadbalancer.server.port=80
-# TODO: disable temporarily (rateLimit)
-#rateLimit:
-#  image: containous/whoami
-#  labels:
-#    - traefik.enable=true
-#    - traefik.http.routers.rt-rateLimit.entryPoints=httpRateLimit
-#    - traefik.http.routers.rt-rateLimit.rule=Host("ratelimit.docker.local")
-#    - traefik.http.routers.rt-rateLimit.middlewares=rate
-#    - traefik.http.middlewares.rate.ratelimit.extractorfunc=client.ip
-#    - traefik.http.middlewares.rate.ratelimit.rateset.Rate0.average=1
-#    - traefik.http.middlewares.rate.ratelimit.rateset.Rate0.burst=2
-#    - traefik.http.middlewares.rate.ratelimit.rateset.Rate0.period=10s
-#    - traefik.http.services.service3.loadbalancer.server.port=80
+rateLimit:
+  image: containous/whoami
+  labels:
+    - traefik.enable=true
+    - traefik.http.routers.rt-rateLimit.entryPoints=httpRateLimit
+    - traefik.http.routers.rt-rateLimit.rule=Host("ratelimit.docker.local")
+    - traefik.http.routers.rt-rateLimit.middlewares=rate
+    - traefik.http.middlewares.rate.ratelimit
+    - traefik.http.middlewares.rate.ratelimit.average=1
+    - traefik.http.middlewares.rate.ratelimit.burst=2
+    - traefik.http.services.service3.loadbalancer.server.port=80
 frontendWhitelist:
   image: containous/whoami
   labels:
