@@ -1,5 +1,30 @@
 # Change Log
 
+## [v2.0.0-rc2](https://github.com/containous/traefik/tree/v2.0.0-rc2) (2019-09-03)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc1...v2.0.0-rc2)
+
+**Enhancements:**
+- **[api]** Improve API for the web UI ([#5267](https://github.com/containous/traefik/pull/5267) by [ldez](https://github.com/ldez))
+- **[middleware,tracing]** Re enable ratelimit integration tests ([#5288](https://github.com/containous/traefik/pull/5288) by [mmatur](https://github.com/mmatur))
+- **[tracing]** Update Zipkin OpenTracing driver to latest 0.4.3 release ([#5283](https://github.com/containous/traefik/pull/5283) by [basvanbeek](https://github.com/basvanbeek))
+
+**Bug fixes:**
+- **[api]** Add errors about unknown entryPoint in runtime api ([#5265](https://github.com/containous/traefik/pull/5265) by [juliens](https://github.com/juliens))
+- **[metrics,tracing]** fix: Datadog case. ([#5272](https://github.com/containous/traefik/pull/5272) by [ldez](https://github.com/ldez))
+- **[middleware,k8s,k8s/crd]** The chain middleware in k8s use middlewareRef ([#5290](https://github.com/containous/traefik/pull/5290) by [juliens](https://github.com/juliens))
+- **[middleware]** Don&#39;t panic with undefined middleware ([#5289](https://github.com/containous/traefik/pull/5289) by [ldez](https://github.com/ldez))
+- **[middleware]** fix buffering middleware ([#5281](https://github.com/containous/traefik/pull/5281) by [ldez](https://github.com/ldez))
+- **[middleware]** fix: stripPrefix and stripPrefixRegex. ([#5291](https://github.com/containous/traefik/pull/5291) by [ldez](https://github.com/ldez))
+- **[service,websocket]** Fix recovered panic when websocket is mirrored ([#5255](https://github.com/containous/traefik/pull/5255) by [juliens](https://github.com/juliens))
+- **[webui]** Rest provider icon in the webui ([#5261](https://github.com/containous/traefik/pull/5261) by [mmatur](https://github.com/mmatur))
+- Fix trailing slash with check new version ([#5266](https://github.com/containous/traefik/pull/5266) by [mmatur](https://github.com/mmatur))
+
+**Documentation:**
+- **[middleware]** fix: stripPrefixRegex documentation. ([#5273](https://github.com/containous/traefik/pull/5273) by [ldez](https://github.com/ldez))
+- Fix some documentation issues ([#5286](https://github.com/containous/traefik/pull/5286) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Update restrictions in the documentation. ([#5270](https://github.com/containous/traefik/pull/5270) by [ldez](https://github.com/ldez))
+- Base of the migration guide ([#5263](https://github.com/containous/traefik/pull/5263) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.0.0-rc1](https://github.com/containous/traefik/tree/v2.0.0-rc1) (2019-08-26)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-beta1...v2.0.0-rc1)
 
