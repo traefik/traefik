@@ -219,7 +219,7 @@ PassTLSClientCert can add two headers to the request:
 !!! note
     The headers are filled with escaped string so it can be safely placed inside a URL query.
 
-In the following example, you can see a complete certificate. We will use each part of it to explains the middleware options.
+In the following example, you can see a complete certificate. We will use each part of it to explain the middleware options.
 
 ??? example "A complete client tls certificate"
 

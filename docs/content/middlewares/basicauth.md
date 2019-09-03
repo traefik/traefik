@@ -79,10 +79,6 @@ Passwords must be encoded using MD5, SHA1, or BCrypt.
 
 The `users` option is an array of authorized users. Each user will be declared using the `name:encoded-password` format.
 
-!!! Note
-    
-    If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
-
 ### `usersFile`
 
 The `usersFile` option is the path to an external file that contains the authorized users for the middleware.
@@ -106,7 +102,7 @@ You can customize the realm for the authentication with the `realm` option. The 
 
 ### `headerField`
 
-You can customize the header field for the authenticated user using the `headerField`option.
+You can define a header field to store the authenticated user using the `headerField`option.
 
 ```yaml tab="Docker"
 labels:

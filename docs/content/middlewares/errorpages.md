@@ -77,7 +77,7 @@ http:
 ```
 
 !!! note 
-    In this example, the error page URL is based on the status code (`query=/{status}.html)`.
+    In this example, the error page URL is based on the status code (`query=/{status}.html`).
 
 ## Configuration Options
 

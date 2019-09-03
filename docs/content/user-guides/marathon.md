@@ -98,7 +98,7 @@ The remaining section is going to explore them along with a benefit/cost trade-o
 
 It may seem obvious to reuse the Marathon health checks as a signal to Traefik whether an application should be taken into load-balancing rotation or not.
 
-Apart from the increased latency a failing health check may have, a major problem with this is is that Marathon does not persist the health check results.
+Apart from the increased latency a failing health check may have, a major problem with this is that Marathon does not persist the health check results.
 Consequently, if a master re-election occurs in the Marathon clusters, all health check results will revert to the _unknown_ state, effectively causing all applications inside the cluster to become unavailable and leading to a complete cluster failure.
 Re-elections do not only happen during regular maintenance work (often requiring rolling upgrades of the Marathon nodes) but also when the Marathon leader fails spontaneously.
 As such, there is no way to handle this situation deterministically.
