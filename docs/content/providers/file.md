@@ -75,7 +75,7 @@ You can write these configuration elements:
           middlewares:
           - my-basic-auth
           service: service-foo
-          rule: Path(`foo`)
+          rule: Path(`/foo`)
       
       # Add the middleware
       middlewares:
