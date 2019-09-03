@@ -121,7 +121,7 @@ http:
 
 ### Using Security Headers
 
-Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured per frontend in a similar manner to the custom headers above.
+Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured in a similar manner to the custom headers above.
 This functionality allows for some easy security features to quickly be set.
 
 ```yaml tab="Docker"
@@ -172,7 +172,7 @@ http:
 
 ### CORS Headers
 
-CORS (Cross-Origin Resource Sharing) headers can be added and configured per frontend in a similar manner to the custom headers above.
+CORS (Cross-Origin Resource Sharing) headers can be added and configured in a similar manner to the custom headers above.
 This functionality allows for more advanced security features to quickly be set.
 
 ```yaml tab="Docker"
