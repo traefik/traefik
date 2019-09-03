@@ -151,6 +151,8 @@ func TestStripPrefix(t *testing.T) {
 			require.NoError(t, err)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.path, nil)
+			req.RequestURI = req.URL.RequestURI()
+
 			resp := &httptest.ResponseRecorder{Code: http.StatusOK}
 
 			handler.ServeHTTP(resp, req)
