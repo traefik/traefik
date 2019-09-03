@@ -132,7 +132,7 @@ For example, the expression `LatencyAtQuantileMS(50.0) > 100` will trigger the c
 
 !!! Note
 
-    You must provide a float number (with the leading .0) for the quantile value
+    You must provide a float number (with the trailing .0) for the quantile value
  
 #### Using multiple metrics
 
