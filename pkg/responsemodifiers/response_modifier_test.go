@@ -47,7 +47,7 @@ func TestBuilderBuild(t *testing.T) {
 			assertResponse: func(t *testing.T, resp *http.Response) {
 				t.Helper()
 
-				assert.Equal(t, resp.Header.Get("X-Foo"), "foo")
+				assert.Equal(t, "foo", resp.Header.Get("X-Foo"))
 			},
 		},
 		{
@@ -85,7 +85,7 @@ func TestBuilderBuild(t *testing.T) {
 			assertResponse: func(t *testing.T, resp *http.Response) {
 				t.Helper()
 
-				assert.Equal(t, resp.Header.Get("Referrer-Policy"), "no-referrer")
+				assert.Equal(t, "no-referrer", resp.Header.Get("Referrer-Policy"))
 			},
 		},
 		{
@@ -107,8 +107,8 @@ func TestBuilderBuild(t *testing.T) {
 			assertResponse: func(t *testing.T, resp *http.Response) {
 				t.Helper()
 
-				assert.Equal(t, resp.Header.Get("X-Foo"), "foo")
-				assert.Equal(t, resp.Header.Get("X-Bar"), "bar")
+				assert.Equal(t, "foo", resp.Header.Get("X-Foo"))
+				assert.Equal(t, "bar", resp.Header.Get("X-Bar"))
 			},
 		},
 		{
@@ -130,7 +130,7 @@ func TestBuilderBuild(t *testing.T) {
 			assertResponse: func(t *testing.T, resp *http.Response) {
 				t.Helper()
 
-				assert.Equal(t, resp.Header.Get("X-Foo"), "foo")
+				assert.Equal(t, "foo", resp.Header.Get("X-Foo"))
 			},
 		},
 		{
@@ -157,8 +157,17 @@ func TestBuilderBuild(t *testing.T) {
 			assertResponse: func(t *testing.T, resp *http.Response) {
 				t.Helper()
 
-				assert.Equal(t, resp.Header.Get("X-Foo"), "foo")
+				assert.Equal(t, "foo", resp.Header.Get("X-Foo"))
 			},
+		},
+		{
+			desc:          "nil middleware",
+			middlewares:   []string{"foo"},
+			buildResponse: stubResponse,
+			conf: map[string]*dynamic.Middleware{
+				"foo": nil,
+			},
+			assertResponse: func(t *testing.T, resp *http.Response) {},
 		},
 	}
 
