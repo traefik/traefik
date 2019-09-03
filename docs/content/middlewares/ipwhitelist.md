@@ -144,7 +144,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 !!! note
 
     - If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP will be empty.
-    - `depth` is ignored if its value is is lesser than or equal to 0.
+    - `depth` is ignored if its value is lesser than or equal to 0.
 
 #### `ipStrategy.excludedIPs`
 
