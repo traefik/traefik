@@ -102,7 +102,7 @@ You can customize the realm for the authentication with the `realm` option. The 
 
 ### `headerField`
 
-You can customize the header field for the authenticated user using the `headerField`option.
+You can define a header field to store the authenticated user using the `headerField`option.
 
 ```yaml tab="Docker"
 labels:
