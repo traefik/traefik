@@ -150,9 +150,9 @@
   [http.middlewares.foo-slash-add-prefix.addPrefix]
     prefix = "/foo/"
   [http.middlewares.id-strip-regex-prefix.stripPrefixRegex]
-    regex = ["/{id:[a-z]+}"]
+    regex = ["/[a-z]+"]
   [http.middlewares.id-slash-strip-regex-prefix.stripPrefixRegex]
-    regex = ["/{id:[a-z]+}/"]
+    regex = ["/[a-z]+/"]
   [http.middlewares.api-regex-replace.replacePathRegex]
     regex = "/api"
     replacement = "/"
