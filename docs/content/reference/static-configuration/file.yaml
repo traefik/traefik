@@ -186,7 +186,6 @@ tracing:
     httpEndpoint: foobar
     sameSpan: true
     id128Bit: true
-    debug: true
     sampleRate: 42
   datadog:
     localAgentHostPort: foobar
