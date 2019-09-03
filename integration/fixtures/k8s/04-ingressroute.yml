@@ -1,6 +1,18 @@
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
+  name: mychain
+  namespace: default
+
+spec:
+  chain:
+    middlewares:
+      - name: stripprefix
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
   name: stripprefix
   namespace: default
 
@@ -26,4 +38,4 @@ spec:
     - name: whoami
       port: 80
     middlewares:
-    - name: stripprefix
+    - name: mychain

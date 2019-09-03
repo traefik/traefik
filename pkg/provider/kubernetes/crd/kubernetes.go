@@ -15,6 +15,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
@@ -146,10 +147,60 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, middleware := range client.GetMiddlewares() {
-		conf.HTTP.Middlewares[makeID(middleware.Namespace, middleware.Name)] = &middleware.Spec
+		id := makeID(middleware.Namespace, middleware.Name)
+		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, id))
+		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
+			AddPrefix:         middleware.Spec.AddPrefix,
+			StripPrefix:       middleware.Spec.StripPrefix,
+			StripPrefixRegex:  middleware.Spec.StripPrefixRegex,
+			ReplacePath:       middleware.Spec.ReplacePath,
+			ReplacePathRegex:  middleware.Spec.ReplacePathRegex,
+			Chain:             createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain),
+			IPWhiteList:       middleware.Spec.IPWhiteList,
+			Headers:           middleware.Spec.Headers,
+			Errors:            middleware.Spec.Errors,
+			RateLimit:         middleware.Spec.RateLimit,
+			RedirectRegex:     middleware.Spec.RedirectRegex,
+			RedirectScheme:    middleware.Spec.RedirectScheme,
+			BasicAuth:         middleware.Spec.BasicAuth,
+			DigestAuth:        middleware.Spec.DigestAuth,
+			ForwardAuth:       middleware.Spec.ForwardAuth,
+			InFlightReq:       middleware.Spec.InFlightReq,
+			Buffering:         middleware.Spec.Buffering,
+			CircuitBreaker:    middleware.Spec.CircuitBreaker,
+			Compress:          middleware.Spec.Compress,
+			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
+			Retry:             middleware.Spec.Retry,
+		}
+
 	}
 
 	return conf
+}
+
+func createChainMiddleware(ctx context.Context, namespace string, chain *v1alpha1.Chain) *dynamic.Chain {
+	if chain == nil {
+		return nil
+	}
+
+	var mds []string
+	for _, mi := range chain.Middlewares {
+		if strings.Contains(mi.Name, "@") {
+			if len(mi.Namespace) > 0 {
+				log.FromContext(ctx).
+					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+			}
+			mds = append(mds, mi.Name)
+			continue
+		}
+
+		ns := mi.Namespace
+		if len(ns) == 0 {
+			ns = namespace
+		}
+		mds = append(mds, makeID(ns, mi.Name))
+	}
+	return &dynamic.Chain{Middlewares: mds}
 }
 
 func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {

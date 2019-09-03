@@ -51,9 +51,9 @@ metadata:
 spec:
   chain:
     middlewares:
-    - https-only
-    - known-ips
-    - auth-users
+    - name: https-only
+    - name: known-ips
+    - name: auth-users
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
