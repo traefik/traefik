@@ -72,6 +72,11 @@ and the `X-Custom-Response-Header` header removed from the response.
 
 Please note that is not possible to remove headers through the use of labels (Docker, Rancher, Marathon, ...) for now.
 
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+```
+
 ```yaml tab="Kubernetes"
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
@@ -86,15 +91,15 @@ spec:
       X-Custom-Response-Header: "" # Removes
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-```
-
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
 }
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
 ```
 
 ```toml tab="File (TOML)"
@@ -141,17 +146,17 @@ spec:
     sslRedirect: "true"
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.framedeny=true"
-  - "traefik.http.middlewares.testheader.headers.sslredirect=true"
-```
-
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.framedeny": "true",
   "traefik.http.middlewares.testheader.headers.sslredirect": "true"
 }
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.testheader.headers.framedeny=true"
+  - "traefik.http.middlewares.testheader.headers.sslredirect=true"
 ```
 
 ```toml tab="File (TOML)"    
@@ -199,14 +204,6 @@ spec:
     addVaryHeader: "true"
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin=origin-list-or-null"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
-```
-
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods": "GET,OPTIONS,PUT",
@@ -214,6 +211,14 @@ labels:
   "traefik.http.middlewares.testheader.headers.accesscontrolmaxage": "100",
   "traefik.http.middlewares.testheader.headers.addvaryheader": "true"
 }
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin=origin-list-or-null"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
+  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
 
 ```toml tab="File (TOML)"    
