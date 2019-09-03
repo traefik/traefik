@@ -27,7 +27,8 @@ func TestStripPrefixRegex(t *testing.T) {
 	}{
 		{
 			path:               "/a/test",
-			expectedStatusCode: http.StatusNotFound,
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/a/test",
 		},
 		{
 			path:               "/a/api/test",
@@ -65,7 +66,8 @@ func TestStripPrefixRegex(t *testing.T) {
 		},
 		{
 			path:               "/c/api/abc/test4",
-			expectedStatusCode: http.StatusNotFound,
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/c/api/abc/test4",
 		},
 		{
 			path:               "/a/api/a%2Fb",

@@ -71,7 +71,7 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 		s.next.ServeHTTP(rw, req)
 		return
 	}
-	http.NotFound(rw, req)
+	s.next.ServeHTTP(rw, req)
 }
 
 func ensureLeadingSlash(str string) string {

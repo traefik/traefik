@@ -28,7 +28,8 @@ func TestStripPrefix(t *testing.T) {
 				Prefixes: []string{},
 			},
 			path:               "/noprefixes",
-			expectedStatusCode: http.StatusNotFound,
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/noprefixes",
 		},
 		{
 			desc: "wildcard (.*) requests",
@@ -76,7 +77,8 @@ func TestStripPrefix(t *testing.T) {
 				Prefixes: []string{"/stat/"},
 			},
 			path:               "/status",
-			expectedStatusCode: http.StatusNotFound,
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/status",
 		},
 		{
 			desc: "general prefix on matching path",
