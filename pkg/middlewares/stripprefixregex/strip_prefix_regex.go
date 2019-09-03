@@ -3,13 +3,13 @@ package stripprefixregex
 import (
 	"context"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/middlewares/stripprefix"
 	"github.com/containous/traefik/v2/pkg/tracing"
-	"github.com/gorilla/mux"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
@@ -19,9 +19,9 @@ const (
 
 // StripPrefixRegex is a middleware used to strip prefix from an URL request.
 type stripPrefixRegex struct {
-	next   http.Handler
-	router *mux.Router
-	name   string
+	next        http.Handler
+	expressions []*regexp.Regexp
+	name        string
 }
 
 // New builds a new StripPrefixRegex middleware.
@@ -29,13 +29,16 @@ func New(ctx context.Context, next http.Handler, config dynamic.StripPrefixRegex
 	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
 
 	stripPrefix := stripPrefixRegex{
-		next:   next,
-		router: mux.NewRouter(),
-		name:   name,
+		next: next,
+		name: name,
 	}
 
-	for _, prefix := range config.Regex {
-		stripPrefix.router.PathPrefix(prefix)
+	for _, exp := range config.Regex {
+		reg, err := regexp.Compile(strings.TrimSpace(exp))
+		if err != nil {
+			return nil, err
+		}
+		stripPrefix.expressions = append(stripPrefix.expressions, reg)
 	}
 
 	return &stripPrefix, nil
@@ -46,31 +49,24 @@ func (s *stripPrefixRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	var match mux.RouteMatch
-	if s.router.Match(req, &match) {
-		params := make([]string, 0, len(match.Vars)*2)
-		for key, val := range match.Vars {
-			params = append(params, key)
-			params = append(params, val)
-		}
+	for _, exp := range s.expressions {
+		parts := exp.FindStringSubmatch(req.URL.Path)
+		if len(parts) > 0 && len(parts[0]) > 0 {
+			prefix := parts[0]
 
-		prefix, err := match.Route.URL(params...)
-		if err != nil || len(prefix.Path) > len(req.URL.Path) {
-			logger := middlewares.GetLogger(req.Context(), s.name, typeName)
-			logger.Error("Error in stripPrefix middleware", err)
+			req.Header.Add(stripprefix.ForwardedPrefixHeader, prefix)
+
+			req.URL.Path = strings.Replace(req.URL.Path, prefix, "", 1)
+			if req.URL.RawPath != "" {
+				req.URL.RawPath = req.URL.RawPath[len(prefix):]
+			}
+
+			req.RequestURI = ensureLeadingSlash(req.URL.RequestURI())
+			s.next.ServeHTTP(rw, req)
 			return
 		}
-
-		req.URL.Path = req.URL.Path[len(prefix.Path):]
-		if req.URL.RawPath != "" {
-			req.URL.RawPath = req.URL.RawPath[len(prefix.Path):]
-		}
-		req.Header.Add(stripprefix.ForwardedPrefixHeader, prefix.Path)
-		req.RequestURI = ensureLeadingSlash(req.URL.RequestURI())
-
-		s.next.ServeHTTP(rw, req)
-		return
 	}
+
 	s.next.ServeHTTP(rw, req)
 }
 
