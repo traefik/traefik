@@ -153,7 +153,6 @@ Here is the list of supported operators:
 - Greater or equal than (`>=`)
 - Lesser than (`<`)
 - Lesser or equal than (`<=`)
-- Not (`!`)
 - Equal (`==`)
 - Not Equal (`!=`)
  
