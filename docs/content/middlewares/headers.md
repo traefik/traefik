@@ -70,7 +70,7 @@ http:
 `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` header removed from the request,
 and the `X-Custom-Response-Header` header removed from the response.
 
-Please note that is not possible to remove headers through the use of labels (Docker, Rancher, Marathon, ...) for now.
+Please note that it is not possible to remove headers through the use of labels (Docker, Rancher, Marathon, ...) for now.
 
 ```yaml tab="Docker"
 labels:
@@ -126,7 +126,7 @@ http:
 
 ### Using Security Headers
 
-Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured in a similar manner to the custom headers above.
+Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured in a manner similar to the custom headers above.
 This functionality allows for some easy security features to quickly be set.
 
 ```yaml tab="Docker"
@@ -177,7 +177,7 @@ http:
 
 ### CORS Headers
 
-CORS (Cross-Origin Resource Sharing) headers can be added and configured in a similar manner to the custom headers above.
+CORS (Cross-Origin Resource Sharing) headers can be added and configured in a manner similar to the custom headers above.
 This functionality allows for more advanced security features to quickly be set.
 
 ```yaml tab="Docker"
