@@ -147,8 +147,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, middleware := range client.GetMiddlewares() {
-		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, makeID(middleware.Namespace, middleware.Name)))
-		conf.HTTP.Middlewares[makeID(middleware.Namespace, middleware.Name)] = &dynamic.Middleware{
+		id := makeID(middleware.Namespace, middleware.Name)
+		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, id))
+		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
 			StripPrefixRegex:  middleware.Spec.StripPrefixRegex,
