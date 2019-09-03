@@ -46,7 +46,7 @@ You can write these configuration elements:
           entryPoints = ["web"]
           middlewares = ["my-basic-auth"]
           service = "service-foo"
-          rule = "Path(`foo`)"
+          rule = "Path(`/foo`)"
     
         # Add the middleware
         [http.middlewares]    
