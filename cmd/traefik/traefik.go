@@ -299,14 +299,14 @@ You haven't specified the sendAnonymousUsage option, it will be enabled by defau
 Stats collection is enabled.
 Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.
 Help us improve Traefik by leaving this feature on :)
-More details on: https://docs.traefik.io/basics/#collected-data
+More details on: https://docs.traefik.io/v2.0/contributing/data-collection/
 `)
 		collect(staticConfiguration)
 	} else {
 		log.WithoutContext().Info(`
 Stats collection is disabled.
 Help us improve Traefik by turning this feature on :)
-More details on: https://docs.traefik.io/basics/#collected-data
+More details on: https://docs.traefik.io/v2.0/contributing/data-collection/
 `)
 	}
 }
