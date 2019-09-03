@@ -24,7 +24,7 @@ func (f *Builder) Build(ctx context.Context, names []string) func(*http.Response
 	for _, middleName := range names {
 		if conf, ok := f.configs[middleName]; ok {
 			if conf == nil || conf.Middleware == nil {
-				getLogger(ctx, middleName, "undefined").Error("Invalid middleware configuration (ResponseModifier)")
+				getLogger(ctx, middleName, "undefined").Error("Invalid Middleware configuration (ResponseModifier)")
 				continue
 			}
 
