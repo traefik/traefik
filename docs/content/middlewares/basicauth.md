@@ -75,13 +75,13 @@ Passwords must be encoded using MD5, SHA1, or BCrypt.
 
     Use `htpasswd` to generate the passwords.
 
-### `users`
-
-The `users` option is an array of authorized users. Each user will be declared using the `name:encoded-password` format.
-
 !!! Note
     
     If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
+
+### `users`
+
+The `users` option is an array of authorized users. Each user will be declared using the `name:encoded-password` format.
 
 ### `usersFile`
 
@@ -95,10 +95,6 @@ The file content is a list of `name:encoded-password`.
     test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/
     test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
     ```
-
-!!! Note
-    
-    If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
 
 ### `realm`
 
