@@ -223,7 +223,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 			HTTPEndpoint: "fff",
 			SameSpan:     true,
 			ID128Bit:     true,
-			Debug:        true,
 			SampleRate:   53,
 		},
 		Datadog: &datadog.Config{

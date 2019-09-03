@@ -561,11 +561,8 @@ Set the maximum character limit for Span names (default 0 = no limit). (Default:
 `--tracing.zipkin`:  
 Settings for Zipkin. (Default: ```false```)
 
-`--tracing.zipkin.debug`:  
-Enable Zipkin debug. (Default: ```false```)
-
 `--tracing.zipkin.httpendpoint`:  
-HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v1/spans```)
+HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
 
 `--tracing.zipkin.id128bit`:  
 Use Zipkin 128 bit root span IDs. (Default: ```true```)
