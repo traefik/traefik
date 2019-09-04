@@ -214,11 +214,11 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 	}
 
 	if auth.TLS != nil {
-
 		forwardAuth.TLS = &dynamic.ClientTLS{
 			CAOptional:         auth.TLS.CAOptional,
 			InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
 		}
+
 		if len(auth.TLS.CASecret) > 0 {
 			caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, k8sClient)
 			if err != nil {
@@ -239,6 +239,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 
 	return forwardAuth, nil
 }
+
 func loadCASecret(namespace, secretName string, k8sClient Client) (string, error) {
 	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
@@ -288,14 +289,12 @@ func createBasicAuthMiddleware(client Client, namespace string, basicAuth *v1alp
 		return nil, err
 	}
 
-	basicAuthMiddleware := &dynamic.BasicAuth{
+	return &dynamic.BasicAuth{
 		Users:        credentials,
 		Realm:        basicAuth.Realm,
 		RemoveHeader: basicAuth.RemoveHeader,
 		HeaderField:  basicAuth.HeaderField,
-	}
-
-	return basicAuthMiddleware, nil
+	}, nil
 }
 
 func createDigestAuthMiddleware(client Client, namespace string, digestAuth *v1alpha1.DigestAuth) (*dynamic.DigestAuth, error) {
@@ -308,14 +307,12 @@ func createDigestAuthMiddleware(client Client, namespace string, digestAuth *v1a
 		return nil, err
 	}
 
-	digestAuthMiddleware := &dynamic.DigestAuth{
+	return &dynamic.DigestAuth{
 		Users:        credentials,
 		Realm:        digestAuth.Realm,
 		RemoveHeader: digestAuth.RemoveHeader,
 		HeaderField:  digestAuth.HeaderField,
-	}
-
-	return digestAuthMiddleware, nil
+	}, nil
 }
 
 func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]string, error) {
