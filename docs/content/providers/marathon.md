@@ -243,7 +243,7 @@ That is to say, if none of the application's labels match the expression, no rou
 In addition, the expression also matched against the application's constraints, such as described in [Marathon constraints](https://mesosphere.github.io/marathon/docs/constraints.html).
 If the expression is empty, all detected applications are included.
 
-The expression syntax is based on the `Label("key", "value")`, and `LabelRegexp("key", "value")`, as well as the usual boolean logic.
+The expression syntax is based on the `Label("key", "value")`, and `LabelRegex("key", "value")`, as well as the usual boolean logic.
 In addition, to match against marathon constraints, the function `MarathonConstraint("field:operator:value")` can be used, where the field, operator, and value parts are joined together in a single string with the `:` separator.
 
 ??? example "Constraints Expression Examples"
@@ -275,7 +275,7 @@ In addition, to match against marathon constraints, the function `MarathonConstr
     
     ```toml
     # Includes only applications having a label with key `a.label.name` and a value matching the `a.+` regular expression.
-    constraints = "LabelRegexp(`a.label.name`, `a.+`)"
+    constraints = "LabelRegex(`a.label.name`, `a.+`)"
     ```
 
     ```toml
