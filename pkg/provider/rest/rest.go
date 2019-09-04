@@ -18,6 +18,7 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that provides a Rest API.
 type Provider struct {
+	Insecure          bool `description:"Activate REST Provider on an insecure entryPoints named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	configurationChan chan<- dynamic.Message
 }
 
@@ -30,6 +31,13 @@ var templatesRenderer = render.New(render.Options{Directory: "nowhere"})
 // Init the provider.
 func (p *Provider) Init() error {
 	return nil
+}
+
+// Handler creates an http.Handler for the Rest API
+func (p *Provider) Handler() http.Handler {
+	router := mux.NewRouter()
+	p.Append(router)
+	return router
 }
 
 // Append add rest provider routes on a router.

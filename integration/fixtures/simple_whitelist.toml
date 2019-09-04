@@ -12,6 +12,7 @@
       insecure=true
 
 [api]
+insecure=true
 
 [providers]
   [providers.docker]

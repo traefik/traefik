@@ -17,6 +17,7 @@
   format = "json"
 
 [api]
+insecure=true
 
 [providers.file]
   filename = "{{ .SelfFilename }}"

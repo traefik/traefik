@@ -13,6 +13,7 @@
     address = ":8443"
 
 [api]
+insecure=true
 
 [providers]
   [providers.docker]

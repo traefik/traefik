@@ -161,33 +161,6 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	}
 }
 
-func (s *SimpleSuite) TestApiOnSameEntryPoint(c *check.C) {
-	c.Skip("Waiting for new api handler implementation")
-	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
-
-	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.entryPoint=http", "--log.level=DEBUG", "--providers.docker")
-	defer output(c)
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	// TODO validate : run on 80
-	// Expected a 404 as we did not configure anything
-	err = try.GetRequest("http://127.0.0.1:8000/test", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-}
-
 func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 	c.Skip("Stats is missing")
 	s.createComposeProject(c, "stats")
@@ -250,7 +223,7 @@ func (s *SimpleSuite) TestDefaultEntryPointHTTP(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api")
+	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
 	defer output(c)
 
 	err := cmd.Start()
@@ -268,7 +241,7 @@ func (s *SimpleSuite) TestWithNonExistingEntryPoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api")
+	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
 	defer output(c)
 
 	err := cmd.Start()
@@ -286,7 +259,7 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--log.level=DEBUG")
+	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--log.level=DEBUG")
 	defer output(c)
 
 	err := cmd.Start()
@@ -784,4 +757,28 @@ func (s *SimpleSuite) TestMirrorCanceled(c *check.C) {
 	c.Assert(countTotal, checker.Equals, int32(5))
 	c.Assert(val1, checker.Equals, int32(0))
 	c.Assert(val2, checker.Equals, int32(0))
+}
+
+func (s *SimpleSuite) TestSecureAPI(c *check.C) {
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	file := s.adaptFile(c, "./fixtures/simple_secure_api.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8000/secure/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
 }

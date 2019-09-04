@@ -13,6 +13,7 @@
     address = ":4443"
 
 [api]
+insecure=true
 
 [providers.file]
   filename = "{{ .SelfFilename }}"

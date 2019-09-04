@@ -97,7 +97,12 @@ func (s *Server) createTCPRouters(ctx context.Context, configuration *runtime.Co
 
 // createHTTPHandlers returns, for the given configuration and entryPoints, the HTTP handlers for non-TLS connections, and for the TLS ones. the given configuration must not be nil. its fields will get mutated.
 func (s *Server) createHTTPHandlers(ctx context.Context, configuration *runtime.Configuration, entryPoints []string) (map[string]http.Handler, map[string]http.Handler) {
-	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper, s.metricsRegistry, s.routinesPool)
+	var apiHandler http.Handler
+	if s.api != nil {
+		apiHandler = s.api(configuration)
+	}
+
+	serviceManager := service.NewManager(configuration.Services, s.defaultRoundTripper, s.metricsRegistry, s.routinesPool, apiHandler, s.restHandler)
 	middlewaresBuilder := middleware.NewBuilder(configuration.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(configuration.Middlewares)
 	routerManager := router.NewManager(configuration, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -114,7 +119,7 @@ func (s *Server) createHTTPHandlers(ctx context.Context, configuration *runtime.
 		factory := s.entryPointsTCP[entryPointName].RouteAppenderFactory
 		if factory != nil {
 			// FIXME remove currentConfigurations
-			appender := factory.NewAppender(ctx, middlewaresBuilder, configuration)
+			appender := factory.NewAppender(ctx, configuration)
 			appender.Append(internalMuxRouter)
 		}
 

@@ -12,6 +12,7 @@
       trustedIPs = ["1.2.3.4"]
 
 [api]
+insecure=true
 
 [providers.file]
   filename = "{{ .SelfFilename }}"

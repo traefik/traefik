@@ -19,9 +19,17 @@ type chainBuilder interface {
 }
 
 // NewRouteAppenderAggregator Creates a new RouteAppenderAggregator
-func NewRouteAppenderAggregator(ctx context.Context, chainBuilder chainBuilder, conf static.Configuration,
+func NewRouteAppenderAggregator(ctx context.Context, conf static.Configuration,
 	entryPointName string, runtimeConfiguration *runtime.Configuration) *RouteAppenderAggregator {
 	aggregator := &RouteAppenderAggregator{}
+
+	if conf.Ping != nil && conf.Ping.EntryPoint == entryPointName {
+		aggregator.AddAppender(conf.Ping)
+	}
+
+	if conf.Metrics != nil && conf.Metrics.Prometheus != nil && conf.Metrics.Prometheus.EntryPoint == entryPointName {
+		aggregator.AddAppender(metrics.PrometheusHandler{})
+	}
 
 	if entryPointName != "traefik" {
 		return aggregator
@@ -31,16 +39,8 @@ func NewRouteAppenderAggregator(ctx context.Context, chainBuilder chainBuilder, 
 		aggregator.AddAppender(conf.Providers.Rest)
 	}
 
-	if conf.API != nil {
+	if conf.API != nil && conf.API.Insecure {
 		aggregator.AddAppender(api.New(conf, runtimeConfiguration))
-	}
-
-	if conf.Ping != nil {
-		aggregator.AddAppender(conf.Ping)
-	}
-
-	if conf.Metrics != nil && conf.Metrics.Prometheus != nil {
-		aggregator.AddAppender(metrics.PrometheusHandler{})
 	}
 
 	return aggregator

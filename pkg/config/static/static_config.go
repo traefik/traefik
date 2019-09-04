@@ -85,6 +85,7 @@ type ServersTransport struct {
 
 // API holds the API configuration
 type API struct {
+	Insecure  bool `description:"Activate API on an insecure entryPoints named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	Dashboard bool `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
 	Debug     bool `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
 	// TODO: Re-enable statistics
@@ -173,9 +174,9 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
-	if (c.API != nil) ||
-		(c.Ping != nil) ||
-		(c.Metrics != nil && c.Metrics.Prometheus != nil) ||
+	if (c.API != nil && c.API.Insecure) ||
+		(c.Ping != nil && c.Ping.EntryPoint == DefaultInternalEntryPointName) ||
+		(c.Metrics != nil && c.Metrics.Prometheus != nil && c.Metrics.Prometheus.EntryPoint == DefaultInternalEntryPointName) ||
 		(c.Providers.Rest != nil) {
 		if _, ok := c.EntryPoints[DefaultInternalEntryPointName]; !ok {
 			ep := &EntryPoint{Address: ":8080"}

@@ -12,6 +12,7 @@
     address = ":9000"
 
 [api]
+insecure=true
 
 [providers.file]
   filename = "{{ .SelfFilename }}"
