@@ -22,9 +22,7 @@ metadata:
   name: test-auth
 spec:
   digestAuth:
-    users:
-    - test:traefik:a2688e031edb4be6a3797f3882655c05
-    - test2:traefik:518845800f9e2bfb1f1f740ec24f074e
+    secret: userssecret
 ```
 
 ```json tab="Marathon"
@@ -70,6 +68,10 @@ The `users` option is an array of authorized users. Each user will be declared u
 !!! Note
     
     If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
+    
+!!! Note
+
+    For security reasons, the field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead. 
 
 ### `usersFile`
 
@@ -87,6 +89,10 @@ The file content is a list of `name:realm:encoded-password`.
 !!! Note
     
     If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
+
+!!! Note
+
+    Because it does not make much sense to refer to a file path on Kubernetes, the `usersFile` field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead. 
 
 ### `realm`
 

@@ -39,8 +39,7 @@ spec:
     tls:
       ca: path/to/local.crt
       caOptional: true
-      cert: path/to/foo.cert
-      key: path/to/foo.key  
+      secret: mytlscert  
 ```
 
 ```json tab="Marathon"
@@ -119,3 +118,53 @@ The `authResponseHeaders` option is the list of the headers to copy from the aut
 ### `tls`
 
 The `tls` option is the TLS configuration from Traefik to the authentication server.
+
+#### `tls.ca`
+
+TODO
+
+#### `tls.caOptional`
+
+TODO
+
+#### `tls.cert`
+
+TODO
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tlssecret
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+```
+
+!!! Note
+    For security reasons, the field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
+    
+#### `tls.key`
+
+TODO
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tlssecret
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+```
+
+!!! Note
+    For security reasons, the field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
+
+#### `tls.insecureSkipVerify`
+
+TODO

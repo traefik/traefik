@@ -27,9 +27,7 @@ metadata:
   name: test-auth
 spec:
   basicAuth:
-    users:
-    - test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/
-    - test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
+    secret: secretName
 ```
 
 ```json tab="Marathon"
@@ -79,6 +77,10 @@ Passwords must be encoded using MD5, SHA1, or BCrypt.
 
 The `users` option is an array of authorized users. Each user will be declared using the `name:encoded-password` format.
 
+!!! Note
+
+    For security reasons, the field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead. 
+
 ### `usersFile`
 
 The `usersFile` option is the path to an external file that contains the authorized users for the middleware.
@@ -95,6 +97,10 @@ The file content is a list of `name:encoded-password`.
 !!! Note
     
     If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
+
+!!! Note
+
+    Because it does not make much sense to refer to a file path on Kubernetes, the `usersFile` field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead. 
 
 ### `realm`
 
