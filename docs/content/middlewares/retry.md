@@ -5,7 +5,8 @@ Retrying until it Succeeds
 
 `TODO: add schema`
 
-Retry to send request on attempt failure.
+The Retry middleware is in charge of reissuing a request a given number of times to a backend server if that server does not reply.
+To be clear, as soon as the server answers, the middleware stops retrying, regardless of the response status.
 
 ## Configuration Examples
 
@@ -60,4 +61,4 @@ http:
 
 _mandatory_
 
-The `attempts` option defines how many times to try sending the request.
+The `attempts` option defines how many times the request should be retried.
