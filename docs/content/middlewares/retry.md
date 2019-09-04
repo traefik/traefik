@@ -5,7 +5,8 @@ Retrying until it Succeeds
 
 `TODO: add schema`
 
-Retry to send request on attempt failure.
+Retry to send request if it can't reach any backend server.
+So it will not retry if a server answers regardless of the status of the response.
 
 ## Configuration Examples
 
