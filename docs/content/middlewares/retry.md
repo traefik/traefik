@@ -61,4 +61,4 @@ http:
 
 _mandatory_
 
-The `attempts` option defines how many times to try sending the request.
+The `attempts` option defines how many times the request should be retried.
