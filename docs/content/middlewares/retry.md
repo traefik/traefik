@@ -5,8 +5,8 @@ Retrying until it Succeeds
 
 `TODO: add schema`
 
-Retry to send request if it can't reach any backend server.
-So it will not retry if a server answers regardless of the status of the response.
+The Retry middleware is in charge of reissuing a request a given number of times to a backend server if that server does not reply.
+To be clear, as soon as the server answers, the middleware stops retrying, regardless of the response status.
 
 ## Configuration Examples
 
