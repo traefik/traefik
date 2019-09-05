@@ -16,7 +16,7 @@
 
       <template v-slot:body="props">
         <q-tr :props="props" class="cursor-pointer" @click.native="$router.push({ path: `/${getPath}/${props.row.name}/${getType(props.row)}`})">
-          <q-td key="status" :props="props">
+          <q-td key="status" :props="props" auto-width>
             <avatar-state :state="props.row.status | status "/>
           </q-td>
           <q-td key="rule" :props="props">
