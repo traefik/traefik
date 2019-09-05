@@ -27,7 +27,7 @@
           <div v-if="routerByName.item.name" class="col-12 col-md-3 q-mb-lg path-block">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-globe-outline"></q-icon>
-              <div class="app-title-label">HTTP Router</div>
+              <div class="app-title-label">{{ routerType }}</div>
             </div>
             <div class="row items-start q-col-gutter-lg">
               <div class="col-12 col-md-8">
@@ -43,7 +43,7 @@
             </div>
           </div>
 
-          <div v-if="middlewares.length" class="col-12 col-md-3 q-mb-lg path-block">
+          <div v-if="hasMiddlewares" class="col-12 col-md-3 q-mb-lg path-block">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-layers"></q-icon>
               <div class="app-title-label">HTTP Middlewares</div>
@@ -125,7 +125,7 @@
             </div>
           </div>
 
-          <div v-if="middlewares.length" class="col-12 col-md-4 q-mb-lg path-block">
+          <div v-if="hasMiddlewares" class="col-12 col-md-4 q-mb-lg path-block">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-layers"></q-icon>
               <div class="app-title-label">Middlewares</div>
@@ -184,7 +184,14 @@ export default {
     }
   },
   computed: {
+    routerType() {
+      return this.$route.meta.protocol.toUpperCase() + ' Router'
+    },
     ...mapGetters('http', { http_routerByName: 'routerByName' }),
+    ...mapGetters('tcp', { tcp_routerByName: 'routerByName' }),
+    hasMiddlewares () {
+        return this.$route.meta.protocol == 'http' && this.middlewares.length > 0
+    },
     protocol () {
       return this.$route.meta.protocol
     },
@@ -197,6 +204,7 @@ export default {
   },
   methods: {
     ...mapActions('http', { http_getRouterByName: 'getRouterByName', getMiddlewareByName: 'getMiddlewareByName' }),
+    ...mapActions('tcp', { tcp_getRouterByName: 'getRouterByName', }),
     ...mapActions('entrypoints', { getEntrypointsByName: 'getByName' }),
     refreshAll () {
       if (this.routerByName.loading) {
@@ -262,6 +270,7 @@ export default {
   beforeDestroy () {
     clearInterval(this.timeOutGetAll)
     this.$store.commit('http/getRouterByNameClear')
+    this.$store.commit('tcp/getRouterByNameClear')
   }
 }
 </script>
