@@ -213,7 +213,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     entryPoints:
       web:
         address: ":80"
-        forwardedHeaders
+        forwardedHeaders:
           trustedIPs:
           - "127.0.0.1/32"
           - "192.168.1.7"
