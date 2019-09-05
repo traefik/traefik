@@ -77,6 +77,7 @@ Attach labels to your containers and let Traefik do the rest!
         deploy:
           labels:
             - traefik.http.routers.my-container.rule=Host(`my-domain`)
+            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
     !!! important "Labels in Docker Swarm Mode"

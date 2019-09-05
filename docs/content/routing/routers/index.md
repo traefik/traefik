@@ -631,7 +631,7 @@ Services are the target for the router.
           rule: "HostSNI(`foo-domain`)"
           service: service-id
           # will terminate the TLS request by default
-          tld: {}
+          tls: {}
     ```
 
 ??? example "Configuring passthrough"

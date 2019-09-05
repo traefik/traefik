@@ -152,15 +152,14 @@ accessLog:
   format: json
   fields:
     defaultMode: keep
-    fields:
+    names:
+      ClientUsername: drop
+    headers:
+      defaultMode: keep
       names:
-        ClientUsername: drop
-      headers:
-        defaultMode: keep
-        names:
-        - User-Agent: redact
-        - Authorization: drop
-        - Content-Type: keep
+      - User-Agent: redact
+      - Authorization: drop
+      - Content-Type: keep
 ```
 
 ```bash tab="CLI"
