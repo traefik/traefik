@@ -125,7 +125,21 @@ const routes = [
         meta: {
           title: 'TCP Services'
         }
-      }
+      },
+      {
+        path: 'services/:name/:type',
+        name: 'tcpServiceDetail',
+        components: {
+          default: () => import('pages/_commons/ServiceDetail.vue'),
+          NavBar: () => import('components/tcp/ToolBar.vue')
+        },
+        props: { default: true, NavBar: true },
+        meta: {
+          protocol: 'tcp',
+          title: 'TCP Service Detail'
+        }
+      },
+
     ]
   }
 ]

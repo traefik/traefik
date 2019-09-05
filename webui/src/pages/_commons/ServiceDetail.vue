@@ -98,7 +98,7 @@ import PanelServers from '../../components/_commons/PanelServers'
 import MainTable from '../../components/_commons/MainTable'
 
 export default {
-  name: 'PageHTTPServiceDetail',
+  name: 'PageServiceDetail',
   props: ['name', 'type'],
   components: {
     PageDefault,
@@ -127,6 +127,7 @@ export default {
   },
   computed: {
     ...mapGetters('http', { http_serviceByName: 'serviceByName' }),
+    ...mapGetters('tcp', { tcp_serviceByName: 'serviceByName' }),
     protocol () {
       return this.$route.meta.protocol
     },
@@ -142,6 +143,7 @@ export default {
   },
   methods: {
     ...mapActions('http', { http_getServiceByName: 'getServiceByName', http_getRouterByName: 'getRouterByName' }),
+    ...mapActions('tcp', { tcp_getServiceByName: 'getServiceByName', tcp_getRouterByName: 'getRouterByName' }),
     refreshAll () {
       if (this.serviceByName.loading) {
         return
