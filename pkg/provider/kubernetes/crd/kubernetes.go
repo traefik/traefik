@@ -214,27 +214,29 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 	}
 
 	if auth.TLS != nil {
-		forwardAuth.TLS = &dynamic.ClientTLS{
-			CAOptional:         auth.TLS.CAOptional,
-			InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
-		}
+		return forwardAuth, nil
+	}
 
-		if len(auth.TLS.CASecret) > 0 {
-			caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, k8sClient)
-			if err != nil {
-				return nil, fmt.Errorf("failed to load auth ca secret: %v", err)
-			}
-			forwardAuth.TLS.CA = caSecret
-		}
+	forwardAuth.TLS = &dynamic.ClientTLS{
+		CAOptional:         auth.TLS.CAOptional,
+		InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
+	}
 
-		if len(auth.TLS.CertSecret) > 0 {
-			authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, k8sClient)
-			if err != nil {
-				return nil, fmt.Errorf("failed to load auth secret: %s", err)
-			}
-			forwardAuth.TLS.Cert = authSecretCert
-			forwardAuth.TLS.Key = authSecretKey
+	if len(auth.TLS.CASecret) > 0 {
+		caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, k8sClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load auth ca secret: %v", err)
 		}
+		forwardAuth.TLS.CA = caSecret
+	}
+
+	if len(auth.TLS.CertSecret) > 0 {
+		authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, k8sClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load auth secret: %s", err)
+		}
+		forwardAuth.TLS.Cert = authSecretCert
+		forwardAuth.TLS.Key = authSecretKey
 	}
 
 	return forwardAuth, nil
