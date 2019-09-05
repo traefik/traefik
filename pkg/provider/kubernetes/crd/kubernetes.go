@@ -243,16 +243,16 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 func loadCASecret(namespace, secretName string, k8sClient Client) (string, error) {
 	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch secret %q/%q: %s", namespace, secretName, err)
+		return "", fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
 	}
 	if !ok {
-		return "", fmt.Errorf("secret %q/%q not found", namespace, secretName)
+		return "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
 	}
 	if secret == nil {
-		return "", fmt.Errorf("data for secret %q/%q must not be nil", namespace, secretName)
+		return "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
 	}
 	if len(secret.Data) != 1 {
-		return "", fmt.Errorf("found %d elements for secret %q/%q, must be single element exactly", len(secret.Data), namespace, secretName)
+		return "", fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), namespace, secretName)
 	}
 
 	for _, v := range secret.Data {
@@ -264,16 +264,16 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
 	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to fetch secret %q/%q: %s", namespace, secretName, err)
+		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
 	}
 	if !exists {
-		return "", "", fmt.Errorf("secret %q/%q does not exist", namespace, secretName)
+		return "", "", fmt.Errorf("secret '%s/%s' does not exist", namespace, secretName)
 	}
 	if secret == nil {
-		return "", "", fmt.Errorf("data for secret %q/%q must not be nil", namespace, secretName)
+		return "", "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
 	}
 	if len(secret.Data) != 2 {
-		return "", "", fmt.Errorf("found %d elements for secret %q/%q, must be two elements exactly", len(secret.Data), namespace, secretName)
+		return "", "", fmt.Errorf("found %d elements for secret '%s/%s', must be two elements exactly", len(secret.Data), namespace, secretName)
 	}
 
 	return getCertificateBlocks(secret, namespace, secretName)
@@ -331,16 +331,16 @@ func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]strin
 func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
 	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch secret %q/%q: %s", namespace, secretName, err)
+		return nil, fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
 	}
 	if !ok {
-		return nil, fmt.Errorf("secret %q/%q not found", namespace, secretName)
+		return nil, fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
 	}
 	if secret == nil {
-		return nil, fmt.Errorf("data for secret %q/%q must not be nil", namespace, secretName)
+		return nil, fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
 	}
 	if len(secret.Data) != 1 {
-		return nil, fmt.Errorf("found %d elements for secret %q/%q, must be single element exactly", len(secret.Data), namespace, secretName)
+		return nil, fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), namespace, secretName)
 	}
 
 	var firstSecret []byte
@@ -358,7 +358,7 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 	}
 
 	if len(credentials) == 0 {
-		return nil, fmt.Errorf("secret %q/%q does not contain any credentials", namespace, secretName)
+		return nil, fmt.Errorf("secret '%s/%s' does not contain any credentials", namespace, secretName)
 	}
 
 	return credentials, nil
