@@ -18,7 +18,7 @@ type Middleware struct {
 
 // +k8s:deepcopy-gen=true
 
-// Middleware holds the Middleware configuration.
+// MiddlewareSpec holds the Middleware configuration.
 type MiddlewareSpec struct {
 	AddPrefix         *dynamic.AddPrefix         `json:"addPrefix,omitempty"`
 	StripPrefix       *dynamic.StripPrefix       `json:"stripPrefix,omitempty"`
