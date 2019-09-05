@@ -165,7 +165,7 @@ import PanelTLS from '../../components/_commons/PanelTLS'
 import PanelMiddlewares from '../../components/_commons/PanelMiddlewares'
 
 export default {
-  name: 'PageHTTPRouterDetail',
+  name: 'PageRouterDetail',
   props: ['name', 'type'],
   components: {
     PageDefault,
