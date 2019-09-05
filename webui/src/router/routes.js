@@ -102,6 +102,19 @@ const routes = [
         }
       },
       {
+        path: 'routers/:name/:type',
+        name: 'tcpRouterDetail',
+        components: {
+          default: () => import('pages/_commons/RouterDetail.vue'),
+          NavBar: () => import('components/tcp/ToolBar.vue')
+        },
+        props: { default: true, NavBar: true },
+        meta: {
+          protocol: 'tcp',
+          title: 'TCP Router Detail'
+        }
+      },
+      {
         path: 'services',
         name: 'tcpServices',
         components: {
