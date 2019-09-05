@@ -1,6 +1,8 @@
 package crd
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -149,6 +151,25 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	for _, middleware := range client.GetMiddlewares() {
 		id := makeID(middleware.Namespace, middleware.Name)
 		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, id))
+
+		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading basic auth middleware: %v", err)
+			continue
+		}
+
+		digestAuth, err := createDigestAuthMiddleware(client, middleware.Namespace, middleware.Spec.DigestAuth)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading digest auth middleware: %v", err)
+			continue
+		}
+
+		forwardAuth, err := createForwardAuthMiddleware(client, middleware.Namespace, middleware.Spec.ForwardAuth)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading forward auth middleware: %v", err)
+			continue
+		}
+
 		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
@@ -162,9 +183,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			RateLimit:         middleware.Spec.RateLimit,
 			RedirectRegex:     middleware.Spec.RedirectRegex,
 			RedirectScheme:    middleware.Spec.RedirectScheme,
-			BasicAuth:         middleware.Spec.BasicAuth,
-			DigestAuth:        middleware.Spec.DigestAuth,
-			ForwardAuth:       middleware.Spec.ForwardAuth,
+			BasicAuth:         basicAuth,
+			DigestAuth:        digestAuth,
+			ForwardAuth:       forwardAuth,
 			InFlightReq:       middleware.Spec.InFlightReq,
 			Buffering:         middleware.Spec.Buffering,
 			CircuitBreaker:    middleware.Spec.CircuitBreaker,
@@ -176,6 +197,175 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	return conf
+}
+
+func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
+	if auth == nil {
+		return nil, nil
+	}
+	if len(auth.Address) == 0 {
+		return nil, fmt.Errorf("forward authentication requires an address")
+	}
+
+	forwardAuth := &dynamic.ForwardAuth{
+		Address:             auth.Address,
+		TrustForwardHeader:  auth.TrustForwardHeader,
+		AuthResponseHeaders: auth.AuthResponseHeaders,
+	}
+
+	if auth.TLS == nil {
+		return forwardAuth, nil
+	}
+
+	forwardAuth.TLS = &dynamic.ClientTLS{
+		CAOptional:         auth.TLS.CAOptional,
+		InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
+	}
+
+	if len(auth.TLS.CASecret) > 0 {
+		caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, k8sClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load auth ca secret: %v", err)
+		}
+		forwardAuth.TLS.CA = caSecret
+	}
+
+	if len(auth.TLS.CertSecret) > 0 {
+		authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, k8sClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load auth secret: %s", err)
+		}
+		forwardAuth.TLS.Cert = authSecretCert
+		forwardAuth.TLS.Key = authSecretKey
+	}
+
+	return forwardAuth, nil
+}
+
+func loadCASecret(namespace, secretName string, k8sClient Client) (string, error) {
+	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
+	}
+	if !ok {
+		return "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
+	}
+	if secret == nil {
+		return "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
+	}
+	if len(secret.Data) != 1 {
+		return "", fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), namespace, secretName)
+	}
+
+	for _, v := range secret.Data {
+		return string(v), nil
+	}
+	return "", nil
+}
+
+func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
+	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
+	}
+	if !exists {
+		return "", "", fmt.Errorf("secret '%s/%s' does not exist", namespace, secretName)
+	}
+	if secret == nil {
+		return "", "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
+	}
+	if len(secret.Data) != 2 {
+		return "", "", fmt.Errorf("found %d elements for secret '%s/%s', must be two elements exactly", len(secret.Data), namespace, secretName)
+	}
+
+	return getCertificateBlocks(secret, namespace, secretName)
+}
+
+func createBasicAuthMiddleware(client Client, namespace string, basicAuth *v1alpha1.BasicAuth) (*dynamic.BasicAuth, error) {
+	if basicAuth == nil {
+		return nil, nil
+	}
+
+	credentials, err := getAuthCredentials(client, basicAuth.Secret, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dynamic.BasicAuth{
+		Users:        credentials,
+		Realm:        basicAuth.Realm,
+		RemoveHeader: basicAuth.RemoveHeader,
+		HeaderField:  basicAuth.HeaderField,
+	}, nil
+}
+
+func createDigestAuthMiddleware(client Client, namespace string, digestAuth *v1alpha1.DigestAuth) (*dynamic.DigestAuth, error) {
+	if digestAuth == nil {
+		return nil, nil
+	}
+
+	credentials, err := getAuthCredentials(client, digestAuth.Secret, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dynamic.DigestAuth{
+		Users:        credentials,
+		Realm:        digestAuth.Realm,
+		RemoveHeader: digestAuth.RemoveHeader,
+		HeaderField:  digestAuth.HeaderField,
+	}, nil
+}
+
+func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]string, error) {
+	if authSecret == "" {
+		return nil, fmt.Errorf("auth secret must be set")
+	}
+
+	auth, err := loadAuthCredentials(namespace, authSecret, k8sClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load auth credentials: %s", err)
+	}
+
+	return auth, nil
+}
+
+func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
+	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
+	}
+	if !ok {
+		return nil, fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
+	}
+	if secret == nil {
+		return nil, fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
+	}
+	if len(secret.Data) != 1 {
+		return nil, fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), namespace, secretName)
+	}
+
+	var firstSecret []byte
+	for _, v := range secret.Data {
+		firstSecret = v
+		break
+	}
+
+	var credentials []string
+	scanner := bufio.NewScanner(bytes.NewReader(firstSecret))
+	for scanner.Scan() {
+		if cred := scanner.Text(); len(cred) > 0 {
+			credentials = append(credentials, cred)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading secret for %v/%v: %v", namespace, secretName, err)
+	}
+	if len(credentials) == 0 {
+		return nil, fmt.Errorf("secret '%s/%s' does not contain any credentials", namespace, secretName)
+	}
+
+	return credentials, nil
 }
 
 func createChainMiddleware(ctx context.Context, namespace string, chain *v1alpha1.Chain) *dynamic.Chain {

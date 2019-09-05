@@ -1462,6 +1462,43 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple Ingress Route, with basic auth middleware",
+			paths: []string{"services.yml", "with_auth.yml"},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default/basicauth": {
+							BasicAuth: &dynamic.BasicAuth{
+								Users: dynamic.Users{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							},
+						},
+						"default/digestauth": {
+							DigestAuth: &dynamic.DigestAuth{
+								Users: dynamic.Users{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							},
+						},
+						"default/forwardauth": {
+							ForwardAuth: &dynamic.ForwardAuth{
+								Address: "test.com",
+								TLS: &dynamic.ClientTLS{
+									CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+									Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+									Key:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
 			desc: "port selected by name (TODO)",
 		},
 	}
