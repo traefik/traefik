@@ -138,8 +138,7 @@ const routes = [
           protocol: 'tcp',
           title: 'TCP Service Detail'
         }
-      },
-
+      }
     ]
   }
 ]
