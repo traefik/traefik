@@ -71,7 +71,7 @@ The `users` option is an array of authorized users. Each user will be declared u
 
 !!! Note
     
-    - If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
+    - If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
     - For security reasons, the field `users` doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead. 
 
 ```yaml tab="Docker"
@@ -139,7 +139,7 @@ The file content is a list of `name:realm:encoded-password`.
 
 !!! Note
     
-    - If both `users` and `usersFile` are provided, the two are merged. The content of `usersFile` has precedence over `users`.
+    - If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
     - Because it does not make much sense to refer to a file path on Kubernetes, the `usersFile` field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead. 
 
 ```yaml tab="Docker"

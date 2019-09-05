@@ -178,7 +178,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 
 		if routerConfig.Rule == "" {
-			err := errors.New("the rule is missing on the router")
+			err := errors.New("router has no rule")
 			routerConfig.AddError(err, true)
 			logger.Error(err)
 			continue

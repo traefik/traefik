@@ -166,7 +166,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 		forwardAuth, err := createForwardAuthMiddleware(client, middleware.Namespace, middleware.Spec.ForwardAuth)
 		if err != nil {
-			log.FromContext(ctxMid).Errorf("Error while reading digest auth middleware: %v", err)
+			log.FromContext(ctxMid).Errorf("Error while reading forward auth middleware: %v", err)
 			continue
 		}
 
@@ -222,7 +222,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 		if len(auth.TLS.CASecret) > 0 {
 			caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, k8sClient)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to load auth ca secret: %v", err)
 			}
 			forwardAuth.TLS.CA = caSecret
 		}
@@ -356,7 +356,9 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 			credentials = append(credentials, cred)
 		}
 	}
-
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading secret for %v/%v: %v", namespace, secretName, err)
+	}
 	if len(credentials) == 0 {
 		return nil, fmt.Errorf("secret '%s/%s' does not contain any credentials", namespace, secretName)
 	}
