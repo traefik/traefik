@@ -184,13 +184,13 @@ export default {
     }
   },
   computed: {
-    routerType() {
+    routerType () {
       return this.$route.meta.protocol.toUpperCase() + ' Router'
     },
     ...mapGetters('http', { http_routerByName: 'routerByName' }),
     ...mapGetters('tcp', { tcp_routerByName: 'routerByName' }),
     hasMiddlewares () {
-        return this.$route.meta.protocol == 'http' && this.middlewares.length > 0
+      return this.$route.meta.protocol === 'http' && this.middlewares.length > 0
     },
     protocol () {
       return this.$route.meta.protocol
@@ -204,7 +204,7 @@ export default {
   },
   methods: {
     ...mapActions('http', { http_getRouterByName: 'getRouterByName', getMiddlewareByName: 'getMiddlewareByName' }),
-    ...mapActions('tcp', { tcp_getRouterByName: 'getRouterByName', }),
+    ...mapActions('tcp', { tcp_getRouterByName: 'getRouterByName' }),
     ...mapActions('entrypoints', { getEntrypointsByName: 'getByName' }),
     refreshAll () {
       if (this.routerByName.loading) {

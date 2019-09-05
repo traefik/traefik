@@ -31,12 +31,21 @@
         <div class="row items-start no-wrap">
           <div class="col">
             <div class="text-subtitle2">DOMAINS</div>
-            <q-chip
-              v-for="(domain, index) in data.domains" :key="index"
-              outline
-              class="app-chip app-chip-entry-points">
-              {{ domain }}
-            </q-chip>
+            <div v-for="(domain, key) in data.domains" :key="key" class="flex">
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-rule">
+                {{ domain.main }}
+              </q-chip>
+              <q-chip
+                v-for="(domain, key) in domain.sans" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-entry-points">
+                {{ domain }}
+              </q-chip>
+            </div>
           </div>
         </div>
       </q-card-section>
