@@ -43,8 +43,8 @@
           </div>
         </div>
       </q-card-section>
-      <q-separator v-if="data.type || data.strategy" />
-      <q-card-section v-if="data.type || data.strategy" >
+      <q-separator v-if="data.weighted" />
+      <q-card-section v-if="data.weighted" >
         <div class="row items-start no-wrap">
           <div class="text-subtitle1">Sticky: Cookie</div>
         </div>
