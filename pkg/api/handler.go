@@ -55,7 +55,7 @@ type Handler struct {
 	dashboardAssets *assetfs.AssetFS
 }
 
-// NewBuilder return a http.Handler builder based on runtime.Configuration
+// NewBuilder returns a http.Handler builder based on runtime.Configuration
 func NewBuilder(staticConfig static.Configuration) func(*runtime.Configuration) http.Handler {
 	return func(configuration *runtime.Configuration) http.Handler {
 		router := mux.NewRouter()

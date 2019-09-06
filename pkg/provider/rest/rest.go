@@ -18,7 +18,7 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that provides a Rest API.
 type Provider struct {
-	Insecure          bool `description:"Activate REST Provider on an insecure entryPoints named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	Insecure          bool `description:"Activate REST Provider directly on the entryPoint named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	configurationChan chan<- dynamic.Message
 }
 
