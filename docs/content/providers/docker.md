@@ -424,6 +424,116 @@ The expression syntax is based on the `Label("key", "value")`, and `LabelRegexp(
 
 See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
 
+### `tls`
+
+_Optional_
+
+#### `tls.ca`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.docker.tls]
+  ca = "path/to/ca.crt"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    tls:
+      ca: path/to/ca.crt
+```
+
+```bash tab="CLI"
+--providers.docker.tls.ca=path/to/ca.crt
+```
+
+#### `tls.caOptional`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.docker.tls]
+  caOptional = true
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    tls:
+      caOptional: true
+```
+
+```bash tab="CLI"
+--providers.docker.tls.caOptional=true
+```
+
+#### `tls.cert`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.docker.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    tls:
+      cert: path/to/foo.cert
+      key: path/to/foo.key
+```
+
+```bash tab="CLI"
+--providers.docker.tls.cert=path/to/foo.cert
+--providers.docker.tls.key=path/to/foo.key
+```
+
+#### `tls.key`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.docker.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    tls:
+      cert: path/to/foo.cert
+      key: path/to/foo.key
+```
+
+```bash tab="CLI"
+--providers.docker.tls.cert=path/to/foo.cert
+--providers.docker.tls.key=path/to/foo.key
+```
+
+#### `tls.insecureSkipVerify`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.docker.tls]
+  insecureSkipVerify = true
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    tls:
+      insecureSkipVerify: true
+```
+
+```bash tab="CLI"
+--providers.docker.tls.insecureSkipVerify=true
+```
+
 ## Routing Configuration Options
 
 ### General
