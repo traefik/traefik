@@ -109,7 +109,7 @@
             </div>
           </div>
 
-          <div v-if="routerByName.item.tls && routerByName.item.tls.options" class="col-12 col-md-4 q-mb-lg path-block">
+          <div v-if="hasTLSConfiguration" class="col-12 col-md-4 q-mb-lg path-block">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-shield"></q-icon>
               <div class="app-title-label">TLS</div>
@@ -118,7 +118,7 @@
               <div class="col-12">
                 <div class="row items-start q-col-gutter-md">
                   <div class="col-12">
-                    <panel-t-l-s :data="routerByName.item.tls"/>
+                    <panel-t-l-s :data="routerByName.item.tls" :protocol="protocol"/>
                   </div>
                 </div>
               </div>
@@ -184,6 +184,9 @@ export default {
     }
   },
   computed: {
+    hasTLSConfiguration () {
+      return this.routerByName.item.tls
+    },
     routerType () {
       return this.$route.meta.protocol.toUpperCase() + ' Router'
     },

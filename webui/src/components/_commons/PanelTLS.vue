@@ -14,6 +14,18 @@
           </div>
         </div>
       </q-card-section>
+      <q-card-section v-if="protocol == 'tcp'">
+        <div class="row items-start no-wrap">
+          <div class="col">
+            <div class="text-subtitle2">PASSTHROUGH</div>
+            <q-chip
+              outline
+              v-bind:class="['feature-chip', {'feature-chip-on':data.passthrough}, {'feature-chip-off':!data.passthrough}]">
+              {{ getPassthroughLabel }}
+            </q-chip>
+          </div>
+        </div>
+      </q-card-section>
       <q-card-section v-if="data.certResolver">
         <div class="row items-start no-wrap">
           <div class="col">
@@ -56,7 +68,12 @@
 <script>
 export default {
   name: 'PanelTLS',
-  props: ['data']
+  props: ['data', 'protocol'],
+  computed: {
+    getPassthroughLabel () {
+      return this.data.passthrough ? 'ON' : 'OFF'
+    }
+  }
 }
 </script>
 
@@ -93,6 +110,26 @@ export default {
         /deep/ .q-chip__content{
           white-space: normal;
         }
+      }
+    }
+
+    .feature-chip {
+      border-radius: 12px;
+      border-width: 2px;
+      height: 20px;
+      padding: 12px 24px;
+      color: $primary;
+      font-size: 20px;
+      font-weight: 600;
+      &-off {
+        border-color: $negative;
+        color: $negative;
+        background-color: rgba( $negative, .1 );
+      }
+      &-on{
+        border-color: $positive;
+        color: $positive;
+        background-color: rgba( $positive, .1 );
       }
     }
   }
