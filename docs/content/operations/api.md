@@ -52,7 +52,6 @@ And then you will able to reference it like this.
   "traefik.http.routers.api.service": "api@internal"
   "traefik.http.routers.api.middlewares": "auth"
   "traefik.http.middlewares.auth.basicauth.users": "test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
-
 }
 ```
 

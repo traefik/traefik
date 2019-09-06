@@ -45,6 +45,9 @@ Activate dashboard. (Default: ```true```)
 `TRAEFIK_API_DEBUG`:  
 Enable additional endpoints for debugging and profiling. (Default: ```false```)
 
+`TRAEFIK_API_INSECURE`:  
+Activate API on an insecure entryPoints named traefik. (Default: ```false```)
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>`:  
 Certificates resolvers configuration. (Default: ```false```)
 
@@ -207,6 +210,9 @@ Enable metrics on services. (Default: ```true```)
 `TRAEFIK_METRICS_PROMETHEUS_BUCKETS`:  
 Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000```)
 
+`TRAEFIK_METRICS_PROMETHEUS_ENTRYPOINT`:  
+EntryPoint (Default: ```traefik```)
+
 `TRAEFIK_METRICS_STATSD`:  
 StatsD metrics exporter type. (Default: ```false```)
 
@@ -223,7 +229,10 @@ Enable metrics on services. (Default: ```true```)
 StatsD push interval. (Default: ```10```)
 
 `TRAEFIK_PING`:  
-Enable ping. (Default: ```true```)
+Enable ping. (Default: ```false```)
+
+`TRAEFIK_PING_ENTRYPOINT`:  
+EntryPoint (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_DOCKER`:  
 Enable Docker backend with default settings. (Default: ```false```)
@@ -433,7 +442,10 @@ Defines the polling interval in seconds. (Default: ```15```)
 Watch provider. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_REST`:  
-Enable Rest backend with default settings. (Default: ```true```)
+Enable Rest backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_REST_INSECURE`:  
+Activate REST Provider on an insecure entryPoints named traefik. (Default: ```false```)
 
 `TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_DIALTIMEOUT`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
