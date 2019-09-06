@@ -94,8 +94,6 @@ http:
         - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
-
-
 ### `insecure`
 
 Enable the API in `insecure` mode, it means that API will be available directly on the entryPoint named `traefik`.
@@ -116,7 +114,6 @@ api:
 ```bash tab="CLI"
 --api.insecure=true
 ```
-
 
 ### `dashboard`
 
