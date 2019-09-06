@@ -8,6 +8,15 @@ which require one to update their configuration when they migrate from v1 to v2.
 The goal of this page is to recapitulate all of these changes, and in particular to give examples, 
 feature by feature, of how the configuration looked like in v1, and how it now looks like in v2.
 
+!!! Note "Migration Helper"
+    
+    We created a tool to help during the migration: [traefik-migration-tool](https://github.com/containous/traefik-migration-tool)
+
+    This tool allows to:
+
+    - convert `Ingress` to Traefik `IngressRoute` resources.
+    - convert `acme.json` file from v1 to v2 format.
+
 ## Frontends and Backends Are Dead... <br/>... Long Live Routers, Middlewares, and Services
 
 During the transition from v1 to v2, a number of internal pieces and components of Traefik were rewritten and reorganized.
