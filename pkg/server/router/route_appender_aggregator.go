@@ -35,7 +35,7 @@ func NewRouteAppenderAggregator(ctx context.Context, conf static.Configuration,
 		return aggregator
 	}
 
-	if conf.Providers != nil && conf.Providers.Rest != nil {
+	if conf.Providers != nil && conf.Providers.Rest != nil && conf.Providers.Rest.Insecure {
 		aggregator.AddAppender(conf.Providers.Rest)
 	}
 
