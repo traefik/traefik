@@ -43,41 +43,47 @@
           </div>
         </div>
       </q-card-section>
-      <!-- TODO - Sticky: Cookie - missing data from api -->
-      <!-- q-separator v-if="data.type || data.strategy" />
+      <q-separator v-if="data.type || data.strategy" />
       <q-card-section v-if="data.type || data.strategy" >
         <div class="row items-start no-wrap">
+          <div class="text-subtitle1">Sticky: Cookie</div>
+        </div>
+        <br/>
+        <div class="row items-start no-wrap">
           <div class="col" v-if="data.type">
-            <div class="text-subtitle2">TYPE</div>
+            <div class="text-subtitle2">NAME</div>
             <q-chip
               outline
               dense
               class="app-chip app-chip-entry-points">
-              {{ data.type }}
+              {{ data.weighted.sticky.cookie.name }}
             </q-chip>
           </div>
-          <div class="col" v-if="data.strategy">
-            <div class="text-subtitle2">STRATEGY</div>
-            <q-chip
-              outline
-              dense
-              class="app-chip app-chip-name">
-              {{ data.strategy }}
-            </q-chip>
+
+          <div class="col">
+            <div class="text-subtitle2">SECURE</div>
+            <boolean-state :value="data.weighted.sticky.cookie.secure"/>
+          </div>
+
+          <div class="col">
+            <div class="text-subtitle2">HTTP Only</div>
+            <boolean-state :value="data.weighted.sticky.cookie.httpOnly"/>
           </div>
         </div>
-      </q-card-section-->
+      </q-card-section>
     </q-scroll-area>
   </q-card>
 </template>
 
 <script>
 import AvatarState from './AvatarState'
+import BooleanState from './BooleanState'
 
 export default {
   name: 'PanelServiceDetails',
   props: ['data', 'dense'],
   components: {
+    BooleanState,
     AvatarState
   },
   computed: {
