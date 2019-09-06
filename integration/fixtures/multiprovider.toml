@@ -14,6 +14,7 @@ insecure=true
 
 [providers]
   [providers.rest]
+    insecure = true
 
   [providers.file]
     filename = "{{ .SelfFilename }}"
