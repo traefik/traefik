@@ -124,7 +124,7 @@ func TestRateLimit(t *testing.T) {
 				Average: 0,
 				Burst:   1,
 			},
-			incomingLoad: 10000,
+			incomingLoad: 1000,
 			loadDuration: time.Second,
 		},
 	}
@@ -146,10 +146,13 @@ func TestRateLimit(t *testing.T) {
 			period := time.Duration(1e9 / test.incomingLoad)
 			start := time.Now()
 			end := start.Add(test.loadDuration)
+			ticker := time.NewTicker(period)
+			defer ticker.Stop()
 			for {
 				if time.Now().After(end) {
 					break
 				}
+
 				req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 				req.RemoteAddr = "127.0.0.1:1234"
 				w := httptest.NewRecorder()
@@ -163,18 +166,14 @@ func TestRateLimit(t *testing.T) {
 					// fast as possible
 					continue
 				}
-				time.Sleep(period)
+				<-ticker.C
 			}
 			stop := time.Now()
 			elapsed := stop.Sub(start)
 
 			if test.config.Average == 0 {
-				// With no rate limiting, we only arbitrarily check that at least 50% of the
-				// incoming load went through, because the actual throughput is highly dependent on
-				// the CPU load and other factors. Feel free to adjust as desired. However, for
-				// sure, there should have been no request dropped.
-				if reqCount < 50*test.incomingLoad/100 {
-					t.Fatalf("we (arbitrarily) expect at least 50%% of the requests to go through with no rate limiting, and yet only %d/%d went through", reqCount, test.incomingLoad)
+				if reqCount < 95*test.incomingLoad/100 {
+					t.Fatalf("we (arbitrarily) expect at least 95%% of the requests to go through with no rate limiting, and yet only %d/%d went through", reqCount, test.incomingLoad)
 				}
 				if dropped != 0 {
 					t.Fatalf("no request should have been dropped if rate limiting is disabled, and yet %d were", dropped)
