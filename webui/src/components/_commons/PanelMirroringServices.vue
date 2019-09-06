@@ -7,7 +7,7 @@
             <div class="text-subtitle2 text-table">Name</div>
           </div>
           <div class="col-3">
-            <div class="text-subtitle2 text-table">Weight</div>
+            <div class="text-subtitle2 text-table">Percent</div>
           </div>
           <div class="col-4">
             <div class="text-subtitle2 text-table">Provider</div>
@@ -15,7 +15,7 @@
         </div>
       </q-card-section>
       <q-separator />
-      <div v-for="(service, index) in data.weighted.services" :key="index">
+      <div v-for="(service, index) in data.mirroring.mirrors" :key="index">
         <q-card-section>
           <div class="row items-center no-wrap">
             <div class="col-7">
@@ -27,7 +27,7 @@
               </q-chip>
             </div>
             <div class="col-3">
-              {{ service.weight }}
+              {{ service.percent }}
             </div>
             <div class="col-4">
               <q-avatar>
@@ -45,7 +45,7 @@
 <script>
 
 export default {
-  name: 'PanelWeightedServices',
+  name: 'PanelMirroringServices',
   props: ['data', 'dense'],
   components: {},
   computed: {

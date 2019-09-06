@@ -4,7 +4,7 @@
     <section v-if="!loading" class="app-section">
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-xl q-pb-lg">
         <div v-if="serviceByName.item" class="row no-wrap items-center app-title">
-          <div class="app-title-label" style="font-size: 32px">{{serviceByName.item.type}}</div>
+          <div class="app-title-label" style="font-size: 32px">{{ getTitle }}</div>
         </div>
       </div>
     </section>
@@ -77,6 +77,22 @@
             </div>
           </div>
 
+          <div v-if="serviceByName.item.mirroring && serviceByName.item.mirroring.mirrors" class="col-12 col-md-4 q-mb-lg path-block">
+            <div class="row no-wrap items-center q-mb-lg app-title">
+              <q-icon name="eva-globe-outline"></q-icon>
+              <div class="app-title-label">Mirror Services</div>
+            </div>
+            <div class="row items-start q-col-gutter-lg">
+              <div class="col-12">
+                <div class="row items-start q-col-gutter-md">
+                  <div class="col-12">
+                    <panel-mirroring-services dense :data="serviceByName.item"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
         <div v-else class="row items-start">
           <div class="col-12">
@@ -113,11 +129,13 @@ import PanelHealthCheck from '../../components/_commons/PanelHealthCheck'
 import PanelServers from '../../components/_commons/PanelServers'
 import MainTable from '../../components/_commons/MainTable'
 import PanelWeightedServices from '../../components/_commons/PanelWeightedServices'
+import PanelMirroringServices from '../../components/_commons/PanelMirroringServices'
 
 export default {
   name: 'PageServiceDetail',
   props: ['name', 'type'],
   components: {
+    PanelMirroringServices,
     PanelWeightedServices,
     PageDefault,
     SkeletonBox,
@@ -157,6 +175,10 @@ export default {
     },
     getRouterByName () {
       return this[`${this.protocol}_getRouterByName`]
+    },
+    getTitle () {
+      const type = this.serviceByName.item.type
+      return type.charAt(0).toUpperCase() + type.slice(1)
     }
   },
   methods: {
