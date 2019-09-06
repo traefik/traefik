@@ -1,0 +1,25 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+ [entryPoints.traefik]
+    address = ":8080"
+
+
+[api]
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+[http.routers.api]
+    rule="PathPrefix(`/secure`)"
+    service="api@internal"
+    middlewares=["strip"]
+
+[http.middlewares.strip.stripPrefix]
+    prefixes = [ "/secure" ]
+    

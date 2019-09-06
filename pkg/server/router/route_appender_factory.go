@@ -6,7 +6,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/provider/acme"
-	"github.com/containous/traefik/v2/pkg/server/middleware"
 	"github.com/containous/traefik/v2/pkg/types"
 )
 
@@ -27,8 +26,8 @@ type RouteAppenderFactory struct {
 }
 
 // NewAppender Creates a new RouteAppender
-func (r *RouteAppenderFactory) NewAppender(ctx context.Context, middlewaresBuilder *middleware.Builder, runtimeConfiguration *runtime.Configuration) types.RouteAppender {
-	aggregator := NewRouteAppenderAggregator(ctx, middlewaresBuilder, r.staticConfiguration, r.entryPointName, runtimeConfiguration)
+func (r *RouteAppenderFactory) NewAppender(ctx context.Context, runtimeConfiguration *runtime.Configuration) types.RouteAppender {
+	aggregator := NewRouteAppenderAggregator(ctx, r.staticConfiguration, r.entryPointName, runtimeConfiguration)
 
 	for _, p := range r.acmeProvider {
 		if p != nil && p.HTTPChallenge != nil && p.HTTPChallenge.EntryPoint == r.entryPointName {

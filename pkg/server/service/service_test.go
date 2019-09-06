@@ -80,7 +80,7 @@ func TestGetLoadBalancer(t *testing.T) {
 }
 
 func TestGetLoadBalancerServiceHandler(t *testing.T) {
-	sm := NewManager(nil, http.DefaultTransport, nil, nil)
+	sm := NewManager(nil, http.DefaultTransport, nil, nil, nil, nil)
 
 	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "first")
@@ -332,7 +332,7 @@ func TestManager_Build(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			manager := NewManager(test.configs, http.DefaultTransport, nil, nil)
+			manager := NewManager(test.configs, http.DefaultTransport, nil, nil, nil, nil)
 
 			ctx := context.Background()
 			if len(test.providerName) > 0 {
@@ -353,7 +353,7 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 				Weighted:     &dynamic.WeightedRoundRobin{},
 			},
 		},
-	}, http.DefaultTransport, nil, nil)
+	}, http.DefaultTransport, nil, nil, nil, nil)
 
 	_, err := manager.BuildHTTP(context.Background(), "test@file", nil)
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")

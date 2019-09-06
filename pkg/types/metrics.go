@@ -17,6 +17,7 @@ type Prometheus struct {
 	Buckets              []float64 `description:"Buckets for latency metrics." json:"buckets,omitempty" toml:"buckets,omitempty" yaml:"buckets,omitempty" export:"true"`
 	AddEntryPointsLabels bool      `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
 	AddServicesLabels    bool      `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
+	EntryPoint           string    `description:"EntryPoint" export:"true" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
 }
 
 // SetDefaults sets the default values.
@@ -24,6 +25,7 @@ func (p *Prometheus) SetDefaults() {
 	p.Buckets = []float64{0.1, 0.3, 1.2, 5}
 	p.AddEntryPointsLabels = true
 	p.AddServicesLabels = true
+	p.EntryPoint = "traefik"
 }
 
 // Datadog contains address and metrics pushing interval configuration.

@@ -1,0 +1,27 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[api]
+  insecure = true
+
+[providers.rest]
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+[http.routers.rest]
+    rule="PathPrefix(`/secure`)"
+    service="rest@internal"
+    middlewares=["strip"]
+
+[http.middlewares.strip.stripPrefix]
+    prefixes = [ "/secure" ]
+    

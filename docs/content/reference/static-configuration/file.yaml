@@ -102,7 +102,8 @@ providers:
     - foobar
     labelSelector: foobar
     ingressClass: foobar
-  rest: {}
+  rest:
+    insecure: true
   rancher:
     constraints: foobar
     watch: true
@@ -113,6 +114,7 @@ providers:
     intervalPoll: true
     prefix: foobar
 api:
+  insecure: true
   dashboard: true
   debug: true
 metrics:
@@ -122,6 +124,7 @@ metrics:
     - 42
     addEntryPointsLabels: true
     addServicesLabels: true
+    entryPoint: foobar
   datadog:
     address: foobar
     pushInterval: 42
@@ -142,7 +145,8 @@ metrics:
     password: foobar
     addEntryPointsLabels: true
     addServicesLabels: true
-ping: {}
+ping:
+  entryPoint: foobar
 log:
   level: foobar
   filePath: foobar
