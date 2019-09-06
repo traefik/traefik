@@ -3,7 +3,7 @@
   sendAnonymousUsage = false
 
 [api]
-insecure=true
+  insecure = true
 
 [log]
   level = "DEBUG"

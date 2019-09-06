@@ -12,7 +12,7 @@
       trustedIPs = ["{{.HaproxyIP}}"]
 
 [api]
-insecure=true
+  insecure = true
 
 [providers.file]
   filename = "{{ .SelfFilename }}"

@@ -34,4 +34,4 @@
 {{end}}
 
 [api]
-insecure=true
+  insecure = true

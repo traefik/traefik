@@ -22,7 +22,7 @@
     address = ":8008"
 
 [api]
-insecure=true
+  insecure = true
 
 [providers]
   [providers.docker]

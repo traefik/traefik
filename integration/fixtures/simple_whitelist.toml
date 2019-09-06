@@ -9,10 +9,10 @@
   [entryPoints.web]
     address = ":8000"
     [entryPoints.web.ForwardedHeaders]
-      insecure=true
+      insecure = true
 
 [api]
-insecure=true
+  insecure = true
 
 [providers]
   [providers.docker]

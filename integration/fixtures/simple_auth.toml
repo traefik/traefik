@@ -13,7 +13,7 @@
     address = ":8001"
 
 [api]
-insecure=true
+  insecure = true
   middlewares = ["authentication@file"]
 
 [ping]

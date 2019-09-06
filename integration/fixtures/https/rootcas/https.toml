@@ -29,7 +29,7 @@ fblo6RBxUQ==
     address = ":8081"
 
 [api]
-insecure=true
+  insecure = true
 
 [providers.file]
   filename = "{{ .SelfFilename }}"
