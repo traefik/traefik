@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/containous/traefik/v2/integration/try"
@@ -129,6 +130,13 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2000*time.Millisecond, try.BodyContains("PathPrefix(`/secure`)"))
 	c.Assert(err, checker.IsNil)
+
+	request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", strings.NewReader("{}"))
+	c.Assert(err, checker.IsNil)
+
+	response, err := http.DefaultClient.Do(request)
+	c.Assert(err, checker.IsNil)
+	c.Assert(response.StatusCode, checker.Equals, http.StatusNotFound)
 
 	testCase := []struct {
 		desc      string
