@@ -24,10 +24,10 @@ export default {
     .feature-chip {
       border-radius: 12px;
       border-width: 2px;
-      height: 20px;
-      padding: 12px 24px;
+      height: 18px;
+      padding: 9px 20px;
       color: $primary;
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 600;
       &-off {
         border-color: $negative;
