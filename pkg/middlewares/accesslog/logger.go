@@ -77,7 +77,7 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 	case JSONFormat:
 		formatter = new(logrus.JSONFormatter)
 	default:
-		log.WithoutContext().Warnf("unsupported access log format: %q, defaulting to common format instead.", config.Format)
+		log.WithoutContext().Errorf("unsupported access log format: %q, defaulting to common format instead.", config.Format)
 		formatter = new(CommonLogFormatter)
 	}
 
