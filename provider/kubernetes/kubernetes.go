@@ -992,24 +992,25 @@ func getForwardAuthConfig(i *extensionsv1beta1.Ingress, k8sClient Client) (*type
 		AuthResponseHeaders: getSliceStringValue(i.Annotations, annotationKubernetesAuthForwardResponseHeaders),
 	}
 
-	authSecretName := getStringValue(i.Annotations, annotationKubernetesAuthForwardTLSSecret, "")
-	if len(authSecretName) > 0 {
-		authSecretCert, authSecretKey, err := loadAuthTLSSecret(i.Namespace, authSecretName, k8sClient)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load auth secret: %s", err)
-		}
+	authSecretCert, authSecretKey, err := loadAuthTLSSecret(i.Namespace, getStringValue(i.Annotations, annotationKubernetesAuthForwardTLSSecret, ""), k8sClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load auth secret: %s", err)
+	}
 
-		forwardAuth.TLS = &types.ClientTLS{
-			Cert:               authSecretCert,
-			Key:                authSecretKey,
-			InsecureSkipVerify: getBoolValue(i.Annotations, annotationKubernetesAuthForwardTLSInsecure, false),
-		}
+	forwardAuth.TLS = &types.ClientTLS{
+		Cert:               authSecretCert,
+		Key:                authSecretKey,
+		InsecureSkipVerify: getBoolValue(i.Annotations, annotationKubernetesAuthForwardTLSInsecure, false),
 	}
 
 	return forwardAuth, nil
 }
 
 func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
+	if len(secretName) == 0 {
+		return "", "", nil
+	}
+
 	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to fetch secret %q/%q: %s", namespace, secretName, err)
