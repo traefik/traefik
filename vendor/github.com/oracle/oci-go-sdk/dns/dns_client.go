@@ -1,10 +1,10 @@
-// Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2016, 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 // Code generated. DO NOT EDIT.
 
 // DNS API
 //
 // API for the DNS service. Use this API to manage DNS zones, records, and other DNS resources.
-// For more information, see Overview of the DNS Service (https://docs.us-phoenix-1.oraclecloud.com/iaas/Content/DNS/Concepts/dnszonemanagement.htm).
+// For more information, see Overview of the DNS Service (https://docs.cloud.oracle.com/iaas/Content/DNS/Concepts/dnszonemanagement.htm).
 //
 
 package dns
@@ -38,7 +38,7 @@ func NewDnsClientWithConfigurationProvider(configProvider common.ConfigurationPr
 
 // SetRegion overrides the region of this client.
 func (client *DnsClient) SetRegion(region string) {
-	client.Host = common.StringToRegion(region).Endpoint("dns")
+	client.Host = common.StringToRegion(region).EndpointForTemplate("dns", "https://dns.{region}.{secondLevelDomain}")
 }
 
 // SetConfigurationProvider sets the configuration provider including the region, returns an error if is not valid
@@ -59,7 +59,103 @@ func (client *DnsClient) ConfigurationProvider() *common.ConfigurationProvider {
 	return client.config
 }
 
-// CreateSteeringPolicy Creates a new steering policy in the specified compartment.
+// ChangeSteeringPolicyCompartment Moves a steering policy into a different compartment. When provided, If-Match is checked against ETag values of the resource.
+func (client DnsClient) ChangeSteeringPolicyCompartment(ctx context.Context, request ChangeSteeringPolicyCompartmentRequest) (response ChangeSteeringPolicyCompartmentResponse, err error) {
+	var ociResponse common.OCIResponse
+	policy := common.NoRetryPolicy()
+	if request.RetryPolicy() != nil {
+		policy = *request.RetryPolicy()
+	}
+
+	if !(request.OpcRetryToken != nil && *request.OpcRetryToken != "") {
+		request.OpcRetryToken = common.String(common.RetryToken())
+	}
+
+	ociResponse, err = common.Retry(ctx, request, client.changeSteeringPolicyCompartment, policy)
+	if err != nil {
+		if ociResponse != nil {
+			response = ChangeSteeringPolicyCompartmentResponse{RawResponse: ociResponse.HTTPResponse()}
+		}
+		return
+	}
+	if convertedResponse, ok := ociResponse.(ChangeSteeringPolicyCompartmentResponse); ok {
+		response = convertedResponse
+	} else {
+		err = fmt.Errorf("failed to convert OCIResponse into ChangeSteeringPolicyCompartmentResponse")
+	}
+	return
+}
+
+// changeSteeringPolicyCompartment implements the OCIOperation interface (enables retrying operations)
+func (client DnsClient) changeSteeringPolicyCompartment(ctx context.Context, request common.OCIRequest) (common.OCIResponse, error) {
+	httpRequest, err := request.HTTPRequest(http.MethodPost, "/steeringPolicies/{steeringPolicyId}/actions/changeCompartment")
+	if err != nil {
+		return nil, err
+	}
+
+	var response ChangeSteeringPolicyCompartmentResponse
+	var httpResponse *http.Response
+	httpResponse, err = client.Call(ctx, &httpRequest)
+	defer common.CloseBodyIfValid(httpResponse)
+	response.RawResponse = httpResponse
+	if err != nil {
+		return response, err
+	}
+
+	err = common.UnmarshalResponse(httpResponse, &response)
+	return response, err
+}
+
+// ChangeZoneCompartment Moves a zone into a different compartment. When provided, If-Match is checked against ETag values of the resource.
+// **Note:** All SteeringPolicyAttachment objects associated with this zone will also be moved into the provided compartment.
+func (client DnsClient) ChangeZoneCompartment(ctx context.Context, request ChangeZoneCompartmentRequest) (response ChangeZoneCompartmentResponse, err error) {
+	var ociResponse common.OCIResponse
+	policy := common.NoRetryPolicy()
+	if request.RetryPolicy() != nil {
+		policy = *request.RetryPolicy()
+	}
+
+	if !(request.OpcRetryToken != nil && *request.OpcRetryToken != "") {
+		request.OpcRetryToken = common.String(common.RetryToken())
+	}
+
+	ociResponse, err = common.Retry(ctx, request, client.changeZoneCompartment, policy)
+	if err != nil {
+		if ociResponse != nil {
+			response = ChangeZoneCompartmentResponse{RawResponse: ociResponse.HTTPResponse()}
+		}
+		return
+	}
+	if convertedResponse, ok := ociResponse.(ChangeZoneCompartmentResponse); ok {
+		response = convertedResponse
+	} else {
+		err = fmt.Errorf("failed to convert OCIResponse into ChangeZoneCompartmentResponse")
+	}
+	return
+}
+
+// changeZoneCompartment implements the OCIOperation interface (enables retrying operations)
+func (client DnsClient) changeZoneCompartment(ctx context.Context, request common.OCIRequest) (common.OCIResponse, error) {
+	httpRequest, err := request.HTTPRequest(http.MethodPost, "/zones/{zoneId}/actions/changeCompartment")
+	if err != nil {
+		return nil, err
+	}
+
+	var response ChangeZoneCompartmentResponse
+	var httpResponse *http.Response
+	httpResponse, err = client.Call(ctx, &httpRequest)
+	defer common.CloseBodyIfValid(httpResponse)
+	response.RawResponse = httpResponse
+	if err != nil {
+		return response, err
+	}
+
+	err = common.UnmarshalResponse(httpResponse, &response)
+	return response, err
+}
+
+// CreateSteeringPolicy Creates a new steering policy in the specified compartment. For more information on
+// creating policies with templates, see Traffic Management API Guide (https://docs.cloud.oracle.com/iaas/Content/TrafficManagement/Concepts/trafficmanagementapi.htm).
 func (client DnsClient) CreateSteeringPolicy(ctx context.Context, request CreateSteeringPolicyRequest) (response CreateSteeringPolicyResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -106,9 +202,11 @@ func (client DnsClient) createSteeringPolicy(ctx context.Context, request common
 	return response, err
 }
 
-// CreateSteeringPolicyAttachment Creates a new attachment between a steering policy and a domain.
+// CreateSteeringPolicyAttachment Creates a new attachment between a steering policy and a domain, giving the
+// policy permission to answer queries for the specified domain. A steering policy must
+// be attached to a domain for the policy to answer DNS queries for that domain.
 // For the purposes of access control, the attachment is automatically placed
-// into the same compartment as the containing zone of the domain.
+// into the same compartment as the domain's zone.
 func (client DnsClient) CreateSteeringPolicyAttachment(ctx context.Context, request CreateSteeringPolicyAttachmentRequest) (response CreateSteeringPolicyAttachmentResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -285,7 +383,8 @@ func (client DnsClient) deleteRRSet(ctx context.Context, request common.OCIReque
 
 // DeleteSteeringPolicy Deletes the specified steering policy.
 // A `204` response indicates that the delete has been successful.
-// Deletion will fail if the policy is attached to any zones.
+// Deletion will fail if the policy is attached to any zones. To detach a
+// policy from a zone, see `DeleteSteeringPolicyAttachment`.
 func (client DnsClient) DeleteSteeringPolicy(ctx context.Context, request DeleteSteeringPolicyRequest) (response DeleteSteeringPolicyResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -798,7 +897,10 @@ func (client DnsClient) listZones(ctx context.Context, request common.OCIRequest
 	return response, err
 }
 
-// PatchDomainRecords Updates records in the specified zone at a domain. You can update one record or all records for the specified zone depending on the changes provided in the request body. You can also add or remove records using this function.
+// PatchDomainRecords Updates records in the specified zone at a domain. You can update
+// one record or all records for the specified zone depending on the changes
+// provided in the request body. You can also add or remove records using this
+// function.
 func (client DnsClient) PatchDomainRecords(ctx context.Context, request PatchDomainRecordsRequest) (response PatchDomainRecordsResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -1016,7 +1118,7 @@ func (client DnsClient) updateRRSet(ctx context.Context, request common.OCIReque
 	return response, err
 }
 
-// UpdateSteeringPolicy Updates the specified steering policy with your new information.
+// UpdateSteeringPolicy Updates the configuration of the specified steering policy.
 func (client DnsClient) UpdateSteeringPolicy(ctx context.Context, request UpdateSteeringPolicyRequest) (response UpdateSteeringPolicyResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()
@@ -1102,7 +1204,7 @@ func (client DnsClient) updateSteeringPolicyAttachment(ctx context.Context, requ
 
 // UpdateZone Updates the specified secondary zone with your new external master
 // server information. For more information about secondary zone, see
-// Manage DNS Service Zone (https://docs.us-phoenix-1.oraclecloud.com/iaas/Content/DNS/Tasks/managingdnszones.htm).
+// Manage DNS Service Zone (https://docs.cloud.oracle.com/iaas/Content/DNS/Tasks/managingdnszones.htm).
 func (client DnsClient) UpdateZone(ctx context.Context, request UpdateZoneRequest) (response UpdateZoneResponse, err error) {
 	var ociResponse common.OCIResponse
 	policy := common.NoRetryPolicy()

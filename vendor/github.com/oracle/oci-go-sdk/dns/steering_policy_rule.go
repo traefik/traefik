@@ -1,10 +1,10 @@
-// Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2016, 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 // Code generated. DO NOT EDIT.
 
 // DNS API
 //
 // API for the DNS service. Use this API to manage DNS zones, records, and other DNS resources.
-// For more information, see Overview of the DNS Service (https://docs.us-phoenix-1.oraclecloud.com/iaas/Content/DNS/Concepts/dnszonemanagement.htm).
+// For more information, see Overview of the DNS Service (https://docs.cloud.oracle.com/iaas/Content/DNS/Concepts/dnszonemanagement.htm).
 //
 
 package dns
@@ -14,23 +14,18 @@ import (
 	"github.com/oracle/oci-go-sdk/common"
 )
 
-// SteeringPolicyRule Configuration for sorting and/or filtering the list of remaining candidate answers, subject to
-// rule type and the values of type-specific parameters and/or data associated with answers.
+// SteeringPolicyRule The configuration of the sorting and filtering behaviors in a steering policy. Rules can
+// filter and sort answers based on weight, priority, endpoint health, and other data.
+//
 // A rule may optionally include a sequence of cases, each with an optional `caseCondition`
-// expression.  If it does, the first case with a matching `caseCondition` or with no
-// `caseCondition` at all is used to set rule parameter values and/or answer-associated data,
-// and the rule will be ignored during processing of any request that does not match any case.
-// Rules without a sequence of cases are processed unconditionally, and rules with an _empty_
-// sequence of cases are **ignored** unconditionally.
-// Data is associated with answers one-by-one in a similar fashion—for each answer, the first
-// answerData item with a matching `answerCondition` or with no `answerCondition` at all is used
-// to associate data with the answer, and the absence of any such item associates with the answer
-// a default value.  Rule-level default answer data is always processed, but case-level answer
-// data will override it on a per-answer basis.
-// To prevent empty responses, any attempt to filter away all answers is suppressed at runtime.
+// expression. Cases allow a sequence of conditions to be defined that will apply different
+// parameters to the rule when the conditions are met. For more information about cases,
+// see Traffic Management API Guide (https://docs.cloud.oracle.com/iaas/Content/TrafficManagement/Concepts/trafficmanagementapi.htm).
+//
+// **Warning:** Oracle recommends that you avoid using any confidential information when you supply string values using the API.
 type SteeringPolicyRule interface {
 
-	// Your description of the rule's purpose and/or behavior.
+	// A user-defined description of the rule's purpose or behavior.
 	GetDescription() *string
 }
 

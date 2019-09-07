@@ -16,22 +16,33 @@ package auth
 
 import (
 	"bytes"
-	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
-	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils"
 	"sort"
 	"strings"
+
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils"
 )
+
+var debug utils.Debug
+
+var hookGetDate = func(fn func() string) string {
+	return fn()
+}
+
+func init() {
+	debug = utils.Init("sdk")
+}
 
 func signRoaRequest(request requests.AcsRequest, signer Signer, regionId string) (err error) {
 	completeROASignParams(request, signer, regionId)
 	stringToSign := buildRoaStringToSign(request)
 	request.SetStringToSign(stringToSign)
-	signature := signer.Sign(stringToSign, "")
 	accessKeyId, err := signer.GetAccessKeyId()
 	if err != nil {
-		return nil
+		return err
 	}
 
+	signature := signer.Sign(stringToSign, "")
 	request.GetHeaders()["Authorization"] = "acs " + accessKeyId + ":" + signature
 
 	return
@@ -51,13 +62,16 @@ func completeROASignParams(request requests.AcsRequest, signer Signer, regionId 
 				headerParams["x-acs-security-token"] = value
 				continue
 			}
-
+			if key == "BearerToken" {
+				headerParams["x-acs-bearer-token"] = value
+				continue
+			}
 			queryParams[key] = value
 		}
 	}
 
 	// complete header params
-	headerParams["Date"] = utils.GetTimeInFormatRFC2616()
+	headerParams["Date"] = hookGetDate(utils.GetTimeInFormatRFC2616)
 	headerParams["x-acs-signature-method"] = signer.GetName()
 	headerParams["x-acs-signature-version"] = signer.GetVersion()
 	if request.GetFormParams() != nil && len(request.GetFormParams()) > 0 {
@@ -110,6 +124,7 @@ func buildRoaStringToSign(request requests.AcsRequest) (stringToSign string) {
 	// append query params
 	stringToSignBuilder.WriteString(request.BuildQueries())
 	stringToSign = stringToSignBuilder.String()
+	debug("stringToSign: %s", stringToSign)
 	return
 }
 

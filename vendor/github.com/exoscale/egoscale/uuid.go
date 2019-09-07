@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/gofrs/uuid"
 )
 
 // UUID holds a UUID v4
@@ -38,7 +38,7 @@ func (u *UUID) DeepCopyInto(out *UUID) {
 
 // Equal returns true if itself is equal to other.
 func (u UUID) Equal(other UUID) bool {
-	return uuid.Equal(u.UUID, other.UUID)
+	return u == other
 }
 
 // UnmarshalJSON unmarshals the raw JSON into the UUID.

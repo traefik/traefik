@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
+	"github.com/aws/aws-sdk-go/aws/crr"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/signer/v4"
 	"github.com/aws/aws-sdk-go/private/protocol/jsonrpc"
@@ -19,6 +20,7 @@ import (
 // modify mutate any of the struct's properties though.
 type DynamoDB struct {
 	*client.Client
+	endpointCache *crr.EndpointCache
 }
 
 // Used for custom client initialization logic
@@ -29,8 +31,9 @@ var initRequest func(*request.Request)
 
 // Service information constants
 const (
-	ServiceName = "dynamodb"  // Service endpoint prefix API calls made to.
-	EndpointsID = ServiceName // Service ID for Regions and Endpoints metadata.
+	ServiceName = "dynamodb"  // Name of service.
+	EndpointsID = ServiceName // ID to lookup a service endpoint with.
+	ServiceID   = "DynamoDB"  // ServiceID is a unique identifer of a specific service.
 )
 
 // New creates a new instance of the DynamoDB client with a session.
@@ -55,6 +58,7 @@ func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegio
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   ServiceName,
+				ServiceID:     ServiceID,
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -65,6 +69,7 @@ func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegio
 			handlers,
 		),
 	}
+	svc.endpointCache = crr.NewEndpointCache(10)
 
 	// Handlers
 	svc.Handlers.Sign.PushBackNamed(v4.SignRequestHandler)

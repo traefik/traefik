@@ -76,8 +76,9 @@ func (client *Client) DescribeSupportLinesWithCallback(request *DescribeSupportL
 // DescribeSupportLinesRequest is the request struct for api DescribeSupportLines
 type DescribeSupportLinesRequest struct {
 	*requests.RpcRequest
-	Lang         string `position:"Query" name:"Lang"`
 	UserClientIp string `position:"Query" name:"UserClientIp"`
+	DomainName   string `position:"Query" name:"DomainName"`
+	Lang         string `position:"Query" name:"Lang"`
 }
 
 // DescribeSupportLinesResponse is the response struct for api DescribeSupportLines
@@ -92,7 +93,7 @@ func CreateDescribeSupportLinesRequest() (request *DescribeSupportLinesRequest) 
 	request = &DescribeSupportLinesRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Alidns", "2015-01-09", "DescribeSupportLines", "", "")
+	request.InitWithApiInfo("Alidns", "2015-01-09", "DescribeSupportLines", "Alidns", "openAPI")
 	return
 }
 

@@ -36,21 +36,23 @@ type Instance struct {
 	CreatedStr string `json:"created"`
 	UpdatedStr string `json:"updated"`
 
-	ID         int             `json:"id"`
-	Created    *time.Time      `json:"-"`
-	Updated    *time.Time      `json:"-"`
-	Region     string          `json:"region"`
-	Alerts     *InstanceAlert  `json:"alerts"`
-	Backups    *InstanceBackup `json:"backups"`
-	Image      string          `json:"image"`
-	Group      string          `json:"group"`
-	IPv4       []*net.IP       `json:"ipv4"`
-	IPv6       string          `json:"ipv6"`
-	Label      string          `json:"label"`
-	Type       string          `json:"type"`
-	Status     InstanceStatus  `json:"status"`
-	Hypervisor string          `json:"hypervisor"`
-	Specs      *InstanceSpec   `json:"specs"`
+	ID              int             `json:"id"`
+	Created         *time.Time      `json:"-"`
+	Updated         *time.Time      `json:"-"`
+	Region          string          `json:"region"`
+	Alerts          *InstanceAlert  `json:"alerts"`
+	Backups         *InstanceBackup `json:"backups"`
+	Image           string          `json:"image"`
+	Group           string          `json:"group"`
+	IPv4            []*net.IP       `json:"ipv4"`
+	IPv6            string          `json:"ipv6"`
+	Label           string          `json:"label"`
+	Type            string          `json:"type"`
+	Status          InstanceStatus  `json:"status"`
+	Hypervisor      string          `json:"hypervisor"`
+	Specs           *InstanceSpec   `json:"specs"`
+	WatchdogEnabled bool            `json:"watchdog_enabled"`
+	Tags            []string        `json:"tags"`
 }
 
 // InstanceSpec represents a linode spec
@@ -79,6 +81,18 @@ type InstanceBackup struct {
 	}
 }
 
+// InstanceTransfer pool stats for a Linode Instance during the current billing month
+type InstanceTransfer struct {
+	// Bytes of transfer this instance has consumed
+	Used int `json:"used"`
+
+	// GB of billable transfer this instance has consumed
+	Billable int `json:"billable"`
+
+	// GB of transfer this instance adds to the Transfer pool
+	Quota int `json:"quota"`
+}
+
 // InstanceCreateOptions require only Region and Type
 type InstanceCreateOptions struct {
 	Region          string            `json:"region"`
@@ -94,6 +108,7 @@ type InstanceCreateOptions struct {
 	Image           string            `json:"image,omitempty"`
 	BackupsEnabled  bool              `json:"backups_enabled,omitempty"`
 	PrivateIP       bool              `json:"private_ip,omitempty"`
+	Tags            []string          `json:"tags,omitempty"`
 
 	// Creation fields that need to be set explicitly false, "", or 0 use pointers
 	SwapSize *int  `json:"swap_size,omitempty"`
@@ -107,6 +122,19 @@ type InstanceUpdateOptions struct {
 	Backups         *InstanceBackup `json:"backups,omitempty"`
 	Alerts          *InstanceAlert  `json:"alerts,omitempty"`
 	WatchdogEnabled *bool           `json:"watchdog_enabled,omitempty"`
+	Tags            *[]string       `json:"tags,omitempty"`
+}
+
+// GetUpdateOptions converts an Instance to InstanceUpdateOptions for use in UpdateInstance
+func (l *Instance) GetUpdateOptions() InstanceUpdateOptions {
+	return InstanceUpdateOptions{
+		Label:           l.Label,
+		Group:           l.Group,
+		Backups:         l.Backups,
+		Alerts:          l.Alerts,
+		WatchdogEnabled: &l.WatchdogEnabled,
+		Tags:            &l.Tags,
+	}
 }
 
 // InstanceCloneOptions is an options struct sent when Cloning an Instance
@@ -121,6 +149,14 @@ type InstanceCloneOptions struct {
 	BackupsEnabled bool   `json:"backups_enabled"`
 	Disks          []int  `json:"disks,omitempty"`
 	Configs        []int  `json:"configs,omitempty"`
+}
+
+// InstanceResizeOptions
+type InstanceResizeOptions struct {
+	Type string `json:"type"`
+
+	// When enabled, an instance resize will also resize a data disk if the instance has no more than one data disk and one swap disk
+	AllowAutoDiskResize *bool `json:"allow_auto_disk_resize,omitempty"`
 }
 
 func (l *Instance) fixDates() *Instance {
@@ -176,6 +212,22 @@ func (c *Client) GetInstance(ctx context.Context, linodeID int) (*Instance, erro
 		return nil, err
 	}
 	return r.Result().(*Instance).fixDates(), nil
+}
+
+// GetInstance gets the instance with the provided ID
+func (c *Client) GetInstanceTransfer(ctx context.Context, linodeID int) (*InstanceTransfer, error) {
+	e, err := c.Instances.Endpoint()
+	if err != nil {
+		return nil, err
+	}
+	e = fmt.Sprintf("%s/%d/transfer", e, linodeID)
+	r, err := coupleAPIErrors(c.R(ctx).
+		SetResult(InstanceTransfer{}).
+		Get(e))
+	if err != nil {
+		return nil, err
+	}
+	return r.Result().(*InstanceTransfer), nil
 }
 
 // CreateInstance creates a Linode instance
@@ -331,8 +383,8 @@ func (c *Client) RebootInstance(ctx context.Context, id int, configID int) error
 	return err
 }
 
-// RebuildInstanceOptions is a struct representing the options to send to the rebuild linode endpoint
-type RebuildInstanceOptions struct {
+// InstanceRebuildOptions is a struct representing the options to send to the rebuild linode endpoint
+type InstanceRebuildOptions struct {
 	Image           string            `json:"image"`
 	RootPass        string            `json:"root_pass"`
 	AuthorizedKeys  []string          `json:"authorized_keys"`
@@ -344,7 +396,7 @@ type RebuildInstanceOptions struct {
 
 // RebuildInstance Deletes all Disks and Configs on this Linode,
 // then deploys a new Image to this Linode with the given attributes.
-func (c *Client) RebuildInstance(ctx context.Context, id int, opts RebuildInstanceOptions) (*Instance, error) {
+func (c *Client) RebuildInstance(ctx context.Context, id int, opts InstanceRebuildOptions) (*Instance, error) {
 	o, err := json.Marshal(opts)
 	if err != nil {
 		return nil, NewError(err)
@@ -365,8 +417,8 @@ func (c *Client) RebuildInstance(ctx context.Context, id int, opts RebuildInstan
 	return r.Result().(*Instance).fixDates(), nil
 }
 
-// RescueInstanceOptions fields are those accepted by RescueInstance
-type RescueInstanceOptions struct {
+// InstanceRescueOptions fields are those accepted by RescueInstance
+type InstanceRescueOptions struct {
 	Devices InstanceConfigDeviceMap `json:"devices"`
 }
 
@@ -374,7 +426,7 @@ type RescueInstanceOptions struct {
 // Rescue Mode is based on the Finnix recovery distribution, a self-contained and bootable Linux distribution.
 // You can also use Rescue Mode for tasks other than disaster recovery, such as formatting disks to use different filesystems,
 // copying data between disks, and downloading files from a disk via SSH and SFTP.
-func (c *Client) RescueInstance(ctx context.Context, id int, opts RescueInstanceOptions) error {
+func (c *Client) RescueInstance(ctx context.Context, id int, opts InstanceRescueOptions) error {
 	o, err := json.Marshal(opts)
 	if err != nil {
 		return NewError(err)
@@ -394,9 +446,12 @@ func (c *Client) RescueInstance(ctx context.Context, id int, opts RescueInstance
 }
 
 // ResizeInstance resizes an instance to new Linode type
-func (c *Client) ResizeInstance(ctx context.Context, id int, linodeType string) error {
-	body := fmt.Sprintf("{\"type\":\"%s\"}", linodeType)
-
+func (c *Client) ResizeInstance(ctx context.Context, id int, opts InstanceResizeOptions) error {
+	o, err := json.Marshal(opts)
+	if err != nil {
+		return NewError(err)
+	}
+	body := string(o)
 	e, err := c.Instances.Endpoint()
 	if err != nil {
 		return err

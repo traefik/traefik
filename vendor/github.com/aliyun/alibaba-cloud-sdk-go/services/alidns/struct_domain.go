@@ -21,7 +21,7 @@ type Domain struct {
 	DomainName      string                      `json:"DomainName" xml:"DomainName"`
 	PunyCode        string                      `json:"PunyCode" xml:"PunyCode"`
 	AliDomain       bool                        `json:"AliDomain" xml:"AliDomain"`
-	RecordCount     int                         `json:"RecordCount" xml:"RecordCount"`
+	RecordCount     int64                       `json:"RecordCount" xml:"RecordCount"`
 	RegistrantEmail string                      `json:"RegistrantEmail" xml:"RegistrantEmail"`
 	Remark          string                      `json:"Remark" xml:"Remark"`
 	GroupId         string                      `json:"GroupId" xml:"GroupId"`

@@ -1,10 +1,10 @@
-// Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2016, 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 // Code generated. DO NOT EDIT.
 
 // DNS API
 //
 // API for the DNS service. Use this API to manage DNS zones, records, and other DNS resources.
-// For more information, see Overview of the DNS Service (https://docs.us-phoenix-1.oraclecloud.com/iaas/Content/DNS/Concepts/dnszonemanagement.htm).
+// For more information, see Overview of the DNS Service (https://docs.cloud.oracle.com/iaas/Content/DNS/Concepts/dnszonemanagement.htm).
 //
 
 package dns
@@ -26,7 +26,7 @@ type SteeringPolicyAttachmentSummary struct {
 	DomainName *string `mandatory:"false" json:"domainName"`
 
 	// A user-friendly name for the steering policy attachment.
-	// Does not have to be unique, and it's changeable.
+	// Does not have to be unique and can be changed.
 	// Avoid entering confidential information.
 	DisplayName *string `mandatory:"false" json:"displayName"`
 
@@ -44,8 +44,7 @@ type SteeringPolicyAttachmentSummary struct {
 	// The OCID of the resource.
 	Id *string `mandatory:"false" json:"id"`
 
-	// The date and time the resource was created in "YYYY-MM-ddThh:mmZ" format
-	// with a Z offset, as defined by RFC 3339.
+	// The date and time the resource was created, expressed in RFC 3339 timestamp format.
 	// **Example:** `2016-07-22T17:23:59:60Z`
 	TimeCreated *common.SDKTime `mandatory:"false" json:"timeCreated"`
 

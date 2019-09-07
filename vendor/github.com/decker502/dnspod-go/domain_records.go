@@ -44,12 +44,12 @@ func recordAction(action string) string {
 // List the domain records.
 //
 // dnspod API docs: https://www.dnspod.cn/docs/records.html#record-list
-func (s *DomainsService) ListRecords(domain string, recordName string) ([]Record, *Response, error) {
+func (s *DomainsService) ListRecords(domainID string, recordName string) ([]Record, *Response, error) {
 	path := recordAction("List")
 
 	payload := newPayLoad(s.client.CommonParams)
 
-	payload.Add("domain_id", domain)
+	payload.Add("domain_id", domainID)
 
 	if recordName != "" {
 		payload.Add("sub_domain", recordName)

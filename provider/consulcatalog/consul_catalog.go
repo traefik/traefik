@@ -34,6 +34,7 @@ type Provider struct {
 	Stale                 bool             `description:"Use stale consistency for catalog reads" export:"true"`
 	ExposedByDefault      bool             `description:"Expose Consul services by default" export:"true"`
 	Prefix                string           `description:"Prefix used for Consul catalog tags" export:"true"`
+	StrictChecks          bool             `description:"Keep a Consul node only if all checks status are passing" export:"true"`
 	FrontEndRule          string           `description:"Frontend rule used for Consul services" export:"true"`
 	TLS                   *types.ClientTLS `description:"Enable TLS support" export:"true"`
 	client                *api.Client
@@ -301,6 +302,8 @@ func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[s
 					_, failing := currentFailing[key]
 					if healthy.Status == "passing" && !failing {
 						current[key] = append(current[key], healthy.Node)
+					} else if !p.StrictChecks && healthy.Status == "warning" && !failing {
+						current[key] = append(current[key], healthy.Node)
 					} else if strings.HasPrefix(healthy.CheckID, "_service_maintenance") || strings.HasPrefix(healthy.CheckID, "_node_maintenance") {
 						maintenance = append(maintenance, healthy.CheckID)
 					} else {
@@ -489,7 +492,8 @@ func getServiceAddresses(services []*api.CatalogService) []string {
 
 func (p *Provider) healthyNodes(service string) (catalogUpdate, error) {
 	health := p.client.Health()
-	data, _, err := health.Service(service, "", true, &api.QueryOptions{AllowStale: p.Stale})
+	// You can't filter with assigning passingOnly here, nodeFilter will do this later
+	data, _, err := health.Service(service, "", false, &api.QueryOptions{AllowStale: p.Stale})
 	if err != nil {
 		log.WithError(err).Errorf("Failed to fetch details of %s", service)
 		return catalogUpdate{}, err
@@ -533,7 +537,8 @@ func (p *Provider) nodeFilter(service string, node *api.ServiceEntry) bool {
 		log.Debugf("Service %v pruned by '%v' constraint", service, failingConstraint.String())
 		return false
 	}
-	return true
+
+	return p.hasPassingChecks(node)
 }
 
 func (p *Provider) isServiceEnabled(node *api.ServiceEntry) bool {
@@ -565,6 +570,11 @@ func (p *Provider) getConstraintTags(tags []string) []string {
 	}
 
 	return values
+}
+
+func (p *Provider) hasPassingChecks(node *api.ServiceEntry) bool {
+	status := node.Checks.AggregatedStatus()
+	return status == "passing" || !p.StrictChecks && status == "warning"
 }
 
 func (p *Provider) generateFrontends(service *serviceUpdate) []*serviceUpdate {

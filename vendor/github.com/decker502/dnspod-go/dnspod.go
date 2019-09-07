@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,6 +21,8 @@ const (
 	userAgent      = "dnspod-go/" + libraryVersion
 
 	apiVersion = "v1"
+	timeout    = 5
+	keepAlive  = 30
 )
 
 // dnspod API docs: https://www.dnspod.cn/docs/info.html
@@ -30,6 +33,8 @@ type CommonParams struct {
 	Lang         string
 	ErrorOnEmpty string
 	UserID       string
+	Timeout      int
+	KeepAlive    int
 }
 
 func newPayLoad(params CommonParams) url.Values {
@@ -49,7 +54,6 @@ func newPayLoad(params CommonParams) url.Values {
 	}
 	if params.UserID != "" {
 		p.Set("user_id", params.UserID)
-
 	}
 
 	return p
@@ -82,7 +86,27 @@ type Client struct {
 
 // NewClient returns a new dnspod API client.
 func NewClient(CommonParams CommonParams) *Client {
-	c := &Client{HttpClient: &http.Client{}, CommonParams: CommonParams, BaseURL: baseURL, UserAgent: userAgent}
+	var _timeout, _keepalive int
+	_timeout = timeout
+	_keepalive = keepAlive
+
+	if CommonParams.Timeout != 0 {
+		_timeout = CommonParams.Timeout
+	}
+	if CommonParams.KeepAlive != 0 {
+		_keepalive = CommonParams.KeepAlive
+	}
+
+	cli := http.Client{
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout:   time.Duration(_timeout) * time.Second,
+				KeepAlive: time.Duration(_keepalive) * time.Second,
+			}).Dial,
+		},
+	}
+
+	c := &Client{HttpClient: &cli, CommonParams: CommonParams, BaseURL: baseURL, UserAgent: userAgent}
 	c.Domains = &DomainsService{client: c}
 	return c
 

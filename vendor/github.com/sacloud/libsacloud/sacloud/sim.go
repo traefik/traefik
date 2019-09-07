@@ -52,7 +52,7 @@ type SIMInfo struct {
 	RegisteredDate             *time.Time       `json:"registered_date,omitempty"`
 	ActivatedDate              *time.Time       `json:"activated_date,omitempty"`
 	DeactivatedDate            *time.Time       `json:"deactivated_date,omitempty"`
-	SIMGroupID                 string           `json:"simgroiup_id,omitempty"`
+	SIMGroupID                 string           `json:"simgroup_id,omitempty"`
 	TrafficBytesOfCurrentMonth *SIMTrafficBytes `json:"traffic_bytes_of_current_month,omitempty"`
 	ConnectedIMEI              string           `json:"connected_imei,omitempty"`
 }

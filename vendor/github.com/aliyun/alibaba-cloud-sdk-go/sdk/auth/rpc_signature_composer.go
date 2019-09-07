@@ -15,12 +15,16 @@
 package auth
 
 import (
+	"net/url"
+	"strings"
+
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils"
-	"net/url"
-	"sort"
-	"strings"
 )
+
+var hookGetNonce = func(fn func() string) string {
+	return fn()
+}
 
 func signRpcRequest(request requests.AcsRequest, signer Signer, regionId string) (err error) {
 	err = completeRpcSignParams(request, signer, regionId)
@@ -44,11 +48,11 @@ func completeRpcSignParams(request requests.AcsRequest, signer Signer, regionId 
 	queryParams["Version"] = request.GetVersion()
 	queryParams["Action"] = request.GetActionName()
 	queryParams["Format"] = request.GetAcceptFormat()
-	queryParams["Timestamp"] = utils.GetTimeInFormatISO8601()
+	queryParams["Timestamp"] = hookGetDate(utils.GetTimeInFormatISO8601)
 	queryParams["SignatureMethod"] = signer.GetName()
 	queryParams["SignatureType"] = signer.GetType()
 	queryParams["SignatureVersion"] = signer.GetVersion()
-	queryParams["SignatureNonce"] = utils.GetUUIDV4()
+	queryParams["SignatureNonce"] = hookGetNonce(utils.GetUUID)
 	queryParams["AccessKeyId"], err = signer.GetAccessKeyId()
 
 	if err != nil {
@@ -80,12 +84,6 @@ func buildRpcStringToSign(request requests.AcsRequest) (stringToSign string) {
 		signParams[key] = value
 	}
 
-	// sort params by key
-	var paramKeySlice []string
-	for key := range signParams {
-		paramKeySlice = append(paramKeySlice, key)
-	}
-	sort.Strings(paramKeySlice)
 	stringToSign = utils.GetUrlFormedMap(signParams)
 	stringToSign = strings.Replace(stringToSign, "+", "%20", -1)
 	stringToSign = strings.Replace(stringToSign, "*", "%2A", -1)

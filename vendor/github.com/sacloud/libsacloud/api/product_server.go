@@ -25,15 +25,20 @@ func NewProductServerAPI(client *Client) *ProductServerAPI {
 }
 
 // GetBySpec 指定のコア数/メモリサイズ/世代のプランを取得
-func (api *ProductServerAPI) GetBySpec(core int, memGB int, gen sacloud.PlanGenerations) (*sacloud.ProductServer, error) {
-	plans, err := api.Reset().Find()
+func (api *ProductServerAPI) GetBySpec(core, memGB int, gen sacloud.PlanGenerations) (*sacloud.ProductServer, error) {
+	return api.GetBySpecCommitment(core, memGB, gen, sacloud.ECommitmentStandard)
+}
+
+// GetBySpecCommitment 指定のコア数/メモリサイズ/世代のプランを取得
+func (api *ProductServerAPI) GetBySpecCommitment(core, memGB int, gen sacloud.PlanGenerations, commitment sacloud.ECommitment) (*sacloud.ProductServer, error) {
+	plans, err := api.Reset().Limit(1000).Find()
 	if err != nil {
 		return nil, err
 	}
 	var res sacloud.ProductServer
 	var found bool
 	for _, plan := range plans.ServerPlans {
-		if plan.CPU == core && plan.GetMemoryGB() == memGB {
+		if plan.CPU == core && plan.GetMemoryGB() == memGB && plan.Commitment == commitment {
 			if gen == sacloud.PlanDefault || gen == plan.Generation {
 				// PlanDefaultの場合は複数ヒットしうる。
 				// この場合より新しい世代を優先する。

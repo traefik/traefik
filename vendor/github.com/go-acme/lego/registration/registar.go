@@ -11,7 +11,7 @@ import (
 
 // Resource represents all important information about a registration
 // of which the client needs to keep track itself.
-// Deprecated: will be remove in the future (acme.ExtendedAccount).
+// WARNING: will be remove in the future (acme.ExtendedAccount), https://github.com/go-acme/lego/issues/855.
 type Resource struct {
 	Body acme.Account `json:"body,omitempty"`
 	URI  string       `json:"uri,omitempty"`

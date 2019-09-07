@@ -22,10 +22,10 @@ type StsTokenSigner struct {
 	credential *credentials.StsTokenCredential
 }
 
-func NewStsTokenSigner(credential *credentials.StsTokenCredential) (*StsTokenSigner, error) {
+func NewStsTokenSigner(credential *credentials.StsTokenCredential) *StsTokenSigner {
 	return &StsTokenSigner{
 		credential: credential,
-	}, nil
+	}
 }
 
 func (*StsTokenSigner) GetName() string {
@@ -51,8 +51,4 @@ func (signer *StsTokenSigner) GetExtraParam() map[string]string {
 func (signer *StsTokenSigner) Sign(stringToSign, secretSuffix string) string {
 	secret := signer.credential.AccessKeySecret + secretSuffix
 	return ShaHmac1(stringToSign, secret)
-}
-
-func (signer *StsTokenSigner) Shutdown() {
-
 }

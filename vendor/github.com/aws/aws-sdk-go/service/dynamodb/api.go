@@ -4,10 +4,12 @@ package dynamodb
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/crr"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/private/protocol"
 	"github.com/aws/aws-sdk-go/private/protocol/jsonrpc"
@@ -18,7 +20,7 @@ const opBatchGetItem = "BatchGetItem"
 // BatchGetItemRequest generates a "aws/request.Request" representing the
 // client's request for the BatchGetItem operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -58,6 +60,27 @@ func (c *DynamoDB) BatchGetItemRequest(input *BatchGetItemInput) (req *request.R
 
 	output = &BatchGetItemOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -67,23 +90,23 @@ func (c *DynamoDB) BatchGetItemRequest(input *BatchGetItemInput) (req *request.R
 // one or more tables. You identify requested items by primary key.
 //
 // A single operation can retrieve up to 16 MB of data, which can contain as
-// many as 100 items. BatchGetItem will return a partial result if the response
+// many as 100 items. BatchGetItem returns a partial result if the response
 // size limit is exceeded, the table's provisioned throughput is exceeded, or
 // an internal processing failure occurs. If a partial result is returned, the
 // operation returns a value for UnprocessedKeys. You can use this value to
 // retry the operation starting with the next item to get.
 //
-// If you request more than 100 items BatchGetItem will return a ValidationException
-// with the message "Too many items requested for the BatchGetItem call".
+// If you request more than 100 items, BatchGetItem returns a ValidationException
+// with the message "Too many items requested for the BatchGetItem call."
 //
 // For example, if you ask to retrieve 100 items, but each individual item is
 // 300 KB in size, the system returns 52 items (so as not to exceed the 16 MB
 // limit). It also returns an appropriate UnprocessedKeys value so you can get
 // the next page of results. If desired, your application can include its own
-// logic to assemble the pages of results into one data set.
+// logic to assemble the pages of results into one dataset.
 //
 // If none of the items can be processed due to insufficient provisioned throughput
-// on all of the tables in the request, then BatchGetItem will return a ProvisionedThroughputExceededException.
+// on all of the tables in the request, then BatchGetItem returns a ProvisionedThroughputExceededException.
 // If at least one of the items is successfully processed, then BatchGetItem
 // completes successfully, while returning the keys of the unread items in UnprocessedKeys.
 //
@@ -94,7 +117,7 @@ func (c *DynamoDB) BatchGetItemRequest(input *BatchGetItemInput) (req *request.R
 // tables. If you delay the batch operation using exponential backoff, the individual
 // requests in the batch are much more likely to succeed.
 //
-// For more information, see Batch Operations and Error Handling (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ErrorHandling.html#BatchOperations)
+// For more information, see Batch Operations and Error Handling (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ErrorHandling.html#BatchOperations)
 // in the Amazon DynamoDB Developer Guide.
 //
 // By default, BatchGetItem performs eventually consistent reads on every table
@@ -110,7 +133,7 @@ func (c *DynamoDB) BatchGetItemRequest(input *BatchGetItemInput) (req *request.R
 //
 // If a requested item does not exist, it is not returned in the result. Requests
 // for nonexistent items consume the minimum read capacity units according to
-// the type of read. For more information, see Capacity Units Calculations (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#CapacityUnitCalculations)
+// the type of read. For more information, see Working with Tables (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#CapacityUnitCalculations)
 // in the Amazon DynamoDB Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -126,12 +149,17 @@ func (c *DynamoDB) BatchGetItemRequest(input *BatchGetItemInput) (req *request.R
 //   requests that receive this exception. Your request is eventually successful,
 //   unless your retry queue is too large to finish. Reduce the frequency of requests
 //   and use exponential backoff. For more information, go to Error Retries and
-//   Exponential Backoff (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
+//   Exponential Backoff (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
 //   in the Amazon DynamoDB Developer Guide.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The operation tried to access a nonexistent table or index. The resource
 //   might not be specified correctly, or its status might not be ACTIVE.
+//
+//   * ErrCodeRequestLimitExceeded "RequestLimitExceeded"
+//   Throughput exceeds the current throughput limit for your account. Please
+//   contact AWS Support at AWS Support (https://aws.amazon.com/support) to request
+//   a limit increase.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -169,7 +197,7 @@ func (c *DynamoDB) BatchGetItemWithContext(ctx aws.Context, input *BatchGetItemI
 //    // Example iterating over at most 3 pages of a BatchGetItem operation.
 //    pageNum := 0
 //    err := client.BatchGetItemPages(params,
-//        func(page *BatchGetItemOutput, lastPage bool) bool {
+//        func(page *dynamodb.BatchGetItemOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -213,7 +241,7 @@ const opBatchWriteItem = "BatchWriteItem"
 // BatchWriteItemRequest generates a "aws/request.Request" representing the
 // client's request for the BatchWriteItem operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -247,6 +275,27 @@ func (c *DynamoDB) BatchWriteItemRequest(input *BatchWriteItemInput) (req *reque
 
 	output = &BatchWriteItemOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -268,9 +317,8 @@ func (c *DynamoDB) BatchWriteItemRequest(input *BatchWriteItemInput) (req *reque
 // check for unprocessed items and submit a new BatchWriteItem request with
 // those unprocessed items until all items have been processed.
 //
-// Note that if none of the items can be processed due to insufficient provisioned
-// throughput on all of the tables in the request, then BatchWriteItem will
-// return a ProvisionedThroughputExceededException.
+// If none of the items can be processed due to insufficient provisioned throughput
+// on all of the tables in the request, then BatchWriteItem returns a ProvisionedThroughputExceededException.
 //
 // If DynamoDB returns any unprocessed items, you should retry the batch operation
 // on those items. However, we strongly recommend that you use an exponential
@@ -279,16 +327,15 @@ func (c *DynamoDB) BatchWriteItemRequest(input *BatchWriteItemInput) (req *reque
 // tables. If you delay the batch operation using exponential backoff, the individual
 // requests in the batch are much more likely to succeed.
 //
-// For more information, see Batch Operations and Error Handling (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ErrorHandling.html#BatchOperations)
+// For more information, see Batch Operations and Error Handling (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ErrorHandling.html#Programming.Errors.BatchOperations)
 // in the Amazon DynamoDB Developer Guide.
 //
 // With BatchWriteItem, you can efficiently write or delete large amounts of
-// data, such as from Amazon Elastic MapReduce (EMR), or copy data from another
-// database into DynamoDB. In order to improve performance with these large-scale
-// operations, BatchWriteItem does not behave in the same way as individual
-// PutItem and DeleteItem calls would. For example, you cannot specify conditions
-// on individual put and delete requests, and BatchWriteItem does not return
-// deleted items in the response.
+// data, such as from Amazon EMR, or copy data from another database into DynamoDB.
+// In order to improve performance with these large-scale operations, BatchWriteItem
+// does not behave in the same way as individual PutItem and DeleteItem calls
+// would. For example, you cannot specify conditions on individual put and delete
+// requests, and BatchWriteItem does not return deleted items in the response.
 //
 // If you use a programming language that supports concurrency, you can use
 // threads to write items in parallel. Your application must include the necessary
@@ -316,7 +363,7 @@ func (c *DynamoDB) BatchWriteItemRequest(input *BatchWriteItemInput) (req *reque
 //    BatchWriteItem request. For example, you cannot put and delete the same
 //    item in the same BatchWriteItem request.
 //
-//    *  Your request contains at least two items with identical hash and range
+//    * Your request contains at least two items with identical hash and range
 //    keys (which essentially is two put operations).
 //
 //    * There are more than 25 requests in the batch.
@@ -338,7 +385,7 @@ func (c *DynamoDB) BatchWriteItemRequest(input *BatchWriteItemInput) (req *reque
 //   requests that receive this exception. Your request is eventually successful,
 //   unless your retry queue is too large to finish. Reduce the frequency of requests
 //   and use exponential backoff. For more information, go to Error Retries and
-//   Exponential Backoff (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
+//   Exponential Backoff (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
 //   in the Amazon DynamoDB Developer Guide.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
@@ -348,6 +395,11 @@ func (c *DynamoDB) BatchWriteItemRequest(input *BatchWriteItemInput) (req *reque
 //   * ErrCodeItemCollectionSizeLimitExceededException "ItemCollectionSizeLimitExceededException"
 //   An item collection is too large. This exception is only returned for tables
 //   that have one or more local secondary indexes.
+//
+//   * ErrCodeRequestLimitExceeded "RequestLimitExceeded"
+//   Throughput exceeds the current throughput limit for your account. Please
+//   contact AWS Support at AWS Support (https://aws.amazon.com/support) to request
+//   a limit increase.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -379,7 +431,7 @@ const opCreateBackup = "CreateBackup"
 // CreateBackupRequest generates a "aws/request.Request" representing the
 // client's request for the CreateBackup operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -413,6 +465,27 @@ func (c *DynamoDB) CreateBackupRequest(input *CreateBackupInput) (req *request.R
 
 	output = &CreateBackupOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -420,10 +493,10 @@ func (c *DynamoDB) CreateBackupRequest(input *CreateBackupInput) (req *request.R
 //
 // Creates a backup for an existing table.
 //
-// Each time you create an On-Demand Backup, the entire table data is backed
+// Each time you create an on-demand backup, the entire table data is backed
 // up. There is no limit to the number of on-demand backups that can be taken.
 //
-// When you create an On-Demand Backup, a time marker of the request is cataloged,
+// When you create an on-demand backup, a time marker of the request is cataloged,
 // and the backup is created asynchronously, by applying all changes until the
 // time of the request to the last full table snapshot. Backup requests are
 // processed instantaneously and become available for restore within minutes.
@@ -435,9 +508,8 @@ func (c *DynamoDB) CreateBackupRequest(input *CreateBackupInput) (req *request.R
 //
 // If you submit a backup request on 2018-12-14 at 14:25:00, the backup is guaranteed
 // to contain all data committed to the table up to 14:24:00, and data committed
-// after 14:26:00 will not be. The backup may or may not contain data modifications
-// made between 14:24:00 and 14:26:00. On-Demand Backup does not support causal
-// consistency.
+// after 14:26:00 will not be. The backup might contain data modifications made
+// between 14:24:00 and 14:26:00. On-demand backup does not support causal consistency.
 //
 // Along with data, the following are also included on the backups:
 //
@@ -469,21 +541,21 @@ func (c *DynamoDB) CreateBackupRequest(input *CreateBackupInput) (req *request.R
 //
 //   * ErrCodeBackupInUseException "BackupInUseException"
 //   There is another ongoing conflicting backup control plane operation on the
-//   table. The backups is either being created, deleted or restored to a table.
+//   table. The backup is either being created, deleted or restored to a table.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -515,7 +587,7 @@ const opCreateGlobalTable = "CreateGlobalTable"
 // CreateGlobalTableRequest generates a "aws/request.Request" representing the
 // client's request for the CreateGlobalTable operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -549,6 +621,27 @@ func (c *DynamoDB) CreateGlobalTableRequest(input *CreateGlobalTableInput) (req 
 
 	output = &CreateGlobalTableOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -556,33 +649,37 @@ func (c *DynamoDB) CreateGlobalTableRequest(input *CreateGlobalTableInput) (req 
 //
 // Creates a global table from an existing table. A global table creates a replication
 // relationship between two or more DynamoDB tables with the same table name
-// in the provided regions.
+// in the provided Regions.
 //
-// Tables can only be added as the replicas of a global table group under the
-// following conditions:
+// If you want to add a new replica table to a global table, each of the following
+// conditions must be true:
 //
-//    *  The tables must have the same name.
+//    * The table must have the same primary key as all of the other replicas.
 //
-//    *  The tables must contain no items.
+//    * The table must have the same name as all of the other replicas.
 //
-//    *  The tables must have the same hash key and sort key (if present).
+//    * The table must have DynamoDB Streams enabled, with the stream containing
+//    both the new and the old images of the item.
 //
-//    *  The tables must have DynamoDB Streams enabled (NEW_AND_OLD_IMAGES).
-//
-//
-//    *  The tables must have same provisioned and maximum write capacity units.
-//
+//    * None of the replica tables in the global table can contain any data.
 //
 // If global secondary indexes are specified, then the following conditions
 // must also be met:
 //
-//    *  The global secondary indexes must have the same name.
+//    * The global secondary indexes must have the same name.
 //
-//    *  The global secondary indexes must have the same hash key and sort key
+//    * The global secondary indexes must have the same hash key and sort key
 //    (if present).
 //
-//    *  The global secondary indexes must have the same provisioned and maximum
-//    write capacity units.
+// Write capacity settings should be set consistently across your replica tables
+// and secondary indexes. DynamoDB strongly recommends enabling auto scaling
+// to manage the write capacity settings for all of your global tables replicas
+// and indexes.
+//
+// If you prefer to manage write capacity settings manually, you should provision
+// equal replicated write capacity units to your replica tables. You should
+// also provision equal replicated write capacity units to matching secondary
+// indexes across your global table.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -593,18 +690,18 @@ func (c *DynamoDB) CreateGlobalTableRequest(input *CreateGlobalTableInput) (req 
 //
 // Returned Error Codes:
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -643,7 +740,7 @@ const opCreateTable = "CreateTable"
 // CreateTableRequest generates a "aws/request.Request" representing the
 // client's request for the CreateTable operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -677,14 +774,35 @@ func (c *DynamoDB) CreateTableRequest(input *CreateTableInput) (req *request.Req
 
 	output = &CreateTableOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
 // CreateTable API operation for Amazon DynamoDB.
 //
 // The CreateTable operation adds a new table to your account. In an AWS account,
-// table names must be unique within each region. That is, you can have two
-// tables with same name if you create the tables in different regions.
+// table names must be unique within each Region. That is, you can have two
+// tables with same name if you create the tables in different Regions.
 //
 // CreateTable is an asynchronous operation. Upon receiving a CreateTable request,
 // DynamoDB immediately returns a response with a TableStatus of CREATING. After
@@ -712,18 +830,18 @@ func (c *DynamoDB) CreateTableRequest(input *CreateTableInput) (req *request.Req
 //   in the CREATING state.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -755,7 +873,7 @@ const opDeleteBackup = "DeleteBackup"
 // DeleteBackupRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteBackup operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -789,6 +907,27 @@ func (c *DynamoDB) DeleteBackupRequest(input *DeleteBackupInput) (req *request.R
 
 	output = &DeleteBackupOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -811,21 +950,21 @@ func (c *DynamoDB) DeleteBackupRequest(input *DeleteBackupInput) (req *request.R
 //
 //   * ErrCodeBackupInUseException "BackupInUseException"
 //   There is another ongoing conflicting backup control plane operation on the
-//   table. The backups is either being created, deleted or restored to a table.
+//   table. The backup is either being created, deleted or restored to a table.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -857,7 +996,7 @@ const opDeleteItem = "DeleteItem"
 // DeleteItemRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteItem operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -891,6 +1030,27 @@ func (c *DynamoDB) DeleteItemRequest(input *DeleteItemInput) (req *request.Reque
 
 	output = &DeleteItemOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -927,7 +1087,7 @@ func (c *DynamoDB) DeleteItemRequest(input *DeleteItemInput) (req *request.Reque
 //   requests that receive this exception. Your request is eventually successful,
 //   unless your retry queue is too large to finish. Reduce the frequency of requests
 //   and use exponential backoff. For more information, go to Error Retries and
-//   Exponential Backoff (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
+//   Exponential Backoff (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
 //   in the Amazon DynamoDB Developer Guide.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
@@ -937,6 +1097,14 @@ func (c *DynamoDB) DeleteItemRequest(input *DeleteItemInput) (req *request.Reque
 //   * ErrCodeItemCollectionSizeLimitExceededException "ItemCollectionSizeLimitExceededException"
 //   An item collection is too large. This exception is only returned for tables
 //   that have one or more local secondary indexes.
+//
+//   * ErrCodeTransactionConflictException "TransactionConflictException"
+//   Operation was rejected because there is an ongoing transaction for the item.
+//
+//   * ErrCodeRequestLimitExceeded "RequestLimitExceeded"
+//   Throughput exceeds the current throughput limit for your account. Please
+//   contact AWS Support at AWS Support (https://aws.amazon.com/support) to request
+//   a limit increase.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -968,7 +1136,7 @@ const opDeleteTable = "DeleteTable"
 // DeleteTableRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteTable operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -1002,6 +1170,27 @@ func (c *DynamoDB) DeleteTableRequest(input *DeleteTableInput) (req *request.Req
 
 	output = &DeleteTableOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -1044,18 +1233,18 @@ func (c *DynamoDB) DeleteTableRequest(input *DeleteTableInput) (req *request.Req
 //   might not be specified correctly, or its status might not be ACTIVE.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -1087,7 +1276,7 @@ const opDescribeBackup = "DescribeBackup"
 // DescribeBackupRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeBackup operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -1121,6 +1310,27 @@ func (c *DynamoDB) DescribeBackupRequest(input *DescribeBackupInput) (req *reque
 
 	output = &DescribeBackupOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -1171,7 +1381,7 @@ const opDescribeContinuousBackups = "DescribeContinuousBackups"
 // DescribeContinuousBackupsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeContinuousBackups operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -1205,6 +1415,27 @@ func (c *DynamoDB) DescribeContinuousBackupsRequest(input *DescribeContinuousBac
 
 	output = &DescribeContinuousBackupsOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -1215,8 +1446,8 @@ func (c *DynamoDB) DescribeContinuousBackupsRequest(input *DescribeContinuousBac
 // If point in time recovery is enabled, PointInTimeRecoveryStatus will be set
 // to ENABLED.
 //
-// Once continuous backups and point in time recovery are enabled, you can restore
-// to any point in time within EarliestRestorableDateTime and LatestRestorableDateTime.
+// After continuous backups and point in time recovery are enabled, you can
+// restore to any point in time within EarliestRestorableDateTime and LatestRestorableDateTime.
 //
 // LatestRestorableDateTime is typically 5 minutes before the current time.
 // You can restore your table to any point in time during the last 35 days.
@@ -1261,12 +1492,145 @@ func (c *DynamoDB) DescribeContinuousBackupsWithContext(ctx aws.Context, input *
 	return out, req.Send()
 }
 
+const opDescribeEndpoints = "DescribeEndpoints"
+
+// DescribeEndpointsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeEndpoints operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeEndpoints for more information on using the DescribeEndpoints
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeEndpointsRequest method.
+//    req, resp := client.DescribeEndpointsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/dynamodb-2012-08-10/DescribeEndpoints
+func (c *DynamoDB) DescribeEndpointsRequest(input *DescribeEndpointsInput) (req *request.Request, output *DescribeEndpointsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeEndpoints,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeEndpointsInput{}
+	}
+
+	output = &DescribeEndpointsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeEndpoints API operation for Amazon DynamoDB.
+//
+// Returns the regional endpoint information.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon DynamoDB's
+// API operation DescribeEndpoints for usage and error information.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/dynamodb-2012-08-10/DescribeEndpoints
+func (c *DynamoDB) DescribeEndpoints(input *DescribeEndpointsInput) (*DescribeEndpointsOutput, error) {
+	req, out := c.DescribeEndpointsRequest(input)
+	return out, req.Send()
+}
+
+// DescribeEndpointsWithContext is the same as DescribeEndpoints with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeEndpoints for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DynamoDB) DescribeEndpointsWithContext(ctx aws.Context, input *DescribeEndpointsInput, opts ...request.Option) (*DescribeEndpointsOutput, error) {
+	req, out := c.DescribeEndpointsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+type discovererDescribeEndpoints struct {
+	Client        *DynamoDB
+	Required      bool
+	EndpointCache *crr.EndpointCache
+	Params        map[string]*string
+	Key           string
+}
+
+func (d *discovererDescribeEndpoints) Discover() (crr.Endpoint, error) {
+	input := &DescribeEndpointsInput{}
+
+	resp, err := d.Client.DescribeEndpoints(input)
+	if err != nil {
+		return crr.Endpoint{}, err
+	}
+
+	endpoint := crr.Endpoint{
+		Key: d.Key,
+	}
+
+	for _, e := range resp.Endpoints {
+		if e.Address == nil {
+			continue
+		}
+
+		cachedInMinutes := aws.Int64Value(e.CachePeriodInMinutes)
+		u, err := url.Parse(*e.Address)
+		if err != nil {
+			continue
+		}
+
+		addr := crr.WeightedAddress{
+			URL:     u,
+			Expired: time.Now().Add(time.Duration(cachedInMinutes) * time.Minute),
+		}
+
+		endpoint.Add(addr)
+	}
+
+	d.EndpointCache.Add(endpoint)
+
+	return endpoint, nil
+}
+
+func (d *discovererDescribeEndpoints) Handler(r *request.Request) {
+	endpointKey := crr.BuildEndpointKey(d.Params)
+	d.Key = endpointKey
+
+	endpoint, err := d.EndpointCache.Get(d, endpointKey, d.Required)
+	if err != nil {
+		r.Error = err
+		return
+	}
+
+	if endpoint.URL != nil && len(endpoint.URL.String()) > 0 {
+		r.HTTPRequest.URL = endpoint.URL
+	}
+}
+
 const opDescribeGlobalTable = "DescribeGlobalTable"
 
 // DescribeGlobalTableRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeGlobalTable operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -1300,6 +1664,27 @@ func (c *DynamoDB) DescribeGlobalTableRequest(input *DescribeGlobalTableInput) (
 
 	output = &DescribeGlobalTableOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -1348,7 +1733,7 @@ const opDescribeGlobalTableSettings = "DescribeGlobalTableSettings"
 // DescribeGlobalTableSettingsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeGlobalTableSettings operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -1382,12 +1767,33 @@ func (c *DynamoDB) DescribeGlobalTableSettingsRequest(input *DescribeGlobalTable
 
 	output = &DescribeGlobalTableSettingsOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
 // DescribeGlobalTableSettings API operation for Amazon DynamoDB.
 //
-// Describes region specific settings for a global table.
+// Describes Region-specific settings for a global table.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1430,7 +1836,7 @@ const opDescribeLimits = "DescribeLimits"
 // DescribeLimitsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeLimits operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -1464,20 +1870,41 @@ func (c *DynamoDB) DescribeLimitsRequest(input *DescribeLimitsInput) (req *reque
 
 	output = &DescribeLimitsOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
 // DescribeLimits API operation for Amazon DynamoDB.
 //
 // Returns the current provisioned-capacity limits for your AWS account in a
-// region, both for the region as a whole and for any one DynamoDB table that
+// Region, both for the Region as a whole and for any one DynamoDB table that
 // you create there.
 //
 // When you establish an AWS account, the account has initial limits on the
 // maximum read capacity units and write capacity units that you can provision
-// across all of your DynamoDB tables in a given region. Also, there are per-table
+// across all of your DynamoDB tables in a given Region. Also, there are per-table
 // limits that apply when you create a table there. For more information, see
-// Limits (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
+// Limits (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
 // page in the Amazon DynamoDB Developer Guide.
 //
 // Although you can increase these limits by filing a case at AWS Support Center
@@ -1488,26 +1915,27 @@ func (c *DynamoDB) DescribeLimitsRequest(input *DescribeLimitsInput) (req *reque
 //
 // For example, you could use one of the AWS SDKs to do the following:
 //
-// Call DescribeLimits for a particular region to obtain your current account
+// Call DescribeLimits for a particular Region to obtain your current account
 // limits on provisioned capacity there.
 //
 // Create a variable to hold the aggregate read capacity units provisioned for
-// all your tables in that region, and one to hold the aggregate write capacity
+// all your tables in that Region, and one to hold the aggregate write capacity
 // units. Zero them both.
 //
 // Call ListTables to obtain a list of all your DynamoDB tables.
 //
 // For each table name listed by ListTables, do the following:
 //
-// Call DescribeTable with the table name.
+//    * Call DescribeTable with the table name.
 //
-// Use the data returned by DescribeTable to add the read capacity units and
-// write capacity units provisioned for the table itself to your variables.
+//    * Use the data returned by DescribeTable to add the read capacity units
+//    and write capacity units provisioned for the table itself to your variables.
 //
-// If the table has one or more global secondary indexes (GSIs), loop over these
-// GSIs and add their provisioned capacity values to your variables as well.
+//    * If the table has one or more global secondary indexes (GSIs), loop over
+//    these GSIs and add their provisioned capacity values to your variables
+//    as well.
 //
-// Report the account limits for that region returned by DescribeLimits, along
+// Report the account limits for that Region returned by DescribeLimits, along
 // with the total current provisioned capacity levels you have calculated.
 //
 // This will let you see whether you are getting close to your account-level
@@ -1517,8 +1945,8 @@ func (c *DynamoDB) DescribeLimitsRequest(input *DescribeLimitsInput) (req *reque
 // the sum of the provisioned capacity of the new table itself and all its global
 // secondary indexes.
 //
-// For existing tables and their GSIs, DynamoDB will not let you increase provisioned
-// capacity extremely rapidly, but the only upper limit that applies is that
+// For existing tables and their GSIs, DynamoDB doesn't let you increase provisioned
+// capacity extremely rapidly. But the only upper limit that applies is that
 // the aggregate provisioned capacity over all your tables and GSIs cannot exceed
 // either of the per-account limits.
 //
@@ -1565,7 +1993,7 @@ const opDescribeTable = "DescribeTable"
 // DescribeTableRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTable operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -1599,6 +2027,27 @@ func (c *DynamoDB) DescribeTableRequest(input *DescribeTableInput) (req *request
 
 	output = &DescribeTableOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -1656,7 +2105,7 @@ const opDescribeTimeToLive = "DescribeTimeToLive"
 // DescribeTimeToLiveRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTimeToLive operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -1690,6 +2139,27 @@ func (c *DynamoDB) DescribeTimeToLiveRequest(input *DescribeTimeToLiveInput) (re
 
 	output = &DescribeTimeToLiveOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -1739,7 +2209,7 @@ const opGetItem = "GetItem"
 // GetItemRequest generates a "aws/request.Request" representing the
 // client's request for the GetItem operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -1773,6 +2243,27 @@ func (c *DynamoDB) GetItemRequest(input *GetItemInput) (req *request.Request, ou
 
 	output = &GetItemOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -1800,12 +2291,17 @@ func (c *DynamoDB) GetItemRequest(input *GetItemInput) (req *request.Request, ou
 //   requests that receive this exception. Your request is eventually successful,
 //   unless your retry queue is too large to finish. Reduce the frequency of requests
 //   and use exponential backoff. For more information, go to Error Retries and
-//   Exponential Backoff (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
+//   Exponential Backoff (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
 //   in the Amazon DynamoDB Developer Guide.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The operation tried to access a nonexistent table or index. The resource
 //   might not be specified correctly, or its status might not be ACTIVE.
+//
+//   * ErrCodeRequestLimitExceeded "RequestLimitExceeded"
+//   Throughput exceeds the current throughput limit for your account. Please
+//   contact AWS Support at AWS Support (https://aws.amazon.com/support) to request
+//   a limit increase.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -1837,7 +2333,7 @@ const opListBackups = "ListBackups"
 // ListBackupsRequest generates a "aws/request.Request" representing the
 // client's request for the ListBackups operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -1871,6 +2367,27 @@ func (c *DynamoDB) ListBackupsRequest(input *ListBackupsInput) (req *request.Req
 
 	output = &ListBackupsOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -1878,13 +2395,13 @@ func (c *DynamoDB) ListBackupsRequest(input *ListBackupsInput) (req *request.Req
 //
 // List backups associated with an AWS account. To list backups for a given
 // table, specify TableName. ListBackups returns a paginated list of results
-// with at most 1MB worth of items in a page. You can also specify a limit for
-// the maximum number of entries to be returned in a page.
+// with at most 1 MB worth of items in a page. You can also specify a limit
+// for the maximum number of entries to be returned in a page.
 //
-// In the request, start time is inclusive but end time is exclusive. Note that
-// these limits are for the time at which the original backup was requested.
+// In the request, start time is inclusive, but end time is exclusive. Note
+// that these limits are for the time at which the original backup was requested.
 //
-// You can call ListBackups a maximum of 5 times per second.
+// You can call ListBackups a maximum of five times per second.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1924,7 +2441,7 @@ const opListGlobalTables = "ListGlobalTables"
 // ListGlobalTablesRequest generates a "aws/request.Request" representing the
 // client's request for the ListGlobalTables operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -1958,12 +2475,33 @@ func (c *DynamoDB) ListGlobalTablesRequest(input *ListGlobalTablesInput) (req *r
 
 	output = &ListGlobalTablesOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
 // ListGlobalTables API operation for Amazon DynamoDB.
 //
-// Lists all global tables that have a replica in the specified region.
+// Lists all global tables that have a replica in the specified Region.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2003,7 +2541,7 @@ const opListTables = "ListTables"
 // ListTablesRequest generates a "aws/request.Request" representing the
 // client's request for the ListTables operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -2043,6 +2581,27 @@ func (c *DynamoDB) ListTablesRequest(input *ListTablesInput) (req *request.Reque
 
 	output = &ListTablesOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -2096,7 +2655,7 @@ func (c *DynamoDB) ListTablesWithContext(ctx aws.Context, input *ListTablesInput
 //    // Example iterating over at most 3 pages of a ListTables operation.
 //    pageNum := 0
 //    err := client.ListTablesPages(params,
-//        func(page *ListTablesOutput, lastPage bool) bool {
+//        func(page *dynamodb.ListTablesOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -2140,7 +2699,7 @@ const opListTagsOfResource = "ListTagsOfResource"
 // ListTagsOfResourceRequest generates a "aws/request.Request" representing the
 // client's request for the ListTagsOfResource operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -2174,6 +2733,27 @@ func (c *DynamoDB) ListTagsOfResourceRequest(input *ListTagsOfResourceInput) (re
 
 	output = &ListTagsOfResourceOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -2182,7 +2762,7 @@ func (c *DynamoDB) ListTagsOfResourceRequest(input *ListTagsOfResourceInput) (re
 // List all tags on an Amazon DynamoDB resource. You can call ListTagsOfResource
 // up to 10 times per second, per account.
 //
-// For an overview on tagging DynamoDB resources, see Tagging for DynamoDB (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tagging.html)
+// For an overview on tagging DynamoDB resources, see Tagging for DynamoDB (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tagging.html)
 // in the Amazon DynamoDB Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -2227,7 +2807,7 @@ const opPutItem = "PutItem"
 // PutItemRequest generates a "aws/request.Request" representing the
 // client's request for the PutItem operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -2261,6 +2841,27 @@ func (c *DynamoDB) PutItemRequest(input *PutItemInput) (req *request.Request, ou
 
 	output = &PutItemOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -2279,28 +2880,28 @@ func (c *DynamoDB) PutItemRequest(input *PutItemInput) (req *request.Request, ou
 // For information on how to call the PutItem API using the AWS SDK in specific
 // languages, see the following:
 //
-//  PutItem in the AWS Command Line Interface  (http://docs.aws.amazon.com/goto/aws-cli/dynamodb-2012-08-10/PutItem)
+//    * PutItem in the AWS Command Line Interface (http://docs.aws.amazon.com/goto/aws-cli/dynamodb-2012-08-10/PutItem)
 //
-//  PutItem in the AWS SDK for .NET  (http://docs.aws.amazon.com/goto/DotNetSDKV3/dynamodb-2012-08-10/PutItem)
+//    * PutItem in the AWS SDK for .NET (http://docs.aws.amazon.com/goto/DotNetSDKV3/dynamodb-2012-08-10/PutItem)
 //
-//  PutItem in the AWS SDK for C++  (http://docs.aws.amazon.com/goto/SdkForCpp/dynamodb-2012-08-10/PutItem)
+//    * PutItem in the AWS SDK for C++ (http://docs.aws.amazon.com/goto/SdkForCpp/dynamodb-2012-08-10/PutItem)
 //
-//  PutItem in the AWS SDK for Go  (http://docs.aws.amazon.com/goto/SdkForGoV1/dynamodb-2012-08-10/PutItem)
+//    * PutItem in the AWS SDK for Go (http://docs.aws.amazon.com/goto/SdkForGoV1/dynamodb-2012-08-10/PutItem)
 //
-//  PutItem in the AWS SDK for Java  (http://docs.aws.amazon.com/goto/SdkForJava/dynamodb-2012-08-10/PutItem)
+//    * PutItem in the AWS SDK for Java (http://docs.aws.amazon.com/goto/SdkForJava/dynamodb-2012-08-10/PutItem)
 //
-//  PutItem in the AWS SDK for JavaScript  (http://docs.aws.amazon.com/goto/AWSJavaScriptSDK/dynamodb-2012-08-10/PutItem)
+//    * PutItem in the AWS SDK for JavaScript (http://docs.aws.amazon.com/goto/AWSJavaScriptSDK/dynamodb-2012-08-10/PutItem)
 //
-//  PutItem in the AWS SDK for PHP V3  (http://docs.aws.amazon.com/goto/SdkForPHPV3/dynamodb-2012-08-10/PutItem)
+//    * PutItem in the AWS SDK for PHP V3 (http://docs.aws.amazon.com/goto/SdkForPHPV3/dynamodb-2012-08-10/PutItem)
 //
-//  PutItem in the AWS SDK for Python  (http://docs.aws.amazon.com/goto/boto3/dynamodb-2012-08-10/PutItem)
+//    * PutItem in the AWS SDK for Python (http://docs.aws.amazon.com/goto/boto3/dynamodb-2012-08-10/PutItem)
 //
-//  PutItem in the AWS SDK for Ruby V2  (http://docs.aws.amazon.com/goto/SdkForRubyV2/dynamodb-2012-08-10/PutItem)
+//    * PutItem in the AWS SDK for Ruby V2 (http://docs.aws.amazon.com/goto/SdkForRubyV2/dynamodb-2012-08-10/PutItem)
 //
-// When you add an item, the primary key attribute(s) are the only required
-// attributes. Attribute values cannot be null. String and Binary type attributes
-// must have lengths greater than zero. Set type attributes cannot be empty.
-// Requests with empty values will be rejected with a ValidationException exception.
+// When you add an item, the primary key attributes are the only required attributes.
+// Attribute values cannot be null. String and Binary type attributes must have
+// lengths greater than zero. Set type attributes cannot be empty. Requests
+// with empty values will be rejected with a ValidationException exception.
 //
 // To prevent a new item from replacing an existing item, use a conditional
 // expression that contains the attribute_not_exists function with the name
@@ -2308,7 +2909,7 @@ func (c *DynamoDB) PutItemRequest(input *PutItemInput) (req *request.Request, ou
 // record must contain that attribute, the attribute_not_exists function will
 // only succeed if no matching item exists.
 //
-// For more information about PutItem, see Working with Items (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html)
+// For more information about PutItem, see Working with Items (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html)
 // in the Amazon DynamoDB Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -2327,7 +2928,7 @@ func (c *DynamoDB) PutItemRequest(input *PutItemInput) (req *request.Request, ou
 //   requests that receive this exception. Your request is eventually successful,
 //   unless your retry queue is too large to finish. Reduce the frequency of requests
 //   and use exponential backoff. For more information, go to Error Retries and
-//   Exponential Backoff (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
+//   Exponential Backoff (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
 //   in the Amazon DynamoDB Developer Guide.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
@@ -2337,6 +2938,14 @@ func (c *DynamoDB) PutItemRequest(input *PutItemInput) (req *request.Request, ou
 //   * ErrCodeItemCollectionSizeLimitExceededException "ItemCollectionSizeLimitExceededException"
 //   An item collection is too large. This exception is only returned for tables
 //   that have one or more local secondary indexes.
+//
+//   * ErrCodeTransactionConflictException "TransactionConflictException"
+//   Operation was rejected because there is an ongoing transaction for the item.
+//
+//   * ErrCodeRequestLimitExceeded "RequestLimitExceeded"
+//   Throughput exceeds the current throughput limit for your account. Please
+//   contact AWS Support at AWS Support (https://aws.amazon.com/support) to request
+//   a limit increase.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -2368,7 +2977,7 @@ const opQuery = "Query"
 // QueryRequest generates a "aws/request.Request" representing the
 // client's request for the Query operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -2408,6 +3017,27 @@ func (c *DynamoDB) QueryRequest(input *QueryInput) (req *request.Request, output
 
 	output = &QueryOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -2446,7 +3076,7 @@ func (c *DynamoDB) QueryRequest(input *QueryInput) (req *request.Request, output
 // (if using the Limit parameter) or a maximum of 1 MB of data and then apply
 // any filtering to the results using FilterExpression. If LastEvaluatedKey
 // is present in the response, you will need to paginate the result set. For
-// more information, see Paginating the Results (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html#Query.Pagination)
+// more information, see Paginating the Results (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html#Query.Pagination)
 // in the Amazon DynamoDB Developer Guide.
 //
 // FilterExpression is applied after a Query finishes, but before the results
@@ -2475,12 +3105,17 @@ func (c *DynamoDB) QueryRequest(input *QueryInput) (req *request.Request, output
 //   requests that receive this exception. Your request is eventually successful,
 //   unless your retry queue is too large to finish. Reduce the frequency of requests
 //   and use exponential backoff. For more information, go to Error Retries and
-//   Exponential Backoff (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
+//   Exponential Backoff (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
 //   in the Amazon DynamoDB Developer Guide.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The operation tried to access a nonexistent table or index. The resource
 //   might not be specified correctly, or its status might not be ACTIVE.
+//
+//   * ErrCodeRequestLimitExceeded "RequestLimitExceeded"
+//   Throughput exceeds the current throughput limit for your account. Please
+//   contact AWS Support at AWS Support (https://aws.amazon.com/support) to request
+//   a limit increase.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -2518,7 +3153,7 @@ func (c *DynamoDB) QueryWithContext(ctx aws.Context, input *QueryInput, opts ...
 //    // Example iterating over at most 3 pages of a Query operation.
 //    pageNum := 0
 //    err := client.QueryPages(params,
-//        func(page *QueryOutput, lastPage bool) bool {
+//        func(page *dynamodb.QueryOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -2562,7 +3197,7 @@ const opRestoreTableFromBackup = "RestoreTableFromBackup"
 // RestoreTableFromBackupRequest generates a "aws/request.Request" representing the
 // client's request for the RestoreTableFromBackup operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -2596,6 +3231,27 @@ func (c *DynamoDB) RestoreTableFromBackupRequest(input *RestoreTableFromBackupIn
 
 	output = &RestoreTableFromBackupOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -2612,7 +3268,7 @@ func (c *DynamoDB) RestoreTableFromBackupRequest(input *RestoreTableFromBackupIn
 //
 //    * IAM policies
 //
-//    * Cloudwatch metrics and alarms
+//    * Amazon CloudWatch metrics and alarms
 //
 //    * Tags
 //
@@ -2639,21 +3295,21 @@ func (c *DynamoDB) RestoreTableFromBackupRequest(input *RestoreTableFromBackupIn
 //
 //   * ErrCodeBackupInUseException "BackupInUseException"
 //   There is another ongoing conflicting backup control plane operation on the
-//   table. The backups is either being created, deleted or restored to a table.
+//   table. The backup is either being created, deleted or restored to a table.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -2685,7 +3341,7 @@ const opRestoreTableToPointInTime = "RestoreTableToPointInTime"
 // RestoreTableToPointInTimeRequest generates a "aws/request.Request" representing the
 // client's request for the RestoreTableToPointInTime operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -2719,6 +3375,27 @@ func (c *DynamoDB) RestoreTableToPointInTimeRequest(input *RestoreTableToPointIn
 
 	output = &RestoreTableToPointInTimeOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -2742,10 +3419,8 @@ func (c *DynamoDB) RestoreTableToPointInTimeRequest(input *RestoreTableToPointIn
 //
 //    * Provisioned read and write capacity
 //
-//    * Encryption settings
-//
-//  All these settings come from the current settings of the source table at
-//    the time of restore.
+//    * Encryption settings All these settings come from the current settings
+//    of the source table at the time of restore.
 //
 // You must manually set up the following on the restored table:
 //
@@ -2753,7 +3428,7 @@ func (c *DynamoDB) RestoreTableToPointInTimeRequest(input *RestoreTableToPointIn
 //
 //    * IAM policies
 //
-//    * Cloudwatch metrics and alarms
+//    * Amazon CloudWatch metrics and alarms
 //
 //    * Tags
 //
@@ -2782,18 +3457,18 @@ func (c *DynamoDB) RestoreTableToPointInTimeRequest(input *RestoreTableToPointIn
 //   A target table with the specified name is either being created or deleted.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeInvalidRestoreTimeException "InvalidRestoreTimeException"
 //   An invalid restore time was specified. RestoreDateTime must be between EarliestRestorableDateTime
@@ -2832,7 +3507,7 @@ const opScan = "Scan"
 // ScanRequest generates a "aws/request.Request" representing the
 // client's request for the Scan operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -2872,6 +3547,27 @@ func (c *DynamoDB) ScanRequest(input *ScanInput) (req *request.Request, output *
 
 	output = &ScanOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -2881,23 +3577,23 @@ func (c *DynamoDB) ScanRequest(input *ScanInput) (req *request.Request, output *
 // every item in a table or a secondary index. To have DynamoDB return fewer
 // items, you can provide a FilterExpression operation.
 //
-// If the total number of scanned items exceeds the maximum data set size limit
+// If the total number of scanned items exceeds the maximum dataset size limit
 // of 1 MB, the scan stops and results are returned to the user as a LastEvaluatedKey
 // value to continue the scan in a subsequent operation. The results also include
 // the number of items exceeding the limit. A scan can result in no table data
 // meeting the filter criteria.
 //
-// A single Scan operation will read up to the maximum number of items set (if
-// using the Limit parameter) or a maximum of 1 MB of data and then apply any
-// filtering to the results using FilterExpression. If LastEvaluatedKey is present
-// in the response, you will need to paginate the result set. For more information,
-// see Paginating the Results (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.Pagination)
+// A single Scan operation reads up to the maximum number of items set (if using
+// the Limit parameter) or a maximum of 1 MB of data and then apply any filtering
+// to the results using FilterExpression. If LastEvaluatedKey is present in
+// the response, you need to paginate the result set. For more information,
+// see Paginating the Results (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.Pagination)
 // in the Amazon DynamoDB Developer Guide.
 //
 // Scan operations proceed sequentially; however, for faster performance on
 // a large table or secondary index, applications can request a parallel Scan
 // operation by providing the Segment and TotalSegments parameters. For more
-// information, see Parallel Scan (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan)
+// information, see Parallel Scan (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan)
 // in the Amazon DynamoDB Developer Guide.
 //
 // Scan uses eventually consistent reads when accessing the data in a table;
@@ -2919,12 +3615,17 @@ func (c *DynamoDB) ScanRequest(input *ScanInput) (req *request.Request, output *
 //   requests that receive this exception. Your request is eventually successful,
 //   unless your retry queue is too large to finish. Reduce the frequency of requests
 //   and use exponential backoff. For more information, go to Error Retries and
-//   Exponential Backoff (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
+//   Exponential Backoff (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
 //   in the Amazon DynamoDB Developer Guide.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The operation tried to access a nonexistent table or index. The resource
 //   might not be specified correctly, or its status might not be ACTIVE.
+//
+//   * ErrCodeRequestLimitExceeded "RequestLimitExceeded"
+//   Throughput exceeds the current throughput limit for your account. Please
+//   contact AWS Support at AWS Support (https://aws.amazon.com/support) to request
+//   a limit increase.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -2962,7 +3663,7 @@ func (c *DynamoDB) ScanWithContext(ctx aws.Context, input *ScanInput, opts ...re
 //    // Example iterating over at most 3 pages of a Scan operation.
 //    pageNum := 0
 //    err := client.ScanPages(params,
-//        func(page *ScanOutput, lastPage bool) bool {
+//        func(page *dynamodb.ScanOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -3006,7 +3707,7 @@ const opTagResource = "TagResource"
 // TagResourceRequest generates a "aws/request.Request" representing the
 // client's request for the TagResource operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -3040,8 +3741,28 @@ func (c *DynamoDB) TagResourceRequest(input *TagResourceInput) (req *request.Req
 
 	output = &TagResourceOutput{}
 	req = c.newRequest(op, input, output)
-	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
-	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -3049,10 +3770,10 @@ func (c *DynamoDB) TagResourceRequest(input *TagResourceInput) (req *request.Req
 //
 // Associate a set of tags with an Amazon DynamoDB resource. You can then activate
 // these user-defined tags so that they appear on the Billing and Cost Management
-// console for cost allocation tracking. You can call TagResource up to 5 times
-// per second, per account.
+// console for cost allocation tracking. You can call TagResource up to five
+// times per second, per account.
 //
-// For an overview on tagging DynamoDB resources, see Tagging for DynamoDB (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tagging.html)
+// For an overview on tagging DynamoDB resources, see Tagging for DynamoDB (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tagging.html)
 // in the Amazon DynamoDB Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -3064,18 +3785,18 @@ func (c *DynamoDB) TagResourceRequest(input *TagResourceInput) (req *request.Req
 //
 // Returned Error Codes:
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The operation tried to access a nonexistent table or index. The resource
@@ -3111,12 +3832,517 @@ func (c *DynamoDB) TagResourceWithContext(ctx aws.Context, input *TagResourceInp
 	return out, req.Send()
 }
 
+const opTransactGetItems = "TransactGetItems"
+
+// TransactGetItemsRequest generates a "aws/request.Request" representing the
+// client's request for the TransactGetItems operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See TransactGetItems for more information on using the TransactGetItems
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the TransactGetItemsRequest method.
+//    req, resp := client.TransactGetItemsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/dynamodb-2012-08-10/TransactGetItems
+func (c *DynamoDB) TransactGetItemsRequest(input *TransactGetItemsInput) (req *request.Request, output *TransactGetItemsOutput) {
+	op := &request.Operation{
+		Name:       opTransactGetItems,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &TransactGetItemsInput{}
+	}
+
+	output = &TransactGetItemsOutput{}
+	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
+	return
+}
+
+// TransactGetItems API operation for Amazon DynamoDB.
+//
+// TransactGetItems is a synchronous operation that atomically retrieves multiple
+// items from one or more tables (but not from indexes) in a single account
+// and Region. A TransactGetItems call can contain up to 25 TransactGetItem
+// objects, each of which contains a Get structure that specifies an item to
+// retrieve from a table in the account and Region. A call to TransactGetItems
+// cannot retrieve items from tables in more than one AWS account or Region.
+// The aggregate size of the items in the transaction cannot exceed 4 MB.
+//
+// All AWS Regions and AWS GovCloud (US) support up to 25 items per transaction
+// with up to 4 MB of data, except the following AWS Regions:
+//
+//    * China (Beijing)
+//
+//    * China (Ningxia)
+//
+// The China (Beijing) and China (Ningxia) Regions support up to 10 items per
+// transaction with up to 4 MB of data.
+//
+// DynamoDB rejects the entire TransactGetItems request if any of the following
+// is true:
+//
+//    * A conflicting operation is in the process of updating an item to be
+//    read.
+//
+//    * There is insufficient provisioned capacity for the transaction to be
+//    completed.
+//
+//    * There is a user error, such as an invalid data format.
+//
+//    * The aggregate size of the items in the transaction cannot exceed 4 MB.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon DynamoDB's
+// API operation TransactGetItems for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   The operation tried to access a nonexistent table or index. The resource
+//   might not be specified correctly, or its status might not be ACTIVE.
+//
+//   * ErrCodeTransactionCanceledException "TransactionCanceledException"
+//   The entire transaction request was canceled.
+//
+//   DynamoDB cancels a TransactWriteItems request under the following circumstances:
+//
+//      * A condition in one of the condition expressions is not met.
+//
+//      * A table in the TransactWriteItems request is in a different account
+//      or region.
+//
+//      * More than one action in the TransactWriteItems operation targets the
+//      same item.
+//
+//      * There is insufficient provisioned capacity for the transaction to be
+//      completed.
+//
+//      * An item size becomes too large (larger than 400 KB), or a local secondary
+//      index (LSI) becomes too large, or a similar validation error occurs because
+//      of changes made by the transaction.
+//
+//      * The aggregate size of the items in the transaction exceeds 4 MBs.
+//
+//      * There is a user error, such as an invalid data format.
+//
+//   DynamoDB cancels a TransactGetItems request under the following circumstances:
+//
+//      * There is an ongoing TransactGetItems operation that conflicts with a
+//      concurrent PutItem, UpdateItem, DeleteItem or TransactWriteItems request.
+//      In this case the TransactGetItems operation fails with a TransactionCanceledException.
+//
+//      * A table in the TransactGetItems request is in a different account or
+//      region.
+//
+//      * There is insufficient provisioned capacity for the transaction to be
+//      completed.
+//
+//      * The aggregate size of the items in the transaction exceeds 4 MBs.
+//
+//      * There is a user error, such as an invalid data format.
+//
+//   If using Java, DynamoDB lists the cancellation reasons on the CancellationReasons
+//   property. This property is not set for other languages. Transaction cancellation
+//   reasons are ordered in the order of requested items, if an item has no error
+//   it will have NONE code and Null message.
+//
+//   Cancellation reason codes and possible error messages:
+//
+//      * No Errors: Code: NONE Message: null
+//
+//      * Conditional Check Failed: Code: ConditionalCheckFailed Message: The
+//      conditional request failed.
+//
+//      * Item Collection Size Limit Exceeded: Code: ItemCollectionSizeLimitExceeded
+//      Message: Collection size exceeded.
+//
+//      * Transaction Conflict: Code: TransactionConflict Message: Transaction
+//      is ongoing for the item.
+//
+//      * Provisioned Throughput Exceeded: Code: ProvisionedThroughputExceeded
+//      Messages: The level of configured provisioned throughput for the table
+//      was exceeded. Consider increasing your provisioning level with the UpdateTable
+//      API. This Message is received when provisioned throughput is exceeded
+//      is on a provisioned DynamoDB table. The level of configured provisioned
+//      throughput for one or more global secondary indexes of the table was exceeded.
+//      Consider increasing your provisioning level for the under-provisioned
+//      global secondary indexes with the UpdateTable API. This message is returned
+//      when provisioned throughput is exceeded is on a provisioned GSI.
+//
+//      * Throttling Error: Code: ThrottlingError Messages: Throughput exceeds
+//      the current capacity of your table or index. DynamoDB is automatically
+//      scaling your table or index so please try again shortly. If exceptions
+//      persist, check if you have a hot key: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html.
+//      This message is returned when writes get throttled on an On-Demand table
+//      as DynamoDB is automatically scaling the table. Throughput exceeds the
+//      current capacity for one or more global secondary indexes. DynamoDB is
+//      automatically scaling your index so please try again shortly. This message
+//      is returned when when writes get throttled on an On-Demand GSI as DynamoDB
+//      is automatically scaling the GSI.
+//
+//      * Validation Error: Code: ValidationError Messages: One or more parameter
+//      values were invalid. The update expression attempted to update the secondary
+//      index key beyond allowed size limits. The update expression attempted
+//      to update the secondary index key to unsupported type. An operand in the
+//      update expression has an incorrect data type. Item size to update has
+//      exceeded the maximum allowed size. Number overflow. Attempting to store
+//      a number with magnitude larger than supported range. Type mismatch for
+//      attribute to update. Nesting Levels have exceeded supported limits. The
+//      document path provided in the update expression is invalid for update.
+//      The provided expression refers to an attribute that does not exist in
+//      the item.
+//
+//   * ErrCodeProvisionedThroughputExceededException "ProvisionedThroughputExceededException"
+//   Your request rate is too high. The AWS SDKs for DynamoDB automatically retry
+//   requests that receive this exception. Your request is eventually successful,
+//   unless your retry queue is too large to finish. Reduce the frequency of requests
+//   and use exponential backoff. For more information, go to Error Retries and
+//   Exponential Backoff (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
+//   in the Amazon DynamoDB Developer Guide.
+//
+//   * ErrCodeInternalServerError "InternalServerError"
+//   An error occurred on the server side.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/dynamodb-2012-08-10/TransactGetItems
+func (c *DynamoDB) TransactGetItems(input *TransactGetItemsInput) (*TransactGetItemsOutput, error) {
+	req, out := c.TransactGetItemsRequest(input)
+	return out, req.Send()
+}
+
+// TransactGetItemsWithContext is the same as TransactGetItems with the addition of
+// the ability to pass a context and additional request options.
+//
+// See TransactGetItems for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DynamoDB) TransactGetItemsWithContext(ctx aws.Context, input *TransactGetItemsInput, opts ...request.Option) (*TransactGetItemsOutput, error) {
+	req, out := c.TransactGetItemsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opTransactWriteItems = "TransactWriteItems"
+
+// TransactWriteItemsRequest generates a "aws/request.Request" representing the
+// client's request for the TransactWriteItems operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See TransactWriteItems for more information on using the TransactWriteItems
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the TransactWriteItemsRequest method.
+//    req, resp := client.TransactWriteItemsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/dynamodb-2012-08-10/TransactWriteItems
+func (c *DynamoDB) TransactWriteItemsRequest(input *TransactWriteItemsInput) (req *request.Request, output *TransactWriteItemsOutput) {
+	op := &request.Operation{
+		Name:       opTransactWriteItems,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &TransactWriteItemsInput{}
+	}
+
+	output = &TransactWriteItemsOutput{}
+	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
+	return
+}
+
+// TransactWriteItems API operation for Amazon DynamoDB.
+//
+// TransactWriteItems is a synchronous write operation that groups up to 25
+// action requests. These actions can target items in different tables, but
+// not in different AWS accounts or Regions, and no two actions can target the
+// same item. For example, you cannot both ConditionCheck and Update the same
+// item. The aggregate size of the items in the transaction cannot exceed 4
+// MB.
+//
+// All AWS Regions and AWS GovCloud (US) support up to 25 items per transaction
+// with up to 4 MB of data, except the following AWS Regions:
+//
+//    * China (Beijing)
+//
+//    * China (Ningxia)
+//
+// The China (Beijing) and China (Ningxia) Regions support up to 10 items per
+// transaction with up to 4 MB of data.
+//
+// The actions are completed atomically so that either all of them succeed,
+// or all of them fail. They are defined by the following objects:
+//
+//    * Put — Initiates a PutItem operation to write a new item. This structure
+//    specifies the primary key of the item to be written, the name of the table
+//    to write it in, an optional condition expression that must be satisfied
+//    for the write to succeed, a list of the item's attributes, and a field
+//    indicating whether to retrieve the item's attributes if the condition
+//    is not met.
+//
+//    * Update — Initiates an UpdateItem operation to update an existing item.
+//    This structure specifies the primary key of the item to be updated, the
+//    name of the table where it resides, an optional condition expression that
+//    must be satisfied for the update to succeed, an expression that defines
+//    one or more attributes to be updated, and a field indicating whether to
+//    retrieve the item's attributes if the condition is not met.
+//
+//    * Delete — Initiates a DeleteItem operation to delete an existing item.
+//    This structure specifies the primary key of the item to be deleted, the
+//    name of the table where it resides, an optional condition expression that
+//    must be satisfied for the deletion to succeed, and a field indicating
+//    whether to retrieve the item's attributes if the condition is not met.
+//
+//    * ConditionCheck — Applies a condition to an item that is not being
+//    modified by the transaction. This structure specifies the primary key
+//    of the item to be checked, the name of the table where it resides, a condition
+//    expression that must be satisfied for the transaction to succeed, and
+//    a field indicating whether to retrieve the item's attributes if the condition
+//    is not met.
+//
+// DynamoDB rejects the entire TransactWriteItems request if any of the following
+// is true:
+//
+//    * A condition in one of the condition expressions is not met.
+//
+//    * An ongoing operation is in the process of updating the same item.
+//
+//    * There is insufficient provisioned capacity for the transaction to be
+//    completed.
+//
+//    * An item size becomes too large (bigger than 400 KB), a local secondary
+//    index (LSI) becomes too large, or a similar validation error occurs because
+//    of changes made by the transaction.
+//
+//    * The aggregate size of the items in the transaction exceeds 4 MB.
+//
+//    * There is a user error, such as an invalid data format.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon DynamoDB's
+// API operation TransactWriteItems for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   The operation tried to access a nonexistent table or index. The resource
+//   might not be specified correctly, or its status might not be ACTIVE.
+//
+//   * ErrCodeTransactionCanceledException "TransactionCanceledException"
+//   The entire transaction request was canceled.
+//
+//   DynamoDB cancels a TransactWriteItems request under the following circumstances:
+//
+//      * A condition in one of the condition expressions is not met.
+//
+//      * A table in the TransactWriteItems request is in a different account
+//      or region.
+//
+//      * More than one action in the TransactWriteItems operation targets the
+//      same item.
+//
+//      * There is insufficient provisioned capacity for the transaction to be
+//      completed.
+//
+//      * An item size becomes too large (larger than 400 KB), or a local secondary
+//      index (LSI) becomes too large, or a similar validation error occurs because
+//      of changes made by the transaction.
+//
+//      * The aggregate size of the items in the transaction exceeds 4 MBs.
+//
+//      * There is a user error, such as an invalid data format.
+//
+//   DynamoDB cancels a TransactGetItems request under the following circumstances:
+//
+//      * There is an ongoing TransactGetItems operation that conflicts with a
+//      concurrent PutItem, UpdateItem, DeleteItem or TransactWriteItems request.
+//      In this case the TransactGetItems operation fails with a TransactionCanceledException.
+//
+//      * A table in the TransactGetItems request is in a different account or
+//      region.
+//
+//      * There is insufficient provisioned capacity for the transaction to be
+//      completed.
+//
+//      * The aggregate size of the items in the transaction exceeds 4 MBs.
+//
+//      * There is a user error, such as an invalid data format.
+//
+//   If using Java, DynamoDB lists the cancellation reasons on the CancellationReasons
+//   property. This property is not set for other languages. Transaction cancellation
+//   reasons are ordered in the order of requested items, if an item has no error
+//   it will have NONE code and Null message.
+//
+//   Cancellation reason codes and possible error messages:
+//
+//      * No Errors: Code: NONE Message: null
+//
+//      * Conditional Check Failed: Code: ConditionalCheckFailed Message: The
+//      conditional request failed.
+//
+//      * Item Collection Size Limit Exceeded: Code: ItemCollectionSizeLimitExceeded
+//      Message: Collection size exceeded.
+//
+//      * Transaction Conflict: Code: TransactionConflict Message: Transaction
+//      is ongoing for the item.
+//
+//      * Provisioned Throughput Exceeded: Code: ProvisionedThroughputExceeded
+//      Messages: The level of configured provisioned throughput for the table
+//      was exceeded. Consider increasing your provisioning level with the UpdateTable
+//      API. This Message is received when provisioned throughput is exceeded
+//      is on a provisioned DynamoDB table. The level of configured provisioned
+//      throughput for one or more global secondary indexes of the table was exceeded.
+//      Consider increasing your provisioning level for the under-provisioned
+//      global secondary indexes with the UpdateTable API. This message is returned
+//      when provisioned throughput is exceeded is on a provisioned GSI.
+//
+//      * Throttling Error: Code: ThrottlingError Messages: Throughput exceeds
+//      the current capacity of your table or index. DynamoDB is automatically
+//      scaling your table or index so please try again shortly. If exceptions
+//      persist, check if you have a hot key: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html.
+//      This message is returned when writes get throttled on an On-Demand table
+//      as DynamoDB is automatically scaling the table. Throughput exceeds the
+//      current capacity for one or more global secondary indexes. DynamoDB is
+//      automatically scaling your index so please try again shortly. This message
+//      is returned when when writes get throttled on an On-Demand GSI as DynamoDB
+//      is automatically scaling the GSI.
+//
+//      * Validation Error: Code: ValidationError Messages: One or more parameter
+//      values were invalid. The update expression attempted to update the secondary
+//      index key beyond allowed size limits. The update expression attempted
+//      to update the secondary index key to unsupported type. An operand in the
+//      update expression has an incorrect data type. Item size to update has
+//      exceeded the maximum allowed size. Number overflow. Attempting to store
+//      a number with magnitude larger than supported range. Type mismatch for
+//      attribute to update. Nesting Levels have exceeded supported limits. The
+//      document path provided in the update expression is invalid for update.
+//      The provided expression refers to an attribute that does not exist in
+//      the item.
+//
+//   * ErrCodeTransactionInProgressException "TransactionInProgressException"
+//   The transaction with the given request token is already in progress.
+//
+//   * ErrCodeIdempotentParameterMismatchException "IdempotentParameterMismatchException"
+//   DynamoDB rejected the request because you retried a request with a different
+//   payload but with an idempotent token that was already used.
+//
+//   * ErrCodeProvisionedThroughputExceededException "ProvisionedThroughputExceededException"
+//   Your request rate is too high. The AWS SDKs for DynamoDB automatically retry
+//   requests that receive this exception. Your request is eventually successful,
+//   unless your retry queue is too large to finish. Reduce the frequency of requests
+//   and use exponential backoff. For more information, go to Error Retries and
+//   Exponential Backoff (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
+//   in the Amazon DynamoDB Developer Guide.
+//
+//   * ErrCodeInternalServerError "InternalServerError"
+//   An error occurred on the server side.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/dynamodb-2012-08-10/TransactWriteItems
+func (c *DynamoDB) TransactWriteItems(input *TransactWriteItemsInput) (*TransactWriteItemsOutput, error) {
+	req, out := c.TransactWriteItemsRequest(input)
+	return out, req.Send()
+}
+
+// TransactWriteItemsWithContext is the same as TransactWriteItems with the addition of
+// the ability to pass a context and additional request options.
+//
+// See TransactWriteItems for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DynamoDB) TransactWriteItemsWithContext(ctx aws.Context, input *TransactWriteItemsInput, opts ...request.Option) (*TransactWriteItemsOutput, error) {
+	req, out := c.TransactWriteItemsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUntagResource = "UntagResource"
 
 // UntagResourceRequest generates a "aws/request.Request" representing the
 // client's request for the UntagResource operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -3150,17 +4376,37 @@ func (c *DynamoDB) UntagResourceRequest(input *UntagResourceInput) (req *request
 
 	output = &UntagResourceOutput{}
 	req = c.newRequest(op, input, output)
-	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
-	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
 // UntagResource API operation for Amazon DynamoDB.
 //
 // Removes the association of tags from an Amazon DynamoDB resource. You can
-// call UntagResource up to 5 times per second, per account.
+// call UntagResource up to five times per second, per account.
 //
-// For an overview on tagging DynamoDB resources, see Tagging for DynamoDB (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tagging.html)
+// For an overview on tagging DynamoDB resources, see Tagging for DynamoDB (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tagging.html)
 // in the Amazon DynamoDB Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -3172,18 +4418,18 @@ func (c *DynamoDB) UntagResourceRequest(input *UntagResourceInput) (req *request
 //
 // Returned Error Codes:
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The operation tried to access a nonexistent table or index. The resource
@@ -3224,7 +4470,7 @@ const opUpdateContinuousBackups = "UpdateContinuousBackups"
 // UpdateContinuousBackupsRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateContinuousBackups operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -3258,6 +4504,27 @@ func (c *DynamoDB) UpdateContinuousBackupsRequest(input *UpdateContinuousBackups
 
 	output = &UpdateContinuousBackupsOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -3273,7 +4540,7 @@ func (c *DynamoDB) UpdateContinuousBackupsRequest(input *UpdateContinuousBackups
 // to any point in time within EarliestRestorableDateTime and LatestRestorableDateTime.
 //
 // LatestRestorableDateTime is typically 5 minutes before the current time.
-// You can restore your table to any point in time during the last 35 days..
+// You can restore your table to any point in time during the last 35 days.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3320,7 +4587,7 @@ const opUpdateGlobalTable = "UpdateGlobalTable"
 // UpdateGlobalTableRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateGlobalTable operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -3354,6 +4621,27 @@ func (c *DynamoDB) UpdateGlobalTableRequest(input *UpdateGlobalTableInput) (req 
 
 	output = &UpdateGlobalTableOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -3361,9 +4649,9 @@ func (c *DynamoDB) UpdateGlobalTableRequest(input *UpdateGlobalTableInput) (req 
 //
 // Adds or removes replicas in the specified global table. The global table
 // must already exist to be able to use this operation. Any replica to be added
-// must be empty, must have the same name as the global table, must have the
-// same key schema, and must have DynamoDB Streams enabled and must have same
-// provisioned and maximum write capacity units.
+// must be empty, have the same name as the global table, have the same key
+// schema, have DynamoDB Streams enabled, and have the same provisioned and
+// maximum write capacity units.
 //
 // Although you can use UpdateGlobalTable to add replicas and remove replicas
 // in a single request, for simplicity we recommend that you issue separate
@@ -3372,12 +4660,12 @@ func (c *DynamoDB) UpdateGlobalTableRequest(input *UpdateGlobalTableInput) (req 
 // If global secondary indexes are specified, then the following conditions
 // must also be met:
 //
-//    *  The global secondary indexes must have the same name.
+//    * The global secondary indexes must have the same name.
 //
-//    *  The global secondary indexes must have the same hash key and sort key
+//    * The global secondary indexes must have the same hash key and sort key
 //    (if present).
 //
-//    *  The global secondary indexes must have the same provisioned and maximum
+//    * The global secondary indexes must have the same provisioned and maximum
 //    write capacity units.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -3431,7 +4719,7 @@ const opUpdateGlobalTableSettings = "UpdateGlobalTableSettings"
 // UpdateGlobalTableSettingsRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateGlobalTableSettings operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -3465,6 +4753,27 @@ func (c *DynamoDB) UpdateGlobalTableSettingsRequest(input *UpdateGlobalTableSett
 
 	output = &UpdateGlobalTableSettingsOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -3490,18 +4799,18 @@ func (c *DynamoDB) UpdateGlobalTableSettingsRequest(input *UpdateGlobalTableSett
 //   The operation tried to access a nonexistent index.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeResourceInUseException "ResourceInUseException"
 //   The operation conflicts with the resource's availability. For example, you
@@ -3538,7 +4847,7 @@ const opUpdateItem = "UpdateItem"
 // UpdateItemRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateItem operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -3572,6 +4881,27 @@ func (c *DynamoDB) UpdateItemRequest(input *UpdateItemInput) (req *request.Reque
 
 	output = &UpdateItemOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -3602,7 +4932,7 @@ func (c *DynamoDB) UpdateItemRequest(input *UpdateItemInput) (req *request.Reque
 //   requests that receive this exception. Your request is eventually successful,
 //   unless your retry queue is too large to finish. Reduce the frequency of requests
 //   and use exponential backoff. For more information, go to Error Retries and
-//   Exponential Backoff (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
+//   Exponential Backoff (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
 //   in the Amazon DynamoDB Developer Guide.
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
@@ -3612,6 +4942,14 @@ func (c *DynamoDB) UpdateItemRequest(input *UpdateItemInput) (req *request.Reque
 //   * ErrCodeItemCollectionSizeLimitExceededException "ItemCollectionSizeLimitExceededException"
 //   An item collection is too large. This exception is only returned for tables
 //   that have one or more local secondary indexes.
+//
+//   * ErrCodeTransactionConflictException "TransactionConflictException"
+//   Operation was rejected because there is an ongoing transaction for the item.
+//
+//   * ErrCodeRequestLimitExceeded "RequestLimitExceeded"
+//   Throughput exceeds the current throughput limit for your account. Please
+//   contact AWS Support at AWS Support (https://aws.amazon.com/support) to request
+//   a limit increase.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -3643,7 +4981,7 @@ const opUpdateTable = "UpdateTable"
 // UpdateTableRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateTable operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -3677,6 +5015,27 @@ func (c *DynamoDB) UpdateTableRequest(input *UpdateTableInput) (req *request.Req
 
 	output = &UpdateTableOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
@@ -3689,11 +5048,11 @@ func (c *DynamoDB) UpdateTableRequest(input *UpdateTableInput) (req *request.Req
 //
 //    * Modify the provisioned throughput settings of the table.
 //
-//    * Enable or disable Streams on the table.
+//    * Enable or disable DynamoDB Streams on the table.
 //
 //    * Remove a global secondary index from the table.
 //
-//    * Create a new global secondary index on the table. Once the index begins
+//    * Create a new global secondary index on the table. After the index begins
 //    backfilling, you can use UpdateTable to perform other operations.
 //
 // UpdateTable is an asynchronous operation; while it is executing, the table
@@ -3719,18 +5078,18 @@ func (c *DynamoDB) UpdateTableRequest(input *UpdateTableInput) (req *request.Req
 //   might not be specified correctly, or its status might not be ACTIVE.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -3762,7 +5121,7 @@ const opUpdateTimeToLive = "UpdateTimeToLive"
 // UpdateTimeToLiveRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateTimeToLive operation. The "output" return
 // value will be populated with the request's response once the request completes
-// successfuly.
+// successfully.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
@@ -3796,14 +5155,35 @@ func (c *DynamoDB) UpdateTimeToLiveRequest(input *UpdateTimeToLiveInput) (req *r
 
 	output = &UpdateTimeToLiveOutput{}
 	req = c.newRequest(op, input, output)
+	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
+		de := discovererDescribeEndpoints{
+			Required:      false,
+			EndpointCache: c.endpointCache,
+			Params: map[string]*string{
+				"op": aws.String(req.Operation.Name),
+			},
+			Client: c,
+		}
+
+		for k, v := range de.Params {
+			if v == nil {
+				delete(de.Params, k)
+			}
+		}
+
+		req.Handlers.Build.PushFrontNamed(request.NamedHandler{
+			Name: "crr.endpointdiscovery",
+			Fn:   de.Handler,
+		})
+	}
 	return
 }
 
 // UpdateTimeToLive API operation for Amazon DynamoDB.
 //
-// The UpdateTimeToLive method will enable or disable TTL for the specified
-// table. A successful UpdateTimeToLive call returns the current TimeToLiveSpecification;
-// it may take up to one hour for the change to fully process. Any additional
+// The UpdateTimeToLive method enables or disables Time to Live (TTL) for the
+// specified table. A successful UpdateTimeToLive call returns the current TimeToLiveSpecification.
+// It can take up to one hour for the change to fully process. Any additional
 // UpdateTimeToLive calls for the same table during this one hour duration result
 // in a ValidationException.
 //
@@ -3813,7 +5193,7 @@ func (c *DynamoDB) UpdateTimeToLiveRequest(input *UpdateTimeToLiveInput) (req *r
 // deleted.
 //
 // The epoch time format is the number of seconds elapsed since 12:00:00 AM
-// January 1st, 1970 UTC.
+// January 1, 1970 UTC.
 //
 // DynamoDB deletes expired items on a best-effort basis to ensure availability
 // of throughput for other data operations.
@@ -3823,11 +5203,11 @@ func (c *DynamoDB) UpdateTimeToLiveRequest(input *UpdateTimeToLiveInput) (req *r
 // to the nature of the workload. Items that have expired and not been deleted
 // will still show up in reads, queries, and scans.
 //
-// As items are deleted, they are removed from any Local Secondary Index and
-// Global Secondary Index immediately in the same eventually consistent way
+// As items are deleted, they are removed from any local secondary index and
+// global secondary index immediately in the same eventually consistent way
 // as a standard delete operation.
 //
-// For more information, see Time To Live (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html)
+// For more information, see Time To Live (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html)
 // in the Amazon DynamoDB Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -3848,18 +5228,18 @@ func (c *DynamoDB) UpdateTimeToLiveRequest(input *UpdateTimeToLiveInput) (req *r
 //   might not be specified correctly, or its status might not be ACTIVE.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
-//   Up to 50 CreateBackup operations are allowed per second, per account. There
-//   is no limit to the number of daily on-demand backups that can be taken.
+//   There is no limit to the number of daily on-demand backups that can be taken.
 //
-//   Up to 10 simultaneous table operations are allowed per account. These operations
+//   Up to 50 simultaneous table operations are allowed per account. These operations
 //   include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, RestoreTableFromBackup,
 //   and RestoreTableToPointInTime.
 //
-//   For tables with secondary indexes, only one of those tables can be in the
-//   CREATING state at any point in time. Do not attempt to create more than one
-//   such table simultaneously.
+//   The only exception is when you are creating a table with one or more secondary
+//   indexes. You can have up to 25 such requests running at a time; however,
+//   if the table or index specifications are complex, DynamoDB might temporarily
+//   reduce the number of concurrent operations.
 //
-//   The total limit of tables in the ACTIVE state is 250.
+//   There is a soft account limit of 256 tables.
 //
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
@@ -3953,7 +5333,7 @@ func (s *AttributeDefinition) SetAttributeType(v string) *AttributeDefinition {
 // Each attribute value is described as a name-value pair. The name is the data
 // type, and the value is the data itself.
 //
-// For more information, see Data Types (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html#HowItWorks.DataTypes)
+// For more information, see Data Types (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html#HowItWorks.DataTypes)
 // in the Amazon DynamoDB Developer Guide.
 type AttributeValue struct {
 	_ struct{} `type:"structure"`
@@ -3977,7 +5357,7 @@ type AttributeValue struct {
 
 	// An attribute of type List. For example:
 	//
-	// "L": ["Cookies", "Coffee", 3.14159]
+	// "L": [ {"S": "Cookies"} , {"S": "Coffee"}, {"N", "3.14159"}]
 	L []*AttributeValue `type:"list"`
 
 	// An attribute of type Map. For example:
@@ -4113,47 +5493,38 @@ type AttributeValueUpdate struct {
 	//
 	//    * DELETE - If no value is specified, the attribute and its value are removed
 	//    from the item. The data type of the specified value must match the existing
-	//    value's data type.
-	//
-	// If a set of values is specified, then those values are subtracted from the
-	//    old set. For example, if the attribute value was the set [a,b,c] and the
-	//    DELETE action specified [a,c], then the final attribute value would be
-	//    [b]. Specifying an empty set is an error.
+	//    value's data type. If a set of values is specified, then those values
+	//    are subtracted from the old set. For example, if the attribute value was
+	//    the set [a,b,c] and the DELETE action specified [a,c], then the final
+	//    attribute value would be [b]. Specifying an empty set is an error.
 	//
 	//    * ADD - If the attribute does not already exist, then the attribute and
 	//    its values are added to the item. If the attribute does exist, then the
-	//    behavior of ADD depends on the data type of the attribute:
-	//
-	// If the existing attribute is a number, and if Value is also a number, then
-	//    the Value is mathematically added to the existing attribute. If Value
-	//    is a negative number, then it is subtracted from the existing attribute.
-	//
-	//  If you use ADD to increment or decrement a number value for an item that
-	//    doesn't exist before the update, DynamoDB uses 0 as the initial value.
-	//
-	// In addition, if you use ADD to update an existing item, and intend to increment
-	//    or decrement an attribute value which does not yet exist, DynamoDB uses
-	//    0 as the initial value. For example, suppose that the item you want to
-	//    update does not yet have an attribute named itemcount, but you decide
-	//    to ADD the number 3 to this attribute anyway, even though it currently
-	//    does not exist. DynamoDB will create the itemcount attribute, set its
-	//    initial value to 0, and finally add 3 to it. The result will be a new
-	//    itemcount attribute in the item, with a value of 3.
-	//
-	// If the existing data type is a set, and if the Value is also a set, then
-	//    the Value is added to the existing set. (This is a set operation, not
-	//    mathematical addition.) For example, if the attribute value was the set
-	//    [1,2], and the ADD action specified [3], then the final attribute value
-	//    would be [1,2,3]. An error occurs if an Add action is specified for a
-	//    set attribute and the attribute type specified does not match the existing
-	//    set type.
-	//
-	// Both sets must have the same primitive data type. For example, if the existing
-	//    data type is a set of strings, the Value must also be a set of strings.
-	//    The same holds true for number sets and binary sets.
-	//
-	// This action is only valid for an existing attribute whose data type is number
-	//    or is a set. Do not use ADD for any other data types.
+	//    behavior of ADD depends on the data type of the attribute: If the existing
+	//    attribute is a number, and if Value is also a number, then the Value is
+	//    mathematically added to the existing attribute. If Value is a negative
+	//    number, then it is subtracted from the existing attribute. If you use
+	//    ADD to increment or decrement a number value for an item that doesn't
+	//    exist before the update, DynamoDB uses 0 as the initial value. In addition,
+	//    if you use ADD to update an existing item, and intend to increment or
+	//    decrement an attribute value which does not yet exist, DynamoDB uses 0
+	//    as the initial value. For example, suppose that the item you want to update
+	//    does not yet have an attribute named itemcount, but you decide to ADD
+	//    the number 3 to this attribute anyway, even though it currently does not
+	//    exist. DynamoDB will create the itemcount attribute, set its initial value
+	//    to 0, and finally add 3 to it. The result will be a new itemcount attribute
+	//    in the item, with a value of 3. If the existing data type is a set, and
+	//    if the Value is also a set, then the Value is added to the existing set.
+	//    (This is a set operation, not mathematical addition.) For example, if
+	//    the attribute value was the set [1,2], and the ADD action specified [3],
+	//    then the final attribute value would be [1,2,3]. An error occurs if an
+	//    Add action is specified for a set attribute and the attribute type specified
+	//    does not match the existing set type. Both sets must have the same primitive
+	//    data type. For example, if the existing data type is a set of strings,
+	//    the Value must also be a set of strings. The same holds true for number
+	//    sets and binary sets. This action is only valid for an existing attribute
+	//    whose data type is number or is a set. Do not use ADD for any other data
+	//    types.
 	//
 	// If no item with the specified Key is found:
 	//
@@ -4172,7 +5543,7 @@ type AttributeValueUpdate struct {
 	// Each attribute value is described as a name-value pair. The name is the data
 	// type, and the value is the data itself.
 	//
-	// For more information, see Data Types (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html#HowItWorks.DataTypes)
+	// For more information, see Data Types (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html#HowItWorks.DataTypes)
 	// in the Amazon DynamoDB Developer Guide.
 	Value *AttributeValue `type:"structure"`
 }
@@ -4196,6 +5567,394 @@ func (s *AttributeValueUpdate) SetAction(v string) *AttributeValueUpdate {
 // SetValue sets the Value field's value.
 func (s *AttributeValueUpdate) SetValue(v *AttributeValue) *AttributeValueUpdate {
 	s.Value = v
+	return s
+}
+
+// Represents the properties of the scaling policy.
+type AutoScalingPolicyDescription struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the scaling policy.
+	PolicyName *string `min:"1" type:"string"`
+
+	// Represents a target tracking scaling policy configuration.
+	TargetTrackingScalingPolicyConfiguration *AutoScalingTargetTrackingScalingPolicyConfigurationDescription `type:"structure"`
+}
+
+// String returns the string representation
+func (s AutoScalingPolicyDescription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AutoScalingPolicyDescription) GoString() string {
+	return s.String()
+}
+
+// SetPolicyName sets the PolicyName field's value.
+func (s *AutoScalingPolicyDescription) SetPolicyName(v string) *AutoScalingPolicyDescription {
+	s.PolicyName = &v
+	return s
+}
+
+// SetTargetTrackingScalingPolicyConfiguration sets the TargetTrackingScalingPolicyConfiguration field's value.
+func (s *AutoScalingPolicyDescription) SetTargetTrackingScalingPolicyConfiguration(v *AutoScalingTargetTrackingScalingPolicyConfigurationDescription) *AutoScalingPolicyDescription {
+	s.TargetTrackingScalingPolicyConfiguration = v
+	return s
+}
+
+// Represents the autoscaling policy to be modified.
+type AutoScalingPolicyUpdate struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the scaling policy.
+	PolicyName *string `min:"1" type:"string"`
+
+	// Represents a target tracking scaling policy configuration.
+	//
+	// TargetTrackingScalingPolicyConfiguration is a required field
+	TargetTrackingScalingPolicyConfiguration *AutoScalingTargetTrackingScalingPolicyConfigurationUpdate `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s AutoScalingPolicyUpdate) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AutoScalingPolicyUpdate) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AutoScalingPolicyUpdate) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AutoScalingPolicyUpdate"}
+	if s.PolicyName != nil && len(*s.PolicyName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("PolicyName", 1))
+	}
+	if s.TargetTrackingScalingPolicyConfiguration == nil {
+		invalidParams.Add(request.NewErrParamRequired("TargetTrackingScalingPolicyConfiguration"))
+	}
+	if s.TargetTrackingScalingPolicyConfiguration != nil {
+		if err := s.TargetTrackingScalingPolicyConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("TargetTrackingScalingPolicyConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetPolicyName sets the PolicyName field's value.
+func (s *AutoScalingPolicyUpdate) SetPolicyName(v string) *AutoScalingPolicyUpdate {
+	s.PolicyName = &v
+	return s
+}
+
+// SetTargetTrackingScalingPolicyConfiguration sets the TargetTrackingScalingPolicyConfiguration field's value.
+func (s *AutoScalingPolicyUpdate) SetTargetTrackingScalingPolicyConfiguration(v *AutoScalingTargetTrackingScalingPolicyConfigurationUpdate) *AutoScalingPolicyUpdate {
+	s.TargetTrackingScalingPolicyConfiguration = v
+	return s
+}
+
+// Represents the autoscaling settings for a global table or global secondary
+// index.
+type AutoScalingSettingsDescription struct {
+	_ struct{} `type:"structure"`
+
+	// Disabled autoscaling for this global table or global secondary index.
+	AutoScalingDisabled *bool `type:"boolean"`
+
+	// Role ARN used for configuring autoScaling policy.
+	AutoScalingRoleArn *string `type:"string"`
+
+	// The maximum capacity units that a global table or global secondary index
+	// should be scaled up to.
+	MaximumUnits *int64 `min:"1" type:"long"`
+
+	// The minimum capacity units that a global table or global secondary index
+	// should be scaled down to.
+	MinimumUnits *int64 `min:"1" type:"long"`
+
+	// Information about the scaling policies.
+	ScalingPolicies []*AutoScalingPolicyDescription `type:"list"`
+}
+
+// String returns the string representation
+func (s AutoScalingSettingsDescription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AutoScalingSettingsDescription) GoString() string {
+	return s.String()
+}
+
+// SetAutoScalingDisabled sets the AutoScalingDisabled field's value.
+func (s *AutoScalingSettingsDescription) SetAutoScalingDisabled(v bool) *AutoScalingSettingsDescription {
+	s.AutoScalingDisabled = &v
+	return s
+}
+
+// SetAutoScalingRoleArn sets the AutoScalingRoleArn field's value.
+func (s *AutoScalingSettingsDescription) SetAutoScalingRoleArn(v string) *AutoScalingSettingsDescription {
+	s.AutoScalingRoleArn = &v
+	return s
+}
+
+// SetMaximumUnits sets the MaximumUnits field's value.
+func (s *AutoScalingSettingsDescription) SetMaximumUnits(v int64) *AutoScalingSettingsDescription {
+	s.MaximumUnits = &v
+	return s
+}
+
+// SetMinimumUnits sets the MinimumUnits field's value.
+func (s *AutoScalingSettingsDescription) SetMinimumUnits(v int64) *AutoScalingSettingsDescription {
+	s.MinimumUnits = &v
+	return s
+}
+
+// SetScalingPolicies sets the ScalingPolicies field's value.
+func (s *AutoScalingSettingsDescription) SetScalingPolicies(v []*AutoScalingPolicyDescription) *AutoScalingSettingsDescription {
+	s.ScalingPolicies = v
+	return s
+}
+
+// Represents the autoscaling settings to be modified for a global table or
+// global secondary index.
+type AutoScalingSettingsUpdate struct {
+	_ struct{} `type:"structure"`
+
+	// Disabled autoscaling for this global table or global secondary index.
+	AutoScalingDisabled *bool `type:"boolean"`
+
+	// Role ARN used for configuring autoscaling policy.
+	AutoScalingRoleArn *string `min:"1" type:"string"`
+
+	// The maximum capacity units that a global table or global secondary index
+	// should be scaled up to.
+	MaximumUnits *int64 `min:"1" type:"long"`
+
+	// The minimum capacity units that a global table or global secondary index
+	// should be scaled down to.
+	MinimumUnits *int64 `min:"1" type:"long"`
+
+	// The scaling policy to apply for scaling target global table or global secondary
+	// index capacity units.
+	ScalingPolicyUpdate *AutoScalingPolicyUpdate `type:"structure"`
+}
+
+// String returns the string representation
+func (s AutoScalingSettingsUpdate) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AutoScalingSettingsUpdate) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AutoScalingSettingsUpdate) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AutoScalingSettingsUpdate"}
+	if s.AutoScalingRoleArn != nil && len(*s.AutoScalingRoleArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("AutoScalingRoleArn", 1))
+	}
+	if s.MaximumUnits != nil && *s.MaximumUnits < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaximumUnits", 1))
+	}
+	if s.MinimumUnits != nil && *s.MinimumUnits < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MinimumUnits", 1))
+	}
+	if s.ScalingPolicyUpdate != nil {
+		if err := s.ScalingPolicyUpdate.Validate(); err != nil {
+			invalidParams.AddNested("ScalingPolicyUpdate", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAutoScalingDisabled sets the AutoScalingDisabled field's value.
+func (s *AutoScalingSettingsUpdate) SetAutoScalingDisabled(v bool) *AutoScalingSettingsUpdate {
+	s.AutoScalingDisabled = &v
+	return s
+}
+
+// SetAutoScalingRoleArn sets the AutoScalingRoleArn field's value.
+func (s *AutoScalingSettingsUpdate) SetAutoScalingRoleArn(v string) *AutoScalingSettingsUpdate {
+	s.AutoScalingRoleArn = &v
+	return s
+}
+
+// SetMaximumUnits sets the MaximumUnits field's value.
+func (s *AutoScalingSettingsUpdate) SetMaximumUnits(v int64) *AutoScalingSettingsUpdate {
+	s.MaximumUnits = &v
+	return s
+}
+
+// SetMinimumUnits sets the MinimumUnits field's value.
+func (s *AutoScalingSettingsUpdate) SetMinimumUnits(v int64) *AutoScalingSettingsUpdate {
+	s.MinimumUnits = &v
+	return s
+}
+
+// SetScalingPolicyUpdate sets the ScalingPolicyUpdate field's value.
+func (s *AutoScalingSettingsUpdate) SetScalingPolicyUpdate(v *AutoScalingPolicyUpdate) *AutoScalingSettingsUpdate {
+	s.ScalingPolicyUpdate = v
+	return s
+}
+
+// Represents the properties of a target tracking scaling policy.
+type AutoScalingTargetTrackingScalingPolicyConfigurationDescription struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates whether scale in by the target tracking policy is disabled. If
+	// the value is true, scale in is disabled and the target tracking policy won't
+	// remove capacity from the scalable resource. Otherwise, scale in is enabled
+	// and the target tracking policy can remove capacity from the scalable resource.
+	// The default value is false.
+	DisableScaleIn *bool `type:"boolean"`
+
+	// The amount of time, in seconds, after a scale in activity completes before
+	// another scale in activity can start. The cooldown period is used to block
+	// subsequent scale in requests until it has expired. You should scale in conservatively
+	// to protect your application's availability. However, if another alarm triggers
+	// a scale out policy during the cooldown period after a scale-in, application
+	// autoscaling scales out your scalable target immediately.
+	ScaleInCooldown *int64 `type:"integer"`
+
+	// The amount of time, in seconds, after a scale out activity completes before
+	// another scale out activity can start. While the cooldown period is in effect,
+	// the capacity that has been added by the previous scale out event that initiated
+	// the cooldown is calculated as part of the desired capacity for the next scale
+	// out. You should continuously (but not excessively) scale out.
+	ScaleOutCooldown *int64 `type:"integer"`
+
+	// The target value for the metric. The range is 8.515920e-109 to 1.174271e+108
+	// (Base 10) or 2e-360 to 2e360 (Base 2).
+	//
+	// TargetValue is a required field
+	TargetValue *float64 `type:"double" required:"true"`
+}
+
+// String returns the string representation
+func (s AutoScalingTargetTrackingScalingPolicyConfigurationDescription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AutoScalingTargetTrackingScalingPolicyConfigurationDescription) GoString() string {
+	return s.String()
+}
+
+// SetDisableScaleIn sets the DisableScaleIn field's value.
+func (s *AutoScalingTargetTrackingScalingPolicyConfigurationDescription) SetDisableScaleIn(v bool) *AutoScalingTargetTrackingScalingPolicyConfigurationDescription {
+	s.DisableScaleIn = &v
+	return s
+}
+
+// SetScaleInCooldown sets the ScaleInCooldown field's value.
+func (s *AutoScalingTargetTrackingScalingPolicyConfigurationDescription) SetScaleInCooldown(v int64) *AutoScalingTargetTrackingScalingPolicyConfigurationDescription {
+	s.ScaleInCooldown = &v
+	return s
+}
+
+// SetScaleOutCooldown sets the ScaleOutCooldown field's value.
+func (s *AutoScalingTargetTrackingScalingPolicyConfigurationDescription) SetScaleOutCooldown(v int64) *AutoScalingTargetTrackingScalingPolicyConfigurationDescription {
+	s.ScaleOutCooldown = &v
+	return s
+}
+
+// SetTargetValue sets the TargetValue field's value.
+func (s *AutoScalingTargetTrackingScalingPolicyConfigurationDescription) SetTargetValue(v float64) *AutoScalingTargetTrackingScalingPolicyConfigurationDescription {
+	s.TargetValue = &v
+	return s
+}
+
+// Represents the settings of a target tracking scaling policy that will be
+// modified.
+type AutoScalingTargetTrackingScalingPolicyConfigurationUpdate struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates whether scale in by the target tracking policy is disabled. If
+	// the value is true, scale in is disabled and the target tracking policy won't
+	// remove capacity from the scalable resource. Otherwise, scale in is enabled
+	// and the target tracking policy can remove capacity from the scalable resource.
+	// The default value is false.
+	DisableScaleIn *bool `type:"boolean"`
+
+	// The amount of time, in seconds, after a scale in activity completes before
+	// another scale in activity can start. The cooldown period is used to block
+	// subsequent scale in requests until it has expired. You should scale in conservatively
+	// to protect your application's availability. However, if another alarm triggers
+	// a scale out policy during the cooldown period after a scale-in, application
+	// autoscaling scales out your scalable target immediately.
+	ScaleInCooldown *int64 `type:"integer"`
+
+	// The amount of time, in seconds, after a scale out activity completes before
+	// another scale out activity can start. While the cooldown period is in effect,
+	// the capacity that has been added by the previous scale out event that initiated
+	// the cooldown is calculated as part of the desired capacity for the next scale
+	// out. You should continuously (but not excessively) scale out.
+	ScaleOutCooldown *int64 `type:"integer"`
+
+	// The target value for the metric. The range is 8.515920e-109 to 1.174271e+108
+	// (Base 10) or 2e-360 to 2e360 (Base 2).
+	//
+	// TargetValue is a required field
+	TargetValue *float64 `type:"double" required:"true"`
+}
+
+// String returns the string representation
+func (s AutoScalingTargetTrackingScalingPolicyConfigurationUpdate) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AutoScalingTargetTrackingScalingPolicyConfigurationUpdate) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AutoScalingTargetTrackingScalingPolicyConfigurationUpdate) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AutoScalingTargetTrackingScalingPolicyConfigurationUpdate"}
+	if s.TargetValue == nil {
+		invalidParams.Add(request.NewErrParamRequired("TargetValue"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDisableScaleIn sets the DisableScaleIn field's value.
+func (s *AutoScalingTargetTrackingScalingPolicyConfigurationUpdate) SetDisableScaleIn(v bool) *AutoScalingTargetTrackingScalingPolicyConfigurationUpdate {
+	s.DisableScaleIn = &v
+	return s
+}
+
+// SetScaleInCooldown sets the ScaleInCooldown field's value.
+func (s *AutoScalingTargetTrackingScalingPolicyConfigurationUpdate) SetScaleInCooldown(v int64) *AutoScalingTargetTrackingScalingPolicyConfigurationUpdate {
+	s.ScaleInCooldown = &v
+	return s
+}
+
+// SetScaleOutCooldown sets the ScaleOutCooldown field's value.
+func (s *AutoScalingTargetTrackingScalingPolicyConfigurationUpdate) SetScaleOutCooldown(v int64) *AutoScalingTargetTrackingScalingPolicyConfigurationUpdate {
+	s.ScaleOutCooldown = &v
+	return s
+}
+
+// SetTargetValue sets the TargetValue field's value.
+func (s *AutoScalingTargetTrackingScalingPolicyConfigurationUpdate) SetTargetValue(v float64) *AutoScalingTargetTrackingScalingPolicyConfigurationUpdate {
+	s.TargetValue = &v
 	return s
 }
 
@@ -4254,7 +6013,11 @@ type BackupDetails struct {
 	// Time at which the backup was created. This is the request time of the backup.
 	//
 	// BackupCreationDateTime is a required field
-	BackupCreationDateTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+	BackupCreationDateTime *time.Time `type:"timestamp" required:"true"`
+
+	// Time at which the automatic on-demand backup created by DynamoDB will expire.
+	// This SYSTEM on-demand backup expires automatically 35 days after its creation.
+	BackupExpiryDateTime *time.Time `type:"timestamp"`
 
 	// Name of the requested backup.
 	//
@@ -4268,6 +6031,20 @@ type BackupDetails struct {
 	//
 	// BackupStatus is a required field
 	BackupStatus *string `type:"string" required:"true" enum:"BackupStatus"`
+
+	// BackupType:
+	//
+	//    * USER - You create and manage these using the on-demand backup feature.
+	//
+	//    * SYSTEM - If you delete a table with point-in-time recovery enabled,
+	//    a SYSTEM backup is automatically created and is retained for 35 days (at
+	//    no additional cost). System backups allow you to restore the deleted table
+	//    to the state it was in just before the point of deletion.
+	//
+	//    * AWS_BACKUP - On-demand backup created by you from AWS Backup service.
+	//
+	// BackupType is a required field
+	BackupType *string `type:"string" required:"true" enum:"BackupType"`
 }
 
 // String returns the string representation
@@ -4292,6 +6069,12 @@ func (s *BackupDetails) SetBackupCreationDateTime(v time.Time) *BackupDetails {
 	return s
 }
 
+// SetBackupExpiryDateTime sets the BackupExpiryDateTime field's value.
+func (s *BackupDetails) SetBackupExpiryDateTime(v time.Time) *BackupDetails {
+	s.BackupExpiryDateTime = &v
+	return s
+}
+
 // SetBackupName sets the BackupName field's value.
 func (s *BackupDetails) SetBackupName(v string) *BackupDetails {
 	s.BackupName = &v
@@ -4310,6 +6093,12 @@ func (s *BackupDetails) SetBackupStatus(v string) *BackupDetails {
 	return s
 }
 
+// SetBackupType sets the BackupType field's value.
+func (s *BackupDetails) SetBackupType(v string) *BackupDetails {
+	s.BackupType = &v
+	return s
+}
+
 // Contains details for the backup.
 type BackupSummary struct {
 	_ struct{} `type:"structure"`
@@ -4318,7 +6107,11 @@ type BackupSummary struct {
 	BackupArn *string `min:"37" type:"string"`
 
 	// Time at which the backup was created.
-	BackupCreationDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	BackupCreationDateTime *time.Time `type:"timestamp"`
+
+	// Time at which the automatic on-demand backup created by DynamoDB will expire.
+	// This SYSTEM on-demand backup expires automatically 35 days after its creation.
+	BackupExpiryDateTime *time.Time `type:"timestamp"`
 
 	// Name of the specified backup.
 	BackupName *string `min:"3" type:"string"`
@@ -4328,6 +6121,18 @@ type BackupSummary struct {
 
 	// Backup can be in one of the following states: CREATING, ACTIVE, DELETED.
 	BackupStatus *string `type:"string" enum:"BackupStatus"`
+
+	// BackupType:
+	//
+	//    * USER - You create and manage these using the on-demand backup feature.
+	//
+	//    * SYSTEM - If you delete a table with point-in-time recovery enabled,
+	//    a SYSTEM backup is automatically created and is retained for 35 days (at
+	//    no additional cost). System backups allow you to restore the deleted table
+	//    to the state it was in just before the point of deletion.
+	//
+	//    * AWS_BACKUP - On-demand backup created by you from AWS Backup service.
+	BackupType *string `type:"string" enum:"BackupType"`
 
 	// ARN associated with the table.
 	TableArn *string `type:"string"`
@@ -4361,6 +6166,12 @@ func (s *BackupSummary) SetBackupCreationDateTime(v time.Time) *BackupSummary {
 	return s
 }
 
+// SetBackupExpiryDateTime sets the BackupExpiryDateTime field's value.
+func (s *BackupSummary) SetBackupExpiryDateTime(v time.Time) *BackupSummary {
+	s.BackupExpiryDateTime = &v
+	return s
+}
+
 // SetBackupName sets the BackupName field's value.
 func (s *BackupSummary) SetBackupName(v string) *BackupSummary {
 	s.BackupName = &v
@@ -4376,6 +6187,12 @@ func (s *BackupSummary) SetBackupSizeBytes(v int64) *BackupSummary {
 // SetBackupStatus sets the BackupStatus field's value.
 func (s *BackupSummary) SetBackupStatus(v string) *BackupSummary {
 	s.BackupStatus = &v
+	return s
+}
+
+// SetBackupType sets the BackupType field's value.
+func (s *BackupSummary) SetBackupType(v string) *BackupSummary {
+	s.BackupType = &v
 	return s
 }
 
@@ -4412,38 +6229,22 @@ type BatchGetItemInput struct {
 	//
 	//    * ExpressionAttributeNames - One or more substitution tokens for attribute
 	//    names in the ProjectionExpression parameter. The following are some use
-	//    cases for using ExpressionAttributeNames:
-	//
-	// To access an attribute whose name conflicts with a DynamoDB reserved word.
-	//
-	// To create a placeholder for repeating occurrences of an attribute name in
-	//    an expression.
-	//
-	// To prevent special characters in an attribute name from being misinterpreted
-	//    in an expression.
-	//
-	// Use the # character in an expression to dereference an attribute name. For
-	//    example, consider the following attribute name:
-	//
-	// Percentile
-	//
-	// The name of this attribute conflicts with a reserved word, so it cannot be
+	//    cases for using ExpressionAttributeNames: To access an attribute whose
+	//    name conflicts with a DynamoDB reserved word. To create a placeholder
+	//    for repeating occurrences of an attribute name in an expression. To prevent
+	//    special characters in an attribute name from being misinterpreted in an
+	//    expression. Use the # character in an expression to dereference an attribute
+	//    name. For example, consider the following attribute name: Percentile The
+	//    name of this attribute conflicts with a reserved word, so it cannot be
 	//    used directly in an expression. (For the complete list of reserved words,
-	//    see Reserved Words (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
+	//    see Reserved Words (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
 	//    in the Amazon DynamoDB Developer Guide). To work around this, you could
-	//    specify the following for ExpressionAttributeNames:
-	//
-	// {"#P":"Percentile"}
-	//
-	// You could then use this substitution in an expression, as in this example:
-	//
-	// #P = :val
-	//
-	// Tokens that begin with the : character are expression attribute values, which
-	//    are placeholders for the actual value at runtime.
-	//
-	// For more information on expression attribute names, see Accessing Item Attributes
-	//    (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	//    specify the following for ExpressionAttributeNames: {"#P":"Percentile"}
+	//    You could then use this substitution in an expression, as in this example:
+	//    #P = :val Tokens that begin with the : character are expression attribute
+	//    values, which are placeholders for the actual value at runtime. For more
+	//    information about expression attribute names, see Accessing Item Attributes
+	//    (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	//    in the Amazon DynamoDB Developer Guide.
 	//
 	//    * Keys - An array of primary key attribute values that define specific
@@ -4455,17 +6256,14 @@ type BatchGetItemInput struct {
 	//    * ProjectionExpression - A string that identifies one or more attributes
 	//    to retrieve from the table. These attributes can include scalars, sets,
 	//    or elements of a JSON document. The attributes in the expression must
-	//    be separated by commas.
-	//
-	// If no attribute names are specified, then all attributes will be returned.
-	//    If any of the requested attributes are not found, they will not appear
-	//    in the result.
-	//
-	// For more information, see Accessing Item Attributes (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	//    be separated by commas. If no attribute names are specified, then all
+	//    attributes are returned. If any of the requested attributes are not found,
+	//    they do not appear in the result. For more information, see Accessing
+	//    Item Attributes (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	//    in the Amazon DynamoDB Developer Guide.
 	//
 	//    * AttributesToGet - This is a legacy parameter. Use ProjectionExpression
-	//    instead. For more information, see AttributesToGet (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.AttributesToGet.html)
+	//    instead. For more information, see AttributesToGet (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.AttributesToGet.html)
 	//    in the Amazon DynamoDB Developer Guide.
 	//
 	// RequestItems is a required field
@@ -4476,11 +6274,9 @@ type BatchGetItemInput struct {
 	//
 	//    * INDEXES - The response includes the aggregate ConsumedCapacity for the
 	//    operation, together with ConsumedCapacity for each table and secondary
-	//    index that was accessed.
-	//
-	// Note that some operations, such as GetItem and BatchGetItem, do not access
-	//    any indexes at all. In these cases, specifying INDEXES will only return
-	//    ConsumedCapacity information for table(s).
+	//    index that was accessed. Note that some operations, such as GetItem and
+	//    BatchGetItem, do not access any indexes at all. In these cases, specifying
+	//    INDEXES will only return ConsumedCapacity information for table(s).
 	//
 	//    * TOTAL - The response includes only the aggregate ConsumedCapacity for
 	//    the operation.
@@ -4615,27 +6411,23 @@ type BatchWriteItemInput struct {
 	// of the following:
 	//
 	//    * DeleteRequest - Perform a DeleteItem operation on the specified item.
-	//    The item to be deleted is identified by a Key subelement:
-	//
-	// Key - A map of primary key attribute values that uniquely identify the item.
-	//    Each entry in this map consists of an attribute name and an attribute
-	//    value. For each primary key, you must provide all of the key attributes.
-	//    For example, with a simple primary key, you only need to provide a value
-	//    for the partition key. For a composite primary key, you must provide values
+	//    The item to be deleted is identified by a Key subelement: Key - A map
+	//    of primary key attribute values that uniquely identify the item. Each
+	//    entry in this map consists of an attribute name and an attribute value.
+	//    For each primary key, you must provide all of the key attributes. For
+	//    example, with a simple primary key, you only need to provide a value for
+	//    the partition key. For a composite primary key, you must provide values
 	//    for both the partition key and the sort key.
 	//
 	//    * PutRequest - Perform a PutItem operation on the specified item. The
-	//    item to be put is identified by an Item subelement:
-	//
-	// Item - A map of attributes and their values. Each entry in this map consists
-	//    of an attribute name and an attribute value. Attribute values must not
-	//    be null; string and binary type attributes must have lengths greater than
-	//    zero; and set type attributes must not be empty. Requests that contain
-	//    empty values will be rejected with a ValidationException exception.
-	//
-	// If you specify any attributes that are part of an index key, then the data
-	//    types for those attributes must match those of the schema in the table's
-	//    attribute definition.
+	//    item to be put is identified by an Item subelement: Item - A map of attributes
+	//    and their values. Each entry in this map consists of an attribute name
+	//    and an attribute value. Attribute values must not be null; string and
+	//    binary type attributes must have lengths greater than zero; and set type
+	//    attributes must not be empty. Requests that contain empty values are rejected
+	//    with a ValidationException exception. If you specify any attributes that
+	//    are part of an index key, then the data types for those attributes must
+	//    match those of the schema in the table's attribute definition.
 	//
 	// RequestItems is a required field
 	RequestItems map[string][]*WriteRequest `min:"1" type:"map" required:"true"`
@@ -4645,11 +6437,9 @@ type BatchWriteItemInput struct {
 	//
 	//    * INDEXES - The response includes the aggregate ConsumedCapacity for the
 	//    operation, together with ConsumedCapacity for each table and secondary
-	//    index that was accessed.
-	//
-	// Note that some operations, such as GetItem and BatchGetItem, do not access
-	//    any indexes at all. In these cases, specifying INDEXES will only return
-	//    ConsumedCapacity information for table(s).
+	//    index that was accessed. Note that some operations, such as GetItem and
+	//    BatchGetItem, do not access any indexes at all. In these cases, specifying
+	//    INDEXES will only return ConsumedCapacity information for table(s).
 	//
 	//    * TOTAL - The response includes only the aggregate ConsumedCapacity for
 	//    the operation.
@@ -4735,10 +6525,9 @@ type BatchWriteItemOutput struct {
 	//    bound for the estimate. The estimate includes the size of all the items
 	//    in the table, plus the size of all attributes projected into all of the
 	//    local secondary indexes on the table. Use this estimate to measure whether
-	//    a local secondary index is approaching its size limit.
-	//
-	// The estimate is subject to change over time; therefore, do not rely on the
-	//    precision or accuracy of the estimate.
+	//    a local secondary index is approaching its size limit. The estimate is
+	//    subject to change over time; therefore, do not rely on the precision or
+	//    accuracy of the estimate.
 	ItemCollectionMetrics map[string][]*ItemCollectionMetrics `type:"map"`
 
 	// A map of tables and requests against those tables that were not processed.
@@ -4750,24 +6539,19 @@ type BatchWriteItemOutput struct {
 	// a list of operations to perform (DeleteRequest or PutRequest).
 	//
 	//    * DeleteRequest - Perform a DeleteItem operation on the specified item.
-	//    The item to be deleted is identified by a Key subelement:
-	//
-	// Key - A map of primary key attribute values that uniquely identify the item.
-	//    Each entry in this map consists of an attribute name and an attribute
-	//    value.
+	//    The item to be deleted is identified by a Key subelement: Key - A map
+	//    of primary key attribute values that uniquely identify the item. Each
+	//    entry in this map consists of an attribute name and an attribute value.
 	//
 	//    * PutRequest - Perform a PutItem operation on the specified item. The
-	//    item to be put is identified by an Item subelement:
-	//
-	// Item - A map of attributes and their values. Each entry in this map consists
-	//    of an attribute name and an attribute value. Attribute values must not
-	//    be null; string and binary type attributes must have lengths greater than
-	//    zero; and set type attributes must not be empty. Requests that contain
-	//    empty values will be rejected with a ValidationException exception.
-	//
-	// If you specify any attributes that are part of an index key, then the data
-	//    types for those attributes must match those of the schema in the table's
-	//    attribute definition.
+	//    item to be put is identified by an Item subelement: Item - A map of attributes
+	//    and their values. Each entry in this map consists of an attribute name
+	//    and an attribute value. Attribute values must not be null; string and
+	//    binary type attributes must have lengths greater than zero; and set type
+	//    attributes must not be empty. Requests that contain empty values will
+	//    be rejected with a ValidationException exception. If you specify any attributes
+	//    that are part of an index key, then the data types for those attributes
+	//    must match those of the schema in the table's attribute definition.
 	//
 	// If there are no unprocessed items remaining, the response contains an empty
 	// UnprocessedItems map.
@@ -4802,6 +6586,92 @@ func (s *BatchWriteItemOutput) SetUnprocessedItems(v map[string][]*WriteRequest)
 	return s
 }
 
+// Contains the details for the read/write capacity mode.
+type BillingModeSummary struct {
+	_ struct{} `type:"structure"`
+
+	// Controls how you are charged for read and write throughput and how you manage
+	// capacity. This setting can be changed later.
+	//
+	//    * PROVISIONED - Sets the read/write capacity mode to PROVISIONED. We recommend
+	//    using PROVISIONED for predictable workloads.
+	//
+	//    * PAY_PER_REQUEST - Sets the read/write capacity mode to PAY_PER_REQUEST.
+	//    We recommend using PAY_PER_REQUEST for unpredictable workloads.
+	BillingMode *string `type:"string" enum:"BillingMode"`
+
+	// Represents the time when PAY_PER_REQUEST was last set as the read/write capacity
+	// mode.
+	LastUpdateToPayPerRequestDateTime *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation
+func (s BillingModeSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BillingModeSummary) GoString() string {
+	return s.String()
+}
+
+// SetBillingMode sets the BillingMode field's value.
+func (s *BillingModeSummary) SetBillingMode(v string) *BillingModeSummary {
+	s.BillingMode = &v
+	return s
+}
+
+// SetLastUpdateToPayPerRequestDateTime sets the LastUpdateToPayPerRequestDateTime field's value.
+func (s *BillingModeSummary) SetLastUpdateToPayPerRequestDateTime(v time.Time) *BillingModeSummary {
+	s.LastUpdateToPayPerRequestDateTime = &v
+	return s
+}
+
+// An ordered list of errors for each item in the request which caused the transaction
+// to get cancelled. The values of the list are ordered according to the ordering
+// of the TransactWriteItems request parameter. If no error occurred for the
+// associated item an error with a Null code and Null message will be present.
+type CancellationReason struct {
+	_ struct{} `type:"structure"`
+
+	// Status code for the result of the cancelled transaction.
+	Code *string `type:"string"`
+
+	// Item in the request which caused the transaction to get cancelled.
+	Item map[string]*AttributeValue `type:"map"`
+
+	// Cancellation reason message description.
+	Message *string `type:"string"`
+}
+
+// String returns the string representation
+func (s CancellationReason) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CancellationReason) GoString() string {
+	return s.String()
+}
+
+// SetCode sets the Code field's value.
+func (s *CancellationReason) SetCode(v string) *CancellationReason {
+	s.Code = &v
+	return s
+}
+
+// SetItem sets the Item field's value.
+func (s *CancellationReason) SetItem(v map[string]*AttributeValue) *CancellationReason {
+	s.Item = v
+	return s
+}
+
+// SetMessage sets the Message field's value.
+func (s *CancellationReason) SetMessage(v string) *CancellationReason {
+	s.Message = &v
+	return s
+}
+
 // Represents the amount of provisioned throughput capacity consumed on a table
 // or an index.
 type Capacity struct {
@@ -4809,6 +6679,12 @@ type Capacity struct {
 
 	// The total number of capacity units consumed on a table or an index.
 	CapacityUnits *float64 `type:"double"`
+
+	// The total number of read capacity units consumed on a table or an index.
+	ReadCapacityUnits *float64 `type:"double"`
+
+	// The total number of write capacity units consumed on a table or an index.
+	WriteCapacityUnits *float64 `type:"double"`
 }
 
 // String returns the string representation
@@ -4827,16 +6703,25 @@ func (s *Capacity) SetCapacityUnits(v float64) *Capacity {
 	return s
 }
 
+// SetReadCapacityUnits sets the ReadCapacityUnits field's value.
+func (s *Capacity) SetReadCapacityUnits(v float64) *Capacity {
+	s.ReadCapacityUnits = &v
+	return s
+}
+
+// SetWriteCapacityUnits sets the WriteCapacityUnits field's value.
+func (s *Capacity) SetWriteCapacityUnits(v float64) *Capacity {
+	s.WriteCapacityUnits = &v
+	return s
+}
+
 // Represents the selection criteria for a Query or Scan operation:
 //
 //    * For a Query operation, Condition is used for specifying the KeyConditions
 //    to use when querying a table or an index. For KeyConditions, only the
-//    following comparison operators are supported:
-//
-// EQ | LE | LT | GE | GT | BEGINS_WITH | BETWEEN
-//
-// Condition is also used in a QueryFilter, which evaluates the query results
-//    and returns only the desired values.
+//    following comparison operators are supported: EQ | LE | LT | GE | GT |
+//    BEGINS_WITH | BETWEEN Condition is also used in a QueryFilter, which evaluates
+//    the query results and returns only the desired values.
 //
 //    * For a Scan operation, Condition is used in a ScanFilter, which evaluates
 //    the scan results and returns only the desired values.
@@ -4868,36 +6753,109 @@ type Condition struct {
 	// The following are descriptions of each comparison operator.
 	//
 	//    * EQ : Equal. EQ is supported for all data types, including lists and
-	//    maps.
+	//    maps. AttributeValueList can contain only one AttributeValue element of
+	//    type String, Number, Binary, String Set, Number Set, or Binary Set. If
+	//    an item contains an AttributeValue element of a different type than the
+	//    one provided in the request, the value does not match. For example, {"S":"6"}
+	//    does not equal {"N":"6"}. Also, {"N":"6"} does not equal {"NS":["6", "2",
+	//    "1"]}.
 	//
-	// AttributeValueList can contain only one AttributeValue element of type String,
-	//    Number, Binary, String Set, Number Set, or Binary Set. If an item contains
-	//    an AttributeValue element of a different type than the one provided in
+	//    * NE : Not equal. NE is supported for all data types, including lists
+	//    and maps. AttributeValueList can contain only one AttributeValue of type
+	//    String, Number, Binary, String Set, Number Set, or Binary Set. If an item
+	//    contains an AttributeValue of a different type than the one provided in
 	//    the request, the value does not match. For example, {"S":"6"} does not
 	//    equal {"N":"6"}. Also, {"N":"6"} does not equal {"NS":["6", "2", "1"]}.
 	//
-	//    * NE : Not equal. NE is supported for all data types, including lists
-	//    and maps.
+	//    * LE : Less than or equal. AttributeValueList can contain only one AttributeValue
+	//    element of type String, Number, or Binary (not a set type). If an item
+	//    contains an AttributeValue element of a different type than the one provided
+	//    in the request, the value does not match. For example, {"S":"6"} does
+	//    not equal {"N":"6"}. Also, {"N":"6"} does not compare to {"NS":["6", "2",
+	//    "1"]}.
 	//
-	//    * AttributeValueList can contain only one AttributeValue of type String,
-	//    Number, Binary, String Set, Number Set, or Binary Set. If an item contains
-	//    an AttributeValue of a different type than the one provided in the request,
-	//    the value does not match. For example, {"S":"6"} does not equal {"N":"6"}.
-	//    Also, {"N":"6"} does not equal {"NS":["6", "2", "1"]}.
+	//    * LT : Less than. AttributeValueList can contain only one AttributeValue
+	//    of type String, Number, or Binary (not a set type). If an item contains
+	//    an AttributeValue element of a different type than the one provided in
+	//    the request, the value does not match. For example, {"S":"6"} does not
+	//    equal {"N":"6"}. Also, {"N":"6"} does not compare to {"NS":["6", "2",
+	//    "1"]}.
 	//
-	//    * LE : Less than or equal.
+	//    * GE : Greater than or equal. AttributeValueList can contain only one
+	//    AttributeValue element of type String, Number, or Binary (not a set type).
+	//    If an item contains an AttributeValue element of a different type than
+	//    the one provided in the request, the value does not match. For example,
+	//    {"S":"6"} does not equal {"N":"6"}. Also, {"N":"6"} does not compare to
+	//    {"NS":["6", "2", "1"]}.
 	//
-	// AttributeValueList can contain only one AttributeValue element of type String,
-	// Number, or Binary (not a set type). If an item contains an AttributeValue
-	// element of a different type than the one provided in the request, the value
-	// does not match. For example, {"S":"6"} does not equal {"N":"6"}. Also, {"N":"6"}
-	// does not compare to {"NS":["6", "2", "1"]}.
+	//    * GT : Greater than. AttributeValueList can contain only one AttributeValue
+	//    element of type String, Number, or Binary (not a set type). If an item
+	//    contains an AttributeValue element of a different type than the one provided
+	//    in the request, the value does not match. For example, {"S":"6"} does
+	//    not equal {"N":"6"}. Also, {"N":"6"} does not compare to {"NS":["6", "2",
+	//    "1"]}.
 	//
-	// LT: Less than.
+	//    * NOT_NULL : The attribute exists. NOT_NULL is supported for all data
+	//    types, including lists and maps. This operator tests for the existence
+	//    of an attribute, not its data type. If the data type of attribute "a"
+	//    is null, and you evaluate it using NOT_NULL, the result is a Boolean true.
+	//    This result is because the attribute "a" exists; its data type is not
+	//    relevant to the NOT_NULL comparison operator.
 	//
-	// AttributeValueListcan contain only one AttributeValueof type String, Number, or Binary (not a set type). If an item contains an
-	// AttributeValueelement of a different type than the one provided in the request, the value
-	// does not match. For example, {"S":"6"}does not equal {"N":"6"}. Also, {"N":"6"}does not compare to {"NS":["6", "2", "1"]}
+	//    * NULL : The attribute does not exist. NULL is supported for all data
+	//    types, including lists and maps. This operator tests for the nonexistence
+	//    of an attribute, not its data type. If the data type of attribute "a"
+	//    is null, and you evaluate it using NULL, the result is a Boolean false.
+	//    This is because the attribute "a" exists; its data type is not relevant
+	//    to the NULL comparison operator.
+	//
+	//    * CONTAINS : Checks for a subsequence, or value in a set. AttributeValueList
+	//    can contain only one AttributeValue element of type String, Number, or
+	//    Binary (not a set type). If the target attribute of the comparison is
+	//    of type String, then the operator checks for a substring match. If the
+	//    target attribute of the comparison is of type Binary, then the operator
+	//    looks for a subsequence of the target that matches the input. If the target
+	//    attribute of the comparison is a set ("SS", "NS", or "BS"), then the operator
+	//    evaluates to true if it finds an exact match with any member of the set.
+	//    CONTAINS is supported for lists: When evaluating "a CONTAINS b", "a" can
+	//    be a list; however, "b" cannot be a set, a map, or a list.
+	//
+	//    * NOT_CONTAINS : Checks for absence of a subsequence, or absence of a
+	//    value in a set. AttributeValueList can contain only one AttributeValue
+	//    element of type String, Number, or Binary (not a set type). If the target
+	//    attribute of the comparison is a String, then the operator checks for
+	//    the absence of a substring match. If the target attribute of the comparison
+	//    is Binary, then the operator checks for the absence of a subsequence of
+	//    the target that matches the input. If the target attribute of the comparison
+	//    is a set ("SS", "NS", or "BS"), then the operator evaluates to true if
+	//    it does not find an exact match with any member of the set. NOT_CONTAINS
+	//    is supported for lists: When evaluating "a NOT CONTAINS b", "a" can be
+	//    a list; however, "b" cannot be a set, a map, or a list.
+	//
+	//    * BEGINS_WITH : Checks for a prefix. AttributeValueList can contain only
+	//    one AttributeValue of type String or Binary (not a Number or a set type).
+	//    The target attribute of the comparison must be of type String or Binary
+	//    (not a Number or a set type).
+	//
+	//    * IN : Checks for matching elements in a list. AttributeValueList can
+	//    contain one or more AttributeValue elements of type String, Number, or
+	//    Binary. These attributes are compared against an existing attribute of
+	//    an item. If any elements of the input are equal to the item attribute,
+	//    the expression evaluates to true.
+	//
+	//    * BETWEEN : Greater than or equal to the first value, and less than or
+	//    equal to the second value. AttributeValueList must contain two AttributeValue
+	//    elements of the same type, either String, Number, or Binary (not a set
+	//    type). A target attribute matches if the target value is greater than,
+	//    or equal to, the first element and less than, or equal to, the second
+	//    element. If an item contains an AttributeValue element of a different
+	//    type than the one provided in the request, the value does not match. For
+	//    example, {"S":"6"} does not compare to {"N":"6"}. Also, {"N":"6"} does
+	//    not compare to {"NS":["6", "2", "1"]}
+	//
+	// For usage examples of AttributeValueList and ComparisonOperator, see Legacy
+	// Conditional Parameters (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.html)
+	// in the Amazon DynamoDB Developer Guide.
 	//
 	// ComparisonOperator is a required field
 	ComparisonOperator *string `type:"string" required:"true" enum:"ComparisonOperator"`
@@ -4938,11 +6896,112 @@ func (s *Condition) SetComparisonOperator(v string) *Condition {
 	return s
 }
 
+// Represents a request to perform a check that an item exists or to check the
+// condition of specific attributes of the item..
+type ConditionCheck struct {
+	_ struct{} `type:"structure"`
+
+	// A condition that must be satisfied in order for a conditional update to succeed.
+	//
+	// ConditionExpression is a required field
+	ConditionExpression *string `type:"string" required:"true"`
+
+	// One or more substitution tokens for attribute names in an expression.
+	ExpressionAttributeNames map[string]*string `type:"map"`
+
+	// One or more values that can be substituted in an expression.
+	ExpressionAttributeValues map[string]*AttributeValue `type:"map"`
+
+	// The primary key of the item to be checked. Each element consists of an attribute
+	// name and a value for that attribute.
+	//
+	// Key is a required field
+	Key map[string]*AttributeValue `type:"map" required:"true"`
+
+	// Use ReturnValuesOnConditionCheckFailure to get the item attributes if the
+	// ConditionCheck condition fails. For ReturnValuesOnConditionCheckFailure,
+	// the valid values are: NONE and ALL_OLD.
+	ReturnValuesOnConditionCheckFailure *string `type:"string" enum:"ReturnValuesOnConditionCheckFailure"`
+
+	// Name of the table for the check item request.
+	//
+	// TableName is a required field
+	TableName *string `min:"3" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s ConditionCheck) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ConditionCheck) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ConditionCheck) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ConditionCheck"}
+	if s.ConditionExpression == nil {
+		invalidParams.Add(request.NewErrParamRequired("ConditionExpression"))
+	}
+	if s.Key == nil {
+		invalidParams.Add(request.NewErrParamRequired("Key"))
+	}
+	if s.TableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableName"))
+	}
+	if s.TableName != nil && len(*s.TableName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("TableName", 3))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetConditionExpression sets the ConditionExpression field's value.
+func (s *ConditionCheck) SetConditionExpression(v string) *ConditionCheck {
+	s.ConditionExpression = &v
+	return s
+}
+
+// SetExpressionAttributeNames sets the ExpressionAttributeNames field's value.
+func (s *ConditionCheck) SetExpressionAttributeNames(v map[string]*string) *ConditionCheck {
+	s.ExpressionAttributeNames = v
+	return s
+}
+
+// SetExpressionAttributeValues sets the ExpressionAttributeValues field's value.
+func (s *ConditionCheck) SetExpressionAttributeValues(v map[string]*AttributeValue) *ConditionCheck {
+	s.ExpressionAttributeValues = v
+	return s
+}
+
+// SetKey sets the Key field's value.
+func (s *ConditionCheck) SetKey(v map[string]*AttributeValue) *ConditionCheck {
+	s.Key = v
+	return s
+}
+
+// SetReturnValuesOnConditionCheckFailure sets the ReturnValuesOnConditionCheckFailure field's value.
+func (s *ConditionCheck) SetReturnValuesOnConditionCheckFailure(v string) *ConditionCheck {
+	s.ReturnValuesOnConditionCheckFailure = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *ConditionCheck) SetTableName(v string) *ConditionCheck {
+	s.TableName = &v
+	return s
+}
+
 // The capacity units consumed by an operation. The data returned includes the
 // total provisioned throughput consumed, along with statistics for the table
 // and any indexes involved in the operation. ConsumedCapacity is only returned
 // if the request asked for it. For more information, see Provisioned Throughput
-// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
+// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
 // in the Amazon DynamoDB Developer Guide.
 type ConsumedCapacity struct {
 	_ struct{} `type:"structure"`
@@ -4956,11 +7015,17 @@ type ConsumedCapacity struct {
 	// The amount of throughput consumed on each local index affected by the operation.
 	LocalSecondaryIndexes map[string]*Capacity `type:"map"`
 
+	// The total number of read capacity units consumed by the operation.
+	ReadCapacityUnits *float64 `type:"double"`
+
 	// The amount of throughput consumed on the table affected by the operation.
 	Table *Capacity `type:"structure"`
 
 	// The name of the table that was affected by the operation.
 	TableName *string `min:"3" type:"string"`
+
+	// The total number of write capacity units consumed by the operation.
+	WriteCapacityUnits *float64 `type:"double"`
 }
 
 // String returns the string representation
@@ -4991,6 +7056,12 @@ func (s *ConsumedCapacity) SetLocalSecondaryIndexes(v map[string]*Capacity) *Con
 	return s
 }
 
+// SetReadCapacityUnits sets the ReadCapacityUnits field's value.
+func (s *ConsumedCapacity) SetReadCapacityUnits(v float64) *ConsumedCapacity {
+	s.ReadCapacityUnits = &v
+	return s
+}
+
 // SetTable sets the Table field's value.
 func (s *ConsumedCapacity) SetTable(v *Capacity) *ConsumedCapacity {
 	s.Table = v
@@ -5003,12 +7074,18 @@ func (s *ConsumedCapacity) SetTableName(v string) *ConsumedCapacity {
 	return s
 }
 
+// SetWriteCapacityUnits sets the WriteCapacityUnits field's value.
+func (s *ConsumedCapacity) SetWriteCapacityUnits(v float64) *ConsumedCapacity {
+	s.WriteCapacityUnits = &v
+	return s
+}
+
 // Represents the continuous backups and point in time recovery settings on
 // the table.
 type ContinuousBackupsDescription struct {
 	_ struct{} `type:"structure"`
 
-	// ContinuousBackupsStatus can be one of the following states : ENABLED, DISABLED
+	// ContinuousBackupsStatus can be one of the following states: ENABLED, DISABLED
 	//
 	// ContinuousBackupsStatus is a required field
 	ContinuousBackupsStatus *string `type:"string" required:"true" enum:"ContinuousBackupsStatus"`
@@ -5145,11 +7222,9 @@ type CreateGlobalSecondaryIndexAction struct {
 	// index.
 	//
 	// For current minimum and maximum provisioned throughput values, see Limits
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
 	// in the Amazon DynamoDB Developer Guide.
-	//
-	// ProvisionedThroughput is a required field
-	ProvisionedThroughput *ProvisionedThroughput `type:"structure" required:"true"`
+	ProvisionedThroughput *ProvisionedThroughput `type:"structure"`
 }
 
 // String returns the string representation
@@ -5179,9 +7254,6 @@ func (s *CreateGlobalSecondaryIndexAction) Validate() error {
 	}
 	if s.Projection == nil {
 		invalidParams.Add(request.NewErrParamRequired("Projection"))
-	}
-	if s.ProvisionedThroughput == nil {
-		invalidParams.Add(request.NewErrParamRequired("ProvisionedThroughput"))
 	}
 	if s.KeySchema != nil {
 		for i, v := range s.KeySchema {
@@ -5242,7 +7314,7 @@ type CreateGlobalTableInput struct {
 	// GlobalTableName is a required field
 	GlobalTableName *string `min:"3" type:"string" required:"true"`
 
-	// The regions where the global table needs to be created.
+	// The Regions where the global table needs to be created.
 	//
 	// ReplicationGroup is a required field
 	ReplicationGroup []*Replica `type:"list" required:"true"`
@@ -5360,8 +7432,18 @@ type CreateTableInput struct {
 	// AttributeDefinitions is a required field
 	AttributeDefinitions []*AttributeDefinition `type:"list" required:"true"`
 
-	// One or more global secondary indexes (the maximum is five) to be created
-	// on the table. Each global secondary index in the array includes the following:
+	// Controls how you are charged for read and write throughput and how you manage
+	// capacity. This setting can be changed later.
+	//
+	//    * PROVISIONED - Sets the billing mode to PROVISIONED. We recommend using
+	//    PROVISIONED for predictable workloads.
+	//
+	//    * PAY_PER_REQUEST - Sets the billing mode to PAY_PER_REQUEST. We recommend
+	//    using PAY_PER_REQUEST for unpredictable workloads.
+	BillingMode *string `type:"string" enum:"BillingMode"`
+
+	// One or more global secondary indexes (the maximum is 20) to be created on
+	// the table. Each global secondary index in the array includes the following:
 	//
 	//    * IndexName - The name of the global secondary index. Must be unique only
 	//    for this table.
@@ -5371,22 +7453,16 @@ type CreateTableInput struct {
 	//    * Projection - Specifies attributes that are copied (projected) from the
 	//    table into the index. These are in addition to the primary key attributes
 	//    and index key attributes, which are automatically projected. Each attribute
-	//    specification is composed of:
-	//
-	//    * ProjectionType - One of the following:
-	//
-	// KEYS_ONLY - Only the index and primary keys are projected into the index.
-	//
-	// INCLUDE - Only the specified table attributes are projected into the index.
-	//    The list of projected attributes are in NonKeyAttributes.
-	//
-	// ALL - All of the table attributes are projected into the index.
-	//
-	// NonKeyAttributes - A list of one or more non-key attribute names that are
-	//    projected into the secondary index. The total count of attributes provided
-	//    in NonKeyAttributes, summed across all of the secondary indexes, must
-	//    not exceed 20. If you project the same attribute into two different indexes,
-	//    this counts as two distinct attributes when determining the total.
+	//    specification is composed of: ProjectionType - One of the following: KEYS_ONLY
+	//    - Only the index and primary keys are projected into the index. INCLUDE
+	//    - Only the specified table attributes are projected into the index. The
+	//    list of projected attributes is in NonKeyAttributes. ALL - All of the
+	//    table attributes are projected into the index. NonKeyAttributes - A list
+	//    of one or more non-key attribute names that are projected into the secondary
+	//    index. The total count of attributes provided in NonKeyAttributes, summed
+	//    across all of the secondary indexes, must not exceed 100. If you project
+	//    the same attribute into two different indexes, this counts as two distinct
+	//    attributes when determining the total.
 	//
 	//    * ProvisionedThroughput - The provisioned throughput settings for the
 	//    global secondary index, consisting of read and write capacity units.
@@ -5394,21 +7470,18 @@ type CreateTableInput struct {
 
 	// Specifies the attributes that make up the primary key for a table or an index.
 	// The attributes in KeySchema must also be defined in the AttributeDefinitions
-	// array. For more information, see Data Model (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DataModel.html)
+	// array. For more information, see Data Model (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DataModel.html)
 	// in the Amazon DynamoDB Developer Guide.
 	//
 	// Each KeySchemaElement in the array is composed of:
 	//
 	//    * AttributeName - The name of this key attribute.
 	//
-	//    * KeyType - The role that the key attribute will assume:
-	//
-	// HASH - partition key
-	//
-	// RANGE - sort key
+	//    * KeyType - The role that the key attribute will assume: HASH - partition
+	//    key RANGE - sort key
 	//
 	// The partition key of an item is also known as its hash attribute. The term
-	// "hash attribute" derives from DynamoDB' usage of an internal hash function
+	// "hash attribute" derives from the DynamoDB usage of an internal hash function
 	// to evenly distribute data items across partitions, based on their partition
 	// key values.
 	//
@@ -5423,16 +7496,16 @@ type CreateTableInput struct {
 	// exactly two elements, in this order: The first element must have a KeyType
 	// of HASH, and the second element must have a KeyType of RANGE.
 	//
-	// For more information, see Specifying the Primary Key (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#WorkingWithTables.primary.key)
+	// For more information, see Working with Tables (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#WorkingWithTables.primary.key)
 	// in the Amazon DynamoDB Developer Guide.
 	//
 	// KeySchema is a required field
 	KeySchema []*KeySchemaElement `min:"1" type:"list" required:"true"`
 
-	// One or more local secondary indexes (the maximum is five) to be created on
-	// the table. Each index is scoped to a given partition key value. There is
-	// a 10 GB size limit per partition key value; otherwise, the size of a local
-	// secondary index is unconstrained.
+	// One or more local secondary indexes (the maximum is 5) to be created on the
+	// table. Each index is scoped to a given partition key value. There is a 10
+	// GB size limit per partition key value; otherwise, the size of a local secondary
+	// index is unconstrained.
 	//
 	// Each local secondary index in the array includes the following:
 	//
@@ -5445,63 +7518,55 @@ type CreateTableInput struct {
 	//    * Projection - Specifies attributes that are copied (projected) from the
 	//    table into the index. These are in addition to the primary key attributes
 	//    and index key attributes, which are automatically projected. Each attribute
-	//    specification is composed of:
-	//
-	//    * ProjectionType - One of the following:
-	//
-	// KEYS_ONLY - Only the index and primary keys are projected into the index.
-	//
-	// INCLUDE - Only the specified table attributes are projected into the index.
-	//    The list of projected attributes are in NonKeyAttributes.
-	//
-	// ALL - All of the table attributes are projected into the index.
-	//
-	// NonKeyAttributes - A list of one or more non-key attribute names that are
-	//    projected into the secondary index. The total count of attributes provided
-	//    in NonKeyAttributes, summed across all of the secondary indexes, must
-	//    not exceed 20. If you project the same attribute into two different indexes,
-	//    this counts as two distinct attributes when determining the total.
+	//    specification is composed of: ProjectionType - One of the following: KEYS_ONLY
+	//    - Only the index and primary keys are projected into the index. INCLUDE
+	//    - Only the specified table attributes are projected into the index. The
+	//    list of projected attributes is in NonKeyAttributes. ALL - All of the
+	//    table attributes are projected into the index. NonKeyAttributes - A list
+	//    of one or more non-key attribute names that are projected into the secondary
+	//    index. The total count of attributes provided in NonKeyAttributes, summed
+	//    across all of the secondary indexes, must not exceed 100. If you project
+	//    the same attribute into two different indexes, this counts as two distinct
+	//    attributes when determining the total.
 	LocalSecondaryIndexes []*LocalSecondaryIndex `type:"list"`
 
 	// Represents the provisioned throughput settings for a specified table or index.
 	// The settings can be modified using the UpdateTable operation.
 	//
-	// For current minimum and maximum provisioned throughput values, see Limits
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
-	// in the Amazon DynamoDB Developer Guide.
+	// If you set BillingMode as PROVISIONED, you must specify this property. If
+	// you set BillingMode as PAY_PER_REQUEST, you cannot specify this property.
 	//
-	// ProvisionedThroughput is a required field
-	ProvisionedThroughput *ProvisionedThroughput `type:"structure" required:"true"`
+	// For current minimum and maximum provisioned throughput values, see Limits
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
+	// in the Amazon DynamoDB Developer Guide.
+	ProvisionedThroughput *ProvisionedThroughput `type:"structure"`
 
 	// Represents the settings used to enable server-side encryption.
 	SSESpecification *SSESpecification `type:"structure"`
 
 	// The settings for DynamoDB Streams on the table. These settings consist of:
 	//
-	//    * StreamEnabled - Indicates whether Streams is to be enabled (true) or
-	//    disabled (false).
+	//    * StreamEnabled - Indicates whether DynamoDB Streams is to be enabled
+	//    (true) or disabled (false).
 	//
 	//    * StreamViewType - When an item in the table is modified, StreamViewType
 	//    determines what information is written to the table's stream. Valid values
-	//    for StreamViewType are:
-	//
-	// KEYS_ONLY - Only the key attributes of the modified item are written to the
-	//    stream.
-	//
-	// NEW_IMAGE - The entire item, as it appears after it was modified, is written
-	//    to the stream.
-	//
-	// OLD_IMAGE - The entire item, as it appeared before it was modified, is written
-	//    to the stream.
-	//
-	// NEW_AND_OLD_IMAGES - Both the new and the old item images of the item are
-	//    written to the stream.
+	//    for StreamViewType are: KEYS_ONLY - Only the key attributes of the modified
+	//    item are written to the stream. NEW_IMAGE - The entire item, as it appears
+	//    after it was modified, is written to the stream. OLD_IMAGE - The entire
+	//    item, as it appeared before it was modified, is written to the stream.
+	//    NEW_AND_OLD_IMAGES - Both the new and the old item images of the item
+	//    are written to the stream.
 	StreamSpecification *StreamSpecification `type:"structure"`
 
 	// The name of the table to create.
 	//
 	// TableName is a required field
 	TableName *string `min:"3" type:"string" required:"true"`
+
+	// A list of key-value pairs to label the table. For more information, see Tagging
+	// for DynamoDB (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tagging.html).
+	Tags []*Tag `type:"list"`
 }
 
 // String returns the string representation
@@ -5525,9 +7590,6 @@ func (s *CreateTableInput) Validate() error {
 	}
 	if s.KeySchema != nil && len(s.KeySchema) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("KeySchema", 1))
-	}
-	if s.ProvisionedThroughput == nil {
-		invalidParams.Add(request.NewErrParamRequired("ProvisionedThroughput"))
 	}
 	if s.TableName == nil {
 		invalidParams.Add(request.NewErrParamRequired("TableName"))
@@ -5580,9 +7642,14 @@ func (s *CreateTableInput) Validate() error {
 			invalidParams.AddNested("ProvisionedThroughput", err.(request.ErrInvalidParams))
 		}
 	}
-	if s.SSESpecification != nil {
-		if err := s.SSESpecification.Validate(); err != nil {
-			invalidParams.AddNested("SSESpecification", err.(request.ErrInvalidParams))
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
 		}
 	}
 
@@ -5595,6 +7662,12 @@ func (s *CreateTableInput) Validate() error {
 // SetAttributeDefinitions sets the AttributeDefinitions field's value.
 func (s *CreateTableInput) SetAttributeDefinitions(v []*AttributeDefinition) *CreateTableInput {
 	s.AttributeDefinitions = v
+	return s
+}
+
+// SetBillingMode sets the BillingMode field's value.
+func (s *CreateTableInput) SetBillingMode(v string) *CreateTableInput {
+	s.BillingMode = &v
 	return s
 }
 
@@ -5640,6 +7713,12 @@ func (s *CreateTableInput) SetTableName(v string) *CreateTableInput {
 	return s
 }
 
+// SetTags sets the Tags field's value.
+func (s *CreateTableInput) SetTags(v []*Tag) *CreateTableInput {
+	s.Tags = v
+	return s
+}
+
 // Represents the output of a CreateTable operation.
 type CreateTableOutput struct {
 	_ struct{} `type:"structure"`
@@ -5661,6 +7740,101 @@ func (s CreateTableOutput) GoString() string {
 // SetTableDescription sets the TableDescription field's value.
 func (s *CreateTableOutput) SetTableDescription(v *TableDescription) *CreateTableOutput {
 	s.TableDescription = v
+	return s
+}
+
+// Represents a request to perform a DeleteItem operation.
+type Delete struct {
+	_ struct{} `type:"structure"`
+
+	// A condition that must be satisfied in order for a conditional delete to succeed.
+	ConditionExpression *string `type:"string"`
+
+	// One or more substitution tokens for attribute names in an expression.
+	ExpressionAttributeNames map[string]*string `type:"map"`
+
+	// One or more values that can be substituted in an expression.
+	ExpressionAttributeValues map[string]*AttributeValue `type:"map"`
+
+	// The primary key of the item to be deleted. Each element consists of an attribute
+	// name and a value for that attribute.
+	//
+	// Key is a required field
+	Key map[string]*AttributeValue `type:"map" required:"true"`
+
+	// Use ReturnValuesOnConditionCheckFailure to get the item attributes if the
+	// Delete condition fails. For ReturnValuesOnConditionCheckFailure, the valid
+	// values are: NONE and ALL_OLD.
+	ReturnValuesOnConditionCheckFailure *string `type:"string" enum:"ReturnValuesOnConditionCheckFailure"`
+
+	// Name of the table in which the item to be deleted resides.
+	//
+	// TableName is a required field
+	TableName *string `min:"3" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s Delete) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Delete) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Delete) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Delete"}
+	if s.Key == nil {
+		invalidParams.Add(request.NewErrParamRequired("Key"))
+	}
+	if s.TableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableName"))
+	}
+	if s.TableName != nil && len(*s.TableName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("TableName", 3))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetConditionExpression sets the ConditionExpression field's value.
+func (s *Delete) SetConditionExpression(v string) *Delete {
+	s.ConditionExpression = &v
+	return s
+}
+
+// SetExpressionAttributeNames sets the ExpressionAttributeNames field's value.
+func (s *Delete) SetExpressionAttributeNames(v map[string]*string) *Delete {
+	s.ExpressionAttributeNames = v
+	return s
+}
+
+// SetExpressionAttributeValues sets the ExpressionAttributeValues field's value.
+func (s *Delete) SetExpressionAttributeValues(v map[string]*AttributeValue) *Delete {
+	s.ExpressionAttributeValues = v
+	return s
+}
+
+// SetKey sets the Key field's value.
+func (s *Delete) SetKey(v map[string]*AttributeValue) *Delete {
+	s.Key = v
+	return s
+}
+
+// SetReturnValuesOnConditionCheckFailure sets the ReturnValuesOnConditionCheckFailure field's value.
+func (s *Delete) SetReturnValuesOnConditionCheckFailure(v string) *Delete {
+	s.ReturnValuesOnConditionCheckFailure = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *Delete) SetTableName(v string) *Delete {
+	s.TableName = &v
 	return s
 }
 
@@ -5780,26 +7954,24 @@ type DeleteItemInput struct {
 	// An expression can contain any of the following:
 	//
 	//    * Functions: attribute_exists | attribute_not_exists | attribute_type
-	//    | contains | begins_with | size
-	//
-	// These function names are case-sensitive.
+	//    | contains | begins_with | size These function names are case-sensitive.
 	//
 	//    * Comparison operators: = | <> | < | > | <= | >= | BETWEEN | IN
 	//
-	//    *  Logical operators: AND | OR | NOT
+	//    * Logical operators: AND | OR | NOT
 	//
-	// For more information on condition expressions, see Specifying Conditions
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
+	// For more information about condition expressions, see Condition Expressions
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConditionExpression *string `type:"string"`
 
 	// This is a legacy parameter. Use ConditionExpression instead. For more information,
-	// see ConditionalOperator (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ConditionalOperator.html)
+	// see ConditionalOperator (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ConditionalOperator.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConditionalOperator *string `type:"string" enum:"ConditionalOperator"`
 
 	// This is a legacy parameter. Use ConditionExpression instead. For more information,
-	// see Expected (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.Expected.html)
+	// see Expected (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.Expected.html)
 	// in the Amazon DynamoDB Developer Guide.
 	Expected map[string]*ExpectedAttributeValue `type:"map"`
 
@@ -5822,7 +7994,7 @@ type DeleteItemInput struct {
 	//
 	// The name of this attribute conflicts with a reserved word, so it cannot be
 	// used directly in an expression. (For the complete list of reserved words,
-	// see Reserved Words (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
+	// see Reserved Words (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
 	// in the Amazon DynamoDB Developer Guide). To work around this, you could specify
 	// the following for ExpressionAttributeNames:
 	//
@@ -5835,8 +8007,8 @@ type DeleteItemInput struct {
 	// Tokens that begin with the : character are expression attribute values, which
 	// are placeholders for the actual value at runtime.
 	//
-	// For more information on expression attribute names, see Accessing Item Attributes
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	// For more information on expression attribute names, see Specifying Item Attributes
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeNames map[string]*string `type:"map"`
 
@@ -5857,8 +8029,8 @@ type DeleteItemInput struct {
 	//
 	// ProductStatus IN (:avail, :back, :disc)
 	//
-	// For more information on expression attribute values, see Specifying Conditions
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
+	// For more information on expression attribute values, see Condition Expressions
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeValues map[string]*AttributeValue `type:"map"`
 
@@ -5878,11 +8050,9 @@ type DeleteItemInput struct {
 	//
 	//    * INDEXES - The response includes the aggregate ConsumedCapacity for the
 	//    operation, together with ConsumedCapacity for each table and secondary
-	//    index that was accessed.
-	//
-	// Note that some operations, such as GetItem and BatchGetItem, do not access
-	//    any indexes at all. In these cases, specifying INDEXES will only return
-	//    ConsumedCapacity information for table(s).
+	//    index that was accessed. Note that some operations, such as GetItem and
+	//    BatchGetItem, do not access any indexes at all. In these cases, specifying
+	//    INDEXES will only return ConsumedCapacity information for table(s).
 	//
 	//    * TOTAL - The response includes only the aggregate ConsumedCapacity for
 	//    the operation.
@@ -6016,7 +8186,7 @@ type DeleteItemOutput struct {
 	// includes the total provisioned throughput consumed, along with statistics
 	// for the table and any indexes involved in the operation. ConsumedCapacity
 	// is only returned if the ReturnConsumedCapacity parameter was specified. For
-	// more information, see Provisioned Throughput (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
+	// more information, see Provisioned Mode (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConsumedCapacity *ConsumedCapacity `type:"structure"`
 
@@ -6035,10 +8205,9 @@ type DeleteItemOutput struct {
 	//    bound for the estimate. The estimate includes the size of all the items
 	//    in the table, plus the size of all attributes projected into all of the
 	//    local secondary indexes on that table. Use this estimate to measure whether
-	//    a local secondary index is approaching its size limit.
-	//
-	// The estimate is subject to change over time; therefore, do not rely on the
-	//    precision or accuracy of the estimate.
+	//    a local secondary index is approaching its size limit. The estimate is
+	//    subject to change over time; therefore, do not rely on the precision or
+	//    accuracy of the estimate.
 	ItemCollectionMetrics *ItemCollectionMetrics `type:"structure"`
 }
 
@@ -6206,7 +8375,7 @@ func (s *DeleteTableOutput) SetTableDescription(v *TableDescription) *DeleteTabl
 type DescribeBackupInput struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN associated with the backup.
+	// The Amazon Resource Name (ARN) associated with the backup.
 	//
 	// BackupArn is a required field
 	BackupArn *string `min:"37" type:"string" required:"true"`
@@ -6312,7 +8481,8 @@ func (s *DescribeContinuousBackupsInput) SetTableName(v string) *DescribeContinu
 type DescribeContinuousBackupsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// ContinuousBackupsDescription can be one of the following : ENABLED, DISABLED.
+	// Represents the continuous backups and point in time recovery settings on
+	// the table.
 	ContinuousBackupsDescription *ContinuousBackupsDescription `type:"structure"`
 }
 
@@ -6329,6 +8499,45 @@ func (s DescribeContinuousBackupsOutput) GoString() string {
 // SetContinuousBackupsDescription sets the ContinuousBackupsDescription field's value.
 func (s *DescribeContinuousBackupsOutput) SetContinuousBackupsDescription(v *ContinuousBackupsDescription) *DescribeContinuousBackupsOutput {
 	s.ContinuousBackupsDescription = v
+	return s
+}
+
+type DescribeEndpointsInput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DescribeEndpointsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEndpointsInput) GoString() string {
+	return s.String()
+}
+
+type DescribeEndpointsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// List of endpoints.
+	//
+	// Endpoints is a required field
+	Endpoints []*Endpoint `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s DescribeEndpointsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeEndpointsOutput) GoString() string {
+	return s.String()
+}
+
+// SetEndpoints sets the Endpoints field's value.
+func (s *DescribeEndpointsOutput) SetEndpoints(v []*Endpoint) *DescribeEndpointsOutput {
+	s.Endpoints = v
 	return s
 }
 
@@ -6443,7 +8652,7 @@ type DescribeGlobalTableSettingsOutput struct {
 	// The name of the global table.
 	GlobalTableName *string `min:"3" type:"string"`
 
-	// The region specific settings for the global table.
+	// The Region-specific settings for the global table.
 	ReplicaSettings []*ReplicaSettingsDescription `type:"list"`
 }
 
@@ -6489,20 +8698,20 @@ type DescribeLimitsOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The maximum total read capacity units that your account allows you to provision
-	// across all of your tables in this region.
+	// across all of your tables in this Region.
 	AccountMaxReadCapacityUnits *int64 `min:"1" type:"long"`
 
 	// The maximum total write capacity units that your account allows you to provision
-	// across all of your tables in this region.
+	// across all of your tables in this Region.
 	AccountMaxWriteCapacityUnits *int64 `min:"1" type:"long"`
 
 	// The maximum read capacity units that your account allows you to provision
-	// for a new table that you are creating in this region, including the read
+	// for a new table that you are creating in this Region, including the read
 	// capacity units provisioned for its global secondary indexes (GSIs).
 	TableMaxReadCapacityUnits *int64 `min:"1" type:"long"`
 
 	// The maximum write capacity units that your account allows you to provision
-	// for a new table that you are creating in this region, including the write
+	// for a new table that you are creating in this Region, including the write
 	// capacity units provisioned for its global secondary indexes (GSIs).
 	TableMaxWriteCapacityUnits *int64 `min:"1" type:"long"`
 }
@@ -6671,6 +8880,43 @@ func (s *DescribeTimeToLiveOutput) SetTimeToLiveDescription(v *TimeToLiveDescrip
 	return s
 }
 
+// An endpoint information details.
+type Endpoint struct {
+	_ struct{} `type:"structure"`
+
+	// IP address of the endpoint.
+	//
+	// Address is a required field
+	Address *string `type:"string" required:"true"`
+
+	// Endpoint cache time to live (TTL) value.
+	//
+	// CachePeriodInMinutes is a required field
+	CachePeriodInMinutes *int64 `type:"long" required:"true"`
+}
+
+// String returns the string representation
+func (s Endpoint) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Endpoint) GoString() string {
+	return s.String()
+}
+
+// SetAddress sets the Address field's value.
+func (s *Endpoint) SetAddress(v string) *Endpoint {
+	s.Address = &v
+	return s
+}
+
+// SetCachePeriodInMinutes sets the CachePeriodInMinutes field's value.
+func (s *Endpoint) SetCachePeriodInMinutes(v int64) *Endpoint {
+	s.CachePeriodInMinutes = &v
+	return s
+}
+
 // Represents a condition to be compared with an attribute value. This condition
 // can be used with DeleteItem, PutItem or UpdateItem operations; if the comparison
 // evaluates to true, the operation succeeds; if not, the operation fails. You
@@ -6707,7 +8953,7 @@ type ExpectedAttributeValue struct {
 	// For Binary, DynamoDB treats each byte of the binary data as unsigned when
 	// it compares binary values.
 	//
-	// For information on specifying data types in JSON, see JSON Data Format (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DataFormat.html)
+	// For information on specifying data types in JSON, see JSON Data Format (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DataFormat.html)
 	// in the Amazon DynamoDB Developer Guide.
 	AttributeValueList []*AttributeValue `type:"list"`
 
@@ -6722,48 +8968,117 @@ type ExpectedAttributeValue struct {
 	// The following are descriptions of each comparison operator.
 	//
 	//    * EQ : Equal. EQ is supported for all data types, including lists and
-	//    maps.
+	//    maps. AttributeValueList can contain only one AttributeValue element of
+	//    type String, Number, Binary, String Set, Number Set, or Binary Set. If
+	//    an item contains an AttributeValue element of a different type than the
+	//    one provided in the request, the value does not match. For example, {"S":"6"}
+	//    does not equal {"N":"6"}. Also, {"N":"6"} does not equal {"NS":["6", "2",
+	//    "1"]}.
 	//
-	// AttributeValueList can contain only one AttributeValue element of type String,
-	//    Number, Binary, String Set, Number Set, or Binary Set. If an item contains
-	//    an AttributeValue element of a different type than the one provided in
+	//    * NE : Not equal. NE is supported for all data types, including lists
+	//    and maps. AttributeValueList can contain only one AttributeValue of type
+	//    String, Number, Binary, String Set, Number Set, or Binary Set. If an item
+	//    contains an AttributeValue of a different type than the one provided in
 	//    the request, the value does not match. For example, {"S":"6"} does not
 	//    equal {"N":"6"}. Also, {"N":"6"} does not equal {"NS":["6", "2", "1"]}.
 	//
-	//    * NE : Not equal. NE is supported for all data types, including lists
-	//    and maps.
+	//    * LE : Less than or equal. AttributeValueList can contain only one AttributeValue
+	//    element of type String, Number, or Binary (not a set type). If an item
+	//    contains an AttributeValue element of a different type than the one provided
+	//    in the request, the value does not match. For example, {"S":"6"} does
+	//    not equal {"N":"6"}. Also, {"N":"6"} does not compare to {"NS":["6", "2",
+	//    "1"]}.
 	//
-	//    * AttributeValueList can contain only one AttributeValue of type String,
-	//    Number, Binary, String Set, Number Set, or Binary Set. If an item contains
-	//    an AttributeValue of a different type than the one provided in the request,
-	//    the value does not match. For example, {"S":"6"} does not equal {"N":"6"}.
-	//    Also, {"N":"6"} does not equal {"NS":["6", "2", "1"]}.
+	//    * LT : Less than. AttributeValueList can contain only one AttributeValue
+	//    of type String, Number, or Binary (not a set type). If an item contains
+	//    an AttributeValue element of a different type than the one provided in
+	//    the request, the value does not match. For example, {"S":"6"} does not
+	//    equal {"N":"6"}. Also, {"N":"6"} does not compare to {"NS":["6", "2",
+	//    "1"]}.
 	//
-	//    * LE : Less than or equal.
+	//    * GE : Greater than or equal. AttributeValueList can contain only one
+	//    AttributeValue element of type String, Number, or Binary (not a set type).
+	//    If an item contains an AttributeValue element of a different type than
+	//    the one provided in the request, the value does not match. For example,
+	//    {"S":"6"} does not equal {"N":"6"}. Also, {"N":"6"} does not compare to
+	//    {"NS":["6", "2", "1"]}.
 	//
-	// AttributeValueList can contain only one AttributeValue element of type String,
-	// Number, or Binary (not a set type). If an item contains an AttributeValue
-	// element of a different type than the one provided in the request, the value
-	// does not match. For example, {"S":"6"} does not equal {"N":"6"}. Also, {"N":"6"}
-	// does not compare to {"NS":["6", "2", "1"]}.
+	//    * GT : Greater than. AttributeValueList can contain only one AttributeValue
+	//    element of type String, Number, or Binary (not a set type). If an item
+	//    contains an AttributeValue element of a different type than the one provided
+	//    in the request, the value does not match. For example, {"S":"6"} does
+	//    not equal {"N":"6"}. Also, {"N":"6"} does not compare to {"NS":["6", "2",
+	//    "1"]}.
 	//
-	// LT: Less than.
+	//    * NOT_NULL : The attribute exists. NOT_NULL is supported for all data
+	//    types, including lists and maps. This operator tests for the existence
+	//    of an attribute, not its data type. If the data type of attribute "a"
+	//    is null, and you evaluate it using NOT_NULL, the result is a Boolean true.
+	//    This result is because the attribute "a" exists; its data type is not
+	//    relevant to the NOT_NULL comparison operator.
 	//
-	// AttributeValueListcan contain only one AttributeValueof type String, Number, or Binary (not a set type). If an item contains an
-	// AttributeValueelement of a different type than the one provided in the request, the value
-	// does not match. For example, {"S":"6"}does not equal {"N":"6"}. Also, {"N":"6"}does not compare to {"NS":["6", "2", "1"]}
+	//    * NULL : The attribute does not exist. NULL is supported for all data
+	//    types, including lists and maps. This operator tests for the nonexistence
+	//    of an attribute, not its data type. If the data type of attribute "a"
+	//    is null, and you evaluate it using NULL, the result is a Boolean false.
+	//    This is because the attribute "a" exists; its data type is not relevant
+	//    to the NULL comparison operator.
+	//
+	//    * CONTAINS : Checks for a subsequence, or value in a set. AttributeValueList
+	//    can contain only one AttributeValue element of type String, Number, or
+	//    Binary (not a set type). If the target attribute of the comparison is
+	//    of type String, then the operator checks for a substring match. If the
+	//    target attribute of the comparison is of type Binary, then the operator
+	//    looks for a subsequence of the target that matches the input. If the target
+	//    attribute of the comparison is a set ("SS", "NS", or "BS"), then the operator
+	//    evaluates to true if it finds an exact match with any member of the set.
+	//    CONTAINS is supported for lists: When evaluating "a CONTAINS b", "a" can
+	//    be a list; however, "b" cannot be a set, a map, or a list.
+	//
+	//    * NOT_CONTAINS : Checks for absence of a subsequence, or absence of a
+	//    value in a set. AttributeValueList can contain only one AttributeValue
+	//    element of type String, Number, or Binary (not a set type). If the target
+	//    attribute of the comparison is a String, then the operator checks for
+	//    the absence of a substring match. If the target attribute of the comparison
+	//    is Binary, then the operator checks for the absence of a subsequence of
+	//    the target that matches the input. If the target attribute of the comparison
+	//    is a set ("SS", "NS", or "BS"), then the operator evaluates to true if
+	//    it does not find an exact match with any member of the set. NOT_CONTAINS
+	//    is supported for lists: When evaluating "a NOT CONTAINS b", "a" can be
+	//    a list; however, "b" cannot be a set, a map, or a list.
+	//
+	//    * BEGINS_WITH : Checks for a prefix. AttributeValueList can contain only
+	//    one AttributeValue of type String or Binary (not a Number or a set type).
+	//    The target attribute of the comparison must be of type String or Binary
+	//    (not a Number or a set type).
+	//
+	//    * IN : Checks for matching elements in a list. AttributeValueList can
+	//    contain one or more AttributeValue elements of type String, Number, or
+	//    Binary. These attributes are compared against an existing attribute of
+	//    an item. If any elements of the input are equal to the item attribute,
+	//    the expression evaluates to true.
+	//
+	//    * BETWEEN : Greater than or equal to the first value, and less than or
+	//    equal to the second value. AttributeValueList must contain two AttributeValue
+	//    elements of the same type, either String, Number, or Binary (not a set
+	//    type). A target attribute matches if the target value is greater than,
+	//    or equal to, the first element and less than, or equal to, the second
+	//    element. If an item contains an AttributeValue element of a different
+	//    type than the one provided in the request, the value does not match. For
+	//    example, {"S":"6"} does not compare to {"N":"6"}. Also, {"N":"6"} does
+	//    not compare to {"NS":["6", "2", "1"]}
 	ComparisonOperator *string `type:"string" enum:"ComparisonOperator"`
 
 	// Causes DynamoDB to evaluate the value before attempting a conditional operation:
 	//
 	//    * If Exists is true, DynamoDB will check to see if that attribute value
 	//    already exists in the table. If it is found, then the operation succeeds.
-	//    If it is not found, the operation fails with a ConditionalCheckFailedException.
+	//    If it is not found, the operation fails with a ConditionCheckFailedException.
 	//
 	//    * If Exists is false, DynamoDB assumes that the attribute value does not
 	//    exist in the table. If in fact the value does not exist, then the assumption
 	//    is valid and the operation succeeds. If the value is found, despite the
-	//    assumption that it does not exist, the operation fails with a ConditionalCheckFailedException.
+	//    assumption that it does not exist, the operation fails with a ConditionCheckFailedException.
 	//
 	// The default setting for Exists is true. If you supply a Value all by itself,
 	// DynamoDB assumes the attribute exists: You don't have to set Exists to true,
@@ -6783,7 +9098,7 @@ type ExpectedAttributeValue struct {
 	// Each attribute value is described as a name-value pair. The name is the data
 	// type, and the value is the data itself.
 	//
-	// For more information, see Data Types (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html#HowItWorks.DataTypes)
+	// For more information, see Data Types (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html#HowItWorks.DataTypes)
 	// in the Amazon DynamoDB Developer Guide.
 	Value *AttributeValue `type:"structure"`
 }
@@ -6822,12 +9137,93 @@ func (s *ExpectedAttributeValue) SetValue(v *AttributeValue) *ExpectedAttributeV
 	return s
 }
 
+// Specifies an item and related attribute values to retrieve in a TransactGetItem
+// object.
+type Get struct {
+	_ struct{} `type:"structure"`
+
+	// One or more substitution tokens for attribute names in the ProjectionExpression
+	// parameter.
+	ExpressionAttributeNames map[string]*string `type:"map"`
+
+	// A map of attribute names to AttributeValue objects that specifies the primary
+	// key of the item to retrieve.
+	//
+	// Key is a required field
+	Key map[string]*AttributeValue `type:"map" required:"true"`
+
+	// A string that identifies one or more attributes of the specified item to
+	// retrieve from the table. The attributes in the expression must be separated
+	// by commas. If no attribute names are specified, then all attributes of the
+	// specified item are returned. If any of the requested attributes are not found,
+	// they do not appear in the result.
+	ProjectionExpression *string `type:"string"`
+
+	// The name of the table from which to retrieve the specified item.
+	//
+	// TableName is a required field
+	TableName *string `min:"3" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s Get) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Get) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Get) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Get"}
+	if s.Key == nil {
+		invalidParams.Add(request.NewErrParamRequired("Key"))
+	}
+	if s.TableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableName"))
+	}
+	if s.TableName != nil && len(*s.TableName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("TableName", 3))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetExpressionAttributeNames sets the ExpressionAttributeNames field's value.
+func (s *Get) SetExpressionAttributeNames(v map[string]*string) *Get {
+	s.ExpressionAttributeNames = v
+	return s
+}
+
+// SetKey sets the Key field's value.
+func (s *Get) SetKey(v map[string]*AttributeValue) *Get {
+	s.Key = v
+	return s
+}
+
+// SetProjectionExpression sets the ProjectionExpression field's value.
+func (s *Get) SetProjectionExpression(v string) *Get {
+	s.ProjectionExpression = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *Get) SetTableName(v string) *Get {
+	s.TableName = &v
+	return s
+}
+
 // Represents the input of a GetItem operation.
 type GetItemInput struct {
 	_ struct{} `type:"structure"`
 
 	// This is a legacy parameter. Use ProjectionExpression instead. For more information,
-	// see AttributesToGet (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.AttributesToGet.html)
+	// see AttributesToGet (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.AttributesToGet.html)
 	// in the Amazon DynamoDB Developer Guide.
 	AttributesToGet []*string `min:"1" type:"list"`
 
@@ -6855,7 +9251,7 @@ type GetItemInput struct {
 	//
 	// The name of this attribute conflicts with a reserved word, so it cannot be
 	// used directly in an expression. (For the complete list of reserved words,
-	// see Reserved Words (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
+	// see Reserved Words (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
 	// in the Amazon DynamoDB Developer Guide). To work around this, you could specify
 	// the following for ExpressionAttributeNames:
 	//
@@ -6868,8 +9264,8 @@ type GetItemInput struct {
 	// Tokens that begin with the : character are expression attribute values, which
 	// are placeholders for the actual value at runtime.
 	//
-	// For more information on expression attribute names, see Accessing Item Attributes
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	// For more information on expression attribute names, see Specifying Item Attributes
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeNames map[string]*string `type:"map"`
 
@@ -6888,11 +9284,11 @@ type GetItemInput struct {
 	// These attributes can include scalars, sets, or elements of a JSON document.
 	// The attributes in the expression must be separated by commas.
 	//
-	// If no attribute names are specified, then all attributes will be returned.
-	// If any of the requested attributes are not found, they will not appear in
-	// the result.
+	// If no attribute names are specified, then all attributes are returned. If
+	// any of the requested attributes are not found, they do not appear in the
+	// result.
 	//
-	// For more information, see Accessing Item Attributes (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	// For more information, see Specifying Item Attributes (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ProjectionExpression *string `type:"string"`
 
@@ -6901,11 +9297,9 @@ type GetItemInput struct {
 	//
 	//    * INDEXES - The response includes the aggregate ConsumedCapacity for the
 	//    operation, together with ConsumedCapacity for each table and secondary
-	//    index that was accessed.
-	//
-	// Note that some operations, such as GetItem and BatchGetItem, do not access
-	//    any indexes at all. In these cases, specifying INDEXES will only return
-	//    ConsumedCapacity information for table(s).
+	//    index that was accessed. Note that some operations, such as GetItem and
+	//    BatchGetItem, do not access any indexes at all. In these cases, specifying
+	//    INDEXES will only return ConsumedCapacity information for table(s).
 	//
 	//    * TOTAL - The response includes only the aggregate ConsumedCapacity for
 	//    the operation.
@@ -7001,7 +9395,7 @@ type GetItemOutput struct {
 	// the total provisioned throughput consumed, along with statistics for the
 	// table and any indexes involved in the operation. ConsumedCapacity is only
 	// returned if the ReturnConsumedCapacity parameter was specified. For more
-	// information, see Provisioned Throughput (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
+	// information, see Read/Write Capacity Mode (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConsumedCapacity *ConsumedCapacity `type:"structure"`
 
@@ -7071,11 +9465,9 @@ type GlobalSecondaryIndex struct {
 	// index.
 	//
 	// For current minimum and maximum provisioned throughput values, see Limits
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
 	// in the Amazon DynamoDB Developer Guide.
-	//
-	// ProvisionedThroughput is a required field
-	ProvisionedThroughput *ProvisionedThroughput `type:"structure" required:"true"`
+	ProvisionedThroughput *ProvisionedThroughput `type:"structure"`
 }
 
 // String returns the string representation
@@ -7105,9 +9497,6 @@ func (s *GlobalSecondaryIndex) Validate() error {
 	}
 	if s.Projection == nil {
 		invalidParams.Add(request.NewErrParamRequired("Projection"))
-	}
-	if s.ProvisionedThroughput == nil {
-		invalidParams.Add(request.NewErrParamRequired("ProvisionedThroughput"))
 	}
 	if s.KeySchema != nil {
 		for i, v := range s.KeySchema {
@@ -7227,7 +9616,7 @@ type GlobalSecondaryIndexDescription struct {
 	// index.
 	//
 	// For current minimum and maximum provisioned throughput values, see Limits
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ProvisionedThroughput *ProvisionedThroughputDescription `type:"structure"`
 }
@@ -7489,7 +9878,7 @@ type GlobalTableDescription struct {
 	_ struct{} `type:"structure"`
 
 	// The creation time of the global table.
-	CreationDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	CreationDateTime *time.Time `type:"timestamp"`
 
 	// The unique identifier of the global table.
 	GlobalTableArn *string `type:"string"`
@@ -7563,6 +9952,10 @@ type GlobalTableGlobalSecondaryIndexSettingsUpdate struct {
 	// IndexName is a required field
 	IndexName *string `min:"3" type:"string" required:"true"`
 
+	// AutoScaling settings for managing a global secondary index's write capacity
+	// units.
+	ProvisionedWriteCapacityAutoScalingSettingsUpdate *AutoScalingSettingsUpdate `type:"structure"`
+
 	// The maximum number of writes consumed per second before DynamoDB returns
 	// a ThrottlingException.
 	ProvisionedWriteCapacityUnits *int64 `min:"1" type:"long"`
@@ -7590,6 +9983,11 @@ func (s *GlobalTableGlobalSecondaryIndexSettingsUpdate) Validate() error {
 	if s.ProvisionedWriteCapacityUnits != nil && *s.ProvisionedWriteCapacityUnits < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("ProvisionedWriteCapacityUnits", 1))
 	}
+	if s.ProvisionedWriteCapacityAutoScalingSettingsUpdate != nil {
+		if err := s.ProvisionedWriteCapacityAutoScalingSettingsUpdate.Validate(); err != nil {
+			invalidParams.AddNested("ProvisionedWriteCapacityAutoScalingSettingsUpdate", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -7600,6 +9998,12 @@ func (s *GlobalTableGlobalSecondaryIndexSettingsUpdate) Validate() error {
 // SetIndexName sets the IndexName field's value.
 func (s *GlobalTableGlobalSecondaryIndexSettingsUpdate) SetIndexName(v string) *GlobalTableGlobalSecondaryIndexSettingsUpdate {
 	s.IndexName = &v
+	return s
+}
+
+// SetProvisionedWriteCapacityAutoScalingSettingsUpdate sets the ProvisionedWriteCapacityAutoScalingSettingsUpdate field's value.
+func (s *GlobalTableGlobalSecondaryIndexSettingsUpdate) SetProvisionedWriteCapacityAutoScalingSettingsUpdate(v *AutoScalingSettingsUpdate) *GlobalTableGlobalSecondaryIndexSettingsUpdate {
+	s.ProvisionedWriteCapacityAutoScalingSettingsUpdate = v
 	return s
 }
 
@@ -7651,6 +10055,30 @@ func (s *ItemCollectionMetrics) SetItemCollectionKey(v map[string]*AttributeValu
 // SetSizeEstimateRangeGB sets the SizeEstimateRangeGB field's value.
 func (s *ItemCollectionMetrics) SetSizeEstimateRangeGB(v []*float64) *ItemCollectionMetrics {
 	s.SizeEstimateRangeGB = v
+	return s
+}
+
+// Details for the requested item.
+type ItemResponse struct {
+	_ struct{} `type:"structure"`
+
+	// Map of attribute data consisting of the data type and attribute value.
+	Item map[string]*AttributeValue `type:"map"`
+}
+
+// String returns the string representation
+func (s ItemResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ItemResponse) GoString() string {
+	return s.String()
+}
+
+// SetItem sets the Item field's value.
+func (s *ItemResponse) SetItem(v map[string]*AttributeValue) *ItemResponse {
+	s.Item = v
 	return s
 }
 
@@ -7744,7 +10172,7 @@ type KeysAndAttributes struct {
 	_ struct{} `type:"structure"`
 
 	// This is a legacy parameter. Use ProjectionExpression instead. For more information,
-	// see Legacy Conditional Parameters (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.html)
+	// see Legacy Conditional Parameters (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.html)
 	// in the Amazon DynamoDB Developer Guide.
 	AttributesToGet []*string `min:"1" type:"list"`
 
@@ -7771,7 +10199,7 @@ type KeysAndAttributes struct {
 	//
 	// The name of this attribute conflicts with a reserved word, so it cannot be
 	// used directly in an expression. (For the complete list of reserved words,
-	// see Reserved Words (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
+	// see Reserved Words (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
 	// in the Amazon DynamoDB Developer Guide). To work around this, you could specify
 	// the following for ExpressionAttributeNames:
 	//
@@ -7785,7 +10213,7 @@ type KeysAndAttributes struct {
 	// are placeholders for the actual value at runtime.
 	//
 	// For more information on expression attribute names, see Accessing Item Attributes
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeNames map[string]*string `type:"map"`
 
@@ -7803,7 +10231,7 @@ type KeysAndAttributes struct {
 	// If any of the requested attributes are not found, they will not appear in
 	// the result.
 	//
-	// For more information, see Accessing Item Attributes (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	// For more information, see Accessing Item Attributes (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ProjectionExpression *string `type:"string"`
 }
@@ -7870,7 +10298,21 @@ func (s *KeysAndAttributes) SetProjectionExpression(v string) *KeysAndAttributes
 type ListBackupsInput struct {
 	_ struct{} `type:"structure"`
 
-	// LastEvaluatedBackupARN returned by the previous ListBackups call.
+	// The backups from the table specified by BackupType are listed.
+	//
+	// Where BackupType can be:
+	//
+	//    * USER - On-demand backup created by you.
+	//
+	//    * SYSTEM - On-demand backup automatically created by DynamoDB.
+	//
+	//    * ALL - All types of on-demand backups (USER and SYSTEM).
+	BackupType *string `type:"string" enum:"BackupTypeFilter"`
+
+	// LastEvaluatedBackupArn is the Amazon Resource Name (ARN) of the backup last
+	// evaluated when the current page of results was returned, inclusive of the
+	// current page of results. This value may be specified as the ExclusiveStartBackupArn
+	// of a new ListBackups operation in order to fetch the next page of results.
 	ExclusiveStartBackupArn *string `min:"37" type:"string"`
 
 	// Maximum number of backups to return at once.
@@ -7880,11 +10322,11 @@ type ListBackupsInput struct {
 	TableName *string `min:"3" type:"string"`
 
 	// Only backups created after this time are listed. TimeRangeLowerBound is inclusive.
-	TimeRangeLowerBound *time.Time `type:"timestamp" timestampFormat:"unix"`
+	TimeRangeLowerBound *time.Time `type:"timestamp"`
 
 	// Only backups created before this time are listed. TimeRangeUpperBound is
 	// exclusive.
-	TimeRangeUpperBound *time.Time `type:"timestamp" timestampFormat:"unix"`
+	TimeRangeUpperBound *time.Time `type:"timestamp"`
 }
 
 // String returns the string representation
@@ -7914,6 +10356,12 @@ func (s *ListBackupsInput) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetBackupType sets the BackupType field's value.
+func (s *ListBackupsInput) SetBackupType(v string) *ListBackupsInput {
+	s.BackupType = &v
+	return s
 }
 
 // SetExclusiveStartBackupArn sets the ExclusiveStartBackupArn field's value.
@@ -7952,7 +10400,17 @@ type ListBackupsOutput struct {
 	// List of BackupSummary objects.
 	BackupSummaries []*BackupSummary `type:"list"`
 
-	// Last evaluated BackupARN.
+	// The ARN of the backup last evaluated when the current page of results was
+	// returned, inclusive of the current page of results. This value may be specified
+	// as the ExclusiveStartBackupArn of a new ListBackups operation in order to
+	// fetch the next page of results.
+	//
+	// If LastEvaluatedBackupArn is empty, then the last page of results has been
+	// processed and there are no more results to be retrieved.
+	//
+	// If LastEvaluatedBackupArn is not empty, this may or may not indicate that
+	// there is more data to be returned. All results are guaranteed to have been
+	// returned if and only if no value for LastEvaluatedBackupArn is returned.
 	LastEvaluatedBackupArn *string `min:"37" type:"string"`
 }
 
@@ -7987,7 +10445,7 @@ type ListGlobalTablesInput struct {
 	// The maximum number of table names to return.
 	Limit *int64 `min:"1" type:"integer"`
 
-	// Lists the global tables in a specific region.
+	// Lists the global tables in a specific Region.
 	RegionName *string `type:"string"`
 }
 
@@ -8507,10 +10965,10 @@ type PointInTimeRecoveryDescription struct {
 
 	// Specifies the earliest point in time you can restore your table to. It You
 	// can restore your table to any point in time during the last 35 days.
-	EarliestRestorableDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	EarliestRestorableDateTime *time.Time `type:"timestamp"`
 
 	// LatestRestorableDateTime is typically 5 minutes before the current time.
-	LatestRestorableDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	LatestRestorableDateTime *time.Time `type:"timestamp"`
 
 	// The current state of point in time recovery:
 	//
@@ -8654,23 +11112,27 @@ func (s *Projection) SetProjectionType(v string) *Projection {
 // The settings can be modified using the UpdateTable operation.
 //
 // For current minimum and maximum provisioned throughput values, see Limits
-// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
+// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
 // in the Amazon DynamoDB Developer Guide.
 type ProvisionedThroughput struct {
 	_ struct{} `type:"structure"`
 
 	// The maximum number of strongly consistent reads consumed per second before
 	// DynamoDB returns a ThrottlingException. For more information, see Specifying
-	// Read and Write Requirements (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#ProvisionedThroughput)
+	// Read and Write Requirements (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#ProvisionedThroughput)
 	// in the Amazon DynamoDB Developer Guide.
+	//
+	// If read/write capacity mode is PAY_PER_REQUEST the value is set to 0.
 	//
 	// ReadCapacityUnits is a required field
 	ReadCapacityUnits *int64 `min:"1" type:"long" required:"true"`
 
 	// The maximum number of writes consumed per second before DynamoDB returns
 	// a ThrottlingException. For more information, see Specifying Read and Write
-	// Requirements (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#ProvisionedThroughput)
+	// Requirements (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#ProvisionedThroughput)
 	// in the Amazon DynamoDB Developer Guide.
+	//
+	// If read/write capacity mode is PAY_PER_REQUEST the value is set to 0.
 	//
 	// WriteCapacityUnits is a required field
 	WriteCapacityUnits *int64 `min:"1" type:"long" required:"true"`
@@ -8726,14 +11188,14 @@ type ProvisionedThroughputDescription struct {
 	_ struct{} `type:"structure"`
 
 	// The date and time of the last provisioned throughput decrease for this table.
-	LastDecreaseDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	LastDecreaseDateTime *time.Time `type:"timestamp"`
 
 	// The date and time of the last provisioned throughput increase for this table.
-	LastIncreaseDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	LastIncreaseDateTime *time.Time `type:"timestamp"`
 
 	// The number of provisioned throughput decreases for this table during this
 	// UTC calendar day. For current maximums on provisioned throughput decreases,
-	// see Limits (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
+	// see Limits (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
 	// in the Amazon DynamoDB Developer Guide.
 	NumberOfDecreasesToday *int64 `min:"1" type:"long"`
 
@@ -8741,11 +11203,11 @@ type ProvisionedThroughputDescription struct {
 	// DynamoDB returns a ThrottlingException. Eventually consistent reads require
 	// less effort than strongly consistent reads, so a setting of 50 ReadCapacityUnits
 	// per second provides 100 eventually consistent ReadCapacityUnits per second.
-	ReadCapacityUnits *int64 `min:"1" type:"long"`
+	ReadCapacityUnits *int64 `type:"long"`
 
 	// The maximum number of writes consumed per second before DynamoDB returns
 	// a ThrottlingException.
-	WriteCapacityUnits *int64 `min:"1" type:"long"`
+	WriteCapacityUnits *int64 `type:"long"`
 }
 
 // String returns the string representation
@@ -8788,6 +11250,104 @@ func (s *ProvisionedThroughputDescription) SetWriteCapacityUnits(v int64) *Provi
 	return s
 }
 
+// Represents a request to perform a PutItem operation.
+type Put struct {
+	_ struct{} `type:"structure"`
+
+	// A condition that must be satisfied in order for a conditional update to succeed.
+	ConditionExpression *string `type:"string"`
+
+	// One or more substitution tokens for attribute names in an expression.
+	ExpressionAttributeNames map[string]*string `type:"map"`
+
+	// One or more values that can be substituted in an expression.
+	ExpressionAttributeValues map[string]*AttributeValue `type:"map"`
+
+	// A map of attribute name to attribute values, representing the primary key
+	// of the item to be written by PutItem. All of the table's primary key attributes
+	// must be specified, and their data types must match those of the table's key
+	// schema. If any attributes are present in the item that are part of an index
+	// key schema for the table, their types must match the index key schema.
+	//
+	// Item is a required field
+	Item map[string]*AttributeValue `type:"map" required:"true"`
+
+	// Use ReturnValuesOnConditionCheckFailure to get the item attributes if the
+	// Put condition fails. For ReturnValuesOnConditionCheckFailure, the valid values
+	// are: NONE and ALL_OLD.
+	ReturnValuesOnConditionCheckFailure *string `type:"string" enum:"ReturnValuesOnConditionCheckFailure"`
+
+	// Name of the table in which to write the item.
+	//
+	// TableName is a required field
+	TableName *string `min:"3" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s Put) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Put) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Put) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Put"}
+	if s.Item == nil {
+		invalidParams.Add(request.NewErrParamRequired("Item"))
+	}
+	if s.TableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableName"))
+	}
+	if s.TableName != nil && len(*s.TableName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("TableName", 3))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetConditionExpression sets the ConditionExpression field's value.
+func (s *Put) SetConditionExpression(v string) *Put {
+	s.ConditionExpression = &v
+	return s
+}
+
+// SetExpressionAttributeNames sets the ExpressionAttributeNames field's value.
+func (s *Put) SetExpressionAttributeNames(v map[string]*string) *Put {
+	s.ExpressionAttributeNames = v
+	return s
+}
+
+// SetExpressionAttributeValues sets the ExpressionAttributeValues field's value.
+func (s *Put) SetExpressionAttributeValues(v map[string]*AttributeValue) *Put {
+	s.ExpressionAttributeValues = v
+	return s
+}
+
+// SetItem sets the Item field's value.
+func (s *Put) SetItem(v map[string]*AttributeValue) *Put {
+	s.Item = v
+	return s
+}
+
+// SetReturnValuesOnConditionCheckFailure sets the ReturnValuesOnConditionCheckFailure field's value.
+func (s *Put) SetReturnValuesOnConditionCheckFailure(v string) *Put {
+	s.ReturnValuesOnConditionCheckFailure = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *Put) SetTableName(v string) *Put {
+	s.TableName = &v
+	return s
+}
+
 // Represents the input of a PutItem operation.
 type PutItemInput struct {
 	_ struct{} `type:"structure"`
@@ -8798,26 +11358,24 @@ type PutItemInput struct {
 	// An expression can contain any of the following:
 	//
 	//    * Functions: attribute_exists | attribute_not_exists | attribute_type
-	//    | contains | begins_with | size
-	//
-	// These function names are case-sensitive.
+	//    | contains | begins_with | size These function names are case-sensitive.
 	//
 	//    * Comparison operators: = | <> | < | > | <= | >= | BETWEEN | IN
 	//
-	//    *  Logical operators: AND | OR | NOT
+	//    * Logical operators: AND | OR | NOT
 	//
-	// For more information on condition expressions, see Specifying Conditions
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
+	// For more information on condition expressions, see Condition Expressions
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConditionExpression *string `type:"string"`
 
 	// This is a legacy parameter. Use ConditionExpression instead. For more information,
-	// see ConditionalOperator (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ConditionalOperator.html)
+	// see ConditionalOperator (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ConditionalOperator.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConditionalOperator *string `type:"string" enum:"ConditionalOperator"`
 
 	// This is a legacy parameter. Use ConditionExpression instead. For more information,
-	// see Expected (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.Expected.html)
+	// see Expected (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.Expected.html)
 	// in the Amazon DynamoDB Developer Guide.
 	Expected map[string]*ExpectedAttributeValue `type:"map"`
 
@@ -8840,7 +11398,7 @@ type PutItemInput struct {
 	//
 	// The name of this attribute conflicts with a reserved word, so it cannot be
 	// used directly in an expression. (For the complete list of reserved words,
-	// see Reserved Words (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
+	// see Reserved Words (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
 	// in the Amazon DynamoDB Developer Guide). To work around this, you could specify
 	// the following for ExpressionAttributeNames:
 	//
@@ -8853,8 +11411,8 @@ type PutItemInput struct {
 	// Tokens that begin with the : character are expression attribute values, which
 	// are placeholders for the actual value at runtime.
 	//
-	// For more information on expression attribute names, see Accessing Item Attributes
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	// For more information on expression attribute names, see Specifying Item Attributes
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeNames map[string]*string `type:"map"`
 
@@ -8875,8 +11433,8 @@ type PutItemInput struct {
 	//
 	// ProductStatus IN (:avail, :back, :disc)
 	//
-	// For more information on expression attribute values, see Specifying Conditions
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
+	// For more information on expression attribute values, see Condition Expressions
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeValues map[string]*AttributeValue `type:"map"`
 
@@ -8893,7 +11451,7 @@ type PutItemInput struct {
 	// types for those attributes must match those of the schema in the table's
 	// attribute definition.
 	//
-	// For more information about primary keys, see Primary Key (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DataModel.html#DataModelPrimaryKey)
+	// For more information about primary keys, see Primary Key (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey)
 	// in the Amazon DynamoDB Developer Guide.
 	//
 	// Each element in the Item map is an AttributeValue object.
@@ -8906,11 +11464,9 @@ type PutItemInput struct {
 	//
 	//    * INDEXES - The response includes the aggregate ConsumedCapacity for the
 	//    operation, together with ConsumedCapacity for each table and secondary
-	//    index that was accessed.
-	//
-	// Note that some operations, such as GetItem and BatchGetItem, do not access
-	//    any indexes at all. In these cases, specifying INDEXES will only return
-	//    ConsumedCapacity information for table(s).
+	//    index that was accessed. Note that some operations, such as GetItem and
+	//    BatchGetItem, do not access any indexes at all. In these cases, specifying
+	//    INDEXES will only return ConsumedCapacity information for table(s).
 	//
 	//    * TOTAL - The response includes only the aggregate ConsumedCapacity for
 	//    the operation.
@@ -9046,7 +11602,7 @@ type PutItemOutput struct {
 	// the total provisioned throughput consumed, along with statistics for the
 	// table and any indexes involved in the operation. ConsumedCapacity is only
 	// returned if the ReturnConsumedCapacity parameter was specified. For more
-	// information, see Provisioned Throughput (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
+	// information, see Read/Write Capacity Mode (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConsumedCapacity *ConsumedCapacity `type:"structure"`
 
@@ -9065,10 +11621,9 @@ type PutItemOutput struct {
 	//    bound for the estimate. The estimate includes the size of all the items
 	//    in the table, plus the size of all attributes projected into all of the
 	//    local secondary indexes on that table. Use this estimate to measure whether
-	//    a local secondary index is approaching its size limit.
-	//
-	// The estimate is subject to change over time; therefore, do not rely on the
-	//    precision or accuracy of the estimate.
+	//    a local secondary index is approaching its size limit. The estimate is
+	//    subject to change over time; therefore, do not rely on the precision or
+	//    accuracy of the estimate.
 	ItemCollectionMetrics *ItemCollectionMetrics `type:"structure"`
 }
 
@@ -9135,12 +11690,12 @@ type QueryInput struct {
 	_ struct{} `type:"structure"`
 
 	// This is a legacy parameter. Use ProjectionExpression instead. For more information,
-	// see AttributesToGet (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.AttributesToGet.html)
+	// see AttributesToGet (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.AttributesToGet.html)
 	// in the Amazon DynamoDB Developer Guide.
 	AttributesToGet []*string `min:"1" type:"list"`
 
 	// This is a legacy parameter. Use FilterExpression instead. For more information,
-	// see ConditionalOperator (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ConditionalOperator.html)
+	// see ConditionalOperator (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ConditionalOperator.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConditionalOperator *string `type:"string" enum:"ConditionalOperator"`
 
@@ -9156,7 +11711,7 @@ type QueryInput struct {
 	// The primary key of the first item that this operation will evaluate. Use
 	// the value that was returned for LastEvaluatedKey in the previous operation.
 	//
-	// The data type for ExclusiveStartKey must be String, Number or Binary. No
+	// The data type for ExclusiveStartKey must be String, Number, or Binary. No
 	// set data types are allowed.
 	ExclusiveStartKey map[string]*AttributeValue `type:"map"`
 
@@ -9179,7 +11734,7 @@ type QueryInput struct {
 	//
 	// The name of this attribute conflicts with a reserved word, so it cannot be
 	// used directly in an expression. (For the complete list of reserved words,
-	// see Reserved Words (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
+	// see Reserved Words (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
 	// in the Amazon DynamoDB Developer Guide). To work around this, you could specify
 	// the following for ExpressionAttributeNames:
 	//
@@ -9192,8 +11747,8 @@ type QueryInput struct {
 	// Tokens that begin with the : character are expression attribute values, which
 	// are placeholders for the actual value at runtime.
 	//
-	// For more information on expression attribute names, see Accessing Item Attributes
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	// For more information on expression attribute names, see Specifying Item Attributes
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeNames map[string]*string `type:"map"`
 
@@ -9215,7 +11770,7 @@ type QueryInput struct {
 	// ProductStatus IN (:avail, :back, :disc)
 	//
 	// For more information on expression attribute values, see Specifying Conditions
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeValues map[string]*AttributeValue `type:"map"`
 
@@ -9229,7 +11784,7 @@ type QueryInput struct {
 	// A FilterExpression is applied after the items have already been read; the
 	// process of filtering does not consume any additional read capacity units.
 	//
-	// For more information, see Filter Expressions (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#FilteringResults)
+	// For more information, see Filter Expressions (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#FilteringResults)
 	// in the Amazon DynamoDB Developer Guide.
 	FilterExpression *string `type:"string"`
 
@@ -9238,7 +11793,7 @@ type QueryInput struct {
 	// parameter, you must also provide TableName.
 	IndexName *string `min:"3" type:"string"`
 
-	// The condition that specifies the key value(s) for items to be retrieved by
+	// The condition that specifies the key values for items to be retrieved by
 	// the Query action.
 	//
 	// The condition must perform an equality test on a single partition key value.
@@ -9251,34 +11806,35 @@ type QueryInput struct {
 	// The partition key equality test is required, and must be specified in the
 	// following format:
 	//
-	// partitionKeyName=:partitionkeyval
+	// partitionKeyName = :partitionkeyval
 	//
 	// If you also want to provide a condition for the sort key, it must be combined
 	// using AND with the condition for the sort key. Following is an example, using
 	// the = comparison operator for the sort key:
 	//
-	// partitionKeyName=:partitionkeyvalANDsortKeyName=:sortkeyval
+	// partitionKeyName = :partitionkeyval AND sortKeyName = :sortkeyval
 	//
 	// Valid comparisons for the sort key condition are as follows:
 	//
-	//    * sortKeyName=:sortkeyval - true if the sort key value is equal to :sortkeyval.
+	//    * sortKeyName = :sortkeyval - true if the sort key value is equal to :sortkeyval.
 	//
-	//    * sortKeyName<:sortkeyval - true if the sort key value is less than :sortkeyval.
-	//
-	//    * sortKeyName<=:sortkeyval - true if the sort key value is less than or
-	//    equal to :sortkeyval.
-	//
-	//    * sortKeyName>:sortkeyval - true if the sort key value is greater than
+	//    * sortKeyName < :sortkeyval - true if the sort key value is less than
 	//    :sortkeyval.
 	//
-	//    * sortKeyName>= :sortkeyval - true if the sort key value is greater than
+	//    * sortKeyName <= :sortkeyval - true if the sort key value is less than
 	//    or equal to :sortkeyval.
 	//
-	//    * sortKeyNameBETWEEN:sortkeyval1AND:sortkeyval2 - true if the sort key
-	//    value is greater than or equal to :sortkeyval1, and less than or equal
+	//    * sortKeyName > :sortkeyval - true if the sort key value is greater than
+	//    :sortkeyval.
+	//
+	//    * sortKeyName >= :sortkeyval - true if the sort key value is greater than
+	//    or equal to :sortkeyval.
+	//
+	//    * sortKeyName BETWEEN :sortkeyval1 AND :sortkeyval2 - true if the sort
+	//    key value is greater than or equal to :sortkeyval1, and less than or equal
 	//    to :sortkeyval2.
 	//
-	//    * begins_with (sortKeyName, :sortkeyval) - true if the sort key value
+	//    * begins_with ( sortKeyName, :sortkeyval ) - true if the sort key value
 	//    begins with a particular operand. (You cannot use this function with a
 	//    sort key that is of type Number.) Note that the function name begins_with
 	//    is case-sensitive.
@@ -9299,16 +11855,16 @@ type QueryInput struct {
 	//
 	//    * #S = :myval
 	//
-	// For a list of reserved words, see Reserved Words (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
+	// For a list of reserved words, see Reserved Words (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
 	// in the Amazon DynamoDB Developer Guide.
 	//
 	// For more information on ExpressionAttributeNames and ExpressionAttributeValues,
-	// see Using Placeholders for Attribute Names and Values (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ExpressionPlaceholders.html)
+	// see Using Placeholders for Attribute Names and Values (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ExpressionPlaceholders.html)
 	// in the Amazon DynamoDB Developer Guide.
 	KeyConditionExpression *string `type:"string"`
 
 	// This is a legacy parameter. Use KeyConditionExpression instead. For more
-	// information, see KeyConditions (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.KeyConditions.html)
+	// information, see KeyConditions (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.KeyConditions.html)
 	// in the Amazon DynamoDB Developer Guide.
 	KeyConditions map[string]*Condition `type:"map"`
 
@@ -9316,11 +11872,11 @@ type QueryInput struct {
 	// items). If DynamoDB processes the number of items up to the limit while processing
 	// the results, it stops the operation and returns the matching values up to
 	// that point, and a key in LastEvaluatedKey to apply in a subsequent operation,
-	// so that you can pick up where you left off. Also, if the processed data set
+	// so that you can pick up where you left off. Also, if the processed dataset
 	// size exceeds 1 MB before DynamoDB reaches this limit, it stops the operation
 	// and returns the matching values up to the limit, and a key in LastEvaluatedKey
 	// to apply in a subsequent operation to continue the operation. For more information,
-	// see Query and Scan (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html)
+	// see Query and Scan (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html)
 	// in the Amazon DynamoDB Developer Guide.
 	Limit *int64 `min:"1" type:"integer"`
 
@@ -9332,12 +11888,12 @@ type QueryInput struct {
 	// If any of the requested attributes are not found, they will not appear in
 	// the result.
 	//
-	// For more information, see Accessing Item Attributes (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	// For more information, see Accessing Item Attributes (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ProjectionExpression *string `type:"string"`
 
 	// This is a legacy parameter. Use FilterExpression instead. For more information,
-	// see QueryFilter (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.QueryFilter.html)
+	// see QueryFilter (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.QueryFilter.html)
 	// in the Amazon DynamoDB Developer Guide.
 	QueryFilter map[string]*Condition `type:"map"`
 
@@ -9346,11 +11902,9 @@ type QueryInput struct {
 	//
 	//    * INDEXES - The response includes the aggregate ConsumedCapacity for the
 	//    operation, together with ConsumedCapacity for each table and secondary
-	//    index that was accessed.
-	//
-	// Note that some operations, such as GetItem and BatchGetItem, do not access
-	//    any indexes at all. In these cases, specifying INDEXES will only return
-	//    ConsumedCapacity information for table(s).
+	//    index that was accessed. Note that some operations, such as GetItem and
+	//    BatchGetItem, do not access any indexes at all. In these cases, specifying
+	//    INDEXES will only return ConsumedCapacity information for table(s).
 	//
 	//    * TOTAL - The response includes only the aggregate ConsumedCapacity for
 	//    the operation.
@@ -9379,10 +11933,10 @@ type QueryInput struct {
 	//
 	//    * ALL_ATTRIBUTES - Returns all of the item attributes from the specified
 	//    table or index. If you query a local secondary index, then for each matching
-	//    item in the index DynamoDB will fetch the entire item from the parent
-	//    table. If the index is configured to project all item attributes, then
-	//    all of the data can be obtained from the local secondary index, and no
-	//    fetching is required.
+	//    item in the index, DynamoDB fetches the entire item from the parent table.
+	//    If the index is configured to project all item attributes, then all of
+	//    the data can be obtained from the local secondary index, and no fetching
+	//    is required.
 	//
 	//    * ALL_PROJECTED_ATTRIBUTES - Allowed only when querying an index. Retrieves
 	//    all attributes that have been projected into the index. If the index is
@@ -9394,18 +11948,15 @@ type QueryInput struct {
 	//
 	//    * SPECIFIC_ATTRIBUTES - Returns only the attributes listed in AttributesToGet.
 	//    This return value is equivalent to specifying AttributesToGet without
-	//    specifying any value for Select.
-	//
-	// If you query or scan a local secondary index and request only attributes
-	//    that are projected into that index, the operation will read only the index
-	//    and not the table. If any of the requested attributes are not projected
-	//    into the local secondary index, DynamoDB will fetch each of these attributes
-	//    from the parent table. This extra fetching incurs additional throughput
-	//    cost and latency.
-	//
-	// If you query or scan a global secondary index, you can only request attributes
-	//    that are projected into the index. Global secondary index queries cannot
-	//    fetch attributes from the parent table.
+	//    specifying any value for Select. If you query or scan a local secondary
+	//    index and request only attributes that are projected into that index,
+	//    the operation will read only the index and not the table. If any of the
+	//    requested attributes are not projected into the local secondary index,
+	//    DynamoDB fetches each of these attributes from the parent table. This
+	//    extra fetching incurs additional throughput cost and latency. If you query
+	//    or scan a global secondary index, you can only request attributes that
+	//    are projected into the index. Global secondary index queries cannot fetch
+	//    attributes from the parent table.
 	//
 	// If neither Select nor AttributesToGet are specified, DynamoDB defaults to
 	// ALL_ATTRIBUTES when accessing a table, and ALL_PROJECTED_ATTRIBUTES when
@@ -9589,8 +12140,8 @@ type QueryOutput struct {
 	// The capacity units consumed by the Query operation. The data returned includes
 	// the total provisioned throughput consumed, along with statistics for the
 	// table and any indexes involved in the operation. ConsumedCapacity is only
-	// returned if the ReturnConsumedCapacity parameter was specified For more information,
-	// see Provisioned Throughput (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
+	// returned if the ReturnConsumedCapacity parameter was specified. For more
+	// information, see Provisioned Throughput (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConsumedCapacity *ConsumedCapacity `type:"structure"`
 
@@ -9622,7 +12173,7 @@ type QueryOutput struct {
 
 	// The number of items evaluated, before any QueryFilter is applied. A high
 	// ScannedCount value with few, or no, Count results indicates an inefficient
-	// Query operation. For more information, see Count and ScannedCount (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#Count)
+	// Query operation. For more information, see Count and ScannedCount (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#Count)
 	// in the Amazon DynamoDB Developer Guide.
 	//
 	// If you did not use a filter in the request, then ScannedCount is the same
@@ -9739,9 +12290,17 @@ type ReplicaGlobalSecondaryIndexSettingsDescription struct {
 	//    * ACTIVE - The global secondary index is ready for use.
 	IndexStatus *string `type:"string" enum:"IndexStatus"`
 
+	// Autoscaling settings for a global secondary index replica's read capacity
+	// units.
+	ProvisionedReadCapacityAutoScalingSettings *AutoScalingSettingsDescription `type:"structure"`
+
 	// The maximum number of strongly consistent reads consumed per second before
 	// DynamoDB returns a ThrottlingException.
 	ProvisionedReadCapacityUnits *int64 `min:"1" type:"long"`
+
+	// AutoScaling settings for a global secondary index replica's write capacity
+	// units.
+	ProvisionedWriteCapacityAutoScalingSettings *AutoScalingSettingsDescription `type:"structure"`
 
 	// The maximum number of writes consumed per second before DynamoDB returns
 	// a ThrottlingException.
@@ -9770,9 +12329,21 @@ func (s *ReplicaGlobalSecondaryIndexSettingsDescription) SetIndexStatus(v string
 	return s
 }
 
+// SetProvisionedReadCapacityAutoScalingSettings sets the ProvisionedReadCapacityAutoScalingSettings field's value.
+func (s *ReplicaGlobalSecondaryIndexSettingsDescription) SetProvisionedReadCapacityAutoScalingSettings(v *AutoScalingSettingsDescription) *ReplicaGlobalSecondaryIndexSettingsDescription {
+	s.ProvisionedReadCapacityAutoScalingSettings = v
+	return s
+}
+
 // SetProvisionedReadCapacityUnits sets the ProvisionedReadCapacityUnits field's value.
 func (s *ReplicaGlobalSecondaryIndexSettingsDescription) SetProvisionedReadCapacityUnits(v int64) *ReplicaGlobalSecondaryIndexSettingsDescription {
 	s.ProvisionedReadCapacityUnits = &v
+	return s
+}
+
+// SetProvisionedWriteCapacityAutoScalingSettings sets the ProvisionedWriteCapacityAutoScalingSettings field's value.
+func (s *ReplicaGlobalSecondaryIndexSettingsDescription) SetProvisionedWriteCapacityAutoScalingSettings(v *AutoScalingSettingsDescription) *ReplicaGlobalSecondaryIndexSettingsDescription {
+	s.ProvisionedWriteCapacityAutoScalingSettings = v
 	return s
 }
 
@@ -9792,6 +12363,10 @@ type ReplicaGlobalSecondaryIndexSettingsUpdate struct {
 	//
 	// IndexName is a required field
 	IndexName *string `min:"3" type:"string" required:"true"`
+
+	// Autoscaling settings for managing a global secondary index replica's read
+	// capacity units.
+	ProvisionedReadCapacityAutoScalingSettingsUpdate *AutoScalingSettingsUpdate `type:"structure"`
 
 	// The maximum number of strongly consistent reads consumed per second before
 	// DynamoDB returns a ThrottlingException.
@@ -9820,6 +12395,11 @@ func (s *ReplicaGlobalSecondaryIndexSettingsUpdate) Validate() error {
 	if s.ProvisionedReadCapacityUnits != nil && *s.ProvisionedReadCapacityUnits < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("ProvisionedReadCapacityUnits", 1))
 	}
+	if s.ProvisionedReadCapacityAutoScalingSettingsUpdate != nil {
+		if err := s.ProvisionedReadCapacityAutoScalingSettingsUpdate.Validate(); err != nil {
+			invalidParams.AddNested("ProvisionedReadCapacityAutoScalingSettingsUpdate", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -9830,6 +12410,12 @@ func (s *ReplicaGlobalSecondaryIndexSettingsUpdate) Validate() error {
 // SetIndexName sets the IndexName field's value.
 func (s *ReplicaGlobalSecondaryIndexSettingsUpdate) SetIndexName(v string) *ReplicaGlobalSecondaryIndexSettingsUpdate {
 	s.IndexName = &v
+	return s
+}
+
+// SetProvisionedReadCapacityAutoScalingSettingsUpdate sets the ProvisionedReadCapacityAutoScalingSettingsUpdate field's value.
+func (s *ReplicaGlobalSecondaryIndexSettingsUpdate) SetProvisionedReadCapacityAutoScalingSettingsUpdate(v *AutoScalingSettingsUpdate) *ReplicaGlobalSecondaryIndexSettingsUpdate {
+	s.ProvisionedReadCapacityAutoScalingSettingsUpdate = v
 	return s
 }
 
@@ -9848,20 +12434,29 @@ type ReplicaSettingsDescription struct {
 	// RegionName is a required field
 	RegionName *string `type:"string" required:"true"`
 
+	// The read/write capacity mode of the replica.
+	ReplicaBillingModeSummary *BillingModeSummary `type:"structure"`
+
 	// Replica global secondary index settings for the global table.
 	ReplicaGlobalSecondaryIndexSettings []*ReplicaGlobalSecondaryIndexSettingsDescription `type:"list"`
 
+	// Autoscaling settings for a global table replica's read capacity units.
+	ReplicaProvisionedReadCapacityAutoScalingSettings *AutoScalingSettingsDescription `type:"structure"`
+
 	// The maximum number of strongly consistent reads consumed per second before
 	// DynamoDB returns a ThrottlingException. For more information, see Specifying
-	// Read and Write Requirements (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#ProvisionedThroughput)
+	// Read and Write Requirements (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#ProvisionedThroughput)
 	// in the Amazon DynamoDB Developer Guide.
-	ReplicaProvisionedReadCapacityUnits *int64 `min:"1" type:"long"`
+	ReplicaProvisionedReadCapacityUnits *int64 `type:"long"`
+
+	// AutoScaling settings for a global table replica's write capacity units.
+	ReplicaProvisionedWriteCapacityAutoScalingSettings *AutoScalingSettingsDescription `type:"structure"`
 
 	// The maximum number of writes consumed per second before DynamoDB returns
 	// a ThrottlingException. For more information, see Specifying Read and Write
-	// Requirements (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#ProvisionedThroughput)
+	// Requirements (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#ProvisionedThroughput)
 	// in the Amazon DynamoDB Developer Guide.
-	ReplicaProvisionedWriteCapacityUnits *int64 `min:"1" type:"long"`
+	ReplicaProvisionedWriteCapacityUnits *int64 `type:"long"`
 
 	// The current state of the region:
 	//
@@ -9891,15 +12486,33 @@ func (s *ReplicaSettingsDescription) SetRegionName(v string) *ReplicaSettingsDes
 	return s
 }
 
+// SetReplicaBillingModeSummary sets the ReplicaBillingModeSummary field's value.
+func (s *ReplicaSettingsDescription) SetReplicaBillingModeSummary(v *BillingModeSummary) *ReplicaSettingsDescription {
+	s.ReplicaBillingModeSummary = v
+	return s
+}
+
 // SetReplicaGlobalSecondaryIndexSettings sets the ReplicaGlobalSecondaryIndexSettings field's value.
 func (s *ReplicaSettingsDescription) SetReplicaGlobalSecondaryIndexSettings(v []*ReplicaGlobalSecondaryIndexSettingsDescription) *ReplicaSettingsDescription {
 	s.ReplicaGlobalSecondaryIndexSettings = v
 	return s
 }
 
+// SetReplicaProvisionedReadCapacityAutoScalingSettings sets the ReplicaProvisionedReadCapacityAutoScalingSettings field's value.
+func (s *ReplicaSettingsDescription) SetReplicaProvisionedReadCapacityAutoScalingSettings(v *AutoScalingSettingsDescription) *ReplicaSettingsDescription {
+	s.ReplicaProvisionedReadCapacityAutoScalingSettings = v
+	return s
+}
+
 // SetReplicaProvisionedReadCapacityUnits sets the ReplicaProvisionedReadCapacityUnits field's value.
 func (s *ReplicaSettingsDescription) SetReplicaProvisionedReadCapacityUnits(v int64) *ReplicaSettingsDescription {
 	s.ReplicaProvisionedReadCapacityUnits = &v
+	return s
+}
+
+// SetReplicaProvisionedWriteCapacityAutoScalingSettings sets the ReplicaProvisionedWriteCapacityAutoScalingSettings field's value.
+func (s *ReplicaSettingsDescription) SetReplicaProvisionedWriteCapacityAutoScalingSettings(v *AutoScalingSettingsDescription) *ReplicaSettingsDescription {
+	s.ReplicaProvisionedWriteCapacityAutoScalingSettings = v
 	return s
 }
 
@@ -9928,9 +12541,13 @@ type ReplicaSettingsUpdate struct {
 	// will be modified.
 	ReplicaGlobalSecondaryIndexSettingsUpdate []*ReplicaGlobalSecondaryIndexSettingsUpdate `min:"1" type:"list"`
 
+	// Autoscaling settings for managing a global table replica's read capacity
+	// units.
+	ReplicaProvisionedReadCapacityAutoScalingSettingsUpdate *AutoScalingSettingsUpdate `type:"structure"`
+
 	// The maximum number of strongly consistent reads consumed per second before
 	// DynamoDB returns a ThrottlingException. For more information, see Specifying
-	// Read and Write Requirements (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#ProvisionedThroughput)
+	// Read and Write Requirements (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.html#ProvisionedThroughput)
 	// in the Amazon DynamoDB Developer Guide.
 	ReplicaProvisionedReadCapacityUnits *int64 `min:"1" type:"long"`
 }
@@ -9967,6 +12584,11 @@ func (s *ReplicaSettingsUpdate) Validate() error {
 			}
 		}
 	}
+	if s.ReplicaProvisionedReadCapacityAutoScalingSettingsUpdate != nil {
+		if err := s.ReplicaProvisionedReadCapacityAutoScalingSettingsUpdate.Validate(); err != nil {
+			invalidParams.AddNested("ReplicaProvisionedReadCapacityAutoScalingSettingsUpdate", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -9983,6 +12605,12 @@ func (s *ReplicaSettingsUpdate) SetRegionName(v string) *ReplicaSettingsUpdate {
 // SetReplicaGlobalSecondaryIndexSettingsUpdate sets the ReplicaGlobalSecondaryIndexSettingsUpdate field's value.
 func (s *ReplicaSettingsUpdate) SetReplicaGlobalSecondaryIndexSettingsUpdate(v []*ReplicaGlobalSecondaryIndexSettingsUpdate) *ReplicaSettingsUpdate {
 	s.ReplicaGlobalSecondaryIndexSettingsUpdate = v
+	return s
+}
+
+// SetReplicaProvisionedReadCapacityAutoScalingSettingsUpdate sets the ReplicaProvisionedReadCapacityAutoScalingSettingsUpdate field's value.
+func (s *ReplicaSettingsUpdate) SetReplicaProvisionedReadCapacityAutoScalingSettingsUpdate(v *AutoScalingSettingsUpdate) *ReplicaSettingsUpdate {
+	s.ReplicaProvisionedReadCapacityAutoScalingSettingsUpdate = v
 	return s
 }
 
@@ -10058,7 +12686,7 @@ type RestoreSummary struct {
 	// Point in time or source backup time.
 	//
 	// RestoreDateTime is a required field
-	RestoreDateTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+	RestoreDateTime *time.Time `type:"timestamp" required:"true"`
 
 	// Indicates if a restore is in progress or not.
 	//
@@ -10109,7 +12737,7 @@ func (s *RestoreSummary) SetSourceTableArn(v string) *RestoreSummary {
 type RestoreTableFromBackupInput struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN associated with the backup.
+	// The Amazon Resource Name (ARN) associated with the backup.
 	//
 	// BackupArn is a required field
 	BackupArn *string `min:"37" type:"string" required:"true"`
@@ -10191,7 +12819,7 @@ type RestoreTableToPointInTimeInput struct {
 	_ struct{} `type:"structure"`
 
 	// Time in the past to restore the table to.
-	RestoreDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	RestoreDateTime *time.Time `type:"timestamp"`
 
 	// Name of the source table that is being restored.
 	//
@@ -10291,15 +12919,21 @@ func (s *RestoreTableToPointInTimeOutput) SetTableDescription(v *TableDescriptio
 type SSEDescription struct {
 	_ struct{} `type:"structure"`
 
-	// The current state of server-side encryption:
+	// The KMS customer master key (CMK) ARN used for the KMS encryption.
+	KMSMasterKeyArn *string `type:"string"`
+
+	// Server-side encryption type. The only supported value is:
 	//
-	//    * ENABLING - Server-side encryption is being enabled.
+	//    * KMS - Server-side encryption which uses AWS Key Management Service.
+	//    Key is stored in your account and is managed by AWS KMS (KMS charges apply).
+	SSEType *string `type:"string" enum:"SSEType"`
+
+	// Represents the current state of server-side encryption. The only supported
+	// values are:
 	//
 	//    * ENABLED - Server-side encryption is enabled.
 	//
-	//    * DISABLING - Server-side encryption is being disabled.
-	//
-	//    * DISABLED - Server-side encryption is disabled.
+	//    * UPDATING - Server-side encryption is being updated.
 	Status *string `type:"string" enum:"SSEStatus"`
 }
 
@@ -10313,6 +12947,18 @@ func (s SSEDescription) GoString() string {
 	return s.String()
 }
 
+// SetKMSMasterKeyArn sets the KMSMasterKeyArn field's value.
+func (s *SSEDescription) SetKMSMasterKeyArn(v string) *SSEDescription {
+	s.KMSMasterKeyArn = &v
+	return s
+}
+
+// SetSSEType sets the SSEType field's value.
+func (s *SSEDescription) SetSSEType(v string) *SSEDescription {
+	s.SSEType = &v
+	return s
+}
+
 // SetStatus sets the Status field's value.
 func (s *SSEDescription) SetStatus(v string) *SSEDescription {
 	s.Status = &v
@@ -10323,11 +12969,23 @@ func (s *SSEDescription) SetStatus(v string) *SSEDescription {
 type SSESpecification struct {
 	_ struct{} `type:"structure"`
 
-	// Indicates whether server-side encryption is enabled (true) or disabled (false)
-	// on the table.
+	// Indicates whether server-side encryption is done using an AWS managed CMK
+	// or an AWS owned CMK. If enabled (true), server-side encryption type is set
+	// to KMS and an AWS managed CMK is used (AWS KMS charges apply). If disabled
+	// (false) or not specified, server-side encryption is set to AWS owned CMK.
+	Enabled *bool `type:"boolean"`
+
+	// The KMS Customer Master Key (CMK) which should be used for the KMS encryption.
+	// To specify a CMK, use its key ID, Amazon Resource Name (ARN), alias name,
+	// or alias ARN. Note that you should only provide this parameter if the key
+	// is different from the default DynamoDB Customer Master Key alias/aws/dynamodb.
+	KMSMasterKeyId *string `type:"string"`
+
+	// Server-side encryption type. The only supported value is:
 	//
-	// Enabled is a required field
-	Enabled *bool `type:"boolean" required:"true"`
+	//    * KMS - Server-side encryption which uses AWS Key Management Service.
+	//    Key is stored in your account and is managed by AWS KMS (KMS charges apply).
+	SSEType *string `type:"string" enum:"SSEType"`
 }
 
 // String returns the string representation
@@ -10340,22 +12998,21 @@ func (s SSESpecification) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *SSESpecification) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "SSESpecification"}
-	if s.Enabled == nil {
-		invalidParams.Add(request.NewErrParamRequired("Enabled"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // SetEnabled sets the Enabled field's value.
 func (s *SSESpecification) SetEnabled(v bool) *SSESpecification {
 	s.Enabled = &v
+	return s
+}
+
+// SetKMSMasterKeyId sets the KMSMasterKeyId field's value.
+func (s *SSESpecification) SetKMSMasterKeyId(v string) *SSESpecification {
+	s.KMSMasterKeyId = &v
+	return s
+}
+
+// SetSSEType sets the SSEType field's value.
+func (s *SSESpecification) SetSSEType(v string) *SSESpecification {
+	s.SSEType = &v
 	return s
 }
 
@@ -10364,12 +13021,12 @@ type ScanInput struct {
 	_ struct{} `type:"structure"`
 
 	// This is a legacy parameter. Use ProjectionExpression instead. For more information,
-	// see AttributesToGet (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.AttributesToGet.html)
+	// see AttributesToGet (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.AttributesToGet.html)
 	// in the Amazon DynamoDB Developer Guide.
 	AttributesToGet []*string `min:"1" type:"list"`
 
 	// This is a legacy parameter. Use FilterExpression instead. For more information,
-	// see ConditionalOperator (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ConditionalOperator.html)
+	// see ConditionalOperator (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ConditionalOperator.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConditionalOperator *string `type:"string" enum:"ConditionalOperator"`
 
@@ -10377,7 +13034,7 @@ type ScanInput struct {
 	//
 	//    * If ConsistentRead is false, then the data returned from Scan might not
 	//    contain the results from other recently completed write operations (PutItem,
-	//    UpdateItem or DeleteItem).
+	//    UpdateItem, or DeleteItem).
 	//
 	//    * If ConsistentRead is true, then all of the write operations that completed
 	//    before the Scan began are guaranteed to be contained in the Scan response.
@@ -10419,7 +13076,7 @@ type ScanInput struct {
 	//
 	// The name of this attribute conflicts with a reserved word, so it cannot be
 	// used directly in an expression. (For the complete list of reserved words,
-	// see Reserved Words (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
+	// see Reserved Words (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
 	// in the Amazon DynamoDB Developer Guide). To work around this, you could specify
 	// the following for ExpressionAttributeNames:
 	//
@@ -10432,8 +13089,8 @@ type ScanInput struct {
 	// Tokens that begin with the : character are expression attribute values, which
 	// are placeholders for the actual value at runtime.
 	//
-	// For more information on expression attribute names, see Accessing Item Attributes
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	// For more information on expression attribute names, see Specifying Item Attributes
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeNames map[string]*string `type:"map"`
 
@@ -10454,8 +13111,8 @@ type ScanInput struct {
 	//
 	// ProductStatus IN (:avail, :back, :disc)
 	//
-	// For more information on expression attribute values, see Specifying Conditions
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
+	// For more information on expression attribute values, see Condition Expressions
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeValues map[string]*AttributeValue `type:"map"`
 
@@ -10466,7 +13123,7 @@ type ScanInput struct {
 	// A FilterExpression is applied after the items have already been read; the
 	// process of filtering does not consume any additional read capacity units.
 	//
-	// For more information, see Filter Expressions (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#FilteringResults)
+	// For more information, see Filter Expressions (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#FilteringResults)
 	// in the Amazon DynamoDB Developer Guide.
 	FilterExpression *string `type:"string"`
 
@@ -10479,11 +13136,11 @@ type ScanInput struct {
 	// items). If DynamoDB processes the number of items up to the limit while processing
 	// the results, it stops the operation and returns the matching values up to
 	// that point, and a key in LastEvaluatedKey to apply in a subsequent operation,
-	// so that you can pick up where you left off. Also, if the processed data set
+	// so that you can pick up where you left off. Also, if the processed dataset
 	// size exceeds 1 MB before DynamoDB reaches this limit, it stops the operation
 	// and returns the matching values up to the limit, and a key in LastEvaluatedKey
 	// to apply in a subsequent operation to continue the operation. For more information,
-	// see Query and Scan (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html)
+	// see Working with Queries (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html)
 	// in the Amazon DynamoDB Developer Guide.
 	Limit *int64 `min:"1" type:"integer"`
 
@@ -10495,7 +13152,7 @@ type ScanInput struct {
 	// If any of the requested attributes are not found, they will not appear in
 	// the result.
 	//
-	// For more information, see Accessing Item Attributes (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	// For more information, see Specifying Item Attributes (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ProjectionExpression *string `type:"string"`
 
@@ -10504,11 +13161,9 @@ type ScanInput struct {
 	//
 	//    * INDEXES - The response includes the aggregate ConsumedCapacity for the
 	//    operation, together with ConsumedCapacity for each table and secondary
-	//    index that was accessed.
-	//
-	// Note that some operations, such as GetItem and BatchGetItem, do not access
-	//    any indexes at all. In these cases, specifying INDEXES will only return
-	//    ConsumedCapacity information for table(s).
+	//    index that was accessed. Note that some operations, such as GetItem and
+	//    BatchGetItem, do not access any indexes at all. In these cases, specifying
+	//    INDEXES will only return ConsumedCapacity information for table(s).
 	//
 	//    * TOTAL - The response includes only the aggregate ConsumedCapacity for
 	//    the operation.
@@ -10517,7 +13172,7 @@ type ScanInput struct {
 	ReturnConsumedCapacity *string `type:"string" enum:"ReturnConsumedCapacity"`
 
 	// This is a legacy parameter. Use FilterExpression instead. For more information,
-	// see ScanFilter (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ScanFilter.html)
+	// see ScanFilter (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ScanFilter.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ScanFilter map[string]*Condition `type:"map"`
 
@@ -10545,10 +13200,10 @@ type ScanInput struct {
 	//
 	//    * ALL_ATTRIBUTES - Returns all of the item attributes from the specified
 	//    table or index. If you query a local secondary index, then for each matching
-	//    item in the index DynamoDB will fetch the entire item from the parent
-	//    table. If the index is configured to project all item attributes, then
-	//    all of the data can be obtained from the local secondary index, and no
-	//    fetching is required.
+	//    item in the index, DynamoDB fetches the entire item from the parent table.
+	//    If the index is configured to project all item attributes, then all of
+	//    the data can be obtained from the local secondary index, and no fetching
+	//    is required.
 	//
 	//    * ALL_PROJECTED_ATTRIBUTES - Allowed only when querying an index. Retrieves
 	//    all attributes that have been projected into the index. If the index is
@@ -10560,18 +13215,15 @@ type ScanInput struct {
 	//
 	//    * SPECIFIC_ATTRIBUTES - Returns only the attributes listed in AttributesToGet.
 	//    This return value is equivalent to specifying AttributesToGet without
-	//    specifying any value for Select.
-	//
-	// If you query or scan a local secondary index and request only attributes
-	//    that are projected into that index, the operation will read only the index
-	//    and not the table. If any of the requested attributes are not projected
-	//    into the local secondary index, DynamoDB will fetch each of these attributes
-	//    from the parent table. This extra fetching incurs additional throughput
-	//    cost and latency.
-	//
-	// If you query or scan a global secondary index, you can only request attributes
-	//    that are projected into the index. Global secondary index queries cannot
-	//    fetch attributes from the parent table.
+	//    specifying any value for Select. If you query or scan a local secondary
+	//    index and request only attributes that are projected into that index,
+	//    the operation reads only the index and not the table. If any of the requested
+	//    attributes are not projected into the local secondary index, DynamoDB
+	//    fetches each of these attributes from the parent table. This extra fetching
+	//    incurs additional throughput cost and latency. If you query or scan a
+	//    global secondary index, you can only request attributes that are projected
+	//    into the index. Global secondary index queries cannot fetch attributes
+	//    from the parent table.
 	//
 	// If neither Select nor AttributesToGet are specified, DynamoDB defaults to
 	// ALL_ATTRIBUTES when accessing a table, and ALL_PROJECTED_ATTRIBUTES when
@@ -10757,7 +13409,7 @@ type ScanOutput struct {
 	// the total provisioned throughput consumed, along with statistics for the
 	// table and any indexes involved in the operation. ConsumedCapacity is only
 	// returned if the ReturnConsumedCapacity parameter was specified. For more
-	// information, see Provisioned Throughput (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
+	// information, see Provisioned Throughput (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConsumedCapacity *ConsumedCapacity `type:"structure"`
 
@@ -10788,7 +13440,7 @@ type ScanOutput struct {
 
 	// The number of items evaluated, before any ScanFilter is applied. A high ScannedCount
 	// value with few, or no, Count results indicates an inefficient Scan operation.
-	// For more information, see Count and ScannedCount (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#Count)
+	// For more information, see Count and ScannedCount (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#Count)
 	// in the Amazon DynamoDB Developer Guide.
 	//
 	// If you did not use a filter in the request, then ScannedCount is the same
@@ -10840,6 +13492,16 @@ func (s *ScanOutput) SetScannedCount(v int64) *ScanOutput {
 type SourceTableDetails struct {
 	_ struct{} `type:"structure"`
 
+	// Controls how you are charged for read and write throughput and how you manage
+	// capacity. This setting can be changed later.
+	//
+	//    * PROVISIONED - Sets the read/write capacity mode to PROVISIONED. We recommend
+	//    using PROVISIONED for predictable workloads.
+	//
+	//    * PAY_PER_REQUEST - Sets the read/write capacity mode to PAY_PER_REQUEST.
+	//    We recommend using PAY_PER_REQUEST for unpredictable workloads.
+	BillingMode *string `type:"string" enum:"BillingMode"`
+
 	// Number of items in the table. Please note this is an approximate value.
 	ItemCount *int64 `type:"long"`
 
@@ -10859,7 +13521,7 @@ type SourceTableDetails struct {
 	// Time when the source table was created.
 	//
 	// TableCreationDateTime is a required field
-	TableCreationDateTime *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
+	TableCreationDateTime *time.Time `type:"timestamp" required:"true"`
 
 	// Unique identifier for the table for which the backup was created.
 	//
@@ -10883,6 +13545,12 @@ func (s SourceTableDetails) String() string {
 // GoString returns the string representation
 func (s SourceTableDetails) GoString() string {
 	return s.String()
+}
+
+// SetBillingMode sets the BillingMode field's value.
+func (s *SourceTableDetails) SetBillingMode(v string) *SourceTableDetails {
+	s.BillingMode = &v
+	return s
 }
 
 // SetItemCount sets the ItemCount field's value.
@@ -11061,9 +13729,12 @@ type TableDescription struct {
 	//    * AttributeType - The data type for the attribute.
 	AttributeDefinitions []*AttributeDefinition `type:"list"`
 
+	// Contains the details for the read/write capacity mode.
+	BillingModeSummary *BillingModeSummary `type:"structure"`
+
 	// The date and time when the table was created, in UNIX epoch time (http://www.epochconverter.com/)
 	// format.
-	CreationDateTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+	CreationDateTime *time.Time `type:"timestamp"`
 
 	// The global secondary indexes, if any, on the table. Each index is scoped
 	// to a given partition key value. Each element is composed of:
@@ -11080,15 +13751,9 @@ type TableDescription struct {
 	//    DynamoDB updates this value approximately every six hours. Recent changes
 	//    might not be reflected in this value.
 	//
-	//    * IndexStatus - The current status of the global secondary index:
-	//
-	// CREATING - The index is being created.
-	//
-	// UPDATING - The index is being updated.
-	//
-	// DELETING - The index is being deleted.
-	//
-	// ACTIVE - The index is ready for use.
+	//    * IndexStatus - The current status of the global secondary index: CREATING
+	//    - The index is being created. UPDATING - The index is being updated. DELETING
+	//    - The index is being deleted. ACTIVE - The index is ready for use.
 	//
 	//    * ItemCount - The number of items in the global secondary index. DynamoDB
 	//    updates this value approximately every six hours. Recent changes might
@@ -11101,22 +13766,16 @@ type TableDescription struct {
 	//    * Projection - Specifies attributes that are copied (projected) from the
 	//    table into the index. These are in addition to the primary key attributes
 	//    and index key attributes, which are automatically projected. Each attribute
-	//    specification is composed of:
-	//
-	// ProjectionType - One of the following:
-	//
-	// KEYS_ONLY - Only the index and primary keys are projected into the index.
-	//
-	// INCLUDE - Only the specified table attributes are projected into the index.
-	//    The list of projected attributes are in NonKeyAttributes.
-	//
-	// ALL - All of the table attributes are projected into the index.
-	//
-	// NonKeyAttributes - A list of one or more non-key attribute names that are
-	//    projected into the secondary index. The total count of attributes provided
-	//    in NonKeyAttributes, summed across all of the secondary indexes, must
-	//    not exceed 20. If you project the same attribute into two different indexes,
-	//    this counts as two distinct attributes when determining the total.
+	//    specification is composed of: ProjectionType - One of the following: KEYS_ONLY
+	//    - Only the index and primary keys are projected into the index. INCLUDE
+	//    - Only the specified table attributes are projected into the index. The
+	//    list of projected attributes are in NonKeyAttributes. ALL - All of the
+	//    table attributes are projected into the index. NonKeyAttributes - A list
+	//    of one or more non-key attribute names that are projected into the secondary
+	//    index. The total count of attributes provided in NonKeyAttributes, summed
+	//    across all of the secondary indexes, must not exceed 20. If you project
+	//    the same attribute into two different indexes, this counts as two distinct
+	//    attributes when determining the total.
 	//
 	//    * ProvisionedThroughput - The provisioned throughput settings for the
 	//    global secondary index, consisting of read and write capacity units, along
@@ -11134,22 +13793,16 @@ type TableDescription struct {
 	//
 	//    * AttributeName - The name of the attribute.
 	//
-	//    * KeyType - The role of the attribute:
+	//    * KeyType - The role of the attribute: HASH - partition key RANGE - sort
+	//    key The partition key of an item is also known as its hash attribute.
+	//    The term "hash attribute" derives from DynamoDB's usage of an internal
+	//    hash function to evenly distribute data items across partitions, based
+	//    on their partition key values. The sort key of an item is also known as
+	//    its range attribute. The term "range attribute" derives from the way DynamoDB
+	//    stores items with the same partition key physically close together, in
+	//    sorted order by the sort key value.
 	//
-	// HASH - partition key
-	//
-	// RANGE - sort key
-	//
-	// The partition key of an item is also known as its hash attribute. The term
-	//    "hash attribute" derives from DynamoDB' usage of an internal hash function
-	//    to evenly distribute data items across partitions, based on their partition
-	//    key values.
-	//
-	// The sort key of an item is also known as its range attribute. The term "range
-	//    attribute" derives from the way DynamoDB stores items with the same partition
-	//    key physically close together, in sorted order by the sort key value.
-	//
-	// For more information about primary keys, see Primary Key (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DataModel.html#DataModelPrimaryKey)
+	// For more information about primary keys, see Primary Key (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DataModel.html#DataModelPrimaryKey)
 	// in the Amazon DynamoDB Developer Guide.
 	KeySchema []*KeySchemaElement `min:"1" type:"list"`
 
@@ -11186,22 +13839,16 @@ type TableDescription struct {
 	//    * Projection - Specifies attributes that are copied (projected) from the
 	//    table into the index. These are in addition to the primary key attributes
 	//    and index key attributes, which are automatically projected. Each attribute
-	//    specification is composed of:
-	//
-	// ProjectionType - One of the following:
-	//
-	// KEYS_ONLY - Only the index and primary keys are projected into the index.
-	//
-	// INCLUDE - Only the specified table attributes are projected into the index.
-	//    The list of projected attributes are in NonKeyAttributes.
-	//
-	// ALL - All of the table attributes are projected into the index.
-	//
-	// NonKeyAttributes - A list of one or more non-key attribute names that are
-	//    projected into the secondary index. The total count of attributes provided
-	//    in NonKeyAttributes, summed across all of the secondary indexes, must
-	//    not exceed 20. If you project the same attribute into two different indexes,
-	//    this counts as two distinct attributes when determining the total.
+	//    specification is composed of: ProjectionType - One of the following: KEYS_ONLY
+	//    - Only the index and primary keys are projected into the index. INCLUDE
+	//    - Only the specified table attributes are projected into the index. The
+	//    list of projected attributes are in NonKeyAttributes. ALL - All of the
+	//    table attributes are projected into the index. NonKeyAttributes - A list
+	//    of one or more non-key attribute names that are projected into the secondary
+	//    index. The total count of attributes provided in NonKeyAttributes, summed
+	//    across all of the secondary indexes, must not exceed 20. If you project
+	//    the same attribute into two different indexes, this counts as two distinct
+	//    attributes when determining the total.
 	//
 	//    * IndexSizeBytes - Represents the total size of the index, in bytes. DynamoDB
 	//    updates this value approximately every six hours. Recent changes might
@@ -11267,6 +13914,12 @@ func (s TableDescription) GoString() string {
 // SetAttributeDefinitions sets the AttributeDefinitions field's value.
 func (s *TableDescription) SetAttributeDefinitions(v []*AttributeDefinition) *TableDescription {
 	s.AttributeDefinitions = v
+	return s
+}
+
+// SetBillingModeSummary sets the BillingModeSummary field's value.
+func (s *TableDescription) SetBillingModeSummary(v *BillingModeSummary) *TableDescription {
+	s.BillingModeSummary = v
 	return s
 }
 
@@ -11374,14 +14027,14 @@ func (s *TableDescription) SetTableStatus(v string) *TableDescription {
 // the tag limit of 50. User-assigned tag names have the prefix user: in the
 // Cost Allocation Report. You cannot backdate the application of a tag.
 //
-// For an overview on tagging DynamoDB resources, see Tagging for DynamoDB (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tagging.html)
+// For an overview on tagging DynamoDB resources, see Tagging for DynamoDB (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tagging.html)
 // in the Amazon DynamoDB Developer Guide.
 type Tag struct {
 	_ struct{} `type:"structure"`
 
-	// The key of the tag.Tag keys are case sensitive. Each DynamoDB table can only
-	// have up to one tag with the same key. If you try to add an existing tag (same
-	// key), the existing tag value will be updated to the new value.
+	// The key of the tag. Tag keys are case sensitive. Each DynamoDB table can
+	// only have up to one tag with the same key. If you try to add an existing
+	// tag (same key), the existing tag value will be updated to the new value.
 	//
 	// Key is a required field
 	Key *string `min:"1" type:"string" required:"true"`
@@ -11517,10 +14170,10 @@ func (s TagResourceOutput) GoString() string {
 type TimeToLiveDescription struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the Time to Live attribute for items in the table.
+	// The name of the TTL attribute for items in the table.
 	AttributeName *string `min:"1" type:"string"`
 
-	// The Time to Live status for the table.
+	// The TTL status for the table.
 	TimeToLiveStatus *string `type:"string" enum:"TimeToLiveStatus"`
 }
 
@@ -11546,19 +14199,19 @@ func (s *TimeToLiveDescription) SetTimeToLiveStatus(v string) *TimeToLiveDescrip
 	return s
 }
 
-// Represents the settings used to enable or disable Time to Live for the specified
-// table.
+// Represents the settings used to enable or disable Time to Live (TTL) for
+// the specified table.
 type TimeToLiveSpecification struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the Time to Live attribute used to store the expiration time
-	// for items in the table.
+	// The name of the TTL attribute used to store the expiration time for items
+	// in the table.
 	//
 	// AttributeName is a required field
 	AttributeName *string `min:"1" type:"string" required:"true"`
 
-	// Indicates whether Time To Live is to be enabled (true) or disabled (false)
-	// on the table.
+	// Indicates whether TTL is to be enabled (true) or disabled (false) on the
+	// table.
 	//
 	// Enabled is a required field
 	Enabled *bool `type:"boolean" required:"true"`
@@ -11605,17 +14258,405 @@ func (s *TimeToLiveSpecification) SetEnabled(v bool) *TimeToLiveSpecification {
 	return s
 }
 
+// Specifies an item to be retrieved as part of the transaction.
+type TransactGetItem struct {
+	_ struct{} `type:"structure"`
+
+	// Contains the primary key that identifies the item to get, together with the
+	// name of the table that contains the item, and optionally the specific attributes
+	// of the item to retrieve.
+	//
+	// Get is a required field
+	Get *Get `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s TransactGetItem) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransactGetItem) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TransactGetItem) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TransactGetItem"}
+	if s.Get == nil {
+		invalidParams.Add(request.NewErrParamRequired("Get"))
+	}
+	if s.Get != nil {
+		if err := s.Get.Validate(); err != nil {
+			invalidParams.AddNested("Get", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetGet sets the Get field's value.
+func (s *TransactGetItem) SetGet(v *Get) *TransactGetItem {
+	s.Get = v
+	return s
+}
+
+type TransactGetItemsInput struct {
+	_ struct{} `type:"structure"`
+
+	// A value of TOTAL causes consumed capacity information to be returned, and
+	// a value of NONE prevents that information from being returned. No other value
+	// is valid.
+	ReturnConsumedCapacity *string `type:"string" enum:"ReturnConsumedCapacity"`
+
+	// An ordered array of up to 25 TransactGetItem objects, each of which contains
+	// a Get structure.
+	//
+	// TransactItems is a required field
+	TransactItems []*TransactGetItem `min:"1" type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s TransactGetItemsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransactGetItemsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TransactGetItemsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TransactGetItemsInput"}
+	if s.TransactItems == nil {
+		invalidParams.Add(request.NewErrParamRequired("TransactItems"))
+	}
+	if s.TransactItems != nil && len(s.TransactItems) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TransactItems", 1))
+	}
+	if s.TransactItems != nil {
+		for i, v := range s.TransactItems {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "TransactItems", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetReturnConsumedCapacity sets the ReturnConsumedCapacity field's value.
+func (s *TransactGetItemsInput) SetReturnConsumedCapacity(v string) *TransactGetItemsInput {
+	s.ReturnConsumedCapacity = &v
+	return s
+}
+
+// SetTransactItems sets the TransactItems field's value.
+func (s *TransactGetItemsInput) SetTransactItems(v []*TransactGetItem) *TransactGetItemsInput {
+	s.TransactItems = v
+	return s
+}
+
+type TransactGetItemsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// If the ReturnConsumedCapacity value was TOTAL, this is an array of ConsumedCapacity
+	// objects, one for each table addressed by TransactGetItem objects in the TransactItems
+	// parameter. These ConsumedCapacity objects report the read-capacity units
+	// consumed by the TransactGetItems call in that table.
+	ConsumedCapacity []*ConsumedCapacity `type:"list"`
+
+	// An ordered array of up to 25 ItemResponse objects, each of which corresponds
+	// to the TransactGetItem object in the same position in the TransactItems array.
+	// Each ItemResponse object contains a Map of the name-value pairs that are
+	// the projected attributes of the requested item.
+	//
+	// If a requested item could not be retrieved, the corresponding ItemResponse
+	// object is Null, or if the requested item has no projected attributes, the
+	// corresponding ItemResponse object is an empty Map.
+	Responses []*ItemResponse `min:"1" type:"list"`
+}
+
+// String returns the string representation
+func (s TransactGetItemsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransactGetItemsOutput) GoString() string {
+	return s.String()
+}
+
+// SetConsumedCapacity sets the ConsumedCapacity field's value.
+func (s *TransactGetItemsOutput) SetConsumedCapacity(v []*ConsumedCapacity) *TransactGetItemsOutput {
+	s.ConsumedCapacity = v
+	return s
+}
+
+// SetResponses sets the Responses field's value.
+func (s *TransactGetItemsOutput) SetResponses(v []*ItemResponse) *TransactGetItemsOutput {
+	s.Responses = v
+	return s
+}
+
+// A list of requests that can perform update, put, delete, or check operations
+// on multiple items in one or more tables atomically.
+type TransactWriteItem struct {
+	_ struct{} `type:"structure"`
+
+	// A request to perform a check item operation.
+	ConditionCheck *ConditionCheck `type:"structure"`
+
+	// A request to perform a DeleteItem operation.
+	Delete *Delete `type:"structure"`
+
+	// A request to perform a PutItem operation.
+	Put *Put `type:"structure"`
+
+	// A request to perform an UpdateItem operation.
+	Update *Update `type:"structure"`
+}
+
+// String returns the string representation
+func (s TransactWriteItem) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransactWriteItem) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TransactWriteItem) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TransactWriteItem"}
+	if s.ConditionCheck != nil {
+		if err := s.ConditionCheck.Validate(); err != nil {
+			invalidParams.AddNested("ConditionCheck", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Delete != nil {
+		if err := s.Delete.Validate(); err != nil {
+			invalidParams.AddNested("Delete", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Put != nil {
+		if err := s.Put.Validate(); err != nil {
+			invalidParams.AddNested("Put", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Update != nil {
+		if err := s.Update.Validate(); err != nil {
+			invalidParams.AddNested("Update", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetConditionCheck sets the ConditionCheck field's value.
+func (s *TransactWriteItem) SetConditionCheck(v *ConditionCheck) *TransactWriteItem {
+	s.ConditionCheck = v
+	return s
+}
+
+// SetDelete sets the Delete field's value.
+func (s *TransactWriteItem) SetDelete(v *Delete) *TransactWriteItem {
+	s.Delete = v
+	return s
+}
+
+// SetPut sets the Put field's value.
+func (s *TransactWriteItem) SetPut(v *Put) *TransactWriteItem {
+	s.Put = v
+	return s
+}
+
+// SetUpdate sets the Update field's value.
+func (s *TransactWriteItem) SetUpdate(v *Update) *TransactWriteItem {
+	s.Update = v
+	return s
+}
+
+type TransactWriteItemsInput struct {
+	_ struct{} `type:"structure"`
+
+	// Providing a ClientRequestToken makes the call to TransactWriteItems idempotent,
+	// meaning that multiple identical calls have the same effect as one single
+	// call.
+	//
+	// Although multiple identical calls using the same client request token produce
+	// the same result on the server (no side effects), the responses to the calls
+	// might not be the same. If the ReturnConsumedCapacity> parameter is set, then
+	// the initial TransactWriteItems call returns the amount of write capacity
+	// units consumed in making the changes. Subsequent TransactWriteItems calls
+	// with the same client token return the number of read capacity units consumed
+	// in reading the item.
+	//
+	// A client request token is valid for 10 minutes after the first request that
+	// uses it is completed. After 10 minutes, any request with the same client
+	// token is treated as a new request. Do not resubmit the same request with
+	// the same client token for more than 10 minutes, or the result might not be
+	// idempotent.
+	//
+	// If you submit a request with the same client token but a change in other
+	// parameters within the 10-minute idempotency window, DynamoDB returns an IdempotentParameterMismatch
+	// exception.
+	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
+
+	// Determines the level of detail about provisioned throughput consumption that
+	// is returned in the response:
+	//
+	//    * INDEXES - The response includes the aggregate ConsumedCapacity for the
+	//    operation, together with ConsumedCapacity for each table and secondary
+	//    index that was accessed. Note that some operations, such as GetItem and
+	//    BatchGetItem, do not access any indexes at all. In these cases, specifying
+	//    INDEXES will only return ConsumedCapacity information for table(s).
+	//
+	//    * TOTAL - The response includes only the aggregate ConsumedCapacity for
+	//    the operation.
+	//
+	//    * NONE - No ConsumedCapacity details are included in the response.
+	ReturnConsumedCapacity *string `type:"string" enum:"ReturnConsumedCapacity"`
+
+	// Determines whether item collection metrics are returned. If set to SIZE,
+	// the response includes statistics about item collections (if any), that were
+	// modified during the operation and are returned in the response. If set to
+	// NONE (the default), no statistics are returned.
+	ReturnItemCollectionMetrics *string `type:"string" enum:"ReturnItemCollectionMetrics"`
+
+	// An ordered array of up to 25 TransactWriteItem objects, each of which contains
+	// a ConditionCheck, Put, Update, or Delete object. These can operate on items
+	// in different tables, but the tables must reside in the same AWS account and
+	// Region, and no two of them can operate on the same item.
+	//
+	// TransactItems is a required field
+	TransactItems []*TransactWriteItem `min:"1" type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s TransactWriteItemsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransactWriteItemsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TransactWriteItemsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TransactWriteItemsInput"}
+	if s.ClientRequestToken != nil && len(*s.ClientRequestToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientRequestToken", 1))
+	}
+	if s.TransactItems == nil {
+		invalidParams.Add(request.NewErrParamRequired("TransactItems"))
+	}
+	if s.TransactItems != nil && len(s.TransactItems) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TransactItems", 1))
+	}
+	if s.TransactItems != nil {
+		for i, v := range s.TransactItems {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "TransactItems", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientRequestToken sets the ClientRequestToken field's value.
+func (s *TransactWriteItemsInput) SetClientRequestToken(v string) *TransactWriteItemsInput {
+	s.ClientRequestToken = &v
+	return s
+}
+
+// SetReturnConsumedCapacity sets the ReturnConsumedCapacity field's value.
+func (s *TransactWriteItemsInput) SetReturnConsumedCapacity(v string) *TransactWriteItemsInput {
+	s.ReturnConsumedCapacity = &v
+	return s
+}
+
+// SetReturnItemCollectionMetrics sets the ReturnItemCollectionMetrics field's value.
+func (s *TransactWriteItemsInput) SetReturnItemCollectionMetrics(v string) *TransactWriteItemsInput {
+	s.ReturnItemCollectionMetrics = &v
+	return s
+}
+
+// SetTransactItems sets the TransactItems field's value.
+func (s *TransactWriteItemsInput) SetTransactItems(v []*TransactWriteItem) *TransactWriteItemsInput {
+	s.TransactItems = v
+	return s
+}
+
+type TransactWriteItemsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The capacity units consumed by the entire TransactWriteItems operation. The
+	// values of the list are ordered according to the ordering of the TransactItems
+	// request parameter.
+	ConsumedCapacity []*ConsumedCapacity `type:"list"`
+
+	// A list of tables that were processed by TransactWriteItems and, for each
+	// table, information about any item collections that were affected by individual
+	// UpdateItem, PutItem, or DeleteItem operations.
+	ItemCollectionMetrics map[string][]*ItemCollectionMetrics `type:"map"`
+}
+
+// String returns the string representation
+func (s TransactWriteItemsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TransactWriteItemsOutput) GoString() string {
+	return s.String()
+}
+
+// SetConsumedCapacity sets the ConsumedCapacity field's value.
+func (s *TransactWriteItemsOutput) SetConsumedCapacity(v []*ConsumedCapacity) *TransactWriteItemsOutput {
+	s.ConsumedCapacity = v
+	return s
+}
+
+// SetItemCollectionMetrics sets the ItemCollectionMetrics field's value.
+func (s *TransactWriteItemsOutput) SetItemCollectionMetrics(v map[string][]*ItemCollectionMetrics) *TransactWriteItemsOutput {
+	s.ItemCollectionMetrics = v
+	return s
+}
+
 type UntagResourceInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon DyanamoDB resource the tags will be removed from. This value is
-	// an Amazon Resource Name (ARN).
+	// The DynamoDB resource that the tags will be removed from. This value is an
+	// Amazon Resource Name (ARN).
 	//
 	// ResourceArn is a required field
 	ResourceArn *string `min:"1" type:"string" required:"true"`
 
 	// A list of tag keys. Existing tags of the resource whose keys are members
-	// of this list will be removed from the Amazon DynamoDB resource.
+	// of this list will be removed from the DynamoDB resource.
 	//
 	// TagKeys is a required field
 	TagKeys []*string `type:"list" required:"true"`
@@ -11674,6 +14715,116 @@ func (s UntagResourceOutput) String() string {
 // GoString returns the string representation
 func (s UntagResourceOutput) GoString() string {
 	return s.String()
+}
+
+// Represents a request to perform an UpdateItem operation.
+type Update struct {
+	_ struct{} `type:"structure"`
+
+	// A condition that must be satisfied in order for a conditional update to succeed.
+	ConditionExpression *string `type:"string"`
+
+	// One or more substitution tokens for attribute names in an expression.
+	ExpressionAttributeNames map[string]*string `type:"map"`
+
+	// One or more values that can be substituted in an expression.
+	ExpressionAttributeValues map[string]*AttributeValue `type:"map"`
+
+	// The primary key of the item to be updated. Each element consists of an attribute
+	// name and a value for that attribute.
+	//
+	// Key is a required field
+	Key map[string]*AttributeValue `type:"map" required:"true"`
+
+	// Use ReturnValuesOnConditionCheckFailure to get the item attributes if the
+	// Update condition fails. For ReturnValuesOnConditionCheckFailure, the valid
+	// values are: NONE, ALL_OLD, UPDATED_OLD, ALL_NEW, UPDATED_NEW.
+	ReturnValuesOnConditionCheckFailure *string `type:"string" enum:"ReturnValuesOnConditionCheckFailure"`
+
+	// Name of the table for the UpdateItem request.
+	//
+	// TableName is a required field
+	TableName *string `min:"3" type:"string" required:"true"`
+
+	// An expression that defines one or more attributes to be updated, the action
+	// to be performed on them, and new value(s) for them.
+	//
+	// UpdateExpression is a required field
+	UpdateExpression *string `type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s Update) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Update) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Update) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Update"}
+	if s.Key == nil {
+		invalidParams.Add(request.NewErrParamRequired("Key"))
+	}
+	if s.TableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableName"))
+	}
+	if s.TableName != nil && len(*s.TableName) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("TableName", 3))
+	}
+	if s.UpdateExpression == nil {
+		invalidParams.Add(request.NewErrParamRequired("UpdateExpression"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetConditionExpression sets the ConditionExpression field's value.
+func (s *Update) SetConditionExpression(v string) *Update {
+	s.ConditionExpression = &v
+	return s
+}
+
+// SetExpressionAttributeNames sets the ExpressionAttributeNames field's value.
+func (s *Update) SetExpressionAttributeNames(v map[string]*string) *Update {
+	s.ExpressionAttributeNames = v
+	return s
+}
+
+// SetExpressionAttributeValues sets the ExpressionAttributeValues field's value.
+func (s *Update) SetExpressionAttributeValues(v map[string]*AttributeValue) *Update {
+	s.ExpressionAttributeValues = v
+	return s
+}
+
+// SetKey sets the Key field's value.
+func (s *Update) SetKey(v map[string]*AttributeValue) *Update {
+	s.Key = v
+	return s
+}
+
+// SetReturnValuesOnConditionCheckFailure sets the ReturnValuesOnConditionCheckFailure field's value.
+func (s *Update) SetReturnValuesOnConditionCheckFailure(v string) *Update {
+	s.ReturnValuesOnConditionCheckFailure = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *Update) SetTableName(v string) *Update {
+	s.TableName = &v
+	return s
+}
+
+// SetUpdateExpression sets the UpdateExpression field's value.
+func (s *Update) SetUpdateExpression(v string) *Update {
+	s.UpdateExpression = &v
+	return s
 }
 
 type UpdateContinuousBackupsInput struct {
@@ -11774,7 +14925,7 @@ type UpdateGlobalSecondaryIndexAction struct {
 	// index.
 	//
 	// For current minimum and maximum provisioned throughput values, see Limits
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html)
 	// in the Amazon DynamoDB Developer Guide.
 	//
 	// ProvisionedThroughput is a required field
@@ -11835,7 +14986,7 @@ type UpdateGlobalTableInput struct {
 	// GlobalTableName is a required field
 	GlobalTableName *string `min:"3" type:"string" required:"true"`
 
-	// A list of regions that should be added or removed from the global table.
+	// A list of Regions that should be added or removed from the global table.
 	//
 	// ReplicaUpdates is a required field
 	ReplicaUpdates []*ReplicaUpdate `type:"list" required:"true"`
@@ -11918,6 +15069,10 @@ func (s *UpdateGlobalTableOutput) SetGlobalTableDescription(v *GlobalTableDescri
 type UpdateGlobalTableSettingsInput struct {
 	_ struct{} `type:"structure"`
 
+	// The billing mode of the global table. If GlobalTableBillingMode is not specified,
+	// the global table defaults to PROVISIONED capacity billing mode.
+	GlobalTableBillingMode *string `type:"string" enum:"BillingMode"`
+
 	// Represents the settings of a global secondary index for a global table that
 	// will be modified.
 	GlobalTableGlobalSecondaryIndexSettingsUpdate []*GlobalTableGlobalSecondaryIndexSettingsUpdate `min:"1" type:"list"`
@@ -11927,11 +15082,15 @@ type UpdateGlobalTableSettingsInput struct {
 	// GlobalTableName is a required field
 	GlobalTableName *string `min:"3" type:"string" required:"true"`
 
+	// Auto scaling settings for managing provisioned write capacity for the global
+	// table.
+	GlobalTableProvisionedWriteCapacityAutoScalingSettingsUpdate *AutoScalingSettingsUpdate `type:"structure"`
+
 	// The maximum number of writes consumed per second before DynamoDB returns
 	// a ThrottlingException.
 	GlobalTableProvisionedWriteCapacityUnits *int64 `min:"1" type:"long"`
 
-	// Represents the settings for a global table in a region that will be modified.
+	// Represents the settings for a global table in a Region that will be modified.
 	ReplicaSettingsUpdate []*ReplicaSettingsUpdate `min:"1" type:"list"`
 }
 
@@ -11973,6 +15132,11 @@ func (s *UpdateGlobalTableSettingsInput) Validate() error {
 			}
 		}
 	}
+	if s.GlobalTableProvisionedWriteCapacityAutoScalingSettingsUpdate != nil {
+		if err := s.GlobalTableProvisionedWriteCapacityAutoScalingSettingsUpdate.Validate(); err != nil {
+			invalidParams.AddNested("GlobalTableProvisionedWriteCapacityAutoScalingSettingsUpdate", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.ReplicaSettingsUpdate != nil {
 		for i, v := range s.ReplicaSettingsUpdate {
 			if v == nil {
@@ -11990,6 +15154,12 @@ func (s *UpdateGlobalTableSettingsInput) Validate() error {
 	return nil
 }
 
+// SetGlobalTableBillingMode sets the GlobalTableBillingMode field's value.
+func (s *UpdateGlobalTableSettingsInput) SetGlobalTableBillingMode(v string) *UpdateGlobalTableSettingsInput {
+	s.GlobalTableBillingMode = &v
+	return s
+}
+
 // SetGlobalTableGlobalSecondaryIndexSettingsUpdate sets the GlobalTableGlobalSecondaryIndexSettingsUpdate field's value.
 func (s *UpdateGlobalTableSettingsInput) SetGlobalTableGlobalSecondaryIndexSettingsUpdate(v []*GlobalTableGlobalSecondaryIndexSettingsUpdate) *UpdateGlobalTableSettingsInput {
 	s.GlobalTableGlobalSecondaryIndexSettingsUpdate = v
@@ -11999,6 +15169,12 @@ func (s *UpdateGlobalTableSettingsInput) SetGlobalTableGlobalSecondaryIndexSetti
 // SetGlobalTableName sets the GlobalTableName field's value.
 func (s *UpdateGlobalTableSettingsInput) SetGlobalTableName(v string) *UpdateGlobalTableSettingsInput {
 	s.GlobalTableName = &v
+	return s
+}
+
+// SetGlobalTableProvisionedWriteCapacityAutoScalingSettingsUpdate sets the GlobalTableProvisionedWriteCapacityAutoScalingSettingsUpdate field's value.
+func (s *UpdateGlobalTableSettingsInput) SetGlobalTableProvisionedWriteCapacityAutoScalingSettingsUpdate(v *AutoScalingSettingsUpdate) *UpdateGlobalTableSettingsInput {
+	s.GlobalTableProvisionedWriteCapacityAutoScalingSettingsUpdate = v
 	return s
 }
 
@@ -12020,7 +15196,7 @@ type UpdateGlobalTableSettingsOutput struct {
 	// The name of the global table.
 	GlobalTableName *string `min:"3" type:"string"`
 
-	// The region specific settings for the global table.
+	// The Region-specific settings for the global table.
 	ReplicaSettings []*ReplicaSettingsDescription `type:"list"`
 }
 
@@ -12051,7 +15227,7 @@ type UpdateItemInput struct {
 	_ struct{} `type:"structure"`
 
 	// This is a legacy parameter. Use UpdateExpression instead. For more information,
-	// see AttributeUpdates (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.AttributeUpdates.html)
+	// see AttributeUpdates (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.AttributeUpdates.html)
 	// in the Amazon DynamoDB Developer Guide.
 	AttributeUpdates map[string]*AttributeValueUpdate `type:"map"`
 
@@ -12060,26 +15236,24 @@ type UpdateItemInput struct {
 	// An expression can contain any of the following:
 	//
 	//    * Functions: attribute_exists | attribute_not_exists | attribute_type
-	//    | contains | begins_with | size
-	//
-	// These function names are case-sensitive.
+	//    | contains | begins_with | size These function names are case-sensitive.
 	//
 	//    * Comparison operators: = | <> | < | > | <= | >= | BETWEEN | IN
 	//
-	//    *  Logical operators: AND | OR | NOT
+	//    * Logical operators: AND | OR | NOT
 	//
-	// For more information on condition expressions, see Specifying Conditions
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
+	// For more information about condition expressions, see Specifying Conditions
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConditionExpression *string `type:"string"`
 
 	// This is a legacy parameter. Use ConditionExpression instead. For more information,
-	// see ConditionalOperator (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ConditionalOperator.html)
+	// see ConditionalOperator (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.ConditionalOperator.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConditionalOperator *string `type:"string" enum:"ConditionalOperator"`
 
 	// This is a legacy parameter. Use ConditionExpression instead. For more information,
-	// see Expected (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.Expected.html)
+	// see Expected (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.Expected.html)
 	// in the Amazon DynamoDB Developer Guide.
 	Expected map[string]*ExpectedAttributeValue `type:"map"`
 
@@ -12102,8 +15276,8 @@ type UpdateItemInput struct {
 	//
 	// The name of this attribute conflicts with a reserved word, so it cannot be
 	// used directly in an expression. (For the complete list of reserved words,
-	// see Reserved Words (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
-	// in the Amazon DynamoDB Developer Guide). To work around this, you could specify
+	// see Reserved Words (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html)
+	// in the Amazon DynamoDB Developer Guide.) To work around this, you could specify
 	// the following for ExpressionAttributeNames:
 	//
 	//    * {"#P":"Percentile"}
@@ -12115,8 +15289,8 @@ type UpdateItemInput struct {
 	// Tokens that begin with the : character are expression attribute values, which
 	// are placeholders for the actual value at runtime.
 	//
-	// For more information on expression attribute names, see Accessing Item Attributes
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
+	// For more information about expression attribute names, see Specifying Item
+	// Attributes (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeNames map[string]*string `type:"map"`
 
@@ -12137,8 +15311,8 @@ type UpdateItemInput struct {
 	//
 	// ProductStatus IN (:avail, :back, :disc)
 	//
-	// For more information on expression attribute values, see Specifying Conditions
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
+	// For more information on expression attribute values, see Condition Expressions
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ExpressionAttributeValues map[string]*AttributeValue `type:"map"`
 
@@ -12158,11 +15332,9 @@ type UpdateItemInput struct {
 	//
 	//    * INDEXES - The response includes the aggregate ConsumedCapacity for the
 	//    operation, together with ConsumedCapacity for each table and secondary
-	//    index that was accessed.
-	//
-	// Note that some operations, such as GetItem and BatchGetItem, do not access
-	//    any indexes at all. In these cases, specifying INDEXES will only return
-	//    ConsumedCapacity information for table(s).
+	//    index that was accessed. Note that some operations, such as GetItem and
+	//    BatchGetItem, do not access any indexes at all. In these cases, specifying
+	//    INDEXES will only return ConsumedCapacity information for table(s).
 	//
 	//    * TOTAL - The response includes only the aggregate ConsumedCapacity for
 	//    the operation.
@@ -12207,77 +15379,61 @@ type UpdateItemInput struct {
 	TableName *string `min:"3" type:"string" required:"true"`
 
 	// An expression that defines one or more attributes to be updated, the action
-	// to be performed on them, and new value(s) for them.
+	// to be performed on them, and new values for them.
 	//
 	// The following action values are available for UpdateExpression.
 	//
 	//    * SET - Adds one or more attributes and values to an item. If any of these
-	//    attribute already exist, they are replaced by the new values. You can
+	//    attributes already exist, they are replaced by the new values. You can
 	//    also use SET to add or subtract from an attribute that is of type Number.
-	//    For example: SET myNum = myNum + :val
-	//
-	// SET supports the following functions:
-	//
-	// if_not_exists (path, operand) - if the item does not contain an attribute
+	//    For example: SET myNum = myNum + :val SET supports the following functions:
+	//    if_not_exists (path, operand) - if the item does not contain an attribute
 	//    at the specified path, then if_not_exists evaluates to operand; otherwise,
 	//    it evaluates to path. You can use this function to avoid overwriting an
-	//    attribute that may already be present in the item.
-	//
-	// list_append (operand, operand) - evaluates to a list with a new element added
-	//    to it. You can append the new element to the start or the end of the list
-	//    by reversing the order of the operands.
-	//
-	// These function names are case-sensitive.
+	//    attribute that may already be present in the item. list_append (operand,
+	//    operand) - evaluates to a list with a new element added to it. You can
+	//    append the new element to the start or the end of the list by reversing
+	//    the order of the operands. These function names are case-sensitive.
 	//
 	//    * REMOVE - Removes one or more attributes from an item.
 	//
 	//    * ADD - Adds the specified value to the item, if the attribute does not
 	//    already exist. If the attribute does exist, then the behavior of ADD depends
-	//    on the data type of the attribute:
+	//    on the data type of the attribute: If the existing attribute is a number,
+	//    and if Value is also a number, then Value is mathematically added to the
+	//    existing attribute. If Value is a negative number, then it is subtracted
+	//    from the existing attribute. If you use ADD to increment or decrement
+	//    a number value for an item that doesn't exist before the update, DynamoDB
+	//    uses 0 as the initial value. Similarly, if you use ADD for an existing
+	//    item to increment or decrement an attribute value that doesn't exist before
+	//    the update, DynamoDB uses 0 as the initial value. For example, suppose
+	//    that the item you want to update doesn't have an attribute named itemcount,
+	//    but you decide to ADD the number 3 to this attribute anyway. DynamoDB
+	//    will create the itemcount attribute, set its initial value to 0, and finally
+	//    add 3 to it. The result will be a new itemcount attribute in the item,
+	//    with a value of 3. If the existing data type is a set and if Value is
+	//    also a set, then Value is added to the existing set. For example, if the
+	//    attribute value is the set [1,2], and the ADD action specified [3], then
+	//    the final attribute value is [1,2,3]. An error occurs if an ADD action
+	//    is specified for a set attribute and the attribute type specified does
+	//    not match the existing set type. Both sets must have the same primitive
+	//    data type. For example, if the existing data type is a set of strings,
+	//    the Value must also be a set of strings. The ADD action only supports
+	//    Number and set data types. In addition, ADD can only be used on top-level
+	//    attributes, not nested attributes.
 	//
-	// If the existing attribute is a number, and if Value is also a number, then
-	//    Value is mathematically added to the existing attribute. If Value is a
-	//    negative number, then it is subtracted from the existing attribute.
-	//
-	// If you use ADD to increment or decrement a number value for an item that
-	//    doesn't exist before the update, DynamoDB uses 0 as the initial value.
-	//
-	// Similarly, if you use ADD for an existing item to increment or decrement
-	//    an attribute value that doesn't exist before the update, DynamoDB uses
-	//    0 as the initial value. For example, suppose that the item you want to
-	//    update doesn't have an attribute named itemcount, but you decide to ADD
-	//    the number 3 to this attribute anyway. DynamoDB will create the itemcount
-	//    attribute, set its initial value to 0, and finally add 3 to it. The result
-	//    will be a new itemcount attribute in the item, with a value of 3.
-	//
-	// If the existing data type is a set and if Value is also a set, then Value
-	//    is added to the existing set. For example, if the attribute value is the
-	//    set [1,2], and the ADD action specified [3], then the final attribute
-	//    value is [1,2,3]. An error occurs if an ADD action is specified for a
-	//    set attribute and the attribute type specified does not match the existing
-	//    set type.
-	//
-	// Both sets must have the same primitive data type. For example, if the existing
-	//    data type is a set of strings, the Value must also be a set of strings.
-	//
-	// The ADD action only supports Number and set data types. In addition, ADD
-	//    can only be used on top-level attributes, not nested attributes.
-	//
-	//    * DELETE - Deletes an element from a set.
-	//
-	// If a set of values is specified, then those values are subtracted from the
-	//    old set. For example, if the attribute value was the set [a,b,c] and the
-	//    DELETE action specifies [a,c], then the final attribute value is [b].
-	//    Specifying an empty set is an error.
-	//
-	// The DELETE action only supports set data types. In addition, DELETE can only
-	//    be used on top-level attributes, not nested attributes.
+	//    * DELETE - Deletes an element from a set. If a set of values is specified,
+	//    then those values are subtracted from the old set. For example, if the
+	//    attribute value was the set [a,b,c] and the DELETE action specifies [a,c],
+	//    then the final attribute value is [b]. Specifying an empty set is an error.
+	//    The DELETE action only supports set data types. In addition, DELETE can
+	//    only be used on top-level attributes, not nested attributes.
 	//
 	// You can have many actions in a single expression, such as the following:
 	// SET a=:value1, b=:value2 DELETE :value3, :value4, :value5
 	//
 	// For more information on update expressions, see Modifying Items and Attributes
-	// (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html)
+	// (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html)
 	// in the Amazon DynamoDB Developer Guide.
 	UpdateExpression *string `type:"string"`
 }
@@ -12398,7 +15554,7 @@ type UpdateItemOutput struct {
 	// includes the total provisioned throughput consumed, along with statistics
 	// for the table and any indexes involved in the operation. ConsumedCapacity
 	// is only returned if the ReturnConsumedCapacity parameter was specified. For
-	// more information, see Provisioned Throughput (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
+	// more information, see Provisioned Throughput (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ProvisionedThroughputIntro.html)
 	// in the Amazon DynamoDB Developer Guide.
 	ConsumedCapacity *ConsumedCapacity `type:"structure"`
 
@@ -12417,10 +15573,9 @@ type UpdateItemOutput struct {
 	//    bound for the estimate. The estimate includes the size of all the items
 	//    in the table, plus the size of all attributes projected into all of the
 	//    local secondary indexes on that table. Use this estimate to measure whether
-	//    a local secondary index is approaching its size limit.
-	//
-	// The estimate is subject to change over time; therefore, do not rely on the
-	//    precision or accuracy of the estimate.
+	//    a local secondary index is approaching its size limit. The estimate is
+	//    subject to change over time; therefore, do not rely on the precision or
+	//    accuracy of the estimate.
 	ItemCollectionMetrics *ItemCollectionMetrics `type:"structure"`
 }
 
@@ -12461,6 +15616,19 @@ type UpdateTableInput struct {
 	// must include the key element(s) of the new index.
 	AttributeDefinitions []*AttributeDefinition `type:"list"`
 
+	// Controls how you are charged for read and write throughput and how you manage
+	// capacity. When switching from pay-per-request to provisioned capacity, initial
+	// provisioned capacity values must be set. The initial provisioned capacity
+	// values are estimated based on the consumed read and write capacity of your
+	// table and global secondary indexes over the past 30 minutes.
+	//
+	//    * PROVISIONED - Sets the billing mode to PROVISIONED. We recommend using
+	//    PROVISIONED for predictable workloads.
+	//
+	//    * PAY_PER_REQUEST - Sets the billing mode to PAY_PER_REQUEST. We recommend
+	//    using PAY_PER_REQUEST for unpredictable workloads.
+	BillingMode *string `type:"string" enum:"BillingMode"`
+
 	// An array of one or more global secondary indexes for the table. For each
 	// index in the array, you can request one action:
 	//
@@ -12471,18 +15639,21 @@ type UpdateTableInput struct {
 	//
 	//    * Delete - remove a global secondary index from the table.
 	//
-	// For more information, see Managing Global Secondary Indexes (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.OnlineOps.html)
+	// For more information, see Managing Global Secondary Indexes (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.OnlineOps.html)
 	// in the Amazon DynamoDB Developer Guide.
 	GlobalSecondaryIndexUpdates []*GlobalSecondaryIndexUpdate `type:"list"`
 
 	// The new provisioned throughput settings for the specified table or index.
 	ProvisionedThroughput *ProvisionedThroughput `type:"structure"`
 
+	// The new server-side encryption settings for the specified table.
+	SSESpecification *SSESpecification `type:"structure"`
+
 	// Represents the DynamoDB Streams configuration for the table.
 	//
-	// You will receive a ResourceInUseException if you attempt to enable a stream
-	// on a table that already has a stream, or if you attempt to disable a stream
-	// on a table which does not have a stream.
+	// You receive a ResourceInUseException if you try to enable a stream on a table
+	// that already has a stream, or if you try to disable a stream on a table that
+	// doesn't have a stream.
 	StreamSpecification *StreamSpecification `type:"structure"`
 
 	// The name of the table to be updated.
@@ -12548,6 +15719,12 @@ func (s *UpdateTableInput) SetAttributeDefinitions(v []*AttributeDefinition) *Up
 	return s
 }
 
+// SetBillingMode sets the BillingMode field's value.
+func (s *UpdateTableInput) SetBillingMode(v string) *UpdateTableInput {
+	s.BillingMode = &v
+	return s
+}
+
 // SetGlobalSecondaryIndexUpdates sets the GlobalSecondaryIndexUpdates field's value.
 func (s *UpdateTableInput) SetGlobalSecondaryIndexUpdates(v []*GlobalSecondaryIndexUpdate) *UpdateTableInput {
 	s.GlobalSecondaryIndexUpdates = v
@@ -12557,6 +15734,12 @@ func (s *UpdateTableInput) SetGlobalSecondaryIndexUpdates(v []*GlobalSecondaryIn
 // SetProvisionedThroughput sets the ProvisionedThroughput field's value.
 func (s *UpdateTableInput) SetProvisionedThroughput(v *ProvisionedThroughput) *UpdateTableInput {
 	s.ProvisionedThroughput = v
+	return s
+}
+
+// SetSSESpecification sets the SSESpecification field's value.
+func (s *UpdateTableInput) SetSSESpecification(v *SSESpecification) *UpdateTableInput {
+	s.SSESpecification = v
 	return s
 }
 
@@ -12740,6 +15923,39 @@ const (
 )
 
 const (
+	// BackupTypeUser is a BackupType enum value
+	BackupTypeUser = "USER"
+
+	// BackupTypeSystem is a BackupType enum value
+	BackupTypeSystem = "SYSTEM"
+
+	// BackupTypeAwsBackup is a BackupType enum value
+	BackupTypeAwsBackup = "AWS_BACKUP"
+)
+
+const (
+	// BackupTypeFilterUser is a BackupTypeFilter enum value
+	BackupTypeFilterUser = "USER"
+
+	// BackupTypeFilterSystem is a BackupTypeFilter enum value
+	BackupTypeFilterSystem = "SYSTEM"
+
+	// BackupTypeFilterAwsBackup is a BackupTypeFilter enum value
+	BackupTypeFilterAwsBackup = "AWS_BACKUP"
+
+	// BackupTypeFilterAll is a BackupTypeFilter enum value
+	BackupTypeFilterAll = "ALL"
+)
+
+const (
+	// BillingModeProvisioned is a BillingMode enum value
+	BillingModeProvisioned = "PROVISIONED"
+
+	// BillingModePayPerRequest is a BillingMode enum value
+	BillingModePayPerRequest = "PAY_PER_REQUEST"
+)
+
+const (
 	// ComparisonOperatorEq is a ComparisonOperator enum value
 	ComparisonOperatorEq = "EQ"
 
@@ -12870,11 +16086,9 @@ const (
 //
 //    * INDEXES - The response includes the aggregate ConsumedCapacity for the
 //    operation, together with ConsumedCapacity for each table and secondary
-//    index that was accessed.
-//
-// Note that some operations, such as GetItem and BatchGetItem, do not access
-//    any indexes at all. In these cases, specifying INDEXES will only return
-//    ConsumedCapacity information for table(s).
+//    index that was accessed. Note that some operations, such as GetItem and
+//    BatchGetItem, do not access any indexes at all. In these cases, specifying
+//    INDEXES will only return ConsumedCapacity information for table(s).
 //
 //    * TOTAL - The response includes only the aggregate ConsumedCapacity for
 //    the operation.
@@ -12917,6 +16131,14 @@ const (
 )
 
 const (
+	// ReturnValuesOnConditionCheckFailureAllOld is a ReturnValuesOnConditionCheckFailure enum value
+	ReturnValuesOnConditionCheckFailureAllOld = "ALL_OLD"
+
+	// ReturnValuesOnConditionCheckFailureNone is a ReturnValuesOnConditionCheckFailure enum value
+	ReturnValuesOnConditionCheckFailureNone = "NONE"
+)
+
+const (
 	// SSEStatusEnabling is a SSEStatus enum value
 	SSEStatusEnabling = "ENABLING"
 
@@ -12928,6 +16150,17 @@ const (
 
 	// SSEStatusDisabled is a SSEStatus enum value
 	SSEStatusDisabled = "DISABLED"
+
+	// SSEStatusUpdating is a SSEStatus enum value
+	SSEStatusUpdating = "UPDATING"
+)
+
+const (
+	// SSETypeAes256 is a SSEType enum value
+	SSETypeAes256 = "AES256"
+
+	// SSETypeKms is a SSEType enum value
+	SSETypeKms = "KMS"
 )
 
 const (

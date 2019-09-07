@@ -36,14 +36,14 @@ type TemplateUpdateOptions struct {
 // GetCreateOptions converts a Template to TemplateCreateOptions for use in CreateTemplate
 func (i Template) GetCreateOptions() (o TemplateCreateOptions) {
 	// o.Label = i.Label
-	// o.Description = copyString(o.Description)
+	// o.Description = copyString(i.Description)
 	return
 }
 
 // GetUpdateOptions converts a Template to TemplateUpdateOptions for use in UpdateTemplate
 func (i Template) GetUpdateOptions() (o TemplateUpdateOptions) {
 	// o.Label = i.Label
-	// o.Description = copyString(o.Description)
+	// o.Description = copyString(i.Description)
 	return
 }
 

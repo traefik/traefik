@@ -59,7 +59,7 @@ func CreateNewDNS(zoneName string) *DNS {
 
 // AllowDNSTypes DNSレコード種別リスト
 func AllowDNSTypes() []string {
-	return []string{"A", "AAAA", "CNAME", "NS", "MX", "TXT", "SRV"}
+	return []string{"A", "AAAA", "CNAME", "NS", "MX", "TXT", "SRV", "CAA"}
 }
 
 // SetZone DNSゾーン名 設定

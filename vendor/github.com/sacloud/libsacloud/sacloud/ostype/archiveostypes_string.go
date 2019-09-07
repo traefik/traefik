@@ -4,9 +4,37 @@ package ostype
 
 import "strconv"
 
-const _ArchiveOSTypes_name = "CentOSCentOS6UbuntuDebianVyOSCoreOSRancherOSKusanagiSophosUTMFreeBSDNetwiserOPNsenseWindows2012Windows2012RDSWindows2012RDSOfficeWindows2016Windows2016RDSWindows2016RDSOfficeWindows2016SQLServerWebWindows2016SQLServerStandardWindows2016SQLServer2017StandardWindows2016SQLServerStandardAllWindows2016SQLServer2017StandardAllWindows2019Custom"
+func _() {
+	// An "invalid array index" compiler error signifies that the constant values have changed.
+	// Re-run the stringer command to generate them again.
+	var x [1]struct{}
+	_ = x[CentOS-0]
+	_ = x[CentOS6-1]
+	_ = x[Ubuntu-2]
+	_ = x[Debian-3]
+	_ = x[CoreOS-4]
+	_ = x[RancherOS-5]
+	_ = x[K3OS-6]
+	_ = x[Kusanagi-7]
+	_ = x[SophosUTM-8]
+	_ = x[FreeBSD-9]
+	_ = x[Netwiser-10]
+	_ = x[OPNsense-11]
+	_ = x[Windows2016-12]
+	_ = x[Windows2016RDS-13]
+	_ = x[Windows2016RDSOffice-14]
+	_ = x[Windows2016SQLServerWeb-15]
+	_ = x[Windows2016SQLServerStandard-16]
+	_ = x[Windows2016SQLServer2017Standard-17]
+	_ = x[Windows2016SQLServerStandardAll-18]
+	_ = x[Windows2016SQLServer2017StandardAll-19]
+	_ = x[Windows2019-20]
+	_ = x[Custom-21]
+}
 
-var _ArchiveOSTypes_index = [...]uint16{0, 6, 13, 19, 25, 29, 35, 44, 52, 61, 68, 76, 84, 95, 109, 129, 140, 154, 174, 197, 225, 257, 288, 323, 334, 340}
+const _ArchiveOSTypes_name = "CentOSCentOS6UbuntuDebianCoreOSRancherOSK3OSKusanagiSophosUTMFreeBSDNetwiserOPNsenseWindows2016Windows2016RDSWindows2016RDSOfficeWindows2016SQLServerWebWindows2016SQLServerStandardWindows2016SQLServer2017StandardWindows2016SQLServerStandardAllWindows2016SQLServer2017StandardAllWindows2019Custom"
+
+var _ArchiveOSTypes_index = [...]uint16{0, 6, 13, 19, 25, 31, 40, 44, 52, 61, 68, 76, 84, 95, 109, 129, 152, 180, 212, 243, 278, 289, 295}
 
 func (i ArchiveOSTypes) String() string {
 	if i < 0 || i >= ArchiveOSTypes(len(_ArchiveOSTypes_index)-1) {

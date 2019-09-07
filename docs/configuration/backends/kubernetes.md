@@ -73,6 +73,14 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 #
 # enablePassTLSCert = true
 
+# Throttle how frequently we refresh our configuration from Ingresses when there
+# are frequent changes.
+#
+# Optional
+# Default: 0 (no throttling)
+#
+# throttleDuration = 10s
+
 # Override default configuration template.
 #
 # Optional
@@ -210,7 +218,7 @@ infos:
     serialnumber: true
 ```
 
-If `pem` is set, it will add a `X-Forwarded-Tls-Client-Cert` header that contains the escaped pem as value.  
+If `pem` is set, it will add a `X-Forwarded-Tls-Client-Cert` header that contains the escaped pem as value.
 If at least one flag of the `infos` part is set, it will add a `X-Forwarded-Tls-Client-Cert-Infos` header that contains an escaped string composed of the client certificate data selected by the infos flags.
 This infos part is composed like the following example (not escaped):
 ```Subject="C=FR,ST=SomeState,L=Lyon,O=Cheese,CN=*.cheese.org",NB=1531900816,NA=1563436816,SAN=*.cheese.org,*.cheese.net,cheese.in,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2```
@@ -231,7 +239,7 @@ rateset:
 ```
 
 <5> `traefik.ingress.kubernetes.io/rule-type`
-Note: `ReplacePath` is deprecated in this annotation, use the `traefik.ingress.kubernetes.io/request-modifier` annotation instead. Default: `PathPrefix`. 
+Note: `ReplacePath` is deprecated in this annotation, use the `traefik.ingress.kubernetes.io/request-modifier` annotation instead. Default: `PathPrefix`.
 
 <6> `traefik.ingress.kubernetes.io/service-weights`:
 Service weights enable to split traffic across multiple backing services in a fine-grained manner.

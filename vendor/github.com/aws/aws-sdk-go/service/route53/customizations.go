@@ -33,7 +33,7 @@ func sanitizeURL(r *request.Request) {
 	// Update Path so that it reflects the cleaned RawPath
 	updated, err := url.Parse(r.HTTPRequest.URL.RawPath)
 	if err != nil {
-		r.Error = awserr.New("SerializationError", "failed to clean Route53 URL", err)
+		r.Error = awserr.New(request.ErrCodeSerialization, "failed to clean Route53 URL", err)
 		return
 	}
 

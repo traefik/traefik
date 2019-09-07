@@ -15,13 +15,37 @@ package autorest
 //  limitations under the License.
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/Azure/go-autorest/tracing"
 )
+
+// used as a key type in context.WithValue()
+type ctxSendDecorators struct{}
+
+// WithSendDecorators adds the specified SendDecorators to the provided context.
+// If no SendDecorators are provided the context is unchanged.
+func WithSendDecorators(ctx context.Context, sendDecorator []SendDecorator) context.Context {
+	if len(sendDecorator) == 0 {
+		return ctx
+	}
+	return context.WithValue(ctx, ctxSendDecorators{}, sendDecorator)
+}
+
+// GetSendDecorators returns the SendDecorators in the provided context or the provided default SendDecorators.
+func GetSendDecorators(ctx context.Context, defaultSendDecorators ...SendDecorator) []SendDecorator {
+	inCtx := ctx.Value(ctxSendDecorators{})
+	if sd, ok := inCtx.([]SendDecorator); ok {
+		return sd
+	}
+	return defaultSendDecorators
+}
 
 // Sender is the interface that wraps the Do method to send HTTP requests.
 //
@@ -38,7 +62,7 @@ func (sf SenderFunc) Do(r *http.Request) (*http.Response, error) {
 	return sf(r)
 }
 
-// SendDecorator takes and possibily decorates, by wrapping, a Sender. Decorators may affect the
+// SendDecorator takes and possibly decorates, by wrapping, a Sender. Decorators may affect the
 // http.Request and pass it along or, first, pass the http.Request along then react to the
 // http.Response result.
 type SendDecorator func(Sender) Sender
@@ -68,7 +92,7 @@ func DecorateSender(s Sender, decorators ...SendDecorator) Sender {
 //
 // Send will not poll or retry requests.
 func Send(r *http.Request, decorators ...SendDecorator) (*http.Response, error) {
-	return SendWithSender(&http.Client{}, r, decorators...)
+	return SendWithSender(&http.Client{Transport: tracing.Transport}, r, decorators...)
 }
 
 // SendWithSender sends the passed http.Request, through the provided Sender, returning the
@@ -209,50 +233,77 @@ func DoRetryForAttempts(attempts int, backoff time.Duration) SendDecorator {
 
 // DoRetryForStatusCodes returns a SendDecorator that retries for specified statusCodes for up to the specified
 // number of attempts, exponentially backing off between requests using the supplied backoff
-// time.Duration (which may be zero). Retrying may be canceled by closing the optional channel on
-// the http.Request.
+// time.Duration (which may be zero). Retrying may be canceled by cancelling the context on the http.Request.
+// NOTE: Code http.StatusTooManyRequests (429) will *not* be counted against the number of attempts.
 func DoRetryForStatusCodes(attempts int, backoff time.Duration, codes ...int) SendDecorator {
 	return func(s Sender) Sender {
-		return SenderFunc(func(r *http.Request) (resp *http.Response, err error) {
-			rr := NewRetriableRequest(r)
-			// Increment to add the first call (attempts denotes number of retries)
-			attempts++
-			for attempt := 0; attempt < attempts; {
-				err = rr.Prepare()
-				if err != nil {
-					return resp, err
-				}
-				resp, err = s.Do(rr.Request())
-				// we want to retry if err is not nil (e.g. transient network failure).  note that for failed authentication
-				// resp and err will both have a value, so in this case we don't want to retry as it will never succeed.
-				if err == nil && !ResponseHasStatusCode(resp, codes...) || IsTokenRefreshError(err) {
-					return resp, err
-				}
-				delayed := DelayWithRetryAfter(resp, r.Context().Done())
-				if !delayed && !DelayForBackoff(backoff, attempt, r.Context().Done()) {
-					return nil, r.Context().Err()
-				}
-				// don't count a 429 against the number of attempts
-				// so that we continue to retry until it succeeds
-				if resp == nil || resp.StatusCode != http.StatusTooManyRequests {
-					attempt++
-				}
-			}
-			return resp, err
+		return SenderFunc(func(r *http.Request) (*http.Response, error) {
+			return doRetryForStatusCodesImpl(s, r, false, attempts, backoff, 0, codes...)
 		})
 	}
 }
 
-// DelayWithRetryAfter invokes time.After for the duration specified in the "Retry-After" header in
-// responses with status code 429
+// DoRetryForStatusCodesWithCap returns a SendDecorator that retries for specified statusCodes for up to the
+// specified number of attempts, exponentially backing off between requests using the supplied backoff
+// time.Duration (which may be zero). To cap the maximum possible delay between iterations specify a value greater
+// than zero for cap. Retrying may be canceled by cancelling the context on the http.Request.
+func DoRetryForStatusCodesWithCap(attempts int, backoff, cap time.Duration, codes ...int) SendDecorator {
+	return func(s Sender) Sender {
+		return SenderFunc(func(r *http.Request) (*http.Response, error) {
+			return doRetryForStatusCodesImpl(s, r, true, attempts, backoff, cap, codes...)
+		})
+	}
+}
+
+func doRetryForStatusCodesImpl(s Sender, r *http.Request, count429 bool, attempts int, backoff, cap time.Duration, codes ...int) (resp *http.Response, err error) {
+	rr := NewRetriableRequest(r)
+	// Increment to add the first call (attempts denotes number of retries)
+	for attempt := 0; attempt < attempts+1; {
+		err = rr.Prepare()
+		if err != nil {
+			return
+		}
+		resp, err = s.Do(rr.Request())
+		// if the error isn't temporary don't bother retrying
+		if err != nil && !IsTemporaryNetworkError(err) {
+			return
+		}
+		// we want to retry if err is not nil (e.g. transient network failure).  note that for failed authentication
+		// resp and err will both have a value, so in this case we don't want to retry as it will never succeed.
+		if err == nil && !ResponseHasStatusCode(resp, codes...) || IsTokenRefreshError(err) {
+			return resp, err
+		}
+		delayed := DelayWithRetryAfter(resp, r.Context().Done())
+		if !delayed && !DelayForBackoffWithCap(backoff, cap, attempt, r.Context().Done()) {
+			return resp, r.Context().Err()
+		}
+		// when count429 == false don't count a 429 against the number
+		// of attempts so that we continue to retry until it succeeds
+		if count429 || (resp == nil || resp.StatusCode != http.StatusTooManyRequests) {
+			attempt++
+		}
+	}
+	return resp, err
+}
+
+// DelayWithRetryAfter invokes time.After for the duration specified in the "Retry-After" header.
+// The value of Retry-After can be either the number of seconds or a date in RFC1123 format.
+// The function returns true after successfully waiting for the specified duration.  If there is
+// no Retry-After header or the wait is cancelled the return value is false.
 func DelayWithRetryAfter(resp *http.Response, cancel <-chan struct{}) bool {
 	if resp == nil {
 		return false
 	}
-	retryAfter, _ := strconv.Atoi(resp.Header.Get("Retry-After"))
-	if resp.StatusCode == http.StatusTooManyRequests && retryAfter > 0 {
+	var dur time.Duration
+	ra := resp.Header.Get("Retry-After")
+	if retryAfter, _ := strconv.Atoi(ra); retryAfter > 0 {
+		dur = time.Duration(retryAfter) * time.Second
+	} else if t, err := time.Parse(time.RFC1123, ra); err == nil {
+		dur = t.Sub(time.Now())
+	}
+	if dur > 0 {
 		select {
-		case <-time.After(time.Duration(retryAfter) * time.Second):
+		case <-time.After(dur):
 			return true
 		case <-cancel:
 			return false
@@ -312,8 +363,22 @@ func WithLogging(logger *log.Logger) SendDecorator {
 // Note: Passing attempt 1 will result in doubling "backoff" duration. Treat this as a zero-based attempt
 // count.
 func DelayForBackoff(backoff time.Duration, attempt int, cancel <-chan struct{}) bool {
+	return DelayForBackoffWithCap(backoff, 0, attempt, cancel)
+}
+
+// DelayForBackoffWithCap invokes time.After for the supplied backoff duration raised to the power of
+// passed attempt (i.e., an exponential backoff delay). Backoff duration is in seconds and can set
+// to zero for no delay. To cap the maximum possible delay specify a value greater than zero for cap.
+// The delay may be canceled by closing the passed channel. If terminated early, returns false.
+// Note: Passing attempt 1 will result in doubling "backoff" duration. Treat this as a zero-based attempt
+// count.
+func DelayForBackoffWithCap(backoff, cap time.Duration, attempt int, cancel <-chan struct{}) bool {
+	d := time.Duration(backoff.Seconds()*math.Pow(2, float64(attempt))) * time.Second
+	if cap > 0 && d > cap {
+		d = cap
+	}
 	select {
-	case <-time.After(time.Duration(backoff.Seconds()*math.Pow(2, float64(attempt))) * time.Second):
+	case <-time.After(d):
 		return true
 	case <-cancel:
 		return false
