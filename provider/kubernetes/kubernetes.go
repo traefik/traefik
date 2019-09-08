@@ -394,40 +394,13 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 								Weight: externalNameServiceWeight,
 							}
 						} else {
-							endpoints, exists, err := k8sClient.GetEndpoints(service.Namespace, service.Name)
-							if err != nil {
-								log.Errorf("Error retrieving endpoints %s/%s: %v", service.Namespace, service.Name, err)
-								return nil, err
+							url := protocol + "://" + service.Name + "." + service.Namespace
+							if port.Port != 443 && port.Port != 80 {
+								url = fmt.Sprintf("%s:%d", url, port.Port)
 							}
-
-							if !exists {
-								log.Warnf("Endpoints not found for %s/%s", service.Namespace, service.Name)
-								break
-							}
-
-							if len(endpoints.Subsets) == 0 {
-								log.Warnf("Endpoints not available for %s/%s", service.Namespace, service.Name)
-								break
-							}
-
-							for _, subset := range endpoints.Subsets {
-								endpointPort := endpointPortNumber(port, subset.Ports)
-								if endpointPort == 0 {
-									// endpoint port does not match service.
-									continue
-								}
-								for _, address := range subset.Addresses {
-									url := protocol + "://" + net.JoinHostPort(address.IP, strconv.FormatInt(int64(endpointPort), 10))
-									name := url
-									if address.TargetRef != nil && address.TargetRef.Name != "" {
-										name = address.TargetRef.Name
-									}
-
-									templateObjects.Backends[baseName].Servers[name] = types.Server{
-										URL:    url,
-										Weight: weightAllocator.getWeight(r.Host, pa.Path, pa.Backend.ServiceName),
-									}
-								}
+							templateObjects.Backends[baseName].Servers[url] = types.Server{
+								URL:    url,
+								Weight: weightAllocator.getWeight(r.Host, pa.Path, pa.Backend.ServiceName),
 							}
 						}
 						break
