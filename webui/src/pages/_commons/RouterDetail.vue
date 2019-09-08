@@ -52,7 +52,7 @@
               <div class="col-12 col-md-8">
                 <div class="row items-start q-col-gutter-md">
                   <div v-for="(middleware, index) in middlewares" :key="index" class="col-12">
-                    <panel-entry type="detail" name="Middleware" :address="middleware.type | middlewareTypeLabel"/>
+                    <panel-entry type="detail" name="Middleware" :address="middleware.type | capFirstLetter"/>
                   </div>
                 </div>
               </div>
@@ -109,7 +109,7 @@
             </div>
           </div>
 
-          <div v-if="hasTLSConfiguration" class="col-12 col-md-4 q-mb-lg path-block">
+          <div class="col-12 col-md-4 q-mb-lg path-block">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-shield"></q-icon>
               <div class="app-title-label">TLS</div>
@@ -125,7 +125,7 @@
             </div>
           </div>
 
-          <div v-if="hasMiddlewares" class="col-12 col-md-4 q-mb-lg path-block">
+          <div class="col-12 col-md-4 q-mb-lg path-block">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-layers"></q-icon>
               <div class="app-title-label">Middlewares</div>

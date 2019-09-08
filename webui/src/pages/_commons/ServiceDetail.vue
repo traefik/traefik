@@ -4,7 +4,7 @@
     <section v-if="!loading" class="app-section">
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-xl q-pb-lg">
         <div v-if="serviceByName.item" class="row no-wrap items-center app-title">
-          <div class="app-title-label" style="font-size: 32px">{{ getTitle }}</div>
+          <div class="app-title-label text-capitalize" style="font-size: 32px">{{ serviceByName.item.type }}</div>
         </div>
       </div>
     </section>
@@ -94,7 +94,7 @@
           </div>
 
         </div>
-        <div v-else class="row items-start">
+        <div v-else class="row items-start q-mt-xl">
           <div class="col-12">
             <p v-for="n in 4" :key="n" class="flex">
               <SkeletonBox :min-width="15" :max-width="15" style="margin-right: 2%"/> <SkeletonBox :min-width="50" :max-width="83"/>
@@ -175,10 +175,6 @@ export default {
     },
     getRouterByName () {
       return this[`${this.protocol}_getRouterByName`]
-    },
-    getTitle () {
-      const type = this.serviceByName.item.type
-      return type.charAt(0).toUpperCase() + type.slice(1)
     }
   },
   methods: {

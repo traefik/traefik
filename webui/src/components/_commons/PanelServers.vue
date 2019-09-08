@@ -16,8 +16,8 @@
         <q-card-section>
           <div class="row items-center no-wrap">
             <div class="col-3">
-              <div class="block-right-text">
-                <avatar-state :state="data.serverStatus[server.url] | status "/>
+              <div v-if="data.serverStatus" class="block-right-text">
+                <avatar-state :state="data.serverStatus[server.url || server.address] | status "/>
               </div>
             </div>
             <div class="col-9">
@@ -25,7 +25,7 @@
                 outline
                 dense
                 class="app-chip app-chip-rule">
-                {{ server.url }}
+                {{ server.url || server.address}}
               </q-chip>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { APP } from '../_helpers/APP'
+import Helps from '../_helpers/Helps'
 
 const Boot = {
   install (Vue, options) {
@@ -27,17 +28,8 @@ const Boot = {
       methods: {
       },
       filters: {
-        middlewareTypeLabel (value) {
-          // TODO - add all types to middlewares
-          // fake function, remplace for optimized function
-          let label = value
-          if (value === 'redirectscheme') {
-            label = 'redirectScheme'
-          }
-          if (value === 'basicauth') {
-            label = 'basicAuth'
-          }
-          return label
+        capFirstLetter (value) {
+          return Helps.capFirstLetter(value)
         }
       },
       created () {

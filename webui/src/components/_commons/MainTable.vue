@@ -54,7 +54,7 @@
               outline
               dense
               class="app-chip app-chip-entry-points">
-              {{ props.row.type | middlewareTypeLabel}}
+              {{ props.row.type | capFirstLetter}}
             </q-chip>
           </q-td>
           <q-td key="servers" :props="props">

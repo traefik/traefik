@@ -25,10 +25,11 @@ const routes = [
         name: 'httpRouters',
         components: {
           default: () => import('pages/http/Routers.vue'),
-          NavBar: () => import('components/http/ToolBar.vue')
+          NavBar: () => import('components/_commons/ToolBar.vue')
         },
         props: { default: true, NavBar: true },
         meta: {
+          protocol: 'http',
           title: 'HTTP Routers'
         }
       },
@@ -37,7 +38,7 @@ const routes = [
         name: 'httpRouterDetail',
         components: {
           default: () => import('pages/_commons/RouterDetail.vue'),
-          NavBar: () => import('components/http/ToolBar.vue')
+          NavBar: () => import('components/_commons/ToolBar.vue')
         },
         props: { default: true, NavBar: true },
         meta: {
@@ -50,10 +51,11 @@ const routes = [
         name: 'httpServices',
         components: {
           default: () => import('pages/http/Services.vue'),
-          NavBar: () => import('components/http/ToolBar.vue')
+          NavBar: () => import('components/_commons/ToolBar.vue')
         },
         props: { default: true, NavBar: true },
         meta: {
+          protocol: 'http',
           title: 'HTTP Services'
         }
       },
@@ -62,7 +64,7 @@ const routes = [
         name: 'httpServiceDetail',
         components: {
           default: () => import('pages/_commons/ServiceDetail.vue'),
-          NavBar: () => import('components/http/ToolBar.vue')
+          NavBar: () => import('components/_commons/ToolBar.vue')
         },
         props: { default: true, NavBar: true },
         meta: {
@@ -75,11 +77,25 @@ const routes = [
         name: 'httpMiddlewares',
         components: {
           default: () => import('pages/http/Middlewares.vue'),
-          NavBar: () => import('components/http/ToolBar.vue')
+          NavBar: () => import('components/_commons/ToolBar.vue')
         },
         props: { default: true, NavBar: true },
         meta: {
+          protocol: 'http',
           title: 'HTTP Middlewares'
+        }
+      },
+      {
+        path: 'middlewares/:name/:type',
+        name: 'httpMiddlewareDetail',
+        components: {
+          default: () => import('pages/_commons/MiddlewareDetail.vue'),
+          NavBar: () => import('components/_commons/ToolBar.vue')
+        },
+        props: { default: true, NavBar: true },
+        meta: {
+          protocol: 'http',
+          title: 'HTTP Middleware Detail'
         }
       }
     ]
@@ -94,10 +110,11 @@ const routes = [
         name: 'tcpRouters',
         components: {
           default: () => import('pages/tcp/Routers.vue'),
-          NavBar: () => import('components/tcp/ToolBar.vue')
+          NavBar: () => import('components/_commons/ToolBar.vue')
         },
         props: { default: true, NavBar: true },
         meta: {
+          protocol: 'tcp',
           title: 'TCP Routers'
         }
       },
@@ -106,7 +123,7 @@ const routes = [
         name: 'tcpRouterDetail',
         components: {
           default: () => import('pages/_commons/RouterDetail.vue'),
-          NavBar: () => import('components/tcp/ToolBar.vue')
+          NavBar: () => import('components/_commons/ToolBar.vue')
         },
         props: { default: true, NavBar: true },
         meta: {
@@ -119,10 +136,11 @@ const routes = [
         name: 'tcpServices',
         components: {
           default: () => import('pages/tcp/Services.vue'),
-          NavBar: () => import('components/tcp/ToolBar.vue')
+          NavBar: () => import('components/_commons/ToolBar.vue')
         },
         props: { default: true, NavBar: true },
         meta: {
+          protocol: 'tcp',
           title: 'TCP Services'
         }
       },
@@ -131,7 +149,7 @@ const routes = [
         name: 'tcpServiceDetail',
         components: {
           default: () => import('pages/_commons/ServiceDetail.vue'),
-          NavBar: () => import('components/tcp/ToolBar.vue')
+          NavBar: () => import('components/_commons/ToolBar.vue')
         },
         props: { default: true, NavBar: true },
         meta: {

@@ -3,14 +3,14 @@
     <q-scroll-area :thumb-style="appThumbStyle" style="height:100%;">
       <q-card-section>
         <div class="row items-start no-wrap">
-          <div class="col-7">
+          <div class="col-6">
             <div class="text-subtitle2 text-table">Name</div>
           </div>
           <div class="col-3">
-            <div class="text-subtitle2 text-table">Percent</div>
+            <div class="text-subtitle2 text-table" style="text-align: right">Percent</div>
           </div>
-          <div class="col-4">
-            <div class="text-subtitle2 text-table">Provider</div>
+          <div class="col-3">
+            <div class="text-subtitle2 text-table" style="text-align: right">Provider</div>
           </div>
         </div>
       </q-card-section>
@@ -18,7 +18,7 @@
       <div v-for="(service, index) in data.mirroring.mirrors" :key="index">
         <q-card-section>
           <div class="row items-center no-wrap">
-            <div class="col-7">
+            <div class="col-6">
               <q-chip
                 outline
                 dense
@@ -26,11 +26,11 @@
                 {{ service.name }}
               </q-chip>
             </div>
-            <div class="col-3">
+            <div class="col-3 text-right">
               {{ service.percent }}
             </div>
-            <div class="col-4">
-              <q-avatar>
+            <div class="col-3 text-right">
+              <q-avatar class="provider-logo">
                 <q-icon :name="`img:statics/providers/${getProvider(service)}.svg`" />
               </q-avatar>
             </div>
@@ -119,6 +119,15 @@ export default {
       font-weight: 700;
       letter-spacing: normal;
       text-transform: none;
+    }
+
+    .provider-logo {
+      width: 32px;
+      height: 32px;
+      img {
+        width: 100%;
+        height: 100%;
+      }
     }
   }
 

@@ -1,9 +1,9 @@
 <template>
-  <q-card flat bordered v-bind:class="['panel-router-details']">
-    <q-scroll-area :thumb-style="appThumbStyle" style="height:100%;">
+  <q-card flat bordered v-bind:class="['panel-middleware-details', {'panel-middleware-details-dense':isDense}]">
+    <q-scroll-area v-if="data && data.length" :thumb-style="appThumbStyle" style="height:100%;">
       <div v-for="(middleware, index) in data" :key="index">
-        <q-card-section class="app-title">
-          <div class="app-title-label">{{middleware.type | middlewareTypeLabel}}</div>
+        <q-card-section v-if="!isDense" class="app-title">
+          <div class="app-title-label text-capitalize">{{middleware.type}}</div>
         </q-card-section>
         <q-card-section>
           <div class="row items-start no-wrap">
@@ -55,6 +55,17 @@
         <q-separator v-if="(index+1) < data.length" inset />
       </div>
     </q-scroll-area>
+    <q-card-section v-else style="height: 100%">
+      <div class="row items-center" style="height: 100%">
+        <div class="col-12">
+        <div class="block-empty"></div>
+          <div class="q-pb-lg block-empty-logo">
+            <img alt="empty" src="~assets/middlewares-empty.svg">
+          </div>
+          <div class="block-empty-label">There are no<br>Middlewares configured</div>
+        </div>
+      </div>
+    </q-card-section>
   </q-card>
 </template>
 
@@ -62,13 +73,15 @@
 import AvatarState from './AvatarState'
 
 export default {
-  name: 'PanelRouterDetails',
-  props: ['data'],
+  name: 'PanelMiddlewareDetails',
+  props: ['data', 'dense'],
   components: {
     AvatarState
   },
   computed: {
-
+    isDense () {
+      return this.dense !== undefined
+    }
   },
   methods: {
 
@@ -101,8 +114,11 @@ export default {
 <style scoped lang="scss">
   @import "../../css/sass/variables";
 
-  .panel-router-details {
+  .panel-middleware-details {
     height: 600px;
+    &-dense{
+      height: 400px;
+    }
     .q-card__section {
       padding: 24px;
       + .q-card__section {
@@ -152,6 +168,19 @@ export default {
       img {
         width: 100%;
         height: 100%;
+      }
+    }
+
+    .block-empty {
+      &-logo {
+        text-align: center;
+      }
+      &-label {
+        font-size: 20px;
+        font-weight: 700;
+        color: #b8b8b8;
+        text-align: center;
+        line-height: 1.2;
       }
     }
   }

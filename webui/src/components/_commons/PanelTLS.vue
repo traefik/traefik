@@ -1,6 +1,6 @@
 <template>
   <q-card flat bordered v-bind:class="['panel-tls']">
-    <q-scroll-area :thumb-style="appThumbStyle" style="height:100%;">
+    <q-scroll-area v-if="data" :thumb-style="appThumbStyle" style="height:100%;">
       <q-card-section v-if="data.options">
         <div class="row items-start no-wrap">
           <div class="col">
@@ -58,6 +58,17 @@
         </div>
       </q-card-section>
     </q-scroll-area>
+    <q-card-section v-else style="height: 100%">
+      <div class="row items-center" style="height: 100%">
+        <div class="col-12">
+          <div class="block-empty"></div>
+          <div class="q-pb-lg block-empty-logo">
+            <img alt="empty" src="~assets/middlewares-empty.svg">
+          </div>
+          <div class="block-empty-label">There are no<br>TLS configured</div>
+        </div>
+      </div>
+    </q-card-section>
   </q-card>
 </template>
 
@@ -106,6 +117,19 @@ export default {
         /deep/ .q-chip__content{
           white-space: normal;
         }
+      }
+    }
+
+    .block-empty {
+      &-logo {
+        text-align: center;
+      }
+      &-label {
+        font-size: 20px;
+        font-weight: 700;
+        color: #b8b8b8;
+        text-align: center;
+        line-height: 1.2;
       }
     }
   }
