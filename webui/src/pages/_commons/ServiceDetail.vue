@@ -4,7 +4,7 @@
     <section v-if="!loading" class="app-section">
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-xl q-pb-lg">
         <div v-if="serviceByName.item" class="row no-wrap items-center app-title">
-          <div class="app-title-label text-capitalize" style="font-size: 26px">{{ serviceByName.item.name }}</div>
+          <div class="app-title-label" style="font-size: 26px">{{ serviceByName.item.name }}</div>
         </div>
       </div>
     </section>
