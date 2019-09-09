@@ -50,6 +50,7 @@ type Statsd struct {
 	PushInterval         Duration `description:"StatsD push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
 	AddEntryPointsLabels bool     `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
 	AddServicesLabels    bool     `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
+	Prefix               string   `description:"Prefix to use for metrics collection." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -58,6 +59,7 @@ func (s *Statsd) SetDefaults() {
 	s.PushInterval = Duration(10 * time.Second)
 	s.AddEntryPointsLabels = true
 	s.AddServicesLabels = true
+	s.Prefix = "traefik"
 }
 
 // InfluxDB contains address, login and metrics pushing interval configuration.
