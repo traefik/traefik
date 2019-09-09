@@ -117,7 +117,16 @@ func TestRateLimit(t *testing.T) {
 			incomingLoad: 200,
 			burst:        150,
 		},
-
+		{
+			desc: "burst over average, initial burst, over capacity",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   200,
+			},
+			loadDuration: 2 * time.Second,
+			incomingLoad: 200,
+			burst:        300,
+		},
 		{
 			desc: "Zero average ==> no rate limiting",
 			config: dynamic.RateLimit{
