@@ -53,7 +53,7 @@
         </div>
 
       </q-card-section>
-      <q-card-section v-if="data.type || data.strategy">
+      <q-card-section v-if="data.name">
         <div class="row items-start no-wrap">
           <div class="col" v-if="data.name">
             <div class="text-subtitle2">NAME</div>
@@ -66,6 +66,15 @@
           </div>
         </div>
       </q-card-section>
+      <q-card-section >
+        <div class="row items-start no-wrap">
+          <div class="col" v-if="data.name">
+            <div class="text-subtitle2">Pass Host Header</div>
+            <boolean-state :value="data.passHostHeader"/>
+          </div>
+        </div>
+      </q-card-section>
+
       <q-separator v-if="data.weighted" />
       <q-card-section v-if="data.weighted" >
         <div class="row items-start no-wrap">
