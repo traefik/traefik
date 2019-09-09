@@ -105,6 +105,21 @@
             </div>
           </div>
         </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - chain -->
+        <q-card-section v-if="middleware.chain">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Chain</div>
+              <q-chip
+                v-for="(mi, key) in exData(middleware).middlewares" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ mi }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
         <!-- EXTRA FIELDS FROM MIDDLEWARES - prefix -->
         <q-card-section v-if="exData(middleware).prefix">
           <div class="row items-start no-wrap">
