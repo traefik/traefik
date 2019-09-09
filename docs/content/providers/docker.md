@@ -388,7 +388,7 @@ Constraints is an expression that Traefik matches against the container's labels
 That is to say, if none of the container's labels match the expression, no route for the container is created.
 If the expression is empty, all detected containers are included.
 
-The expression syntax is based on the `Label("key", "value")`, and `LabelRegexp("key", "value")` functions, as well as the usual boolean logic, as shown in examples below.
+The expression syntax is based on the `Label("key", "value")`, and `LabelRegex("key", "value")` functions, as well as the usual boolean logic, as shown in examples below.
 
 ??? example "Constraints Expression Examples"
 
@@ -419,10 +419,120 @@ The expression syntax is based on the `Label("key", "value")`, and `LabelRegexp(
     
     ```toml
     # Includes only containers having a label with key `a.label.name` and a value matching the `a.+` regular expression.
-    constraints = "LabelRegexp(`a.label.name`, `a.+`)"
+    constraints = "LabelRegex(`a.label.name`, `a.+`)"
     ```
 
 See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+
+### `tls`
+
+_Optional_
+
+#### `tls.ca`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.docker.tls]
+  ca = "path/to/ca.crt"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    tls:
+      ca: path/to/ca.crt
+```
+
+```bash tab="CLI"
+--providers.docker.tls.ca=path/to/ca.crt
+```
+
+#### `tls.caOptional`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.docker.tls]
+  caOptional = true
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    tls:
+      caOptional: true
+```
+
+```bash tab="CLI"
+--providers.docker.tls.caOptional=true
+```
+
+#### `tls.cert`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.docker.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    tls:
+      cert: path/to/foo.cert
+      key: path/to/foo.key
+```
+
+```bash tab="CLI"
+--providers.docker.tls.cert=path/to/foo.cert
+--providers.docker.tls.key=path/to/foo.key
+```
+
+#### `tls.key`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.docker.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    tls:
+      cert: path/to/foo.cert
+      key: path/to/foo.key
+```
+
+```bash tab="CLI"
+--providers.docker.tls.cert=path/to/foo.cert
+--providers.docker.tls.key=path/to/foo.key
+```
+
+#### `tls.insecureSkipVerify`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.docker.tls]
+  insecureSkipVerify = true
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    tls:
+      insecureSkipVerify: true
+```
+
+```bash tab="CLI"
+--providers.docker.tls.insecureSkipVerify=true
+```
 
 ## Routing Configuration Options
 

@@ -5,7 +5,7 @@ Checking the Health of Your Traefik Instances
 
 ## Configuration Examples
 
-!!! example "Enabling /ping"
+To enable the API handler:
 
 ```toml tab="File (TOML)"
 [ping]

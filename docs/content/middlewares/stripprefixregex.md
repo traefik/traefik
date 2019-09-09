@@ -9,7 +9,7 @@ Remove the matching prefixes from the URL path.
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/",
+- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
 ```
 
 ```yaml tab="Kubernetes"
@@ -31,7 +31,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/",
+- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
 ```
 
 ```toml tab="File (TOML)"
