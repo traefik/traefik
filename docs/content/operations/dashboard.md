@@ -10,14 +10,10 @@ The dashboard is the central place that shows you the current active routes hand
     Therefore, the dashboard is currently not working.
 
 <figure>
-    <img src="../../assets/img/dashboard-main.png" alt="Dashboard - Providers" />
-    <figcaption>The dashboard in action with Traefik listening to 3 different providers</figcaption>
+    <img src="../../assets/img/webui-dashboard.png" alt="Dashboard - Providers" />
+    <figcaption>The dashboard in action</figcaption>
 </figure>
 
-<figure>
-    <img src="../../assets/img/dashboard-health.png" alt="Dashboard - Health" />
-    <figcaption>The dashboard shows the health of the system.</figcaption>
-</figure>
 
 By default, the dashboard is available on `/` on port `:8080`.
 
