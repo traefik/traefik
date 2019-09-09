@@ -123,6 +123,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			if ingressRoute.Spec.TLS != nil {
 				tlsConf := &dynamic.RouterTLSConfig{
 					CertResolver: ingressRoute.Spec.TLS.CertResolver,
+					Domains:      ingressRoute.Spec.TLS.Domains,
 				}
 
 				if ingressRoute.Spec.TLS.Options != nil && len(ingressRoute.Spec.TLS.Options.Name) > 0 {

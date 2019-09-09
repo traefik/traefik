@@ -30,6 +30,7 @@ package v1alpha1
 
 import (
 	dynamic "github.com/containous/traefik/v2/pkg/config/dynamic"
+	types "github.com/containous/traefik/v2/pkg/types"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -653,6 +654,13 @@ func (in *TLS) DeepCopyInto(out *TLS) {
 		in, out := &in.Options, &out.Options
 		*out = new(TLSOptionRef)
 		**out = **in
+	}
+	if in.Domains != nil {
+		in, out := &in.Domains, &out.Domains
+		*out = make([]types.Domain, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	return
 }

@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/containous/traefik/v2/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,8 +33,9 @@ type TLS struct {
 	// certificate details.
 	SecretName string `json:"secretName"`
 	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
-	Options      *TLSOptionRef `json:"options"`
-	CertResolver string        `json:"certResolver"`
+	Options      *TLSOptionRef  `json:"options,omitempty"`
+	CertResolver string         `json:"certResolver,omitempty"`
+	Domains      []types.Domain `json:"domains,omitempty"`
 }
 
 // TLSOptionRef is a ref to the TLSOption resources.
