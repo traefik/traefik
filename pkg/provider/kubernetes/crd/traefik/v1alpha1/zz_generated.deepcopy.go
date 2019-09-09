@@ -797,6 +797,13 @@ func (in *TLSTCP) DeepCopyInto(out *TLSTCP) {
 		*out = new(TLSOptionTCPRef)
 		**out = **in
 	}
+	if in.Domains != nil {
+		in, out := &in.Domains, &out.Domains
+		*out = make([]types.Domain, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	return
 }
 
