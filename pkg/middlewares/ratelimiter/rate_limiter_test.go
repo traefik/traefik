@@ -180,8 +180,8 @@ func TestRateLimit(t *testing.T) {
 			elapsed := stop.Sub(start)
 
 			if test.config.Average == 0 {
-				if reqCount < 95*test.incomingLoad/100 {
-					t.Fatalf("we (arbitrarily) expect at least 95%% of the requests to go through with no rate limiting, and yet only %d/%d went through", reqCount, test.incomingLoad)
+				if reqCount < 75*test.incomingLoad/100 {
+					t.Fatalf("we (arbitrarily) expect at least 75%% of the requests to go through with no rate limiting, and yet only %d/%d went through", reqCount, test.incomingLoad)
 				}
 				if dropped != 0 {
 					t.Fatalf("no request should have been dropped if rate limiting is disabled, and yet %d were", dropped)
