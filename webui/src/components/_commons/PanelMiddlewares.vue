@@ -3,17 +3,19 @@
     <q-scroll-area v-if="data && data.length" :thumb-style="appThumbStyle" style="height:100%;">
       <div v-for="(middleware, index) in data" :key="index">
         <q-card-section v-if="!isDense" class="app-title">
-          <div class="app-title-label text-capitalize">{{middleware.type}}</div>
+          <div class="app-title-label text-capitalize">{{ middleware.name }}</div>
         </q-card-section>
         <!-- COMMON FIELDS -->
         <q-card-section>
           <div class="row items-start no-wrap">
             <div class="col">
-              <div class="text-subtitle2">STATUS</div>
-              <div class="block-right-text">
-                <avatar-state :state="middleware.status | status "/>
-                <div v-bind:class="['block-right-text-label', `block-right-text-label-${middleware.status}`]">{{middleware.status | statusLabel}}</div>
-              </div>
+              <div class="text-subtitle2">Type</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-purple">
+                {{ middleware.type }}
+              </q-chip>
             </div>
             <div class="col">
               <div class="text-subtitle2">PROVIDER</div>
@@ -26,16 +28,14 @@
             </div>
           </div>
         </q-card-section>
-        <q-card-section v-if="middleware.name">
+        <q-card-section>
           <div class="row items-start no-wrap">
             <div class="col">
-              <div class="text-subtitle2">NAME</div>
-              <q-chip
-                outline
-                dense
-                class="app-chip app-chip-purple">
-                {{ middleware.name }}
-              </q-chip>
+              <div class="text-subtitle2">STATUS</div>
+              <div class="block-right-text">
+                <avatar-state :state="middleware.status | status "/>
+                <div v-bind:class="['block-right-text-label', `block-right-text-label-${middleware.status}`]">{{middleware.status | statusLabel}}</div>
+              </div>
             </div>
           </div>
         </q-card-section>
@@ -77,8 +77,12 @@
               <q-chip
                 outline
                 dense
-                class="app-chip app-chip-warning">
-                Depth: {{ exData(middleware).sourceCriterion.ipStrategy.depth }}
+                class="app-chip app-chip-accent">Depth :</q-chip>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+               {{ exData(middleware).sourceCriterion.ipStrategy.depth }}
               </q-chip>
             </div>
             <div v-if="exData(middleware).sourceCriterion.ipStrategy.excludedIPs" class="col-12">
