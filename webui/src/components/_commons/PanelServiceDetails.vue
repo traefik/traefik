@@ -51,6 +51,20 @@
             </q-chip>
           </div>
         </div>
+
+      </q-card-section>
+      <q-card-section v-if="data.type || data.strategy">
+        <div class="row items-start no-wrap">
+          <div class="col" v-if="data.name">
+            <div class="text-subtitle2">NAME</div>
+            <q-chip
+              outline
+              dense
+              class="app-chip app-chip-service">
+              {{ data.name }}
+            </q-chip>
+          </div>
+        </div>
       </q-card-section>
       <q-separator v-if="data.weighted" />
       <q-card-section v-if="data.weighted" >
