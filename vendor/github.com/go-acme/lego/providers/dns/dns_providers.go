@@ -9,6 +9,7 @@ import (
 	"github.com/go-acme/lego/providers/dns/alidns"
 	"github.com/go-acme/lego/providers/dns/auroradns"
 	"github.com/go-acme/lego/providers/dns/azure"
+	"github.com/go-acme/lego/providers/dns/bindman"
 	"github.com/go-acme/lego/providers/dns/bluecat"
 	"github.com/go-acme/lego/providers/dns/cloudflare"
 	"github.com/go-acme/lego/providers/dns/cloudns"
@@ -23,6 +24,7 @@ import (
 	"github.com/go-acme/lego/providers/dns/dreamhost"
 	"github.com/go-acme/lego/providers/dns/duckdns"
 	"github.com/go-acme/lego/providers/dns/dyn"
+	"github.com/go-acme/lego/providers/dns/easydns"
 	"github.com/go-acme/lego/providers/dns/exec"
 	"github.com/go-acme/lego/providers/dns/exoscale"
 	"github.com/go-acme/lego/providers/dns/fastdns"
@@ -35,12 +37,14 @@ import (
 	"github.com/go-acme/lego/providers/dns/httpreq"
 	"github.com/go-acme/lego/providers/dns/iij"
 	"github.com/go-acme/lego/providers/dns/inwx"
+	"github.com/go-acme/lego/providers/dns/joker"
 	"github.com/go-acme/lego/providers/dns/lightsail"
 	"github.com/go-acme/lego/providers/dns/linode"
 	"github.com/go-acme/lego/providers/dns/linodev4"
 	"github.com/go-acme/lego/providers/dns/mydnsjp"
 	"github.com/go-acme/lego/providers/dns/namecheap"
 	"github.com/go-acme/lego/providers/dns/namedotcom"
+	"github.com/go-acme/lego/providers/dns/namesilo"
 	"github.com/go-acme/lego/providers/dns/netcup"
 	"github.com/go-acme/lego/providers/dns/nifcloud"
 	"github.com/go-acme/lego/providers/dns/ns1"
@@ -56,6 +60,7 @@ import (
 	"github.com/go-acme/lego/providers/dns/stackpath"
 	"github.com/go-acme/lego/providers/dns/transip"
 	"github.com/go-acme/lego/providers/dns/vegadns"
+	"github.com/go-acme/lego/providers/dns/versio"
 	"github.com/go-acme/lego/providers/dns/vscale"
 	"github.com/go-acme/lego/providers/dns/vultr"
 	"github.com/go-acme/lego/providers/dns/zoneee"
@@ -72,6 +77,8 @@ func NewDNSChallengeProviderByName(name string) (challenge.Provider, error) {
 		return azure.NewDNSProvider()
 	case "auroradns":
 		return auroradns.NewDNSProvider()
+	case "bindman":
+		return bindman.NewDNSProvider()
 	case "bluecat":
 		return bluecat.NewDNSProvider()
 	case "cloudflare":
@@ -102,6 +109,8 @@ func NewDNSChallengeProviderByName(name string) (challenge.Provider, error) {
 		return dyn.NewDNSProvider()
 	case "fastdns":
 		return fastdns.NewDNSProvider()
+	case "easydns":
+		return easydns.NewDNSProvider()
 	case "exec":
 		return exec.NewDNSProvider()
 	case "exoscale":
@@ -124,6 +133,8 @@ func NewDNSChallengeProviderByName(name string) (challenge.Provider, error) {
 		return iij.NewDNSProvider()
 	case "inwx":
 		return inwx.NewDNSProvider()
+	case "joker":
+		return joker.NewDNSProvider()
 	case "lightsail":
 		return lightsail.NewDNSProvider()
 	case "linode":
@@ -138,6 +149,8 @@ func NewDNSChallengeProviderByName(name string) (challenge.Provider, error) {
 		return namecheap.NewDNSProvider()
 	case "namedotcom":
 		return namedotcom.NewDNSProvider()
+	case "namesilo":
+		return namesilo.NewDNSProvider()
 	case "netcup":
 		return netcup.NewDNSProvider()
 	case "nifcloud":
@@ -168,6 +181,8 @@ func NewDNSChallengeProviderByName(name string) (challenge.Provider, error) {
 		return transip.NewDNSProvider()
 	case "vegadns":
 		return vegadns.NewDNSProvider()
+	case "versio":
+		return versio.NewDNSProvider()
 	case "vultr":
 		return vultr.NewDNSProvider()
 	case "vscale":
@@ -175,6 +190,6 @@ func NewDNSChallengeProviderByName(name string) (challenge.Provider, error) {
 	case "zoneee":
 		return zoneee.NewDNSProvider()
 	default:
-		return nil, fmt.Errorf("unrecognised DNS provider: %s", name)
+		return nil, fmt.Errorf("unrecognized DNS provider: %s", name)
 	}
 }

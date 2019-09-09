@@ -1,4 +1,4 @@
-// Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2016, 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 // Code generated. DO NOT EDIT.
 
 package dns
@@ -31,7 +31,7 @@ type ListSteeringPoliciesRequest struct {
 	DisplayNameContains *string `mandatory:"false" contributesTo:"query" name:"displayNameContains"`
 
 	// Search by health check monitor OCID.
-	// Will match any resource whose health check monitor id matches the provided value.
+	// Will match any resource whose health check monitor ID matches the provided value.
 	HealthCheckMonitorId *string `mandatory:"false" contributesTo:"query" name:"healthCheckMonitorId"`
 
 	// An RFC 3339 (https://www.ietf.org/rfc/rfc3339.txt) timestamp that states
@@ -42,14 +42,14 @@ type ListSteeringPoliciesRequest struct {
 	// all returned resources were created before the indicated time.
 	TimeCreatedLessThan *common.SDKTime `mandatory:"false" contributesTo:"query" name:"timeCreatedLessThan"`
 
-	// Search by template type.
+	// Search by steering template type.
 	// Will match any resource whose template type matches the provided value.
 	Template *string `mandatory:"false" contributesTo:"query" name:"template"`
 
 	// The state of a resource.
 	LifecycleState SteeringPolicySummaryLifecycleStateEnum `mandatory:"false" contributesTo:"query" name:"lifecycleState" omitEmpty:"true"`
 
-	// The field by which to sort steering policies.
+	// The field by which to sort steering policies. If unspecified, defaults to `timeCreated`.
 	SortBy ListSteeringPoliciesSortByEnum `mandatory:"false" contributesTo:"query" name:"sortBy" omitEmpty:"true"`
 
 	// The order to sort the resources.
@@ -89,7 +89,7 @@ type ListSteeringPoliciesResponse struct {
 
 	// For list pagination. When this header appears in the response, additional pages
 	// of results remain. For important details about how pagination works,
-	// see List Pagination (https://docs.us-phoenix-1.oraclecloud.com/iaas/Content/API/Concepts/usingapi.htm#nine).
+	// see List Pagination (https://docs.cloud.oracle.com/iaas/Content/API/Concepts/usingapi.htm#nine).
 	OpcNextPage *string `presentIn:"header" name:"opc-next-page"`
 
 	// The total number of items that match the query.

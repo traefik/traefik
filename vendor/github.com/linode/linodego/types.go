@@ -9,7 +9,7 @@ import (
 type LinodeType struct {
 	ID         string          `json:"id"`
 	Disk       int             `json:"disk"`
-	Class      LinodeTypeClass `json:"class"` // enum: nanode, standard, highmem
+	Class      LinodeTypeClass `json:"class"` // enum: nanode, standard, highmem, dedicated
 	Price      *LinodePrice    `json:"price"`
 	Label      string          `json:"label"`
 	Addons     *LinodeAddons   `json:"addons"`
@@ -40,9 +40,10 @@ type LinodeTypeClass string
 
 // LinodeTypeClass contants are the Instance Type Classes that an Instance Type can be assigned
 const (
-	ClassNanode   LinodeTypeClass = "nanode"
-	ClassStandard LinodeTypeClass = "standard"
-	ClassHighmem  LinodeTypeClass = "highmem"
+	ClassNanode    LinodeTypeClass = "nanode"
+	ClassStandard  LinodeTypeClass = "standard"
+	ClassHighmem   LinodeTypeClass = "highmem"
+	ClassDedicated LinodeTypeClass = "dedicated"
 )
 
 // LinodeTypesPagedResponse represents a linode types API response for listing

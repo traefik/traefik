@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	serviceName string = "DomainService"
+	serviceName    string = "DomainService"
+	dnsServiceName string = "DnsService"
 )
 
 // Domain represents a Transip_Domain object
@@ -240,6 +241,98 @@ func (d DNSEntries) EncodeArgs(key string) string {
 	return fmt.Sprintf("%s</%s>", output, key)
 }
 
+// DNSSecAlgorithm represents the possible types of DNSSec algorithms
+type DNSSecAlgorithm int
+
+const (
+	// DNSSecAlgorithmDSA represents DSA
+	DNSSecAlgorithmDSA DNSSecAlgorithm = iota + 3
+	_
+	// DNSSecAlgorithmRSASHA1 represents RSASHA1
+	DNSSecAlgorithmRSASHA1
+	// DNSSecAlgorithmDSANSEC3SHA1 represents DSANSEC3SHA1
+	DNSSecAlgorithmDSANSEC3SHA1
+	// DNSSecAlgorithmRSASHA1NSEC3SHA1 represents RSASHA1NSEC3SHA1
+	DNSSecAlgorithmRSASHA1NSEC3SHA1
+	// DNSSecAlgorithmRSASHA256 represents RSASHA256
+	DNSSecAlgorithmRSASHA256
+	// DNSSecAlgorithmRSASHA512 represents RSASHA512
+	DNSSecAlgorithmRSASHA512 DNSSecAlgorithm = iota + 4
+	_
+	// DNSSecAlgorithmECCGOST represents ECCGOST
+	DNSSecAlgorithmECCGOST
+	// DNSSecAlgorithmECDSAP256SHA256 represents ECDSAP256SHA256
+	DNSSecAlgorithmECDSAP256SHA256
+	// DNSSecAlgorithmECDSAP384SHA384 represents ECDSAP384SHA384
+	DNSSecAlgorithmECDSAP384SHA384
+	// DNSSecAlgorithmED25519 represents ED25519
+	DNSSecAlgorithmED25519
+	// DNSSecAlgorithmED448 represents ED448
+	DNSSecAlgorithmED448
+)
+
+// DNSSecFlag represents the possible types of DNSSec flags
+type DNSSecFlag int
+
+const (
+	// DNSSecFlagNone means no flag is set
+	DNSSecFlagNone DNSSecFlag = 0
+	// DNSSecFlagZSK means this is a Zone Signing Key
+	DNSSecFlagZSK DNSSecFlag = 256
+	// DNSSecFlagKSK means this is a Key Signing Key
+	DNSSecFlagKSK DNSSecFlag = 257
+)
+
+// DNSSecEntry represents a Transip_DnsSecEntry object as described at
+// https://api.transip.nl/docs/transip.nl/class-Transip_DnsSecEntry.html
+type DNSSecEntry struct {
+	KeyTag    int             `xml:"keyTag"`
+	Flags     DNSSecFlag      `xml:"flags"`
+	Algorithm DNSSecAlgorithm `xml:"algorithm"`
+	PublicKey string          `xml:"publicKey"`
+}
+
+// DNSSecEntries is just an array of DNSSecEntry
+// basically only here so it can implement paramsEncoder
+type DNSSecEntries []DNSSecEntry
+
+// EncodeParams returns DNSSecEntries parameters ready to be used for constructing
+// a signature
+// the order of parameters added here has to match the order in the WSDL as
+// described at http://api.transip.nl/wsdl/?service=DnsService
+func (d DNSSecEntries) EncodeParams(prm gotransip.ParamsContainer, prefix string) {
+	if len(d) == 0 {
+		prm.Add("anything", nil)
+		return
+	}
+
+	if len(prefix) == 0 {
+		prefix = fmt.Sprintf("%d", prm.Len())
+	}
+
+	for i, e := range d {
+		prm.Add(fmt.Sprintf("%s[%d][keyTag]", prefix, i), fmt.Sprintf("%d", e.KeyTag))
+		prm.Add(fmt.Sprintf("%s[%d][flags]", prefix, i), fmt.Sprintf("%d", e.Flags))
+		prm.Add(fmt.Sprintf("%s[%d][algorithm]", prefix, i), fmt.Sprintf("%d", e.Algorithm))
+		prm.Add(fmt.Sprintf("%s[%d][publicKey]", prefix, i), e.PublicKey)
+	}
+}
+
+// EncodeArgs returns Entries XML body ready to be passed in the SOAP call
+func (d DNSSecEntries) EncodeArgs(key string) string {
+	output := fmt.Sprintf(`<%s SOAP-ENC:arrayType="ns1:DnsSecEntry[%d]" xsi:type="ns1:ArrayOfDnsSecEntry">`, key, len(d)) + "\n"
+	for _, e := range d {
+		output += fmt.Sprintf(`	<item xsi:type="ns1:DnsSecEntry">
+		<keyTag xsi:type="xsd:int">%d</keyTag>
+		<flags xsi:type="xsd:int">%d</flags>
+		<algorithm xsi:type="xsd:int">%d</algorithm>
+		<publicKey xsi:type="xsd:string">%s</publicKey>
+	</item>`, e.KeyTag, e.Flags, e.Algorithm, e.PublicKey) + "\n"
+	}
+
+	return fmt.Sprintf("%s</%s>", output, key)
+}
+
 // Status reflects the current status of a domain in a check result
 type Status string
 
@@ -298,14 +391,14 @@ func (b Branding) EncodeParams(prm gotransip.ParamsContainer, prefix string) {
 // EncodeArgs returns Branding XML body ready to be passed in the SOAP call
 func (b Branding) EncodeArgs(key string) string {
 	return fmt.Sprintf(`<branding xsi:type="ns1:DomainBranding">
-		<companyName xsi:type="xsd:string">%s</companyName>
-		<supportEmail xsi:type="xsd:string">%s</supportEmail>
-		<companyUrl xsi:type="xsd:string">%s</companyUrl>
-		<termsOfUsageUrl xsi:type="xsd:string">%s</termsOfUsageUrl>
-		<bannerLine1 xsi:type="xsd:string">%s</bannerLine1>
-		<bannerLine2 xsi:type="xsd:string">%s</bannerLine2>
-		<bannerLine3 xsi:type="xsd:string">%s</bannerLine3>
-	</branding>`, b.CompanyName, b.SupportEmail, b.CompanyURL, b.TermsOfUsageURL, b.BannerLine1, b.BannerLine2, b.BannerLine3)
+    <companyName xsi:type="xsd:string">%s</companyName>
+    <supportEmail xsi:type="xsd:string">%s</supportEmail>
+    <companyUrl xsi:type="xsd:string">%s</companyUrl>
+    <termsOfUsageUrl xsi:type="xsd:string">%s</termsOfUsageUrl>
+    <bannerLine1 xsi:type="xsd:string">%s</bannerLine1>
+    <bannerLine2 xsi:type="xsd:string">%s</bannerLine2>
+    <bannerLine3 xsi:type="xsd:string">%s</bannerLine3>
+</branding>`, b.CompanyName, b.SupportEmail, b.CompanyURL, b.TermsOfUsageURL, b.BannerLine1, b.BannerLine2, b.BannerLine3)
 }
 
 // Action reflects the available actions to perform on a domain

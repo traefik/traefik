@@ -35,7 +35,7 @@
 
 For more customization, see [entry points](/configuration/entrypoints/) documentation and the examples below.
 
-## Web UI
+## Dashboard (Web UI)
 
 ![Web UI Providers](/img/web.frontend.png)
 
@@ -322,9 +322,12 @@ curl -s "http://localhost:8080/health" | jq .
 }
 ```
 
-## Metrics
+## Dashboard Statistics
 
-You can enable Traefik to export internal metrics to different monitoring systems.
+You can control how the Traefik's internal metrics are shown in the Dashboard.
+
+If you want to export internal metrics to different monitoring systems,
+please check the page [Metrics](./metrics.md).
 
 ```toml
 [api]

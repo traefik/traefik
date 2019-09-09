@@ -6,6 +6,17 @@ import (
 	"net"
 )
 
+// Healthcheck represents an Healthcheck attached to an IP
+type Healthcheck struct {
+	Interval    int64  `json:"interval,omitempty" doc:"healthcheck definition: time in seconds to wait for each check. Default: 10, minimum: 5"`
+	Mode        string `json:"mode,omitempty" doc:"healthcheck definition: healthcheck mode can be either 'tcp' or 'http'"`
+	Path        string `json:"path,omitempty" doc:"healthcheck definition: the path against which the 'http' healthcheck will be performed. Required if mode is 'http', ignored otherwise."`
+	Port        int64  `json:"port,omitempty" doc:"healthcheck definition: the port against which the healthcheck will be performed. Required if a 'mode' is provided."`
+	StrikesFail int64  `json:"strikes-fail,omitempty" doc:"healthcheck definition: number of times to retry before declaring the healthcheck 'dead'. Default: 3"`
+	StrikesOk   int64  `json:"strikes-ok,omitempty" doc:"healthcheck definition: number of times to retry before declaring the healthcheck 'alive'. Default: 2"`
+	Timeout     int64  `json:"timeout,omitempty" doc:"healthcheck definition: time in seconds to wait for each check. Default: 2, cannot be greater than interval."`
+}
+
 // IPAddress represents an IP Address
 type IPAddress struct {
 	Allocated                 string        `json:"allocated,omitempty" doc:"date the public IP address was acquired"`
@@ -13,6 +24,7 @@ type IPAddress struct {
 	AssociatedNetworkID       *UUID         `json:"associatednetworkid,omitempty" doc:"the ID of the Network associated with the IP address"`
 	AssociatedNetworkName     string        `json:"associatednetworkname,omitempty" doc:"the name of the Network associated with the IP address"`
 	ForVirtualNetwork         bool          `json:"forvirtualnetwork,omitempty" doc:"the virtual network for the IP address"`
+	Healthcheck               *Healthcheck  `json:"healthcheck,omitempty" doc:"The IP healthcheck configuration"`
 	ID                        *UUID         `json:"id,omitempty" doc:"public IP address id"`
 	IPAddress                 net.IP        `json:"ipaddress,omitempty" doc:"public IP address"`
 	IsElastic                 bool          `json:"iselastic,omitempty" doc:"is an elastic ip"`
@@ -77,10 +89,15 @@ func (ipaddress IPAddress) Delete(ctx context.Context, client *Client) error {
 
 // AssociateIPAddress (Async) represents the IP creation
 type AssociateIPAddress struct {
-	IsPortable *bool `json:"isportable,omitempty" doc:"should be set to true if public IP is required to be transferable across zones, if not specified defaults to false"`
-	NetworkdID *UUID `json:"networkid,omitempty" doc:"The network this ip address should be associated to."`
-	ZoneID     *UUID `json:"zoneid,omitempty" doc:"the ID of the availability zone you want to acquire an public IP address from"`
-	_          bool  `name:"associateIpAddress" description:"Acquires and associates a public IP to an account."`
+	HealthcheckInterval    int64  `json:"interval,omitempty" doc:"healthcheck definition: time in seconds to wait for each check. Default: 10, minimum: 5"`
+	HealthcheckMode        string `json:"mode,omitempty" doc:"healthcheck definition: healthcheck mode can be either 'tcp' or 'http'"`
+	HealthcheckPath        string `json:"path,omitempty" doc:"healthcheck definition: the path against which the 'http' healthcheck will be performed. Required if mode is 'http', ignored otherwise."`
+	HealthcheckPort        int64  `json:"port,omitempty" doc:"healthcheck definition: the port against which the healthcheck will be performed. Required if a 'mode' is provided."`
+	HealthcheckStrikesFail int64  `json:"strikes-fail,omitempty" doc:"healthcheck definition: number of times to retry before declaring the healthcheck 'dead'. Default: 3"`
+	HealthcheckStrikesOk   int64  `json:"strikes-ok,omitempty" doc:"healthcheck definition: number of times to retry before declaring the healthcheck 'alive'. Default: 2"`
+	HealthcheckTimeout     int64  `json:"timeout,omitempty" doc:"healthcheck definition: time in seconds to wait for each check. Default: 2, cannot be greater than interval."`
+	ZoneID                 *UUID  `json:"zoneid,omitempty" doc:"the ID of the availability zone you want to acquire a public IP address from"`
+	_                      bool   `name:"associateIpAddress" description:"Acquires and associates a public IP to an account."`
 }
 
 // Response returns the struct to unmarshal
@@ -111,9 +128,15 @@ func (DisassociateIPAddress) AsyncResponse() interface{} {
 
 // UpdateIPAddress (Async) represents the IP modification
 type UpdateIPAddress struct {
-	ID       *UUID `json:"id" doc:"the id of the public ip address to update"`
-	CustomID *UUID `json:"customid,omitempty" doc:"an optional field, in case you want to set a custom id to the resource. Allowed to Root Admins only"`
-	_        bool  `name:"updateIpAddress" description:"Updates an ip address"`
+	HealthcheckInterval    int64  `json:"interval,omitempty" doc:"healthcheck definition: time in seconds to wait for each check. Default: 10, minimum: 5"`
+	HealthcheckMode        string `json:"mode,omitempty" doc:"healthcheck definition: healthcheck mode can be either 'tcp' or 'http'"`
+	HealthcheckPath        string `json:"path,omitempty" doc:"healthcheck definition: the path against which the 'http' healthcheck will be performed. Required if mode is 'http', ignored otherwise."`
+	HealthcheckPort        int64  `json:"port,omitempty" doc:"healthcheck definition: the port against which the healthcheck will be performed. Required if a 'mode' is provided."`
+	HealthcheckStrikesFail int64  `json:"strikes-fail,omitempty" doc:"healthcheck definition: number of times to retry before declaring the healthcheck 'dead'. Default: 3"`
+	HealthcheckStrikesOk   int64  `json:"strikes-ok,omitempty" doc:"healthcheck definition: number of times to retry before declaring the healthcheck 'alive'. Default: 2"`
+	HealthcheckTimeout     int64  `json:"timeout,omitempty" doc:"healthcheck definition: time in seconds to wait for each check. Default: 2, cannot be greater than interval."`
+	ID                     *UUID  `json:"id" doc:"the id of the public IP address to update"`
+	_                      bool   `name:"updateIpAddress" description:"Updates an IP address"`
 }
 
 // Response returns the struct to unmarshal

@@ -85,6 +85,8 @@ func (h *hijackConnectionTracker) Shutdown(ctx context.Context) error {
 
 // Close close all the connections in the tracked connections list
 func (h *hijackConnectionTracker) Close() {
+	h.lock.Lock()
+	defer h.lock.Unlock()
 	for conn := range h.conns {
 		if err := conn.Close(); err != nil {
 			log.Errorf("Error while closing Hijacked conn: %v", err)

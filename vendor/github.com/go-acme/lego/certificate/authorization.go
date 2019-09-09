@@ -62,8 +62,8 @@ func (c *Certifier) getAuthorizations(order acme.ExtendedOrder) ([]acme.Authoriz
 
 func (c *Certifier) deactivateAuthorizations(order acme.ExtendedOrder) {
 	for _, auth := range order.Authorizations {
-		if err := c.core.Authorizations.Deactivate(auth); err != nil {
-			log.Infof("Unable to deactivated authorizations: %s", auth)
+		if c.core.Authorizations.Deactivate(auth) != nil {
+			log.Infof("Unable to deactivate the authorization: %s", auth)
 		}
 	}
 }

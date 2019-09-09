@@ -39,7 +39,7 @@ logLevel = "INFO"
 
 For more information about the CLI, see the documentation about [Traefik command](/basics/#traefik).
 
-```shell
+```bash
 --logLevel="DEBUG"
 --traefikLog.filePath="/path/to/traefik.log"
 --traefikLog.format="json"
@@ -54,7 +54,6 @@ For more information about the CLI, see the documentation about [Traefik command
 --accessLog.fields.headers.names="User-Agent=redact Authorization=drop Content-Type=keep"
 ```
 
-
 ## Traefik Logs
 
 By default the Traefik log is written to stdout in text format.
@@ -66,14 +65,13 @@ To write the logs into a log file specify the `filePath`:
   filePath = "/path/to/traefik.log"
 ```
 
-To write JSON format logs, specify `json` as the format:
+To switch to JSON format instead of standard format (`common`), specify `json` as the format:
 
 ```toml
 [traefikLog]
   filePath = "/path/to/traefik.log"
   format   = "json"
 ```
-
 
 Deprecated way (before 1.4):
 
@@ -105,11 +103,10 @@ To customize the log level:
 logLevel = "ERROR"
 ```
 
-
 ## Access Logs
 
 Access logs are written when `[accessLog]` is defined.
-By default it will write to stdout and produce logs in the textual Common Log Format (CLF), extended with additional fields.
+By default it will write to stdout and produce logs in the textual [Common Log Format (CLF)](#clf-common-log-format), extended with additional fields.
 
 To enable access logs using the default settings just add the `[accessLog]` entry:
 
@@ -124,12 +121,12 @@ To write the logs into a log file specify the `filePath`:
 filePath = "/path/to/access.log"
 ```
 
-To write JSON format logs, specify `json` as the format:
+To switch to JSON format instead of [Common Log Format (CLF)](#clf-common-log-format), specify `json` as the format:
 
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
-format = "json"
+format = "json"  # Default: "common"
 ```
 
 To write the logs in async, specify `bufferingSize` as the format (must be >0):
@@ -152,7 +149,7 @@ To filter logs you can specify a set of filters which are logically "OR-connecte
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
-format = "json"
+format = "json"  # Default: "common"
 
   [accessLog.filters]
 
@@ -178,12 +175,12 @@ format = "json"
   minDuration = "10ms"
 ```
 
-To customize logs format:
+To customize logs format, you must switch to the JSON format:
 
 ```toml
 [accessLog]
 filePath = "/path/to/access.log"
-format = "json"
+format = "json" # Default: "common"
 
   [accessLog.filters]
 
@@ -227,41 +224,40 @@ format = "json"
       # ...
 ```
 
-
 ### List of all available fields
 
-```ini
-StartUTC
-StartLocal
-Duration
-FrontendName
-BackendName
-BackendURL
-BackendAddr
-ClientAddr
-ClientHost
-ClientPort
-ClientUsername
-RequestAddr
-RequestHost
-RequestPort
-RequestMethod
-RequestPath
-RequestProtocol
-RequestLine
-RequestContentSize
-OriginDuration
-OriginContentSize
-OriginStatus
-OriginStatusLine
-DownstreamStatus
-DownstreamStatusLine
-DownstreamContentSize
-RequestCount
-GzipRatio
-Overhead
-RetryAttempts
-```
+| Field                   | Description                                                                                                                                                         |
+|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `StartUTC`              | The time at which request processing started.                                                                                                                       |
+| `StartLocal`            | The local time at which request processing started.                                                                                                                 |
+| `Duration`              | The total time taken by processing the response, including the origin server's time but not the log writing time.                                                   |
+| `FrontendName`          | The name of the Traefik frontend.                                                                                                                                   |
+| `BackendName`           | The name of the Traefik backend.                                                                                                                                    |
+| `BackendURL`            | The URL of the Traefik backend.                                                                                                                                     |
+| `BackendAddr`           | The IP:port of the Traefik backend (extracted from `BackendURL`)                                                                                                    |
+| `ClientAddr`            | The remote address in its original form (usually IP:port).                                                                                                          |
+| `ClientHost`            | The remote IP address from which the client request was received.                                                                                                   |
+| `ClientPort`            | The remote TCP port from which the client request was received.                                                                                                     |
+| `ClientUsername`        | The username provided in the URL, if present.                                                                                                                       |
+| `RequestAddr`           | The HTTP Host header (usually IP:port). This is treated as not a header by the Go API.                                                                              |
+| `RequestHost`           | The HTTP Host server name (not including port).                                                                                                                     |
+| `RequestPort`           | The TCP port from the HTTP Host.                                                                                                                                    |
+| `RequestMethod`         | The HTTP method.                                                                                                                                                    |
+| `RequestPath`           | The HTTP request URI, not including the scheme, host or port.                                                                                                       |
+| `RequestProtocol`       | The version of HTTP requested.                                                                                                                                      |
+| `RequestLine`           | `RequestMethod` + `RequestPath` + `RequestProtocol`                                                                                                                 |
+| `RequestContentSize`    | The number of bytes in the request entity (a.k.a. body) sent by the client.                                                                                         |
+| `OriginDuration`        | The time taken by the origin server ('upstream') to return its response.                                                                                            |
+| `OriginContentSize`     | The content length specified by the origin server, or 0 if unspecified.                                                                                             |
+| `OriginStatus`          | The HTTP status code returned by the origin server. If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent.     |
+| `OriginStatusLine`      | `OriginStatus` + Status code explanation                                                                                                                            |
+| `DownstreamStatus`      | The HTTP status code returned to the client.                                                                                                                        |
+| `DownstreamStatusLine`  | `DownstreamStatus` + Status code explanation                                                                                                                        |
+| `DownstreamContentSize` | The number of bytes in the response entity returned to the client. This is in addition to the "Content-Length" header, which may be present in the origin response. |
+| `RequestCount`          | The number of requests received since the Traefik instance started.                                                                                                 |
+| `GzipRatio`             | The response body compression ratio achieved.                                                                                                                       |
+| `Overhead`              | The processing time overhead caused by Traefik.                                                                                                                     |
+| `RetryAttempts`         | The amount of attempts the request was retried.                                                                                                                     |
 
 Deprecated way (before 1.4):
 
@@ -281,9 +277,8 @@ accessLogsFile = "log/access.log"
 By default, Traefik use the CLF (`common`) as access log format.
 
 ```html
-<remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms 
+<remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms
 ```
-
 
 ## Log Rotation
 
@@ -292,3 +287,34 @@ This allows the logs to be rotated and processed by an external program, such as
 
 !!! note
     This does not work on Windows due to the lack of USR signals.
+
+## Time Zones
+
+The timestamp of each log line is in UTC time by default.
+
+If you want to use local timezone, you need to ensure the 3 following elements:
+
+1. Provide the timezone data into /usr/share/zoneinfo
+2. Set the environement variable TZ to the timezone to be used
+3. Specify the field StartLocal instead of StartUTC (works on default Common Log Format (CLF) as well as JSON)
+
+Example using docker-compose:
+
+```yml
+version: '3'
+
+services:
+  traefik:
+    image: containous/traefik:[latest stable version]
+    ports:
+      - "80:80"
+    environment:
+      - "TZ=US/Alaska"
+    command:
+      - --docker
+      - --accesslog
+      - --accesslog.fields.names="StartUTC=drop"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/usr/share/zoneinfo:/usr/share/zoneinfo:ro"
+```

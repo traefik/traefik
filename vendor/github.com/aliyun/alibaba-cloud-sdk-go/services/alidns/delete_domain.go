@@ -76,9 +76,9 @@ func (client *Client) DeleteDomainWithCallback(request *DeleteDomainRequest, cal
 // DeleteDomainRequest is the request struct for api DeleteDomain
 type DeleteDomainRequest struct {
 	*requests.RpcRequest
-	Lang         string `position:"Query" name:"Lang"`
 	UserClientIp string `position:"Query" name:"UserClientIp"`
 	DomainName   string `position:"Query" name:"DomainName"`
+	Lang         string `position:"Query" name:"Lang"`
 }
 
 // DeleteDomainResponse is the response struct for api DeleteDomain
@@ -93,7 +93,7 @@ func CreateDeleteDomainRequest() (request *DeleteDomainRequest) {
 	request = &DeleteDomainRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Alidns", "2015-01-09", "DeleteDomain", "", "")
+	request.InitWithApiInfo("Alidns", "2015-01-09", "DeleteDomain", "Alidns", "openAPI")
 	return
 }
 

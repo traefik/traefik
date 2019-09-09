@@ -345,7 +345,7 @@ func (client *Client) request(ctx context.Context, command Command) (json.RawMes
 		return nil, err
 	}
 	request = request.WithContext(ctx)
-	request.Header.Add("User-Agent", fmt.Sprintf("exoscale/egoscale (%v)", Version))
+	request.Header.Add("User-Agent", UserAgent)
 
 	if method == "POST" {
 		request.Header.Add("Content-Type", "application/x-www-form-urlencoded")

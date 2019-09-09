@@ -87,7 +87,7 @@ func (p *Provider) safeGetConfiguration(defaultTemplate string, funcMap template
 	defer func() {
 		e := recover()
 		if e != nil {
-			err = fmt.Errorf("%v", e)
+			err = fmt.Errorf("error while getting the configuration: %v", e)
 		}
 	}()
 
@@ -576,9 +576,9 @@ func (p *Provider) listServers(backend string) []string {
 func (p *Provider) serverFilter(serverName string) bool {
 	key := fmt.Sprint(serverName, pathBackendServerURL)
 	if _, err := p.kvClient.Get(key, nil); err != nil {
+		log.Errorf("Failed to retrieve value for key %s: %s", key, err)
 		checkError(err)
 
-		log.Errorf("failed to retrieve value for key %s: %s", key, err)
 		return false
 	}
 	return p.checkConstraints(serverName, pathTags)
@@ -639,15 +639,11 @@ func (p *Provider) get(defaultValue string, keyParts ...string) string {
 	}
 
 	keyPair, err := p.kvClient.Get(key, nil)
-	if err != nil {
+	if err != nil || keyPair == nil {
+		log.Debugf("Cannot get key %s %s", key, err)
 		checkError(err)
 
-		log.Debugf("Cannot get key %s %s, setting default %s", key, err, defaultValue)
-		return defaultValue
-	}
-
-	if keyPair == nil {
-		log.Debugf("Cannot get key %s, setting default %s", key, defaultValue)
+		log.Debugf("Setting %s to default: %s", key, defaultValue)
 		return defaultValue
 	}
 
@@ -682,9 +678,9 @@ func (p *Provider) hasPrefix(keyParts ...string) bool {
 
 	listKeys, err := p.kvClient.List(baseKey, nil)
 	if err != nil {
+		log.Debugf("Cannot list keys under %q: %v", baseKey, err)
 		checkError(err)
 
-		log.Debugf("Cannot list keys under %q: %v", baseKey, err)
 		return false
 	}
 
@@ -726,9 +722,9 @@ func (p *Provider) list(keyParts ...string) []string {
 
 	keysPairs, err := p.kvClient.List(rootKey, nil)
 	if err != nil {
+		log.Debugf("Cannot list keys under %q: %v", rootKey, err)
 		checkError(err)
 
-		log.Debugf("Cannot list keys under %q: %v", rootKey, err)
 		return nil
 	}
 
@@ -801,7 +797,7 @@ func (p *Provider) getMap(keyParts ...string) map[string]string {
 }
 
 func checkError(err error) {
-	if err != store.ErrKeyNotFound {
+	if err != nil && err != store.ErrKeyNotFound {
 		panic(err)
 	}
 }

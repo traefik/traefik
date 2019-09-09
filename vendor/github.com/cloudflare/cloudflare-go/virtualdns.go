@@ -2,6 +2,9 @@ package cloudflare
 
 import (
 	"encoding/json"
+	"net/url"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -18,6 +21,32 @@ type VirtualDNS struct {
 	ModifiedOn           string   `json:"modified_on"`
 }
 
+// VirtualDNSAnalyticsMetrics respresents a group of aggregated Virtual DNS metrics.
+type VirtualDNSAnalyticsMetrics struct {
+	QueryCount         *int64   `json:"queryCount"`
+	UncachedCount      *int64   `json:"uncachedCount"`
+	StaleCount         *int64   `json:"staleCount"`
+	ResponseTimeAvg    *float64 `json:"responseTimeAvg"`
+	ResponseTimeMedian *float64 `json:"responseTimeMedian"`
+	ResponseTime90th   *float64 `json:"responseTime90th"`
+	ResponseTime99th   *float64 `json:"responseTime99th"`
+}
+
+// VirtualDNSAnalytics represents a set of aggregated Virtual DNS metrics.
+// TODO: Add the queried data and not only the aggregated values.
+type VirtualDNSAnalytics struct {
+	Totals VirtualDNSAnalyticsMetrics `json:"totals"`
+	Min    VirtualDNSAnalyticsMetrics `json:"min"`
+	Max    VirtualDNSAnalyticsMetrics `json:"max"`
+}
+
+// VirtualDNSUserAnalyticsOptions represents range and dimension selection on analytics endpoint
+type VirtualDNSUserAnalyticsOptions struct {
+	Metrics []string
+	Since   *time.Time
+	Until   *time.Time
+}
+
 // VirtualDNSResponse represents a Virtual DNS response.
 type VirtualDNSResponse struct {
 	Response
@@ -28,6 +57,12 @@ type VirtualDNSResponse struct {
 type VirtualDNSListResponse struct {
 	Response
 	Result []*VirtualDNS `json:"result"`
+}
+
+// VirtualDNSAnalyticsResponse represents a Virtual DNS analytics response.
+type VirtualDNSAnalyticsResponse struct {
+	Response
+	Result VirtualDNSAnalytics `json:"result"`
 }
 
 // CreateVirtualDNS creates a new Virtual DNS cluster.
@@ -122,4 +157,36 @@ func (api *API) DeleteVirtualDNS(virtualDNSID string) error {
 	}
 
 	return nil
+}
+
+// encode encodes non-nil fields into URL encoded form.
+func (o VirtualDNSUserAnalyticsOptions) encode() string {
+	v := url.Values{}
+	if o.Since != nil {
+		v.Set("since", (*o.Since).UTC().Format(time.RFC3339))
+	}
+	if o.Until != nil {
+		v.Set("until", (*o.Until).UTC().Format(time.RFC3339))
+	}
+	if o.Metrics != nil {
+		v.Set("metrics", strings.Join(o.Metrics, ","))
+	}
+	return v.Encode()
+}
+
+// VirtualDNSUserAnalytics retrieves analytics report for a specified dimension and time range
+func (api *API) VirtualDNSUserAnalytics(virtualDNSID string, o VirtualDNSUserAnalyticsOptions) (VirtualDNSAnalytics, error) {
+	uri := "/user/virtual_dns/" + virtualDNSID + "/dns_analytics/report?" + o.encode()
+	res, err := api.makeRequest("GET", uri, nil)
+	if err != nil {
+		return VirtualDNSAnalytics{}, errors.Wrap(err, errMakeRequestError)
+	}
+
+	response := VirtualDNSAnalyticsResponse{}
+	err = json.Unmarshal(res, &response)
+	if err != nil {
+		return VirtualDNSAnalytics{}, errors.Wrap(err, errUnmarshalError)
+	}
+
+	return response.Result, nil
 }

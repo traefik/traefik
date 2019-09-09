@@ -1,10 +1,10 @@
-// Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2016, 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 // Code generated. DO NOT EDIT.
 
 // DNS API
 //
 // API for the DNS service. Use this API to manage DNS zones, records, and other DNS resources.
-// For more information, see Overview of the DNS Service (https://docs.us-phoenix-1.oraclecloud.com/iaas/Content/DNS/Concepts/dnszonemanagement.htm).
+// For more information, see Overview of the DNS Service (https://docs.cloud.oracle.com/iaas/Content/DNS/Concepts/dnszonemanagement.htm).
 //
 
 package dns
@@ -16,79 +16,79 @@ import (
 
 // UpdateSteeringPolicyDetails The body for updating a steering policy. New rules and answers provided in the request will
 // replace the existing rules and answers in the policy.
-// *Warning:* Oracle recommends that you avoid using any confidential information when you supply string values using the API.
+//
+// **Warning:** Oracle recommends that you avoid using any confidential information when you supply string values using the API.
 type UpdateSteeringPolicyDetails struct {
 
-	// A user-friendly name for the steering policy.
-	// Does not have to be unique, and it's changeable.
+	// A user-friendly name for the steering policy. Does not have to be unique and can be changed.
 	// Avoid entering confidential information.
 	DisplayName *string `mandatory:"false" json:"displayName"`
 
-	// The Time To Live for responses from the steering policy, in seconds.
+	// The Time To Live (TTL) for responses from the steering policy, in seconds.
 	// If not specified during creation, a value of 30 seconds will be used.
 	Ttl *int `mandatory:"false" json:"ttl"`
 
 	// The OCID of the health check monitor providing health data about the answers of the
-	// steering policy.
-	// A steering policy answer with `rdata` matching a monitored endpoint will use the health
-	// data of that endpoint.
-	// A steering policy answer with `rdata` not matching any monitored endpoint will be assumed
-	// healthy.
+	// steering policy. A steering policy answer with `rdata` matching a monitored endpoint
+	// will use the health data of that endpoint. A steering policy answer with `rdata` not
+	// matching any monitored endpoint will be assumed healthy.
+	//
+	// **Note:** To use the Health Check monitoring feature in a steering policy, a monitor
+	// must be created using the Health Checks service first. For more information on how to
+	// create a monitor, please see Managing Health Checks (https://docs.cloud.oracle.com/iaas/Content/HealthChecks/Tasks/managinghealthchecks.htm).
 	HealthCheckMonitorId *string `mandatory:"false" json:"healthCheckMonitorId"`
 
-	// The common pattern (or lack thereof) to which the steering policy adheres. This
-	// value restricts the possible configurations of rules, but thereby supports
-	// specifically tailored interfaces. Values other than "CUSTOM" require the rules to
-	// begin with an unconditional FILTER that keeps answers contingent upon
-	// `answer.isDisabled != true`, followed
-	// _if and only if the policy references a health check monitor_ by an unconditional
-	// HEALTH rule, and require the last rule to be an unconditional LIMIT.
-	// What must precede the LIMIT rule is determined by the template value:
-	// - FAILOVER requires exactly an unconditional PRIORITY rule that ranks answers by pool.
-	//   Each answer pool must have a unique priority value assigned to it. Answer data must
-	//   be defined in the `defaultAnswerData` property for the rule and the `cases` property
-	//   must not be defined.
-	// - LOAD_BALANCE requires exactly an unconditional WEIGHTED rule that shuffles answers
-	//   by name. Answer data must be defined in the `defaultAnswerData` property for the
-	//   rule and the `cases` property must not be defined.
-	// - ROUTE_BY_GEO requires exactly one PRIORITY rule that ranks answers by pool using the
-	//   geographical location of the client as a condition. Within that rule you may only
-	//   use `query.client.geoKey` in the `caseCondition` expressions for defining the cases.
-	//   For each case in the PRIORITY rule each answer pool must have a unique priority
-	//   value assigned to it. Answer data can only be defined within cases and
-	//   `defaultAnswerData` cannot be used in the PRIORITY rule.
-	// - ROUTE_BY_ASN requires exactly one PRIORITY rule that ranks answers by pool using the
-	//   ASN of the client as a condition. Within that rule you may only use
-	//   `query.client.asn` in the `caseCondition` expressions for defining the cases.
-	//   For each case in the PRIORITY rule each answer pool must have a unique priority
-	//   value assigned to it. Answer data can only be defined within cases and
-	//   `defaultAnswerData` cannot be used in the PRIORITY rule.
-	// - ROUTE_BY_IP requires exactly one PRIORITY rule that ranks answers by pool using the
-	//   IP subnet of the client as a condition. Within that rule you may only use
-	//   `query.client.address` in the `caseCondition` expressions for defining the cases.
-	//   For each case in the PRIORITY rule each answer pool must have a unique priority
-	//   value assigned to it. Answer data can only be defined within cases and
-	//   `defaultAnswerData` cannot be used in the PRIORITY rule.
-	// - CUSTOM allows an arbitrary configuration of rules.
-	// For an existing steering policy, the template value may be changed to any of the
-	// supported options but the resulting policy must conform to the requirements for the
-	// new template type or else a Bad Request error will be returned.
+	// A set of predefined rules based on the desired purpose of the steering policy. Each
+	// template utilizes Traffic Management's rules in a different order to produce the desired
+	// results when answering DNS queries.
+	//
+	// **Example:** The `FAILOVER` template determines answers by filtering the policy's answers
+	// using the `FILTER` rule first, then the following rules in succession: `HEALTH`, `PRIORITY`,
+	// and `LIMIT`. This gives the domain dynamic failover capability.
+	//
+	// It is **strongly recommended** to use a template other than `CUSTOM` when creating
+	// a steering policy.
+	//
+	// All templates require the rule order to begin with an unconditional `FILTER` rule that keeps
+	// answers contingent upon `answer.isDisabled != true`, except for `CUSTOM`. A defined
+	// `HEALTH` rule must follow the `FILTER` rule if the policy references a `healthCheckMonitorId`.
+	// The last rule of a template must must be a `LIMIT` rule. For more information about templates
+	// and code examples, see Traffic Management API Guide (https://docs.cloud.oracle.com/iaas/Content/TrafficManagement/Concepts/trafficmanagementapi.htm).
+	// **Template Types**
+	// * `FAILOVER` - Uses health check information on your endpoints to determine which DNS answers
+	// to serve. If an endpoint fails a health check, the answer for that endpoint will be removed
+	// from the list of available answers until the endpoint is detected as healthy.
+	//
+	// * `LOAD_BALANCE` - Distributes web traffic to specified endpoints based on defined weights.
+	//
+	// * `ROUTE_BY_GEO` - Answers DNS queries based on the query's geographic location. For a list of geographic
+	// locations to route by, see Traffic Management Geographic Locations (https://docs.cloud.oracle.com/iaas/Content/TrafficManagement/Reference/trafficmanagementgeo.htm).
+	//
+	// * `ROUTE_BY_ASN` - Answers DNS queries based on the query's originating ASN.
+	//
+	// * `ROUTE_BY_IP` - Answers DNS queries based on the query's IP address.
+	//
+	// * `CUSTOM` - Allows a customized configuration of rules.
 	Template UpdateSteeringPolicyDetailsTemplateEnum `mandatory:"false" json:"template,omitempty"`
 
-	// Simple key-value pair that is applied without any predefined name, type, or scope.
-	// For more information, see Resource Tags (https://docs.us-phoenix-1.oraclecloud.com/Content/General/Concepts/resourcetags.htm).
-	// Example: `{"bar-key": "value"}`
+	// Free-form tags for this resource. Each tag is a simple key-value pair with no predefined name, type, or namespace.
+	// For more information, see Resource Tags (https://docs.cloud.oracle.com/Content/General/Concepts/resourcetags.htm).
+	//
+	// **Example:** `{"Department": "Finance"}`
 	FreeformTags map[string]string `mandatory:"false" json:"freeformTags"`
 
-	// Usage of predefined tag keys. These predefined keys are scoped to a namespace.
-	// Example: `{"foo-namespace": {"bar-key": "value"}}`
+	// Defined tags for this resource. Each key is predefined and scoped to a namespace.
+	// For more information, see Resource Tags (https://docs.cloud.oracle.com/Content/General/Concepts/resourcetags.htm).
+	//
+	// **Example:** `{"Operations": {"CostCenter": "42"}}`
 	DefinedTags map[string]map[string]interface{} `mandatory:"false" json:"definedTags"`
 
 	// The set of all answers that can potentially issue from the steering policy.
 	Answers []SteeringPolicyAnswer `mandatory:"false" json:"answers"`
 
-	// The pipeline of rules that will be processed in sequence to reduce the pool of answers
+	// The series of rules that will be processed in sequence to reduce the pool of answers
 	// to a response for any given request.
+	//
 	// The first rule receives a shuffled list of all answers, and every other rule receives
 	// the list of answers emitted by the one preceding it. The last rule populates the
 	// response.

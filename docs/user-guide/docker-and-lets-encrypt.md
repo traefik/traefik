@@ -50,7 +50,7 @@ version: '2'
 
 services:
   traefik:
-    image: traefik:1.5.4
+    image: traefik:<stable version from https://hub.docker.com/_/traefik>
     restart: always
     ports:
       - 80:80
@@ -106,6 +106,28 @@ entryPoint = "https"
 onHostRule = true
 [acme.httpChallenge]
 entryPoint = "http"
+```
+
+Alternatively, the `TOML` file above can also be translated into command line switches. 
+This is the `command` value of the `traefik` service in the `docker-compose.yml` manifest:
+
+```yaml
+command:
+  - --debug=false
+  - --logLevel=ERROR
+  - --defaultentrypoints=https,http
+  - --entryPoints=Name:http Address::80 Redirect.EntryPoint:https
+  - --entryPoints=Name:https Address::443 TLS
+  - --retry
+  - --docker.endpoint=unix:///var/run/docker.sock
+  - --docker.domain=my-awesome-app.org
+  - --docker.watch=true
+  - --docker.exposedbydefault=false
+  - --acme.email=your-email-here@my-awesome-app.org
+  - --acme.storage=acme.json
+  - --acme.entryPoint=https
+  - --acme.onHostRule=true
+  - --acme.httpchallenge.entrypoint=http
 ```
 
 This is the minimum configuration required to do the following:

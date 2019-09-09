@@ -15,12 +15,12 @@ const (
 	Ubuntu
 	// Debian OS種別:Debian
 	Debian
-	// VyOS OS種別:VyOS
-	VyOS
 	// CoreOS OS種別:CoreOS
 	CoreOS
 	// RancherOS OS種別:RancherOS
 	RancherOS
+	// K3OS OS種別: k3OS
+	K3OS
 	// Kusanagi OS種別:Kusanagi(CentOS)
 	Kusanagi
 	// SophosUTM OS種別:Sophos UTM
@@ -31,12 +31,6 @@ const (
 	Netwiser
 	// OPNsense OS種別: OPNsense
 	OPNsense
-	// Windows2012 OS種別:Windows Server 2012 R2 Datacenter Edition
-	Windows2012
-	// Windows2012RDS OS種別:Windows Server 2012 R2 for RDS
-	Windows2012RDS
-	// Windows2012RDSOffice OS種別:Windows Server 2012 R2 for RDS(Office)
-	Windows2012RDSOffice
 	// Windows2016 OS種別:Windows Server 2016 Datacenter Edition
 	Windows2016
 	// Windows2016RDS OS種別:Windows Server 2016 RDS
@@ -61,10 +55,9 @@ const (
 
 // OSTypeShortNames OSTypeとして利用できる文字列のリスト
 var OSTypeShortNames = []string{
-	"centos", "centos6", "ubuntu", "debian", "vyos", "coreos",
-	"rancheros", "kusanagi", "sophos-utm", "freebsd",
+	"centos", "centos6", "ubuntu", "debian", "coreos",
+	"rancheros", "k3os", "kusanagi", "sophos-utm", "freebsd",
 	"netwiser", "opnsense",
-	"windows2012", "windows2012-rds", "windows2012-rds-office",
 	"windows2016", "windows2016-rds", "windows2016-rds-office",
 	"windows2016-sql-web", "windows2016-sql-standard", "windows2016-sql-standard-all",
 	"windows2016-sql2017-standard", "windows2016-sql2017-standard-all",
@@ -74,8 +67,7 @@ var OSTypeShortNames = []string{
 // IsWindows Windowsか
 func (o ArchiveOSTypes) IsWindows() bool {
 	switch o {
-	case Windows2012, Windows2012RDS, Windows2012RDSOffice,
-		Windows2016, Windows2016RDS, Windows2016RDSOffice,
+	case Windows2016, Windows2016RDS, Windows2016RDSOffice,
 		Windows2016SQLServerWeb, Windows2016SQLServerStandard, Windows2016SQLServerStandardAll,
 		Windows2016SQLServer2017Standard, Windows2016SQLServer2017StandardAll,
 		Windows2019:
@@ -88,7 +80,7 @@ func (o ArchiveOSTypes) IsWindows() bool {
 // IsSupportDiskEdit ディスクの修正機能をフルサポートしているか(Windowsは一部サポートのためfalseを返す)
 func (o ArchiveOSTypes) IsSupportDiskEdit() bool {
 	switch o {
-	case CentOS, CentOS6, Ubuntu, Debian, VyOS, CoreOS, RancherOS, Kusanagi, FreeBSD:
+	case CentOS, CentOS6, Ubuntu, Debian, CoreOS, RancherOS, K3OS, Kusanagi, FreeBSD:
 		return true
 	default:
 		return false
@@ -106,12 +98,12 @@ func StrToOSType(osType string) ArchiveOSTypes {
 		return Ubuntu
 	case "debian":
 		return Debian
-	case "vyos":
-		return VyOS
 	case "coreos":
 		return CoreOS
 	case "rancheros":
 		return RancherOS
+	case "k3os":
+		return K3OS
 	case "kusanagi":
 		return Kusanagi
 	case "sophos-utm":
@@ -122,12 +114,6 @@ func StrToOSType(osType string) ArchiveOSTypes {
 		return Netwiser
 	case "opnsense":
 		return OPNsense
-	case "windows2012":
-		return Windows2012
-	case "windows2012-rds":
-		return Windows2012RDS
-	case "windows2012-rds-office":
-		return Windows2012RDSOffice
 	case "windows2016":
 		return Windows2016
 	case "windows2016-rds":

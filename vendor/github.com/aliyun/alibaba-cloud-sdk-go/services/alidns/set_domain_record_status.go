@@ -76,9 +76,9 @@ func (client *Client) SetDomainRecordStatusWithCallback(request *SetDomainRecord
 // SetDomainRecordStatusRequest is the request struct for api SetDomainRecordStatus
 type SetDomainRecordStatusRequest struct {
 	*requests.RpcRequest
-	Lang         string `position:"Query" name:"Lang"`
-	UserClientIp string `position:"Query" name:"UserClientIp"`
 	RecordId     string `position:"Query" name:"RecordId"`
+	UserClientIp string `position:"Query" name:"UserClientIp"`
+	Lang         string `position:"Query" name:"Lang"`
 	Status       string `position:"Query" name:"Status"`
 }
 
@@ -95,7 +95,7 @@ func CreateSetDomainRecordStatusRequest() (request *SetDomainRecordStatusRequest
 	request = &SetDomainRecordStatusRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Alidns", "2015-01-09", "SetDomainRecordStatus", "", "")
+	request.InitWithApiInfo("Alidns", "2015-01-09", "SetDomainRecordStatus", "Alidns", "openAPI")
 	return
 }
 

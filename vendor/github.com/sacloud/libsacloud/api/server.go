@@ -160,6 +160,7 @@ func (api *ServerAPI) ChangePlan(serverID int64, plan *sacloud.ProductServer) (*
 	body.CPU = plan.CPU
 	body.MemoryMB = plan.MemoryMB
 	body.Generation = plan.Generation
+	body.Commitment = plan.Commitment
 
 	return api.request(func(res *sacloud.Response) error {
 		return api.baseAPI.request(method, uri, body, res)

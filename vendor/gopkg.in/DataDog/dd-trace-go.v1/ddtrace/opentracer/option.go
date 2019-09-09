@@ -18,6 +18,11 @@ func ResourceName(name string) opentracing.StartSpanOption {
 	return opentracing.Tag{Key: ext.ResourceName, Value: name}
 }
 
+// SpanName sets the Datadog operation name for the span.
+func SpanName(name string) opentracing.StartSpanOption {
+	return opentracing.Tag{Key: ext.SpanName, Value: name}
+}
+
 // SpanType can be used with opentracing.StartSpan to set the type of a span.
 func SpanType(name string) opentracing.StartSpanOption {
 	return opentracing.Tag{Key: ext.SpanType, Value: name}

@@ -3,33 +3,40 @@ package linodego
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
-	"github.com/go-resty/resty"
+	"gopkg.in/resty.v1"
 )
 
 const (
 	// APIHost Linode API hostname
 	APIHost = "api.linode.com"
+	// APIHostVar environment var to check for alternate API URL
+	APIHostVar = "LINODE_URL"
+	// APIHostCert environment var containing path to CA cert to validate against
+	APIHostCert = "LINODE_CA"
 	// APIVersion Linode API version
 	APIVersion = "v4"
 	// APIProto connect to API with http(s)
 	APIProto = "https"
 	// Version of linodego
-	Version = "0.5.1"
+	Version = "0.10.0"
 	// APIEnvVar environment var to check for API token
 	APIEnvVar = "LINODE_TOKEN"
-	// APISecondsPerPoll how frequently to poll for new Events
-	APISecondsPerPoll = 10
+	// APISecondsPerPoll how frequently to poll for new Events or Status in WaitFor functions
+	APISecondsPerPoll = 3
+	// DefaultUserAgent is the default User-Agent sent in HTTP request headers
+	DefaultUserAgent = "linodego " + Version + " https://github.com/linode/linodego"
 )
 
-// DefaultUserAgent is the default User-Agent sent in HTTP request headers
-const DefaultUserAgent = "linodego " + Version + " https://github.com/linode/linodego"
-
-var envDebug = false
+var (
+	envDebug = false
+)
 
 // Client is a wrapper around the Resty client
 type Client struct {
@@ -38,12 +45,15 @@ type Client struct {
 	resources map[string]*Resource
 	debug     bool
 
+	millisecondsPerPoll time.Duration
+
 	Images                *Resource
 	InstanceDisks         *Resource
 	InstanceConfigs       *Resource
 	InstanceSnapshots     *Resource
 	InstanceIPs           *Resource
 	InstanceVolumes       *Resource
+	InstanceStats         *Resource
 	Instances             *Resource
 	IPAddresses           *Resource
 	IPv6Pools             *Resource
@@ -63,13 +73,20 @@ type Client struct {
 	NodeBalancerNodes     *Resource
 	SSHKeys               *Resource
 	Tickets               *Resource
+	Tokens                *Resource
+	Token                 *Resource
 	Account               *Resource
+	AccountSettings       *Resource
 	Invoices              *Resource
 	InvoiceItems          *Resource
 	Events                *Resource
 	Notifications         *Resource
+	OAuthClients          *Resource
 	Profile               *Resource
 	Managed               *Resource
+	Tags                  *Resource
+	Users                 *Resource
+	Payments              *Resource
 }
 
 func init() {
@@ -115,6 +132,25 @@ func (c *Client) SetBaseURL(url string) *Client {
 	return c
 }
 
+func (c *Client) SetRootCertificate(path string) *Client {
+	c.resty.SetRootCertificate(path)
+	return c
+}
+
+// SetToken sets the API token for all requests from this client
+// Only necessary if you haven't already provided an http client to NewClient() configured with the token.
+func (c *Client) SetToken(token string) *Client {
+	c.resty.SetHeader("Authorization", fmt.Sprintf("Bearer %s", token))
+	return c
+}
+
+// SetPollDelay sets the number of milliseconds to wait between events or status polls.
+// Affects all WaitFor* functions.
+func (c *Client) SetPollDelay(delay time.Duration) *Client {
+	c.millisecondsPerPoll = delay
+	return c
+}
+
 // Resource looks up a resource by name
 func (c Client) Resource(resourceName string) *Resource {
 	selectedResource, ok := c.resources[resourceName]
@@ -126,10 +162,30 @@ func (c Client) Resource(resourceName string) *Resource {
 
 // NewClient factory to create new Client struct
 func NewClient(hc *http.Client) (client Client) {
-	restyClient := resty.NewWithClient(hc)
-	client.resty = restyClient
+	if hc != nil {
+		client.resty = resty.NewWithClient(hc)
+	} else {
+		client.resty = resty.New()
+	}
 	client.SetUserAgent(DefaultUserAgent)
-	client.SetBaseURL(fmt.Sprintf("%s://%s/%s", APIProto, APIHost, APIVersion))
+	baseURL, baseURLExists := os.LookupEnv(APIHostVar)
+	if baseURLExists {
+		client.SetBaseURL(baseURL)
+	} else {
+		client.SetBaseURL(fmt.Sprintf("%s://%s/%s", APIProto, APIHost, APIVersion))
+	}
+	certPath, certPathExists := os.LookupEnv(APIHostCert)
+	if certPathExists {
+		cert, err := ioutil.ReadFile(certPath)
+		if err != nil {
+			log.Fatalf("[ERROR] Error when reading cert at %s: %s\n", certPath, err.Error())
+		}
+		client.SetRootCertificate(certPath)
+		if envDebug {
+			log.Printf("[DEBUG] Set API root certificate to %s with contents %s\n", certPath, cert)
+		}
+	}
+	client.SetPollDelay(1000 * APISecondsPerPoll)
 
 	resources := map[string]*Resource{
 		stackscriptsName:          NewResource(&client, stackscriptsName, stackscriptsEndpoint, false, Stackscript{}, StackscriptsPagedResponse{}),
@@ -140,8 +196,9 @@ func NewClient(hc *http.Client) (client Client) {
 		instanceSnapshotsName:     NewResource(&client, instanceSnapshotsName, instanceSnapshotsEndpoint, true, InstanceSnapshot{}, nil),
 		instanceIPsName:           NewResource(&client, instanceIPsName, instanceIPsEndpoint, true, InstanceIP{}, nil),                           // really?
 		instanceVolumesName:       NewResource(&client, instanceVolumesName, instanceVolumesEndpoint, true, nil, InstanceVolumesPagedResponse{}), // really?
-		ipaddressesName:           NewResource(&client, ipaddressesName, ipaddressesEndpoint, false, nil, IPAddressesPagedResponse{}),            // really?
-		ipv6poolsName:             NewResource(&client, ipv6poolsName, ipv6poolsEndpoint, false, nil, IPv6PoolsPagedResponse{}),                  // really?
+		instanceStatsName:         NewResource(&client, instanceStatsName, instanceStatsEndpoint, true, InstanceStats{}, nil),
+		ipaddressesName:           NewResource(&client, ipaddressesName, ipaddressesEndpoint, false, nil, IPAddressesPagedResponse{}), // really?
+		ipv6poolsName:             NewResource(&client, ipv6poolsName, ipv6poolsEndpoint, false, nil, IPv6PoolsPagedResponse{}),       // really?
 		ipv6rangesName:            NewResource(&client, ipv6rangesName, ipv6rangesEndpoint, false, IPv6Range{}, IPv6RangesPagedResponse{}),
 		regionsName:               NewResource(&client, regionsName, regionsEndpoint, false, Region{}, RegionsPagedResponse{}),
 		volumesName:               NewResource(&client, volumesName, volumesEndpoint, false, Volume{}, VolumesPagedResponse{}),
@@ -155,14 +212,21 @@ func NewClient(hc *http.Client) (client Client) {
 		nodebalancersName:         NewResource(&client, nodebalancersName, nodebalancersEndpoint, false, NodeBalancer{}, NodeBalancerConfigsPagedResponse{}),
 		nodebalancerconfigsName:   NewResource(&client, nodebalancerconfigsName, nodebalancerconfigsEndpoint, true, NodeBalancerConfig{}, NodeBalancerConfigsPagedResponse{}),
 		nodebalancernodesName:     NewResource(&client, nodebalancernodesName, nodebalancernodesEndpoint, true, NodeBalancerNode{}, NodeBalancerNodesPagedResponse{}),
+		notificationsName:         NewResource(&client, notificationsName, notificationsEndpoint, false, Notification{}, NotificationsPagedResponse{}),
+		oauthClientsName:          NewResource(&client, oauthClientsName, oauthClientsEndpoint, false, OAuthClient{}, OAuthClientsPagedResponse{}),
 		sshkeysName:               NewResource(&client, sshkeysName, sshkeysEndpoint, false, SSHKey{}, SSHKeysPagedResponse{}),
 		ticketsName:               NewResource(&client, ticketsName, ticketsEndpoint, false, Ticket{}, TicketsPagedResponse{}),
-		accountName:               NewResource(&client, accountName, accountEndpoint, false, Account{}, nil), // really?
+		tokensName:                NewResource(&client, tokensName, tokensEndpoint, false, Token{}, TokensPagedResponse{}),
+		accountName:               NewResource(&client, accountName, accountEndpoint, false, Account{}, nil),                         // really?
+		accountSettingsName:       NewResource(&client, accountSettingsName, accountSettingsEndpoint, false, AccountSettings{}, nil), // really?
 		eventsName:                NewResource(&client, eventsName, eventsEndpoint, false, Event{}, EventsPagedResponse{}),
 		invoicesName:              NewResource(&client, invoicesName, invoicesEndpoint, false, Invoice{}, InvoicesPagedResponse{}),
 		invoiceItemsName:          NewResource(&client, invoiceItemsName, invoiceItemsEndpoint, true, InvoiceItem{}, InvoiceItemsPagedResponse{}),
 		profileName:               NewResource(&client, profileName, profileEndpoint, false, nil, nil), // really?
 		managedName:               NewResource(&client, managedName, managedEndpoint, false, nil, nil), // really?
+		tagsName:                  NewResource(&client, tagsName, tagsEndpoint, false, Tag{}, TagsPagedResponse{}),
+		usersName:                 NewResource(&client, usersName, usersEndpoint, false, User{}, UsersPagedResponse{}),
+		paymentsName:              NewResource(&client, paymentsName, paymentsEndpoint, false, Payment{}, PaymentsPagedResponse{}),
 	}
 
 	client.resources = resources
@@ -177,6 +241,7 @@ func NewClient(hc *http.Client) (client Client) {
 	client.InstanceSnapshots = resources[instanceSnapshotsName]
 	client.InstanceIPs = resources[instanceIPsName]
 	client.InstanceVolumes = resources[instanceVolumesName]
+	client.InstanceStats = resources[instanceStatsName]
 	client.IPAddresses = resources[ipaddressesName]
 	client.IPv6Pools = resources[ipv6poolsName]
 	client.IPv6Ranges = resources[ipv6rangesName]
@@ -190,12 +255,50 @@ func NewClient(hc *http.Client) (client Client) {
 	client.NodeBalancers = resources[nodebalancersName]
 	client.NodeBalancerConfigs = resources[nodebalancerconfigsName]
 	client.NodeBalancerNodes = resources[nodebalancernodesName]
+	client.Notifications = resources[notificationsName]
+	client.OAuthClients = resources[oauthClientsName]
 	client.SSHKeys = resources[sshkeysName]
 	client.Tickets = resources[ticketsName]
+	client.Tokens = resources[tokensName]
 	client.Account = resources[accountName]
 	client.Events = resources[eventsName]
 	client.Invoices = resources[invoicesName]
 	client.Profile = resources[profileName]
 	client.Managed = resources[managedName]
+	client.Tags = resources[tagsName]
+	client.Users = resources[usersName]
+	client.Payments = resources[paymentsName]
 	return
+}
+
+func copyBool(bPtr *bool) *bool {
+	if bPtr == nil {
+		return nil
+	}
+	var t = *bPtr
+	return &t
+}
+
+func copyInt(iPtr *int) *int {
+	if iPtr == nil {
+		return nil
+	}
+	var t = *iPtr
+	return &t
+}
+
+func copyString(sPtr *string) *string {
+	if sPtr == nil {
+		return nil
+	}
+	var t = *sPtr
+	return &t
+}
+
+func copyTime(tPtr *time.Time) *time.Time {
+	if tPtr == nil {
+		return nil
+	}
+	var t = *tPtr
+	return &t
 }

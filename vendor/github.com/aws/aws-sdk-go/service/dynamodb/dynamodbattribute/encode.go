@@ -189,6 +189,11 @@ type MarshalOptions struct {
 	//
 	// Enabled by default.
 	SupportJSONTags bool
+
+	// Support other custom struct tag keys, such as `yaml` or `toml`.
+	// Note that values provided with a custom TagKey must also be supported
+	// by the (un)marshalers in this package.
+	TagKey string
 }
 
 // An Encoder provides marshaling Go value types to AttributeValues.

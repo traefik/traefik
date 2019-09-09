@@ -81,7 +81,7 @@ docker $(docker-machine config mhs-demo0) run \
     -p 80:80 -p 8080:8080 \
     --net=my-net \
     -v /var/lib/boot2docker/:/ssl \
-    traefik \
+    traefik:<stable version from https://hub.docker.com/_/traefik> \
     -l DEBUG \
     -c /dev/null \
     --docker \

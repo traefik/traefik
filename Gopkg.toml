@@ -180,7 +180,11 @@
 
 [[constraint]]
   name = "github.com/go-acme/lego"
-  version = "2.4.0"
+  version = "2.7.2"
+
+[[constraint]]
+  name = "github.com/golang/protobuf"
+  version = "v1.3.0"
 
 [[constraint]]
   name = "google.golang.org/grpc"
@@ -255,7 +259,7 @@
 
 [[constraint]]
   name = "gopkg.in/DataDog/dd-trace-go.v1"
-  version = "1.7.0"
+  version = "1.13.0"
 
 [[constraint]]
   name = "github.com/google/uuid"

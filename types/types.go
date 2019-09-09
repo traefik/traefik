@@ -408,14 +408,14 @@ type Users []string
 
 // Basic HTTP basic authentication
 type Basic struct {
-	Users        `json:"users,omitempty" mapstructure:","`
+	Users        `json:"-" mapstructure:"," dynamodbav:"users,omitempty"`
 	UsersFile    string `json:"usersFile,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty"`
 }
 
 // Digest HTTP authentication
 type Digest struct {
-	Users        `json:"users,omitempty" mapstructure:","`
+	Users        `json:"-" mapstructure:"," dynamodbav:"users,omitempty"`
 	UsersFile    string `json:"usersFile,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty"`
 }
@@ -512,7 +512,7 @@ type ClientTLS struct {
 	CA                 string `description:"TLS CA" json:"ca,omitempty"`
 	CAOptional         bool   `description:"TLS CA.Optional" json:"caOptional,omitempty"`
 	Cert               string `description:"TLS cert" json:"cert,omitempty"`
-	Key                string `description:"TLS key" json:"key,omitempty"`
+	Key                string `description:"TLS key" json:"-" dynamodbav:"key,omitempty"`
 	InsecureSkipVerify bool   `description:"TLS insecure skip verify" json:"insecureSkipVerify,omitempty"`
 }
 

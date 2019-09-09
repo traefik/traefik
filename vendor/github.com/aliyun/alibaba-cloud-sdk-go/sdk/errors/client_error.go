@@ -60,7 +60,7 @@ func NewClientError(errorCode, message string, originErr error) Error {
 }
 
 func (err *ClientError) Error() string {
-	clientErrMsg := fmt.Sprintf("[%s] %s", err.errorCode, err.message)
+	clientErrMsg := fmt.Sprintf("[%s] %s", err.ErrorCode(), err.message)
 	if err.originError != nil {
 		return clientErrMsg + "\ncaused by:\n" + err.originError.Error()
 	}

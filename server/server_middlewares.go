@@ -113,7 +113,7 @@ func (s *Server) buildMiddlewares(frontendName string, frontend *types.Frontend,
 	}
 
 	// TLSClientHeaders
-	tlsClientHeadersMiddleware := middlewares.NewTLSClientHeaders(frontend)
+	tlsClientHeadersMiddleware := middlewares.NewTLSClientHeaders(frontend.PassTLSClientCert)
 	if tlsClientHeadersMiddleware != nil {
 		log.Debugf("Adding TLSClientHeaders middleware for frontend %s", frontendName)
 

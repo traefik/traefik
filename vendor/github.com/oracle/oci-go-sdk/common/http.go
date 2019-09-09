@@ -66,10 +66,15 @@ func toStringValue(v reflect.Value, field reflect.StructField) (string, error) {
 	}
 }
 
-func addBinaryBody(request *http.Request, value reflect.Value) (e error) {
+func addBinaryBody(request *http.Request, value reflect.Value, field reflect.StructField) (e error) {
 	readCloser, ok := value.Interface().(io.ReadCloser)
-	if !ok {
-		e = fmt.Errorf("body of the request needs to be an io.ReadCloser interface. Can not marshal body of binary request")
+	isMandatory, err := strconv.ParseBool(field.Tag.Get("mandatory"))
+	if err != nil {
+		return fmt.Errorf("mandatory tag is not valid for field %s", field.Name)
+	}
+
+	if isMandatory && !ok {
+		e = fmt.Errorf("body of the request is mandatory and needs  to be an io.ReadCloser interface. Can not marshal body of binary request")
 		return
 	}
 
@@ -252,7 +257,7 @@ func addToBody(request *http.Request, value reflect.Value, field reflect.StructF
 	encoding := tag.Get("encoding")
 
 	if encoding == "binary" {
-		return addBinaryBody(request, value)
+		return addBinaryBody(request, value, field)
 	}
 
 	rawJSON, e := json.Marshal(value.Interface())
@@ -263,6 +268,11 @@ func addToBody(request *http.Request, value reflect.Value, field reflect.StructF
 	if e != nil {
 		return
 	}
+
+	if defaultLogger.LogLevel() == verboseLogging {
+		Debugf("Marshaled body is: %s\n", string(marshaled))
+	}
+
 	bodyBytes := bytes.NewReader(marshaled)
 	request.ContentLength = int64(bodyBytes.Len())
 	request.Header.Set(requestHeaderContentLength, strconv.FormatInt(request.ContentLength, 10))

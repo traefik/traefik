@@ -85,7 +85,7 @@ func derCert(privKey *rsa.PrivateKey, expiration time.Time, domain string) ([]by
 		NotBefore: time.Now(),
 		NotAfter:  expiration,
 
-		KeyUsage:              x509.KeyUsageKeyEncipherment,
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageKeyAgreement | x509.KeyUsageDataEncipherment,
 		BasicConstraintsValid: true,
 		DNSNames:              []string{domain},
 	}

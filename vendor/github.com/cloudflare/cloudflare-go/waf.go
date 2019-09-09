@@ -39,14 +39,28 @@ type WAFRule struct {
 	AllowedModes []string `json:"allowed_modes"`
 }
 
-// WAFRulesResponse represents the response from the WAF rule endpoint.
+// WAFRulesResponse represents the response from the WAF rules endpoint.
 type WAFRulesResponse struct {
 	Response
 	Result     []WAFRule  `json:"result"`
 	ResultInfo ResultInfo `json:"result_info"`
 }
 
+// WAFRuleResponse represents the response from the WAF rule endpoint.
+type WAFRuleResponse struct {
+	Response
+	Result     WAFRule    `json:"result"`
+	ResultInfo ResultInfo `json:"result_info"`
+}
+
+// WAFRuleOptions is a subset of WAFRule, for editable options.
+type WAFRuleOptions struct {
+	Mode string `json:"mode"`
+}
+
 // ListWAFPackages returns a slice of the WAF packages for the given zone.
+//
+// API Reference: https://api.cloudflare.com/#waf-rule-packages-list-firewall-packages
 func (api *API) ListWAFPackages(zoneID string) ([]WAFPackage, error) {
 	var p WAFPackagesResponse
 	var packages []WAFPackage
@@ -72,26 +86,70 @@ func (api *API) ListWAFPackages(zoneID string) ([]WAFPackage, error) {
 }
 
 // ListWAFRules returns a slice of the WAF rules for the given WAF package.
+//
+// API Reference: https://api.cloudflare.com/#waf-rules-list-rules
 func (api *API) ListWAFRules(zoneID, packageID string) ([]WAFRule, error) {
-	var r WAFRulesResponse
 	var rules []WAFRule
 	var res []byte
 	var err error
+
 	uri := "/zones/" + zoneID + "/firewall/waf/packages/" + packageID + "/rules"
 	res, err = api.makeRequest("GET", uri, nil)
 	if err != nil {
 		return []WAFRule{}, errors.Wrap(err, errMakeRequestError)
 	}
+
+	var r WAFRulesResponse
 	err = json.Unmarshal(res, &r)
 	if err != nil {
 		return []WAFRule{}, errors.Wrap(err, errUnmarshalError)
 	}
+
 	if !r.Success {
 		// TODO: Provide an actual error message instead of always returning nil
 		return []WAFRule{}, err
 	}
+
 	for ri := range r.Result {
 		rules = append(rules, r.Result[ri])
 	}
 	return rules, nil
+}
+
+// WAFRule returns a WAF rule from the given WAF package.
+//
+// API Reference: https://api.cloudflare.com/#waf-rules-rule-details
+func (api *API) WAFRule(zoneID, packageID, ruleID string) (WAFRule, error) {
+	uri := "/zones/" + zoneID + "/firewall/waf/packages/" + packageID + "/rules/" + ruleID
+	res, err := api.makeRequest("GET", uri, nil)
+	if err != nil {
+		return WAFRule{}, errors.Wrap(err, errMakeRequestError)
+	}
+
+	var r WAFRuleResponse
+	err = json.Unmarshal(res, &r)
+	if err != nil {
+		return WAFRule{}, errors.Wrap(err, errUnmarshalError)
+	}
+
+	return r.Result, nil
+}
+
+// UpdateWAFRule lets you update the mode of a WAF Rule.
+//
+// API Reference: https://api.cloudflare.com/#waf-rules-edit-rule
+func (api *API) UpdateWAFRule(zoneID, packageID, ruleID, mode string) (WAFRule, error) {
+	opts := WAFRuleOptions{Mode: mode}
+	uri := "/zones/" + zoneID + "/firewall/waf/packages/" + packageID + "/rules/" + ruleID
+	res, err := api.makeRequest("PATCH", uri, opts)
+	if err != nil {
+		return WAFRule{}, errors.Wrap(err, errMakeRequestError)
+	}
+
+	var r WAFRuleResponse
+	err = json.Unmarshal(res, &r)
+	if err != nil {
+		return WAFRule{}, errors.Wrap(err, errUnmarshalError)
+	}
+	return r.Result, nil
 }

@@ -1316,7 +1316,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]
 
     {{if $backend.ResponseForwarding }}
     [backends."{{ $backendName }}".responseForwarding]
-      flushInterval = "{{ $backend.responseForwarding.FlushInterval }}"
+      flushInterval = "{{ $backend.ResponseForwarding.FlushInterval }}"
     {{end}}
 
     [backends."{{ $backendName }}".loadBalancer]
@@ -1365,7 +1365,9 @@ var _templatesKubernetesTmpl = []byte(`[backends]
 
     {{if $frontend.Auth }}
     [frontends."{{ $frontendName }}".auth]
-      headerField = "X-WebAuth-User"
+      {{if $frontend.Auth.HeaderField }}
+      headerField = "{{ $frontend.Auth.HeaderField }}"
+      {{end}}
 
       {{if $frontend.Auth.Basic }}
       [frontends."{{ $frontendName }}".auth.basic]

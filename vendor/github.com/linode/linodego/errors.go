@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-resty/resty"
+	"gopkg.in/resty.v1"
 )
 
 const (
@@ -60,7 +60,7 @@ func coupleAPIErrors(r *resty.Response, err error) (*resty.Response, error) {
 }
 
 func (e APIError) Error() string {
-	var x []string
+	x := []string{}
 	for _, msg := range e.Errors {
 		x = append(x, msg.Error())
 	}

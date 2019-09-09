@@ -17,16 +17,16 @@ package alidns
 
 // Record is a nested struct in alidns response
 type Record struct {
-	Locked     bool   `json:"Locked" xml:"Locked"`
-	Type       string `json:"Type" xml:"Type"`
-	Line       string `json:"Line" xml:"Line"`
-	RR         string `json:"RR" xml:"RR"`
-	Remark     string `json:"Remark" xml:"Remark"`
-	Priority   int    `json:"Priority" xml:"Priority"`
-	RecordId   string `json:"RecordId" xml:"RecordId"`
 	Value      string `json:"Value" xml:"Value"`
+	TTL        int64  `json:"TTL" xml:"TTL"`
+	Remark     string `json:"Remark" xml:"Remark"`
 	DomainName string `json:"DomainName" xml:"DomainName"`
-	Weight     int    `json:"Weight" xml:"Weight"`
+	RR         string `json:"RR" xml:"RR"`
+	Priority   int64  `json:"Priority" xml:"Priority"`
+	RecordId   string `json:"RecordId" xml:"RecordId"`
 	Status     string `json:"Status" xml:"Status"`
-	TTL        int    `json:"TTL" xml:"TTL"`
+	Locked     bool   `json:"Locked" xml:"Locked"`
+	Weight     int    `json:"Weight" xml:"Weight"`
+	Line       string `json:"Line" xml:"Line"`
+	Type       string `json:"Type" xml:"Type"`
 }

@@ -117,15 +117,19 @@ func GetIsLocked(c gotransip.Client, domainName string) (bool, error) {
 	return v, err
 }
 
-// Register registers a domain name and will automatically create and sign a proposition for it
-func Register(c gotransip.Client, domain Domain) error {
+// Register registers a domain name and will automatically create and sign a
+// proposition for it. It returns the TransIP proposition number or an error
+// when registering the domain fails
+func Register(c gotransip.Client, domain Domain) (string, error) {
 	sr := gotransip.SoapRequest{
 		Service: serviceName,
 		Method:  "register",
 	}
 	sr.AddArgument("domain", domain)
 
-	return c.Call(sr, nil)
+	var v string
+	err := c.Call(sr, &v)
+	return v, err
 }
 
 // Cancel cancels a domain name, will automatically create and sign a cancellation document
@@ -140,8 +144,9 @@ func Cancel(c gotransip.Client, domainName string, endTime gotransip.Cancellatio
 	return c.Call(sr, nil)
 }
 
-// TransferWithOwnerChange transfers a domain with changing the owner
-func TransferWithOwnerChange(c gotransip.Client, domain, authCode string) error {
+// TransferWithOwnerChange transfers a domain with changing the owner. It returns
+// the TransIP proposition number or an error when transferring the domain fails
+func TransferWithOwnerChange(c gotransip.Client, domain, authCode string) (string, error) {
 	sr := gotransip.SoapRequest{
 		Service: serviceName,
 		Method:  "transferWithOwnerChange",
@@ -149,11 +154,15 @@ func TransferWithOwnerChange(c gotransip.Client, domain, authCode string) error 
 	sr.AddArgument("domain", domain)
 	sr.AddArgument("authCode", authCode)
 
-	return c.Call(sr, nil)
+	var v string
+	err := c.Call(sr, &v)
+	return v, err
 }
 
-// TransferWithoutOwnerChange transfers a domain without changing the owner
-func TransferWithoutOwnerChange(c gotransip.Client, domain, authCode string) error {
+// TransferWithoutOwnerChange transfers a domain without changing the owner. It
+// returns  the TransIP proposition number or an error when transferring the domain
+// fails
+func TransferWithoutOwnerChange(c gotransip.Client, domain, authCode string) (string, error) {
 	sr := gotransip.SoapRequest{
 		Service: serviceName,
 		Method:  "transferWithoutOwnerChange",
@@ -161,7 +170,9 @@ func TransferWithoutOwnerChange(c gotransip.Client, domain, authCode string) err
 	sr.AddArgument("domain", domain)
 	sr.AddArgument("authCode", authCode)
 
-	return c.Call(sr, nil)
+	var v string
+	err := c.Call(sr, &v)
+	return v, err
 }
 
 // SetNameservers starts a nameserver change for this domain, will replace all
@@ -203,7 +214,7 @@ func UnsetLock(c gotransip.Client, domainName string) error {
 // dns entries with the new entries
 func SetDNSEntries(c gotransip.Client, domainName string, dnsEntries DNSEntries) error {
 	sr := gotransip.SoapRequest{
-		Service: serviceName,
+		Service: dnsServiceName,
 		Method:  "setDnsEntries",
 	}
 	sr.AddArgument("domainName", domainName)
@@ -309,6 +320,84 @@ func CancelDomainAction(c gotransip.Client, domain string) error {
 		Method:  "cancelDomainAction",
 	}
 	sr.AddArgument("domain", domain)
+
+	return c.Call(sr, nil)
+}
+
+// RequestAuthCode requests the authcode at the registry
+func RequestAuthCode(c gotransip.Client, domainName string) (string, error) {
+	sr := gotransip.SoapRequest{
+		Service: serviceName,
+		Method:  "requestAuthCode",
+	}
+	sr.AddArgument("domain", domainName)
+
+	var v string
+	err := c.Call(sr, &v)
+	return v, err
+}
+
+// Handover a Domain to another TransIP User. Please be aware that this will NOT
+// change the owner contact information at the registry. If you want to change
+// the domain owner at the registry, then you should execute a 'SetOwner'.
+func Handover(c gotransip.Client, domainName, targetAccountName string) error {
+	sr := gotransip.SoapRequest{
+		Service: serviceName,
+		Method:  "handover",
+	}
+	sr.AddArgument("domainName", domainName)
+	sr.AddArgument("targetAccountname", targetAccountName)
+
+	return c.Call(sr, nil)
+}
+
+// CanEditDNSSec checks if the DNSSec entries of a domain can be updated.
+func CanEditDNSSec(c gotransip.Client, domainName string) (bool, error) {
+	sr := gotransip.SoapRequest{
+		Service: dnsServiceName,
+		Method:  "canEditDnsSec",
+	}
+	sr.AddArgument("domainName", domainName)
+
+	var v bool
+	err := c.Call(sr, &v)
+	return v, err
+}
+
+// GetDNSSecEntries returns DNSSec entries for given domain name
+func GetDNSSecEntries(c gotransip.Client, domainName string) (DNSSecEntries, error) {
+	sr := gotransip.SoapRequest{
+		Service: dnsServiceName,
+		Method:  "getDnsSecEntries",
+	}
+	sr.AddArgument("domainName", domainName)
+
+	var v struct {
+		V DNSSecEntries `xml:"item"`
+	}
+	err := c.Call(sr, &v)
+	return v.V, err
+}
+
+// SetDNSSecEntries sets new DNSSec entries for a domain, replacing the current ones.
+func SetDNSSecEntries(c gotransip.Client, domainName string, dnssecKeyEntrySet DNSSecEntries) error {
+	sr := gotransip.SoapRequest{
+		Service: dnsServiceName,
+		Method:  "setDnsSecEntries",
+	}
+	sr.AddArgument("domainName", domainName)
+	sr.AddArgument("dnssecKeyEntrySet", dnssecKeyEntrySet)
+
+	return c.Call(sr, nil)
+}
+
+// RemoveAllDNSSecEntries removes all the DNSSec entries from a domain.
+func RemoveAllDNSSecEntries(c gotransip.Client, domainName string) error {
+	sr := gotransip.SoapRequest{
+		Service: dnsServiceName,
+		Method:  "removeAllDnsSecEntries",
+	}
+	sr.AddArgument("domainName", domainName)
 
 	return c.Call(sr, nil)
 }
