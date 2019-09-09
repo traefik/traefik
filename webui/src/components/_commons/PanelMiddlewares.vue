@@ -114,12 +114,7 @@
             </div>
             <div v-if="exData(middleware).sourceCriterion.requestHost" class="col">
               <div class="text-subtitle2">REQUEST HOST</div>
-              <q-chip
-                outline
-                dense
-                class="app-chip app-chip-warning">
-                {{ exData(middleware).sourceCriterion.requestHost }}
-              </q-chip>
+              <boolean-state :value="exData(middleware).sourceCriterion.requestHost"/>
             </div>
           </div>
         </q-card-section>
@@ -155,13 +150,15 @@
 </template>
 
 <script>
+import BooleanState from './BooleanState'
 import AvatarState from './AvatarState'
 
 export default {
   name: 'PanelMiddlewareDetails',
   props: ['data', 'dense'],
   components: {
-    AvatarState
+    AvatarState,
+    BooleanState
   },
   computed: {
     isDense () {
@@ -210,7 +207,7 @@ export default {
   .panel-middleware-details {
     height: 600px;
     &-dense{
-      height: 400px;
+      /*height: 400px;*/
     }
     .q-card__section {
       padding: 24px;
