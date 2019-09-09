@@ -325,7 +325,453 @@
           </div>
         </q-card-section>
 
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - [inflightreq] - amount -->
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - customRequestHeaders -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Custom Request Headers</div>
+              <q-chip
+                v-for="(val, key) in exData(middleware).customRequestHeaders" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ val }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - customResponseHeaders -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Custom Response Headers</div>
+              <q-chip
+                v-for="(val, key) in exData(middleware).customResponseHeaders" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ val }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - accessControlAllowCredentials -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Access Control Allow Credentials</div>
+              <boolean-state :value="!!exData(middleware).accessControlAllowCredentials"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - accessControlAllowHeaders -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Access Control Allow Headers</div>
+              <q-chip
+                v-for="(val, key) in exData(middleware).accessControlAllowHeaders" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ val }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - accessControlAllowMethods -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Access Control Allow Methods</div>
+              <q-chip
+                v-for="(val, key) in exData(middleware).accessControlAllowMethods" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ val }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - accessControlAllowOrigin -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Access Control Allow Origin</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).accessControlAllowOrigin }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - accessControlExposeHeaders -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Access Control Expose Headers</div>
+              <q-chip
+                v-for="(val, key) in exData(middleware).accessControlExposeHeaders" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ val }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - accessControlMaxAge -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Access Control Max Age</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).accessControlMaxAge }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - addVaryHeader -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Add Vary Header</div>
+              <boolean-state :value="!!exData(middleware).addVaryHeader"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - allowedHosts -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Allowed Hosts</div>
+              <q-chip
+                v-for="(val, key) in exData(middleware).allowedHosts" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ val }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - hostsProxyHeaders -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Hosts Proxy Headers</div>
+              <q-chip
+                v-for="(val, key) in exData(middleware).hostsProxyHeaders" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ val }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - sslRedirect -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">SSL Redirect</div>
+              <boolean-state :value="!!exData(middleware).sslRedirect"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - sslTemporaryRedirect -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">SSL Temporary Redirect</div>
+              <boolean-state :value="!!exData(middleware).sslTemporaryRedirect"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - sslHost -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">SSL Host</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).sslHost }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - sslProxyHeaders -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">SSL Proxy Headers</div>
+              <q-chip
+                v-for="(val, key) in exData(middleware).sslProxyHeaders" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ val }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - sslForceHost -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">SSL Force Host</div>
+              <boolean-state :value="!!exData(middleware).sslForceHost"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - stsSeconds -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">STS Seconds</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).stsSeconds }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - stsIncludeSubdomains -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">STS Include Subdomains</div>
+              <boolean-state :value="!!exData(middleware).stsIncludeSubdomains"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - stsPreload -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">STS Preload</div>
+              <boolean-state :value="!!exData(middleware).stsPreload"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - forceSTSHeader -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Force STS Header</div>
+              <boolean-state :value="!!exData(middleware).forceSTSHeader"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - frameDeny -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Frame Deny</div>
+              <boolean-state :value="!!exData(middleware).frameDeny"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - customFrameOptionsValue -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Custom Frame Options Value</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).customFrameOptionsValue }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - contentTypeNosniff -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Content Type Nosniff</div>
+              <boolean-state :value="!!exData(middleware).contentTypeNosniff"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - browserXssFilter -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Browser XSS Filter</div>
+              <boolean-state :value="!!exData(middleware).browserXssFilter"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - customBrowserXSSValue -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Custom Browser XSS Value</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).customBrowserXSSValue }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - contentSecurityPolicy -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Content Security Policy</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).contentSecurityPolicy }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - publicKey -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Public Key</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).publicKey }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - referrerPolicy -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Referrer Policy</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).referrerPolicy }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - featurePolicy -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Feature Policy</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).featurePolicy }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - isDevelopment -->
+        <q-card-section v-if="middleware.headers">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Is Development</div>
+              <boolean-state :value="!!exData(middleware).isDevelopment"/>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - sourceRange -->
+        <q-card-section v-if="middleware.ipWhiteList">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Source Range</div>
+              <q-chip
+                v-for="(range, key) in exData(middleware).sourceRange" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ range }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - ipStrategy -->
+        <q-card-section v-if="middleware.ipWhiteList">
+          <div class="row items-start">
+            <div class="col-12">
+              <div class="text-subtitle2">IP Strategy</div>
+            </div>
+            <div v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.depth" class="col-12">
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-accent">Depth :</q-chip>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).ipStrategy.depth }}
+              </q-chip>
+            </div>
+            <div v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.excludedIPs" class="col-12">
+              <div class="flex">
+                <q-chip
+                  outline
+                  dense
+                  class="app-chip app-chip-accent">
+                  Excluded IPs:
+                </q-chip>
+                <q-chip
+                  v-for="(excludedIPs, key) in exData(middleware).ipStrategy.excludedIPs" :key="key"
+                  outline
+                  dense
+                  class="app-chip app-chip-green">
+                  {{ excludedIPs }}
+                </q-chip>
+              </div>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [rateLimit] - average && burst-->
+        <q-card-section v-if="middleware.rateLimit">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Average</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).average }}
+              </q-chip>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Burst</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).burst }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [inFlightReq] - amount -->
         <q-card-section v-if="exData(middleware).amount">
           <div class="row items-start no-wrap">
             <div class="col">
@@ -339,7 +785,8 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - [inflightreq] - aipStrategy -->
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [inFlightReq & rateLimit] - ipStrategy -->
         <q-card-section v-if="exData(middleware).sourceCriterion && exData(middleware).sourceCriterion.ipStrategy">
           <div class="row items-start">
             <div class="col-12">
@@ -376,7 +823,7 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - [inflightreq] - arequestHeaderName, requestHost -->
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [inFlightReq & rateLimit] - requestHeaderName, requestHost -->
         <q-card-section v-if="exData(middleware) && exData(middleware).sourceCriterion">
           <div class="row items-start no-wrap">
             <div v-if="exData(middleware).sourceCriterion.requestHeaderName" class="col">
@@ -391,6 +838,126 @@
             <div v-if="exData(middleware).sourceCriterion.requestHost" class="col">
               <div class="text-subtitle2">REQUEST HOST</div>
               <boolean-state :value="exData(middleware).sourceCriterion.requestHost"/>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - pem -->
+        <q-card-section v-if="middleware.passTLSClientCert">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">PEM</div>
+              <boolean-state :value="!!exData(middleware).pem"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - info - notAfter -->
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info">
+          <div class="text-subtitle2">Info:</div>
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Not After</div>
+              <boolean-state :value="!!exData(middleware).info.notAfter"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Not Before</div>
+              <boolean-state :value="!!exData(middleware).info.notBefore"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Sans</div>
+              <boolean-state :value="!!exData(middleware).info.sans"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - info - subject -->
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
+          <div class="text-subtitle2">Info Subject:</div>
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">country</div>
+              <boolean-state :value="!!exData(middleware).info.subject.country"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Province</div>
+              <boolean-state :value="!!exData(middleware).info.subject.province"/>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Locality</div>
+              <boolean-state :value="!!exData(middleware).info.subject.locality"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Organization</div>
+              <boolean-state :value="!!exData(middleware).info.subject.organization"/>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Common Name</div>
+              <boolean-state :value="!!exData(middleware).info.subject.commonName"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Serial Number</div>
+              <boolean-state :value="!!exData(middleware).info.subject.serialNumber"/>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Domain Component</div>
+              <boolean-state :value="!!exData(middleware).info.subject.domainComponent"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - info - issuer -->
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
+          <div class="text-subtitle2">Info Issuer:</div>
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">country</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.country"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Province</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.province"/>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Locality</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.locality"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Organization</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.organization"/>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Common Name</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.commonName"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Serial Number</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.serialNumber"/>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Domain Component</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.domainComponent"/>
             </div>
           </div>
         </q-card-section>
