@@ -54,6 +54,21 @@
           </div>
         </q-card-section>
 
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [addPrefix] - prefix -->
+        <q-card-section v-if="middleware.addPrefix">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">PREFIX</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).prefix }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
         <!-- EXTRA FIELDS FROM MIDDLEWARES - [basicAuth & digestAuth] - users -->
         <q-card-section v-if="exData(middleware).users">
           <div class="row items-start no-wrap">
@@ -310,22 +325,7 @@
           </div>
         </q-card-section>
 
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - [addPrefix] - prefix -->
-        <q-card-section v-if="middleware.addPrefix">
-          <div class="row items-start no-wrap">
-            <div class="col">
-              <div class="text-subtitle2">PREFIX</div>
-              <q-chip
-                outline
-                dense
-                class="app-chip app-chip-warning">
-                {{ exData(middleware).prefix }}
-              </q-chip>
-            </div>
-          </div>
-        </q-card-section>
-
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - amount -->
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [inflightreq] - amount -->
         <q-card-section v-if="exData(middleware).amount">
           <div class="row items-start no-wrap">
             <div class="col">
@@ -339,7 +339,7 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - ipStrategy -->
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [inflightreq] - aipStrategy -->
         <q-card-section v-if="exData(middleware).sourceCriterion && exData(middleware).sourceCriterion.ipStrategy">
           <div class="row items-start">
             <div class="col-12">
@@ -376,7 +376,7 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - requestHeaderName, requestHost -->
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [inflightreq] - arequestHeaderName, requestHost -->
         <q-card-section v-if="exData(middleware) && exData(middleware).sourceCriterion">
           <div class="row items-start no-wrap">
             <div v-if="exData(middleware).sourceCriterion.requestHeaderName" class="col">
@@ -391,6 +391,150 @@
             <div v-if="exData(middleware).sourceCriterion.requestHost" class="col">
               <div class="text-subtitle2">REQUEST HOST</div>
               <boolean-state :value="exData(middleware).sourceCriterion.requestHost"/>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [redirectRegex] - regex -->
+        <q-card-section v-if="middleware.redirectRegex">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Regex</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).regex }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [redirectRegex] - replacement -->
+        <q-card-section v-if="middleware.redirectRegex">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Replacement</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).replacement }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [redirectRegex] - permanent -->
+        <q-card-section v-if="middleware.redirectRegex">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Permanent</div>
+              <boolean-state :value="!!exData(middleware).permanent"/>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [redirectScheme] - scheme -->
+        <q-card-section v-if="middleware.redirectScheme">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Scheme</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).scheme }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [replacePath] - path -->
+        <q-card-section v-if="middleware.replacePath">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Path</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).path }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [replacePathRegex] - regex -->
+        <q-card-section v-if="middleware.replacePathRegex">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Regex</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).regex }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [replacePathRegex] - replacement -->
+        <q-card-section v-if="middleware.replacePathRegex">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Replacement</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).replacement }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [retry] - attempts -->
+        <q-card-section v-if="middleware.retry">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Attempts</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).attempts }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [stripPrefix] - prefixes -->
+        <q-card-section v-if="middleware.stripPrefix">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Prefixes</div>
+              <q-chip
+                v-for="(prefix, key) in exData(middleware).prefixes" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ prefix }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [stripPrefixRegex] - regex -->
+        <q-card-section v-if="middleware.stripPrefixRegex">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Regex</div>
+              <q-chip
+                v-for="(exp, key) in exData(middleware).regex" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exp }}
+              </q-chip>
             </div>
           </div>
         </q-card-section>
