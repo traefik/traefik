@@ -19,6 +19,9 @@
           <q-td key="status" :props="props" auto-width>
             <avatar-state :state="props.row.status | status "/>
           </q-td>
+          <q-td key="tls" :props="props" auto-width>
+            <t-l-s-state :is-t-l-s="props.row.tls"/>
+          </q-td>
           <q-td key="rule" :props="props">
             <q-chip
               v-if="props.row.rule"
@@ -60,10 +63,16 @@
           <q-td key="servers" :props="props">
             <span class="servers-label">{{ props.row | servers }}</span>
           </q-td>
-          <q-td key="tls" :props="props">
-            <t-l-s-state :is-t-l-s="props.row.tls"/>
+          <q-td key="service" :props="props">
+            <q-chip
+              v-if="props.row.service"
+              outline
+              dense
+              class="app-chip app-chip-service">
+              {{ props.row.service }}
+            </q-chip>
           </q-td>
-          <q-td key="provider" :props="props">
+          <q-td key="provider" :props="props" auto-width>
             <q-avatar class="provider-logo">
               <q-icon :name="`img:statics/providers/${props.row.provider}.svg`" />
             </q-avatar>
@@ -88,7 +97,7 @@ export default {
   },
   data () {
     return {
-      visibleColumnsHttpRouters: ['status', 'rule', 'entryPoints', 'name', 'tls', 'provider'],
+      visibleColumnsHttpRouters: ['status', 'rule', 'entryPoints', 'name', 'service', 'tls', 'provider'],
       visibleColumnsHttpServices: ['status', 'name', 'type', 'servers', 'provider'],
       visibleColumnsHttpMiddlewares: ['status', 'name', 'type', 'provider'],
       visibleColumns: ['status', 'name', 'provider'],
@@ -99,6 +108,12 @@ export default {
           label: 'Status',
           align: 'left',
           field: row => row.status
+        },
+        {
+          name: 'tls',
+          align: 'left',
+          label: 'TLS',
+          field: row => row
         },
         {
           name: 'rule',
@@ -131,14 +146,14 @@ export default {
           field: row => row.servers
         },
         {
-          name: 'tls',
-          align: 'right',
-          label: 'TLS',
-          field: row => row
+          name: 'service',
+          align: 'left',
+          label: 'Service',
+          field: row => row.service
         },
         {
           name: 'provider',
-          align: 'right',
+          align: 'center',
           label: 'Provider',
           field: row => row.provider
         }
