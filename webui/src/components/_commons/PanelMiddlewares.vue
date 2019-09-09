@@ -39,6 +39,72 @@
             </div>
           </div>
         </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - users -->
+        <q-card-section v-if="exData(middleware).users">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">USERS</div>
+              <q-chip
+                v-for="(user, key) in exData(middleware).users" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ user }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - usersFile -->
+        <q-card-section v-if="exData(middleware).usersFile">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Users File</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).usersFile }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - realm -->
+        <q-card-section v-if="exData(middleware).realm">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Realm</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-warning">
+                {{ exData(middleware).realm }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - removeHeader -->
+        <q-card-section v-if="middleware.basicAuth || middleware.digestAuth">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Remove Header</div>
+              <boolean-state :value="exData(middleware).removeHeader"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - headerField -->
+        <q-card-section v-if="exData(middleware).headerField">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Header Field</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-warning">
+                {{ exData(middleware).headerField }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
         <!-- EXTRA FIELDS FROM MIDDLEWARES - prefix -->
         <q-card-section v-if="exData(middleware).prefix">
           <div class="row items-start no-wrap">
