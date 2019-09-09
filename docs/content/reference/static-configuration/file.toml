@@ -96,6 +96,7 @@
     labelSelector = "foobar"
     ingressClass = "foobar"
   [providers.rest]
+    insecure = true
   [providers.rancher]
     constraints = "foobar"
     watch = true
@@ -107,6 +108,7 @@
     prefix = "foobar"
 
 [api]
+  insecure = true
   dashboard = true
   debug = true
 
@@ -115,6 +117,7 @@
     buckets = [42.0, 42.0]
     addEntryPointsLabels = true
     addServicesLabels = true
+    entryPoint = "foobar"
   [metrics.datadog]
     address = "foobar"
     pushInterval = "10s"
@@ -137,6 +140,7 @@
     addServicesLabels = true
 
 [ping]
+  entryPoint = "foobar"
 
 [log]
   level = "foobar"

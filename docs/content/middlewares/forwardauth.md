@@ -206,7 +206,7 @@ The `tls` option is the TLS configuration from Traefik to the authentication ser
 
 #### `tls.ca`
 
-TODO
+TODO add description.
 
 ```yaml tab="Docker"
 labels:
@@ -266,7 +266,7 @@ http:
 
 #### `tls.caOptional`
 
-TODO
+TODO add description.
 
 ```yaml tab="Docker"
 labels:
@@ -316,7 +316,7 @@ http:
 
 #### `tls.cert`
 
-TODO
+TODO add description.
 
 ```yaml tab="Docker"
 labels:
@@ -385,7 +385,7 @@ http:
 
 #### `tls.key`
 
-TODO
+TODO add description.
 
 ```yaml tab="Docker"
 labels:
@@ -454,7 +454,7 @@ http:
 
 #### `tls.insecureSkipVerify`
 
-TODO
+TODO add description.
 
 ```yaml tab="Docker"
 labels:

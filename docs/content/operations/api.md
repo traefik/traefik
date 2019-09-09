@@ -1,8 +1,5 @@
 # API
 
-!!! important
-    In the RC version, you can't configure middlewares (basic authentication or white listing) anymore, but as security is important, this will change before the GA version.
-
 Traefik exposes a number of information through an API handler, such as the configuration of all routers, services, middlewares, etc.
 
 As with all features of Traefik, this handler can be enabled with the [static configuration](../getting-started/configuration-overview.md#the-static-configuration).
@@ -22,10 +19,9 @@ would be to apply the following protection mechanisms:
   keeping it restricted to internal networks
   (as in the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), applied to networks).
 
-!!! important
-    In the beta version, you can't configure middlewares (basic authentication or white listing) anymore, but as security is important, this will change before the RC version.
-
 ## Configuration
+
+If you enable the API, a new special `service` named `api@internal` is created and then can be reference in a router.
 
 To enable the API handler:
 
@@ -39,6 +35,83 @@ api: {}
 
 ```bash tab="CLI"
 --api=true
+```
+
+And then you will able to reference it like this.
+
+```yaml tab="Docker"
+  - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+  - "traefik.http.routers.api.service=api@internal"
+  - "traefik.http.routers.api.middlewares=auth"
+  - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.routers.api.rule": "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+  "traefik.http.routers.api.service": "api@internal"
+  "traefik.http.routers.api.middlewares": "auth"
+  "traefik.http.middlewares.auth.basicauth.users": "test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+}
+```
+
+```yaml tab="Rancher"
+# Declaring the user list
+labels:
+  - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+    - "traefik.http.routers.api.service=api@internal"
+    - "traefik.http.routers.api.middlewares=auth"
+    - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+```
+
+```toml tab="File (TOML)"
+[http.routers.my-api]
+    rule="PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+    service="api@internal"
+    middlewares=["auth"]
+
+[http.middlewares.auth.basicAuth]
+    users = [
+        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
+        "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+      ]
+```
+
+```yaml tab="File (YAML)"
+http:
+  routers:
+    api:
+      rule: PathPrefix(`/api`) || PathPrefix(`/dashboard`)
+      service: api@internal
+      middlewares:
+        - auth
+  middlewares:
+    auth:
+      basicAuth:
+        users:
+        - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" 
+        - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+```
+
+### `insecure`
+
+Enable the API in `insecure` mode, which means that the API will be available directly on the entryPoint named `traefik`.
+
+!!! Note
+    If the entryPoint named `traefik` is not configured, it will be automatically created on port 8080.
+
+```toml tab="File (TOML)"
+[api]
+  insecure = true
+```
+
+```yaml tab="File (YAML)"
+api:
+  insecure: true
+```
+
+```bash tab="CLI"
+--api.insecure=true
 ```
 
 ### `dashboard`

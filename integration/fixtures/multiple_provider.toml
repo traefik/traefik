@@ -10,6 +10,7 @@
     address = ":8000"
 
 [api]
+  insecure = true
 
 [providers]
   [providers.docker]

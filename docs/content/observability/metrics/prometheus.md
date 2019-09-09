@@ -85,3 +85,34 @@ metrics:
 ```bash tab="CLI"
 --metrics.prometheus.addServicesLabels=true
 ```
+
+#### `entryPoint`
+
+_Optional, Default=traefik_
+
+Entry point used to expose metrics.
+
+```toml tab="File (TOML)"
+[entryPoints]
+  [entryPoints.metrics]
+    address = ":8082"
+
+[metrics]
+  [metrics.prometheus]
+    entryPoint = "metrics"
+```
+
+```yaml tab="File (YAML)"
+entryPoints:
+  metrics:
+    address: ":8082"
+
+metrics:
+  prometheus:
+    entryPoint: metrics
+```
+
+```bash tab="CLI"
+--entryPoints.metrics.address=":8082"
+--metrics.prometheus..entryPoint="metrics"
+```

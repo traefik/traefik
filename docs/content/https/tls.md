@@ -141,17 +141,17 @@ tls:
 
 ### Client Authentication (mTLS)
 
-Traefik supports mutual authentication, through the `ClientAuth` section.
+Traefik supports mutual authentication, through the `clientAuth` section.
 
-For authentication policies that require verification of the client certificate, the certificate authority for the certificate should be set in `ClientAuth.caFiles`.
+For authentication policies that require verification of the client certificate, the certificate authority for the certificate should be set in `clientAuth.caFiles`.
  
-The `ClientAuth.clientAuthType` option governs the behaviour as follows:
+The `clientAuth.clientAuthType` option governs the behaviour as follows:
 
 - `NoClientCert`: disregards any client certificate.
 - `RequestClientCert`: asks for a certificate but proceeds anyway if none is provided.
-- `RequireAnyClientCert`: requires a certificate but does not verify if it is signed by a CA listed in `ClientAuth.caFiles`.
-- `VerifyClientCertIfGiven`: if a certificate is provided, verifies if it is signed by a CA listed in `ClientAuth.caFiles`. Otherwise proceeds without any certificate.
-- `RequireAndVerifyClientCert`: requires a certificate, which must be signed by a CA listed in `ClientAuth.caFiles`. 
+- `RequireAnyClientCert`: requires a certificate but does not verify if it is signed by a CA listed in `clientAuth.caFiles`.
+- `VerifyClientCertIfGiven`: if a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles`. Otherwise proceeds without any certificate.
+- `RequireAndVerifyClientCert`: requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles`. 
 
 ```toml tab="TOML"
 [tls.options]

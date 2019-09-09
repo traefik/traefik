@@ -31,6 +31,7 @@
 {{end}}
 
 [api]
+  insecure = true
 
 [providers.file]
   filename = "{{ .SelfFilename }}"

@@ -11,6 +11,7 @@ RegexRedirect redirect a request from an url to another with regex matching and 
 
 ```yaml tab="Docker"
 # Redirect with domain replacement
+# Note: all dollar signs need to be doubled for escaping.
 labels:
 - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
 - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
@@ -37,9 +38,10 @@ spec:
 
 ```yaml tab="Rancher"
 # Redirect with domain replacement
+# Note: all dollar signs need to be doubled for escaping.
 labels:
 - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/${1}"
+- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
 ```
 
 ```toml tab="File (TOML)"

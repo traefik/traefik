@@ -12,6 +12,7 @@
     address = ":9090"
 
 [api]
+  insecure = true
 
 [providers]
   [providers.marathon]

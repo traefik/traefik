@@ -398,36 +398,115 @@ when waiting for the first response header from a Marathon master.
 
 Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration), or directly as a number of seconds.
 
-### `TLS`
+### `tls`
 
 _Optional_
 
+#### `tls.ca`
+
+TODO add description.
+
 ```toml tab="File (TOML)"
 [providers.marathon.tls]
-  ca = "/etc/ssl/ca.crt"
-  cert = "/etc/ssl/marathon.cert"
-  key = "/etc/ssl/marathon.key"
+  ca = "path/to/ca.crt"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    tls:
+      ca: path/to/ca.crt
+```
+
+```bash tab="CLI"
+--providers.marathon.tls.ca=path/to/ca.crt
+```
+
+#### `tls.caOptional`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.marathon.tls]
+  caOptional = true
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    tls:
+      caOptional: true
+```
+
+```bash tab="CLI"
+--providers.marathon.tls.caOptional=true
+```
+
+#### `tls.cert`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.marathon.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    tls:
+      cert: path/to/foo.cert
+      key: path/to/foo.key
+```
+
+```bash tab="CLI"
+--providers.marathon.tls.cert=path/to/foo.cert
+--providers.marathon.tls.key=path/to/foo.key
+```
+
+#### `tls.key`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.marathon.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  marathon:
+    tls:
+      cert: path/to/foo.cert
+      key: path/to/foo.key
+```
+
+```bash tab="CLI"
+--providers.marathon.tls.cert=path/to/foo.cert
+--providers.marathon.tls.key=path/to/foo.key
+```
+
+#### `tls.insecureSkipVerify`
+
+TODO add description.
+
+```toml tab="File (TOML)"
+[providers.marathon.tls]
   insecureSkipVerify = true
 ```
 
 ```yaml tab="File (YAML)"
 providers:
-  marathon
+  marathon:
     tls:
-      ca: "/etc/ssl/ca.crt"
-      cert: "/etc/ssl/marathon.cert"
-      key: "/etc/ssl/marathon.key"
-      insecureSkipVerify:  true
+      insecureSkipVerify: true
 ```
 
 ```bash tab="CLI"
---providers.marathon.tls.ca="/etc/ssl/ca.crt"
---providers.marathon.tls.cert="/etc/ssl/marathon.cert"
---providers.marathon.tls.key="/etc/ssl/marathon.key"
---providers.marathon.tls.insecureskipverify=true
+--providers.marathon.tls.insecureSkipVerify=true
 ```
-
-TLS client configuration. [tls/#Config](https://golang.org/pkg/crypto/tls/#Config).
 
 ### `tlsHandshakeTimeout`
 

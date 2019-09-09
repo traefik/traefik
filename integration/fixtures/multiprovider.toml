@@ -6,6 +6,7 @@
   level = "DEBUG"
 
 [api]
+  insecure = true
 
 [entryPoints]
   [entryPoints.web]
@@ -13,6 +14,7 @@
 
 [providers]
   [providers.rest]
+    insecure = true
 
   [providers.file]
     filename = "{{ .SelfFilename }}"

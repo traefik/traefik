@@ -6,6 +6,7 @@
   level = "DEBUG"
 
 [api]
+  insecure = true
 
 [entryPoints]
   [entryPoints.web]

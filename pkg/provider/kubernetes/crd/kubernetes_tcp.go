@@ -80,6 +80,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				conf.Routers[serviceName].TLS = &dynamic.RouterTCPTLSConfig{
 					Passthrough:  ingressRouteTCP.Spec.TLS.Passthrough,
 					CertResolver: ingressRouteTCP.Spec.TLS.CertResolver,
+					Domains:      ingressRouteTCP.Spec.TLS.Domains,
 				}
 
 				if ingressRouteTCP.Spec.TLS.Options != nil && len(ingressRouteTCP.Spec.TLS.Options.Name) > 0 {
