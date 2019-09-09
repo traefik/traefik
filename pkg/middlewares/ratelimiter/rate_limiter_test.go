@@ -196,7 +196,7 @@ func TestRateLimit(t *testing.T) {
 			// Allow for a 2% leeway
 			maxCount := wantCount * 102 / 100
 			// With very high CPU loads,
-			// we can expect some extra delay in addition to the  rate limiting we already do,
+			// we can expect some extra delay in addition to the rate limiting we already do,
 			// so we allow for some extra leeway there.
 			// Feel free to adjust wrt to the load on e.g. the CI.
 			minCount := wantCount * 95 / 100
