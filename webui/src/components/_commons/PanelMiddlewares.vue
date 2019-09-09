@@ -39,7 +39,22 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - users -->
+        <!-- ERROR -->
+        <q-card-section v-if="middleware.error">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">ERRORS</div>
+              <q-chip
+                v-for="(errorMsg, index) in middleware.error" :key="index"
+                outline
+                class="app-chip app-chip-error">
+                {{ errorMsg }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [basicAuth & digestAuth] - users -->
         <q-card-section v-if="exData(middleware).users">
           <div class="row items-start no-wrap">
             <div class="col">
@@ -54,7 +69,7 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - usersFile -->
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [basicAuth & digestAuth] - usersFile -->
         <q-card-section v-if="exData(middleware).usersFile">
           <div class="row items-start no-wrap">
             <div class="col">
@@ -68,7 +83,7 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - realm -->
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [basicAuth & digestAuth] - realm -->
         <q-card-section v-if="exData(middleware).realm">
           <div class="row items-start no-wrap">
             <div class="col">
@@ -82,7 +97,7 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - removeHeader -->
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [basicAuth & digestAuth] - removeHeader -->
         <q-card-section v-if="middleware.basicAuth || middleware.digestAuth">
           <div class="row items-start no-wrap">
             <div class="col">
@@ -91,7 +106,7 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - headerField -->
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [basicAuth & digestAuth] - headerField -->
         <q-card-section v-if="exData(middleware).headerField">
           <div class="row items-start no-wrap">
             <div class="col">
@@ -105,7 +120,8 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - chain -->
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [chain] - middlewares -->
         <q-card-section v-if="middleware.chain">
           <div class="row items-start no-wrap">
             <div class="col">
@@ -120,8 +136,182 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - prefix -->
-        <q-card-section v-if="exData(middleware).prefix">
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [buffering] - xxxRequestBodyBytes -->
+        <q-card-section v-if="exData(middleware).maxRequestBodyBytes || exData(middleware).memRequestBodyBytes">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Max Request Body Bytes</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).maxRequestBodyBytes }}
+              </q-chip>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Mem Request Body Bytes</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).memRequestBodyBytes }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [buffering] - xxxResponseBodyBytes -->
+        <q-card-section v-if="exData(middleware).maxResponseBodyBytes || exData(middleware).memResponseBodyBytes">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Max Response Body Bytes</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).maxResponseBodyBytes }}
+              </q-chip>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Mem Response Body Bytes</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).memResponseBodyBytes }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [buffering] - retryExpression -->
+        <q-card-section v-if="exData(middleware).retryExpression">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Retry Expression</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).retryExpression }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [circuitBreaker] - expression -->
+        <q-card-section v-if="middleware.circuitBreaker">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Expression</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).expression }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [compress] - compress -->
+        <q-card-section v-if="middleware.compress">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Compress</div>
+              <boolean-state :value="!!middleware.compress"/>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [errors] - service -->
+        <q-card-section v-if="middleware.errors">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Service</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).service }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [errors] - query -->
+        <q-card-section v-if="middleware.errors">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Query</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).query }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [errors] - status -->
+        <q-card-section v-if="middleware.errors">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Status</div>
+              <q-chip
+                v-for="(st, key) in exData(middleware).status" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ st }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [forwardAuth] - address -->
+        <q-card-section v-if="middleware.forwardAuth">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Address</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ exData(middleware).address }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [forwardAuth] - trustForwardHeader && tls -->
+        <q-card-section v-if="middleware.forwardAuth">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">TLS</div>
+              <boolean-state :value="!!exData(middleware).tls"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Trust Forward Headers</div>
+              <boolean-state :value="exData(middleware).trustForwardHeader"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [forwardAuth] - authResponseHeaders -->
+        <q-card-section v-if="middleware.forwardAuth">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Auth Response Headers</div>
+              <q-chip
+                v-for="(respHeader, key) in exData(middleware).authResponseHeaders" :key="key"
+                outline
+                dense
+                class="app-chip app-chip-green">
+                {{ respHeader }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [addPrefix] - prefix -->
+        <q-card-section v-if="middleware.addPrefix">
           <div class="row items-start no-wrap">
             <div class="col">
               <div class="text-subtitle2">PREFIX</div>
@@ -134,6 +324,7 @@
             </div>
           </div>
         </q-card-section>
+
         <!-- EXTRA FIELDS FROM MIDDLEWARES - amount -->
         <q-card-section v-if="exData(middleware).amount">
           <div class="row items-start no-wrap">
@@ -203,20 +394,7 @@
             </div>
           </div>
         </q-card-section>
-        <!-- ERROR -->
-        <q-card-section v-if="middleware.error">
-          <div class="row items-start no-wrap">
-            <div class="col">
-              <div class="text-subtitle2">ERRORS</div>
-              <q-chip
-                v-for="(errorMsg, index) in middleware.error" :key="index"
-                outline
-                class="app-chip app-chip-error">
-                {{ errorMsg }}
-              </q-chip>
-            </div>
-          </div>
-        </q-card-section>
+
         <q-separator v-if="(index+1) < data.length" inset />
       </div>
     </q-scroll-area>
