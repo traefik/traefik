@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	stdlog "log"
 	"net"
 	"net/http"
 	"sync"
@@ -16,9 +17,12 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/forwardedheaders"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tcp"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
+
+var httpServerLogger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "", 0)
 
 type httpForwarder struct {
 	net.Listener
@@ -352,7 +356,8 @@ func createHTTPServer(ln net.Listener, configuration *static.EntryPoint, withH2c
 	}
 
 	serverHTTP := &http.Server{
-		Handler: handler,
+		Handler:  handler,
+		ErrorLog: httpServerLogger,
 	}
 
 	listener := newHTTPForwarder(ln)
