@@ -4,11 +4,13 @@
       <q-card-section>
         <div class="row items-start no-wrap">
           <div class="col">
-            <div class="text-subtitle2">STATUS</div>
-            <div class="block-right-text">
-              <avatar-state :state="data.status | status "/>
-              <div v-bind:class="['block-right-text-label', `block-right-text-label-${data.status}`]">{{data.status | statusLabel}}</div>
-            </div>
+            <div class="text-subtitle2">TYPE</div>
+            <q-chip
+              outline
+              dense
+              class="app-chip app-chip-entry-points">
+              {{ data.type }}
+            </q-chip>
           </div>
           <div class="col">
             <div class="text-subtitle2">PROVIDER</div>
@@ -21,47 +23,26 @@
           </div>
         </div>
       </q-card-section>
-      <q-card-section v-if="data.type || data.strategy">
+      <q-card-section>
         <div class="row items-start no-wrap">
-          <div class="col" v-if="data.type">
-            <div class="text-subtitle2">TYPE</div>
-            <q-chip
-              outline
-              dense
-              class="app-chip app-chip-entry-points">
-              {{ data.type }}
-            </q-chip>
+          <div class="col">
+            <div class="text-subtitle2">STATUS</div>
+            <div class="block-right-text">
+              <avatar-state :state="data.status | status "/>
+              <div v-bind:class="['block-right-text-label', `block-right-text-label-${data.status}`]">{{data.status | statusLabel}}</div>
+            </div>
           </div>
-          <div class="col" v-if="data.mirroring && data.mirroring.service">
+        </div>
+      </q-card-section>
+      <q-card-section>
+        <div class="row items-start no-wrap">
+          <div class="col" v-if="data.mirroring">
             <div class="text-subtitle2">Main Service</div>
             <q-chip
               outline
               dense
               class="app-chip app-chip-name">
               {{ data.mirroring.service }}
-            </q-chip>
-          </div>
-          <div class="col" v-if="data.strategy">
-            <div class="text-subtitle2">STRATEGY</div>
-            <q-chip
-              outline
-              dense
-              class="app-chip app-chip-name">
-              {{ data.strategy }}
-            </q-chip>
-          </div>
-        </div>
-
-      </q-card-section>
-      <q-card-section v-if="data.name">
-        <div class="row items-start no-wrap">
-          <div class="col" v-if="data.name">
-            <div class="text-subtitle2">NAME</div>
-            <q-chip
-              outline
-              dense
-              class="app-chip app-chip-service">
-              {{ data.name }}
             </q-chip>
           </div>
         </div>
@@ -75,14 +56,15 @@
         </div>
       </q-card-section>
 
-      <q-separator v-if="data.weighted" />
-      <q-card-section v-if="data.weighted" >
+      <q-separator v-if="data.weighted && data.weighted.sticky" />
+      <q-card-section v-if="data.weighted && data.weighted.sticky" >
         <div class="row items-start no-wrap">
           <div class="text-subtitle1">Sticky: Cookie</div>
         </div>
-        <br/>
+      </q-card-section>
+      <q-card-section v-if="data.weighted && data.weighted.sticky" >
         <div class="row items-start no-wrap">
-          <div class="col" v-if="data.type">
+          <div class="col" v-if="data.weighted.sticky.cookie && data.weighted.sticky.cookie.name">
             <div class="text-subtitle2">NAME</div>
             <q-chip
               outline
@@ -91,9 +73,9 @@
               {{ data.weighted.sticky.cookie.name }}
             </q-chip>
           </div>
-          </div>
+        </div>
       </q-card-section>
-      <q-card-section v-if="data.weighted" >
+      <q-card-section v-if="data.weighted && data.weighted.sticky" >
         <div class="row items-start no-wrap">
           <div class="col">
             <div class="text-subtitle2">SECURE</div>
