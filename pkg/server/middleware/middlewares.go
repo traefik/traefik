@@ -141,6 +141,12 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		if middleware != nil {
 			return nil, badConf
 		}
+
+		qualifiedNames := make([]string, len(config.Chain.Middlewares))
+		for i, name := range config.Chain.Middlewares {
+			qualifiedNames[i] = internal.GetQualifiedName(ctx, name)
+		}
+		config.Chain.Middlewares = qualifiedNames
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return chain.New(ctx, next, *config.Chain, b, middlewareName)
 		}

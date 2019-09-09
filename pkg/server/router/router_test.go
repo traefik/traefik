@@ -725,6 +725,57 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 }
 
+func TestProviderOnMiddlewares(t *testing.T) {
+	entryPoints := []string{"web"}
+
+	rtConf := runtime.NewConfig(dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Services: map[string]*dynamic.Service{
+				"test@file": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{},
+					},
+				},
+			},
+			Routers: map[string]*dynamic.Router{
+				"router@file": {
+					Rule:        "Host(`test`)",
+					Service:     "test@file",
+					Middlewares: []string{"chain@file", "m1"},
+				},
+				"router@docker": {
+					Rule:        "Host(`test`)",
+					Service:     "test@file",
+					Middlewares: []string{"chain", "m1@file"},
+				},
+			},
+			Middlewares: map[string]*dynamic.Middleware{
+				"chain@file": {
+					Chain: &dynamic.Chain{Middlewares: []string{"m1", "m2", "m1@file"}},
+				},
+				"chain@docker": {
+					Chain: &dynamic.Chain{Middlewares: []string{"m1", "m2", "m1@file"}},
+				},
+				"m1@file":   {AddPrefix: &dynamic.AddPrefix{Prefix: "/m1"}},
+				"m2@file":   {AddPrefix: &dynamic.AddPrefix{Prefix: "/m2"}},
+				"m1@docker": {AddPrefix: &dynamic.AddPrefix{Prefix: "/m1"}},
+				"m2@docker": {AddPrefix: &dynamic.AddPrefix{Prefix: "/m2"}},
+			},
+		},
+	})
+	serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil, nil, nil)
+	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+	responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
+
+	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
+
+	assert.Equal(t, []string{"chain@file", "m1@file"}, rtConf.Routers["router@file"].Middlewares)
+	assert.Equal(t, []string{"m1@file", "m2@file", "m1@file"}, rtConf.Middlewares["chain@file"].Chain.Middlewares)
+	assert.Equal(t, []string{"chain@docker", "m1@file"}, rtConf.Routers["router@docker"].Middlewares)
+	assert.Equal(t, []string{"m1@docker", "m2@docker", "m1@file"}, rtConf.Middlewares["chain@docker"].Chain.Middlewares)
+}
+
 type staticTransport struct {
 	res *http.Response
 }
