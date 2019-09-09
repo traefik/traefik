@@ -68,7 +68,10 @@
               {{ data.weighted.sticky.cookie.name }}
             </q-chip>
           </div>
-
+          </div>
+      </q-card-section>
+      <q-card-section v-if="data.weighted" >
+        <div class="row items-start no-wrap">
           <div class="col">
             <div class="text-subtitle2">SECURE</div>
             <boolean-state :value="data.weighted.sticky.cookie.secure"/>
