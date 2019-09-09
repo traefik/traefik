@@ -32,6 +32,15 @@
               {{ data.type }}
             </q-chip>
           </div>
+          <div class="col" v-if="data.mirroring && data.mirroring.service">
+            <div class="text-subtitle2">Main Service</div>
+            <q-chip
+              outline
+              dense
+              class="app-chip app-chip-name">
+              {{ data.mirroring.service }}
+            </q-chip>
+          </div>
           <div class="col" v-if="data.strategy">
             <div class="text-subtitle2">STRATEGY</div>
             <q-chip
