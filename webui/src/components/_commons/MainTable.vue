@@ -60,6 +60,9 @@
           <q-td key="servers" :props="props">
             <span class="servers-label">{{ props.row | servers }}</span>
           </q-td>
+          <q-td key="tls" :props="props">
+            <t-l-s-state :is-t-l-s="props.row.tls"/>
+          </q-td>
           <q-td key="provider" :props="props">
             <q-avatar class="provider-logo">
               <q-icon :name="`img:statics/providers/${props.row.provider}.svg`" />
@@ -74,16 +77,18 @@
 
 <script>
 import AvatarState from './AvatarState'
+import TLSState from './TLSState'
 
 export default {
   name: 'MainTable',
   props: ['data', 'request', 'loading', 'pagination', 'filter', 'type'],
   components: {
+    TLSState,
     AvatarState
   },
   data () {
     return {
-      visibleColumnsHttpRouters: ['status', 'rule', 'entryPoints', 'name', 'provider'],
+      visibleColumnsHttpRouters: ['status', 'rule', 'entryPoints', 'name', 'tls', 'provider'],
       visibleColumnsHttpServices: ['status', 'name', 'type', 'servers', 'provider'],
       visibleColumnsHttpMiddlewares: ['status', 'name', 'type', 'provider'],
       visibleColumns: ['status', 'name', 'provider'],
@@ -124,6 +129,12 @@ export default {
           align: 'right',
           label: 'Servers',
           field: row => row.servers
+        },
+        {
+          name: 'tls',
+          align: 'right',
+          label: 'TLS',
+          field: row => row
         },
         {
           name: 'provider',
