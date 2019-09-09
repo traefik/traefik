@@ -5,6 +5,7 @@
         <q-card-section v-if="!isDense" class="app-title">
           <div class="app-title-label text-capitalize">{{middleware.type}}</div>
         </q-card-section>
+        <!-- COMMON FIELDS -->
         <q-card-section>
           <div class="row items-start no-wrap">
             <div class="col">
@@ -32,22 +33,106 @@
               <q-chip
                 outline
                 dense
-                class="app-chip app-chip-name">
+                class="app-chip app-chip-purple">
                 {{ middleware.name }}
               </q-chip>
             </div>
           </div>
         </q-card-section>
-        <!-- TODO - EXTRA FIELDS TO MIDDLEWARES TYPES -->
-        <q-card-section v-if="middleware.service">
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - prefix -->
+        <q-card-section v-if="exData(middleware).prefix">
           <div class="row items-start no-wrap">
             <div class="col">
-              <div class="text-subtitle2">SERVICE</div>
+              <div class="text-subtitle2">PREFIX</div>
               <q-chip
                 outline
                 dense
-                class="app-chip app-chip-service">
-                {{ middleware.service }}
+                class="app-chip app-chip-warning">
+                {{ exData(middleware).prefix }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - amount -->
+        <q-card-section v-if="exData(middleware).amount">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">AMOUNT</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-warning">
+                {{ exData(middleware).amount }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - ipStrategy -->
+        <q-card-section v-if="exData(middleware).sourceCriterion && exData(middleware).sourceCriterion.ipStrategy">
+          <div class="row items-start">
+            <div class="col-12">
+              <div class="text-subtitle2">IP STRATEGY</div>
+            </div>
+            <div v-if="exData(middleware).sourceCriterion.ipStrategy.depth" class="col-12">
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-warning">
+                Depth: {{ exData(middleware).sourceCriterion.ipStrategy.depth }}
+              </q-chip>
+            </div>
+            <div v-if="exData(middleware).sourceCriterion.ipStrategy.excludedIPs" class="col-12">
+              <div class="flex">
+                <q-chip
+                  outline
+                  dense
+                  class="app-chip app-chip-accent">
+                  Excluded IPs:
+                </q-chip>
+                <q-chip
+                  v-for="(excludedIPs, key) in exData(middleware).sourceCriterion.ipStrategy.excludedIPs" :key="key"
+                  outline
+                  dense
+                  class="app-chip app-chip-green">
+                  {{ excludedIPs }}
+                </q-chip>
+              </div>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - requestHeaderName, requestHost -->
+        <q-card-section v-if="exData(middleware) && exData(middleware).sourceCriterion">
+          <div class="row items-start no-wrap">
+            <div v-if="exData(middleware).sourceCriterion.requestHeaderName" class="col">
+              <div class="text-subtitle2">REQUEST HEADER NAME</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-warning">
+                {{ exData(middleware).sourceCriterion.requestHeaderName }}
+              </q-chip>
+            </div>
+            <div v-if="exData(middleware).sourceCriterion.requestHost" class="col">
+              <div class="text-subtitle2">REQUEST HOST</div>
+              <q-chip
+                outline
+                dense
+                class="app-chip app-chip-warning">
+                {{ exData(middleware).sourceCriterion.requestHost }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- ERROR -->
+        <q-card-section v-if="middleware.error">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">ERRORS</div>
+              <q-chip
+                v-for="(errorMsg, index) in middleware.error" :key="index"
+                outline
+                class="app-chip app-chip-error">
+                {{ errorMsg }}
               </q-chip>
             </div>
           </div>
@@ -84,7 +169,15 @@ export default {
     }
   },
   methods: {
-
+    exData (item) {
+      let exData = {}
+      for (const prop in item) {
+        if (prop.toLowerCase() === item.type && item.hasOwnProperty(prop)) {
+          exData = item[prop]
+        }
+      }
+      return exData
+    }
   },
   filters: {
     status (value) {
@@ -160,6 +253,19 @@ export default {
       letter-spacing: 2px;
       font-weight: 600;
       text-transform: uppercase;
+    }
+
+    .app-chip {
+      &-error {
+        display: flex;
+        height: 100%;
+        flex-wrap: wrap;
+        border-width: 0;
+        margin-bottom: 8px;
+        /deep/ .q-chip__content{
+          white-space: normal;
+        }
+      }
     }
 
     .provider-logo {

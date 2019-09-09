@@ -64,6 +64,10 @@ body {
   &-label {
     font-size: inherit;
     font-weight: inherit;
+    &-sub {
+      font-size: 16px;
+      font-weight: 600;
+    }
   }
   .q-icon + &-label {
     margin-left: 8px;
@@ -124,37 +128,37 @@ body {
       white-space: normal;
     }
   }
-  &-rule {
+  &-accent, &-rule {
     color: $accent;
     border: solid 1px $accent;
     background-color: rgba($accent, 0.1);
   }
-  &-entry-points {
+  &-green, &-entry-points {
     color: $app-text-green;
     border: solid 1px $app-text-green;
     background-color: rgba($app-text-green, 0.1);
   }
-  &-name {
+  &-purple, &-name {
     color: $app-text-purple;
     border: solid 1px $app-text-purple;
     background-color: rgba($app-text-purple, 0.1);
   }
-  &-service {
+  &-warning, &-service {
     color: $warning;
     border: solid 1px $warning;
     background-color: rgba($warning, 0.1);
   }
-  &-error {
+  &-negative, &-error {
     color: $negative;
     border: solid 1px $negative;
     background-color: rgba($negative, 0.1);
   }
-  &-options {
+  &-green-2, &-options {
     color: $app-text-green-2;
     border: solid 1px $app-text-green-2;
     background-color: rgba($app-text-green-2, 0.1);
   }
-  &-interval {
+  &-marine, &-interval {
     color: $app-text-marine;
     border: solid 1px $app-text-marine;
     background-color: rgba($app-text-grey, 0.1);
