@@ -6,8 +6,10 @@ metadata:
 
 spec:
   errors:
-    status: [ "404", "500" ]
-    query: "query"
+    status:
+    - "404"
+    - "500"
+    query: query
     service:
       name: whoami
       port: 80
