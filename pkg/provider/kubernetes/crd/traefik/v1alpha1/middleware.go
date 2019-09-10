@@ -28,7 +28,7 @@ type MiddlewareSpec struct {
 	Chain             *Chain                     `json:"chain,omitempty"`
 	IPWhiteList       *dynamic.IPWhiteList       `json:"ipWhiteList,omitempty"`
 	Headers           *dynamic.Headers           `json:"headers,omitempty"`
-	Errors            *dynamic.ErrorPage         `json:"errors,omitempty"`
+	Errors            *ErrorPage                 `json:"errors,omitempty"`
 	RateLimit         *dynamic.RateLimit         `json:"rateLimit,omitempty"`
 	RedirectRegex     *dynamic.RedirectRegex     `json:"redirectRegex,omitempty"`
 	RedirectScheme    *dynamic.RedirectScheme    `json:"redirectScheme,omitempty"`
@@ -41,6 +41,15 @@ type MiddlewareSpec struct {
 	Compress          *dynamic.Compress          `json:"compress,omitempty"`
 	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
 	Retry             *dynamic.Retry             `json:"retry,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ErrorPage holds the custom error page configuration.
+type ErrorPage struct {
+	Status  []string `json:"status,omitempty"`
+	Service Service  `json:"service,omitempty"`
+	Query   string   `json:"query,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
