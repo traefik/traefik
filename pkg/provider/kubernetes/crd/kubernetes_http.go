@@ -64,7 +64,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			serviceName := makeID(ingressRoute.Namespace, key)
 
 			for _, service := range route.Services {
-				balancerServerHTTP, err := createLoadBalancerServerHTTP(client, ingressRoute, service)
+				balancerServerHTTP, err := createLoadBalancerServerHTTP(client, ingressRoute.Namespace, service)
 				if err != nil {
 					logger.
 						WithField("serviceName", service.Name).
@@ -151,8 +151,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	return conf
 }
 
-func createLoadBalancerServerHTTP(client Client, ingressRoute *v1alpha1.IngressRoute, service v1alpha1.Service) (*dynamic.Service, error) {
-	servers, err := loadServers(client, ingressRoute.Namespace, service)
+func createLoadBalancerServerHTTP(client Client, namespace string, service v1alpha1.Service) (*dynamic.Service, error) {
+	servers, err := loadServers(client, namespace, service)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]dynam
 	}
 
 	if !exists {
-		return nil, errors.New("service not found")
+		return nil, fmt.Errorf("service not found %s/%s", namespace, svc.Name)
 	}
 
 	var portSpec *corev1.ServicePort

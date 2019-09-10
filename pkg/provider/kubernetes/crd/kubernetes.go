@@ -170,6 +170,18 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
+		errorPage, errorPageService, err := createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading error page middleware: %v", err)
+			continue
+		}
+
+		if errorPage != nil && errorPageService != nil {
+			serviceName := id + "-errorpage-service"
+			errorPage.Service = serviceName
+			conf.HTTP.Services[serviceName] = errorPageService
+		}
+
 		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
@@ -179,7 +191,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Chain:             createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain),
 			IPWhiteList:       middleware.Spec.IPWhiteList,
 			Headers:           middleware.Spec.Headers,
-			Errors:            middleware.Spec.Errors,
+			Errors:            errorPage,
 			RateLimit:         middleware.Spec.RateLimit,
 			RedirectRegex:     middleware.Spec.RedirectRegex,
 			RedirectScheme:    middleware.Spec.RedirectScheme,
@@ -197,6 +209,24 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	return conf
+}
+
+func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+	if errorPage == nil {
+		return nil, nil, nil
+	}
+
+	errorPageMiddleware := &dynamic.ErrorPage{
+		Status: errorPage.Status,
+		Query:  errorPage.Query,
+	}
+
+	balancerServerHTTP, err := createLoadBalancerServerHTTP(client, namespace, errorPage.Service)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return errorPageMiddleware, balancerServerHTTP, nil
 }
 
 func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
