@@ -1,5 +1,29 @@
 # Change Log
 
+## [v2.0.0-rc3](https://github.com/containous/traefik/tree/v2.0.0-rc3) (2019-09-10)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc2...v2.0.0-rc3)
+
+**Enhancements:**
+- **[acme,api,tracing]** New API security ([#5311](https://github.com/containous/traefik/pull/5311) by [juliens](https://github.com/juliens))
+- **[authentication,middleware,k8s,k8s/crd]** Auth middlewares in kubernetes CRD use secrets ([#5299](https://github.com/containous/traefik/pull/5299) by [juliens](https://github.com/juliens))
+- **[logs]** Default to CLF when accesslog format is unsupported ([#5314](https://github.com/containous/traefik/pull/5314) by [mpl](https://github.com/mpl))
+- **[middleware,k8s,k8s/crd]** k8s ErrorPage middleware now uses k8s service ([#5339](https://github.com/containous/traefik/pull/5339) by [juliens](https://github.com/juliens))
+- **[webui]** Add more pages in the WebUI ([#5278](https://github.com/containous/traefik/pull/5278) by [Basgrani](https://github.com/Basgrani))
+
+**Bug fixes:**
+- **[api]** Add provider in middleware chain ([#5334](https://github.com/containous/traefik/pull/5334) by [juliens](https://github.com/juliens))
+- **[k8s,k8s/crd]** fix: TLS domains with IngressRoute. ([#5327](https://github.com/containous/traefik/pull/5327) by [ldez](https://github.com/ldez))
+- **[middleware]** Improve rate limiter tests ([#5310](https://github.com/containous/traefik/pull/5310) by [mpl](https://github.com/mpl))
+- **[server]** Write HTTP server logs into the global logger. ([#5329](https://github.com/containous/traefik/pull/5329) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Misc documentation fixes ([#5307](https://github.com/containous/traefik/pull/5307) by [ldez](https://github.com/ldez))
+- misc documentation fixes ([#5302](https://github.com/containous/traefik/pull/5302) by [mpl](https://github.com/mpl))
+- Enhance the Retry Middleware Documentation ([#5298](https://github.com/containous/traefik/pull/5298) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
+**Misc:**
+- Cherry pick v1.7 into v2.0 ([#5341](https://github.com/containous/traefik/pull/5341) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.0.0-rc2](https://github.com/containous/traefik/tree/v2.0.0-rc2) (2019-09-03)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc1...v2.0.0-rc2)
 
