@@ -20,7 +20,6 @@
           <div class="row items-center no-wrap">
             <div class="col-6">
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-rule">
                 {{ service.name }}

@@ -52,7 +52,7 @@
               <div class="col-12 col-md-8">
                 <div class="row items-start q-col-gutter-md">
                   <div v-for="(middleware, index) in middlewares" :key="index" class="col-12">
-                    <panel-entry type="detail" name="Middleware" :address="middleware.type | capFirstLetter"/>
+                    <panel-entry type="detail" name="Middleware" :address="middleware.type"/>
                   </div>
                 </div>
               </div>

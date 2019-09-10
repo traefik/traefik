@@ -22,7 +22,6 @@
             </div>
             <div class="col-9">
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-rule">
                 {{ server.url || server.address}}

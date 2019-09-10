@@ -15,7 +15,7 @@
       table-header-class="table-header">
 
       <template v-slot:body="props">
-        <q-tr :props="props" class="cursor-pointer" @click.native="$router.push({ path: `/${getPath}/${props.row.name}/${getType(props.row)}`})">
+        <q-tr :props="props" class="cursor-pointer" @click.native="$router.push({ path: `/${getPath}/${props.row.name}`})">
           <q-td key="status" :props="props" auto-width>
             <avatar-state :state="props.row.status | status "/>
           </q-td>
@@ -25,7 +25,6 @@
           <q-td key="rule" :props="props">
             <q-chip
               v-if="props.row.rule"
-              outline
               dense
               class="app-chip app-chip-rule">
               {{ props.row.rule }}
@@ -35,7 +34,6 @@
             <div v-if="props.row.using">
               <q-chip
                 v-for="(entryPoints, index) in props.row.using" :key="index"
-                outline
                 dense
                 class="app-chip app-chip-entry-points">
                 {{ entryPoints }}
@@ -45,7 +43,6 @@
           <q-td key="name" :props="props">
             <q-chip
               v-if="props.row.name"
-              outline
               dense
               class="app-chip app-chip-name">
               {{ props.row.name }}
@@ -54,7 +51,6 @@
           <q-td key="type" :props="props">
             <q-chip
               v-if="props.row.type"
-              outline
               dense
               class="app-chip app-chip-entry-points">
               {{ props.row.type }}
@@ -66,7 +62,6 @@
           <q-td key="service" :props="props">
             <q-chip
               v-if="props.row.service"
-              outline
               dense
               class="app-chip app-chip-service">
               {{ props.row.service }}

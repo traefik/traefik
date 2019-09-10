@@ -6,7 +6,6 @@
           <div class="col">
             <div class="text-subtitle2">TYPE</div>
             <q-chip
-              outline
               dense
               class="app-chip app-chip-entry-points">
               {{ data.type }}
@@ -39,7 +38,6 @@
           <div class="col" v-if="data.mirroring">
             <div class="text-subtitle2">Main Service</div>
             <q-chip
-              outline
               dense
               class="app-chip app-chip-name">
               {{ data.mirroring.service }}
@@ -67,7 +65,6 @@
           <div class="col" v-if="data.weighted.sticky.cookie && data.weighted.sticky.cookie.name">
             <div class="text-subtitle2">NAME</div>
             <q-chip
-              outline
               dense
               class="app-chip app-chip-entry-points">
               {{ data.weighted.sticky.cookie.name }}

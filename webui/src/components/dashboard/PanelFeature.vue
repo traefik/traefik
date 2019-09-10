@@ -10,7 +10,6 @@
     <q-card-section>
       <div class="text-h3 text-center text-weight-bold">
         <q-chip
-          outline
           v-bind:class="['feature-chip', {'feature-chip-string':isString}, {'feature-chip-boolean':isBoolean}, {'feature-chip-boolean-true':isTrue}]">
           {{getVal}}
         </q-chip>

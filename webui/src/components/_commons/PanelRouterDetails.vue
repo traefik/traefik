@@ -26,7 +26,6 @@
           <div class="col">
             <div class="text-subtitle2">RULE</div>
             <q-chip
-              outline
               dense
               class="app-chip app-chip-rule">
               {{ data.rule }}
@@ -39,7 +38,6 @@
           <div class="col">
             <div class="text-subtitle2">NAME</div>
             <q-chip
-              outline
               dense
               class="app-chip app-chip-name">
               {{ data.name }}
@@ -53,7 +51,6 @@
             <div class="text-subtitle2">ENTRYPOINTS</div>
             <q-chip
               v-for="(entryPoint, index) in data.using" :key="index"
-              outline
               dense
               class="app-chip app-chip-entry-points">
               {{ entryPoint }}
@@ -66,7 +63,6 @@
           <div class="col">
             <div class="text-subtitle2">SERVICE</div>
             <q-chip
-              outline
               dense
               class="app-chip app-chip-service">
               {{ data.service }}
@@ -80,7 +76,6 @@
             <div class="text-subtitle2">ERRORS</div>
             <q-chip
               v-for="(errorMsg, index) in data.error" :key="index"
-              outline
               class="app-chip app-chip-error">
               {{ errorMsg }}
             </q-chip>

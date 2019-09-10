@@ -6,7 +6,6 @@
           <div class="col">
             <div class="text-subtitle2">OPTIONS</div>
             <q-chip
-              outline
               dense
               class="app-chip app-chip-options">
               {{ data.options }}
@@ -27,7 +26,6 @@
           <div class="col">
             <div class="text-subtitle2">CERTIFICATE RESOLVER</div>
             <q-chip
-              outline
               dense
               class="app-chip app-chip-service">
               {{ data.certResolver }}
@@ -41,14 +39,12 @@
             <div class="text-subtitle2">DOMAINS</div>
             <div v-for="(domain, key) in data.domains" :key="key" class="flex">
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-rule">
                 {{ domain.main }}
               </q-chip>
               <q-chip
                 v-for="(domain, key) in domain.sans" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-entry-points">
                 {{ domain }}

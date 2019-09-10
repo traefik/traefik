@@ -34,7 +34,7 @@ const routes = [
         }
       },
       {
-        path: 'routers/:name/:type',
+        path: 'routers/:name',
         name: 'httpRouterDetail',
         components: {
           default: () => import('pages/_commons/RouterDetail.vue'),
@@ -60,7 +60,7 @@ const routes = [
         }
       },
       {
-        path: 'services/:name/:type',
+        path: 'services/:name',
         name: 'httpServiceDetail',
         components: {
           default: () => import('pages/_commons/ServiceDetail.vue'),
@@ -86,7 +86,7 @@ const routes = [
         }
       },
       {
-        path: 'middlewares/:name/:type',
+        path: 'middlewares/:name',
         name: 'httpMiddlewareDetail',
         components: {
           default: () => import('pages/_commons/MiddlewareDetail.vue'),
@@ -119,7 +119,7 @@ const routes = [
         }
       },
       {
-        path: 'routers/:name/:type',
+        path: 'routers/:name',
         name: 'tcpRouterDetail',
         components: {
           default: () => import('pages/_commons/RouterDetail.vue'),
@@ -145,7 +145,7 @@ const routes = [
         }
       },
       {
-        path: 'services/:name/:type',
+        path: 'services/:name',
         name: 'tcpServiceDetail',
         components: {
           default: () => import('pages/_commons/ServiceDetail.vue'),

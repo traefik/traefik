@@ -11,7 +11,6 @@
             <div class="col">
               <div class="text-subtitle2">Type</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-purple">
                 {{ middleware.type }}
@@ -46,7 +45,6 @@
               <div class="text-subtitle2">ERRORS</div>
               <q-chip
                 v-for="(errorMsg, index) in middleware.error" :key="index"
-                outline
                 class="app-chip app-chip-error">
                 {{ errorMsg }}
               </q-chip>
@@ -60,7 +58,6 @@
             <div class="col">
               <div class="text-subtitle2">PREFIX</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).prefix }}
@@ -76,7 +73,6 @@
               <div class="text-subtitle2">USERS</div>
               <q-chip
                 v-for="(user, key) in exData(middleware).users" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ user }}
@@ -90,7 +86,6 @@
             <div class="col">
               <div class="text-subtitle2">Users File</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).usersFile }}
@@ -104,7 +99,6 @@
             <div class="col">
               <div class="text-subtitle2">Realm</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-warning">
                 {{ exData(middleware).realm }}
@@ -127,7 +121,6 @@
             <div class="col">
               <div class="text-subtitle2">Header Field</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-warning">
                 {{ exData(middleware).headerField }}
@@ -143,7 +136,6 @@
               <div class="text-subtitle2">Chain</div>
               <q-chip
                 v-for="(mi, key) in exData(middleware).middlewares" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ mi }}
@@ -158,7 +150,6 @@
             <div class="col">
               <div class="text-subtitle2">Max Request Body Bytes</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).maxRequestBodyBytes }}
@@ -167,7 +158,6 @@
             <div class="col">
               <div class="text-subtitle2">Mem Request Body Bytes</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).memRequestBodyBytes }}
@@ -181,7 +171,6 @@
             <div class="col">
               <div class="text-subtitle2">Max Response Body Bytes</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).maxResponseBodyBytes }}
@@ -190,7 +179,6 @@
             <div class="col">
               <div class="text-subtitle2">Mem Response Body Bytes</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).memResponseBodyBytes }}
@@ -204,7 +192,6 @@
             <div class="col">
               <div class="text-subtitle2">Retry Expression</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).retryExpression }}
@@ -219,7 +206,6 @@
             <div class="col">
               <div class="text-subtitle2">Expression</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).expression }}
@@ -244,7 +230,6 @@
             <div class="col">
               <div class="text-subtitle2">Service</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).service }}
@@ -258,7 +243,6 @@
             <div class="col">
               <div class="text-subtitle2">Query</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).query }}
@@ -273,7 +257,6 @@
               <div class="text-subtitle2">Status</div>
               <q-chip
                 v-for="(st, key) in exData(middleware).status" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ st }}
@@ -288,7 +271,6 @@
             <div class="col">
               <div class="text-subtitle2">Address</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).address }}
@@ -316,7 +298,6 @@
               <div class="text-subtitle2">Auth Response Headers</div>
               <q-chip
                 v-for="(respHeader, key) in exData(middleware).authResponseHeaders" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ respHeader }}
@@ -332,7 +313,6 @@
               <div class="text-subtitle2">Custom Request Headers</div>
               <q-chip
                 v-for="(val, key) in exData(middleware).customRequestHeaders" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ val }}
@@ -347,7 +327,6 @@
               <div class="text-subtitle2">Custom Response Headers</div>
               <q-chip
                 v-for="(val, key) in exData(middleware).customResponseHeaders" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ val }}
@@ -371,7 +350,6 @@
               <div class="text-subtitle2">Access Control Allow Headers</div>
               <q-chip
                 v-for="(val, key) in exData(middleware).accessControlAllowHeaders" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ val }}
@@ -386,7 +364,6 @@
               <div class="text-subtitle2">Access Control Allow Methods</div>
               <q-chip
                 v-for="(val, key) in exData(middleware).accessControlAllowMethods" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ val }}
@@ -400,7 +377,6 @@
             <div class="col">
               <div class="text-subtitle2">Access Control Allow Origin</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).accessControlAllowOrigin }}
@@ -415,7 +391,6 @@
               <div class="text-subtitle2">Access Control Expose Headers</div>
               <q-chip
                 v-for="(val, key) in exData(middleware).accessControlExposeHeaders" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ val }}
@@ -429,7 +404,6 @@
             <div class="col">
               <div class="text-subtitle2">Access Control Max Age</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).accessControlMaxAge }}
@@ -453,7 +427,6 @@
               <div class="text-subtitle2">Allowed Hosts</div>
               <q-chip
                 v-for="(val, key) in exData(middleware).allowedHosts" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ val }}
@@ -468,7 +441,6 @@
               <div class="text-subtitle2">Hosts Proxy Headers</div>
               <q-chip
                 v-for="(val, key) in exData(middleware).hostsProxyHeaders" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ val }}
@@ -500,7 +472,6 @@
             <div class="col">
               <div class="text-subtitle2">SSL Host</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).sslHost }}
@@ -515,7 +486,6 @@
               <div class="text-subtitle2">SSL Proxy Headers</div>
               <q-chip
                 v-for="(val, key) in exData(middleware).sslProxyHeaders" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ val }}
@@ -538,7 +508,6 @@
             <div class="col">
               <div class="text-subtitle2">STS Seconds</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).stsSeconds }}
@@ -588,7 +557,6 @@
             <div class="col">
               <div class="text-subtitle2">Custom Frame Options Value</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).customFrameOptionsValue }}
@@ -620,7 +588,6 @@
             <div class="col">
               <div class="text-subtitle2">Custom Browser XSS Value</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).customBrowserXSSValue }}
@@ -634,7 +601,6 @@
             <div class="col">
               <div class="text-subtitle2">Content Security Policy</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).contentSecurityPolicy }}
@@ -648,7 +614,6 @@
             <div class="col">
               <div class="text-subtitle2">Public Key</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).publicKey }}
@@ -662,7 +627,6 @@
             <div class="col">
               <div class="text-subtitle2">Referrer Policy</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).referrerPolicy }}
@@ -676,7 +640,6 @@
             <div class="col">
               <div class="text-subtitle2">Feature Policy</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).featurePolicy }}
@@ -701,7 +664,6 @@
               <div class="text-subtitle2">Source Range</div>
               <q-chip
                 v-for="(range, key) in exData(middleware).sourceRange" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ range }}
@@ -717,11 +679,9 @@
             </div>
             <div v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.depth" class="col-12">
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-accent">Depth :</q-chip>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).ipStrategy.depth }}
@@ -730,14 +690,12 @@
             <div v-if="exData(middleware).ipStrategy && exData(middleware).ipStrategy.excludedIPs" class="col-12">
               <div class="flex">
                 <q-chip
-                  outline
                   dense
                   class="app-chip app-chip-accent">
                   Excluded IPs:
                 </q-chip>
                 <q-chip
                   v-for="(excludedIPs, key) in exData(middleware).ipStrategy.excludedIPs" :key="key"
-                  outline
                   dense
                   class="app-chip app-chip-green">
                   {{ excludedIPs }}
@@ -753,7 +711,6 @@
             <div class="col">
               <div class="text-subtitle2">Average</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).average }}
@@ -762,7 +719,6 @@
             <div class="col">
               <div class="text-subtitle2">Burst</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).burst }}
@@ -777,7 +733,6 @@
             <div class="col">
               <div class="text-subtitle2">AMOUNT</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-warning">
                 {{ exData(middleware).amount }}
@@ -794,11 +749,9 @@
             </div>
             <div v-if="exData(middleware).sourceCriterion.ipStrategy.depth" class="col-12">
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-accent">Depth :</q-chip>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                {{ exData(middleware).sourceCriterion.ipStrategy.depth }}
@@ -807,14 +760,12 @@
             <div v-if="exData(middleware).sourceCriterion.ipStrategy.excludedIPs" class="col-12">
               <div class="flex">
                 <q-chip
-                  outline
                   dense
                   class="app-chip app-chip-accent">
                   Excluded IPs:
                 </q-chip>
                 <q-chip
                   v-for="(excludedIPs, key) in exData(middleware).sourceCriterion.ipStrategy.excludedIPs" :key="key"
-                  outline
                   dense
                   class="app-chip app-chip-green">
                   {{ excludedIPs }}
@@ -829,7 +780,6 @@
             <div v-if="exData(middleware).sourceCriterion.requestHeaderName" class="col">
               <div class="text-subtitle2">REQUEST HEADER NAME</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-warning">
                 {{ exData(middleware).sourceCriterion.requestHeaderName }}
@@ -968,7 +918,6 @@
             <div class="col">
               <div class="text-subtitle2">Regex</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).regex }}
@@ -982,7 +931,6 @@
             <div class="col">
               <div class="text-subtitle2">Replacement</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).replacement }}
@@ -1006,7 +954,6 @@
             <div class="col">
               <div class="text-subtitle2">Scheme</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).scheme }}
@@ -1021,7 +968,6 @@
             <div class="col">
               <div class="text-subtitle2">Path</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).path }}
@@ -1036,7 +982,6 @@
             <div class="col">
               <div class="text-subtitle2">Regex</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).regex }}
@@ -1050,7 +995,6 @@
             <div class="col">
               <div class="text-subtitle2">Replacement</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).replacement }}
@@ -1065,7 +1009,6 @@
             <div class="col">
               <div class="text-subtitle2">Attempts</div>
               <q-chip
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exData(middleware).attempts }}
@@ -1081,7 +1024,6 @@
               <div class="text-subtitle2">Prefixes</div>
               <q-chip
                 v-for="(prefix, key) in exData(middleware).prefixes" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ prefix }}
@@ -1097,7 +1039,6 @@
               <div class="text-subtitle2">Regex</div>
               <q-chip
                 v-for="(exp, key) in exData(middleware).regex" :key="key"
-                outline
                 dense
                 class="app-chip app-chip-green">
                 {{ exp }}
