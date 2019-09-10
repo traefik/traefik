@@ -14,7 +14,6 @@ The dashboard is the central place that shows you the current active routes hand
     <figcaption>The dashboard in action</figcaption>
 </figure>
 
-
 By default, the dashboard is available on `/` on port `:8080`.
 
 !!! tip "Did You Know?"
