@@ -336,7 +336,7 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 | [VegaDNS](https://github.com/shupp/VegaDNS-API)             | `vegadns`      | `SECRET_VEGADNS_KEY`, `SECRET_VEGADNS_SECRET`, `VEGADNS_URL`                                                                                | Not tested yet                 |
 | [Versio](https://www.versio.nl/domeinnamen)                 | `versio`       | `VERSIO_USERNAME`, `VERSIO_PASSWORD`                                                                                                        | YES                            |
 | [Vscale](https://vscale.io/)                                | `vscale`       | `VSCALE_API_TOKEN`                                                                                                                          | YES                            |
-| [VULTR](https://www.vultr.com)                              | `vultr`        | `VULTR_API_KEY`                                                                                                                             | Not tested yet                 |
+| [VULTR](https://www.vultr.com)                              | `vultr`        | `VULTR_API_KEY`                                                                                                                             | YES                            |
 | [Zone.ee](https://www.zone.ee)                              | `zoneee`       | `ZONEEE_API_USER`, `ZONEEE_API_KEY`                                                                                                         | YES                            |
 
 - (1): more information about the HTTP message format can be found [here](https://go-acme.github.io/lego/dns/httpreq/)
