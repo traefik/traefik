@@ -168,28 +168,21 @@ export default {
       return this.type.replace('-', '/', 'gi')
     }
   },
-  methods: {
-    getType (item) {
-      return item.type || 'default'
-    }
-  },
   filters: {
     status (value) {
-      let status = value
       if (value === 'enabled') {
-        status = 'positive'
+        return 'positive'
       }
       if (value === 'disabled') {
-        status = 'negative'
+        return 'negative'
       }
-      return status
+      return value
     },
     servers (value) {
-      let servers = 0
       if (value.loadBalancer && value.loadBalancer.servers) {
-        servers = value.loadBalancer.servers.length
+        return value.loadBalancer.servers.length
       }
-      return servers
+      return 0
     }
   },
   created () {

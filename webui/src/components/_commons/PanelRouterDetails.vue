@@ -64,6 +64,8 @@
             <div class="text-subtitle2">SERVICE</div>
             <q-chip
               dense
+              clickable
+              @click.native="$router.push({ path: `/${protocol}/services/${getServiceId()}`})"
               class="app-chip app-chip-service">
               {{ data.service }}
             </q-chip>
@@ -91,9 +93,19 @@ import AvatarState from './AvatarState'
 
 export default {
   name: 'PanelRouterDetails',
-  props: ['data'],
+  props: ['data', 'protocol'],
   components: {
     AvatarState
+  },
+  methods: {
+    getServiceId () {
+      const words = this.data.service.split('@')
+      if (words.length === 2) {
+        return this.data.service
+      }
+
+      return `${this.data.service}@${this.data.provider}`
+    }
   },
   filters: {
     status (value) {
