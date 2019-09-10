@@ -125,7 +125,7 @@
             </div>
           </div>
 
-          <div class="col-12 col-md-4 q-mb-lg path-block">
+          <div class="col-12 col-md-4 q-mb-lg path-block" v-if="protocol === 'http'">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-layers"></q-icon>
               <div class="app-title-label">Middlewares</div>

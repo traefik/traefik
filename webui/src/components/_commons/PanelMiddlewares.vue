@@ -1093,24 +1093,22 @@ export default {
   },
   filters: {
     status (value) {
-      let status = value
       if (value === 'enabled') {
-        status = 'positive'
+        return 'positive'
       }
       if (value === 'disabled') {
-        status = 'negative'
+        return 'negative'
       }
-      return status
+      return value
     },
     statusLabel (value) {
-      let status = value
       if (value === 'enabled') {
-        status = 'success'
+        return 'success'
       }
       if (value === 'disabled') {
-        status = 'error'
+        return 'error'
       }
-      return status
+      return value
     }
   }
 }

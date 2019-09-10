@@ -16,8 +16,9 @@
         <q-card-section>
           <div class="row items-center no-wrap">
             <div class="col-3">
-              <div v-if="data.serverStatus" class="block-right-text">
-                <avatar-state :state="data.serverStatus[server.url || server.address] | status "/>
+              <div class="block-right-text">
+                <avatar-state v-if="data.serverStatus" :state="data.serverStatus[server.url || server.address] | status "/>
+                <avatar-state v-if="!data.serverStatus" :state="'DOWN' | status"/>
               </div>
             </div>
             <div class="col-9">
@@ -51,11 +52,10 @@ export default {
   },
   filters: {
     status (value) {
-      let status = 'negative'
       if (value === 'UP') {
-        status = 'positive'
+        return 'positive'
       }
-      return status
+      return 'negative'
     }
   }
 }
