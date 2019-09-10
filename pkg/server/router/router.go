@@ -147,6 +147,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	for i, name := range router.Middlewares {
 		qualifiedNames[i] = internal.GetQualifiedName(ctx, name)
 	}
+	router.Middlewares = qualifiedNames
 	rm := m.modifierBuilder.Build(ctx, qualifiedNames)
 
 	if router.Service == "" {
