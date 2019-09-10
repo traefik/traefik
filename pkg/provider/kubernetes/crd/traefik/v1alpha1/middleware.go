@@ -89,6 +89,7 @@ type ForwardAuth struct {
 	TLS                 *ClientTLS `json:"tls,omitempty"`
 }
 
+// ClientTLS holds TLS specific configurations as client.
 type ClientTLS struct {
 	CASecret           string `json:"caSecret,omitempty"`
 	CAOptional         bool   `json:"caOptional,omitempty"`

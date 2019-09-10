@@ -23,6 +23,10 @@
   [linters-settings.misspell]
     locale = "US"
 
+  [linters-settings.funlen]
+    lines = 230 # default 60
+    statements = 120 # default 40
+
 [linters]
   enable-all = true
   disable = [
@@ -37,7 +41,6 @@
     "gochecknoinits",
     "gochecknoglobals",
     "bodyclose", # Too many false-positive and panics.
-    "typecheck", # v1.17.1 and Go1.13 => bug
   ]
 
 [issues]
@@ -50,8 +53,8 @@
     "should have a package comment, unless it's in another file for this package",
   ]
  [[issues.exclude-rules]]
-    path = ".+_test.go"
-    linters = ["goconst"]
+    path = "(.+)_test.go"
+    linters = ["goconst", "funlen"]
  [[issues.exclude-rules]]
     path = "integration/.+_test.go"
     text = "Error return value of `cmd\\.Process\\.Kill` is not checked"

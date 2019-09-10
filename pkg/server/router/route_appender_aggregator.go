@@ -13,11 +13,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// chainBuilder The contract of the middleware builder
-type chainBuilder interface {
-	BuildChain(ctx context.Context, middlewares []string) *alice.Chain
-}
-
 // NewRouteAppenderAggregator Creates a new RouteAppenderAggregator
 func NewRouteAppenderAggregator(ctx context.Context, conf static.Configuration,
 	entryPointName string, runtimeConfiguration *runtime.Configuration) *RouteAppenderAggregator {
