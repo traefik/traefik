@@ -8,6 +8,8 @@
           </div>
           <q-tabs align="left" inline-label indicator-color="transparent" active-color="white" stretch>
             <q-route-tab to="/" icon="eva-home-outline" no-caps label="Dashboard" />
+            <q-route-tab to="/http" icon="eva-globe-outline" no-caps label="HTTP" />
+            <q-route-tab to="/tcp" icon="eva-globe-2-outline" no-caps label="TCP" />
           </q-tabs>
           <q-space />
           <q-btn type="a" :href="`https://docs.traefik.io/${parsedVersion}`" target="_blank" stretch flat no-caps label="Documentation" class="btn-menu" />

@@ -3,7 +3,9 @@
 Updating the Path Before Forwarding the Request
 {: .subtitle }
 
-`TODO: add schema`
+<!--
+TODO: add schema
+-->
 
 Replace the path of the request url.
 

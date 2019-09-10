@@ -5,25 +5,16 @@ See What's Going On
 
 The dashboard is the central place that shows you the current active routes handled by Traefik. 
 
-!!! warning "Dashboard WIP"
-    Currently, the dashboard is in a Work In Progress State while being reconstructed for v2. 
-    Therefore, the dashboard is currently not working.
-
 <figure>
-    <img src="../../assets/img/dashboard-main.png" alt="Dashboard - Providers" />
-    <figcaption>The dashboard in action with Traefik listening to 3 different providers</figcaption>
-</figure>
-
-<figure>
-    <img src="../../assets/img/dashboard-health.png" alt="Dashboard - Health" />
-    <figcaption>The dashboard shows the health of the system.</figcaption>
+    <img src="../../assets/img/webui-dashboard.png" alt="Dashboard - Providers" />
+    <figcaption>The dashboard in action</figcaption>
 </figure>
 
 By default, the dashboard is available on `/` on port `:8080`.
 
 !!! tip "Did You Know?"
     It is possible to customize the dashboard endpoint. 
-    To learn how, refer to the `Traefik's API documentation`(TODO: add doc and link).
+    To learn how, refer to the [API documentation](./api.md)
     
 ## Enabling the Dashboard
 
@@ -64,4 +55,4 @@ api:
 
 !!! tip "Did You Know?"
     The API provides more features than the Dashboard. 
-    To learn more about it, refer to the `Traefik's API documentation`(TODO: add doc and link).
+    To learn more about it, refer to the [API documentation](./api.md)

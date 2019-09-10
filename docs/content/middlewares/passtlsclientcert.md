@@ -3,7 +3,9 @@
 Adding Client Certificates in a Header
 {: .subtitle }
 
-`TODO add schema`
+<!--
+TODO: add schema
+-->
 
 PassTLSClientCert adds in header the selected data from the passed client tls certificate.
 
