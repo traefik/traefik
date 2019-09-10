@@ -3,7 +3,9 @@
 Retrying until it Succeeds
 {: .subtitle }
 
-`TODO: add schema`
+<!--
+TODO: add schema
+-->
 
 The Retry middleware is in charge of reissuing a request a given number of times to a backend server if that server does not reply.
 To be clear, as soon as the server answers, the middleware stops retrying, regardless of the response status.

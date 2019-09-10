@@ -3,7 +3,9 @@
 Removing Prefixes From the Path Before Forwarding the Request
 {: .subtitle }
 
-`TODO: add schema`
+<!--
+TODO: add schema
+-->
 
 Remove the specified prefixes from the URL path.
 
