@@ -35,6 +35,18 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		{
+			desc:        "no error, but not a 200",
+			errorPage:   &types.ErrorPage{Backend: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
+			backendCode: http.StatusPartialContent,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, "My error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusPartialContent, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), http.StatusText(http.StatusPartialContent))
+			},
+		},
+		{
 			desc:        "in the range",
 			errorPage:   &types.ErrorPage{Backend: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
 			backendCode: http.StatusInternalServerError,
