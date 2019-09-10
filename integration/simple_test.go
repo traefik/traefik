@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -745,9 +744,11 @@ func (s *SimpleSuite) TestMirrorCanceled(c *check.C) {
 		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
 		c.Assert(err, checker.IsNil)
 
-		newCtx, _ := context.WithTimeout(req.Context(), time.Second)
-		req = req.WithContext(newCtx)
-		http.DefaultClient.Do(req)
+		client := &http.Client{
+			Timeout: time.Second,
+		}
+		_, err = client.Do(req)
+		c.Assert(err, checker.IsNil)
 	}
 
 	countTotal := atomic.LoadInt32(&count)
