@@ -747,8 +747,7 @@ func (s *SimpleSuite) TestMirrorCanceled(c *check.C) {
 		client := &http.Client{
 			Timeout: time.Second,
 		}
-		_, err = client.Do(req)
-		c.Assert(err, checker.IsNil)
+		_, _ = client.Do(req)
 	}
 
 	countTotal := atomic.LoadInt32(&count)
