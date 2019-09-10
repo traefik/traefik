@@ -1,6 +1,14 @@
 <template>
   <q-card flat bordered v-bind:class="['panel-tls']">
     <q-scroll-area v-if="data" :thumb-style="appThumbStyle" style="height:100%;">
+      <q-card-section v-if="data">
+        <div class="row items-start no-wrap">
+          <div class="col">
+            <div class="text-subtitle2">TLS</div>
+            <boolean-state :value="!!data"/>
+          </div>
+        </div>
+      </q-card-section>
       <q-card-section v-if="data.options">
         <div class="row items-start no-wrap">
           <div class="col">
