@@ -62,22 +62,22 @@ func TestGetAllDomains(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			var defaultCert *tls.Certificate
-			staticMap := map[string]*tls.Certificate{}
-			dynamicMap := map[string]*tls.Certificate{}
 
+			staticMap := map[string]*tls.Certificate{}
 			if test.staticCert != "" {
 				cert, err := loadTestCert(test.staticCert, false)
 				require.NoError(t, err)
 				staticMap[strings.ToLower(test.staticCert)] = cert
 			}
 
+			dynamicMap := map[string]*tls.Certificate{}
 			if test.dynamicCert != "" {
 				cert, err := loadTestCert(test.dynamicCert, false)
 				require.NoError(t, err)
 				dynamicMap[strings.ToLower(test.dynamicCert)] = cert
 			}
 
+			var defaultCert *tls.Certificate
 			if test.defaultCert != "" {
 				cert, err := loadTestCert(test.defaultCert, false)
 				require.NoError(t, err)
@@ -200,15 +200,15 @@ func TestGetBestCertificate(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			staticMap := map[string]*tls.Certificate{}
-			dynamicMap := map[string]*tls.Certificate{}
 
+			staticMap := map[string]*tls.Certificate{}
 			if test.staticCert != "" {
 				cert, err := loadTestCert(test.staticCert, test.uppercase)
 				require.NoError(t, err)
 				staticMap[strings.ToLower(test.staticCert)] = cert
 			}
 
+			dynamicMap := map[string]*tls.Certificate{}
 			if test.dynamicCert != "" {
 				cert, err := loadTestCert(test.dynamicCert, test.uppercase)
 				require.NoError(t, err)
