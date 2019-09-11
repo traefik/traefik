@@ -2,6 +2,7 @@ package tls
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"net"
 	"sort"
 	"strings"
@@ -46,6 +47,11 @@ func (c CertificateStore) GetAllDomains() []string {
 		for domains := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
 			allCerts = append(allCerts, domains)
 		}
+	}
+
+	// Get Default certificate
+	if c.DefaultCertificate != nil {
+		allCerts = append(allCerts, getCertificateDomains(c.DefaultCertificate)...)
 	}
 	return allCerts
 }
@@ -113,6 +119,27 @@ func (c CertificateStore) ResetCache() {
 	if c.CertCache != nil {
 		c.CertCache.Flush()
 	}
+}
+
+func getCertificateDomains(cert *tls.Certificate) []string {
+	if cert == nil {
+		return nil
+	}
+
+	x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
+	if err != nil {
+		return nil
+	}
+
+	var names []string
+	if len(x509Cert.Subject.CommonName) > 0 {
+		names = append(names, x509Cert.Subject.CommonName)
+	}
+	for _, san := range x509Cert.DNSNames {
+		names = append(names, san)
+	}
+
+	return names
 }
 
 // MatchDomain return true if a domain match the cert domain
