@@ -307,9 +307,163 @@ Then, a router's TLS field can refer to one of the TLS configurations defined at
       - "traefik.http.routers.router0.tls.options=myTLSOptions@file"
     ```
 
-## HTTP -> HTTPS Redirection
+## HTTP to HTTPS Redirection is now applied on Router
 
-	TODO
+Previously on Traefik v1, the redirection was applied on an entrypoint or on a FrontEnd.
+With Traefik v2 it is applied on a Router. 
+
+To apply a redirection, one of the redirect middlewares, [RedirectRegex](../middlewares/redirectregex.md) or [RedirectScheme](../middlewares/redirectscheme.md), has to be configured and added to the router middlewares list.
+
+!!! example "HTTP to HTTPS redirection thanks to the RedirectScheme Middleware"
+
+    ### v1
+    
+    ```toml tab="File (TOML)"
+    # static configuration
+    defaultEntryPoints = ["http", "https"]
+    
+    [entryPoints]
+      [entryPoints.http]
+      address = ":80"
+        [entryPoints.http.redirect]
+        entryPoint = "https"
+      [entryPoints.https]
+      address = ":443"
+        [entryPoints.https.tls]
+          [[entryPoints.https.tls.certificates]]
+          certFile = "examples/traefik.crt"
+          keyFile = "examples/traefik.key"
+    ```
+    
+    ```bash tab="CLI"
+    --entrypoints=Name:web Address::80 Redirect.EntryPoint:web-secure
+    --entryPoints='Name:web-secure Address::443 TLS:path/to/my.cert,path/to/my.key'
+    ```
+    
+    ### v2
+    
+    ```yaml tab="Docker"
+    labels:
+    - traefik.http.routers.web.entrypoints=web
+    - traefik.http.routers.web.middlewares=redirect@file
+    - traefik.http.routers.web-secured.entrypoints=web-secure
+    - traefik.http.routers.web-secured.tls=true
+    ```
+
+    ```yaml tab="K8s IngressRoute"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: http-redirect-ingressRoute
+    
+    spec:
+      entryPoints:
+        - web
+      routes:
+        - match: Host(`foo`)
+          kind: Rule
+          services:
+            - name: whoami
+              port: 80
+          middlewares:
+            - name: redirect
+    
+    ---
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: https-ingressRoute
+    
+    spec:
+      entryPoints:
+        - web-secure
+      routes:
+        - match: Host(`foo`)
+          kind: Rule
+          services:
+            - name: whoami
+              port: 80
+      tls: {}
+      
+    ---
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: Middleware
+    metadata:
+      name: redirect
+    spec:
+      redirectScheme:
+        scheme: https
+      
+    ```
+
+    ```toml tab="File (TOML)"
+    # static configuration
+    [entryPoints.web]
+        Address = ":80"
+    
+    [entryPoints.web-secure]
+        Address = ":443"
+    
+    # dynamic configuration
+    [http.routers]
+      [http.routers.router0]
+        service = "my-service"
+        entrypoints = "web"
+        middlewares = ["redirect"]
+    
+    [http.routers.router1]
+        service = "my-service"
+        entrypoints = "web-secure"
+        [http.routers.router1.tls]
+        
+    [http.services]
+      [[http.services.my-service.loadBalancer.servers]]
+        url = "http://10.10.10.1:80"
+      [[http.services.my-service.loadBalancer.servers]]
+        url = "http://10.10.10.2:80"
+    
+    [http.middlewares]
+      [http.middlewares.redirect.redirectScheme]
+        scheme = "https"
+    
+    [[tls.certificates]]
+          certFile = "/path/to/domain.cert"
+          keyFile = "/path/to/domain.key"    
+    ```
+    
+    ```yaml tab="File (YAML)"
+    http:
+      routers:
+        router0:
+            entryPoints:
+            - web
+            middlewares:
+            - redirect
+            service: my-service
+    
+        router1:
+            entryPoints:
+                - web-secure
+            service: my-service
+            tls: {}
+    
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+            - url: http://10.10.10.1:80
+            - url: http://10.10.10.2:80
+    
+      middlewares:
+        redirect:
+          redirectScheme:
+            scheme: https
+    
+    tls:
+      certificate:
+      - certFile: /app/certs/server/server.pem
+        keyFile: /app/certs/server/server.pem
+    ``` 
 
 ## ACME (let's encrypt)
 
