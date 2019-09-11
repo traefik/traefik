@@ -90,8 +90,7 @@ To get your hands on Traefik, you can use the [5-Minute Quickstart](http://docs.
 
 You can access the simple HTML frontend of Traefik.
 
-![Web UI Providers](docs/content/assets/img/dashboard-main.png)
-![Web UI Health](docs/content/assets/img/dashboard-health.png)
+![Web UI Providers](docs/content/assets/img/webui-dashboard.png)
 
 ## Documentation
 

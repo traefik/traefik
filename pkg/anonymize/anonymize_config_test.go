@@ -186,7 +186,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		Prometheus: &types.Prometheus{
 			Buckets: []float64{0.1, 0.3, 1.2, 5},
 		},
-		DataDog: &types.DataDog{
+		Datadog: &types.Datadog{
 			Address:      "localhost:8181",
 			PushInterval: 12,
 		},
@@ -223,10 +223,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 			HTTPEndpoint: "fff",
 			SameSpan:     true,
 			ID128Bit:     true,
-			Debug:        true,
 			SampleRate:   53,
 		},
-		DataDog: &datadog.Config{
+		Datadog: &datadog.Config{
 			LocalAgentHostPort: "ggg",
 			GlobalTag:          "eee",
 			Debug:              true,

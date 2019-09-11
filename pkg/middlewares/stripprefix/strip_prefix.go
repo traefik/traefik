@@ -49,7 +49,7 @@ func (s *stripPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	http.NotFound(rw, req)
+	s.next.ServeHTTP(rw, req)
 }
 
 func (s *stripPrefix) serveRequest(rw http.ResponseWriter, req *http.Request, prefix string) {

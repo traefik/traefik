@@ -5,6 +5,9 @@
         <div class="col">
           <div class="text-h6 text-weight-bold">{{getName}}</div>
         </div>
+        <div class="col-auto">
+          <q-btn :to="getUrl" color="accent" dense flat icon-right="eva-arrow-forward-outline" no-caps label="Explore" size="md" class="text-weight-bold"/>
+        </div>
       </div>
     </q-card-section>
     <q-card-section>
@@ -104,7 +107,7 @@ export default {
       } else {
         result = num
       }
-      return isNaN(result) ? 0 : result
+      return isNaN(result) || result < 0 ? 0 : result
     },
     getWarnings (inPercent = false) {
       const num = this.data.warnings
@@ -114,7 +117,7 @@ export default {
       } else {
         result = num
       }
-      return isNaN(result) ? 0 : result
+      return isNaN(result) || result < 0 ? 0 : result
     },
     getErrors (inPercent = false) {
       const num = this.data.errors
@@ -124,7 +127,7 @@ export default {
       } else {
         result = num
       }
-      return isNaN(result) ? 0 : result
+      return isNaN(result) || result < 0 ? 0 : result
     },
     getData () {
       return [this.getSuccess(), this.getWarnings(), this.getErrors()]

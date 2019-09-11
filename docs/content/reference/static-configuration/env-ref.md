@@ -45,6 +45,9 @@ Activate dashboard. (Default: ```true```)
 `TRAEFIK_API_DEBUG`:  
 Enable additional endpoints for debugging and profiling. (Default: ```false```)
 
+`TRAEFIK_API_INSECURE`:  
+Activate API directly on the entryPoint named traefik. (Default: ```false```)
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>`:  
 Certificates resolvers configuration. (Default: ```false```)
 
@@ -151,19 +154,19 @@ Traefik log format: json | common (Default: ```common```)
 Log level set to traefik logs. (Default: ```ERROR```)
 
 `TRAEFIK_METRICS_DATADOG`:  
-DataDog metrics exporter type. (Default: ```false```)
+Datadog metrics exporter type. (Default: ```false```)
 
 `TRAEFIK_METRICS_DATADOG_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
 
 `TRAEFIK_METRICS_DATADOG_ADDRESS`:  
-DataDog's address. (Default: ```localhost:8125```)
+Datadog's address. (Default: ```localhost:8125```)
 
 `TRAEFIK_METRICS_DATADOG_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
 `TRAEFIK_METRICS_DATADOG_PUSHINTERVAL`:  
-DataDog push interval. (Default: ```10```)
+Datadog push interval. (Default: ```10```)
 
 `TRAEFIK_METRICS_INFLUXDB`:  
 InfluxDB metrics exporter type. (Default: ```false```)
@@ -207,6 +210,9 @@ Enable metrics on services. (Default: ```true```)
 `TRAEFIK_METRICS_PROMETHEUS_BUCKETS`:  
 Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000```)
 
+`TRAEFIK_METRICS_PROMETHEUS_ENTRYPOINT`:  
+EntryPoint (Default: ```traefik```)
+
 `TRAEFIK_METRICS_STATSD`:  
 StatsD metrics exporter type. (Default: ```false```)
 
@@ -223,7 +229,10 @@ Enable metrics on services. (Default: ```true```)
 StatsD push interval. (Default: ```10```)
 
 `TRAEFIK_PING`:  
-Enable ping. (Default: ```true```)
+Enable ping. (Default: ```false```)
+
+`TRAEFIK_PING_ENTRYPOINT`:  
+EntryPoint (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_DOCKER`:  
 Enable Docker backend with default settings. (Default: ```false```)
@@ -303,6 +312,9 @@ Kubernetes label selector to use.
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_NAMESPACES`:  
 Kubernetes namespaces.
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_THROTTLEDURATION`:  
+Ingress refresh throttle duration (Default: ```0```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
@@ -335,6 +347,9 @@ Kubernetes Ingress label selector to use.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_NAMESPACES`:  
 Kubernetes namespaces.
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_THROTTLEDURATION`:  
+Ingress refresh throttle duration (Default: ```0```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
@@ -433,7 +448,10 @@ Defines the polling interval in seconds. (Default: ```15```)
 Watch provider. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_REST`:  
-Enable Rest backend with default settings. (Default: ```true```)
+Enable Rest backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_REST_INSECURE`:  
+Activate REST Provider directly on the entryPoint named traefik. (Default: ```false```)
 
 `TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_DIALTIMEOUT`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
@@ -457,13 +475,13 @@ Add cert file for self-signed certificate.
 OpenTracing configuration. (Default: ```false```)
 
 `TRAEFIK_TRACING_DATADOG`:  
-Settings for DataDog. (Default: ```false```)
+Settings for Datadog. (Default: ```false```)
 
 `TRAEFIK_TRACING_DATADOG_BAGAGEPREFIXHEADERNAME`:  
 Specifies the header name prefix that will be used to store baggage items in a map.
 
 `TRAEFIK_TRACING_DATADOG_DEBUG`:  
-Enable DataDog debug. (Default: ```false```)
+Enable Datadog debug. (Default: ```false```)
 
 `TRAEFIK_TRACING_DATADOG_GLOBALTAG`:  
 Key:Value tag to be set on all the spans.
@@ -561,11 +579,8 @@ Set the maximum character limit for Span names (default 0 = no limit). (Default:
 `TRAEFIK_TRACING_ZIPKIN`:  
 Settings for Zipkin. (Default: ```false```)
 
-`TRAEFIK_TRACING_ZIPKIN_DEBUG`:  
-Enable Zipkin debug. (Default: ```false```)
-
 `TRAEFIK_TRACING_ZIPKIN_HTTPENDPOINT`:  
-HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v1/spans```)
+HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
 
 `TRAEFIK_TRACING_ZIPKIN_ID128BIT`:  
 Use Zipkin 128 bit root span IDs. (Default: ```true```)

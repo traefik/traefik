@@ -29,8 +29,10 @@ spec:
   errors:
     status:
     - 500-599
-    service: serviceError
     query: /{status}.html
+    service:
+      name: whoami
+      port: 80
 ```
 
 ```json tab="Marathon"
@@ -77,7 +79,7 @@ http:
 ```
 
 !!! note 
-    In this example, the error page URL is based on the status code (`query=/{status}.html)`.
+    In this example, the error page URL is based on the status code (`query=/{status}.html`).
 
 ## Configuration Options
 
@@ -94,6 +96,9 @@ The status code ranges are inclusive (`500-599` will trigger with every code bet
 ### `service`
 
 The service that will serve the new requested error page.
+
+!!! Note
+    In kubernetes, you need to reference a kubernetes service instead of a traefik service.
 
 ### `query`
 

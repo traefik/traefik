@@ -119,7 +119,7 @@
     buckets = [42.0, 42.0]
     entryPoint = "foobar"
     middlewares = ["foobar", "foobar"]
-  [metrics.dataDog]
+  [metrics.datadog]
     address = "foobar"
     pushInterval = "10s"
   [metrics.statsD]
@@ -179,7 +179,7 @@
     id128Bit = true
     debug = true
     sampleRate = 42.0
-  [tracing.dataDog]
+  [tracing.datadog]
     localAgentHostPort = "foobar"
     globalTag = "foobar"
     debug = true
@@ -249,16 +249,14 @@
         prefixes = ["foobar", "foobar"]
     [http.middlewares.Middleware10]
       [http.middlewares.Middleware10.rateLimit]
-        extractorFunc = "foobar"
-        [http.middlewares.Middleware10.rateLimit.rateSet]
-          [http.middlewares.Middleware10.rateLimit.rateSet.Rate0]
-            period = 42000000000
-            average = 42
-            burst = 42
-          [http.middlewares.Middleware10.rateLimit.rateSet.Rate1]
-            period = 42000000000
-            average = 42
-            burst = 42
+        average = 42
+        burst = 42
+        [http.middlewares.Middleware10.rateLimit.sourceCriterion]
+          requestHeaderName = "foobar"
+          requestHost = true
+        [http.middlewares.Middleware10.rateLimit.sourceCriterion.ipStrategy]
+          depth = 42
+          excludedIPs = ["foobar", "foobar"]
     [http.middlewares.Middleware11]
       [http.middlewares.Middleware11.redirectRegex]
         regex = "foobar"

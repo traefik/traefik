@@ -35,7 +35,7 @@ tls:
 !!! important "File Provider Only"
 
     In the above example, we've used the [file provider](../providers/file.md) to handle these definitions.
-    In its current beta version, it is the only available method to configure the certificates (as well as the options and the stores).
+    It is the only available method to configure the certificates (as well as the options and the stores).
 
 ## Certificates Stores
 
@@ -52,9 +52,9 @@ tls:
     default: {}
 ```
 
-!!! important "Beta restriction"
+!!! important "Restriction"
 
-    During the beta version, any store definition other than the default one (named `default`) will be ignored,
+    Any store definition other than the default one (named `default`) will be ignored,
     and there is thefore only one globally available TLS store.
 
 In the `tls.certificates` section, a list of stores can then be specified to indicate where the certificates should be stored:
@@ -85,9 +85,9 @@ tls:
     keyFile: /path/to/other-domain.key
 ```
 
-!!! important "Beta restriction"
+!!! important "Restriction"
 
-    During the beta version, the `stores` list will actually be ignored and automatically set to `["default"]`.
+    The `stores` list will actually be ignored and automatically set to `["default"]`.
 
 ### Default Certificate
 
@@ -141,17 +141,17 @@ tls:
 
 ### Client Authentication (mTLS)
 
-Traefik supports mutual authentication, through the `ClientAuth` section.
+Traefik supports mutual authentication, through the `clientAuth` section.
 
-For authentication policies that require verification of the client certificate, the certificate authority for the certificate should be set in `ClientAuth.caFiles`.
+For authentication policies that require verification of the client certificate, the certificate authority for the certificate should be set in `clientAuth.caFiles`.
  
-The `ClientAuth.clientAuthType` option governs the behaviour as follows:
+The `clientAuth.clientAuthType` option governs the behaviour as follows:
 
 - `NoClientCert`: disregards any client certificate.
 - `RequestClientCert`: asks for a certificate but proceeds anyway if none is provided.
-- `RequireAnyClientCert`: requires a certificate but does not verify if it is signed by a CA listed in `ClientAuth.caFiles`.
-- `VerifyClientCertIfGiven`: if a certificate is provided, verifies if it is signed by a CA listed in `ClientAuth.caFiles`. Otherwise proceeds without any certificate.
-- `RequireAndVerifyClientCert`: requires a certificate, which must be signed by a CA listed in `ClientAuth.caFiles`. 
+- `RequireAnyClientCert`: requires a certificate but does not verify if it is signed by a CA listed in `clientAuth.caFiles`.
+- `VerifyClientCertIfGiven`: if a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles`. Otherwise proceeds without any certificate.
+- `RequireAndVerifyClientCert`: requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles`. 
 
 ```toml tab="TOML"
 [tls.options]

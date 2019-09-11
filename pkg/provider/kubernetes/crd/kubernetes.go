@@ -1,6 +1,8 @@
 package crd
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -15,8 +17,10 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -28,13 +32,14 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint               string   `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token                  string   `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
-	CertAuthFilePath       string   `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	DisablePassHostHeaders bool     `description:"Kubernetes disable PassHost Headers." json:"disablePassHostHeaders,omitempty" toml:"disablePassHostHeaders,omitempty" yaml:"disablePassHostHeaders,omitempty" export:"true"`
-	Namespaces             []string `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	LabelSelector          string   `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	IngressClass           string   `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	Endpoint               string         `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token                  string         `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
+	CertAuthFilePath       string         `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	DisablePassHostHeaders bool           `description:"Kubernetes disable PassHost Headers." json:"disablePassHostHeaders,omitempty" toml:"disablePassHostHeaders,omitempty" yaml:"disablePassHostHeaders,omitempty" export:"true"`
+	Namespaces             []string       `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector          string         `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	IngressClass           string         `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	ThrottleDuration       types.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
 	lastConfiguration      safe.Safe
 }
 
@@ -92,6 +97,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			stopWatch := make(chan struct{}, 1)
 			defer close(stopWatch)
 			eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
+
 			if err != nil {
 				logger.Errorf("Error watching kubernetes events: %v", err)
 				timer := time.NewTimer(1 * time.Second)
@@ -102,11 +108,23 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					return nil
 				}
 			}
+
+			throttleDuration := time.Duration(p.ThrottleDuration)
+			throttledChan := throttleEvents(ctxLog, throttleDuration, stop, eventsChan)
+			if throttledChan != nil {
+				eventsChan = throttledChan
+			}
+
 			for {
 				select {
 				case <-stop:
 					return nil
 				case event := <-eventsChan:
+					// Note that event is the *first* event that came in during this
+					// throttling interval -- if we're hitting our throttle, we may have
+					// dropped events. This is fine, because we don't treat different
+					// event types differently. But if we do in the future, we'll need to
+					// track more information about the dropped events.
 					conf := p.loadConfigurationFromCRD(ctxLog, k8sClient)
 
 					if reflect.DeepEqual(p.lastConfiguration.Get(), conf) {
@@ -118,6 +136,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							Configuration: conf,
 						}
 					}
+
+					// If we're throttling, we sleep here for the throttle duration to
+					// enforce that we don't refresh faster than our throttle. time.Sleep
+					// returns immediately if p.ThrottleDuration is 0 (no throttle).
+					time.Sleep(throttleDuration)
 				}
 			}
 		}
@@ -146,10 +169,278 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, middleware := range client.GetMiddlewares() {
-		conf.HTTP.Middlewares[makeID(middleware.Namespace, middleware.Name)] = &middleware.Spec
+		id := makeID(middleware.Namespace, middleware.Name)
+		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, id))
+
+		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading basic auth middleware: %v", err)
+			continue
+		}
+
+		digestAuth, err := createDigestAuthMiddleware(client, middleware.Namespace, middleware.Spec.DigestAuth)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading digest auth middleware: %v", err)
+			continue
+		}
+
+		forwardAuth, err := createForwardAuthMiddleware(client, middleware.Namespace, middleware.Spec.ForwardAuth)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading forward auth middleware: %v", err)
+			continue
+		}
+
+		errorPage, errorPageService, err := createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading error page middleware: %v", err)
+			continue
+		}
+
+		if errorPage != nil && errorPageService != nil {
+			serviceName := id + "-errorpage-service"
+			errorPage.Service = serviceName
+			conf.HTTP.Services[serviceName] = errorPageService
+		}
+
+		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
+			AddPrefix:         middleware.Spec.AddPrefix,
+			StripPrefix:       middleware.Spec.StripPrefix,
+			StripPrefixRegex:  middleware.Spec.StripPrefixRegex,
+			ReplacePath:       middleware.Spec.ReplacePath,
+			ReplacePathRegex:  middleware.Spec.ReplacePathRegex,
+			Chain:             createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain),
+			IPWhiteList:       middleware.Spec.IPWhiteList,
+			Headers:           middleware.Spec.Headers,
+			Errors:            errorPage,
+			RateLimit:         middleware.Spec.RateLimit,
+			RedirectRegex:     middleware.Spec.RedirectRegex,
+			RedirectScheme:    middleware.Spec.RedirectScheme,
+			BasicAuth:         basicAuth,
+			DigestAuth:        digestAuth,
+			ForwardAuth:       forwardAuth,
+			InFlightReq:       middleware.Spec.InFlightReq,
+			Buffering:         middleware.Spec.Buffering,
+			CircuitBreaker:    middleware.Spec.CircuitBreaker,
+			Compress:          middleware.Spec.Compress,
+			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
+			Retry:             middleware.Spec.Retry,
+		}
+
 	}
 
 	return conf
+}
+
+func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+	if errorPage == nil {
+		return nil, nil, nil
+	}
+
+	errorPageMiddleware := &dynamic.ErrorPage{
+		Status: errorPage.Status,
+		Query:  errorPage.Query,
+	}
+
+	balancerServerHTTP, err := createLoadBalancerServerHTTP(client, namespace, errorPage.Service)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return errorPageMiddleware, balancerServerHTTP, nil
+}
+
+func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
+	if auth == nil {
+		return nil, nil
+	}
+	if len(auth.Address) == 0 {
+		return nil, fmt.Errorf("forward authentication requires an address")
+	}
+
+	forwardAuth := &dynamic.ForwardAuth{
+		Address:             auth.Address,
+		TrustForwardHeader:  auth.TrustForwardHeader,
+		AuthResponseHeaders: auth.AuthResponseHeaders,
+	}
+
+	if auth.TLS == nil {
+		return forwardAuth, nil
+	}
+
+	forwardAuth.TLS = &dynamic.ClientTLS{
+		CAOptional:         auth.TLS.CAOptional,
+		InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
+	}
+
+	if len(auth.TLS.CASecret) > 0 {
+		caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, k8sClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load auth ca secret: %v", err)
+		}
+		forwardAuth.TLS.CA = caSecret
+	}
+
+	if len(auth.TLS.CertSecret) > 0 {
+		authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, k8sClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load auth secret: %s", err)
+		}
+		forwardAuth.TLS.Cert = authSecretCert
+		forwardAuth.TLS.Key = authSecretKey
+	}
+
+	return forwardAuth, nil
+}
+
+func loadCASecret(namespace, secretName string, k8sClient Client) (string, error) {
+	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
+	}
+	if !ok {
+		return "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
+	}
+	if secret == nil {
+		return "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
+	}
+	if len(secret.Data) != 1 {
+		return "", fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), namespace, secretName)
+	}
+
+	for _, v := range secret.Data {
+		return string(v), nil
+	}
+	return "", nil
+}
+
+func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
+	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
+	}
+	if !exists {
+		return "", "", fmt.Errorf("secret '%s/%s' does not exist", namespace, secretName)
+	}
+	if secret == nil {
+		return "", "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
+	}
+	if len(secret.Data) != 2 {
+		return "", "", fmt.Errorf("found %d elements for secret '%s/%s', must be two elements exactly", len(secret.Data), namespace, secretName)
+	}
+
+	return getCertificateBlocks(secret, namespace, secretName)
+}
+
+func createBasicAuthMiddleware(client Client, namespace string, basicAuth *v1alpha1.BasicAuth) (*dynamic.BasicAuth, error) {
+	if basicAuth == nil {
+		return nil, nil
+	}
+
+	credentials, err := getAuthCredentials(client, basicAuth.Secret, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dynamic.BasicAuth{
+		Users:        credentials,
+		Realm:        basicAuth.Realm,
+		RemoveHeader: basicAuth.RemoveHeader,
+		HeaderField:  basicAuth.HeaderField,
+	}, nil
+}
+
+func createDigestAuthMiddleware(client Client, namespace string, digestAuth *v1alpha1.DigestAuth) (*dynamic.DigestAuth, error) {
+	if digestAuth == nil {
+		return nil, nil
+	}
+
+	credentials, err := getAuthCredentials(client, digestAuth.Secret, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dynamic.DigestAuth{
+		Users:        credentials,
+		Realm:        digestAuth.Realm,
+		RemoveHeader: digestAuth.RemoveHeader,
+		HeaderField:  digestAuth.HeaderField,
+	}, nil
+}
+
+func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]string, error) {
+	if authSecret == "" {
+		return nil, fmt.Errorf("auth secret must be set")
+	}
+
+	auth, err := loadAuthCredentials(namespace, authSecret, k8sClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load auth credentials: %s", err)
+	}
+
+	return auth, nil
+}
+
+func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
+	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
+	}
+	if !ok {
+		return nil, fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
+	}
+	if secret == nil {
+		return nil, fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
+	}
+	if len(secret.Data) != 1 {
+		return nil, fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), namespace, secretName)
+	}
+
+	var firstSecret []byte
+	for _, v := range secret.Data {
+		firstSecret = v
+		break
+	}
+
+	var credentials []string
+	scanner := bufio.NewScanner(bytes.NewReader(firstSecret))
+	for scanner.Scan() {
+		if cred := scanner.Text(); len(cred) > 0 {
+			credentials = append(credentials, cred)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading secret for %v/%v: %v", namespace, secretName, err)
+	}
+	if len(credentials) == 0 {
+		return nil, fmt.Errorf("secret '%s/%s' does not contain any credentials", namespace, secretName)
+	}
+
+	return credentials, nil
+}
+
+func createChainMiddleware(ctx context.Context, namespace string, chain *v1alpha1.Chain) *dynamic.Chain {
+	if chain == nil {
+		return nil
+	}
+
+	var mds []string
+	for _, mi := range chain.Middlewares {
+		if strings.Contains(mi.Name, "@") {
+			if len(mi.Namespace) > 0 {
+				log.FromContext(ctx).
+					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+			}
+			mds = append(mds, mi.Name)
+			continue
+		}
+
+		ns := mi.Namespace
+		if len(ns) == 0 {
+			ns = namespace
+		}
+		mds = append(mds, makeID(ns, mi.Name))
+	}
+	return &dynamic.Chain{Middlewares: mds}
 }
 
 func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
@@ -315,4 +606,37 @@ func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, e
 	}
 
 	return cert, nil
+}
+
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop chan bool, eventsChan <-chan interface{}) chan interface{} {
+	if throttleDuration == 0 {
+		return nil
+	}
+	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling)
+	eventsChanBuffered := make(chan interface{}, 1)
+
+	// Run a goroutine that reads events from eventChan and does a
+	// non-blocking write to pendingEvent. This guarantees that writing to
+	// eventChan will never block, and that pendingEvent will have
+	// something in it if there's been an event since we read from that channel.
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case nextEvent := <-eventsChan:
+				select {
+				case eventsChanBuffered <- nextEvent:
+				default:
+					// We already have an event in eventsChanBuffered, so we'll
+					// do a refresh as soon as our throttle allows us to. It's fine
+					// to drop the event and keep whatever's in the buffer -- we
+					// don't do different things for different events
+					log.FromContext(ctx).Debugf("Dropping event kind %T due to throttling", nextEvent)
+				}
+			}
+		}
+	}()
+
+	return eventsChanBuffered
 }

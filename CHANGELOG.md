@@ -1,5 +1,54 @@
 # Change Log
 
+## [v2.0.0-rc3](https://github.com/containous/traefik/tree/v2.0.0-rc3) (2019-09-10)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc2...v2.0.0-rc3)
+
+**Enhancements:**
+- **[acme,api,tracing]** New API security ([#5311](https://github.com/containous/traefik/pull/5311) by [juliens](https://github.com/juliens))
+- **[authentication,middleware,k8s,k8s/crd]** Auth middlewares in kubernetes CRD use secrets ([#5299](https://github.com/containous/traefik/pull/5299) by [juliens](https://github.com/juliens))
+- **[logs]** Default to CLF when accesslog format is unsupported ([#5314](https://github.com/containous/traefik/pull/5314) by [mpl](https://github.com/mpl))
+- **[middleware,k8s,k8s/crd]** k8s ErrorPage middleware now uses k8s service ([#5339](https://github.com/containous/traefik/pull/5339) by [juliens](https://github.com/juliens))
+- **[webui]** Add more pages in the WebUI ([#5278](https://github.com/containous/traefik/pull/5278) by [Basgrani](https://github.com/Basgrani))
+
+**Bug fixes:**
+- **[api]** Add provider in middleware chain ([#5334](https://github.com/containous/traefik/pull/5334) by [juliens](https://github.com/juliens))
+- **[k8s,k8s/crd]** fix: TLS domains with IngressRoute. ([#5327](https://github.com/containous/traefik/pull/5327) by [ldez](https://github.com/ldez))
+- **[middleware]** Improve rate limiter tests ([#5310](https://github.com/containous/traefik/pull/5310) by [mpl](https://github.com/mpl))
+- **[server]** Write HTTP server logs into the global logger. ([#5329](https://github.com/containous/traefik/pull/5329) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Misc documentation fixes ([#5307](https://github.com/containous/traefik/pull/5307) by [ldez](https://github.com/ldez))
+- misc documentation fixes ([#5302](https://github.com/containous/traefik/pull/5302) by [mpl](https://github.com/mpl))
+- Enhance the Retry Middleware Documentation ([#5298](https://github.com/containous/traefik/pull/5298) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
+**Misc:**
+- Cherry pick v1.7 into v2.0 ([#5341](https://github.com/containous/traefik/pull/5341) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
+## [v2.0.0-rc2](https://github.com/containous/traefik/tree/v2.0.0-rc2) (2019-09-03)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc1...v2.0.0-rc2)
+
+**Enhancements:**
+- **[api]** Improve API for the web UI ([#5267](https://github.com/containous/traefik/pull/5267) by [ldez](https://github.com/ldez))
+- **[middleware,tracing]** Re enable ratelimit integration tests ([#5288](https://github.com/containous/traefik/pull/5288) by [mmatur](https://github.com/mmatur))
+- **[tracing]** Update Zipkin OpenTracing driver to latest 0.4.3 release ([#5283](https://github.com/containous/traefik/pull/5283) by [basvanbeek](https://github.com/basvanbeek))
+
+**Bug fixes:**
+- **[api]** Add errors about unknown entryPoint in runtime api ([#5265](https://github.com/containous/traefik/pull/5265) by [juliens](https://github.com/juliens))
+- **[metrics,tracing]** fix: Datadog case. ([#5272](https://github.com/containous/traefik/pull/5272) by [ldez](https://github.com/ldez))
+- **[middleware,k8s,k8s/crd]** The chain middleware in k8s use middlewareRef ([#5290](https://github.com/containous/traefik/pull/5290) by [juliens](https://github.com/juliens))
+- **[middleware]** Don&#39;t panic with undefined middleware ([#5289](https://github.com/containous/traefik/pull/5289) by [ldez](https://github.com/ldez))
+- **[middleware]** fix buffering middleware ([#5281](https://github.com/containous/traefik/pull/5281) by [ldez](https://github.com/ldez))
+- **[middleware]** fix: stripPrefix and stripPrefixRegex. ([#5291](https://github.com/containous/traefik/pull/5291) by [ldez](https://github.com/ldez))
+- **[service,websocket]** Fix recovered panic when websocket is mirrored ([#5255](https://github.com/containous/traefik/pull/5255) by [juliens](https://github.com/juliens))
+- **[webui]** Rest provider icon in the webui ([#5261](https://github.com/containous/traefik/pull/5261) by [mmatur](https://github.com/mmatur))
+- Fix trailing slash with check new version ([#5266](https://github.com/containous/traefik/pull/5266) by [mmatur](https://github.com/mmatur))
+
+**Documentation:**
+- **[middleware]** fix: stripPrefixRegex documentation. ([#5273](https://github.com/containous/traefik/pull/5273) by [ldez](https://github.com/ldez))
+- Fix some documentation issues ([#5286](https://github.com/containous/traefik/pull/5286) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Update restrictions in the documentation. ([#5270](https://github.com/containous/traefik/pull/5270) by [ldez](https://github.com/ldez))
+- Base of the migration guide ([#5263](https://github.com/containous/traefik/pull/5263) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.0.0-rc1](https://github.com/containous/traefik/tree/v2.0.0-rc1) (2019-08-26)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-beta1...v2.0.0-rc1)
 
@@ -36,6 +85,13 @@
 
 **Misc:**
 - Cherry pick v1.7 into v2.0 ([#5192](https://github.com/containous/traefik/pull/5192) by [ldez](https://github.com/ldez))
+
+## [v1.7.14](https://github.com/containous/traefik/tree/v1.7.14) (2019-08-14)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.13...v1.7.14)
+
+**Bug fixes:**
+- Update to go1.12.8 ([#5201](https://github.com/containous/traefik/pull/5201) by [ldez](https://github.com/ldez)). HTTP/2 Denial of Service [CVE-2019-9512](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-9512) and [CVE-2019-9514](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-9514)
+- **[server]** Make hijackConnectionTracker.Close thread safe ([#5194](https://github.com/containous/traefik/pull/5194) by [jlevesy](https://github.com/jlevesy))
 
 ## [v1.7.13](https://github.com/containous/traefik/tree/v1.7.13) (2019-08-07)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.12...v1.7.13)
@@ -217,7 +273,7 @@
 - **[api,authentication]** Remove authentication hashes from API ([#4918](https://github.com/containous/traefik/pull/4918) by [ldez](https://github.com/ldez))
 - **[consul]** Enhance KV logs. ([#4877](https://github.com/containous/traefik/pull/4877) by [ldez](https://github.com/ldez))
 - **[k8s]** Fix kubernetes template for backend responseforwarding flushinterval setting ([#4901](https://github.com/containous/traefik/pull/4901) by [ravilr](https://github.com/ravilr))
-- **[metrics]** Upgraded DataDog tracing library to 1.13.0 ([#4878](https://github.com/containous/traefik/pull/4878) by [aantono](https://github.com/aantono))
+- **[metrics]** Upgraded Datadog tracing library to 1.13.0 ([#4878](https://github.com/containous/traefik/pull/4878) by [aantono](https://github.com/aantono))
 - **[server]** Add missing callback on close of hijacked connections ([#4900](https://github.com/containous/traefik/pull/4900) by [ravilr](https://github.com/ravilr))
 
 **Documentation:**
@@ -419,7 +475,7 @@
 - **[k8s/ingress]** Loop through service ports for global backend ([#4486](https://github.com/containous/traefik/pull/4486) by [dtomcej](https://github.com/dtomcej))
 - **[k8s]** Add entrypoints prefix in kubernetes frontend/backend id  ([#4679](https://github.com/containous/traefik/pull/4679) by [juliens](https://github.com/juliens))
 - **[websocket]** Exclude websocket connections from Average Response Time ([#4313](https://github.com/containous/traefik/pull/4313) by [siyu6974](https://github.com/siyu6974))
-- **[middleware]** Added support for configuring trace headers for DataDog tracing ([#4516](https://github.com/containous/traefik/pull/4516) by [aantono](https://github.com/aantono))
+- **[middleware]** Added support for configuring trace headers for Datadog tracing ([#4516](https://github.com/containous/traefik/pull/4516) by [aantono](https://github.com/aantono))
 
 **Documentation:**
 - **[acme]** Add _FILE Environment Variable Documentation ([#4643](https://github.com/containous/traefik/pull/4643) by [dargmuesli](https://github.com/dargmuesli))
@@ -670,7 +726,7 @@
 - **[metrics]** Metrics: Add support for InfluxDB Database / RetentionPolicy and HTTP client ([#3391](https://github.com/containous/traefik/pull/3391) by [drewkerrigan](https://github.com/drewkerrigan))
 - **[middleware,consulcatalog,docker,ecs,kv,marathon,mesos,rancher]** Pass the TLS Cert infos in headers ([#3826](https://github.com/containous/traefik/pull/3826) by [jbdoumenjou](https://github.com/jbdoumenjou))
 - **[middleware,server]** Extreme Makeover: server refactoring ([#3461](https://github.com/containous/traefik/pull/3461) by [ldez](https://github.com/ldez))
-- **[middleware,tracing]** Added integration support for DataDog APM Tracing ([#3517](https://github.com/containous/traefik/pull/3517) by [aantono](https://github.com/aantono))
+- **[middleware,tracing]** Added integration support for Datadog APM Tracing ([#3517](https://github.com/containous/traefik/pull/3517) by [aantono](https://github.com/aantono))
 - **[middleware,tracing]** Create a custom logger for jaeger ([#3541](https://github.com/containous/traefik/pull/3541) by [mmatur](https://github.com/mmatur))
 - **[middleware]** Performance enhancements for the rules matchers. ([#3563](https://github.com/containous/traefik/pull/3563) by [ShaneSaww](https://github.com/ShaneSaww))
 - **[middleware]** Extract internal router creation from server ([#3204](https://github.com/containous/traefik/pull/3204) by [Juliens](https://github.com/Juliens))
@@ -731,7 +787,7 @@
 - **[oxy]** Handle Te header when http2 ([#3824](https://github.com/containous/traefik/pull/3824) by [Juliens](https://github.com/Juliens))
 - **[server]** Avoid goroutine leak in server ([#3851](https://github.com/containous/traefik/pull/3851) by [nmengin](https://github.com/nmengin))
 - **[server]** Avoid panic during stop ([#3898](https://github.com/containous/traefik/pull/3898) by [nmengin](https://github.com/nmengin))
-- **[tracing]** Added default configuration for DataDog APM Tracer ([#3655](https://github.com/containous/traefik/pull/3655) by [aantono](https://github.com/aantono))
+- **[tracing]** Added default configuration for Datadog APM Tracer ([#3655](https://github.com/containous/traefik/pull/3655) by [aantono](https://github.com/aantono))
 - **[tracing]** Added support for Trace name truncation for traces ([#3689](https://github.com/containous/traefik/pull/3689) by [aantono](https://github.com/aantono))
 - **[websocket]** Handle shutdown of Hijacked connections ([#3636](https://github.com/containous/traefik/pull/3636) by [Juliens](https://github.com/Juliens))
 - **[webui]** Added Dashboard table item for Rate Limits ([#3893](https://github.com/containous/traefik/pull/3893) by [codecyclist](https://github.com/codecyclist))
@@ -868,7 +924,7 @@
 - **[docker]** Uses both binded HostIP and HostPort when useBindPortIP=true ([#3638](https://github.com/containous/traefik/pull/3638) by [geraldcroes](https://github.com/geraldcroes))
 - **[k8s]** Fix Rewrite-target regex ([#3699](https://github.com/containous/traefik/pull/3699) by [dtomcej](https://github.com/dtomcej))
 - **[middleware]** Correct Entrypoint Redirect with Stripped or Added Path ([#3631](https://github.com/containous/traefik/pull/3631) by [dtomcej](https://github.com/dtomcej))
-- **[tracing]** Added default configuration for DataDog APM Tracer ([#3655](https://github.com/containous/traefik/pull/3655) by [aantono](https://github.com/aantono))
+- **[tracing]** Added default configuration for Datadog APM Tracer ([#3655](https://github.com/containous/traefik/pull/3655) by [aantono](https://github.com/aantono))
 - **[tracing]** Added support for Trace name truncation for traces ([#3689](https://github.com/containous/traefik/pull/3689) by [aantono](https://github.com/aantono))
 - **[websocket]** Handle shutdown of Hijacked connections ([#3636](https://github.com/containous/traefik/pull/3636) by [Juliens](https://github.com/Juliens))
 - H2C: Remove buggy line in init to make verbose switch working ([#3701](https://github.com/containous/traefik/pull/3701) by [dduportal](https://github.com/dduportal))
@@ -964,7 +1020,7 @@
 - **[mesos]** Segments Labels: Mesos ([#3383](https://github.com/containous/traefik/pull/3383) by [drewkerrigan](https://github.com/drewkerrigan))
 - **[metrics]** Metrics: Add support for InfluxDB Database / RetentionPolicy and HTTP client ([#3391](https://github.com/containous/traefik/pull/3391) by [drewkerrigan](https://github.com/drewkerrigan))
 - **[middleware,server]** Extreme Makeover: server refactoring ([#3461](https://github.com/containous/traefik/pull/3461) by [ldez](https://github.com/ldez))
-- **[middleware,tracing]** Added integration support for DataDog APM Tracing ([#3517](https://github.com/containous/traefik/pull/3517) by [aantono](https://github.com/aantono))
+- **[middleware,tracing]** Added integration support for Datadog APM Tracing ([#3517](https://github.com/containous/traefik/pull/3517) by [aantono](https://github.com/aantono))
 - **[middleware,tracing]** Create a custom logger for jaeger ([#3541](https://github.com/containous/traefik/pull/3541) by [mmatur](https://github.com/mmatur))
 - **[middleware]** Performance enhancements for the rules matchers. ([#3563](https://github.com/containous/traefik/pull/3563) by [ShaneSaww](https://github.com/ShaneSaww))
 - **[middleware]** Extract internal router creation from server ([#3204](https://github.com/containous/traefik/pull/3204) by [Juliens](https://github.com/Juliens))
@@ -1142,7 +1198,7 @@
 - **[metrics]** Added entrypoint metrics to influxdb ([#2992](https://github.com/containous/traefik/pull/2992) by [adityacs](https://github.com/adityacs))
 - **[metrics]** Remove unnecessary conversion ([#2850](https://github.com/containous/traefik/pull/2850) by [ferhatelmas](https://github.com/ferhatelmas))
 - **[metrics]** Extend metrics and rebuild prometheus exporting logic ([#2567](https://github.com/containous/traefik/pull/2567) by [marco-jantke](https://github.com/marco-jantke))
-- **[metrics]** Added missing metrics to registry for DataDog and StatsD ([#2890](https://github.com/containous/traefik/pull/2890) by [aantono](https://github.com/aantono))
+- **[metrics]** Added missing metrics to registry for Datadog and StatsD ([#2890](https://github.com/containous/traefik/pull/2890) by [aantono](https://github.com/aantono))
 - **[middleware,consul,consulcatalog,docker,ecs,k8s,marathon,mesos,rancher]** New option in secure middleware ([#2958](https://github.com/containous/traefik/pull/2958) by [mmatur](https://github.com/mmatur))
 - **[middleware,consulcatalog,docker,ecs,k8s,kv,marathon,mesos,rancher]** Ability to use &#34;X-Forwarded-For&#34; as a source of IP for white list. ([#3070](https://github.com/containous/traefik/pull/3070) by [ldez](https://github.com/ldez))
 - **[middleware,docker]** Use pointer of error pages ([#2607](https://github.com/containous/traefik/pull/2607) by [ldez](https://github.com/ldez))
@@ -1394,7 +1450,7 @@
 - **[mesos]** Add all available labels to Mesos Backend  ([#2687](https://github.com/containous/traefik/pull/2687) by [ldez](https://github.com/ldez))
 - **[metrics]** Added entrypoint metrics to influxdb ([#2992](https://github.com/containous/traefik/pull/2992) by [adityacs](https://github.com/adityacs))
 - **[metrics]** Extend metrics and rebuild prometheus exporting logic ([#2567](https://github.com/containous/traefik/pull/2567) by [marco-jantke](https://github.com/marco-jantke))
-- **[metrics]** Added missing metrics to registry for DataDog and StatsD ([#2890](https://github.com/containous/traefik/pull/2890) by [aantono](https://github.com/aantono))
+- **[metrics]** Added missing metrics to registry for Datadog and StatsD ([#2890](https://github.com/containous/traefik/pull/2890) by [aantono](https://github.com/aantono))
 - **[metrics]** Remove unnecessary conversion ([#2850](https://github.com/containous/traefik/pull/2850) by [ferhatelmas](https://github.com/ferhatelmas))
 - **[middleware,consul,consulcatalog,docker,ecs,k8s,marathon,mesos,rancher]** New option in secure middleware ([#2958](https://github.com/containous/traefik/pull/2958) by [mmatur](https://github.com/mmatur))
 - **[middleware,consulcatalog,docker,ecs,k8s,kv,marathon,mesos,rancher]** Ability to use &#34;X-Forwarded-For&#34; as a source of IP for white list. ([#3070](https://github.com/containous/traefik/pull/3070) by [ldez](https://github.com/ldez))
@@ -2015,12 +2071,12 @@
 - **[marathon]** Add support for readiness checks. ([#1883](https://github.com/containous/traefik/pull/1883) by [timoreimann](https://github.com/timoreimann))
 - **[marathon]** Move marathon mock ([#1732](https://github.com/containous/traefik/pull/1732) by [ldez](https://github.com/ldez))
 - **[marathon]** Use single API call to fetch Marathon resources. ([#1815](https://github.com/containous/traefik/pull/1815) by [timoreimann](https://github.com/timoreimann))
-- **[metrics]** Added RetryMetrics to DataDog and StatsD providers ([#1884](https://github.com/containous/traefik/pull/1884) by [aantono](https://github.com/aantono))
+- **[metrics]** Added RetryMetrics to Datadog and StatsD providers ([#1884](https://github.com/containous/traefik/pull/1884) by [aantono](https://github.com/aantono))
 - **[metrics]** Extract metrics to own package and refactor implementations ([#1968](https://github.com/containous/traefik/pull/1968) by [marco-jantke](https://github.com/marco-jantke))
 - **[metrics]** Add metrics for backend_retries_total ([#1504](https://github.com/containous/traefik/pull/1504) by [marco-jantke](https://github.com/marco-jantke))
 - **[metrics]** Add status code to request duration metric ([#1755](https://github.com/containous/traefik/pull/1755) by [marco-jantke](https://github.com/marco-jantke))
 - **[middleware]** Add trusted whitelist proxy protocol ([#2234](https://github.com/containous/traefik/pull/2234) by [emilevauge](https://github.com/emilevauge)))
-- **[metrics]** DataDog and StatsD Metrics Support ([#1701](https://github.com/containous/traefik/pull/1701) by [aantono](https://github.com/aantono))
+- **[metrics]** Datadog and StatsD Metrics Support ([#1701](https://github.com/containous/traefik/pull/1701) by [aantono](https://github.com/aantono))
 - **[middleware]** Create Header Middleware ([#1236](https://github.com/containous/traefik/pull/1236) by [dtomcej](https://github.com/dtomcej))
 - **[middleware]** Add configurable timeouts and curate default timeout settings ([#1873](https://github.com/containous/traefik/pull/1873) by [marco-jantke](https://github.com/marco-jantke))
 - **[middleware]** Fix command bug content. ([#2002](https://github.com/containous/traefik/pull/2002) by [ldez](https://github.com/ldez))
@@ -2326,11 +2382,11 @@
 - **[marathon]** Move marathon mock ([#1732](https://github.com/containous/traefik/pull/1732) by [ldez](https://github.com/ldez))
 - **[marathon]** Support multi-port service routing for containers running on Marathon ([#1742](https://github.com/containous/traefik/pull/1742) by [aantono](https://github.com/aantono))
 - **[marathon]** Use test builder. ([#1871](https://github.com/containous/traefik/pull/1871) by [timoreimann](https://github.com/timoreimann))
-- **[metrics]** DataDog and StatsD Metrics Support ([#1701](https://github.com/containous/traefik/pull/1701) by [aantono](https://github.com/aantono))
+- **[metrics]** Datadog and StatsD Metrics Support ([#1701](https://github.com/containous/traefik/pull/1701) by [aantono](https://github.com/aantono))
 - **[metrics]** Add status code to request duration metric ([#1755](https://github.com/containous/traefik/pull/1755) by [marco-jantke](https://github.com/marco-jantke))
 - **[metrics]** Add metrics for backend_retries_total ([#1504](https://github.com/containous/traefik/pull/1504) by [marco-jantke](https://github.com/marco-jantke))
 - **[metrics]** Extract metrics to own package and refactor implementations ([#1968](https://github.com/containous/traefik/pull/1968) by [marco-jantke](https://github.com/marco-jantke))
-- **[metrics]** Added RetryMetrics to DataDog and StatsD providers ([#1884](https://github.com/containous/traefik/pull/1884) by [aantono](https://github.com/aantono))
+- **[metrics]** Added RetryMetrics to Datadog and StatsD providers ([#1884](https://github.com/containous/traefik/pull/1884) by [aantono](https://github.com/aantono))
 - **[middleware]** Return 503 on empty backend ([#1748](https://github.com/containous/traefik/pull/1748) by [marco-jantke](https://github.com/marco-jantke))
 - **[middleware]** Add configurable timeouts and curate default timeout settings ([#1873](https://github.com/containous/traefik/pull/1873) by [marco-jantke](https://github.com/marco-jantke))
 - **[middleware]** Custom Error Pages ([#1675](https://github.com/containous/traefik/pull/1675) by [bparli](https://github.com/bparli))

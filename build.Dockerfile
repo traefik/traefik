@@ -1,4 +1,4 @@
-FROM golang:1.13rc1-alpine
+FROM golang:1.13-alpine
 
 RUN apk --update upgrade \
     && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \
@@ -19,7 +19,7 @@ RUN mkdir -p /usr/local/bin \
     && chmod +x /usr/local/bin/go-bindata
 
 # Download golangci-lint binary to bin folder in $GOPATH
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.17.1
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.18.0
 
 # Download golangci-lint and misspell binary to bin folder in $GOPATH
 RUN GO111MODULE=off go get github.com/client9/misspell/cmd/misspell

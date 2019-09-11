@@ -66,7 +66,7 @@ spec:
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo",
-  "traefik.http.router.router1.middlewares": "foo-add-prefix@marathon"
+  "traefik.http.routers.router1.middlewares": "foo-add-prefix@marathon"
 }
 ```
 
@@ -76,7 +76,7 @@ labels:
   # Create a middleware named `foo-add-prefix`
   - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
   # Apply the middleware named `foo-add-prefix` to the router named `router1`
-  - "traefik.http.router.router1.middlewares=foo-add-prefix@rancher"
+  - "traefik.http.routers.router1.middlewares=foo-add-prefix@rancher"
 ```
 
 ```toml tab="File (TOML)"

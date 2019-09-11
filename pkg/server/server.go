@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/containous/traefik/v2/pkg/api"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/config/static"
@@ -18,7 +19,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/safe"
-	"github.com/containous/traefik/v2/pkg/server/middleware"
 	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/containous/traefik/v2/pkg/tracing/jaeger"
@@ -44,11 +44,13 @@ type Server struct {
 	requestDecorator           *requestdecorator.RequestDecorator
 	providersThrottleDuration  time.Duration
 	tlsManager                 *tls.Manager
+	api                        func(configuration *runtime.Configuration) http.Handler
+	restHandler                http.Handler
 }
 
 // RouteAppenderFactory the route appender factory interface
 type RouteAppenderFactory interface {
-	NewAppender(ctx context.Context, middlewaresBuilder *middleware.Builder, runtimeConfiguration *runtime.Configuration) types.RouteAppender
+	NewAppender(ctx context.Context, runtimeConfiguration *runtime.Configuration) types.RouteAppender
 }
 
 func setupTracing(conf *static.Tracing) tracing.Backend {
@@ -66,11 +68,11 @@ func setupTracing(conf *static.Tracing) tracing.Backend {
 		}
 	}
 
-	if conf.DataDog != nil {
+	if conf.Datadog != nil {
 		if backend != nil {
-			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create DataDog backend.")
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Datadog backend.")
 		} else {
-			backend = conf.DataDog
+			backend = conf.Datadog
 		}
 	}
 
@@ -102,6 +104,14 @@ func setupTracing(conf *static.Tracing) tracing.Backend {
 // NewServer returns an initialized Server.
 func NewServer(staticConfiguration static.Configuration, provider provider.Provider, entryPoints TCPEntryPoints, tlsManager *tls.Manager) *Server {
 	server := &Server{}
+
+	if staticConfiguration.API != nil {
+		server.api = api.NewBuilder(staticConfiguration)
+	}
+
+	if staticConfiguration.Providers != nil && staticConfiguration.Providers.Rest != nil {
+		server.restHandler = staticConfiguration.Providers.Rest.Handler()
+	}
 
 	server.provider = provider
 	server.entryPointsTCP = entryPoints
@@ -307,11 +317,11 @@ func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 		}
 	}
 
-	if metricsConfig.DataDog != nil {
+	if metricsConfig.Datadog != nil {
 		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "datadog"))
-		registries = append(registries, metrics.RegisterDatadog(ctx, metricsConfig.DataDog))
-		log.FromContext(ctx).Debugf("Configured DataDog metrics: pushing to %s once every %s",
-			metricsConfig.DataDog.Address, metricsConfig.DataDog.PushInterval)
+		registries = append(registries, metrics.RegisterDatadog(ctx, metricsConfig.Datadog))
+		log.FromContext(ctx).Debugf("Configured Datadog metrics: pushing to %s once every %s",
+			metricsConfig.Datadog.Address, metricsConfig.Datadog.PushInterval)
 	}
 
 	if metricsConfig.StatsD != nil {

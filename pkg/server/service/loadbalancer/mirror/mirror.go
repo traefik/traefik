@@ -1,8 +1,10 @@
 package mirror
 
 import (
+	"bufio"
 	"context"
 	"errors"
+	"net"
 	"net/http"
 	"sync"
 
@@ -61,7 +63,7 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			if handler.count*100 < total*uint64(handler.percent) {
 				handler.count++
 				handler.lock.Unlock()
-				// When a request served by m.handler is successful, req.Context will be cancelled,
+				// When a request served by m.handler is successful, req.Context will be canceled,
 				// which would trigger a cancellation of the ongoing mirrored requests.
 				// Therefore, we give a new, non-cancellable context  to each of the mirrored calls,
 				// so they can terminate by themselves.
@@ -75,7 +77,7 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // AddMirror adds an httpHandler to mirror to.
 func (m *Mirroring) AddMirror(handler http.Handler, percent int) error {
-	if percent < 0 || percent >= 100 {
+	if percent < 0 || percent > 100 {
 		return errors.New("percent must be between 0 and 100")
 	}
 	m.mirrorHandlers = append(m.mirrorHandlers, &mirrorHandler{Handler: handler, percent: percent})
@@ -83,6 +85,12 @@ func (m *Mirroring) AddMirror(handler http.Handler, percent int) error {
 }
 
 type blackholeResponseWriter struct{}
+
+func (b blackholeResponseWriter) Flush() {}
+
+func (b blackholeResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return nil, nil, errors.New("you can hijack connection on blackholeResponseWriter")
+}
 
 func (b blackholeResponseWriter) Header() http.Header {
 	return http.Header{}
@@ -92,8 +100,7 @@ func (b blackholeResponseWriter) Write(bytes []byte) (int, error) {
 	return len(bytes), nil
 }
 
-func (b blackholeResponseWriter) WriteHeader(statusCode int) {
-}
+func (b blackholeResponseWriter) WriteHeader(statusCode int) {}
 
 type contextStopPropagation struct {
 	context.Context

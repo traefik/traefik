@@ -3,55 +3,50 @@
 Removing Prefixes From the Path Before Forwarding the Request (Using a Regex)
 {: .subtitle }
 
-`TODO: add schema`
-
 Remove the matching prefixes from the URL path.
 
 ## Configuration Examples
 
 ```yaml tab="Docker"
-# Replace the path by /foo
 labels:
-- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=^/foo/(.*)",
+- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
 ```
 
 ```yaml tab="Kubernetes"
-# Replace the path by /foo
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: test-stripprefixregex
 spec:
   stripPrefixRegex:
-    regex: "^/foo/(.*)"
+    regex:
+    - "/foo/[a-z0-9]+/[0-9]+/"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex": "^/foo/(.*)"
+  "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex": "/foo/[a-z0-9]+/[0-9]+/"
 }
 ```
 
 ```yaml tab="Rancher"
-# Replace the path by /foo
 labels:
-- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=^/foo/(.*)",
+- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
 ```
 
 ```toml tab="File (TOML)"
-# Replace the path by /foo
 [http.middlewares]
   [http.middlewares.test-stripprefixregex.stripPrefixRegex]
-     regex = "^/foo/(.*)"
+    regex = ["/foo/[a-z0-9]+/[0-9]+/"]
 ```
 
 ```yaml tab="File (YAML)"
-# Replace the path by /foo
 http:
   middlewares:
     test-stripprefixregex:
       stripPrefixRegex:
-       regex: "^/foo/(.*)"
+        regex:
+        - "/foo/[a-z0-9]+/[0-9]+/"
 ```
 
 ## Configuration Options

@@ -10,31 +10,45 @@
 			"tls": {
 				"options": "default/mytlsoption"
 			},
-			"status": "enabled"
+			"status": "enabled",
+			"using": [
+				"web"
+			]
 		},
 		"default/test2.route-23c7f4c450289ee29016@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
 			"middlewares": [
-				"default/stripprefix"
+				"default/mychain@kubernetescrd"
 			],
 			"service": "default/test2.route-23c7f4c450289ee29016",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/tobestripped`)",
-			"status": "enabled"
+			"status": "enabled",
+			"using": [
+				"web"
+			]
 		}
 	},
 	"middlewares": {
-		"default/stripprefix@kubernetescrd": {
-			"stripPrefix": {
-				"prefixes": [
-					"/tobestripped"
+		"default/mychain@kubernetescrd": {
+			"chain": {
+				"middlewares": [
+					"default/stripprefix@kubernetescrd"
 				]
 			},
 			"status": "enabled",
 			"usedBy": [
 				"default/test2.route-23c7f4c450289ee29016@kubernetescrd"
 			]
+		},
+		"default/stripprefix@kubernetescrd": {
+			"stripPrefix": {
+				"prefixes": [
+					"/tobestripped"
+				]
+			},
+			"status": "enabled"
 		}
 	},
 	"services": {
@@ -42,10 +56,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.2:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.6:80"
 					}
 				],
 				"passHostHeader": true
@@ -55,18 +69,18 @@
 				"default/test.route-6b204d94623b3df4370c@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.2:80": "UP",
+				"http://10.42.0.6:80": "UP"
 			}
 		},
 		"default/test2.route-23c7f4c450289ee29016@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.2:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.6:80"
 					}
 				],
 				"passHostHeader": true
@@ -76,8 +90,8 @@
 				"default/test2.route-23c7f4c450289ee29016@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.2:80": "UP",
+				"http://10.42.0.6:80": "UP"
 			}
 		}
 	},
@@ -92,7 +106,10 @@
 				"passthrough": false,
 				"options": "default/mytlsoption"
 			},
-			"status": "enabled"
+			"status": "enabled",
+			"using": [
+				"footcp"
+			]
 		}
 	},
 	"tcpServices": {
@@ -100,10 +117,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.3:8080"
+						"address": "10.42.0.4:8080"
 					},
 					{
-						"address": "10.42.0.6:8080"
+						"address": "10.42.0.5:8080"
 					}
 				]
 			},

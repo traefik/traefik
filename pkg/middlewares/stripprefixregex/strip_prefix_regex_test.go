@@ -15,7 +15,7 @@ import (
 
 func TestStripPrefixRegex(t *testing.T) {
 	testPrefixRegex := dynamic.StripPrefixRegex{
-		Regex: []string{"/a/api/", "/b/{regex}/", "/c/{category}/{id:[0-9]+}/"},
+		Regex: []string{"/a/api/", "/b/([a-z0-9]+)/", "/c/[a-z0-9]+/[0-9]+/"},
 	}
 
 	testCases := []struct {
@@ -27,7 +27,13 @@ func TestStripPrefixRegex(t *testing.T) {
 	}{
 		{
 			path:               "/a/test",
-			expectedStatusCode: http.StatusNotFound,
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/a/test",
+		},
+		{
+			path:               "/a/test",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/a/test",
 		},
 		{
 			path:               "/a/api/test",
@@ -65,7 +71,8 @@ func TestStripPrefixRegex(t *testing.T) {
 		},
 		{
 			path:               "/c/api/abc/test4",
-			expectedStatusCode: http.StatusNotFound,
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/c/api/abc/test4",
 		},
 		{
 			path:               "/a/api/a%2Fb",

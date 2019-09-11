@@ -2,9 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strconv"
+	"reflect"
 	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
@@ -15,12 +14,19 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const (
-	defaultPerPage = 100
-	defaultPage    = 1
-)
+type apiError struct {
+	Message string `json:"message"`
+}
 
-const nextPageHeader = "X-Next-Page"
+func writeError(rw http.ResponseWriter, msg string, code int) {
+	data, err := json.Marshal(apiError{Message: msg})
+	if err != nil {
+		http.Error(rw, msg, code)
+		return
+	}
+
+	http.Error(rw, string(data), code)
+}
 
 type serviceInfoRepresentation struct {
 	*runtime.ServiceInfo
@@ -36,12 +42,6 @@ type RunTimeRepresentation struct {
 	TCPServices map[string]*runtime.TCPServiceInfo    `json:"tcpServices,omitempty"`
 }
 
-type pageInfo struct {
-	startIndex int
-	endIndex   int
-	nextPage   int
-}
-
 // Handler serves the configuration and status of Traefik on API endpoints.
 type Handler struct {
 	dashboard bool
@@ -53,6 +53,15 @@ type Handler struct {
 	// stats                *thoasstats.Stats // FIXME stats
 	// StatsRecorder         *middlewares.StatsRecorder // FIXME stats
 	dashboardAssets *assetfs.AssetFS
+}
+
+// NewBuilder returns a http.Handler builder based on runtime.Configuration
+func NewBuilder(staticConfig static.Configuration) func(*runtime.Configuration) http.Handler {
+	return func(configuration *runtime.Configuration) http.Handler {
+		router := mux.NewRouter()
+		New(staticConfig, configuration).Append(router)
+		return router
+	}
 }
 
 // New returns a Handler defined by staticConfig, and if provided, by runtimeConfig.
@@ -136,48 +145,19 @@ func (h Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.R
 	}
 }
 
-func pagination(request *http.Request, max int) (pageInfo, error) {
-	perPage, err := getIntParam(request, "per_page", defaultPerPage)
-	if err != nil {
-		return pageInfo{}, err
-	}
-
-	page, err := getIntParam(request, "page", defaultPage)
-	if err != nil {
-		return pageInfo{}, err
-	}
-
-	startIndex := (page - 1) * perPage
-	if startIndex != 0 && startIndex >= max {
-		return pageInfo{}, fmt.Errorf("invalid request: page: %d, per_page: %d", page, perPage)
-	}
-
-	endIndex := startIndex + perPage
-	if endIndex >= max {
-		endIndex = max
-	}
-
-	nextPage := 1
-	if page*perPage < max {
-		nextPage = page + 1
-	}
-
-	return pageInfo{startIndex: startIndex, endIndex: endIndex, nextPage: nextPage}, nil
-}
-
-func getIntParam(request *http.Request, key string, defaultValue int) (int, error) {
-	raw := request.URL.Query().Get(key)
-	if raw == "" {
-		return defaultValue, nil
-	}
-
-	value, err := strconv.Atoi(raw)
-	if err != nil || value <= 0 {
-		return 0, fmt.Errorf("invalid request: %s: %d", key, value)
-	}
-	return value, nil
-}
-
 func getProviderName(id string) string {
 	return strings.SplitN(id, "@", 2)[1]
+}
+
+func extractType(element interface{}) string {
+	v := reflect.ValueOf(element).Elem()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		if field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct {
+			if !field.IsNil() {
+				return v.Type().Field(i).Name
+			}
+		}
+	}
+	return ""
 }

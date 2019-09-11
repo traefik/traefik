@@ -122,7 +122,7 @@ nav:
       - 'Access Logs': 'observability/access-logs.md'
       - 'Metrics':
           - 'Overview': 'observability/metrics/overview.md'
-          - 'DataDog': 'observability/metrics/datadog.md'
+          - 'Datadog': 'observability/metrics/datadog.md'
           - 'InfluxDB': 'observability/metrics/influxdb.md'
           - 'Prometheus': 'observability/metrics/prometheus.md'
           - 'StatsD': 'observability/metrics/statsd.md'
@@ -130,7 +130,7 @@ nav:
           - 'Overview': 'observability/tracing/overview.md'
           - 'Jaeger': 'observability/tracing/jaeger.md'
           - 'Zipkin': 'observability/tracing/zipkin.md'
-          - 'DataDog': 'observability/tracing/datadog.md'
+          - 'Datadog': 'observability/tracing/datadog.md'
           - 'Instana': 'observability/tracing/instana.md'
           - 'Haystack': 'observability/tracing/haystack.md'
   - 'User Guides':
@@ -143,6 +143,8 @@ nav:
           - 'TLS Challenge': 'user-guides/docker-compose/acme-tls/index.md'
           - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
           - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
+  - 'Migration':
+      - 'Traefik v1 to v2': 'migration/v1-to-v2.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'

@@ -18,46 +18,24 @@ tracing:
 
 #### `httpEndpoint`
 
-_Required, Default="http://localhost:9411/api/v1/spans"_
+_Required, Default="http://localhost:9411/api/v2/spans"_
 
 Zipkin HTTP endpoint used to send data.
 
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.zipkin]
-    httpEndpoint = "http://localhost:9411/api/v1/spans"
+    httpEndpoint = "http://localhost:9411/api/v2/spans"
 ```
 
 ```yaml tab="File (YAML)"
 tracing:
   zipkin:
-    httpEndpoint: http://localhost:9411/api/v1/spans
+    httpEndpoint: http://localhost:9411/api/v2/spans
 ```
 
 ```bash tab="CLI"
---tracing.zipkin.httpEndpoint="http://localhost:9411/api/v1/spans"
-```
-
-#### `debug`
-
-_Optional, Default=false_
-
-Enable Zipkin debug.
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.zipkin]
-    debug = true
-```
-
-```yaml tab="File (YAML)"
-tracing:
-  zipkin:
-    debug: true
-```
-
-```bash tab="CLI"
---tracing.zipkin.debug=true
+--tracing.zipkin.httpEndpoint="http://localhost:9411/api/v2/spans"
 ```
 
 #### `sameSpan`
@@ -86,7 +64,7 @@ tracing:
 
 _Optional, Default=true_
 
-Use Zipkin 128 bit root span IDs.
+Use Zipkin 128 bit trace IDs.
 
 ```toml tab="File (TOML)"
 [tracing]

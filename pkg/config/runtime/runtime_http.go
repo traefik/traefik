@@ -2,13 +2,15 @@ package runtime
 
 import (
 	"context"
+	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
 )
 
-// GetRoutersByEntryPoints returns all the http routers by entry points name and routers name
+// GetRoutersByEntryPoints returns all the http routers by entry points name and routers name.
 func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*RouterInfo {
 	entryPointsRouters := make(map[string]map[string]*RouterInfo)
 
@@ -17,13 +19,19 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 			continue
 		}
 
+		logger := log.FromContext(log.With(ctx, log.Str(log.RouterName, rtName)))
+
 		eps := rt.EntryPoints
 		if len(eps) == 0 {
+			logger.Debugf("No entryPoint defined for this router, using the default one(s) instead: %+v", entryPoints)
 			eps = entryPoints
 		}
+
+		entryPointsCount := 0
 		for _, entryPointName := range eps {
 			if !contains(entryPoints, entryPointName) {
-				log.FromContext(log.With(ctx, log.Str(log.EntryPointName, entryPointName))).
+				rt.AddError(fmt.Errorf("entryPoint %q doesn't exist", entryPointName), false)
+				logger.WithField(log.EntryPointName, entryPointName).
 					Errorf("entryPoint %q doesn't exist", entryPointName)
 				continue
 			}
@@ -32,14 +40,40 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 				entryPointsRouters[entryPointName] = make(map[string]*RouterInfo)
 			}
 
+			entryPointsCount++
+			rt.Using = append(rt.Using, entryPointName)
+
 			entryPointsRouters[entryPointName][rtName] = rt
 		}
+
+		if entryPointsCount == 0 {
+			rt.AddError(fmt.Errorf("no valid entryPoint for this router"), true)
+			logger.Error("no valid entryPoint for this router")
+		}
+
+		rt.Using = unique(rt.Using)
 	}
 
 	return entryPointsRouters
 }
 
-// RouterInfo holds information about a currently running HTTP router
+func unique(src []string) []string {
+	var uniq []string
+
+	set := make(map[string]struct{})
+	for _, v := range src {
+		if _, exist := set[v]; !exist {
+			set[v] = struct{}{}
+			uniq = append(uniq, v)
+		}
+	}
+
+	sort.Strings(uniq)
+
+	return uniq
+}
+
+// RouterInfo holds information about a currently running HTTP router.
 type RouterInfo struct {
 	*dynamic.Router // dynamic configuration
 	// Err contains all the errors that occurred during router's creation.
@@ -47,7 +81,8 @@ type RouterInfo struct {
 	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
 	// If not in "enabled" state, the reason for it should be in the list of Err.
 	// It is the caller's responsibility to set the initial status.
-	Status string `json:"status,omitempty"`
+	Status string   `json:"status,omitempty"`
+	Using  []string `json:"using,omitempty"` // Effective entry points used by that router.
 }
 
 // AddError adds err to r.Err, if it does not already exist.
@@ -71,13 +106,13 @@ func (r *RouterInfo) AddError(err error, critical bool) {
 	}
 }
 
-// MiddlewareInfo holds information about a currently running middleware
+// MiddlewareInfo holds information about a currently running middleware.
 type MiddlewareInfo struct {
 	*dynamic.Middleware // dynamic configuration
 	// Err contains all the errors that occurred during service creation.
 	Err    []string `json:"error,omitempty"`
 	Status string   `json:"status,omitempty"`
-	UsedBy []string `json:"usedBy,omitempty"` // list of routers and services using that middleware
+	UsedBy []string `json:"usedBy,omitempty"` // list of routers and services using that middleware.
 }
 
 // AddError adds err to s.Err, if it does not already exist.
@@ -101,7 +136,7 @@ func (m *MiddlewareInfo) AddError(err error, critical bool) {
 	}
 }
 
-// ServiceInfo holds information about a currently running service
+// ServiceInfo holds information about a currently running service.
 type ServiceInfo struct {
 	*dynamic.Service // dynamic configuration
 	// Err contains all the errors that occurred during service creation.

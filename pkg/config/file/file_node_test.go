@@ -143,7 +143,7 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 				{Name: "format", Value: "foobar"},
 				{Name: "level", Value: "foobar"}}},
 			{Name: "metrics", Children: []*parser.Node{
-				{Name: "dataDog", Children: []*parser.Node{
+				{Name: "datadog", Children: []*parser.Node{
 					{Name: "address", Value: "foobar"},
 					{Name: "pushInterval", Value: "10s"}}},
 				{Name: "influxDB", Children: []*parser.Node{
@@ -251,7 +251,7 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 				{Name: "maxIdleConnsPerHost", Value: "42"},
 				{Name: "rootCAs", Value: "foobar,foobar"}}},
 			{Name: "tracing", Children: []*parser.Node{
-				{Name: "dataDog", Children: []*parser.Node{
+				{Name: "datadog", Children: []*parser.Node{
 					{Name: "bagagePrefixHeaderName", Value: "foobar"},
 					{Name: "debug", Value: "true"},
 					{Name: "globalTag", Value: "foobar"},
@@ -282,7 +282,6 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 				{Name: "serviceName", Value: "foobar"},
 				{Name: "spanNameLimit", Value: "42"},
 				{Name: "zipkin", Children: []*parser.Node{
-					{Name: "debug", Value: "true"},
 					{Name: "httpEndpoint", Value: "foobar"},
 					{Name: "id128Bit", Value: "true"},
 					{Name: "sameSpan", Value: "true"},
@@ -378,7 +377,7 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 				{Name: "format", Value: "foobar"},
 				{Name: "level", Value: "foobar"}}},
 			{Name: "metrics", Children: []*parser.Node{
-				{Name: "dataDog", Children: []*parser.Node{
+				{Name: "datadog", Children: []*parser.Node{
 					{Name: "address", Value: "foobar"},
 					{Name: "pushInterval", Value: "10s"}}},
 				{Name: "influxDB", Children: []*parser.Node{
@@ -486,7 +485,7 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 				{Name: "maxIdleConnsPerHost", Value: "42"},
 				{Name: "rootCAs", Value: "foobar,foobar"}}},
 			{Name: "tracing", Children: []*parser.Node{
-				{Name: "dataDog", Children: []*parser.Node{
+				{Name: "datadog", Children: []*parser.Node{
 					{Name: "bagagePrefixHeaderName", Value: "foobar"},
 					{Name: "debug", Value: "true"},
 					{Name: "globalTag", Value: "foobar"},
@@ -517,7 +516,6 @@ func Test_decodeFileToNode_Yaml(t *testing.T) {
 				{Name: "serviceName", Value: "foobar"},
 				{Name: "spanNameLimit", Value: "42"},
 				{Name: "zipkin", Children: []*parser.Node{
-					{Name: "debug", Value: "true"},
 					{Name: "httpEndpoint", Value: "foobar"},
 					{Name: "id128Bit", Value: "true"},
 					{Name: "sameSpan", Value: "true"},

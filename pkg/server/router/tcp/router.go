@@ -177,6 +177,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
+		if routerConfig.Rule == "" {
+			err := errors.New("router has no rule")
+			routerConfig.AddError(err, true)
+			logger.Error(err)
+			continue
+		}
+
 		handler, err := m.serviceManager.BuildTCP(ctxRouter, routerConfig.Service)
 		if err != nil {
 			routerConfig.AddError(err, true)
@@ -188,7 +195,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		if err != nil {
 			routerErr := fmt.Errorf("unknown rule %s", routerConfig.Rule)
 			routerConfig.AddError(routerErr, true)
-			logger.Debug(routerErr)
+			logger.Error(routerErr)
 			continue
 		}
 

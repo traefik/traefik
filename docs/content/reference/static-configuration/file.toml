@@ -83,6 +83,7 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
+    throttleDuration = "10s"
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -95,7 +96,9 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
+    throttleDuration = "10s"
   [providers.rest]
+    insecure = true
   [providers.rancher]
     constraints = "foobar"
     watch = true
@@ -107,6 +110,7 @@
     prefix = "foobar"
 
 [api]
+  insecure = true
   dashboard = true
   debug = true
 
@@ -115,7 +119,8 @@
     buckets = [42.0, 42.0]
     addEntryPointsLabels = true
     addServicesLabels = true
-  [metrics.dataDog]
+    entryPoint = "foobar"
+  [metrics.datadog]
     address = "foobar"
     pushInterval = "10s"
     addEntryPointsLabels = true
@@ -137,6 +142,7 @@
     addServicesLabels = true
 
 [ping]
+  entryPoint = "foobar"
 
 [log]
   level = "foobar"
@@ -181,9 +187,8 @@
     httpEndpoint = "foobar"
     sameSpan = true
     id128Bit = true
-    debug = true
     sampleRate = 42.0
-  [tracing.dataDog]
+  [tracing.datadog]
     localAgentHostPort = "foobar"
     globalTag = "foobar"
     debug = true

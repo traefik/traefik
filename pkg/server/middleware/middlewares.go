@@ -102,6 +102,10 @@ func checkRecursion(ctx context.Context, middlewareName string) (context.Context
 // it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (alice.Constructor, error) {
 	config := b.configs[middlewareName]
+	if config == nil || config.Middleware == nil {
+		return nil, fmt.Errorf("invalid middleware %q configuration", middlewareName)
+	}
+
 	var middleware alice.Constructor
 	badConf := errors.New("cannot create middleware: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
 
@@ -123,7 +127,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	// Buffering
-	if config.Buffering != nil && config.InFlightReq.Amount != 0 {
+	if config.Buffering != nil {
 		if middleware != nil {
 			return nil, badConf
 		}
@@ -137,6 +141,12 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		if middleware != nil {
 			return nil, badConf
 		}
+
+		qualifiedNames := make([]string, len(config.Chain.Middlewares))
+		for i, name := range config.Chain.Middlewares {
+			qualifiedNames[i] = internal.GetQualifiedName(ctx, name)
+		}
+		config.Chain.Middlewares = qualifiedNames
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return chain.New(ctx, next, *config.Chain, b, middlewareName)
 		}
@@ -213,7 +223,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	// InFlightReq
-	if config.InFlightReq != nil && config.InFlightReq.Amount != 0 {
+	if config.InFlightReq != nil {
 		if middleware != nil {
 			return nil, badConf
 		}
@@ -314,7 +324,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	if middleware == nil {
-		return nil, errors.New("middleware does not exist")
+		return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
 	}
 
 	return tracing.Wrap(ctx, middleware), nil

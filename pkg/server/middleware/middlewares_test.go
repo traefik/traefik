@@ -314,6 +314,14 @@ func TestBuilder_buildConstructor(t *testing.T) {
 				Prefix: "foo/",
 			},
 		},
+		"buff-foo": {
+			Buffering: &dynamic.Buffering{
+				MaxRequestBodyBytes:  1,
+				MemRequestBodyBytes:  2,
+				MaxResponseBodyBytes: 3,
+				MemResponseBodyBytes: 5,
+			},
+		},
 	}
 
 	rtConf := runtime.NewConfig(dynamic.Configuration{
@@ -339,6 +347,11 @@ func TestBuilder_buildConstructor(t *testing.T) {
 			expectedError: false,
 		},
 		{
+			desc:          "Should create a buffering middleware",
+			middlewareID:  "buff-foo",
+			expectedError: false,
+		},
+		{
 			desc:          "Should not create an empty AddPrefix middleware when given an empty prefix",
 			middlewareID:  "ap-empty",
 			expectedError: true,
@@ -356,7 +369,6 @@ func TestBuilder_buildConstructor(t *testing.T) {
 			t.Parallel()
 
 			constructor, err := middlewaresBuilder.buildConstructor(context.Background(), test.middlewareID)
-
 			require.NoError(t, err)
 
 			middleware, err2 := constructor(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))

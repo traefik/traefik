@@ -1462,6 +1462,81 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple Ingress Route, with basic auth middleware",
+			paths: []string{"services.yml", "with_auth.yml"},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default/basicauth": {
+							BasicAuth: &dynamic.BasicAuth{
+								Users: dynamic.Users{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							},
+						},
+						"default/digestauth": {
+							DigestAuth: &dynamic.DigestAuth{
+								Users: dynamic.Users{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+							},
+						},
+						"default/forwardauth": {
+							ForwardAuth: &dynamic.ForwardAuth{
+								Address: "test.com",
+								TLS: &dynamic.ClientTLS{
+									CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+									Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+									Key:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc:  "Simple Ingress Route, with error page middleware",
+			paths: []string{"services.yml", "with_error_page.yml"},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default/errorpage": {
+							Errors: &dynamic.ErrorPage{
+								Status:  []string{"404", "500"},
+								Service: "default/errorpage-errorpage-service",
+								Query:   "query",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default/errorpage-errorpage-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: true,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "port selected by name (TODO)",
 		},
 	}
@@ -1469,6 +1544,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 
+		if test.desc != "Simple Ingress Route, with error page middleware" {
+			continue
+		}
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

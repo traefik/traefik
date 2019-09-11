@@ -3,7 +3,9 @@
 Removing Prefixes From the Path Before Forwarding the Request
 {: .subtitle }
 
-`TODO: add schema`
+<!--
+TODO: add schema
+-->
 
 Remove the specified prefixes from the URL path.
 
@@ -12,7 +14,7 @@ Remove the specified prefixes from the URL path.
 ```yaml tab="Docker"
 # Strip prefix /foobar and /fiibar
 labels:
-- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar, /fiibar"
+- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
 ```
 
 ```yaml tab="Kubernetes"
@@ -30,14 +32,14 @@ spec:
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes": "/foobar, /fiibar"
+  "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes": "/foobar,/fiibar"
 }
 ```
 
 ```yaml tab="Rancher"
 # Strip prefix /foobar and /fiibar
 labels:
-- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar, /fiibar"
+- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
 ```
 
 ```toml tab="File (TOML)"

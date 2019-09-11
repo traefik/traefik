@@ -63,7 +63,7 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	// Without this, child spans are getting the NOOP tracer
 	opentracing.SetGlobalTracer(tracer)
 
-	log.WithoutContext().Debug("DataDog tracer configured")
+	log.WithoutContext().Debug("haystack tracer configured")
 
 	return tracer, closer, nil
 }

@@ -76,4 +76,58 @@ func TestInvalidPercent(t *testing.T) {
 
 	err = mirror.AddMirror(nil, 101)
 	assert.Error(t, err)
+
+	err = mirror.AddMirror(nil, 100)
+	assert.NoError(t, err)
+
+	err = mirror.AddMirror(nil, 0)
+	assert.NoError(t, err)
+}
+
+func TestHijack(t *testing.T) {
+	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	})
+	pool := safe.NewPool(context.Background())
+	mirror := New(handler, pool)
+
+	var mirrorRequest bool
+	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		hijacker, ok := rw.(http.Hijacker)
+		assert.Equal(t, true, ok)
+
+		_, _, err := hijacker.Hijack()
+		assert.Error(t, err)
+		mirrorRequest = true
+	}), 100)
+	assert.NoError(t, err)
+
+	mirror.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+
+	pool.Stop()
+	assert.Equal(t, true, mirrorRequest)
+}
+
+func TestFlush(t *testing.T) {
+	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	})
+	pool := safe.NewPool(context.Background())
+	mirror := New(handler, pool)
+
+	var mirrorRequest bool
+	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		hijacker, ok := rw.(http.Flusher)
+		assert.Equal(t, true, ok)
+
+		hijacker.Flush()
+
+		mirrorRequest = true
+	}), 100)
+	assert.NoError(t, err)
+
+	mirror.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+
+	pool.Stop()
+	assert.Equal(t, true, mirrorRequest)
 }

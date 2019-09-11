@@ -3,7 +3,9 @@
 Updating the Path Before Forwarding the Request (Using a Regex)
 {: .subtitle }
 
-`TODO: add schema`
+<!--
+TODO: add schema
+-->
 
 The ReplaceRegex replace a path from an url to another with regex matching and replacement.
 

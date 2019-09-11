@@ -1,0 +1,29 @@
+[
+	{
+		"addPrefix": {
+			"prefix": "/toto"
+		},
+		"name": "addPrefixTest@anotherprovider",
+		"provider": "anotherprovider",
+		"status": "enabled",
+		"type": "addprefix",
+		"usedBy": [
+			"bar@myprovider"
+		]
+	},
+	{
+		"basicAuth": {
+			"users": [
+				"admin:admin"
+			]
+		},
+		"name": "auth@myprovider",
+		"provider": "myprovider",
+		"status": "enabled",
+		"type": "basicauth",
+		"usedBy": [
+			"bar@myprovider",
+			"test@myprovider"
+		]
+	}
+]

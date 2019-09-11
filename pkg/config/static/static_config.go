@@ -85,6 +85,7 @@ type ServersTransport struct {
 
 // API holds the API configuration
 type API struct {
+	Insecure  bool `description:"Activate API directly on the entryPoint named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	Dashboard bool `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
 	Debug     bool `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
 	// TODO: Re-enable statistics
@@ -139,7 +140,7 @@ type Tracing struct {
 	SpanNameLimit int              `description:"Set the maximum character limit for Span names (default 0 = no limit)." json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty" export:"true"`
 	Jaeger        *jaeger.Config   `description:"Settings for Jaeger." json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty" export:"true" label:"allowEmpty"`
 	Zipkin        *zipkin.Config   `description:"Settings for Zipkin." json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty" export:"true" label:"allowEmpty"`
-	DataDog       *datadog.Config  `description:"Settings for DataDog." json:"dataDog,omitempty" toml:"dataDog,omitempty" yaml:"dataDog,omitempty" export:"true" label:"allowEmpty"`
+	Datadog       *datadog.Config  `description:"Settings for Datadog." json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" export:"true" label:"allowEmpty"`
 	Instana       *instana.Config  `description:"Settings for Instana." json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" export:"true" label:"allowEmpty"`
 	Haystack      *haystack.Config `description:"Settings for Haystack." json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty" export:"true" label:"allowEmpty"`
 }
@@ -173,9 +174,9 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
-	if (c.API != nil) ||
-		(c.Ping != nil) ||
-		(c.Metrics != nil && c.Metrics.Prometheus != nil) ||
+	if (c.API != nil && c.API.Insecure) ||
+		(c.Ping != nil && c.Ping.EntryPoint == DefaultInternalEntryPointName) ||
+		(c.Metrics != nil && c.Metrics.Prometheus != nil && c.Metrics.Prometheus.EntryPoint == DefaultInternalEntryPointName) ||
 		(c.Providers.Rest != nil) {
 		if _, ok := c.EntryPoints[DefaultInternalEntryPointName]; !ok {
 			ep := &EntryPoint{Address: ":8080"}

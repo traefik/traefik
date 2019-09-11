@@ -11,7 +11,7 @@ Traefik supports five tracing backends:
 
 - [Jaeger](./jaeger.md)
 - [Zipkin](./zipkin.md)
-- [DataDog](./datadog.md)
+- [Datadog](./datadog.md)
 - [Instana](./instana.md)
 - [Haystack](./haystack.md)
 

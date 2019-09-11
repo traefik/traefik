@@ -3,8 +3,6 @@
 To Control the Number of Requests Going to a Service
 {: .subtitle }
 
-![RateLimit](../assets/img/middleware/ratelimit.png)
-
 The RateLimit middleware ensures that services will receive a _fair_ number of requests, and allows you define what is fair.
 
 ## Configuration Example
@@ -173,7 +171,7 @@ The `ipStrategy` option defines two parameters that sets how Traefik will determ
 The `depth` option tells Traefik to use the `X-Forwarded-For` header and take the IP located at the `depth` position (starting from the right).
 
 - If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP will be empty.
-- `depth` is ignored if its value is is lesser than or equal to 0.
+- `depth` is ignored if its value is lesser than or equal to 0.
 
 !!! note "Example of Depth & X-Forwarded-For"
 

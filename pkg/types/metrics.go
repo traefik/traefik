@@ -7,7 +7,7 @@ import (
 // Metrics provides options to expose and send Traefik metrics to different third party monitoring systems.
 type Metrics struct {
 	Prometheus *Prometheus `description:"Prometheus metrics exporter type." json:"prometheus,omitempty" toml:"prometheus,omitempty" yaml:"prometheus,omitempty" export:"true" label:"allowEmpty"`
-	DataDog    *DataDog    `description:"DataDog metrics exporter type." json:"dataDog,omitempty" toml:"dataDog,omitempty" yaml:"dataDog,omitempty" export:"true" label:"allowEmpty"`
+	Datadog    *Datadog    `description:"Datadog metrics exporter type." json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" export:"true" label:"allowEmpty"`
 	StatsD     *Statsd     `description:"StatsD metrics exporter type." json:"statsD,omitempty" toml:"statsD,omitempty" yaml:"statsD,omitempty" export:"true" label:"allowEmpty"`
 	InfluxDB   *InfluxDB   `description:"InfluxDB metrics exporter type." json:"influxDB,omitempty" toml:"influxDB,omitempty" yaml:"influxDB,omitempty" label:"allowEmpty"`
 }
@@ -17,6 +17,7 @@ type Prometheus struct {
 	Buckets              []float64 `description:"Buckets for latency metrics." json:"buckets,omitempty" toml:"buckets,omitempty" yaml:"buckets,omitempty" export:"true"`
 	AddEntryPointsLabels bool      `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
 	AddServicesLabels    bool      `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
+	EntryPoint           string    `description:"EntryPoint" export:"true" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
 }
 
 // SetDefaults sets the default values.
@@ -24,18 +25,19 @@ func (p *Prometheus) SetDefaults() {
 	p.Buckets = []float64{0.1, 0.3, 1.2, 5}
 	p.AddEntryPointsLabels = true
 	p.AddServicesLabels = true
+	p.EntryPoint = "traefik"
 }
 
-// DataDog contains address and metrics pushing interval configuration.
-type DataDog struct {
-	Address              string   `description:"DataDog's address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	PushInterval         Duration `description:"DataDog push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
+// Datadog contains address and metrics pushing interval configuration.
+type Datadog struct {
+	Address              string   `description:"Datadog's address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	PushInterval         Duration `description:"Datadog push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
 	AddEntryPointsLabels bool     `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
 	AddServicesLabels    bool     `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
-func (d *DataDog) SetDefaults() {
+func (d *Datadog) SetDefaults() {
 	d.Address = "localhost:8125"
 	d.PushInterval = Duration(10 * time.Second)
 	d.AddEntryPointsLabels = true

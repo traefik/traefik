@@ -62,17 +62,28 @@
         [http.services.Service01.loadBalancer.responseForwarding]
           flushInterval = "foobar"
     [http.services.Service02]
-      [http.services.Service02.weighted]
+      [http.services.Service02.mirroring]
+        service = "foobar"
 
-        [[http.services.Service02.weighted.services]]
+        [[http.services.Service02.mirroring.mirrors]]
+          name = "foobar"
+          percent = 42
+
+        [[http.services.Service02.mirroring.mirrors]]
+          name = "foobar"
+          percent = 42
+    [http.services.Service03]
+      [http.services.Service03.weighted]
+
+        [[http.services.Service03.weighted.services]]
           name = "foobar"
           weight = 42
 
-        [[http.services.Service02.weighted.services]]
+        [[http.services.Service03.weighted.services]]
           name = "foobar"
           weight = 42
-        [http.services.Service02.weighted.sticky]
-          [http.services.Service02.weighted.sticky.cookie]
+        [http.services.Service03.weighted.sticky]
+          [http.services.Service03.weighted.sticky.cookie]
             name = "foobar"
             secure = true
             httpOnly = true
@@ -202,30 +213,40 @@
             serialNumber = true
             domainComponent = true
     [http.middlewares.Middleware13]
-      [http.middlewares.Middleware13.redirectRegex]
+      [http.middlewares.Middleware13.rateLimit]
+        average = 42
+        burst = 42
+        [http.middlewares.Middleware13.rateLimit.sourceCriterion]
+          requestHeaderName = "foobar"
+          requestHost = true
+          [http.middlewares.Middleware13.rateLimit.sourceCriterion.ipStrategy]
+            depth = 42
+            excludedIPs = ["foobar", "foobar"]
+    [http.middlewares.Middleware14]
+      [http.middlewares.Middleware14.redirectRegex]
         regex = "foobar"
         replacement = "foobar"
         permanent = true
-    [http.middlewares.Middleware14]
-      [http.middlewares.Middleware14.redirectScheme]
+    [http.middlewares.Middleware15]
+      [http.middlewares.Middleware15.redirectScheme]
         scheme = "foobar"
         port = "foobar"
         permanent = true
-    [http.middlewares.Middleware15]
-      [http.middlewares.Middleware15.replacePath]
-        path = "foobar"
     [http.middlewares.Middleware16]
-      [http.middlewares.Middleware16.replacePathRegex]
+      [http.middlewares.Middleware16.replacePath]
+        path = "foobar"
+    [http.middlewares.Middleware17]
+      [http.middlewares.Middleware17.replacePathRegex]
         regex = "foobar"
         replacement = "foobar"
-    [http.middlewares.Middleware17]
-      [http.middlewares.Middleware17.retry]
-        attempts = 42
     [http.middlewares.Middleware18]
-      [http.middlewares.Middleware18.stripPrefix]
-        prefixes = ["foobar", "foobar"]
+      [http.middlewares.Middleware18.retry]
+        attempts = 42
     [http.middlewares.Middleware19]
-      [http.middlewares.Middleware19.stripPrefixRegex]
+      [http.middlewares.Middleware19.stripPrefix]
+        prefixes = ["foobar", "foobar"]
+    [http.middlewares.Middleware20]
+      [http.middlewares.Middleware20.stripPrefixRegex]
         regex = ["foobar", "foobar"]
 
 [tcp]

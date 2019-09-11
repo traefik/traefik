@@ -501,8 +501,8 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 // TestWithClientCertificateAuthentication
 // Use two CA:s and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check.C) {
-	server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { rw.Write([]byte("server1")) }))
-	server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { rw.Write([]byte("server2")) }))
+	server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server1")) }))
+	server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server2")) }))
 	defer func() {
 		server1.Close()
 		server2.Close()
@@ -598,8 +598,8 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check
 // TestWithClientCertificateAuthentication
 // Use two CA:s in two different files and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleFiles(c *check.C) {
-	server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { rw.Write([]byte("server1")) }))
-	server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { rw.Write([]byte("server2")) }))
+	server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server1")) }))
+	server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server2")) }))
 	defer func() {
 		server1.Close()
 		server2.Close()

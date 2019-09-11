@@ -39,6 +39,10 @@ body {
   color: $app-text-grey;
 }
 
+.bg-app-toggle {
+  background-color: rgba( $accent, .1 );
+}
+
 // Helps
 .xs-text-center {
   @include respond-to(sm, max) {
@@ -60,6 +64,10 @@ body {
   &-label {
     font-size: inherit;
     font-weight: inherit;
+    &-sub {
+      font-size: 16px;
+      font-weight: 600;
+    }
   }
   .q-icon + &-label {
     margin-left: 8px;
@@ -106,4 +114,46 @@ body {
 // Card
 .q-card {
   border-radius: 8px;
+}
+
+// Chips
+.app-chip {
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  &-wrap {
+    height: 100%;
+    flex-wrap: wrap;
+    .q-chip__content{
+      white-space: normal;
+    }
+  }
+  &-accent, &-rule {
+    color: $accent;
+    background-color: rgba($accent, 0.1);
+  }
+  &-green, &-entry-points {
+    color: $app-text-green;
+    background-color: rgba($app-text-green, 0.1);
+  }
+  &-purple, &-name {
+    color: $app-text-purple;
+    background-color: rgba($app-text-purple, 0.1);
+  }
+  &-warning, &-service {
+    color: $warning;
+    background-color: rgba($warning, 0.1);
+  }
+  &-negative, &-error {
+    color: $negative;
+    background-color: rgba($negative, 0.1);
+  }
+  &-green-2, &-options {
+    color: $app-text-green-2;
+    background-color: rgba($app-text-green-2, 0.1);
+  }
+  &-marine, &-interval {
+    color: $app-text-marine;
+    background-color: rgba($app-text-grey, 0.1);
+  }
 }

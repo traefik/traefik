@@ -35,7 +35,7 @@ const (
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
-func RegisterDatadog(ctx context.Context, config *types.DataDog) Registry {
+func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 	if datadogTicker == nil {
 		datadogTicker = initDatadogClient(ctx, config)
 	}
@@ -66,7 +66,7 @@ func RegisterDatadog(ctx context.Context, config *types.DataDog) Registry {
 	return registry
 }
 
-func initDatadogClient(ctx context.Context, config *types.DataDog) *time.Ticker {
+func initDatadogClient(ctx context.Context, config *types.Datadog) *time.Ticker {
 	address := config.Address
 	if len(address) == 0 {
 		address = "localhost:8125"
