@@ -483,7 +483,8 @@ func TestEntryPoints_Set(t *testing.T) {
 				Address:          ":8443",
 				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
 				TLS: &tls.TLS{
-					MinVersion: "VersionTLS10",
+					MinVersion:   "VersionTLS10",
+					Certificates: tls.Certificates{},
 				},
 			},
 		},
