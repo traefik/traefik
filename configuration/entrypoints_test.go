@@ -477,7 +477,7 @@ func TestEntryPoints_Set(t *testing.T) {
 		},
 		{
 			name:                   "enforce tls minversion",
-			expression:             "Name:foo address::8443 compress:true tls",
+			expression:             "Name:foo address::8443 tls",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address:          ":8443",
