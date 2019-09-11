@@ -2,6 +2,7 @@ package tls
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"net"
 	"sort"
 	"strings"
@@ -47,7 +48,34 @@ func (c CertificateStore) GetAllDomains() []string {
 			allCerts = append(allCerts, domains)
 		}
 	}
+
+	// Get Default certificate
+	if c.DefaultCertificate != nil {
+		allCerts = append(allCerts, c.getCertificateDomains(c.DefaultCertificate)...)
+	}
 	return allCerts
+}
+
+func (c CertificateStore) getCertificateDomains(cert *tls.Certificate) []string {
+	var names []string
+
+	if cert == nil {
+		return names
+	}
+
+	x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
+	if err != nil {
+		return nil
+	}
+
+	if len(x509Cert.Subject.CommonName) > 0 {
+		names = append(names, x509Cert.Subject.CommonName)
+	}
+	for _, san := range x509Cert.DNSNames {
+		names = append(names, san)
+	}
+
+	return names
 }
 
 // GetBestCertificate returns the best match certificate, and caches the response

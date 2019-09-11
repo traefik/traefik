@@ -13,6 +13,90 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestGetAllDomains(t *testing.T) {
+	testCases := []struct {
+		desc            string
+		staticCert      string
+		dynamicCert     string
+		defaultCert     string
+		expectedDomains []string
+	}{
+		{
+			desc:            "Empty Store, returns no domains",
+			staticCert:      "",
+			dynamicCert:     "",
+			defaultCert:     "",
+			expectedDomains: nil,
+		},
+		{
+			desc:            "Static cert domains",
+			staticCert:      "snitest.com",
+			dynamicCert:     "",
+			defaultCert:     "",
+			expectedDomains: []string{"snitest.com"},
+		},
+		{
+			desc:            "Dynamic cert domains",
+			staticCert:      "",
+			dynamicCert:     "snitest.com",
+			defaultCert:     "",
+			expectedDomains: []string{"snitest.com"},
+		},
+		{
+			desc:            "Default cert domains",
+			staticCert:      "",
+			dynamicCert:     "",
+			defaultCert:     "snitest.com",
+			expectedDomains: []string{"snitest.com"},
+		},
+		{
+			desc:            "All domains",
+			staticCert:      "www.snitest.com",
+			dynamicCert:     "*.snitest.com",
+			defaultCert:     "snitest.com",
+			expectedDomains: []string{"www.snitest.com", "*.snitest.com", "snitest.com"},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			var defaultCert *tls.Certificate
+			staticMap := map[string]*tls.Certificate{}
+			dynamicMap := map[string]*tls.Certificate{}
+
+			if test.staticCert != "" {
+				cert, err := loadTestCert(test.staticCert, false)
+				require.NoError(t, err)
+				staticMap[strings.ToLower(test.staticCert)] = cert
+			}
+
+			if test.dynamicCert != "" {
+				cert, err := loadTestCert(test.dynamicCert, false)
+				require.NoError(t, err)
+				dynamicMap[strings.ToLower(test.dynamicCert)] = cert
+			}
+
+			if test.defaultCert != "" {
+				cert, err := loadTestCert(test.defaultCert, false)
+				require.NoError(t, err)
+				defaultCert = cert
+			}
+
+			store := &CertificateStore{
+				DynamicCerts:       safe.New(dynamicMap),
+				StaticCerts:        safe.New(staticMap),
+				DefaultCertificate: defaultCert,
+				CertCache:          cache.New(1*time.Hour, 10*time.Minute),
+			}
+
+			actual := store.GetAllDomains()
+			assert.Equal(t, test.expectedDomains, actual)
+		})
+	}
+}
+
 func TestGetBestCertificate(t *testing.T) {
 	testCases := []struct {
 		desc          string
