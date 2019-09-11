@@ -312,11 +312,11 @@ This strategy can be defined only with [File](../../providers/file.md).
 
 ```toml tab="TOML"
 [http.services]
-  [http.services.canary]
-    [[http.services.canary.weighted.services]]
+  [http.services.app]
+    [[http.services.app.weighted.services]]
       name = "appv1"
       weight = 3
-    [[http.services.canary.weighted.services]]
+    [[http.services.app.weighted.services]]
       name = "appv2"
       weight = 1
 
@@ -334,7 +334,7 @@ This strategy can be defined only with [File](../../providers/file.md).
 ```yaml tab="YAML"
 http:
   services:
-    canary:
+    app:
       weighted:
         services:
         - name: appv1
@@ -361,40 +361,40 @@ This strategy can be defined only with [File](../../providers/file.md).
 
 ```toml tab="TOML"
 [http.services]
-  [http.services.mirroring]
-    [http.services.mirroring.mirroring]
-      service = "app"
-    [[http.services.mirroring.mirroring.mirrors]]
-      name = "mirror"
+  [http.services.mirrored-api]
+    [http.services.mirrored-api.mirroring]
+      service = "appv1"
+    [[http.services.mirrored-api.mirroring.mirrors]]
+      name = "appv2"
       percent = 10
 
-  [http.services.app]
-    [http.services.app.loadBalancer]
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
       [[http.services.appv1.loadBalancer.servers]]
         url = "http://private-ip-server-1/"
 
-  [http.services.mirror]
-    [http.services.mirror.loadBalancer]
-      [[http.services.mirror.loadBalancer.servers]]
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [[http.services.appv2.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
 ```
 
 ```yaml tab="YAML"
 http:
   services:
-    mirroring:
+    mirrored-api:
       mirroring:
-        service: app
+        service: appv1
         mirrors:
-        - name: mirror
+        - name: appv2
           percent: 10
 
-    app:
+    appv1:
       loadBalancer:
         servers:
         - url: "http://private-ip-server-1/"
 
-    mirror:
+    appv2:
       loadBalancer:
         servers:
         - url: "http://private-ip-server-2/"
