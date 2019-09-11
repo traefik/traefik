@@ -51,12 +51,12 @@ func (c CertificateStore) GetAllDomains() []string {
 
 	// Get Default certificate
 	if c.DefaultCertificate != nil {
-		allCerts = append(allCerts, c.getCertificateDomains(c.DefaultCertificate)...)
+		allCerts = append(allCerts, getCertificateDomains(c.DefaultCertificate)...)
 	}
 	return allCerts
 }
 
-func (c CertificateStore) getCertificateDomains(cert *tls.Certificate) []string {
+func getCertificateDomains(cert *tls.Certificate) []string {
 	var names []string
 
 	if cert == nil {
