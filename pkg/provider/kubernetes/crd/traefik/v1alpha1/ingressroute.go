@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -46,12 +47,19 @@ type TLSOptionRef struct {
 
 // Service defines an upstream to proxy traffic.
 type Service struct {
-	Name        string       `json:"name"`
-	Port        int32        `json:"port"`
-	Scheme      string       `json:"scheme,omitempty"`
-	HealthCheck *HealthCheck `json:"healthCheck,omitempty"`
-	Strategy    string       `json:"strategy,omitempty"`
-	Weight      *int         `json:"weight,omitempty"`
+	Name           string       `json:"name"`
+	Port           int32        `json:"port"`
+	Scheme         string       `json:"scheme,omitempty"`
+	HealthCheck    *HealthCheck `json:"healthCheck,omitempty"`
+	Strategy       string       `json:"strategy,omitempty"`
+	ServersOptions *Options     `json:"options,omitempty"`
+	Weight         *int         `json:"weight,omitempty"`
+}
+
+// Options configures options for the servers
+type Options struct {
+	PassHostHeader     *bool                       `json:"passHostHeader,omitempty"`
+	ResponseForwarding *dynamic.ResponseForwarding `json:"responseForwarding,omitempty"`
 }
 
 // MiddlewareRef is a ref to the Middleware resources.
