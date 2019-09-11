@@ -141,6 +141,7 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, app maratho
 	if len(conf.Services) == 0 {
 		conf.Services = make(map[string]*dynamic.TCPService)
 		lb := &dynamic.TCPLoadBalancerService{}
+		lb.SetDefaults()
 		conf.Services[appName] = &dynamic.TCPService{
 			LoadBalancer: lb,
 		}

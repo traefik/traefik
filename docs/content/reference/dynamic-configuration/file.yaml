@@ -324,11 +324,13 @@ tcp:
   services:
     TCPService0:
       loadBalancer:
+        terminationDelay: 100
         servers:
         - address: foobar
         - address: foobar
     TCPService1:
       loadBalancer:
+        terminationDelay: 100
         servers:
         - address: foobar
         - address: foobar

@@ -45,7 +45,18 @@ type RouterTCPTLSConfig struct {
 
 // TCPLoadBalancerService holds the LoadBalancerService configuration.
 type TCPLoadBalancerService struct {
-	Servers []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
+	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
+	// of its connected peers indicates it has closed the writing capability of its
+	// connection, to close the reading capability as well, hence fully terminating the
+	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
+	// means an infinite deadline (i.e. the reading capability is never closed).
+	TerminationDelay *int        `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty"`
+	Servers          []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
+}
+
+func (l *TCPLoadBalancerService) SetDefaults() {
+	defaultTerminationDelay := 100 // in milliseconds
+	l.TerminationDelay = &defaultTerminationDelay
 }
 
 // Mergeable tells if the given service is mergeable.

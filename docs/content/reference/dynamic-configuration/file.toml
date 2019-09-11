@@ -286,14 +286,17 @@
   [tcp.services]
     [tcp.services.TCPService0]
       [tcp.services.TCPService0.loadBalancer]
+        terminationDelay = 100
 
         [[tcp.services.TCPService0.loadBalancer.servers]]
           address = "foobar"
 
         [[tcp.services.TCPService0.loadBalancer.servers]]
           address = "foobar"
+
     [tcp.services.TCPService1]
       [tcp.services.TCPService1.loadBalancer]
+        terminationDelay = 100
 
         [[tcp.services.TCPService1.loadBalancer.servers]]
           address = "foobar"

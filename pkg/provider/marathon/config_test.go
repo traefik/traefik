@@ -1240,6 +1240,7 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:80",
 									},
 								},
+								TerminationDelay: func(i int) *int { return &i }(100),
 							},
 						},
 					},
@@ -1271,6 +1272,7 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:80",
 									},
 								},
+								TerminationDelay: func(i int) *int { return &i }(100),
 							},
 						},
 					},
@@ -1310,6 +1312,48 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:8080",
 									},
 								},
+								TerminationDelay: func(i int) *int { return &i }(100),
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc: "one app with tcp labels with port, with termination delay",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
+					withLabel("traefik.tcp.routers.foo.rule", "HostSNI(`foo.bar`)"),
+					withLabel("traefik.tcp.routers.foo.tls", "true"),
+					withLabel("traefik.tcp.services.foo.loadbalancer.server.port", "8080"),
+					withLabel("traefik.tcp.services.foo.loadbalancer.terminationdelay", "200"),
+				)),
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"foo": {
+							Service: "foo",
+							Rule:    "HostSNI(`foo.bar`)",
+							TLS:     &dynamic.RouterTCPTLSConfig{},
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"foo": {
+							LoadBalancer: &dynamic.TCPLoadBalancerService{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "localhost:8080",
+									},
+								},
+								TerminationDelay: func(i int) *int { return &i }(200),
 							},
 						},
 					},
@@ -1350,6 +1394,7 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:8080",
 									},
 								},
+								TerminationDelay: func(i int) *int { return &i }(100),
 							},
 						},
 					},
