@@ -212,6 +212,12 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 			}
 		}
 
+		// Thanks to SSLv3 being enabled by mistake in golang 1.12,
+		// If no minVersion is set, apply TLS1.0 as the minimum.
+		if entryPoint.TLS != nil && len(entryPoint.TLS.MinVersion) == 0 {
+			entryPoint.TLS.MinVersion = "VersionTLS10"
+		}
+
 		if entryPoint.TLS != nil && entryPoint.TLS.DefaultCertificate == nil && len(entryPoint.TLS.Certificates) > 0 {
 			log.Infof("No tls.defaultCertificate given for %s: using the first item in tls.certificates as a fallback.", entryPointName)
 			entryPoint.TLS.DefaultCertificate = &entryPoint.TLS.Certificates[0]

@@ -12,6 +12,7 @@ import (
 	"github.com/containous/traefik/provider"
 	acmeprovider "github.com/containous/traefik/provider/acme"
 	"github.com/containous/traefik/provider/file"
+	"github.com/containous/traefik/tls"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -266,6 +267,72 @@ func TestInitACMEProvider(t *testing.T) {
 			} else {
 				assert.Equal(t, test.expectedConfiguration.Storage, configuration.Storage)
 			}
+		})
+	}
+}
+
+func TestSetEffectiveConfigurationTLSMinVersion(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		provided EntryPoint
+		expected EntryPoint
+	}{
+		{
+			desc: "Entrypoint with no TLS",
+			provided: EntryPoint{
+				Address: ":80",
+			},
+			expected: EntryPoint{
+				Address:          ":80",
+				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
+			},
+		},
+		{
+			desc: "Entrypoint with TLS Specifying MinVersion",
+			provided: EntryPoint{
+				Address: ":443",
+				TLS: &tls.TLS{
+					MinVersion: "VersionTLS12",
+				},
+			},
+			expected: EntryPoint{
+				Address:          ":443",
+				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
+				TLS: &tls.TLS{
+					MinVersion: "VersionTLS12",
+				},
+			},
+		},
+		{
+			desc: "Entrypoint with TLS without Specifying MinVersion",
+			provided: EntryPoint{
+				Address: ":443",
+				TLS:     &tls.TLS{},
+			},
+			expected: EntryPoint{
+				Address:          ":443",
+				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
+				TLS: &tls.TLS{
+					MinVersion: "VersionTLS10",
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			gc := &GlobalConfiguration{
+				EntryPoints: map[string]*EntryPoint{
+					"foo": &test.provided,
+				},
+			}
+
+			gc.SetEffectiveConfiguration(defaultConfigFile)
+
+			assert.Equal(t, &test.expected, gc.EntryPoints["foo"])
 		})
 	}
 }

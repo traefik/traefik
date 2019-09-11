@@ -475,19 +475,6 @@ func TestEntryPoints_Set(t *testing.T) {
 				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
 			},
 		},
-		{
-			name:                   "enforce tls minversion",
-			expression:             "Name:foo address::8443 tls",
-			expectedEntryPointName: "foo",
-			expectedEntryPoint: &EntryPoint{
-				Address:          ":8443",
-				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
-				TLS: &tls.TLS{
-					MinVersion:   "VersionTLS10",
-					Certificates: tls.Certificates{},
-				},
-			},
-		},
 	}
 
 	for _, test := range testCases {

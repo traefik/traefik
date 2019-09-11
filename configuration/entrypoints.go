@@ -247,12 +247,6 @@ func makeEntryPointTLS(result map[string]string) (*tls.TLS, error) {
 			configTLS.MinVersion = result["tls_minversion"]
 		}
 
-		// Thanks to SSLv3 being enabled by mistake in golang 1.12,
-		// If no minVersion is set, apply TLS1.0 as the minimum.
-		if len(result["tls_minversion"]) == 0 {
-			configTLS.MinVersion = "VersionTLS10"
-		}
-
 		if len(result["tls_ciphersuites"]) > 0 {
 			configTLS.CipherSuites = strings.Split(result["tls_ciphersuites"], ",")
 		}
