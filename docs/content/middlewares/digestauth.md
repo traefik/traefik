@@ -97,8 +97,7 @@ metadata:
 
 data:
   users: |2
-    dGVzdDokYXByMSRINnVza2trVyRJZ1hMUDZld1RyU3VCa1RycUU4d2ovCnRlc3QyOiRhcHIxJGQ5
-    aHI5SEJCJDRIeHdnVWlyM0hQNEVzZ2dQL1FObzAK
+    dGVzdDp0cmFlZmlrOmEyNjg4ZTAzMWVkYjRiZTZhMzc5N2YzODgyNjU1YzA1CnRlc3QyOnRyYWVmaWs6NTE4ODQ1ODAwZjllMmJmYjFmMWY3NDBlYzI0ZjA3NGUKCg==
 ```
 
 ```json tab="Marathon"

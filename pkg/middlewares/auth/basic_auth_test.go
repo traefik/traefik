@@ -210,9 +210,6 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		if test.desc != "Should skip comments" {
-			continue
-		}
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
