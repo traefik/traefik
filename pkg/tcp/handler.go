@@ -18,6 +18,7 @@ func (f HandlerFunc) ServeTCP(conn WriteCloser) {
 	f(conn)
 }
 
+// WriteCloser describe a net.Conn with a CloseWrite method.
 type WriteCloser interface {
 	net.Conn
 	// CloseWrite, on a network connection, indicates that the issuer of the call

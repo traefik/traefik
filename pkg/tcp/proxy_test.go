@@ -48,6 +48,8 @@ func TestCloseWrite(t *testing.T) {
 	require.NoError(t, err)
 
 	proxyListener, err := net.Listen("tcp", ":0")
+	require.NoError(t, err)
+
 	go func() {
 		for {
 			conn, err := proxyListener.Accept()
@@ -62,7 +64,8 @@ func TestCloseWrite(t *testing.T) {
 	_, err = conn.Write([]byte("ping\n"))
 	require.NoError(t, err)
 
-	conn.(*net.TCPConn).CloseWrite()
+	err = conn.(*net.TCPConn).CloseWrite()
+	require.NoError(t, err)
 
 	var buf []byte
 	buffer := bytes.NewBuffer(buf)

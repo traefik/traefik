@@ -54,6 +54,7 @@ type TCPLoadBalancerService struct {
 	Servers          []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
 }
 
+// SetDefaults Default values for a TCPLoadBalancerService
 func (l *TCPLoadBalancerService) SetDefaults() {
 	defaultTerminationDelay := 100 // in milliseconds
 	l.TerminationDelay = &defaultTerminationDelay
