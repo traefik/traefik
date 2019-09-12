@@ -43,8 +43,10 @@ func TestCloseWrite(t *testing.T) {
 	require.NoError(t, err)
 
 	go fakeRedis(t, backendListener)
+	_, port, err := net.SplitHostPort(backendListener.Addr().String())
+	require.NoError(t, err)
 
-	proxy, err := NewProxy(backendListener.Addr().String(), 10*time.Millisecond)
+	proxy, err := NewProxy(":"+port, 10*time.Millisecond)
 	require.NoError(t, err)
 
 	proxyListener, err := net.Listen("tcp", ":0")
@@ -58,7 +60,10 @@ func TestCloseWrite(t *testing.T) {
 		}
 	}()
 
-	conn, err := net.Dial("tcp", proxyListener.Addr().String())
+	_, port, err = net.SplitHostPort(proxyListener.Addr().String())
+	require.NoError(t, err)
+
+	conn, err := net.Dial("tcp", ":"+port)
 	require.NoError(t, err)
 
 	_, err = conn.Write([]byte("ping\n"))
