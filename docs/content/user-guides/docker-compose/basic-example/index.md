@@ -53,7 +53,7 @@ ports:
 ```yaml
 command:
   # Traefik will listen on port 8080 by default for API request.
-  - "--api=true"
+  - "--api.insecure=true"
 
 ports:
   - "8080:8080"
