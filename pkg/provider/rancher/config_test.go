@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Int(v int) *int { return &v }
+
 func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -512,7 +514,7 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: func(i int) *int { return &i }(100),
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -549,7 +551,7 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: func(i int) *int { return &i }(100),
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -592,7 +594,7 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:8080",
 									},
 								},
-								TerminationDelay: func(i int) *int { return &i }(100),
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -641,7 +643,7 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.2:8080",
 									},
 								},
-								TerminationDelay: func(i int) *int { return &i }(100),
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -697,7 +699,7 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:8080",
 									},
 								},
-								TerminationDelay: func(i int) *int { return &i }(100),
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -735,7 +737,7 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:8080",
 									},
 								},
-								TerminationDelay: func(i int) *int { return &i }(200),
+								TerminationDelay: Int(200),
 							},
 						},
 					},

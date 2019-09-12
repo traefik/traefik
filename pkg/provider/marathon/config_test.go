@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Int(v int) *int { return &v }
+
 func TestGetConfigurationAPIErrors(t *testing.T) {
 	fakeClient := newFakeClient(true, marathon.Applications{})
 
@@ -1240,7 +1242,7 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:80",
 									},
 								},
-								TerminationDelay: func(i int) *int { return &i }(100),
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -1272,7 +1274,7 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:80",
 									},
 								},
-								TerminationDelay: func(i int) *int { return &i }(100),
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -1312,7 +1314,7 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:8080",
 									},
 								},
-								TerminationDelay: func(i int) *int { return &i }(100),
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -1353,7 +1355,7 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:8080",
 									},
 								},
-								TerminationDelay: func(i int) *int { return &i }(200),
+								TerminationDelay: Int(200),
 							},
 						},
 					},
@@ -1394,7 +1396,7 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:8080",
 									},
 								},
-								TerminationDelay: func(i int) *int { return &i }(100),
+								TerminationDelay: Int(100),
 							},
 						},
 					},
