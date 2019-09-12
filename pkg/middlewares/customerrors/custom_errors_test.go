@@ -34,6 +34,30 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		{
+			desc:        "no error, but not a 200",
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
+			backendCode: http.StatusPartialContent,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, "My error page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusPartialContent, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), http.StatusText(http.StatusPartialContent))
+			},
+		},
+		{
+			desc:        "a 304, so no Write called",
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
+			backendCode: http.StatusNotModified,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, "whatever, should not be called")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusNotModified, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "")
+			},
+		},
+		{
 			desc:        "in the range",
 			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
 			backendCode: http.StatusInternalServerError,
@@ -104,6 +128,9 @@ func TestHandler(t *testing.T) {
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(test.backendCode)
+				if test.backendCode == http.StatusNotModified {
+					return
+				}
 				fmt.Fprintln(w, http.StatusText(test.backendCode))
 			})
 			errorPageHandler, err := New(context.Background(), handler, *test.errorPage, serviceBuilderMock, "test")
