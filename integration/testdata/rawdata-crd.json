@@ -115,6 +115,7 @@
 	"tcpServices": {
 		"default/test3.route-673acf455cb2dab0b43a@kubernetescrd": {
 			"loadBalancer": {
+				"terminationDelay": 100,
 				"servers": [
 					{
 						"address": "10.42.0.4:8080"
