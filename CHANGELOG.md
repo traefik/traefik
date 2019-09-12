@@ -1,5 +1,22 @@
 # Change Log
 
+## [v1.7.15](https://github.com/containous/traefik/tree/v1.7.15) (2019-09-12)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.14...v1.7.15)
+
+**Bug fixes:**
+- **[authentication,k8s/ingress]** Kubernetes support for Auth.HeaderField ([#5235](https://github.com/containous/traefik/pull/5235) by [ErikWegner](https://github.com/ErikWegner))
+- **[k8s,k8s/ingress]** Finish kubernetes throttling refactoring ([#5269](https://github.com/containous/traefik/pull/5269) by [mpl](https://github.com/mpl))
+- **[k8s]** Throttle Kubernetes config refresh ([#4716](https://github.com/containous/traefik/pull/4716) by [benweissmann](https://github.com/benweissmann))
+- **[k8s]** Fix wrong handling of insecure tls auth forward ingress annotation ([#5319](https://github.com/containous/traefik/pull/5319) by [majkrzak](https://github.com/majkrzak))
+- **[middleware]** error pages: do not buffer response when it&#39;s not an error ([#5285](https://github.com/containous/traefik/pull/5285) by [mpl](https://github.com/mpl))
+- **[tls]** Consider default cert domain in certificate store ([#5353](https://github.com/containous/traefik/pull/5353) by [nrwiersma](https://github.com/nrwiersma))
+- **[tls]** Add TLS minversion constraint ([#5356](https://github.com/containous/traefik/pull/5356) by [dtomcej](https://github.com/dtomcej))
+
+**Documentation:**
+- **[acme]** Update Acme doc - Vultr Wildcard &amp; Root ([#5320](https://github.com/containous/traefik/pull/5320) by [ddymko](https://github.com/ddymko))
+- **[consulcatalog]** Typo in basic auth usersFile label consul-catalog ([#5230](https://github.com/containous/traefik/pull/5230) by [pitan](https://github.com/pitan))
+- **[logs]** Improve Access Logs Documentation page ([#5238](https://github.com/containous/traefik/pull/5238) by [dduportal](https://github.com/dduportal))
+
 ## [v1.7.14](https://github.com/containous/traefik/tree/v1.7.14) (2019-08-14)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.13...v1.7.14)
 
