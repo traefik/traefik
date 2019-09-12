@@ -50,7 +50,7 @@ func (s *myserver) StreamExample(in *helloworld.StreamExampleRequest, server hel
 	}
 
 	if err := server.Send(&helloworld.StreamExampleReply{Data: string(data)}); err != nil {
-		log.Error(err)
+		log.WithoutContext().Error(err)
 	}
 
 	<-s.stopStreamExample

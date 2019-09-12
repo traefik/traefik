@@ -85,8 +85,9 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 		}
 	}
 
-	for _, service := range configuration.Services {
-		err := p.addServerTCP(ctx, container, service.LoadBalancer)
+	for name, service := range configuration.Services {
+		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
+		err := p.addServerTCP(ctxSvc, container, service.LoadBalancer)
 		if err != nil {
 			return err
 		}
@@ -107,8 +108,9 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 		}
 	}
 
-	for _, service := range configuration.Services {
-		err := p.addServer(ctx, container, service.LoadBalancer)
+	for name, service := range configuration.Services {
+		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
+		err := p.addServer(ctxSvc, container, service.LoadBalancer)
 		if err != nil {
 			return err
 		}

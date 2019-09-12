@@ -28,7 +28,7 @@ var showLog = flag.Bool("tlog", false, "always show Traefik logs")
 
 func Test(t *testing.T) {
 	if !*integration {
-		log.Info("Integration tests disabled.")
+		log.WithoutContext().Info("Integration tests disabled.")
 		return
 	}
 
@@ -91,7 +91,7 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 		ip, _, err := net.ParseCIDR(addr.String())
 		c.Assert(err, checker.IsNil)
 		if !ip.IsLoopback() && ip.To4() != nil {
-			os.Setenv("DOCKER_HOST_IP", ip.String())
+			_ = os.Setenv("DOCKER_HOST_IP", ip.String())
 			break
 		}
 	}

@@ -270,7 +270,8 @@ func (s *Server) listenProviders(stop chan bool) {
 			if configMsg.Configuration != nil {
 				s.preLoadConfiguration(configMsg)
 			} else {
-				log.Debugf("Received nil configuration from provider %q, skipping.", configMsg.ProviderName)
+				log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName).
+					Debug("Received nil configuration from provider, skipping.")
 			}
 		}
 	}
@@ -285,18 +286,20 @@ func (s *Server) AddListener(listener func(dynamic.Configuration)) {
 }
 
 func (s *Server) startProvider() {
+	logger := log.WithoutContext()
+
 	jsonConf, err := json.Marshal(s.provider)
 	if err != nil {
-		log.WithoutContext().Debugf("Unable to marshal provider configuration %T: %v", s.provider, err)
+		logger.Debugf("Unable to marshal provider configuration %T: %v", s.provider, err)
 	}
 
-	log.WithoutContext().Infof("Starting provider %T %s", s.provider, jsonConf)
+	logger.Infof("Starting provider %T %s", s.provider, jsonConf)
 	currentProvider := s.provider
 
 	safe.Go(func() {
 		err := currentProvider.Provide(s.configurationChan, s.routinesPool)
 		if err != nil {
-			log.WithoutContext().Errorf("Error starting provider %T: %s", s.provider, err)
+			logger.Errorf("Error starting provider %T: %s", s.provider, err)
 		}
 	})
 }

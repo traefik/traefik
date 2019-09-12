@@ -350,17 +350,19 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 						if route.TLS == nil || route.TLS.CertResolver != p.ResolverName {
 							continue
 						}
+
 						ctxRouter := log.With(ctx, log.Str(log.RouterName, routerName), log.Str(log.Rule, route.Rule))
+						logger := log.FromContext(ctxRouter)
 
 						tlsStore := "default"
 						if len(route.TLS.Domains) > 0 {
 							for _, domain := range route.TLS.Domains {
 								if domain.Main != dns01.UnFqdn(domain.Main) {
-									log.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
+									logger.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
 								}
 								for _, san := range domain.SANs {
 									if san != dns01.UnFqdn(san) {
-										log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
+										logger.Warnf("FQDN detected, please remove the trailing dot: %s", san)
 									}
 								}
 							}
@@ -378,7 +380,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 						} else {
 							domains, err := rules.ParseHostSNI(route.Rule)
 							if err != nil {
-								log.FromContext(ctxRouter).Errorf("Error parsing domains in provider ACME: %v", err)
+								logger.Errorf("Error parsing domains in provider ACME: %v", err)
 								continue
 							}
 							p.resolveDomains(ctxRouter, domains, tlsStore)

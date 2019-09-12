@@ -62,12 +62,6 @@ func Panic(args ...interface{}) {
 	mainLogger.Panic(args...)
 }
 
-// Panicf logs a message at level Panic on the standard logger.
-// Deprecated
-func Panicf(format string, args ...interface{}) {
-	mainLogger.Panicf(format, args...)
-}
-
 // Fatal logs a message at level Fatal on the standard logger.
 // Deprecated
 func Fatal(args ...interface{}) {

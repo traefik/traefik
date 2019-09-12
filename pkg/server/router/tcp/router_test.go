@@ -203,6 +203,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceManager := tcp.NewManager(conf)
 			tlsManager := tls.NewManager()
 			tlsManager.UpdateConfigs(
+				context.Background(),
 				map[string]tls.Store{},
 				map[string]tls.Options{
 					"default": {

@@ -15,6 +15,8 @@ type handler struct{}
 // Simplified version of the Challenge Test Server from Boulder
 // https://github.com/letsencrypt/boulder/blob/a6597b9f120207eff192c3e4107a7e49972a0250/test/challtestsrv/dnsone.go#L40
 func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+	logger := log.WithoutContext()
+
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.Compress = false
@@ -23,8 +25,9 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	if fakeDNS == "" {
 		fakeDNS = "127.0.0.1"
 	}
+
 	for _, q := range r.Question {
-		log.Infof("Query -- [%s] %s", q.Name, dns.TypeToString[q.Qtype])
+		logger.Infof("Query -- [%s] %s", q.Name, dns.TypeToString[q.Qtype])
 
 		switch q.Qtype {
 		case dns.TypeA:
@@ -94,7 +97,7 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	m.Ns = append(m.Ns, auth)
 
 	if err := w.WriteMsg(m); err != nil {
-		log.Fatalf("Failed to write message %v", err)
+		logger.Fatalf("Failed to write message %v", err)
 	}
 }
 
@@ -106,9 +109,9 @@ func startFakeDNSServer() *dns.Server {
 	}
 
 	go func() {
-		log.Infof("Start a fake DNS server.")
+		log.WithoutContext().Infof("Start a fake DNS server.")
 		if err := srv.ListenAndServe(); err != nil {
-			log.Fatalf("Failed to set udp listener %v", err)
+			log.WithoutContext().Fatalf("Failed to set udp listener %v", err)
 		}
 	}()
 

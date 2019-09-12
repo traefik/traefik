@@ -63,7 +63,7 @@ func (s *Server) loadConfiguration(configMsg dynamic.Message) {
 // loadConfigurationTCP returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
 func (s *Server) loadConfigurationTCP(configurations dynamic.Configurations) map[string]*tcpCore.Router {
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	var entryPoints []string
 	for entryPointName := range s.entryPointsTCP {
@@ -72,7 +72,7 @@ func (s *Server) loadConfigurationTCP(configurations dynamic.Configurations) map
 
 	conf := mergeConfiguration(configurations)
 
-	s.tlsManager.UpdateConfigs(conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
+	s.tlsManager.UpdateConfigs(ctx, conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
 
 	rtConf := runtime.NewConfig(conf)
 	handlersNonTLS, handlersTLS := s.createHTTPHandlers(ctx, rtConf, entryPoints)

@@ -72,14 +72,14 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 
 	router := &tcp.Router{}
 
-	httpServer, err := createHTTPServer(listener, configuration, true)
+	httpServer, err := createHTTPServer(ctx, listener, configuration, true)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing httpServer: %v", err)
 	}
 
 	router.HTTPForwarder(httpServer.Forwarder)
 
-	httpsServer, err := createHTTPServer(listener, configuration, false)
+	httpsServer, err := createHTTPServer(ctx, listener, configuration, false)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing httpsServer: %v", err)
 	}
@@ -128,13 +128,13 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 }
 
 func (e *TCPEntryPoint) startTCP(ctx context.Context) {
-
-	log.FromContext(ctx).Debugf("Start TCP Server")
+	logger := log.FromContext(ctx)
+	logger.Debugf("Start TCP Server")
 
 	for {
 		conn, err := e.listener.Accept()
 		if err != nil {
-			log.Error(err)
+			logger.Error(err)
 			return
 		}
 
@@ -372,7 +372,7 @@ type httpServer struct {
 	Switcher  *middlewares.HTTPHandlerSwitcher
 }
 
-func createHTTPServer(ln net.Listener, configuration *static.EntryPoint, withH2c bool) (*httpServer, error) {
+func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool) (*httpServer, error) {
 	httpSwitcher := middlewares.NewHandlerSwitcher(buildDefaultHTTPRouter())
 
 	var handler http.Handler
@@ -398,7 +398,7 @@ func createHTTPServer(ln net.Listener, configuration *static.EntryPoint, withH2c
 	go func() {
 		err := serverHTTP.Serve(listener)
 		if err != nil {
-			log.Errorf("Error while starting server: %v", err)
+			log.FromContext(ctx).Errorf("Error while starting server: %v", err)
 		}
 	}()
 	return &httpServer{

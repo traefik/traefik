@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
@@ -27,8 +28,9 @@ type headers struct {
 // New creates a Headers middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.Headers, name string) (http.Handler, error) {
 	// HeaderMiddleware -> SecureMiddleWare -> next
-	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
+
 	hasSecureHeaders := config.HasSecureHeadersDefined()
 	hasCustomHeaders := config.HasCustomHeadersDefined()
 	hasCorsHeaders := config.HasCorsHeadersDefined()

@@ -1,6 +1,7 @@
 package tls
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -30,7 +31,7 @@ func NewManager() *Manager {
 }
 
 // UpdateConfigs updates the TLS* configuration options
-func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]Options, certs []*CertAndStores) {
+func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, configs map[string]Options, certs []*CertAndStores) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
@@ -40,9 +41,10 @@ func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]Opti
 
 	m.stores = make(map[string]*CertificateStore)
 	for storeName, storeConfig := range m.storesConfig {
-		store, err := buildCertificateStore(storeConfig)
+		ctxStore := log.With(ctx, log.Str(log.TLSStoreName, storeName))
+		store, err := buildCertificateStore(ctxStore, storeConfig)
 		if err != nil {
-			log.Errorf("Error while creating certificate store %s: %v", storeName, err)
+			log.FromContext(ctxStore).Errorf("Error while creating certificate store: %v", err)
 			continue
 		}
 		m.stores[storeName] = store
@@ -52,14 +54,15 @@ func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]Opti
 	for _, conf := range certs {
 		if len(conf.Stores) == 0 {
 			if log.GetLevel() >= logrus.DebugLevel {
-				log.Debugf("No store is defined to add the certificate %s, it will be added to the default store.",
+				log.FromContext(ctx).Debugf("No store is defined to add the certificate %s, it will be added to the default store.",
 					conf.Certificate.GetTruncatedCertificateName())
 			}
 			conf.Stores = []string{"default"}
 		}
 		for _, store := range conf.Stores {
+			ctxStore := log.With(ctx, log.Str(log.TLSStoreName, store))
 			if err := conf.Certificate.AppendCertificate(storesCertificates, store); err != nil {
-				log.Errorf("Unable to append certificate %s to store %s: %v", conf.Certificate.GetTruncatedCertificateName(), store, err)
+				log.FromContext(ctxStore).Errorf("Unable to append certificate %s to store: %v", conf.Certificate.GetTruncatedCertificateName(), err)
 			}
 		}
 	}
@@ -125,7 +128,7 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 func (m *Manager) getStore(storeName string) *CertificateStore {
 	_, ok := m.stores[storeName]
 	if !ok {
-		m.stores[storeName], _ = buildCertificateStore(Store{})
+		m.stores[storeName], _ = buildCertificateStore(context.Background(), Store{})
 	}
 	return m.stores[storeName]
 }
@@ -138,7 +141,7 @@ func (m *Manager) GetStore(storeName string) *CertificateStore {
 	return m.getStore(storeName)
 }
 
-func buildCertificateStore(tlsStore Store) (*CertificateStore, error) {
+func buildCertificateStore(ctx context.Context, tlsStore Store) (*CertificateStore, error) {
 	certificateStore := NewCertificateStore()
 	certificateStore.DynamicCerts.Set(make(map[string]*tls.Certificate))
 
@@ -149,7 +152,7 @@ func buildCertificateStore(tlsStore Store) (*CertificateStore, error) {
 		}
 		certificateStore.DefaultCertificate = cert
 	} else {
-		log.Debug("No default certificate, generating one")
+		log.FromContext(ctx).Debug("No default certificate, generating one")
 		cert, err := generate.DefaultCertificate()
 		if err != nil {
 			return certificateStore, err

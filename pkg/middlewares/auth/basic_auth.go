@@ -9,6 +9,7 @@ import (
 
 	goauth "github.com/abbot/go-http-auth"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/tracing"
@@ -30,7 +31,7 @@ type basicAuth struct {
 
 // NewBasic creates a basicAuth middleware.
 func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAuth, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, basicTypeName).Debug("Creating middleware")
+	log.FromContext(middlewares.GetLoggerCtx(ctx, name, basicTypeName)).Debug("Creating middleware")
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, basicUserParser)
 	if err != nil {
 		return nil, err
@@ -58,7 +59,7 @@ func (b *basicAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), b.name, basicTypeName)
+	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), b.name, basicTypeName))
 
 	if username := b.auth.CheckAuth(req); username == "" {
 		logger.Debug("Authentication failed")
