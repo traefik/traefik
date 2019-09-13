@@ -111,7 +111,7 @@ func (c *writeCloserWrapper) CloseWrite() error {
 }
 
 // writeCloser returns the given connection, augmented with the WriteCloser
-// implementation, if any was found underlying conn.
+// implementation, if any was found within the underlying conn.
 func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 	switch typedConn := conn.(type) {
 	case *proxyprotocol.Conn:
