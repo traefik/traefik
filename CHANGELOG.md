@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.16](https://github.com/containous/traefik/tree/v1.7.16) (2019-09-13)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.15...v1.7.16)
+
+**Bug fixes:**
+- **[middleware,websocket]** implement Flusher and Hijacker for codeCatcher ([#5376](https://github.com/containous/traefik/pull/5376) by [mpl](https://github.com/mpl))
+
 ## [v1.7.15](https://github.com/containous/traefik/tree/v1.7.15) (2019-09-12)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.14...v1.7.15)
 
