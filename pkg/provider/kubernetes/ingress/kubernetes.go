@@ -325,7 +325,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				serviceName := ingress.Namespace + "/" + p.Backend.ServiceName + "/" + p.Backend.ServicePort.String()
+				serviceName := ingress.Namespace + "-" + p.Backend.ServiceName + "-" + p.Backend.ServicePort.String()
 				serviceName = strings.ReplaceAll(serviceName, ".", "-")
 				var rules []string
 				if len(rule.Host) > 0 {
@@ -381,7 +381,7 @@ func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tls
 			continue
 		}
 
-		configKey := ingress.Namespace + "/" + t.SecretName
+		configKey := ingress.Namespace + "-" + t.SecretName
 		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
 			secret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
 			if err != nil {

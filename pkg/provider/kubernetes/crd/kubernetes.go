@@ -511,7 +511,7 @@ func makeID(namespace, name string) string {
 		return name
 	}
 
-	return namespace + "/" + name
+	return namespace + "-" + name
 }
 
 func shouldProcessIngress(ingressClass string, ingressClassAnnotation string) bool {
