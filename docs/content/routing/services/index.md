@@ -404,13 +404,14 @@ http:
 
 ### General
 
-Currently, `LoadBalancer` is the only supported kind of TCP `Service`.
-However, since Traefik is an ever evolving project, other kind of TCP Services will be available in the future,
-reason why you have to specify it. 
+Each of the fields of the service section represents a kind of service.
+Which means, that for each specified service, one of the fields, and only one,
+has to be enabled to define what kind of service is created.
+Currently, the two available kinds are `LoadBalancer`, and `Weighted`.
 
-### Load Balancer
+### Servers Load Balancer
 
-The load balancers are able to load balance the requests between multiple instances of your programs. 
+The servers load balancer is in charge of balancing the requests between the servers of the same service.
 
 ??? example "Declaring a Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
 
@@ -486,3 +487,54 @@ A negative value means an infinite deadline (i.e. the connection is never fully 
           loadBalancer:
             terminationDelay: 200
     ```
+
+### Weighted
+
+The Weighted Round Robin (alias `WRR`) load-balancer of services is in charge of balancing the requests between multiple services based on provided weights.
+
+This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
+
+This strategy can only be defined with [File](../../providers/file.md).
+
+```toml tab="TOML"
+[tcp.services]
+  [tcp.services.app]
+    [[tcp.services.app.weighted.services]]
+      name = "appv1"
+      weight = 3
+    [[tcp.services.app.weighted.services]]
+      name = "appv2"
+      weight = 1
+
+  [tcp.services.appv1]
+    [tcp.services.appv1.loadBalancer]
+      [[tcp.services.appv1.loadBalancer.servers]]
+        address = "private-ip-server-1/:8080"
+
+  [tcp.services.appv2]
+    [tcp.services.appv2.loadBalancer]
+      [[tcp.services.appv2.loadBalancer.servers]]
+        address = "private-ip-server-2/:8080"
+```
+
+```yaml tab="YAML"
+tcp:
+  services:
+    app:
+      weighted:
+        services:
+        - name: appv1
+          weight: 3
+        - name: appv2
+          weight: 1
+
+    appv1:
+      loadBalancer:
+        servers:
+        - address: "xxx.xxx.xxx.xxx:8080"
+
+    appv2:
+      loadBalancer:
+        servers:
+        - address: "xxx.xxx.xxx.xxx:8080"
+```

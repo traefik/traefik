@@ -208,7 +208,7 @@ func TestDecodeConfiguration(t *testing.T) {
 			},
 			Services: map[string]*dynamic.TCPService{
 				"Service0": {
-					LoadBalancer: &dynamic.TCPLoadBalancerService{
+					LoadBalancer: &dynamic.TCPServersLoadBalancer{
 						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",
@@ -218,7 +218,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Service1": {
-					LoadBalancer: &dynamic.TCPLoadBalancerService{
+					LoadBalancer: &dynamic.TCPServersLoadBalancer{
 						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",
@@ -614,7 +614,7 @@ func TestEncodeConfiguration(t *testing.T) {
 			},
 			Services: map[string]*dynamic.TCPService{
 				"Service0": {
-					LoadBalancer: &dynamic.TCPLoadBalancerService{
+					LoadBalancer: &dynamic.TCPServersLoadBalancer{
 						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",
@@ -623,7 +623,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Service1": {
-					LoadBalancer: &dynamic.TCPLoadBalancerService{
+					LoadBalancer: &dynamic.TCPServersLoadBalancer{
 						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",

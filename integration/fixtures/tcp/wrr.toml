@@ -1,0 +1,42 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.tcp]
+    address = ":8093"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+[tcp]
+  [tcp.routers]
+    [tcp.routers.to-whoami-a]
+      rule = "HostSNI(`whoami-a.test`)"
+      service = "whoami"
+      entryPoints = [ "tcp" ]
+      [tcp.routers.to-whoami-a.tls]
+        passthrough=true
+
+    [[tcp.services.whoami.weighted.services]]
+        name="whoami-a"
+        weight=3
+    [[tcp.services.whoami.weighted.services]]
+        name="whoami-b"
+        weight=1
+
+    [tcp.services.whoami-a.loadBalancer]
+      [[tcp.services.whoami-a.loadBalancer.servers]]
+        address = "localhost:8081"
+
+    [tcp.services.whoami-b.loadBalancer]
+      [[tcp.services.whoami-b.loadBalancer.servers]]
+        address = "localhost:8082"
+

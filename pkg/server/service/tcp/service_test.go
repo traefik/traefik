@@ -41,7 +41,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*runtime.TCPServiceInfo{
 				"test": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
 							Servers: []dynamic.TCPServer{
 								{Address: "test:31"},
 							},
@@ -56,7 +56,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*runtime.TCPServiceInfo{
 				"test": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
 							Servers: []dynamic.TCPServer{
 								{Address: "foobar"},
 							},
@@ -71,7 +71,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*runtime.TCPServiceInfo{
 				"serviceName": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{},
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{},
 					},
 				},
 			},
@@ -82,7 +82,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*runtime.TCPServiceInfo{
 				"serviceName@provider-1": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{},
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{},
 					},
 				},
 			},
@@ -93,7 +93,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*runtime.TCPServiceInfo{
 				"serviceName@provider-1": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{},
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{},
 					},
 				},
 			},
@@ -105,7 +105,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*runtime.TCPServiceInfo{
 				"serviceName@provider-1": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
 							Servers: []dynamic.TCPServer{
 								{
 									Address: "foobar.com:80",
@@ -123,7 +123,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*runtime.TCPServiceInfo{
 				"serviceName@provider-1": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
 							Servers: []dynamic.TCPServer{
 								{
 									Address: "192.168.0.12:80",
@@ -141,7 +141,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*runtime.TCPServiceInfo{
 				"serviceName@provider-1": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
 							Servers: []dynamic.TCPServer{
 								{
 									Address: "foobar.com",
@@ -159,7 +159,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			configs: map[string]*runtime.TCPServiceInfo{
 				"serviceName@provider-1": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
 							Servers: []dynamic.TCPServer{
 								{
 									Address: "192.168.0.12",

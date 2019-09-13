@@ -58,13 +58,14 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 
 	errClose := dst.CloseWrite()
 	if errClose != nil {
-		log.WithoutContext().Errorf("Error while terminating connection: %v", errClose)
+		log.WithoutContext().Debugf("Error while terminating connection: %v", errClose)
+		return
 	}
 
 	if p.terminationDelay >= 0 {
 		err := dst.SetReadDeadline(time.Now().Add(p.terminationDelay))
 		if err != nil {
-			log.WithoutContext().Errorf("Error while setting deadline: %v", err)
+			log.WithoutContext().Debugf("Error while setting deadline: %v", err)
 		}
 	}
 }

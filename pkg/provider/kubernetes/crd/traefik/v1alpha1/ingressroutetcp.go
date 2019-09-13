@@ -44,8 +44,10 @@ type TLSOptionTCPRef struct {
 
 // ServiceTCP defines an upstream to proxy traffic.
 type ServiceTCP struct {
-	Name string `json:"name"`
-	Port int32  `json:"port"`
+	Name             string `json:"name"`
+	Port             int32  `json:"port"`
+	Weight           *int   `json:"weight,omitempty"`
+	TerminationDelay *int   `json:"terminationDelay,omitempty"`
 }
 
 // +genclient

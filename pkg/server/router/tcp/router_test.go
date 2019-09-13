@@ -23,7 +23,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
 							Servers: []dynamic.TCPServer{
 								{
 									Port:    "8085",
@@ -70,7 +70,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
 							Servers: []dynamic.TCPServer{
 								{
 									Address: "127.0.0.1:80",
@@ -104,7 +104,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
 							Servers: []dynamic.TCPServer{
 								{
 									Address: "127.0.0.1:80",
@@ -137,7 +137,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
 					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPLoadBalancerService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
 							Servers: []dynamic.TCPServer{
 								{
 									Address: "127.0.0.1:80",
