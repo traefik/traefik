@@ -325,7 +325,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				serviceName := ingress.Namespace + "/" + p.Backend.ServiceName + "/" + p.Backend.ServicePort.String()
+				serviceName := ingress.Namespace + "-" + p.Backend.ServiceName + "-" + p.Backend.ServicePort.String()
 				serviceName = strings.ReplaceAll(serviceName, ".", "-")
 				var rules []string
 				if len(rule.Host) > 0 {
@@ -336,14 +336,18 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					rules = append(rules, "PathPrefix(`"+p.Path+"`)")
 				}
 
-				conf.HTTP.Routers[strings.Replace(rule.Host, ".", "-", -1)+p.Path] = &dynamic.Router{
+				routerKey := strings.Replace(rule.Host, ".", "-", -1) + strings.Replace(p.Path, "/", "-", 1)
+				if strings.HasPrefix(routerKey, "-") {
+					routerKey = strings.Replace(routerKey, "-", "", 1)
+				}
+				conf.HTTP.Routers[routerKey] = &dynamic.Router{
 					Rule:    strings.Join(rules, " && "),
 					Service: serviceName,
 				}
 
 				if len(ingress.Spec.TLS) > 0 {
 					// TLS enabled for this ingress, add TLS router
-					conf.HTTP.Routers[strings.Replace(rule.Host, ".", "-", -1)+p.Path+"-tls"] = &dynamic.Router{
+					conf.HTTP.Routers[routerKey+"-tls"] = &dynamic.Router{
 						Rule:    strings.Join(rules, " && "),
 						Service: serviceName,
 						TLS:     &dynamic.RouterTLSConfig{},
@@ -381,7 +385,7 @@ func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tls
 			continue
 		}
 
-		configKey := ingress.Namespace + "/" + t.SecretName
+		configKey := ingress.Namespace + "-" + t.SecretName
 		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
 			secret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
 			if err != nil {

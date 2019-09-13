@@ -1,7 +1,7 @@
 {
 	"routers": {
-		"whoami-test-https/whoami-tls@kubernetes": {
-			"service": "default/whoami/http",
+		"whoami-test-https-whoami-tls@kubernetes": {
+			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"tls": {},
 			"status": "enabled",
@@ -10,8 +10,8 @@
 				"web"
 			]
 		},
-		"whoami-test-https/whoami@kubernetes": {
-			"service": "default/whoami/http",
+		"whoami-test-https-whoami@kubernetes": {
+			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"status": "enabled",
 			"using": [
@@ -19,8 +19,8 @@
 				"web"
 			]
 		},
-		"whoami-test/whoami@kubernetes": {
-			"service": "default/whoami/http",
+		"whoami-test-whoami@kubernetes": {
+			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"status": "enabled",
 			"using": [
@@ -30,7 +30,7 @@
 		}
 	},
 	"services": {
-		"default/whoami/http@kubernetes": {
+		"default-whoami-http@kubernetes": {
 			"loadBalancer": {
 				"servers": [
 					{
@@ -44,9 +44,9 @@
 			},
 			"status": "enabled",
 			"usedBy": [
-				"whoami-test-https/whoami-tls@kubernetes",
-				"whoami-test-https/whoami@kubernetes",
-				"whoami-test/whoami@kubernetes"
+				"whoami-test-https-whoami-tls@kubernetes",
+				"whoami-test-https-whoami@kubernetes",
+				"whoami-test-whoami@kubernetes"
 			],
 			"serverStatus": {
 				"http://10.42.0.2:80": "UP",
