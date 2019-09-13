@@ -116,7 +116,6 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 		}
 		srv := b.servers[b.index]
 		if srv.weight >= b.currentWeight {
-			// log.WithoutContext().Debugf("Service Select: %s", srv.name)
 			return srv, nil
 		}
 	}
