@@ -467,7 +467,88 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 
 ## ACME (let's encrypt)
 
-	TODO
+[ACME](../https/acme.md) is now a certificate resolver (under a certificatesResolvers section) but remains in the static configuration.
+
+!!! example ""
+
+    ### v1
+    
+    ```toml tab="File (TOML)"
+    # static configuration
+    defaultEntryPoints = ["web-secure","web"]
+    
+    [entryPoints.web]
+    address = ":80"
+      [entryPoints.web.redirect]
+      entryPoint = "webs"
+    [entryPoints.web-secure]
+      address = ":443"
+      [entryPoints.https.tls]
+    
+    [acme]
+      email = "your-email-here@my-awesome-app.org"
+      storage = "acme.json"
+      entryPoint = "web-secure"
+      onHostRule = true
+      [acme.httpChallenge]
+        entryPoint = "web"
+    ```
+    
+    ```bash tab="CLI"
+    --defaultentrypoints=web-secure,web
+    --entryPoints=Name:web Address::80 Redirect.EntryPoint:web-secure
+    --entryPoints=Name:web-secure Address::443 TLS
+    --acme.email=your-email-here@my-awesome-app.org
+    --acme.storage=acme.json
+    --acme.entryPoint=web-secure
+    --acme.onHostRule=true
+    --acme.httpchallenge.entrypoint=http
+    ```
+    
+    ### v2
+    
+    ```toml tab="File (TOML)"
+    # static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+    
+      [entryPoints.web-secure]
+        address = ":443"
+    
+    [certificatesResolvers.sample.acme]
+      email = "your-email@your-domain.org"
+      storage = "acme.json"
+      [acme.httpChallenge]
+        # used during the challenge
+        entryPoint = "web"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    entryPoints:
+      web:
+        address: ":80"
+    
+      web-secure:
+        address: ":443"
+    
+    certificatesResolvers:
+      sample:
+        acme:
+          email: your-email@your-domain.org
+          storage: acme.json
+          httpChallenge:
+            # used during the challenge
+            entryPoint: web
+    ``` 
+    
+    ```bash tab="CLI"
+    --entryPoints.web.address=":80"
+    --entryPoints.websecure.address=":443"
+    --certificatesResolvers.sample.acme.email: your-email@your-domain.org
+    --certificatesResolvers.sample.acme.storage: acme.json
+    --certificatesResolvers.sample.acme.httpChallenge.entryPoint: web
+    ```
 
 ## Traefik Logs
 
