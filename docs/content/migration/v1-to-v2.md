@@ -552,7 +552,51 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 
 ## Traefik Logs
 
-	TODO
+In the v2, all the [log configuration](../observability/logs.md) remains in the static part but are unified under a `log` section.
+There is no more log configuration at the root level.
+
+!!! example "Simple log configuration"
+
+    ### v1
+    
+    ```toml tab="File (TOML)"
+    # static configuration
+    logLevel = "DEBUG"
+    
+    [traefikLog]
+      filePath = "/path/to/traefik.log"
+      format   = "json"
+    ```
+    
+    ```bash tab="CLI"
+    --logLevel="DEBUG"
+    --traefikLog.filePath="/path/to/traefik.log"
+    --traefikLog.format="json"
+    ```
+    
+    ### v2
+    
+    ```toml tab="File (TOML)"
+    # static configuration
+    [log]
+      level = "DEBUG"
+      filePath = "/path/to/log-file.log"
+      format = "json"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    # static configuration
+    log:
+      level: DEBUG
+      filePath: /path/to/log-file.log
+      format: json
+    ``` 
+    
+    ```bash tab="CLI"
+    --log.level="DEBUG"
+    --log.filePath="/path/to/traefik.log"
+    --log.format="json"
+    ```
 
 ## Tracing
 
