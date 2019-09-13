@@ -162,12 +162,10 @@ func createLoadBalancerServerHTTP(client Client, namespace string, service v1alp
 	lb.SetDefaults()
 
 	lb.Servers = servers
-	if service.ServersOptions != nil {
-		if service.ServersOptions.PassHostHeader != nil {
-			lb.PassHostHeader = *service.ServersOptions.PassHostHeader
-		}
-		lb.ResponseForwarding = service.ServersOptions.ResponseForwarding
+	if service.PassHostHeader != nil {
+		lb.PassHostHeader = *service.PassHostHeader
 	}
+	lb.ResponseForwarding = service.ResponseForwarding
 
 	return &dynamic.Service{
 		LoadBalancer: lb,
