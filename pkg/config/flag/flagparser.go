@@ -121,9 +121,9 @@ func (f *flagSet) setValue(name string, value string) {
 }
 
 func (f *flagSet) getFlagType(name string) reflect.Kind {
-	n := strings.ToLower(name)
+	neutral := strings.ToLower(name)
 
-	kind, ok := f.flagTypes[n]
+	kind, ok := f.flagTypes[neutral]
 	if ok {
 		return kind
 	}
@@ -131,7 +131,7 @@ func (f *flagSet) getFlagType(name string) reflect.Kind {
 	for n, k := range f.flagTypes {
 		if strings.Contains(n, parser.MapNamePlaceholder) {
 			p := strings.NewReplacer(".", `\.`, parser.MapNamePlaceholder, `([^.]+)`).Replace(n)
-			if regexp.MustCompile(p).MatchString(n) {
+			if regexp.MustCompile(p).MatchString(neutral) {
 				return k
 			}
 		}
