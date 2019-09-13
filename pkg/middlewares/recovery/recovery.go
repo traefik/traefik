@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/middlewares"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -19,7 +19,7 @@ type recovery struct {
 
 // New creates recovery middleware.
 func New(ctx context.Context, next http.Handler, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
+	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
 
 	return &recovery{
 		next: next,
@@ -28,13 +28,13 @@ func New(ctx context.Context, next http.Handler, name string) (http.Handler, err
 }
 
 func (re *recovery) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	defer recoverFunc(middlewares.GetLogger(req.Context(), re.name, typeName), rw)
+	defer recoverFunc(middlewares.GetLoggerCtx(req.Context(), re.name, typeName), rw)
 	re.next.ServeHTTP(rw, req)
 }
 
-func recoverFunc(logger logrus.FieldLogger, rw http.ResponseWriter) {
+func recoverFunc(ctx context.Context, rw http.ResponseWriter) {
 	if err := recover(); err != nil {
-		logger.Errorf("Recovered from panic in http handler: %+v", err)
+		log.FromContext(ctx).Errorf("Recovered from panic in http handler: %+v", err)
 		http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }

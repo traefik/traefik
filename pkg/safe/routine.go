@@ -155,8 +155,9 @@ func GoWithRecover(goroutine func(), customRecover func(err interface{})) {
 }
 
 func defaultRecoverGoroutine(err interface{}) {
-	log.Errorf("Error in Go routine: %s", err)
-	log.Errorf("Stack: %s", debug.Stack())
+	logger := log.WithoutContext()
+	logger.Errorf("Error in Go routine: %s", err)
+	logger.Errorf("Stack: %s", debug.Stack())
 }
 
 // OperationWithRecover wrap a backoff operation in a Recover

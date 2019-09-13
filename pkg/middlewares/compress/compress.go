@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"github.com/NYTimes/gziphandler"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -25,7 +25,7 @@ type compress struct {
 
 // New creates a new compress middleware.
 func New(ctx context.Context, next http.Handler, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
+	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
 
 	return &compress{
 		next: next,
@@ -38,7 +38,8 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if strings.HasPrefix(contentType, "application/grpc") {
 		c.next.ServeHTTP(rw, req)
 	} else {
-		gzipHandler(c.next, middlewares.GetLogger(req.Context(), c.name, typeName)).ServeHTTP(rw, req)
+		ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
+		gzipHandler(ctx, c.next).ServeHTTP(rw, req)
 	}
 }
 
@@ -46,12 +47,12 @@ func (c *compress) GetTracingInformation() (string, ext.SpanKindEnum) {
 	return c.name, tracing.SpanKindNoneEnum
 }
 
-func gzipHandler(h http.Handler, logger logrus.FieldLogger) http.Handler {
+func gzipHandler(ctx context.Context, h http.Handler) http.Handler {
 	wrapper, err := gziphandler.GzipHandlerWithOpts(
 		gziphandler.CompressionLevel(gzip.DefaultCompression),
 		gziphandler.MinSize(gziphandler.DefaultMinSize))
 	if err != nil {
-		logger.Error(err)
+		log.FromContext(ctx).Error(err)
 	}
 
 	return wrapper(h)

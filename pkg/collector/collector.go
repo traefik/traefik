@@ -35,7 +35,7 @@ func Collect(staticConfiguration *static.Configuration) error {
 		return err
 	}
 
-	log.Infof("Anonymous stats sent to %s: %s", collectorURL, anonConfig)
+	log.WithoutContext().Infof("Anonymous stats sent to %s: %s", collectorURL, anonConfig)
 
 	hashConf, err := hashstructure.Hash(staticConfiguration, nil)
 	if err != nil {

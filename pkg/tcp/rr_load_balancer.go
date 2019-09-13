@@ -39,7 +39,7 @@ func (r *RRLoadBalancer) next() Handler {
 
 	if r.current >= len(r.servers) {
 		r.current = 0
-		log.Debugf("Load balancer: going back to the first available server")
+		log.WithoutContext().Debugf("Load balancer: going back to the first available server")
 	}
 
 	handler := r.servers[r.current]

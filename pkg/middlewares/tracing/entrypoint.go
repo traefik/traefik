@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/containous/alice"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go"
@@ -17,7 +18,7 @@ const (
 
 // NewEntryPoint creates a new middleware that the incoming request.
 func NewEntryPoint(ctx context.Context, t *tracing.Tracing, entryPointName string, next http.Handler) http.Handler {
-	middlewares.GetLogger(ctx, "tracing", entryPointTypeName).Debug("Creating middleware")
+	log.FromContext(middlewares.GetLoggerCtx(ctx, "tracing", entryPointTypeName)).Debug("Creating middleware")
 
 	return &entryPointMiddleware{
 		entryPoint: entryPointName,
