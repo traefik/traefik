@@ -1,4 +1,21 @@
-# Change Log
+## [v2.0.0-rc4](https://github.com/containous/traefik/tree/v2.0.0-rc4) (2019-09-13)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc3...v2.0.0-rc4)
+
+**Enhancements:**
+- **[docker,k8s,k8s/crd,marathon,rancher,tcp]** Add weighted round robin load balancer on TCP ([#5380](https://github.com/containous/traefik/pull/5380) by [juliens](https://github.com/juliens))
+- **[k8s,k8s/crd,k8s/ingress]** Fix kubernetes id name ([#5383](https://github.com/containous/traefik/pull/5383) by [mmatur](https://github.com/mmatur))
+- **[k8s,k8s/crd]** Add passHostHeader and responseForwarding in IngressRoute ([#5368](https://github.com/containous/traefik/pull/5368) by [juliens](https://github.com/juliens))
+
+**Bug fixes:**
+- **[api,webui]** Improve documentation about API and Dashboard. ([#5364](https://github.com/containous/traefik/pull/5364) by [ldez](https://github.com/ldez))
+- **[cli]** fix: boolean flag parsing with map. ([#5372](https://github.com/containous/traefik/pull/5372) by [ldez](https://github.com/ldez))
+- **[logs]** fix: logger and context. ([#5370](https://github.com/containous/traefik/pull/5370) by [ldez](https://github.com/ldez))
+- **[tcp]** On client CloseWrite, do CloseWrite instead of Close for backend ([#5366](https://github.com/containous/traefik/pull/5366) by [juliens](https://github.com/juliens))
+- **[webui]** fix: passHostHeader in the webUI. ([#5369](https://github.com/containous/traefik/pull/5369) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- fix a service with one server .yaml example ([#5373](https://github.com/containous/traefik/pull/5373) by [zaverden](https://github.com/zaverden))
+- fix: services configuration documentation. ([#5359](https://github.com/containous/traefik/pull/5359) by [ldez](https://github.com/ldez))
 
 ## [v2.0.0-rc3](https://github.com/containous/traefik/tree/v2.0.0-rc3) (2019-09-10)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc2...v2.0.0-rc3)
