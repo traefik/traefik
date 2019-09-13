@@ -20,7 +20,7 @@ feature by feature, of how the configuration looked like in v1, and how it now l
 ## Frontends and Backends Are Dead... <br/>... Long Live Routers, Middlewares, and Services
 
 During the transition from v1 to v2, a number of internal pieces and components of Traefik were rewritten and reorganized.
-As such, the combination of core notions such as frontends and backends has been replaced with the combination of routers, services, and middlewares.
+As such, the combination of core notions such as frontends and backends has been replaced with the combination of [routers](../routing/routers/index.md), [services](../routing/services/index.md), and [middlewares](../middlewares/overview.md).
 
 Typically, a router replaces a frontend, and a service assumes the role of a backend, with each router referring to a service.
 However, even though a backend was in charge of applying any desired modification on the fly to the incoming request,
@@ -187,7 +187,7 @@ Then any router can refer to an instance of the wanted middleware.
 
 TLS parameters used to be specified in the static configuration, as an entryPoint field.
 With Traefik v2, a new dynamic TLS section at the root contains all the desired TLS configurations.
-Then, a router's TLS field can refer to one of the TLS configurations defined at the root, hence defining the TLS configuration for that router.
+Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one of the [TLS configurations](../https/tls.md) defined at the root, hence defining the [TLS configuration](../https/tls.md) for that router.
 
 !!! example "TLS on web-secure entryPoint becomes TLS option on Router-1"
 
@@ -310,7 +310,7 @@ Then, a router's TLS field can refer to one of the TLS configurations defined at
 ## HTTP to HTTPS Redirection is now applied on Router
 
 Previously on Traefik v1, the redirection was applied on an entrypoint or on a FrontEnd.
-With Traefik v2 it is applied on a Router. 
+With Traefik v2 it is applied on a [Router](../routing/routers/index.md). 
 
 To apply a redirection, one of the redirect middlewares, [RedirectRegex](../middlewares/redirectregex.md) or [RedirectScheme](../middlewares/redirectscheme.md), has to be configured and added to the router middlewares list.
 
