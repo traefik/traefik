@@ -250,7 +250,7 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
-			desc: "map struct with sub-map case senstitive",
+			desc: "map struct with sub-map case sensitive",
 			args: []string{"--foo.Name1.bar.name2.value=firstValue", "--foo.naMe1.bar.name2.value=secondValue"},
 			element: &struct {
 				Foo map[string]struct {
@@ -271,6 +271,20 @@ func TestParse(t *testing.T) {
 			}{},
 			expected: map[string]string{
 				"traefik.foo.Name1.bar.name2.value": "secondValue",
+			},
+		},
+		{
+			desc: "pointer of struct and map without explicit value",
+			args: []string{"--foo.default.bar.fuu"},
+			element: &struct {
+				Foo map[string]struct {
+					Bar *struct {
+						Fuu *struct{ Value string }
+					}
+				}
+			}{},
+			expected: map[string]string{
+				"traefik.foo.default.bar.fuu": "true",
 			},
 		},
 		{

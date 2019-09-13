@@ -3,6 +3,7 @@ package flag
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/parser"
@@ -80,8 +81,8 @@ func (f *flagSet) parseOne() (bool, error) {
 		return true, nil
 	}
 
-	n := strings.ToLower(name)
-	if f.flagTypes[n] == reflect.Bool || f.flagTypes[n] == reflect.Ptr {
+	flagType := f.getFlagType(name)
+	if flagType == reflect.Bool || flagType == reflect.Ptr {
 		f.setValue(name, "true")
 		return true, nil
 	}
@@ -111,10 +112,30 @@ func (f *flagSet) setValue(name string, value string) {
 	}
 
 	v, ok := f.values[key]
-	if ok && f.flagTypes[strings.ToLower(name)] == reflect.Slice {
+	if ok && f.getFlagType(name) == reflect.Slice {
 		f.values[key] = v + "," + value
 		return
 	}
 
 	f.values[key] = value
+}
+
+func (f *flagSet) getFlagType(name string) reflect.Kind {
+	neutral := strings.ToLower(name)
+
+	kind, ok := f.flagTypes[neutral]
+	if ok {
+		return kind
+	}
+
+	for n, k := range f.flagTypes {
+		if strings.Contains(n, parser.MapNamePlaceholder) {
+			p := strings.NewReplacer(".", `\.`, parser.MapNamePlaceholder, `([^.]+)`).Replace(n)
+			if regexp.MustCompile(p).MatchString(neutral) {
+				return k
+			}
+		}
+	}
+
+	return reflect.Invalid
 }
