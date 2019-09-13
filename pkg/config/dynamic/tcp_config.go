@@ -18,7 +18,29 @@ type TCPConfiguration struct {
 
 // TCPService holds a tcp service configuration (can only be of one type at the same time).
 type TCPService struct {
-	LoadBalancer *TCPLoadBalancerService `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty"`
+	LoadBalancer *TCPServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty"`
+	Weighted     *TCPWeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TCPWeightedRoundRobin is a weighted round robin tcp load-balancer of services.
+type TCPWeightedRoundRobin struct {
+	Services []TCPWRRService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TCPWRRService is a reference to a tcp service load-balanced with weighted round robin.
+type TCPWRRService struct {
+	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty"`
+}
+
+// SetDefaults Default values for a TCPWRRService.
+func (w *TCPWRRService) SetDefaults() {
+	defaultWeight := 1
+	w.Weight = &defaultWeight
 }
 
 // +k8s:deepcopy-gen=true
@@ -43,8 +65,8 @@ type RouterTCPTLSConfig struct {
 
 // +k8s:deepcopy-gen=true
 
-// TCPLoadBalancerService holds the LoadBalancerService configuration.
-type TCPLoadBalancerService struct {
+// TCPServersLoadBalancer holds the LoadBalancerService configuration.
+type TCPServersLoadBalancer struct {
 	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
 	// of its connected peers indicates it has closed the writing capability of its
 	// connection, to close the reading capability as well, hence fully terminating the
@@ -54,14 +76,14 @@ type TCPLoadBalancerService struct {
 	Servers          []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
 }
 
-// SetDefaults Default values for a TCPLoadBalancerService
-func (l *TCPLoadBalancerService) SetDefaults() {
+// SetDefaults Default values for a TCPServersLoadBalancer
+func (l *TCPServersLoadBalancer) SetDefaults() {
 	defaultTerminationDelay := 100 // in milliseconds
 	l.TerminationDelay = &defaultTerminationDelay
 }
 
 // Mergeable tells if the given service is mergeable.
-func (l *TCPLoadBalancerService) Mergeable(loadBalancer *TCPLoadBalancerService) bool {
+func (l *TCPServersLoadBalancer) Mergeable(loadBalancer *TCPServersLoadBalancer) bool {
 	savedServers := l.Servers
 	defer func() {
 		l.Servers = savedServers

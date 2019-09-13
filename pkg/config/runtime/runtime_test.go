@@ -488,7 +488,7 @@ func TestPopulateUsedBy(t *testing.T) {
 				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"foo-service@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1",
@@ -522,7 +522,7 @@ func TestPopulateUsedBy(t *testing.T) {
 				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"foo-service@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1",
@@ -598,7 +598,7 @@ func TestPopulateUsedBy(t *testing.T) {
 				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"foo-service@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1",
@@ -614,7 +614,7 @@ func TestPopulateUsedBy(t *testing.T) {
 					},
 					"bar-service@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1",

@@ -49,19 +49,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				continue
 			}
 
-			var allServers []dynamic.TCPServer
-			for _, service := range route.Services {
-				servers, err := loadTCPServers(client, ingressRouteTCP.Namespace, service)
-				if err != nil {
-					logger.
-						WithField("serviceName", service.Name).
-						WithField("servicePort", service.Port).
-						Errorf("Cannot create service: %v", err)
-					continue
-				}
-
-				allServers = append(allServers, servers...)
-			}
+			//			var allServers []dynamic.TCPServer
 
 			key, e := makeServiceKey(route.Match, ingressName)
 			if e != nil {
@@ -70,6 +58,39 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 			}
 
 			serviceName := makeID(ingressRouteTCP.Namespace, key)
+
+			for _, service := range route.Services {
+				balancerServerTCP, err := createLoadBalancerServerTCP(client, ingressRouteTCP.Namespace, service)
+				if err != nil {
+					logger.
+						WithField("serviceName", service.Name).
+						WithField("servicePort", service.Port).
+						Errorf("Cannot create service: %v", err)
+					continue
+				}
+
+				// If there is only one service defined, we skip the creation of the load balancer of services,
+				// i.e. the service on top is directly a load balancer of servers.
+				if len(route.Services) == 1 {
+					conf.Services[serviceName] = balancerServerTCP
+					break
+				}
+
+				serviceKey := fmt.Sprintf("%s-%s-%d", serviceName, service.Name, service.Port)
+				conf.Services[serviceKey] = balancerServerTCP
+
+				srv := dynamic.TCPWRRService{Name: serviceKey}
+				srv.SetDefaults()
+				if service.Weight != nil {
+					srv.Weight = service.Weight
+				}
+
+				if conf.Services[serviceName] == nil {
+					conf.Services[serviceName] = &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
+				}
+				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
+			}
+
 			conf.Routers[serviceName] = &dynamic.TCPRouter{
 				EntryPoints: ingressRouteTCP.Spec.EntryPoints,
 				Rule:        route.Match,
@@ -83,35 +104,51 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					Domains:      ingressRouteTCP.Spec.TLS.Domains,
 				}
 
-				if ingressRouteTCP.Spec.TLS.Options != nil && len(ingressRouteTCP.Spec.TLS.Options.Name) > 0 {
-					tlsOptionsName := ingressRouteTCP.Spec.TLS.Options.Name
-					// Is a Kubernetes CRD reference (i.e. not a cross-provider reference)
-					ns := ingressRouteTCP.Spec.TLS.Options.Namespace
-					if !strings.Contains(tlsOptionsName, "@") {
-						if len(ns) == 0 {
-							ns = ingressRouteTCP.Namespace
-						}
-						tlsOptionsName = makeID(ns, tlsOptionsName)
-					} else if len(ns) > 0 {
-						logger.
-							WithField("TLSoptions", ingressRouteTCP.Spec.TLS.Options.Name).
-							Warnf("namespace %q is ignored in cross-provider context", ns)
-					}
-
-					conf.Routers[serviceName].TLS.Options = tlsOptionsName
-
+				if ingressRouteTCP.Spec.TLS.Options == nil || len(ingressRouteTCP.Spec.TLS.Options.Name) == 0 {
+					continue
 				}
+
+				tlsOptionsName := ingressRouteTCP.Spec.TLS.Options.Name
+				// Is a Kubernetes CRD reference (i.e. not a cross-provider reference)
+				ns := ingressRouteTCP.Spec.TLS.Options.Namespace
+				if !strings.Contains(tlsOptionsName, "@") {
+					if len(ns) == 0 {
+						ns = ingressRouteTCP.Namespace
+					}
+					tlsOptionsName = makeID(ns, tlsOptionsName)
+				} else if len(ns) > 0 {
+					logger.
+						WithField("TLSoptions", ingressRouteTCP.Spec.TLS.Options.Name).
+						Warnf("namespace %q is ignored in cross-provider context", ns)
+				}
+
+				conf.Routers[serviceName].TLS.Options = tlsOptionsName
+
 			}
 
-			conf.Services[serviceName] = &dynamic.TCPService{
-				LoadBalancer: &dynamic.TCPLoadBalancerService{
-					Servers: allServers,
-				},
-			}
 		}
 	}
 
 	return conf
+}
+
+func createLoadBalancerServerTCP(client Client, namespace string, service v1alpha1.ServiceTCP) (*dynamic.TCPService, error) {
+	servers, err := loadTCPServers(client, namespace, service)
+	if err != nil {
+		return nil, err
+	}
+
+	tcpService := &dynamic.TCPService{
+		LoadBalancer: &dynamic.TCPServersLoadBalancer{
+			Servers: servers,
+		},
+	}
+
+	if service.TerminationDelay != nil {
+		tcpService.LoadBalancer.TerminationDelay = service.TerminationDelay
+	}
+
+	return tcpService, nil
 }
 
 func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([]dynamic.TCPServer, error) {

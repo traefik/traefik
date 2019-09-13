@@ -13,7 +13,4 @@ spec:
     services:
     - name: whoamitcp
       port: 8000
-      weight: 2
-    - name: whoamitcp2
-      port: 8080
-      weight: 3
+      terminationDelay: 500

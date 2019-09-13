@@ -93,7 +93,9 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 		}
 	}
 	if count > 1 {
-		return nil, errors.New("cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
+		err := errors.New("cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
+		conf.AddError(err, true)
+		return nil, err
 	}
 
 	var lb http.Handler

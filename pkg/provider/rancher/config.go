@@ -74,7 +74,7 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, service ran
 
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.TCPService)
-		lb := &dynamic.TCPLoadBalancerService{}
+		lb := &dynamic.TCPServersLoadBalancer{}
 		lb.SetDefaults()
 		configuration.Services[serviceName] = &dynamic.TCPService{
 			LoadBalancer: lb,
@@ -146,7 +146,7 @@ func (p *Provider) keepService(ctx context.Context, service rancherData) bool {
 	return true
 }
 
-func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBalancer *dynamic.TCPLoadBalancerService) error {
+func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBalancer *dynamic.TCPServersLoadBalancer) error {
 	log.FromContext(ctx).Debugf("Trying to add servers for service  %s \n", service.Name)
 
 	serverPort := ""

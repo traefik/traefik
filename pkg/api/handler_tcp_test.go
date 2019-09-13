@@ -255,7 +255,7 @@ func TestHandler_TCP(t *testing.T) {
 				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"bar@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:2345",
@@ -268,7 +268,7 @@ func TestHandler_TCP(t *testing.T) {
 					},
 					"baz@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.2:2345",
@@ -281,7 +281,7 @@ func TestHandler_TCP(t *testing.T) {
 					},
 					"foz@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.2:2345",
@@ -307,7 +307,7 @@ func TestHandler_TCP(t *testing.T) {
 				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"bar@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:2345",
@@ -320,7 +320,7 @@ func TestHandler_TCP(t *testing.T) {
 					},
 					"baz@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.2:2345",
@@ -333,7 +333,7 @@ func TestHandler_TCP(t *testing.T) {
 					},
 					"foz@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.2:2345",
@@ -359,7 +359,7 @@ func TestHandler_TCP(t *testing.T) {
 				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"bar@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:2345",
@@ -372,7 +372,7 @@ func TestHandler_TCP(t *testing.T) {
 					},
 					"baz@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.2:2345",
@@ -385,7 +385,7 @@ func TestHandler_TCP(t *testing.T) {
 					},
 					"foz@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.2:2345",
@@ -411,7 +411,7 @@ func TestHandler_TCP(t *testing.T) {
 				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"bar@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:2345",
@@ -423,7 +423,7 @@ func TestHandler_TCP(t *testing.T) {
 					},
 					"baz@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.2:2345",
@@ -435,7 +435,7 @@ func TestHandler_TCP(t *testing.T) {
 					},
 					"test@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.3:2345",
@@ -459,7 +459,7 @@ func TestHandler_TCP(t *testing.T) {
 				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"bar@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:2345",
@@ -483,7 +483,7 @@ func TestHandler_TCP(t *testing.T) {
 				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"bar@myprovider": {
 						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:2345",

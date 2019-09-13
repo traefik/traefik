@@ -77,7 +77,7 @@ type WRRService struct {
 	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty"`
 }
 
-// SetDefaults Default values for a ServersLoadBalancer.
+// SetDefaults Default values for a WRRService.
 func (w *WRRService) SetDefaults() {
 	defaultWeight := 1
 	w.Weight = &defaultWeight

@@ -55,7 +55,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -92,7 +92,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -106,7 +106,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							},
 						},
 						"default/test.route-f44ce589164e656d231c": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -130,7 +130,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			},
 		},
 		{
-			desc:  "One ingress Route with two different services, their servers will merge",
+			desc:  "One ingress Route with two different services",
 			paths: []string{"tcp/services.yml", "tcp/with_two_services.yml"},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -143,27 +143,44 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
-								Servers: []dynamic.TCPServer{
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
 									{
-										Address: "10.10.0.1:8000",
-										Port:    "",
+										Name:   "default/test.route-fdd3e9338e47a45efefc-whoamitcp-8000",
+										Weight: func(i int) *int { return &i }(2),
 									},
 									{
-										Address: "10.10.0.2:8000",
-										Port:    "",
-									},
-									{
-										Address: "10.10.0.3:8080",
-										Port:    "",
-									},
-									{
-										Address: "10.10.0.4:8080",
-										Port:    "",
+										Name:   "default/test.route-fdd3e9338e47a45efefc-whoamitcp2-8080",
+										Weight: func(i int) *int { return &i }(3),
 									},
 								},
 							},
-						}},
+						},
+						"default/test.route-fdd3e9338e47a45efefc-whoamitcp-8000": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+						"default/test.route-fdd3e9338e47a45efefc-whoamitcp2-8080": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.3:8080",
+									},
+									{
+										Address: "10.10.0.4:8080",
+									},
+								},
+							},
+						},
+					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:     map[string]*dynamic.Router{},
@@ -247,7 +264,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -286,7 +303,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -345,7 +362,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -403,7 +420,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -460,7 +477,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -506,7 +523,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -552,7 +569,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -589,7 +606,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"default/test.route-fdd3e9338e47a45efefc": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
@@ -610,6 +627,44 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Services:    map[string]*dynamic.Service{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "TCP with terminationDelay",
+			paths: []string{"tcp/services.yml", "tcp/with_termination_delay.yml"},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default/test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default/test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default/test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+									{
+										Address: "10.10.0.2:8000",
+										Port:    "",
+									},
+								},
+								TerminationDelay: Int(500),
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
 			},
 		},
 	}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/containous/traefik/v2/integration/try"
@@ -265,4 +266,36 @@ func guessWhoTLSMaxVersion(addr, serverName string, tlsCall bool, tlsMaxVersion 
 	}
 
 	return string(out[:n]), nil
+}
+
+func (s *TCPSuite) TestWRR(c *check.C) {
+	file := s.adaptFile(c, "fixtures/tcp/wrr.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI"))
+	c.Assert(err, checker.IsNil)
+
+	call := map[string]int{}
+	for i := 0; i < 4; i++ {
+		// Traefik passes through, termination handled by whoami-a
+		out, err := guessWho("127.0.0.1:8093", "whoami-a.test", true)
+		c.Assert(err, checker.IsNil)
+		switch {
+		case strings.Contains(out, "whoami-a"):
+			call["whoami-a"]++
+		case strings.Contains(out, "whoami-b"):
+			call["whoami-b"]++
+		default:
+			call["unknown"]++
+		}
+	}
+	c.Assert(call, checker.DeepEquals, map[string]int{"whoami-a": 3, "whoami-b": 1})
+
 }

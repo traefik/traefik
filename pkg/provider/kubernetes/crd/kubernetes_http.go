@@ -73,6 +73,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					continue
 				}
 
+				// If there is only one service defined, we skip the creation of the load balancer of services,
+				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
 					conf.Services[serviceName] = balancerServerHTTP
 					break

@@ -508,7 +508,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"Test": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:80",
@@ -545,7 +545,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.TCPRouter{},
 					Services: map[string]*dynamic.TCPService{
 						"Test": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:80",
@@ -588,7 +588,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"foo": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:8080",
@@ -634,7 +634,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"foo": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:8080",
@@ -693,7 +693,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.TCPRouter{},
 					Services: map[string]*dynamic.TCPService{
 						"foo": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:8080",
@@ -731,7 +731,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.TCPRouter{},
 					Services: map[string]*dynamic.TCPService{
 						"foo": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:8080",
