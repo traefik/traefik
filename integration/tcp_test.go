@@ -296,6 +296,6 @@ func (s *TCPSuite) TestWRR(c *check.C) {
 			call["unknown"]++
 		}
 	}
-	c.Assert(call, checker.DeepEquals, map[string]int{"whoami-a": 3, "whoami-b": 1})
 
+	c.Assert(call, checker.DeepEquals, map[string]int{"whoami-a": 3, "whoami-b": 1})
 }

@@ -49,11 +49,9 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				continue
 			}
 
-			//			var allServers []dynamic.TCPServer
-
-			key, e := makeServiceKey(route.Match, ingressName)
-			if e != nil {
-				logger.Error(e)
+			key, err := makeServiceKey(route.Match, ingressName)
+			if err != nil {
+				logger.Error(err)
 				continue
 			}
 

@@ -120,5 +120,4 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 			return srv, nil
 		}
 	}
-
 }
