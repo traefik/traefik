@@ -469,7 +469,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 
 [ACME](../https/acme.md) is now a certificate resolver (under a certificatesResolvers section) but remains in the static configuration.
 
-!!! example ""
+!!! example "ACME from provider to a specific Certificate Resolver"
 
     ### v1
     
