@@ -105,7 +105,7 @@ The `url` option point to a specific instance.
         my-service:
           loadBalancer:
             servers:
-              url: "http://private-ip-server-1/"
+              - url: "http://private-ip-server-1/"
     ```
 
 #### Load-balancing
