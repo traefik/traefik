@@ -15,7 +15,7 @@ spec:
     services:
     - name: whoami
       port: 80
-      options:
+      serversOptions:
         passHostHeader: false
         responseForwarding:
           flushInterval: 10s

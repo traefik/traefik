@@ -52,7 +52,7 @@ type Service struct {
 	Scheme         string       `json:"scheme,omitempty"`
 	HealthCheck    *HealthCheck `json:"healthCheck,omitempty"`
 	Strategy       string       `json:"strategy,omitempty"`
-	ServersOptions *Options     `json:"options,omitempty"`
+	ServersOptions *Options     `json:"serversOptions,omitempty"`
 	Weight         *int         `json:"weight,omitempty"`
 }
 
