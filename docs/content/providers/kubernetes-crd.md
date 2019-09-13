@@ -226,6 +226,13 @@ spec:
       port: 80
       # (default 1) A weight used by the weighted round-robin strategy (WRR).  
       weight: 1
+      # (default true) PassHostHeader controls whether to leave the request's Host
+      # Header as it was before it reached the proxy, or whether to let the proxy set it
+      # to the destination (backend) host.
+      passHostHeader: true
+      responseForwarding:
+        # (default 100ms) Interval between flushes of the buffered response body to the client.
+        flushInterval: 100ms
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

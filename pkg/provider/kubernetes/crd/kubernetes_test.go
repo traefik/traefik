@@ -1537,12 +1537,51 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple Ingress Route, with options",
+			paths: []string{"services.yml", "with_options.yml"},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default/test.route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default/test.route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default/test.route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader:     false,
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: "10s"},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "port selected by name (TODO)",
 		},
 	}
 
 	for _, test := range testCases {
 		test := test
+
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
