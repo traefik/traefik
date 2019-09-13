@@ -635,6 +635,16 @@ func (in *Service) DeepCopyInto(out *Service) {
 		*out = new(HealthCheck)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.PassHostHeader != nil {
+		in, out := &in.PassHostHeader, &out.PassHostHeader
+		*out = new(bool)
+		**out = **in
+	}
+	if in.ResponseForwarding != nil {
+		in, out := &in.ResponseForwarding, &out.ResponseForwarding
+		*out = new(dynamic.ResponseForwarding)
+		**out = **in
+	}
 	if in.Weight != nil {
 		in, out := &in.Weight, &out.Weight
 		*out = new(int)
