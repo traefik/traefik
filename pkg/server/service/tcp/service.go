@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -44,13 +45,19 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 
 	loadBalancer := tcp.NewRRLoadBalancer()
 
+	if conf.LoadBalancer.TerminationDelay == nil {
+		defaultTerminationDelay := 100
+		conf.LoadBalancer.TerminationDelay = &defaultTerminationDelay
+	}
+	duration := time.Millisecond * time.Duration(*conf.LoadBalancer.TerminationDelay)
+
 	for name, server := range conf.LoadBalancer.Servers {
 		if _, _, err := net.SplitHostPort(server.Address); err != nil {
 			logger.Errorf("In service %q: %v", serviceQualifiedName, err)
 			continue
 		}
 
-		handler, err := tcp.NewProxy(server.Address)
+		handler, err := tcp.NewProxy(server.Address, duration)
 		if err != nil {
 			logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
 			continue

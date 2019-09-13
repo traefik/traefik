@@ -1,7 +1,6 @@
 package tcp
 
 import (
-	"net"
 	"sync"
 
 	"github.com/containous/traefik/v2/pkg/log"
@@ -20,7 +19,7 @@ func NewRRLoadBalancer() *RRLoadBalancer {
 }
 
 // ServeTCP forwards the connection to the right service
-func (r *RRLoadBalancer) ServeTCP(conn net.Conn) {
+func (r *RRLoadBalancer) ServeTCP(conn WriteCloser) {
 	if len(r.servers) == 0 {
 		log.WithoutContext().Error("no available server")
 		return

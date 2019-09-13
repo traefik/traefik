@@ -113,7 +113,7 @@ func TestShutdownTCPConn(t *testing.T) {
 	go entryPoint.startTCP(context.Background())
 
 	router := &tcp.Router{}
-	router.AddCatchAllNoTLS(tcp.HandlerFunc(func(conn net.Conn) {
+	router.AddCatchAllNoTLS(tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 		_, err := http.ReadRequest(bufio.NewReader(conn))
 		require.NoError(t, err)
 		time.Sleep(1 * time.Second)

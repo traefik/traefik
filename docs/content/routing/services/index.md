@@ -455,3 +455,34 @@ The `address` option (IP:Port) point to a specific instance.
             servers:
               address: "xx.xx.xx.xx:xx"
     ```
+
+#### Termination Delay
+
+As a proxy between a client and a server, it can happen that either side (e.g. client side) decides to terminate its writing capability on the connection (i.e. issuance of a FIN packet).
+The proxy needs to propagate that intent to the other side, and so when that happens, it also does the same on its connection with the other side (e.g. backend side).
+
+However, if for some reason (bad implementation, or malicious intent) the other side does not eventually do the same as well,
+the connection would stay half-open, which would lock resources for however long.
+
+To that end, as soon as the proxy enters this termination sequence, it sets a deadline on fully terminating the connections on both sides.
+
+The termination delay controls that deadline.
+It is a duration in milliseconds, defaulting to 100.
+A negative value means an infinite deadline (i.e. the connection is never fully terminated by the proxy itself).
+
+??? example "A Service with a termination delay -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    [tcp.services]
+      [tcp.services.my-service.loadBalancer]
+        [[tcp.services.my-service.loadBalancer]]
+          terminationDelay = 200
+    ```
+
+    ```yaml tab="YAML"
+    tcp:
+      services:
+        my-service:
+          loadBalancer:
+            terminationDelay: 200
+    ```
