@@ -194,6 +194,21 @@ func (cc *codeCatcher) WriteHeader(code int) {
 	cc.code = code
 }
 
+// Hijack hijacks the connection
+func (cc *codeCatcher) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hj, ok := cc.responseWriter.(http.Hijacker); ok {
+		return hj.Hijack()
+	}
+	return nil, nil, fmt.Errorf("%T is not a http.Hijacker", cc.responseWriter)
+}
+
+// Flush sends any buffered data to the client.
+func (cc *codeCatcher) Flush() {
+	if flusher, ok := cc.responseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
 type responseRecorder interface {
 	http.ResponseWriter
 	http.Flusher
