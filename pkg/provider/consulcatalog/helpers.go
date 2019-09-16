@@ -1,6 +1,8 @@
 package consulcatalog
 
-import "strings"
+import (
+	"strings"
+)
 
 func inArray(needle string, arr []string) bool {
 	for _, s := range arr {
@@ -22,4 +24,19 @@ func inArrayPrefix(needle string, arr []string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// convert labels from []string to map[string]string
+func convertLabels(labels []string) (map[string]string, error) {
+	result := make(map[string]string)
+	for _, label := range labels {
+		parts := strings.Split(label, "=")
+		labelValue := ""
+		if len(parts) >= 2 {
+			labelValue = strings.Join(parts[1:], "=")
+		}
+		result[parts[0]] = labelValue
+	}
+
+	return result, nil
 }

@@ -2,78 +2,72 @@ package consulcatalog
 
 import (
 	"context"
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/hashicorp/consul/api"
 )
 
-func (p *Provider) getConsulServicesData(ctx context.Context) (map[string]*dynamic.Router, map[string]*dynamic.Service, map[string]*dynamic.TCPRouter, map[string]*dynamic.TCPService, error) {
-	httpRouters := make(map[string]*dynamic.Router)
-	httpServices := make(map[string]*dynamic.Service)
-	tcpRouters := make(map[string]*dynamic.TCPRouter)
-	tcpServices := make(map[string]*dynamic.TCPService)
-
-	var consulServiceNames map[string][]string
-	var consulServices []*api.CatalogService
-	var err error
-
-	consulServiceNames, err = p.serviceNames(ctx)
-	if err != nil {
-		return httpRouters, httpServices, tcpRouters, tcpServices, err
-	}
-
-	for name, tags := range consulServiceNames {
-		protocol := p.Protocol
-
-		if value, ok := inArrayPrefix(p.prefixes.protocol, tags); ok {
-			protocol = value
-		}
-
-		if err = validateProtocol(protocol); err != nil {
-			return httpRouters, httpServices, tcpRouters, tcpServices, err
-		}
-
-		queryService := &api.QueryOptions{
-			//Datacenter:        "",
-			//AllowStale:        false,
-			//RequireConsistent: false,
-			//UseCache:          false,
-			//MaxAge:            0,
-			//StaleIfError:      0,
-			//WaitIndex:         0,
-			//WaitHash:          "",
-			//WaitTime:          0,
-			//Token:             "",
-			//Near:              "",
-			//NodeMeta:          nil,
-			//RelayFactor:       0,
-			//Connect:           false,
-		}
-
-		consulServices, _, err = p.clientCatalog.Service(name, "", queryService)
-		if err != nil {
-			return httpRouters, httpServices, tcpRouters, tcpServices, err
-		}
-
-		switch protocol {
-		case "http":
-			routerName, routerConfig := p.buildHTTPRouterConfiguration(name, tags)
-			httpRouters[routerName] = routerConfig
-			serviceName, serviceConfig := p.buildHTTPServiceConfiguration(name, consulServices)
-			httpServices[serviceName] = serviceConfig
-		case "tcp":
-			routerName, routerConfig := p.buildTCPRouterConfiguration(name, tags)
-			tcpRouters[routerName] = routerConfig
-			serviceName, serviceConfig := p.buildTCPServiceConfiguration(name, consulServices)
-			tcpServices[serviceName] = serviceConfig
-		}
-	}
-
-	return httpRouters, httpServices, tcpRouters, tcpServices, err
+type consulCatalogItem struct {
+	ID      string
+	Name    string
+	Address string
+	Port    int
+	Labels  map[string]string
+}
+type consulCatalogData struct {
+	Items []*consulCatalogItem
 }
 
-func (p *Provider) serviceNames(ctx context.Context) (map[string][]string, error) {
+func (p *Provider) getConsulServicesData(ctx context.Context) (*consulCatalogData, error) {
+	data := &consulCatalogData{}
 
-	queryServiceNames := &api.QueryOptions{
+	consulServiceNames, err := p.getConsulServicesNames(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for name := range consulServiceNames {
+		consulServices, err := p.getConsulServices(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, consulService := range consulServices {
+			labels, err := convertLabels(consulService.ServiceTags)
+			if err != nil {
+				return nil, err
+			}
+			item := &consulCatalogItem{
+				ID:      consulService.ServiceID,
+				Name:    consulService.ServiceName,
+				Address: consulService.ServiceAddress,
+				Port:    consulService.ServicePort,
+				Labels:  labels,
+			}
+
+			data.Items = append(data.Items, item)
+		}
+	}
+	return data, nil
+}
+
+func (p *Provider) getConsulServices(ctx context.Context, name string) ([]*api.CatalogService, error) {
+	tagFilter := ""
+	if !p.ExposedByDefault {
+		tagFilter = p.labelEnabled
+	}
+
+	consulServices, _, err := p.clientCatalog.Service(name, tagFilter, p.getQueryOptions())
+
+	return consulServices, err
+}
+
+func (p *Provider) getConsulServicesNames(ctx context.Context) (map[string][]string, error) {
+	serviceNames, _, err := p.clientCatalog.Services(p.getQueryOptions())
+
+	return serviceNames, err
+}
+
+func (p *Provider) getQueryOptions() *api.QueryOptions {
+	return &api.QueryOptions{
 		//Datacenter:        "",
 		//AllowStale:        false,
 		//RequireConsistent: false,
@@ -89,17 +83,4 @@ func (p *Provider) serviceNames(ctx context.Context) (map[string][]string, error
 		//RelayFactor:       0,
 		//Connect:           false,
 	}
-
-	serviceNames, _, err := p.clientCatalog.Services(queryServiceNames)
-	if err != nil {
-		return nil, err
-	}
-
-	for name, tags := range serviceNames {
-		if !inArray(p.prefixes.enabled, tags) {
-			delete(serviceNames, name)
-		}
-	}
-
-	return serviceNames, nil
 }

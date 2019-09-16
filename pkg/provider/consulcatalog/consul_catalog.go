@@ -13,16 +13,11 @@ import (
 	"time"
 )
 
+type getConsulClientFunc func(*EndpointConfig) (consulCatalog, error)
+
 type consulCatalog interface {
 	Service(string, string, *api.QueryOptions) ([]*api.CatalogService, *api.QueryMeta, error)
 	Services(*api.QueryOptions) (map[string][]string, *api.QueryMeta, error)
-}
-
-type prefixes struct {
-	enabled           string
-	protocol          string
-	routerRule        string
-	routerEntrypoints string
 }
 
 type EndpointHttpAuthConfig struct {
@@ -50,24 +45,34 @@ type EndpointConfig struct {
 }
 
 type Provider struct {
-	Endpoint        EndpointConfig `description:"Consul endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
-	Prefix          string         `description:"Prefix for consul service tags. Default 'traefik'" json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
-	Entrypoints     []string       `description:"Default entrypoints" json:"entrypoints,omitempty" toml:"entrypoints,omitempty" yaml:"entrypoints,omitempty" export:"true"`
-	RouterRule      string         `description:"Default router rule" json:"routerRule,omitempty" toml:"routerRule,omitempty" yaml:"routerRule,omitempty" export:"true"`
-	RefreshInterval types.Duration `description:"Interval for check Consul API. Default 100ms" json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
-	Protocol        string         `description:"Default protocol. 'http' or 'tcp' only'" json:"protocol,omitempty" toml:"protocol,omitempty" yaml:"protocol,omitempty" export:"true"`
+	Endpoint         *EndpointConfig `description:"Consul endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
+	Prefix           string          `description:"Prefix for consul service tags. Default 'traefik'" json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
+	Entrypoints      []string        `description:"Default entrypoints" json:"entrypoints,omitempty" toml:"entrypoints,omitempty" yaml:"entrypoints,omitempty" export:"true"`
+	Middlewares      []string        `description:"Default middlewares" json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	RouterRule       string          `description:"Default router rule" json:"routerRule,omitempty" toml:"routerRule,omitempty" yaml:"routerRule,omitempty" export:"true"`
+	Protocol         string          `description:"Default protocol: http or tcp" json:"protocol,omitempty" toml:"protocol,omitempty" yaml:"protocol,omitempty" export:"true"`
+	RefreshInterval  types.Duration  `description:"Interval for check Consul API. Default 100ms" json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
+	PassHostHeader   bool            `description:"Default value PassHostHeader" json:"passHostHeader,omitempty" toml:"passHostHeader,omitempty" yaml:"passHostHeader,omitempty" export:"true"`
+	ExposedByDefault bool            `description:"Expose containers by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
 
-	prefixes      prefixes
-	clientCatalog consulCatalog
+	labelEnabled        string
+	getConsulClientFunc getConsulClientFunc
+	clientCatalog       consulCatalog
 }
 
 func (p *Provider) SetDefaults() {
+	p.Endpoint = &EndpointConfig{
+		Address: "http://127.0.0.1:8500",
+	}
 	p.RefreshInterval = types.Duration(time.Millisecond * 100)
-	p.Endpoint.Address = "http://127.0.0.1:8500"
 	p.Prefix = "traefik"
 	p.Entrypoints = []string{"web"}
 	p.RouterRule = "Path(`/`)"
+	p.PassHostHeader = true
 	p.Protocol = "http"
+	p.ExposedByDefault = true
+	p.getConsulClientFunc = getConsulClient
+
 }
 
 func (p *Provider) Init() error {
@@ -75,10 +80,7 @@ func (p *Provider) Init() error {
 		return err
 	}
 
-	p.prefixes.enabled = p.Prefix + ".enabled"
-	p.prefixes.protocol = p.Prefix + ".protocol="
-	p.prefixes.routerRule = p.Prefix + ".router.rule="
-	p.prefixes.routerEntrypoints = p.Prefix + ".router.entrypoints="
+	p.labelEnabled = p.Prefix + ".enable=true"
 
 	return nil
 }
@@ -91,23 +93,28 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		operation := func() error {
 			var err error
 
-			client, err := p.createClient()
+			p.clientCatalog, err = p.getConsulClientFunc(p.Endpoint)
 			if err != nil {
 				return fmt.Errorf("error create consul client, %v", err)
 			}
-
-			p.clientCatalog = client.Catalog()
 
 			t := time.NewTicker(time.Duration(p.RefreshInterval))
 
 			for {
 				select {
 				case <-t.C:
-					configuration, err := p.buildConfiguration(ctxLog)
+					data, err := p.getConsulServicesData(routineCtx)
+					if err != nil {
+						logger.Errorf("error get consulCatalog data, %v", err)
+						return err
+					}
+
+					configuration, err := p.buildConfiguration(routineCtx, data)
 					if err != nil {
 						logger.Errorf("error building configuration, %v", err)
 						return err
 					}
+
 					configurationChan <- dynamic.Message{
 						ProviderName:  "consulcatalog",
 						Configuration: configuration,
@@ -133,27 +140,32 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
-func (p *Provider) createClient() (*api.Client, error) {
+func getConsulClient(cfg *EndpointConfig) (consulCatalog, error) {
 
-	cfg := api.Config{
-		Address:    p.Endpoint.Address,
-		Scheme:     p.Endpoint.Scheme,
-		Datacenter: p.Endpoint.Datacenter,
+	config := api.Config{
+		Address:    cfg.Address,
+		Scheme:     cfg.Scheme,
+		Datacenter: cfg.Datacenter,
 		HttpAuth: &api.HttpBasicAuth{
-			Username: p.Endpoint.HttpAuth.Username,
-			Password: p.Endpoint.HttpAuth.Password,
+			Username: cfg.HttpAuth.Username,
+			Password: cfg.HttpAuth.Password,
 		},
-		WaitTime: time.Duration(p.Endpoint.EndpointWaitTime),
-		Token:    p.Endpoint.Token,
+		WaitTime: time.Duration(cfg.EndpointWaitTime),
+		Token:    cfg.Token,
 		TLSConfig: api.TLSConfig{
-			Address:            p.Endpoint.TLS.Address,
-			CAFile:             p.Endpoint.TLS.CAFile,
-			CAPath:             p.Endpoint.TLS.CAPath,
-			CertFile:           p.Endpoint.TLS.CertFile,
-			KeyFile:            p.Endpoint.TLS.KeyFile,
-			InsecureSkipVerify: p.Endpoint.TLS.InsecureSkipVerify,
+			Address:            cfg.TLS.Address,
+			CAFile:             cfg.TLS.CAFile,
+			CAPath:             cfg.TLS.CAPath,
+			CertFile:           cfg.TLS.CertFile,
+			KeyFile:            cfg.TLS.KeyFile,
+			InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
 		},
 	}
 
-	return api.NewClient(&cfg)
+	client, err := api.NewClient(&config)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Catalog(), nil
 }
