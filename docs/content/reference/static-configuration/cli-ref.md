@@ -234,6 +234,75 @@ Enable ping. (Default: ```false```)
 `--ping.entrypoint`:  
 EntryPoint (Default: ```traefik```)
 
+`--providers.consulcatalog.endpoint.address`:  
+The address of the Consul server (Default: ```http://127.0.0.1:8500```)
+
+`--providers.consulcatalog.endpoint.datacenter`:  
+Datacenter to use. If not provided, the default agent datacenter is used
+
+`--providers.consulcatalog.endpoint.endpointwaittime`:  
+WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
+
+`--providers.consulcatalog.endpoint.httpauth`:  
+Auth info to use for http access
+
+`--providers.consulcatalog.endpoint.httpauth.password`:  
+Basic Auth password
+
+`--providers.consulcatalog.endpoint.httpauth.username`:  
+Basic Auth username
+
+`--providers.consulcatalog.endpoint.scheme`:  
+The URI scheme for the Consul server
+
+`--providers.consulcatalog.endpoint.tls`:  
+TLSConfig is used to generate a TLSClientConfig that's useful for talking to Consul using TLS
+
+`--providers.consulcatalog.endpoint.tls.address`:  
+Address of the Consul server
+
+`--providers.consulcatalog.endpoint.tls.cafile`:  
+Path to the CA certificate used for Consul communication, defaults to the system bundle if not specified
+
+`--providers.consulcatalog.endpoint.tls.capath`:  
+Path to a directory of CA certificates to use for Consul communication, defaults to the system bundle if not specified
+
+`--providers.consulcatalog.endpoint.tls.certfile`:  
+Path to the certificate for Consul communication. If this is set then you need to also set KeyFile
+
+`--providers.consulcatalog.endpoint.tls.insecureskipverify`:  
+InsecureSkipVerify if set to true will disable TLS host verification (Default: ```false```)
+
+`--providers.consulcatalog.endpoint.tls.keyfile`:  
+Path to the private key for Consul communication. If this is set then you need to also set CertFile
+
+`--providers.consulcatalog.endpoint.token`:  
+Token is used to provide a per-request ACL token which overrides the agent's default token
+
+`--providers.consulcatalog.entrypoints`:  
+Default entrypoints (Default: ```web```)
+
+`--providers.consulcatalog.exposedbydefault`:  
+Expose containers by default. (Default: ```true```)
+
+`--providers.consulcatalog.middlewares`:  
+Default middlewares
+
+`--providers.consulcatalog.passhostheader`:  
+Default value PassHostHeader (Default: ```true```)
+
+`--providers.consulcatalog.prefix`:  
+Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
+
+`--providers.consulcatalog.protocol`:  
+Default protocol: http or tcp (Default: ```http```)
+
+`--providers.consulcatalog.refreshinterval`:  
+Interval for check Consul API. Default 100ms (Default: ```0```)
+
+`--providers.consulcatalog.routerrule`:  
+Default router rule (Default: ```Path(`/`)```)
+
 `--providers.docker`:  
 Enable Docker backend with default settings. (Default: ```false```)
 

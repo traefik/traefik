@@ -234,6 +234,75 @@ Enable ping. (Default: ```false```)
 `TRAEFIK_PING_ENTRYPOINT`:  
 EntryPoint (Default: ```traefik```)
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_ADDRESS`:  
+The address of the Consul server (Default: ```http://127.0.0.1:8500```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_DATACENTER`:  
+Datacenter to use. If not provided, the default agent datacenter is used
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_ENDPOINTWAITTIME`:  
+WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_HTTPAUTH`:  
+Auth info to use for http access
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_HTTPAUTH_PASSWORD`:  
+Basic Auth password
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_HTTPAUTH_USERNAME`:  
+Basic Auth username
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_SCHEME`:  
+The URI scheme for the Consul server
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS`:  
+TLSConfig is used to generate a TLSClientConfig that's useful for talking to Consul using TLS
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_ADDRESS`:  
+Address of the Consul server
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CAFILE`:  
+Path to the CA certificate used for Consul communication, defaults to the system bundle if not specified
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CAPATH`:  
+Path to a directory of CA certificates to use for Consul communication, defaults to the system bundle if not specified
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CERTFILE`:  
+Path to the certificate for Consul communication. If this is set then you need to also set KeyFile
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_INSECURESKIPVERIFY`:  
+InsecureSkipVerify if set to true will disable TLS host verification (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_KEYFILE`:  
+Path to the private key for Consul communication. If this is set then you need to also set CertFile
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TOKEN`:  
+Token is used to provide a per-request ACL token which overrides the agent's default token
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENTRYPOINTS`:  
+Default entrypoints (Default: ```web```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_EXPOSEDBYDEFAULT`:  
+Expose containers by default. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_MIDDLEWARES`:  
+Default middlewares
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_PASSHOSTHEADER`:  
+Default value PassHostHeader (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_PREFIX`:  
+Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_PROTOCOL`:  
+Default protocol: http or tcp (Default: ```http```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_REFRESHINTERVAL`:  
+Interval for check Consul API. Default 100ms (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ROUTERRULE`:  
+Default router rule (Default: ```Path(`/`)```)
+
 `TRAEFIK_PROVIDERS_DOCKER`:  
 Enable Docker backend with default settings. (Default: ```false```)
 
