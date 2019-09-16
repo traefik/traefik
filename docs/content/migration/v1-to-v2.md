@@ -600,7 +600,64 @@ There is no more log configuration at the root level.
 
 ## Tracing
 
-	TODO
+Traefik v2 remains the OpenTracing support. The the `backend` root option from the v1 is gone, you just have to set your [tracing configuration](../observability/tracing/overview.md).
+	
+!!! example "Simple Jaeger tracing configuration"
+
+    ### v1
+    
+    ```toml tab="File (TOML)"
+    # static configuration
+    [tracing]
+      backend = "jaeger"
+      servicename = "tracing"
+      [tracing.jaeger]
+        samplingParam = 1.0
+        samplingServerURL = "http://12.0.0.1:5778/sampling"
+        samplingType = "const"
+        localAgentHostPort = "12.0.0.1:6831"
+    ```
+    
+    ```bash tab="CLI"
+    --tracing.backend="jaeger"
+    --tracing.servicename="tracing"
+    --tracing.jaeger.localagenthostport="12.0.0.1:6831"
+    --tracing.jaeger.samplingparam="1.0"
+    --tracing.jaeger.samplingserverurl="http://12.0.0.1:5778/sampling"
+    --tracing.jaeger.samplingtype="const" 
+    ```
+    
+    ### v2
+    
+    ```toml tab="File (TOML)"
+    # static configuration
+    [tracing]
+      servicename = "tracing"
+      [tracing.jaeger]
+        samplingParam = 1.0
+        samplingServerURL = "http://12.0.0.1:5778/sampling"
+        samplingType = "const"
+        localAgentHostPort = "12.0.0.1:6831"
+     ```
+    
+    ```yaml tab="File (YAML)"
+    # static configuration
+    tracing:
+      servicename: tracing
+      jaeger:
+        samplingParam: 1
+        samplingServerURL: 'http://12.0.0.1:5778/sampling'
+        samplingType: const
+        localAgentHostPort: '12.0.0.1:6831'
+    ``` 
+    
+    ```bash tab="CLI"
+    --tracing.servicename="tracing"
+    --tracing.jaeger.localagenthostport="12.0.0.1:6831"
+    --tracing.jaeger.samplingparam="1.0"
+    --tracing.jaeger.samplingserverurl="http://12.0.0.1:5778/sampling"
+    --tracing.jaeger.samplingtype="const"
+    ```
 
 ## Metrics
 
