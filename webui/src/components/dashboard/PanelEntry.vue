@@ -8,7 +8,10 @@
       </div>
     </q-card-section>
     <q-card-section>
-      <div class="text-h3 text-center text-weight-bold">{{address}}</div>
+      <div class="text-h3 text-center text-weight-bold ellipsis">
+        <span>{{address}}</span>
+        <q-tooltip>{{address}}</q-tooltip>
+      </div>
     </q-card-section>
   </q-card>
 </template>
