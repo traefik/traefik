@@ -64,7 +64,7 @@ func TestConsulCatalog(t *testing.T) {
 							Sticky: nil,
 							Servers: []dynamic.Server{
 								{
-									URL:    "192.168.1.1:1000",
+									URL:    "http://192.168.1.1:1000",
 									Scheme: "http",
 									Port:   "",
 								},

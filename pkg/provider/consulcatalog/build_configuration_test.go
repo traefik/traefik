@@ -135,8 +135,8 @@ func TestBuildConfiguration_DefaultHTTP(t *testing.T) {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Sticky: nil,
 						Servers: []dynamic.Server{
-							{URL: "192.168.1.1:8002", Scheme: "http", Port: ""},
-							{URL: "192.168.1.1:8001", Scheme: "http", Port: ""},
+							{URL: "http://192.168.1.1:8002", Scheme: "http", Port: ""},
+							{URL: "http://192.168.1.1:8001", Scheme: "http", Port: ""},
 						},
 						HealthCheck:        nil,
 						PassHostHeader:     true,
