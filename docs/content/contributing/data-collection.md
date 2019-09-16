@@ -8,9 +8,6 @@ Understanding How Traefik is Being Used
 Understanding how you use Traefik is very important to us: it helps us improve the solution in many different ways.  
 For this very reason, the sendAnonymousUsage option is mandatory: we want you to take time to consider whether or not you wish to share anonymous data with us so we can benefit from your experience and use cases.
 
-!!! warning
-    Before the GA, leaving this option unset will not prevent Traefik from running but will generate an error log indicating that it enables data collection by default.
-
 !!! example "Enabling Data Collection"
     
     ```toml tab="File (TOML)"
@@ -71,14 +68,6 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
         cert = "dockerCert"
         key = "dockerKey"
         insecureSkipVerify = true
-    
-    [providers.ecs]
-      domain = "foo.bar"
-      exposedByDefault = true
-      clusters = ["foo-bar"]
-      region = "us-west-2"
-      accessKeyID = "AccessKeyID"
-      secretAccessKey = "SecretAccessKey"
     ```
 
 ??? example "Resulting Obfuscated Configuration"
@@ -92,7 +81,6 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
     
     [providers.docker]
       endpoint = "xxxx"
-      domain = "xxxx"
       exposedByDefault = true
       swarmMode = true
     
@@ -101,14 +89,6 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
         cert = "xxxx"
         key = "xxxx"
         insecureSkipVerify = false
-    
-    [providers.ecs]
-      domain = "xxxx"
-      exposedByDefault = true
-      clusters = []
-      region = "us-west-2"
-      accessKeyID = "xxxx"
-      secretAccessKey = "xxxx"
     ```
 
 ## The Code for Data Collection
