@@ -65,7 +65,7 @@ func TestConsulCatalog(t *testing.T) {
 							Servers: []dynamic.Server{
 								{
 									URL:    "http://192.168.1.1:1000",
-									Scheme: "http",
+									Scheme: "",
 									Port:   "",
 								},
 							},

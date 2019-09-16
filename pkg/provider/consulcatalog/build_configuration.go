@@ -59,12 +59,16 @@ func (p *Provider) buildConfiguration(ctx context.Context, data *consulCatalogDa
 }
 
 func (p *Provider) buildConfigurationHTTPService(ctx context.Context, cfg *dynamic.Configuration, item *consulCatalogItem) {
+
+	server := dynamic.Server{}
+	server.SetDefaults()
+	server.URL = server.Scheme + "://" + net.JoinHostPort(item.Address, strconv.Itoa(item.Port))
+	server.Scheme = ""
+
 	cfg.HTTP.Services[item.Name] = &dynamic.Service{
 		LoadBalancer: &dynamic.ServersLoadBalancer{
-			Sticky: nil,
-			Servers: []dynamic.Server{
-				{URL: "http://" + net.JoinHostPort(item.Address, strconv.Itoa(item.Port)), Scheme: "http"},
-			},
+			Sticky:             nil,
+			Servers:            []dynamic.Server{server},
 			HealthCheck:        nil,
 			PassHostHeader:     p.PassHostHeader,
 			ResponseForwarding: nil,
