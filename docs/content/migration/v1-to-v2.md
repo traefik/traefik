@@ -600,7 +600,7 @@ There is no more log configuration at the root level.
 
 ## Tracing
 
-Traefik v2 remains the OpenTracing support. The the `backend` root option from the v1 is gone, you just have to set your [tracing configuration](../observability/tracing/overview.md).
+Traefik v2 remains the OpenTracing support. The `backend` root option from the v1 is gone, you just have to set your [tracing configuration](../observability/tracing/overview.md).
 	
 !!! example "Simple Jaeger tracing configuration"
 
@@ -662,7 +662,7 @@ Traefik v2 remains the OpenTracing support. The the `backend` root option from t
 ## Metrics
 
 The v2 remains the metrics tools and allows to configure the metric for the entrypoints and/or the services.
-For a basic configuration, the metrics configuration remains the same.     
+For a basic configuration, the [metrics configuration](../observability/metrics/overview.md) remains the same.     
 
 !!! example "Simple Prometheus metrics configuration"
 
@@ -708,11 +708,90 @@ For a basic configuration, the metrics configuration remains the same.
 
 ## No more root level key/values
 
-	TODO
+To avoid any source of confusion, there is no more configuration at the root level.
+Each root item has been moved to a related section or removed.
+
+!!! example "From root to dedicated section"
+ 
+    ### v1
+ 
+    ```toml tab="File (TOML)"
+    # static configuration
+    checkNewVersion = false
+    sendAnonymousUsage = true
+    logLevel = "DEBUG"
+    insecureSkipVerify = true
+    rootCAs = [ "/mycert.cert" ]
+    maxIdleConnsPerHost = 200
+    providersThrottleDuration = "2s"
+    AllowMinWeightZero = true
+    debug = true
+    defaultEntryPoints = ["web", "web-secure"]
+    keepTrailingSlash = false
+    ```
+    
+    ```bash tab="CLI"
+    --checknewversion=false
+    --sendanonymoususage=true
+    --loglevel="DEBUG"
+    --insecureskipverify=true
+    --rootcas="/mycert.cert"
+    --maxidleconnsperhost=200
+    --providersthrottleduration="2s"
+    --allowminweightzero=true
+    --debug=true
+    --defaultentrypoints="web","web-secure"
+    --keeptrailingslash=true
+    ```
+    
+    ### v2
+    ```toml tab="File (TOML)"
+    # static configuration
+    [global]
+      checkNewVersion = true
+      sendAnonymousUsage = true
+    
+    [log]
+      level = "DEBUG"
+    
+    [serversTransport]
+        insecureSkipVerify = true
+        rootCAs = [ "/mycert.cert" ]
+        maxIdleConnsPerHost = 42
+    
+    [providers]
+        providersThrottleDuration = 42    
+    ```
+    
+    ```yaml tab="File (YAML)"
+    # static configuration
+    global:
+      checkNewVersion: true
+      sendAnonymousUsage: true
+    log:
+      level: DEBUG
+    serversTransport:
+      insecureSkipVerify: true
+      rootCAs:
+        - /mycert.cert
+      maxIdleConnsPerHost: 42
+    providers:
+      providersThrottleDuration: 42
+    ``` 
+    
+    ```bash tab="CLI"
+    --global.checknewversion=true
+    --global.sendanonymoususage=true
+    --log.level="DEBUG"
+    --serverstransport.insecureskipverify=true
+    --serverstransport.rootcas="/mycert.cert"
+    --serverstransport.maxidleconnsperhost=42
+    --providers.providersthrottleduration=42
+    ```
 
 ## Providers
 
-Supported providers, for now:
+Supported [providers](../providers/overview.md), for now:
 
 - [ ] Azure Service Fabric
 - [ ] BoltDB
