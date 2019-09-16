@@ -661,7 +661,50 @@ Traefik v2 remains the OpenTracing support. The the `backend` root option from t
 
 ## Metrics
 
-	TODO
+The v2 remains the metrics tools and allows to configure the metric for the entrypoints and/or the services.
+For a basic configuration, the metrics configuration remains the same.     
+
+!!! example "Simple Prometheus metrics configuration"
+
+    ### v1
+    
+    ```toml tab="File (TOML)"
+    # static configuration
+    [metrics.prometheus]
+        buckets = [0.1,0.3,1.2,5.0]
+        entryPoint = "traefik"
+    ```
+    
+    ```bash tab="CLI"
+    --metrics.prometheus.buckets=[0.1,0.3,1.2,5.0]
+    --metrics.prometheus.entrypoint="traefik"
+    ```
+    
+    ### v2
+    
+    ```toml tab="File (TOML)"
+    # static configuration
+    [metrics.prometheus]
+        buckets = [0.1,0.3,1.2,5.0]
+        entryPoint = "metrics"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    # static configuration
+    metrics:
+      prometheus:
+        buckets:
+          - 0.1
+          - 0.3
+          - 1.2
+          - 5
+        entryPoint: metrics
+    ``` 
+    
+    ```bash tab="CLI"
+    --metrics.prometheus.buckets=[0.1,0.3,1.2,5.0]
+    --metrics.prometheus.entrypoint="metrics"
+    ```
 
 ## No more root level key/values
 
