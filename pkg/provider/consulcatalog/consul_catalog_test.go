@@ -35,7 +35,7 @@ func TestConsulCatalog(t *testing.T) {
 		ServiceTags:    []string{"foo=bar"},
 	}
 
-	m.On("Services", mock.Anything).Return(map[string][]string{"service1": []string{"foo=bar"}}, &api.QueryMeta{}, nil)
+	m.On("Services", mock.Anything).Return(map[string][]string{"service1": {"foo=bar"}}, &api.QueryMeta{}, nil)
 	m.On("Service", "service1", mock.Anything, mock.Anything).Return([]*api.CatalogService{catalogService}, &api.QueryMeta{}, nil)
 
 	ch := make(chan dynamic.Message)

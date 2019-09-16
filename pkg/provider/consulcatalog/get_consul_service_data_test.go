@@ -112,7 +112,7 @@ func TestGetConsulServiceData(t *testing.T) {
 		ServiceTags:    []string{"foo=bar"},
 	}
 
-	m.On("Services", mock.Anything).Return(map[string][]string{"service1": []string{}}, &api.QueryMeta{}, nil)
+	m.On("Services", mock.Anything).Return(map[string][]string{"service1": {}}, &api.QueryMeta{}, nil)
 	m.On("Service", "service1", mock.Anything, mock.Anything).Return([]*api.CatalogService{catalogService}, &api.QueryMeta{}, nil)
 
 	data, err := p.getConsulServicesData(context.Background())

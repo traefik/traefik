@@ -47,7 +47,7 @@ func TestBuildConfiguration_FromLabels(t *testing.T) {
 	expectedConfig := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers: map[string]*dynamic.Router{
-				"router1": &dynamic.Router{
+				"router1": {
 					EntryPoints: []string{"web"},
 					Middlewares: nil,
 					Service:     "service1",
@@ -58,7 +58,7 @@ func TestBuildConfiguration_FromLabels(t *testing.T) {
 			},
 			Middlewares: map[string]*dynamic.Middleware{},
 			Services: map[string]*dynamic.Service{
-				"service1": &dynamic.Service{
+				"service1": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Sticky: nil,
 						Servers: []dynamic.Server{
@@ -120,7 +120,7 @@ func TestBuildConfiguration_DefaultHTTP(t *testing.T) {
 	expectedConfig := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers: map[string]*dynamic.Router{
-				"service1-router": &dynamic.Router{
+				"service1-router": {
 					EntryPoints: []string{"web"},
 					Middlewares: nil,
 					Service:     "service1",
@@ -131,7 +131,7 @@ func TestBuildConfiguration_DefaultHTTP(t *testing.T) {
 			},
 			Middlewares: map[string]*dynamic.Middleware{},
 			Services: map[string]*dynamic.Service{
-				"service1": &dynamic.Service{
+				"service1": {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Sticky: nil,
 						Servers: []dynamic.Server{
@@ -198,7 +198,7 @@ func TestBuildConfiguration_DefaultTCP(t *testing.T) {
 		},
 		TCP: &dynamic.TCPConfiguration{
 			Routers: map[string]*dynamic.TCPRouter{
-				"service1-router": &dynamic.TCPRouter{
+				"service1-router": {
 					EntryPoints: []string{"web"},
 					Service:     "service1",
 					Rule:        "Host(`example.com`)",
@@ -206,7 +206,7 @@ func TestBuildConfiguration_DefaultTCP(t *testing.T) {
 				},
 			},
 			Services: map[string]*dynamic.TCPService{
-				"service1": &dynamic.TCPService{
+				"service1": {
 					LoadBalancer: &dynamic.TCPLoadBalancerService{
 						Servers: []dynamic.TCPServer{
 							{Address: "192.168.1.1", Port: "8002"},
