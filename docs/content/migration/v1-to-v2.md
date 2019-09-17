@@ -30,7 +30,7 @@ Then any router can refer to an instance of the wanted middleware.
 
 !!! example "One frontend with basic auth and one backend, become one router, one service, and one basic auth middleware."
 
-    ### v1
+    !!! info "v1"
     
     ```yaml tab="Docker"
     labels:
@@ -92,7 +92,7 @@ Then any router can refer to an instance of the wanted middleware.
           method = "wrr"
     ```
     
-    ### v2
+    !!! info "v2"
     
     ```yaml tab="Docker"
     labels:
@@ -191,7 +191,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
 
 !!! example "TLS on web-secure entryPoint becomes TLS option on Router-1"
 
-    ### v1
+    !!! info "v1"
     
     ```toml tab="File (TOML)"
     # static configuration
@@ -214,7 +214,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     --entryPoints='Name:web-secure Address::443 TLS:path/to/my.cert,path/to/my.key TLS.MinVersion:VersionTLS12 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384'
     ```
     
-    ### v2
+    !!! info "v2"
     
     ```toml tab="File (TOML)"
     # dynamic configuration
@@ -309,14 +309,14 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
 
 ## HTTP to HTTPS Redirection is now configured on Routers
 
-Previously on Traefik v1, the redirection was applied on an entrypoint or on a FrontEnd.
+Previously on Traefik v1, the redirection was applied on an entry point or on a frontend.
 With Traefik v2 it is applied on a [Router](../routing/routers/index.md). 
 
 To apply a redirection, one of the redirect middlewares, [RedirectRegex](../middlewares/redirectregex.md) or [RedirectScheme](../middlewares/redirectscheme.md), has to be configured and added to the router middlewares list.
 
-!!! example "HTTP to HTTPS redirection thanks to the RedirectScheme Middleware"
+!!! example "HTTP to HTTPS redirection"
 
-    ### v1
+    !!! info "v1"
     
     ```toml tab="File (TOML)"
     # static configuration
@@ -324,15 +324,16 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     
     [entryPoints]
       [entryPoints.http]
-      address = ":80"
+        address = ":80"
         [entryPoints.http.redirect]
-        entryPoint = "https"
+          entryPoint = "https"
+
       [entryPoints.https]
-      address = ":443"
+        address = ":443"
         [entryPoints.https.tls]
           [[entryPoints.https.tls.certificates]]
-          certFile = "examples/traefik.crt"
-          keyFile = "examples/traefik.key"
+            certFile = "examples/traefik.crt"
+            keyFile = "examples/traefik.key"
     ```
     
     ```bash tab="CLI"
@@ -340,12 +341,14 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     --entryPoints='Name:web-secure Address::443 TLS:path/to/my.cert,path/to/my.key'
     ```
     
-    ### v2
+    !!! info "v2"
     
     ```yaml tab="Docker"
     labels:
+    - traefik.http.routers.web.rule=Host(`foo.com`)
     - traefik.http.routers.web.entrypoints=web
     - traefik.http.routers.web.middlewares=redirect@file
+    - traefik.http.routers.web-secured.rule=Host(`foo.com`)
     - traefik.http.routers.web-secured.entrypoints=web-secure
     - traefik.http.routers.web-secured.tls=true
     ```
@@ -360,7 +363,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
       entryPoints:
         - web
       routes:
-        - match: Host(`foo`)
+        - match: Host(`foo.com`)
           kind: Rule
           services:
             - name: whoami
@@ -397,21 +400,29 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     ```
 
     ```toml tab="File (TOML)"
-    # static configuration
+    ## static configuration
+    # traefik.toml
+    
     [entryPoints.web]
-        Address = ":80"
+      address = ":80"
     
     [entryPoints.web-secure]
-        Address = ":443"
+      address = ":443"
     
-    # dynamic configuration
+    ##---------------------##
+    
+    ## dynamic configuration
+    # dymanic-conf.toml
+    
     [http.routers]
       [http.routers.router0]
+        rule = "Host(`foo.com`)"
         service = "my-service"
         entrypoints = "web"
         middlewares = ["redirect"]
     
     [http.routers.router1]
+        rule = "Host(`foo.com`)"
         service = "my-service"
         entrypoints = "web-secure"
         [http.routers.router1.tls]
@@ -427,14 +438,30 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         scheme = "https"
     
     [[tls.certificates]]
-          certFile = "/path/to/domain.cert"
-          keyFile = "/path/to/domain.key"    
+      certFile = "/path/to/domain.cert"
+      keyFile = "/path/to/domain.key"    
     ```
     
     ```yaml tab="File (YAML)"
+    ## static configuration
+    # traefik.yml
+    
+    entryPoints:
+      web:
+        address: ":80"
+    
+      web-secure:
+        address: ":443"
+    
+    ##---------------------##
+    
+    ## dynamic configuration
+    # dymanic-conf.yml
+    
     http:
       routers:
         router0:
+            rule: "Host(`foo.com`)"
             entryPoints:
             - web
             middlewares:
@@ -442,8 +469,9 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
             service: my-service
     
         router1:
+            rule: "Host(`foo.com`)"
             entryPoints:
-                - web-secure
+            - web-secure
             service: my-service
             tls: {}
     
@@ -460,7 +488,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
             scheme: https
     
     tls:
-      certificate:
+      certificates:
       - certFile: /app/certs/server/server.pem
         keyFile: /app/certs/server/server.pem
     ``` 
@@ -471,7 +499,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 
 !!! example "ACME from provider to a specific Certificate Resolver"
 
-    ### v1
+    !!! info "v1"
     
     ```toml tab="File (TOML)"
     # static configuration
@@ -505,7 +533,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     --acme.httpchallenge.entrypoint=http
     ```
     
-    ### v2
+    !!! info "v2"
     
     ```toml tab="File (TOML)"
     # static configuration
@@ -557,7 +585,7 @@ There is no more log configuration at the root level.
 
 !!! example "Simple log configuration"
 
-    ### v1
+    !!! info "v1"
     
     ```toml tab="File (TOML)"
     # static configuration
@@ -574,7 +602,7 @@ There is no more log configuration at the root level.
     --traefikLog.format="json"
     ```
     
-    ### v2
+    !!! info "v2"
     
     ```toml tab="File (TOML)"
     # static configuration
@@ -604,7 +632,7 @@ Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is
 	
 !!! example "Simple Jaeger tracing configuration"
 
-    ### v1
+    !!! info "v1"
     
     ```toml tab="File (TOML)"
     # static configuration
@@ -627,7 +655,7 @@ Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is
     --tracing.jaeger.samplingtype="const" 
     ```
     
-    ### v2
+    !!! info "v2"
     
     ```toml tab="File (TOML)"
     # static configuration
@@ -666,7 +694,7 @@ For a basic configuration, the [metrics configuration](../observability/metrics/
 
 !!! example "Simple Prometheus metrics configuration"
 
-    ### v1
+    !!! info "v1"
     
     ```toml tab="File (TOML)"
     # static configuration
@@ -680,7 +708,7 @@ For a basic configuration, the [metrics configuration](../observability/metrics/
     --metrics.prometheus.entrypoint="traefik"
     ```
     
-    ### v2
+    !!! info "v2"
     
     ```toml tab="File (TOML)"
     # static configuration
@@ -713,7 +741,7 @@ Each root item has been moved to a related section or removed.
 
 !!! example "From root to dedicated section"
  
-    ### v1
+    !!! info "v1"
  
     ```toml tab="File (TOML)"
     # static configuration
@@ -744,7 +772,8 @@ Each root item has been moved to a related section or removed.
     --keeptrailingslash=true
     ```
     
-    ### v2
+    !!! info "v2"
+    
     ```toml tab="File (TOML)"
     # static configuration
     [global]
@@ -768,13 +797,16 @@ Each root item has been moved to a related section or removed.
     global:
       checkNewVersion: true
       sendAnonymousUsage: true
+    
     log:
       level: DEBUG
+    
     serversTransport:
       insecureSkipVerify: true
       rootCAs:
         - /mycert.cert
       maxIdleConnsPerHost: 42
+    
     providers:
       providersThrottleDuration: 42
     ``` 
