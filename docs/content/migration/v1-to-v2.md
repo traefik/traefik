@@ -807,5 +807,6 @@ Supported [providers](../providers/overview.md), for now:
 - [x] Kubernetes IngressRoute
 - [x] Marathon
 - [ ] Mesos
+- [x] Rancher
 - [x] Rest
 - [ ] Zookeeper
