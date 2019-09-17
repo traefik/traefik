@@ -307,7 +307,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       - "traefik.http.routers.router0.tls.options=myTLSOptions@file"
     ```
 
-## HTTP to HTTPS Redirection is now applied on Router
+## HTTP to HTTPS Redirection is now configured on Routers
 
 Previously on Traefik v1, the redirection was applied on an entrypoint or on a FrontEnd.
 With Traefik v2 it is applied on a [Router](../routing/routers/index.md). 
@@ -465,7 +465,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         keyFile: /app/certs/server/server.pem
     ``` 
 
-## ACME (let's encrypt)
+## ACME (LetsEncrypt)
 
 [ACME](../https/acme.md) is now a certificate resolver (under a certificatesResolvers section) but remains in the static configuration.
 
@@ -600,7 +600,7 @@ There is no more log configuration at the root level.
 
 ## Tracing
 
-Traefik v2 remains the OpenTracing support. The `backend` root option from the v1 is gone, you just have to set your [tracing configuration](../observability/tracing/overview.md).
+Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is gone, you just have to set your [tracing configuration](../observability/tracing/overview.md).
 	
 !!! example "Simple Jaeger tracing configuration"
 
@@ -661,7 +661,7 @@ Traefik v2 remains the OpenTracing support. The `backend` root option from the v
 
 ## Metrics
 
-The v2 remains the metrics tools and allows to configure the metric for the entrypoints and/or the services.
+The v2 retains metrics tools and allows metrics to be configured for the entrypoints and/or services.
 For a basic configuration, the [metrics configuration](../observability/metrics/overview.md) remains the same.     
 
 !!! example "Simple Prometheus metrics configuration"
@@ -708,7 +708,7 @@ For a basic configuration, the [metrics configuration](../observability/metrics/
 
 ## No more root level key/values
 
-To avoid any source of confusion, there is no more configuration at the root level.
+To avoid any source of confusion, there are no more configuration at the root level.
 Each root item has been moved to a related section or removed.
 
 !!! example "From root to dedicated section"
