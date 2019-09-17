@@ -435,10 +435,94 @@ func Test_addRoute(t *testing.T) {
 			rule:          `Host("tchouk") && Path("", "/titi")`,
 			expectedError: true,
 		},
+		{
+			desc: "Rule with not",
+			rule: `!Host("tchouk")`,
+			expected: map[string]int{
+				"http://tchouk/titi":   http.StatusNotFound,
+				"http://tchouk/powpow": http.StatusNotFound,
+				"http://test/powpow":   http.StatusOK,
+			},
+		},
+		{
+			desc: "Rule with not on Path",
+			rule: `!Path("/titi")`,
+			expected: map[string]int{
+				"http://tchouk/titi":   http.StatusNotFound,
+				"http://tchouk/powpow": http.StatusOK,
+				"http://test/titi":     http.StatusNotFound,
+			},
+		},
+		{
+			desc: "Rule with not on multiple route with or",
+			rule: `!(Host("tchouk") || Host("toto"))`,
+			expected: map[string]int{
+				"http://tchouk/titi": http.StatusNotFound,
+				"http://toto/powpow": http.StatusNotFound,
+				"http://test/powpow": http.StatusOK,
+			},
+		},
+		{
+			desc: "Rule with not on multiple route with and",
+			rule: `!(Host("tchouk") && Path("/titi"))`,
+			expected: map[string]int{
+				"http://tchouk/titi": http.StatusNotFound,
+				"http://tchouk/toto": http.StatusOK,
+			},
+		},
+		{
+			desc: "Rule with not on multiple route with and and another not",
+			rule: `!(Host("tchouk") && !Path("/titi"))`,
+			expected: map[string]int{
+				"http://tchouk/titi": http.StatusOK,
+				"http://toto/titi":   http.StatusOK,
+				"http://tchouk/toto": http.StatusNotFound,
+			},
+		},
+		{
+			desc: "Rule with not on two rule",
+			rule: `!Host("tchouk") || !Path("/titi")`,
+			expected: map[string]int{
+				"http://tchouk/titi": http.StatusNotFound,
+				"http://tchouk/toto": http.StatusOK,
+			},
+		},
+		{
+			desc: "Rule case with double not",
+			rule: `!(!((Host("tchouk") && Pathprefix("/titi"))))`,
+			expected: map[string]int{
+				"http://tchouk/titi":   http.StatusOK,
+				"http://tchouk/powpow": http.StatusNotFound,
+			},
+		},
+		{
+			desc: "Rule case with not domain",
+			rule: `!Host("tchouk") && Pathprefix("/titi")`,
+			expected: map[string]int{
+				"http://tchouk/titi":   http.StatusNotFound,
+				"http://tchouk/powpow": http.StatusNotFound,
+				"http://toto/powpow":   http.StatusNotFound,
+				"http://toto/titi":     http.StatusOK,
+			},
+		},
+		{
+			desc: "Rule with multiple host AND multiple path AND not",
+			rule: `!(Host("tchouk","pouet") && Path("/powpow", "/titi"))`,
+			expected: map[string]int{
+				"http://tchouk/toto":   http.StatusOK,
+				"http://tchouk/powpow": http.StatusNotFound,
+				"http://pouet/powpow":  http.StatusNotFound,
+				"http://tchouk/titi":   http.StatusNotFound,
+				"http://pouet/titi":    http.StatusNotFound,
+				"http://pouet/toto":    http.StatusOK,
+				"http://plopi/a":       http.StatusOK,
+			},
+		},
 	}
 
 	for _, test := range testCases {
 		test := test
+
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

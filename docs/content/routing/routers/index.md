@@ -256,6 +256,10 @@ The table below lists all the available matchers:
 
     You can combine multiple matchers using the AND (`&&`) and OR (`||`) operators. You can also use parenthesis.
 
+!!! info "Invert a matcher"
+
+    You can invert a matcher by using the `!` operator. 
+
 !!! important "Rule, Middleware, and Services"
 
     The rule is evaluated "before" any middleware has the opportunity to work, and "before" the request is forwarded to the service.
