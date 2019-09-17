@@ -1,5 +1,5 @@
 traefik:
-  image: traefik
+  image: traefik:v1.7
   command: --api --rancher --rancher.domain=rancher.localhost --rancher.endpoint=http://example.com --rancher.accesskey=XXXXXXX --rancher.secretkey=YYYYYY --logLevel=DEBUG
   ports:
     - "80:80"
