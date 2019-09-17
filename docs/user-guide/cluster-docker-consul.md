@@ -91,7 +91,7 @@ To watch docker events, add `--docker.watch`.
 version: "3"
 services:
   traefik:
-    image: traefik:<stable version from https://hub.docker.com/_/traefik>
+    image: traefik:<stable v1.7 from https://hub.docker.com/_/traefik>
     command:
       - "--api"
       - "--entrypoints=Name:http Address::80 Redirect.EntryPoint:https"
@@ -156,7 +156,7 @@ The initializer in a docker-compose file will be:
 
 ```yaml
   traefik_init:
-    image: traefik:<stable version from https://hub.docker.com/_/traefik>
+    image: traefik:<stable v1.7 from https://hub.docker.com/_/traefik>
     command:
       - "storeconfig"
       - "--api"
@@ -177,7 +177,7 @@ And now, the Traefik part will only have the Consul configuration.
 
 ```yaml
   traefik:
-    image: traefik:<stable version from https://hub.docker.com/_/traefik>
+    image: traefik:<stable v1.7 from https://hub.docker.com/_/traefik>
     depends_on:
       - traefik_init
       - consul
@@ -200,7 +200,7 @@ The new configuration will be stored in Consul, and you need to restart the Trae
 version: "3.4"
 services:
   traefik_init:
-    image: traefik:<stable version from https://hub.docker.com/_/traefik>
+    image: traefik:<stable v1.7 from https://hub.docker.com/_/traefik>
     command:
       - "storeconfig"
       - "--api"
@@ -229,7 +229,7 @@ services:
     depends_on:
       - consul
   traefik:
-    image: traefik:<stable version from https://hub.docker.com/_/traefik>
+    image: traefik:<stable v1.7 from https://hub.docker.com/_/traefik>
     depends_on:
       - traefik_init
       - consul

@@ -97,7 +97,7 @@ In compose file the entrypoint syntax is different. Notice how quotes are used:
 
 ```yaml
 traefik:
-    image: traefik
+    image: traefik:v1.7
     command:
         - --defaultentrypoints=powpow
         - "--entryPoints=Name:powpow Address::42 Compress:true"
@@ -105,7 +105,7 @@ traefik:
 or
 ```yaml
 traefik:
-    image: traefik
+    image: traefik:v1.7
     command: --defaultentrypoints=powpow --entryPoints='Name:powpow Address::42 Compress:true'
 ```
 

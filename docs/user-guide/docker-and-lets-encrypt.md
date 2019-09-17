@@ -50,7 +50,7 @@ version: '2'
 
 services:
   traefik:
-    image: traefik:<stable version from https://hub.docker.com/_/traefik>
+    image: traefik:<stable v1.7 from https://hub.docker.com/_/traefik>
     restart: always
     ports:
       - 80:80
