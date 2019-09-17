@@ -221,7 +221,10 @@ infos:
 If `pem` is set, it will add a `X-Forwarded-Tls-Client-Cert` header that contains the escaped pem as value.
 If at least one flag of the `infos` part is set, it will add a `X-Forwarded-Tls-Client-Cert-Infos` header that contains an escaped string composed of the client certificate data selected by the infos flags.
 This infos part is composed like the following example (not escaped):
-```Subject="C=FR,ST=SomeState,L=Lyon,O=Cheese,CN=*.cheese.org",NB=1531900816,NA=1563436816,SAN=*.cheese.org,*.cheese.net,cheese.in,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2```
+```
+Subject="C=FR,ST=SomeState,L=Lyon,O=Cheese,CN=*.cheese.org",NB=1531900816,NA=1563436816,SAN=*.cheese.org,*.cheese.net,cheese.in,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2
+```
+
 Note these options work only with certificates issued by CAs included in the applicable [EntryPoint ClientCA section](/configuration/entrypoints/#tls-mutual-authentication); certificates from other CAs are not parsed or passed through as-is.
 
 <4> `traefik.ingress.kubernetes.io/rate-limit` example:
