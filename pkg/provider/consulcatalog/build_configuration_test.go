@@ -3,8 +3,8 @@ package consulcatalog
 import (
 	"context"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
 	"testing"
 )
 
@@ -83,7 +83,7 @@ func TestBuildConfiguration_FromLabels(t *testing.T) {
 
 	cfg, err := p.buildConfiguration(context.Background(), data)
 	require.NoError(t, err)
-	assert.DeepEqual(t, expectedConfig, cfg)
+	assert.Equal(t, expectedConfig, cfg)
 }
 
 func TestBuildConfiguration_DefaultHTTP(t *testing.T) {
@@ -156,7 +156,7 @@ func TestBuildConfiguration_DefaultHTTP(t *testing.T) {
 
 	cfg, err := p.buildConfiguration(context.Background(), data)
 	require.NoError(t, err)
-	assert.DeepEqual(t, expectedConfig, cfg)
+	assert.Equal(t, expectedConfig, cfg)
 }
 
 func TestBuildConfiguration_DefaultTCP(t *testing.T) {
@@ -221,5 +221,5 @@ func TestBuildConfiguration_DefaultTCP(t *testing.T) {
 
 	cfg, err := p.buildConfiguration(context.Background(), data)
 	require.NoError(t, err)
-	assert.DeepEqual(t, expectedConfig, cfg)
+	assert.Equal(t, expectedConfig, cfg)
 }
