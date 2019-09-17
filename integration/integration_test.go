@@ -57,6 +57,7 @@ func Test(t *testing.T) {
 		check.Suite(&TLSClientHeadersSuite{})
 		check.Suite(&TracingSuite{})
 		check.Suite(&WebsocketSuite{})
+		check.Suite(&ConsulCatalogSuite{})
 	}
 	if *host {
 		// tests launched from the host
