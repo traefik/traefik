@@ -51,7 +51,7 @@ require (
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/influxdata/influxdb1-client v0.0.0-20190402204710-8ff2fc3824fc
 	github.com/instana/go-sensor v1.4.17-0.20190515112224-78c14625025a
-	github.com/labbsr0x/goh v0.0.0-20190610190554-60aa50bcbca7 // indirect
+	github.com/labbsr0x/goh v0.0.0-20190830205702-3d6988c73e10 // indirect
 	github.com/libkermit/compose v0.0.0-20171122111507-c04e39c026ad
 	github.com/libkermit/docker v0.0.0-20171122101128-e6674d32b807
 	github.com/libkermit/docker-check v0.0.0-20171122104347-1113af38e591

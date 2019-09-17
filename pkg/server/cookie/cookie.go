@@ -27,7 +27,7 @@ func GenerateName(backendName string) string {
 	_, err := hash.Write(data)
 	if err != nil {
 		// Impossible case
-		log.Errorf("Fail to create cookie name: %v", err)
+		log.WithoutContext().Errorf("Fail to create cookie name: %v", err)
 	}
 
 	return fmt.Sprintf("_%x", hash.Sum(nil))[:cookieNameLength]

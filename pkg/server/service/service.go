@@ -93,7 +93,9 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 		}
 	}
 	if count > 1 {
-		return nil, errors.New("cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
+		err := errors.New("cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
+		conf.AddError(err, true)
+		return nil, err
 	}
 
 	var lb http.Handler
@@ -232,7 +234,7 @@ func (m *Manager) LaunchHealthCheck() {
 	}
 
 	// FIXME metrics and context
-	healthcheck.GetHealthCheck().SetBackendsConfiguration(context.TODO(), backendConfigs)
+	healthcheck.GetHealthCheck().SetBackendsConfiguration(context.Background(), backendConfigs)
 }
 
 func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler, backend string, hc *dynamic.HealthCheck) *healthcheck.Options {

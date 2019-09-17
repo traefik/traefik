@@ -37,7 +37,7 @@ func newHTTPForwarder(ln net.Listener) *httpForwarder {
 }
 
 // ServeTCP uses the connection to serve it later in "Accept"
-func (h *httpForwarder) ServeTCP(conn net.Conn) {
+func (h *httpForwarder) ServeTCP(conn tcp.WriteCloser) {
 	h.connChan <- conn
 }
 
@@ -72,14 +72,14 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 
 	router := &tcp.Router{}
 
-	httpServer, err := createHTTPServer(listener, configuration, true)
+	httpServer, err := createHTTPServer(ctx, listener, configuration, true)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing httpServer: %v", err)
 	}
 
 	router.HTTPForwarder(httpServer.Forwarder)
 
-	httpsServer, err := createHTTPServer(listener, configuration, false)
+	httpsServer, err := createHTTPServer(ctx, listener, configuration, false)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing httpsServer: %v", err)
 	}
@@ -99,18 +99,52 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 	}, nil
 }
 
+// writeCloserWrapper wraps together a connection, and the concrete underlying
+// connection type that was found to satisfy WriteCloser.
+type writeCloserWrapper struct {
+	net.Conn
+	writeCloser tcp.WriteCloser
+}
+
+func (c *writeCloserWrapper) CloseWrite() error {
+	return c.writeCloser.CloseWrite()
+}
+
+// writeCloser returns the given connection, augmented with the WriteCloser
+// implementation, if any was found within the underlying conn.
+func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
+	switch typedConn := conn.(type) {
+	case *proxyprotocol.Conn:
+		underlying, err := writeCloser(typedConn.Conn)
+		if err != nil {
+			return nil, err
+		}
+		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
+	case *net.TCPConn:
+		return typedConn, nil
+	default:
+		return nil, fmt.Errorf("unknown connection type %T", typedConn)
+	}
+}
+
 func (e *TCPEntryPoint) startTCP(ctx context.Context) {
-	log.FromContext(ctx).Debugf("Start TCP Server")
+	logger := log.FromContext(ctx)
+	logger.Debugf("Start TCP Server")
 
 	for {
 		conn, err := e.listener.Accept()
 		if err != nil {
-			log.Error(err)
+			logger.Error(err)
 			return
 		}
 
+		writeCloser, err := writeCloser(conn)
+		if err != nil {
+			panic(err)
+		}
+
 		safe.Go(func() {
-			e.switcher.ServeTCP(newTrackedConnection(conn, e.tracker))
+			e.switcher.ServeTCP(newTrackedConnection(writeCloser, e.tracker))
 		})
 	}
 }
@@ -338,7 +372,7 @@ type httpServer struct {
 	Switcher  *middlewares.HTTPHandlerSwitcher
 }
 
-func createHTTPServer(ln net.Listener, configuration *static.EntryPoint, withH2c bool) (*httpServer, error) {
+func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool) (*httpServer, error) {
 	httpSwitcher := middlewares.NewHandlerSwitcher(buildDefaultHTTPRouter())
 
 	var handler http.Handler
@@ -364,7 +398,7 @@ func createHTTPServer(ln net.Listener, configuration *static.EntryPoint, withH2c
 	go func() {
 		err := serverHTTP.Serve(listener)
 		if err != nil {
-			log.Errorf("Error while starting server: %v", err)
+			log.FromContext(ctx).Errorf("Error while starting server: %v", err)
 		}
 	}()
 	return &httpServer{
@@ -374,20 +408,20 @@ func createHTTPServer(ln net.Listener, configuration *static.EntryPoint, withH2c
 	}, nil
 }
 
-func newTrackedConnection(conn net.Conn, tracker *connectionTracker) *trackedConnection {
+func newTrackedConnection(conn tcp.WriteCloser, tracker *connectionTracker) *trackedConnection {
 	tracker.AddConnection(conn)
 	return &trackedConnection{
-		Conn:    conn,
-		tracker: tracker,
+		WriteCloser: conn,
+		tracker:     tracker,
 	}
 }
 
 type trackedConnection struct {
 	tracker *connectionTracker
-	net.Conn
+	tcp.WriteCloser
 }
 
 func (t *trackedConnection) Close() error {
-	t.tracker.RemoveConnection(t.Conn)
-	return t.Conn.Close()
+	t.tracker.RemoveConnection(t.WriteCloser)
+	return t.WriteCloser.Close()
 }

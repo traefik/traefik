@@ -79,7 +79,7 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"service1": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
@@ -183,7 +183,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"service1": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",

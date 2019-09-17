@@ -25,7 +25,7 @@ type circuitBreaker struct {
 func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.CircuitBreaker, name string) (http.Handler, error) {
 	expression := confCircuitBreaker.Expression
 
-	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
 	logger.Debug("Setting up with expression: %s", expression)
 
@@ -56,6 +56,5 @@ func (c *circuitBreaker) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (c *circuitBreaker) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	middlewares.GetLogger(req.Context(), c.name, typeName).Debug("Entering middleware")
 	c.circuitBreaker.ServeHTTP(rw, req)
 }

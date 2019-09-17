@@ -33,9 +33,9 @@
           </div>
         </div>
       </q-card-section>
-      <q-card-section>
+      <q-card-section v-if="data.mirroring">
         <div class="row items-start no-wrap">
-          <div class="col" v-if="data.mirroring">
+          <div class="col">
             <div class="text-subtitle2">Main Service</div>
             <q-chip
               dense
@@ -45,11 +45,11 @@
           </div>
         </div>
       </q-card-section>
-      <q-card-section >
+      <q-card-section v-if="data.loadBalancer">
         <div class="row items-start no-wrap">
-          <div class="col" v-if="data.name">
+          <div class="col">
             <div class="text-subtitle2">Pass Host Header</div>
-            <boolean-state :value="data.passHostHeader"/>
+            <boolean-state :value="data.loadBalancer.passHostHeader"/>
           </div>
         </div>
       </q-card-section>

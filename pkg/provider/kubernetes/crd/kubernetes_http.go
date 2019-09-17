@@ -73,6 +73,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					continue
 				}
 
+				// If there is only one service defined, we skip the creation of the load balancer of services,
+				// i.e. the service on top is directly a load balancer of servers.
 				if len(route.Services) == 1 {
 					conf.Services[serviceName] = balancerServerHTTP
 					break
@@ -157,12 +159,18 @@ func createLoadBalancerServerHTTP(client Client, namespace string, service v1alp
 		return nil, err
 	}
 
+	// TODO: support other strategies.
+	lb := &dynamic.ServersLoadBalancer{}
+	lb.SetDefaults()
+
+	lb.Servers = servers
+	if service.PassHostHeader != nil {
+		lb.PassHostHeader = *service.PassHostHeader
+	}
+	lb.ResponseForwarding = service.ResponseForwarding
+
 	return &dynamic.Service{
-		LoadBalancer: &dynamic.ServersLoadBalancer{
-			Servers: servers,
-			// TODO: support other strategies.
-			PassHostHeader: true,
-		},
+		LoadBalancer: lb,
 	}, nil
 }
 

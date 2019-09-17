@@ -47,7 +47,7 @@ InfluxDB's address protocol (udp or http).
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxdb]
-    protocol = "upd"
+    protocol = "udp"
 ```
 
 ```yaml tab="File (YAML)"

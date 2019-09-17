@@ -12,4 +12,5 @@ const (
 	MetricsProviderName = "metricsProviderName"
 	TracingProviderName = "tracingProviderName"
 	ServerName          = "serverName"
+	TLSStoreName        = "tlsStoreName"
 )

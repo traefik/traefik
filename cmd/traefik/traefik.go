@@ -286,24 +286,16 @@ func checkNewVersion() {
 }
 
 func stats(staticConfiguration *static.Configuration) {
-	if staticConfiguration.Global.SendAnonymousUsage == nil {
-		log.WithoutContext().Error(`
-You haven't specified the sendAnonymousUsage option, it will be enabled by default.
-`)
-		sendAnonymousUsage := true
-		staticConfiguration.Global.SendAnonymousUsage = &sendAnonymousUsage
-	}
+	logger := log.WithoutContext()
 
-	if *staticConfiguration.Global.SendAnonymousUsage {
-		log.WithoutContext().Info(`
-Stats collection is enabled.
-Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.
-Help us improve Traefik by leaving this feature on :)
-More details on: https://docs.traefik.io/v2.0/contributing/data-collection/
-`)
+	if staticConfiguration.Global.SendAnonymousUsage {
+		logger.Info(`Stats collection is enabled.`)
+		logger.Info(`Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.`)
+		logger.Info(`Help us improve Traefik by leaving this feature on :)`)
+		logger.Info(`More details on: https://docs.traefik.io/v2.0/contributing/data-collection/`)
 		collect(staticConfiguration)
 	} else {
-		log.WithoutContext().Info(`
+		logger.Info(`
 Stats collection is disabled.
 Help us improve Traefik by turning this feature on :)
 More details on: https://docs.traefik.io/v2.0/contributing/data-collection/

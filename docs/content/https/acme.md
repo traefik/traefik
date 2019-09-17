@@ -50,10 +50,10 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     --entryPoints.web.address=":80"
     --entryPoints.websecure.address=":443"
     # ...
-    --certificatesResolvers.sample.acme.email: your-email@your-domain.org
-    --certificatesResolvers.sample.acme.storage: acme.json
+    --certificatesResolvers.sample.acme.email="your-email@your-domain.org"
+    --certificatesResolvers.sample.acme.storage="acme.json"
     # used during the challenge
-    --certificatesResolvers.sample.acme.httpChallenge.entryPoint: web
+    --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
     ```
 
 ??? note "Configuration Reference"

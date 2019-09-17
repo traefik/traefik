@@ -25,7 +25,7 @@ type Router struct {
 }
 
 // ServeTCP forwards the connection to the right TCP/HTTP handler
-func (r *Router) ServeTCP(conn net.Conn) {
+func (r *Router) ServeTCP(conn WriteCloser) {
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
 
 	if r.catchAllNoTLS != nil && len(r.routingTable) == 0 && r.httpsHandler == nil {
@@ -99,11 +99,11 @@ func (r *Router) AddCatchAllNoTLS(handler Handler) {
 }
 
 // GetConn creates a connection proxy with a peeked string
-func (r *Router) GetConn(conn net.Conn, peeked string) net.Conn {
+func (r *Router) GetConn(conn WriteCloser, peeked string) WriteCloser {
 	// FIXME should it really be on Router ?
 	conn = &Conn{
-		Peeked: []byte(peeked),
-		Conn:   conn,
+		Peeked:      []byte(peeked),
+		WriteCloser: conn,
 	}
 	return conn
 }
@@ -157,7 +157,7 @@ type Conn struct {
 	// It can be type asserted against *net.TCPConn or other types
 	// as needed. It should not be read from directly unless
 	// Peeked is nil.
-	net.Conn
+	WriteCloser
 }
 
 // Read reads bytes from the connection (using the buffer prior to actually reading)
@@ -170,7 +170,7 @@ func (c *Conn) Read(p []byte) (n int, err error) {
 		}
 		return n, nil
 	}
-	return c.Conn.Read(p)
+	return c.WriteCloser.Read(p)
 }
 
 // clientHelloServerName returns the SNI server name inside the TLS ClientHello,

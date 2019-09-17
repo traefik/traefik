@@ -90,7 +90,8 @@ func (rl *rateLimiter) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	logger := middlewares.GetLogger(r.Context(), rl.name, typeName)
+	ctx := middlewares.GetLoggerCtx(r.Context(), rl.name, typeName)
+	logger := log.FromContext(ctx)
 
 	source, amount, err := rl.sourceMatcher.Extract(r)
 	if err != nil {
@@ -127,7 +128,7 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	delay := res.Delay()
 	if delay > rl.maxDelay {
 		res.Cancel()
-		rl.serveDelayError(w, r, delay)
+		rl.serveDelayError(ctx, w, r, delay)
 		return
 	}
 
@@ -135,12 +136,12 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rl.next.ServeHTTP(w, r)
 }
 
-func (rl *rateLimiter) serveDelayError(w http.ResponseWriter, r *http.Request, delay time.Duration) {
+func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, r *http.Request, delay time.Duration) {
 	w.Header().Set("Retry-After", fmt.Sprintf("%.0f", delay.Seconds()))
 	w.Header().Set("X-Retry-In", delay.String())
 	w.WriteHeader(http.StatusTooManyRequests)
 
 	if _, err := w.Write([]byte(http.StatusText(http.StatusTooManyRequests))); err != nil {
-		middlewares.GetLogger(r.Context(), rl.name, typeName).Errorf("could not serve 429: %v", err)
+		log.FromContext(ctx).Errorf("could not serve 429: %v", err)
 	}
 }

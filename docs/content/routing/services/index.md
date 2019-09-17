@@ -105,7 +105,7 @@ The `url` option point to a specific instance.
         my-service:
           loadBalancer:
             servers:
-              url: "http://private-ip-server-1/"
+              - url: "http://private-ip-server-1/"
     ```
 
 #### Load-balancing
@@ -312,11 +312,11 @@ This strategy can be defined only with [File](../../providers/file.md).
 
 ```toml tab="TOML"
 [http.services]
-  [http.services.canary]
-    [[http.services.canary.weighted.services]]
+  [http.services.app]
+    [[http.services.app.weighted.services]]
       name = "appv1"
       weight = 3
-    [[http.services.canary.weighted.services]]
+    [[http.services.app.weighted.services]]
       name = "appv2"
       weight = 1
 
@@ -334,7 +334,7 @@ This strategy can be defined only with [File](../../providers/file.md).
 ```yaml tab="YAML"
 http:
   services:
-    canary:
+    app:
       weighted:
         services:
         - name: appv1
@@ -361,40 +361,40 @@ This strategy can be defined only with [File](../../providers/file.md).
 
 ```toml tab="TOML"
 [http.services]
-  [http.services.mirroring]
-    [http.services.mirroring.mirroring]
-      service = "app"
-    [[http.services.mirroring.mirroring.mirrors]]
-      name = "mirror"
+  [http.services.mirrored-api]
+    [http.services.mirrored-api.mirroring]
+      service = "appv1"
+    [[http.services.mirrored-api.mirroring.mirrors]]
+      name = "appv2"
       percent = 10
 
-  [http.services.app]
-    [http.services.app.loadBalancer]
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
       [[http.services.appv1.loadBalancer.servers]]
         url = "http://private-ip-server-1/"
 
-  [http.services.mirror]
-    [http.services.mirror.loadBalancer]
-      [[http.services.mirror.loadBalancer.servers]]
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [[http.services.appv2.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
 ```
 
 ```yaml tab="YAML"
 http:
   services:
-    mirroring:
+    mirrored-api:
       mirroring:
-        service: app
+        service: appv1
         mirrors:
-        - name: mirror
+        - name: appv2
           percent: 10
 
-    app:
+    appv1:
       loadBalancer:
         servers:
         - url: "http://private-ip-server-1/"
 
-    mirror:
+    appv2:
       loadBalancer:
         servers:
         - url: "http://private-ip-server-2/"
@@ -404,13 +404,14 @@ http:
 
 ### General
 
-Currently, `LoadBalancer` is the only supported kind of TCP `Service`.
-However, since Traefik is an ever evolving project, other kind of TCP Services will be available in the future,
-reason why you have to specify it. 
+Each of the fields of the service section represents a kind of service.
+Which means, that for each specified service, one of the fields, and only one,
+has to be enabled to define what kind of service is created.
+Currently, the two available kinds are `LoadBalancer`, and `Weighted`.
 
-### Load Balancer
+### Servers Load Balancer
 
-The load balancers are able to load balance the requests between multiple instances of your programs. 
+The servers load balancer is in charge of balancing the requests between the servers of the same service.
 
 ??? example "Declaring a Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
 
@@ -455,3 +456,85 @@ The `address` option (IP:Port) point to a specific instance.
             servers:
               address: "xx.xx.xx.xx:xx"
     ```
+
+#### Termination Delay
+
+As a proxy between a client and a server, it can happen that either side (e.g. client side) decides to terminate its writing capability on the connection (i.e. issuance of a FIN packet).
+The proxy needs to propagate that intent to the other side, and so when that happens, it also does the same on its connection with the other side (e.g. backend side).
+
+However, if for some reason (bad implementation, or malicious intent) the other side does not eventually do the same as well,
+the connection would stay half-open, which would lock resources for however long.
+
+To that end, as soon as the proxy enters this termination sequence, it sets a deadline on fully terminating the connections on both sides.
+
+The termination delay controls that deadline.
+It is a duration in milliseconds, defaulting to 100.
+A negative value means an infinite deadline (i.e. the connection is never fully terminated by the proxy itself).
+
+??? example "A Service with a termination delay -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    [tcp.services]
+      [tcp.services.my-service.loadBalancer]
+        [[tcp.services.my-service.loadBalancer]]
+          terminationDelay = 200
+    ```
+
+    ```yaml tab="YAML"
+    tcp:
+      services:
+        my-service:
+          loadBalancer:
+            terminationDelay: 200
+    ```
+
+### Weighted
+
+The Weighted Round Robin (alias `WRR`) load-balancer of services is in charge of balancing the requests between multiple services based on provided weights.
+
+This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
+
+This strategy can only be defined with [File](../../providers/file.md).
+
+```toml tab="TOML"
+[tcp.services]
+  [tcp.services.app]
+    [[tcp.services.app.weighted.services]]
+      name = "appv1"
+      weight = 3
+    [[tcp.services.app.weighted.services]]
+      name = "appv2"
+      weight = 1
+
+  [tcp.services.appv1]
+    [tcp.services.appv1.loadBalancer]
+      [[tcp.services.appv1.loadBalancer.servers]]
+        address = "private-ip-server-1/:8080"
+
+  [tcp.services.appv2]
+    [tcp.services.appv2.loadBalancer]
+      [[tcp.services.appv2.loadBalancer.servers]]
+        address = "private-ip-server-2/:8080"
+```
+
+```yaml tab="YAML"
+tcp:
+  services:
+    app:
+      weighted:
+        services:
+        - name: appv1
+          weight: 3
+        - name: appv2
+          weight: 1
+
+    appv1:
+      loadBalancer:
+        servers:
+        - address: "xxx.xxx.xxx.xxx:8080"
+
+    appv2:
+      loadBalancer:
+        servers:
+        - address: "xxx.xxx.xxx.xxx:8080"
+```

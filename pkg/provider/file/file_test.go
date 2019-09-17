@@ -46,7 +46,7 @@ func TestTLSContent(t *testing.T) {
 	require.NoError(t, err)
 
 	provider := &Provider{}
-	configuration, err := provider.loadFileConfig(fileConfig.Name(), true)
+	configuration, err := provider.loadFileConfig(context.Background(), fileConfig.Name(), true)
 	require.NoError(t, err)
 
 	require.Equal(t, "CONTENT", configuration.TLS.Certificates[0].Certificate.CertFile.String())

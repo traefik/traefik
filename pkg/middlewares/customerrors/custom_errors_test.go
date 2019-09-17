@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -151,7 +150,7 @@ func TestNewResponseRecorder(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rec := newResponseRecorder(test.rw, middlewares.GetLogger(context.Background(), "test", typeName))
+			rec := newResponseRecorder(context.Background(), test.rw)
 			assert.IsType(t, rec, test.expected)
 		})
 	}

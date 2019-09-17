@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
@@ -21,7 +22,7 @@ type forwarderMiddleware struct {
 
 // NewForwarder creates a new forwarder middleware that traces the outgoing request.
 func NewForwarder(ctx context.Context, router, service string, next http.Handler) http.Handler {
-	middlewares.GetLogger(ctx, "tracing", forwarderTypeName).
+	log.FromContext(middlewares.GetLoggerCtx(ctx, "tracing", forwarderTypeName)).
 		Debugf("Added outgoing tracing middleware %s", service)
 
 	return &forwarderMiddleware{

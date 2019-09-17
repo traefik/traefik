@@ -71,8 +71,8 @@ type CertificateResolver struct {
 
 // Global holds the global configuration.
 type Global struct {
-	CheckNewVersion    bool  `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" export:"true"`
-	SendAnonymousUsage *bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" export:"true"`
+	CheckNewVersion    bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" export:"true"`
+	SendAnonymousUsage bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers
@@ -238,13 +238,15 @@ func getSafeACMECAServer(caServerSrc string) string {
 
 	if strings.HasPrefix(caServerSrc, "https://acme-v01.api.letsencrypt.org") {
 		caServer := strings.Replace(caServerSrc, "v01", "v02", 1)
-		log.Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
+		log.WithoutContext().
+			Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
 		return caServer
 	}
 
 	if strings.HasPrefix(caServerSrc, "https://acme-staging.api.letsencrypt.org") {
 		caServer := strings.Replace(caServerSrc, "https://acme-staging.api.letsencrypt.org", "https://acme-staging-v02.api.letsencrypt.org", 1)
-		log.Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
+		log.WithoutContext().
+			Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
 		return caServer
 	}
 

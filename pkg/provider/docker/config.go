@@ -78,14 +78,16 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.TCPService)
-		lb := &dynamic.TCPLoadBalancerService{}
+		lb := &dynamic.TCPServersLoadBalancer{}
+		lb.SetDefaults()
 		configuration.Services[serviceName] = &dynamic.TCPService{
 			LoadBalancer: lb,
 		}
 	}
 
-	for _, service := range configuration.Services {
-		err := p.addServerTCP(ctx, container, service.LoadBalancer)
+	for name, service := range configuration.Services {
+		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
+		err := p.addServerTCP(ctxSvc, container, service.LoadBalancer)
 		if err != nil {
 			return err
 		}
@@ -106,8 +108,9 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 		}
 	}
 
-	for _, service := range configuration.Services {
-		err := p.addServer(ctx, container, service.LoadBalancer)
+	for name, service := range configuration.Services {
+		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
+		err := p.addServer(ctxSvc, container, service.LoadBalancer)
 		if err != nil {
 			return err
 		}
@@ -142,7 +145,7 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 	return true
 }
 
-func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadBalancer *dynamic.TCPLoadBalancerService) error {
+func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadBalancer *dynamic.TCPServersLoadBalancer) error {
 	serverPort := ""
 	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
 		serverPort = loadBalancer.Servers[0].Port

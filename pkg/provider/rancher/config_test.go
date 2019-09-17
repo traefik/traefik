@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Int(v int) *int { return &v }
+
 func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -506,12 +508,13 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"Test": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:80",
 									},
 								},
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -542,12 +545,13 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.TCPRouter{},
 					Services: map[string]*dynamic.TCPService{
 						"Test": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:80",
 									},
 								},
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -584,12 +588,13 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"foo": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:8080",
 									},
 								},
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -629,7 +634,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					Services: map[string]*dynamic.TCPService{
 						"foo": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:8080",
@@ -638,6 +643,7 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.2:8080",
 									},
 								},
+								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -687,12 +693,51 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.TCPRouter{},
 					Services: map[string]*dynamic.TCPService{
 						"foo": {
-							LoadBalancer: &dynamic.TCPLoadBalancerService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "127.0.0.1:8080",
 									},
 								},
+								TerminationDelay: Int(100),
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc: "tcp with label for tcp service, with termination delay",
+			containers: []rancherData{
+				{
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.tcp.services.foo.loadbalancer.server.port":      "8080",
+						"traefik.tcp.services.foo.loadbalancer.terminationdelay": "200",
+					},
+					Port:       "80/tcp",
+					Containers: []string{"127.0.0.1"},
+					Health:     "",
+					State:      "",
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{
+						"foo": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.1:8080",
+									},
+								},
+								TerminationDelay: Int(200),
 							},
 						},
 					},

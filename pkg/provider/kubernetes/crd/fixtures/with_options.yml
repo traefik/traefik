@@ -1,0 +1,20 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - match: Host(`foo.com`) && PathPrefix(`/bar`)
+    kind: Rule
+    priority: 12
+    services:
+    - name: whoami
+      port: 80
+      passHostHeader: false
+      responseForwarding:
+        flushInterval: 10s

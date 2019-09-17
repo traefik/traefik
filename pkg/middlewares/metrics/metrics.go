@@ -39,7 +39,7 @@ type metricsMiddleware struct {
 
 // NewEntryPointMiddleware creates a new metrics middleware for an Entrypoint.
 func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry metrics.Registry, entryPointName string) http.Handler {
-	middlewares.GetLogger(ctx, nameEntrypoint, typeName).Debug("Creating middleware")
+	log.FromContext(middlewares.GetLoggerCtx(ctx, nameEntrypoint, typeName)).Debug("Creating middleware")
 
 	return &metricsMiddleware{
 		next:                 next,
@@ -52,7 +52,7 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 
 // NewServiceMiddleware creates a new metrics middleware for a Service.
 func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metrics.Registry, serviceName string) http.Handler {
-	middlewares.GetLogger(ctx, nameService, typeName).Debug("Creating middleware")
+	log.FromContext(middlewares.GetLoggerCtx(ctx, nameService, typeName)).Debug("Creating middleware")
 
 	return &metricsMiddleware{
 		next:                 next,
