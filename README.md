@@ -33,7 +33,7 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
-:warning: Please be aware that the old configurations for Traefik v1.X are NOT compatible with the v2.X config as of now. If you're testing out v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/).
+:warning: Please be aware that the old configurations for Traefik v1.X are NOT compatible with the v2.X config as of now. If you're running v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/).
 
 ## Overview
 
@@ -121,7 +121,7 @@ git clone https://github.com/containous/traefik
 
 ## Introductory Videos
 
-:warning: Please be aware that these videos are for v1.X. The old configurations for Traefik v1.X are NOT compatible with Traefik v2. If you're testing out v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/).
+:warning: Please be aware that these videos are for v1.X. The old configurations for Traefik v1.X are NOT compatible with Traefik v2. If you're running v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/).
 
 Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at GopherCon 2017.
 You will learn Traefik basics in less than 10 minutes.
