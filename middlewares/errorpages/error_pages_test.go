@@ -47,6 +47,18 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		{
+			desc:        "a 304, so no Write called",
+			errorPage:   &types.ErrorPage{Backend: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
+			backendCode: http.StatusNotModified,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, "whatever, should not be called")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusNotModified, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "")
+			},
+		},
+		{
 			desc:        "in the range",
 			errorPage:   &types.ErrorPage{Backend: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
 			backendCode: http.StatusInternalServerError,
@@ -120,6 +132,9 @@ func TestHandler(t *testing.T) {
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(test.backendCode)
+				if test.backendCode == http.StatusNotModified {
+					return
+				}
 				fmt.Fprintln(w, http.StatusText(test.backendCode))
 			})
 
