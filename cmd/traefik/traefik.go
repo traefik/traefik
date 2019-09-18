@@ -352,14 +352,14 @@ func stats(globalConfiguration *configuration.GlobalConfiguration) {
 Stats collection is enabled.
 Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.
 Help us improve Traefik by leaving this feature on :)
-More details on: https://docs.traefik.io/basics/#collected-data
+More details on: https://docs.traefik.io/v1.7/basics/#collected-data
 `)
 		collect(globalConfiguration)
 	} else {
 		log.Info(`
 Stats collection is disabled.
 Help us improve Traefik by turning this feature on :)
-More details on: https://docs.traefik.io/basics/#collected-data
+More details on: https://docs.traefik.io/v1.7/basics/#collected-data
 `)
 	}
 }

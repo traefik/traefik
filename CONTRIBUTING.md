@@ -158,7 +158,7 @@ Integration tests must be run from the `integration/` directory and require the 
 
 ## Documentation
 
-The [documentation site](https://docs.traefik.io/) is built with [mkdocs](https://mkdocs.org/)
+The [documentation site](https://docs.traefik.io/v1.7/) is built with [mkdocs](https://mkdocs.org/)
 
 ### Building Documentation
 
