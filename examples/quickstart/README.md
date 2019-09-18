@@ -101,7 +101,7 @@ IP: 172.27.0.4
 
 ### 4 — Enjoy Traefik's Magic
 
-Now that you have a basic understanding of how Traefik can automatically create the routes to your services and load balance them, it might be time to dive into [the documentation](https://docs.traefik.io/) and let Traefik work for you!
-Whatever your infrastructure is, there is probably [an available Traefik backend](https://docs.traefik.io/#supported-backends) that will do the job.
+Now that you have a basic understanding of how Traefik can automatically create the routes to your services and load balance them, it might be time to dive into [the documentation](https://docs.traefik.io/v1.7/) and let Traefik work for you!
+Whatever your infrastructure is, there is probably [an available Traefik backend](https://docs.traefik.io/v1.7/#supported-backends) that will do the job.
 
-Our recommendation would be to see for yourself how simple it is to enable HTTPS with [Traefik's let's encrypt integration](https://docs.traefik.io/user-guide/examples/#lets-encrypt-support) using the dedicated [user guide](https://docs.traefik.io/user-guide/docker-and-lets-encrypt/).
+Our recommendation would be to see for yourself how simple it is to enable HTTPS with [Traefik's let's encrypt integration](https://docs.traefik.io/v1.7/user-guide/examples/#lets-encrypt-support) using the dedicated [user guide](https://docs.traefik.io/v1.7/user-guide/docker-and-lets-encrypt/).
