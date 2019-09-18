@@ -461,19 +461,19 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     http:
       routers:
         router0:
-            rule: "Host(`foo.com`)"
-            entryPoints:
-            - web
-            middlewares:
-            - redirect
-            service: my-service
+          rule: "Host(`foo.com`)"
+          entryPoints:
+          - web
+          middlewares:
+          - redirect
+          service: my-service
     
         router1:
-            rule: "Host(`foo.com`)"
-            entryPoints:
-            - web-secure
-            service: my-service
-            tls: {}
+          rule: "Host(`foo.com`)"
+          entryPoints:
+          - web-secure
+          service: my-service
+          tls: {}
     
       services:
         my-service:
@@ -699,8 +699,8 @@ For a basic configuration, the [metrics configuration](../observability/metrics/
     ```toml tab="File (TOML)"
     # static configuration
     [metrics.prometheus]
-        buckets = [0.1,0.3,1.2,5.0]
-        entryPoint = "traefik"
+      buckets = [0.1,0.3,1.2,5.0]
+      entryPoint = "traefik"
     ```
     
     ```bash tab="CLI"
@@ -713,8 +713,8 @@ For a basic configuration, the [metrics configuration](../observability/metrics/
     ```toml tab="File (TOML)"
     # static configuration
     [metrics.prometheus]
-        buckets = [0.1,0.3,1.2,5.0]
-        entryPoint = "metrics"
+      buckets = [0.1,0.3,1.2,5.0]
+      entryPoint = "metrics"
     ```
     
     ```yaml tab="File (YAML)"
@@ -784,12 +784,12 @@ Each root item has been moved to a related section or removed.
       level = "DEBUG"
     
     [serversTransport]
-        insecureSkipVerify = true
-        rootCAs = [ "/mycert.cert" ]
-        maxIdleConnsPerHost = 42
+      insecureSkipVerify = true
+      rootCAs = [ "/mycert.cert" ]
+      maxIdleConnsPerHost = 42
     
     [providers]
-        providersThrottleDuration = 42    
+      providersThrottleDuration = 42    
     ```
     
     ```yaml tab="File (YAML)"
