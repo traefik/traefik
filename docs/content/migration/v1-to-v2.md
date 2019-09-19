@@ -666,7 +666,7 @@ Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is
         samplingServerURL = "http://12.0.0.1:5778/sampling"
         samplingType = "const"
         localAgentHostPort = "12.0.0.1:6831"
-     ```
+    ```
     
     ```yaml tab="File (YAML)"
     # static configuration
