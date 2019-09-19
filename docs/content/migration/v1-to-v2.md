@@ -826,8 +826,8 @@ Each root item has been moved to a related section or removed.
 You need to activate the [API](../operations/dashboard.md#enabling-the-dashboard) to access the dashboard.
 As the dashboard access is now secured by default you can either:
 
-* define a  [specific router](../operations/api.md#configuration) with the `api@internal` service and one authentication middleware like the following example. 
-* or use the [unsecure](../operations/api.md#insecure) option of the api
+* define a  [specific router](../operations/api.md#configuration) with the `api@internal` service and one authentication middleware like the following example
+* or use the [unsecure](../operations/api.md#insecure) option of the API
 
 !!! note "Dashboard with k8s and dedicated router"
 
@@ -961,10 +961,10 @@ Supported [providers](../providers/overview.md), for now:
 * [x] Rest
 * [ ] Zookeeper
 
-## Some Tips You Should Knwon
+## Some Tips You Should Known
 
 * The different sources of static configuration (file, CLI flags, ...) cannot be [mixed](../getting-started/configuration-overview.md#the-static-configuration).
-* Now we can refers to configuration element between differents providers by using the provider namespace (`@provider`).
+* Now we can refers to configuration element between different providers by using the provider namespace (`@provider`).
   For example a router in a File Provider can refer to a service defined in Docker Provider.
 * The middlewares are applied in the same order as their declaration in router.
 * If you have any questions feel free to join our [community forum](https://community.containo.us).
