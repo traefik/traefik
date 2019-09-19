@@ -820,7 +820,124 @@ Each root item has been moved to a related section or removed.
     --serverstransport.maxidleconnsperhost=42
     --providers.providersthrottleduration=42
     ```
+## Dashboard
 
+You need to activate the [API](../operations/dashboard.md#enabling-the-dashboard) to access the dashboard.
+As the dashboard access is now secured by default you can either:
+
+* define a  [specific router](../operations/api.md#configuration) with the `api@internal` service and one authentication middleware like the following example. 
+* or use the [unsecure](../operations/api.md#insecure) option of the api
+
+!!! note "Dashboard with k8s and dedicated router"
+
+    As `api@internal` is not a Kubernetes service, you have to use the file provider or the `insecure` API option.
+    
+!!! example "Activate and access the dashboard"
+
+    !!! info "v1"
+    
+    ```toml tab="File (TOML)"
+    ## static configuration
+    # traefik.toml
+    
+    [entryPoints.web-secure]
+      address = ":443"
+      [entryPoints.web-secure.tls]
+      [entryPoints.web-secure.auth]
+        [entryPoints.web-secure.auth.basic]
+          users = [
+            "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+          ]
+    
+    [api]
+      entryPoint = "web-secure"
+    ```
+    
+    ```bash tab="CLI"
+    --entryPoints='Name:web-secure Address::443 TLS Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/'
+    --api
+    ```
+    
+    !!! info "v2"
+    
+    ```yaml tab="Docker"
+    # dynamic configuration
+    labels:
+      - "traefik.http.routers.api.rule=Host(`traefik.docker.localhost`)"
+      - "traefik.http.routers.api.entrypoints=web-secured"
+      - "traefik.http.routers.api.service=api@internal"
+      - "traefik.http.routers.api.middlewares=myAuth"
+      - "traefik.http.routers.api.tls"
+      - "traefik.http.middlewares.myAuth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+    ```
+
+    ```toml tab="File (TOML)"
+    ## static configuration
+    # traefik.toml
+    
+    [entryPoints.web-secure]
+      address = ":443"
+    
+    [api]
+    
+    [providers.file]
+        filename = "/dymanic-conf.toml"
+    
+    ##---------------------##
+    
+    ## dynamic configuration
+    # dymanic-conf.toml
+    
+    [http.routers.api]
+      rule = "Host(`traefik.docker.localhost`)"
+      entrypoints = ["web-secure"]
+      service = "api@internal"
+      middlewares = ["myAuth"]
+      [http.routers.api.tls]
+    
+    [http.middlewares.myAuth.basicAuth]
+      users = [
+        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+      ]
+    ```
+    
+    ```yaml tab="File (YAML)"
+    ## static configuration
+    # traefik.yaml
+    
+    entryPoints:
+      web-secure:
+        address: ':443'
+        
+    api: {}
+    
+    providers:
+      file:
+        filename: /dymanic-conf.yaml
+   
+    ##---------------------##
+    
+    ## dynamic configuration
+    # dymanic-conf.yaml
+    
+     http:
+      routers:
+        api:
+          rule: Host(`traefik.docker.localhost`)
+          entrypoints:
+            - web-secure
+          service: api@internal
+          middlewares:
+            - myAuth
+          tls: {}
+          
+      middlewares:
+        myAuth:
+          basicAuth:
+            users:
+              - 'test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/'
+    ``` 
+    
 ## Providers
 
 Supported [providers](../providers/overview.md), for now:
