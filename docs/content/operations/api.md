@@ -21,7 +21,7 @@ would be to apply the following protection mechanisms:
 
 ## Configuration
 
-If you enable the API, a new special `service` named `api@internal` is created and then can be reference in a router.
+If you enable the API, a new special `service` named `api@internal` is created and can then be referenced in a router.
 
 To enable the API handler:
 
@@ -37,7 +37,7 @@ api: {}
 --api=true
 ```
 
-And then you will able to reference it like this.
+And then you will be able to reference it like this:
 
 ```yaml tab="Docker"
   - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
