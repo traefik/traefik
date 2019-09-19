@@ -820,6 +820,7 @@ Each root item has been moved to a related section or removed.
     --serverstransport.maxidleconnsperhost=42
     --providers.providersthrottleduration=42
     ```
+    
 ## Dashboard
 
 You need to activate the [API](../operations/dashboard.md#enabling-the-dashboard) to access the dashboard.
@@ -942,23 +943,23 @@ As the dashboard access is now secured by default you can either:
 
 Supported [providers](../providers/overview.md), for now:
 
-- [ ] Azure Service Fabric
-- [ ] BoltDB
-- [ ] Consul
-- [ ] Consul Catalog
-- [x] Docker
-- [ ] DynamoDB
-- [ ] ECS
-- [ ] Etcd
-- [ ] Eureka
-- [x] File
-- [x] Kubernetes Ingress (without annotations)
-- [x] Kubernetes IngressRoute
-- [x] Marathon
-- [ ] Mesos
-- [x] Rancher
-- [x] Rest
-- [ ] Zookeeper
+* [ ] Azure Service Fabric
+* [ ] BoltDB
+* [ ] Consul
+* [ ] Consul Catalog
+* [x] Docker
+* [ ] DynamoDB
+* [ ] ECS
+* [ ] Etcd
+* [ ] Eureka
+* [x] File
+* [x] Kubernetes Ingress (without annotations)
+* [x] Kubernetes IngressRoute
+* [x] Marathon
+* [ ] Mesos
+* [x] Rancher
+* [x] Rest
+* [ ] Zookeeper
 
 ## Some Tips You Should Knwon
 
