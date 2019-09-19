@@ -80,6 +80,9 @@ Look it up.
 
 ### Traefik Routers
 
+Note that if you are using minikube the tls ingress will not work out of the box because there will be no way for the cert provider callback the minikube instance on your local machine to complete the acme challenge and verify ownership of the domain. 
+Instead test the non-tls configuration only and add an entry in `/etc/hosts` for your local domain, eg `your.domain.com` pointing to the minikube ip.
+
 We can now finally apply the actual ingressRoutes, with:
 
 ```bash
@@ -102,3 +105,22 @@ curl [-k] http://your.domain.com:8000/notls
 ```
 
 Note that you'll have to use `-k` as long as you're using the staging server of Let's Encrypt, since it is not in the root DNS servers.
+
+### Minikube
+
+If you are using Minikube you will need an additional configuration to route from the nginx ingress controller to the traefik service. 
+
+###### Caveats
+If you have deployed traefik to a namespace other than `default` be sure to update the `ExternalName` resource below to point to the namespace that the traefik service is deployed in.
+
+If you have deployed traefik to the `kube-system` namespace then you can remove the `ExternalName` resource below as this is only used to route traefik from the `kube-system` namespace to the namespace that traefik was deployed to.
+
+When you are done making any necessary modifications apply with:
+
+```bash
+kubectl apply -f 05-minikubeingress.yml
+```
+
+```yaml
+--8<-- "content/user-guides/crd-acme/05-minikubeingress.yml"
+```

@@ -1,0 +1,26 @@
+# Minikube only
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  namespace: kube-system
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: your.domain.com
+      http:
+        paths:
+          - backend:
+              serviceName: traefik
+              servicePort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  type: ExternalName
+  # The 'default' in  'traefik.default.svc.cluster.local' should be the namespace traefik was deployed to
+  externalName: traefik.default.svc.cluster.local
