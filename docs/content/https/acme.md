@@ -390,7 +390,7 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 ```
 
 !!! warning
-    For concurrency reason, this file cannot be shared across multiple instances of Traefik. Use a key value store entry instead.
+    For concurrency reason, this file cannot be shared across multiple instances of Traefik. Clustered operation is available in Traefik EE.
 
 ## Fallback
 
