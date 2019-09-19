@@ -277,6 +277,11 @@ See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-sc
 
 ## Routing Configuration Options
 
+!!! note "Labels"
+    
+    - Labels are case insensitive.
+    - The complete list of labels can be found [the reference page](../reference/dynamic-configuration/rancher.md)
+
 ### General
 
 Traefik creates, for each rancher service, a corresponding [service](../routing/services/index.md) and [router](../routing/routers/index.md).
