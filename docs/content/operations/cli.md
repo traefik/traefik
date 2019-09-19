@@ -26,7 +26,7 @@ traefik [--flag=flag_argument] [-f [flag_argument]]
 traefik [--flag[=true|false| ]] [-f [true|false| ]]
 ```
 
-Flags are case insensitive.
+!!! info "Flags are case insensitive."
 
 ### `healthcheck`
 
