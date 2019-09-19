@@ -959,3 +959,11 @@ Supported [providers](../providers/overview.md), for now:
 - [x] Rancher
 - [x] Rest
 - [ ] Zookeeper
+
+## Some Tips You Should Knwon
+
+* The different sources of static configuration (file, CLI flags, ...) cannot be [mixed](../getting-started/configuration-overview.md#the-static-configuration).
+* Now we can refers to configuration element between differents providers by using the provider namespace (`@provider`).
+  For example a router in a File Provider can refer to a service defined in Docker Provider.
+* The middlewares are applied in the same order as their declaration in router.
+* If you have any questions feel free to join our [community forum](https://community.containo.us).
