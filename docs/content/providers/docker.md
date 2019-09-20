@@ -430,7 +430,7 @@ _Optional_
 
 #### `tls.ca`
 
-TODO add description.
+Certificate Authority used for the connection to the connection to Docker.
 
 ```toml tab="File (TOML)"
 [providers.docker.tls]
@@ -450,7 +450,12 @@ providers:
 
 #### `tls.caOptional`
 
-TODO add description.
+The policy followed by the server for TLS Client Authentication.
+Only used if `tls.ca` is defined.
+
+- `true`: VerifyClientCertIfGiven
+- `false`: RequireAndVerifyClientCert
+- if `tls.ca` is undefined NoClientCert
 
 ```toml tab="File (TOML)"
 [providers.docker.tls]
@@ -470,7 +475,7 @@ providers:
 
 #### `tls.cert`
 
-TODO add description.
+Public certificate used for the connection to Docker.
 
 ```toml tab="File (TOML)"
 [providers.docker.tls]
@@ -493,7 +498,7 @@ providers:
 
 #### `tls.key`
 
-TODO add description.
+Private certificate used for the connection to Docker.
 
 ```toml tab="File (TOML)"
 [providers.docker.tls]
@@ -516,7 +521,7 @@ providers:
 
 #### `tls.insecureSkipVerify`
 
-TODO add description.
+If `insecureSkipVerify` is `true`, TLS for the connection to Docker accepts any certificate presented by the server and any host name in that certificate.
 
 ```toml tab="File (TOML)"
 [providers.docker.tls]
