@@ -159,8 +159,8 @@ type codeCatcherWithCloseNotify struct {
 
 // CloseNotify returns a channel that receives at most a
 // single value (true) when the client connection has gone away.
-func (r *codeCatcherWithCloseNotify) CloseNotify() <-chan bool {
-	return r.responseWriter.(http.CloseNotifier).CloseNotify()
+func (cc *codeCatcherWithCloseNotify) CloseNotify() <-chan bool {
+	return cc.responseWriter.(http.CloseNotifier).CloseNotify()
 }
 
 func newCodeCatcher(rw http.ResponseWriter, httpCodeRanges types.HTTPCodeRanges) responseInterceptor {
@@ -218,12 +218,10 @@ func (cc *codeCatcher) Write(buf []byte) (int, error) {
 }
 
 func (cc *codeCatcher) WriteHeader(code int) {
-	if cc.headersSent {
+	if cc.headersSent || cc.caughtFilteredCode {
 		return
 	}
-	if cc.caughtFilteredCode {
-		return
-	}
+
 	cc.code = code
 	for _, block := range cc.httpCodeRanges {
 		if cc.code >= block[0] && cc.code <= block[1] {
