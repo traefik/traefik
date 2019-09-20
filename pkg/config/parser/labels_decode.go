@@ -65,7 +65,7 @@ func decodeToNode(root *Node, path []string, value string) {
 
 func containsNode(nodes []*Node, name string) *Node {
 	for _, n := range nodes {
-		if name == n.Name {
+		if strings.EqualFold(name, n.Name) {
 			return n
 		}
 	}
