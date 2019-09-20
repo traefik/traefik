@@ -547,7 +547,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     [certificatesResolvers.sample.acme]
       email = "your-email@your-domain.org"
       storage = "acme.json"
-      [acme.httpChallenge]
+      [certificatesResolvers.sample.acme.httpChallenge]
         # used during the challenge
         entryPoint = "web"
     ```

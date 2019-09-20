@@ -23,7 +23,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     [certificatesResolvers.sample.acme]
       email = "your-email@your-domain.org"
       storage = "acme.json"
-      [acme.httpChallenge]
+      [certificatesResolvers.sample.acme.httpChallenge]
         # used during the challenge
         entryPoint = "web"
     ```
