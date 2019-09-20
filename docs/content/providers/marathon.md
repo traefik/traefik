@@ -404,7 +404,7 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the connection to the connection to Marathon.
+Certificate Authority used for the secured connection to Marathon.
 
 ```toml tab="File (TOML)"
 [providers.marathon.tls]
@@ -424,8 +424,8 @@ providers:
 
 #### `tls.caOptional`
 
-The policy followed by the server for TLS Client Authentication.
-Only used if `tls.ca` is defined.
+Policy followed for the secured connection to Marathon with TLS Client Authentication.
+Requires `tls.ca` to be defined.
 
 - `true`: VerifyClientCertIfGiven
 - `false`: RequireAndVerifyClientCert
@@ -449,7 +449,7 @@ providers:
 
 #### `tls.cert`
 
-Public certificate used for the connection to Marathon.
+Public certificate used for the secured connection to Marathon.
 
 ```toml tab="File (TOML)"
 [providers.marathon.tls]
@@ -472,7 +472,7 @@ providers:
 
 #### `tls.key`
 
-Private certificate used for the connection to Marathon.
+Private certificate used for the secured connection to Marathon.
 
 ```toml tab="File (TOML)"
 [providers.marathon.tls]

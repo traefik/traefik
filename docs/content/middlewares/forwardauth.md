@@ -206,7 +206,7 @@ The `tls` option is the TLS configuration from Traefik to the authentication ser
 
 #### `tls.ca`
 
-Certificate Authority used for the connection to the authentication server.
+Certificate Authority used for the secured connection to the authentication server.
 
 ```yaml tab="Docker"
 labels:
@@ -266,8 +266,8 @@ http:
 
 #### `tls.caOptional`
 
-The policy followed by the server for TLS Client Authentication.
-Only used if `tls.ca` is defined.
+Policy used for the secured connection with TLS Client Authentication to the authentication server.
+Requires `tls.ca` to be defined.
 
 - `true`: VerifyClientCertIfGiven
 - `false`: RequireAndVerifyClientCert
@@ -321,7 +321,7 @@ http:
 
 #### `tls.cert`
 
-Public certificate used for the connection to the authentication server.
+Public certificate used for the secured connection to the authentication server.
 
 ```yaml tab="Docker"
 labels:
@@ -390,7 +390,7 @@ http:
 
 #### `tls.key`
 
-Private certificate used for the connection to Docker.
+Private certificate used for the secure connection to the authentication server.
 
 ```yaml tab="Docker"
 labels:
