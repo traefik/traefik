@@ -461,19 +461,19 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     http:
       routers:
         router0:
-            rule: "Host(`foo.com`)"
-            entryPoints:
-            - web
-            middlewares:
-            - redirect
-            service: my-service
+          rule: "Host(`foo.com`)"
+          entryPoints:
+          - web
+          middlewares:
+          - redirect
+          service: my-service
     
         router1:
-            rule: "Host(`foo.com`)"
-            entryPoints:
-            - web-secure
-            service: my-service
-            tls: {}
+          rule: "Host(`foo.com`)"
+          entryPoints:
+          - web-secure
+          service: my-service
+          tls: {}
     
       services:
         my-service:
@@ -699,8 +699,8 @@ For a basic configuration, the [metrics configuration](../observability/metrics/
     ```toml tab="File (TOML)"
     # static configuration
     [metrics.prometheus]
-        buckets = [0.1,0.3,1.2,5.0]
-        entryPoint = "traefik"
+      buckets = [0.1,0.3,1.2,5.0]
+      entryPoint = "traefik"
     ```
     
     ```bash tab="CLI"
@@ -713,8 +713,8 @@ For a basic configuration, the [metrics configuration](../observability/metrics/
     ```toml tab="File (TOML)"
     # static configuration
     [metrics.prometheus]
-        buckets = [0.1,0.3,1.2,5.0]
-        entryPoint = "metrics"
+      buckets = [0.1,0.3,1.2,5.0]
+      entryPoint = "metrics"
     ```
     
     ```yaml tab="File (YAML)"
@@ -784,12 +784,12 @@ Each root item has been moved to a related section or removed.
       level = "DEBUG"
     
     [serversTransport]
-        insecureSkipVerify = true
-        rootCAs = [ "/mycert.cert" ]
-        maxIdleConnsPerHost = 42
+      insecureSkipVerify = true
+      rootCAs = [ "/mycert.cert" ]
+      maxIdleConnsPerHost = 42
     
     [providers]
-        providersThrottleDuration = 42    
+      providersThrottleDuration = 42    
     ```
     
     ```yaml tab="File (YAML)"
@@ -820,25 +820,151 @@ Each root item has been moved to a related section or removed.
     --serverstransport.maxidleconnsperhost=42
     --providers.providersthrottleduration=42
     ```
+    
+## Dashboard
 
+You need to activate the [API](../operations/dashboard.md#enabling-the-dashboard) to access the dashboard.
+As the dashboard access is now secured by default you can either:
+
+* define a  [specific router](../operations/api.md#configuration) with the `api@internal` service and one authentication middleware like the following example
+* or use the [unsecure](../operations/api.md#insecure) option of the API
+
+!!! note "Dashboard with k8s and dedicated router"
+
+    As `api@internal` is not a Kubernetes service, you have to use the file provider or the `insecure` API option.
+    
+!!! example "Activate and access the dashboard"
+
+    !!! info "v1"
+    
+    ```toml tab="File (TOML)"
+    ## static configuration
+    # traefik.toml
+    
+    [entryPoints.web-secure]
+      address = ":443"
+      [entryPoints.web-secure.tls]
+      [entryPoints.web-secure.auth]
+        [entryPoints.web-secure.auth.basic]
+          users = [
+            "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+          ]
+    
+    [api]
+      entryPoint = "web-secure"
+    ```
+    
+    ```bash tab="CLI"
+    --entryPoints='Name:web-secure Address::443 TLS Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/'
+    --api
+    ```
+    
+    !!! info "v2"
+    
+    ```yaml tab="Docker"
+    # dynamic configuration
+    labels:
+      - "traefik.http.routers.api.rule=Host(`traefik.docker.localhost`)"
+      - "traefik.http.routers.api.entrypoints=web-secured"
+      - "traefik.http.routers.api.service=api@internal"
+      - "traefik.http.routers.api.middlewares=myAuth"
+      - "traefik.http.routers.api.tls"
+      - "traefik.http.middlewares.myAuth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+    ```
+
+    ```toml tab="File (TOML)"
+    ## static configuration
+    # traefik.toml
+    
+    [entryPoints.web-secure]
+      address = ":443"
+    
+    [api]
+    
+    [providers.file]
+        filename = "/dymanic-conf.toml"
+    
+    ##---------------------##
+    
+    ## dynamic configuration
+    # dymanic-conf.toml
+    
+    [http.routers.api]
+      rule = "Host(`traefik.docker.localhost`)"
+      entrypoints = ["web-secure"]
+      service = "api@internal"
+      middlewares = ["myAuth"]
+      [http.routers.api.tls]
+    
+    [http.middlewares.myAuth.basicAuth]
+      users = [
+        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+      ]
+    ```
+    
+    ```yaml tab="File (YAML)"
+    ## static configuration
+    # traefik.yaml
+    
+    entryPoints:
+      web-secure:
+        address: ':443'
+        
+    api: {}
+    
+    providers:
+      file:
+        filename: /dymanic-conf.yaml
+   
+    ##---------------------##
+    
+    ## dynamic configuration
+    # dymanic-conf.yaml
+    
+     http:
+      routers:
+        api:
+          rule: Host(`traefik.docker.localhost`)
+          entrypoints:
+            - web-secure
+          service: api@internal
+          middlewares:
+            - myAuth
+          tls: {}
+          
+      middlewares:
+        myAuth:
+          basicAuth:
+            users:
+              - 'test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/'
+    ``` 
+    
 ## Providers
 
 Supported [providers](../providers/overview.md), for now:
 
-- [ ] Azure Service Fabric
-- [ ] BoltDB
-- [ ] Consul
-- [ ] Consul Catalog
-- [x] Docker
-- [ ] DynamoDB
-- [ ] ECS
-- [ ] Etcd
-- [ ] Eureka
-- [x] File
-- [x] Kubernetes Ingress (without annotations)
-- [x] Kubernetes IngressRoute
-- [x] Marathon
-- [ ] Mesos
-- [x] Rancher
-- [x] Rest
-- [ ] Zookeeper
+* [ ] Azure Service Fabric
+* [ ] BoltDB
+* [ ] Consul
+* [ ] Consul Catalog
+* [x] Docker
+* [ ] DynamoDB
+* [ ] ECS
+* [ ] Etcd
+* [ ] Eureka
+* [x] File
+* [x] Kubernetes Ingress (without annotations)
+* [x] Kubernetes IngressRoute
+* [x] Marathon
+* [ ] Mesos
+* [x] Rancher
+* [x] Rest
+* [ ] Zookeeper
+
+## Some Tips You Should Known
+
+* Different sources of static configuration (file, CLI flags, ...) cannot be [mixed](../getting-started/configuration-overview.md#the-static-configuration).
+* Now, configuration elements can be referenced between different providers by using the provider namespace notation: `@<provider>`.
+  For instance, a router named `myrouter` in a File Provider can refer to a service named `myservice` defined in Docker Provider with the following notation: `myservice@docker`.
+* Middlewares are applied in the same order as their declaration in router.
+* If you have any questions feel free to join our [community forum](https://community.containo.us).
