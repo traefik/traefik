@@ -963,8 +963,8 @@ Supported [providers](../providers/overview.md), for now:
 
 ## Some Tips You Should Known
 
-* The different sources of static configuration (file, CLI flags, ...) cannot be [mixed](../getting-started/configuration-overview.md#the-static-configuration).
-* Now we can refers to configuration element between different providers by using the provider namespace (`@provider`).
-  For example a router in a File Provider can refer to a service defined in Docker Provider.
-* The middlewares are applied in the same order as their declaration in router.
+* Different sources of static configuration (file, CLI flags, ...) cannot be [mixed](../getting-started/configuration-overview.md#the-static-configuration).
+* Now, configuration elements can be referenced between different providers by using the provider namespace notation: `@<provider>`.
+  For instance, a router named `myrouter` in a File Provider can refer to a service named `myservice` defined in Docker Provider with the following notation: `myservice@docker`.
+* Middlewares are applied in the same order as their declaration in router.
 * If you have any questions feel free to join our [community forum](https://community.containo.us).
