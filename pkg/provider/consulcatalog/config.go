@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/containous/traefik/v2/pkg/config/label"
-
-	"github.com/containous/traefik/v2/pkg/provider/constraints"
-
-	"github.com/containous/traefik/v2/pkg/log"
-
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/label"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/provider"
+	"github.com/containous/traefik/v2/pkg/provider/constraints"
+	"github.com/hashicorp/consul/api"
 )
 
 func (p *Provider) buildConfiguration(ctx context.Context, datas []itemData) *dynamic.Configuration {
@@ -74,7 +72,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, datas []itemData) *dy
 func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 	logger := log.FromContext(ctx)
 
-	if !item.Enable {
+	if !item.ExtraConf.Enable {
 		logger.Debug("Filtering disabled item")
 		return false
 	}
@@ -89,7 +87,7 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 		return false
 	}
 
-	if item.Status != "" && item.Status != "passing" {
+	if item.Status != api.HealthPassing && item.Status != api.HealthWarning {
 		logger.Debug("Filtering unhealthy or starting item")
 		return false
 	}
@@ -144,17 +142,13 @@ func (p *Provider) addServerTCP(ctx context.Context, item itemData, loadBalancer
 		return errors.New("load-balancer is not defined")
 	}
 
-	var port string
-	if len(loadBalancer.Servers) > 0 {
-		port = loadBalancer.Servers[0].Port
-	}
-
 	if len(loadBalancer.Servers) == 0 {
 		server := dynamic.TCPServer{}
 
 		loadBalancer.Servers = []dynamic.TCPServer{server}
 	}
 
+	var port string
 	if item.Port != "" {
 		port = item.Port
 		loadBalancer.Servers[0].Port = ""

@@ -234,6 +234,12 @@ Enable ping. (Default: ```false```)
 `--ping.entrypoint`:  
 EntryPoint (Default: ```traefik```)
 
+`--providers.consulcatalog.constraints`:  
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`--providers.consulcatalog.defaultrule`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
 `--providers.consulcatalog.endpoint.address`:  
 The address of the Consul server (Default: ```http://127.0.0.1:8500```)
 
@@ -255,53 +261,32 @@ Basic Auth username
 `--providers.consulcatalog.endpoint.scheme`:  
 The URI scheme for the Consul server
 
-`--providers.consulcatalog.endpoint.tls`:  
-TLSConfig is used to generate a TLSClientConfig that's useful for talking to Consul using TLS
+`--providers.consulcatalog.endpoint.tls.ca`:  
+TLS CA
 
-`--providers.consulcatalog.endpoint.tls.address`:  
-Address of the Consul server
+`--providers.consulcatalog.endpoint.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
 
-`--providers.consulcatalog.endpoint.tls.cafile`:  
-Path to the CA certificate used for Consul communication, defaults to the system bundle if not specified
-
-`--providers.consulcatalog.endpoint.tls.capath`:  
-Path to a directory of CA certificates to use for Consul communication, defaults to the system bundle if not specified
-
-`--providers.consulcatalog.endpoint.tls.certfile`:  
-Path to the certificate for Consul communication. If this is set then you need to also set KeyFile
+`--providers.consulcatalog.endpoint.tls.cert`:  
+TLS cert
 
 `--providers.consulcatalog.endpoint.tls.insecureskipverify`:  
-InsecureSkipVerify if set to true will disable TLS host verification (Default: ```false```)
+TLS insecure skip verify (Default: ```false```)
 
-`--providers.consulcatalog.endpoint.tls.keyfile`:  
-Path to the private key for Consul communication. If this is set then you need to also set CertFile
+`--providers.consulcatalog.endpoint.tls.key`:  
+TLS key
 
 `--providers.consulcatalog.endpoint.token`:  
 Token is used to provide a per-request ACL token which overrides the agent's default token
 
-`--providers.consulcatalog.entrypoints`:  
-Default entrypoints (Default: ```web```)
-
 `--providers.consulcatalog.exposedbydefault`:  
 Expose containers by default. (Default: ```true```)
-
-`--providers.consulcatalog.middlewares`:  
-Default middlewares
-
-`--providers.consulcatalog.passhostheader`:  
-Default value PassHostHeader (Default: ```true```)
 
 `--providers.consulcatalog.prefix`:  
 Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
 
-`--providers.consulcatalog.protocol`:  
-Default protocol: http or tcp (Default: ```http```)
-
 `--providers.consulcatalog.refreshinterval`:  
-Interval for check Consul API. Default 100ms (Default: ```0```)
-
-`--providers.consulcatalog.routerrule`:  
-Default router rule (Default: ```Path(`/`)```)
+Interval for check Consul API. Default 100ms (Default: ```15```)
 
 `--providers.docker`:  
 Enable Docker backend with default settings. (Default: ```false```)

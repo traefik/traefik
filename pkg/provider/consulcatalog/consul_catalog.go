@@ -41,18 +41,17 @@ type EndpointConfig struct {
 	Datacenter       string                 `description:"Datacenter to use. If not provided, the default agent datacenter is used" json:"datacenter,omitempty" toml:"datacenter,omitempty" yaml:"datacenter,omitempty" export:"true"`
 	Token            string                 `description:"Token is used to provide a per-request ACL token which overrides the agent's default token" json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" export:"true"`
 	TLS              *types.ClientTLS       `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	HttpAuth         EndpointHttpAuthConfig `description:"Auth info to use for http access" json:"httpAuth,omitempty" toml:"httpAuth,omitempty" yaml:"httpAuth,omitempty" export:"true"`
+	HTTPAuth         EndpointHTTPAuthConfig `description:"Auth info to use for http access" json:"httpAuth,omitempty" toml:"httpAuth,omitempty" yaml:"httpAuth,omitempty" export:"true"`
 	EndpointWaitTime types.Duration         `description:"WaitTime limits how long a Watch will block. If not provided, the agent default values will be used" json:"endpointWaitTime,omitempty" toml:"endpointWaitTime,omitempty" yaml:"endpointWaitTime,omitempty" export:"true"`
 }
 
-// EndpointHttpAuthConfig holds configurations of the authentication.
-type EndpointHttpAuthConfig struct {
+// EndpointHTTPAuthConfig holds configurations of the authentication.
+type EndpointHTTPAuthConfig struct {
 	Username string `description:"Basic Auth username" json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" export:"true"`
 	Password string `description:"Basic Auth password" json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
-
 func (p *Provider) SetDefaults() {
 	p.Endpoint = &EndpointConfig{
 		Address: "http://127.0.0.1:8500",
@@ -75,13 +74,13 @@ func (p *Provider) Init() error {
 }
 
 type itemData struct {
-	ID      string
-	Name    string
-	Address string
-	Port    string
-	Enable  bool
-	Status  string
-	Labels  map[string]string
+	ID        string
+	Name      string
+	Address   string
+	Port      string
+	Status    string
+	Labels    map[string]string
+	ExtraConf configuration
 }
 
 func createClient(cfg *EndpointConfig) (*api.Client, error) {
@@ -90,8 +89,8 @@ func createClient(cfg *EndpointConfig) (*api.Client, error) {
 		Scheme:     cfg.Scheme,
 		Datacenter: cfg.Datacenter,
 		HttpAuth: &api.HttpBasicAuth{
-			Username: cfg.HttpAuth.Username,
-			Password: cfg.HttpAuth.Password,
+			Username: cfg.HTTPAuth.Username,
+			Password: cfg.HTTPAuth.Password,
 		},
 		WaitTime: time.Duration(cfg.EndpointWaitTime),
 		Token:    cfg.Token,
@@ -107,6 +106,7 @@ func createClient(cfg *EndpointConfig) (*api.Client, error) {
 	return api.NewClient(&config)
 }
 
+// Provide allows the consul catalog provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "consulcatalog"))
@@ -178,7 +178,15 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 				Address: consulService.ServiceAddress,
 				Port:    string(consulService.ServicePort),
 				Labels:  labels,
+				Status:  consulService.Checks.AggregatedStatus(),
 			}
+
+			extraConf, err := p.getConfiguration(item)
+			if err != nil {
+				log.FromContext(ctx).Errorf("Skip item %s: %v", item.Name, err)
+				continue
+			}
+			item.ExtraConf = extraConf
 
 			data = append(data, item)
 		}

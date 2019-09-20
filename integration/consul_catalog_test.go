@@ -3,13 +3,14 @@ package integration
 import (
 	"bytes"
 	"fmt"
-	"github.com/containous/traefik/v2/integration/try"
-	"github.com/docker/docker/integration-cli/checker"
-	"github.com/go-check/check"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/containous/traefik/v2/integration/try"
+	"github.com/docker/docker/integration-cli/checker"
+	"github.com/go-check/check"
 )
 
 type ConsulCatalogSuite struct {
@@ -56,9 +57,7 @@ func (s *ConsulCatalogSuite) deregisterService(id string) error {
 }
 
 func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *check.C) {
-	var err error
-
-	err = s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", []string{"traefik.enable=true"})
+	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", []string{"traefik.enable=true"})
 	c.Assert(err, checker.IsNil)
 	err = s.registerService("whoami2", "whoami", s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress, "80", []string{"traefik.enable=true"})
 	c.Assert(err, checker.IsNil)
