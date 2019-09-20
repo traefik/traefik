@@ -26,6 +26,8 @@ traefik [--flag=flag_argument] [-f [flag_argument]]
 traefik [--flag[=true|false| ]] [-f [true|false| ]]
 ```
 
+!!! info "Flags are case insensitive."
+
 ### `healthcheck`
 
 Calls Traefik `/ping` to check the health of Traefik.

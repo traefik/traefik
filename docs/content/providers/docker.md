@@ -541,6 +541,11 @@ providers:
 
 ## Routing Configuration Options
 
+!!! note "Labels"
+    
+    - Labels are case insensitive.
+    - The complete list of labels can be found [the reference page](../reference/dynamic-configuration/docker.md)
+
 ### General
 
 Traefik creates, for each container, a corresponding [service](../routing/services/index.md) and [router](../routing/routers/index.md).
