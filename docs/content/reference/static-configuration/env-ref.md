@@ -244,13 +244,10 @@ Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 The address of the Consul server (Default: ```http://127.0.0.1:8500```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_DATACENTER`:  
-Datacenter to use. If not provided, the default agent datacenter is used
+Data center to use. If not provided, the default agent data center is used
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_ENDPOINTWAITTIME`:  
 WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
-
-`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_HTTPAUTH`:  
-Auth info to use for http access
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_HTTPAUTH_PASSWORD`:  
 Basic Auth password

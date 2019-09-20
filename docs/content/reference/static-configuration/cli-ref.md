@@ -244,13 +244,10 @@ Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 The address of the Consul server (Default: ```http://127.0.0.1:8500```)
 
 `--providers.consulcatalog.endpoint.datacenter`:  
-Datacenter to use. If not provided, the default agent datacenter is used
+Data center to use. If not provided, the default agent data center is used
 
 `--providers.consulcatalog.endpoint.endpointwaittime`:  
 WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
-
-`--providers.consulcatalog.endpoint.httpauth`:  
-Auth info to use for http access
 
 `--providers.consulcatalog.endpoint.httpauth.password`:  
 Basic Auth password

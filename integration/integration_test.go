@@ -36,6 +36,7 @@ func Test(t *testing.T) {
 		// tests launched from a container
 		check.Suite(&AccessLogSuite{})
 		check.Suite(&AcmeSuite{})
+		check.Suite(&ConsulCatalogSuite{})
 		check.Suite(&DockerComposeSuite{})
 		check.Suite(&DockerSuite{})
 		check.Suite(&ErrorPagesSuite{})
@@ -57,7 +58,6 @@ func Test(t *testing.T) {
 		check.Suite(&TLSClientHeadersSuite{})
 		check.Suite(&TracingSuite{})
 		check.Suite(&WebsocketSuite{})
-		check.Suite(&ConsulCatalogSuite{})
 	}
 	if *host {
 		// tests launched from the host

@@ -1,5 +1,7 @@
 consul:
   image: consul:1.6.1
+  ports:
+    - 8500:8500
 whoami1:
   image: containous/whoami:v1.3.0
   hostname: whoami1
@@ -9,3 +11,6 @@ whoami2:
 whoami3:
   image: containous/whoami:v1.3.0
   hostname: whoami3
+whoamitcp:
+  image: containous/whoamitcp
+  hostname: whoamitcp

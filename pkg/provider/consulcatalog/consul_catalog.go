@@ -3,6 +3,7 @@ package consulcatalog
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"text/template"
 	"time"
 
@@ -36,13 +37,13 @@ type Provider struct {
 
 // EndpointConfig holds configurations of the endpoint.
 type EndpointConfig struct {
-	Address          string                 `description:"The address of the Consul server" json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" export:"true"`
-	Scheme           string                 `description:"The URI scheme for the Consul server" json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
-	Datacenter       string                 `description:"Datacenter to use. If not provided, the default agent datacenter is used" json:"datacenter,omitempty" toml:"datacenter,omitempty" yaml:"datacenter,omitempty" export:"true"`
-	Token            string                 `description:"Token is used to provide a per-request ACL token which overrides the agent's default token" json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" export:"true"`
-	TLS              *types.ClientTLS       `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	HTTPAuth         EndpointHTTPAuthConfig `description:"Auth info to use for http access" json:"httpAuth,omitempty" toml:"httpAuth,omitempty" yaml:"httpAuth,omitempty" export:"true"`
-	EndpointWaitTime types.Duration         `description:"WaitTime limits how long a Watch will block. If not provided, the agent default values will be used" json:"endpointWaitTime,omitempty" toml:"endpointWaitTime,omitempty" yaml:"endpointWaitTime,omitempty" export:"true"`
+	Address          string                  `description:"The address of the Consul server" json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" export:"true"`
+	Scheme           string                  `description:"The URI scheme for the Consul server" json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
+	DataCenter       string                  `description:"Data center to use. If not provided, the default agent data center is used" json:"data center,omitempty" toml:"data center,omitempty" yaml:"datacenter,omitempty" export:"true"`
+	Token            string                  `description:"Token is used to provide a per-request ACL token which overrides the agent's default token" json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" export:"true"`
+	TLS              *types.ClientTLS        `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	HTTPAuth         *EndpointHTTPAuthConfig `description:"Auth info to use for http access" json:"httpAuth,omitempty" toml:"httpAuth,omitempty" yaml:"httpAuth,omitempty" export:"true"`
+	EndpointWaitTime types.Duration          `description:"WaitTime limits how long a Watch will block. If not provided, the agent default values will be used" json:"endpointWaitTime,omitempty" toml:"endpointWaitTime,omitempty" yaml:"endpointWaitTime,omitempty" export:"true"`
 }
 
 // EndpointHTTPAuthConfig holds configurations of the authentication.
@@ -87,20 +88,26 @@ func createClient(cfg *EndpointConfig) (*api.Client, error) {
 	config := api.Config{
 		Address:    cfg.Address,
 		Scheme:     cfg.Scheme,
-		Datacenter: cfg.Datacenter,
-		HttpAuth: &api.HttpBasicAuth{
+		Datacenter: cfg.DataCenter,
+		WaitTime:   time.Duration(cfg.EndpointWaitTime),
+		Token:      cfg.Token,
+	}
+
+	if cfg.HTTPAuth != nil {
+		config.HttpAuth = &api.HttpBasicAuth{
 			Username: cfg.HTTPAuth.Username,
 			Password: cfg.HTTPAuth.Password,
-		},
-		WaitTime: time.Duration(cfg.EndpointWaitTime),
-		Token:    cfg.Token,
-		TLSConfig: api.TLSConfig{
+		}
+	}
+
+	if cfg.TLS != nil {
+		config.TLSConfig = api.TLSConfig{
 			Address:            cfg.Address,
 			CAFile:             cfg.TLS.CA,
 			CertFile:           cfg.TLS.Cert,
 			KeyFile:            cfg.TLS.Key,
 			InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
-		},
+		}
 	}
 
 	return api.NewClient(&config)
@@ -176,7 +183,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 				ID:      consulService.ServiceID,
 				Name:    consulService.ServiceName,
 				Address: consulService.ServiceAddress,
-				Port:    string(consulService.ServicePort),
+				Port:    strconv.Itoa(consulService.ServicePort),
 				Labels:  labels,
 				Status:  consulService.Checks.AggregatedStatus(),
 			}
