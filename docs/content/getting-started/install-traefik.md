@@ -10,7 +10,7 @@ You can install Traefik with the following flavors:
 
 Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/v2.0/traefik.sample.toml):
 
-```shell
+```bash
 docker run -d -p 8080:8080 -p 80:80 \
     -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik:v2.0
 ```
@@ -28,7 +28,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 
 Grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page.
 
-??? tip "Check the integrity of the downloaded file"
+??? info "Check the integrity of the downloaded file"
 
     ```bash tab="Linux"
     # Compare this value to the one found in traefik-${traefik_version}_checksums.txt
@@ -45,7 +45,7 @@ Grab the latest binary from the [releases](https://github.com/containous/traefik
     Get-FileHash ./traefik_${traefik_version}_windows_${arch}.zip -Algorithm SHA256
     ```
 
-??? tip "Extract the downloaded archive"
+??? info "Extract the downloaded archive"
 
     ```bash tab="Linux"
     tar -zxvf traefik_${traefik_version}_linux_${arch}.tar.gz

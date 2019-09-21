@@ -23,21 +23,21 @@ This configuration can change and is seamlessly hot-reloaded, without any reques
 
 Traefik gets its _dynamic configuration_ from [providers](../providers/overview.md): whether an orchestrator, a service registry, or a plain old configuration file. Since this configuration is specific to your infrastructure choices, we invite you to refer to the [dedicated section of this documentation](../providers/overview.md).
 
-!!! Note 
+!!! info 
 
     In the [Quick Start example](../getting-started/quick-start.md), the dynamic configuration comes from docker in the form of labels attached to your containers.
     
-!!! Note
+!!! info "HTTPS Certificates also belong to the dynamic configuration."
     
-    HTTPS Certificates also belong to the dynamic configuration. You can add / update / remove them without restarting your Traefik instance. 
+    You can add / update / remove them without restarting your Traefik instance. 
  
 ## The Static Configuration
 
-There are three different, mutually exclusive, ways to define static configuration options in Traefik:
+There are three different, **mutually exclusive**, ways to define static configuration options in Traefik:
 
-- In a configuration file
-- In the command-line arguments
-- As environment variables
+1. In a configuration file
+1. In the command-line arguments
+1. As environment variables
 
 These ways are evaluated in the order listed above.
 

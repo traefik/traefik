@@ -23,11 +23,11 @@ The opposite is true: when you remove a service from your infrastructure, the ro
 
 You no longer need to create and synchronize configuration files cluttered with IP addresses or other rules.
 
-!!! note "Many different rules"
+!!! info "Many different rules"
 
     In the example above, we used the request [path](../routing/routers/index.md#rule) to determine which service was in charge, but of course you can use many other different [rules](../routing/routers/index.md#rule).
 
-!!! note "Updating the requests"
+!!! info "Updating the requests"
 
     In the [middleware](../middlewares/overview.md) section, you can learn about how to update the requests before forwarding them to the services.
 
