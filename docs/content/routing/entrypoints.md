@@ -13,18 +13,21 @@ They define the port which will receive the requests (whether HTTP or TCP).
 ??? example "Port 80 only"
 
     ```toml tab="File (TOML)"
+    ## Static configuration
     [entryPoints]
       [entryPoints.web]
         address = ":80"
     ```
     
     ```yaml tab="File (YAML)"
+    ## Static configuration
     entryPoints:
       web:
        address: ":80"
     ```
     
     ```bash tab="CLI"
+    ## Static configuration
     --entryPoints.web.address=:80
     ```
 
@@ -33,6 +36,7 @@ They define the port which will receive the requests (whether HTTP or TCP).
 ??? example "Port 80 & 443" 
 
     ```toml tab="File (TOML)"
+    ## Static configuration
     [entryPoints]
       [entryPoints.web]
         address = ":80"
@@ -42,6 +46,7 @@ They define the port which will receive the requests (whether HTTP or TCP).
     ```
     
     ```yaml tab="File (YAML)"
+    ## Static configuration
     entryPoints:
       web:
         address: ":80"
@@ -51,6 +56,7 @@ They define the port which will receive the requests (whether HTTP or TCP).
     ```
     
     ```bash tab="CLI"
+    ## Static configuration
     --entryPoints.web.address=:80
     --entryPoints.web-secure.address=:443
     ```
@@ -68,30 +74,30 @@ You can define them using a toml file, CLI arguments, or a key-value store.
 See the complete reference for the list of available options:
 
 ```toml tab="File (TOML)"
+## Static configuration
 [entryPoints]
-
-  [entryPoints.EntryPoint0]
+  [entryPoints.name]
     address = ":8888"
-    [entryPoints.EntryPoint0.transport]
-      [entryPoints.EntryPoint0.transport.lifeCycle]
+    [entryPoints.name.transport]
+      [entryPoints.name.transport.lifeCycle]
         requestAcceptGraceTimeout = 42
         graceTimeOut = 42
-      [entryPoints.EntryPoint0.transport.respondingTimeouts]
+      [entryPoints.name.transport.respondingTimeouts]
         readTimeout = 42
         writeTimeout = 42
         idleTimeout = 42
-    [entryPoints.EntryPoint0.proxyProtocol]
+    [entryPoints.name.proxyProtocol]
       insecure = true
-      trustedIPs = ["foobar", "foobar"]
-    [entryPoints.EntryPoint0.forwardedHeaders]
+      trustedIPs = ["127.0.0.1", "192.168.0.1"]
+    [entryPoints.name.forwardedHeaders]
       insecure = true
-      trustedIPs = ["foobar", "foobar"]
+      trustedIPs = ["127.0.0.1", "192.168.0.1"]
 ```
 
 ```yaml tab="File (YAML)"
+## Static configuration
 entryPoints:
-
-  EntryPoint0:
+  name:
     address: ":8888"
     transport:
       lifeCycle:
@@ -104,26 +110,27 @@ entryPoints:
     proxyProtocol:
       insecure: true
       trustedIPs:
-      - "foobar"
-      - "foobar"
+      - "127.0.0.1"
+      - "192.168.0.1"
     forwardedHeaders:
       insecure: true
       trustedIPs:
-      - "foobar"
-      - "foobar"
+      - "127.0.0.1"
+      - "192.168.0.1"
 ```
 
 ```bash tab="CLI"
---entryPoints.EntryPoint0.address=:8888
---entryPoints.EntryPoint0.transport.lifeCycle.requestAcceptGraceTimeout=42
---entryPoints.EntryPoint0.transport.lifeCycle.graceTimeOut=42
---entryPoints.EntryPoint0.transport.respondingTimeouts.readTimeout=42
---entryPoints.EntryPoint0.transport.respondingTimeouts.writeTimeout=42
---entryPoints.EntryPoint0.transport.respondingTimeouts.idleTimeout=42
---entryPoints.EntryPoint0.proxyProtocol.insecure=true
---entryPoints.EntryPoint0.proxyProtocol.trustedIPs=foobar,foobar
---entryPoints.EntryPoint0.forwardedHeaders.insecure=true
---entryPoints.EntryPoint0.forwardedHeaders.trustedIPs=foobar,foobar
+## Static configuration
+--entryPoints.name.address=:8888
+--entryPoints.name.transport.lifeCycle.requestAcceptGraceTimeout=42
+--entryPoints.name.transport.lifeCycle.graceTimeOut=42
+--entryPoints.name.transport.respondingTimeouts.readTimeout=42
+--entryPoints.name.transport.respondingTimeouts.writeTimeout=42
+--entryPoints.name.transport.respondingTimeouts.idleTimeout=42
+--entryPoints.name.proxyProtocol.insecure=true
+--entryPoints.name.proxyProtocol.trustedIPs="127.0.0.1,192.168.0.1"
+--entryPoints.name.forwardedHeaders.insecure=true
+--entryPoints.name.forwardedHeaders.trustedIPs="127.0.0.1,192.168.0.1"
 ```
 
 ## ProxyProtocol
@@ -137,6 +144,7 @@ If the proxyprotocol header is passed, then the version is determined automatica
 ??? example "Enabling Proxy Protocol with Trusted IPs" 
 
     ```toml tab="File (TOML)"
+    ## Static configuration
     [entryPoints]
       [entryPoints.web]
         address = ":80"
@@ -146,6 +154,7 @@ If the proxyprotocol header is passed, then the version is determined automatica
     ```
     
     ```yaml tab="File (YAML)"
+    ## Static configuration
     entryPoints:
       web:
         address: ":80"
@@ -168,6 +177,7 @@ If the proxyprotocol header is passed, then the version is determined automatica
     Doing so, every remote client address will be replaced (`trustedIPs` won't have any effect)
 
     ```toml tab="File (TOML)"
+    ## Static configuration
     [entryPoints]
       [entryPoints.web]
         address = ":80"
@@ -177,6 +187,7 @@ If the proxyprotocol header is passed, then the version is determined automatica
     ```
     
     ```yaml tab="File (YAML)"
+    ## Static configuration
     entryPoints:
       web:
         address: ":80"
@@ -201,6 +212,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
 ??? example "Trusting Forwarded Headers from specific IPs"
 
     ```toml tab="File (TOML)"
+    ## Static configuration
     [entryPoints]
       [entryPoints.web]
         address = ":80"
@@ -210,6 +222,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     ```
     
     ```yaml tab="File (YAML)"
+    ## Static configuration
     entryPoints:
       web:
         address: ":80"
@@ -220,6 +233,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     ```
     
     ```bash tab="CLI"
+    ## Static configuration
     --entryPoints.web.address=:80
     --entryPoints.web.forwardedHeaders.trustedIPs=127.0.0.1/32,192.168.1.7
     ```
@@ -227,6 +241,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
 ??? example "Insecure Mode -- Always Trusting Forwarded Headers"
 
     ```toml tab="File (TOML)"
+    ## Static configuration
     [entryPoints]
       [entryPoints.web]
         address = ":80"
@@ -236,6 +251,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     ```
     
     ```yaml tab="File (YAML)"
+    ## Static configuration
     entryPoints:
       web:
         address: ":80"
@@ -244,6 +260,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     ```
     
     ```bash tab="CLI"
+    ## Static configuration
     --entryPoints.web.address=:80
     --entryPoints.web.forwardedHeaders.insecure
     ```

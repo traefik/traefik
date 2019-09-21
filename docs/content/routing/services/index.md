@@ -12,6 +12,7 @@ The `Services` are responsible for configuring how to reach the actual services 
 ??? example "Declaring an HTTP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [http.services]
       [http.services.my-service.loadBalancer]
 
@@ -22,6 +23,7 @@ The `Services` are responsible for configuring how to reach the actual services 
     ```
     
     ```yaml tab="YAML"
+    ## Dynamic configuration
     http:
       services:
         my-service:
@@ -34,6 +36,7 @@ The `Services` are responsible for configuring how to reach the actual services 
 ??? example "Declaring a TCP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [tcp.services]
       [tcp.services.my-service.loadBalancer]
          [[tcp.services.my-service.loadBalancer.servers]]
@@ -61,6 +64,7 @@ The load balancers are able to load balance the requests between multiple instan
 ??? example "Declaring a Service with Two Servers (with Load Balancing) -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [http.services]
       [http.services.my-service.loadBalancer]
 
@@ -85,14 +89,15 @@ The load balancers are able to load balance the requests between multiple instan
 Servers declare a single instance of your program.
 The `url` option point to a specific instance. 
 
-!!! note
-    Paths in the servers' `url` have no effet. 
+!!! info
+    Paths in the servers' `url` have no effect. 
     If you want the requests to be sent to a specific path on your servers,
     configure your [`routers`](../routers/index.md) to use a corresponding [middleware](../../middlewares/overview.md) (e.g. the [AddPrefix](../../middlewares/addprefix.md) or [ReplacePath](../../middlewares/replacepath.md)) middlewares.
 
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [http.services]
       [http.services.my-service.loadBalancer]
         [[http.services.my-service.loadBalancer.servers]]
@@ -100,6 +105,7 @@ The `url` option point to a specific instance.
     ```
     
     ```yaml tab="YAML"
+    ## Dynamic configuration
     http:
       services:
         my-service:
@@ -115,6 +121,7 @@ For now, only round robin load balancing is supported:
 ??? example "Load Balancing -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [http.services]
       [http.services.my-service.loadBalancer]
         [[http.services.my-service.loadBalancer.servers]]
@@ -124,6 +131,7 @@ For now, only round robin load balancing is supported:
     ```
 
     ```yaml tab="YAML"
+    ## Dynamic configuration
     http:
       services:
         my-service:
@@ -138,27 +146,29 @@ For now, only round robin load balancing is supported:
 When sticky sessions are enabled, a cookie is set on the initial request to track which server handles the first response.
 On subsequent requests, the client is forwarded to the same server.
 
-!!! note "Stickiness & Unhealthy Servers"
+!!! info "Stickiness & Unhealthy Servers"
    
     If the server specified in the cookie becomes unhealthy, the request will be forwarded to a new server (and the cookie will keep track of the new server).
 
-!!! note "Cookie Name" 
+!!! info "Cookie Name" 
     
     The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
 
-!!! note "Secure & HTTPOnly flags"
+!!! info "Secure & HTTPOnly flags"
 
     By default, the affinity cookie is created without those flags. One however can change that through configuration. 
 
-??? example "Adding Stickiness"
+??? example "Adding Stickiness -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [http.services]
       [http.services.my-service]
         [http.services.my-service.loadBalancer.sticky.cookie]
     ```
     
     ```yaml tab="YAML"
+    ## Dynamic configuration
     http:
       services:
         my-service:
@@ -167,9 +177,10 @@ On subsequent requests, the client is forwarded to the same server.
              cookie: {}
     ```
 
-??? example "Adding Stickiness with custom Options"
+??? example "Adding Stickiness with custom Options -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [http.services]
       [http.services.my-service]
         [http.services.my-service.loadBalancer.sticky.cookie]
@@ -179,6 +190,7 @@ On subsequent requests, the client is forwarded to the same server.
     ```
 
     ```yaml tab="YAML"
+    ## Dynamic configuration
     http:
       services:
         my-service:
@@ -205,12 +217,12 @@ Below are the available options for the health check mechanism:
 - `timeout` defines the maximum duration Traefik will wait for a health check request before considering the server failed (unhealthy).
 - `headers` defines custom headers to be sent to the health check endpoint.
 
-!!! note "Interval & Timeout Format"
+!!! info "Interval & Timeout Format"
 
     Interval and timeout are to be given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
     The interval must be greater than the timeout. If configuration doesn't reflect this, the interval will be set to timeout + 1 second.
 
-!!! note "Recovering Servers"
+!!! info "Recovering Servers"
    
     Traefik keeps monitoring the health of unhealthy servers. 
     If a server has recovered (returning `2xx` -> `3xx` responses again), it will be added back to the load balacer rotation pool.
@@ -218,6 +230,7 @@ Below are the available options for the health check mechanism:
 ??? example "Custom Interval & Timeout -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [http.services]
       [http.servicess.Service-1]
         [http.services.Service-1.loadBalancer.healthCheck]
@@ -227,6 +240,7 @@ Below are the available options for the health check mechanism:
     ```
 
     ```yaml tab="YAML"
+    ## Dynamic configuration
     http:
       servicess:
         Service-1:
@@ -240,6 +254,7 @@ Below are the available options for the health check mechanism:
 ??? example "Custom Port -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [http.services]
       [http.services.Service-1]
         [http.services.Service-1.loadBalancer.healthCheck]
@@ -248,6 +263,7 @@ Below are the available options for the health check mechanism:
     ```
     
     ```yaml tab="YAML"
+    ## Dynamic configuration
     http:
       services:
         Service-1:
@@ -260,6 +276,7 @@ Below are the available options for the health check mechanism:
 ??? example "Custom Scheme -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [http.services]
       [http.services.Service-1]
         [http.services.Service-1.loadBalancer.healthCheck]
@@ -268,6 +285,7 @@ Below are the available options for the health check mechanism:
     ```
     
     ```yaml tab="YAML"
+    ## Dynamic configuration
     http:
       services:
         Service-1:
@@ -280,6 +298,7 @@ Below are the available options for the health check mechanism:
 ??? example "Additional HTTP Headers -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [http.services]
       [http.services.Service-1]
         [http.services.Service-1.loadBalancer.healthCheck]
@@ -291,6 +310,7 @@ Below are the available options for the health check mechanism:
     ```
     
     ```yaml tab="YAML"
+    ## Dynamic configuration
     http:
       services:
         Service-1:
@@ -311,6 +331,7 @@ This strategy is only available to load balance between [services](./index.md) a
 This strategy can be defined only with [File](../../providers/file.md).
 
 ```toml tab="TOML"
+## Dynamic configuration
 [http.services]
   [http.services.app]
     [[http.services.app.weighted.services]]
@@ -332,6 +353,7 @@ This strategy can be defined only with [File](../../providers/file.md).
 ```
 
 ```yaml tab="YAML"
+## Dynamic configuration
 http:
   services:
     app:
@@ -360,6 +382,7 @@ The mirroring is able to mirror requests sent to a service to other services.
 This strategy can be defined only with [File](../../providers/file.md).
 
 ```toml tab="TOML"
+## Dynamic configuration
 [http.services]
   [http.services.mirrored-api]
     [http.services.mirrored-api.mirroring]
@@ -380,6 +403,7 @@ This strategy can be defined only with [File](../../providers/file.md).
 ```
 
 ```yaml tab="YAML"
+## Dynamic configuration
 http:
   services:
     mirrored-api:
@@ -416,6 +440,7 @@ The servers load balancer is in charge of balancing the requests between the ser
 ??? example "Declaring a Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [tcp.services]
       [tcp.services.my-service.loadBalancer]
         [[tcp.services.my-service.loadBalancer.servers]]
@@ -425,6 +450,7 @@ The servers load balancer is in charge of balancing the requests between the ser
     ```
 
     ```yaml tab="YAML"
+    ## Dynamic configuration
     tcp:
       services:
         my-service:
@@ -442,6 +468,7 @@ The `address` option (IP:Port) point to a specific instance.
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [tcp.services]
       [tcp.services.my-service.loadBalancer]
         [[tcp.services.my-service.loadBalancer.servers]]
@@ -449,6 +476,7 @@ The `address` option (IP:Port) point to a specific instance.
     ```
 
     ```yaml tab="YAML"
+    ## Dynamic configuration
     tcp:
       services:
         my-service:
@@ -474,6 +502,7 @@ A negative value means an infinite deadline (i.e. the connection is never fully 
 ??? example "A Service with a termination delay -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
+    ## Dynamic configuration
     [tcp.services]
       [tcp.services.my-service.loadBalancer]
         [[tcp.services.my-service.loadBalancer]]
@@ -481,6 +510,7 @@ A negative value means an infinite deadline (i.e. the connection is never fully 
     ```
 
     ```yaml tab="YAML"
+    ## Dynamic configuration
     tcp:
       services:
         my-service:
@@ -497,6 +527,7 @@ This strategy is only available to load balance between [services](./index.md) a
 This strategy can only be defined with [File](../../providers/file.md).
 
 ```toml tab="TOML"
+## Dynamic configuration
 [tcp.services]
   [tcp.services.app]
     [[tcp.services.app.weighted.services]]
@@ -518,6 +549,7 @@ This strategy can only be defined with [File](../../providers/file.md).
 ```
 
 ```yaml tab="YAML"
+## Dynamic configuration
 tcp:
   services:
     app:
