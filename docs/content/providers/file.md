@@ -9,10 +9,10 @@ You can write these configuration elements:
 * In [a dedicated file](#filename)
 * In [several dedicated files](#directory)
 
-!!! note
+!!! info
     The file provider is the default format used throughout the documentation to show samples of the configuration for many features. 
 
-!!! tip
+!!! info
     The file provider can be a good location for common elements you'd like to re-use from other providers; e.g. declaring whitelist middlewares, basic authentication, ...
 
 ## Configuration Examples

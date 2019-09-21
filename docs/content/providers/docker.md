@@ -37,7 +37,7 @@ Attach labels to your containers and let Traefik do the rest!
       my-container:
         # ...
         labels:
-          - traefik.http.routers.my-container.rule=Host(`my-domain`)
+          - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
     ```
 
 ??? example "Configuring Docker Swarm & Deploying / Exposing Services"
@@ -81,7 +81,8 @@ Attach labels to your containers and let Traefik do the rest!
     ```
 
     !!! important "Labels in Docker Swarm Mode"
-        While in Swarm Mode, Traefik uses labels found on services, not on individual containers. Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
+        While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
+        Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
         This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
 
 ## Provider Configuration Options
@@ -118,7 +119,7 @@ Traefik requires access to the docker socket to get its dynamic configuration.
 
     `[...] only **trusted** users should be allowed to control your Docker daemon [...]`
 
-    !!! note "Improved Security"
+    !!! info "Improved Security"
 
         [TraefikEE](https://containo.us/traefikee) solves this problem by separating the control plane (connected to Docker) and the data plane (handling the requests).
 
@@ -148,7 +149,7 @@ Traefik requires access to the docker socket to get its dynamic configuration.
         - [Letting Traefik run on Worker Nodes](https://blog.mikesir87.io/2018/07/letting-traefik-run-on-worker-nodes/)
         - [Docker Socket Proxy from Tecnativa](https://github.com/Tecnativa/docker-socket-proxy)
 
-!!! note "Traefik & Swarm Mode"
+!!! info "Traefik & Swarm Mode"
     To let Traefik access the Docker Socket of the Swarm manager, it is mandatory to schedule Traefik on the Swarm manager nodes.
 
 ??? example "Using the docker.sock"
@@ -159,7 +160,6 @@ Traefik requires access to the docker socket to get its dynamic configuration.
     version: '3'
 
     services:
-
       traefik:
          image: traefik:v2.0 # The official v2.0 Traefik docker image
          ports:
@@ -213,10 +213,10 @@ providers:
 Traefik routes requests to the IP/Port of the matching container.
 When setting `useBindPortIP=true`, you tell Traefik to use the IP/Port attached to the container's _binding_ instead of its inner network IP/Port.
 
-When used in conjunction with the `traefik.http.services.XXX.loadbalancer.server.port` label (that tells Traefik to route requests to a specific port),
-Traefik tries to find a binding on port `traefik.http.services.XXX.loadbalancer.server.port`.
+When used in conjunction with the `traefik.http.services.<name>.loadbalancer.server.port` label (that tells Traefik to route requests to a specific port),
+Traefik tries to find a binding on port `traefik.http.services.<name>.loadbalancer.server.port`.
 If it can't find such a binding, Traefik falls back on the internal network IP of the container,
-but still uses the `traefik.http.services.XXX.loadbalancer.server.port` that is set in the label.
+but still uses the `traefik.http.services.<name>.loadbalancer.server.port` that is set in the label.
 
 ??? example "Examples of `usebindportip` in different situations."
 
@@ -230,8 +230,9 @@ but still uses the `traefik.http.services.XXX.loadbalancer.server.port` that is 
     | LblPort            | ExtIp:ExtPort:OtherPort                            | IntIp:LblPort  |
     | LblPort            | ExtIp1:ExtPort1:IntPort1 & ExtIp2:LblPort:IntPort2 | ExtIp2:LblPort |
 
-    !!! note
-        In the above table, ExtIp stands for "external IP found in the binding", IntIp stands for "internal network container's IP", ExtPort stands for "external Port found in the binding", and IntPort stands for "internal network container's port."
+    !!! info
+        In the above table, ExtIp stands for "external IP found in the binding", IntIp stands for "internal network container's IP",
+        ExtPort stands for "external Port found in the binding", and IntPort stands for "internal network container's port."
 
 ### `exposedByDefault`
 
@@ -541,7 +542,7 @@ providers:
 
 ## Routing Configuration Options
 
-!!! note "Labels"
+!!! info "Labels"
     
     - Labels are case insensitive.
     - The complete list of labels can be found [the reference page](../reference/dynamic-configuration/docker.md)
@@ -551,23 +552,30 @@ providers:
 Traefik creates, for each container, a corresponding [service](../routing/services/index.md) and [router](../routing/routers/index.md).
 
 The Service automatically gets a server per instance of the container,
-and the router automatically gets a rule defined by defaultRule (if no rule for it was defined in labels).
+and the router automatically gets a rule defined by `defaultRule` (if no rule for it was defined in labels).
 
 ### Routers
 
-To update the configuration of the Router automatically attached to the container, add labels starting with `traefik.http.routers.{name-of-your-choice}.` and followed by the option you want to change. For example, to change the rule, you could add the label `traefik.http.routers.my-container.rule=Host(my-domain)`.
+To update the configuration of the Router automatically attached to the container,
+add labels starting with `traefik.http.routers.<name-of-your-choice>.` and followed by the option you want to change.
+For example, to change the rule, you could add the label ```traefik.http.routers.my-container.rule=Host(`mydomain.com`)```.
 
 Every [Router](../routing/routers/index.md) parameter can be updated this way.
 
 ### Services
 
-To update the configuration of the Service automatically attached to the container, add labels starting with `traefik.http.services.{name-of-your-choice}.`, followed by the option you want to change. For example, to change the passhostheader behavior, you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.passhostheader=false`.
+To update the configuration of the Service automatically attached to the container,
+add labels starting with `traefik.http.services.<name-of-your-choice>.`, followed by the option you want to change.
+For example, to change the `passHostHeader` behavior, you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.passhostheader=false`.
 
 Every [Service](../routing/services/index.md) parameter can be updated this way.
 
 ### Middleware
 
-You can declare pieces of middleware using labels starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options. For example, to declare a middleware [`redirectscheme`](../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme: https`.
+You can declare pieces of middleware using labels starting with `traefik.http.middlewares.<name-of-your-choice>.`,
+followed by the middleware type/options.
+For example, to declare a middleware [`redirectscheme`](../middlewares/redirectscheme.md) named `my-redirect`,
+you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme=https`.
 
 ??? example "Declaring and Referencing a Middleware"
 
@@ -576,7 +584,9 @@ You can declare pieces of middleware using labels starting with `traefik.http.mi
          my-container:
            # ...
            labels:
+             # Declaring a middleware
              - traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
+             # Referencing a middleware
              - traefik.http.routers.my-container.middlewares=my-redirect
     ```
 
@@ -597,9 +607,9 @@ You can declare TCP Routers and/or Services using labels.
          my-container:
            # ...
            labels:
-             - traefik.tcp.routers.my-router.rule="HostSNI(`my-host.com`)"
-             - traefik.tcp.routers.my-router.tls="true"
-             - traefik.tcp.services.my-service.loadbalancer.server.port="4123"
+             - "traefik.tcp.routers.my-router.rule=HostSNI(`my-host.com`)"
+             - "traefik.tcp.routers.my-router.tls=true"
+             - "traefik.tcp.services.my-service.loadbalancer.server.port=4123"
     ```
 
 !!! warning "TCP and HTTP"
@@ -619,7 +629,8 @@ This option overrides the value of `exposedByDefault`.
 
 Overrides the default docker network to use for connections to the container.
 
-If a container is linked to several networks, be sure to set the proper network name (you can check this with `docker inspect <container_id>`), otherwise it will randomly pick one (depending on how docker is returning them).
+If a container is linked to several networks, be sure to set the proper network name (you can check this with `docker inspect <container_id>`),
+otherwise it will randomly pick one (depending on how docker is returning them).
 
 !!! warning
     When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.

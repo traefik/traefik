@@ -592,7 +592,7 @@ Enables watching for Marathon changes.
 
 ## Routing Configuration Options
 
-!!! note "Labels"
+!!! info "Labels"
     
     - Labels are case insensitive.
     - The complete list of labels can be found [the reference page](../reference/dynamic-configuration/marathon.md)

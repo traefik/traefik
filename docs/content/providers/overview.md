@@ -34,9 +34,9 @@ Below is the list of the currently supported providers in Traefik.
 | [Rancher](./rancher.md)           | Orchestrator | Label              |
 | [File](./file.md)                 | Manual       | TOML format        |
 
-!!! note "More Providers"
+!!! info "More Providers"
 
-    The current version of Traefik is in development and doesn't support (yet) every provider.
+    The current version of Traefik doesn't support (yet) every provider.
     See the previous version (1.7) for more providers.
 
 <!--
