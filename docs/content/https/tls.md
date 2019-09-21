@@ -222,7 +222,7 @@ spec:
 
 !!! important
 
-    TLS 1.3 cipher suites are not configurable. All supported cipher suites are safe.
+    TLS 1.3 cipher suites are not configurable (All supported cipher suites are safe in this case).
     <https://golang.org/doc/go1.12#tls_1_3>
 
 ### Strict SNI Checking
