@@ -3,7 +3,7 @@
     <q-scroll-area v-if="data && data.length" :thumb-style="appThumbStyle" style="height:100%;">
       <div v-for="(middleware, index) in data" :key="index">
         <q-card-section v-if="!isDense" class="app-title">
-          <div class="app-title-label text-capitalize">{{ middleware.name }}</div>
+          <div class="app-title-label">{{ middleware.name }}</div>
         </q-card-section>
         <!-- COMMON FIELDS -->
         <q-card-section>
