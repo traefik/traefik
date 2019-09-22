@@ -328,7 +328,7 @@ The WRR is able to load balance the requests between multiple services based on 
 
 This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
 
-This strategy can be defined only with [File](../../providers/file.md).
+!!! info "This strategy can be defined only with [File](../../providers/file.md)."
 
 ```toml tab="TOML"
 ## Dynamic configuration
@@ -379,7 +379,7 @@ http:
 
 The mirroring is able to mirror requests sent to a service to other services.
 
-This strategy can be defined only with [File](../../providers/file.md).
+!!! info "This strategy can be defined only with [File](../../providers/file.md)."
 
 ```toml tab="TOML"
 ## Dynamic configuration
@@ -518,7 +518,7 @@ A negative value means an infinite deadline (i.e. the connection is never fully 
             terminationDelay: 200
     ```
 
-### Weighted
+### Weighted Round Robin
 
 The Weighted Round Robin (alias `WRR`) load-balancer of services is in charge of balancing the requests between multiple services based on provided weights.
 
