@@ -321,6 +321,8 @@ followed by the middleware type/options.
 For example, to declare a middleware [`redirectscheme`](../../middlewares/redirectscheme.md) named `my-redirect`,
 you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme=https`.
 
+More information about available middlewares in the dedicated [middlewares section](../../middlewares/overview.md).
+
 ??? example "Declaring and Referencing a Middleware"
 
     ```yaml
@@ -337,8 +339,6 @@ you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme=https`.
 !!! warning "Conflicts in Declaration"
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
-
-More information about available middlewares in the dedicated [middlewares section](../../middlewares/overview.md).
 
 ### TCP
 
