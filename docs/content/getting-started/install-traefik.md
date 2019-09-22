@@ -21,7 +21,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 
     * Prefer a fixed version than the latest that could be an unexpected version.
     ex: `traefik:v2.0.0`
-    * Docker images comes in 2 flavors: scratch based or alpine based.
+    * Docker images are alpine based.
     * All the orchestrator using docker images could fetch the official Traefik docker image.
 
 ## Use the Binary Distribution
