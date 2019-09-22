@@ -187,7 +187,8 @@ For example, to change the rule, you could add the label ```traefik.http.routers
 To update the configuration of the Service automatically attached to the container,
 add labels starting with `traefik.http.services.<name-of-your-choice>.`, followed by the option you want to change.
 
-For example, to change the `passHostHeader` behavior, you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.passhostheader=false`.
+For example, to change the `passHostHeader` behavior,
+you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.passhostheader=false`.
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.server.port`"
     
@@ -305,6 +306,8 @@ For example, to change the `passHostHeader` behavior, you'd add the label `traef
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
     <!-- TODO doc responseforwarding in services page -->
+    
+    FlushInterval specifies the flush interval to flush to the client while copying the response body.
     
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10"
