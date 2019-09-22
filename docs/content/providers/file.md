@@ -12,7 +12,7 @@ You can write these configuration elements:
 !!! info
     The file provider is the default format used throughout the documentation to show samples of the configuration for many features. 
 
-!!! info
+!!! tip
     The file provider can be a good location for common elements you'd like to re-use from other providers; e.g. declaring whitelist middlewares, basic authentication, ...
 
 ## Configuration Examples
@@ -103,8 +103,6 @@ You can write these configuration elements:
     
 ### `filename`
 
-_Optional_
-
 Defines the path of the configuration file.
 
 ```toml tab="File (TOML)"
@@ -125,8 +123,6 @@ providers:
 
 ### `directory`
 
-_Optional_
-
 Defines the directory that contains the configuration files.
 
 ```toml tab="File (TOML)"
@@ -146,8 +142,6 @@ providers:
 ```
 
 ### `watch`
-
-_Optional_
 
 Set the `watch` option to `true` to allow Traefik to automatically watch for file changes.  
 It works with both the `filename` and the `directory` options.

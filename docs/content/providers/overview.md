@@ -32,12 +32,12 @@ Below is the list of the currently supported providers in Traefik.
 | [Kubernetes](./kubernetes-crd.md) | Orchestrator | Custom Resource    |
 | [Marathon](./marathon.md)         | Orchestrator | Label              |
 | [Rancher](./rancher.md)           | Orchestrator | Label              |
-| [File](./file.md)                 | Manual       | TOML format        |
+| [File](./file.md)                 | Manual       | TOML/YAML format   |
 
 !!! info "More Providers"
 
     The current version of Traefik doesn't support (yet) every provider.
-    See the previous version (1.7) for more providers.
+    See the [previous version (v1.7)](https://docs.traefik.io/v1.7/) for more providers.
 
 <!--
 TODO (document TCP VS HTTP dynamic configuration)
@@ -69,3 +69,4 @@ List of providers that support constraints:
 - [Rancher](./rancher.md#constraints)
 - [Marathon](./marathon.md#constraints)
 - [Kubernetes CRD](./kubernetes-crd.md#labelselector)
+- [Kubernetes Ingress](./kubernetes-ingress.md#labelselector)

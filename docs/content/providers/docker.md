@@ -119,11 +119,11 @@ Traefik requires access to the docker socket to get its dynamic configuration.
 
     `[...] only **trusted** users should be allowed to control your Docker daemon [...]`
 
-    !!! info "Improved Security"
+    !!! tip "Improved Security"
 
         [TraefikEE](https://containo.us/traefikee) solves this problem by separating the control plane (connected to Docker) and the data plane (handling the requests).
 
-    ??? tip "Resources about Docker's Security"
+    ??? info "Resources about Docker's Security"
 
         - [KubeCon EU 2018 Keynote, Running with Scissors, from Liz Rice](https://www.youtube.com/watch?v=ltrV-Qmh3oY)
         - [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container.html)
@@ -142,7 +142,7 @@ Traefik requires access to the docker socket to get its dynamic configuration.
       With Swarm mode, it allows scheduling of Traefik on worker nodes, with only the "socket exposer" container on the manager nodes.
     - Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), to only allows an identified set of actions for Traefik's process (or the "socket exposer" process).
 
-    ??? tip "Additional Resources"
+    ??? info "Additional Resources"
 
         - [Traefik issue GH-4174 about security with Docker socket](https://github.com/containous/traefik/issues/4174)
         - [Inspecting Docker Activity with Socat](https://developers.redhat.com/blog/2015/02/25/inspecting-docker-activity-with-socat/)
