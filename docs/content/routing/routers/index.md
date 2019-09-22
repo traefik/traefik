@@ -494,7 +494,7 @@ Each domain & SAN will lead to a certificate request.
       certResolver = "bar"
       [[http.routers.routerbar.tls.domains]]
         main = "snitest.com"
-        sans = "*.snitest.com"
+        sans = ["*.snitest.com"]
 ```
 
 ```yaml tab="File (YAML)"
@@ -823,7 +823,7 @@ See [`domains` for HTTP router](./index.md#domains) for more information.
       certResolver = "bar"
       [[tcp.routers.routerbar.tls.domains]]
         main = "snitest.com"
-        sans = "*.snitest.com"
+        sans = ["*.snitest.com"]
 ```
 
 ```yaml tab="File (YAML)"
