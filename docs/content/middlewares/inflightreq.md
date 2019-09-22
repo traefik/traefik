@@ -59,6 +59,49 @@ http:
 The `amount` option defines the maximum amount of allowed simultaneous in-flight request.
 The middleware will return an `HTTP 429 Too Many Requests` if there are already `amount` requests in progress (based on the same `sourceCriterion` strategy).
 
+```yaml tab="Docker"
+labels:
+- "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-inflightreq
+spec:
+  inFlightReq:
+    amount: 10
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
+}
+```
+
+```yaml tab="Rancher"
+# Limiting to 10 simultaneous connections
+labels:
+- "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+```
+
+```toml tab="File (TOML)"
+# Limiting to 10 simultaneous connections
+[http.middlewares]
+  [http.middlewares.test-inflightreq.inFlightReq]
+    amount = 10 
+```
+
+```yaml tab="File (YAML)"
+# Limiting to 10 simultaneous connections
+http:
+  middlewares:
+    test-inflightreq:
+      inFlightReq:
+        amount: 10 
+```
+
 ### `sourceCriterion`
  
 SourceCriterion defines what criterion is used to group requests as originating from a common source.
@@ -86,12 +129,56 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
+```yaml tab="Docker"
+labels:
+- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-inflightreq
+spec:
+  inFlightReq:
+    sourceCriterion:
+      ipStrategy:
+        depth: 2
+```
+
+```yaml tab="Rancher"
+labels:
+- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth": "2"
+}
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-inflightreq.inflightreq]
+    [http.middlewares.test-inflightreq.inFlightReq.sourceCriterion.ipStrategy]
+      depth = 2
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-inflightreq:
+      inFlightReq:
+        sourceCriterion:
+          ipStrategy:
+            depth: 2
+```
+
 ##### `ipStrategy.excludedIPs`
 
 `excludedIPs` tells Traefik to scan the `X-Forwarded-For` header and pick the first IP not in the list.
 
-!!! important
-    If `depth` is specified, `excludedIPs` is ignored.
+!!! important "If `depth` is specified, `excludedIPs` is ignored."
 
 !!! note "Example of ExcludedIPs & X-Forwarded-For"
 
