@@ -85,10 +85,7 @@ Attach labels to your containers and let Traefik do the rest!
         Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
         This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
 
-## Provider Configuration Options
-
-!!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration/overview.md) and the [dynamic](../reference/dynamic-configuration/docker.md) configuration references.
+## Provider Configuration
 
 ### `endpoint`
 
@@ -540,104 +537,6 @@ providers:
 --providers.docker.tls.insecureSkipVerify=true
 ```
 
-## Routing Configuration Options
+## Routing Configuration
 
-!!! info "Labels"
-    
-    - Labels are case insensitive.
-    - The complete list of labels can be found [the reference page](../reference/dynamic-configuration/docker.md)
-
-### General
-
-Traefik creates, for each container, a corresponding [service](../routing/services/index.md) and [router](../routing/routers/index.md).
-
-The Service automatically gets a server per instance of the container,
-and the router automatically gets a rule defined by `defaultRule` (if no rule for it was defined in labels).
-
-### Routers
-
-To update the configuration of the Router automatically attached to the container,
-add labels starting with `traefik.http.routers.<name-of-your-choice>.` and followed by the option you want to change.
-For example, to change the rule, you could add the label ```traefik.http.routers.my-container.rule=Host(`mydomain.com`)```.
-
-Every [Router](../routing/routers/index.md) parameter can be updated this way.
-
-### Services
-
-To update the configuration of the Service automatically attached to the container,
-add labels starting with `traefik.http.services.<name-of-your-choice>.`, followed by the option you want to change.
-For example, to change the `passHostHeader` behavior, you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.passhostheader=false`.
-
-Every [Service](../routing/services/index.md) parameter can be updated this way.
-
-### Middleware
-
-You can declare pieces of middleware using labels starting with `traefik.http.middlewares.<name-of-your-choice>.`,
-followed by the middleware type/options.
-For example, to declare a middleware [`redirectscheme`](../middlewares/redirectscheme.md) named `my-redirect`,
-you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme=https`.
-
-??? example "Declaring and Referencing a Middleware"
-
-    ```yaml
-       services:
-         my-container:
-           # ...
-           labels:
-             # Declaring a middleware
-             - traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
-             # Referencing a middleware
-             - traefik.http.routers.my-container.middlewares=my-redirect
-    ```
-
-!!! warning "Conflicts in Declaration"
-
-    If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
-
-More information about available middlewares in the dedicated [middlewares section](../middlewares/overview.md).
-
-### TCP
-
-You can declare TCP Routers and/or Services using labels.
-
-??? example "Declaring TCP Routers and Services"
-
-    ```yaml
-       services:
-         my-container:
-           # ...
-           labels:
-             - "traefik.tcp.routers.my-router.rule=HostSNI(`my-host.com`)"
-             - "traefik.tcp.routers.my-router.tls=true"
-             - "traefik.tcp.services.my-service.loadbalancer.server.port=4123"
-    ```
-
-!!! warning "TCP and HTTP"
-
-    If you declare a TCP Router/Service, it will prevent Traefik from automatically creating an HTTP Router/Service (like it does by default if no TCP Router/Service is defined).
-    You can declare both a TCP Router/Service and an HTTP Router/Service for the same container (but you have to do so manually).
-
-### Specific Options
-
-#### `traefik.enable`
-
-You can tell Traefik to consider (or not) the container by setting `traefik.enable` to true or false.
-
-This option overrides the value of `exposedByDefault`.
-
-#### `traefik.docker.network`
-
-Overrides the default docker network to use for connections to the container.
-
-If a container is linked to several networks, be sure to set the proper network name (you can check this with `docker inspect <container_id>`),
-otherwise it will randomly pick one (depending on how docker is returning them).
-
-!!! warning
-    When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.
-
-#### `traefik.docker.lbswarm`
-
-Enables Swarm's inbuilt load balancer (only relevant in Swarm Mode).
-
-If you enable this option, Traefik will use the virtual IP provided by docker swarm instead of the containers IPs.
-Which means that Traefik will not perform any kind of load balancing and will delegate this task to swarm.
+See the dedicated section in [routing](../routing/providers/docker.md).
