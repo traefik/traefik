@@ -79,6 +79,10 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		Level:     logrus.InfoLevel,
 	}
 
+	if file == os.Stdout {
+		file = nil
+	}
+
 	logHandler := &LogHandler{
 		config:         config,
 		logger:         logger,
@@ -199,7 +203,10 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 func (l *LogHandler) Close() error {
 	close(l.logHandlerChan)
 	l.wg.Wait()
-	return l.file.Close()
+	if l.file != nil {
+		return l.file.Close()
+	}
+	return nil
 }
 
 // Rotate closes and reopens the log file to allow for rotation
@@ -207,11 +214,13 @@ func (l *LogHandler) Close() error {
 func (l *LogHandler) Rotate() error {
 	var err error
 
-	if l.file != nil {
-		defer func(f *os.File) {
-			f.Close()
-		}(l.file)
+	if l.file == nil {
+		return nil
 	}
+
+	defer func(f *os.File) {
+		f.Close()
+	}(l.file)
 
 	l.file, err = os.OpenFile(l.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
