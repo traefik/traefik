@@ -208,6 +208,10 @@ func (l *LogHandler) Close() error {
 func (l *LogHandler) Rotate() error {
 	var err error
 
+	if l.config.FilePath == "" {
+		return nil
+	}
+
 	if l.file != nil {
 		defer func(f *os.File) {
 			f.Close()
