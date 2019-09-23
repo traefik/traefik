@@ -98,8 +98,8 @@ You can write these configuration elements:
 
 ## Provider Configuration
 
-If you're in a hurry, maybe you'd rather go through the [static configuration](../reference/static-configuration/overview.md) and the [dynamic configuration](../reference/dynamic-configuration/file.md) references.
-    
+If you're in a hurry, maybe you'd rather go through the [dynamic configuration](../reference/dynamic-configuration/file.md) references and the [static configuration](../reference/static-configuration/overview.md).
+
 ### `filename`
 
 Defines the path of the configuration file.
