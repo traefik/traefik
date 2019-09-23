@@ -35,7 +35,6 @@ spec:
 - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
-
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes": "2000000"
