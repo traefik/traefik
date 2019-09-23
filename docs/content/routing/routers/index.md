@@ -50,7 +50,7 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
       routers:
         to-database:
           entryPoints:
-          - "mysql"
+            - "mysql"
           # Catch every request (only available rule for non-tls routers. See below.)
           rule: "HostSNI(`*`)"
           service: database
@@ -164,8 +164,8 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
         Router-1:
           # won't listen to entry point web
           entryPoints:
-          - "websecure"
-          - "other"
+            - "websecure"
+            - "other"
           rule: "Host(`traefik.io`)"
           service: "service-1"
     ```
@@ -415,8 +415,8 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
         foo:
           minVersion: VersionTLS12
           cipherSuites:
-          - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          - TLS_RSA_WITH_AES_256_GCM_SHA384
+            - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+            - TLS_RSA_WITH_AES_256_GCM_SHA384
     ```
 
 !!! important "Conflicting TLS Options"
@@ -510,8 +510,8 @@ http:
       tls:
         certResolver: "bar"
         domains:
-        - main: "snitest.com"
-          sans: "*.snitest.com"
+          - main: "snitest.com"
+            sans: "*.snitest.com"
 ```
 
 [ACME v2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
@@ -627,8 +627,8 @@ If you want to limit the router scope to a set of entry points, set the entry po
         Router-1:
           # won't listen to entry point web
           entryPoints:
-          - "websecure"
-          - "other"
+            - "websecure"
+            - "other"
           rule: "HostSNI(`traefik.io`)"
           service: "service-1"
           # will route TLS requests (and ignore non tls requests)
@@ -787,8 +787,8 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
         foo:
           minVersion: VersionTLS12
           cipherSuites:
-          - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
-          - "TLS_RSA_WITH_AES_256_GCM_SHA384"
+            - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+            - "TLS_RSA_WITH_AES_256_GCM_SHA384"
     ```
 
 #### `certResolver`
@@ -839,6 +839,6 @@ tcp:
       tls:
         certResolver: "bar"
         domains:
-        - main: "snitest.com"
-          sans: "*.snitest.com"
+          - main: "snitest.com"
+            sans: "*.snitest.com"
 ```

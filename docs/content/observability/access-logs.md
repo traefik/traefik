@@ -95,8 +95,8 @@ accessLog:
   format: json
   filters:    
     statusCodes:
-    - "200"
-    - "300-302"
+      - "200"
+      - "300-302"
     retryAttempts: true
     minDuration: "10ms"
 ```

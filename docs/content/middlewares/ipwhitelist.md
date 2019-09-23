@@ -12,7 +12,7 @@ IPWhitelist accepts / refuses requests based on the client IP.
 ```yaml tab="Docker"
 # Accepts request from defined IP
 labels:
-- "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="Kubernetes"
@@ -23,8 +23,8 @@ metadata:
 spec:
   ipWhiteList:
     sourceRange:
-    - 127.0.0.1/32
-    - 192.168.1.7
+      - 127.0.0.1/32
+      - 192.168.1.7
 ```
 
 ```json tab="Marathon"
@@ -36,7 +36,7 @@ spec:
 ```yaml tab="Rancher"
 # Accepts request from defined IP
 labels:
-- "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```toml tab="File (TOML)"
@@ -53,8 +53,8 @@ http:
     test-ipwhitelist:
       ipWhiteList:
         sourceRange:
-        - "127.0.0.1/32"
-        - "192.168.1.7"
+          - "127.0.0.1/32"
+          - "192.168.1.7"
 ```
 
 ## Configuration Options
@@ -76,8 +76,8 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
     ```yaml tab="Docker"
     # Whitelisting Based on `X-Forwarded-For` with `depth=2`
     labels:
-        - "traefik.http.middlewares.testIPwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
-        - "traefik.http.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.depth=2"
+      - "traefik.http.middlewares.testIPwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+      - "traefik.http.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.depth=2"
     ```
     
     ```yaml tab="Kubernetes"
@@ -89,8 +89,8 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
     spec:
       ipWhiteList:
         sourceRange:
-        - 127.0.0.1/32
-        - 192.168.1.7
+          - 127.0.0.1/32
+          - 192.168.1.7
         ipStrategy:
           depth: 2
     ```
@@ -98,14 +98,14 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
     ```yaml tab="Rancher"
     # Whitelisting Based on `X-Forwarded-For` with `depth=2`
     labels:
-        - "traefik.http.middlewares.testIPwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
-        - "traefik.http.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.depth=2"
+      - "traefik.http.middlewares.testIPwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+      - "traefik.http.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.depth=2"
     ```
     
     ```json tab="Marathon"
     "labels": {
-        "traefik.http.middlewares.testIPwhitelist.ipwhitelist.sourcerange": "127.0.0.1/32, 192.168.1.7",
-        "traefik.http.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.depth": "2"
+      "traefik.http.middlewares.testIPwhitelist.ipwhitelist.sourcerange": "127.0.0.1/32, 192.168.1.7",
+      "traefik.http.middlewares.testIPwhitelist.ipwhitelist.ipstrategy.depth": "2"
     }
     ```
     
@@ -125,8 +125,8 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
         test-ipwhitelist:
           ipWhiteList:
             sourceRange:
-            - "127.0.0.1/32"
-            - "192.168.1.7"
+              - "127.0.0.1/32"
+              - "192.168.1.7"
             ipStrategy:
               depth: 2
     ```
@@ -164,19 +164,19 @@ spec:
   ipWhiteList:
     ipStrategy:
       excludedIPs:
-      - 127.0.0.1/32
-      - 192.168.1.7
+        - 127.0.0.1/32
+        - 192.168.1.7
 ```
 
 ```yaml tab="Rancher"
 # Exclude from `X-Forwarded-For`
 labels:
-    - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```json tab="Marathon"
 "labels": {
-    "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
+  "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
 }
 ```
 
@@ -196,8 +196,8 @@ http:
       ipWhiteList:
         ipStrategy:
           excludedIPs:
-          - "127.0.0.1/32"
-          - "192.168.1.7"
+            - "127.0.0.1/32"
+            - "192.168.1.7"
 ```
 
 `excludedIPs` tells Traefik to scan the `X-Forwarded-For` header and pick the first IP not in the list.

@@ -15,9 +15,9 @@ The ErrorPage middleware returns a custom page in lieu of the default, according
 ```yaml tab="Docker"
 # Dynamic Custom Error Page for 5XX Status Code
 labels:
-- "traefik.http.middlewares.test-errorpage.errors.status=500-599"
-- "traefik.http.middlewares.test-errorpage.errors.service=serviceError"
-- "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
+  - "traefik.http.middlewares.test-errorpage.errors.status=500-599"
+  - "traefik.http.middlewares.test-errorpage.errors.service=serviceError"
+  - "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
 ```
 
 ```yaml tab="Kubernetes"
@@ -28,7 +28,7 @@ metadata:
 spec:
   errors:
     status:
-    - 500-599
+      - 500-599
     query: /{status}.html
     service:
       name: whoami
@@ -46,9 +46,9 @@ spec:
 ```yaml tab="Rancher"
 # Dynamic Custom Error Page for 5XX Status Code
 labels:
-- "traefik.http.middlewares.test-errorpage.errors.status=500-599"
-- "traefik.http.middlewares.test-errorpage.errors.service=serviceError"
-- "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
+  - "traefik.http.middlewares.test-errorpage.errors.status=500-599"
+  - "traefik.http.middlewares.test-errorpage.errors.service=serviceError"
+  - "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
 ```
 
 ```toml tab="File (TOML)"
@@ -70,7 +70,7 @@ http:
     test-errorpage:
       errors:
         status:
-        - "500-599"
+          - "500-599"
         service: serviceError
         query: "/{status}.html"
 

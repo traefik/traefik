@@ -30,10 +30,10 @@ To add / remove TLS certificates, even when Traefik is already running, their de
 
 tls:
   certificates:
-  - certFile: /path/to/domain.cert
-    keyFile: /path/to/domain.key
-  - certFile: /path/to/other-domain.cert
-    keyFile: /path/to/other-domain.key
+    - certFile: /path/to/domain.cert
+      keyFile: /path/to/domain.key
+    - certFile: /path/to/other-domain.cert
+      keyFile: /path/to/other-domain.key
 ```
 
 !!! important "Restriction"
@@ -88,14 +88,14 @@ In the `tls.certificates` section, a list of stores can then be specified to ind
 
 tls:
   certificates:
-  - certFile: /path/to/domain.cert
-    keyFile: /path/to/domain.key
-    stores:
-    - default
-  # Note that since no store is defined,
-  # the certificate below will be stored in the `default` store.
-  - certFile: /path/to/other-domain.cert
-    keyFile: /path/to/other-domain.key
+    - certFile: /path/to/domain.cert
+      keyFile: /path/to/domain.key
+      stores:
+        - default
+    # Note that since no store is defined,
+    # the certificate below will be stored in the `default` store.
+    - certFile: /path/to/other-domain.cert
+      keyFile: /path/to/other-domain.key
 ```
 
 !!! important "Restriction"
@@ -203,8 +203,8 @@ tls:
   options:
     default:
       cipherSuites:
-      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-      - TLS_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_RSA_WITH_AES_256_GCM_SHA384
 ```
 
 ```yaml tab="Kubernetes"
@@ -216,8 +216,8 @@ metadata:
 
 spec:
   cipherSuites:
-  - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-  - TLS_RSA_WITH_AES_256_GCM_SHA384
+    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    - TLS_RSA_WITH_AES_256_GCM_SHA384
 ```
 
 !!! important "TLS 1.3"
@@ -293,8 +293,8 @@ tls:
       clientAuth:
         # in PEM format. each file can contain multiple CAs.
         caFiles:
-        - tests/clientca1.crt
-        - tests/clientca2.crt
+          - tests/clientca1.crt
+          - tests/clientca2.crt
         clientAuthType: RequireAndVerifyClientCert
 ```
 

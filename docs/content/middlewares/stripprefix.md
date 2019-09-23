@@ -14,7 +14,7 @@ Remove the specified prefixes from the URL path.
 ```yaml tab="Docker"
 # Strip prefix /foobar and /fiibar
 labels:
-- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
+  - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
 ```
 
 ```yaml tab="Kubernetes"
@@ -26,8 +26,8 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-    - /foobar
-    - /fiibar
+      - /foobar
+      - /fiibar
 ```
 
 ```json tab="Marathon"
@@ -39,7 +39,7 @@ spec:
 ```yaml tab="Rancher"
 # Strip prefix /foobar and /fiibar
 labels:
-- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
+  - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
 ```
 
 ```toml tab="File (TOML)"
@@ -56,8 +56,8 @@ http:
     test-stripprefix:
       stripPrefix:
         prefixes:
-        - "/foobar"
-        - "/fiibar"
+          - "/foobar"
+          - "/fiibar"
 ```
 
 ## Configuration Options

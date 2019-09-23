@@ -31,7 +31,7 @@ To assess if your system is healthy, the circuit breaker constantly monitors the
 ```yaml tab="Docker"
 # Latency Check
 labels:
-- "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+  - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
 ```
 
 ```yaml tab="Kubernetes"
@@ -54,7 +54,7 @@ spec:
 ```yaml tab="Rancher"
 # Latency Check
 labels:
-- "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+  - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
 ```
 
 ```toml tab="File (TOML)"
