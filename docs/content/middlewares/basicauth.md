@@ -30,6 +30,10 @@ spec:
     secret: secretName
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-auth.basicauth.users": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
@@ -186,6 +190,10 @@ data:
     aHI5SEJCJDRIeHdnVWlyM0hQNEVzZ2dQL1FObzAK
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.basicauth.usersfile=/path/to/my/usersfile"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-auth.basicauth.usersfile": "/path/to/my/usersfile"
@@ -237,6 +245,10 @@ spec:
     realm: MyRealm
 ```
 
+```json tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.basicauth.realm=MyRealm"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-auth.basicauth.realm": "MyRealm"
@@ -282,6 +294,10 @@ spec:
     headerField: X-WebAuth-User
 ```
 
+```json tab="Consul Catalog"
+- "traefik.http.middlewares.my-auth.basicauth.headerField=X-WebAuth-User"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.my-auth.basicauth.headerField": "X-WebAuth-User"
@@ -320,6 +336,10 @@ metadata:
 spec:
   basicAuth:
     removeHeader: true
+```
+
+```json tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.basicauth.removeheader=true"
 ```
 
 ```json tab="Marathon"

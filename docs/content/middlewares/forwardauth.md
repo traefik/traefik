@@ -28,6 +28,11 @@ spec:
     address: https://authserver.com/auth
 ```
 
+```yaml tab="Consul Catalog"
+# Forward authentication to authserver.com
+- "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-auth.forwardauth.address": "https://authserver.com/auth"
