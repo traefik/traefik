@@ -80,5 +80,5 @@ log:
 Traefik will close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
 This allows the logs to be rotated and processed by an external program, such as `logrotate`.
 
-!!! note
+!!! warning
     This does not work on Windows due to the lack of USR signals.

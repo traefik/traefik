@@ -23,7 +23,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     [certificatesResolvers.sample.acme]
       email = "your-email@your-domain.org"
       storage = "acme.json"
-      [acme.httpChallenge]
+      [certificatesResolvers.sample.acme.httpChallenge]
         # used during the challenge
         entryPoint = "web"
     ```
@@ -56,6 +56,8 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
     ```
 
+!!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
+
 ??? note "Configuration Reference"
     
     There are many available options for ACME.
@@ -79,10 +81,12 @@ Traefik automatically tracks the expiry date of ACME certificates it generates.
 
 If there are less than 30 days remaining before the certificate expires, Traefik will attempt to renew it automatically.
 
-!!! note
+!!! info ""
     Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
 
 ## The Different ACME Challenges
+
+!!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
 ### `tlsChallenge`
 
@@ -158,7 +162,7 @@ when using the `HTTP-01` challenge, `certificatesResolvers.sample.acme.httpChall
     --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
     ```
 
-!!! note
+!!! info ""
     Redirection is fully compatible with the `HTTP-01` challenge.
 
 ### `dnsChallenge`
@@ -274,7 +278,7 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 [^3]: [google/default.go](https://github.com/golang/oauth2/blob/36a7019397c4c86cf59eeab3bc0d188bac444277/google/default.go#L61-L76)
 [^4]: `docker stack` remark: there is no way to support terminal attached to container when deploying with `docker stack`, so you might need to run container with `docker run -it` to generate certificates using `manual` provider.
 
-!!! note "`delayBeforeCheck`"
+!!! info "`delayBeforeCheck`"
     By default, the `provider` verifies the TXT record _before_ letting ACME verify.
     You can delay this operation by specifying a delay (in seconds) with `delayBeforeCheck` (value must be greater than zero).
     This option is useful when internal networks block external DNS queries.
@@ -299,8 +303,8 @@ certificatesResolvers:
       dnsChallenge:
         # ...
         resolvers:
-        - "1.1.1.1:53"
-        - "8.8.8.8:53"
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
 ```
 
 ```bash tab="CLI"
@@ -394,5 +398,5 @@ If Let's Encrypt is not reachable, the following certificates will apply:
   1. Expired ACME certificates
   1. Provided certificates
 
-!!! note
+!!! important
     For new (sub)domains which need Let's Encrypt authentication, the default Traefik certificate will be used until Traefik is restarted.

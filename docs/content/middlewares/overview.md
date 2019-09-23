@@ -60,7 +60,7 @@ spec:
   routes:
     # more fields...
     middlewares:
-    - name: stripprefix
+      - name: stripprefix
 ```
 
 ```json tab="Marathon"
@@ -106,7 +106,7 @@ http:
     router1:
       service: myService
       middlewares:
-      - "foo-add-prefix"
+        - "foo-add-prefix"
       rule: "Host(`example.com`)"
 
   middlewares:
@@ -118,7 +118,7 @@ http:
     service1:
       loadBalancer:
         servers:
-        - url: "http://127.0.0.1:80"
+          - url: "http://127.0.0.1:80"
 ```
 
 ## Provider Namespace

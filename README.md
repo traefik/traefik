@@ -33,7 +33,7 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
-:warning: Please be aware that the old configurations for Traefik v1.X are NOT compatible with the v2.X config as of now. If you're testing out v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/v2.0/).
+:warning: Please be aware that the old configurations for Traefik v1.X are NOT compatible with the v2.X config as of now. If you're running v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/).
 
 ## Overview
 
@@ -69,18 +69,11 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 ## Supported Backends
 
-- [Docker](https://docs.traefik.io/configuration/backends/docker) / [Swarm mode](https://docs.traefik.io/configuration/backends/docker#docker-swarm-mode)
-- [Kubernetes](https://docs.traefik.io/configuration/backends/kubernetes)
-- [Mesos](https://docs.traefik.io/configuration/backends/mesos) / [Marathon](https://docs.traefik.io/configuration/backends/marathon)
-- [Rancher](https://docs.traefik.io/configuration/backends/rancher) (API, Metadata)
-- [Azure Service Fabric](https://docs.traefik.io/configuration/backends/servicefabric)
-- [Consul Catalog](https://docs.traefik.io/configuration/backends/consulcatalog)
-- [Consul](https://docs.traefik.io/configuration/backends/consul) / [Etcd](https://docs.traefik.io/configuration/backends/etcd) / [Zookeeper](https://docs.traefik.io/configuration/backends/zookeeper) / [BoltDB](https://docs.traefik.io/configuration/backends/boltdb)
-- [Eureka](https://docs.traefik.io/configuration/backends/eureka)
-- [Amazon ECS](https://docs.traefik.io/configuration/backends/ecs)
-- [Amazon DynamoDB](https://docs.traefik.io/configuration/backends/dynamodb)
+- [Docker](https://docs.traefik.io/providers/docker/) / [Swarm mode](https://docs.traefik.io/providers/docker/)
+- [Kubernetes](https://docs.traefik.io/providers/kubernetes-crd/)
+- [Marathon](https://docs.traefik.io/providers/marathon/)
+- [Rancher](https://docs.traefik.io/providers/rancher/) (Metadata)
 - [File](https://docs.traefik.io/configuration/backends/file)
-- [Rest](https://docs.traefik.io/configuration/backends/rest)
 
 ## Quickstart
 
@@ -97,7 +90,7 @@ You can access the simple HTML frontend of Traefik.
 You can find the complete documentation at [https://docs.traefik.io](https://docs.traefik.io).
 A collection of contributions around Traefik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
 
-:warning: If you're testing out v2, please ensure you are using the [v2 documentation](https://docs.traefik.io/v2.0/).
+:warning: If you're testing out v2, please ensure you are using the [v2 documentation](https://docs.traefik.io/).
 
 ## Support
 
@@ -128,7 +121,7 @@ git clone https://github.com/containous/traefik
 
 ## Introductory Videos
 
-:warning: Please be aware that these videos are for v1.X. The old configurations for Traefik v1.X are NOT compatible with Traefik v2. If you're testing out v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/v2.0/).
+:warning: Please be aware that these videos are for v1.X. The old configurations for Traefik v1.X are NOT compatible with Traefik v2. If you're running v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/).
 
 Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at GopherCon 2017.
 You will learn Traefik basics in less than 10 minutes.

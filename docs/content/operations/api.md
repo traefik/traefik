@@ -21,7 +21,7 @@ would be to apply the following protection mechanisms:
 
 ## Configuration
 
-If you enable the API, a new special `service` named `api@internal` is created and then can be reference in a router.
+If you enable the API, a new special `service` named `api@internal` is created and can then be referenced in a router.
 
 To enable the API handler:
 
@@ -37,9 +37,10 @@ api: {}
 --api=true
 ```
 
-And then you will able to reference it like this.
+And then you will be able to reference it like this:
 
 ```yaml tab="Docker"
+labels:
   - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
   - "traefik.http.routers.api.service=api@internal"
   - "traefik.http.routers.api.middlewares=auth"
@@ -59,9 +60,9 @@ And then you will able to reference it like this.
 # Declaring the user list
 labels:
   - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
-    - "traefik.http.routers.api.service=api@internal"
-    - "traefik.http.routers.api.middlewares=auth"
-    - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+  - "traefik.http.routers.api.service=api@internal"
+  - "traefik.http.routers.api.middlewares=auth"
+  - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```toml tab="File (TOML)"
@@ -72,9 +73,9 @@ labels:
 
 [http.middlewares.auth.basicAuth]
     users = [
-        "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
-        "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-      ]
+      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
+      "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+    ]
 ```
 
 ```yaml tab="File (YAML)"
@@ -89,15 +90,15 @@ http:
     auth:
       basicAuth:
         users:
-        - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" 
-        - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+          - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" 
+          - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ### `insecure`
 
 Enable the API in `insecure` mode, which means that the API will be available directly on the entryPoint named `traefik`.
 
-!!! Note
+!!! info
     If the entryPoint named `traefik` is not configured, it will be automatically created on port 8080.
 
 ```toml tab="File (TOML)"
@@ -138,7 +139,7 @@ api:
 
 _Optional, Default=false_
 
-Enable additional endpoints for debugging and profiling, served under `/debug/`.
+Enable additional [endpoints](./api.md#endpoints) for debugging and profiling, served under `/debug/`.
 
 ```toml tab="File (TOML)"
 [api]

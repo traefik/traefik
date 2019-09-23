@@ -12,7 +12,7 @@ The DigestAuth middleware is a quick way to restrict access to your services to 
 ```yaml tab="Docker"
 # Declaring the user list
 labels:
-- "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
+  - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
 ```yaml tab="Kubernetes"
@@ -35,7 +35,7 @@ spec:
 ```yaml tab="Rancher"
 # Declaring the user list
 labels:
-- "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
+  - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
 ```toml tab="File (TOML)"
@@ -55,8 +55,8 @@ http:
     test-auth:
       digestAuth:
         users:
-        - "test:traefik:a2688e031edb4be6a3797f3882655c05"
-        - "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
+          - "test:traefik:a2688e031edb4be6a3797f3882655c05"
+          - "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
 ## Configuration Options
@@ -69,14 +69,14 @@ http:
 
 The `users` option is an array of authorized users. Each user will be declared using the `name:realm:encoded-password` format.
 
-!!! Note
+!!! note ""
     
     - If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
     - For security reasons, the field `users` doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead. 
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
+  - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
 ```yaml tab="Kubernetes"
@@ -108,7 +108,7 @@ data:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
+  - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
 ```toml tab="File (TOML)"
@@ -126,8 +126,8 @@ http:
     test-auth:
       digestAuth:
         users:
-        - "test:traefik:a2688e031edb4be6a3797f3882655c05"
-        - "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
+          - "test:traefik:a2688e031edb4be6a3797f3882655c05"
+          - "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
 ### `usersFile`
@@ -136,14 +136,14 @@ The `usersFile` option is the path to an external file that contains the authori
 
 The file content is a list of `name:realm:encoded-password`.
 
-!!! Note
+!!! note ""
     
     - If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
     - Because it does not make much sense to refer to a file path on Kubernetes, the `usersFile` field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead. 
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.digestauth.usersfile=/path/to/my/usersfile"
+  - "traefik.http.middlewares.test-auth.digestauth.usersfile=/path/to/my/usersfile"
 ```
 
 ```yaml tab="Kubernetes"
@@ -206,7 +206,7 @@ You can customize the realm for the authentication with the `realm` option. The 
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.digestauth.realm=MyRealm"
+  - "traefik.http.middlewares.test-auth.digestauth.realm=MyRealm"
 ```
 
 ```yaml tab="Kubernetes"
@@ -296,7 +296,7 @@ Set the `removeHeader` option to `true` to remove the authorization header befor
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.digestauth.removeheader=true"
+  - "traefik.http.middlewares.test-auth.digestauth.removeheader=true"
 ```
 
 ```yaml tab="Kubernetes"

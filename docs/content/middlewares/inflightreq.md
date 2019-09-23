@@ -11,7 +11,7 @@ To proactively prevent services from being overwhelmed with high load, a limit o
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```yaml tab="Kubernetes"
@@ -33,7 +33,7 @@ spec:
 ```yaml tab="Rancher"
 # Limiting to 10 simultaneous connections
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```toml tab="File (TOML)"
@@ -59,6 +59,49 @@ http:
 The `amount` option defines the maximum amount of allowed simultaneous in-flight request.
 The middleware will return an `HTTP 429 Too Many Requests` if there are already `amount` requests in progress (based on the same `sourceCriterion` strategy).
 
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-inflightreq
+spec:
+  inFlightReq:
+    amount: 10
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
+}
+```
+
+```yaml tab="Rancher"
+# Limiting to 10 simultaneous connections
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+```
+
+```toml tab="File (TOML)"
+# Limiting to 10 simultaneous connections
+[http.middlewares]
+  [http.middlewares.test-inflightreq.inFlightReq]
+    amount = 10 
+```
+
+```yaml tab="File (YAML)"
+# Limiting to 10 simultaneous connections
+http:
+  middlewares:
+    test-inflightreq:
+      inFlightReq:
+        amount: 10 
+```
+
 ### `sourceCriterion`
  
 SourceCriterion defines what criterion is used to group requests as originating from a common source.
@@ -76,7 +119,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 - If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP will be empty.
 - `depth` is ignored if its value is lesser than or equal to 0.
     
-!!! note "Example of Depth & X-Forwarded-For"
+!!! example "Example of Depth & X-Forwarded-For"
 
     If `depth` was equal to 2, and the request `X-Forwarded-For` header was `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP would be `"10.0.0.1"` (at depth 4) but the IP used as the criterion would be `"12.0.0.1"` (`depth=2`).
 
@@ -86,14 +129,58 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-inflightreq
+spec:
+  inFlightReq:
+    sourceCriterion:
+      ipStrategy:
+        depth: 2
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth": "2"
+}
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-inflightreq.inflightreq]
+    [http.middlewares.test-inflightreq.inFlightReq.sourceCriterion.ipStrategy]
+      depth = 2
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-inflightreq:
+      inFlightReq:
+        sourceCriterion:
+          ipStrategy:
+            depth: 2
+```
+
 ##### `ipStrategy.excludedIPs`
 
 `excludedIPs` tells Traefik to scan the `X-Forwarded-For` header and pick the first IP not in the list.
 
-!!! important
-    If `depth` is specified, `excludedIPs` is ignored.
+!!! important "If `depth` is specified, `excludedIPs` is ignored."
 
-!!! note "Example of ExcludedIPs & X-Forwarded-For"
+!!! example "Example of ExcludedIPs & X-Forwarded-For"
 
     | `X-Forwarded-For`                       | `excludedIPs`         | clientIP     |
     |-----------------------------------------|-----------------------|--------------|
@@ -105,7 +192,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="Kubernetes"
@@ -122,15 +209,15 @@ spec:
         - 192.168.1.7
 ```
 
-```yaml tab="Rancher"
-labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
-```
-
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
 }
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```toml tab="File (TOML)"
@@ -148,8 +235,8 @@ http:
         sourceCriterion:
           ipStrategy:
             excludedIPs:
-            - "127.0.0.1/32"
-            - "192.168.1.7"
+              - "127.0.0.1/32"
+              - "192.168.1.7"
 ```
 
 #### `sourceCriterion.requestHeaderName`
@@ -158,7 +245,7 @@ Requests having the same value for the given header are grouped as coming from t
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
 
 ```yaml tab="Kubernetes"
@@ -174,7 +261,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
 
 ```json tab="Marathon"
@@ -205,7 +292,7 @@ Whether to consider the request host as the source.
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -221,7 +308,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
 
 ```json tab="Marathon"

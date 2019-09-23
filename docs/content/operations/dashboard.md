@@ -10,9 +10,11 @@ The dashboard is the central place that shows you the current active routes hand
     <figcaption>The dashboard in action</figcaption>
 </figure>
 
-By default, the dashboard is available on `/` on port `:8080`.
+By default, the dashboard is available on `/dashboard` on port `:8080`.
+There is also a redirect of `/` to `/dashboard`, but one should not rely on that property as it is bound to change,
+and it might make for confusing routing rules anyway.
 
-!!! note "Did You Know?"
+!!! info "Did You Know?"
     It is possible to customize the dashboard endpoint. 
     To learn how, refer to the [API documentation](./api.md)
     
@@ -55,6 +57,6 @@ api:
     like authentication ([basicAuth](../middlewares/basicauth.md) , [digestAuth](../middlewares/digestauth.md), [forwardAuth](../middlewares/forwardauth.md)) or [whitelisting](../middlewares/ipwhitelist.md).  
     More information about `api@internal` can be found in the [API documentation](./api.md#configuration)
 
-!!! note "Did You Know?"
+!!! info "Did You Know?"
     The API provides more features than the Dashboard. 
     To learn more about it, refer to the [API documentation](./api.md)

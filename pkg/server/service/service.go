@@ -310,7 +310,7 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 		return nil, fmt.Errorf("error configuring load balancer for service %s: %v", serviceName, err)
 	}
 
-	return lb, nil
+	return lbsu, nil
 }
 
 func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHandler, servers []dynamic.Server) error {

@@ -82,9 +82,14 @@ nav:
       - 'Marathon': 'providers/marathon.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
-      - 'Entrypoints': 'routing/entrypoints.md'
+      - 'EntryPoints': 'routing/entrypoints.md'
       - 'Routers': 'routing/routers/index.md'
       - 'Services': 'routing/services/index.md'
+      - 'Providers':
+          - 'Docker': 'routing/providers/docker.md'
+          - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
+          - 'Rancher': 'routing/providers/rancher.md'
+          - 'Marathon': 'routing/providers/marathon.md'
   - 'HTTPS & TLS':
       - 'Overview': 'https/overview.md'
       - 'TLS': 'https/tls.md'

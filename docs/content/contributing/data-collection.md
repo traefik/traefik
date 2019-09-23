@@ -42,54 +42,51 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
 - a hash of the configuration
 - an **anonymized version** of the static configuration (token, user name, password, URL, IP, domain, email, etc, are removed).
 
-!!! note
-    We do not collect the dynamic configuration information (routers & services).
-    We do not collect these data to run advertising programs.
-    We do not sell these data to third-parties.
+!!! info
+    
+    - We do not collect the dynamic configuration information (routers & services).
+    - We do not collect this data to run advertising programs.
+    - We do not sell this data to third-parties.
 
 ### Example of Collected Data
 
-??? example "Original configuration"
+```toml tab="Original configuration"
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
 
-    ```toml
-    [entryPoints]
-      [entryPoints.web]
-         address = ":80"
-    
-    [api]
-    
-    [providers.docker]
-      endpoint = "tcp://10.10.10.10:2375"
-      exposedByDefault = true
-      swarmMode = true
-    
-      [providers.docker.TLS]
-        ca = "dockerCA"
-        cert = "dockerCert"
-        key = "dockerKey"
-        insecureSkipVerify = true
-    ```
+[api]
 
-??? example "Resulting Obfuscated Configuration"
+[providers.docker]
+  endpoint = "tcp://10.10.10.10:2375"
+  exposedByDefault = true
+  swarmMode = true
 
-    ```toml
-    [entryPoints]
-      [entryPoints.web]
-        address = ":80"
-    
-    [api]
-    
-    [providers.docker]
-      endpoint = "xxxx"
-      exposedByDefault = true
-      swarmMode = true
-    
-      [providers.docker.TLS]
-        ca = "xxxx"
-        cert = "xxxx"
-        key = "xxxx"
-        insecureSkipVerify = false
-    ```
+  [providers.docker.TLS]
+    ca = "dockerCA"
+    cert = "dockerCert"
+    key = "dockerKey"
+    insecureSkipVerify = true
+```
+
+```toml tab="Resulting Obfuscated Configuration"
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
+
+[api]
+
+[providers.docker]
+  endpoint = "xxxx"
+  exposedByDefault = true
+  swarmMode = true
+
+  [providers.docker.TLS]
+    ca = "xxxx"
+    cert = "xxxx"
+    key = "xxxx"
+    insecureSkipVerify = false
+```
 
 ## The Code for Data Collection
 
