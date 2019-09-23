@@ -3,6 +3,7 @@ package accesslog
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -51,7 +52,7 @@ type LogHandler struct {
 
 // NewLogHandler creates a new LogHandler
 func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
-	file := os.Stdout
+	file := ioutil.NopCloser(os.Stdout)
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
 		if err != nil {
@@ -77,10 +78,6 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		Formatter: formatter,
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
-	}
-
-	if file == os.Stdout {
-		file = nil
 	}
 
 	logHandler := &LogHandler{
@@ -203,10 +200,7 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 func (l *LogHandler) Close() error {
 	close(l.logHandlerChan)
 	l.wg.Wait()
-	if l.file != nil {
-		return l.file.Close()
-	}
-	return nil
+	return l.file.Close()
 }
 
 // Rotate closes and reopens the log file to allow for rotation
@@ -214,13 +208,11 @@ func (l *LogHandler) Close() error {
 func (l *LogHandler) Rotate() error {
 	var err error
 
-	if l.file == nil {
-		return nil
+	if l.file != nil {
+		defer func(f *os.File) {
+			f.Close()
+		}(l.file)
 	}
-
-	defer func(f *os.File) {
-		f.Close()
-	}(l.file)
 
 	l.file, err = os.OpenFile(l.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
