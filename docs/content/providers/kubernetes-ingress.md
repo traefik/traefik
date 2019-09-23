@@ -49,7 +49,6 @@ spec:
 
 ## Provider Configuration
 
-
 ### `endpoint`
 
 _Optional, Default=empty_

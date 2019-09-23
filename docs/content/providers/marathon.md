@@ -49,6 +49,10 @@ See also [Marathon user guide](../user-guides/marathon.md).
 	}
     ```
 
+## Routing Configuration
+
+See the dedicated section in [routing](../routing/providers/marathon.md).
+
 ## Provider Configuration
 
 ### `basic`
@@ -586,7 +590,3 @@ providers:
 ```
 
 Enables watching for Marathon changes.
-
-## Routing Configuration
-
-See the dedicated section in [routing](../routing/providers/marathon.md).

@@ -76,14 +76,19 @@ Attach labels to your containers and let Traefik do the rest!
       my-container:
         deploy:
           labels:
-            - traefik.http.routers.my-container.rule=Host(`my-domain`)
+            - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
             - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
     !!! important "Labels in Docker Swarm Mode"
         While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
+        
         Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
         This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
+
+## Routing Configuration
+
+See the dedicated section in [routing](../routing/providers/docker.md).
 
 ## Provider Configuration
 
@@ -227,9 +232,13 @@ but still uses the `traefik.http.services.<name>.loadbalancer.server.port` that 
     | LblPort            | ExtIp:ExtPort:OtherPort                            | IntIp:LblPort  |
     | LblPort            | ExtIp1:ExtPort1:IntPort1 & ExtIp2:LblPort:IntPort2 | ExtIp2:LblPort |
 
-    !!! info
-        In the above table, ExtIp stands for "external IP found in the binding", IntIp stands for "internal network container's IP",
-        ExtPort stands for "external Port found in the binding", and IntPort stands for "internal network container's port."
+    !!! info ""
+        In the above table:
+        
+        - `ExtIp` stands for "external IP found in the binding"
+        - `IntIp` stands for "internal network container's IP",
+        - `ExtPort` stands for "external Port found in the binding"
+        - `IntPort` stands for "internal network container's port."
 
 ### `exposedByDefault`
 
@@ -536,7 +545,3 @@ providers:
 ```bash tab="CLI"
 --providers.docker.tls.insecureSkipVerify=true
 ```
-
-## Routing Configuration
-
-See the dedicated section in [routing](../routing/providers/docker.md).

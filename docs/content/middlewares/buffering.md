@@ -286,7 +286,6 @@ You can have the Buffering middleware replay the request with the help of the `r
             retryExpression: "IsNetworkError() && Attempts() < 2"
     ```
 
-
 The retry expression is defined as a logical combination of the functions below with the operators AND (`&&`) and OR (`||`). At least one function is required:
 
 - `Attempts()` number of attempts (the first one counts)

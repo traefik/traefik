@@ -35,8 +35,12 @@ Attach labels to your services and let Traefik do the rest!
 
     ```yaml
     labels:
-      - traefik.http.services.my-service.rule=Host(`my-domain`)
+      - traefik.http.services.my-service.rule=Host(`mydomain.com`)
     ```
+
+## Routing Configuration
+
+See the dedicated section in [routing](../routing/providers/rancher.md).
 
 ## Provider Configuration
 
@@ -272,7 +276,3 @@ The expression syntax is based on the `Label("key", "value")`, and `LabelRegex("
     ```
 
 See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
-
-## Routing Configuration
-
-See the dedicated section in [routing](../routing/providers/rancher.md).

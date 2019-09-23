@@ -73,7 +73,7 @@ Attach labels to your containers and let Traefik do the rest!
       my-container:
         deploy:
           labels:
-            - traefik.http.routers.my-container.rule=Host(`my-domain`)
+            - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
             - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 

@@ -8,6 +8,10 @@ Traefik used to support Kubernetes only through the [Kubernetes Ingress provider
 However, as the community expressed the need to benefit from Traefik features without resorting to (lots of) annotations,
 we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (alias CRD in the following) for an IngressRoute type, defined below, in order to provide a better way to configure access to a Kubernetes cluster.
 
+## Resource Configuration
+
+See the dedicated section in [routing](../routing/providers/kubernetes-crd.md).
+
 ## Provider Configuration
 
 ### `endpoint`
@@ -188,10 +192,6 @@ providers:
 ```bash tab="CLI"
 --providers.kubernetescrd.throttleDuration="10s"
 ```
-
-## Resource Configuration
-
-See the dedicated section in [routing](../routing/providers/kubernetes-crd.md).
 
 ## Further
 

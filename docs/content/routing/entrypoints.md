@@ -396,9 +396,9 @@ Controls the behavior of Traefik during the shutdown phase.
 
 Traefik supports [ProxyProtocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2.
 
-If proxyprotocol header parsing is enabled for the entry point, this entry point can accept connections with or without proxyprotocol headers.
+If Proxy Protocol header parsing is enabled for the entry point, this entry point can accept connections with or without Proxy Protocol headers.
 
-If the proxyprotocol header is passed, then the version is determined automatically.
+If the Proxy Protocol header is passed, then the version is determined automatically.
 
 ??? info "`proxyProtocol.trustedIPs`" 
     

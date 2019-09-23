@@ -26,7 +26,7 @@ traefik [--flag=flag_argument] [-f [flag_argument]]
 traefik [--flag[=true|false| ]] [-f [true|false| ]]
 ```
 
-All flags are documented in the [(Static Configuration) CLI reference](../reference/static-configuration/cli.md).
+All flags are documented in the [(static configuration) CLI reference](../reference/static-configuration/cli.md).
 
 !!! info "Flags are case insensitive."
 
@@ -39,7 +39,7 @@ This can be used with Docker [HEALTHCHECK](https://docs.docker.com/engine/refere
 or any other health check orchestration mechanism.
 
 !!! info
-    The [`ping` endpoint](../ping/) must be enabled to allow the `healthcheck` command to call `/ping`.
+    The [`ping` endpoint](../operations/ping.md) must be enabled to allow the `healthcheck` command to call `/ping`.
 
 Usage:
 
