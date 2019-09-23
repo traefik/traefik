@@ -13,7 +13,9 @@ See the [Let's Encrypt](./acme.md) page.
 
 To add / remove TLS certificates, even when Traefik is already running, their definition can be added to the [dynamic configuration](../getting-started/configuration-overview.md), in the `[[tls.certificates]]` section:
 
-```toml tab="TOML"
+```toml tab="File (TOML)"
+# Dynamic configuration
+
 [[tls.certificates]]
   certFile = "/path/to/domain.cert"
   keyFile = "/path/to/domain.key"
@@ -23,7 +25,9 @@ To add / remove TLS certificates, even when Traefik is already running, their de
   keyFile = "/path/to/other-domain.key"
 ```
 
-```yaml tab="YAML"
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
 tls:
   certificates:
   - certFile: /path/to/domain.cert
@@ -32,21 +36,26 @@ tls:
     keyFile: /path/to/other-domain.key
 ```
 
-!!! important "File Provider Only"
+!!! important "Restriction"
 
     In the above example, we've used the [file provider](../providers/file.md) to handle these definitions.
     It is the only available method to configure the certificates (as well as the options and the stores).
+    However, in [Kubernetes](../providers/kubernetes-crd.md), the certificates can and must be provided by [secrets](../providers/kubernetes-crd.md#tls). 
 
 ## Certificates Stores
 
 In Traefik, certificates are grouped together in certificates stores, which are defined as such:
 
-```toml tab="TOML"
+```toml tab="File (TOML)"
+# Dynamic configuration
+
 [tls.stores]
   [tls.stores.default]
 ```
 
-```yaml tab="YAML"
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
 tls:
   stores:
     default: {}
@@ -59,7 +68,9 @@ tls:
 
 In the `tls.certificates` section, a list of stores can then be specified to indicate where the certificates should be stored:
 
-```toml tab="TOML"
+```toml tab="File (TOML)"
+# Dynamic configuration
+
 [[tls.certificates]]
   certFile = "/path/to/domain.cert"
   keyFile = "/path/to/domain.key"
@@ -72,7 +83,9 @@ In the `tls.certificates` section, a list of stores can then be specified to ind
   keyFile = "/path/to/other-domain.key"
 ```
 
-```yaml tab="YAML"
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
 tls:
   certificates:
   - certFile: /path/to/domain.cert
@@ -94,7 +107,9 @@ tls:
 Traefik can use a default certificate for connections without a SNI, or without a matching domain.
 This default certificate should be defined in a TLS store:
 
-```toml tab="TOML"
+```toml tab="File (TOML)"
+# Dynamic configuration
+
 [tls.stores]
   [tls.stores.default]
     [tls.stores.default.defaultCertificate]
@@ -102,7 +117,9 @@ This default certificate should be defined in a TLS store:
       keyFile  = "path/to/cert.key"
 ```
 
-```yaml tab="YAML"
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
 tls:
   stores:
     default:
@@ -119,7 +136,9 @@ The TLS options allow one to configure some parameters of the TLS connection.
 
 ### Minimum TLS Version
 
-```toml tab="TOML"
+```toml tab="File (TOML)"
+# Dynamic configuration
+
 [tls.options]
 
   [tls.options.default]
@@ -129,7 +148,9 @@ The TLS options allow one to configure some parameters of the TLS connection.
     minVersion = "VersionTLS13"
 ```
 
-```yaml tab="YAML"
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
 tls:
   options:
     default:
@@ -137,6 +158,105 @@ tls:
 
     mintls13:
       minVersion: VersionTLS13
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  minVersion: VersionTLS12
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: mintls13
+  namespace: default
+
+spec:
+  minVersion: VersionTLS13
+```
+
+### Cipher Suites
+
+See [cipherSuites](https://godoc.org/crypto/tls#pkg-constants) for more information.
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+  [tls.options.default]
+    cipherSuites = [
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_RSA_WITH_AES_256_GCM_SHA384"
+    ]
+```
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      cipherSuites:
+      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      - TLS_RSA_WITH_AES_256_GCM_SHA384
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  cipherSuites:
+  - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+  - TLS_RSA_WITH_AES_256_GCM_SHA384
+```
+
+!!! important "TLS 1.3"
+
+    Cipher suites defined for TLS 1.2 and below cannot be used in TLS 1.3, and vice versa. (<https://tools.ietf.org/html/rfc8446>)  
+    With TLS 1.3, the cipher suites are not configurable (all supported cipher suites are safe in this case).
+    <https://golang.org/doc/go1.12#tls_1_3>
+
+### Strict SNI Checking
+
+With strict SNI checking, Traefik won't allow connections from clients connections
+that do not specify a server_name extension.
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+  [tls.options.default]
+    sniStrict = true
+```
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      sniStrict: true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  sniStrict: true
 ```
 
 ### Client Authentication (mTLS)
@@ -153,7 +273,9 @@ The `clientAuth.clientAuthType` option governs the behaviour as follows:
 - `VerifyClientCertIfGiven`: if a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles`. Otherwise proceeds without any certificate.
 - `RequireAndVerifyClientCert`: requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles`. 
 
-```toml tab="TOML"
+```toml tab="File (TOML)"
+# Dynamic configuration
+
 [tls.options]
   [tls.options.default]
     [tls.options.default.clientAuth]
@@ -162,7 +284,9 @@ The `clientAuth.clientAuthType` option governs the behaviour as follows:
       clientAuthType = "RequireAndVerifyClientCert"
 ```
 
-```yaml tab="YAML"
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
 tls:
   options:
     default:
@@ -174,42 +298,16 @@ tls:
         clientAuthType: RequireAndVerifyClientCert
 ```
 
-### Cipher Suites
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
 
-See [cipherSuites](https://godoc.org/crypto/tls#pkg-constants) for more information.
-
-```toml tab="TOML"
-[tls.options]
-  [tls.options.default]
-    cipherSuites = [
-      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-      "TLS_RSA_WITH_AES_256_GCM_SHA384"
-    ]
-```
-
-```yaml tab="YAML"
-tls:
-  options:
-    default:
-      cipherSuites:
-      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-      - TLS_RSA_WITH_AES_256_GCM_SHA384
-```
-
-### Strict SNI Checking
-
-With strict SNI checking, Traefik won't allow connections from clients connections
-that do not specify a server_name extension.
-
-```toml tab="TOML"
-[tls.options]
-  [tls.options.default]
-    sniStrict = true
-```
-
-```yaml tab="YAML"
-tls:
-  options:
-    default:
-      sniStrict: true
+spec:
+  clientAuth:
+    secretNames:
+      - secretCA
+    clientAuthType: RequireAndVerifyClientCert
 ```
