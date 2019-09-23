@@ -28,6 +28,13 @@ spec:
       burst: 50
 ```
 
+```yaml tab="Consul Catalog"
+# Here, an average of 100 requests per second is allowed.
+# In addition, a burst of 50 requests is allowed.
+- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-ratelimit.ratelimit.average": "100",
@@ -85,6 +92,10 @@ spec:
       average: 100
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-ratelimit.ratelimit.average": "100",
@@ -130,6 +141,10 @@ spec:
       burst: 100
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"	
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-ratelimit.ratelimit.burst": "100",
@@ -138,8 +153,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
-  		
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"	
 ```
 
 ```toml tab="File (TOML)"
@@ -204,15 +218,19 @@ spec:
         - 192.168.1.7
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
 }
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```toml tab="File (TOML)"
@@ -268,15 +286,19 @@ spec:
       requestHeaderName: username
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername": "username"
 }
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
 ```
 
 ```toml tab="File (TOML)"
@@ -315,15 +337,19 @@ spec:
       requestHost: true
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost": "true"
 }
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
 ```
 
 ```toml tab="File (TOML)"

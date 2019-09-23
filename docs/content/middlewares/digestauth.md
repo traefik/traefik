@@ -178,7 +178,7 @@ data:
 ```
 
 ```yaml tab="Consul Catalog"
-  - "traefik.http.middlewares.test-auth.digestauth.usersfile=/path/to/my/usersfile"
+- "traefik.http.middlewares.test-auth.digestauth.usersfile=/path/to/my/usersfile"
 ```
 
 ```json tab="Marathon"

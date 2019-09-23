@@ -23,6 +23,10 @@ spec:
       - "/foo/[a-z0-9]+/[0-9]+/"
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex": "/foo/[a-z0-9]+/[0-9]+/"

@@ -30,6 +30,12 @@ spec:
     replacement: /bar/$1
 ```
 
+```yaml tab="Consul Catalog"
+# Replace path with regex
+- "traefik.http.middlewares.test-replacepathregex.replacepathregex.regex=^/foo/(.*)"
+- "traefik.http.middlewares.test-replacepathregex.replacepathregex.replacement=/bar/$1"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-replacepathregex.replacepathregex.regex": "^/foo/(.*)",
