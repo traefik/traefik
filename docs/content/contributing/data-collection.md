@@ -43,6 +43,7 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
 - an **anonymized version** of the static configuration (token, user name, password, URL, IP, domain, email, etc, are removed).
 
 !!! info
+    
     - We do not collect the dynamic configuration information (routers & services).
     - We do not collect these data to run advertising programs.
     - We do not sell these data to third-parties.

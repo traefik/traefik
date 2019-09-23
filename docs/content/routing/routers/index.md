@@ -262,7 +262,6 @@ The middlewares will take effect only if the rule matches, and before forwarding
     
     Middlewares are applied in the same order as their declaration in **router**.
 
-
 ??? example "With a [middleware](../../middlewares/overview.md) -- using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
