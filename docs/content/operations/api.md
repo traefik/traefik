@@ -97,7 +97,7 @@ http:
 
 Enable the API in `insecure` mode, which means that the API will be available directly on the entryPoint named `traefik`.
 
-!!! Note
+!!! info
     If the entryPoint named `traefik` is not configured, it will be automatically created on port 8080.
 
 ```toml tab="File (TOML)"
@@ -138,7 +138,7 @@ api:
 
 _Optional, Default=false_
 
-Enable additional endpoints for debugging and profiling, served under `/debug/`.
+Enable additional [endpoints](./api.md#endpoints) for debugging and profiling, served under `/debug/`.
 
 ```toml tab="File (TOML)"
 [api]

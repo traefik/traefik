@@ -47,10 +47,7 @@ spec:
           servicePort: 80
 ```
 
-## Provider Configuration Options
-
-!!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration/overview.md) configuration reference.
+## Provider Configuration
 
 ### `endpoint`
 

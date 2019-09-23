@@ -385,7 +385,7 @@ http:
           key: "path/to/foo.key"
 ```
 
-!!! Note
+!!! info
     For security reasons, the field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
 
 #### `tls.key`
@@ -454,7 +454,7 @@ http:
           key: "path/to/foo.key"
 ```
 
-!!! Note
+!!! info
     For security reasons, the field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
 
 #### `tls.insecureSkipVerify`

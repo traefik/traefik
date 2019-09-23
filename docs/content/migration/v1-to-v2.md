@@ -8,7 +8,7 @@ which require one to update their configuration when they migrate from v1 to v2.
 The goal of this page is to recapitulate all of these changes, and in particular to give examples, 
 feature by feature, of how the configuration looked like in v1, and how it now looks like in v2.
 
-!!! Note "Migration Helper"
+!!! info "Migration Helper"
     
     We created a tool to help during the migration: [traefik-migration-tool](https://github.com/containous/traefik-migration-tool)
 
@@ -16,6 +16,7 @@ feature by feature, of how the configuration looked like in v1, and how it now l
 
     - convert `Ingress` to Traefik `IngressRoute` resources.
     - convert `acme.json` file from v1 to v2 format.
+    - migrate the static configuration contained in the file `traefik.toml` to a Traefik v2 file.
 
 ## Frontends and Backends Are Dead... <br/>... Long Live Routers, Middlewares, and Services
 
@@ -829,7 +830,7 @@ As the dashboard access is now secured by default you can either:
 * define a  [specific router](../operations/api.md#configuration) with the `api@internal` service and one authentication middleware like the following example
 * or use the [unsecure](../operations/api.md#insecure) option of the API
 
-!!! note "Dashboard with k8s and dedicated router"
+!!! info "Dashboard with k8s and dedicated router"
 
     As `api@internal` is not a Kubernetes service, you have to use the file provider or the `insecure` API option.
     

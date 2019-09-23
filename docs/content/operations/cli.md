@@ -26,6 +26,8 @@ traefik [--flag=flag_argument] [-f [flag_argument]]
 traefik [--flag[=true|false| ]] [-f [true|false| ]]
 ```
 
+All flags are documented in the [(static configuration) CLI reference](../reference/static-configuration/cli.md).
+
 !!! info "Flags are case insensitive."
 
 ### `healthcheck`
@@ -36,8 +38,8 @@ Its exit status is `0` if Traefik is healthy and `1` otherwise.
 This can be used with Docker [HEALTHCHECK](https://docs.docker.com/engine/reference/builder/#healthcheck) instruction
 or any other health check orchestration mechanism.
 
-!!! note
-    The [`ping` endpoint](../ping/) must be enabled to allow the `healthcheck` command to call `/ping`.
+!!! info
+    The [`ping` endpoint](../operations/ping.md) must be enabled to allow the `healthcheck` command to call `/ping`.
 
 Usage:
 

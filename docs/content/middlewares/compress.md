@@ -51,10 +51,10 @@ http:
       compress: {}
 ```
 
-## Notes
-
-Responses are compressed when:
-
-* The response body is larger than `1400` bytes.
-* The `Accept-Encoding` request header contains `gzip`.
-* The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
+!!! info
+    
+    Responses are compressed when:
+    
+    * The response body is larger than `1400` bytes.
+    * The `Accept-Encoding` request header contains `gzip`.
+    * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
