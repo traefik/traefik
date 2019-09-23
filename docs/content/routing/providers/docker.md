@@ -446,7 +446,8 @@ You can declare TCP Routers and/or Services using labels.
     ```
 
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.terminationdelay`"
-    <!-- TODO doc terminationdelay in TCP services page -->
+        
+    See [termination delay](../services/index.md#termination-delay) for more information.
     
     ```yaml
     - "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100"
