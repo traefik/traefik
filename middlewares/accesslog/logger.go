@@ -219,18 +219,15 @@ func (l *LogHandler) Close() error {
 // Rotate closes and reopens the log file to allow for rotation
 // by an external source.
 func (l *LogHandler) Rotate() error {
-	var err error
-
 	if l.config.FilePath == "" {
 		return nil
 	}
 
 	if l.file != nil {
-		defer func(f io.Closer) {
-			f.Close()
-		}(l.file)
+		defer func(f io.Closer) { _ = f.Close() }(l.file)
 	}
 
+	var err error
 	l.file, err = os.OpenFile(l.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
 		return err
