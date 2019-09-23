@@ -251,7 +251,7 @@ http:
 !!! warning
     If the custom header name is the same as one header name of the request or response, it will be replaced.
 
-!!! note
+!!! note ""
     The detailed documentation for the security headers can be found in [unrolled/secure](https://github.com/unrolled/secure#available-options).
 
 ### `customRequestHeaders`

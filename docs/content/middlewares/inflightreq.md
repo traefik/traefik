@@ -119,7 +119,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 - If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP will be empty.
 - `depth` is ignored if its value is lesser than or equal to 0.
     
-!!! note "Example of Depth & X-Forwarded-For"
+!!! example "Example of Depth & X-Forwarded-For"
 
     If `depth` was equal to 2, and the request `X-Forwarded-For` header was `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP would be `"10.0.0.1"` (at depth 4) but the IP used as the criterion would be `"12.0.0.1"` (`depth=2`).
 
@@ -180,7 +180,7 @@ http:
 
 !!! important "If `depth` is specified, `excludedIPs` is ignored."
 
-!!! note "Example of ExcludedIPs & X-Forwarded-For"
+!!! example "Example of ExcludedIPs & X-Forwarded-For"
 
     | `X-Forwarded-For`                       | `excludedIPs`         | clientIP     |
     |-----------------------------------------|-----------------------|--------------|

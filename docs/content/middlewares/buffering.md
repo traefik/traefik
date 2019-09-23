@@ -244,7 +244,7 @@ http:
 
 You can have the Buffering middleware replay the request with the help of the `retryExpression` option.
 
-!!! example "Retries once in case of a network error"
+??? example "Retries once in case of a network error"
     
     ```yaml tab="Docker"
     labels:

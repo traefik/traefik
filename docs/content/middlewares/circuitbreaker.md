@@ -12,14 +12,19 @@ When your system becomes unhealthy, the circuit becomes open and the requests ar
 
 To assess if your system is healthy, the circuit breaker constantly monitors the services. 
 
-!!! Note
+!!! note ""
 
     - The CircuitBreaker only analyses what happens _after_ it is positioned in the middleware chain. What happens _before_ has no impact on its state.
     - The CircuitBreaker only affects the routers that use it. Routers that don't use the CircuitBreaker won't be affected by its state.
 
 !!! important
 
-    Each router will eventually gets its own instance of a given circuit breaker. If two different routers refer to the same circuit breaker definition, they will get one instance each. It means that one circuit breaker can be open while the other stays close: their state is not shared. This is the expected behavior, we want you to be able to define what makes a service healthy without having to declare a circuit breaker for each route.
+    Each router will eventually gets its own instance of a given circuit breaker.
+    
+    If two different routers refer to the same circuit breaker definition, they will get one instance each.
+    It means that one circuit breaker can be open while the other stays close: their state is not shared.
+    
+    This is the expected behavior, we want you to be able to define what makes a service healthy without having to declare a circuit breaker for each route.
 
 ## Configuration Examples
 
@@ -117,7 +122,7 @@ The `ResponseCodeRatio` accepts four parameters, `from`, `to`, `dividedByFrom`, 
 
 The operation that will be computed is sum(`to` -> `from`) / sum (`dividedByFrom` -> `dividedByTo`).
 
-!!! Note
+!!! note ""
     If sum (`dividedByFrom` -> `dividedByTo`) equals 0, then `ResponseCodeRatio` returns 0.
     
     `from`is inclusive, `to` is exclusive. 
@@ -130,7 +135,7 @@ You can trigger the circuit breaker when a given proportion of your requests bec
 
 For example, the expression `LatencyAtQuantileMS(50.0) > 100` will trigger the circuit breaker when the median latency (quantile 50) reaches 100MS.
 
-!!! Note
+!!! note ""
 
     You must provide a float number (with the trailing .0) for the quantile value
  
@@ -155,14 +160,16 @@ Here is the list of supported operators:
 - Lesser or equal than (`<=`)
 - Equal (`==`)
 - Not Equal (`!=`)
- 
+
 ### Fallback mechanism
 
-The fallback mechanism returns a `HTTP 503 Service Unavailable` to the client (instead of calling the target service). This behavior cannot be configured. 
+The fallback mechanism returns a `HTTP 503 Service Unavailable` to the client (instead of calling the target service).
+This behavior cannot be configured. 
 
 ### `CheckPeriod`
 
-The interval used to evaluate `expression` and decide if the state of the circuit breaker must change. By default, `CheckPeriod` is 100Ms. This value cannot be configured.
+The interval used to evaluate `expression` and decide if the state of the circuit breaker must change.
+By default, `CheckPeriod` is 100Ms. This value cannot be configured.
 
 ### `FallbackDuration`
 

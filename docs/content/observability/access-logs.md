@@ -32,7 +32,7 @@ By default, logs are written using the Common Log Format (CLF).
 To write logs in JSON, use `json` in the `format` option.
 If the given format is unsupported, the default (CLF) is used instead.
 
-!!! note "Common Log Format"
+!!! info "Common Log Format"
     
     ```html
     <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms 
@@ -174,7 +174,7 @@ accessLog:
 --accesslog.fields.headers.names.Content-Type="keep"
 ```
 
-??? list "Available Fields"
+??? info "Available Fields"
 
     | Field                   | Description                                                                                                                                                         |
     |-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -214,5 +214,5 @@ accessLog:
 Traefik will close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
 This allows the logs to be rotated and processed by an external program, such as `logrotate`.
 
-!!! note
+!!! warning
     This does not work on Windows due to the lack of USR signals.

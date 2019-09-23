@@ -78,7 +78,7 @@ http:
   # ... definition of error-handler-service and my-service
 ```
 
-!!! note 
+!!! note "" 
     In this example, the error page URL is based on the status code (`query=/{status}.html`).
 
 ## Configuration Options
@@ -89,7 +89,7 @@ The `status` that will trigger the error page.
 
 The status code ranges are inclusive (`500-599` will trigger with every code between `500` and `599`, `500` and `599` included).
  
-!!! Note
+!!! note "" 
 
     You can define either a status code like `500` or ranges with a syntax like `500-599`.
 
@@ -97,7 +97,7 @@ The status code ranges are inclusive (`500-599` will trigger with every code bet
 
 The service that will serve the new requested error page.
 
-!!! Note
+!!! note "" 
     In kubernetes, you need to reference a kubernetes service instead of a traefik service.
 
 ### `query`
