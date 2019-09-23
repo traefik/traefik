@@ -56,7 +56,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
     ```
 
-!!! important "The certificates resolver must [referenced](../routing/routers/index.md#certresolver) by a router to be used."
+!!! important "The certificates resolver must be [referenced](../routing/routers/index.md#certresolver) by a router to be used."
 
 ??? note "Configuration Reference"
     
@@ -86,7 +86,7 @@ If there are less than 30 days remaining before the certificate expires, Traefik
 
 ## The Different ACME Challenges
 
-!!! important "The certificates resolver must [referenced](../routing/routers/index.md#certresolver) by a router to be used."
+!!! important "The certificates resolver must be [referenced](../routing/routers/index.md#certresolver) by a router to be used."
 
 ### `tlsChallenge`
 
