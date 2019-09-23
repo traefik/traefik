@@ -86,7 +86,7 @@ If there are less than 30 days remaining before the certificate expires, Traefik
 
 ## The Different ACME Challenges
 
-!!! important "The certificates resolver must be [referenced](../routing/routers/index.md#certresolver) by a router to be used."
+!!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
 ### `tlsChallenge`
 
