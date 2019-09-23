@@ -7,9 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/docker/docker/integration-cli/checker"
-
 	"github.com/containous/traefik/v2/integration/try"
+	"github.com/docker/docker/integration-cli/checker"
 	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
 )
