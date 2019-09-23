@@ -418,13 +418,13 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
       [http.routers.router0]
         rule = "Host(`foo.com`)"
         service = "my-service"
-        entrypoints = "web"
+        entrypoints = ["web"]
         middlewares = ["redirect"]
     
     [http.routers.router1]
         rule = "Host(`foo.com`)"
         service = "my-service"
-        entrypoints = "web-secure"
+        entrypoints = ["web-secure"]
         [http.routers.router1.tls]
         
     [http.services]
