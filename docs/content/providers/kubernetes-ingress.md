@@ -49,7 +49,6 @@ spec:
 
 ## Provider Configuration
 
-If you're in a hurry, maybe you'd rather go through the [static configuration](../reference/static-configuration/overview.md) reference.
 
 ### `endpoint`
 

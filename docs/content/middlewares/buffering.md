@@ -64,7 +64,7 @@ http:
 
 With the `maxRequestBodyBytes` option, you can configure the maximum allowed body size for the request (in Bytes).
 
-If the request exceeds the allowed size, the request is not forwarded to the service and the client gets a `413 (Request Entity Too Large)` response.
+If the request exceeds the allowed size, it is not forwarded to the service and the client gets a `413 (Request Entity Too Large)` response.
 
 ```yaml tab="Docker"
 labels:
@@ -286,7 +286,8 @@ You can have the Buffering middleware replay the request with the help of the `r
             retryExpression: "IsNetworkError() && Attempts() < 2"
     ```
 
-Available functions for the retry expression are:
+
+The retry expression is defined as a logical combination of the functions below with the operators AND (`&&`) and OR (`||`). At least one function is required:
 
 - `Attempts()` number of attempts (the first one counts)
 - `ResponseCode()` response code of the service
