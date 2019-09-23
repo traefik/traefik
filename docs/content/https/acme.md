@@ -303,8 +303,8 @@ certificatesResolvers:
       dnsChallenge:
         # ...
         resolvers:
-        - "1.1.1.1:53"
-        - "8.8.8.8:53"
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
 ```
 
 ```bash tab="CLI"

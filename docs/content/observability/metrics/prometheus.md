@@ -32,10 +32,10 @@ Buckets for latency metrics.
 metrics:
   prometheus:
     buckets:
-    - 0.1
-    - 0.3
-    - 1.2
-    - 5.0
+      - 0.1
+      - 0.3
+      - 1.2
+      - 5.0
 ```
 
 ```bash tab="CLI"

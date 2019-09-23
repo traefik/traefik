@@ -11,7 +11,7 @@ To proactively prevent services from being overwhelmed with high load, a limit o
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```yaml tab="Kubernetes"
@@ -33,7 +33,7 @@ spec:
 ```yaml tab="Rancher"
 # Limiting to 10 simultaneous connections
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```toml tab="File (TOML)"
@@ -61,7 +61,7 @@ The middleware will return an `HTTP 429 Too Many Requests` if there are already 
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```yaml tab="Kubernetes"
@@ -83,7 +83,7 @@ spec:
 ```yaml tab="Rancher"
 # Limiting to 10 simultaneous connections
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```toml tab="File (TOML)"
@@ -131,7 +131,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
 ```
 
 ```yaml tab="Kubernetes"
@@ -148,7 +148,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
 ```
 
 ```json tab="Marathon"
@@ -192,7 +192,7 @@ http:
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="Kubernetes"
@@ -209,15 +209,15 @@ spec:
         - 192.168.1.7
 ```
 
-```yaml tab="Rancher"
-labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
-```
-
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
 }
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```toml tab="File (TOML)"
@@ -235,8 +235,8 @@ http:
         sourceCriterion:
           ipStrategy:
             excludedIPs:
-            - "127.0.0.1/32"
-            - "192.168.1.7"
+              - "127.0.0.1/32"
+              - "192.168.1.7"
 ```
 
 #### `sourceCriterion.requestHeaderName`
@@ -245,7 +245,7 @@ Requests having the same value for the given header are grouped as coming from t
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
 
 ```yaml tab="Kubernetes"
@@ -261,7 +261,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
 
 ```json tab="Marathon"
@@ -292,7 +292,7 @@ Whether to consider the request host as the source.
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -308,7 +308,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
 
 ```json tab="Marathon"

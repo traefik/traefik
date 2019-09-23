@@ -262,6 +262,119 @@ More information about available middlewares in the dedicated [middlewares secti
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
 
+### TCP
+
+You can declare TCP Routers and/or Services using labels.
+
+??? example "Declaring TCP Routers and Services"
+
+    ```yaml
+       services:
+         my-container:
+           # ...
+           labels:
+             - "traefik.tcp.routers.my-router.rule=HostSNI(`my-host.com`)"
+             - "traefik.tcp.routers.my-router.tls=true"
+             - "traefik.tcp.services.my-service.loadbalancer.server.port=4123"
+    ```
+
+!!! warning "TCP and HTTP"
+
+    If you declare a TCP Router/Service, it will prevent Traefik from automatically creating an HTTP Router/Service (like it does by default if no TCP Router/Service is defined).
+    You can declare both a TCP Router/Service and an HTTP Router/Service for the same container (but you have to do so manually).
+
+#### TCP Routers
+
+??? info "`traefik.tcp.routers.<router_name>.entrypoints`"
+    
+    See [entry points](../routers/index.md#entrypoints_1) for more information.
+    
+    ```yaml
+    - "traefik.tcp.routers.mytcprouter.entrypoints=ep1,ep2"
+    ```
+
+??? info "`traefik.tcp.routers.<router_name>.rule`"
+    
+    See [rule](../routers/index.md#rule_1) for more information.
+    
+    ```yaml
+    - "traefik.tcp.routers.mytcprouter.rule=HostSNI(`myhost.com`)"
+    ```
+
+??? info "`traefik.tcp.routers.<router_name>.service`"
+    
+    See [service](../routers/index.md#services) for more information.
+    
+    ```yaml
+    - "traefik.tcp.routers.mytcprouter.service=myservice"
+    ```
+
+??? info "`traefik.tcp.routers.<router_name>.tls`"
+    
+    See [TLS](../routers/index.md#tls_1) for more information.
+    
+    ```yaml
+    - "traefik.tcp.routers.mytcprouter.tls=true"
+    ```
+
+??? info "`traefik.tcp.routers.<router_name>.tls.certresolver`"
+    
+    See [certResolver](../routers/index.md#certresolver_1) for more information.
+    
+    ```yaml
+    - "traefik.tcp.routers.mytcprouter.tls.certresolver=myresolver"
+    ```
+
+??? info "`traefik.tcp.routers.<router_name>.tls.domains[n].main`"
+    
+    See [domains](../routers/index.md#domains_1) for more information.
+    
+    ```yaml
+    - "traefik.tcp.routers.mytcprouter.tls.domains[0].main=foobar.com"
+    ```
+
+??? info "`traefik.tcp.routers.<router_name>.tls.domains[n].sans`"
+    
+    See [domains](../routers/index.md#domains_1) for more information.
+    
+    ```yaml
+    - "traefik.tcp.routers.mytcprouter.tls.domains[0].sans=test.foobar.com,dev.foobar.com"
+    ```
+
+??? info "`traefik.tcp.routers.<router_name>.tls.options`"
+    
+    See [options](../routers/index.md#options_1) for more information.
+    
+    ```yaml
+    - "traefik.tcp.routers.mytcprouter.tls.options=mysoptions"
+    ```
+
+??? info "`traefik.tcp.routers.<router_name>.tls.passthrough`"
+    
+    See [TLS](../routers/index.md#tls_1) for more information.
+    
+    ```yaml
+    - "traefik.tcp.routers.mytcprouter.tls.passthrough=true"
+    ```
+
+#### TCP Services
+
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.server.port`"
+    
+    Registers a port of the application.
+    
+    ```yaml
+    - "traefik.tcp.services.mytcpservice.loadbalancer.server.port=423"
+    ```
+
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.terminationdelay`"
+        
+    See [termination delay](../services/index.md#termination-delay) for more information.
+    
+    ```yaml
+    - "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100"
+    ```
+
 ### Specific Provider Options
 
 #### `traefik.enable`

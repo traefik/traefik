@@ -34,17 +34,17 @@ metadata:
 
 spec:
   rules:
-  - host: foo.com
-    http:
-      paths:
-      - path: /bar
-        backend:
-          serviceName: service1
-          servicePort: 80
-      - path: /foo
-        backend:
-          serviceName: service1
-          servicePort: 80
+    - host: foo.com
+      http:
+        paths:
+          - path: /bar
+            backend:
+              serviceName: service1
+              servicePort: 80
+          - path: /foo
+            backend:
+              serviceName: service1
+              servicePort: 80
 ```
 
 ## Provider Configuration
@@ -165,8 +165,8 @@ _Optional, Default: all namespaces (empty array)_
 providers:
   kubernetesIngress:
     namespaces:
-    - "default"
-    - "production"
+      - "default"
+      - "production"
     # ...
 ```
 

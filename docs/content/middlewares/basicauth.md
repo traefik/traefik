@@ -16,7 +16,7 @@ The BasicAuth middleware is a quick way to restrict access to your services to k
 # To create user:password pair, it's possible to use this command:
 # echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g
 labels:
-- "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+  - "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="Kubernetes"
@@ -39,7 +39,7 @@ spec:
 ```yaml tab="Rancher"
 # Declaring the user list
 labels:
-- "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+  - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```toml tab="File (TOML)"
@@ -59,8 +59,8 @@ http:
     test-auth:
       basicAuth:
         users:
-        - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" 
-        - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+          - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" 
+          - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ## Configuration Options
@@ -89,7 +89,7 @@ The `users` option is an array of authorized users. Each user will be declared u
 # To create user:password pair, it's possible to use this command:
 # echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g
 labels:
-- "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+  - "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="Kubernetes"
@@ -124,7 +124,7 @@ data:
 ```yaml tab="Rancher"
 # Declaring the user list
 labels:
-- "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+  - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```toml tab="File (TOML)"
@@ -144,8 +144,8 @@ http:
     test-auth:
       basicAuth:
         users:
-        - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" 
-        - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+          - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" 
+          - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ### `usersFile`
@@ -161,7 +161,7 @@ The file content is a list of `name:encoded-password`.
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.basicauth.usersfile=/path/to/my/usersfile"
+  - "traefik.http.middlewares.test-auth.basicauth.usersfile=/path/to/my/usersfile"
 ```
 
 ```yaml tab="Kubernetes"
@@ -224,7 +224,7 @@ You can customize the realm for the authentication with the `realm` option. The 
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.basicauth.realm=MyRealm"
+  - "traefik.http.middlewares.test-auth.basicauth.realm=MyRealm"
 ```
 
 ```yaml tab="Kubernetes"
@@ -268,7 +268,7 @@ You can define a header field to store the authenticated user using the `headerF
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.my-auth.basicauth.headerField=X-WebAuth-User"
+  - "traefik.http.middlewares.my-auth.basicauth.headerField=X-WebAuth-User"
 ```
 
 ```yaml tab="Kubernetes"
@@ -309,7 +309,7 @@ Set the `removeHeader` option to `true` to remove the authorization header befor
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.basicauth.removeheader=true"
+  - "traefik.http.middlewares.test-auth.basicauth.removeheader=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -330,7 +330,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-auth.basicauth.removeheader=true"
+  - "traefik.http.middlewares.test-auth.basicauth.removeheader=true"
 ```
 
 ```toml tab="File (TOML)"

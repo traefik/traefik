@@ -110,13 +110,13 @@ You can define them using a toml file, CLI arguments, or a key-value store.
         proxyProtocol:
           insecure: true
           trustedIPs:
-          - "127.0.0.1"
-          - "192.168.0.1"
+            - "127.0.0.1"
+            - "192.168.0.1"
         forwardedHeaders:
           insecure: true
           trustedIPs:
-          - "127.0.0.1"
-          - "192.168.0.1"
+            - "127.0.0.1"
+            - "192.168.0.1"
     ```
     
     ```bash tab="CLI"
@@ -158,8 +158,8 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
         address: ":80"
         forwardedHeaders:
           trustedIPs:
-          - "127.0.0.1/32"
-          - "192.168.1.7"
+            - "127.0.0.1/32"
+            - "192.168.1.7"
     ```
     
     ```bash tab="CLI"
@@ -421,8 +421,8 @@ If the Proxy Protocol header is passed, then the version is determined automatic
         address: ":80"
         proxyProtocol:
           trustedIPs:
-          - "127.0.0.1/32"
-          - "192.168.1.7"
+            - "127.0.0.1/32"
+            - "192.168.1.7"
     ```
     
     ```bash tab="CLI"

@@ -15,7 +15,7 @@ To be clear, as soon as the server answers, the middleware stops retrying, regar
 ```yaml tab="Docker"
 # Retry to send request 4 times
 labels:
-- "traefik.http.middlewares.test-retry.retry.attempts=4"
+  - "traefik.http.middlewares.test-retry.retry.attempts=4"
 ```
 
 ```yaml tab="Kubernetes"
@@ -38,7 +38,7 @@ spec:
 ```yaml tab="Rancher"
 # Retry to send request 4 times
 labels:
-- "traefik.http.middlewares.test-retry.retry.attempts=4"
+  - "traefik.http.middlewares.test-retry.retry.attempts=4"
 ```
 
 ```toml tab="File (TOML)"

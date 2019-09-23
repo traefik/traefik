@@ -14,7 +14,7 @@ Otherwise, the response from the authentication server is returned.
 ```yaml tab="Docker"
 # Forward authentication to authserver.com
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+  - "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
 ```
 
 ```yaml tab="Kubernetes"
@@ -37,7 +37,7 @@ spec:
 ```yaml tab="Rancher"
 # Forward authentication to authserver.com
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+  - "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
 ```
 
 ```toml tab="File (TOML)"
@@ -64,7 +64,7 @@ The `address` option defines the authentication server address.
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+  - "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
 ```
 
 ```yaml tab="Kubernetes"
@@ -85,7 +85,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+  - "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
 ```
 
 ```toml tab="File (TOML)"
@@ -108,7 +108,7 @@ Set the `trustForwardHeader` option to `true` to trust all the existing `X-Forwa
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
+  - "traefik.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -130,7 +130,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
+  - "traefik.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
 ```
 
 ```toml tab="File (TOML)"
@@ -155,7 +155,7 @@ The `authResponseHeaders` option is the list of the headers to copy from the aut
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
+  - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
 ```
 
 ```yaml tab="Kubernetes"
@@ -167,8 +167,8 @@ spec:
   forwardAuth:
     address: https://authserver.com/auth
     authResponseHeaders:
-    - X-Auth-User
-    - X-Secret
+      - X-Auth-User
+      - X-Secret
 ```
 
 ```json tab="Marathon"
@@ -179,7 +179,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
+  - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
 ```
 
 ```toml tab="File (TOML)"
@@ -196,8 +196,8 @@ http:
       forwardAuth:
         address: "https://authserver.com/auth"
         authResponseHeaders:
-        - "X-Auth-User"
-        - "X-Secret"
+          - "X-Auth-User"
+          - "X-Secret"
 ```
 
 ### `tls`
@@ -210,7 +210,7 @@ Certificate Authority used for the secured connection to the authentication serv
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
 ```
 
 ```yaml tab="Kubernetes"
@@ -243,7 +243,7 @@ data:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
 ```
 
 ```toml tab="File (TOML)"
@@ -275,7 +275,7 @@ Requires `tls.ca` to be defined.
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.tls.caOptional=true"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.caOptional=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -298,7 +298,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.tls.caOptional=true"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.caOptional=true"
 ```
 
 ```toml tab="File (TOML)"
@@ -325,8 +325,8 @@ Public certificate used for the secured connection to the authentication server.
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="Kubernetes"
@@ -361,8 +361,8 @@ data:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
 ```
 
 ```toml tab="File (TOML)"
@@ -394,8 +394,8 @@ Private certificate used for the secure connection to the authentication server.
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="Kubernetes"
@@ -430,8 +430,8 @@ data:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
 ```
 
 ```toml tab="File (TOML)"
@@ -463,7 +463,7 @@ If `insecureSkipVerify` is `true`, TLS for the connection to authentication serv
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.tls.insecureSkipVerify=true"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.insecureSkipVerify=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -485,7 +485,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-auth.forwardauth.tls.InsecureSkipVerify=true"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.InsecureSkipVerify=true"
 ```
 
 ```toml tab="File (TOML)"

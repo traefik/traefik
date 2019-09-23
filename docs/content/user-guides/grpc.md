@@ -143,7 +143,7 @@ entryPoints:
 serversTransport:
   # For secure connection on backend.local
   rootCAs:
-  - ./backend.cert
+    - ./backend.cert
 
 providers:
   file:

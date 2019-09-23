@@ -11,8 +11,8 @@ The RateLimit middleware ensures that services will receive a _fair_ number of r
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 50 requests is allowed.
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
 ```
 
 ```yaml tab="Kubernetes"
@@ -39,8 +39,8 @@ spec:
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 50 requests is allowed.
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
 ```
 
 ```toml tab="File (TOML)"
@@ -72,7 +72,7 @@ It defaults to 0, which means no rate limiting.
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
 ```yaml tab="Kubernetes"
@@ -93,7 +93,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
 ```toml tab="File (TOML)"
@@ -117,7 +117,7 @@ It defaults to 1.
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
 ```
 
 ```yaml tab="Kubernetes"
@@ -138,7 +138,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
   		
 ```
 
@@ -187,7 +187,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="Kubernetes"
@@ -206,7 +206,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```json tab="Marathon"
@@ -230,8 +230,8 @@ http:
         sourceCriterion:
           ipStrategy:
             excludedIPs:
-            - "127.0.0.1/32"
-            - "192.168.1.7"
+              - "127.0.0.1/32"
+              - "192.168.1.7"
 ```
 
 `excludedIPs` tells Traefik to scan the `X-Forwarded-For` header and pick the first IP not in the list.
@@ -254,7 +254,7 @@ Requests having the same value for the given header are grouped as coming from t
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
 ```
 
 ```yaml tab="Kubernetes"
@@ -270,7 +270,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
 ```
 
 ```json tab="Marathon"
@@ -301,7 +301,7 @@ Whether to consider the request host as the source.
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -317,7 +317,7 @@ spec:
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
 ```
 
 ```json tab="Marathon"

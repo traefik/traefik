@@ -167,21 +167,21 @@ Then any router can refer to an instance of the wanted middleware.
           rule: "Host(`test.localhost`) && PathPrefix(`/test`)"
           service: my-service
           middlewares:
-          - auth
+            - auth
     
       services:
         my-service:
           loadBalancer:
             servers:
-            - url: http://10.10.10.1:80
-            - url: http://10.10.10.2:80
+              - url: http://10.10.10.1:80
+              - url: http://10.10.10.2:80
     
       middlewares:
         auth:
           basicAuth:
             users:
-            - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
-            - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+              - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+              - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
     ```
 
 ## TLS configuration is now dynamic, per router.
@@ -261,8 +261,8 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
         myTLSOptions:
           minVersion: VersionTLS13
           cipherSuites:
-          - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          - TLS_RSA_WITH_AES_256_GCM_SHA384
+            - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+            - TLS_RSA_WITH_AES_256_GCM_SHA384
     ```
     
     ```yaml tab="K8s IngressRoute"
@@ -290,11 +290,11 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`)
-        kind: Rule
-        services:
-        - name: whoami
-          port: 80
+        - match: Host(`bar.com`)
+          kind: Rule
+          services:
+            - name: whoami
+              port: 80
       tls:
         options: 
           name: mytlsoption
@@ -464,15 +464,15 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         router0:
           rule: "Host(`foo.com`)"
           entryPoints:
-          - web
+            - web
           middlewares:
-          - redirect
+            - redirect
           service: my-service
     
         router1:
           rule: "Host(`foo.com`)"
           entryPoints:
-          - web-secure
+            - web-secure
           service: my-service
           tls: {}
     
@@ -480,8 +480,8 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         my-service:
           loadBalancer:
             servers:
-            - url: http://10.10.10.1:80
-            - url: http://10.10.10.2:80
+              - url: http://10.10.10.1:80
+              - url: http://10.10.10.2:80
     
       middlewares:
         redirect:
@@ -490,8 +490,8 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     
     tls:
       certificates:
-      - certFile: /app/certs/server/server.pem
-        keyFile: /app/certs/server/server.pem
+        - certFile: /app/certs/server/server.pem
+          keyFile: /app/certs/server/server.pem
     ``` 
 
 ## ACME (LetsEncrypt)
