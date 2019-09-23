@@ -223,7 +223,7 @@ spec:
 !!! important "TLS 1.3"
 
     Cipher suites defined for TLS 1.2 and below cannot be used in TLS 1.3, and vice versa. (<https://tools.ietf.org/html/rfc8446>)  
-    With TLS 1.3, the cipher suites are not configurable (All supported cipher suites are safe in this case).
+    With TLS 1.3, the cipher suites are not configurable (all supported cipher suites are safe in this case).
     <https://golang.org/doc/go1.12#tls_1_3>
 
 ### Strict SNI Checking
