@@ -26,6 +26,8 @@ traefik [--flag=flag_argument] [-f [flag_argument]]
 traefik [--flag[=true|false| ]] [-f [true|false| ]]
 ```
 
+All flags are documented in the [CLI reference](../reference/static-configuration/cli.md).
+
 !!! info "Flags are case insensitive."
 
 ### `healthcheck`
