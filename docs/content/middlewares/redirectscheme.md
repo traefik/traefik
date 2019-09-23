@@ -37,7 +37,7 @@ spec:
 ```yaml tab="Rancher"
 # Redirect to https
 labels:
-- "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
 ```
 
 ```toml tab="File (TOML)"
