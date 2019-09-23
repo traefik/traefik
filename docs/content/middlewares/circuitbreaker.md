@@ -22,7 +22,7 @@ To assess if your system is healthy, the circuit breaker constantly monitors the
     Each router will eventually gets its own instance of a given circuit breaker.
     
     If two different routers refer to the same circuit breaker definition, they will get one instance each.
-    It means that one circuit breaker can be open while the other stays close: their state is not shared.
+    It means that one circuit breaker can be open while the other stays closed: their state is not shared.
     
     This is the expected behavior, we want you to be able to define what makes a service healthy without having to declare a circuit breaker for each route.
 
@@ -169,7 +169,7 @@ This behavior cannot be configured.
 ### `CheckPeriod`
 
 The interval used to evaluate `expression` and decide if the state of the circuit breaker must change.
-By default, `CheckPeriod` is 100Ms. This value cannot be configured.
+By default, `CheckPeriod` is 100ms. This value cannot be configured.
 
 ### `FallbackDuration`
 

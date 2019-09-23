@@ -45,8 +45,8 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
 !!! info
     
     - We do not collect the dynamic configuration information (routers & services).
-    - We do not collect these data to run advertising programs.
-    - We do not sell these data to third-parties.
+    - We do not collect this data to run advertising programs.
+    - We do not sell this data to third-parties.
 
 ### Example of Collected Data
 
