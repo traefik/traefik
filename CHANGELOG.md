@@ -70,6 +70,18 @@
 - Add the router priority documentation ([#5481](https://github.com/containous/traefik/pull/5481) by [jbdoumenjou](https://github.com/jbdoumenjou))
 - Improve the Migration Guide ([#5391](https://github.com/containous/traefik/pull/5391) by [jbdoumenjou](https://github.com/jbdoumenjou))
 
+## [v1.7.17](https://github.com/containous/traefik/tree/v1.7.17) (2019-09-23)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.16...v1.7.17)
+
+**Bug fixes:**
+- **[logs,middleware]** Avoid closing stdout when the accesslog handler is closed ([#5459](https://github.com/containous/traefik/pull/5459) by [nrwiersma](https://github.com/nrwiersma))
+- **[middleware]** Actually send header and code during WriteHeader, if needed ([#5404](https://github.com/containous/traefik/pull/5404) by [mpl](https://github.com/mpl))
+
+**Documentation:**
+- **[k8s]** Add note clarifying client certificate header ([#5362](https://github.com/containous/traefik/pull/5362) by [bradjones1](https://github.com/bradjones1))
+- **[webui]** Update docs links. ([#5412](https://github.com/containous/traefik/pull/5412) by [ldez](https://github.com/ldez))
+- Update Traefik image version. ([#5399](https://github.com/containous/traefik/pull/5399) by [ldez](https://github.com/ldez))
+
 ## [v2.0.0](https://github.com/containous/traefik/tree/v2.0.0) (2019-09-16)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha1...v2.0.0)
 
