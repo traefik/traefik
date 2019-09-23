@@ -1,0 +1,44 @@
+# Enable Consul Catalog Provider.
+[providers.consulcatalog]
+
+  # Expose Consul Catalog services by default in Traefik.
+  exposedByDefault = true
+
+  # Prefix used for accessing the Consul service metadata.
+  prefix = "traefik"
+
+  # Defines the polling interval (in seconds).
+  refreshSeconds = 15
+
+  # Defines default rule.
+  defaultRule = "foobar"
+
+  # Defines Consul Catalog Provider endpoint.
+  [providers.consulcatalog.endpoint]
+
+    # Defines the consul address endpoint.
+    address = "127.0.0.1:8500"
+
+    # Defines the scheme used.
+    scheme = "foobar"
+
+    # Defines the DC.
+    datacenter = "foobar"
+
+    # Defines the token.
+    token = "foobar"
+
+    # Defines the expoint wait time.
+    endpointWaitTime = "15s"
+
+    # Defines Consul Catalog Provider TLS endpoint.
+    [providers.consulcatalog.endpoint.tls]
+
+      # Defines Consul Catalog Provider endpoint.
+      caOptional = true
+
+      cert = "foobar"
+
+      key = "foobar"
+
+      insecureSkipVerify = true

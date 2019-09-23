@@ -77,9 +77,10 @@ nav:
       - 'Docker': 'providers/docker.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
       - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
+      - 'Consul Catalog': 'providers/consul-catalog.md'
+      - 'Marathon': 'providers/marathon.md'
       - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
-      - 'Marathon': 'providers/marathon.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'EntryPoints': 'routing/entrypoints.md'
@@ -88,8 +89,9 @@ nav:
       - 'Providers':
           - 'Docker': 'routing/providers/docker.md'
           - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
-          - 'Rancher': 'routing/providers/rancher.md'
+          - 'Consul Catalog': 'routing/providers/consul-catalog.md'
           - 'Marathon': 'routing/providers/marathon.md'
+          - 'Rancher': 'routing/providers/rancher.md'
   - 'HTTPS & TLS':
       - 'Overview': 'https/overview.md'
       - 'TLS': 'https/tls.md'
@@ -170,5 +172,6 @@ nav:
         - 'File': 'reference/dynamic-configuration/file.md'
         - 'Docker': 'reference/dynamic-configuration/docker.md'
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
+        - 'Consul Catalog': 'reference/dynamic-configuration/consul-catalog.md'
         - 'Marathon': 'reference/dynamic-configuration/marathon.md'
         - 'Rancher': 'reference/dynamic-configuration/rancher.md'
