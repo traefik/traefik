@@ -276,5 +276,5 @@ This option overrides the value of `exposedByDefault`.
 
 #### Port Lookup
 
-Traefik is now capable of detecting the port to use, by following the default rancher flow.
+Traefik is capable of detecting the port to use, by following the default rancher flow.
 That means, if you just expose lets say port `:1337` on the rancher ui, traefik will pick up this port and use it.

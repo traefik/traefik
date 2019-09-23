@@ -112,7 +112,7 @@ http:
         - url: http://private/whoami-service
 ```
 
-!!! info "The File Provider"
+!!! info ""
 
     In this example, we use the [file provider](../providers/file.md).
     Even if it is one of the least magical way of configuring Traefik, it explicitly describes every available notion.

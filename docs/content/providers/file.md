@@ -98,8 +98,7 @@ You can write these configuration elements:
 
 ## Provider Configuration
 
-!!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration/overview.md) and the [dynamic](../reference/dynamic-configuration/file.md) configuration references.
+If you're in a hurry, maybe you'd rather go through the [static configuration](../reference/static-configuration/overview.md) and the [dynamic configuration](../reference/dynamic-configuration/file.md) references.
     
 ### `filename`
 
@@ -168,8 +167,8 @@ providers:
 ### Go Templating
 
 !!! warning
-    Go Templating only works along with dedicated configuration files.
-    Templating does not work in the Traefik main configuration file.
+    Go Templating only works along with dedicated dynamic configuration files.
+    Templating does not work in the Traefik main static configuration file.
 
 Traefik allows using Go templating.  
 Thus, it's possible to define easily lot of routers, services and TLS certificates as described in the file `template-rules.toml` :

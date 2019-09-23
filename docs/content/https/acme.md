@@ -81,7 +81,7 @@ Traefik automatically tracks the expiry date of ACME certificates it generates.
 
 If there are less than 30 days remaining before the certificate expires, Traefik will attempt to renew it automatically.
 
-!!! info
+!!! info ""
     Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
 
 ## The Different ACME Challenges
@@ -162,7 +162,8 @@ when using the `HTTP-01` challenge, `certificatesResolvers.sample.acme.httpChall
     --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
     ```
 
-!!! info "Redirection is fully compatible with the `HTTP-01` challenge."
+!!! info ""
+    Redirection is fully compatible with the `HTTP-01` challenge.
 
 ### `dnsChallenge`
 

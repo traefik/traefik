@@ -89,7 +89,7 @@ The load balancers are able to load balance the requests between multiple instan
 Servers declare a single instance of your program.
 The `url` option point to a specific instance. 
 
-!!! info
+!!! info ""
     Paths in the servers' `url` have no effect. 
     If you want the requests to be sent to a specific path on your servers,
     configure your [`routers`](../routers/index.md) to use a corresponding [middleware](../../middlewares/overview.md) (e.g. the [AddPrefix](../../middlewares/addprefix.md) or [ReplacePath](../../middlewares/replacepath.md)) middlewares.

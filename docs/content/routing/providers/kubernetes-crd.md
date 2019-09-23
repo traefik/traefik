@@ -5,7 +5,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
 
 ## Resource Configuration
 
-If you're in a hurry, maybe you'd rather go through the [dynamic](../../reference/dynamic-configuration/kubernetes-crd.md) configuration reference.
+If you're in a hurry, maybe you'd rather go through the [dynamic configuration](../../reference/dynamic-configuration/kubernetes-crd.md) reference.
 
 ### Traefik IngressRoute definition
 

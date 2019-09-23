@@ -138,7 +138,7 @@ api:
 
 _Optional, Default=false_
 
-Enable additional endpoints for debugging and profiling, served under `/debug/`.
+Enable additional [endpoints](./api.md#endpoints) for debugging and profiling, served under `/debug/`.
 
 ```toml tab="File (TOML)"
 [api]

@@ -29,30 +29,6 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
           service: service-foo
     ```
 
-??? example "With a [middleware](../../middlewares/overview.md) -- using the [File Provider](../../providers/file.md)"
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [http.routers]
-      [http.routers.my-router]
-        rule = "Path(`/foo`)"
-        # declared elsewhere
-        middlewares = ["authentication"]
-        service = "service-foo"
-    ```
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    http:
-      routers:
-        my-router:
-          rule: "Path(`/foo`)"
-          # declared elsewhere
-          middlewares:
-          - authentication
-          service: service-foo
-    ```
-
 ??? example "Forwarding all (non-tls) requests on port 3306 to a database service"
     
     **Dynamic Configuration**
@@ -281,6 +257,35 @@ The table below lists all the available matchers:
 
 You can attach a list of [middlewares](../../middlewares/overview.md) to each HTTP router.
 The middlewares will take effect only if the rule matches, and before forwarding the request to the service.
+
+!!! tip "Middlewares order"
+    
+    Middlewares are applied in the same order as their declaration in **router**.
+
+
+??? example "With a [middleware](../../middlewares/overview.md) -- using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.my-router]
+        rule = "Path(`/foo`)"
+        # declared elsewhere
+        middlewares = ["authentication"]
+        service = "service-foo"
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      routers:
+        my-router:
+          rule: "Path(`/foo`)"
+          # declared elsewhere
+          middlewares:
+          - authentication
+          service: service-foo
+    ```
 
 ### Service
 
