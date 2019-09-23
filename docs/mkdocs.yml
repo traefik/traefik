@@ -87,9 +87,9 @@ nav:
       - 'Services': 'routing/services/index.md'
       - 'Providers':
           - 'Docker': 'routing/providers/docker.md'
+          - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
           - 'Rancher': 'routing/providers/rancher.md'
           - 'Marathon': 'routing/providers/marathon.md'
-          - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
   - 'HTTPS & TLS':
       - 'Overview': 'https/overview.md'
       - 'TLS': 'https/tls.md'
