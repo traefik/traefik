@@ -3,7 +3,7 @@ package accesslog
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -33,6 +33,19 @@ const (
 	JSONFormat = "json"
 )
 
+type noopCloser struct {
+	*os.File
+}
+
+func (n noopCloser) Write(p []byte) (int, error) {
+	return n.File.Write(p)
+}
+
+func (n noopCloser) Close() error {
+	// noop
+	return nil
+}
+
 type logHandlerParams struct {
 	logDataTable *LogData
 	crr          *captureRequestReader
@@ -43,7 +56,7 @@ type logHandlerParams struct {
 type LogHandler struct {
 	config         *types.AccessLog
 	logger         *logrus.Logger
-	file           *os.File
+	file           io.WriteCloser
 	mu             sync.Mutex
 	httpCodeRanges types.HTTPCodeRanges
 	logHandlerChan chan logHandlerParams
@@ -52,7 +65,7 @@ type LogHandler struct {
 
 // NewLogHandler creates a new LogHandler
 func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
-	file := ioutil.NopCloser(os.Stdout)
+	var file io.WriteCloser = noopCloser{os.Stdout}
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
 		if err != nil {
@@ -213,7 +226,7 @@ func (l *LogHandler) Rotate() error {
 	}
 
 	if l.file != nil {
-		defer func(f *os.File) {
+		defer func(f io.Closer) {
 			f.Close()
 		}(l.file)
 	}
