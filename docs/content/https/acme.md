@@ -56,7 +56,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
     ```
 
-!!! important "The certificates resolver must be [referenced](../routing/routers/index.md#certresolver) by a router to be used."
+!!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
 ??? note "Configuration Reference"
     
