@@ -253,6 +253,49 @@ The table below lists all the available matchers:
     For instance, `PathPrefix: /products` would match `/products` but also `/products/shoes` and `/products/shirts`.
     Since the path is forwarded as-is, your service is expected to listen on `/products`.
 
+### Priority
+
+By default, to avoid path overlap, routes will be sorted in descending order using rules length (the largest length has the highest priority).
+
+A priority value of 0 will be ignored, so the default value will be calculated (rules length).
+
+```toml
+[http.routers]
+  [http.routers.Router-1]
+    rule = "HostRegexp(`.*\.traefik\.com`)"
+    entryPoints = ["web"]
+    service = "service-1"
+  [http.routers.Router-2]
+    rule = "Host(`foobar.traefik.com`)"
+    entryPoints = ["web"]
+    service = "service-2"
+```
+
+| Name     | Rule                                 | length |
+|----------|--------------------------------------|--------|
+| Router-1 | ```HostRegexp(`.*\.traefik\.com`)``` | 30     |
+| Router-2 | ```Host(`foobar.traefik.com`)```     | 26     |
+
+The previous table shows that `Router-1` has a higher priority than `Router-2`.
+In this case, all requests with host `foobar.traefik.com` will be routed through `Router-1` instead of `Router-2`.
+To solve this issue, the priority must be setted.
+
+```toml
+[http.routers]
+  [http.routers.Router-1]
+    rule = "HostRegexp(`.*\.traefik\.com`)"
+    entryPoints = ["web"]
+    service = "service-1"
+    priority = 1
+  [http.routers.Router-2]
+    rule = "Host(`foobar.traefik.com`)"
+    entryPoints = ["web"]
+    priority = 2
+    service = "service-2"
+```
+
+In this configuration, the priority is configured to allow `Router-2` to handle requests with the `foobar.traefik.com` host.
+
 ### Middlewares
 
 You can attach a list of [middlewares](../../middlewares/overview.md) to each HTTP router.
