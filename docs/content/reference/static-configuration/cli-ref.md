@@ -286,7 +286,7 @@ Enable debug logging of generated configuration template. (Default: ```false```)
 Load dynamic configuration from one or more .toml or .yml files in a directory.
 
 `--providers.file.filename`:  
-Load dynamic configuration a file.
+Load dynamic configuration from a file.
 
 `--providers.file.watch`:  
 Watch provider. (Default: ```true```)

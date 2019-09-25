@@ -286,7 +286,7 @@ Enable debug logging of generated configuration template. (Default: ```false```)
 Load dynamic configuration from one or more .toml or .yml files in a directory.
 
 `TRAEFIK_PROVIDERS_FILE_FILENAME`:  
-Load dynamic configuration a file.
+Load dynamic configuration from a file.
 
 `TRAEFIK_PROVIDERS_FILE_WATCH`:  
 Watch provider. (Default: ```true```)
