@@ -142,7 +142,12 @@ func (p *Provider) createClient() (client.APIClient, error) {
 		apiVersion = SwarmAPIVersion
 	}
 
-	return client.NewClient(p.Endpoint, apiVersion, httpClient, httpHeaders)
+	return client.NewClientWithOpts(
+		client.WithHost(p.Endpoint),
+		client.WithVersion(apiVersion),
+		client.WithHTTPClient(httpClient),
+		client.WithHTTPHeaders(httpHeaders),
+	)
 }
 
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
