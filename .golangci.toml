@@ -40,7 +40,9 @@
     "scopelint",
     "gochecknoinits",
     "gochecknoglobals",
+    "godox", # manage TODO/FIXME
     "bodyclose", # Too many false-positive and panics.
+    "stylecheck", # skip because report issues related to some generated files.
   ]
 
 [issues]

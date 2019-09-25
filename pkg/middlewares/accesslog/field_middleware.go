@@ -45,7 +45,6 @@ func AddServiceFields(rw http.ResponseWriter, req *http.Request, next http.Handl
 	data.Core[ServiceAddr] = req.URL.Host
 
 	next.ServeHTTP(rw, req)
-
 }
 
 // AddOriginFields add origin fields

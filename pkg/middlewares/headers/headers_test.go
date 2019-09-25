@@ -327,7 +327,6 @@ func TestGetTracingInformation(t *testing.T) {
 
 	assert.Equal(t, "testing", name)
 	assert.Equal(t, tracing.SpanKindNoneEnum, trace)
-
 }
 
 func TestCORSResponses(t *testing.T) {

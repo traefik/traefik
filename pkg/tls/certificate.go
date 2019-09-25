@@ -140,7 +140,6 @@ func (c *Certificates) isEmpty() bool {
 
 // AppendCertificate appends a Certificate to a certificates map keyed by entrypoint.
 func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certificate, ep string) error {
-
 	certContent, err := c.CertFile.Read()
 	if err != nil {
 		return fmt.Errorf("unable to read CertFile : %v", err)
@@ -168,7 +167,6 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 				SANs = append(SANs, strings.ToLower(dnsName))
 			}
 		}
-
 	}
 	if parsedCert.IPAddresses != nil {
 		for _, ip := range parsedCert.IPAddresses {
@@ -176,7 +174,6 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 				SANs = append(SANs, strings.ToLower(ip.String()))
 			}
 		}
-
 	}
 	certKey := strings.Join(SANs, ",")
 

@@ -60,7 +60,6 @@ func TestInfluxDB(t *testing.T) {
 		influxDBRegistry.EntryPointReqsCounter().With("entrypoint", "test").Add(1)
 		influxDBRegistry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 		influxDBRegistry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
-
 	})
 
 	assertMessage(t, msgEntrypoint, expectedEntrypoint)

@@ -90,7 +90,6 @@ func getHelloClientGRPC() (helloworld.GreeterClient, func() error, error) {
 		return nil, func() error { return nil }, err
 	}
 	return helloworld.NewGreeterClient(conn), conn.Close, nil
-
 }
 
 func getHelloClientGRPCh2c() (helloworld.GreeterClient, func() error, error) {
@@ -99,7 +98,6 @@ func getHelloClientGRPCh2c() (helloworld.GreeterClient, func() error, error) {
 		return nil, func() error { return nil }, err
 	}
 	return helloworld.NewGreeterClient(conn), conn.Close, nil
-
 }
 
 func callHelloClientGRPC(name string, secure bool) (string, error) {

@@ -92,7 +92,6 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, service ran
 }
 
 func (p *Provider) buildServiceConfiguration(ctx context.Context, service rancherData, configuration *dynamic.HTTPConfiguration) error {
-
 	serviceName := service.Name
 
 	if len(configuration.Services) == 0 {
@@ -181,7 +180,6 @@ func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBa
 
 	loadBalancer.Servers = servers
 	return nil
-
 }
 
 func (p *Provider) addServers(ctx context.Context, service rancherData, loadBalancer *dynamic.ServersLoadBalancer) error {

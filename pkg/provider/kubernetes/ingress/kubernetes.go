@@ -221,7 +221,6 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 
 		var port int32
 		for _, subset := range endpoints.Subsets {
-
 			for _, p := range subset.Ports {
 				if portName == p.Name {
 					port = p.Port
@@ -352,7 +351,6 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 						Service: serviceName,
 						TLS:     &dynamic.RouterTLSConfig{},
 					}
-
 				}
 				conf.HTTP.Services[serviceName] = service
 			}
