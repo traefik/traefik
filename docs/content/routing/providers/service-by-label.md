@@ -1,6 +1,6 @@
 In general when configuring a Traefik provider,
-a service assigned to one (or several) router(s) must have been defined as well somewhere in the configuration
-for the routing to be functional.
+a service assigned to one (or several) router(s) must have been defined as well somewhere in the configuration for the routing to be functional.
+
 There are however exceptions when using label-based configurations:
 
 1. If a label defines a router (e.g. through a router Rule),
