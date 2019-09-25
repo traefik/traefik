@@ -324,7 +324,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	if middleware == nil {
-		return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
+		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
 	return tracing.Wrap(ctx, middleware), nil
