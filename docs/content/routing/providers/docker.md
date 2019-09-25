@@ -87,7 +87,7 @@ Attach labels to your containers and let Traefik do the rest!
 !!! info "Labels"
     
     - Labels are case insensitive.
-    - The complete list of labels can be found [the reference page](../../reference/dynamic-configuration/docker.md)
+    - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/docker.md).
 
 ### General
 
@@ -95,6 +95,32 @@ Traefik creates, for each container, a corresponding [service](../services/index
 
 The Service automatically gets a server per instance of the container,
 and the router automatically gets a rule defined by `defaultRule` (if no rule for it was defined in labels).
+
+#### Service definition
+
+--8<-- "content/routing/providers/service-by-label.md"
+
+??? example "Automatic service assignment with labels"
+
+    With labels in a compose file
+
+    ```yaml
+    labels:
+      - "traefik.http.routers.myproxy.rule=Host(`foo.com`)"
+      # service myservice gets automatically assigned to router myproxy
+      - "traefik.http.services.myservice.loadbalancer.server.port=80"
+    ```
+
+??? example "Automatic service creation and assignment with labels"
+
+    With labels in a compose file
+
+    ```yaml
+    labels:
+      # no service specified or defined and yet one gets automatically created
+      # and assigned to router myproxy.
+      - "traefik.http.routers.myproxy.rule=Host(`foo.com`)"
+    ```
 
 ### Routers
 
