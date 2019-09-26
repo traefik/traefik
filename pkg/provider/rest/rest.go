@@ -46,7 +46,6 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 		Methods(http.MethodPut).
 		Path("/api/providers/{provider}").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-
 			vars := mux.Vars(request)
 			if vars["provider"] != "rest" {
 				response.WriteHeader(http.StatusBadRequest)

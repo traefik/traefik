@@ -250,7 +250,6 @@ func createProvider(t *testing.T, test ProvideTestCase, watch bool) (*Provider, 
 	}
 
 	if len(test.filePath) > 0 {
-
 		var file *os.File
 		if watch {
 			var err error

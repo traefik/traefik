@@ -111,7 +111,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	logger := log.FromContext(ctx)
 
 	operation := func() error {
-
 		confg := marathon.NewDefaultConfig()
 		confg.URL = p.Endpoint
 		confg.EventsTransport = marathon.EventsTransportSSE

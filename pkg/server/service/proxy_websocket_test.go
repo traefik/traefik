@@ -139,7 +139,6 @@ func TestWebSocketEcho(t *testing.T) {
 
 		err = conn.Close()
 		require.NoError(t, err)
-
 	}))
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -169,7 +168,6 @@ func TestWebSocketEcho(t *testing.T) {
 
 	err = conn.Close()
 	require.NoError(t, err)
-
 }
 
 func TestWebSocketPassHost(t *testing.T) {
@@ -215,7 +213,6 @@ func TestWebSocketPassHost(t *testing.T) {
 
 				err = conn.Close()
 				require.NoError(t, err)
-
 			}))
 
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -246,7 +243,6 @@ func TestWebSocketPassHost(t *testing.T) {
 
 			err = conn.Close()
 			require.NoError(t, err)
-
 		})
 	}
 }

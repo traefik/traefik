@@ -77,8 +77,8 @@ func TestShutdownHTTPHijacked(t *testing.T) {
 		resp := http.Response{StatusCode: http.StatusOK}
 		err = resp.Write(conn)
 		require.NoError(t, err)
-
 	}))
+
 	entryPoint.switchRouter(router)
 
 	conn, err := net.Dial("tcp", entryPoint.listener.Addr().String())

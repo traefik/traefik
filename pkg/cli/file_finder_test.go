@@ -85,7 +85,6 @@ func TestFinder_Find(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-
 			finder := Finder{
 				BasePaths:  test.basePaths,
 				Extensions: []string{"toml", "yaml", "yml"},

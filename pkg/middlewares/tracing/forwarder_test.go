@@ -109,7 +109,6 @@ func TestNewForwarder(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-
 			newTracing, err := tracing.NewTracing("", test.spanNameLimit, test.tracing)
 			require.NoError(t, err)
 
