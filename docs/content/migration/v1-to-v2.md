@@ -413,7 +413,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     ##---------------------##
     
     ## dynamic configuration
-    # dymanic-conf.toml
+    # dynamic-conf.toml
     
     [http.routers]
       [http.routers.router0]
@@ -457,7 +457,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     ##---------------------##
     
     ## dynamic configuration
-    # dymanic-conf.yml
+    # dynamic-conf.yml
     
     http:
       routers:
@@ -883,12 +883,12 @@ As the dashboard access is now secured by default you can either:
     [api]
     
     [providers.file]
-        filename = "/dymanic-conf.toml"
+        filename = "/dynamic-conf.toml"
     
     ##---------------------##
     
     ## dynamic configuration
-    # dymanic-conf.toml
+    # dynamic-conf.toml
     
     [http.routers.api]
       rule = "Host(`traefik.docker.localhost`)"
@@ -915,12 +915,12 @@ As the dashboard access is now secured by default you can either:
     
     providers:
       file:
-        filename: /dymanic-conf.yaml
+        filename: /dynamic-conf.yaml
    
     ##---------------------##
     
     ## dynamic configuration
-    # dymanic-conf.yaml
+    # dynamic-conf.yaml
     
      http:
       routers:
