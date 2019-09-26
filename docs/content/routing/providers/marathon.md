@@ -10,7 +10,7 @@ See also [Marathon user guide](../../user-guides/marathon.md).
 !!! info "Labels"
     
     - Labels are case insensitive.
-    - The complete list of labels can be found [the reference page](../../reference/dynamic-configuration/marathon.md)
+    - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/marathon.md).
 
 ### General
 
@@ -18,6 +18,32 @@ Traefik creates, for each Marathon application, a corresponding [service](../ser
 
 The Service automatically gets a server per instance of the application,
 and the router automatically gets a rule defined by defaultRule (if no rule for it was defined in labels).
+
+#### Service definition
+
+--8<-- "content/routing/providers/service-by-label.md"
+
+??? example "Automatic service assignment with labels"
+
+    Service myservice gets automatically assigned to router myproxy.
+
+    ```json
+    labels: {
+      "traefik.http.routers.myproxy.rule": "Host(`foo.com`)",
+      "traefik.http.services.myservice.loadbalancer.server.port": "80"
+    }
+    ```
+
+??? example "Automatic service creation and assignment with labels"
+
+    No service specified or defined, and yet one gets automatically created.
+    and assigned to router myproxy.
+
+    ```json
+    labels: {
+      "traefik.http.routers.myproxy.rule": "Host(`foo.com`)"
+	}
+    ```
 
 ### Routers
 

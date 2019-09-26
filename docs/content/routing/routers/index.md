@@ -288,8 +288,14 @@ The middlewares will take effect only if the rule matches, and before forwarding
 
 ### Service
 
-You must attach a [service](../services/index.md) per router.
-Services are the target for the router.
+Each request must eventually be handled by a [service](../services/index.md),
+which is why each router definition should include a service target,
+which is basically where the request will be passed along to.
+
+In general, a service assigned to a router should have been defined,
+but there are exceptions for label-based providers.
+See the specific [docker](../providers/docker.md#service-definition), [rancher](../providers/rancher.md#service-definition),
+or [marathon](../providers/marathon.md#service-definition) documentation.
 
 !!! important "HTTP routers can only target HTTP services (not TCP services)."
 
