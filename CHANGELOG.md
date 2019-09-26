@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.18](https://github.com/containous/traefik/tree/v1.7.18) (2019-09-23)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.17...v1.7.18)
+
+**Bug fixes:**
+- **[go,security]** This version is compiled with [Go 1.12.10](https://groups.google.com/d/msg/golang-announce/cszieYyuL9Q/g4Z7pKaqAgAJ), which fixes a vulnerability in previous versions. See the [CVE](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-16276) about it for more details.
+
 ## [v1.7.17](https://github.com/containous/traefik/tree/v1.7.17) (2019-09-23)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.16...v1.7.17)
 
