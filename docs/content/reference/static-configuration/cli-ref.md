@@ -283,10 +283,10 @@ Watch provider. (Default: ```true```)
 Enable debug logging of generated configuration template. (Default: ```false```)
 
 `--providers.file.directory`:  
-Load configuration from one or more .toml files in a directory.
+Load dynamic configuration from one or more .toml or .yml files in a directory.
 
 `--providers.file.filename`:  
-Override default configuration template. For advanced users :)
+Load dynamic configuration from a file.
 
 `--providers.file.watch`:  
 Watch provider. (Default: ```true```)
