@@ -25,7 +25,7 @@ and the router automatically gets a rule defined by defaultRule (if no rule for 
 
 ??? example "Automatic service assignment with labels"
 
-    service myservice gets automatically assigned to router myproxy.
+    Service myservice gets automatically assigned to router myproxy.
 
     ```json
     labels: {
@@ -36,7 +36,7 @@ and the router automatically gets a rule defined by defaultRule (if no rule for 
 
 ??? example "Automatic service creation and assignment with labels"
 
-    no service specified or defined, and yet one gets automatically created
+    No service specified or defined, and yet one gets automatically created.
     and assigned to router myproxy.
 
     ```json
