@@ -253,6 +253,85 @@ The table below lists all the available matchers:
     For instance, `PathPrefix: /products` would match `/products` but also `/products/shoes` and `/products/shirts`.
     Since the path is forwarded as-is, your service is expected to listen on `/products`.
 
+### Priority
+
+To avoid path overlap, routes are sorted, by default, in descending order using rules length. The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
+
+A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
+
+??? info "How default priorities are computed"
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.Router-1]
+        rule = "HostRegexp(`.*\.traefik\.com`)"
+        # ...
+      [http.routers.Router-2]
+        rule = "Host(`foobar.traefik.com`)"
+        # ...
+    ```
+    
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    http:
+      routers:
+        Router-1:
+          rule: "HostRegexp(`.*\.traefik\.com`)"
+          # ...
+        Router-2:
+          rule: "Host(`foobar.traefik.com`)"
+          # ...
+    ```
+    
+    In this case, all requests with host `foobar.traefik.com` will be routed through `Router-1` instead of `Router-2`.
+    
+    | Name     | Rule                                 | Priority |
+    |----------|--------------------------------------|----------|
+    | Router-1 | ```HostRegexp(`.*\.traefik\.com`)``` | 30       |
+    | Router-2 | ```Host(`foobar.traefik.com`)```     | 26       |
+    
+    The previous table shows that `Router-1` has a higher priority than `Router-2`.
+    
+    To solve this issue, the priority must be setted.
+
+??? example "Set priorities -- using the [File Provider](../../providers/file.md)"
+    
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.Router-1]
+        rule = "HostRegexp(`.*\.traefik\.com`)"
+        entryPoints = ["web"]
+        service = "service-1"
+        priority = 1
+      [http.routers.Router-2]
+        rule = "Host(`foobar.traefik.com`)"
+        entryPoints = ["web"]
+        priority = 2
+        service = "service-2"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    http:
+      routers:
+        Router-1:
+          rule: "HostRegexp(`.*\.traefik\.com`)"
+          entryPoints:
+          - "web"
+          service: service-1
+          priority: 1
+        Router-2:
+          rule: "Host(`foobar.traefik.com`)"
+          entryPoints:
+          - "web"
+          priority: 2
+          service: service-2
+    ```
+
+    In this configuration, the priority is configured to allow `Router-2` to handle requests with the `foobar.traefik.com` host.
+
 ### Middlewares
 
 You can attach a list of [middlewares](../../middlewares/overview.md) to each HTTP router.

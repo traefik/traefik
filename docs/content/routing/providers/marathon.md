@@ -125,7 +125,8 @@ For example, to change the routing rule, you could add the label ```"traefik.htt
     ```
 
 ??? info "`traefik.http.routers.<router_name>.priority`"
-    <!-- TODO doc priority in routers page -->
+    
+    See [options](../routers/index.md#priority) for more information.
     
     ```json
     "traefik.http.routers.myrouter.priority": "42"
