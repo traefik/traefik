@@ -259,7 +259,7 @@ To avoid path overlap, routes are sorted, by default, in descending order using 
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
-??? info "Calculate default priorities"
+??? info "How default priorities are computed"
 
     ```toml tab="File (TOML)"
     ## Dynamic configuration
