@@ -286,10 +286,10 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     
     In this case, all requests with host `foobar.traefik.com` will be routed through `Router-1` instead of `Router-2`.
     
-    | Name     | Rule                                 | length |
-    |----------|--------------------------------------|--------|
-    | Router-1 | ```HostRegexp(`.*\.traefik\.com`)``` | 30     |
-    | Router-2 | ```Host(`foobar.traefik.com`)```     | 26     |
+    | Name     | Rule                                 | Priority |
+    |----------|--------------------------------------|----------|
+    | Router-1 | ```HostRegexp(`.*\.traefik\.com`)``` | 30       |
+    | Router-2 | ```Host(`foobar.traefik.com`)```     | 26       |
     
     The previous table shows that `Router-1` has a higher priority than `Router-2`.
     
