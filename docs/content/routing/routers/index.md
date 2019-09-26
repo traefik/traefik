@@ -255,9 +255,9 @@ The table below lists all the available matchers:
 
 ### Priority
 
-By default, to avoid path overlap, routes will be sorted in descending order using rules length (the largest length has the highest priority).
+To avoid path overlap, routes are sorted, by default, in descending order using rules length: the largest length has the highest priority.
 
-A priority value of 0 will be ignored, so the default value will be calculated (rules length).
+A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
 ??? info "Calculate default priorities"
 
