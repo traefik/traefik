@@ -324,16 +324,16 @@ Below are the available options for the health check mechanism:
 
 #### Pass Host Header
 
-You can optionally enable `passHostHeader` to forward client Host header to server. 
+You can optionally disable `passHostHeader` to not forward client Host header to server. 
 
-??? example "Pass the host header -- Using the [File Provider](../../providers/file.md)"
+??? example "Don't forward the host header -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
     ## Dynamic configuration
     [http.services]
       [http.services.Service01]
         [http.services.Service01.loadBalancer]
-          passHostHeader = true
+          passHostHeader = false
     ```
     
     ```yaml tab="YAML"
@@ -342,7 +342,7 @@ You can optionally enable `passHostHeader` to forward client Host header to serv
       services:
         Service01:
           loadBalancer:
-            passHostHeader: true
+            passHostHeader: false
     ```
 
 ### Weighted Round Robin (service)
