@@ -325,11 +325,11 @@ func getPort(container dockerData, serverPort string) string {
 }
 
 func getServiceName(container dockerData) string {
-	serviceName := strings.TrimPrefix(container.ServiceName, "/")
+	serviceName := container.ServiceName
 
 	if values, err := getStringMultipleStrict(container.Labels, labelDockerComposeProject, labelDockerComposeService); err == nil {
 		serviceName = values[labelDockerComposeService] + "_" + values[labelDockerComposeProject]
 	}
 
-	return serviceName
+	return provider.Normalize(serviceName)
 }
