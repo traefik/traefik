@@ -322,6 +322,29 @@ Below are the available options for the health check mechanism:
                 My-Header: bar
     ```
 
+#### Pass Host Header
+
+You can optionally enable `passHostHeader` to forward client Host header to server. 
+
+??? example "Pass the host header -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.Service01]
+        [http.services.Service01.loadBalancer]
+          passHostHeader = true
+    ```
+    
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        Service01:
+          loadBalancer:
+            passHostHeader: true
+    ```
+
 ### Weighted Round Robin (service)
 
 The WRR is able to load balance the requests between multiple services based on weights.
