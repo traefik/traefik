@@ -1,3 +1,36 @@
+## [v2.0.1](https://github.com/containous/traefik/tree/v2.0.1) (2019-09-26)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0...v2.0.1)
+
+**Bug fixes:**
+- **[go,security]** This version is compiled with [Go 1.13.1](https://groups.google.com/d/msg/golang-announce/cszieYyuL9Q/g4Z7pKaqAgAJ), which fixes a vulnerability in previous versions. See the [CVE](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-16276) about it for more details.
+- **[api,healthcheck]** Return an actual server status updater ([#5407](https://github.com/containous/traefik/pull/5407) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[cli]** Flag names don&#39;t need a consistent case. ([#5438](https://github.com/containous/traefik/pull/5438) by [ldez](https://github.com/ldez))
+- **[docker]** fix: docker service name. ([#5491](https://github.com/containous/traefik/pull/5491) by [ldez](https://github.com/ldez))
+- **[logs,middleware]** fix: improve log for invalid middleware. ([#5486](https://github.com/containous/traefik/pull/5486) by [ldez](https://github.com/ldez))
+- **[middleware]** Update Casing on STS Header Directive ([#5492](https://github.com/containous/traefik/pull/5492) by [dtomcej](https://github.com/dtomcej))
+- **[server]** Do not initialize list of middlewares if not needed ([#5485](https://github.com/containous/traefik/pull/5485) by [mpl](https://github.com/mpl))
+- **[websocket]** Fix case-sensitive header in websocket ([#5397](https://github.com/containous/traefik/pull/5397) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[acme,tls]** Improve TLS documentation. ([#5448](https://github.com/containous/traefik/pull/5448) by [ldez](https://github.com/ldez))
+- **[acme]** fix typo for kubectl version ([#5409](https://github.com/containous/traefik/pull/5409) by [mpl](https://github.com/mpl))
+- **[acme]** Wrong acme example. ([#5439](https://github.com/containous/traefik/pull/5439) by [ldez](https://github.com/ldez))
+- **[cli,docker]** doc: Flags and labels are case insensitive. ([#5428](https://github.com/containous/traefik/pull/5428) by [ldez](https://github.com/ldez))
+- **[docker,marathon,rancher]** clarify automatic service creation/assignment with labels ([#5493](https://github.com/containous/traefik/pull/5493) by [mpl](https://github.com/mpl))
+- **[file]** fix doc about file.filename ([#5494](https://github.com/containous/traefik/pull/5494) by [ldez](https://github.com/ldez))
+- **[k8s]** add indent to fix notes ([#5467](https://github.com/containous/traefik/pull/5467) by [mpl](https://github.com/mpl))
+- **[middleware,docker,marathon,tls]** Improve documentation for the TLS  section of the provider connection. ([#5437](https://github.com/containous/traefik/pull/5437) by [ldez](https://github.com/ldez))
+- **[yaml]** YAML I love you ([#5461](https://github.com/containous/traefik/pull/5461) by [mmatur](https://github.com/mmatur))
+- Improve routing documentation ([#5450](https://github.com/containous/traefik/pull/5450) by [ldez](https://github.com/ldez))
+- fix: typo in TOML for HTTP to HTTPS redirection ([#5452](https://github.com/containous/traefik/pull/5452) by [krerkkiat](https://github.com/krerkkiat))
+- document that /dashboard should be preferred over / ([#5431](https://github.com/containous/traefik/pull/5431) by [mpl](https://github.com/mpl))
+- Improve the migration guide ([#5430](https://github.com/containous/traefik/pull/5430) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- fixed doc typoes ([#5425](https://github.com/containous/traefik/pull/5425) by [mpl](https://github.com/mpl))
+- fix indentation for tab on migration guide ([#5423](https://github.com/containous/traefik/pull/5423) by [ViceIce](https://github.com/ViceIce))
+- Update links in readme. ([#5411](https://github.com/containous/traefik/pull/5411) by [ldez](https://github.com/ldez))
+- Add the router priority documentation ([#5481](https://github.com/containous/traefik/pull/5481) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Improve the Migration Guide ([#5391](https://github.com/containous/traefik/pull/5391) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.0.0](https://github.com/containous/traefik/tree/v2.0.0) (2019-09-16)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha1...v2.0.0)
 
