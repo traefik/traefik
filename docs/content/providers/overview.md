@@ -53,7 +53,7 @@ before taking into account any new configuration refresh event.
 If any event arrives during that duration, only the most recent one is taken into account,
 and all the previous others are dropped.
 
-This option cannot cannot be set per provider,
+This option cannot be set per provider,
 but the throttling algorithm applies independently to each of them.
 It defaults to 2 seconds.
 
