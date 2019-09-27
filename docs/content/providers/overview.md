@@ -39,6 +39,24 @@ Below is the list of the currently supported providers in Traefik.
     The current version of Traefik doesn't support (yet) every provider.
     See the [previous version (v1.7)](https://docs.traefik.io/v1.7/) for more providers.
 
+### Configuration reload frequency
+
+In some cases, some providers might undergo a sudden burst of changes,
+which would generate a lot of configuration change events.
+If Traefik took them all into account,
+that would trigger a lot more configuration reloads than what is necessary,
+or even useful.
+
+In order to mitigate that, the `providers.providersThrottleDuration` option can be set.
+It is the duration that Traefik waits for, after a configuration reload,
+before taking into account any new configuration refresh event.
+If any event arrives during that duration, only the most recent one is taken into account,
+and all the previous others are dropped.
+
+This option cannot cannot be set per provider,
+but the throttling algorithm applies independently to each of them.
+It defaults to 2 seconds.
+
 <!--
 TODO (document TCP VS HTTP dynamic configuration)
 -->
