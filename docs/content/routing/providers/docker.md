@@ -166,7 +166,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [tls](../routers/index.md#tls) for more information.
     
     ```yaml
-    - "traefik.http.routers.myrouter>.tls=true"
+    - "traefik.http.routers.myrouter.tls=true"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.certresolver`"
