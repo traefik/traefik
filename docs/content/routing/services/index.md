@@ -324,7 +324,9 @@ Below are the available options for the health check mechanism:
 
 #### Pass Host Header
 
-You can optionally disable `passHostHeader` to not forward client Host header to server. 
+The `passHostHeader` allows to forward client Host header to server.
+
+By default, `passHostHeader` is true.
 
 ??? example "Don't forward the host header -- Using the [File Provider](../../providers/file.md)"
 
