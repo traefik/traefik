@@ -19,6 +19,170 @@ If they do, the router might transform the request using pieces of [middleware](
 - [_Services_](./services/index.md) forward the request to your services (load balancing, ...)
 - [_Middlewares_](../middlewares/overview.md) may update the request or make decisions based on the request (authentication, rate limiting, headers, ...)
 
+## Transport configuration
+
+Most of the connection parameters between the clients and Traefik is defined through the [entrypoints](../entrypoints),
+and most of what happens between Traefik and the backends is defined by the [routers](../routers).
+
+In addition, a few parameters are dedicated to configuring globally
+what happens with the connections between Traefik and the backends.
+This is done through the `serversTransport` section of the configuration,
+which features these options:
+
+### `serversTransport.insecureSkipVerify`
+
+_Optional, Default=true_
+
+`insecureSkipVerify` disables SSL certificate verification.
+
+```toml tab="File (TOML)"
+## Static configuration
+[serversTransport]
+  insecureSkipVerify = true
+```
+
+```yaml tab="File (YAML)"
+## Static configuration
+serversTransport:
+  insecureSkipVerify: true
+```
+
+```bash tab="CLI"
+## Static configuration
+--serversTransport.insecureSkipVerify=true
+```
+
+### `serversTransport.rootCAs`
+
+_Optional, Default=_
+
+`rootCAs` is the list of certificates (as file paths, or data bytes)
+that will be set as Root Certificate Authorities when using a self-signed TLS certificate.
+
+```toml tab="File (TOML)"
+## Static configuration
+[serversTransport]
+  rootCAs = ["foo.crt", "bar.crt"]
+```
+
+```yaml tab="File (YAML)"
+## Static configuration
+serversTransport:
+  rootCAs:
+    - foo.crt
+    - bar.crt
+```
+
+```bash tab="CLI"
+## Static configuration
+--serversTransport.rootCAs=foo.crt,bar.crt
+```
+
+### `serversTransport.maxIdleConnsPerHost`
+
+_Optional, Default=2_
+
+If non-zero, `maxIdleConnsPerHost` controls the maximum idle (keep-alive) connections to keep per-host.
+
+```toml tab="File (TOML)"
+## Static configuration
+[serversTransport]
+  maxIdleConnsPerHost = 7
+```
+
+```yaml tab="File (YAML)"
+## Static configuration
+serversTransport:
+  maxIdleConnsPerHost: 7
+```
+
+```bash tab="CLI"
+## Static configuration
+--serversTransport.maxIdleConnsPerHost=7
+```
+
+### `serversTransport.forwardingTimeouts`
+
+`forwardingTimeouts` is about a number of timeouts relevant to when forwarding requests to the backend servers.
+
+#### `serversTransport.forwardingTimeouts.dialTimeout`
+
+_Optional, Default=_
+
+`dialTimeout` is the maximum duration allowed for a connection to a backend server to be established.
+Zero means no timeout.
+
+```toml tab="File (TOML)"
+## Static configuration
+[serversTransport.forwardingTimeouts]
+  dialTimeout = 1s
+```
+
+```yaml tab="File (YAML)"
+## Static configuration
+serversTransport:
+  forwardingTimeouts:
+    dialTimeout: 1s
+```
+
+```bash tab="CLI"
+## Static configuration
+--serversTransport.forwardingTimeouts.dialTimeout=1s
+```
+
+#### `serversTransport.forwardingTimeouts.responseHeaderTimeout`
+
+_Optional, Default=_
+
+`responseHeaderTimeout`, if non-zero, specifies the amount of time to wait for a server's response headers
+after fully writing the request (including its body, if any).
+This time does not include the time to read the response body.
+Zero means no timeout.
+
+```toml tab="File (TOML)"
+## Static configuration
+[serversTransport.forwardingTimeouts]
+  responseHeaderTimeout = 1s
+```
+
+```yaml tab="File (YAML)"
+## Static configuration
+serversTransport:
+  forwardingTimeouts:
+    responseHeaderTimeout: 1s
+```
+
+```bash tab="CLI"
+## Static configuration
+--serversTransport.forwardingTimeouts.responseHeaderTimeout=1s
+```
+
+#### `serversTransport.forwardingTimeouts.idleConnTimeout`
+
+_Optional, Default=_
+
+`idleConnTimeout`, is the maximum amount of time an idle (keep-alive) connection
+will remain idle before closing itself.
+Zero means no limit.
+
+```toml tab="File (TOML)"
+## Static configuration
+[serversTransport.forwardingTimeouts]
+  idleConnTimeout = 1s
+```
+
+```yaml tab="File (YAML)"
+## Static configuration
+serversTransport:
+  forwardingTimeouts:
+    idleConnTimeout: 1s
+```
+
+```bash tab="CLI"
+## Static configuration
+--serversTransport.forwardingTimeouts.idleConnTimeout=1s
+```
+
 ## Example with a File Provider
 
 Below is an example of a full configuration file for the [file provider](../providers/file.md) that forwards `http://domain/whoami/` requests to a service reachable on `http://private/whoami-service/`.
