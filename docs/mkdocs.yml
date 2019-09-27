@@ -93,7 +93,7 @@ nav:
   - 'HTTPS & TLS':
       - 'Overview': 'https/overview.md'
       - 'TLS': 'https/tls.md'
-      - 'Let''s Encrypt': 'https/acme.md'
+      - 'ACME/Let''s Encrypt': 'https/acme.md'
   - 'Middlewares':
       - 'Overview': 'middlewares/overview.md'
       - 'AddPrefix': 'middlewares/addprefix.md'
