@@ -242,7 +242,7 @@ Below are the available options for the health check mechanism:
     ```yaml tab="YAML"
     ## Dynamic configuration
     http:
-      servicess:
+      services:
         Service-1:
           loadBalancer:
             healthCheck:
