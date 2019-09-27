@@ -16,26 +16,19 @@ The dashboard is available at the same location as the [API](./api.md) but on th
 
 There are 2 ways to configure and access the dashboard:
 
-- Insecure mode: by using the [insecure mode of the API](./api.md#insecure),
-  then you can use the port `:8080` of Traefik and reach the dashboard at the URL `http://<Traefik IP>:8080/dashboard/`.
-
-!!! tip "Changing the default port `8080` for insecured mode"
-    By default, the insecure mode uses the default entrypoint named
-    It is possible to customize the dashboard endpoint.
-    To learn how, refer to the [API documentation](./api.md)
-
-- Secured mode: by defining a router for Traefik's dashboard, associated to the service `api@internal`,
-  then you can access the router through Traefik itself with your own routing rule.
-  Read more on this on the section ["API/Dashboard Security"](#apidashboard-security).
+- [Secured mode (Recommended)](#secured-mode)
+- [Insecured mode](#insecured-mode)
 
 !!! note ""
     There is also a redirect of the path `/` to the path `/dashboard/`,
     but one should not rely on that property as it is bound to change,
     and it might make for confusing routing rules anyway.
 
-## Enabling the Dashboard
+## Secured Mode
 
-To enable the dashboard, you need to enable [Traefik's API](./api.md).
+This is the **recommended** method.
+
+Start by enabling the dashboard by using the following option from [Traefik's API](./api.md):
 
 ```toml tab="File (TOML)"
 [api]
@@ -66,12 +59,39 @@ api:
 --api.dashboard=true
 ```
 
-## API/Dashboard Security
+Then specifies a router associated to the service `api@internal` to allow:
 
-To secure your dashboard, the use of a `service` named `api@internal` is mandatory and requires the definition of a router using one or more security [middlewares](../middlewares/overview.md)
-like authentication ([basicAuth](../middlewares/basicauth.md) , [digestAuth](../middlewares/digestauth.md), [forwardAuth](../middlewares/forwardauth.md)) or [whitelisting](../middlewares/ipwhitelist.md).
-More information about `api@internal` can be found in the [API documentation](./api.md#configuration)
+- Defining one or more security features through [middlewares](../middlewares/overview.md)
+  like authentication ([basicAuth](../middlewares/basicauth.md) , [digestAuth](../middlewares/digestauth.md),
+  [forwardAuth](../middlewares/forwardauth.md)) or [whitelisting](../middlewares/ipwhitelist.md).
 
-!!! info "Did You Know?"
-    The API provides more features than the Dashboard.
-    To learn more about it, refer to the [API documentation](./api.md)
+- Defining your own [HTTP routing rule](../../routing/routers/#rule) for accessing the dashboard,
+  through Traefik itself (sometimes referred as "Traefik-ception").
+
+Please visit the ["Configuration" section of the API documentation](./api.md#configuration)
+to learn about configuring a router with the service `api@internal` and enabling the security features.
+
+## Insecured Mode
+
+This mode is not recommend because it does not allow usage of security features.
+
+To enable the "insecure mode", use the following options from [Traefik's API](./api.md#insecure):
+
+```toml tab="File (TOML)"
+[api]
+  dashboard = true
+  insecure = true
+```
+
+```yaml tab="File (YAML)"
+api:
+  dashboard: true
+  insecure: true
+```
+
+```bash tab="CLI"
+--api.dashboard=true --api.insecure=true
+```
+
+You can know access the dashboard on the port `8080` of the Traefik instance,
+ath the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
