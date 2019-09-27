@@ -237,7 +237,8 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
-    <!-- TODO doc passHostHeader in services page -->
+    
+    See [pass Host header](../services/index.md#pass-host-header) for more information.
     
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.passhostheader=true"
