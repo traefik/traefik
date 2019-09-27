@@ -164,8 +164,11 @@ func createLoadBalancerServerHTTP(client Client, namespace string, service v1alp
 	lb.SetDefaults()
 
 	lb.Servers = servers
-	if service.PassHostHeader != nil {
-		lb.PassHostHeader = *service.PassHostHeader
+
+	lb.PassHostHeader = service.PassHostHeader
+	if lb.PassHostHeader == nil {
+		passHostHeader := true
+		lb.PassHostHeader = &passHostHeader
 	}
 	lb.ResponseForwarding = service.ResponseForwarding
 
