@@ -36,7 +36,7 @@ Then any router can refer to an instance of the wanted middleware.
     ```yaml tab="Docker"
     labels:
       - "traefik.frontend.rule=Host:test.localhost;PathPrefix:/test"
-      - "traefik.frontend.auth.basic.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+      - "traefik.frontend.auth.basic.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     ```
 
     ```yaml tab="K8s Ingress"
@@ -99,7 +99,7 @@ Then any router can refer to an instance of the wanted middleware.
     labels:
       - "traefik.http.routers.router0.rule=Host(`bar.com`) && PathPrefix(`/test`)"
       - "traefik.http.routers.router0.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+      - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     ```
 
     ```yaml tab="K8s IngressRoute"
@@ -870,7 +870,7 @@ As the dashboard access is now secured by default you can either:
       - "traefik.http.routers.api.service=api@internal"
       - "traefik.http.routers.api.middlewares=myAuth"
       - "traefik.http.routers.api.tls"
-      - "traefik.http.middlewares.myAuth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+      - "traefik.http.middlewares.myAuth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
     ```
 
     ```toml tab="File (TOML)"
