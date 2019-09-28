@@ -226,6 +226,10 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
         # will terminate the TLS request
         [http.routers.Router-1.tls]
           options = "myTLSOptions"
+          certResolver = "myCertResolver"
+          [[http.routers.Router-1.tls.domains]]
+            main = "tls.example.com"
+            sans = ["*.example.com"]
     
     [[tls.certificates]]
       certFile = "/path/to/domain.cert"
