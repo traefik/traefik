@@ -33,5 +33,7 @@ func (r *responseRecorder) CloseNotify() <-chan bool {
 
 // Flush sends any buffered data to the client.
 func (r *responseRecorder) Flush() {
-	r.ResponseWriter.(http.Flusher).Flush()
+	if f, ok := r.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
 }
