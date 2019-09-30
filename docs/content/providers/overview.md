@@ -57,6 +57,20 @@ This option cannot be set per provider,
 but the throttling algorithm applies independently to each of them.
 It defaults to 2 seconds.
 
+```toml tab="File (TOML)"
+[providers]
+  providers.providersThrottleDuration = 10s
+```
+
+```yaml tab="File (YAML)"
+providers:
+  providersThrottleDuration: 10s
+```
+
+```bash tab="CLI"
+--providers.providersThrottleDuration=10s
+```
+
 <!--
 TODO (document TCP VS HTTP dynamic configuration)
 -->
