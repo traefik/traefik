@@ -260,7 +260,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
     
-    See [response fowarding](../services/index.md#response-forwarding) for more information.
+    See [response forwarding](../services/index.md#response-forwarding) for more information.
 
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10"
