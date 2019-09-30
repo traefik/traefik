@@ -157,7 +157,8 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
-    <!-- TODO doc passHostHeader in services page -->
+    
+    See [pass Host header](../services/index.md#pass-host-header) for more information.
     
     ```json
     "traefik.http.services.myservice.loadbalancer.passhostheader": "true"
