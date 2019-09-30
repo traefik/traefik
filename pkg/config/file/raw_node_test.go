@@ -538,3 +538,27 @@ func Test_decodeRawToNode(t *testing.T) {
 		})
 	}
 }
+
+func Test_decodeRawToNode_errors(t *testing.T) {
+	testCases := []struct {
+		desc string
+		data map[string]interface{}
+	}{
+		{
+			desc: "invalid type",
+			data: map[string]interface{}{
+				"foo": struct{}{},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := decodeRawToNode(test.data, parser.DefaultRootName)
+			require.Error(t, err)
+		})
+	}
+}
