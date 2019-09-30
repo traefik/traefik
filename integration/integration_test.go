@@ -25,11 +25,6 @@ var host = flag.Bool("host", false, "run host integration tests")
 var showLog = flag.Bool("tlog", false, "always show Traefik logs")
 
 func Test(t *testing.T) {
-	check.TestingT(t)
-}
-
-func init() {
-	flag.Parse()
 	if !*integration {
 		log.Info("Integration tests disabled.")
 		return
@@ -70,6 +65,8 @@ func init() {
 		check.Suite(&ProxyProtocolSuite{})
 		check.Suite(&Etcd3Suite{})
 	}
+
+	check.TestingT(t)
 }
 
 var traefikBinary = "../dist/traefik"
