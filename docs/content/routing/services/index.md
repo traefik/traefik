@@ -349,7 +349,7 @@ By default, `passHostHeader` is true.
    
 #### Response Forwarding
 
-Configure response forwarding to define how forwards serves back the response of requests to remote server.
+This section is about configuring how Traefik forwards the response from the backend server to the client.
 
 Below are the available options for the Response Forwarding mechanism:
 
