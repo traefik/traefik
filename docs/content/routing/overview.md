@@ -238,15 +238,16 @@ http:
 
 ## Transport configuration
 
-Most of the connection parameters between the clients and Traefik is defined through the [entrypoints](../entrypoints),
-and most of what happens between Traefik and the backends is defined by the [routers](../routers).
+Most of what happens to the connection between the clients and Traefik,
+and then between Traefik and the backend servers, is configured through the
+[entrypoints](../entrypoints) and the [routers](../routers).
 
 In addition, a few parameters are dedicated to configuring globally
 what happens with the connections between Traefik and the backends.
 This is done through the `serversTransport` section of the configuration,
 which features these options:
 
-### `serversTransport.insecureSkipVerify`
+### `insecureSkipVerify`
 
 _Optional, Default=false_
 
@@ -269,7 +270,7 @@ serversTransport:
 --serversTransport.insecureSkipVerify=true
 ```
 
-### `serversTransport.rootCAs`
+### `rootCAs`
 
 _Optional_
 
@@ -295,7 +296,7 @@ serversTransport:
 --serversTransport.rootCAs=foo.crt,bar.crt
 ```
 
-### `serversTransport.maxIdleConnsPerHost`
+### `maxIdleConnsPerHost`
 
 _Optional, Default=2_
 
@@ -318,11 +319,11 @@ serversTransport:
 --serversTransport.maxIdleConnsPerHost=7
 ```
 
-### `serversTransport.forwardingTimeouts`
+### `forwardingTimeouts`
 
 `forwardingTimeouts` is about a number of timeouts relevant to when forwarding requests to the backend servers.
 
-#### `serversTransport.forwardingTimeouts.dialTimeout`
+#### forwardingTimeouts.dialTimeout`
 
 _Optional, Default=30s_
 
@@ -347,7 +348,7 @@ serversTransport:
 --serversTransport.forwardingTimeouts.dialTimeout=1s
 ```
 
-#### `serversTransport.forwardingTimeouts.responseHeaderTimeout`
+#### forwardingTimeouts.responseHeaderTimeout`
 
 _Optional, Default=0s_
 
@@ -374,7 +375,7 @@ serversTransport:
 --serversTransport.forwardingTimeouts.responseHeaderTimeout=1s
 ```
 
-#### `serversTransport.forwardingTimeouts.idleConnTimeout`
+#### forwardingTimeouts.idleConnTimeout`
 
 _Optional, Default=90s_
 
