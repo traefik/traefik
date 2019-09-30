@@ -353,12 +353,13 @@ Configure response forwarding to define how forwards serves back the response of
 
 Below are the available options for the Response Forwarding mechanism:
 
-- `FlushInterval` specifies the flush interval to flush to the client while copying the response body.
+- `FlushInterval` specifies the interval in between flushes to the client while copying the response body.
   It is a duration in milliseconds, defaulting to 100.
   A negative value means to flush immediately after each write to the client.
-  The FlushInterval is ignored when ReverseProxy recognizes a response as a streaming response; for such responses, writes are flushed to the client immediately.
+  The FlushInterval is ignored when ReverseProxy recognizes a response as a streaming response;
+  for such responses, writes are flushed to the client immediately.
   
-??? example "Use a custom FlushInterval -- Using the [File Provider](../../providers/file.md)"
+??? example "Using a custom FlushInterval -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
     ## Dynamic configuration
