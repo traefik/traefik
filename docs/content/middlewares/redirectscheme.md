@@ -7,7 +7,7 @@ Redirecting the Client to a Different Scheme/Port
 TODO: add schema
 -->
 
-RegexRedirect redirect request from a scheme to another.
+RedirectScheme redirect request from a scheme to another.
 
 ## Configuration Examples
 
