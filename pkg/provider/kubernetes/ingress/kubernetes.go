@@ -248,7 +248,7 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 	return &dynamic.Service{
 		LoadBalancer: &dynamic.ServersLoadBalancer{
 			Servers:        servers,
-			PassHostHeader: true,
+			PassHostHeader: func(v bool) *bool { return &v }(true),
 		},
 	}, nil
 }

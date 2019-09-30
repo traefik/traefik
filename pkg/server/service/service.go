@@ -176,6 +176,11 @@ func (m *Manager) getLoadBalancerServiceHandler(
 	service *dynamic.ServersLoadBalancer,
 	responseModifier func(*http.Response) error,
 ) (http.Handler, error) {
+	if service.PassHostHeader == nil {
+		defaultPassHostHeader := true
+		service.PassHostHeader = &defaultPassHostHeader
+	}
+
 	fwd, err := buildProxy(service.PassHostHeader, service.ResponseForwarding, m.defaultRoundTripper, m.bufferPool, responseModifier)
 	if err != nil {
 		return nil, err
