@@ -83,7 +83,7 @@ func decodeRaw(node *parser.Node, vData reflect.Value, filters ...string) error 
 						values = append(values, val)
 					}
 				default:
-					return fmt.Errorf("field %s use unsupported slice type: %s", child.Name, item.Kind().String())
+					return fmt.Errorf("field %s uses unsupported slice type: %s", child.Name, item.Kind().String())
 				}
 			}
 
@@ -94,7 +94,7 @@ func decodeRaw(node *parser.Node, vData reflect.Value, filters ...string) error 
 				return err
 			}
 		default:
-			return fmt.Errorf("field %s use unsupported type: %s", child.Name, value.Kind().String())
+			return fmt.Errorf("field %s uses unsupported type: %s", child.Name, value.Kind().String())
 		}
 
 		node.Children = append(node.Children, child)
@@ -116,7 +116,7 @@ func getSimpleValue(item reflect.Value) (string, error) {
 	case reflect.Bool:
 		return strconv.FormatBool(item.Bool()), nil
 	default:
-		return "", fmt.Errorf("unsupported Simple value type: %s", item.Kind().String())
+		return "", fmt.Errorf("unsupported simple value type: %s", item.Kind().String())
 	}
 }
 
