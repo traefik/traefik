@@ -16,15 +16,15 @@ The dashboard is available at the same location as the [API](./api.md) but on th
 
 There are 2 ways to configure and access the dashboard:
 
-- [Secured mode (Recommended)](#secured-mode)
-- [Insecured mode](#insecured-mode)
+- [Secure mode (Recommended)](#secure-mode)
+- [Insecure mode](#insecure-mode)
 
 !!! note ""
     There is also a redirect of the path `/` to the path `/dashboard/`,
     but one should not rely on that property as it is bound to change,
     and it might make for confusing routing rules anyway.
 
-## Secured Mode
+## Secure Mode
 
 This is the **recommended** method.
 
@@ -59,7 +59,7 @@ api:
 --api.dashboard=true
 ```
 
-Then specifies a router associated to the service `api@internal` to allow:
+Then specify a router associated to the service `api@internal` to allow:
 
 - Defining one or more security features through [middlewares](../middlewares/overview.md)
   like authentication ([basicAuth](../middlewares/basicauth.md) , [digestAuth](../middlewares/digestauth.md),
@@ -71,9 +71,9 @@ Then specifies a router associated to the service `api@internal` to allow:
 Please visit the ["Configuration" section of the API documentation](./api.md#configuration)
 to learn about configuring a router with the service `api@internal` and enabling the security features.
 
-## Insecured Mode
+## Insecure Mode
 
-This mode is not recommend because it does not allow usage of security features.
+This mode is not recommended because it does not allow the use of security features.
 
 To enable the "insecure mode", use the following options from [Traefik's API](./api.md#insecure):
 
@@ -93,5 +93,5 @@ api:
 --api.dashboard=true --api.insecure=true
 ```
 
-You can know access the dashboard on the port `8080` of the Traefik instance,
-ath the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
+You can now access the dashboard on the port `8080` of the Traefik instance,
+at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
