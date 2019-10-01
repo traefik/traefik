@@ -253,10 +253,9 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
-    <!-- TODO doc responseforwarding in services page -->
     
-    FlushInterval specifies the flush interval to flush to the client while copying the response body.
-    
+    See [response forwarding](../services/index.md#response-forwarding) for more information.
+
     ```json
     "traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval": "10"
     ```

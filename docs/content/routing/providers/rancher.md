@@ -259,10 +259,9 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
-    <!-- TODO doc responseforwarding in services page -->
     
-    FlushInterval specifies the flush interval to flush to the client while copying the response body.
-    
+    See [response forwarding](../services/index.md#response-forwarding) for more information.
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10"
     ```
