@@ -235,7 +235,7 @@ http:
   middlewares:
     testHeader:
       headers:
-        accessControlAllowMethod:
+        accessControlAllowMethods:
           - GET
           - OPTIONS
           - PUT
