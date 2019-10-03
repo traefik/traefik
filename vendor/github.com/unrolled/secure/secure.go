@@ -269,7 +269,7 @@ func (s *Secure) processRequest(w http.ResponseWriter, r *http.Request) (http.He
 	}
 
 	if s.opt.SSLForceHost {
-		var SSLHost = host;
+		var SSLHost = host
 		if s.opt.SSLHostFunc != nil {
 			if h := (*s.opt.SSLHostFunc)(host); len(h) > 0 {
 				SSLHost = h
@@ -369,6 +369,12 @@ func (s *Secure) isSSL(r *http.Request) bool {
 // Used by http.ReverseProxy.
 func (s *Secure) ModifyResponseHeaders(res *http.Response) error {
 	if res != nil && res.Request != nil {
+		// Fix Location response header http to https when SSL is enabled.
+		location := res.Header.Get("Location")
+		if s.isSSL(res.Request) && strings.Contains(location, "http:") {
+			location = strings.Replace(location, "http:", "https:", 1)
+			res.Header.Set("Location", location)
+		}
 		responseHeader := res.Request.Context().Value(ctxSecureHeaderKey)
 		if responseHeader != nil {
 			for header, values := range responseHeader.(http.Header) {
