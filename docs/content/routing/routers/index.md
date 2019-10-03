@@ -925,5 +925,6 @@ tcp:
         certResolver: "bar"
         domains:
           - main: "snitest.com"
-            sans: "*.snitest.com"
+            sans: 
+              - "*.snitest.com"
 ```
