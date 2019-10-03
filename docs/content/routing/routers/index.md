@@ -229,7 +229,7 @@ The table below lists all the available matchers:
 | ```Method(`GET`, ...)```                                             | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
 | ```Path(`/path`, `/articles/{category}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
 | ```PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
-| ```Query(`foo=bar`, `bar=baz`)```                                    | Match` Query String parameters. It accepts a sequence of key=value pairs.                                      |
+| ```Query(`foo=bar`, `bar=baz`)```                                    | Match Query String parameters. It accepts a sequence of key=value pairs.                                      |
 
 !!! important "Regexp Syntax"
 
