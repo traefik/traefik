@@ -1909,11 +1909,11 @@
 
 [[projects]]
   branch = "v1"
-  digest = "1:60888cead16f066c948c078258b27f2885dce91cb6aadacf545b62a1ae1d08cb"
+  digest = "1:819d4566276aed820b412b7e72683edfe99f53d2ac54e5b13eda197b523a369b"
   name = "github.com/unrolled/secure"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "a1cf62cc2159fff407728f118c41aece76c397fa"
+  revision = "232c938a6a69cfd83e26e2bfe100a20486d3a9a0"
 
 [[projects]]
   digest = "1:e84e99d5f369afaa9a5c41f55b57fa03047ecd3bac2a65861607882693ceea81"
