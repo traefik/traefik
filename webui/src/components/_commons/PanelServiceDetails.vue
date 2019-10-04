@@ -54,37 +54,8 @@
         </div>
       </q-card-section>
 
-      <q-separator v-if="data.weighted && data.weighted.sticky" />
-      <q-card-section v-if="data.weighted && data.weighted.sticky" >
-        <div class="row items-start no-wrap">
-          <div class="text-subtitle1">Sticky: Cookie</div>
-        </div>
-      </q-card-section>
-      <q-card-section v-if="data.weighted && data.weighted.sticky" >
-        <div class="row items-start no-wrap">
-          <div class="col" v-if="data.weighted.sticky.cookie && data.weighted.sticky.cookie.name">
-            <div class="text-subtitle2">NAME</div>
-            <q-chip
-              dense
-              class="app-chip app-chip-entry-points">
-              {{ data.weighted.sticky.cookie.name }}
-            </q-chip>
-          </div>
-        </div>
-      </q-card-section>
-      <q-card-section v-if="data.weighted && data.weighted.sticky" >
-        <div class="row items-start no-wrap">
-          <div class="col">
-            <div class="text-subtitle2">SECURE</div>
-            <boolean-state :value="data.weighted.sticky.cookie.secure"/>
-          </div>
-
-          <div class="col">
-            <div class="text-subtitle2">HTTP Only</div>
-            <boolean-state :value="data.weighted.sticky.cookie.httpOnly"/>
-          </div>
-        </div>
-      </q-card-section>
+      <q-separator v-if="sticky" />
+      <StickyServiceDetails v-if="sticky" :sticky="sticky" :dense="dense"/>
     </q-scroll-area>
   </q-card>
 </template>
@@ -92,17 +63,30 @@
 <script>
 import AvatarState from './AvatarState'
 import BooleanState from './BooleanState'
+import StickyServiceDetails from './StickyServiceDetails'
 
 export default {
   name: 'PanelServiceDetails',
   props: ['data', 'dense'],
   components: {
     BooleanState,
-    AvatarState
+    AvatarState,
+    StickyServiceDetails
   },
   computed: {
     isDense () {
       return this.dense !== undefined
+    },
+    sticky () {
+      if (this.data.weighted && this.data.weighted.sticky) {
+        return this.data.weighted.sticky
+      }
+
+      if (this.data.loadBalancer && this.data.loadBalancer.sticky) {
+        return this.data.loadBalancer.sticky
+      }
+
+      return null
     }
   },
   filters: {
