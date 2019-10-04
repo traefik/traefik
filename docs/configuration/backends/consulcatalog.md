@@ -53,6 +53,13 @@ strictChecks = true
 #
 prefix = "traefik"
 
+# Enables the use of a local consul agent cache https://www.consul.io/api/features/caching.html
+#
+# Optional
+# Default: false
+#
+cache = false
+
 # Default frontEnd Rule for Consul services.
 #
 # The format is a Go Template with:
