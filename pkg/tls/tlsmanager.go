@@ -234,7 +234,7 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 	// Set the list of CurvePreferences/CurveIDs if set in the config TOML
 	if tlsOption.CurvePreferences != nil {
 		conf.CurvePreferences = make([]tls.CurveID, 0)
-		// if our list of CipherSuites is defined in the entryPoint config, we can re-initialize the suites list as empty
+		// if our list of CurvePreferences/CurveIDs is defined in the config, we can re-initialize the list as empty
 		for _, curve := range tlsOption.CurvePreferences {
 			if curveID, exists := CurveIDs[curve]; exists {
 				conf.CurvePreferences = append(conf.CurvePreferences, curveID)
