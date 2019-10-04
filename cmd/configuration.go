@@ -111,6 +111,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultConsulCatalog.Prefix = "traefik"
 	defaultConsulCatalog.FrontEndRule = "Host:{{.ServiceName}}.{{.Domain}}"
 	defaultConsulCatalog.Stale = false
+	defaultConsulCatalog.Cache = false
 	defaultConsulCatalog.StrictChecks = true
 
 	// default Etcd

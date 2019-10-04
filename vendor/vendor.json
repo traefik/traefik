@@ -1,0 +1,14 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"checksumSHA1": "Drx6kxtKEuFkp5FWgAfdZNux4x0=",
+			"origin": "github.com/containous/traefik/vendor/github.com/hashicorp/consul/api",
+			"path": "github.com/hashicorp/consul/api",
+			"revision": "8241787e922955e973c0e762ad3cb8db1804f6cd",
+			"revisionTime": "2019-08-09T22:33:43Z"
+		}
+	],
+	"rootPath": "github.com/containous/traefik"
+}

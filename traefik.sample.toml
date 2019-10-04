@@ -14,7 +14,7 @@
 # Optional
 # Default: "ERROR"
 #
-# logLevel = "DEBUG"
+logLevel = "DEBUG"
 
 # Entrypoints to be used by frontends that do not specify any entrypoint.
 # Each frontend can specify its own entrypoints.
@@ -35,7 +35,6 @@
 [entryPoints]
     [entryPoints.http]
     address = ":80"
-
 ################################################################
 # Traefik logs configuration
 ################################################################
@@ -45,7 +44,7 @@
 #
 # Optional
 #
-# [traefikLog]
+[traefikLog]
 
 # Sets the filepath for the traefik log. If not specified, stdout will be used.
 # Intermediate directories are created if necessary.
@@ -101,7 +100,7 @@
   # Optional
   # Default: "traefik"
   #
-  # entryPoint = "traefik"
+  # entryPoint = "admin"
 
   # Enabled Dashboard
   #
