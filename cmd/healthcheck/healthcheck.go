@@ -15,7 +15,7 @@ import (
 func NewCmd(traefikConfiguration *static.Configuration, loaders []cli.ResourceLoader) *cli.Command {
 	return &cli.Command{
 		Name:          "healthcheck",
-		Description:   `Calls Traefik /ping to check the health of Traefik (the endpoint must be enabled).`,
+		Description:   `Calls Traefik /ping endpoint (disabled by default) to check the health of Traefik.`,
 		Configuration: traefikConfiguration,
 		Run:           runCmd(traefikConfiguration),
 		Resources:     loaders,
