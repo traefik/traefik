@@ -233,11 +233,11 @@ func (c *clientWrapper) GetMiddlewares() []*v1alpha1.Middleware {
 	var result []*v1alpha1.Middleware
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().Middlewares().Lister().List(c.labelSelector)
+		middlewares, err := factory.Traefik().V1alpha1().Middlewares().Lister().List(c.labelSelector)
 		if err != nil {
-			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
+			log.Errorf("Failed to list middlewares in namespace %s: %s", ns, err)
 		}
-		result = append(result, ings...)
+		result = append(result, middlewares...)
 	}
 
 	return result
