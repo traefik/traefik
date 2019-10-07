@@ -394,8 +394,11 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
       [tls.options.foo]
         minVersion = "VersionTLS12"
         cipherSuites = [
-          "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-          "TLS_RSA_WITH_AES_256_GCM_SHA384"
+          "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+          "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
         ]
     ```
     
@@ -415,8 +418,11 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
         foo:
           minVersion: VersionTLS12
           cipherSuites:
+            - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+            - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+            - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+            - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
             - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-            - TLS_RSA_WITH_AES_256_GCM_SHA384
     ```
 
 !!! important "Conflicting TLS Options"
@@ -766,8 +772,11 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
       [tls.options.foo]
         minVersion = "VersionTLS12"
         cipherSuites = [
-          "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-          "TLS_RSA_WITH_AES_256_GCM_SHA384"
+          "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+          "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
         ]
     ```
 
@@ -787,8 +796,11 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
         foo:
           minVersion: VersionTLS12
           cipherSuites:
+            - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+            - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
+            - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+            - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
             - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
-            - "TLS_RSA_WITH_AES_256_GCM_SHA384"
     ```
 
 #### `certResolver`
