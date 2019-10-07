@@ -824,7 +824,7 @@ Each root item has been moved to a related section or removed.
     
 ## Dashboard
 
-You need to activate the [API](../operations/dashboard.md#enabling-the-dashboard) to access the dashboard.
+You need to activate the API to access the [dashboard](../operations/dashboard.md).
 As the dashboard access is now secured by default you can either:
 
 * define a  [specific router](../operations/api.md#configuration) with the `api@internal` service and one authentication middleware like the following example
