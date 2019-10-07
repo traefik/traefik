@@ -17,9 +17,10 @@
   format = "json"
 
 [api]
+  insecure = true
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 

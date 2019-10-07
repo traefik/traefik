@@ -12,7 +12,7 @@ RUN yarn install
 RUN npm run build
 
 # BUILD
-FROM golang:1.12-alpine as gobuild
+FROM golang:1.13-alpine as gobuild
 
 RUN apk --update upgrade \
     && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \
@@ -24,6 +24,12 @@ RUN mkdir -p /usr/local/bin \
     && chmod +x /usr/local/bin/go-bindata
 
 WORKDIR /go/src/github.com/containous/traefik
+
+# Download go modules
+COPY go.mod .
+COPY go.sum .
+RUN GO111MODULE=on GOPROXY=https://proxy.golang.org go mod download
+
 COPY . /go/src/github.com/containous/traefik
 
 RUN rm -rf /go/src/github.com/containous/traefik/static/

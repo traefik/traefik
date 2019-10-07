@@ -18,7 +18,7 @@ In the following, the Kubernetes resources defined in YAML configuration files c
 
 !!! important "Kubectl Version"
 
-    With the `rancher/k3s` version used in this guide (`0.5.0`), the kubectl version needs to be >= `0.11`.
+    With the `rancher/k3s` version used in this guide (`0.8.0`), the kubectl version needs to be >= `1.11`.
 
 ## k3s Docker-compose Configuration
 

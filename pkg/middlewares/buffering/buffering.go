@@ -4,9 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
 	oxybuffer "github.com/vulcand/oxy/buffer"
 )
@@ -21,10 +22,10 @@ type buffer struct {
 }
 
 // New creates a buffering middleware.
-func New(ctx context.Context, next http.Handler, config config.Buffering, name string) (http.Handler, error) {
-	logger := middlewares.GetLogger(ctx, name, typeName)
+func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name string) (http.Handler, error) {
+	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
-	logger.Debug("Setting up buffering: request limits: %d (mem), %d (max), response limits: %d (mem), %d (max) with retry: '%s'",
+	logger.Debugf("Setting up buffering: request limits: %d (mem), %d (max), response limits: %d (mem), %d (max) with retry: '%s'",
 		config.MemRequestBodyBytes, config.MaxRequestBodyBytes, config.MemResponseBodyBytes, config.MaxResponseBodyBytes, config.RetryExpression)
 
 	oxyBuffer, err := oxybuffer.New(

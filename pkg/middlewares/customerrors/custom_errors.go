@@ -11,10 +11,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/containous/traefik/pkg/tracing"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/tracing"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/utils"
@@ -42,8 +43,8 @@ type customErrors struct {
 }
 
 // New creates a new custom error pages middleware.
-func New(ctx context.Context, next http.Handler, config config.ErrorPage, serviceBuilder serviceBuilder, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
+func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, serviceBuilder serviceBuilder, name string) (http.Handler, error) {
+	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
 
 	httpCodeRanges, err := types.NewHTTPCodeRanges(config.Status)
 	if err != nil {
@@ -69,7 +70,8 @@ func (c *customErrors) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), c.name, typeName)
+	ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
+	logger := log.FromContext(ctx)
 
 	if c.backendHandler == nil {
 		logger.Error("Error pages: no backend handler.")
@@ -78,7 +80,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	recorder := newResponseRecorder(rw, middlewares.GetLogger(context.Background(), "test", typeName))
+	recorder := newResponseRecorder(ctx, rw)
 	c.next.ServeHTTP(recorder, req)
 
 	// check the recorder code against the configured http status code ranges
@@ -103,7 +105,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			recorderErrorPage := newResponseRecorder(rw, middlewares.GetLogger(context.Background(), "test", typeName))
+			recorderErrorPage := newResponseRecorder(ctx, rw)
 			utils.CopyHeaders(pageReq.Header, req.Header)
 
 			c.backendHandler.ServeHTTP(recorderErrorPage, pageReq.WithContext(req.Context()))
@@ -151,13 +153,13 @@ type responseRecorder interface {
 }
 
 // newResponseRecorder returns an initialized responseRecorder.
-func newResponseRecorder(rw http.ResponseWriter, logger logrus.FieldLogger) responseRecorder {
+func newResponseRecorder(ctx context.Context, rw http.ResponseWriter) responseRecorder {
 	recorder := &responseRecorderWithoutCloseNotify{
 		HeaderMap:      make(http.Header),
 		Body:           new(bytes.Buffer),
 		Code:           http.StatusOK,
 		responseWriter: rw,
-		logger:         logger,
+		logger:         log.FromContext(ctx),
 	}
 	if _, ok := rw.(http.CloseNotifier); ok {
 		return &responseRecorderWithCloseNotify{recorder}

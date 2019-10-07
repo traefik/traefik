@@ -1,0 +1,18 @@
+[
+	{
+		"entryPoints": [
+			"web"
+		],
+		"name": "test@myprovider",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar.other`)",
+		"service": "foo-service@myprovider",
+		"status": "enabled",
+		"tls": {
+			"passthrough": false
+		},
+		"using": [
+			"web"
+		]
+	}
+]

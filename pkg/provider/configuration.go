@@ -10,23 +10,23 @@ import (
 	"unicode"
 
 	"github.com/Masterminds/sprig"
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 // Merge Merges multiple configurations.
-func Merge(ctx context.Context, configurations map[string]*config.Configuration) *config.Configuration {
+func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration) *dynamic.Configuration {
 	logger := log.FromContext(ctx)
 
-	configuration := &config.Configuration{
-		HTTP: &config.HTTPConfiguration{
-			Routers:     make(map[string]*config.Router),
-			Middlewares: make(map[string]*config.Middleware),
-			Services:    make(map[string]*config.Service),
+	configuration := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:     make(map[string]*dynamic.Router),
+			Middlewares: make(map[string]*dynamic.Middleware),
+			Services:    make(map[string]*dynamic.Service),
 		},
-		TCP: &config.TCPConfiguration{
-			Routers:  make(map[string]*config.TCPRouter),
-			Services: make(map[string]*config.TCPService),
+		TCP: &dynamic.TCPConfiguration{
+			Routers:  make(map[string]*dynamic.TCPRouter),
+			Services: make(map[string]*dynamic.TCPService),
 		},
 	}
 
@@ -123,7 +123,7 @@ func Merge(ctx context.Context, configurations map[string]*config.Configuration)
 }
 
 // AddServiceTCP Adds a service to a configurations.
-func AddServiceTCP(configuration *config.TCPConfiguration, serviceName string, service *config.TCPService) bool {
+func AddServiceTCP(configuration *dynamic.TCPConfiguration, serviceName string, service *dynamic.TCPService) bool {
 	if _, ok := configuration.Services[serviceName]; !ok {
 		configuration.Services[serviceName] = service
 		return true
@@ -138,7 +138,7 @@ func AddServiceTCP(configuration *config.TCPConfiguration, serviceName string, s
 }
 
 // AddRouterTCP Adds a router to a configurations.
-func AddRouterTCP(configuration *config.TCPConfiguration, routerName string, router *config.TCPRouter) bool {
+func AddRouterTCP(configuration *dynamic.TCPConfiguration, routerName string, router *dynamic.TCPRouter) bool {
 	if _, ok := configuration.Routers[routerName]; !ok {
 		configuration.Routers[routerName] = router
 		return true
@@ -148,7 +148,7 @@ func AddRouterTCP(configuration *config.TCPConfiguration, routerName string, rou
 }
 
 // AddService Adds a service to a configurations.
-func AddService(configuration *config.HTTPConfiguration, serviceName string, service *config.Service) bool {
+func AddService(configuration *dynamic.HTTPConfiguration, serviceName string, service *dynamic.Service) bool {
 	if _, ok := configuration.Services[serviceName]; !ok {
 		configuration.Services[serviceName] = service
 		return true
@@ -163,7 +163,7 @@ func AddService(configuration *config.HTTPConfiguration, serviceName string, ser
 }
 
 // AddRouter Adds a router to a configurations.
-func AddRouter(configuration *config.HTTPConfiguration, routerName string, router *config.Router) bool {
+func AddRouter(configuration *dynamic.HTTPConfiguration, routerName string, router *dynamic.Router) bool {
 	if _, ok := configuration.Routers[routerName]; !ok {
 		configuration.Routers[routerName] = router
 		return true
@@ -173,7 +173,7 @@ func AddRouter(configuration *config.HTTPConfiguration, routerName string, route
 }
 
 // AddMiddleware Adds a middleware to a configurations.
-func AddMiddleware(configuration *config.HTTPConfiguration, middlewareName string, middleware *config.Middleware) bool {
+func AddMiddleware(configuration *dynamic.HTTPConfiguration, middlewareName string, middleware *dynamic.Middleware) bool {
 	if _, ok := configuration.Middlewares[middlewareName]; !ok {
 		configuration.Middlewares[middlewareName] = middleware
 		return true
@@ -195,7 +195,7 @@ func MakeDefaultRuleTemplate(defaultRule string, funcMap template.FuncMap) (*tem
 }
 
 // BuildTCPRouterConfiguration Builds a router configuration.
-func BuildTCPRouterConfiguration(ctx context.Context, configuration *config.TCPConfiguration) {
+func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCPConfiguration) {
 	for routerName, router := range configuration.Routers {
 		loggerRouter := log.FromContext(ctx).WithField(log.RouterName, routerName)
 		if len(router.Rule) == 0 {
@@ -220,13 +220,13 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *config.TCPC
 }
 
 // BuildRouterConfiguration Builds a router configuration.
-func BuildRouterConfiguration(ctx context.Context, configuration *config.HTTPConfiguration, defaultRouterName string, defaultRuleTpl *template.Template, model interface{}) {
+func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPConfiguration, defaultRouterName string, defaultRuleTpl *template.Template, model interface{}) {
 	if len(configuration.Routers) == 0 {
 		if len(configuration.Services) > 1 {
 			log.FromContext(ctx).Info("Could not create a router for the container: too many services")
 		} else {
-			configuration.Routers = make(map[string]*config.Router)
-			configuration.Routers[defaultRouterName] = &config.Router{}
+			configuration.Routers = make(map[string]*dynamic.Router)
+			configuration.Routers[defaultRouterName] = &dynamic.Router{}
 		}
 	}
 

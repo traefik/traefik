@@ -6,11 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
+	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/gorilla/mux"
 	"github.com/unrolled/render"
 )
 
@@ -18,13 +18,12 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that provides a Rest API.
 type Provider struct {
-	configurationChan chan<- config.Message
-	EntryPoint        string `description:"EntryPoint." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
+	Insecure          bool `description:"Activate REST Provider directly on the entryPoint named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	configurationChan chan<- dynamic.Message
 }
 
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
-	p.EntryPoint = "traefik"
 }
 
 var templatesRenderer = render.New(render.Options{Directory: "nowhere"})
@@ -32,6 +31,13 @@ var templatesRenderer = render.New(render.Options{Directory: "nowhere"})
 // Init the provider.
 func (p *Provider) Init() error {
 	return nil
+}
+
+// Handler creates an http.Handler for the Rest API
+func (p *Provider) Handler() http.Handler {
+	router := mux.NewRouter()
+	p.Append(router)
+	return router
 }
 
 // Append add rest provider routes on a router.
@@ -48,7 +54,7 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 				return
 			}
 
-			configuration := new(config.HTTPConfiguration)
+			configuration := new(dynamic.Configuration)
 			body, _ := ioutil.ReadAll(request.Body)
 
 			if err := json.Unmarshal(body, configuration); err != nil {
@@ -57,9 +63,7 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 				return
 			}
 
-			p.configurationChan <- config.Message{ProviderName: "rest", Configuration: &config.Configuration{
-				HTTP: configuration,
-			}}
+			p.configurationChan <- dynamic.Message{ProviderName: "rest", Configuration: configuration}
 			if err := templatesRenderer.JSON(response, http.StatusOK, configuration); err != nil {
 				log.WithoutContext().Error(err)
 			}
@@ -68,7 +72,7 @@ func (p *Provider) Append(systemRouter *mux.Router) {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	p.configurationChan = configurationChan
 	return nil
 }

@@ -2,7 +2,6 @@ package redirect
 
 import (
 	"bytes"
-	"context"
 	"html/template"
 	"io"
 	"net/http"
@@ -10,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/vulcand/oxy/utils"
 )
@@ -25,7 +24,7 @@ type redirect struct {
 }
 
 // New creates a Redirect middleware.
-func newRedirect(_ context.Context, next http.Handler, regex string, replacement string, permanent bool, name string) (http.Handler, error) {
+func newRedirect(next http.Handler, regex string, replacement string, permanent bool, name string) (http.Handler, error) {
 	re, err := regexp.Compile(regex)
 	if err != nil {
 		return nil, err

@@ -1,5 +1,5 @@
 zipkin:
-  image: openzipkin/zipkin:2.12.6
+  image: openzipkin/zipkin:2.16.2
   environment:
     STORAGE_TYPE: mem
     JAVA_OPTS: -Dlogging.level.zipkin=DEBUG

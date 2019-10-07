@@ -3,120 +3,121 @@ package label
 import (
 	"fmt"
 	"testing"
-	"time"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDecodeConfiguration(t *testing.T) {
 	labels := map[string]string{
-		"traefik.http.middlewares.Middleware0.addprefix.prefix":                                "foobar",
-		"traefik.http.middlewares.Middleware1.basicauth.headerfield":                           "foobar",
-		"traefik.http.middlewares.Middleware1.basicauth.realm":                                 "foobar",
-		"traefik.http.middlewares.Middleware1.basicauth.removeheader":                          "true",
-		"traefik.http.middlewares.Middleware1.basicauth.users":                                 "foobar, fiibar",
-		"traefik.http.middlewares.Middleware1.basicauth.usersfile":                             "foobar",
-		"traefik.http.middlewares.Middleware2.buffering.maxrequestbodybytes":                   "42",
-		"traefik.http.middlewares.Middleware2.buffering.maxresponsebodybytes":                  "42",
-		"traefik.http.middlewares.Middleware2.buffering.memrequestbodybytes":                   "42",
-		"traefik.http.middlewares.Middleware2.buffering.memresponsebodybytes":                  "42",
-		"traefik.http.middlewares.Middleware2.buffering.retryexpression":                       "foobar",
-		"traefik.http.middlewares.Middleware3.chain.middlewares":                               "foobar, fiibar",
-		"traefik.http.middlewares.Middleware4.circuitbreaker.expression":                       "foobar",
-		"traefik.http.middlewares.Middleware5.digestauth.headerfield":                          "foobar",
-		"traefik.http.middlewares.Middleware5.digestauth.realm":                                "foobar",
-		"traefik.http.middlewares.Middleware5.digestauth.removeheader":                         "true",
-		"traefik.http.middlewares.Middleware5.digestauth.users":                                "foobar, fiibar",
-		"traefik.http.middlewares.Middleware5.digestauth.usersfile":                            "foobar",
-		"traefik.http.middlewares.Middleware6.errors.query":                                    "foobar",
-		"traefik.http.middlewares.Middleware6.errors.service":                                  "foobar",
-		"traefik.http.middlewares.Middleware6.errors.status":                                   "foobar, fiibar",
-		"traefik.http.middlewares.Middleware7.forwardauth.address":                             "foobar",
-		"traefik.http.middlewares.Middleware7.forwardauth.authresponseheaders":                 "foobar, fiibar",
-		"traefik.http.middlewares.Middleware7.forwardauth.tls.ca":                              "foobar",
-		"traefik.http.middlewares.Middleware7.forwardauth.tls.caoptional":                      "true",
-		"traefik.http.middlewares.Middleware7.forwardauth.tls.cert":                            "foobar",
-		"traefik.http.middlewares.Middleware7.forwardauth.tls.insecureskipverify":              "true",
-		"traefik.http.middlewares.Middleware7.forwardauth.tls.key":                             "foobar",
-		"traefik.http.middlewares.Middleware7.forwardauth.trustforwardheader":                  "true",
-		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowcredentials":           "true",
-		"traefik.http.middlewares.Middleware8.headers.allowedhosts":                            "foobar, fiibar",
-		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowheaders":               "X-foobar, X-fiibar",
-		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowmethods":               "GET, PUT",
-		"traefik.http.middlewares.Middleware8.headers.accesscontrolalloworigin":                "foobar",
-		"traefik.http.middlewares.Middleware8.headers.accesscontrolexposeheaders":              "X-foobar, X-fiibar",
-		"traefik.http.middlewares.Middleware8.headers.accesscontrolmaxage":                     "200",
-		"traefik.http.middlewares.Middleware8.headers.addvaryheader":                           "true",
-		"traefik.http.middlewares.Middleware8.headers.browserxssfilter":                        "true",
-		"traefik.http.middlewares.Middleware8.headers.contentsecuritypolicy":                   "foobar",
-		"traefik.http.middlewares.Middleware8.headers.contenttypenosniff":                      "true",
-		"traefik.http.middlewares.Middleware8.headers.custombrowserxssvalue":                   "foobar",
-		"traefik.http.middlewares.Middleware8.headers.customframeoptionsvalue":                 "foobar",
-		"traefik.http.middlewares.Middleware8.headers.customrequestheaders.name0":              "foobar",
-		"traefik.http.middlewares.Middleware8.headers.customrequestheaders.name1":              "foobar",
-		"traefik.http.middlewares.Middleware8.headers.customresponseheaders.name0":             "foobar",
-		"traefik.http.middlewares.Middleware8.headers.customresponseheaders.name1":             "foobar",
-		"traefik.http.middlewares.Middleware8.headers.forcestsheader":                          "true",
-		"traefik.http.middlewares.Middleware8.headers.framedeny":                               "true",
-		"traefik.http.middlewares.Middleware8.headers.hostsproxyheaders":                       "foobar, fiibar",
-		"traefik.http.middlewares.Middleware8.headers.isdevelopment":                           "true",
-		"traefik.http.middlewares.Middleware8.headers.publickey":                               "foobar",
-		"traefik.http.middlewares.Middleware8.headers.referrerpolicy":                          "foobar",
-		"traefik.http.middlewares.Middleware8.headers.sslforcehost":                            "true",
-		"traefik.http.middlewares.Middleware8.headers.sslhost":                                 "foobar",
-		"traefik.http.middlewares.Middleware8.headers.sslproxyheaders.name0":                   "foobar",
-		"traefik.http.middlewares.Middleware8.headers.sslproxyheaders.name1":                   "foobar",
-		"traefik.http.middlewares.Middleware8.headers.sslredirect":                             "true",
-		"traefik.http.middlewares.Middleware8.headers.ssltemporaryredirect":                    "true",
-		"traefik.http.middlewares.Middleware8.headers.stsincludesubdomains":                    "true",
-		"traefik.http.middlewares.Middleware8.headers.stspreload":                              "true",
-		"traefik.http.middlewares.Middleware8.headers.stsseconds":                              "42",
-		"traefik.http.middlewares.Middleware9.ipwhitelist.ipstrategy.depth":                    "42",
-		"traefik.http.middlewares.Middleware9.ipwhitelist.ipstrategy.excludedips":              "foobar, fiibar",
-		"traefik.http.middlewares.Middleware9.ipwhitelist.sourcerange":                         "foobar, fiibar",
-		"traefik.http.middlewares.Middleware10.maxconn.amount":                                 "42",
-		"traefik.http.middlewares.Middleware10.maxconn.extractorfunc":                          "foobar",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.notafter":                "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.notbefore":               "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.sans":                    "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.commonname":      "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.country":         "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.domaincomponent": "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.locality":        "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.organization":    "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.province":        "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.serialnumber":    "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.commonname":       "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.country":          "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.domaincomponent":  "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.locality":         "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.organization":     "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.province":         "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.serialnumber":     "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.pem":                          "true",
-		"traefik.http.middlewares.Middleware12.ratelimit.extractorfunc":                        "foobar",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.average":                "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.burst":                  "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate0.period":                 "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.average":                "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.burst":                  "42",
-		"traefik.http.middlewares.Middleware12.ratelimit.rateset.Rate1.period":                 "42",
-		"traefik.http.middlewares.Middleware13.redirectregex.permanent":                        "true",
-		"traefik.http.middlewares.Middleware13.redirectregex.regex":                            "foobar",
-		"traefik.http.middlewares.Middleware13.redirectregex.replacement":                      "foobar",
-		"traefik.http.middlewares.Middleware13b.redirectscheme.scheme":                         "https",
-		"traefik.http.middlewares.Middleware13b.redirectscheme.port":                           "80",
-		"traefik.http.middlewares.Middleware13b.redirectscheme.permanent":                      "true",
-		"traefik.http.middlewares.Middleware14.replacepath.path":                               "foobar",
-		"traefik.http.middlewares.Middleware15.replacepathregex.regex":                         "foobar",
-		"traefik.http.middlewares.Middleware15.replacepathregex.replacement":                   "foobar",
-		"traefik.http.middlewares.Middleware16.retry.attempts":                                 "42",
-		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":                           "foobar, fiibar",
-		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":                         "foobar, fiibar",
-		"traefik.http.middlewares.Middleware19.compress":                                       "true",
+		"traefik.http.middlewares.Middleware0.addprefix.prefix":                                    "foobar",
+		"traefik.http.middlewares.Middleware1.basicauth.headerfield":                               "foobar",
+		"traefik.http.middlewares.Middleware1.basicauth.realm":                                     "foobar",
+		"traefik.http.middlewares.Middleware1.basicauth.removeheader":                              "true",
+		"traefik.http.middlewares.Middleware1.basicauth.users":                                     "foobar, fiibar",
+		"traefik.http.middlewares.Middleware1.basicauth.usersfile":                                 "foobar",
+		"traefik.http.middlewares.Middleware2.buffering.maxrequestbodybytes":                       "42",
+		"traefik.http.middlewares.Middleware2.buffering.maxresponsebodybytes":                      "42",
+		"traefik.http.middlewares.Middleware2.buffering.memrequestbodybytes":                       "42",
+		"traefik.http.middlewares.Middleware2.buffering.memresponsebodybytes":                      "42",
+		"traefik.http.middlewares.Middleware2.buffering.retryexpression":                           "foobar",
+		"traefik.http.middlewares.Middleware3.chain.middlewares":                                   "foobar, fiibar",
+		"traefik.http.middlewares.Middleware4.circuitbreaker.expression":                           "foobar",
+		"traefik.http.middlewares.Middleware5.digestauth.headerfield":                              "foobar",
+		"traefik.http.middlewares.Middleware5.digestauth.realm":                                    "foobar",
+		"traefik.http.middlewares.Middleware5.digestauth.removeheader":                             "true",
+		"traefik.http.middlewares.Middleware5.digestauth.users":                                    "foobar, fiibar",
+		"traefik.http.middlewares.Middleware5.digestauth.usersfile":                                "foobar",
+		"traefik.http.middlewares.Middleware6.errors.query":                                        "foobar",
+		"traefik.http.middlewares.Middleware6.errors.service":                                      "foobar",
+		"traefik.http.middlewares.Middleware6.errors.status":                                       "foobar, fiibar",
+		"traefik.http.middlewares.Middleware7.forwardauth.address":                                 "foobar",
+		"traefik.http.middlewares.Middleware7.forwardauth.authresponseheaders":                     "foobar, fiibar",
+		"traefik.http.middlewares.Middleware7.forwardauth.tls.ca":                                  "foobar",
+		"traefik.http.middlewares.Middleware7.forwardauth.tls.caoptional":                          "true",
+		"traefik.http.middlewares.Middleware7.forwardauth.tls.cert":                                "foobar",
+		"traefik.http.middlewares.Middleware7.forwardauth.tls.insecureskipverify":                  "true",
+		"traefik.http.middlewares.Middleware7.forwardauth.tls.key":                                 "foobar",
+		"traefik.http.middlewares.Middleware7.forwardauth.trustforwardheader":                      "true",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowcredentials":               "true",
+		"traefik.http.middlewares.Middleware8.headers.allowedhosts":                                "foobar, fiibar",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowheaders":                   "X-foobar, X-fiibar",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowmethods":                   "GET, PUT",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolalloworigin":                    "foobar",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolexposeheaders":                  "X-foobar, X-fiibar",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolmaxage":                         "200",
+		"traefik.http.middlewares.Middleware8.headers.addvaryheader":                               "true",
+		"traefik.http.middlewares.Middleware8.headers.browserxssfilter":                            "true",
+		"traefik.http.middlewares.Middleware8.headers.contentsecuritypolicy":                       "foobar",
+		"traefik.http.middlewares.Middleware8.headers.contenttypenosniff":                          "true",
+		"traefik.http.middlewares.Middleware8.headers.custombrowserxssvalue":                       "foobar",
+		"traefik.http.middlewares.Middleware8.headers.customframeoptionsvalue":                     "foobar",
+		"traefik.http.middlewares.Middleware8.headers.customrequestheaders.name0":                  "foobar",
+		"traefik.http.middlewares.Middleware8.headers.customrequestheaders.name1":                  "foobar",
+		"traefik.http.middlewares.Middleware8.headers.customresponseheaders.name0":                 "foobar",
+		"traefik.http.middlewares.Middleware8.headers.customresponseheaders.name1":                 "foobar",
+		"traefik.http.middlewares.Middleware8.headers.forcestsheader":                              "true",
+		"traefik.http.middlewares.Middleware8.headers.framedeny":                                   "true",
+		"traefik.http.middlewares.Middleware8.headers.hostsproxyheaders":                           "foobar, fiibar",
+		"traefik.http.middlewares.Middleware8.headers.isdevelopment":                               "true",
+		"traefik.http.middlewares.Middleware8.headers.publickey":                                   "foobar",
+		"traefik.http.middlewares.Middleware8.headers.referrerpolicy":                              "foobar",
+		"traefik.http.middlewares.Middleware8.headers.featurepolicy":                               "foobar",
+		"traefik.http.middlewares.Middleware8.headers.sslforcehost":                                "true",
+		"traefik.http.middlewares.Middleware8.headers.sslhost":                                     "foobar",
+		"traefik.http.middlewares.Middleware8.headers.sslproxyheaders.name0":                       "foobar",
+		"traefik.http.middlewares.Middleware8.headers.sslproxyheaders.name1":                       "foobar",
+		"traefik.http.middlewares.Middleware8.headers.sslredirect":                                 "true",
+		"traefik.http.middlewares.Middleware8.headers.ssltemporaryredirect":                        "true",
+		"traefik.http.middlewares.Middleware8.headers.stsincludesubdomains":                        "true",
+		"traefik.http.middlewares.Middleware8.headers.stspreload":                                  "true",
+		"traefik.http.middlewares.Middleware8.headers.stsseconds":                                  "42",
+		"traefik.http.middlewares.Middleware9.ipwhitelist.ipstrategy.depth":                        "42",
+		"traefik.http.middlewares.Middleware9.ipwhitelist.ipstrategy.excludedips":                  "foobar, fiibar",
+		"traefik.http.middlewares.Middleware9.ipwhitelist.sourcerange":                             "foobar, fiibar",
+		"traefik.http.middlewares.Middleware10.inflightreq.amount":                                 "42",
+		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.ipstrategy.depth":       "42",
+		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.ipstrategy.excludedips": "foobar, fiibar",
+		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.requestheadername":      "foobar",
+		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.requesthost":            "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.notafter":                    "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.notbefore":                   "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.sans":                        "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.commonname":          "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.country":             "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.domaincomponent":     "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.locality":            "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.organization":        "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.province":            "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.subject.serialnumber":        "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.commonname":           "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.country":              "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.domaincomponent":      "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.locality":             "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.organization":         "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.province":             "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.serialnumber":         "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.pem":                              "true",
+		"traefik.http.middlewares.Middleware12.ratelimit.average":                                  "42",
+		"traefik.http.middlewares.Middleware12.ratelimit.burst":                                    "42",
+		"traefik.http.middlewares.Middleware12.ratelimit.sourcecriterion.requestheadername":        "foobar",
+		"traefik.http.middlewares.Middleware12.ratelimit.sourcecriterion.requesthost":              "true",
+		"traefik.http.middlewares.Middleware12.ratelimit.sourcecriterion.ipstrategy.depth":         "42",
+		"traefik.http.middlewares.Middleware12.ratelimit.sourcecriterion.ipstrategy.excludedips":   "foobar, foobar",
+		"traefik.http.middlewares.Middleware13.redirectregex.permanent":                            "true",
+		"traefik.http.middlewares.Middleware13.redirectregex.regex":                                "foobar",
+		"traefik.http.middlewares.Middleware13.redirectregex.replacement":                          "foobar",
+		"traefik.http.middlewares.Middleware13b.redirectscheme.scheme":                             "https",
+		"traefik.http.middlewares.Middleware13b.redirectscheme.port":                               "80",
+		"traefik.http.middlewares.Middleware13b.redirectscheme.permanent":                          "true",
+		"traefik.http.middlewares.Middleware14.replacepath.path":                                   "foobar",
+		"traefik.http.middlewares.Middleware15.replacepathregex.regex":                             "foobar",
+		"traefik.http.middlewares.Middleware15.replacepathregex.replacement":                       "foobar",
+		"traefik.http.middlewares.Middleware16.retry.attempts":                                     "42",
+		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":                               "foobar, fiibar",
+		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":                             "foobar, fiibar",
+		"traefik.http.middlewares.Middleware19.compress":                                           "true",
 
 		"traefik.http.routers.Router0.entrypoints": "foobar, fiibar",
 		"traefik.http.routers.Router0.middlewares": "foobar, fiibar",
@@ -142,8 +143,8 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.responseforwarding.flushinterval": "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.scheme":                    "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.port":                      "8080",
-		"traefik.http.services.Service0.loadbalancer.stickiness.cookiename":            "foobar",
-		"traefik.http.services.Service0.loadbalancer.stickiness.securecookie":          "true",
+		"traefik.http.services.Service0.loadbalancer.sticky.cookie.name":               "foobar",
+		"traefik.http.services.Service0.loadbalancer.sticky.cookie.secure":             "true",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name0":        "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name1":        "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.hostname":             "foobar",
@@ -156,8 +157,8 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.responseforwarding.flushinterval": "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.scheme":                    "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.port":                      "8080",
-		"traefik.http.services.Service1.loadbalancer.stickiness":                       "false",
-		"traefik.http.services.Service1.loadbalancer.stickiness.cookiename":            "fui",
+		"traefik.http.services.Service1.loadbalancer.sticky":                           "false",
+		"traefik.http.services.Service1.loadbalancer.sticky.cookie.name":               "fui",
 		"traefik.tcp.routers.Router0.rule":                                             "foobar",
 		"traefik.tcp.routers.Router0.entrypoints":                                      "foobar, fiibar",
 		"traefik.tcp.routers.Router0.service":                                          "foobar",
@@ -169,15 +170,17 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.tcp.routers.Router1.tls.options":                                      "foo",
 		"traefik.tcp.routers.Router1.tls.passthrough":                                  "false",
 		"traefik.tcp.services.Service0.loadbalancer.server.Port":                       "42",
+		"traefik.tcp.services.Service0.loadbalancer.TerminationDelay":                  "42",
 		"traefik.tcp.services.Service1.loadbalancer.server.Port":                       "42",
+		"traefik.tcp.services.Service1.loadbalancer.TerminationDelay":                  "42",
 	}
 
 	configuration, err := DecodeConfiguration(labels)
 	require.NoError(t, err)
 
-	expected := &config.Configuration{
-		TCP: &config.TCPConfiguration{
-			Routers: map[string]*config.TCPRouter{
+	expected := &dynamic.Configuration{
+		TCP: &dynamic.TCPConfiguration{
+			Routers: map[string]*dynamic.TCPRouter{
 				"Router0": {
 					EntryPoints: []string{
 						"foobar",
@@ -185,7 +188,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 					Service: "foobar",
 					Rule:    "foobar",
-					TLS: &config.RouterTCPTLSConfig{
+					TLS: &dynamic.RouterTCPTLSConfig{
 						Passthrough: false,
 						Options:     "foo",
 					},
@@ -197,35 +200,37 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 					Service: "foobar",
 					Rule:    "foobar",
-					TLS: &config.RouterTCPTLSConfig{
+					TLS: &dynamic.RouterTCPTLSConfig{
 						Passthrough: false,
 						Options:     "foo",
 					},
 				},
 			},
-			Services: map[string]*config.TCPService{
+			Services: map[string]*dynamic.TCPService{
 				"Service0": {
-					LoadBalancer: &config.TCPLoadBalancerService{
-						Servers: []config.TCPServer{
+					LoadBalancer: &dynamic.TCPServersLoadBalancer{
+						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",
 							},
 						},
+						TerminationDelay: func(i int) *int { return &i }(42),
 					},
 				},
 				"Service1": {
-					LoadBalancer: &config.TCPLoadBalancerService{
-						Servers: []config.TCPServer{
+					LoadBalancer: &dynamic.TCPServersLoadBalancer{
+						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",
 							},
 						},
+						TerminationDelay: func(i int) *int { return &i }(42),
 					},
 				},
 			},
 		},
-		HTTP: &config.HTTPConfiguration{
-			Routers: map[string]*config.Router{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers: map[string]*dynamic.Router{
 				"Router0": {
 					EntryPoints: []string{
 						"foobar",
@@ -238,7 +243,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					Service:  "foobar",
 					Rule:     "foobar",
 					Priority: 42,
-					TLS:      &config.RouterTLSConfig{},
+					TLS:      &dynamic.RouterTLSConfig{},
 				},
 				"Router1": {
 					EntryPoints: []string{
@@ -254,14 +259,14 @@ func TestDecodeConfiguration(t *testing.T) {
 					Priority: 42,
 				},
 			},
-			Middlewares: map[string]*config.Middleware{
+			Middlewares: map[string]*dynamic.Middleware{
 				"Middleware0": {
-					AddPrefix: &config.AddPrefix{
+					AddPrefix: &dynamic.AddPrefix{
 						Prefix: "foobar",
 					},
 				},
 				"Middleware1": {
-					BasicAuth: &config.BasicAuth{
+					BasicAuth: &dynamic.BasicAuth{
 						Users: []string{
 							"foobar",
 							"fiibar",
@@ -273,18 +278,25 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware10": {
-					MaxConn: &config.MaxConn{
-						Amount:        42,
-						ExtractorFunc: "foobar",
+					InFlightReq: &dynamic.InFlightReq{
+						Amount: 42,
+						SourceCriterion: &dynamic.SourceCriterion{
+							IPStrategy: &dynamic.IPStrategy{
+								Depth:       42,
+								ExcludedIPs: []string{"foobar", "fiibar"},
+							},
+							RequestHeaderName: "foobar",
+							RequestHost:       true,
+						},
 					},
 				},
 				"Middleware11": {
-					PassTLSClientCert: &config.PassTLSClientCert{
+					PassTLSClientCert: &dynamic.PassTLSClientCert{
 						PEM: true,
-						Info: &config.TLSClientCertificateInfo{
+						Info: &dynamic.TLSClientCertificateInfo{
 							NotAfter:  true,
 							NotBefore: true,
-							Subject: &config.TLSCLientCertificateDNInfo{
+							Subject: &dynamic.TLSCLientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -293,7 +305,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								SerialNumber:    true,
 								DomainComponent: true,
 							},
-							Issuer: &config.TLSCLientCertificateDNInfo{
+							Issuer: &dynamic.TLSCLientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -307,54 +319,51 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware12": {
-					RateLimit: &config.RateLimit{
-						RateSet: map[string]*config.Rate{
-							"Rate0": {
-								Period:  types.Duration(42 * time.Second),
-								Average: 42,
-								Burst:   42,
+					RateLimit: &dynamic.RateLimit{
+						Average: 42,
+						Burst:   42,
+						SourceCriterion: &dynamic.SourceCriterion{
+							IPStrategy: &dynamic.IPStrategy{
+								Depth:       42,
+								ExcludedIPs: []string{"foobar", "foobar"},
 							},
-							"Rate1": {
-								Period:  types.Duration(42 * time.Second),
-								Average: 42,
-								Burst:   42,
-							},
+							RequestHeaderName: "foobar",
+							RequestHost:       true,
 						},
-						ExtractorFunc: "foobar",
 					},
 				},
 				"Middleware13": {
-					RedirectRegex: &config.RedirectRegex{
+					RedirectRegex: &dynamic.RedirectRegex{
 						Regex:       "foobar",
 						Replacement: "foobar",
 						Permanent:   true,
 					},
 				},
 				"Middleware13b": {
-					RedirectScheme: &config.RedirectScheme{
+					RedirectScheme: &dynamic.RedirectScheme{
 						Scheme:    "https",
 						Port:      "80",
 						Permanent: true,
 					},
 				},
 				"Middleware14": {
-					ReplacePath: &config.ReplacePath{
+					ReplacePath: &dynamic.ReplacePath{
 						Path: "foobar",
 					},
 				},
 				"Middleware15": {
-					ReplacePathRegex: &config.ReplacePathRegex{
+					ReplacePathRegex: &dynamic.ReplacePathRegex{
 						Regex:       "foobar",
 						Replacement: "foobar",
 					},
 				},
 				"Middleware16": {
-					Retry: &config.Retry{
+					Retry: &dynamic.Retry{
 						Attempts: 42,
 					},
 				},
 				"Middleware17": {
-					StripPrefix: &config.StripPrefix{
+					StripPrefix: &dynamic.StripPrefix{
 						Prefixes: []string{
 							"foobar",
 							"fiibar",
@@ -362,7 +371,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware18": {
-					StripPrefixRegex: &config.StripPrefixRegex{
+					StripPrefixRegex: &dynamic.StripPrefixRegex{
 						Regex: []string{
 							"foobar",
 							"fiibar",
@@ -370,10 +379,10 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware19": {
-					Compress: &config.Compress{},
+					Compress: &dynamic.Compress{},
 				},
 				"Middleware2": {
-					Buffering: &config.Buffering{
+					Buffering: &dynamic.Buffering{
 						MaxRequestBodyBytes:  42,
 						MemRequestBodyBytes:  42,
 						MaxResponseBodyBytes: 42,
@@ -382,7 +391,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware3": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{
 							"foobar",
 							"fiibar",
@@ -390,12 +399,12 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware4": {
-					CircuitBreaker: &config.CircuitBreaker{
+					CircuitBreaker: &dynamic.CircuitBreaker{
 						Expression: "foobar",
 					},
 				},
 				"Middleware5": {
-					DigestAuth: &config.DigestAuth{
+					DigestAuth: &dynamic.DigestAuth{
 						Users: []string{
 							"foobar",
 							"fiibar",
@@ -407,7 +416,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware6": {
-					Errors: &config.ErrorPage{
+					Errors: &dynamic.ErrorPage{
 						Status: []string{
 							"foobar",
 							"fiibar",
@@ -417,9 +426,9 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware7": {
-					ForwardAuth: &config.ForwardAuth{
+					ForwardAuth: &dynamic.ForwardAuth{
 						Address: "foobar",
-						TLS: &config.ClientTLS{
+						TLS: &dynamic.ClientTLS{
 							CA:                 "foobar",
 							CAOptional:         true,
 							Cert:               "foobar",
@@ -434,7 +443,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware8": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
@@ -487,16 +496,17 @@ func TestDecodeConfiguration(t *testing.T) {
 						ContentSecurityPolicy:   "foobar",
 						PublicKey:               "foobar",
 						ReferrerPolicy:          "foobar",
+						FeaturePolicy:           "foobar",
 						IsDevelopment:           true,
 					},
 				},
 				"Middleware9": {
-					IPWhiteList: &config.IPWhiteList{
+					IPWhiteList: &dynamic.IPWhiteList{
 						SourceRange: []string{
 							"foobar",
 							"fiibar",
 						},
-						IPStrategy: &config.IPStrategy{
+						IPStrategy: &dynamic.IPStrategy{
 							Depth: 42,
 							ExcludedIPs: []string{
 								"foobar",
@@ -506,21 +516,23 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			Services: map[string]*config.Service{
+			Services: map[string]*dynamic.Service{
 				"Service0": {
-					LoadBalancer: &config.LoadBalancerService{
-						Stickiness: &config.Stickiness{
-							CookieName:     "foobar",
-							SecureCookie:   true,
-							HTTPOnlyCookie: false,
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Sticky: &dynamic.Sticky{
+							Cookie: &dynamic.Cookie{
+								Name:     "foobar",
+								Secure:   true,
+								HTTPOnly: false,
+							},
 						},
-						Servers: []config.Server{
+						Servers: []dynamic.Server{
 							{
 								Scheme: "foobar",
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &config.HealthCheck{
+						HealthCheck: &dynamic.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -533,20 +545,20 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						ResponseForwarding: &config.ResponseForwarding{
+						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
 					},
 				},
 				"Service1": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								Scheme: "foobar",
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &config.HealthCheck{
+						HealthCheck: &dynamic.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -559,7 +571,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						ResponseForwarding: &config.ResponseForwarding{
+						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
 					},
@@ -572,9 +584,9 @@ func TestDecodeConfiguration(t *testing.T) {
 }
 
 func TestEncodeConfiguration(t *testing.T) {
-	configuration := &config.Configuration{
-		TCP: &config.TCPConfiguration{
-			Routers: map[string]*config.TCPRouter{
+	configuration := &dynamic.Configuration{
+		TCP: &dynamic.TCPConfiguration{
+			Routers: map[string]*dynamic.TCPRouter{
 				"Router0": {
 					EntryPoints: []string{
 						"foobar",
@@ -582,7 +594,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 					Service: "foobar",
 					Rule:    "foobar",
-					TLS: &config.RouterTCPTLSConfig{
+					TLS: &dynamic.RouterTCPTLSConfig{
 						Passthrough: false,
 						Options:     "foo",
 					},
@@ -594,16 +606,16 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 					Service: "foobar",
 					Rule:    "foobar",
-					TLS: &config.RouterTCPTLSConfig{
+					TLS: &dynamic.RouterTCPTLSConfig{
 						Passthrough: false,
 						Options:     "foo",
 					},
 				},
 			},
-			Services: map[string]*config.TCPService{
+			Services: map[string]*dynamic.TCPService{
 				"Service0": {
-					LoadBalancer: &config.TCPLoadBalancerService{
-						Servers: []config.TCPServer{
+					LoadBalancer: &dynamic.TCPServersLoadBalancer{
+						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",
 							},
@@ -611,8 +623,8 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Service1": {
-					LoadBalancer: &config.TCPLoadBalancerService{
-						Servers: []config.TCPServer{
+					LoadBalancer: &dynamic.TCPServersLoadBalancer{
+						Servers: []dynamic.TCPServer{
 							{
 								Port: "42",
 							},
@@ -621,8 +633,8 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 			},
 		},
-		HTTP: &config.HTTPConfiguration{
-			Routers: map[string]*config.Router{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers: map[string]*dynamic.Router{
 				"Router0": {
 					EntryPoints: []string{
 						"foobar",
@@ -635,7 +647,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					Service:  "foobar",
 					Rule:     "foobar",
 					Priority: 42,
-					TLS:      &config.RouterTLSConfig{},
+					TLS:      &dynamic.RouterTLSConfig{},
 				},
 				"Router1": {
 					EntryPoints: []string{
@@ -651,14 +663,14 @@ func TestEncodeConfiguration(t *testing.T) {
 					Priority: 42,
 				},
 			},
-			Middlewares: map[string]*config.Middleware{
+			Middlewares: map[string]*dynamic.Middleware{
 				"Middleware0": {
-					AddPrefix: &config.AddPrefix{
+					AddPrefix: &dynamic.AddPrefix{
 						Prefix: "foobar",
 					},
 				},
 				"Middleware1": {
-					BasicAuth: &config.BasicAuth{
+					BasicAuth: &dynamic.BasicAuth{
 						Users: []string{
 							"foobar",
 							"fiibar",
@@ -670,18 +682,25 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware10": {
-					MaxConn: &config.MaxConn{
-						Amount:        42,
-						ExtractorFunc: "foobar",
+					InFlightReq: &dynamic.InFlightReq{
+						Amount: 42,
+						SourceCriterion: &dynamic.SourceCriterion{
+							IPStrategy: &dynamic.IPStrategy{
+								Depth:       42,
+								ExcludedIPs: []string{"foobar", "fiibar"},
+							},
+							RequestHeaderName: "foobar",
+							RequestHost:       true,
+						},
 					},
 				},
 				"Middleware11": {
-					PassTLSClientCert: &config.PassTLSClientCert{
+					PassTLSClientCert: &dynamic.PassTLSClientCert{
 						PEM: true,
-						Info: &config.TLSClientCertificateInfo{
+						Info: &dynamic.TLSClientCertificateInfo{
 							NotAfter:  true,
 							NotBefore: true,
-							Subject: &config.TLSCLientCertificateDNInfo{
+							Subject: &dynamic.TLSCLientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -690,7 +709,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								SerialNumber:    true,
 								DomainComponent: true,
 							},
-							Issuer: &config.TLSCLientCertificateDNInfo{
+							Issuer: &dynamic.TLSCLientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -703,54 +722,51 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware12": {
-					RateLimit: &config.RateLimit{
-						RateSet: map[string]*config.Rate{
-							"Rate0": {
-								Period:  types.Duration(42 * time.Nanosecond),
-								Average: 42,
-								Burst:   42,
+					RateLimit: &dynamic.RateLimit{
+						Average: 42,
+						Burst:   42,
+						SourceCriterion: &dynamic.SourceCriterion{
+							IPStrategy: &dynamic.IPStrategy{
+								Depth:       42,
+								ExcludedIPs: []string{"foobar", "foobar"},
 							},
-							"Rate1": {
-								Period:  types.Duration(42 * time.Nanosecond),
-								Average: 42,
-								Burst:   42,
-							},
+							RequestHeaderName: "foobar",
+							RequestHost:       true,
 						},
-						ExtractorFunc: "foobar",
 					},
 				},
 				"Middleware13": {
-					RedirectRegex: &config.RedirectRegex{
+					RedirectRegex: &dynamic.RedirectRegex{
 						Regex:       "foobar",
 						Replacement: "foobar",
 						Permanent:   true,
 					},
 				},
 				"Middleware13b": {
-					RedirectScheme: &config.RedirectScheme{
+					RedirectScheme: &dynamic.RedirectScheme{
 						Scheme:    "https",
 						Port:      "80",
 						Permanent: true,
 					},
 				},
 				"Middleware14": {
-					ReplacePath: &config.ReplacePath{
+					ReplacePath: &dynamic.ReplacePath{
 						Path: "foobar",
 					},
 				},
 				"Middleware15": {
-					ReplacePathRegex: &config.ReplacePathRegex{
+					ReplacePathRegex: &dynamic.ReplacePathRegex{
 						Regex:       "foobar",
 						Replacement: "foobar",
 					},
 				},
 				"Middleware16": {
-					Retry: &config.Retry{
+					Retry: &dynamic.Retry{
 						Attempts: 42,
 					},
 				},
 				"Middleware17": {
-					StripPrefix: &config.StripPrefix{
+					StripPrefix: &dynamic.StripPrefix{
 						Prefixes: []string{
 							"foobar",
 							"fiibar",
@@ -758,7 +774,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware18": {
-					StripPrefixRegex: &config.StripPrefixRegex{
+					StripPrefixRegex: &dynamic.StripPrefixRegex{
 						Regex: []string{
 							"foobar",
 							"fiibar",
@@ -766,10 +782,10 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware19": {
-					Compress: &config.Compress{},
+					Compress: &dynamic.Compress{},
 				},
 				"Middleware2": {
-					Buffering: &config.Buffering{
+					Buffering: &dynamic.Buffering{
 						MaxRequestBodyBytes:  42,
 						MemRequestBodyBytes:  42,
 						MaxResponseBodyBytes: 42,
@@ -778,7 +794,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware3": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{
 							"foobar",
 							"fiibar",
@@ -786,12 +802,12 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware4": {
-					CircuitBreaker: &config.CircuitBreaker{
+					CircuitBreaker: &dynamic.CircuitBreaker{
 						Expression: "foobar",
 					},
 				},
 				"Middleware5": {
-					DigestAuth: &config.DigestAuth{
+					DigestAuth: &dynamic.DigestAuth{
 						Users: []string{
 							"foobar",
 							"fiibar",
@@ -803,7 +819,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware6": {
-					Errors: &config.ErrorPage{
+					Errors: &dynamic.ErrorPage{
 						Status: []string{
 							"foobar",
 							"fiibar",
@@ -813,9 +829,9 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware7": {
-					ForwardAuth: &config.ForwardAuth{
+					ForwardAuth: &dynamic.ForwardAuth{
 						Address: "foobar",
-						TLS: &config.ClientTLS{
+						TLS: &dynamic.ClientTLS{
 							CA:                 "foobar",
 							CAOptional:         true,
 							Cert:               "foobar",
@@ -830,7 +846,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware8": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
@@ -883,16 +899,17 @@ func TestEncodeConfiguration(t *testing.T) {
 						ContentSecurityPolicy:   "foobar",
 						PublicKey:               "foobar",
 						ReferrerPolicy:          "foobar",
+						FeaturePolicy:           "foobar",
 						IsDevelopment:           true,
 					},
 				},
 				"Middleware9": {
-					IPWhiteList: &config.IPWhiteList{
+					IPWhiteList: &dynamic.IPWhiteList{
 						SourceRange: []string{
 							"foobar",
 							"fiibar",
 						},
-						IPStrategy: &config.IPStrategy{
+						IPStrategy: &dynamic.IPStrategy{
 							Depth: 42,
 							ExcludedIPs: []string{
 								"foobar",
@@ -902,20 +919,22 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			Services: map[string]*config.Service{
+			Services: map[string]*dynamic.Service{
 				"Service0": {
-					LoadBalancer: &config.LoadBalancerService{
-						Stickiness: &config.Stickiness{
-							CookieName:     "foobar",
-							HTTPOnlyCookie: true,
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Sticky: &dynamic.Sticky{
+							Cookie: &dynamic.Cookie{
+								Name:     "foobar",
+								HTTPOnly: true,
+							},
 						},
-						Servers: []config.Server{
+						Servers: []dynamic.Server{
 							{
 								Scheme: "foobar",
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &config.HealthCheck{
+						HealthCheck: &dynamic.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -928,20 +947,20 @@ func TestEncodeConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						ResponseForwarding: &config.ResponseForwarding{
+						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
 					},
 				},
 				"Service1": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								Scheme: "foobar",
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &config.HealthCheck{
+						HealthCheck: &dynamic.HealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -954,7 +973,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							},
 						},
 						PassHostHeader: true,
-						ResponseForwarding: &config.ResponseForwarding{
+						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: "foobar",
 						},
 					},
@@ -967,110 +986,113 @@ func TestEncodeConfiguration(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := map[string]string{
-		"traefik.HTTP.Middlewares.Middleware0.AddPrefix.Prefix":                                "foobar",
-		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.HeaderField":                           "foobar",
-		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.Realm":                                 "foobar",
-		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.RemoveHeader":                          "true",
-		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.Users":                                 "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.UsersFile":                             "foobar",
-		"traefik.HTTP.Middlewares.Middleware2.Buffering.MaxRequestBodyBytes":                   "42",
-		"traefik.HTTP.Middlewares.Middleware2.Buffering.MaxResponseBodyBytes":                  "42",
-		"traefik.HTTP.Middlewares.Middleware2.Buffering.MemRequestBodyBytes":                   "42",
-		"traefik.HTTP.Middlewares.Middleware2.Buffering.MemResponseBodyBytes":                  "42",
-		"traefik.HTTP.Middlewares.Middleware2.Buffering.RetryExpression":                       "foobar",
-		"traefik.HTTP.Middlewares.Middleware3.Chain.Middlewares":                               "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware4.CircuitBreaker.Expression":                       "foobar",
-		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.HeaderField":                          "foobar",
-		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.Realm":                                "foobar",
-		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.RemoveHeader":                         "true",
-		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.Users":                                "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.UsersFile":                            "foobar",
-		"traefik.HTTP.Middlewares.Middleware6.Errors.Query":                                    "foobar",
-		"traefik.HTTP.Middlewares.Middleware6.Errors.Service":                                  "foobar",
-		"traefik.HTTP.Middlewares.Middleware6.Errors.Status":                                   "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.Address":                             "foobar",
-		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.AuthResponseHeaders":                 "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.CA":                              "foobar",
-		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.CAOptional":                      "true",
-		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.Cert":                            "foobar",
-		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.InsecureSkipVerify":              "true",
-		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.Key":                             "foobar",
-		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TrustForwardHeader":                  "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowCredentials":           "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowHeaders":               "X-foobar, X-fiibar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowMethods":               "GET, PUT",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowOrigin":                "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlExposeHeaders":              "X-foobar, X-fiibar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlMaxAge":                     "200",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.AddVaryHeader":                           "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.AllowedHosts":                            "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.BrowserXSSFilter":                        "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.ContentSecurityPolicy":                   "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.ContentTypeNosniff":                      "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomBrowserXSSValue":                   "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomFrameOptionsValue":                 "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomRequestHeaders.name0":              "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomRequestHeaders.name1":              "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomResponseHeaders.name0":             "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomResponseHeaders.name1":             "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.ForceSTSHeader":                          "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.FrameDeny":                               "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.HostsProxyHeaders":                       "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.IsDevelopment":                           "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.PublicKey":                               "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.ReferrerPolicy":                          "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLForceHost":                            "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLHost":                                 "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLProxyHeaders.name0":                   "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLProxyHeaders.name1":                   "foobar",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLRedirect":                             "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLTemporaryRedirect":                    "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.STSIncludeSubdomains":                    "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.STSPreload":                              "true",
-		"traefik.HTTP.Middlewares.Middleware8.Headers.STSSeconds":                              "42",
-		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.IPStrategy.Depth":                    "42",
-		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.IPStrategy.ExcludedIPs":              "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.SourceRange":                         "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware10.MaxConn.Amount":                                 "42",
-		"traefik.HTTP.Middlewares.Middleware10.MaxConn.ExtractorFunc":                          "foobar",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.NotAfter":                "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.NotBefore":               "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Sans":                    "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.Country":         "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.Province":        "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.Locality":        "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.Organization":    "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.CommonName":      "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.SerialNumber":    "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.DomainComponent": "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.Country":          "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.Province":         "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.Locality":         "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.Organization":     "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.CommonName":       "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.SerialNumber":     "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.DomainComponent":  "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.PEM":                          "true",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.ExtractorFunc":                        "foobar",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Average":                "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Burst":                  "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate0.Period":                 "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Average":                "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Burst":                  "42",
-		"traefik.HTTP.Middlewares.Middleware12.RateLimit.RateSet.Rate1.Period":                 "42",
-		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Regex":                            "foobar",
-		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Replacement":                      "foobar",
-		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Permanent":                        "true",
-		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Scheme":                         "https",
-		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Port":                           "80",
-		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Permanent":                      "true",
-		"traefik.HTTP.Middlewares.Middleware14.ReplacePath.Path":                               "foobar",
-		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Regex":                         "foobar",
-		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Replacement":                   "foobar",
-		"traefik.HTTP.Middlewares.Middleware16.Retry.Attempts":                                 "42",
-		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":                           "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":                         "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware19.Compress":                                       "true",
+		"traefik.HTTP.Middlewares.Middleware0.AddPrefix.Prefix":                                    "foobar",
+		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.HeaderField":                               "foobar",
+		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.Realm":                                     "foobar",
+		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.RemoveHeader":                              "true",
+		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.Users":                                     "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware1.BasicAuth.UsersFile":                                 "foobar",
+		"traefik.HTTP.Middlewares.Middleware2.Buffering.MaxRequestBodyBytes":                       "42",
+		"traefik.HTTP.Middlewares.Middleware2.Buffering.MaxResponseBodyBytes":                      "42",
+		"traefik.HTTP.Middlewares.Middleware2.Buffering.MemRequestBodyBytes":                       "42",
+		"traefik.HTTP.Middlewares.Middleware2.Buffering.MemResponseBodyBytes":                      "42",
+		"traefik.HTTP.Middlewares.Middleware2.Buffering.RetryExpression":                           "foobar",
+		"traefik.HTTP.Middlewares.Middleware3.Chain.Middlewares":                                   "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware4.CircuitBreaker.Expression":                           "foobar",
+		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.HeaderField":                              "foobar",
+		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.Realm":                                    "foobar",
+		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.RemoveHeader":                             "true",
+		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.Users":                                    "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.UsersFile":                                "foobar",
+		"traefik.HTTP.Middlewares.Middleware6.Errors.Query":                                        "foobar",
+		"traefik.HTTP.Middlewares.Middleware6.Errors.Service":                                      "foobar",
+		"traefik.HTTP.Middlewares.Middleware6.Errors.Status":                                       "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.Address":                                 "foobar",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.AuthResponseHeaders":                     "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.CA":                                  "foobar",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.CAOptional":                          "true",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.Cert":                                "foobar",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.InsecureSkipVerify":                  "true",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.Key":                                 "foobar",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TrustForwardHeader":                      "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowCredentials":               "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowHeaders":                   "X-foobar, X-fiibar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowMethods":                   "GET, PUT",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowOrigin":                    "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlExposeHeaders":                  "X-foobar, X-fiibar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlMaxAge":                         "200",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AddVaryHeader":                               "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AllowedHosts":                                "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.BrowserXSSFilter":                            "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.ContentSecurityPolicy":                       "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.ContentTypeNosniff":                          "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomBrowserXSSValue":                       "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomFrameOptionsValue":                     "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomRequestHeaders.name0":                  "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomRequestHeaders.name1":                  "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomResponseHeaders.name0":                 "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomResponseHeaders.name1":                 "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.ForceSTSHeader":                              "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.FrameDeny":                                   "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.HostsProxyHeaders":                           "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.IsDevelopment":                               "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.PublicKey":                                   "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.ReferrerPolicy":                              "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.FeaturePolicy":                               "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLForceHost":                                "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLHost":                                     "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLProxyHeaders.name0":                       "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLProxyHeaders.name1":                       "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLRedirect":                                 "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLTemporaryRedirect":                        "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.STSIncludeSubdomains":                        "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.STSPreload":                                  "true",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.STSSeconds":                                  "42",
+		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.IPStrategy.Depth":                        "42",
+		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.IPStrategy.ExcludedIPs":                  "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.SourceRange":                             "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.Amount":                                 "42",
+		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.IPStrategy.Depth":       "42",
+		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.IPStrategy.ExcludedIPs": "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.RequestHeaderName":      "foobar",
+		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.RequestHost":            "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.NotAfter":                    "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.NotBefore":                   "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Sans":                        "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.Country":             "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.Province":            "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.Locality":            "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.Organization":        "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.CommonName":          "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.SerialNumber":        "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Subject.DomainComponent":     "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.Country":              "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.Province":             "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.Locality":             "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.Organization":         "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.CommonName":           "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.SerialNumber":         "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.DomainComponent":      "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.PEM":                              "true",
+		"traefik.HTTP.Middlewares.Middleware12.RateLimit.Average":                                  "42",
+		"traefik.HTTP.Middlewares.Middleware12.RateLimit.Burst":                                    "42",
+		"traefik.HTTP.Middlewares.Middleware12.RateLimit.SourceCriterion.RequestHeaderName":        "foobar",
+		"traefik.HTTP.Middlewares.Middleware12.RateLimit.SourceCriterion.RequestHost":              "true",
+		"traefik.HTTP.Middlewares.Middleware12.RateLimit.SourceCriterion.IPStrategy.Depth":         "42",
+		"traefik.HTTP.Middlewares.Middleware12.RateLimit.SourceCriterion.IPStrategy.ExcludedIPs":   "foobar, foobar",
+		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Regex":                                "foobar",
+		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Replacement":                          "foobar",
+		"traefik.HTTP.Middlewares.Middleware13.RedirectRegex.Permanent":                            "true",
+		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Scheme":                             "https",
+		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Port":                               "80",
+		"traefik.HTTP.Middlewares.Middleware13b.RedirectScheme.Permanent":                          "true",
+		"traefik.HTTP.Middlewares.Middleware14.ReplacePath.Path":                                   "foobar",
+		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Regex":                             "foobar",
+		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Replacement":                       "foobar",
+		"traefik.HTTP.Middlewares.Middleware16.Retry.Attempts":                                     "42",
+		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":                               "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":                             "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware19.Compress":                                           "true",
 
 		"traefik.HTTP.Routers.Router0.EntryPoints": "foobar, fiibar",
 		"traefik.HTTP.Routers.Router0.Middlewares": "foobar, fiibar",
@@ -1095,9 +1117,9 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.ResponseForwarding.FlushInterval": "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Port":                      "8080",
 		"traefik.HTTP.Services.Service0.LoadBalancer.server.Scheme":                    "foobar",
-		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.CookieName":            "foobar",
-		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.HTTPOnlyCookie":        "true",
-		"traefik.HTTP.Services.Service0.LoadBalancer.Stickiness.SecureCookie":          "false",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Name":               "foobar",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.HTTPOnly":           "true",
+		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Secure":             "false",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name1":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Hostname":             "foobar",

@@ -58,7 +58,7 @@ build-webui-image:
 generate-webui: build-webui-image
 	if [ ! -d "static" ]; then \
 		mkdir -p static; \
-		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui npm run build; \
+		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui npm run build:nc; \
 		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ../static; \
 		echo 'For more informations show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md; \
 	fi
@@ -128,15 +128,6 @@ docs-serve:
 generate-crd:
 	./script/update-generated-crd-code.sh
 
-## Download dependencies
-dep-ensure:
-	dep ensure -v
-	./script/prune-dep.sh
-
-## Clean vendor directory
-dep-prune:
-	./script/prune-dep.sh
-
 ## Create packages for the release
 release-packages: generate-webui build-dev-image
 	rm -rf dist
@@ -156,5 +147,5 @@ fmt:
 
 run-dev:
 	go generate
-	go build ./cmd/traefik
+	GO111MODULE=on go build ./cmd/traefik
 	./traefik

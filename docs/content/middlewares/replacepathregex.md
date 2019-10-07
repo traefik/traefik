@@ -3,7 +3,9 @@
 Updating the Path Before Forwarding the Request (Using a Regex)
 {: .subtitle }
 
-`TODO: add schema`
+<!--
+TODO: add schema
+-->
 
 The ReplaceRegex replace a path from an url to another with regex matching and replacement.
 
@@ -12,8 +14,8 @@ The ReplaceRegex replace a path from an url to another with regex matching and r
 ```yaml tab="Docker"
 # Replace path with regex
 labels:
-- "traefik.http.middlewares.test-replacepathregex.replacepathregex.regex=^/foo/(.*)"
-- "traefik.http.middlewares.test-replacepathregex.replacepathregex.replacement=/bar/$1"
+  - "traefik.http.middlewares.test-replacepathregex.replacepathregex.regex=^/foo/(.*)"
+  - "traefik.http.middlewares.test-replacepathregex.replacepathregex.replacement=/bar/$1"
 ```
 
 ```yaml tab="Kubernetes"
@@ -38,16 +40,26 @@ spec:
 ```yaml tab="Rancher"
 # Replace path with regex
 labels:
-- "traefik.http.middlewares.test-replacepathregex.replacepathregex.regex=^/foo/(.*)"
-- "traefik.http.middlewares.test-replacepathregex.replacepathregex.replacement=/bar/$1"
+  - "traefik.http.middlewares.test-replacepathregex.replacepathregex.regex=^/foo/(.*)"
+  - "traefik.http.middlewares.test-replacepathregex.replacepathregex.replacement=/bar/$1"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Redirect with domain replacement
 [http.middlewares]
   [http.middlewares.test-replacepathregex.replacePathRegex]
     regex = "^/foo/(.*)"
     replacement = "/bar/$1"
+```
+
+```yaml tab="File (YAML)"
+# Redirect with domain replacement
+http:
+  middlewares:
+    test-replacepathregex:
+      replacePathRegex:
+        regex: "^/foo/(.*)"
+        replacement: "/bar/$1"
 ```
 
 ## Configuration Options

@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/middlewares/accesslog"
+	"github.com/containous/traefik/v2/integration/try"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -46,7 +46,7 @@ func (s *AccessLogSuite) SetUpSuite(c *check.C) {
 
 func (s *AccessLogSuite) TearDownTest(c *check.C) {
 	displayTraefikLogFile(c, traefikTestLogFile)
-	os.Remove(traefikTestAccessLogFile)
+	_ = os.Remove(traefikTestAccessLogFile)
 }
 
 func (s *AccessLogSuite) TestAccessLog(c *check.C) {
@@ -59,7 +59,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	defer func() {
 		traefikLog, err := ioutil.ReadFile(traefikTestLogFile)
 		c.Assert(err, checker.IsNil)
-		log.Info(string(traefikLog))
+		log.WithoutContext().Info(string(traefikLog))
 	}()
 
 	err := cmd.Start()
@@ -233,7 +233,7 @@ func digestParts(resp *http.Response) map[string]string {
 func getMD5(data string) string {
 	digest := md5.New()
 	if _, err := digest.Write([]byte(data)); err != nil {
-		log.Error(err)
+		log.WithoutContext().Error(err)
 	}
 	return fmt.Sprintf("%x", digest.Sum(nil))
 }
@@ -241,7 +241,7 @@ func getMD5(data string) string {
 func getCnonce() string {
 	b := make([]byte, 8)
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
-		log.Error(err)
+		log.WithoutContext().Error(err)
 	}
 	return fmt.Sprintf("%x", b)[:16]
 }

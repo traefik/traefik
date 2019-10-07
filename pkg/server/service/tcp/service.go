@@ -2,22 +2,24 @@ package tcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
+	"time"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/server/internal"
-	"github.com/containous/traefik/pkg/tcp"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/tcp"
 )
 
 // Manager is the TCPHandlers factory
 type Manager struct {
-	configs map[string]*config.TCPServiceInfo
+	configs map[string]*runtime.TCPServiceInfo
 }
 
 // NewManager creates a new manager
-func NewManager(conf *config.RuntimeConfiguration) *Manager {
+func NewManager(conf *runtime.Configuration) *Manager {
 	return &Manager{
 		configs: conf.TCPServices,
 	}
@@ -29,34 +31,59 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 	ctx := internal.AddProviderInContext(rootCtx, serviceQualifiedName)
 	ctx = log.With(ctx, log.Str(log.ServiceName, serviceName))
 
-	// FIXME Check if the service is declared multiple times with different types
 	conf, ok := m.configs[serviceQualifiedName]
 	if !ok {
 		return nil, fmt.Errorf("the service %q does not exist", serviceQualifiedName)
 	}
-	if conf.LoadBalancer == nil {
-		conf.Err = fmt.Errorf("the service %q doesn't have any TCP load balancer", serviceQualifiedName)
-		return nil, conf.Err
+
+	if conf.LoadBalancer != nil && conf.Weighted != nil {
+		err := errors.New("cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
+		conf.AddError(err, true)
+		return nil, err
 	}
 
 	logger := log.FromContext(ctx)
+	switch {
+	case conf.LoadBalancer != nil:
+		loadBalancer := tcp.NewWRRLoadBalancer()
 
-	loadBalancer := tcp.NewRRLoadBalancer()
-
-	for name, server := range conf.LoadBalancer.Servers {
-		if _, _, err := net.SplitHostPort(server.Address); err != nil {
-			logger.Errorf("In service %q: %v", serviceQualifiedName, err)
-			continue
+		if conf.LoadBalancer.TerminationDelay == nil {
+			defaultTerminationDelay := 100
+			conf.LoadBalancer.TerminationDelay = &defaultTerminationDelay
 		}
+		duration := time.Millisecond * time.Duration(*conf.LoadBalancer.TerminationDelay)
 
-		handler, err := tcp.NewProxy(server.Address)
-		if err != nil {
-			logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
-			continue
+		for name, server := range conf.LoadBalancer.Servers {
+			if _, _, err := net.SplitHostPort(server.Address); err != nil {
+				logger.Errorf("In service %q: %v", serviceQualifiedName, err)
+				continue
+			}
+
+			handler, err := tcp.NewProxy(server.Address, duration)
+			if err != nil {
+				logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
+				continue
+			}
+
+			loadBalancer.AddServer(handler)
+			logger.WithField(log.ServerName, name).Debugf("Creating TCP server %d at %s", name, server.Address)
 		}
-
-		loadBalancer.AddServer(handler)
-		logger.WithField(log.ServerName, name).Debugf("Creating TCP server %d at %s", name, server.Address)
+		return loadBalancer, nil
+	case conf.Weighted != nil:
+		loadBalancer := tcp.NewWRRLoadBalancer()
+		for _, service := range conf.Weighted.Services {
+			handler, err := m.BuildTCP(rootCtx, service.Name)
+			if err != nil {
+				logger.Errorf("In service %q: %v", serviceQualifiedName, err)
+				return nil, err
+			}
+			loadBalancer.AddWeightServer(handler, service.Weight)
+		}
+		return loadBalancer, nil
+	default:
+		err := fmt.Errorf("the service %q doesn't have any TCP load balancer", serviceQualifiedName)
+		conf.AddError(err, true)
+		return nil, err
 	}
-	return loadBalancer, nil
+
 }

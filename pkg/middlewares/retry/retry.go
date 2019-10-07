@@ -9,9 +9,10 @@ import (
 	"net/http"
 	"net/http/httptrace"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
@@ -42,9 +43,8 @@ type retry struct {
 }
 
 // New returns a new retry middleware.
-func New(ctx context.Context, next http.Handler, config config.Retry, listener Listener, name string) (http.Handler, error) {
-	logger := middlewares.GetLogger(ctx, name, typeName)
-	logger.Debug("Creating middleware")
+func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener Listener, name string) (http.Handler, error) {
+	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
 
 	if config.Attempts <= 0 {
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
@@ -94,8 +94,10 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		attempts++
-		logger := middlewares.GetLogger(req.Context(), r.name, typeName)
-		logger.Debugf("New attempt %d for request: %v", attempts, req.URL)
+
+		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
+			Debugf("New attempt %d for request: %v", attempts, req.URL)
+
 		r.listener.Retried(req, attempts)
 	}
 }

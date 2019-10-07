@@ -29,9 +29,10 @@ fblo6RBxUQ==
     address = ":8081"
 
 [api]
+  insecure = true
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 

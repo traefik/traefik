@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/mux"
+	"github.com/gorilla/mux"
 )
 
 // Handler expose ping routes.
 type Handler struct {
-	EntryPoint  string   `description:"Ping entryPoint." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
-	Middlewares []string `description:"Middleware list." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	EntryPoint  string `description:"EntryPoint" export:"true" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
 	terminating bool
 }
 

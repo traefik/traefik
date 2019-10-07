@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ExpediaDotCom/haystack-client-go"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -63,7 +63,7 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	// Without this, child spans are getting the NOOP tracer
 	opentracing.SetGlobalTracer(tracer)
 
-	log.WithoutContext().Debug("DataDog tracer configured")
+	log.WithoutContext().Debug("haystack tracer configured")
 
 	return tracer, closer, nil
 }

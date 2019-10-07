@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/pkg/config/generator"
-	"github.com/containous/traefik/pkg/config/parser"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/config/generator"
+	"github.com/containous/traefik/v2/pkg/config/parser"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -133,6 +133,20 @@ func TestDecode(t *testing.T) {
 			}{
 				Foo: map[string]string{
 					"name": "bar",
+				},
+			},
+		},
+		{
+			desc: "map string case sensitive",
+			args: []string{"--foo.caseSensitiveName=barBoo"},
+			element: &struct {
+				Foo map[string]string
+			}{},
+			expected: &struct {
+				Foo map[string]string
+			}{
+				Foo: map[string]string{
+					"caseSensitiveName": "barBoo",
 				},
 			},
 		},

@@ -7,7 +7,7 @@ import (
 	"net/http/pprof"
 	"runtime"
 
-	"github.com/containous/mux"
+	"github.com/gorilla/mux"
 )
 
 func init() {

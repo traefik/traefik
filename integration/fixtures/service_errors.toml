@@ -1,0 +1,35 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web-secure]
+    address = ":4443"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router4]
+    service = "service1"
+    rule = "Host(`snitest.net`)"
+
+  [http.routers.router5]
+    service = "service2"
+    rule = "Host(`snitest.com`)"
+
+[http.services]
+  [http.services.service1]
+
+  [http.services.service2]
+    [http.services.service2.loadBalancer]
+      [[http.services.service2.loadBalancer.servers]]
+        url = "http://127.0.0.1:9010"

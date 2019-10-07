@@ -1,0 +1,39 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[api]
+  insecure = true
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router]
+    service = "wrr"
+    rule = "Path(`/whoami`)"
+
+[http.services]
+  [[http.services.wrr.weighted.services]]
+    name = "service1"
+    weight = 3
+  [[http.services.wrr.weighted.services]]
+    name = "service2"
+
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "{{ .Server1 }}"
+  [http.services.service2.loadBalancer]
+    [[http.services.service2.loadBalancer.servers]]
+      url = "{{ .Server2 }}"
+

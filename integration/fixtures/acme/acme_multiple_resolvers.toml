@@ -1,0 +1,59 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = "{{ .PortHTTP }}"
+  [entryPoints.web-secure]
+    address = "{{ .PortHTTPS }}"
+
+{{range $name, $resolvers := .Acme }}
+
+[certificatesResolvers.{{ $name }}.acme]
+  email = "test@traefik.io"
+  storage = "/tmp/acme.json"
+  keyType = "{{ $resolvers.ACME.KeyType }}"
+  caServer = "{{ $resolvers.ACME.CAServer }}"
+
+  {{if $resolvers.ACME.HTTPChallenge }}
+  [certificatesResolvers.{{ $name }}.acme.httpChallenge]
+    entryPoint = "{{ $resolvers.ACME.HTTPChallenge.EntryPoint }}"
+  {{end}}
+
+  {{if $resolvers.ACME.TLSChallenge }}
+  [certificatesResolvers.{{ $name }}.acme.tlsChallenge]
+  {{end}}
+
+{{end}}
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.services]
+  [http.services.test.loadBalancer]
+    [[http.services.test.loadBalancer.servers]]
+      url = "http://127.0.0.1:9010"
+
+[http.routers]
+  [http.routers.test]
+    entryPoints = ["web-secure"]
+    rule = "Host(`traefik.acme.wtf`)"
+    service = "test"
+    [http.routers.test.tls]
+      certResolver = "default"
+
+  [http.routers.tchouk]
+    entryPoints = ["web-secure"]
+    rule = "Host(`tchouk.acme.wtf`)"
+    service = "test"
+    [http.routers.tchouk.tls]
+      certResolver = "tchouk"

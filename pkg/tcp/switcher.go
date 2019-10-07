@@ -1,9 +1,7 @@
 package tcp
 
 import (
-	"net"
-
-	"github.com/containous/traefik/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/safe"
 )
 
 // HandlerSwitcher is a TCP handler switcher
@@ -12,7 +10,7 @@ type HandlerSwitcher struct {
 }
 
 // ServeTCP forwards the TCP connection to the current active handler
-func (s *HandlerSwitcher) ServeTCP(conn net.Conn) {
+func (s *HandlerSwitcher) ServeTCP(conn WriteCloser) {
 	handler := s.router.Get()
 	h, ok := handler.(Handler)
 	if ok {

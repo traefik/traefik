@@ -3,6 +3,7 @@
   sendAnonymousUsage = false
 
 [api]
+  insecure = true
 
 [log]
   level = "DEBUG"
@@ -11,4 +12,4 @@
   [entryPoints.web]
     address = ":8000"
 
-[providers.kubernetes]
+[providers.kubernetesIngress]

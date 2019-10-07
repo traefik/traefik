@@ -8,3 +8,7 @@ tls:
     keyFile: integration/fixtures/https/snitest3.com.key
   - certFile: integration/fixtures/https/snitest4.com.cert
     keyFile: integration/fixtures/https/snitest4.com.key
+
+  options:
+    mintls13:
+      minVersion: VersionTLS13

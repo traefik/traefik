@@ -34,6 +34,10 @@ h3 {
     font-weight: bold !important;
 }
 
+.md-typeset h5 {
+    text-transform: none;
+}
+
 figcaption {
     text-align: center;
     font-size: 0.8em;

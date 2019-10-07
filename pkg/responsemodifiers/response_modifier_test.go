@@ -6,13 +6,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/middlewares/headers"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/middlewares/headers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func stubResponse(_ map[string]*config.Middleware) *http.Response {
+func stubResponse(_ map[string]*dynamic.Middleware) *http.Response {
 	return &http.Response{Header: make(http.Header)}
 }
 
@@ -21,24 +22,24 @@ func TestBuilderBuild(t *testing.T) {
 		desc        string
 		middlewares []string
 		// buildResponse is needed because secure use a private context key
-		buildResponse  func(map[string]*config.Middleware) *http.Response
-		conf           map[string]*config.Middleware
+		buildResponse  func(map[string]*dynamic.Middleware) *http.Response
+		conf           map[string]*dynamic.Middleware
 		assertResponse func(*testing.T, *http.Response)
 	}{
 		{
 			desc:           "no configuration",
 			middlewares:    []string{"foo", "bar"},
 			buildResponse:  stubResponse,
-			conf:           map[string]*config.Middleware{},
+			conf:           map[string]*dynamic.Middleware{},
 			assertResponse: func(t *testing.T, resp *http.Response) {},
 		},
 		{
 			desc:          "one modifier",
 			middlewares:   []string{"foo", "bar"},
 			buildResponse: stubResponse,
-			conf: map[string]*config.Middleware{
+			conf: map[string]*dynamic.Middleware{
 				"foo": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomResponseHeaders: map[string]string{"X-Foo": "foo"},
 					},
 				},
@@ -46,13 +47,13 @@ func TestBuilderBuild(t *testing.T) {
 			assertResponse: func(t *testing.T, resp *http.Response) {
 				t.Helper()
 
-				assert.Equal(t, resp.Header.Get("X-Foo"), "foo")
+				assert.Equal(t, "foo", resp.Header.Get("X-Foo"))
 			},
 		},
 		{
 			desc:        "secure: one modifier",
 			middlewares: []string{"foo", "bar"},
-			buildResponse: func(middlewares map[string]*config.Middleware) *http.Response {
+			buildResponse: func(middlewares map[string]*dynamic.Middleware) *http.Response {
 				ctx := context.Background()
 
 				var request *http.Request
@@ -69,14 +70,14 @@ func TestBuilderBuild(t *testing.T) {
 
 				return &http.Response{Header: make(http.Header), Request: request}
 			},
-			conf: map[string]*config.Middleware{
+			conf: map[string]*dynamic.Middleware{
 				"foo": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						ReferrerPolicy: "no-referrer",
 					},
 				},
 				"bar": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomResponseHeaders: map[string]string{"X-Bar": "bar"},
 					},
 				},
@@ -84,21 +85,21 @@ func TestBuilderBuild(t *testing.T) {
 			assertResponse: func(t *testing.T, resp *http.Response) {
 				t.Helper()
 
-				assert.Equal(t, resp.Header.Get("Referrer-Policy"), "no-referrer")
+				assert.Equal(t, "no-referrer", resp.Header.Get("Referrer-Policy"))
 			},
 		},
 		{
 			desc:          "two modifiers",
 			middlewares:   []string{"foo", "bar"},
 			buildResponse: stubResponse,
-			conf: map[string]*config.Middleware{
+			conf: map[string]*dynamic.Middleware{
 				"foo": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomResponseHeaders: map[string]string{"X-Foo": "foo"},
 					},
 				},
 				"bar": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomResponseHeaders: map[string]string{"X-Bar": "bar"},
 					},
 				},
@@ -106,22 +107,22 @@ func TestBuilderBuild(t *testing.T) {
 			assertResponse: func(t *testing.T, resp *http.Response) {
 				t.Helper()
 
-				assert.Equal(t, resp.Header.Get("X-Foo"), "foo")
-				assert.Equal(t, resp.Header.Get("X-Bar"), "bar")
+				assert.Equal(t, "foo", resp.Header.Get("X-Foo"))
+				assert.Equal(t, "bar", resp.Header.Get("X-Bar"))
 			},
 		},
 		{
 			desc:          "modifier order",
 			middlewares:   []string{"foo", "bar"},
 			buildResponse: stubResponse,
-			conf: map[string]*config.Middleware{
+			conf: map[string]*dynamic.Middleware{
 				"foo": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomResponseHeaders: map[string]string{"X-Foo": "foo"},
 					},
 				},
 				"bar": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomResponseHeaders: map[string]string{"X-Foo": "bar"},
 					},
 				},
@@ -129,26 +130,26 @@ func TestBuilderBuild(t *testing.T) {
 			assertResponse: func(t *testing.T, resp *http.Response) {
 				t.Helper()
 
-				assert.Equal(t, resp.Header.Get("X-Foo"), "foo")
+				assert.Equal(t, "foo", resp.Header.Get("X-Foo"))
 			},
 		},
 		{
 			desc:          "chain",
 			middlewares:   []string{"chain"},
 			buildResponse: stubResponse,
-			conf: map[string]*config.Middleware{
+			conf: map[string]*dynamic.Middleware{
 				"foo": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomResponseHeaders: map[string]string{"X-Foo": "foo"},
 					},
 				},
 				"bar": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomResponseHeaders: map[string]string{"X-Foo": "bar"},
 					},
 				},
 				"chain": {
-					Chain: &config.Chain{
+					Chain: &dynamic.Chain{
 						Middlewares: []string{"foo", "bar"},
 					},
 				},
@@ -156,8 +157,17 @@ func TestBuilderBuild(t *testing.T) {
 			assertResponse: func(t *testing.T, resp *http.Response) {
 				t.Helper()
 
-				assert.Equal(t, resp.Header.Get("X-Foo"), "foo")
+				assert.Equal(t, "foo", resp.Header.Get("X-Foo"))
 			},
+		},
+		{
+			desc:          "nil middleware",
+			middlewares:   []string{"foo"},
+			buildResponse: stubResponse,
+			conf: map[string]*dynamic.Middleware{
+				"foo": nil,
+			},
+			assertResponse: func(t *testing.T, resp *http.Response) {},
 		},
 	}
 
@@ -166,8 +176,8 @@ func TestBuilderBuild(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rtConf := config.NewRuntimeConfig(config.Configuration{
-				HTTP: &config.HTTPConfiguration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: test.conf,
 				},
 			})

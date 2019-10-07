@@ -3,7 +3,9 @@
 Redirecting the Client to a Different Location
 {: .subtitle }
 
-`TODO: add schema`
+<!--
+TODO: add schema
+-->
 
 RegexRedirect redirect a request from an url to another with regex matching and replacement.
 
@@ -11,9 +13,10 @@ RegexRedirect redirect a request from an url to another with regex matching and 
 
 ```yaml tab="Docker"
 # Redirect with domain replacement
+# Note: all dollar signs need to be doubled for escaping.
 labels:
-- "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$1"
+  - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
+  - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
 ```
 
 ```yaml tab="Kubernetes"
@@ -25,29 +28,40 @@ metadata:
 spec:
   redirectRegex:
     regex: ^http://localhost/(.*)
-    replacement: http://mydomain/$1
+    replacement: http://mydomain/${1}
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-redirectregex.redirectregex.regex": "^http://localhost/(.*)",
-  "traefik.http.middlewares.test-redirectregex.redirectregex.replacement": "http://mydomain/$1"
+  "traefik.http.middlewares.test-redirectregex.redirectregex.replacement": "http://mydomain/${1}"
 }
 ```
 
 ```yaml tab="Rancher"
 # Redirect with domain replacement
+# Note: all dollar signs need to be doubled for escaping.
 labels:
-- "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$1"
+  - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
+  - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Redirect with domain replacement
 [http.middlewares]
   [http.middlewares.test-redirectregex.redirectRegex]
     regex = "^http://localhost/(.*)"
-    replacement = "http://mydomain/$1"
+    replacement = "http://mydomain/${1}"
+```
+
+```yaml tab="File (YAML)"
+# Redirect with domain replacement
+http:
+  middlewares:
+    test-redirectregex:
+      redirectRegex:
+        regex: "^http://localhost/(.*)"
+        replacement: "http://mydomain/${1}"
 ```
 
 ## Configuration Options
@@ -70,5 +84,4 @@ The `regex` option is the regular expression to match and capture elements from 
     
 ### `replacement`
 
-The `replacement` option defines how to modify the URl to have the new target URL.
- 
+The `replacement` option defines how to modify the URL to have the new target URL.

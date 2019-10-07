@@ -14,7 +14,8 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/fatih/structs"
 	"github.com/go-check/check"
 	compose "github.com/libkermit/compose/check"
 	checker "github.com/vdemeester/shakers"
@@ -26,13 +27,8 @@ var host = flag.Bool("host", false, "run host integration tests")
 var showLog = flag.Bool("tlog", false, "always show Traefik logs")
 
 func Test(t *testing.T) {
-	check.TestingT(t)
-}
-
-func init() {
-	flag.Parse()
 	if !*integration {
-		log.Info("Integration tests disabled.")
+		log.WithoutContext().Info("Integration tests disabled.")
 		return
 	}
 
@@ -68,6 +64,8 @@ func init() {
 		check.Suite(&ProxyProtocolSuite{})
 		check.Suite(&TCPSuite{})
 	}
+
+	check.TestingT(t)
 }
 
 var traefikBinary = "../dist/traefik"
@@ -93,7 +91,7 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 		ip, _, err := net.ParseCIDR(addr.String())
 		c.Assert(err, checker.IsNil)
 		if !ip.IsLoopback() && ip.To4() != nil {
-			os.Setenv("DOCKER_HOST_IP", ip.String())
+			_ = os.Setenv("DOCKER_HOST_IP", ip.String())
 			break
 		}
 	}
@@ -117,17 +115,32 @@ func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func(*check.C)) {
 	cmd, out := s.cmdTraefik(args...)
 	return cmd, func(c *check.C) {
 		if c.Failed() || *showLog {
+			s.displayLogK3S(c)
 			s.displayTraefikLog(c, out)
 		}
 	}
 }
 
+func (s *BaseSuite) displayLogK3S(c *check.C) {
+	filePath := "./fixtures/k8s/config.skip/k3s.log"
+	if _, err := os.Stat(filePath); err == nil {
+		content, errR := ioutil.ReadFile(filePath)
+		if errR != nil {
+			log.WithoutContext().Error(errR)
+		}
+		log.WithoutContext().Println(string(content))
+	}
+	log.WithoutContext().Println()
+	log.WithoutContext().Println("################################")
+	log.WithoutContext().Println()
+}
+
 func (s *BaseSuite) displayTraefikLog(c *check.C, output *bytes.Buffer) {
 	if output == nil || output.Len() == 0 {
-		log.Infof("%s: No Traefik logs.", c.TestName())
+		log.WithoutContext().Infof("%s: No Traefik logs.", c.TestName())
 	} else {
-		log.Infof("%s: Traefik logs: ", c.TestName())
-		log.Infof(output.String())
+		log.WithoutContext().Infof("%s: Traefik logs: ", c.TestName())
+		log.WithoutContext().Infof(output.String())
 	}
 }
 
@@ -150,7 +163,10 @@ func (s *BaseSuite) adaptFile(c *check.C, path string, tempObjects interface{}) 
 	c.Assert(err, checker.IsNil)
 	defer tmpFile.Close()
 
-	err = tmpl.ExecuteTemplate(tmpFile, prefix, tempObjects)
+	model := structs.Map(tempObjects)
+	model["SelfFilename"] = tmpFile.Name()
+
+	err = tmpl.ExecuteTemplate(tmpFile, prefix, model)
 	c.Assert(err, checker.IsNil)
 	err = tmpFile.Sync()
 

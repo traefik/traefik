@@ -9,16 +9,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/config/label"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/provider/constraints"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/label"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
+	"github.com/containous/traefik/v2/pkg/provider/constraints"
 	"github.com/gambol99/go-marathon"
 )
 
-func (p *Provider) buildConfiguration(ctx context.Context, applications *marathon.Applications) *config.Configuration {
-	configurations := make(map[string]*config.Configuration)
+func (p *Provider) buildConfiguration(ctx context.Context, applications *marathon.Applications) *dynamic.Configuration {
+	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, app := range applications.Apps {
 		ctxApp := log.With(ctx, log.Str("applicationID", app.ID))
@@ -92,23 +92,23 @@ func getServiceName(app marathon.Application) string {
 	return strings.Replace(strings.TrimPrefix(app.ID, "/"), "/", "_", -1)
 }
 
-func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *config.HTTPConfiguration) error {
+func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *dynamic.HTTPConfiguration) error {
 	appName := getServiceName(app)
 	appCtx := log.With(ctx, log.Str("ApplicationID", appName))
 
 	if len(conf.Services) == 0 {
-		conf.Services = make(map[string]*config.Service)
-		lb := &config.LoadBalancerService{}
+		conf.Services = make(map[string]*dynamic.Service)
+		lb := &dynamic.ServersLoadBalancer{}
 		lb.SetDefaults()
-		conf.Services[appName] = &config.Service{
+		conf.Services[appName] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
 	}
 
 	for serviceName, service := range conf.Services {
-		var servers []config.Server
+		var servers []dynamic.Server
 
-		defaultServer := config.Server{}
+		defaultServer := dynamic.Server{}
 		defaultServer.SetDefaults()
 
 		if len(service.LoadBalancer.Servers) > 0 {
@@ -134,22 +134,23 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.A
 	return nil
 }
 
-func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *config.TCPConfiguration) error {
+func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *dynamic.TCPConfiguration) error {
 	appName := getServiceName(app)
 	appCtx := log.With(ctx, log.Str("ApplicationID", appName))
 
 	if len(conf.Services) == 0 {
-		conf.Services = make(map[string]*config.TCPService)
-		lb := &config.TCPLoadBalancerService{}
-		conf.Services[appName] = &config.TCPService{
+		conf.Services = make(map[string]*dynamic.TCPService)
+		lb := &dynamic.TCPServersLoadBalancer{}
+		lb.SetDefaults()
+		conf.Services[appName] = &dynamic.TCPService{
 			LoadBalancer: lb,
 		}
 	}
 
 	for serviceName, service := range conf.Services {
-		var servers []config.TCPServer
+		var servers []dynamic.TCPServer
 
-		defaultServer := config.TCPServer{}
+		defaultServer := dynamic.TCPServer{}
 
 		if len(service.LoadBalancer.Servers) > 0 {
 			defaultServer = service.LoadBalancer.Servers[0]
@@ -210,36 +211,36 @@ func (p *Provider) taskFilter(ctx context.Context, task marathon.Task, applicati
 	return true
 }
 
-func (p *Provider) getTCPServer(app marathon.Application, task marathon.Task, extraConf configuration, defaultServer config.TCPServer) (config.TCPServer, error) {
+func (p *Provider) getTCPServer(app marathon.Application, task marathon.Task, extraConf configuration, defaultServer dynamic.TCPServer) (dynamic.TCPServer, error) {
 	host, err := p.getServerHost(task, app, extraConf)
 	if len(host) == 0 {
-		return config.TCPServer{}, err
+		return dynamic.TCPServer{}, err
 	}
 
 	port, err := getPort(task, app, defaultServer.Port)
 	if err != nil {
-		return config.TCPServer{}, err
+		return dynamic.TCPServer{}, err
 	}
 
-	server := config.TCPServer{
+	server := dynamic.TCPServer{
 		Address: net.JoinHostPort(host, port),
 	}
 
 	return server, nil
 }
 
-func (p *Provider) getServer(app marathon.Application, task marathon.Task, extraConf configuration, defaultServer config.Server) (config.Server, error) {
+func (p *Provider) getServer(app marathon.Application, task marathon.Task, extraConf configuration, defaultServer dynamic.Server) (dynamic.Server, error) {
 	host, err := p.getServerHost(task, app, extraConf)
 	if len(host) == 0 {
-		return config.Server{}, err
+		return dynamic.Server{}, err
 	}
 
 	port, err := getPort(task, app, defaultServer.Port)
 	if err != nil {
-		return config.Server{}, err
+		return dynamic.Server{}, err
 	}
 
-	server := config.Server{
+	server := dynamic.Server{
 		URL: fmt.Sprintf("%s://%s", defaultServer.Scheme, net.JoinHostPort(host, port)),
 	}
 

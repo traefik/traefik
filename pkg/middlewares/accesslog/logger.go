@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -77,7 +77,8 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 	case JSONFormat:
 		formatter = new(logrus.JSONFormatter)
 	default:
-		return nil, fmt.Errorf("unsupported access log format: %s", config.Format)
+		log.WithoutContext().Errorf("unsupported access log format: %q, defaulting to common format instead.", config.Format)
+		formatter = new(CommonLogFormatter)
 	}
 
 	logger := &logrus.Logger{

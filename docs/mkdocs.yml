@@ -58,9 +58,9 @@ markdown_extensions:
   - pymdownx.tasklist
   - pymdownx.snippets:
       check_paths: true
-  - markdown_include.include:
-      base_path: content/includes/
-      encoding: utf-8
+#  - markdown_include.include:
+#      base_path: content/includes/
+#      encoding: utf-8
   - toc:
       permalink: true
 
@@ -71,19 +71,25 @@ nav:
       - 'Concepts' : 'getting-started/concepts.md'
       - 'Quick Start': 'getting-started/quick-start.md'
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
+      - 'Install Traefik': 'getting-started/install-traefik.md'
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
-#     - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
+      - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
       - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
       - 'Marathon': 'providers/marathon.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
-      - 'Entrypoints': 'routing/entrypoints.md'
+      - 'EntryPoints': 'routing/entrypoints.md'
       - 'Routers': 'routing/routers/index.md'
       - 'Services': 'routing/services/index.md'
+      - 'Providers':
+          - 'Docker': 'routing/providers/docker.md'
+          - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
+          - 'Rancher': 'routing/providers/rancher.md'
+          - 'Marathon': 'routing/providers/marathon.md'
   - 'HTTPS & TLS':
       - 'Overview': 'https/overview.md'
       - 'TLS': 'https/tls.md'
@@ -101,7 +107,7 @@ nav:
       - 'ForwardAuth': 'middlewares/forwardauth.md'
       - 'Headers': 'middlewares/headers.md'
       - 'IpWhitelist': 'middlewares/ipwhitelist.md'
-      - 'Maxconn': 'middlewares/maxconnection.md'
+      - 'InFlightReq': 'middlewares/inflightreq.md'
       - 'PassTLSClientCert': 'middlewares/passtlsclientcert.md'
       - 'RateLimit': 'middlewares/ratelimit.md'
       - 'RedirectRegex': 'middlewares/redirectregex.md'
@@ -119,17 +125,31 @@ nav:
   - 'Observability':
       - 'Logs': 'observability/logs.md'
       - 'Access Logs': 'observability/access-logs.md'
+      - 'Metrics':
+          - 'Overview': 'observability/metrics/overview.md'
+          - 'Datadog': 'observability/metrics/datadog.md'
+          - 'InfluxDB': 'observability/metrics/influxdb.md'
+          - 'Prometheus': 'observability/metrics/prometheus.md'
+          - 'StatsD': 'observability/metrics/statsd.md'
       - 'Tracing':
           - 'Overview': 'observability/tracing/overview.md'
           - 'Jaeger': 'observability/tracing/jaeger.md'
           - 'Zipkin': 'observability/tracing/zipkin.md'
-          - 'DataDog': 'observability/tracing/datadog.md'
+          - 'Datadog': 'observability/tracing/datadog.md'
           - 'Instana': 'observability/tracing/instana.md'
           - 'Haystack': 'observability/tracing/haystack.md'
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
       - 'Marathon': 'user-guides/marathon.md'
+      - 'Docker':
+        - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
+        - 'HTTPS with Let''s Encrypt':
+          - 'TLS Challenge': 'user-guides/docker-compose/acme-tls/index.md'
+          - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
+          - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
+  - 'Migration':
+      - 'Traefik v1 to v2': 'migration/v1-to-v2.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'
@@ -139,7 +159,7 @@ nav:
       - 'Data Collection': 'contributing/data-collection.md'
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'
-  - 'Glossary': 'glossary.md'
+#  - 'Glossary': 'glossary.md'
   - 'References':
       - 'Static Configuration':
           - 'Overview': 'reference/static-configuration/overview.md'
@@ -147,6 +167,8 @@ nav:
           - 'CLI': 'reference/static-configuration/cli.md'
           - 'Environment variables': 'reference/static-configuration/env.md'
       - 'Dynamic Configuration':
+        - 'File': 'reference/dynamic-configuration/file.md'
         - 'Docker': 'reference/dynamic-configuration/docker.md'
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
-        - 'File': 'reference/dynamic-configuration/file.md'
+        - 'Marathon': 'reference/dynamic-configuration/marathon.md'
+        - 'Rancher': 'reference/dynamic-configuration/rancher.md'

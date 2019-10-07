@@ -2,9 +2,10 @@ package integration
 
 import (
 	"net/http"
+	"os"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/v2/integration/try"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -14,12 +15,13 @@ type FileSuite struct{ BaseSuite }
 
 func (s *FileSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "file")
-
 	s.composeProject.Start(c)
 }
 
 func (s *FileSuite) TestSimpleConfiguration(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/file/simple.toml"))
+	file := s.adaptFile(c, "fixtures/file/simple.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)

@@ -8,14 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/middlewares/accesslog"
-	"github.com/containous/traefik/pkg/middlewares/requestdecorator"
-	"github.com/containous/traefik/pkg/responsemodifiers"
-	"github.com/containous/traefik/pkg/server/middleware"
-	"github.com/containous/traefik/pkg/server/service"
-	"github.com/containous/traefik/pkg/testhelpers"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
+	"github.com/containous/traefik/v2/pkg/middlewares/requestdecorator"
+	"github.com/containous/traefik/v2/pkg/responsemodifiers"
+	"github.com/containous/traefik/v2/pkg/server/middleware"
+	"github.com/containous/traefik/v2/pkg/server/service"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,25 +31,25 @@ func TestRouterManager_Get(t *testing.T) {
 
 	testCases := []struct {
 		desc              string
-		routersConfig     map[string]*config.Router
-		serviceConfig     map[string]*config.Service
-		middlewaresConfig map[string]*config.Middleware
+		routersConfig     map[string]*dynamic.Router
+		serviceConfig     map[string]*dynamic.Service
+		middlewaresConfig map[string]*dynamic.Middleware
 		entryPoints       []string
 		expected          ExpectedResult
 	}{
 		{
 			desc: "no middleware",
-			routersConfig: map[string]*config.Router{
+			routersConfig: map[string]*dynamic.Router{
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
 							},
@@ -61,14 +62,14 @@ func TestRouterManager_Get(t *testing.T) {
 		},
 		{
 			desc: "no load balancer",
-			routersConfig: map[string]*config.Router{
+			routersConfig: map[string]*dynamic.Router{
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {},
 			},
 			entryPoints: []string{"web"},
@@ -76,16 +77,16 @@ func TestRouterManager_Get(t *testing.T) {
 		},
 		{
 			desc: "no middleware, default entry point",
-			routersConfig: map[string]*config.Router{
+			routersConfig: map[string]*dynamic.Router{
 				"foo": {
 					Service: "foo-service",
 					Rule:    "Host(`foo.bar`)",
 				},
 			},
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
 							},
@@ -98,17 +99,17 @@ func TestRouterManager_Get(t *testing.T) {
 		},
 		{
 			desc: "no middleware, no matching",
-			routersConfig: map[string]*config.Router{
+			routersConfig: map[string]*dynamic.Router{
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
 					Rule:        "Host(`bar.bar`)",
 				},
 			},
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
 							},
@@ -121,7 +122,7 @@ func TestRouterManager_Get(t *testing.T) {
 		},
 		{
 			desc: "middleware: headers > auth",
-			routersConfig: map[string]*config.Router{
+			routersConfig: map[string]*dynamic.Router{
 				"foo": {
 					EntryPoints: []string{"web"},
 					Middlewares: []string{"headers-middle", "auth-middle"},
@@ -129,10 +130,10 @@ func TestRouterManager_Get(t *testing.T) {
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
 							},
@@ -140,14 +141,14 @@ func TestRouterManager_Get(t *testing.T) {
 					},
 				},
 			},
-			middlewaresConfig: map[string]*config.Middleware{
+			middlewaresConfig: map[string]*dynamic.Middleware{
 				"auth-middle": {
-					BasicAuth: &config.BasicAuth{
+					BasicAuth: &dynamic.BasicAuth{
 						Users: []string{"toto:titi"},
 					},
 				},
 				"headers-middle": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{"X-Apero": "beer"},
 					},
 				},
@@ -162,7 +163,7 @@ func TestRouterManager_Get(t *testing.T) {
 		},
 		{
 			desc: "middleware: auth > header",
-			routersConfig: map[string]*config.Router{
+			routersConfig: map[string]*dynamic.Router{
 				"foo": {
 					EntryPoints: []string{"web"},
 					Middlewares: []string{"auth-middle", "headers-middle"},
@@ -170,10 +171,10 @@ func TestRouterManager_Get(t *testing.T) {
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
 							},
@@ -181,14 +182,14 @@ func TestRouterManager_Get(t *testing.T) {
 					},
 				},
 			},
-			middlewaresConfig: map[string]*config.Middleware{
+			middlewaresConfig: map[string]*dynamic.Middleware{
 				"auth-middle": {
-					BasicAuth: &config.BasicAuth{
+					BasicAuth: &dynamic.BasicAuth{
 						Users: []string{"toto:titi"},
 					},
 				},
 				"headers-middle": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{"X-Apero": "beer"},
 					},
 				},
@@ -203,17 +204,17 @@ func TestRouterManager_Get(t *testing.T) {
 		},
 		{
 			desc: "no middleware with provider name",
-			routersConfig: map[string]*config.Router{
+			routersConfig: map[string]*dynamic.Router{
 				"foo@provider-1": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service@provider-1": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
 							},
@@ -226,17 +227,17 @@ func TestRouterManager_Get(t *testing.T) {
 		},
 		{
 			desc: "no middleware with specified provider name",
-			routersConfig: map[string]*config.Router{
+			routersConfig: map[string]*dynamic.Router{
 				"foo@provider-1": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service@provider-2",
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service@provider-2": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
 							},
@@ -249,7 +250,7 @@ func TestRouterManager_Get(t *testing.T) {
 		},
 		{
 			desc: "middleware: chain with provider name",
-			routersConfig: map[string]*config.Router{
+			routersConfig: map[string]*dynamic.Router{
 				"foo@provider-1": {
 					EntryPoints: []string{"web"},
 					Middlewares: []string{"chain-middle@provider-2", "headers-middle"},
@@ -257,10 +258,10 @@ func TestRouterManager_Get(t *testing.T) {
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service@provider-1": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
 							},
@@ -268,17 +269,17 @@ func TestRouterManager_Get(t *testing.T) {
 					},
 				},
 			},
-			middlewaresConfig: map[string]*config.Middleware{
+			middlewaresConfig: map[string]*dynamic.Middleware{
 				"chain-middle@provider-2": {
-					Chain: &config.Chain{Middlewares: []string{"auth-middle"}},
+					Chain: &dynamic.Chain{Middlewares: []string{"auth-middle"}},
 				},
 				"auth-middle@provider-2": {
-					BasicAuth: &config.BasicAuth{
+					BasicAuth: &dynamic.BasicAuth{
 						Users: []string{"toto:titi"},
 					},
 				},
 				"headers-middle@provider-1": {
-					Headers: &config.Headers{
+					Headers: &dynamic.Headers{
 						CustomRequestHeaders: map[string]string{"X-Apero": "beer"},
 					},
 				},
@@ -298,14 +299,14 @@ func TestRouterManager_Get(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rtConf := config.NewRuntimeConfig(config.Configuration{
-				HTTP: &config.HTTPConfiguration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
 					Services:    test.serviceConfig,
 					Routers:     test.routersConfig,
 					Middlewares: test.middlewaresConfig,
 				},
 			})
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -332,15 +333,15 @@ func TestAccessLog(t *testing.T) {
 
 	testCases := []struct {
 		desc              string
-		routersConfig     map[string]*config.Router
-		serviceConfig     map[string]*config.Service
-		middlewaresConfig map[string]*config.Middleware
+		routersConfig     map[string]*dynamic.Router
+		serviceConfig     map[string]*dynamic.Service
+		middlewaresConfig map[string]*dynamic.Middleware
 		entryPoints       []string
 		expected          string
 	}{
 		{
 			desc: "apply routerName in accesslog (first match)",
-			routersConfig: map[string]*config.Router{
+			routersConfig: map[string]*dynamic.Router{
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
@@ -352,10 +353,10 @@ func TestAccessLog(t *testing.T) {
 					Rule:        "Host(`bar.foo`)",
 				},
 			},
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
 							},
@@ -368,7 +369,7 @@ func TestAccessLog(t *testing.T) {
 		},
 		{
 			desc: "apply routerName in accesslog (second match)",
-			routersConfig: map[string]*config.Router{
+			routersConfig: map[string]*dynamic.Router{
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
@@ -380,10 +381,10 @@ func TestAccessLog(t *testing.T) {
 					Rule:        "Host(`foo.bar`)",
 				},
 			},
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: server.URL,
 							},
@@ -399,14 +400,14 @@ func TestAccessLog(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 
-			rtConf := config.NewRuntimeConfig(config.Configuration{
-				HTTP: &config.HTTPConfiguration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
 					Services:    test.serviceConfig,
 					Routers:     test.routersConfig,
 					Middlewares: test.middlewaresConfig,
 				},
 			})
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -438,17 +439,17 @@ func TestAccessLog(t *testing.T) {
 func TestRuntimeConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc             string
-		serviceConfig    map[string]*config.Service
-		routerConfig     map[string]*config.Router
-		middlewareConfig map[string]*config.Middleware
+		serviceConfig    map[string]*dynamic.Service
+		routerConfig     map[string]*dynamic.Router
+		middlewareConfig map[string]*dynamic.Middleware
 		expectedError    int
 	}{
 		{
 			desc: "No error",
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1:8085",
 							},
@@ -456,14 +457,14 @@ func TestRuntimeConfiguration(t *testing.T) {
 								URL: "http://127.0.0.1:8086",
 							},
 						},
-						HealthCheck: &config.HealthCheck{
+						HealthCheck: &dynamic.HealthCheck{
 							Interval: "500ms",
 							Path:     "/health",
 						},
 					},
 				},
 			},
-			routerConfig: map[string]*config.Router{
+			routerConfig: map[string]*dynamic.Router{
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
@@ -479,10 +480,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "One router with wrong rule",
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
 							},
@@ -490,7 +491,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			routerConfig: map[string]*config.Router{
+			routerConfig: map[string]*dynamic.Router{
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
@@ -506,10 +507,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "All router with wrong rule",
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
 							},
@@ -517,7 +518,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			routerConfig: map[string]*config.Router{
+			routerConfig: map[string]*dynamic.Router{
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
@@ -533,10 +534,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "Router with unknown service",
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
 							},
@@ -544,7 +545,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			routerConfig: map[string]*config.Router{
+			routerConfig: map[string]*dynamic.Router{
 				"foo": {
 					EntryPoints: []string{"web"},
 					Service:     "wrong-service",
@@ -560,12 +561,12 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "Router with broken service",
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
 					LoadBalancer: nil,
 				},
 			},
-			routerConfig: map[string]*config.Router{
+			routerConfig: map[string]*dynamic.Router{
 				"bar": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
@@ -576,10 +577,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "Router with middleware",
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
 							},
@@ -587,19 +588,19 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			middlewareConfig: map[string]*config.Middleware{
+			middlewareConfig: map[string]*dynamic.Middleware{
 				"auth": {
-					BasicAuth: &config.BasicAuth{
+					BasicAuth: &dynamic.BasicAuth{
 						Users: []string{"admin:admin"},
 					},
 				},
 				"addPrefixTest": {
-					AddPrefix: &config.AddPrefix{
+					AddPrefix: &dynamic.AddPrefix{
 						Prefix: "/toto",
 					},
 				},
 			},
-			routerConfig: map[string]*config.Router{
+			routerConfig: map[string]*dynamic.Router{
 				"bar": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
@@ -616,10 +617,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "Router with unknown middleware",
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
 							},
@@ -627,14 +628,14 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			middlewareConfig: map[string]*config.Middleware{
+			middlewareConfig: map[string]*dynamic.Middleware{
 				"auth": {
-					BasicAuth: &config.BasicAuth{
+					BasicAuth: &dynamic.BasicAuth{
 						Users: []string{"admin:admin"},
 					},
 				},
 			},
-			routerConfig: map[string]*config.Router{
+			routerConfig: map[string]*dynamic.Router{
 				"bar": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
@@ -647,10 +648,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 		{
 			desc: "Router with broken middleware",
-			serviceConfig: map[string]*config.Service{
+			serviceConfig: map[string]*dynamic.Service{
 				"foo-service": {
-					LoadBalancer: &config.LoadBalancerService{
-						Servers: []config.Server{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
 							{
 								URL: "http://127.0.0.1",
 							},
@@ -658,14 +659,14 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			middlewareConfig: map[string]*config.Middleware{
+			middlewareConfig: map[string]*dynamic.Middleware{
 				"auth": {
-					BasicAuth: &config.BasicAuth{
+					BasicAuth: &dynamic.BasicAuth{
 						Users: []string{"foo"},
 					},
 				},
 			},
-			routerConfig: map[string]*config.Router{
+			routerConfig: map[string]*dynamic.Router{
 				"bar": {
 					EntryPoints: []string{"web"},
 					Service:     "foo-service",
@@ -685,16 +686,16 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 			entryPoints := []string{"web"}
 
-			rtConf := config.NewRuntimeConfig(config.Configuration{
-				HTTP: &config.HTTPConfiguration{
+			rtConf := runtime.NewConfig(dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
 					Services:    test.serviceConfig,
 					Routers:     test.routerConfig,
 					Middlewares: test.middlewareConfig,
 				},
 			})
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport)
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
-			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*config.MiddlewareInfo{})
+			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
@@ -709,7 +710,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 				}
 			}
 			for _, v := range rtConf.Routers {
-				if v.Err != "" {
+				if len(v.Err) > 0 {
 					allErrors++
 				}
 			}
@@ -722,6 +723,57 @@ func TestRuntimeConfiguration(t *testing.T) {
 		})
 	}
 
+}
+
+func TestProviderOnMiddlewares(t *testing.T) {
+	entryPoints := []string{"web"}
+
+	rtConf := runtime.NewConfig(dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Services: map[string]*dynamic.Service{
+				"test@file": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{},
+					},
+				},
+			},
+			Routers: map[string]*dynamic.Router{
+				"router@file": {
+					Rule:        "Host(`test`)",
+					Service:     "test@file",
+					Middlewares: []string{"chain@file", "m1"},
+				},
+				"router@docker": {
+					Rule:        "Host(`test`)",
+					Service:     "test@file",
+					Middlewares: []string{"chain", "m1@file"},
+				},
+			},
+			Middlewares: map[string]*dynamic.Middleware{
+				"chain@file": {
+					Chain: &dynamic.Chain{Middlewares: []string{"m1", "m2", "m1@file"}},
+				},
+				"chain@docker": {
+					Chain: &dynamic.Chain{Middlewares: []string{"m1", "m2", "m1@file"}},
+				},
+				"m1@file":   {AddPrefix: &dynamic.AddPrefix{Prefix: "/m1"}},
+				"m2@file":   {AddPrefix: &dynamic.AddPrefix{Prefix: "/m2"}},
+				"m1@docker": {AddPrefix: &dynamic.AddPrefix{Prefix: "/m1"}},
+				"m2@docker": {AddPrefix: &dynamic.AddPrefix{Prefix: "/m2"}},
+			},
+		},
+	})
+	serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil, nil, nil)
+	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+	responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
+
+	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
+
+	assert.Equal(t, []string{"chain@file", "m1@file"}, rtConf.Routers["router@file"].Middlewares)
+	assert.Equal(t, []string{"m1@file", "m2@file", "m1@file"}, rtConf.Middlewares["chain@file"].Chain.Middlewares)
+	assert.Equal(t, []string{"chain@docker", "m1@file"}, rtConf.Routers["router@docker"].Middlewares)
+	assert.Equal(t, []string{"m1@docker", "m2@docker", "m1@file"}, rtConf.Middlewares["chain@docker"].Chain.Middlewares)
 }
 
 type staticTransport struct {
@@ -739,17 +791,17 @@ func BenchmarkRouterServe(b *testing.B) {
 		StatusCode: 200,
 		Body:       ioutil.NopCloser(strings.NewReader("")),
 	}
-	routersConfig := map[string]*config.Router{
+	routersConfig := map[string]*dynamic.Router{
 		"foo": {
 			EntryPoints: []string{"web"},
 			Service:     "foo-service",
 			Rule:        "Host(`foo.bar`) && Path(`/`)",
 		},
 	}
-	serviceConfig := map[string]*config.Service{
+	serviceConfig := map[string]*dynamic.Service{
 		"foo-service": {
-			LoadBalancer: &config.LoadBalancerService{
-				Servers: []config.Server{
+			LoadBalancer: &dynamic.ServersLoadBalancer{
+				Servers: []dynamic.Server{
 					{
 						URL: server.URL,
 					},
@@ -759,14 +811,14 @@ func BenchmarkRouterServe(b *testing.B) {
 	}
 	entryPoints := []string{"web"}
 
-	rtConf := config.NewRuntimeConfig(config.Configuration{
-		HTTP: &config.HTTPConfiguration{
+	rtConf := runtime.NewConfig(dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
 			Services:    serviceConfig,
 			Routers:     routersConfig,
-			Middlewares: map[string]*config.Middleware{},
+			Middlewares: map[string]*dynamic.Middleware{},
 		},
 	})
-	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res})
+	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil, nil, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -790,10 +842,10 @@ func BenchmarkService(b *testing.B) {
 		Body:       ioutil.NopCloser(strings.NewReader("")),
 	}
 
-	serviceConfig := map[string]*config.Service{
+	serviceConfig := map[string]*dynamic.Service{
 		"foo-service": {
-			LoadBalancer: &config.LoadBalancerService{
-				Servers: []config.Server{
+			LoadBalancer: &dynamic.ServersLoadBalancer{
+				Servers: []dynamic.Server{
 					{
 						URL: "tchouck",
 					},
@@ -802,12 +854,12 @@ func BenchmarkService(b *testing.B) {
 		},
 	}
 
-	rtConf := config.NewRuntimeConfig(config.Configuration{
-		HTTP: &config.HTTPConfiguration{
+	rtConf := runtime.NewConfig(dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
 			Services: serviceConfig,
 		},
 	})
-	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res})
+	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil, nil, nil)
 	w := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 

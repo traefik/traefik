@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/NYTimes/gziphandler"
-	"github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

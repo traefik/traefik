@@ -8,27 +8,27 @@ import (
 	"strings"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/middlewares/addprefix"
-	"github.com/containous/traefik/pkg/middlewares/auth"
-	"github.com/containous/traefik/pkg/middlewares/buffering"
-	"github.com/containous/traefik/pkg/middlewares/chain"
-	"github.com/containous/traefik/pkg/middlewares/circuitbreaker"
-	"github.com/containous/traefik/pkg/middlewares/compress"
-	"github.com/containous/traefik/pkg/middlewares/customerrors"
-	"github.com/containous/traefik/pkg/middlewares/headers"
-	"github.com/containous/traefik/pkg/middlewares/ipwhitelist"
-	"github.com/containous/traefik/pkg/middlewares/maxconnection"
-	"github.com/containous/traefik/pkg/middlewares/passtlsclientcert"
-	"github.com/containous/traefik/pkg/middlewares/ratelimiter"
-	"github.com/containous/traefik/pkg/middlewares/redirect"
-	"github.com/containous/traefik/pkg/middlewares/replacepath"
-	"github.com/containous/traefik/pkg/middlewares/replacepathregex"
-	"github.com/containous/traefik/pkg/middlewares/retry"
-	"github.com/containous/traefik/pkg/middlewares/stripprefix"
-	"github.com/containous/traefik/pkg/middlewares/stripprefixregex"
-	"github.com/containous/traefik/pkg/middlewares/tracing"
-	"github.com/containous/traefik/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/middlewares/addprefix"
+	"github.com/containous/traefik/v2/pkg/middlewares/auth"
+	"github.com/containous/traefik/v2/pkg/middlewares/buffering"
+	"github.com/containous/traefik/v2/pkg/middlewares/chain"
+	"github.com/containous/traefik/v2/pkg/middlewares/circuitbreaker"
+	"github.com/containous/traefik/v2/pkg/middlewares/compress"
+	"github.com/containous/traefik/v2/pkg/middlewares/customerrors"
+	"github.com/containous/traefik/v2/pkg/middlewares/headers"
+	"github.com/containous/traefik/v2/pkg/middlewares/inflightreq"
+	"github.com/containous/traefik/v2/pkg/middlewares/ipwhitelist"
+	"github.com/containous/traefik/v2/pkg/middlewares/passtlsclientcert"
+	"github.com/containous/traefik/v2/pkg/middlewares/ratelimiter"
+	"github.com/containous/traefik/v2/pkg/middlewares/redirect"
+	"github.com/containous/traefik/v2/pkg/middlewares/replacepath"
+	"github.com/containous/traefik/v2/pkg/middlewares/replacepathregex"
+	"github.com/containous/traefik/v2/pkg/middlewares/retry"
+	"github.com/containous/traefik/v2/pkg/middlewares/stripprefix"
+	"github.com/containous/traefik/v2/pkg/middlewares/stripprefixregex"
+	"github.com/containous/traefik/v2/pkg/middlewares/tracing"
+	"github.com/containous/traefik/v2/pkg/server/internal"
 )
 
 type middlewareStackType int
@@ -39,7 +39,7 @@ const (
 
 // Builder the middleware builder
 type Builder struct {
-	configs        map[string]*config.MiddlewareInfo
+	configs        map[string]*runtime.MiddlewareInfo
 	serviceBuilder serviceBuilder
 }
 
@@ -48,7 +48,7 @@ type serviceBuilder interface {
 }
 
 // NewBuilder creates a new Builder
-func NewBuilder(configs map[string]*config.MiddlewareInfo, serviceBuilder serviceBuilder) *Builder {
+func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder serviceBuilder) *Builder {
 	return &Builder{configs: configs, serviceBuilder: serviceBuilder}
 }
 
@@ -66,19 +66,19 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 
 			var err error
 			if constructorContext, err = checkRecursion(constructorContext, middlewareName); err != nil {
-				b.configs[middlewareName].Err = err
+				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
 
 			constructor, err := b.buildConstructor(constructorContext, middlewareName)
 			if err != nil {
-				b.configs[middlewareName].Err = err
+				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
 
 			handler, err := constructor(next)
 			if err != nil {
-				b.configs[middlewareName].Err = err
+				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
 
@@ -102,6 +102,10 @@ func checkRecursion(ctx context.Context, middlewareName string) (context.Context
 // it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (alice.Constructor, error) {
 	config := b.configs[middlewareName]
+	if config == nil || config.Middleware == nil {
+		return nil, fmt.Errorf("invalid middleware %q configuration", middlewareName)
+	}
+
 	var middleware alice.Constructor
 	badConf := errors.New("cannot create middleware: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
 
@@ -123,7 +127,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	// Buffering
-	if config.Buffering != nil && config.MaxConn.Amount != 0 {
+	if config.Buffering != nil {
 		if middleware != nil {
 			return nil, badConf
 		}
@@ -137,6 +141,12 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		if middleware != nil {
 			return nil, badConf
 		}
+
+		qualifiedNames := make([]string, len(config.Chain.Middlewares))
+		for i, name := range config.Chain.Middlewares {
+			qualifiedNames[i] = internal.GetQualifiedName(ctx, name)
+		}
+		config.Chain.Middlewares = qualifiedNames
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return chain.New(ctx, next, *config.Chain, b, middlewareName)
 		}
@@ -212,13 +222,13 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
-	// MaxConn
-	if config.MaxConn != nil && config.MaxConn.Amount != 0 {
+	// InFlightReq
+	if config.InFlightReq != nil {
 		if middleware != nil {
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return maxconnection.New(ctx, next, *config.MaxConn, middlewareName)
+			return inflightreq.New(ctx, next, *config.InFlightReq, middlewareName)
 		}
 	}
 
@@ -314,7 +324,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	if middleware == nil {
-		return nil, errors.New("middleware does not exist")
+		return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
 	}
 
 	return tracing.Wrap(ctx, middleware), nil

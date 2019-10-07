@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/ip"
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/ip"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -27,8 +27,8 @@ type ipWhiteLister struct {
 }
 
 // New builds a new IPWhiteLister given a list of CIDR-Strings to whitelist
-func New(ctx context.Context, next http.Handler, config config.IPWhiteList, name string) (http.Handler, error) {
-	logger := middlewares.GetLogger(ctx, name, typeName)
+func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, name string) (http.Handler, error) {
+	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
 
 	if len(config.SourceRange) == 0 {
@@ -46,6 +46,7 @@ func New(ctx context.Context, next http.Handler, config config.IPWhiteList, name
 	}
 
 	logger.Debugf("Setting up IPWhiteLister with sourceRange: %s", config.SourceRange)
+
 	return &ipWhiteLister{
 		strategy:    strategy,
 		whiteLister: checker,
@@ -59,14 +60,15 @@ func (wl *ipWhiteLister) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), wl.name, typeName)
+	ctx := middlewares.GetLoggerCtx(req.Context(), wl.name, typeName)
+	logger := log.FromContext(ctx)
 
 	err := wl.whiteLister.IsAuthorized(wl.strategy.GetIP(req))
 	if err != nil {
 		logMessage := fmt.Sprintf("rejecting request %+v: %v", req, err)
 		logger.Debug(logMessage)
 		tracing.SetErrorWithEvent(req, logMessage)
-		reject(logger, rw)
+		reject(ctx, rw)
 		return
 	}
 	logger.Debugf("Accept %s: %+v", wl.strategy.GetIP(req), req)
@@ -74,12 +76,12 @@ func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	wl.next.ServeHTTP(rw, req)
 }
 
-func reject(logger logrus.FieldLogger, rw http.ResponseWriter) {
+func reject(ctx context.Context, rw http.ResponseWriter) {
 	statusCode := http.StatusForbidden
 
 	rw.WriteHeader(statusCode)
 	_, err := rw.Write([]byte(http.StatusText(statusCode)))
 	if err != nil {
-		logger.Error(err)
+		log.FromContext(ctx).Error(err)
 	}
 }

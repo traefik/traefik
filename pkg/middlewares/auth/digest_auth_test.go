@@ -9,8 +9,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +20,7 @@ func TestDigestAuthError(t *testing.T) {
 		fmt.Fprintln(w, "traefik")
 	})
 
-	auth := config.DigestAuth{
+	auth := dynamic.DigestAuth{
 		Users: []string{"test"},
 	}
 	_, err := NewDigest(context.Background(), next, auth, "authName")
@@ -32,7 +32,7 @@ func TestDigestAuthFail(t *testing.T) {
 		fmt.Fprintln(w, "traefik")
 	})
 
-	auth := config.DigestAuth{
+	auth := dynamic.DigestAuth{
 		Users: []string{"test:traefik:a2688e031edb4be6a3797f3882655c05"},
 	}
 	authMiddleware, err := NewDigest(context.Background(), next, auth, "authName")
@@ -101,7 +101,7 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 			require.NoError(t, err)
 
 			// Creates the configuration for our Authenticator
-			authenticatorConfiguration := config.DigestAuth{
+			authenticatorConfiguration := dynamic.DigestAuth{
 				Users:     test.givenUsers,
 				UsersFile: usersFile.Name(),
 				Realm:     test.realm,

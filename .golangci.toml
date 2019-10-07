@@ -23,6 +23,10 @@
   [linters-settings.misspell]
     locale = "US"
 
+  [linters-settings.funlen]
+    lines = 230 # default 60
+    statements = 120 # default 40
+
 [linters]
   enable-all = true
   disable = [
@@ -36,8 +40,7 @@
     "scopelint",
     "gochecknoinits",
     "gochecknoglobals",
-    # uncomment when the CI will be updated
-    # "bodyclose", # Too many false-positive and panics.
+    "bodyclose", # Too many false-positive and panics.
   ]
 
 [issues]
@@ -50,8 +53,8 @@
     "should have a package comment, unless it's in another file for this package",
   ]
  [[issues.exclude-rules]]
-    path = ".+_test.go"
-    linters = ["goconst"]
+    path = "(.+)_test.go"
+    linters = ["goconst", "funlen"]
  [[issues.exclude-rules]]
     path = "integration/.+_test.go"
     text = "Error return value of `cmd\\.Process\\.Kill` is not checked"
@@ -66,7 +69,7 @@
     text = "Error return value of `rw.Write` is not checked"
  [[issues.exclude-rules]]
     path = "pkg/middlewares/recovery/recovery.go"
-    text = "`logger` can be `github.com/containous/traefik/vendor/github.com/stretchr/testify/assert.TestingT`"
+    text = "`logger` can be `github.com/stretchr/testify/assert.TestingT`"
  [[issues.exclude-rules]]
     path = "pkg/provider/docker/builder_test.go"
     text = "(U1000: func )?`(.+)` is unused"

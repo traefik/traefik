@@ -10,9 +10,9 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/types"
 )
 
 // StatusClientClosedRequest non-standard HTTP status code for client disconnection
@@ -21,7 +21,7 @@ const StatusClientClosedRequest = 499
 // StatusClientClosedRequestText non-standard HTTP status for client disconnection
 const StatusClientClosedRequestText = "Client Closed Request"
 
-func buildProxy(passHostHeader bool, responseForwarding *config.ResponseForwarding, defaultRoundTripper http.RoundTripper, bufferPool httputil.BufferPool, responseModifier func(*http.Response) error) (http.Handler, error) {
+func buildProxy(passHostHeader bool, responseForwarding *dynamic.ResponseForwarding, defaultRoundTripper http.RoundTripper, bufferPool httputil.BufferPool, responseModifier func(*http.Response) error) (http.Handler, error) {
 	var flushInterval types.Duration
 	if responseForwarding != nil {
 		err := flushInterval.Set(responseForwarding.FlushInterval)
@@ -57,6 +57,11 @@ func buildProxy(passHostHeader bool, responseForwarding *config.ResponseForwardi
 				outReq.Host = outReq.URL.Host
 			}
 
+			// Even if the websocket RFC says that headers should be case-insensitive,
+			// some servers need Sec-WebSocket-Key to be case-sensitive.
+			// https://tools.ietf.org/html/rfc6455#page-20
+			outReq.Header["Sec-WebSocket-Key"] = outReq.Header["Sec-Websocket-Key"]
+			delete(outReq.Header, "Sec-Websocket-Key")
 		},
 		Transport:      defaultRoundTripper,
 		FlushInterval:  time.Duration(flushInterval),

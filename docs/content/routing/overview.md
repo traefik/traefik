@@ -26,7 +26,7 @@ In the process, Traefik will make sure that the user is authenticated (using the
 
 Static configuration:
 
-```toml tab="TOML"
+```toml tab="File (TOML)"
 [entryPoints]
   [entryPoints.web]
     # Listen on port 8081 for incoming requests
@@ -35,9 +35,10 @@ Static configuration:
 [providers]
   # Enable the file provider to define routers / middlewares / services in a file
   [providers.file]
+    filename = "dynamic_conf.toml"
 ```
 
-```yaml tab="YAML"
+```yaml tab="File (YAML)"
 entryPoints:
   web:
     # Listen on port 8081 for incoming requests
@@ -45,7 +46,16 @@ entryPoints:
 
 providers:
   # Enable the file provider to define routers / middlewares / services in a file
-  file: {}
+  file:
+    filename: dynamic_conf.yml
+```
+
+```bash tab="CLI"
+# Listen on port 8081 for incoming requests
+--entryPoints.web.address=:8081
+
+# Enable the file provider to define routers / middlewares / services in a file
+--providers.file.filename=dynamic_conf.toml
 ```
 
 Dynamic configuration:
@@ -102,21 +112,21 @@ http:
         - url: http://private/whoami-service
 ```
 
-!!! note "The File Provider"
+!!! info ""
 
     In this example, we use the [file provider](../providers/file.md).
     Even if it is one of the least magical way of configuring Traefik, it explicitly describes every available notion.
 
-!!! note "HTTP / TCP"
+!!! info "HTTP / TCP"
 
     In this example, we've defined routing rules for http requests only.
     Traefik also supports TCP requests. To add [TCP routers](./routers/index.md) and [TCP services](./services/index.md), declare them in a TCP section like in the following.
 
     ??? example "Adding a TCP route for TLS requests on whoami.traefik.io"
 
-        Static configuration:
+        **Static Configuration**
         
-        ```toml tab="TOML"
+        ```toml tab="File (TOML)"
         [entryPoints]
           [entryPoints.web]
             # Listen on port 8081 for incoming requests
@@ -125,19 +135,29 @@ http:
         [providers]
           # Enable the file provider to define routers / middlewares / services in a file
           [providers.file]
+            filename = "dynamic_conf.toml"
         ```
         
-        ```yaml tab="YAML"
+        ```yaml tab="File (YAML)"
         entryPoints:
           web:
             # Listen on port 8081 for incoming requests
             address: :8081
         providers:
           # Enable the file provider to define routers / middlewares / services in a file
-          file: {}
+          file:
+            filename: dynamic_conf.yml
         ```
         
-        Dynamic configuration:
+        ```bash tab="CLI"
+        # Listen on port 8081 for incoming requests
+        --entryPoints.web.address=":8081"
+        
+        # Enable the file provider to define routers / middlewares / services in a file
+        --providers.file.filename=dynamic_conf.toml
+        ```
+        
+        **Dynamic Configuration**
 
         ```toml tab="TOML"
         # http routing section

@@ -1,24 +1,24 @@
 package server
 
 import (
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/server/internal"
-	"github.com/containous/traefik/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/tls"
 )
 
-func mergeConfiguration(configurations config.Configurations) config.Configuration {
-	conf := config.Configuration{
-		HTTP: &config.HTTPConfiguration{
-			Routers:     make(map[string]*config.Router),
-			Middlewares: make(map[string]*config.Middleware),
-			Services:    make(map[string]*config.Service),
+func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configuration {
+	conf := dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:     make(map[string]*dynamic.Router),
+			Middlewares: make(map[string]*dynamic.Middleware),
+			Services:    make(map[string]*dynamic.Service),
 		},
-		TCP: &config.TCPConfiguration{
-			Routers:  make(map[string]*config.TCPRouter),
-			Services: make(map[string]*config.TCPService),
+		TCP: &dynamic.TCPConfiguration{
+			Routers:  make(map[string]*dynamic.TCPRouter),
+			Services: make(map[string]*dynamic.TCPService),
 		},
-		TLS: &config.TLSConfiguration{
+		TLS: &dynamic.TLSConfiguration{
 			Stores:  make(map[string]tls.Store),
 			Options: make(map[string]tls.Options),
 		},

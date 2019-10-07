@@ -12,6 +12,8 @@
 	"serverStatus": {
 		"http://127.0.0.1": "UP"
 	},
+	"status": "enabled",
+	"type": "loadbalancer",
 	"usedBy": [
 		"foo@myprovider",
 		"test@myprovider"

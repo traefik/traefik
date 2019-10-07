@@ -1,7 +1,7 @@
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRouteTCP
 metadata:
-  name: test.crd
+  name: test.route
   namespace: default
 
 spec:
@@ -13,6 +13,7 @@ spec:
     services:
     - name: whoamitcp
       port: 8000
+      weight: 2
     - name: whoamitcp2
       port: 8080
-
+      weight: 3

@@ -1,0 +1,45 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[api]
+  insecure = true
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router]
+    service = "mirror"
+    rule = "Path(`/whoami`)"
+
+[http.services]
+  [http.services.mirror.mirroring]
+    service = "service1"
+  [[http.services.mirror.mirroring.mirrors]]
+    name = "mirror1"
+    percent = 10
+  [[http.services.mirror.mirroring.mirrors]]
+    name = "mirror2"
+    percent = 50
+
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "{{ .MainServer }}"
+  [http.services.mirror1.loadBalancer]
+    [[http.services.mirror1.loadBalancer.servers]]
+      url = "{{ .Mirror1Server }}"
+  [http.services.mirror2.loadBalancer]
+      [[http.services.mirror2.loadBalancer.servers]]
+        url = "{{ .Mirror2Server }}"
+

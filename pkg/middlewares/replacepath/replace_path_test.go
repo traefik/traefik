@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestReplacePath(t *testing.T) {
-	var replacementConfig = config.ReplacePath{
+	var replacementConfig = dynamic.ReplacePath{
 		Path: "/replacement-path",
 	}
 

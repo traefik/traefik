@@ -13,11 +13,15 @@
     address = ":8001"
 
 [api]
+  insecure = true
   middlewares = ["authentication@file"]
 
 [ping]
 
 [providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
 
 [http.middlewares]
   [http.middlewares.authentication.basicAuth]

@@ -5,11 +5,13 @@ import (
 	"math"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func Int(v int) *int { return &v }
 
 func TestGetConfigurationAPIErrors(t *testing.T) {
 	fakeClient := newFakeClient(true, marathon.Applications{})
@@ -32,7 +34,7 @@ func TestBuildConfiguration(t *testing.T) {
 		applications *marathon.Applications
 		constraints  string
 		defaultRule  string
-		expected     *config.Configuration
+		expected     *dynamic.Configuration
 	}{
 		{
 			desc: "simple application",
@@ -42,22 +44,22 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80),
 					withTasks(localhostTask(taskPorts(80))),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "app",
 							Rule:    "Host(`app.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
-						"app": {LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"app": {LoadBalancer: &dynamic.ServersLoadBalancer{
+							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:80",
 								},
@@ -76,15 +78,15 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80),
 					withTasks(localhostTask(taskPorts(80), taskState(taskStateStaging))),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -96,22 +98,22 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "app",
 							Rule:    "Host(`app.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
-						"app": {LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"app": {LoadBalancer: &dynamic.ServersLoadBalancer{
+							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:80",
 								},
@@ -132,22 +134,22 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.app.middlewares", "Middleware1"),
 					withTasks(localhostTask(taskPorts(80))),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service:     "app",
 							Rule:        "Host(`app.marathon.localhost`)",
 							Middlewares: []string{"Middleware1"},
 						},
 					},
-					Middlewares: map[string]*config.Middleware{
+					Middlewares: map[string]*dynamic.Middleware{
 						"Middleware1": {
-							BasicAuth: &config.BasicAuth{
+							BasicAuth: &dynamic.BasicAuth{
 								Users: []string{
 									"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
 									"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
@@ -155,9 +157,9 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 					},
-					Services: map[string]*config.Service{
-						"app": {LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
+					Services: map[string]*dynamic.Service{
+						"app": {LoadBalancer: &dynamic.ServersLoadBalancer{
+							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:80",
 								},
@@ -186,22 +188,22 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 			),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"Router1": {
 							Service: "Service1",
 							Rule:    "Host(`app.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
-						"Service1": {LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Service1": {LoadBalancer: &dynamic.ServersLoadBalancer{
+							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:8080",
 								},
@@ -235,22 +237,22 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.Router1.rule", "Host(`app.marathon.localhost`)"),
 				),
 			),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"Router1": {
 							Service: "Service1",
 							Rule:    "Host(`app.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
-						"Service1": {LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Service1": {LoadBalancer: &dynamic.ServersLoadBalancer{
+							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:8080",
 								},
@@ -282,13 +284,13 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(8081))),
 				),
 			),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"foo": {
 							Service: "foo",
 							Rule:    "Host(`foo.marathon.localhost`)",
@@ -298,18 +300,18 @@ func TestBuildConfiguration(t *testing.T) {
 							Rule:    "Host(`bar.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
-						"foo": {LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"foo": {LoadBalancer: &dynamic.ServersLoadBalancer{
+							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:8080",
 								},
 							},
 							PassHostHeader: true,
 						}},
-						"bar": {LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
+						"bar": {LoadBalancer: &dynamic.ServersLoadBalancer{
+							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:8081",
 								},
@@ -328,23 +330,23 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80),
 					withTasks(localhostTask(taskPorts(80)), localhostTask(taskPorts(81))),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "app",
 							Rule:    "Host(`app.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -368,22 +370,22 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80))),
 					withLabel("traefik.http.services.Service1.loadbalancer.passhostheader", "true"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "Service1",
 							Rule:    "Host(`app.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
-						"Service1": {LoadBalancer: &config.LoadBalancerService{
-							Servers: []config.Server{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Service1": {LoadBalancer: &dynamic.ServersLoadBalancer{
+							Servers: []dynamic.Server{
 								{
 									URL: "http://localhost:80",
 								},
@@ -405,23 +407,23 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 					withLabel("traefik.http.routers.Router1.service", "Service1"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"Router1": {
 							Service: "Service1",
 							Rule:    "Host(`foo.com`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -442,17 +444,17 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -461,7 +463,7 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 					},
-					Routers: map[string]*config.Router{
+					Routers: map[string]*dynamic.Router{
 						"Router1": {
 							Service: "app",
 							Rule:    "Host(`foo.com`)",
@@ -480,23 +482,23 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 					withLabel("traefik.http.services.Service1.loadbalancer.passhostheader", "true"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"Router1": {
 							Service: "Service1",
 							Rule:    "Host(`foo.com`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -519,18 +521,18 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.services.Service1.loadbalancer.passhostheader", "true"),
 					withLabel("traefik.http.services.Service2.loadbalancer.passhostheader", "true"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -539,8 +541,8 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"Service2": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -567,13 +569,13 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.http.services.Service1.loadbalancer.passhostheader", "true"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "Service1",
 							Rule:    "Host(`app.marathon.localhost`)",
@@ -583,8 +585,8 @@ func TestBuildConfiguration(t *testing.T) {
 							Rule:    "Host(`app2.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -595,21 +597,21 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "42"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "42"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "app",
 							Rule:    "Host(`app.marathon.localhost`)",
@@ -619,18 +621,20 @@ func TestBuildConfiguration(t *testing.T) {
 							Rule:    "Host(`app2.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{
+					Middlewares: map[string]*dynamic.Middleware{
 						"Middleware1": {
-							MaxConn: &config.MaxConn{
-								Amount:        42,
-								ExtractorFunc: "request.host",
+							InFlightReq: &dynamic.InFlightReq{
+								Amount: 42,
+								SourceCriterion: &dynamic.SourceCriterion{
+									RequestHost: true,
+								},
 							},
 						},
 					},
-					Services: map[string]*config.Service{
+					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -639,8 +643,8 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"app2": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -659,21 +663,21 @@ func TestBuildConfiguration(t *testing.T) {
 					appID("/app"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "42"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "42"),
 				),
 				application(
 					appID("/app2"),
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
-					withLabel("traefik.http.middlewares.Middleware1.maxconn.amount", "41"),
+					withLabel("traefik.http.middlewares.Middleware1.inflightreq.amount", "41"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "app",
 							Rule:    "Host(`app.marathon.localhost`)",
@@ -683,11 +687,11 @@ func TestBuildConfiguration(t *testing.T) {
 							Rule:    "Host(`app2.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -696,8 +700,8 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"app2": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -724,18 +728,18 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.http.routers.Router1.rule", "Host(`bar.com`)"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -744,8 +748,8 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"app2": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -774,23 +778,23 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 					withLabel("traefik.http.services.Service1.LoadBalancer.passhostheader", "true"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"Router1": {
 							Service: "Service1",
 							Rule:    "Host(`foo.com`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -820,18 +824,18 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.http.routers.Router1.rule", "Host(`foo.com`)"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -840,8 +844,8 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"app2": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -862,23 +866,23 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.wrong.label", "tchouk"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "app",
 							Rule:    "Host(`app.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -900,23 +904,23 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.services.Service1.LoadBalancer.server.scheme", "h2c"),
 					withLabel("traefik.http.services.Service1.LoadBalancer.server.port", "90"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "Service1",
 							Rule:    "Host(`app.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "h2c://localhost:90",
 									},
@@ -938,18 +942,18 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.http.services.Service1.LoadBalancer.server.port", ""),
 					withLabel("traefik.http.services.Service2.LoadBalancer.server.port", "8080"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"Service1": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -958,8 +962,8 @@ func TestBuildConfiguration(t *testing.T) {
 							},
 						},
 						"Service2": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:8080",
 									},
@@ -979,15 +983,15 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80, 81),
 					withTasks(localhostTask()),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1000,36 +1004,15 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask()),
 					withLabel("traefik.http.middlewares.Middleware1.basicauth.users", "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
-				},
-			},
-		},
-		{
-			desc: "one app with traefik.enable=false",
-			applications: withApplications(
-				application(
-					appID("/app"),
-					appPorts(80, 81),
-					withTasks(localhostTask()),
-					withLabel("traefik.enable", "false"),
-				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
-				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1042,15 +1025,36 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask()),
 					withLabel("traefik.enable", "false"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc: "one app with traefik.enable=false",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask()),
+					withLabel("traefik.enable", "false"),
+				)),
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1064,15 +1068,15 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.tags", "foo"),
 				)),
 			constraints: `Label("traefik.tags", "bar")`,
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1086,15 +1090,15 @@ func TestBuildConfiguration(t *testing.T) {
 					constraint("rack_id:CLUSTER:rack-1"),
 				)),
 			constraints: `MarathonConstraint("rack_id:CLUSTER:rack-2")`,
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1108,23 +1112,23 @@ func TestBuildConfiguration(t *testing.T) {
 					constraint("rack_id:CLUSTER:rack-1"),
 				)),
 			constraints: `MarathonConstraint("rack_id:CLUSTER:rack-1")`,
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "app",
 							Rule:    "Host(`app.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -1146,23 +1150,23 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.tags", "bar"),
 				)),
 			constraints: `Label("traefik.tags", "bar")`,
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "app",
 							Rule:    "Host(`app.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"app": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -1183,23 +1187,23 @@ func TestBuildConfiguration(t *testing.T) {
 					appPorts(80, 81),
 					withTasks(localhostTask(taskPorts(80, 81))),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers:  map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"a_b_app": {
 							Service: "a_b_app",
 							Rule:    `Host("app.b.a.marathon.localhost")`,
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"a_b_app": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -1221,31 +1225,32 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.tcp.routers.foo.rule", "HostSNI(`foo.bar`)"),
 					withLabel("traefik.tcp.routers.foo.tls", "true"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"foo": {
 							Service: "app",
 							Rule:    "HostSNI(`foo.bar`)",
-							TLS:     &config.RouterTCPTLSConfig{},
+							TLS:     &dynamic.RouterTCPTLSConfig{},
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"app": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "localhost:80",
 									},
 								},
+								TerminationDelay: Int(100),
 							},
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1258,25 +1263,26 @@ func TestBuildConfiguration(t *testing.T) {
 					withTasks(localhostTask(taskPorts(80, 81))),
 					withLabel("traefik.tcp.routers.foo.tls", "true"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{},
-					Services: map[string]*config.TCPService{
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{
 						"app": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "localhost:80",
 									},
 								},
+								TerminationDelay: Int(100),
 							},
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1291,31 +1297,73 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.tcp.routers.foo.tls", "true"),
 					withLabel("traefik.tcp.services.foo.loadbalancer.server.port", "8080"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"foo": {
 							Service: "foo",
 							Rule:    "HostSNI(`foo.bar`)",
-							TLS:     &config.RouterTCPTLSConfig{},
+							TLS:     &dynamic.RouterTCPTLSConfig{},
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"foo": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "localhost:8080",
 									},
 								},
+								TerminationDelay: Int(100),
 							},
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers:     map[string]*config.Router{},
-					Middlewares: map[string]*config.Middleware{},
-					Services:    map[string]*config.Service{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc: "one app with tcp labels with port, with termination delay",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
+					withLabel("traefik.tcp.routers.foo.rule", "HostSNI(`foo.bar`)"),
+					withLabel("traefik.tcp.routers.foo.tls", "true"),
+					withLabel("traefik.tcp.services.foo.loadbalancer.server.port", "8080"),
+					withLabel("traefik.tcp.services.foo.loadbalancer.terminationdelay", "200"),
+				)),
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"foo": {
+							Service: "foo",
+							Rule:    "HostSNI(`foo.bar`)",
+							TLS:     &dynamic.RouterTCPTLSConfig{},
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"foo": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "localhost:8080",
+									},
+								},
+								TerminationDelay: Int(200),
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1331,39 +1379,40 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.tcp.services.foo.loadbalancer.server.port", "8080"),
 					withLabel("traefik.http.services.bar.loadbalancer.passhostheader", "true"),
 				)),
-			expected: &config.Configuration{
-				TCP: &config.TCPConfiguration{
-					Routers: map[string]*config.TCPRouter{
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
 						"foo": {
 							Service: "foo",
 							Rule:    "HostSNI(`foo.bar`)",
-							TLS:     &config.RouterTCPTLSConfig{},
+							TLS:     &dynamic.RouterTCPTLSConfig{},
 						},
 					},
-					Services: map[string]*config.TCPService{
+					Services: map[string]*dynamic.TCPService{
 						"foo": {
-							LoadBalancer: &config.TCPLoadBalancerService{
-								Servers: []config.TCPServer{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
 									{
 										Address: "localhost:8080",
 									},
 								},
+								TerminationDelay: Int(100),
 							},
 						},
 					},
 				},
-				HTTP: &config.HTTPConfiguration{
-					Routers: map[string]*config.Router{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
 						"app": {
 							Service: "bar",
 							Rule:    "Host(`app.marathon.localhost`)",
 						},
 					},
-					Middlewares: map[string]*config.Middleware{},
-					Services: map[string]*config.Service{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
 						"bar": {
-							LoadBalancer: &config.LoadBalancerService{
-								Servers: []config.Server{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
 									{
 										URL: "http://localhost:80",
 									},
@@ -1452,7 +1501,7 @@ func TestApplicationFilterEnabled(t *testing.T) {
 
 func TestGetServer(t *testing.T) {
 	type expected struct {
-		server config.Server
+		server dynamic.Server
 		error  string
 	}
 
@@ -1461,7 +1510,7 @@ func TestGetServer(t *testing.T) {
 		provider      Provider
 		app           marathon.Application
 		extraConf     configuration
-		defaultServer config.Server
+		defaultServer dynamic.Server
 		expected      expected
 	}{
 		{
@@ -1469,7 +1518,7 @@ func TestGetServer(t *testing.T) {
 			provider:      Provider{},
 			app:           application(),
 			extraConf:     configuration{},
-			defaultServer: config.Server{},
+			defaultServer: dynamic.Server{},
 			expected: expected{
 				error: `host is undefined for task "taskID" app ""`,
 			},
@@ -1483,11 +1532,11 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask(taskPorts(80))),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 			},
 			expected: expected{
-				server: config.Server{
+				server: dynamic.Server{
 					URL: "http://localhost:80",
 				},
 			},
@@ -1501,7 +1550,7 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask()),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 			},
 			expected: expected{
@@ -1517,12 +1566,12 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask(taskPorts(80))),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 				Port:   "88",
 			},
 			expected: expected{
-				server: config.Server{
+				server: dynamic.Server{
 					URL: "http://localhost:88",
 				},
 			},
@@ -1536,7 +1585,7 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask(taskPorts(80))),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 				Port:   "aaaa",
 			},
@@ -1553,7 +1602,7 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask(taskPorts(80))),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 				Port:   "-6",
 			},
@@ -1570,12 +1619,12 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask(taskPorts(80, 81))),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 				Port:   "index:1",
 			},
 			expected: expected{
-				server: config.Server{
+				server: dynamic.Server{
 					URL: "http://localhost:81",
 				},
 			},
@@ -1589,7 +1638,7 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask(taskPorts(80, 81))),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 				Port:   "index:2",
 			},
@@ -1606,7 +1655,7 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask(taskPorts(80, 81))),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 				Port:   "index:aaa",
 			},
@@ -1624,11 +1673,11 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask()),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 			},
 			expected: expected{
-				server: config.Server{
+				server: dynamic.Server{
 					URL: "http://localhost:80",
 				},
 			},
@@ -1643,11 +1692,11 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask()),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 			},
 			expected: expected{
-				server: config.Server{
+				server: dynamic.Server{
 					URL: "http://127.0.0.1:88",
 				},
 			},
@@ -1662,11 +1711,11 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask(taskPorts(80, 81))),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 			},
 			expected: expected{
-				server: config.Server{
+				server: dynamic.Server{
 					URL: "http://127.0.0.1:80",
 				},
 			},
@@ -1681,11 +1730,11 @@ func TestGetServer(t *testing.T) {
 				withTasks(localhostTask(taskPorts(80, 81))),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 			},
 			expected: expected{
-				server: config.Server{
+				server: dynamic.Server{
 					URL: "http://localhost:80",
 				},
 			},
@@ -1710,11 +1759,11 @@ func TestGetServer(t *testing.T) {
 					IPAddressIdx: 0,
 				},
 			},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 			},
 			expected: expected{
-				server: config.Server{
+				server: dynamic.Server{
 					URL: "http://127.0.0.1:88",
 				},
 			},
@@ -1738,7 +1787,7 @@ func TestGetServer(t *testing.T) {
 					IPAddressIdx: math.MinInt32,
 				},
 			},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 			},
 			expected: expected{
@@ -1764,7 +1813,7 @@ func TestGetServer(t *testing.T) {
 					IPAddressIdx: 3,
 				},
 			},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 			},
 			expected: expected{
@@ -1785,7 +1834,7 @@ func TestGetServer(t *testing.T) {
 					)),
 			),
 			extraConf: configuration{},
-			defaultServer: config.Server{
+			defaultServer: dynamic.Server{
 				Scheme: "http",
 			},
 			expected: expected{

@@ -2,21 +2,29 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"reflect"
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/healthcheck"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/middlewares/accesslog"
-	"github.com/containous/traefik/pkg/middlewares/emptybackendhandler"
-	"github.com/containous/traefik/pkg/middlewares/pipelining"
-	"github.com/containous/traefik/pkg/server/cookie"
-	"github.com/containous/traefik/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/healthcheck"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/metrics"
+	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
+	"github.com/containous/traefik/v2/pkg/middlewares/emptybackendhandler"
+	metricsMiddle "github.com/containous/traefik/v2/pkg/middlewares/metrics"
+	"github.com/containous/traefik/v2/pkg/middlewares/pipelining"
+	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/server/cookie"
+	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/mirror"
+	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/wrr"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -26,25 +34,47 @@ const (
 )
 
 // NewManager creates a new Manager
-func NewManager(configs map[string]*config.ServiceInfo, defaultRoundTripper http.RoundTripper) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry, routinePool *safe.Pool, api http.Handler, rest http.Handler) *Manager {
 	return &Manager{
+		routinePool:         routinePool,
+		metricsRegistry:     metricsRegistry,
 		bufferPool:          newBufferPool(),
 		defaultRoundTripper: defaultRoundTripper,
 		balancers:           make(map[string][]healthcheck.BalancerHandler),
 		configs:             configs,
+		api:                 api,
+		rest:                rest,
 	}
 }
 
 // Manager The service manager
 type Manager struct {
+	routinePool         *safe.Pool
+	metricsRegistry     metrics.Registry
 	bufferPool          httputil.BufferPool
 	defaultRoundTripper http.RoundTripper
 	balancers           map[string][]healthcheck.BalancerHandler
-	configs             map[string]*config.ServiceInfo
+	configs             map[string]*runtime.ServiceInfo
+	api                 http.Handler
+	rest                http.Handler
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
 func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
+	if serviceName == "api@internal" {
+		if m.api == nil {
+			return nil, errors.New("api is not enabled")
+		}
+		return m.api, nil
+	}
+
+	if serviceName == "rest@internal" {
+		if m.rest == nil {
+			return nil, errors.New("rest is not enabled")
+		}
+		return m.rest, nil
+	}
+
 	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
 
 	serviceName = internal.GetQualifiedName(ctx, serviceName)
@@ -55,26 +85,95 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 		return nil, fmt.Errorf("the service %q does not exist", serviceName)
 	}
 
-	// TODO Should handle multiple service types
-	// FIXME Check if the service is declared multiple times with different types
-	if conf.LoadBalancer == nil {
-		conf.Err = fmt.Errorf("the service %q doesn't have any load balancer", serviceName)
-		return nil, conf.Err
+	value := reflect.ValueOf(*conf.Service)
+	var count int
+	for i := 0; i < value.NumField(); i++ {
+		if !value.Field(i).IsNil() {
+			count++
+		}
+	}
+	if count > 1 {
+		err := errors.New("cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
+		conf.AddError(err, true)
+		return nil, err
 	}
 
-	lb, err := m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
-	if err != nil {
-		conf.Err = err
-		return nil, err
+	var lb http.Handler
+
+	switch {
+	case conf.LoadBalancer != nil:
+		var err error
+		lb, err = m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
+	case conf.Weighted != nil:
+		var err error
+		lb, err = m.getLoadBalancerWRRServiceHandler(ctx, serviceName, conf.Weighted, responseModifier)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
+	case conf.Mirroring != nil:
+		var err error
+		lb, err = m.getLoadBalancerMirrorServiceHandler(ctx, serviceName, conf.Mirroring, responseModifier)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
+	default:
+		sErr := fmt.Errorf("the service %q does not have any type defined", serviceName)
+		conf.AddError(sErr, true)
+		return nil, sErr
 	}
 
 	return lb, nil
 }
 
+func (m *Manager) getLoadBalancerMirrorServiceHandler(ctx context.Context, serviceName string, config *dynamic.Mirroring, responseModifier func(*http.Response) error) (http.Handler, error) {
+	serviceHandler, err := m.BuildHTTP(ctx, config.Service, responseModifier)
+	if err != nil {
+		return nil, err
+	}
+
+	handler := mirror.New(serviceHandler, m.routinePool)
+	for _, mirrorConfig := range config.Mirrors {
+		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name, responseModifier)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handler.AddMirror(mirrorHandler, mirrorConfig.Percent)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return handler, nil
+}
+
+func (m *Manager) getLoadBalancerWRRServiceHandler(ctx context.Context, serviceName string, config *dynamic.WeightedRoundRobin, responseModifier func(*http.Response) error) (http.Handler, error) {
+	// TODO Handle accesslog and metrics with multiple service name
+	if config.Sticky != nil && config.Sticky.Cookie != nil {
+		config.Sticky.Cookie.Name = cookie.GetName(config.Sticky.Cookie.Name, serviceName)
+	}
+
+	balancer := wrr.New(config.Sticky)
+	for _, service := range config.Services {
+		serviceHandler, err := m.BuildHTTP(ctx, service.Name, responseModifier)
+		if err != nil {
+			return nil, err
+		}
+
+		balancer.AddService(service.Name, serviceHandler, service.Weight)
+	}
+	return balancer, nil
+}
+
 func (m *Manager) getLoadBalancerServiceHandler(
 	ctx context.Context,
 	serviceName string,
-	service *config.LoadBalancerService,
+	service *dynamic.ServersLoadBalancer,
 	responseModifier func(*http.Response) error,
 ) (http.Handler, error) {
 	fwd, err := buildProxy(service.PassHostHeader, service.ResponseForwarding, m.defaultRoundTripper, m.bufferPool, responseModifier)
@@ -85,8 +184,12 @@ func (m *Manager) getLoadBalancerServiceHandler(
 	alHandler := func(next http.Handler) (http.Handler, error) {
 		return accesslog.NewFieldHandler(next, accesslog.ServiceName, serviceName, accesslog.AddServiceFields), nil
 	}
+	chain := alice.New()
+	if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
+		chain = chain.Append(metricsMiddle.WrapServiceHandler(ctx, m.metricsRegistry, serviceName))
+	}
 
-	handler, err := alice.New().Append(alHandler).Then(pipelining.New(ctx, fwd, "pipelining"))
+	handler, err := chain.Append(alHandler).Then(pipelining.New(ctx, fwd, "pipelining"))
 	if err != nil {
 		return nil, err
 	}
@@ -131,10 +234,10 @@ func (m *Manager) LaunchHealthCheck() {
 	}
 
 	// FIXME metrics and context
-	healthcheck.GetHealthCheck().SetBackendsConfiguration(context.TODO(), backendConfigs)
+	healthcheck.GetHealthCheck().SetBackendsConfiguration(context.Background(), backendConfigs)
 }
 
-func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler, backend string, hc *config.HealthCheck) *healthcheck.Options {
+func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler, backend string, hc *dynamic.HealthCheck) *healthcheck.Options {
 	if hc == nil || hc.Path == "" {
 		return nil
 	}
@@ -183,16 +286,16 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler
 	}
 }
 
-func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, service *config.LoadBalancerService, fwd http.Handler) (healthcheck.BalancerHandler, error) {
+func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, service *dynamic.ServersLoadBalancer, fwd http.Handler) (healthcheck.BalancerHandler, error) {
 	logger := log.FromContext(ctx)
 	logger.Debug("Creating load-balancer")
 
 	var options []roundrobin.LBOption
 
 	var cookieName string
-	if stickiness := service.Stickiness; stickiness != nil {
-		cookieName = cookie.GetName(stickiness.CookieName, serviceName)
-		opts := roundrobin.CookieOptions{HTTPOnly: stickiness.HTTPOnlyCookie, Secure: stickiness.SecureCookie}
+	if service.Sticky != nil && service.Sticky.Cookie != nil {
+		cookieName = cookie.GetName(service.Sticky.Cookie.Name, serviceName)
+		opts := roundrobin.CookieOptions{HTTPOnly: service.Sticky.Cookie.HTTPOnly, Secure: service.Sticky.Cookie.Secure}
 		options = append(options, roundrobin.EnableStickySession(roundrobin.NewStickySessionWithOptions(cookieName, opts)))
 		logger.Debugf("Sticky session cookie name: %v", cookieName)
 	}
@@ -207,10 +310,10 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 		return nil, fmt.Errorf("error configuring load balancer for service %s: %v", serviceName, err)
 	}
 
-	return lb, nil
+	return lbsu, nil
 }
 
-func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHandler, servers []config.Server) error {
+func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHandler, servers []dynamic.Server) error {
 	logger := log.FromContext(ctx)
 
 	for name, srv := range servers {

@@ -3,7 +3,7 @@
   sendAnonymousUsage = false
 
 [api]
-  entrypoint="api"
+  insecure = true
 
 [log]
   level = "DEBUG"
@@ -12,11 +12,8 @@
   [entryPoints.web]
     address = ":8081"
 
-  [entryPoints.api]
-    address = ":8080"
-
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 
@@ -28,15 +25,8 @@
 
 [http.middlewares]
   [http.middlewares.ratelimit.rateLimit]
-    extractorfunc = "client.ip"
-      [http.middlewares.ratelimit.rateLimit.rateSet.rateset1]
-        period = "60s"
-        average = 4
-        burst = 5
-      [http.middlewares.ratelimit.rateLimit.rateSet.rateset2]
-        period = "3s"
-        average = 1
-        burst = 2
+    average = 100
+    burst = 1
 
 [http.services]
   [http.services.service1]

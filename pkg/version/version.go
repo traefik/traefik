@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/google/go-github/github"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/google/go-github/v28/github"
+	"github.com/gorilla/mux"
 	goversion "github.com/hashicorp/go-version"
 	"github.com/unrolled/render"
 )
@@ -43,7 +43,7 @@ func (v Handler) Append(router *mux.Router) {
 			}
 
 			if err := templatesRenderer.JSON(response, http.StatusOK, v); err != nil {
-				log.Error(err)
+				log.WithoutContext().Error(err)
 			}
 		})
 }
@@ -53,34 +53,39 @@ func CheckNewVersion() {
 	if Version == "dev" {
 		return
 	}
+
+	logger := log.WithoutContext()
+
 	client := github.NewClient(nil)
-	updateURL, err := url.Parse("https://update.traefik.io")
+
+	updateURL, err := url.Parse("https://update.traefik.io/")
 	if err != nil {
-		log.Warnf("Error checking new version: %s", err)
+		logger.Warnf("Error checking new version: %s", err)
 		return
 	}
 	client.BaseURL = updateURL
+
 	releases, resp, err := client.Repositories.ListReleases(context.Background(), "containous", "traefik", nil)
 	if err != nil {
-		log.Warnf("Error checking new version: %s", err)
+		logger.Warnf("Error checking new version: %s", err)
 		return
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		log.Warnf("Error checking new version: status=%s", resp.Status)
+		logger.Warnf("Error checking new version: status=%s", resp.Status)
 		return
 	}
 
 	currentVersion, err := goversion.NewVersion(Version)
 	if err != nil {
-		log.Warnf("Error checking new version: %s", err)
+		logger.Warnf("Error checking new version: %s", err)
 		return
 	}
 
 	for _, release := range releases {
 		releaseVersion, err := goversion.NewVersion(*release.TagName)
 		if err != nil {
-			log.Warnf("Error checking new version: %s", err)
+			logger.Warnf("Error checking new version: %s", err)
 			return
 		}
 
@@ -89,7 +94,7 @@ func CheckNewVersion() {
 		}
 
 		if releaseVersion.GreaterThan(currentVersion) {
-			log.Warnf("A new release has been found: %s. Please consider updating.", releaseVersion.String())
+			logger.Warnf("A new release has been found: %s. Please consider updating.", releaseVersion.String())
 			return
 		}
 	}

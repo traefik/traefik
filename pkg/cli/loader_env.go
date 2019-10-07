@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config/env"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/config/env"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 // EnvLoader loads a configuration from all the environment variables prefixed with "TRAEFIK_".

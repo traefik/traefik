@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
@@ -23,8 +24,8 @@ type addPrefix struct {
 }
 
 // New creates a new handler.
-func New(ctx context.Context, next http.Handler, config config.AddPrefix, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, typeName).Debug("Creating middleware")
+func New(ctx context.Context, next http.Handler, config dynamic.AddPrefix, name string) (http.Handler, error) {
+	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
 	var result *addPrefix
 
 	if len(config.Prefix) > 0 {
@@ -45,7 +46,7 @@ func (ap *addPrefix) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (ap *addPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), ap.name, typeName)
+	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), ap.name, typeName))
 
 	oldURLPath := req.URL.Path
 	req.URL.Path = ap.prefix + req.URL.Path

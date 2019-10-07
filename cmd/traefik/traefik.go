@@ -11,34 +11,27 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/autogen/genstatic"
-	"github.com/containous/traefik/cmd"
-	"github.com/containous/traefik/cmd/healthcheck"
-	cmdVersion "github.com/containous/traefik/cmd/version"
-	"github.com/containous/traefik/pkg/cli"
-	"github.com/containous/traefik/pkg/collector"
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider/aggregator"
-	"github.com/containous/traefik/pkg/safe"
-	"github.com/containous/traefik/pkg/server"
-	"github.com/containous/traefik/pkg/server/router"
-	traefiktls "github.com/containous/traefik/pkg/tls"
-	"github.com/containous/traefik/pkg/version"
+	"github.com/containous/traefik/v2/autogen/genstatic"
+	"github.com/containous/traefik/v2/cmd"
+	"github.com/containous/traefik/v2/cmd/healthcheck"
+	cmdVersion "github.com/containous/traefik/v2/cmd/version"
+	"github.com/containous/traefik/v2/pkg/cli"
+	"github.com/containous/traefik/v2/pkg/collector"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider/acme"
+	"github.com/containous/traefik/v2/pkg/provider/aggregator"
+	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/server"
+	"github.com/containous/traefik/v2/pkg/server/router"
+	traefiktls "github.com/containous/traefik/v2/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/version"
 	"github.com/coreos/go-systemd/daemon"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/sirupsen/logrus"
 	"github.com/vulcand/oxy/roundrobin"
 )
-
-func init() {
-	goDebug := os.Getenv("GODEBUG")
-	if len(goDebug) > 0 {
-		goDebug += ","
-	}
-	os.Setenv("GODEBUG", goDebug+"tls13=1")
-}
 
 func main() {
 	// traefik config inits
@@ -53,7 +46,7 @@ Complete documentation is available at https://traefik.io`,
 		Configuration: tConfig,
 		Resources:     loaders,
 		Run: func(_ []string) error {
-			return runCmd(&tConfig.Configuration, cli.GetConfigFile(loaders))
+			return runCmd(&tConfig.Configuration)
 		},
 	}
 
@@ -78,7 +71,7 @@ Complete documentation is available at https://traefik.io`,
 	os.Exit(0)
 }
 
-func runCmd(staticConfiguration *static.Configuration, configFile string) error {
+func runCmd(staticConfiguration *static.Configuration) error {
 	configureLogging(staticConfiguration)
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
@@ -87,8 +80,10 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) error 
 		log.WithoutContext().Errorf("Could not set roundrobin default weight: %v", err)
 	}
 
-	staticConfiguration.SetEffectiveConfiguration(configFile)
-	staticConfiguration.ValidateConfiguration()
+	staticConfiguration.SetEffectiveConfiguration()
+	if err := staticConfiguration.ValidateConfiguration(); err != nil {
+		return err
+	}
 
 	log.WithoutContext().Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
 
@@ -112,15 +107,9 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) error 
 
 	providerAggregator := aggregator.NewProviderAggregator(*staticConfiguration.Providers)
 
-	acmeProvider, err := staticConfiguration.InitACMEProvider()
-	if err != nil {
-		log.WithoutContext().Errorf("Unable to initialize ACME provider: %v", err)
-	} else if acmeProvider != nil {
-		if err := providerAggregator.AddProvider(acmeProvider); err != nil {
-			log.WithoutContext().Errorf("Unable to add ACME provider to the providers list: %v", err)
-			acmeProvider = nil
-		}
-	}
+	tlsManager := traefiktls.NewManager()
+
+	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager)
 
 	serverEntryPointsTCP := make(server.TCPEntryPoints)
 	for entryPointName, config := range staticConfiguration.EntryPoints {
@@ -129,27 +118,31 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) error 
 		if err != nil {
 			return fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
 		}
-		serverEntryPointsTCP[entryPointName].RouteAppenderFactory = router.NewRouteAppenderFactory(*staticConfiguration, entryPointName, acmeProvider)
+		serverEntryPointsTCP[entryPointName].RouteAppenderFactory = router.NewRouteAppenderFactory(*staticConfiguration, entryPointName, acmeProviders)
 
-	}
-
-	tlsManager := traefiktls.NewManager()
-
-	if acmeProvider != nil {
-		acmeProvider.SetTLSManager(tlsManager)
-		if acmeProvider.TLSChallenge != nil &&
-			acmeProvider.HTTPChallenge == nil &&
-			acmeProvider.DNSChallenge == nil {
-			tlsManager.TLSAlpnGetter = acmeProvider.GetTLSALPNCertificate
-		}
 	}
 
 	svr := server.NewServer(*staticConfiguration, providerAggregator, serverEntryPointsTCP, tlsManager)
 
-	if acmeProvider != nil && acmeProvider.OnHostRule {
-		acmeProvider.SetConfigListenerChan(make(chan config.Configuration))
-		svr.AddListener(acmeProvider.ListenConfiguration)
+	resolverNames := map[string]struct{}{}
+
+	for _, p := range acmeProviders {
+		resolverNames[p.ResolverName] = struct{}{}
+		svr.AddListener(p.ListenConfiguration)
 	}
+
+	svr.AddListener(func(config dynamic.Configuration) {
+		for rtName, rt := range config.HTTP.Routers {
+			if rt.TLS == nil || rt.TLS.CertResolver == "" {
+				continue
+			}
+
+			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok {
+				log.WithoutContext().Errorf("the router %s uses a non-existent resolver: %s", rtName, rt.TLS.CertResolver)
+			}
+		}
+	})
+
 	ctx := cmd.ContextWithSignal(context.Background())
 
 	if staticConfiguration.Ping != nil {
@@ -194,6 +187,40 @@ func runCmd(staticConfiguration *static.Configuration, configFile string) error 
 	log.WithoutContext().Info("Shutting down")
 	logrus.Exit(0)
 	return nil
+}
+
+// initACMEProvider creates an acme provider from the ACME part of globalConfiguration
+func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager) []*acme.Provider {
+	challengeStore := acme.NewLocalChallengeStore()
+	localStores := map[string]*acme.LocalStore{}
+
+	var resolvers []*acme.Provider
+	for name, resolver := range c.CertificatesResolvers {
+		if resolver.ACME != nil {
+			if localStores[resolver.ACME.Storage] == nil {
+				localStores[resolver.ACME.Storage] = acme.NewLocalStore(resolver.ACME.Storage)
+			}
+
+			p := &acme.Provider{
+				Configuration:  resolver.ACME,
+				Store:          localStores[resolver.ACME.Storage],
+				ChallengeStore: challengeStore,
+				ResolverName:   name,
+			}
+
+			if err := providerAggregator.AddProvider(p); err != nil {
+				log.WithoutContext().Errorf("Unable to add ACME provider to the providers list: %v", err)
+				continue
+			}
+			p.SetTLSManager(tlsManager)
+			if p.TLSChallenge != nil {
+				tlsManager.TLSAlpnGetter = p.GetTLSALPNCertificate
+			}
+			p.SetConfigListenerChan(make(chan dynamic.Configuration))
+			resolvers = append(resolvers, p)
+		}
+	}
+	return resolvers
 }
 
 func configureLogging(staticConfiguration *static.Configuration) {
@@ -259,27 +286,19 @@ func checkNewVersion() {
 }
 
 func stats(staticConfiguration *static.Configuration) {
-	if staticConfiguration.Global.SendAnonymousUsage == nil {
-		log.WithoutContext().Error(`
-You haven't specified the sendAnonymousUsage option, it will be enabled by default.
-`)
-		sendAnonymousUsage := true
-		staticConfiguration.Global.SendAnonymousUsage = &sendAnonymousUsage
-	}
+	logger := log.WithoutContext()
 
-	if *staticConfiguration.Global.SendAnonymousUsage {
-		log.WithoutContext().Info(`
-Stats collection is enabled.
-Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.
-Help us improve Traefik by leaving this feature on :)
-More details on: https://docs.traefik.io/basics/#collected-data
-`)
+	if staticConfiguration.Global.SendAnonymousUsage {
+		logger.Info(`Stats collection is enabled.`)
+		logger.Info(`Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.`)
+		logger.Info(`Help us improve Traefik by leaving this feature on :)`)
+		logger.Info(`More details on: https://docs.traefik.io/v2.0/contributing/data-collection/`)
 		collect(staticConfiguration)
 	} else {
-		log.WithoutContext().Info(`
+		logger.Info(`
 Stats collection is disabled.
 Help us improve Traefik by turning this feature on :)
-More details on: https://docs.traefik.io/basics/#collected-data
+More details on: https://docs.traefik.io/v2.0/contributing/data-collection/
 `)
 	}
 }

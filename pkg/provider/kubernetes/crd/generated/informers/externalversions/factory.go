@@ -31,9 +31,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/clientset/versioned"
-	internalinterfaces "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	traefik "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/informers/externalversions/traefik"
+	versioned "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
+	internalinterfaces "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
+	traefik "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/traefik"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

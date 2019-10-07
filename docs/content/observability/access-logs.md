@@ -9,12 +9,16 @@ By default, logs are written to stdout, in text format.
 
 To enable the access logs:
 
-```toml tab="File"
+```toml tab="File (TOML)"
 [accessLog]
 ```
 
+```yaml tab="File (YAML)"
+accessLog: {}
+```
+
 ```bash tab="CLI"
---accesslog
+--accesslog=true
 ```
 
 ### `filePath`
@@ -22,14 +26,13 @@ To enable the access logs:
 By default access logs are written to the standard output.
 To write the logs into a log file, use the `filePath` option.
 
-in the Common Log Format (CLF), extended with additional fields.
-
 ### `format`
  
 By default, logs are written using the Common Log Format (CLF).
 To write logs in JSON, use `json` in the `format` option.
+If the given format is unsupported, the default (CLF) is used instead.
 
-!!! note "Common Log Format"
+!!! info "Common Log Format"
     
     ```html
     <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms 
@@ -41,16 +44,23 @@ To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.
 This option represents the number of log lines Traefik will keep in memory before writing them to the selected output.
 In some cases, this option can greatly help performances.
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Configuring a buffer of 100 lines
 [accessLog]
   filePath = "/path/to/access.log"
   bufferingSize = 100
 ```
 
+```yaml tab="File (YAML)"
+# Configuring a buffer of 100 lines
+accessLog:
+  filePath: "/path/to/access.log"
+  bufferingSize: 100
+```
+
 ```bash tab="CLI"
 # Configuring a buffer of 100 lines
---accesslog
+--accesslog=true
 --accesslog.filepath="/path/to/access.log"
 --accesslog.bufferingsize=100
 ```
@@ -66,11 +76,11 @@ The available filters are:
 - `retryAttempts`, to keep the access logs when at least one retry has happened
 - `minDuration`, to keep access logs when requests take longer than the specified duration
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Configuring Multiple Filters
 [accessLog]
-filePath = "/path/to/access.log"
-format = "json"
+  filePath = "/path/to/access.log"
+  format = "json"
 
   [accessLog.filters]    
     statusCodes = ["200", "300-302"]
@@ -78,9 +88,22 @@ format = "json"
     minDuration = "10ms"
 ```
 
+```yaml tab="File (YAML)"
+# Configuring Multiple Filters
+accessLog:
+  filePath: "/path/to/access.log"
+  format: json
+  filters:    
+    statusCodes:
+      - "200"
+      - "300-302"
+    retryAttempts: true
+    minDuration: "10ms"
+```
+
 ```bash tab="CLI"
 # Configuring Multiple Filters
---accesslog
+--accesslog=true
 --accesslog.filepath="/path/to/access.log"
 --accesslog.format="json"
 --accesslog.filters.statuscodes="200, 300-302"
@@ -100,7 +123,7 @@ Each field can be set to:
 
 The `defaultMode` for `fields.header` is `drop`.
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Limiting the Logs to Specific Fields
 [accessLog]
   filePath = "/path/to/access.log"
@@ -121,9 +144,26 @@ The `defaultMode` for `fields.header` is `drop`.
         "Content-Type" = "keep"
 ```
 
+```yaml tab="File (YAML)"
+# Limiting the Logs to Specific Fields
+accessLog:
+  filePath: "/path/to/access.log"
+  format: json
+  fields:
+    defaultMode: keep
+    names:
+      ClientUsername: drop
+    headers:
+      defaultMode: keep
+      names:
+          User-Agent: redact
+          Authorization: drop
+          Content-Type: keep
+```
+
 ```bash tab="CLI"
 # Limiting the Logs to Specific Fields
---accesslog
+--accesslog=true
 --accesslog.filepath="/path/to/access.log"
 --accesslog.format="json"
 --accesslog.fields.defaultmode="keep"
@@ -134,7 +174,7 @@ The `defaultMode` for `fields.header` is `drop`.
 --accesslog.fields.headers.names.Content-Type="keep"
 ```
 
-??? list "Available Fields"
+??? info "Available Fields"
 
     | Field                   | Description                                                                                                                                                         |
     |-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -174,5 +214,5 @@ The `defaultMode` for `fields.header` is `drop`.
 Traefik will close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
 This allows the logs to be rotated and processed by an external program, such as `logrotate`.
 
-!!! note
+!!! warning
     This does not work on Windows due to the lack of USR signals.

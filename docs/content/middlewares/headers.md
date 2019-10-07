@@ -15,8 +15,8 @@ Add the `X-Script-Name` header to the proxied request and the `X-Custom-Response
 
 ```yaml tab="Docker"
 labels:
-- "traefik.http.middlewares.testHeader.headers.customrequestheaders.X-Script-Name=test"
-- "traefik.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=True"
+  - "traefik.http.middlewares.testHeader.headers.customrequestheaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=value"
 ```
 
 ```yaml tab="Kubernetes"
@@ -29,29 +29,40 @@ spec:
     customRequestHeaders:
       X-Script-Name: "test"
     customResponseHeaders:
-      X-Custom-Response-Header: "True"
+      X-Custom-Response-Header: "value"
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
-  "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header": "True"
+  "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header": "value"
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
-- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=True"
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     [http.middlewares.testHeader.headers.customRequestHeaders]
         X-Script-Name = "test"
     [http.middlewares.testHeader.headers.customResponseHeaders]
-        X-Custom-Response-Header = "True"
+        X-Custom-Response-Header = "value"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    testHeader:
+      headers:
+        customRequestHeaders:
+          X-Script-Name: "test"
+        customResponseHeaders:
+          X-Custom-Response-Header: "value"
 ```
 
 ### Adding and Removing Headers
@@ -59,7 +70,12 @@ labels:
 `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` header removed from the request,
 and the `X-Custom-Response-Header` header removed from the response.
 
-Please note that is not possible to remove headers through the use of labels (Docker, Rancher, Marathon, ...) for now.
+Please note that it is not possible to remove headers through the use of labels (Docker, Rancher, Marathon, ...) for now.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.containo.us/v1alpha1
@@ -75,18 +91,18 @@ spec:
       X-Custom-Response-Header: "" # Removes
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-```
-
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
 }
 ```
 
-```toml tab="File"    
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+```
+
+```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     [http.middlewares.testHeader.headers.customRequestHeaders]
@@ -96,9 +112,21 @@ labels:
         X-Custom-Response-Header = "" # Removes
 ```
 
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    testHeader:
+      headers:
+        customRequestHeaders:
+          X-Script-Name: "test" # Adds
+          X-Custom-Request-Header: "" # Removes
+        customResponseHeaders:
+          X-Custom-Response-Header: "" # Removes
+```
+
 ### Using Security Headers
 
-Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured per frontend in a similar manner to the custom headers above.
+Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured in a manner similar to the custom headers above.
 This functionality allows for some easy security features to quickly be set.
 
 ```yaml tab="Docker"
@@ -118,12 +146,6 @@ spec:
     sslRedirect: "true"
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.framedeny=true"
-  - "traefik.http.middlewares.testheader.headers.sslredirect=true"
-```
-
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.framedeny": "true",
@@ -131,16 +153,31 @@ labels:
 }
 ```
 
-```toml tab="File"    
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.testheader.headers.framedeny=true"
+  - "traefik.http.middlewares.testheader.headers.sslredirect=true"
+```
+
+```toml tab="File (TOML)"    
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     FrameDeny = true
     SSLRedirect = true
 ```
 
+```yaml tab="File (YAML)"  
+http:
+  middlewares:
+    testHeader:
+      headers:
+        FrameDeny: true
+        SSLRedirect: true
+```
+
 ### CORS Headers
 
-CORS (Cross-Origin Resource Sharing) headers can be added and configured per frontend in a similar manner to the custom headers above.
+CORS (Cross-Origin Resource Sharing) headers can be added and configured in a manner similar to the custom headers above.
 This functionality allows for more advanced security features to quickly be set.
 
 ```yaml tab="Docker"
@@ -167,14 +204,6 @@ spec:
     addVaryHeader: "true"
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin=origin-list-or-null"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
-```
-
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods": "GET,OPTIONS,PUT",
@@ -184,13 +213,35 @@ labels:
 }
 ```
 
-```toml tab="File"    
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin=origin-list-or-null"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
+  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
+```
+
+```toml tab="File (TOML)"    
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
     accessControlAllowOrigin = "origin-list-or-null"
     accessControlMaxAge = 100
     addVaryHeader = true
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    testHeader:
+      headers:
+        accessControlAllowMethod:
+          - GET
+          - OPTIONS
+          - PUT
+        accessControlAllowOrigin: "origin-list-or-null"
+        accessControlMaxAge: 100
+        addVaryHeader: true
 ```
 
 ## Configuration Options
@@ -200,7 +251,7 @@ labels:
 !!! warning
     If the custom header name is the same as one header name of the request or response, it will be replaced.
 
-!!! note
+!!! note ""
     The detailed documentation for the security headers can be found in [unrolled/secure](https://github.com/unrolled/secure#available-options).
 
 ### `customRequestHeaders`
@@ -323,6 +374,10 @@ The `publicKey` implements HPKP to prevent MITM attacks with forged certificates
 ### `referrerPolicy`
 
 The `referrerPolicy` allows sites to control when browsers will pass the Referer header to other sites.
+
+### `featurePolicy`
+
+The `featurePolicy` allows sites to control browser features.
 
 ### `isDevelopment`
 

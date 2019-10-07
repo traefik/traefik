@@ -27,7 +27,7 @@ THE SOFTWARE.
 package fake
 
 import (
-	v1alpha1 "github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -127,7 +127,7 @@ func (c *FakeTLSOptions) DeleteCollection(options *v1.DeleteOptions, listOptions
 // Patch applies the patch and returns the patched tLSOption.
 func (c *FakeTLSOptions) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.TLSOption, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(tlsoptionsResource, c.ns, name, data, subresources...), &v1alpha1.TLSOption{})
+		Invokes(testing.NewPatchSubresourceAction(tlsoptionsResource, c.ns, name, pt, data, subresources...), &v1alpha1.TLSOption{})
 
 	if obj == nil {
 		return nil, err

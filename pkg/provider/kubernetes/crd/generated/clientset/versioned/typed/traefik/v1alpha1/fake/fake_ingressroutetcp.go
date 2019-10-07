@@ -27,7 +27,7 @@ THE SOFTWARE.
 package fake
 
 import (
-	v1alpha1 "github.com/containous/traefik/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -127,7 +127,7 @@ func (c *FakeIngressRouteTCPs) DeleteCollection(options *v1.DeleteOptions, listO
 // Patch applies the patch and returns the patched ingressRouteTCP.
 func (c *FakeIngressRouteTCPs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.IngressRouteTCP, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(ingressroutetcpsResource, c.ns, name, data, subresources...), &v1alpha1.IngressRouteTCP{})
+		Invokes(testing.NewPatchSubresourceAction(ingressroutetcpsResource, c.ns, name, pt, data, subresources...), &v1alpha1.IngressRouteTCP{})
 
 	if obj == nil {
 		return nil, err

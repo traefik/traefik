@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httptrace"
+	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/middlewares/emptybackendhandler"
-	"github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/middlewares/emptybackendhandler"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,44 +23,44 @@ import (
 func TestRetry(t *testing.T) {
 	testCases := []struct {
 		desc                  string
-		config                config.Retry
+		config                dynamic.Retry
 		wantRetryAttempts     int
 		wantResponseStatus    int
 		amountFaultyEndpoints int
 	}{
 		{
 			desc:                  "no retry on success",
-			config:                config.Retry{Attempts: 1},
+			config:                dynamic.Retry{Attempts: 1},
 			wantRetryAttempts:     0,
 			wantResponseStatus:    http.StatusOK,
 			amountFaultyEndpoints: 0,
 		},
 		{
 			desc:                  "no retry when max request attempts is one",
-			config:                config.Retry{Attempts: 1},
+			config:                dynamic.Retry{Attempts: 1},
 			wantRetryAttempts:     0,
-			wantResponseStatus:    http.StatusInternalServerError,
+			wantResponseStatus:    http.StatusBadGateway,
 			amountFaultyEndpoints: 1,
 		},
 		{
 			desc:                  "one retry when one server is faulty",
-			config:                config.Retry{Attempts: 2},
+			config:                dynamic.Retry{Attempts: 2},
 			wantRetryAttempts:     1,
 			wantResponseStatus:    http.StatusOK,
 			amountFaultyEndpoints: 1,
 		},
 		{
 			desc:                  "two retries when two servers are faulty",
-			config:                config.Retry{Attempts: 3},
+			config:                dynamic.Retry{Attempts: 3},
 			wantRetryAttempts:     2,
 			wantResponseStatus:    http.StatusOK,
 			amountFaultyEndpoints: 2,
 		},
 		{
 			desc:                  "max attempts exhausted delivers the 5xx response",
-			config:                config.Retry{Attempts: 3},
+			config:                dynamic.Retry{Attempts: 3},
 			wantRetryAttempts:     2,
-			wantResponseStatus:    http.StatusInternalServerError,
+			wantResponseStatus:    http.StatusBadGateway,
 			amountFaultyEndpoints: 3,
 		},
 	}
@@ -83,13 +84,14 @@ func TestRetry(t *testing.T) {
 			loadBalancer, err := roundrobin.New(forwarder)
 			require.NoError(t, err)
 
-			basePort := 33444
+			// out of range port
+			basePort := 1133444
 			for i := 0; i < test.amountFaultyEndpoints; i++ {
 				// 192.0.2.0 is a non-routable IP for testing purposes.
 				// See: https://stackoverflow.com/questions/528538/non-routable-ip-address/18436928#18436928
 				// We only use the port specification here because the URL is used as identifier
 				// in the load balancer and using the exact same URL would not add a new server.
-				err = loadBalancer.UpsertServer(testhelpers.MustParseURL("http://192.0.2.0:" + string(basePort+i)))
+				err = loadBalancer.UpsertServer(testhelpers.MustParseURL("http://192.0.2.0:" + strconv.Itoa(basePort+i)))
 				require.NoError(t, err)
 			}
 
@@ -124,7 +126,7 @@ func TestRetryEmptyServerList(t *testing.T) {
 	next := emptybackendhandler.New(loadBalancer)
 
 	retryListener := &countingRetryListener{}
-	retry, err := New(context.Background(), next, config.Retry{Attempts: 3}, retryListener, "traefikTest")
+	retry, err := New(context.Background(), next, dynamic.Retry{Attempts: 3}, retryListener, "traefikTest")
 	require.NoError(t, err)
 
 	recorder := httptest.NewRecorder()
@@ -172,7 +174,7 @@ func TestMultipleRetriesShouldNotLooseHeaders(t *testing.T) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
-	retry, err := New(context.Background(), next, config.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
+	retry, err := New(context.Background(), next, dynamic.Retry{Attempts: 3}, &countingRetryListener{}, "traefikTest")
 	require.NoError(t, err)
 
 	responseRecorder := httptest.NewRecorder()
@@ -218,7 +220,7 @@ func TestRetryWithFlush(t *testing.T) {
 		}
 	})
 
-	retry, err := New(context.Background(), next, config.Retry{Attempts: 1}, &countingRetryListener{}, "traefikTest")
+	retry, err := New(context.Background(), next, dynamic.Retry{Attempts: 1}, &countingRetryListener{}, "traefikTest")
 	require.NoError(t, err)
 
 	responseRecorder := httptest.NewRecorder()
@@ -277,13 +279,14 @@ func TestRetryWebsocket(t *testing.T) {
 				t.Fatalf("Error creating load balancer: %v", err)
 			}
 
-			basePort := 33444
+			// out of range port
+			basePort := 1133444
 			for i := 0; i < test.amountFaultyEndpoints; i++ {
 				// 192.0.2.0 is a non-routable IP for testing purposes.
 				// See: https://stackoverflow.com/questions/528538/non-routable-ip-address/18436928#18436928
 				// We only use the port specification here because the URL is used as identifier
 				// in the load balancer and using the exact same URL would not add a new server.
-				_ = loadBalancer.UpsertServer(testhelpers.MustParseURL("http://192.0.2.0:" + string(basePort+i)))
+				_ = loadBalancer.UpsertServer(testhelpers.MustParseURL("http://192.0.2.0:" + strconv.Itoa(basePort+i)))
 			}
 
 			// add the functioning server to the end of the load balancer list
@@ -293,7 +296,7 @@ func TestRetryWebsocket(t *testing.T) {
 			}
 
 			retryListener := &countingRetryListener{}
-			retryH, err := New(context.Background(), loadBalancer, config.Retry{Attempts: test.maxRequestAttempts}, retryListener, "traefikTest")
+			retryH, err := New(context.Background(), loadBalancer, dynamic.Retry{Attempts: test.maxRequestAttempts}, retryListener, "traefikTest")
 			require.NoError(t, err)
 
 			retryServer := httptest.NewServer(retryH)

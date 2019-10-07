@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/pkg/cli"
-	"github.com/containous/traefik/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/cli"
+	"github.com/containous/traefik/v2/pkg/config/static"
 )
 
 // NewCmd builds a new HealthCheck command.
@@ -24,7 +24,7 @@ func NewCmd(traefikConfiguration *static.Configuration, loaders []cli.ResourceLo
 
 func runCmd(traefikConfiguration *static.Configuration) func(_ []string) error {
 	return func(_ []string) error {
-		traefikConfiguration.SetEffectiveConfiguration("")
+		traefikConfiguration.SetEffectiveConfiguration()
 
 		resp, errPing := Do(*traefikConfiguration)
 		if resp != nil {
@@ -51,7 +51,7 @@ func Do(staticConfiguration static.Configuration) (*http.Response, error) {
 		return nil, errors.New("please enable `ping` to use health check")
 	}
 
-	pingEntryPoint, ok := staticConfiguration.EntryPoints[staticConfiguration.Ping.EntryPoint]
+	pingEntryPoint, ok := staticConfiguration.EntryPoints["traefik"]
 	if !ok {
 		return nil, errors.New("missing `ping` entrypoint")
 	}

@@ -1,29 +1,31 @@
 package static
 
 import (
-	"errors"
+	"fmt"
+	stdlog "log"
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/ping"
-	acmeprovider "github.com/containous/traefik/pkg/provider/acme"
-	"github.com/containous/traefik/pkg/provider/docker"
-	"github.com/containous/traefik/pkg/provider/file"
-	"github.com/containous/traefik/pkg/provider/kubernetes/crd"
-	"github.com/containous/traefik/pkg/provider/kubernetes/ingress"
-	"github.com/containous/traefik/pkg/provider/marathon"
-	"github.com/containous/traefik/pkg/provider/rancher"
-	"github.com/containous/traefik/pkg/provider/rest"
-	"github.com/containous/traefik/pkg/tls"
-	"github.com/containous/traefik/pkg/tracing/datadog"
-	"github.com/containous/traefik/pkg/tracing/haystack"
-	"github.com/containous/traefik/pkg/tracing/instana"
-	"github.com/containous/traefik/pkg/tracing/jaeger"
-	"github.com/containous/traefik/pkg/tracing/zipkin"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/ping"
+	acmeprovider "github.com/containous/traefik/v2/pkg/provider/acme"
+	"github.com/containous/traefik/v2/pkg/provider/docker"
+	"github.com/containous/traefik/v2/pkg/provider/file"
+	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd"
+	"github.com/containous/traefik/v2/pkg/provider/kubernetes/ingress"
+	"github.com/containous/traefik/v2/pkg/provider/marathon"
+	"github.com/containous/traefik/v2/pkg/provider/rancher"
+	"github.com/containous/traefik/v2/pkg/provider/rest"
+	"github.com/containous/traefik/v2/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/tracing/datadog"
+	"github.com/containous/traefik/v2/pkg/tracing/haystack"
+	"github.com/containous/traefik/v2/pkg/tracing/instana"
+	"github.com/containous/traefik/v2/pkg/tracing/jaeger"
+	"github.com/containous/traefik/v2/pkg/tracing/zipkin"
+	"github.com/containous/traefik/v2/pkg/types"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
-	"github.com/go-acme/lego/challenge/dns01"
+	legolog "github.com/go-acme/lego/v3/log"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -59,13 +61,18 @@ type Configuration struct {
 
 	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening." json:"hostResolver,omitempty" toml:"hostResolver,omitempty" yaml:"hostResolver,omitempty" label:"allowEmpty" export:"true"`
 
+	CertificatesResolvers map[string]CertificateResolver `description:"Certificates resolvers configuration." json:"certificatesResolvers,omitempty" toml:"certificatesResolvers,omitempty" yaml:"certificatesResolvers,omitempty" export:"true"`
+}
+
+// CertificateResolver contains the configuration for the different types of certificates resolver.
+type CertificateResolver struct {
 	ACME *acmeprovider.Configuration `description:"Enable ACME (Let's Encrypt): automatic SSL." json:"acme,omitempty" toml:"acme,omitempty" yaml:"acme,omitempty" export:"true"`
 }
 
 // Global holds the global configuration.
 type Global struct {
-	CheckNewVersion    bool  `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" export:"true"`
-	SendAnonymousUsage *bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" export:"true"`
+	CheckNewVersion    bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" export:"true"`
+	SendAnonymousUsage bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers
@@ -78,17 +85,16 @@ type ServersTransport struct {
 
 // API holds the API configuration
 type API struct {
-	EntryPoint      string            `description:"The entry point that the API handler will be bound to." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
-	Dashboard       bool              `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
-	Debug           bool              `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
-	Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" export:"true" label:"allowEmpty"`
-	Middlewares     []string          `description:"Middleware list." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	DashboardAssets *assetfs.AssetFS  `json:"-" toml:"-" yaml:"-" label:"-"`
+	Insecure  bool `description:"Activate API directly on the entryPoint named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	Dashboard bool `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
+	Debug     bool `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
+	// TODO: Re-enable statistics
+	// Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" export:"true" label:"allowEmpty"`
+	DashboardAssets *assetfs.AssetFS `json:"-" toml:"-" yaml:"-" label:"-"`
 }
 
 // SetDefaults sets the default values.
 func (a *API) SetDefaults() {
-	a.EntryPoint = "traefik"
 	a.Dashboard = true
 }
 
@@ -134,7 +140,7 @@ type Tracing struct {
 	SpanNameLimit int              `description:"Set the maximum character limit for Span names (default 0 = no limit)." json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty" export:"true"`
 	Jaeger        *jaeger.Config   `description:"Settings for Jaeger." json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty" export:"true" label:"allowEmpty"`
 	Zipkin        *zipkin.Config   `description:"Settings for Zipkin." json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty" export:"true" label:"allowEmpty"`
-	DataDog       *datadog.Config  `description:"Settings for DataDog." json:"dataDog,omitempty" toml:"dataDog,omitempty" yaml:"dataDog,omitempty" export:"true" label:"allowEmpty"`
+	Datadog       *datadog.Config  `description:"Settings for Datadog." json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" export:"true" label:"allowEmpty"`
 	Instana       *instana.Config  `description:"Settings for Instana." json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" export:"true" label:"allowEmpty"`
 	Haystack      *haystack.Config `description:"Settings for Haystack." json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty" export:"true" label:"allowEmpty"`
 }
@@ -149,9 +155,9 @@ func (t *Tracing) SetDefaults() {
 type Providers struct {
 	ProvidersThrottleDuration types.Duration     `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." json:"providersThrottleDuration,omitempty" toml:"providersThrottleDuration,omitempty" yaml:"providersThrottleDuration,omitempty" export:"true"`
 	Docker                    *docker.Provider   `description:"Enable Docker backend with default settings." json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" export:"true" label:"allowEmpty"`
-	File                      *file.Provider     `description:"Enable File backend with default settings." json:"file,omitempty" toml:"file,omitempty" yaml:"file,omitempty" export:"true" label:"allowEmpty"`
+	File                      *file.Provider     `description:"Enable File backend with default settings." json:"file,omitempty" toml:"file,omitempty" yaml:"file,omitempty" export:"true"`
 	Marathon                  *marathon.Provider `description:"Enable Marathon backend with default settings." json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty" export:"true" label:"allowEmpty"`
-	Kubernetes                *ingress.Provider  `description:"Enable Kubernetes backend with default settings." json:"kubernetes,omitempty" toml:"kubernetes,omitempty" yaml:"kubernetes,omitempty" export:"true" label:"allowEmpty"`
+	KubernetesIngress         *ingress.Provider  `description:"Enable Kubernetes backend with default settings." json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" export:"true" label:"allowEmpty"`
 	KubernetesCRD             *crd.Provider      `description:"Enable Kubernetes backend with default settings." json:"kubernetesCRD,omitempty" toml:"kubernetesCRD,omitempty" yaml:"kubernetesCRD,omitempty" export:"true" label:"allowEmpty"`
 	Rest                      *rest.Provider     `description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" export:"true" label:"allowEmpty"`
 	Rancher                   *rancher.Provider  `description:"Enable Rancher backend with default settings." json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" export:"true" label:"allowEmpty"`
@@ -159,7 +165,7 @@ type Providers struct {
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
 // It also takes care of maintaining backwards compatibility.
-func (c *Configuration) SetEffectiveConfiguration(configFile string) {
+func (c *Configuration) SetEffectiveConfiguration() {
 	if len(c.EntryPoints) == 0 {
 		ep := &EntryPoint{Address: ":80"}
 		ep.SetDefaults()
@@ -168,10 +174,10 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
-	if (c.API != nil && c.API.EntryPoint == DefaultInternalEntryPointName) ||
+	if (c.API != nil && c.API.Insecure) ||
 		(c.Ping != nil && c.Ping.EntryPoint == DefaultInternalEntryPointName) ||
 		(c.Metrics != nil && c.Metrics.Prometheus != nil && c.Metrics.Prometheus.EntryPoint == DefaultInternalEntryPointName) ||
-		(c.Providers.Rest != nil && c.Providers.Rest.EntryPoint == DefaultInternalEntryPointName) {
+		(c.Providers.Rest != nil) {
 		if _, ok := c.EntryPoints[DefaultInternalEntryPointName]; !ok {
 			ep := &EntryPoint{Address: ":8080"}
 			ep.SetDefaults()
@@ -185,10 +191,6 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
-	if c.Providers.File != nil {
-		c.Providers.File.TraefikFile = configFile
-	}
-
 	if c.Providers.Rancher != nil {
 		if c.Providers.Rancher.RefreshSeconds <= 0 {
 			c.Providers.Rancher.RefreshSeconds = 15
@@ -198,64 +200,35 @@ func (c *Configuration) SetEffectiveConfiguration(configFile string) {
 	c.initACMEProvider()
 }
 
-// FIXME handle on new configuration ACME struct
 func (c *Configuration) initACMEProvider() {
-	if c.ACME != nil {
-		c.ACME.CAServer = getSafeACMECAServer(c.ACME.CAServer)
-
-		if c.ACME.DNSChallenge != nil && c.ACME.HTTPChallenge != nil {
-			log.Warn("Unable to use DNS challenge and HTTP challenge at the same time. Fallback to DNS challenge.")
-			c.ACME.HTTPChallenge = nil
-		}
-
-		if c.ACME.DNSChallenge != nil && c.ACME.TLSChallenge != nil {
-			log.Warn("Unable to use DNS challenge and TLS challenge at the same time. Fallback to DNS challenge.")
-			c.ACME.TLSChallenge = nil
-		}
-
-		if c.ACME.HTTPChallenge != nil && c.ACME.TLSChallenge != nil {
-			log.Warn("Unable to use HTTP challenge and TLS challenge at the same time. Fallback to TLS challenge.")
-			c.ACME.HTTPChallenge = nil
+	for _, resolver := range c.CertificatesResolvers {
+		if resolver.ACME != nil {
+			resolver.ACME.CAServer = getSafeACMECAServer(resolver.ACME.CAServer)
 		}
 	}
-}
 
-// InitACMEProvider create an acme provider from the ACME part of globalConfiguration
-func (c *Configuration) InitACMEProvider() (*acmeprovider.Provider, error) {
-	if c.ACME != nil {
-		if len(c.ACME.Storage) == 0 {
-			return nil, errors.New("unable to initialize ACME provider with no storage location for the certificates")
-		}
-		return &acmeprovider.Provider{
-			Configuration: c.ACME,
-		}, nil
-	}
-	return nil, nil
+	legolog.Logger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "legolog: ", 0)
 }
 
 // ValidateConfiguration validate that configuration is coherent
-func (c *Configuration) ValidateConfiguration() {
-	if c.ACME != nil {
-		for _, domain := range c.ACME.Domains {
-			if domain.Main != dns01.UnFqdn(domain.Main) {
-				log.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
-			}
-			for _, san := range domain.SANs {
-				if san != dns01.UnFqdn(san) {
-					log.Warnf("FQDN detected, please remove the trailing dot: %s", san)
-				}
-			}
+func (c *Configuration) ValidateConfiguration() error {
+	var acmeEmail string
+	for name, resolver := range c.CertificatesResolvers {
+		if resolver.ACME == nil {
+			continue
 		}
+
+		if len(resolver.ACME.Storage) == 0 {
+			return fmt.Errorf("unable to initialize certificates resolver %q with no storage location for the certificates", name)
+		}
+
+		if acmeEmail != "" && resolver.ACME.Email != acmeEmail {
+			return fmt.Errorf("unable to initialize certificates resolver %q, all the acme resolvers must use the same email", name)
+		}
+		acmeEmail = resolver.ACME.Email
 	}
-	// FIXME Validate store config?
-	// if c.ACME != nil {
-	// if _, ok := c.EntryPoints[c.ACME.EntryPoint]; !ok {
-	// 	log.Fatalf("Unknown entrypoint %q for ACME configuration", c.ACME.EntryPoint)
-	// }
-	// else if c.EntryPoints[c.ACME.EntryPoint].TLS == nil {
-	// 	log.Fatalf("Entrypoint %q has no TLS configuration for ACME configuration", c.ACME.EntryPoint)
-	// }
-	// }
+
+	return nil
 }
 
 func getSafeACMECAServer(caServerSrc string) string {
@@ -265,13 +238,15 @@ func getSafeACMECAServer(caServerSrc string) string {
 
 	if strings.HasPrefix(caServerSrc, "https://acme-v01.api.letsencrypt.org") {
 		caServer := strings.Replace(caServerSrc, "v01", "v02", 1)
-		log.Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
+		log.WithoutContext().
+			Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
 		return caServer
 	}
 
 	if strings.HasPrefix(caServerSrc, "https://acme-staging.api.letsencrypt.org") {
 		caServer := strings.Replace(caServerSrc, "https://acme-staging.api.letsencrypt.org", "https://acme-staging-v02.api.letsencrypt.org", 1)
-		log.Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
+		log.WithoutContext().
+			Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
 		return caServer
 	}
 

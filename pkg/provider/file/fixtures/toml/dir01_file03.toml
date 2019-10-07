@@ -15,3 +15,7 @@
 [[tls.certificates]]
   certFile = "integration/fixtures/https/snitest4.com.cert"
   keyFile = "integration/fixtures/https/snitest4.com.key"
+
+[tls.options]
+  [tls.options.mintls13]
+    minVersion = "VersionTLS13"

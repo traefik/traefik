@@ -4,17 +4,17 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
 )
 
 // NewBuilder creates a builder.
-func NewBuilder(configs map[string]*config.MiddlewareInfo) *Builder {
+func NewBuilder(configs map[string]*runtime.MiddlewareInfo) *Builder {
 	return &Builder{configs: configs}
 }
 
 // Builder holds builder configuration.
 type Builder struct {
-	configs map[string]*config.MiddlewareInfo
+	configs map[string]*runtime.MiddlewareInfo
 }
 
 // Build Builds the response modifier.
@@ -23,6 +23,11 @@ func (f *Builder) Build(ctx context.Context, names []string) func(*http.Response
 
 	for _, middleName := range names {
 		if conf, ok := f.configs[middleName]; ok {
+			if conf == nil || conf.Middleware == nil {
+				getLogger(ctx, middleName, "undefined").Error("Invalid Middleware configuration (ResponseModifier)")
+				continue
+			}
+
 			if conf.Headers != nil {
 				getLogger(ctx, middleName, "Headers").Debug("Creating Middleware (ResponseModifier)")
 

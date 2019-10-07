@@ -1,12 +1,12 @@
 package testhelpers
 
 import (
-	"github.com/containous/traefik/pkg/config"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 )
 
 // BuildConfiguration is a helper to create a configuration.
-func BuildConfiguration(dynamicConfigBuilders ...func(*config.HTTPConfiguration)) *config.HTTPConfiguration {
-	conf := &config.HTTPConfiguration{}
+func BuildConfiguration(dynamicConfigBuilders ...func(*dynamic.HTTPConfiguration)) *dynamic.HTTPConfiguration {
+	conf := &dynamic.HTTPConfiguration{}
 	for _, build := range dynamicConfigBuilders {
 		build(conf)
 	}
@@ -14,11 +14,11 @@ func BuildConfiguration(dynamicConfigBuilders ...func(*config.HTTPConfiguration)
 }
 
 // WithRouters is a helper to create a configuration.
-func WithRouters(opts ...func(*config.Router) string) func(*config.HTTPConfiguration) {
-	return func(c *config.HTTPConfiguration) {
-		c.Routers = make(map[string]*config.Router)
+func WithRouters(opts ...func(*dynamic.Router) string) func(*dynamic.HTTPConfiguration) {
+	return func(c *dynamic.HTTPConfiguration) {
+		c.Routers = make(map[string]*dynamic.Router)
 		for _, opt := range opts {
-			b := &config.Router{}
+			b := &dynamic.Router{}
 			name := opt(b)
 			c.Routers[name] = b
 		}
@@ -26,8 +26,8 @@ func WithRouters(opts ...func(*config.Router) string) func(*config.HTTPConfigura
 }
 
 // WithRouter is a helper to create a configuration.
-func WithRouter(routerName string, opts ...func(*config.Router)) func(*config.Router) string {
-	return func(r *config.Router) string {
+func WithRouter(routerName string, opts ...func(*dynamic.Router)) func(*dynamic.Router) string {
+	return func(r *dynamic.Router) string {
 		for _, opt := range opts {
 			opt(r)
 		}
@@ -36,27 +36,27 @@ func WithRouter(routerName string, opts ...func(*config.Router)) func(*config.Ro
 }
 
 // WithRouterMiddlewares is a helper to create a configuration.
-func WithRouterMiddlewares(middlewaresName ...string) func(*config.Router) {
-	return func(r *config.Router) {
+func WithRouterMiddlewares(middlewaresName ...string) func(*dynamic.Router) {
+	return func(r *dynamic.Router) {
 		r.Middlewares = middlewaresName
 	}
 }
 
 // WithServiceName is a helper to create a configuration.
-func WithServiceName(serviceName string) func(*config.Router) {
-	return func(r *config.Router) {
+func WithServiceName(serviceName string) func(*dynamic.Router) {
+	return func(r *dynamic.Router) {
 		r.Service = serviceName
 	}
 }
 
 // WithLoadBalancerServices is a helper to create a configuration.
-func WithLoadBalancerServices(opts ...func(service *config.LoadBalancerService) string) func(*config.HTTPConfiguration) {
-	return func(c *config.HTTPConfiguration) {
-		c.Services = make(map[string]*config.Service)
+func WithLoadBalancerServices(opts ...func(service *dynamic.ServersLoadBalancer) string) func(*dynamic.HTTPConfiguration) {
+	return func(c *dynamic.HTTPConfiguration) {
+		c.Services = make(map[string]*dynamic.Service)
 		for _, opt := range opts {
-			b := &config.LoadBalancerService{}
+			b := &dynamic.ServersLoadBalancer{}
 			name := opt(b)
-			c.Services[name] = &config.Service{
+			c.Services[name] = &dynamic.Service{
 				LoadBalancer: b,
 			}
 		}
@@ -64,8 +64,8 @@ func WithLoadBalancerServices(opts ...func(service *config.LoadBalancerService) 
 }
 
 // WithService is a helper to create a configuration.
-func WithService(name string, opts ...func(*config.LoadBalancerService)) func(*config.LoadBalancerService) string {
-	return func(r *config.LoadBalancerService) string {
+func WithService(name string, opts ...func(*dynamic.ServersLoadBalancer)) func(*dynamic.ServersLoadBalancer) string {
+	return func(r *dynamic.ServersLoadBalancer) string {
 		for _, opt := range opts {
 			opt(r)
 		}
@@ -74,11 +74,11 @@ func WithService(name string, opts ...func(*config.LoadBalancerService)) func(*c
 }
 
 // WithMiddlewares is a helper to create a configuration.
-func WithMiddlewares(opts ...func(*config.Middleware) string) func(*config.HTTPConfiguration) {
-	return func(c *config.HTTPConfiguration) {
-		c.Middlewares = make(map[string]*config.Middleware)
+func WithMiddlewares(opts ...func(*dynamic.Middleware) string) func(*dynamic.HTTPConfiguration) {
+	return func(c *dynamic.HTTPConfiguration) {
+		c.Middlewares = make(map[string]*dynamic.Middleware)
 		for _, opt := range opts {
-			b := &config.Middleware{}
+			b := &dynamic.Middleware{}
 			name := opt(b)
 			c.Middlewares[name] = b
 		}
@@ -86,8 +86,8 @@ func WithMiddlewares(opts ...func(*config.Middleware) string) func(*config.HTTPC
 }
 
 // WithMiddleware is a helper to create a configuration.
-func WithMiddleware(name string, opts ...func(*config.Middleware)) func(*config.Middleware) string {
-	return func(r *config.Middleware) string {
+func WithMiddleware(name string, opts ...func(*dynamic.Middleware)) func(*dynamic.Middleware) string {
+	return func(r *dynamic.Middleware) string {
 		for _, opt := range opts {
 			opt(r)
 		}
@@ -96,31 +96,31 @@ func WithMiddleware(name string, opts ...func(*config.Middleware)) func(*config.
 }
 
 // WithBasicAuth is a helper to create a configuration.
-func WithBasicAuth(auth *config.BasicAuth) func(*config.Middleware) {
-	return func(r *config.Middleware) {
+func WithBasicAuth(auth *dynamic.BasicAuth) func(*dynamic.Middleware) {
+	return func(r *dynamic.Middleware) {
 		r.BasicAuth = auth
 	}
 }
 
 // WithEntryPoints is a helper to create a configuration.
-func WithEntryPoints(eps ...string) func(*config.Router) {
-	return func(f *config.Router) {
+func WithEntryPoints(eps ...string) func(*dynamic.Router) {
+	return func(f *dynamic.Router) {
 		f.EntryPoints = eps
 	}
 }
 
 // WithRule is a helper to create a configuration.
-func WithRule(rule string) func(*config.Router) {
-	return func(f *config.Router) {
+func WithRule(rule string) func(*dynamic.Router) {
+	return func(f *dynamic.Router) {
 		f.Rule = rule
 	}
 }
 
 // WithServers is a helper to create a configuration.
-func WithServers(opts ...func(*config.Server)) func(*config.LoadBalancerService) {
-	return func(b *config.LoadBalancerService) {
+func WithServers(opts ...func(*dynamic.Server)) func(*dynamic.ServersLoadBalancer) {
+	return func(b *dynamic.ServersLoadBalancer) {
 		for _, opt := range opts {
-			server := config.Server{}
+			server := dynamic.Server{}
 			opt(&server)
 			b.Servers = append(b.Servers, server)
 		}
@@ -128,8 +128,8 @@ func WithServers(opts ...func(*config.Server)) func(*config.LoadBalancerService)
 }
 
 // WithServer is a helper to create a configuration.
-func WithServer(url string, opts ...func(*config.Server)) func(*config.Server) {
-	return func(s *config.Server) {
+func WithServer(url string, opts ...func(*dynamic.Server)) func(*dynamic.Server) {
+	return func(s *dynamic.Server) {
 		for _, opt := range opts {
 			opt(s)
 		}
@@ -137,11 +137,11 @@ func WithServer(url string, opts ...func(*config.Server)) func(*config.Server) {
 	}
 }
 
-// WithStickiness is a helper to create a configuration.
-func WithStickiness(cookieName string) func(*config.LoadBalancerService) {
-	return func(b *config.LoadBalancerService) {
-		b.Stickiness = &config.Stickiness{
-			CookieName: cookieName,
+// WithSticky is a helper to create a configuration.
+func WithSticky(cookieName string) func(*dynamic.ServersLoadBalancer) {
+	return func(b *dynamic.ServersLoadBalancer) {
+		b.Sticky = &dynamic.Sticky{
+			Cookie: &dynamic.Cookie{Name: cookieName},
 		}
 	}
 }

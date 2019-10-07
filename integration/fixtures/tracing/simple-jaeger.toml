@@ -6,6 +6,7 @@
   level = "DEBUG"
 
 [api]
+  insecure = true
 
 [entryPoints]
   [entryPoints.web]
@@ -19,15 +20,15 @@
     samplingServerURL = "http://{{.IP}}:5778/sampling"
     localAgentHostPort = "{{.IP}}:6831"
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 
 [http.routers]
   [http.routers.router1]
     Service = "service1"
-    Middlewares = ["retry", "ratelimit"]
+    Middlewares = ["retry", "ratelimit-1"]
     Rule = "Path(`/ratelimit`)"
   [http.routers.router2]
     Service = "service2"
@@ -43,17 +44,9 @@
     attempts = 3
   [http.middlewares.basic-auth.basicAuth]
     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-  [http.middlewares.ratelimit.rateLimit]
-    extractorfunc = "client.ip"
-      [http.middlewares.ratelimit.rateLimit.rateSet.rateset1]
-        period = "60s"
-        average = 4
-        burst = 5
-      [http.middlewares.ratelimit.rateLimit.rateSet.rateset2]
-        period = "3s"
-        average = 1
-        burst = 2
-
+  [http.middlewares.ratelimit-1.rateLimit]
+    average = 1
+    burst = 2
 
 [http.services]
   [http.services.service1]

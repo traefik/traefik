@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/go-kit/kit/metrics"
 	"github.com/vulcand/oxy/roundrobin"
 )
@@ -56,11 +56,16 @@ func (opt Options) String() string {
 	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Port: %d Interval: %s Timeout: %s]", opt.Hostname, opt.Headers, opt.Path, opt.Port, opt.Interval, opt.Timeout)
 }
 
+type backendURL struct {
+	url    *url.URL
+	weight int
+}
+
 // BackendConfig HealthCheck configuration for a backend
 type BackendConfig struct {
 	Options
 	name         string
-	disabledURLs []*url.URL
+	disabledURLs []backendURL
 }
 
 func (b *BackendConfig) newRequest(serverURL *url.URL) (*http.Request, error) {
@@ -117,39 +122,44 @@ func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backe
 }
 
 func (hc *HealthCheck) execute(ctx context.Context, backend *BackendConfig) {
-	log.Debugf("Initial health check for backend: %q", backend.name)
-	hc.checkBackend(backend)
+	logger := log.FromContext(ctx)
+	logger.Debugf("Initial health check for backend: %q", backend.name)
+
+	hc.checkBackend(ctx, backend)
 	ticker := time.NewTicker(backend.Interval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			log.Debugf("Stopping current health check goroutines of backend: %s", backend.name)
+			logger.Debugf("Stopping current health check goroutines of backend: %s", backend.name)
 			return
 		case <-ticker.C:
-			log.Debugf("Refreshing health check for backend: %s", backend.name)
-			hc.checkBackend(backend)
+			logger.Debugf("Refreshing health check for backend: %s", backend.name)
+			hc.checkBackend(ctx, backend)
 		}
 	}
 }
 
-func (hc *HealthCheck) checkBackend(backend *BackendConfig) {
+func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig) {
+	logger := log.FromContext(ctx)
+
 	enabledURLs := backend.LB.Servers()
-	var newDisabledURLs []*url.URL
+	var newDisabledURLs []backendURL
 	// FIXME re enable metrics
 	for _, disableURL := range backend.disabledURLs {
 		// FIXME serverUpMetricValue := float64(0)
-		if err := checkHealth(disableURL, backend); err == nil {
-			log.Warnf("Health check up: Returning to server list. Backend: %q URL: %q", backend.name, disableURL.String())
-			if err = backend.LB.UpsertServer(disableURL, roundrobin.Weight(1)); err != nil {
-				log.Error(err)
+		if err := checkHealth(disableURL.url, backend); err == nil {
+			logger.Warnf("Health check up: Returning to server list. Backend: %q URL: %q Weight: %d",
+				backend.name, disableURL.url.String(), disableURL.weight)
+			if err = backend.LB.UpsertServer(disableURL.url, roundrobin.Weight(disableURL.weight)); err != nil {
+				logger.Error(err)
 			}
 			// FIXME serverUpMetricValue = 1
 		} else {
-			log.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disableURL.String(), err)
+			logger.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disableURL.url.String(), err)
 			newDisabledURLs = append(newDisabledURLs, disableURL)
 		}
-		// FIXME labelValues := []string{"backend", backend.name, "url", disableURL.String()}
+		// FIXME labelValues := []string{"backend", backend.name, "url", backendurl.url.String()}
 		// FIXME hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 	backend.disabledURLs = newDisabledURLs
@@ -158,11 +168,20 @@ func (hc *HealthCheck) checkBackend(backend *BackendConfig) {
 	for _, enableURL := range enabledURLs {
 		// FIXME serverUpMetricValue := float64(1)
 		if err := checkHealth(enableURL, backend); err != nil {
-			log.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Reason: %s", backend.name, enableURL.String(), err)
-			if err := backend.LB.RemoveServer(enableURL); err != nil {
-				log.Error(err)
+			weight := 1
+			rr, ok := backend.LB.(*roundrobin.RoundRobin)
+			if ok {
+				var gotWeight bool
+				weight, gotWeight = rr.ServerWeight(enableURL)
+				if !gotWeight {
+					weight = 1
+				}
 			}
-			backend.disabledURLs = append(backend.disabledURLs, enableURL)
+			logger.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Weight: %d Reason: %s", backend.name, enableURL.String(), weight, err)
+			if err := backend.LB.RemoveServer(enableURL); err != nil {
+				logger.Error(err)
+			}
+			backend.disabledURLs = append(backend.disabledURLs, backendURL{enableURL, weight})
 			// FIXME serverUpMetricValue = 0
 		}
 		// FIXME labelValues := []string{"backend", backend.name, "url", enableURL.String()}
@@ -229,10 +248,10 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 }
 
 // NewLBStatusUpdater returns a new LbStatusUpdater
-func NewLBStatusUpdater(bh BalancerHandler, svinfo *config.ServiceInfo) *LbStatusUpdater {
+func NewLBStatusUpdater(bh BalancerHandler, info *runtime.ServiceInfo) *LbStatusUpdater {
 	return &LbStatusUpdater{
 		BalancerHandler: bh,
-		serviceInfo:     svinfo,
+		serviceInfo:     info,
 	}
 }
 
@@ -240,7 +259,7 @@ func NewLBStatusUpdater(bh BalancerHandler, svinfo *config.ServiceInfo) *LbStatu
 // so it can keep track of the status of a server in the ServiceInfo.
 type LbStatusUpdater struct {
 	BalancerHandler
-	serviceInfo *config.ServiceInfo // can be nil
+	serviceInfo *runtime.ServiceInfo // can be nil
 }
 
 // RemoveServer removes the given server from the BalancerHandler,
@@ -248,7 +267,7 @@ type LbStatusUpdater struct {
 func (lb *LbStatusUpdater) RemoveServer(u *url.URL) error {
 	err := lb.BalancerHandler.RemoveServer(u)
 	if err == nil && lb.serviceInfo != nil {
-		lb.serviceInfo.UpdateStatus(u.String(), serverDown)
+		lb.serviceInfo.UpdateServerStatus(u.String(), serverDown)
 	}
 	return err
 }
@@ -258,7 +277,7 @@ func (lb *LbStatusUpdater) RemoveServer(u *url.URL) error {
 func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
 	err := lb.BalancerHandler.UpsertServer(u, options...)
 	if err == nil && lb.serviceInfo != nil {
-		lb.serviceInfo.UpdateStatus(u.String(), serverUp)
+		lb.serviceInfo.UpdateServerStatus(u.String(), serverUp)
 	}
 	return err
 }

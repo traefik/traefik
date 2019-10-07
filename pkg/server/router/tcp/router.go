@@ -2,24 +2,26 @@ package tcp
 
 import (
 	"context"
+	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/rules"
-	"github.com/containous/traefik/pkg/server/internal"
-	tcpservice "github.com/containous/traefik/pkg/server/service/tcp"
-	"github.com/containous/traefik/pkg/tcp"
-	"github.com/containous/traefik/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/rules"
+	"github.com/containous/traefik/v2/pkg/server/internal"
+	tcpservice "github.com/containous/traefik/v2/pkg/server/service/tcp"
+	"github.com/containous/traefik/v2/pkg/tcp"
+	traefiktls "github.com/containous/traefik/v2/pkg/tls"
 )
 
 // NewManager Creates a new Manager
-func NewManager(conf *config.RuntimeConfiguration,
+func NewManager(conf *runtime.Configuration,
 	serviceManager *tcpservice.Manager,
 	httpHandlers map[string]http.Handler,
 	httpsHandlers map[string]http.Handler,
-	tlsManager *tls.Manager,
+	tlsManager *traefiktls.Manager,
 ) *Manager {
 	return &Manager{
 		serviceManager: serviceManager,
@@ -35,24 +37,24 @@ type Manager struct {
 	serviceManager *tcpservice.Manager
 	httpHandlers   map[string]http.Handler
 	httpsHandlers  map[string]http.Handler
-	tlsManager     *tls.Manager
-	conf           *config.RuntimeConfiguration
+	tlsManager     *traefiktls.Manager
+	conf           *runtime.Configuration
 }
 
-func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*config.TCPRouterInfo {
+func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*runtime.TCPRouterInfo {
 	if m.conf != nil {
-		return m.conf.GetTCPRoutersByEntrypoints(ctx, entryPoints)
+		return m.conf.GetTCPRoutersByEntryPoints(ctx, entryPoints)
 	}
 
-	return make(map[string]map[string]*config.TCPRouterInfo)
+	return make(map[string]map[string]*runtime.TCPRouterInfo)
 }
 
-func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*config.RouterInfo {
+func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
 	if m.conf != nil {
-		return m.conf.GetRoutersByEntrypoints(ctx, entryPoints, tls)
+		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
 	}
 
-	return make(map[string]map[string]*config.RouterInfo)
+	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
 // BuildHandlers builds the handlers for the given entrypoints
@@ -78,18 +80,25 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 	return entryPointHandlers
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*config.TCPRouterInfo, configsHTTP map[string]*config.RouterInfo, handlerHTTP http.Handler, handlerHTTPS http.Handler) (*tcp.Router, error) {
+type nameAndConfig struct {
+	routerName string // just so we have it as additional information when logging
+	TLSConfig  *tls.Config
+}
+
+func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP http.Handler, handlerHTTPS http.Handler) (*tcp.Router, error) {
 	router := &tcp.Router{}
 	router.HTTPHandler(handlerHTTP)
 	const defaultTLSConfigName = "default"
 
 	defaultTLSConf, err := m.tlsManager.Get("default", defaultTLSConfigName)
 	if err != nil {
-		return nil, err
+		log.FromContext(ctx).Errorf("Error during the build of the default TLS configuration: %v", err)
 	}
 
 	router.HTTPSHandler(handlerHTTPS, defaultTLSConf)
 
+	// Keyed by domain, then by options reference.
+	tlsOptionsForHostSNI := map[string]map[string]nameAndConfig{}
 	for routerHTTPName, routerHTTPConfig := range configsHTTP {
 		if len(routerHTTPConfig.TLS.Options) == 0 || routerHTTPConfig.TLS.Options == defaultTLSConfigName {
 			continue
@@ -101,13 +110,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		domains, err := rules.ParseDomains(routerHTTPConfig.Rule)
 		if err != nil {
 			routerErr := fmt.Errorf("invalid rule %s, error: %v", routerHTTPConfig.Rule, err)
-			routerHTTPConfig.Err = routerErr.Error()
+			routerHTTPConfig.AddError(routerErr, true)
 			logger.Debug(routerErr)
 			continue
 		}
 
 		if len(domains) == 0 {
-			logger.Warnf("The 'default' TLS options will be applied instead of %q as no domain has been found in the rule", routerHTTPConfig.TLS.Options)
+			logger.Warnf("No domain found in rule %v, the TLS options applied for this router will depend on the hostSNI of each request", routerHTTPConfig.Rule)
 		}
 
 		for _, domain := range domains {
@@ -119,13 +128,41 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 				tlsConf, err := m.tlsManager.Get("default", tlsOptionsName)
 				if err != nil {
-					routerHTTPConfig.Err = err.Error()
+					routerHTTPConfig.AddError(err, true)
 					logger.Debug(err)
 					continue
 				}
-
-				router.AddRouteHTTPTLS(domain, tlsConf)
+				if tlsOptionsForHostSNI[domain] == nil {
+					tlsOptionsForHostSNI[domain] = make(map[string]nameAndConfig)
+				}
+				tlsOptionsForHostSNI[domain][routerHTTPConfig.TLS.Options] = nameAndConfig{
+					routerName: routerHTTPName,
+					TLSConfig:  tlsConf,
+				}
 			}
+		}
+	}
+
+	logger := log.FromContext(ctx)
+	for hostSNI, tlsConfigs := range tlsOptionsForHostSNI {
+		if len(tlsConfigs) == 1 {
+			var optionsName string
+			var config *tls.Config
+			for k, v := range tlsConfigs {
+				optionsName = k
+				config = v.TLSConfig
+				break
+			}
+			logger.Debugf("Adding route for %s with TLS options %s", hostSNI, optionsName)
+			router.AddRouteHTTPTLS(hostSNI, config)
+		} else {
+			routers := make([]string, 0, len(tlsConfigs))
+			for _, v := range tlsConfigs {
+				configsHTTP[v.routerName].AddError(fmt.Errorf("found different TLS options for routers on the same host %v, so using the default TLS options instead", hostSNI), false)
+				routers = append(routers, v.routerName)
+			}
+			logger.Warnf("Found different TLS options for routers on the same host %v, so using the default TLS options instead for these routers: %#v", hostSNI, routers)
+			router.AddRouteHTTPTLS(hostSNI, defaultTLSConf)
 		}
 	}
 
@@ -133,9 +170,23 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		ctxRouter := log.With(internal.AddProviderInContext(ctx, routerName), log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctxRouter)
 
+		if routerConfig.Service == "" {
+			err := errors.New("the service is missing on the router")
+			routerConfig.AddError(err, true)
+			logger.Error(err)
+			continue
+		}
+
+		if routerConfig.Rule == "" {
+			err := errors.New("router has no rule")
+			routerConfig.AddError(err, true)
+			logger.Error(err)
+			continue
+		}
+
 		handler, err := m.serviceManager.BuildTCP(ctxRouter, routerConfig.Service)
 		if err != nil {
-			routerConfig.Err = err.Error()
+			routerConfig.AddError(err, true)
 			logger.Error(err)
 			continue
 		}
@@ -143,8 +194,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		domains, err := rules.ParseHostSNI(routerConfig.Rule)
 		if err != nil {
 			routerErr := fmt.Errorf("unknown rule %s", routerConfig.Rule)
-			routerConfig.Err = routerErr.Error()
-			logger.Debug(routerErr)
+			routerConfig.AddError(routerErr, true)
+			logger.Error(routerErr)
 			continue
 		}
 
@@ -167,7 +218,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 					tlsConf, err := m.tlsManager.Get("default", tlsOptionsName)
 					if err != nil {
-						routerConfig.Err = err.Error()
+						routerConfig.AddError(err, true)
 						logger.Debug(err)
 						continue
 					}

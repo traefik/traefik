@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containous/traefik/pkg/config/file"
-	"github.com/containous/traefik/pkg/config/flag"
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/config/file"
+	"github.com/containous/traefik/v2/pkg/config/flag"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 // FileLoader loads a configuration from a file.
@@ -30,8 +30,15 @@ func (f *FileLoader) Load(args []string, cmd *Command) (bool, error) {
 	}
 
 	configFileFlag := "traefik.configfile"
+	if _, ok := ref["traefik.configFile"]; ok {
+		configFileFlag = "traefik.configFile"
+	}
+
 	if f.ConfigFileFlag != "" {
-		configFileFlag = "traefik." + strings.ToLower(f.ConfigFileFlag)
+		configFileFlag = "traefik." + f.ConfigFileFlag
+		if _, ok := ref[strings.ToLower(configFileFlag)]; ok {
+			configFileFlag = "traefik." + strings.ToLower(f.ConfigFileFlag)
+		}
 	}
 
 	configFile, err := loadConfigFiles(ref[configFileFlag], cmd.Configuration)

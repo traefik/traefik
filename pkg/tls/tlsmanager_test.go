@@ -1,10 +1,14 @@
 package tls
 
 import (
+	"context"
 	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert with SAN IPs
@@ -54,7 +58,7 @@ func TestTLSInStore(t *testing.T) {
 	}}
 
 	tlsManager := NewManager()
-	tlsManager.UpdateConfigs(nil, nil, dynamicConfigs)
+	tlsManager.UpdateConfigs(context.Background(), nil, nil, dynamicConfigs)
 
 	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*tls.Certificate)
 	if len(certs) == 0 {
@@ -71,14 +75,15 @@ func TestTLSInvalidStore(t *testing.T) {
 	}}
 
 	tlsManager := NewManager()
-	tlsManager.UpdateConfigs(map[string]Store{
-		"default": {
-			DefaultCertificate: &Certificate{
-				CertFile: "/wrong",
-				KeyFile:  "/wrong",
+	tlsManager.UpdateConfigs(context.Background(),
+		map[string]Store{
+			"default": {
+				DefaultCertificate: &Certificate{
+					CertFile: "/wrong",
+					KeyFile:  "/wrong",
+				},
 			},
-		},
-	}, nil, dynamicConfigs)
+		}, nil, dynamicConfigs)
 
 	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*tls.Certificate)
 	if len(certs) == 0 {
@@ -128,7 +133,7 @@ func TestManager_Get(t *testing.T) {
 	}
 
 	tlsManager := NewManager()
-	tlsManager.UpdateConfigs(nil, tlsConfigs, dynamicConfigs)
+	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, dynamicConfigs)
 
 	for _, test := range testCases {
 		test := test
@@ -143,6 +148,153 @@ func TestManager_Get(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, config.MinVersion, test.expectedMinVersion)
+		})
+	}
+}
+
+func TestClientAuth(t *testing.T) {
+	tlsConfigs := map[string]Options{
+		"eca": {
+			ClientAuth: ClientAuth{},
+		},
+		"ecat": {
+			ClientAuth: ClientAuth{ClientAuthType: ""},
+		},
+		"ncc": {
+			ClientAuth: ClientAuth{ClientAuthType: "NoClientCert"},
+		},
+		"rcc": {
+			ClientAuth: ClientAuth{ClientAuthType: "RequestClientCert"},
+		},
+		"racc": {
+			ClientAuth: ClientAuth{ClientAuthType: "RequireAnyClientCert"},
+		},
+		"vccig": {
+			ClientAuth: ClientAuth{
+				CAFiles:        []FileOrContent{localhostCert},
+				ClientAuthType: "VerifyClientCertIfGiven",
+			},
+		},
+		"vccigwca": {
+			ClientAuth: ClientAuth{ClientAuthType: "VerifyClientCertIfGiven"},
+		},
+		"ravcc": {
+			ClientAuth: ClientAuth{ClientAuthType: "RequireAndVerifyClientCert"},
+		},
+		"ravccwca": {
+			ClientAuth: ClientAuth{
+				CAFiles:        []FileOrContent{localhostCert},
+				ClientAuthType: "RequireAndVerifyClientCert",
+			},
+		},
+		"ravccwbca": {
+			ClientAuth: ClientAuth{
+				CAFiles:        []FileOrContent{"Bad content"},
+				ClientAuthType: "RequireAndVerifyClientCert",
+			},
+		},
+		"ucat": {
+			ClientAuth: ClientAuth{ClientAuthType: "Unknown"},
+		},
+	}
+
+	block, _ := pem.Decode([]byte(localhostCert))
+	cert, err := x509.ParseCertificate(block.Bytes)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		desc               string
+		tlsOptionsName     string
+		expectedClientAuth tls.ClientAuthType
+		expectedRawSubject []byte
+		expectedError      bool
+	}{
+		{
+			desc:               "Empty ClientAuth option should get a tls.NoClientCert (default value)",
+			tlsOptionsName:     "eca",
+			expectedClientAuth: tls.NoClientCert,
+		},
+		{
+			desc:               "Empty ClientAuthType option should get a tls.NoClientCert (default value)",
+			tlsOptionsName:     "ecat",
+			expectedClientAuth: tls.NoClientCert,
+		},
+		{
+			desc:               "NoClientCert option should get a tls.NoClientCert as ClientAuthType",
+			tlsOptionsName:     "ncc",
+			expectedClientAuth: tls.NoClientCert,
+		},
+		{
+			desc:               "RequestClientCert option should get a tls.RequestClientCert as ClientAuthType",
+			tlsOptionsName:     "rcc",
+			expectedClientAuth: tls.RequestClientCert,
+		},
+		{
+			desc:               "RequireAnyClientCert option should get a tls.RequireAnyClientCert as ClientAuthType",
+			tlsOptionsName:     "racc",
+			expectedClientAuth: tls.RequireAnyClientCert,
+		},
+		{
+			desc:               "VerifyClientCertIfGiven option should get a tls.VerifyClientCertIfGiven as ClientAuthType",
+			tlsOptionsName:     "vccig",
+			expectedClientAuth: tls.VerifyClientCertIfGiven,
+		},
+		{
+			desc:               "VerifyClientCertIfGiven option without CAFiles yields a default ClientAuthType (NoClientCert)",
+			tlsOptionsName:     "vccigwca",
+			expectedClientAuth: tls.NoClientCert,
+			expectedError:      true,
+		},
+		{
+			desc:               "RequireAndVerifyClientCert option without CAFiles yields a default ClientAuthType (NoClientCert)",
+			tlsOptionsName:     "ravcc",
+			expectedClientAuth: tls.NoClientCert,
+			expectedError:      true,
+		},
+		{
+			desc:               "RequireAndVerifyClientCert option should get a tls.RequireAndVerifyClientCert as ClientAuthType with CA files",
+			tlsOptionsName:     "ravccwca",
+			expectedClientAuth: tls.RequireAndVerifyClientCert,
+			expectedRawSubject: cert.RawSubject,
+		},
+		{
+			desc:               "Unknown option yields a default ClientAuthType (NoClientCert)",
+			tlsOptionsName:     "ucat",
+			expectedClientAuth: tls.NoClientCert,
+			expectedError:      true,
+		},
+		{
+			desc:               "Bad CA certificate content yields a default ClientAuthType (NoClientCert)",
+			tlsOptionsName:     "ravccwbca",
+			expectedClientAuth: tls.NoClientCert,
+			expectedError:      true,
+		},
+	}
+
+	tlsManager := NewManager()
+	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, nil)
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			config, err := tlsManager.Get("default", test.tlsOptionsName)
+
+			if test.expectedError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+
+			if test.expectedRawSubject != nil {
+				subjects := config.ClientCAs.Subjects()
+				assert.Len(t, subjects, 1)
+				assert.Equal(t, subjects[0], test.expectedRawSubject)
+			}
+
+			assert.Equal(t, config.ClientAuth, test.expectedClientAuth)
 		})
 	}
 }

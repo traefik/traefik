@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - match: HostSNI(`foo.com`)
+    services:
+    - name: whoamitcp
+      port: 8000
+      terminationDelay: 500

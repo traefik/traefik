@@ -8,23 +8,25 @@ Understanding How Traefik is Being Used
 Understanding how you use Traefik is very important to us: it helps us improve the solution in many different ways.  
 For this very reason, the sendAnonymousUsage option is mandatory: we want you to take time to consider whether or not you wish to share anonymous data with us so we can benefit from your experience and use cases.
 
-!!! warning
-    During the alpha stage only, leaving this option unset will not prevent Traefik from running but will generate an error log indicating that it enables data collection by default.
-
-??? example "Enabling Data Collection with TOML"
-
-    ```toml
+!!! example "Enabling Data Collection"
+    
+    ```toml tab="File (TOML)"
     [global]
       # Send anonymous usage data
       sendAnonymousUsage = true
     ```
-
-??? example "Enabling Data Collection with the CLI"
-
-    ```bash
-    ./traefik --sendAnonymousUsage=true
+    
+    ```yaml tab="File (YAML)"
+    global:
+      # Send anonymous usage data
+      sendAnonymousUsage: true
     ```
     
+    ```bash tab="CLI"
+    # Send anonymous usage data
+    --global.sendAnonymousUsage
+    ```
+
 ## Collected Data
 
 This feature comes from the public proposal [here](https://github.com/containous/traefik/issues/2369).
@@ -40,71 +42,51 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
 - a hash of the configuration
 - an **anonymized version** of the static configuration (token, user name, password, URL, IP, domain, email, etc, are removed).
 
-!!! note
-    We do not collect the dynamic configuration information (routers & services).
-    We do not collect these data to run advertising programs.
-    We do not sell these data to third-parties.
+!!! info
+    
+    - We do not collect the dynamic configuration information (routers & services).
+    - We do not collect this data to run advertising programs.
+    - We do not sell this data to third-parties.
 
 ### Example of Collected Data
 
-??? example "Original configuration"
+```toml tab="Original configuration"
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
 
-    ```toml
-    [entryPoints]
-      [entryPoints.web]
-         address = ":80"
-    
-    [api]
-    
-    [providers.docker]
-      endpoint = "tcp://10.10.10.10:2375"
-      exposedByDefault = true
-      swarmMode = true
-    
-      [providers.docker.TLS]
-        ca = "dockerCA"
-        cert = "dockerCert"
-        key = "dockerKey"
-        insecureSkipVerify = true
-    
-    [providers.ecs]
-      domain = "foo.bar"
-      exposedByDefault = true
-      clusters = ["foo-bar"]
-      region = "us-west-2"
-      accessKeyID = "AccessKeyID"
-      secretAccessKey = "SecretAccessKey"
-    ```
+[api]
 
-??? example "Resulting Obfuscated Configuration"
+[providers.docker]
+  endpoint = "tcp://10.10.10.10:2375"
+  exposedByDefault = true
+  swarmMode = true
 
-    ```toml
-    [entryPoints]
-      [entryPoints.web]
-        address = ":80"
-    
-    [api]
-    
-    [providers.docker]
-      endpoint = "xxxx"
-      domain = "xxxx"
-      exposedByDefault = true
-      swarmMode = true
-    
-      [providers.docker.TLS]
-        ca = "xxxx"
-        cert = "xxxx"
-        key = "xxxx"
-        insecureSkipVerify = false
-    
-    [providers.ecs]
-      domain = "xxxx"
-      exposedByDefault = true
-      clusters = []
-      region = "us-west-2"
-      accessKeyID = "xxxx"
-      secretAccessKey = "xxxx"
-    ```
+  [providers.docker.TLS]
+    ca = "dockerCA"
+    cert = "dockerCert"
+    key = "dockerKey"
+    insecureSkipVerify = true
+```
+
+```toml tab="Resulting Obfuscated Configuration"
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
+
+[api]
+
+[providers.docker]
+  endpoint = "xxxx"
+  exposedByDefault = true
+  swarmMode = true
+
+  [providers.docker.TLS]
+    ca = "xxxx"
+    cert = "xxxx"
+    key = "xxxx"
+    insecureSkipVerify = false
+```
 
 ## The Code for Data Collection
 

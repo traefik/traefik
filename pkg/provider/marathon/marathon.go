@@ -9,13 +9,13 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/cenkalti/backoff"
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/job"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/safe"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/cenkalti/backoff/v3"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/job"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
+	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/gambol99/go-marathon"
 	"github.com/sirupsen/logrus"
 )
@@ -106,7 +106,7 @@ func (p *Provider) Init() error {
 
 // Provide allows the marathon provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	ctx := log.With(context.Background(), log.Str(log.ProviderName, "marathon"))
 	logger := log.FromContext(ctx)
 
@@ -171,7 +171,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 
 						conf := p.getConfigurations(ctx)
 						if conf != nil {
-							configurationChan <- config.Message{
+							configurationChan <- dynamic.Message{
 								ProviderName:  "marathon",
 								Configuration: conf,
 							}
@@ -182,7 +182,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 		}
 
 		configuration := p.getConfigurations(ctx)
-		configurationChan <- config.Message{
+		configurationChan <- dynamic.Message{
 			ProviderName:  "marathon",
 			Configuration: configuration,
 		}
@@ -199,7 +199,7 @@ func (p *Provider) Provide(configurationChan chan<- config.Message, pool *safe.P
 	return nil
 }
 
-func (p *Provider) getConfigurations(ctx context.Context) *config.Configuration {
+func (p *Provider) getConfigurations(ctx context.Context) *dynamic.Configuration {
 	applications, err := p.getApplications()
 	if err != nil {
 		log.FromContext(ctx).Errorf("Failed to retrieve Marathon applications: %v", err)

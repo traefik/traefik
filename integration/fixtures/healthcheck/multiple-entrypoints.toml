@@ -12,9 +12,10 @@
     address = ":9000"
 
 [api]
+  insecure = true
 
-[providers]
-  [providers.file]
+[providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 

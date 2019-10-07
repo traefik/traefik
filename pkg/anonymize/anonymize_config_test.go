@@ -5,31 +5,30 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/ping"
-	"github.com/containous/traefik/pkg/provider/acme"
-	acmeprovider "github.com/containous/traefik/pkg/provider/acme"
-	"github.com/containous/traefik/pkg/provider/docker"
-	"github.com/containous/traefik/pkg/provider/file"
-	"github.com/containous/traefik/pkg/provider/kubernetes/crd"
-	"github.com/containous/traefik/pkg/provider/kubernetes/ingress"
-	traefiktls "github.com/containous/traefik/pkg/tls"
-	"github.com/containous/traefik/pkg/tracing/datadog"
-	"github.com/containous/traefik/pkg/tracing/haystack"
-	"github.com/containous/traefik/pkg/tracing/instana"
-	"github.com/containous/traefik/pkg/tracing/jaeger"
-	"github.com/containous/traefik/pkg/tracing/zipkin"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/ping"
+	"github.com/containous/traefik/v2/pkg/provider/acme"
+	acmeprovider "github.com/containous/traefik/v2/pkg/provider/acme"
+	"github.com/containous/traefik/v2/pkg/provider/docker"
+	"github.com/containous/traefik/v2/pkg/provider/file"
+	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd"
+	"github.com/containous/traefik/v2/pkg/provider/kubernetes/ingress"
+	traefiktls "github.com/containous/traefik/v2/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/tracing/datadog"
+	"github.com/containous/traefik/v2/pkg/tracing/haystack"
+	"github.com/containous/traefik/v2/pkg/tracing/instana"
+	"github.com/containous/traefik/v2/pkg/tracing/jaeger"
+	"github.com/containous/traefik/v2/pkg/tracing/zipkin"
+	"github.com/containous/traefik/v2/pkg/types"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 )
 
 func TestDo_globalConfiguration(t *testing.T) {
 	config := &static.Configuration{}
 
-	sendAnonymousUsage := true
 	config.Global = &static.Global{
 		CheckNewVersion:    true,
-		SendAnonymousUsage: &sendAnonymousUsage,
+		SendAnonymousUsage: true,
 	}
 
 	config.AccessLog = &types.AccessLog{
@@ -89,23 +88,18 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 		},
 	}
-	config.ACME = &acme.Configuration{
-		Email:        "acme Email",
-		ACMELogging:  true,
-		CAServer:     "CAServer",
-		Storage:      "Storage",
-		EntryPoint:   "EntryPoint",
-		KeyType:      "MyKeyType",
-		OnHostRule:   true,
-		DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
-		HTTPChallenge: &acmeprovider.HTTPChallenge{
-			EntryPoint: "MyEntryPoint",
-		},
-		TLSChallenge: &acmeprovider.TLSChallenge{},
-		Domains: []types.Domain{
-			{
-				Main: "Domains Main",
-				SANs: []string{"Domains acme SANs 1", "Domains acme SANs 2", "Domains acme SANs 3"},
+	config.CertificatesResolvers = map[string]static.CertificateResolver{
+		"default": {
+			ACME: &acme.Configuration{
+				Email:        "acme Email",
+				CAServer:     "CAServer",
+				Storage:      "Storage",
+				KeyType:      "MyKeyType",
+				DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
+				HTTPChallenge: &acmeprovider.HTTPChallenge{
+					EntryPoint: "MyEntryPoint",
+				},
+				TLSChallenge: &acmeprovider.TLSChallenge{},
 			},
 		},
 	}
@@ -124,11 +118,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 
 	config.API = &static.API{
-		EntryPoint: "traefik",
-		Dashboard:  true,
-		Statistics: &types.Statistics{
-			RecentErrors: 111,
-		},
+		Dashboard: true,
 		DashboardAssets: &assetfs.AssetFS{
 			Asset: func(path string) ([]byte, error) {
 				return nil, nil
@@ -141,7 +131,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 			Prefix: "fii",
 		},
-		Middlewares: []string{"first", "second"},
 	}
 
 	config.Providers.File = &file.Provider{
@@ -149,7 +138,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 		Watch:                     true,
 		Filename:                  "file Filename",
 		DebugLogGeneratedTemplate: true,
-		TraefikFile:               "",
 	}
 
 	config.Providers.Docker = &docker.Provider{
@@ -171,7 +159,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		SwarmModeRefreshSeconds: 42,
 	}
 
-	config.Providers.Kubernetes = &ingress.Provider{
+	config.Providers.KubernetesIngress = &ingress.Provider{
 		Endpoint:               "MyEndpoint",
 		Token:                  "MyToken",
 		CertAuthFilePath:       "MyCertAuthPath",
@@ -195,11 +183,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 
 	config.Metrics = &types.Metrics{
 		Prometheus: &types.Prometheus{
-			Buckets:     []float64{0.1, 0.3, 1.2, 5},
-			EntryPoint:  "MyEntryPoint",
-			Middlewares: []string{"m1", "m2"},
+			Buckets: []float64{0.1, 0.3, 1.2, 5},
 		},
-		DataDog: &types.DataDog{
+		Datadog: &types.Datadog{
 			Address:      "localhost:8181",
 			PushInterval: 12,
 		},
@@ -218,10 +204,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 	}
 
-	config.Ping = &ping.Handler{
-		EntryPoint:  "MyEntryPoint",
-		Middlewares: []string{"m1", "m2", "m3"},
-	}
+	config.Ping = &ping.Handler{}
 
 	config.Tracing = &static.Tracing{
 		ServiceName:   "myServiceName",
@@ -239,10 +222,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 			HTTPEndpoint: "fff",
 			SameSpan:     true,
 			ID128Bit:     true,
-			Debug:        true,
 			SampleRate:   53,
 		},
-		DataDog: &datadog.Config{
+		Datadog: &datadog.Config{
 			LocalAgentHostPort: "ggg",
 			GlobalTag:          "eee",
 			Debug:              true,

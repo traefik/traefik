@@ -14,9 +14,6 @@ In production, it should be at least secured by authentication and authorization
 A good sane default (non exhaustive) set of recommendations
 would be to apply the following protection mechanisms:
 
-* At the application level:  
-  securing with middlewares such as [basic authentication](../middlewares/basicauth.md) or [white listing](../middlewares/ipwhitelist.md).
-
 * At the transport level:  
   NOT publicly exposing the API's port,
   keeping it restricted to internal networks
@@ -24,14 +21,98 @@ would be to apply the following protection mechanisms:
 
 ## Configuration
 
+If you enable the API, a new special `service` named `api@internal` is created and can then be referenced in a router.
+
 To enable the API handler:
 
-```toml tab="File"
+```toml tab="File (TOML)"
 [api]
 ```
 
+```yaml tab="File (YAML)"
+api: {}
+```
+
 ```bash tab="CLI"
---api
+--api=true
+```
+
+And then you will be able to reference it like this:
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+  - "traefik.http.routers.api.service=api@internal"
+  - "traefik.http.routers.api.middlewares=auth"
+  - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.routers.api.rule": "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+  "traefik.http.routers.api.service": "api@internal"
+  "traefik.http.routers.api.middlewares": "auth"
+  "traefik.http.middlewares.auth.basicauth.users": "test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+}
+```
+
+```yaml tab="Rancher"
+# Declaring the user list
+labels:
+  - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+  - "traefik.http.routers.api.service=api@internal"
+  - "traefik.http.routers.api.middlewares=auth"
+  - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+```
+
+```toml tab="File (TOML)"
+[http.routers.my-api]
+    rule="PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+    service="api@internal"
+    middlewares=["auth"]
+
+[http.middlewares.auth.basicAuth]
+    users = [
+      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
+      "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+    ]
+```
+
+```yaml tab="File (YAML)"
+http:
+  routers:
+    api:
+      rule: PathPrefix(`/api`) || PathPrefix(`/dashboard`)
+      service: api@internal
+      middlewares:
+        - auth
+  middlewares:
+    auth:
+      basicAuth:
+        users:
+          - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" 
+          - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+```
+
+### `insecure`
+
+Enable the API in `insecure` mode, which means that the API will be available directly on the entryPoint named `traefik`.
+
+!!! info
+    If the entryPoint named `traefik` is not configured, it will be automatically created on port 8080.
+
+```toml tab="File (TOML)"
+[api]
+  insecure = true
+```
+
+```yaml tab="File (YAML)"
+api:
+  insecure: true
+```
+
+```bash tab="CLI"
+--api.insecure=true
 ```
 
 ### `dashboard`
@@ -40,55 +121,34 @@ _Optional, Default=true_
 
 Enable the dashboard. More about the dashboard features [here](./dashboard.md).
 
-```toml tab="File"
+```toml tab="File (TOML)"
 [api]
   dashboard = true
 ```
 
-```bash tab="CLI"
---api.dashboard
-```
-
-### `entrypoint`
-
-_Optional, Default="traefik"_
-
-The entry point that the API handler will be bound to.
-The default ("traefik") is an internal entry point (which is always defined).
-
-```toml tab="File"
-[api]
-  entrypoint = "web"
+```yaml tab="File (YAML)"
+api:
+  dashboard: true
 ```
 
 ```bash tab="CLI"
---api.entrypoint="web"
-```
-
-### `middlewares`
-
-_Optional, Default=empty_
-
-The list of [middlewares](../middlewares/overview.md) applied to the API handler.
-
-```toml tab="File"
-[api]
-  middlewares = ["api-auth", "api-prefix"]
-```
-
-```bash tab="CLI"
---api.middlewares="api-auth,api-prefix"
+--api.dashboard=true
 ```
 
 ### `debug`
 
 _Optional, Default=false_
 
-Enable additional endpoints for debugging and profiling, served under `/debug/`.
+Enable additional [endpoints](./api.md#endpoints) for debugging and profiling, served under `/debug/`.
 
-```toml tab="File"
+```toml tab="File (TOML)"
 [api]
   debug = true
+```
+
+```yaml tab="File (YAML)"
+api:
+  debug: true
 ```
 
 ```bash tab="CLI"
@@ -111,6 +171,8 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | `/api/tcp/routers/{name}`      | Returns the information of the TCP router specified by `name`.                            |
 | `/api/tcp/services`            | Lists all the TCP services information.                                                   |
 | `/api/tcp/services/{name}`     | Returns the information of the TCP service specified by `name`.                           |
+| `/api/entrypoints`             | Lists all the entry points information.                                                   |
+| `/api/entrypoints/{name}`      | Returns the information of the entry point specified by `name`.                           |
 | `/api/version`                 | Returns information about Traefik version.                                                |
 | `/debug/vars`                  | See the [expvar](https://golang.org/pkg/expvar/) Go documentation.                        |
 | `/debug/pprof/`                | See the [pprof Index](https://golang.org/pkg/net/http/pprof/#Index) Go documentation.     |
@@ -118,51 +180,3 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | `/debug/pprof/profile`         | See the [pprof Profile](https://golang.org/pkg/net/http/pprof/#Profile) Go documentation. |
 | `/debug/pprof/symbol`          | See the [pprof Symbol](https://golang.org/pkg/net/http/pprof/#Symbol) Go documentation.   |
 | `/debug/pprof/trace`           | See the [pprof Trace](https://golang.org/pkg/net/http/pprof/#Trace) Go documentation.     |
-
-## Common Configuration Use Cases
-
-### Address / Port
-
-You can define a custom address/port like this:
-
-```toml
-[entryPoints]
-  [entryPoints.web]
-    address = ":80"
-
-  [entryPoints.foo]
-    address = ":8082"
-
-  [entryPoints.bar]
-    address = ":8083"
-
-[ping]
-  entryPoint = "foo"
-
-[api]
-  entryPoint = "bar"
-```
-
-In the above example, you would access a service at /foo, an api endpoint, or the health-check as follows:
-
-* Service: `http://hostname:80/foo`
-* API: `http://hostname:8083/api/http/routers`
-* Ping URL: `http://hostname:8082/ping`
-
-### Authentication
-
-To restrict access to the API handler, one can add authentication with the [basic auth middleware](../middlewares/basicauth.md).
-
-```toml
-[api]
-  middlewares=["api-auth"]
-```
-
-```toml
-[http.middlewares]
-  [http.middlewares.api-auth.basicAuth]
-    users = [
-      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-      "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-    ]
-```

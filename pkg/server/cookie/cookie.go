@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/containous/traefik/pkg/log"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 const cookieNameLength = 6
@@ -27,7 +27,7 @@ func GenerateName(backendName string) string {
 	_, err := hash.Write(data)
 	if err != nil {
 		// Impossible case
-		log.Errorf("Fail to create cookie name: %v", err)
+		log.WithoutContext().Errorf("Fail to create cookie name: %v", err)
 	}
 
 	return fmt.Sprintf("_%x", hash.Sum(nil))[:cookieNameLength]

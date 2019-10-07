@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,16 +15,16 @@ import (
 func TestNewAddPrefix(t *testing.T) {
 	testCases := []struct {
 		desc         string
-		prefix       config.AddPrefix
+		prefix       dynamic.AddPrefix
 		expectsError bool
 	}{
 		{
 			desc:   "Works with a non empty prefix",
-			prefix: config.AddPrefix{Prefix: "/a"},
+			prefix: dynamic.AddPrefix{Prefix: "/a"},
 		},
 		{
 			desc:         "Fails if prefix is empty",
-			prefix:       config.AddPrefix{Prefix: ""},
+			prefix:       dynamic.AddPrefix{Prefix: ""},
 			expectsError: true,
 		},
 	}
@@ -50,20 +50,20 @@ func TestAddPrefix(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	testCases := []struct {
 		desc            string
-		prefix          config.AddPrefix
+		prefix          dynamic.AddPrefix
 		path            string
 		expectedPath    string
 		expectedRawPath string
 	}{
 		{
 			desc:         "Works with a regular path",
-			prefix:       config.AddPrefix{Prefix: "/a"},
+			prefix:       dynamic.AddPrefix{Prefix: "/a"},
 			path:         "/b",
 			expectedPath: "/a/b",
 		},
 		{
 			desc:            "Works with a raw path",
-			prefix:          config.AddPrefix{Prefix: "/a"},
+			prefix:          dynamic.AddPrefix{Prefix: "/a"},
 			path:            "/b%2Fc",
 			expectedPath:    "/a/b/c",
 			expectedRawPath: "/a/b%2Fc",

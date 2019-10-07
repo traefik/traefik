@@ -10,10 +10,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/pkg/provider/acme"
-	"github.com/containous/traefik/pkg/testhelpers"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/integration/try"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/provider/acme"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/go-check/check"
 	"github.com/miekg/dns"
 	checker "github.com/vdemeester/shakers"
@@ -26,17 +27,23 @@ type AcmeSuite struct {
 	fakeDNSServer *dns.Server
 }
 
+type subCases struct {
+	host               string
+	expectedCommonName string
+	expectedAlgorithm  x509.PublicKeyAlgorithm
+}
+
 type acmeTestCase struct {
 	template            templateModel
 	traefikConfFilePath string
-	expectedCommonName  string
-	expectedAlgorithm   x509.PublicKeyAlgorithm
+	subCases            []subCases
 }
 
 type templateModel struct {
+	Domains   []types.Domain
 	PortHTTP  string
 	PortHTTPS string
-	Acme      acme.Configuration
+	Acme      map[string]static.CertificateResolver
 }
 
 const (
@@ -120,40 +127,48 @@ func (s *AcmeSuite) TearDownSuite(c *check.C) {
 	}
 }
 
-func (s *AcmeSuite) TestHTTP01DomainsAtStart(c *check.C) {
-	c.Skip("We need to fix DefaultCertificate at start")
+func (s *AcmeSuite) TestHTTP01Domains(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_domains.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: acmeDomain,
+			expectedAlgorithm:  x509.RSA,
+		}},
 		template: templateModel{
-			Acme: acme.Configuration{
-				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				Domains: types.Domains{types.Domain{
-					Main: "traefik.acme.wtf",
+			Domains: []types.Domain{{
+				Main: "traefik.acme.wtf",
+			}},
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
 				}},
 			},
 		},
-		expectedCommonName: acmeDomain,
-		expectedAlgorithm:  x509.RSA,
 	}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
-func (s *AcmeSuite) TestHTTP01DomainsInSANAtStart(c *check.C) {
-	c.Skip("We need to fix DefaultCertificate at start")
+func (s *AcmeSuite) TestHTTP01DomainsInSAN(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_domains.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: "acme.wtf",
+			expectedAlgorithm:  x509.RSA,
+		}},
 		template: templateModel{
-			Acme: acme.Configuration{
-				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				Domains: types.Domains{types.Domain{
-					Main: "acme.wtf",
-					SANs: []string{"traefik.acme.wtf"},
+			Domains: []types.Domain{{
+				Main: "acme.wtf",
+				SANs: []string{"traefik.acme.wtf"},
+			}},
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
 				}},
 			},
 		},
-		expectedCommonName: "acme.wtf",
-		expectedAlgorithm:  x509.RSA,
 	}
 
 	s.retrieveAcmeCertificate(c, testCase)
@@ -162,14 +177,49 @@ func (s *AcmeSuite) TestHTTP01DomainsInSANAtStart(c *check.C) {
 func (s *AcmeSuite) TestHTTP01OnHostRule(c *check.C) {
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: acmeDomain,
+			expectedAlgorithm:  x509.RSA,
+		}},
 		template: templateModel{
-			Acme: acme.Configuration{
-				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				OnHostRule:    true,
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
+				}},
 			},
 		},
-		expectedCommonName: acmeDomain,
-		expectedAlgorithm:  x509.RSA,
+	}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
+func (s *AcmeSuite) TestMultipleResolver(c *check.C) {
+	testCase := acmeTestCase{
+		traefikConfFilePath: "fixtures/acme/acme_multiple_resolvers.toml",
+		subCases: []subCases{
+			{
+				host:               acmeDomain,
+				expectedCommonName: acmeDomain,
+				expectedAlgorithm:  x509.RSA,
+			},
+			{
+				host:               "tchouk.acme.wtf",
+				expectedCommonName: "tchouk.acme.wtf",
+				expectedAlgorithm:  x509.ECDSA,
+			},
+		},
+		template: templateModel{
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
+				}},
+				"tchouk": {ACME: &acme.Configuration{
+					TLSChallenge: &acme.TLSChallenge{},
+					KeyType:      "EC256",
+				}},
+			},
+		},
 	}
 
 	s.retrieveAcmeCertificate(c, testCase)
@@ -178,15 +228,19 @@ func (s *AcmeSuite) TestHTTP01OnHostRule(c *check.C) {
 func (s *AcmeSuite) TestHTTP01OnHostRuleECDSA(c *check.C) {
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: acmeDomain,
+			expectedAlgorithm:  x509.ECDSA,
+		}},
 		template: templateModel{
-			Acme: acme.Configuration{
-				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				OnHostRule:    true,
-				KeyType:       "EC384",
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
+					KeyType:       "EC384",
+				}},
 			},
 		},
-		expectedCommonName: acmeDomain,
-		expectedAlgorithm:  x509.ECDSA,
 	}
 
 	s.retrieveAcmeCertificate(c, testCase)
@@ -195,31 +249,39 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleECDSA(c *check.C) {
 func (s *AcmeSuite) TestHTTP01OnHostRuleInvalidAlgo(c *check.C) {
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: acmeDomain,
+			expectedAlgorithm:  x509.RSA,
+		}},
 		template: templateModel{
-			Acme: acme.Configuration{
-				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				OnHostRule:    true,
-				KeyType:       "INVALID",
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
+					KeyType:       "INVALID",
+				}},
 			},
 		},
-		expectedCommonName: acmeDomain,
-		expectedAlgorithm:  x509.RSA,
 	}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
-func (s *AcmeSuite) TestHTTP01OnHostRuleStaticCertificatesWithWildcard(c *check.C) {
+func (s *AcmeSuite) TestHTTP01OnHostRuleDefaultDynamicCertificatesWithWildcard(c *check.C) {
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_tls.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: wildcardDomain,
+			expectedAlgorithm:  x509.RSA,
+		}},
 		template: templateModel{
-			Acme: acme.Configuration{
-				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				OnHostRule:    true,
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
+				}},
 			},
 		},
-		expectedCommonName: wildcardDomain,
-		expectedAlgorithm:  x509.RSA,
 	}
 
 	s.retrieveAcmeCertificate(c, testCase)
@@ -228,14 +290,38 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleStaticCertificatesWithWildcard(c *check.
 func (s *AcmeSuite) TestHTTP01OnHostRuleDynamicCertificatesWithWildcard(c *check.C) {
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_tls_dynamic.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: wildcardDomain,
+			expectedAlgorithm:  x509.RSA,
+		}},
 		template: templateModel{
-			Acme: acme.Configuration{
-				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				OnHostRule:    true,
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
+				}},
 			},
 		},
-		expectedCommonName: wildcardDomain,
-		expectedAlgorithm:  x509.RSA,
+	}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
+func (s *AcmeSuite) TestTLSALPN01OnHostRuleTCP(c *check.C) {
+	testCase := acmeTestCase{
+		traefikConfFilePath: "fixtures/acme/acme_tcp.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: acmeDomain,
+			expectedAlgorithm:  x509.RSA,
+		}},
+		template: templateModel{
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					TLSChallenge: &acme.TLSChallenge{},
+				}},
+			},
+		},
 	}
 
 	s.retrieveAcmeCertificate(c, testCase)
@@ -244,72 +330,65 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleDynamicCertificatesWithWildcard(c *check
 func (s *AcmeSuite) TestTLSALPN01OnHostRule(c *check.C) {
 	testCase := acmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: acmeDomain,
+			expectedAlgorithm:  x509.RSA,
+		}},
 		template: templateModel{
-			Acme: acme.Configuration{
-				TLSChallenge: &acme.TLSChallenge{},
-				OnHostRule:   true,
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					TLSChallenge: &acme.TLSChallenge{},
+				}},
 			},
 		},
-		expectedCommonName: acmeDomain,
-		expectedAlgorithm:  x509.RSA,
 	}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
-func (s *AcmeSuite) TestTLSALPN01DomainsAtStart(c *check.C) {
-	c.Skip("We need to fix DefaultCertificate at start")
+func (s *AcmeSuite) TestTLSALPN01Domains(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_domains.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: acmeDomain,
+			expectedAlgorithm:  x509.RSA,
+		}},
 		template: templateModel{
-			Acme: acme.Configuration{
-				TLSChallenge: &acme.TLSChallenge{},
-				Domains: types.Domains{types.Domain{
-					Main: "traefik.acme.wtf",
+			Domains: []types.Domain{{
+				Main: "traefik.acme.wtf",
+			}},
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					TLSChallenge: &acme.TLSChallenge{},
 				}},
 			},
 		},
-		expectedCommonName: acmeDomain,
-		expectedAlgorithm:  x509.RSA,
 	}
 
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
-func (s *AcmeSuite) TestTLSALPN01DomainsInSANAtStart(c *check.C) {
-	c.Skip("We need to fix DefaultCertificate at start")
+func (s *AcmeSuite) TestTLSALPN01DomainsInSAN(c *check.C) {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		traefikConfFilePath: "fixtures/acme/acme_domains.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: "acme.wtf",
+			expectedAlgorithm:  x509.RSA,
+		}},
 		template: templateModel{
-			Acme: acme.Configuration{
-				TLSChallenge: &acme.TLSChallenge{},
-				Domains: types.Domains{types.Domain{
-					Main: "acme.wtf",
-					SANs: []string{"traefik.acme.wtf"},
+			Domains: []types.Domain{{
+				Main: "acme.wtf",
+				SANs: []string{"traefik.acme.wtf"},
+			}},
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					TLSChallenge: &acme.TLSChallenge{},
 				}},
 			},
 		},
-		expectedCommonName: "acme.wtf",
-		expectedAlgorithm:  x509.RSA,
-	}
-
-	s.retrieveAcmeCertificate(c, testCase)
-}
-
-func (s *AcmeSuite) TestTLSALPN01DomainsWithProvidedWildcardDomainAtStart(c *check.C) {
-	c.Skip("We need to fix DefaultCertificate at start")
-	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_tls.toml",
-		template: templateModel{
-			Acme: acme.Configuration{
-				TLSChallenge: &acme.TLSChallenge{},
-				Domains: types.Domains{types.Domain{
-					Main: acmeDomain,
-				}},
-			},
-		},
-		expectedCommonName: wildcardDomain,
-		expectedAlgorithm:  x509.RSA,
 	}
 
 	s.retrieveAcmeCertificate(c, testCase)
@@ -318,10 +397,11 @@ func (s *AcmeSuite) TestTLSALPN01DomainsWithProvidedWildcardDomainAtStart(c *che
 // Test Let's encrypt down
 func (s *AcmeSuite) TestNoValidLetsEncryptServer(c *check.C) {
 	file := s.adaptFile(c, "fixtures/acme/acme_base.toml", templateModel{
-		Acme: acme.Configuration{
-			CAServer:      "http://wrongurl:4001/directory",
-			HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-			OnHostRule:    true,
+		Acme: map[string]static.CertificateResolver{
+			"default": {ACME: &acme.Configuration{
+				CAServer:      "http://wrongurl:4001/directory",
+				HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
+			}},
 		},
 	})
 	defer os.Remove(file)
@@ -347,8 +427,10 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase acmeTestCase) {
 		testCase.template.PortHTTPS = ":5001"
 	}
 
-	if len(testCase.template.Acme.CAServer) == 0 {
-		testCase.template.Acme.CAServer = s.getAcmeURL()
+	for _, value := range testCase.template.Acme {
+		if len(value.ACME.CAServer) == 0 {
+			value.ACME.CAServer = s.getAcmeURL()
+		}
 	}
 
 	file := s.adaptFile(c, testCase.traefikConfFilePath, testCase.template)
@@ -365,57 +447,59 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase acmeTestCase) {
 	backend := startTestServer("9010", http.StatusOK)
 	defer backend.Close()
 
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-
-	// wait for traefik (generating acme account take some seconds)
-	err = try.Do(90*time.Second, func() error {
-		_, errGet := client.Get("https://127.0.0.1:5001")
-		return errGet
-	})
-	c.Assert(err, checker.IsNil)
-
-	client = &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-				ServerName:         acmeDomain,
+	for _, sub := range testCase.subCases {
+		client := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
-		},
+		}
+
+		// wait for traefik (generating acme account take some seconds)
+		err = try.Do(60*time.Second, func() error {
+			_, errGet := client.Get("https://127.0.0.1:5001")
+			return errGet
+		})
+		c.Assert(err, checker.IsNil)
+
+		client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+					ServerName:         sub.host,
+				},
+			},
+		}
+
+		req := testhelpers.MustNewRequest(http.MethodGet, "https://127.0.0.1:5001/", nil)
+		req.Host = sub.host
+		req.Header.Set("Host", sub.host)
+		req.Header.Set("Accept", "*/*")
+
+		var resp *http.Response
+
+		// Retry to send a Request which uses the LE generated certificate
+		err = try.Do(60*time.Second, func() error {
+			resp, err = client.Do(req)
+
+			// /!\ If connection is not closed, SSLHandshake will only be done during the first trial /!\
+			req.Close = true
+
+			if err != nil {
+				return err
+			}
+
+			cn := resp.TLS.PeerCertificates[0].Subject.CommonName
+			if cn != sub.expectedCommonName {
+				return fmt.Errorf("domain %s found instead of %s", cn, sub.expectedCommonName)
+			}
+
+			return nil
+		})
+
+		c.Assert(err, checker.IsNil)
+		c.Assert(resp.StatusCode, checker.Equals, http.StatusOK)
+		// Check Domain into response certificate
+		c.Assert(resp.TLS.PeerCertificates[0].Subject.CommonName, checker.Equals, sub.expectedCommonName)
+		c.Assert(resp.TLS.PeerCertificates[0].PublicKeyAlgorithm, checker.Equals, sub.expectedAlgorithm)
 	}
-
-	req := testhelpers.MustNewRequest(http.MethodGet, "https://127.0.0.1:5001/", nil)
-	req.Host = acmeDomain
-	req.Header.Set("Host", acmeDomain)
-	req.Header.Set("Accept", "*/*")
-
-	var resp *http.Response
-
-	// Retry to send a Request which uses the LE generated certificate
-	err = try.Do(60*time.Second, func() error {
-		resp, err = client.Do(req)
-
-		// /!\ If connection is not closed, SSLHandshake will only be done during the first trial /!\
-		req.Close = true
-
-		if err != nil {
-			return err
-		}
-
-		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
-		if cn != testCase.expectedCommonName {
-			return fmt.Errorf("domain %s found instead of %s", cn, testCase.expectedCommonName)
-		}
-
-		return nil
-	})
-
-	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, http.StatusOK)
-	// Check Domain into response certificate
-	c.Assert(resp.TLS.PeerCertificates[0].Subject.CommonName, checker.Equals, testCase.expectedCommonName)
-	c.Assert(resp.TLS.PeerCertificates[0].PublicKeyAlgorithm, checker.Equals, testCase.expectedAlgorithm)
 }

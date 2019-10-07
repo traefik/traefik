@@ -13,19 +13,21 @@
     address = ":8443"
 
 [api]
+  insecure = true
 
 [providers]
   [providers.docker]
     watch = true
 
   [providers.file]
+    filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 
 [tls.options]
-  [tls.options.default.clientCA]
-    files = [ """{{ .RootCertContent }}""" ]
-    optional = false
+  [tls.options.default.clientAuth]
+    caFiles = [ """{{ .RootCertContent }}""" ]
+    clientAuthType = "RequireAndVerifyClientCert"
 
 [tls.stores]
   [tls.stores.default.defaultCertificate]

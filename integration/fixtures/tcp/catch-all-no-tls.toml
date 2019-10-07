@@ -10,8 +10,10 @@
     address = ":8093"
 
 [api]
+  insecure = true
 
 [providers.file]
+  filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 

@@ -3,16 +3,16 @@ package acme
 import (
 	"crypto/tls"
 
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/types"
-	"github.com/go-acme/lego/challenge"
-	"github.com/go-acme/lego/challenge/tlsalpn01"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/types"
+	"github.com/go-acme/lego/v3/challenge"
+	"github.com/go-acme/lego/v3/challenge/tlsalpn01"
 )
 
 var _ challenge.Provider = (*challengeTLSALPN)(nil)
 
 type challengeTLSALPN struct {
-	Store Store
+	Store ChallengeStore
 }
 
 func (c *challengeTLSALPN) Present(domain, token, keyAuth string) error {
@@ -37,7 +37,7 @@ func (c *challengeTLSALPN) CleanUp(domain, token, keyAuth string) error {
 
 // GetTLSALPNCertificate Get the temp certificate for ACME TLS-ALPN-O1 challenge.
 func (p *Provider) GetTLSALPNCertificate(domain string) (*tls.Certificate, error) {
-	cert, err := p.Store.GetTLSChallenge(domain)
+	cert, err := p.ChallengeStore.GetTLSChallenge(domain)
 	if err != nil {
 		return nil, err
 	}

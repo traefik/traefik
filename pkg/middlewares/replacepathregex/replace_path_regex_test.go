@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/middlewares/replacepath"
-	"github.com/containous/traefik/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/middlewares/replacepath"
+	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +16,7 @@ func TestReplacePathRegex(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		path           string
-		config         config.ReplacePathRegex
+		config         dynamic.ReplacePathRegex
 		expectedPath   string
 		expectedHeader string
 		expectsError   bool
@@ -24,7 +24,7 @@ func TestReplacePathRegex(t *testing.T) {
 		{
 			desc: "simple regex",
 			path: "/whoami/and/whoami",
-			config: config.ReplacePathRegex{
+			config: dynamic.ReplacePathRegex{
 				Replacement: "/who-am-i/$1",
 				Regex:       `^/whoami/(.*)`,
 			},
@@ -34,7 +34,7 @@ func TestReplacePathRegex(t *testing.T) {
 		{
 			desc: "simple replace (no regex)",
 			path: "/whoami/and/whoami",
-			config: config.ReplacePathRegex{
+			config: dynamic.ReplacePathRegex{
 				Replacement: "/who-am-i",
 				Regex:       `/whoami`,
 			},
@@ -44,7 +44,7 @@ func TestReplacePathRegex(t *testing.T) {
 		{
 			desc: "no match",
 			path: "/whoami/and/whoami",
-			config: config.ReplacePathRegex{
+			config: dynamic.ReplacePathRegex{
 				Replacement: "/whoami",
 				Regex:       `/no-match`,
 			},
@@ -53,7 +53,7 @@ func TestReplacePathRegex(t *testing.T) {
 		{
 			desc: "multiple replacement",
 			path: "/downloads/src/source.go",
-			config: config.ReplacePathRegex{
+			config: dynamic.ReplacePathRegex{
 				Replacement: "/downloads/$1-$2",
 				Regex:       `^(?i)/downloads/([^/]+)/([^/]+)$`,
 			},
@@ -63,7 +63,7 @@ func TestReplacePathRegex(t *testing.T) {
 		{
 			desc: "invalid regular expression",
 			path: "/invalid/regexp/test",
-			config: config.ReplacePathRegex{
+			config: dynamic.ReplacePathRegex{
 				Replacement: "/valid/regexp/$1",
 				Regex:       `^(?err)/invalid/regexp/([^/]+)$`,
 			},

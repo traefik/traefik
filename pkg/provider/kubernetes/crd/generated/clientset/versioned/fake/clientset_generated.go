@@ -27,9 +27,9 @@ THE SOFTWARE.
 package fake
 
 import (
-	clientset "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/clientset/versioned"
-	traefikv1alpha1 "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1alpha1"
-	faketraefikv1alpha1 "github.com/containous/traefik/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1alpha1/fake"
+	clientset "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
+	traefikv1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1alpha1"
+	faketraefikv1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -49,7 +49,7 @@ func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 		}
 	}
 
-	cs := &Clientset{}
+	cs := &Clientset{tracker: o}
 	cs.discovery = &fakediscovery.FakeDiscovery{Fake: &cs.Fake}
 	cs.AddReactor("*", "*", testing.ObjectReaction(o))
 	cs.AddWatchReactor("*", func(action testing.Action) (handled bool, ret watch.Interface, err error) {
@@ -71,20 +71,20 @@ func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 type Clientset struct {
 	testing.Fake
 	discovery *fakediscovery.FakeDiscovery
+	tracker   testing.ObjectTracker
 }
 
 func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 	return c.discovery
 }
 
+func (c *Clientset) Tracker() testing.ObjectTracker {
+	return c.tracker
+}
+
 var _ clientset.Interface = &Clientset{}
 
 // TraefikV1alpha1 retrieves the TraefikV1alpha1Client
 func (c *Clientset) TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface {
-	return &faketraefikv1alpha1.FakeTraefikV1alpha1{Fake: &c.Fake}
-}
-
-// Traefik retrieves the TraefikV1alpha1Client
-func (c *Clientset) Traefik() traefikv1alpha1.TraefikV1alpha1Interface {
 	return &faketraefikv1alpha1.FakeTraefikV1alpha1{Fake: &c.Fake}
 }

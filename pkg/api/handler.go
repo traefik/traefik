@@ -2,77 +2,44 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"sort"
-	"strconv"
+	"reflect"
 	"strings"
 
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/types"
-	"github.com/containous/traefik/pkg/version"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/version"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
+	"github.com/gorilla/mux"
 )
 
-const (
-	defaultPerPage = 100
-	defaultPage    = 1
-)
+type apiError struct {
+	Message string `json:"message"`
+}
 
-const nextPageHeader = "X-Next-Page"
+func writeError(rw http.ResponseWriter, msg string, code int) {
+	data, err := json.Marshal(apiError{Message: msg})
+	if err != nil {
+		http.Error(rw, msg, code)
+		return
+	}
+
+	http.Error(rw, string(data), code)
+}
 
 type serviceInfoRepresentation struct {
-	*config.ServiceInfo
+	*runtime.ServiceInfo
 	ServerStatus map[string]string `json:"serverStatus,omitempty"`
 }
 
 // RunTimeRepresentation is the configuration information exposed by the API handler.
 type RunTimeRepresentation struct {
-	Routers     map[string]*config.RouterInfo         `json:"routers,omitempty"`
-	Middlewares map[string]*config.MiddlewareInfo     `json:"middlewares,omitempty"`
+	Routers     map[string]*runtime.RouterInfo        `json:"routers,omitempty"`
+	Middlewares map[string]*runtime.MiddlewareInfo    `json:"middlewares,omitempty"`
 	Services    map[string]*serviceInfoRepresentation `json:"services,omitempty"`
-	TCPRouters  map[string]*config.TCPRouterInfo      `json:"tcpRouters,omitempty"`
-	TCPServices map[string]*config.TCPServiceInfo     `json:"tcpServices,omitempty"`
-}
-
-type routerRepresentation struct {
-	*config.RouterInfo
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
-}
-
-type serviceRepresentation struct {
-	*config.ServiceInfo
-	ServerStatus map[string]string `json:"serverStatus,omitempty"`
-	Name         string            `json:"name,omitempty"`
-	Provider     string            `json:"provider,omitempty"`
-}
-
-type middlewareRepresentation struct {
-	*config.MiddlewareInfo
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
-}
-
-type tcpRouterRepresentation struct {
-	*config.TCPRouterInfo
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
-}
-
-type tcpServiceRepresentation struct {
-	*config.TCPServiceInfo
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
-}
-
-type pageInfo struct {
-	startIndex int
-	endIndex   int
-	nextPage   int
+	TCPRouters  map[string]*runtime.TCPRouterInfo     `json:"tcpRouters,omitempty"`
+	TCPServices map[string]*runtime.TCPServiceInfo    `json:"tcpServices,omitempty"`
 }
 
 // Handler serves the configuration and status of Traefik on API endpoints.
@@ -80,26 +47,37 @@ type Handler struct {
 	dashboard bool
 	debug     bool
 	// runtimeConfiguration is the data set used to create all the data representations exposed by the API.
-	runtimeConfiguration *config.RuntimeConfiguration
-	statistics           *types.Statistics
+	runtimeConfiguration *runtime.Configuration
+	staticConfig         static.Configuration
+	// statistics           *types.Statistics
 	// stats                *thoasstats.Stats // FIXME stats
 	// StatsRecorder         *middlewares.StatsRecorder // FIXME stats
 	dashboardAssets *assetfs.AssetFS
 }
 
+// NewBuilder returns a http.Handler builder based on runtime.Configuration
+func NewBuilder(staticConfig static.Configuration) func(*runtime.Configuration) http.Handler {
+	return func(configuration *runtime.Configuration) http.Handler {
+		router := mux.NewRouter()
+		New(staticConfig, configuration).Append(router)
+		return router
+	}
+}
+
 // New returns a Handler defined by staticConfig, and if provided, by runtimeConfig.
 // It finishes populating the information provided in the runtimeConfig.
-func New(staticConfig static.Configuration, runtimeConfig *config.RuntimeConfiguration) *Handler {
+func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration) *Handler {
 	rConfig := runtimeConfig
 	if rConfig == nil {
-		rConfig = &config.RuntimeConfiguration{}
+		rConfig = &runtime.Configuration{}
 	}
 
 	return &Handler{
-		dashboard:            staticConfig.API.Dashboard,
-		statistics:           staticConfig.API.Statistics,
+		dashboard: staticConfig.API.Dashboard,
+		// statistics:           staticConfig.API.Statistics,
 		dashboardAssets:      staticConfig.API.DashboardAssets,
 		runtimeConfiguration: rConfig,
+		staticConfig:         staticConfig,
 		debug:                staticConfig.API.Debug,
 	}
 }
@@ -111,6 +89,12 @@ func (h Handler) Append(router *mux.Router) {
 	}
 
 	router.Methods(http.MethodGet).Path("/api/rawdata").HandlerFunc(h.getRuntimeConfiguration)
+
+	// Experimental endpoint
+	router.Methods(http.MethodGet).Path("/api/overview").HandlerFunc(h.getOverview)
+
+	router.Methods(http.MethodGet).Path("/api/entrypoints").HandlerFunc(h.getEntryPoints)
+	router.Methods(http.MethodGet).Path("/api/entrypoints/{entryPointID}").HandlerFunc(h.getEntryPoint)
 
 	router.Methods(http.MethodGet).Path("/api/http/routers").HandlerFunc(h.getRouters)
 	router.Methods(http.MethodGet).Path("/api/http/routers/{routerID}").HandlerFunc(h.getRouter)
@@ -132,283 +116,6 @@ func (h Handler) Append(router *mux.Router) {
 
 	if h.dashboard {
 		DashboardHandler{Assets: h.dashboardAssets}.Append(router)
-	}
-}
-
-func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
-	results := make([]routerRepresentation, 0, len(h.runtimeConfiguration.Routers))
-
-	for name, rt := range h.runtimeConfiguration.Routers {
-		results = append(results, routerRepresentation{
-			RouterInfo: rt,
-			Name:       name,
-			Provider:   getProviderName(name),
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
-
-	pageInfo, err := pagination(request, len(results))
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
-
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
-	routerID := mux.Vars(request)["routerID"]
-
-	router, ok := h.runtimeConfiguration.Routers[routerID]
-	if !ok {
-		http.NotFound(rw, request)
-		return
-	}
-
-	result := routerRepresentation{
-		RouterInfo: router,
-		Name:       routerID,
-		Provider:   getProviderName(routerID),
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
-	results := make([]serviceRepresentation, 0, len(h.runtimeConfiguration.Services))
-
-	for name, si := range h.runtimeConfiguration.Services {
-		results = append(results, serviceRepresentation{
-			ServiceInfo:  si,
-			Name:         name,
-			Provider:     getProviderName(name),
-			ServerStatus: si.GetAllStatus(),
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
-
-	pageInfo, err := pagination(request, len(results))
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
-
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
-	serviceID := mux.Vars(request)["serviceID"]
-
-	service, ok := h.runtimeConfiguration.Services[serviceID]
-	if !ok {
-		http.NotFound(rw, request)
-		return
-	}
-
-	result := serviceRepresentation{
-		ServiceInfo:  service,
-		Name:         serviceID,
-		Provider:     getProviderName(serviceID),
-		ServerStatus: service.GetAllStatus(),
-	}
-
-	rw.Header().Add("Content-Type", "application/json")
-
-	err := json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
-	results := make([]middlewareRepresentation, 0, len(h.runtimeConfiguration.Middlewares))
-
-	for name, mi := range h.runtimeConfiguration.Middlewares {
-		results = append(results, middlewareRepresentation{
-			MiddlewareInfo: mi,
-			Name:           name,
-			Provider:       getProviderName(name),
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
-
-	pageInfo, err := pagination(request, len(results))
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
-
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getMiddleware(rw http.ResponseWriter, request *http.Request) {
-	middlewareID := mux.Vars(request)["middlewareID"]
-
-	middleware, ok := h.runtimeConfiguration.Middlewares[middlewareID]
-	if !ok {
-		http.NotFound(rw, request)
-		return
-	}
-
-	result := middlewareRepresentation{
-		MiddlewareInfo: middleware,
-		Name:           middlewareID,
-		Provider:       getProviderName(middlewareID),
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
-	results := make([]tcpRouterRepresentation, 0, len(h.runtimeConfiguration.TCPRouters))
-
-	for name, rt := range h.runtimeConfiguration.TCPRouters {
-		results = append(results, tcpRouterRepresentation{
-			TCPRouterInfo: rt,
-			Name:          name,
-			Provider:      getProviderName(name),
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
-
-	pageInfo, err := pagination(request, len(results))
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
-
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
-	routerID := mux.Vars(request)["routerID"]
-
-	router, ok := h.runtimeConfiguration.TCPRouters[routerID]
-	if !ok {
-		http.NotFound(rw, request)
-		return
-	}
-
-	result := tcpRouterRepresentation{
-		TCPRouterInfo: router,
-		Name:          routerID,
-		Provider:      getProviderName(routerID),
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
-	results := make([]tcpServiceRepresentation, 0, len(h.runtimeConfiguration.TCPServices))
-
-	for name, si := range h.runtimeConfiguration.TCPServices {
-		results = append(results, tcpServiceRepresentation{
-			TCPServiceInfo: si,
-			Name:           name,
-			Provider:       getProviderName(name),
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
-
-	pageInfo, err := pagination(request, len(results))
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-	rw.Header().Set(nextPageHeader, strconv.Itoa(pageInfo.nextPage))
-
-	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
-	serviceID := mux.Vars(request)["serviceID"]
-
-	service, ok := h.runtimeConfiguration.TCPServices[serviceID]
-	if !ok {
-		http.NotFound(rw, request)
-		return
-	}
-
-	result := tcpServiceRepresentation{
-		TCPServiceInfo: service,
-		Name:           serviceID,
-		Provider:       getProviderName(serviceID),
-	}
-
-	rw.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(rw).Encode(result)
-	if err != nil {
-		log.FromContext(request.Context()).Error(err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -438,48 +145,19 @@ func (h Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.R
 	}
 }
 
-func pagination(request *http.Request, max int) (pageInfo, error) {
-	perPage, err := getIntParam(request, "per_page", defaultPerPage)
-	if err != nil {
-		return pageInfo{}, err
-	}
-
-	page, err := getIntParam(request, "page", defaultPage)
-	if err != nil {
-		return pageInfo{}, err
-	}
-
-	startIndex := (page - 1) * perPage
-	if startIndex != 0 && startIndex >= max {
-		return pageInfo{}, fmt.Errorf("invalid request: page: %d, per_page: %d", page, perPage)
-	}
-
-	endIndex := startIndex + perPage
-	if endIndex >= max {
-		endIndex = max
-	}
-
-	nextPage := 1
-	if page*perPage < max {
-		nextPage = page + 1
-	}
-
-	return pageInfo{startIndex: startIndex, endIndex: endIndex, nextPage: nextPage}, nil
-}
-
-func getIntParam(request *http.Request, key string, defaultValue int) (int, error) {
-	raw := request.URL.Query().Get(key)
-	if raw == "" {
-		return defaultValue, nil
-	}
-
-	value, err := strconv.Atoi(raw)
-	if err != nil || value <= 0 {
-		return 0, fmt.Errorf("invalid request: %s: %d", key, value)
-	}
-	return value, nil
-}
-
 func getProviderName(id string) string {
 	return strings.SplitN(id, "@", 2)[1]
+}
+
+func extractType(element interface{}) string {
+	v := reflect.ValueOf(element).Elem()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		if field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct {
+			if !field.IsNil() {
+				return v.Type().Field(i).Name
+			}
+		}
+	}
+	return ""
 }

@@ -3,12 +3,12 @@ package aggregator
 import (
 	"encoding/json"
 
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/provider"
-	"github.com/containous/traefik/pkg/provider/file"
-	"github.com/containous/traefik/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
+	"github.com/containous/traefik/v2/pkg/provider/file"
+	"github.com/containous/traefik/v2/pkg/safe"
 )
 
 // ProviderAggregator aggregates providers.
@@ -37,8 +37,8 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 		p.quietAddProvider(conf.Rest)
 	}
 
-	if conf.Kubernetes != nil {
-		p.quietAddProvider(conf.Kubernetes)
+	if conf.KubernetesIngress != nil {
+		p.quietAddProvider(conf.KubernetesIngress)
 	}
 
 	if conf.KubernetesCRD != nil {
@@ -80,7 +80,7 @@ func (p ProviderAggregator) Init() error {
 }
 
 // Provide calls the provide method of every providers
-func (p ProviderAggregator) Provide(configurationChan chan<- config.Message, pool *safe.Pool) error {
+func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	if p.fileProvider != nil {
 		launchProvider(configurationChan, pool, p.fileProvider)
 	}
@@ -94,7 +94,7 @@ func (p ProviderAggregator) Provide(configurationChan chan<- config.Message, poo
 	return nil
 }
 
-func launchProvider(configurationChan chan<- config.Message, pool *safe.Pool, prd provider.Provider) {
+func launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {
 	jsonConf, err := json.Marshal(prd)
 	if err != nil {
 		log.WithoutContext().Debugf("Cannot marshal the provider configuration %T: %v", prd, err)

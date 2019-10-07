@@ -4,51 +4,38 @@ import (
 	"context"
 
 	"github.com/containous/alice"
-	"github.com/containous/mux"
-	"github.com/containous/traefik/pkg/api"
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/config/static"
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/metrics"
-	"github.com/containous/traefik/pkg/types"
+	"github.com/containous/traefik/v2/pkg/api"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/metrics"
+	"github.com/containous/traefik/v2/pkg/types"
+	"github.com/gorilla/mux"
 )
 
-// chainBuilder The contract of the middleware builder
-type chainBuilder interface {
-	BuildChain(ctx context.Context, middlewares []string) *alice.Chain
-}
-
 // NewRouteAppenderAggregator Creates a new RouteAppenderAggregator
-func NewRouteAppenderAggregator(ctx context.Context, chainBuilder chainBuilder, conf static.Configuration,
-	entryPointName string, runtimeConfiguration *config.RuntimeConfiguration) *RouteAppenderAggregator {
+func NewRouteAppenderAggregator(ctx context.Context, conf static.Configuration,
+	entryPointName string, runtimeConfiguration *runtime.Configuration) *RouteAppenderAggregator {
 	aggregator := &RouteAppenderAggregator{}
 
-	if conf.Providers != nil && conf.Providers.Rest != nil {
-		aggregator.AddAppender(conf.Providers.Rest)
-	}
-
-	if conf.API != nil && conf.API.EntryPoint == entryPointName {
-		chain := chainBuilder.BuildChain(ctx, conf.API.Middlewares)
-		aggregator.AddAppender(&WithMiddleware{
-			appender:          api.New(conf, runtimeConfiguration),
-			routerMiddlewares: chain,
-		})
-	}
-
 	if conf.Ping != nil && conf.Ping.EntryPoint == entryPointName {
-		chain := chainBuilder.BuildChain(ctx, conf.Ping.Middlewares)
-		aggregator.AddAppender(&WithMiddleware{
-			appender:          conf.Ping,
-			routerMiddlewares: chain,
-		})
+		aggregator.AddAppender(conf.Ping)
 	}
 
 	if conf.Metrics != nil && conf.Metrics.Prometheus != nil && conf.Metrics.Prometheus.EntryPoint == entryPointName {
-		chain := chainBuilder.BuildChain(ctx, conf.Metrics.Prometheus.Middlewares)
-		aggregator.AddAppender(&WithMiddleware{
-			appender:          metrics.PrometheusHandler{},
-			routerMiddlewares: chain,
-		})
+		aggregator.AddAppender(metrics.PrometheusHandler{})
+	}
+
+	if entryPointName != "traefik" {
+		return aggregator
+	}
+
+	if conf.Providers != nil && conf.Providers.Rest != nil && conf.Providers.Rest.Insecure {
+		aggregator.AddAppender(conf.Providers.Rest)
+	}
+
+	if conf.API != nil && conf.API.Insecure {
+		aggregator.AddAppender(api.New(conf, runtimeConfiguration))
 	}
 
 	return aggregator

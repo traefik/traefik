@@ -8,10 +8,11 @@ import (
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
-	"github.com/containous/traefik/pkg/config"
-	"github.com/containous/traefik/pkg/middlewares"
-	"github.com/containous/traefik/pkg/middlewares/accesslog"
-	"github.com/containous/traefik/pkg/tracing"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/middlewares"
+	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
+	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
@@ -29,8 +30,8 @@ type digestAuth struct {
 }
 
 // NewDigest creates a digest auth middleware.
-func NewDigest(ctx context.Context, next http.Handler, authConfig config.DigestAuth, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, digestTypeName).Debug("Creating middleware")
+func NewDigest(ctx context.Context, next http.Handler, authConfig dynamic.DigestAuth, name string) (http.Handler, error) {
+	log.FromContext(middlewares.GetLoggerCtx(ctx, name, digestTypeName)).Debug("Creating middleware")
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, digestUserParser)
 	if err != nil {
 		return nil, err
@@ -58,7 +59,7 @@ func (d *digestAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), d.name, digestTypeName)
+	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), d.name, digestTypeName))
 
 	if username, _ := d.auth.CheckAuth(req); username == "" {
 		logger.Debug("Digest authentication failed")

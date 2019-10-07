@@ -12,7 +12,7 @@ The AddPrefix middleware updates the URL Path of the request before forwarding i
 ```yaml tab="Docker"
 # Prefixing with /foo
 labels:
-- "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
+  - "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
 ```
 
 ```yaml tab="Kubernetes"
@@ -35,14 +35,23 @@ spec:
 ```yaml tab="Rancher"
 # Prefixing with /foo
 labels:
-- "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
+  - "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Prefixing with /foo
 [http.middlewares]
   [http.middlewares.add-foo.addPrefix]
     prefix = "/foo"
+```
+
+```yaml tab="File (YAML)"
+# Prefixing with /foo
+http:
+  middlewares:
+    add-foo:
+      addPrefix:
+        prefix: "/foo"
 ```
 
 ## Configuration Options

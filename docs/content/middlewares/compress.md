@@ -12,7 +12,7 @@ The Compress middleware enables the gzip compression.
 ```yaml tab="Docker"
 # Enable gzip compression
 labels:
-- "traefik.http.middlewares.test-compress.compress=true"
+  - "traefik.http.middlewares.test-compress.compress=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -34,19 +34,27 @@ spec:
 ```yaml tab="Rancher"
 # Enable gzip compression
 labels:
-- "traefik.http.middlewares.test-compress.compress=true"
+  - "traefik.http.middlewares.test-compress.compress=true"
 ```
 
-```toml tab="File"
+```toml tab="File (TOML)"
 # Enable gzip compression
 [http.middlewares]
   [http.middlewares.test-compress.compress]
 ```
 
-## Notes
+```yaml tab="File (YAML)"
+# Enable gzip compression
+http:
+  middlewares:
+    test-compress:
+      compress: {}
+```
 
-Responses are compressed when:
-
-* The response body is larger than `512` bytes.
-* The `Accept-Encoding` request header contains `gzip`.
-* The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
+!!! info
+    
+    Responses are compressed when:
+    
+    * The response body is larger than `1400` bytes.
+    * The `Accept-Encoding` request header contains `gzip`.
+    * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.

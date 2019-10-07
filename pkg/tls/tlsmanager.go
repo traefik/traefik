@@ -1,15 +1,17 @@
 package tls
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"sync"
 
-	"github.com/containous/traefik/pkg/log"
-	"github.com/containous/traefik/pkg/tls/generate"
-	"github.com/containous/traefik/pkg/types"
-	"github.com/go-acme/lego/challenge/tlsalpn01"
+	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/tls/generate"
+	"github.com/containous/traefik/v2/pkg/types"
+	"github.com/go-acme/lego/v3/challenge/tlsalpn01"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,7 +31,7 @@ func NewManager() *Manager {
 }
 
 // UpdateConfigs updates the TLS* configuration options
-func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]Options, certs []*CertAndStores) {
+func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, configs map[string]Options, certs []*CertAndStores) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
@@ -39,9 +41,10 @@ func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]Opti
 
 	m.stores = make(map[string]*CertificateStore)
 	for storeName, storeConfig := range m.storesConfig {
-		store, err := buildCertificateStore(storeConfig)
+		ctxStore := log.With(ctx, log.Str(log.TLSStoreName, storeName))
+		store, err := buildCertificateStore(ctxStore, storeConfig)
 		if err != nil {
-			log.Errorf("Error while creating certificate store %s: %v", storeName, err)
+			log.FromContext(ctxStore).Errorf("Error while creating certificate store: %v", err)
 			continue
 		}
 		m.stores[storeName] = store
@@ -51,14 +54,15 @@ func (m *Manager) UpdateConfigs(stores map[string]Store, configs map[string]Opti
 	for _, conf := range certs {
 		if len(conf.Stores) == 0 {
 			if log.GetLevel() >= logrus.DebugLevel {
-				log.Debugf("No store is defined to add the certificate %s, it will be added to the default store.",
+				log.FromContext(ctx).Debugf("No store is defined to add the certificate %s, it will be added to the default store.",
 					conf.Certificate.GetTruncatedCertificateName())
 			}
 			conf.Stores = []string{"default"}
 		}
 		for _, store := range conf.Stores {
+			ctxStore := log.With(ctx, log.Str(log.TLSStoreName, store))
 			if err := conf.Certificate.AppendCertificate(storesCertificates, store); err != nil {
-				log.Errorf("Unable to append certificate %s to store %s: %v", conf.Certificate.GetTruncatedCertificateName(), store, err)
+				log.FromContext(ctxStore).Errorf("Unable to append certificate %s to store: %v", conf.Certificate.GetTruncatedCertificateName(), err)
 			}
 		}
 	}
@@ -73,17 +77,22 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
+	var tlsConfig *tls.Config
+	var err error
+
 	config, ok := m.configs[configName]
 	if !ok {
-		return nil, fmt.Errorf("unknown TLS options: %s", configName)
+		err = fmt.Errorf("unknown TLS options: %s", configName)
+		tlsConfig = &tls.Config{}
 	}
 
 	store := m.getStore(storeName)
 
-	tlsConfig, err := buildTLSConfig(config)
-	if err != nil {
-		log.Error(err)
-		tlsConfig = &tls.Config{}
+	if err == nil {
+		tlsConfig, err = buildTLSConfig(config)
+		if err != nil {
+			tlsConfig = &tls.Config{}
+		}
 	}
 
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
@@ -112,13 +121,14 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 		log.WithoutContext().Debugf("Serving default certificate for request: %q", domainToCheck)
 		return store.DefaultCertificate, nil
 	}
-	return tlsConfig, nil
+
+	return tlsConfig, err
 }
 
 func (m *Manager) getStore(storeName string) *CertificateStore {
 	_, ok := m.stores[storeName]
 	if !ok {
-		m.stores[storeName], _ = buildCertificateStore(Store{})
+		m.stores[storeName], _ = buildCertificateStore(context.Background(), Store{})
 	}
 	return m.stores[storeName]
 }
@@ -131,7 +141,7 @@ func (m *Manager) GetStore(storeName string) *CertificateStore {
 	return m.getStore(storeName)
 }
 
-func buildCertificateStore(tlsStore Store) (*CertificateStore, error) {
+func buildCertificateStore(ctx context.Context, tlsStore Store) (*CertificateStore, error) {
 	certificateStore := NewCertificateStore()
 	certificateStore.DynamicCerts.Set(make(map[string]*tls.Certificate))
 
@@ -142,7 +152,7 @@ func buildCertificateStore(tlsStore Store) (*CertificateStore, error) {
 		}
 		certificateStore.DefaultCertificate = cert
 	} else {
-		log.Debug("No default certificate, generate one")
+		log.FromContext(ctx).Debug("No default certificate, generating one")
 		cert, err := generate.DefaultCertificate()
 		if err != nil {
 			return certificateStore, err
@@ -159,23 +169,45 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 	// ensure http2 enabled
 	conf.NextProtos = []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol}
 
-	if len(tlsOption.ClientCA.Files) > 0 {
+	if len(tlsOption.ClientAuth.CAFiles) > 0 {
 		pool := x509.NewCertPool()
-		for _, caFile := range tlsOption.ClientCA.Files {
+		for _, caFile := range tlsOption.ClientAuth.CAFiles {
 			data, err := caFile.Read()
 			if err != nil {
 				return nil, err
 			}
 			ok := pool.AppendCertsFromPEM(data)
 			if !ok {
-				return nil, fmt.Errorf("invalid certificate(s) in %s", caFile)
+				if caFile.IsPath() {
+					return nil, fmt.Errorf("invalid certificate(s) in %s", caFile)
+				}
+				return nil, errors.New("invalid certificate(s) content")
 			}
 		}
 		conf.ClientCAs = pool
-		if tlsOption.ClientCA.Optional {
+		conf.ClientAuth = tls.RequireAndVerifyClientCert
+	}
+
+	clientAuthType := tlsOption.ClientAuth.ClientAuthType
+	if len(clientAuthType) > 0 {
+		if conf.ClientCAs == nil && (clientAuthType == "VerifyClientCertIfGiven" ||
+			clientAuthType == "RequireAndVerifyClientCert") {
+			return nil, fmt.Errorf("invalid clientAuthType: %s, CAFiles is required", clientAuthType)
+		}
+
+		switch clientAuthType {
+		case "NoClientCert":
+			conf.ClientAuth = tls.NoClientCert
+		case "RequestClientCert":
+			conf.ClientAuth = tls.RequestClientCert
+		case "RequireAnyClientCert":
+			conf.ClientAuth = tls.RequireAnyClientCert
+		case "VerifyClientCertIfGiven":
 			conf.ClientAuth = tls.VerifyClientCertIfGiven
-		} else {
+		case "RequireAndVerifyClientCert":
 			conf.ClientAuth = tls.RequireAndVerifyClientCert
+		default:
+			return nil, fmt.Errorf("unknown client auth type %q", clientAuthType)
 		}
 	}
 

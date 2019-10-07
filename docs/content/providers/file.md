@@ -6,11 +6,10 @@ Good Old Configuration File
 The file provider lets you define the [dynamic configuration](./overview.md) in a TOML or YAML file.
 You can write these configuration elements:
 
-* At the end of the main Traefik configuration file (by default: `traefik.toml`/`traefik.yml`/`traefik.yaml`).
 * In [a dedicated file](#filename)
 * In [several dedicated files](#directory)
 
-!!! note
+!!! info
     The file provider is the default format used throughout the documentation to show samples of the configuration for many features. 
 
 !!! tip
@@ -22,13 +21,19 @@ You can write these configuration elements:
 
     Enabling the file provider:
     
-    ```toml tab="TOML"
+    ```toml tab="File (TOML)"
     [providers.file]
+      filename = "/my/path/to/dynamic-conf.toml"
     ```
     
-    ```yaml tab="YAML"
+    ```yaml tab="File (YAML)"
     providers:
-      file: {}
+      file:
+        filename: "/my/path/to/dynamic-conf.yml"
+    ```
+    
+    ```bash tab="CLI"
+    --providers.file.filename=/my/path/to/dynamic_conf.toml
     ```
     
     Declaring Routers, Middlewares & Services:
@@ -41,7 +46,7 @@ You can write these configuration elements:
           entryPoints = ["web"]
           middlewares = ["my-basic-auth"]
           service = "service-foo"
-          rule = "Path(`foo`)"
+          rule = "Path(`/foo`)"
     
         # Add the middleware
         [http.middlewares]    
@@ -70,7 +75,7 @@ You can write these configuration elements:
           middlewares:
           - my-basic-auth
           service: service-foo
-          rule: Path(`foo`)
+          rule: Path(`/foo`)
       
       # Add the middleware
       middlewares:
@@ -91,73 +96,79 @@ You can write these configuration elements:
             passHostHeader: false
     ```
 
-## Provider Configuration Options
+## Provider Configuration
 
-!!! tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the [static](../reference/static-configuration/overview.md) and the [dynamic](../reference/dynamic-configuration/file.md) configuration references.
-    
+If you're in a hurry, maybe you'd rather go through the [dynamic configuration](../reference/dynamic-configuration/file.md) references and the [static configuration](../reference/static-configuration/overview.md).
+
 ### `filename`
-
-_Optional_
 
 Defines the path of the configuration file.
 
-```toml tab="TOML"
+```toml tab="File (TOML)"
 [providers]
   [providers.file]
-    filename = "rules.toml"
+    filename = "dynamic_conf.toml"
 ```
 
-```yaml tab="YAML"
+```yaml tab="File (YAML)"
 providers:
   file:
-    filename: rules.yaml
+    filename: dynamic_conf.yml
+```
+
+```bash tab="CLI"
+--providers.file.filename=dynamic_conf.toml
 ```
 
 ### `directory`
 
-_Optional_
-
 Defines the directory that contains the configuration files.
 
-```toml tab="TOML"
+```toml tab="File (TOML)"
 [providers]
   [providers.file]
     directory = "/path/to/config"
 ```
 
-```yaml tab="YAML"
+```yaml tab="File (YAML)"
 providers:
   file:
     directory: /path/to/config
 ```
 
-### `watch`
+```bash tab="CLI"
+--providers.file.directory=/path/to/config
+```
 
-_Optional_
+### `watch`
 
 Set the `watch` option to `true` to allow Traefik to automatically watch for file changes.  
 It works with both the `filename` and the `directory` options.
 
-```toml tab="TOML"
+```toml tab="File (TOML)"
 [providers]
   [providers.file]
-    filename = "rules.toml"
+    filename = "dynamic_conf.toml"
     watch = true
 ```
 
-```yaml tab="YAML"
+```yaml tab="File (YAML)"
 providers:
   file:
-    filename: rules.yml
+    filename: dynamic_conf.yml
     watch: true
+```
+
+```bash tab="CLI"
+--providers.file.filename=dynamic_conf.toml
+--providers.file.watch=true
 ```
 
 ### Go Templating
 
 !!! warning
-    Go Templating only works along with dedicated configuration files.
-    Templating does not work in the Traefik main configuration file.
+    Go Templating only works along with dedicated dynamic configuration files.
+    Templating does not work in the Traefik main static configuration file.
 
 Traefik allows using Go templating.  
 Thus, it's possible to define easily lot of routers, services and TLS certificates as described in the file `template-rules.toml` :

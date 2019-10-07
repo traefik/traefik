@@ -20,20 +20,17 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 
 ## How to build (only for frontend developer)
 
-- prerequisite: [Node 6+](https://nodejs.org) [yarn](https://yarnpkg.com/)
-
-  Note: In case of conflict with the Apache Hadoop Yarn Command Line Interface, use the `yarnpkg`
-  alias.
+- prerequisite: [Node 6+](https://nodejs.org) [Npm](https://www.npmjs.com/)
 
 - Go to the directory `webui`
 
 - To install dependencies, execute the following commands:
 
-  - `yarn install`
+  - `npm install`
 
 - Build static Web UI, execute the following command:
 
-  - `yarn run build`
+  - `npm run build`
 
 - Static contents are build in the directory `static`
 
@@ -54,14 +51,14 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 - Go to the directory `webui`
 - Edit files in `webui/src`
 - Run in development mode :
-  - `yarn start`
+  - `npm run dev`
 
 ## Libraries
 
 - [Node](https://nodejs.org)
-- [Yarn](https://yarnpkg.com/)
+- [Npm](https://www.npmjs.com/)
 - [Webpack](https://github.com/webpack/webpack)
-- [Angular](https://angular.io)
+- [Vue](https://vuejs.org/)
 - [Bulma](https://bulma.io)
 - [D3](https://d3js.org)
 - [D3 - Documentation](https://github.com/mbostock/d3/wiki)
