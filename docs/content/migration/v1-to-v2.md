@@ -204,11 +204,11 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
           minVersion = "VersionTLS12"
           cipherSuites = [
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
-        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
            ]
           [[entryPoints.web-secure.tls.certificates]]
             certFile = "path/to/my.cert"
@@ -216,7 +216,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     ```
     
     ```bash tab="CLI"
-    --entryPoints='Name:web-secure Address::443 TLS:path/to/my.cert,path/to/my.key TLS.MinVersion:VersionTLS12 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384'
+    --entryPoints='Name:web-secure Address::443 TLS:path/to/my.cert,path/to/my.key TLS.MinVersion:VersionTLS12 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256'
     ```
     
     !!! info "v2"
@@ -242,11 +242,12 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       [tls.options.myTLSOptions]
         minVersion = "VersionTLS13"
         cipherSuites = [
-              "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-              "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-              "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
-              "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-              "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
             ]
     ```
     
@@ -268,11 +269,11 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
         myTLSOptions:
           minVersion: VersionTLS13
           cipherSuites:
-	    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-	    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
-	    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-	    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+	        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+	        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+	        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+	        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     ```
     
     ```yaml tab="K8s IngressRoute"
@@ -287,11 +288,11 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     spec:
       minVersion: VersionTLS13
       cipherSuites:
-	- TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	- TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-	- TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
-	- TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-	- TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+	    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+	    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+	    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+	    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     
     ---
     apiVersion: traefik.containo.us/v1alpha1
