@@ -596,7 +596,8 @@ http:
         certResolver: "bar"
         domains:
           - main: "snitest.com"
-            sans: "*.snitest.com"
+            sans:
+              - "*.snitest.com"
 ```
 
 [ACME v2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
@@ -925,5 +926,6 @@ tcp:
         certResolver: "bar"
         domains:
           - main: "snitest.com"
-            sans: "*.snitest.com"
+            sans: 
+              - "*.snitest.com"
 ```
