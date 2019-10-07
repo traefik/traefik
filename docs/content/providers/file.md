@@ -4,7 +4,7 @@ Good Old Configuration File
 {: .subtitle } 
 
 The file provider lets you define the [dynamic configuration](./overview.md) in a TOML or YAML file.
-You can write these configuration elements:
+You can write one of these mutually exclusive configuration elements:
 
 * In [a dedicated file](#filename)
 * In [several dedicated files](#directory)
