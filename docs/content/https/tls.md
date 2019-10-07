@@ -191,8 +191,7 @@ See [cipherSuites](https://godoc.org/crypto/tls#pkg-constants) for more informat
 [tls.options]
   [tls.options.default]
     cipherSuites = [
-      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-      "TLS_RSA_WITH_AES_256_GCM_SHA384"
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     ]
 ```
 
@@ -204,7 +203,6 @@ tls:
     default:
       cipherSuites:
         - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        - TLS_RSA_WITH_AES_256_GCM_SHA384
 ```
 
 ```yaml tab="Kubernetes"
@@ -217,7 +215,6 @@ metadata:
 spec:
   cipherSuites:
     - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-    - TLS_RSA_WITH_AES_256_GCM_SHA384
 ```
 
 !!! important "TLS 1.3"
