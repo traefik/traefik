@@ -184,7 +184,7 @@ Then any router can refer to an instance of the wanted middleware.
               - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
     ```
 
-## TLS configuration is now dynamic, per router.
+## TLS Configuration Is Now Dynamic, per Router.
 
 TLS parameters used to be specified in the static configuration, as an entryPoint field.
 With Traefik v2, a new dynamic TLS section at the root contains all the desired TLS configurations.
@@ -322,7 +322,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       - "traefik.http.routers.router0.tls.options=myTLSOptions@file"
     ```
 
-## HTTP to HTTPS Redirection is now configured on Routers
+## HTTP to HTTPS Redirection Is Now Configured on Routers
 
 Previously on Traefik v1, the redirection was applied on an entry point or on a frontend.
 With Traefik v2 it is applied on a [Router](../routing/routers/index.md). 
@@ -749,7 +749,7 @@ For a basic configuration, the [metrics configuration](../observability/metrics/
     --metrics.prometheus.entrypoint="metrics"
     ```
 
-## No more root level key/values
+## No More Root Level Key/Values
 
 To avoid any source of confusion, there are no more configuration at the root level.
 Each root item has been moved to a related section or removed.
@@ -976,7 +976,7 @@ Supported [providers](../providers/overview.md), for now:
 * [x] Rest
 * [ ] Zookeeper
 
-## Some Tips You Should Known
+## Some Tips You Should Know
 
 * Different sources of static configuration (file, CLI flags, ...) cannot be [mixed](../getting-started/configuration-overview.md#the-static-configuration).
 * Now, configuration elements can be referenced between different providers by using the provider namespace notation: `@<provider>`.
