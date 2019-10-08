@@ -508,6 +508,129 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
           keyFile: /app/certs/server/server.pem
     ``` 
 
+## Strip and Rewrite Path Prefixes
+
+With the new core notions of v2 (introduced earlier in the section
+["Frontends and Backends Are Dead... Long Live Routers, Middlewares, and Services"](#frontends-and-backends-are-dead-long-live-routers-middlewares-and-services)),
+transforming the URL path prefix of incoming requests is configured with [middlewares](../middlewares/overview/),
+after the routing step with [router rule `PathPrefix`](https://docs.traefik.io/v2.0/routing/routers/#rule).
+
+Use Case: Incoming requests to `http://company.org/admin` are forwarded to the webapplication "admin",
+with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
+
+- First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
+- Then, define a middlware of type `stripprefix`, which remove the prefix `/admin`, associated to the router `admin`
+
+!!! example "Strip Path Prefix When Forwarding to Backend"
+
+    !!! info "v1"
+
+    ```yaml tab="Docker"
+    labels:
+      - "traefik.frontend.rule=Host:company.org;PathPrefixStrip:/admin"
+    ```
+
+    ```yaml tab="Kubernetes Ingress"
+    apiVersion: networking.k8s.io/v1beta1
+    kind: Ingress
+    metadata:
+      name: traefik
+      annotations:
+        kubernetes.io/ingress.class: traefik
+        traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip
+    spec:
+      rules:
+      - host: company.org
+        http:
+          paths:
+          - path: /admin
+            backend:
+              serviceName: admin-svc
+              servicePort: admin
+    ```
+
+    ```toml tab="File (TOML)"
+    [frontends.admin]
+      [frontends.admin.routes.admin_1]
+      rule = "Host:company.org;PathPrefixStrip:/admin"
+    ```
+
+    !!! info "v2"
+
+    ```yaml tab="Docker"
+    labels:
+      - "traefik.http.routers.admin.rule=Host(`company.org`) && PathPrefix(`/admin`)"
+      - "traefik.http.middlewares.admin-stripprefix.stripprefix.prefixes=/admin"
+      - "traefik.http.routers.web.middlewares=admin-stripprefix@docker"
+    ```
+
+    ```yaml tab="Kubernetes IngressRoute"
+    ---
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: http-redirect-ingressRoute
+      namespace: admin-web
+    spec:
+      entryPoints:
+        - web
+      routes:
+        - match: Host(`company.org`) && PathPrefix(`/admin`)
+          kind: Rule
+          services:
+            - name: admin-svc
+              port: admin
+          middlewares:
+            - name: admin-stripprefix
+    ---
+    kind: Middleware
+    metadata:
+      name: admin-stripprefix
+    spec:
+      stripPrefix:
+        prefixes:
+          - /admin
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    # dynamic-conf.toml
+
+    [http.routers.router1]
+        rule = "Host(`company.org`) && PathPrefix(`/admin`)"
+        service = "admin-svc"
+        entrypoints = ["web"]
+        middlewares = ["admin-stripprefix"]
+
+
+    [http.middlewares]
+      [http.middlewares.admin-stripprefix.stripPrefix]
+      prefixes = ["/admin"]
+
+    # ...
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic Configuration
+    # dynamic-conf.yml
+
+    # As YAML Configuration File
+    http:
+      routers:
+        admin:
+          service: admin-svc
+          middlewares:
+            - "admin-stripprefix"
+          rule: "Host(`company.org`) && PathPrefix(`/admin`)"
+
+      middlewares:
+        admin-stripprefix:
+          addPrefix:
+            prefix: "/admin"
+
+    # ...
+    ```
+
 ## ACME (LetsEncrypt)
 
 [ACME](../https/acme.md) is now a certificate resolver (under a certificatesResolvers section) but remains in the static configuration.
