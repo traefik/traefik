@@ -518,8 +518,8 @@ after the routing step with [router rule `PathPrefix`](https://docs.traefik.io/v
 Use Case: Incoming requests to `http://company.org/admin` are forwarded to the webapplication "admin",
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
 
-- First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
-- Then, define a middlware of type `stripprefix`, which remove the prefix `/admin`, associated to the router `admin`
+* First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
+* Then, define a middlware of type `stripprefix`, which remove the prefix `/admin`, associated to the router `admin`
 
 !!! example "Strip Path Prefix When Forwarding to Backend"
 
