@@ -512,14 +512,14 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 
 With the new core notions of v2 (introduced earlier in the section
 ["Frontends and Backends Are Dead... Long Live Routers, Middlewares, and Services"](#frontends-and-backends-are-dead-long-live-routers-middlewares-and-services)),
-transforming the URL path prefix of incoming requests is configured with [middlewares](../middlewares/overview/),
+transforming the URL path prefix of incoming requests is configured with [middlewares](../../middlewares/overview/),
 after the routing step with [router rule `PathPrefix`](https://docs.traefik.io/v2.0/routing/routers/#rule).
 
 Use Case: Incoming requests to `http://company.org/admin` are forwarded to the webapplication "admin",
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
 
 * First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
-* Then, define a middlware of type `stripprefix`, which remove the prefix `/admin`, associated to the router `admin`
+* Then, define a middlware of type [`stripprefix`](../../middlewares/stripprefix/), which remove the prefix `/admin`, associated to the router `admin`.
 
 !!! example "Strip Path Prefix When Forwarding to Backend"
 
