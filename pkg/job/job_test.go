@@ -33,13 +33,14 @@ func TestJobBackOff(t *testing.T) {
 		// Assert that the next backoff falls in the expected range.
 		var minInterval = expected - time.Duration(testRandomizationFactor*float64(expected))
 		var maxInterval = expected + time.Duration(testRandomizationFactor*float64(expected))
+
 		if i < 3 || i == 8 {
 			time.Sleep(2 * time.Second)
 		}
+
 		var actualInterval = exp.NextBackOff()
 		if !(minInterval <= actualInterval && actualInterval <= maxInterval) {
 			t.Error("error")
 		}
-		// assertEquals(t, expected, exp.currentInterval)
 	}
 }
