@@ -527,7 +527,6 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-
 			// NOTE: It is not possible to run these cases in parallel because we capture Stdout
 
 			file, restoreStdout := captureStdout(t)
@@ -543,7 +542,6 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 }
 
 func assertValidLogData(t *testing.T, expected string, logData []byte) {
-
 	if len(expected) == 0 {
 		assert.Zero(t, len(logData))
 		t.Log(string(logData))

@@ -9,7 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Int(v int) *int { return &v }
+func Int(v int) *int    { return &v }
+func Bool(v bool) *bool { return &v }
 
 func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
@@ -51,7 +52,7 @@ func Test_buildConfiguration(t *testing.T) {
 										URL: "http://127.0.0.1:80",
 									},
 								},
-								PassHostHeader: true,
+								PassHostHeader: Bool(true),
 							},
 						},
 					},
@@ -103,7 +104,7 @@ func Test_buildConfiguration(t *testing.T) {
 										URL: "http://127.0.0.1:80",
 									},
 								},
-								PassHostHeader: true,
+								PassHostHeader: Bool(true),
 							},
 						},
 						"Test2": {
@@ -113,7 +114,7 @@ func Test_buildConfiguration(t *testing.T) {
 										URL: "http://127.0.0.2:80",
 									},
 								},
-								PassHostHeader: true,
+								PassHostHeader: Bool(true),
 							},
 						},
 					},
@@ -168,7 +169,7 @@ func Test_buildConfiguration(t *testing.T) {
 										URL: "http://127.0.0.2:80",
 									},
 								},
-								PassHostHeader: true,
+								PassHostHeader: Bool(true),
 							},
 						},
 						"Test2": {
@@ -178,7 +179,7 @@ func Test_buildConfiguration(t *testing.T) {
 										URL: "http://128.0.0.1:80",
 									},
 								},
-								PassHostHeader: true,
+								PassHostHeader: Bool(true),
 							},
 						},
 					},
@@ -222,7 +223,7 @@ func Test_buildConfiguration(t *testing.T) {
 										URL: "http://127.0.0.1:80",
 									},
 								},
-								PassHostHeader: true,
+								PassHostHeader: Bool(true),
 							},
 						},
 					},
@@ -310,7 +311,7 @@ func Test_buildConfiguration(t *testing.T) {
 										URL: "http://127.0.0.1:80",
 									},
 								},
-								PassHostHeader: true,
+								PassHostHeader: Bool(true),
 							},
 						},
 					},
@@ -380,7 +381,7 @@ func Test_buildConfiguration(t *testing.T) {
 										URL: "http://127.0.0.1:80",
 									},
 								},
-								PassHostHeader: true,
+								PassHostHeader: Bool(true),
 							},
 						},
 					},
@@ -433,7 +434,7 @@ func Test_buildConfiguration(t *testing.T) {
 										URL: "http://127.0.0.1:80",
 									},
 								},
-								PassHostHeader: true,
+								PassHostHeader: Bool(true),
 							},
 						},
 					},
@@ -475,7 +476,7 @@ func Test_buildConfiguration(t *testing.T) {
 										URL: "http://127.0.0.1:80",
 									},
 								},
-								PassHostHeader: true,
+								PassHostHeader: Bool(true),
 							},
 						},
 					},
@@ -667,7 +668,7 @@ func Test_buildConfiguration(t *testing.T) {
 										URL: "http://127.0.0.2:80",
 									},
 								},
-								PassHostHeader: true,
+								PassHostHeader: Bool(true),
 							},
 						},
 					},

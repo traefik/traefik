@@ -21,7 +21,7 @@ const StatusClientClosedRequest = 499
 // StatusClientClosedRequestText non-standard HTTP status for client disconnection
 const StatusClientClosedRequestText = "Client Closed Request"
 
-func buildProxy(passHostHeader bool, responseForwarding *dynamic.ResponseForwarding, defaultRoundTripper http.RoundTripper, bufferPool httputil.BufferPool, responseModifier func(*http.Response) error) (http.Handler, error) {
+func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwarding, defaultRoundTripper http.RoundTripper, bufferPool httputil.BufferPool, responseModifier func(*http.Response) error) (http.Handler, error) {
 	var flushInterval types.Duration
 	if responseForwarding != nil {
 		err := flushInterval.Set(responseForwarding.FlushInterval)
@@ -53,7 +53,7 @@ func buildProxy(passHostHeader bool, responseForwarding *dynamic.ResponseForward
 			outReq.ProtoMinor = 1
 
 			// Do not pass client Host header unless optsetter PassHostHeader is set.
-			if !passHostHeader {
+			if passHostHeader != nil && !*passHostHeader {
 				outReq.Host = outReq.URL.Host
 			}
 

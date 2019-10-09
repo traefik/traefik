@@ -230,7 +230,6 @@ func guessWhoTLSMaxVersion(addr, serverName string, tlsCall bool, tlsMaxVersion 
 	var err error
 
 	if tlsCall {
-
 		conn, err = tls.Dial("tcp", addr, &tls.Config{
 			ServerName:         serverName,
 			InsecureSkipVerify: true,

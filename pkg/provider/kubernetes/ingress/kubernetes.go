@@ -221,7 +221,6 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 
 		var port int32
 		for _, subset := range endpoints.Subsets {
-
 			for _, p := range subset.Ports {
 				if portName == p.Name {
 					port = p.Port
@@ -249,7 +248,7 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 	return &dynamic.Service{
 		LoadBalancer: &dynamic.ServersLoadBalancer{
 			Servers:        servers,
-			PassHostHeader: true,
+			PassHostHeader: func(v bool) *bool { return &v }(true),
 		},
 	}, nil
 }
@@ -295,7 +294,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				conf.HTTP.Routers["/"] = &dynamic.Router{
+				conf.HTTP.Routers["default-router"] = &dynamic.Router{
 					Rule:     "PathPrefix(`/`)",
 					Priority: math.MinInt32,
 					Service:  "default-backend",
@@ -352,7 +351,6 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 						Service: serviceName,
 						TLS:     &dynamic.RouterTLSConfig{},
 					}
-
 				}
 				conf.HTTP.Services[serviceName] = service
 			}

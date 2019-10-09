@@ -171,7 +171,6 @@ func NewLocalChallengeStore() *LocalChallengeStore {
 			TLSChallenges:  make(map[string]*Certificate),
 		},
 	}
-
 }
 
 // GetHTTPChallengeToken Get the http challenge token from the store

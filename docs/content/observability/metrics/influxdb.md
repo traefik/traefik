@@ -4,12 +4,12 @@ To enable the InfluxDB:
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.influxdb]
+  [metrics.influxDB]
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
-  influxdb: {}
+  influxDB: {}
 ```
 
 ```bash tab="CLI"
@@ -24,13 +24,13 @@ Address instructs exporter to send metrics to influxdb at this address.
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.influxdb]
+  [metrics.influxDB]
     address = "localhost:8089"
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
-  influxdb:
+  influxDB:
     address: localhost:8089
 ```
 
@@ -46,13 +46,13 @@ InfluxDB's address protocol (udp or http).
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.influxdb]
+  [metrics.influxDB]
     protocol = "udp"
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
-  influxdb:
+  influxDB:
     protocol: udp
 ```
 
@@ -68,13 +68,13 @@ InfluxDB database used when protocol is http.
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.influxdb]
+  [metrics.influxDB]
     database = ""
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
-  influxdb:
+  influxDB:
     database: ""
 ```
 
@@ -90,13 +90,13 @@ InfluxDB retention policy used when protocol is http.
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.influxdb]
+  [metrics.influxDB]
     retentionPolicy = ""
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
-  influxdb:
+  influxDB:
     retentionPolicy: ""
 ```
 
@@ -112,13 +112,13 @@ InfluxDB username (only with http).
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.influxdb]
+  [metrics.influxDB]
     username = ""
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
-  influxdb:
+  influxDB:
     username: ""
 ```
 
@@ -134,13 +134,13 @@ InfluxDB password (only with http).
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.influxdb]
+  [metrics.influxDB]
     password = ""
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
-  influxdb:
+  influxDB:
     password: ""
 ```
 
@@ -156,13 +156,13 @@ Enable metrics on entry points.
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.influxdb]
+  [metrics.influxDB]
     addEntryPointsLabels = true
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
-  influxdb:
+  influxDB:
     addEntryPointsLabels: true
 ```
 
@@ -178,13 +178,13 @@ Enable metrics on services.
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.influxdb]
+  [metrics.influxDB]
     addServicesLabels = true
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
-  influxdb:
+  influxDB:
     addServicesLabels: true
 ```
 
@@ -200,13 +200,13 @@ The interval used by the exporter to push metrics to influxdb.
 
 ```toml tab="File (TOML)"
 [metrics]
-  [metrics.influxdb]
+  [metrics.influxDB]
     pushInterval = 10s
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
-  influxdb:
+  influxDB:
     pushInterval: 10s
 ```
 

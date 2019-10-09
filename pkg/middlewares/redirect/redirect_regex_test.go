@@ -179,16 +179,13 @@ func TestRedirectRegexHandler(t *testing.T) {
 				handler.ServeHTTP(recorder, r)
 
 				assert.Equal(t, test.expectedStatus, recorder.Code)
-				if test.expectedStatus == http.StatusMovedPermanently ||
-					test.expectedStatus == http.StatusFound ||
-					test.expectedStatus == http.StatusTemporaryRedirect ||
-					test.expectedStatus == http.StatusPermanentRedirect {
-
+				switch test.expectedStatus {
+				case http.StatusMovedPermanently, http.StatusFound, http.StatusTemporaryRedirect, http.StatusPermanentRedirect:
 					location, err := recorder.Result().Location()
 					require.NoError(t, err)
 
 					assert.Equal(t, test.expectedURL, location.String())
-				} else {
+				default:
 					location, err := recorder.Result().Location()
 					require.Errorf(t, err, "Location %v", location)
 				}

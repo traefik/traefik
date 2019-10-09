@@ -232,7 +232,7 @@ Below are the available options for the health check mechanism:
     ```toml tab="TOML"
     ## Dynamic configuration
     [http.services]
-      [http.servicess.Service-1]
+      [http.services.Service-1]
         [http.services.Service-1.loadBalancer.healthCheck]
           path = "/health"
           interval = "10s"
@@ -242,7 +242,7 @@ Below are the available options for the health check mechanism:
     ```yaml tab="YAML"
     ## Dynamic configuration
     http:
-      servicess:
+      services:
         Service-1:
           loadBalancer:
             healthCheck:
@@ -322,6 +322,63 @@ Below are the available options for the health check mechanism:
                 My-Header: bar
     ```
 
+#### Pass Host Header
+
+The `passHostHeader` allows to forward client Host header to server.
+
+By default, `passHostHeader` is true.
+
+??? example "Don't forward the host header -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.Service01]
+        [http.services.Service01.loadBalancer]
+          passHostHeader = false
+    ```
+    
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        Service01:
+          loadBalancer:
+            passHostHeader: false
+    ```
+   
+#### Response Forwarding
+
+This section is about configuring how Traefik forwards the response from the backend server to the client.
+
+Below are the available options for the Response Forwarding mechanism:
+
+- `FlushInterval` specifies the interval in between flushes to the client while copying the response body.
+  It is a duration in milliseconds, defaulting to 100.
+  A negative value means to flush immediately after each write to the client.
+  The FlushInterval is ignored when ReverseProxy recognizes a response as a streaming response;
+  for such responses, writes are flushed to the client immediately.
+  
+??? example "Using a custom FlushInterval -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.Service-1]
+        [http.services.Service-1.loadBalancer.responseForwarding]
+          flushInterval = "1s"
+    ```
+    
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        Service-1:
+          loadBalancer:
+            responseForwarding:
+              flushInterval: 1s
+    ```
+    
 ### Weighted Round Robin (service)
 
 The WRR is able to load balance the requests between multiple services based on weights.

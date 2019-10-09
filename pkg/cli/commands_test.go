@@ -82,7 +82,6 @@ func Test_execute(t *testing.T) {
 						return nil
 					},
 				}
-
 			},
 			expected: expected{result: "root"},
 		},
@@ -99,7 +98,6 @@ func Test_execute(t *testing.T) {
 						return nil
 					},
 				}
-
 			},
 			expected: expected{error: true},
 		},

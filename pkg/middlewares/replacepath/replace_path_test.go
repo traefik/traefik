@@ -23,7 +23,6 @@ func TestReplacePath(t *testing.T) {
 
 	for _, path := range paths {
 		t.Run(path, func(t *testing.T) {
-
 			var expectedPath, actualHeader, requestURI string
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				expectedPath = r.URL.Path

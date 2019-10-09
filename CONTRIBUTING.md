@@ -1,3 +1,4 @@
 # Contributing
 
-See <https://docs.traefik.io/v2.0/contributing/thank-you/>.
+- https://docs.traefik.io/contributing/submitting-pull-requests/
+- https://docs.traefik.io/contributing/submitting-issues/

@@ -414,7 +414,6 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 						}
 						p.resolveDomains(ctxRouter, domains, tlsStore)
 					}
-
 				}
 			case <-stop:
 				return

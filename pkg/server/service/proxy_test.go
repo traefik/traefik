@@ -28,7 +28,7 @@ func BenchmarkProxy(b *testing.B) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 
 	pool := newBufferPool()
-	handler, _ := buildProxy(false, nil, &staticTransport{res}, pool, nil)
+	handler, _ := buildProxy(Bool(false), nil, &staticTransport{res}, pool, nil)
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {

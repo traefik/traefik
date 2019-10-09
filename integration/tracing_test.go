@@ -88,7 +88,6 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 
 	err = try.GetRequest("http://"+s.IP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("forward service1/router1@file", "ratelimit-1@file"))
 	c.Assert(err, checker.IsNil)
-
 }
 
 func (s *TracingSuite) TestZipkinRetry(c *check.C) {

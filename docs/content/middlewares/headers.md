@@ -235,7 +235,7 @@ http:
   middlewares:
     testHeader:
       headers:
-        accessControlAllowMethod:
+        accessControlAllowMethods:
           - GET
           - OPTIONS
           - PUT
@@ -331,7 +331,7 @@ If set to 0, would NOT include the header.
 
 ### `stsIncludeSubdomains` 
 
-The `stsIncludeSubdomains` is set to true, the `includeSubdomains` will be appended to the Strict-Transport-Security header.
+The `stsIncludeSubdomains` is set to true, the `includeSubDomains` directive will be appended to the Strict-Transport-Security header.
 
 ### `stsPreload` 
 

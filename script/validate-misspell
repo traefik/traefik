@@ -2,8 +2,7 @@
 
 SCRIPT_DIR="$( cd "$( dirname "${0}" )" && pwd -P)"
 files=()
-while IFS='' read -r line; do files+=("$line"); done < <(git ls-files "${SCRIPT_DIR}"/../'docs/*.md' "${SCRIPT_DIR}"/../*.md)
-
+while IFS='' read -r line; do files+=("$line"); done < <(git ls-files "${SCRIPT_DIR}"/../'docs/*.md' "${SCRIPT_DIR}"/../*.md | grep -v "CHANGELOG.md")
 
 errors=()
 for f in "${files[@]}"; do

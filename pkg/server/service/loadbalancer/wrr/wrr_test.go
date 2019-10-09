@@ -19,7 +19,6 @@ type responseRecorder struct {
 func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.save[r.Header().Get("server")]++
 	r.ResponseRecorder.WriteHeader(statusCode)
-
 }
 
 func TestBalancer(t *testing.T) {

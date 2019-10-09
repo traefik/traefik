@@ -10,7 +10,7 @@ See also [Marathon user guide](../../user-guides/marathon.md).
 !!! info "Labels"
     
     - Labels are case insensitive.
-    - The complete list of labels can be found [the reference page](../../reference/dynamic-configuration/marathon.md)
+    - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/marathon.md).
 
 ### General
 
@@ -18,6 +18,32 @@ Traefik creates, for each Marathon application, a corresponding [service](../ser
 
 The Service automatically gets a server per instance of the application,
 and the router automatically gets a rule defined by defaultRule (if no rule for it was defined in labels).
+
+#### Service definition
+
+--8<-- "content/routing/providers/service-by-label.md"
+
+??? example "Automatic service assignment with labels"
+
+    Service myservice gets automatically assigned to router myproxy.
+
+    ```json
+    labels: {
+      "traefik.http.routers.myproxy.rule": "Host(`foo.com`)",
+      "traefik.http.services.myservice.loadbalancer.server.port": "80"
+    }
+    ```
+
+??? example "Automatic service creation and assignment with labels"
+
+    No service specified or defined, and yet one gets automatically created.
+    and assigned to router myproxy.
+
+    ```json
+    labels: {
+      "traefik.http.routers.myproxy.rule": "Host(`foo.com`)"
+	}
+    ```
 
 ### Routers
 
@@ -99,7 +125,8 @@ For example, to change the routing rule, you could add the label ```"traefik.htt
     ```
 
 ??? info "`traefik.http.routers.<router_name>.priority`"
-    <!-- TODO doc priority in routers page -->
+    
+    See [options](../routers/index.md#priority) for more information.
     
     ```json
     "traefik.http.routers.myrouter.priority": "42"
@@ -130,7 +157,8 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
-    <!-- TODO doc passHostHeader in services page -->
+    
+    See [pass Host header](../services/index.md#pass-host-header) for more information.
     
     ```json
     "traefik.http.services.myservice.loadbalancer.passhostheader": "true"
@@ -225,10 +253,9 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
-    <!-- TODO doc responseforwarding in services page -->
     
-    FlushInterval specifies the flush interval to flush to the client while copying the response body.
-    
+    See [response forwarding](../services/index.md#response-forwarding) for more information.
+
     ```json
     "traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval": "10"
     ```

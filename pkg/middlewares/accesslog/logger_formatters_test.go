@@ -99,11 +99,9 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 			assert.Equal(t, test.expectedLog, string(raw))
 		})
 	}
-
 }
 
 func Test_toLog(t *testing.T) {
-
 	testCases := []struct {
 		desc         string
 		fields       logrus.Fields

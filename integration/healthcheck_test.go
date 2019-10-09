@@ -27,7 +27,6 @@ func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
-
 	file := s.adaptFile(c, "fixtures/healthcheck/simple.toml", struct {
 		Server1 string
 		Server2 string
@@ -166,7 +165,6 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints(c *check.C) {
 }
 
 func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
-
 	// Set one whoami health to 200
 	client := &http.Client{}
 	statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("200")))
@@ -206,5 +204,4 @@ func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
 	// Verify no backend service is available due to failing health checks
 	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
 	c.Assert(err, checker.IsNil)
-
 }

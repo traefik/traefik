@@ -142,9 +142,9 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 
-		qualifiedNames := make([]string, len(config.Chain.Middlewares))
-		for i, name := range config.Chain.Middlewares {
-			qualifiedNames[i] = internal.GetQualifiedName(ctx, name)
+		var qualifiedNames []string
+		for _, name := range config.Chain.Middlewares {
+			qualifiedNames = append(qualifiedNames, internal.GetQualifiedName(ctx, name))
 		}
 		config.Chain.Middlewares = qualifiedNames
 		middleware = func(next http.Handler) (http.Handler, error) {
@@ -324,7 +324,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	if middleware == nil {
-		return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
+		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
 	return tracing.Wrap(ctx, middleware), nil
