@@ -294,7 +294,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				conf.HTTP.Routers["/"] = &dynamic.Router{
+				conf.HTTP.Routers["default-router"] = &dynamic.Router{
 					Rule:     "PathPrefix(`/`)",
 					Priority: math.MinInt32,
 					Service:  "default-backend",
