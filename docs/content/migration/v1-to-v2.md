@@ -602,11 +602,10 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
         entrypoints = ["web"]
         middlewares = ["admin-stripprefix"]
 
-
     [http.middlewares]
       [http.middlewares.admin-stripprefix.stripPrefix]
       prefixes = ["/admin"]
-
+    
     # ...
     ```
 
