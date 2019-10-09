@@ -3,7 +3,7 @@ name: Feature request
 about: Suggest an idea for this project
 
 ---
-PLEASE FOLLOW THE ISSUE TEMPLATE.
+<!-- PLEASE FOLLOW THE ISSUE TEMPLATE TO HELP TRIAGE AND SUPPORT! -->
 
 ### Do you want to request a *feature* or report a *bug*?
 
