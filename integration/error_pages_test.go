@@ -47,7 +47,6 @@ func (s *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {
 }
 
 func (s *ErrorPagesSuite) TestErrorPage(c *check.C) {
-
 	// error.toml contains a mis-configuration of the backend host
 	file := s.adaptFile(c, "fixtures/error_pages/error.toml", struct {
 		Server1 string

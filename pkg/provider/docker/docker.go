@@ -142,7 +142,12 @@ func (p *Provider) createClient() (client.APIClient, error) {
 		apiVersion = SwarmAPIVersion
 	}
 
-	return client.NewClient(p.Endpoint, apiVersion, httpClient, httpHeaders)
+	return client.NewClientWithOpts(
+		client.WithHost(p.Endpoint),
+		client.WithVersion(apiVersion),
+		client.WithHTTPClient(httpClient),
+		client.WithHTTPHeaders(httpHeaders),
+	)
 }
 
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
@@ -193,10 +198,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			if p.Watch {
 				if p.SwarmMode {
 					errChan := make(chan error)
+
 					// TODO: This need to be change. Linked to Swarm events docker/docker#23827
 					ticker := time.NewTicker(time.Duration(p.SwarmModeRefreshSeconds))
-					pool.GoCtx(func(ctx context.Context) {
 
+					pool.GoCtx(func(ctx context.Context) {
 						ctx = log.With(ctx, log.Str(log.ProviderName, "docker"))
 						logger := log.FromContext(ctx)
 
@@ -229,7 +235,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						return err
 					}
 					// channel closed
-
 				} else {
 					f := filters.NewArgs()
 					f.Add("type", "container")
@@ -256,7 +261,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							case configurationChan <- message:
 							case <-ctx.Done():
 							}
-
 						}
 					}
 

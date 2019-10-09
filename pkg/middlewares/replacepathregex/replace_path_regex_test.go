@@ -74,7 +74,6 @@ func TestReplacePathRegex(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-
 			var actualPath, actualHeader, requestURI string
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				actualPath = r.URL.Path

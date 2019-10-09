@@ -193,7 +193,6 @@ func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 
 	err = try.GetRequest("http://127.0.0.1:8080/health", 1*time.Second, try.BodyContains(`"total_status_code_count":{"200":2}`))
 	c.Assert(err, checker.IsNil)
-
 }
 
 func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
@@ -301,7 +300,6 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 
 	err = try.GetRequest("http://127.0.0.1:8000/file", 1*time.Second, try.BodyContains(ipWhoami02))
 	c.Assert(err, checker.IsNil)
-
 }
 
 func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
@@ -449,7 +447,6 @@ func (s *SimpleSuite) TestMultiProvider(c *check.C) {
 
 	err = try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("CustomValue"))
 	c.Assert(err, checker.IsNil)
-
 }
 
 func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.C) {
@@ -625,8 +622,8 @@ func (s *SimpleSuite) TestWRRSticky(c *check.C) {
 	repartition := map[string]int{}
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
 	c.Assert(err, checker.IsNil)
-	for i := 0; i < 4; i++ {
 
+	for i := 0; i < 4; i++ {
 		response, err := http.DefaultClient.Do(req)
 		c.Assert(err, checker.IsNil)
 		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)

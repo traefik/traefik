@@ -269,7 +269,6 @@ func TestPrometheus(t *testing.T) {
 			}
 			test.assert(family)
 		})
-
 	}
 }
 

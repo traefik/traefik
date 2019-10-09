@@ -17,13 +17,39 @@ Attach labels to your services and let Traefik do the rest!
 !!! info "Labels"
     
     - Labels are case insensitive.
-    - The complete list of labels can be found [the reference page](../../reference/dynamic-configuration/rancher.md)
+    - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/rancher.md).
 
 ### General
 
 Traefik creates, for each rancher service, a corresponding [service](../services/index.md) and [router](../routers/index.md).
 
 The Service automatically gets a server per container in this rancher service, and the router gets a default rule attached to it, based on the service name.
+
+#### Service definition
+
+--8<-- "content/routing/providers/service-by-label.md"
+
+??? example "Automatic service assignment with labels"
+
+    With labels in a compose file
+
+    ```yaml
+    labels:
+      - "traefik.http.routers.myproxy.rule=Host(`foo.com`)"
+      # service myservice gets automatically assigned to router myproxy
+      - "traefik.http.services.myservice.loadbalancer.server.port=80"
+    ```
+
+??? example "Automatic service creation and assignment with labels"
+
+    With labels in a compose file
+
+    ```yaml
+    labels:
+      # no service specified or defined and yet one gets automatically created
+      # and assigned to router myproxy.
+      - "traefik.http.routers.myproxy.rule=Host(`foo.com`)"
+    ```
 
 ### Routers
 
@@ -104,7 +130,8 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     ```
 
 ??? info "`traefik.http.routers.<router_name>.priority`"
-    <!-- TODO doc priority in routers page -->
+    
+    See [options](../routers/index.md#priority) for more information.
     
     ```yaml
     - "traefik.http.routers.myrouter.priority=42"
@@ -136,7 +163,8 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
-    <!-- TODO doc passHostHeader in services page -->
+    
+    See [pass Host header](../services/index.md#pass-host-header) for more information.
     
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.passhostheader=true"
@@ -231,10 +259,9 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
-    <!-- TODO doc responseforwarding in services page -->
     
-    FlushInterval specifies the flush interval to flush to the client while copying the response body.
-    
+    See [response forwarding](../services/index.md#response-forwarding) for more information.
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10"
     ```

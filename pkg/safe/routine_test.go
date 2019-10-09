@@ -12,6 +12,7 @@ import (
 
 func TestNewPoolContext(t *testing.T) {
 	type testKeyType string
+
 	testKey := testKeyType("test")
 
 	ctx := context.WithValue(context.Background(), testKey, "test")

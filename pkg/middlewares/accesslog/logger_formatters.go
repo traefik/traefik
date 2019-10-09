@@ -69,8 +69,8 @@ func toLog(fields logrus.Fields, key string, defaultValue string, quoted bool) i
 			return v
 		}
 	}
-	return defaultValue
 
+	return defaultValue
 }
 
 func toLogEntry(s string, defaultValue string, quote bool) string {

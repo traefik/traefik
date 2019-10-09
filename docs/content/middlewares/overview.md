@@ -183,14 +183,14 @@ and therefore this specification would be ignored even if present.
       routes:
         - match: Host(`bar.com`)
           kind: Rule
-        services:
-          - name: whoami
-            port: 80
-        middlewares:
-          - name: add-foo-prefix@file
-          # namespace: bar
-          # A namespace specification such as above is ignored
-          # when the cross-provider syntax is used.
+          services:
+            - name: whoami
+              port: 80
+          middlewares:
+            - name: add-foo-prefix@file
+            # namespace: bar
+            # A namespace specification such as above is ignored
+            # when the cross-provider syntax is used.
     ```
 
 ## Available Middlewares

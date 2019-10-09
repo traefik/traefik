@@ -360,7 +360,6 @@ WqeUSNGYV//RunTeuRDAf5OxehERb1srzBXhRZ3cZdzXbgR/`),
 			require.Equal(t, test.expected, sanitize(test.toSanitize), "The sanitized certificates should be equal")
 		})
 	}
-
 }
 
 func TestTLSClientHeadersWithPEM(t *testing.T) {
@@ -429,7 +428,6 @@ func TestTLSClientHeadersWithPEM(t *testing.T) {
 			require.Empty(t, res.Header().Get(xForwardedTLSClientCert), "The response header should be always empty")
 		})
 	}
-
 }
 
 func TestGetSans(t *testing.T) {
@@ -478,7 +476,6 @@ func TestGetSans(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestTLSClientHeadersWithCertInfo(t *testing.T) {
@@ -659,5 +656,4 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 			require.Empty(t, res.Header().Get(xForwardedTLSClientCertInfo), "The response header should be always empty")
 		})
 	}
-
 }

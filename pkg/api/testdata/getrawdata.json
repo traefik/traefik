@@ -65,7 +65,7 @@
 						"url": "http://127.0.0.1"
 					}
 				],
-				"passHostHeader": false
+				"passHostHeader": true
 			},
 			"status": "enabled",
 			"usedBy": [

@@ -36,7 +36,7 @@ Then any router can refer to an instance of the wanted middleware.
     ```yaml tab="Docker"
     labels:
       - "traefik.frontend.rule=Host:test.localhost;PathPrefix:/test"
-      - "traefik.frontend.auth.basic.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+      - "traefik.frontend.auth.basic.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     ```
 
     ```yaml tab="K8s Ingress"
@@ -99,7 +99,7 @@ Then any router can refer to an instance of the wanted middleware.
     labels:
       - "traefik.http.routers.router0.rule=Host(`bar.com`) && PathPrefix(`/test`)"
       - "traefik.http.routers.router0.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+      - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     ```
 
     ```yaml tab="K8s IngressRoute"
@@ -204,7 +204,11 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
           minVersion = "VersionTLS12"
           cipherSuites = [
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_RSA_WITH_AES_256_GCM_SHA384"
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
            ]
           [[entryPoints.web-secure.tls.certificates]]
             certFile = "path/to/my.cert"
@@ -212,7 +216,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     ```
     
     ```bash tab="CLI"
-    --entryPoints='Name:web-secure Address::443 TLS:path/to/my.cert,path/to/my.key TLS.MinVersion:VersionTLS12 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA384'
+    --entryPoints='Name:web-secure Address::443 TLS:path/to/my.cert,path/to/my.key TLS.MinVersion:VersionTLS12 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256'
     ```
     
     !!! info "v2"
@@ -238,8 +242,12 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       [tls.options.myTLSOptions]
         minVersion = "VersionTLS13"
         cipherSuites = [
-              "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-              "TLS_RSA_WITH_AES_256_GCM_SHA384"
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
             ]
     ```
     
@@ -261,8 +269,11 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
         myTLSOptions:
           minVersion: VersionTLS13
           cipherSuites:
-            - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-            - TLS_RSA_WITH_AES_256_GCM_SHA384
+	        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+	        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+	        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+	        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     ```
     
     ```yaml tab="K8s IngressRoute"
@@ -277,8 +288,11 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     spec:
       minVersion: VersionTLS13
       cipherSuites:
-        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        - TLS_RSA_WITH_AES_256_GCM_SHA384
+	    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+	    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+	    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+	    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     
     ---
     apiVersion: traefik.containo.us/v1alpha1
@@ -413,7 +427,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     ##---------------------##
     
     ## dynamic configuration
-    # dymanic-conf.toml
+    # dynamic-conf.toml
     
     [http.routers]
       [http.routers.router0]
@@ -457,7 +471,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     ##---------------------##
     
     ## dynamic configuration
-    # dymanic-conf.yml
+    # dynamic-conf.yml
     
     http:
       routers:
@@ -824,7 +838,7 @@ Each root item has been moved to a related section or removed.
     
 ## Dashboard
 
-You need to activate the [API](../operations/dashboard.md#enabling-the-dashboard) to access the dashboard.
+You need to activate the API to access the [dashboard](../operations/dashboard.md).
 As the dashboard access is now secured by default you can either:
 
 * define a  [specific router](../operations/api.md#configuration) with the `api@internal` service and one authentication middleware like the following example
@@ -870,7 +884,7 @@ As the dashboard access is now secured by default you can either:
       - "traefik.http.routers.api.service=api@internal"
       - "traefik.http.routers.api.middlewares=myAuth"
       - "traefik.http.routers.api.tls"
-      - "traefik.http.middlewares.myAuth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+      - "traefik.http.middlewares.myAuth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
     ```
 
     ```toml tab="File (TOML)"
@@ -883,12 +897,12 @@ As the dashboard access is now secured by default you can either:
     [api]
     
     [providers.file]
-        filename = "/dymanic-conf.toml"
+        filename = "/dynamic-conf.toml"
     
     ##---------------------##
     
     ## dynamic configuration
-    # dymanic-conf.toml
+    # dynamic-conf.toml
     
     [http.routers.api]
       rule = "Host(`traefik.docker.localhost`)"
@@ -915,12 +929,12 @@ As the dashboard access is now secured by default you can either:
     
     providers:
       file:
-        filename: /dymanic-conf.yaml
+        filename: /dynamic-conf.yaml
    
     ##---------------------##
     
     ## dynamic configuration
-    # dymanic-conf.yaml
+    # dynamic-conf.yaml
     
      http:
       routers:

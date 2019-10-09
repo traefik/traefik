@@ -130,7 +130,6 @@ func findTypedField(rType reflect.Type, node *Node) (reflect.StructField, error)
 				return cField, nil
 			}
 		}
-
 	}
 
 	return reflect.StructField{}, fmt.Errorf("field not found, node: %s", node.Name)

@@ -229,7 +229,7 @@ The table below lists all the available matchers:
 | ```Method(`GET`, ...)```                                             | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
 | ```Path(`/path`, `/articles/{category}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
 | ```PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
-| ```Query(`foo=bar`, `bar=baz`)```                                    | Match` Query String parameters. It accepts a sequence of key=value pairs.                                      |
+| ```Query(`foo=bar`, `bar=baz`)```                                    | Match Query String parameters. It accepts a sequence of key=value pairs.                                      |
 
 !!! important "Regexp Syntax"
 
@@ -252,6 +252,85 @@ The table below lists all the available matchers:
     Use a `*Prefix*` matcher if your service listens on a particular base path but also serves requests on sub-paths.
     For instance, `PathPrefix: /products` would match `/products` but also `/products/shoes` and `/products/shirts`.
     Since the path is forwarded as-is, your service is expected to listen on `/products`.
+
+### Priority
+
+To avoid path overlap, routes are sorted, by default, in descending order using rules length. The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
+
+A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
+
+??? info "How default priorities are computed"
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.Router-1]
+        rule = "HostRegexp(`.*\.traefik\.com`)"
+        # ...
+      [http.routers.Router-2]
+        rule = "Host(`foobar.traefik.com`)"
+        # ...
+    ```
+    
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    http:
+      routers:
+        Router-1:
+          rule: "HostRegexp(`.*\.traefik\.com`)"
+          # ...
+        Router-2:
+          rule: "Host(`foobar.traefik.com`)"
+          # ...
+    ```
+    
+    In this case, all requests with host `foobar.traefik.com` will be routed through `Router-1` instead of `Router-2`.
+    
+    | Name     | Rule                                 | Priority |
+    |----------|--------------------------------------|----------|
+    | Router-1 | ```HostRegexp(`.*\.traefik\.com`)``` | 30       |
+    | Router-2 | ```Host(`foobar.traefik.com`)```     | 26       |
+    
+    The previous table shows that `Router-1` has a higher priority than `Router-2`.
+    
+    To solve this issue, the priority must be setted.
+
+??? example "Set priorities -- using the [File Provider](../../providers/file.md)"
+    
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.Router-1]
+        rule = "HostRegexp(`.*\.traefik\.com`)"
+        entryPoints = ["web"]
+        service = "service-1"
+        priority = 1
+      [http.routers.Router-2]
+        rule = "Host(`foobar.traefik.com`)"
+        entryPoints = ["web"]
+        priority = 2
+        service = "service-2"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    http:
+      routers:
+        Router-1:
+          rule: "HostRegexp(`.*\.traefik\.com`)"
+          entryPoints:
+          - "web"
+          service: service-1
+          priority: 1
+        Router-2:
+          rule: "Host(`foobar.traefik.com`)"
+          entryPoints:
+          - "web"
+          priority: 2
+          service: service-2
+    ```
+
+    In this configuration, the priority is configured to allow `Router-2` to handle requests with the `foobar.traefik.com` host.
 
 ### Middlewares
 
@@ -288,8 +367,14 @@ The middlewares will take effect only if the rule matches, and before forwarding
 
 ### Service
 
-You must attach a [service](../services/index.md) per router.
-Services are the target for the router.
+Each request must eventually be handled by a [service](../services/index.md),
+which is why each router definition should include a service target,
+which is basically where the request will be passed along to.
+
+In general, a service assigned to a router should have been defined,
+but there are exceptions for label-based providers.
+See the specific [docker](../providers/docker.md#service-definition), [rancher](../providers/rancher.md#service-definition),
+or [marathon](../providers/marathon.md#service-definition) documentation.
 
 !!! important "HTTP routers can only target HTTP services (not TCP services)."
 
@@ -394,8 +479,11 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
       [tls.options.foo]
         minVersion = "VersionTLS12"
         cipherSuites = [
+          "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-          "TLS_RSA_WITH_AES_256_GCM_SHA384"
         ]
     ```
     
@@ -415,8 +503,11 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
         foo:
           minVersion: VersionTLS12
           cipherSuites:
+            - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+            - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+            - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+            - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
             - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-            - TLS_RSA_WITH_AES_256_GCM_SHA384
     ```
 
 !!! important "Conflicting TLS Options"
@@ -511,7 +602,8 @@ http:
         certResolver: "bar"
         domains:
           - main: "snitest.com"
-            sans: "*.snitest.com"
+            sans:
+              - "*.snitest.com"
 ```
 
 [ACME v2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
@@ -766,8 +858,11 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
       [tls.options.foo]
         minVersion = "VersionTLS12"
         cipherSuites = [
+          "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-          "TLS_RSA_WITH_AES_256_GCM_SHA384"
         ]
     ```
 
@@ -787,8 +882,11 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
         foo:
           minVersion: VersionTLS12
           cipherSuites:
-            - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
-            - "TLS_RSA_WITH_AES_256_GCM_SHA384"
+            - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+            - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+            - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+            - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+            - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     ```
 
 #### `certResolver`
@@ -840,5 +938,6 @@ tcp:
         certResolver: "bar"
         domains:
           - main: "snitest.com"
-            sans: "*.snitest.com"
+            sans: 
+              - "*.snitest.com"
 ```

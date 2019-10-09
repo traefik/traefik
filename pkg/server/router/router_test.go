@@ -399,7 +399,6 @@ func TestAccessLog(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-
 			rtConf := runtime.NewConfig(dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Services:    test.serviceConfig,
@@ -407,6 +406,7 @@ func TestAccessLog(t *testing.T) {
 					Middlewares: test.middlewaresConfig,
 				},
 			})
+
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
@@ -722,7 +722,6 @@ func TestRuntimeConfiguration(t *testing.T) {
 			assert.Equal(t, test.expectedError, allErrors)
 		})
 	}
-
 }
 
 func TestProviderOnMiddlewares(t *testing.T) {
@@ -833,7 +832,6 @@ func BenchmarkRouterServe(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)
 	}
-
 }
 
 func BenchmarkService(b *testing.B) {
@@ -868,5 +866,4 @@ func BenchmarkService(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		handler.ServeHTTP(w, req)
 	}
-
 }

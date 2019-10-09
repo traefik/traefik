@@ -119,7 +119,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 			return fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
 		}
 		serverEntryPointsTCP[entryPointName].RouteAppenderFactory = router.NewRouteAppenderFactory(*staticConfiguration, entryPointName, acmeProviders)
-
 	}
 
 	svr := server.NewServer(*staticConfiguration, providerAggregator, serverEntryPointsTCP, tlsManager)
