@@ -1,5 +1,5 @@
 [run]
-  deadline = "10m"
+  timeout = "10m"
   skip-files = []
   skip-dirs = [
     "pkg/provider/kubernetes/crd/generated/",
