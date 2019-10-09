@@ -422,7 +422,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"/": {
+						"default-router": {
 							Rule:     "PathPrefix(`/`)",
 							Service:  "default-backend",
 							Priority: math.MinInt32,
@@ -819,7 +819,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"/": {
+						"default-router": {
 							Rule:     "PathPrefix(`/`)",
 							Service:  "default-backend",
 							Priority: math.MinInt32,
