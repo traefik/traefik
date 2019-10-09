@@ -3,6 +3,9 @@ name: Feature request
 about: Suggest an idea for this project
 
 ---
+PLEASE FOLLOW THE ISSUE TEMPLATE.
+
+### Do you want to request a *feature* or report a *bug*?
 
 <!--
 DO NOT FILE ISSUES FOR GENERAL SUPPORT QUESTIONS.
@@ -13,9 +16,6 @@ For end-user related support questions, please refer to one of the following:
 - the Traefik community forum: https://community.containo.us/
 
 -->
-
-
-### Do you want to request a *feature* or report a *bug*?
 
 Feature
 

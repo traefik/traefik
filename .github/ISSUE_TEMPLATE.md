@@ -1,3 +1,7 @@
+PLEASE FOLLOW THE ISSUE TEMPLATE.
+
+### Do you want to request a *feature* or report a *bug*?
+
 <!--
 DO NOT FILE ISSUES FOR GENERAL SUPPORT QUESTIONS.
 
@@ -8,21 +12,12 @@ For end-user related support questions, please refer to one of the following:
 
 -->
 
-
-### Do you want to request a *feature* or report a *bug*?
-
-<!--
-If you intend to ask a support question: DO NOT FILE AN ISSUE.
--->
-
-### Did you try using a 1.7.x configuration for the version 2.0?
-
-- [ ] Yes
-- [ ] No
+Bug
 
 <!--
 
-If you just checked the "Yes" box, be aware that this is probably not a bug. The configurations between 1.X and 2.X are NOT compatible. Please have a look here https://docs.traefik.io/v2.0/getting-started/configuration-overview/.
+The configurations between 1.X and 2.X are NOT compatible.
+Please have a look here https://docs.traefik.io/v2.0/getting-started/configuration-overview/.
 
 -->
 
@@ -30,7 +25,7 @@ If you just checked the "Yes" box, be aware that this is probably not a bug. The
 
 <!--
 
-HOW TO WRITE A GOOD ISSUE?
+HOW TO WRITE A GOOD BUG REPORT?
 
 - Respect the issue template as much as possible.
 - The title should be short and descriptive.
@@ -52,13 +47,12 @@ HOW TO WRITE A GOOD ISSUE?
 ### Output of `traefik version`: (_What version of Traefik are you using?_)
 
 <!--
+`latest` is not considered as a valid version.
+
 For the Traefik Docker image:
     docker run [IMAGE] version
     ex: docker run traefik version
 
-For the alpine Traefik Docker image:
-    docker run [IMAGE] traefik version
-    ex: docker run traefik traefik version
 -->
 
 ```
@@ -70,12 +64,13 @@ For the alpine Traefik Docker image:
 ```toml
 # (paste your configuration here)
 ```
+
 <!--
 Add more configuration information here.
 -->
 
 
-### If applicable, please paste the log output at DEBUG level (`--log.level=DEBUG` switch)
+### If applicable, please paste the log output in DEBUG level (`--log.level=DEBUG` switch)
 
 ```
 (paste your output here)
