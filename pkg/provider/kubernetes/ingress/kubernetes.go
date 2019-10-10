@@ -16,6 +16,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/containous/traefik/v2/pkg/types"
@@ -324,8 +325,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				serviceName := ingress.Namespace + "-" + p.Backend.ServiceName + "-" + p.Backend.ServicePort.String()
-				serviceName = strings.ReplaceAll(serviceName, ".", "-")
+				serviceName := provider.Normalize(ingress.Namespace + "-" + p.Backend.ServiceName + "-" + p.Backend.ServicePort.String())
 				var rules []string
 				if len(rule.Host) > 0 {
 					rules = []string{"Host(`" + rule.Host + "`)"}
@@ -335,10 +335,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					rules = append(rules, "PathPrefix(`"+p.Path+"`)")
 				}
 
-				routerKey := strings.Replace(rule.Host, ".", "-", -1) + strings.Replace(p.Path, "/", "-", 1)
-				if strings.HasPrefix(routerKey, "-") {
-					routerKey = strings.Replace(routerKey, "-", "", 1)
-				}
+				routerKey := strings.TrimPrefix(provider.Normalize(rule.Host+p.Path), "-")
 				conf.HTTP.Routers[routerKey] = &dynamic.Router{
 					Rule:    strings.Join(rules, " && "),
 					Service: serviceName,
