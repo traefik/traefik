@@ -28,7 +28,8 @@ There are 2 ways to configure and access the dashboard:
 
 This is the **recommended** method.
 
-Start by enabling the dashboard by using the following option from [Traefik's API](./api.md):
+Start by enabling the dashboard by using the following option from [Traefik's API](./api.md)
+on the [static configuration](../getting-started/configuration-overview.md#the-static-configuration):
 
 ```toml tab="File (TOML)"
 [api]
@@ -59,7 +60,10 @@ api:
 --api.dashboard=true
 ```
 
-Then specify a router associated to the service `api@internal` to allow defining:
+Then define a routing configuration on Traefik itself, 
+with a router attached to the service `api@internal` in the 
+[dynamic configuration](../getting-started/configuration-overview.md#the-dynamic-configuration),
+to allow defining:
 
 - One or more security features through [middlewares](../middlewares/overview.md)
   like authentication ([basicAuth](../middlewares/basicauth.md) , [digestAuth](../middlewares/digestauth.md),
@@ -67,6 +71,66 @@ Then specify a router associated to the service `api@internal` to allow defining
 
 - A [router rule](#dashboard-router-rule) for accessing the dashboard,
   through Traefik itself (sometimes referred as "Traefik-ception").
+
+??? example "Dashboard Dynamic Configuration Examples"
+
+    ```yaml tab="Docker"
+    # Dynamic Configuration
+    labels:
+      - "traefik.http.routers.api.rule=Host(`traefik.domain.com`)
+      - "traefik.http.routers.api.service=api@internal"
+      - "traefik.http.routers.api.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+    ```
+
+    ```json tab="Marathon"
+    "labels": {
+      "traefik.http.routers.api.rule": "Host(`traefik.domain.com`)",
+      "traefik.http.routers.api.service": "api@internal",
+      "traefik.http.routers.api.middlewares": "auth",
+      "traefik.http.middlewares.auth.basicauth.users": "test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+    }
+    ```
+
+    ```yaml tab="Rancher"
+    # Dynamic Configuration
+    labels:
+      - "traefik.http.routers.api.rule=Host(`traefik.domain.com`)
+      - "traefik.http.routers.api.service=api@internal"
+      - "traefik.http.routers.api.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+    ```
+
+    ```toml tab="File (TOML)"
+    # Dynamic Configuration
+    [http.routers.my-api]
+        rule="Host(`traefik.domain.com`)
+        service="api@internal"
+        middlewares=["auth"]
+
+    [http.middlewares.auth.basicAuth]
+        users = [
+          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+          "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+        ]
+    ```
+
+    ```yaml tab="File (YAML)"
+    # Dynamic Configuration
+    http:
+      routers:
+        api:
+          rule: Host(`traefik.domain.com`)
+          service: api@internal
+          middlewares:
+            - auth
+      middlewares:
+        auth:
+          basicAuth:
+            users:
+              - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+              - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+    ```
 
 ### Dashboard Router Rule
 

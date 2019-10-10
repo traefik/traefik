@@ -23,13 +23,16 @@ would be to apply the following protection mechanisms:
 
 If you enable the API, a new special `service` named `api@internal` is created and can then be referenced in a router.
 
-To enable the API handler:
+To enable the API handler, use the following option on the
+[static configuration](../getting-started/configuration-overview.md#the-static-configuration):
 
 ```toml tab="File (TOML)"
+# Static Configuration
 [api]
 ```
 
 ```yaml tab="File (YAML)"
+# Static Configuration
 api: {}
 ```
 
@@ -37,9 +40,11 @@ api: {}
 --api=true
 ```
 
-And then you will be able to reference it like this:
+And then define a routing configuration on Traefik itself with the
+[dynamic configuration](../getting-started/configuration-overview.md#the-dynamic-configuration):
 
 ```yaml tab="Docker"
+# Dynamic Configuration
 labels:
   - "traefik.http.routers.api.rule=Host(`traefik.domain.com`)
   - "traefik.http.routers.api.service=api@internal"
@@ -57,7 +62,7 @@ labels:
 ```
 
 ```yaml tab="Rancher"
-# Declaring the user list
+# Dynamic Configuration
 labels:
   - "traefik.http.routers.api.rule=Host(`traefik.domain.com`)
   - "traefik.http.routers.api.service=api@internal"
@@ -66,6 +71,7 @@ labels:
 ```
 
 ```toml tab="File (TOML)"
+# Dynamic Configuration
 [http.routers.my-api]
     rule="Host(`traefik.domain.com`)
     service="api@internal"
@@ -79,6 +85,7 @@ labels:
 ```
 
 ```yaml tab="File (YAML)"
+# Dynamic Configuration
 http:
   routers:
     api:
