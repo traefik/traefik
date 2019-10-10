@@ -158,9 +158,6 @@ rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
 rule = "Host(`traefik.domain.com) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
 ```
 
-<!-- Please visit the ["Configuration" section of the API documentation](./api.md#dashboard)
-to learn about configuring a router with the service `api@internal` and enabling the security features. -->
-
 ## Insecure Mode
 
 This mode is not recommended because it does not allow the use of security features.
