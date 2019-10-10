@@ -14,7 +14,7 @@ In production, it should be at least secured by authentication and authorization
 A good sane default (non exhaustive) set of recommendations
 would be to apply the following protection mechanisms:
 
-* At the transport level:  
+* At the transport level:
   NOT publicly exposing the API's port,
   keeping it restricted to internal networks
   (as in the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), applied to networks).
@@ -41,7 +41,7 @@ And then you will be able to reference it like this:
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+  - "traefik.http.routers.api.rule=Host(`traefik.domain.com`)
   - "traefik.http.routers.api.service=api@internal"
   - "traefik.http.routers.api.middlewares=auth"
   - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
@@ -49,9 +49,9 @@ labels:
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.routers.api.rule": "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
-  "traefik.http.routers.api.service": "api@internal"
-  "traefik.http.routers.api.middlewares": "auth"
+  "traefik.http.routers.api.rule": "Host(`traefik.domain.com`)",
+  "traefik.http.routers.api.service": "api@internal",
+  "traefik.http.routers.api.middlewares": "auth",
   "traefik.http.middlewares.auth.basicauth.users": "test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 }
 ```
@@ -59,7 +59,7 @@ labels:
 ```yaml tab="Rancher"
 # Declaring the user list
 labels:
-  - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+  - "traefik.http.routers.api.rule=Host(`traefik.domain.com`)
   - "traefik.http.routers.api.service=api@internal"
   - "traefik.http.routers.api.middlewares=auth"
   - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
@@ -67,13 +67,13 @@ labels:
 
 ```toml tab="File (TOML)"
 [http.routers.my-api]
-    rule="PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+    rule="Host(`traefik.domain.com`)
     service="api@internal"
     middlewares=["auth"]
 
 [http.middlewares.auth.basicAuth]
     users = [
-      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
+      "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
       "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
     ]
 ```
@@ -82,7 +82,7 @@ labels:
 http:
   routers:
     api:
-      rule: PathPrefix(`/api`) || PathPrefix(`/dashboard`)
+      rule: Host(`traefik.domain.com`)
       service: api@internal
       middlewares:
         - auth
@@ -90,9 +90,31 @@ http:
     auth:
       basicAuth:
         users:
-          - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" 
+          - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
           - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
+
+??? warning "The router's [rule](../../routing/routers#rule) must catch requests for the URI path `/api`"
+    Using an "Host" rule is recommended, by catching all the incoming traffic on this host domain to the API.
+    However, you can also use "path prefix" rule or any combination or rules.
+
+    ```bash tab="Host Rule"
+    # Matches http://traefik.domain.com, http://traefik.domain.com/api
+    # or http://traefik.domain.com/hello
+    rule = "Host(`traefik.domain.com)"
+    ```
+
+    ```bash tab="Path Prefix Rule"
+    # Matches http://api.traefik.domain.com/api or http://domain.com/api
+    # but does not match http://api.traefik.domain.com/hello
+    rule = "PathPrefix(`/api`)"
+    ```
+
+    ```bash tab="Combination of Rules"
+    # Matches http://traefik.domain.com/api or http://traefik.domain.com/dashboard
+    # but does not match http://traefik.domain.com/hello
+    rule = "Host(`traefik.domain.com) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+    ```
 
 ### `insecure`
 
@@ -134,6 +156,9 @@ api:
 ```bash tab="CLI"
 --api.dashboard=true
 ```
+
+!!! warning "With Dashboard enabled, the router [rule](../../routing/routers#rule) must catch requests for both `/api` and `/dashboard`"
+    Please check the [Dashboard documentation](./dashboard.md#dashboard-router-rule) to learn more about this and to get examples.
 
 ### `debug`
 
