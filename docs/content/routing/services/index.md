@@ -539,7 +539,7 @@ The `address` option (IP:Port) point to a specific instance.
         my-service:
           loadBalancer:
             servers:
-              address: "xx.xx.xx.xx:xx"
+              - address: "xx.xx.xx.xx:xx"
     ```
 
 #### Termination Delay
