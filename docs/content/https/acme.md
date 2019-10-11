@@ -382,7 +382,7 @@ ACME certificates can be stored in a JSON file that needs to have a `600` file m
 In Docker you can mount either the JSON file, or the folder containing it:
 
 ```bash
-docker run -v "/my/host/acme.json:acme.json" traefik
+docker run -v "/my/host/acme.json:/acme.json" traefik
 ```
 
 ```bash
