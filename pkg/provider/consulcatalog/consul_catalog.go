@@ -22,6 +22,16 @@ const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 var _ provider.Provider = (*Provider)(nil)
 
+type itemData struct {
+	ID        string
+	Name      string
+	Address   string
+	Port      string
+	Status    string
+	Labels    map[string]string
+	ExtraConf configuration
+}
+
 // Provider holds configurations of the provider.
 type Provider struct {
 	Constraints      string          `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
@@ -77,45 +87,6 @@ func (p *Provider) Init() error {
 
 	p.defaultRuleTpl = defaultRuleTpl
 	return nil
-}
-
-type itemData struct {
-	ID        string
-	Name      string
-	Address   string
-	Port      string
-	Status    string
-	Labels    map[string]string
-	ExtraConf configuration
-}
-
-func createClient(cfg *EndpointConfig) (*api.Client, error) {
-	config := api.Config{
-		Address:    cfg.Address,
-		Scheme:     cfg.Scheme,
-		Datacenter: cfg.DataCenter,
-		WaitTime:   time.Duration(cfg.EndpointWaitTime),
-		Token:      cfg.Token,
-	}
-
-	if cfg.HTTPAuth != nil {
-		config.HttpAuth = &api.HttpBasicAuth{
-			Username: cfg.HTTPAuth.Username,
-			Password: cfg.HTTPAuth.Password,
-		}
-	}
-
-	if cfg.TLS != nil {
-		config.TLSConfig = api.TLSConfig{
-			Address:            cfg.Address,
-			CAFile:             cfg.TLS.CA,
-			CertFile:           cfg.TLS.Cert,
-			KeyFile:            cfg.TLS.Key,
-			InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
-		}
-	}
-
-	return api.NewClient(&config)
 }
 
 // Provide allows the consul catalog provider to provide configurations to traefik using the given configuration channel.
@@ -219,4 +190,33 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Catalo
 func (p *Provider) fetchServices(ctx context.Context) (map[string][]string, error) {
 	serviceNames, _, err := p.client.Catalog().Services(&api.QueryOptions{})
 	return serviceNames, err
+}
+
+func createClient(cfg *EndpointConfig) (*api.Client, error) {
+	config := api.Config{
+		Address:    cfg.Address,
+		Scheme:     cfg.Scheme,
+		Datacenter: cfg.DataCenter,
+		WaitTime:   time.Duration(cfg.EndpointWaitTime),
+		Token:      cfg.Token,
+	}
+
+	if cfg.HTTPAuth != nil {
+		config.HttpAuth = &api.HttpBasicAuth{
+			Username: cfg.HTTPAuth.Username,
+			Password: cfg.HTTPAuth.Password,
+		}
+	}
+
+	if cfg.TLS != nil {
+		config.TLSConfig = api.TLSConfig{
+			Address:            cfg.Address,
+			CAFile:             cfg.TLS.CA,
+			CertFile:           cfg.TLS.Cert,
+			KeyFile:            cfg.TLS.Key,
+			InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
+		}
+	}
+
+	return api.NewClient(&config)
 }
