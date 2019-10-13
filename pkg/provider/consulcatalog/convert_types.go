@@ -9,7 +9,6 @@ func tagsToNeutralLabels(tags []string, prefix string) map[string]string {
 
 	for _, tag := range tags {
 		if strings.HasPrefix(tag, prefix) {
-
 			parts := strings.SplitN(tag, "=", 2)
 			if len(parts) == 2 {
 				if labels == nil {
