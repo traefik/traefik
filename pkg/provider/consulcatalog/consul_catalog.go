@@ -103,11 +103,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				return fmt.Errorf("error create consul client, %v", err)
 			}
 
-			t := time.NewTicker(time.Duration(p.RefreshInterval))
+			ticker := time.NewTicker(time.Duration(p.RefreshInterval))
 
 			for {
 				select {
-				case <-t.C:
+				case <-ticker.C:
 					data, err := p.getConsulServicesData(routineCtx)
 					if err != nil {
 						logger.Errorf("error get consulCatalog data, %v", err)
@@ -120,7 +120,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						Configuration: configuration,
 					}
 				case <-routineCtx.Done():
-					t.Stop()
+					ticker.Stop()
 					return nil
 				}
 			}
@@ -140,13 +140,12 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error) {
-	var data []itemData
-
 	consulServiceNames, err := p.fetchServices(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	var data []itemData
 	for name := range consulServiceNames {
 		consulServices, err := p.fetchService(ctx, name)
 		if err != nil {

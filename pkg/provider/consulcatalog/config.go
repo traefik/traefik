@@ -14,10 +14,10 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-func (p *Provider) buildConfiguration(ctx context.Context, datas []itemData) *dynamic.Configuration {
+func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dynamic.Configuration {
 	configurations := make(map[string]*dynamic.Configuration)
 
-	for _, item := range datas {
+	for _, item := range items {
 		svcName := item.Name + "-" + item.ID
 		ctxSvc := log.With(ctx, log.Str("serviceName", svcName))
 
@@ -26,6 +26,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, datas []itemData) *dy
 		}
 
 		logger := log.FromContext(ctxSvc)
+
 		confFromLabel, err := label.DecodeConfiguration(item.Labels)
 		if err != nil {
 			logger.Error(err)
@@ -38,7 +39,9 @@ func (p *Provider) buildConfiguration(ctx context.Context, datas []itemData) *dy
 				logger.Error(err)
 				continue
 			}
+
 			provider.BuildTCPRouterConfiguration(ctxSvc, confFromLabel.TCP)
+
 			if len(confFromLabel.HTTP.Routers) == 0 &&
 				len(confFromLabel.HTTP.Middlewares) == 0 &&
 				len(confFromLabel.HTTP.Services) == 0 {
@@ -98,8 +101,10 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, item itemData, configuration *dynamic.TCPConfiguration) error {
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.TCPService)
+
 		lb := &dynamic.TCPServersLoadBalancer{}
 		lb.SetDefaults()
+
 		configuration.Services[item.Name] = &dynamic.TCPService{
 			LoadBalancer: lb,
 		}
@@ -119,8 +124,10 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, item itemDa
 func (p *Provider) buildServiceConfiguration(ctx context.Context, item itemData, configuration *dynamic.HTTPConfiguration) error {
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.Service)
+
 		lb := &dynamic.ServersLoadBalancer{}
 		lb.SetDefaults()
+
 		configuration.Services[item.Name] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
@@ -143,9 +150,7 @@ func (p *Provider) addServerTCP(ctx context.Context, item itemData, loadBalancer
 	}
 
 	if len(loadBalancer.Servers) == 0 {
-		server := dynamic.TCPServer{}
-
-		loadBalancer.Servers = []dynamic.TCPServer{server}
+		loadBalancer.Servers = []dynamic.TCPServer{{}}
 	}
 
 	var port string
