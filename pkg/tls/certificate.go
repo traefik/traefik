@@ -22,7 +22,7 @@ var (
 		`VersionTLS13`: tls.VersionTLS13,
 	}
 
-	// MinVersion Map of allowed TLS minimum versions
+	// MaxVersion Map of allowed TLS minimum versions
 	MaxVersion = map[string]uint16{
 		`VersionTLS10`: tls.VersionTLS10,
 		`VersionTLS11`: tls.VersionTLS11,
