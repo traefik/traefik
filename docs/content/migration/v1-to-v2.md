@@ -961,7 +961,7 @@ Supported [providers](../providers/overview.md), for now:
 * [ ] Azure Service Fabric
 * [ ] BoltDB
 * [ ] Consul
-* [ ] Consul Catalog
+* [x] Consul Catalog
 * [x] Docker
 * [ ] DynamoDB
 * [ ] ECS
