@@ -1,0 +1,53 @@
+# Enable Consul Catalog Provider.
+--providers.consulcatalog
+
+# Enable Consul Catalog Provider constraints.
+--providers.consulcatalog.constraints
+
+# Defines the Consul Catalog default rule.
+--providers.consulcatalog.defaultrule
+
+# Defines the Consul Catalog endpoint address.
+--providers.consulcatalog.endpoint.address
+
+# Defines the Consul Catalog endpoint data-center.
+--providers.consulcatalog.endpoint.datacenter
+
+# Defines the Consul Catalog endpoint wait time.
+--providers.consulcatalog.endpoint.endpointwaittime
+
+# Defines the Consul Catalog endpoint http auth password.
+--providers.consulcatalog.endpoint.httpauth.password
+
+# Defines the Consul Catalog endpoint http auth username.
+--providers.consulcatalog.endpoint.httpauth.username
+
+# Defines the Consul Catalog endpoint scheme.
+--providers.consulcatalog.endpoint.scheme
+
+# Defines the Consul Catalog endpoint tls CA.
+--providers.consulcatalog.endpoint.tls.ca
+
+# Defines the Consul Catalog endpoint tls optional  CA.
+--providers.consulcatalog.endpoint.tls.caoptional
+
+# Defines the Consul Catalog endpoint tls cert.
+--providers.consulcatalog.endpoint.tls.cert
+
+# Defines the Consul Catalog endpoint tls insecure skip verify.
+--providers.consulcatalog.endpoint.tls.insecureskipverify
+
+# Defines the Consul Catalog endpoint tls key.
+--providers.consulcatalog.endpoint.tls.key
+
+# Defines the Consul Catalog endpoint token.
+--providers.consulcatalog.endpoint.token
+
+# Defines the Consul Catalog expose by default.
+--providers.consulcatalog.exposedbydefault
+
+# Defines the Consul Catalog prefix.
+--providers.consulcatalog.prefix
+
+# Defines the Consul Catalog refresh interval.
+--providers.consulcatalog.refreshinterval

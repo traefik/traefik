@@ -24,6 +24,11 @@ spec:
     amount: 10
 ```
 
+```yaml tab="Consul Catalog"
+# Limiting to 10 simultaneous connections
+- "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
@@ -72,6 +77,11 @@ metadata:
 spec:
   inFlightReq:
     amount: 10
+```
+
+```yaml tab="Consul Catalog"
+# Limiting to 10 simultaneous connections
+- "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```json tab="Marathon"
@@ -146,15 +156,19 @@ spec:
         depth: 2
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth": "2"
 }
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
 ```
 
 ```toml tab="File (TOML)"
@@ -209,6 +223,10 @@ spec:
         - 192.168.1.7
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
@@ -259,15 +277,19 @@ spec:
       requestHeaderName: username
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername": "username"
 }
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
 
 ```toml tab="File (TOML)"
@@ -306,15 +328,19 @@ spec:
       requestHost: true
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
+```yaml tab="Cosul Catalog"
+- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost": "true"
 }
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
 
 ```toml tab="File (TOML)"

@@ -29,6 +29,11 @@ spec:
     attempts: 4
 ```
 
+```yaml tab="Consul Catalog"
+# Retry to send request 4 times
+- "traefik.http.middlewares.test-retry.retry.attempts=4"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-retry.retry.attempts": "4"
