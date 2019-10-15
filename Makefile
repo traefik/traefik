@@ -86,7 +86,7 @@ test-unit: $(PRE_TARGET)
 
 ## Pull all images for integration tests
 pull-images:
-	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq | xargs -P 6 -n 1 docker pull
+	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $2}' | sort | uniq | xargs -P 6 -n 1 docker pull
 
 ## Run the integration tests
 test-integration: $(PRE_TARGET)
