@@ -79,8 +79,8 @@ require (
 	github.com/stvp/go-udp-testing v0.0.0-20171104055251-c4434f09ec13
 	github.com/tinylib/msgp v1.0.2 // indirect
 	github.com/transip/gotransip v5.8.2+incompatible // indirect
-	github.com/uber/jaeger-client-go v2.16.0+incompatible
-	github.com/uber/jaeger-lib v2.0.0+incompatible
+	github.com/uber/jaeger-client-go v2.19.0+incompatible
+	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/unrolled/render v1.0.1
 	github.com/unrolled/secure v1.0.4
 	github.com/vdemeester/shakers v0.1.0
