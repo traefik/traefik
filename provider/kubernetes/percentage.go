@@ -45,6 +45,6 @@ func newPercentageValueFromString(rawValue string) (percentageValue, error) {
 
 // newPercentageValueFromFloat64 reads percentage value from float64
 func newPercentageValueFromFloat64(f float64) percentageValue {
-	d := decimal.NewFromFloat(f)
-	return percentageValue(d.Mul(decimal.NewFromFloat(1000 * 100)).IntPart())
+	value := decimal.NewFromFloat(f).Mul(decimal.NewFromFloat(1000 * 100))
+	return percentageValue(value.IntPart())
 }
