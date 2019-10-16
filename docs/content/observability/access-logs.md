@@ -180,7 +180,7 @@ accessLog:
     |-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
     | `StartUTC`              | The time at which request processing started.                                                                                                                       |
     | `StartLocal`            | The local time at which request processing started.                                                                                                                 |
-    | `Duration`              | The total time taken (in nanoseconds) by processing the response, including the origin server's time but not the log writing time.                                                   |
+    | `Duration`              | The total time taken (in nanoseconds) by processing the response, including the origin server's time but not the log writing time.                                  |
     | `FrontendName`          | The name of the Traefik frontend.                                                                                                                                   |
     | `BackendName`           | The name of the Traefik backend.                                                                                                                                    |
     | `BackendURL`            | The URL of the Traefik backend.                                                                                                                                     |
