@@ -268,3 +268,8 @@
 [[constraint]]
   name = "github.com/shopspring/decimal"
   revision = "f1972eb1d1f519e2e5f4b51f2dea765e8c93a130"
+
+[[override]]
+  name = "contrib.go.opencensus.io/exporter/ocagent"
+#  revision = "dcb33c7f3b7cfe67e8a2cea10207ede1b7c40764"
+  version = "0.4.12"
