@@ -1771,6 +1771,13 @@
   revision = "1d7be4effb13d2d908342d349d71a284a7542693"
 
 [[projects]]
+  digest = "1:9ca27be3cfd8a452f9814926a5842c6917289da8c21174ee0f9c79d84850b2ed"
+  name = "github.com/shopspring/decimal"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "f1972eb1d1f519e2e5f4b51f2dea765e8c93a130"
+
+[[projects]]
   digest = "1:01252cd79aac70f16cac02a72a1067dd136e0ad6d5b597d0129cf74c739fd8d1"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
@@ -2612,6 +2619,7 @@
     "github.com/rancher/go-rancher-metadata/metadata",
     "github.com/rancher/go-rancher/v2",
     "github.com/ryanuber/go-glob",
+    "github.com/shopspring/decimal",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",

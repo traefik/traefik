@@ -3,6 +3,8 @@ package kubernetes
 import (
 	"strconv"
 	"strings"
+
+	"github.com/shopspring/decimal"
 )
 
 const defaultPercentageValuePrecision = 3
@@ -43,5 +45,6 @@ func newPercentageValueFromString(rawValue string) (percentageValue, error) {
 
 // newPercentageValueFromFloat64 reads percentage value from float64
 func newPercentageValueFromFloat64(f float64) percentageValue {
-	return percentageValue(f * (1000 * 100))
+	value := decimal.NewFromFloat(f).Mul(decimal.NewFromFloat(1000 * 100))
+	return percentageValue(value.IntPart())
 }
