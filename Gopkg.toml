@@ -264,3 +264,11 @@
 [[constraint]]
   name = "github.com/google/uuid"
   version = "0.2.0"
+
+[[constraint]]
+  name = "github.com/shopspring/decimal"
+  revision = "f1972eb1d1f519e2e5f4b51f2dea765e8c93a130"
+
+[[override]]
+  name = "contrib.go.opencensus.io/exporter/ocagent"
+  version = "0.4.12"

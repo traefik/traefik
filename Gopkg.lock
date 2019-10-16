@@ -1771,6 +1771,13 @@
   revision = "1d7be4effb13d2d908342d349d71a284a7542693"
 
 [[projects]]
+  digest = "1:9ca27be3cfd8a452f9814926a5842c6917289da8c21174ee0f9c79d84850b2ed"
+  name = "github.com/shopspring/decimal"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "f1972eb1d1f519e2e5f4b51f2dea765e8c93a130"
+
+[[projects]]
   digest = "1:01252cd79aac70f16cac02a72a1067dd136e0ad6d5b597d0129cf74c739fd8d1"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
@@ -1909,11 +1916,11 @@
 
 [[projects]]
   branch = "v1"
-  digest = "1:60888cead16f066c948c078258b27f2885dce91cb6aadacf545b62a1ae1d08cb"
+  digest = "1:819d4566276aed820b412b7e72683edfe99f53d2ac54e5b13eda197b523a369b"
   name = "github.com/unrolled/secure"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "a1cf62cc2159fff407728f118c41aece76c397fa"
+  revision = "232c938a6a69cfd83e26e2bfe100a20486d3a9a0"
 
 [[projects]]
   digest = "1:e84e99d5f369afaa9a5c41f55b57fa03047ecd3bac2a65861607882693ceea81"
@@ -2612,6 +2619,7 @@
     "github.com/rancher/go-rancher-metadata/metadata",
     "github.com/rancher/go-rancher/v2",
     "github.com/ryanuber/go-glob",
+    "github.com/shopspring/decimal",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
