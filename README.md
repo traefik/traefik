@@ -87,10 +87,9 @@ You can access the simple HTML frontend of Traefik.
 
 ## Documentation
 
-You can find the complete documentation at [https://docs.traefik.io](https://docs.traefik.io).
+You can find the complete documentation at [https://docs.traefik.io](https://docs.traefik.io). If you are not using the latest version, please ensure that you select the appropriate version of the docs.
 A collection of contributions around Traefik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
 
-:warning: If you're testing out v2, please ensure you are using the [v2 documentation](https://docs.traefik.io/).
 
 ## Support
 
