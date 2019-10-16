@@ -209,13 +209,13 @@ func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]dynam
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		var ENproto string
-		ENproto = "http"
+		protocol := "http"
 		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
-			ENproto = "https"
+			protocol = "https"
 		}
+
 		servers = append(servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s:%d", ENproto, service.Spec.ExternalName, portSpec.Port),
+			URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, portSpec.Port),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
