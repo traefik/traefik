@@ -26,13 +26,14 @@ Even if each provider is different, we can categorize them in four groups:
 
 Below is the list of the currently supported providers in Traefik. 
 
-| Provider                          | Type         | Configuration Type |
-|-----------------------------------|--------------|--------------------|
-| [Docker](./docker.md)             | Orchestrator | Label              |
-| [Kubernetes](./kubernetes-crd.md) | Orchestrator | Custom Resource    |
-| [Marathon](./marathon.md)         | Orchestrator | Label              |
-| [Rancher](./rancher.md)           | Orchestrator | Label              |
-| [File](./file.md)                 | Manual       | TOML/YAML format   |
+| Provider                              | Type         | Configuration Type |
+|---------------------------------------|--------------|--------------------|
+| [Docker](./docker.md)                 | Orchestrator | Label              |
+| [Kubernetes](./kubernetes-crd.md)     | Orchestrator | Custom Resource    |
+| [Consul Catalog](./consul-catalog.md) | Orchestrator | Label              |
+| [Marathon](./marathon.md)             | Orchestrator | Label              |
+| [Rancher](./rancher.md)               | Orchestrator | Label              |
+| [File](./file.md)                     | Manual       | TOML/YAML format   |
 
 !!! info "More Providers"
 
@@ -90,6 +91,7 @@ or with a finer granularity mechanism based on constraints.
 List of providers that support that feature:
 
 - [Docker](./docker.md#exposedbydefault)
+- [Consul Catalog](./consul-catalog.md#exposedbydefault)
 - [Rancher](./rancher.md#exposedbydefault)
 - [Marathon](./marathon.md#exposedbydefault)
 
@@ -98,6 +100,7 @@ List of providers that support that feature:
 List of providers that support constraints:
 
 - [Docker](./docker.md#constraints)
+- [Consul Catalog](./consul-catalog.md#constraints)
 - [Rancher](./rancher.md#constraints)
 - [Marathon](./marathon.md#constraints)
 - [Kubernetes CRD](./kubernetes-crd.md#labelselector)
