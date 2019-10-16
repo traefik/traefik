@@ -529,7 +529,7 @@ Specifies the header name that will be used to store the trace ID.
 Settings for Instana. (Default: ```false```)
 
 `TRAEFIK_TRACING_INSTANA_LOCALAGENTHOST`:  
-Set instana-agent's host that the reporter will used. (Default: ```localhost```)
+Set instana-agent's host that the reporter will used.
 
 `TRAEFIK_TRACING_INSTANA_LOCALAGENTPORT`:  
 Set instana-agent's port that the reporter will used. (Default: ```42699```)

@@ -20,7 +20,6 @@ type Config struct {
 
 // SetDefaults sets the default values.
 func (c *Config) SetDefaults() {
-	c.LocalAgentHost = "localhost"
 	c.LocalAgentPort = 42699
 	c.LogLevel = "info"
 }
