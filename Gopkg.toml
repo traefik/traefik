@@ -264,3 +264,7 @@
 [[constraint]]
   name = "github.com/google/uuid"
   version = "0.2.0"
+
+[[constraint]]
+  name = "github.com/shopspring/decimal"
+  branch = "master"
