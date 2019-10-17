@@ -27,7 +27,7 @@ The provider then watches for incoming ingresses events, such as the example bel
 
 ```yaml tab="File (YAML)"
 kind: Ingress
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 metadata:
   name: "foo"
   namespace: production
