@@ -7,7 +7,7 @@ Redirecting the Client to a Different Scheme/Port
 TODO: add schema
 -->
 
-RegexRedirect redirect request from a scheme to another.
+RedirectScheme redirect request from a scheme to another.
 
 ## Configuration Examples
 
@@ -26,6 +26,12 @@ metadata:
 spec:
   redirectScheme:
     scheme: https
+```
+
+```yaml tab="Consul Catalog"
+# Redirect to https
+labels:
+- "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
 ```
 
 ```json tab="Marathon"

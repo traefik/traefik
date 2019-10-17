@@ -91,10 +91,7 @@ func (t *Tracing) Extract(format interface{}, carrier interface{}) (opentracing.
 
 // IsEnabled determines if tracing was successfully activated.
 func (t *Tracing) IsEnabled() bool {
-	if t == nil || t.tracer == nil {
-		return false
-	}
-	return true
+	return t != nil && t.tracer != nil
 }
 
 // Close tracer
@@ -169,9 +166,7 @@ func StartSpan(r *http.Request, operationName string, spanKind ext.SpanKindEnum,
 	}
 
 	r = r.WithContext(ctx)
-	return span, r, func() {
-		span.Finish()
-	}
+	return span, r, func() { span.Finish() }
 }
 
 // SetError flags the span associated with this request as in error.

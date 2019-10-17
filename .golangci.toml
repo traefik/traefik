@@ -1,6 +1,9 @@
 [run]
-  deadline = "10m"
+  timeout = "10m"
   skip-files = []
+  skip-dirs = [
+    "pkg/provider/kubernetes/crd/generated/",
+  ]
 
 [linters-settings]
 
@@ -40,7 +43,11 @@
     "scopelint",
     "gochecknoinits",
     "gochecknoglobals",
+    "godox",
+    "gocognit",
     "bodyclose", # Too many false-positive and panics.
+    "wsl", # Too strict
+    "stylecheck", # skip because report issues related to some generated files.
   ]
 
 [issues]

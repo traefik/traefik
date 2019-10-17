@@ -234,6 +234,57 @@ Enable ping. (Default: ```false```)
 `TRAEFIK_PING_ENTRYPOINT`:  
 EntryPoint (Default: ```traefik```)
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG_CONSTRAINTS`:  
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_DEFAULTRULE`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_ADDRESS`:  
+The address of the Consul server (Default: ```http://127.0.0.1:8500```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_DATACENTER`:  
+Data center to use. If not provided, the default agent data center is used
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_ENDPOINTWAITTIME`:  
+WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_HTTPAUTH_PASSWORD`:  
+Basic Auth password
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_HTTPAUTH_USERNAME`:  
+Basic Auth username
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_SCHEME`:  
+The URI scheme for the Consul server
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TOKEN`:  
+Token is used to provide a per-request ACL token which overrides the agent's default token
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_EXPOSEDBYDEFAULT`:  
+Expose containers by default. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_PREFIX`:  
+Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_REFRESHINTERVAL`:  
+Interval for check Consul API. Default 100ms (Default: ```15```)
+
 `TRAEFIK_PROVIDERS_DOCKER`:  
 Enable Docker backend with default settings. (Default: ```false```)
 
@@ -283,10 +334,10 @@ Watch provider. (Default: ```true```)
 Enable debug logging of generated configuration template. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_FILE_DIRECTORY`:  
-Load configuration from one or more .toml files in a directory.
+Load dynamic configuration from one or more .toml or .yml files in a directory.
 
 `TRAEFIK_PROVIDERS_FILE_FILENAME`:  
-Override default configuration template. For advanced users :)
+Load dynamic configuration from a file.
 
 `TRAEFIK_PROVIDERS_FILE_WATCH`:  
 Watch provider. (Default: ```true```)

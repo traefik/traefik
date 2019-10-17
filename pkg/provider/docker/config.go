@@ -331,5 +331,5 @@ func getServiceName(container dockerData) string {
 		serviceName = values[labelDockerComposeService] + "_" + values[labelDockerComposeProject]
 	}
 
-	return serviceName
+	return provider.Normalize(serviceName)
 }

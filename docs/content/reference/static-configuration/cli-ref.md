@@ -234,6 +234,57 @@ Enable ping. (Default: ```false```)
 `--ping.entrypoint`:  
 EntryPoint (Default: ```traefik```)
 
+`--providers.consulcatalog.constraints`:  
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`--providers.consulcatalog.defaultrule`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`--providers.consulcatalog.endpoint.address`:  
+The address of the Consul server (Default: ```http://127.0.0.1:8500```)
+
+`--providers.consulcatalog.endpoint.datacenter`:  
+Data center to use. If not provided, the default agent data center is used
+
+`--providers.consulcatalog.endpoint.endpointwaittime`:  
+WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
+
+`--providers.consulcatalog.endpoint.httpauth.password`:  
+Basic Auth password
+
+`--providers.consulcatalog.endpoint.httpauth.username`:  
+Basic Auth username
+
+`--providers.consulcatalog.endpoint.scheme`:  
+The URI scheme for the Consul server
+
+`--providers.consulcatalog.endpoint.tls.ca`:  
+TLS CA
+
+`--providers.consulcatalog.endpoint.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.consulcatalog.endpoint.tls.cert`:  
+TLS cert
+
+`--providers.consulcatalog.endpoint.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.consulcatalog.endpoint.tls.key`:  
+TLS key
+
+`--providers.consulcatalog.endpoint.token`:  
+Token is used to provide a per-request ACL token which overrides the agent's default token
+
+`--providers.consulcatalog.exposedbydefault`:  
+Expose containers by default. (Default: ```true```)
+
+`--providers.consulcatalog.prefix`:  
+Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
+
+`--providers.consulcatalog.refreshinterval`:  
+Interval for check Consul API. Default 100ms (Default: ```15```)
+
 `--providers.docker`:  
 Enable Docker backend with default settings. (Default: ```false```)
 
@@ -283,10 +334,10 @@ Watch provider. (Default: ```true```)
 Enable debug logging of generated configuration template. (Default: ```false```)
 
 `--providers.file.directory`:  
-Load configuration from one or more .toml files in a directory.
+Load dynamic configuration from one or more .toml or .yml files in a directory.
 
 `--providers.file.filename`:  
-Override default configuration template. For advanced users :)
+Load dynamic configuration from a file.
 
 `--providers.file.watch`:  
 Watch provider. (Default: ```true```)

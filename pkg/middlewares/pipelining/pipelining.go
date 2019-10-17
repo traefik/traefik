@@ -35,7 +35,6 @@ func (p *pipelining) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	} else {
 		p.next.ServeHTTP(&writerWithoutCloseNotify{rw}, r)
 	}
-
 }
 
 // writerWithoutCloseNotify helps to disable closeNotify

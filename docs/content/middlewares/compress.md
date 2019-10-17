@@ -25,6 +25,11 @@ spec:
   compress: {}
 ```
 
+```yaml tab="Consul Catalog"
+# Enable gzip compression
+- "traefik.http.middlewares.test-compress.compress=true"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-compress.compress": "true"

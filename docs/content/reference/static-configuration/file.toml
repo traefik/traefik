@@ -108,6 +108,24 @@
     refreshSeconds = 42
     intervalPoll = true
     prefix = "foobar"
+  [providers.consulcatalog]
+    constraints = "foobar"
+    prefix = "traefik"
+    defaultRule = "foobar"
+    exposedByDefault = true
+    refreshInterval = 15
+    [providers.consulcatalog.endpoint]
+     address = "foobar"
+     scheme = "foobar"
+     datacenter = "foobar"
+     token = "foobar"
+     endpointWaitTime = "15s"
+     [providers.consulcatalog.endpoint.tls]
+      ca = "foobar"
+      caOptional = true
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
 
 [api]
   insecure = true

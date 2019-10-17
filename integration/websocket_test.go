@@ -177,7 +177,6 @@ func (s *WebsocketSuite) TestOrigin(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(n, checker.Equals, 2)
 	c.Assert(string(msg), checker.Equals, "OK")
-
 }
 
 func (s *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
@@ -238,7 +237,6 @@ func (s *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(n, checker.Equals, 2)
 	c.Assert(string(msg), checker.Equals, "OK")
-
 }
 
 func (s *WebsocketSuite) TestSSLTermination(c *check.C) {
@@ -389,7 +387,6 @@ func (s *WebsocketSuite) TestSpecificResponseFromBackend(c *check.C) {
 	_, resp, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
 	c.Assert(err, checker.NotNil)
 	c.Assert(resp.StatusCode, check.Equals, http.StatusUnauthorized)
-
 }
 
 func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {

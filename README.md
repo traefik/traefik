@@ -121,17 +121,7 @@ git clone https://github.com/containous/traefik
 
 ## Introductory Videos
 
-:warning: Please be aware that these videos are for v1.X. The old configurations for Traefik v1.X are NOT compatible with Traefik v2. If you're running v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/).
-
-Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at GopherCon 2017.
-You will learn Traefik basics in less than 10 minutes.
-
-[![Traefik GopherCon 2017](https://img.youtube.com/vi/RgudiksfL-k/0.jpg)](https://www.youtube.com/watch?v=RgudiksfL-k)
-
-Here is a talk given by [Ed Robinson](https://github.com/errm) at [ContainerCamp UK](https://container.camp) conference.
-You will learn fundamental Traefik features and see some demos with Kubernetes.
-
-[![Traefik ContainerCamp UK](https://img.youtube.com/vi/aFtpIShV60I/0.jpg)](https://www.youtube.com/watch?v=aFtpIShV60I)
+You can find high level and deep dive videos on [videos.containo.us](https://videos.containo.us)
 
 ## Maintainers
 

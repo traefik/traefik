@@ -56,7 +56,6 @@ func (c CertificateStore) getDefaultCertificateDomains() []string {
 
 // GetAllDomains return a slice with all the certificate domain
 func (c CertificateStore) GetAllDomains() []string {
-
 	allCerts := c.getDefaultCertificateDomains()
 
 	// Get dynamic certificates

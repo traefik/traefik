@@ -143,9 +143,9 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 }
 
 func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterInfo, routerName string) (http.Handler, error) {
-	qualifiedNames := make([]string, len(router.Middlewares))
-	for i, name := range router.Middlewares {
-		qualifiedNames[i] = internal.GetQualifiedName(ctx, name)
+	var qualifiedNames []string
+	for _, name := range router.Middlewares {
+		qualifiedNames = append(qualifiedNames, internal.GetQualifiedName(ctx, name))
 	}
 	router.Middlewares = qualifiedNames
 	rm := m.modifierBuilder.Build(ctx, qualifiedNames)

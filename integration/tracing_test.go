@@ -18,9 +18,10 @@ type TracingSuite struct {
 }
 
 type TracingTemplate struct {
-	WhoAmiIP   string
-	WhoAmiPort int
-	IP         string
+	WhoAmiIP               string
+	WhoAmiPort             int
+	IP                     string
+	TraceContextHeaderName string
 }
 
 func (s *TracingSuite) SetUpSuite(c *check.C) {
@@ -88,7 +89,6 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 
 	err = try.GetRequest("http://"+s.IP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("forward service1/router1@file", "ratelimit-1@file"))
 	c.Assert(err, checker.IsNil)
-
 }
 
 func (s *TracingSuite) TestZipkinRetry(c *check.C) {
@@ -158,9 +158,10 @@ func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
 	s.startJaeger(c)
 	defer s.composeProject.Stop(c, "jaeger")
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
-		WhoAmiIP:   s.WhoAmiIP,
-		WhoAmiPort: s.WhoAmiPort,
-		IP:         s.IP,
+		WhoAmiIP:               s.WhoAmiIP,
+		WhoAmiPort:             s.WhoAmiPort,
+		IP:                     s.IP,
+		TraceContextHeaderName: "uber-trace-id",
 	})
 	defer os.Remove(file)
 
@@ -207,9 +208,10 @@ func (s *TracingSuite) TestJaegerRetry(c *check.C) {
 	s.startJaeger(c)
 	defer s.composeProject.Stop(c, "jaeger")
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
-		WhoAmiIP:   s.WhoAmiIP,
-		WhoAmiPort: 81,
-		IP:         s.IP,
+		WhoAmiIP:               s.WhoAmiIP,
+		WhoAmiPort:             81,
+		IP:                     s.IP,
+		TraceContextHeaderName: "uber-trace-id",
 	})
 	defer os.Remove(file)
 
@@ -234,9 +236,38 @@ func (s *TracingSuite) TestJaegerAuth(c *check.C) {
 	s.startJaeger(c)
 	defer s.composeProject.Stop(c, "jaeger")
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
-		WhoAmiIP:   s.WhoAmiIP,
-		WhoAmiPort: s.WhoAmiPort,
-		IP:         s.IP,
+		WhoAmiIP:               s.WhoAmiIP,
+		WhoAmiPort:             s.WhoAmiPort,
+		IP:                     s.IP,
+		TraceContextHeaderName: "uber-trace-id",
+	})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://"+s.IP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("EntryPoint web", "basic-auth@file"))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *TracingSuite) TestJaegerCustomHeader(c *check.C) {
+	s.startJaeger(c)
+	defer s.composeProject.Stop(c, "jaeger")
+	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
+		WhoAmiIP:               s.WhoAmiIP,
+		WhoAmiPort:             s.WhoAmiPort,
+		IP:                     s.IP,
+		TraceContextHeaderName: "powpow",
 	})
 	defer os.Remove(file)
 

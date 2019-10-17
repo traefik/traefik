@@ -26,18 +26,51 @@ Even if each provider is different, we can categorize them in four groups:
 
 Below is the list of the currently supported providers in Traefik. 
 
-| Provider                          | Type         | Configuration Type |
-|-----------------------------------|--------------|--------------------|
-| [Docker](./docker.md)             | Orchestrator | Label              |
-| [Kubernetes](./kubernetes-crd.md) | Orchestrator | Custom Resource    |
-| [Marathon](./marathon.md)         | Orchestrator | Label              |
-| [Rancher](./rancher.md)           | Orchestrator | Label              |
-| [File](./file.md)                 | Manual       | TOML/YAML format   |
+| Provider                              | Type         | Configuration Type |
+|---------------------------------------|--------------|--------------------|
+| [Docker](./docker.md)                 | Orchestrator | Label              |
+| [Kubernetes](./kubernetes-crd.md)     | Orchestrator | Custom Resource    |
+| [Consul Catalog](./consul-catalog.md) | Orchestrator | Label              |
+| [Marathon](./marathon.md)             | Orchestrator | Label              |
+| [Rancher](./rancher.md)               | Orchestrator | Label              |
+| [File](./file.md)                     | Manual       | TOML/YAML format   |
 
 !!! info "More Providers"
 
     The current version of Traefik doesn't support (yet) every provider.
     See the [previous version (v1.7)](https://docs.traefik.io/v1.7/) for more providers.
+
+### Configuration reload frequency
+
+In some cases, some providers might undergo a sudden burst of changes,
+which would generate a lot of configuration change events.
+If Traefik took them all into account,
+that would trigger a lot more configuration reloads than what is necessary,
+or even useful.
+
+In order to mitigate that, the `providers.providersThrottleDuration` option can be set.
+It is the duration that Traefik waits for, after a configuration reload,
+before taking into account any new configuration refresh event.
+If any event arrives during that duration, only the most recent one is taken into account,
+and all the previous others are dropped.
+
+This option cannot be set per provider,
+but the throttling algorithm applies independently to each of them.
+It defaults to 2 seconds.
+
+```toml tab="File (TOML)"
+[providers]
+  providers.providersThrottleDuration = 10s
+```
+
+```yaml tab="File (YAML)"
+providers:
+  providersThrottleDuration: 10s
+```
+
+```bash tab="CLI"
+--providers.providersThrottleDuration=10s
+```
 
 <!--
 TODO (document TCP VS HTTP dynamic configuration)
@@ -58,6 +91,7 @@ or with a finer granularity mechanism based on constraints.
 List of providers that support that feature:
 
 - [Docker](./docker.md#exposedbydefault)
+- [Consul Catalog](./consul-catalog.md#exposedbydefault)
 - [Rancher](./rancher.md#exposedbydefault)
 - [Marathon](./marathon.md#exposedbydefault)
 
@@ -66,6 +100,7 @@ List of providers that support that feature:
 List of providers that support constraints:
 
 - [Docker](./docker.md#constraints)
+- [Consul Catalog](./consul-catalog.md#constraints)
 - [Rancher](./rancher.md#constraints)
 - [Marathon](./marathon.md#constraints)
 - [Kubernetes CRD](./kubernetes-crd.md#labelselector)
