@@ -247,8 +247,8 @@ tls:
   options:
     default:
       curvePreferences:
-      - CurveP521
-      - CurveP384
+        - CurveP521
+        - CurveP384
 ```
 
 ```yaml tab="Kubernetes"
@@ -260,8 +260,8 @@ metadata:
 
 spec:
   curvePreferences:
-  - CurveP521
-  - CurveP384
+    - CurveP521
+    - CurveP384
 ```
 
 ### Strict SNI Checking
