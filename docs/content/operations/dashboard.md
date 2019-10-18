@@ -135,7 +135,7 @@ to allow defining:
 ### Dashboard Router Rule
 
 As underlined in the [documentation for the `api.dashboard` option](./api.md#dashboard),
-the [router rule](../routing/routers/index.md#rule) defined for Traefik must matches 
+the [router rule](../routing/routers/index.md#rule) defined for Traefik must match
 the path prefixes `/api` and `/dashboard`.
 
 We recommend to use a "Host Based rule" as ```Host(`traefik.domain.com`)``` to match everything on the host domain,
