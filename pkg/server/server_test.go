@@ -219,22 +219,6 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			},
 			expectedStatusCode: http.StatusServiceUnavailable,
 		},
-		{
-			desc: "Empty Backend LB Sticky",
-			config: func(testServerURL string) *dynamic.HTTPConfiguration {
-				return th.BuildConfiguration(
-					th.WithRouters(th.WithRouter("foo",
-						th.WithEntryPoints("http"),
-						th.WithServiceName("bar"),
-						th.WithRule(routeRule)),
-					),
-					th.WithLoadBalancerServices(th.WithService("bar",
-						th.WithSticky("test")),
-					),
-				)
-			},
-			expectedStatusCode: http.StatusServiceUnavailable,
-		},
 	}
 
 	for _, test := range testCases {

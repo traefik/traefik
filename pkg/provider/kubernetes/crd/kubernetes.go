@@ -16,6 +16,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
@@ -173,7 +174,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, middleware := range client.GetMiddlewares() {
-		id := makeID(middleware.Namespace, middleware.Name)
+		id := provider.Normalize(makeID(middleware.Namespace, middleware.Name))
 		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, id))
 
 		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth)
