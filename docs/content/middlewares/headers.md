@@ -162,8 +162,8 @@ labels:
 ```toml tab="File (TOML)"    
 [http.middlewares]
   [http.middlewares.testHeader.headers]
-    framedeny = true
-    sslredirect = true
+    frameDeny = true
+    sslRedirect = true
 ```
 
 ```yaml tab="File (YAML)"  
@@ -171,8 +171,8 @@ http:
   middlewares:
     testHeader:
       headers:
-        framedeny: true
-        sslredirect: true
+        frameDeny: true
+        sslRedirect: true
 ```
 
 ### CORS Headers
