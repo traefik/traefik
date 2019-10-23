@@ -289,9 +289,7 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 
 	return proxyprotocol.NewDefaultListener(listener).
 		WithSourceChecker(sourceCheck).
-		WithLogger(proxyProtocolLogger{
-			Logger: log.FromContext(ctx),
-		}), nil
+		WithLogger(proxyProtocolLogger{Logger: log.FromContext(ctx)}), nil
 }
 
 func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {
