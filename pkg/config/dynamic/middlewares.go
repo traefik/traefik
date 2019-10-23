@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/containous/traefik/v2/pkg/types"
 	"io/ioutil"
 	"os"
 
@@ -35,6 +36,22 @@ type Middleware struct {
 	Compress          *Compress          `json:"compress,omitempty" toml:"compress,omitempty" yaml:"compress,omitempty" label:"allowEmpty"`
 	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty" toml:"passTLSClientCert,omitempty" yaml:"passTLSClientCert,omitempty"`
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty"`
+	GRPC              *GRPC              `json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// GRPC holds the GRPC configuration.
+type GRPC struct {
+	ServerID     string         `json:"server-id,omitempty" toml:"server-id,omitempty" yaml:"server-id,omitempty"`
+	Address      string         `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	Timeout      types.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
+	PassToClient struct {
+		Method     bool     `json:"method,omitempty" toml:"method,omitempty" yaml:"method,omitempty"`
+		RequestURI bool     `json:"request-uri,omitempty" toml:"request-uri,omitempty" yaml:"request-uri,omitempty"`
+		RemoteAddr bool     `json:"remote-addr,omitempty" toml:"remote-addr,omitempty" yaml:"remote-addr,omitempty"`
+		Headers    []string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty"`
+	} `json:"pass,omitempty" toml:"pass,omitempty" yaml:"pass,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

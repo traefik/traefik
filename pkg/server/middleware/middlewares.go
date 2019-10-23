@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/containous/traefik/v2/pkg/middlewares/grpc"
 	"net/http"
 	"strings"
 
@@ -320,6 +321,13 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return stripprefixregex.New(ctx, next, *config.StripPrefixRegex, middlewareName)
+		}
+	}
+
+	// GRPC
+	if config.GRPC != nil {
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return grpc.New(ctx, next, *config.GRPC, middlewareName)
 		}
 	}
 

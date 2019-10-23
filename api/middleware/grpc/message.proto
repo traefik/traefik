@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package grpc;
+
+message Request {
+    string ServerID = 1;
+    string Method = 2;
+    string RequestURI = 3;
+    string RemoteAddr = 4;
+    map<string, string> Headers = 5;
+}
+
+message CancelRequest {
+    int32 Code = 1;
+    string Body = 2;
+}
+
+message Actions {
+    map<string, string> SetRequestHeaders = 1;
+    map<string, string> SetResponseHeaders = 2;
+    repeated string RemoveRequestHeaders = 3;
+    CancelRequest CancelRequest = 4;
+}
+
+message Response {
+    string ClientID = 1;
+    Actions Actions = 2;
+}
+
+service Middleware {
+    rpc Handle (Request) returns (Response) {
+    }
+}
