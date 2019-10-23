@@ -203,8 +203,13 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		protocol := "http"
+		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
+			protocol = "https"
+		}
+
 		servers = append(servers, dynamic.Server{
-			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
+			URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, portSpec.Port),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, backend.ServiceName)

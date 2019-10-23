@@ -624,8 +624,9 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
 
       middlewares:
         admin-stripprefix:
-          addPrefix:
-            prefix: "/admin"
+          stripPrefix:
+            prefixes: 
+            - "/admin"
 
     # ...
     ```
