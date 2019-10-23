@@ -149,3 +149,6 @@ run-dev:
 	go generate
 	GO111MODULE=on go build ./cmd/traefik
 	./traefik
+
+gen-proto:
+	protoc -I=. --go_out=plugins=grpc:. ./api/middleware/grpc/message.proto
