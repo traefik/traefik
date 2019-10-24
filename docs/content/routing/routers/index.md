@@ -203,15 +203,13 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
 ### Rule
 
-Rules are a set of matchers that determine if a particular request matches specific criteria.
+Rules are a set of matchers configured with values, that determine if a particular request matches specific criteria.
 If the rule is verified, the router becomes active, calls middlewares, and then forwards the request to the service.
 
-!!! tip "Backtick"
-    [Backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"` can be use to set a rule.
+??? tip "Backticks or Quotes?"
+    To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
     
-    Single quotes `'` are not accepted.  
-    
-    <https://golang.org/ref/spec#String_literals>
+    Single quotes `'` are not accepted as values are "Golang's String Literals" (reference: <https://golang.org/ref/spec#String_literals>).
 
 !!! example "Host is traefik.io"
 
