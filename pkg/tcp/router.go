@@ -184,6 +184,7 @@ func clientHelloServerName(br *bufio.Reader) (string, bool, string) {
 		}
 		return "", false, ""
 	}
+
 	const recordTypeHandshake = 0x16
 	if hdr[0] != recordTypeHandshake {
 		// log.Errorf("Error not tls")
@@ -196,12 +197,14 @@ func clientHelloServerName(br *bufio.Reader) (string, bool, string) {
 		log.Errorf("Error while Peeking hello: %s", err)
 		return "", false, getPeeked(br)
 	}
+
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
 		log.Errorf("Error while Hello: %s", err)
 		return "", true, getPeeked(br)
 	}
+
 	sni := ""
 	server := tls.Server(sniSniffConn{r: bytes.NewReader(helloBytes)}, &tls.Config{
 		GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
@@ -210,6 +213,7 @@ func clientHelloServerName(br *bufio.Reader) (string, bool, string) {
 		},
 	})
 	_ = server.Handshake()
+
 	return sni, true, getPeeked(br)
 }
 

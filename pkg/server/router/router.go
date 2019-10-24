@@ -11,22 +11,32 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/middlewares/recovery"
 	"github.com/containous/traefik/v2/pkg/middlewares/tracing"
-	"github.com/containous/traefik/v2/pkg/responsemodifiers"
 	"github.com/containous/traefik/v2/pkg/rules"
 	"github.com/containous/traefik/v2/pkg/server/internal"
-	"github.com/containous/traefik/v2/pkg/server/middleware"
-	"github.com/containous/traefik/v2/pkg/server/service"
 )
 
 const (
 	recoveryMiddlewareName = "traefik-internal-recovery"
 )
 
+type middlewareBuilder interface {
+	BuildChain(ctx context.Context, names []string) *alice.Chain
+}
+
+type responseModifierBuilder interface {
+	Build(ctx context.Context, names []string) func(*http.Response) error
+}
+
+type serviceManager interface {
+	BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error)
+	LaunchHealthCheck()
+}
+
 // NewManager Creates a new Manager
 func NewManager(conf *runtime.Configuration,
-	serviceManager *service.Manager,
-	middlewaresBuilder *middleware.Builder,
-	modifierBuilder *responsemodifiers.Builder,
+	serviceManager serviceManager,
+	middlewaresBuilder middlewareBuilder,
+	modifierBuilder responseModifierBuilder,
 ) *Manager {
 	return &Manager{
 		routerHandlers:     make(map[string]http.Handler),
@@ -40,9 +50,9 @@ func NewManager(conf *runtime.Configuration,
 // Manager A route/router manager
 type Manager struct {
 	routerHandlers     map[string]http.Handler
-	serviceManager     *service.Manager
-	middlewaresBuilder *middleware.Builder
-	modifierBuilder    *responsemodifiers.Builder
+	serviceManager     serviceManager
+	middlewaresBuilder middlewareBuilder
+	modifierBuilder    responseModifierBuilder
 	conf               *runtime.Configuration
 }
 

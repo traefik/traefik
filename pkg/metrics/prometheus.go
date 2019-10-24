@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"sort"
 	"strings"
@@ -216,22 +215,21 @@ func registerPromState(ctx context.Context) bool {
 // OnConfigurationUpdate receives the current configuration from Traefik.
 // It then converts the configuration to the optimized package internal format
 // and sets it to the promState.
-func OnConfigurationUpdate(dynConf dynamic.Configurations, entryPoints []string) {
+func OnConfigurationUpdate(conf dynamic.Configuration, entryPoints []string) {
 	dynamicConfig := newDynamicConfig()
 
 	for _, value := range entryPoints {
 		dynamicConfig.entryPoints[value] = true
 	}
-	for key, config := range dynConf {
-		for name := range config.HTTP.Routers {
-			dynamicConfig.routers[fmt.Sprintf("%s@%s", name, key)] = true
-		}
 
-		for serviceName, service := range config.HTTP.Services {
-			dynamicConfig.services[fmt.Sprintf("%s@%s", serviceName, key)] = make(map[string]bool)
-			for _, server := range service.LoadBalancer.Servers {
-				dynamicConfig.services[fmt.Sprintf("%s@%s", serviceName, key)][server.URL] = true
-			}
+	for name := range conf.HTTP.Routers {
+		dynamicConfig.routers[name] = true
+	}
+
+	for serviceName, service := range conf.HTTP.Services {
+		dynamicConfig.services[serviceName] = make(map[string]bool)
+		for _, server := range service.LoadBalancer.Servers {
+			dynamicConfig.services[serviceName][server.URL] = true
 		}
 	}
 

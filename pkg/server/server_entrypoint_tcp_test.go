@@ -28,14 +28,14 @@ func TestShutdownHTTP(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	go entryPoint.startTCP(context.Background())
+	go entryPoint.StartTCP(context.Background())
 
 	router := &tcp.Router{}
 	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(1 * time.Second)
 		rw.WriteHeader(http.StatusOK)
 	}))
-	entryPoint.switchRouter(router)
+	entryPoint.SwitchRouter(router)
 
 	conn, err := net.Dial("tcp", entryPoint.listener.Addr().String())
 	require.NoError(t, err)
@@ -66,7 +66,7 @@ func TestShutdownHTTPHijacked(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	go entryPoint.startTCP(context.Background())
+	go entryPoint.StartTCP(context.Background())
 
 	router := &tcp.Router{}
 	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -79,7 +79,7 @@ func TestShutdownHTTPHijacked(t *testing.T) {
 		require.NoError(t, err)
 	}))
 
-	entryPoint.switchRouter(router)
+	entryPoint.SwitchRouter(router)
 
 	conn, err := net.Dial("tcp", entryPoint.listener.Addr().String())
 	require.NoError(t, err)
@@ -110,7 +110,7 @@ func TestShutdownTCPConn(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	go entryPoint.startTCP(context.Background())
+	go entryPoint.StartTCP(context.Background())
 
 	router := &tcp.Router{}
 	router.AddCatchAllNoTLS(tcp.HandlerFunc(func(conn tcp.WriteCloser) {
@@ -123,7 +123,7 @@ func TestShutdownTCPConn(t *testing.T) {
 		require.NoError(t, err)
 	}))
 
-	entryPoint.switchRouter(router)
+	entryPoint.SwitchRouter(router)
 
 	conn, err := net.Dial("tcp", entryPoint.listener.Addr().String())
 	require.NoError(t, err)

@@ -306,7 +306,8 @@ func TestRouterManager_Get(t *testing.T) {
 					Middlewares: test.middlewaresConfig,
 				},
 			})
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil, nil, nil)
+
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -407,7 +408,7 @@ func TestAccessLog(t *testing.T) {
 				},
 			})
 
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil, nil, nil)
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -680,7 +681,6 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -693,7 +693,8 @@ func TestRuntimeConfiguration(t *testing.T) {
 					Middlewares: test.middlewareConfig,
 				},
 			})
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil, nil, nil)
+
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -762,7 +763,8 @@ func TestProviderOnMiddlewares(t *testing.T) {
 			},
 		},
 	})
-	serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil, nil, nil)
+
+	serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
 	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -790,6 +792,7 @@ func BenchmarkRouterServe(b *testing.B) {
 		StatusCode: 200,
 		Body:       ioutil.NopCloser(strings.NewReader("")),
 	}
+
 	routersConfig := map[string]*dynamic.Router{
 		"foo": {
 			EntryPoints: []string{"web"},
@@ -817,7 +820,8 @@ func BenchmarkRouterServe(b *testing.B) {
 			Middlewares: map[string]*dynamic.Middleware{},
 		},
 	})
-	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil, nil, nil)
+
+	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
@@ -857,7 +861,8 @@ func BenchmarkService(b *testing.B) {
 			Services: serviceConfig,
 		},
 	})
-	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil, nil, nil)
+
+	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil)
 	w := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 

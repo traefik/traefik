@@ -50,11 +50,60 @@ func (h *httpForwarder) Accept() (net.Conn, error) {
 // TCPEntryPoints holds a map of TCPEntryPoint (the entrypoint names being the keys)
 type TCPEntryPoints map[string]*TCPEntryPoint
 
+// NewTCPEntryPoints creates a new TCPEntryPoints.
+func NewTCPEntryPoints(staticConfiguration static.Configuration) (TCPEntryPoints, error) {
+	serverEntryPointsTCP := make(TCPEntryPoints)
+	for entryPointName, config := range staticConfiguration.EntryPoints {
+		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+
+		var err error
+		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config)
+		if err != nil {
+			return nil, fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
+		}
+	}
+	return serverEntryPointsTCP, nil
+}
+
+// Start the server entry points.
+func (eps TCPEntryPoints) Start() {
+	for entryPointName, serverEntryPoint := range eps {
+		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+		go serverEntryPoint.StartTCP(ctx)
+	}
+}
+
+// Stop the server entry points.
+func (eps TCPEntryPoints) Stop() {
+	var wg sync.WaitGroup
+
+	for epn, ep := range eps {
+		wg.Add(1)
+
+		go func(entryPointName string, entryPoint *TCPEntryPoint) {
+			defer wg.Done()
+
+			ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+			entryPoint.Shutdown(ctx)
+
+			log.FromContext(ctx).Debugf("Entry point %s closed", entryPointName)
+		}(epn, ep)
+	}
+
+	wg.Wait()
+}
+
+// Switch the TCP routers.
+func (eps TCPEntryPoints) Switch(routersTCP map[string]*tcp.Router) {
+	for entryPointName, rt := range routersTCP {
+		eps[entryPointName].SwitchRouter(rt)
+	}
+}
+
 // TCPEntryPoint is the TCP server
 type TCPEntryPoint struct {
 	listener               net.Listener
 	switcher               *tcp.HandlerSwitcher
-	RouteAppenderFactory   RouteAppenderFactory
 	transportConfiguration *static.EntryPointsTransport
 	tracker                *connectionTracker
 	httpServer             *httpServer
@@ -99,35 +148,8 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 	}, nil
 }
 
-// writeCloserWrapper wraps together a connection, and the concrete underlying
-// connection type that was found to satisfy WriteCloser.
-type writeCloserWrapper struct {
-	net.Conn
-	writeCloser tcp.WriteCloser
-}
-
-func (c *writeCloserWrapper) CloseWrite() error {
-	return c.writeCloser.CloseWrite()
-}
-
-// writeCloser returns the given connection, augmented with the WriteCloser
-// implementation, if any was found within the underlying conn.
-func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
-	switch typedConn := conn.(type) {
-	case *proxyprotocol.Conn:
-		underlying, err := writeCloser(typedConn.Conn)
-		if err != nil {
-			return nil, err
-		}
-		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
-	case *net.TCPConn:
-		return typedConn, nil
-	default:
-		return nil, fmt.Errorf("unknown connection type %T", typedConn)
-	}
-}
-
-func (e *TCPEntryPoint) startTCP(ctx context.Context) {
+// StartTCP starts the TCP server.
+func (e *TCPEntryPoint) StartTCP(ctx context.Context) {
 	logger := log.FromContext(ctx)
 	logger.Debugf("Start TCP Server")
 
@@ -213,22 +235,55 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	cancel()
 }
 
-func (e *TCPEntryPoint) switchRouter(router *tcp.Router) {
+// SwitchRouter switches the TCP router handler.
+func (e *TCPEntryPoint) SwitchRouter(router *tcp.Router) {
 	router.HTTPForwarder(e.httpServer.Forwarder)
-	router.HTTPSForwarder(e.httpsServer.Forwarder)
 
 	httpHandler := router.GetHTTPHandler()
-	httpsHandler := router.GetHTTPSHandler()
 	if httpHandler == nil {
 		httpHandler = buildDefaultHTTPRouter()
 	}
+
+	e.httpServer.Switcher.UpdateHandler(httpHandler)
+
+	router.HTTPSForwarder(e.httpsServer.Forwarder)
+
+	httpsHandler := router.GetHTTPSHandler()
 	if httpsHandler == nil {
 		httpsHandler = buildDefaultHTTPRouter()
 	}
 
-	e.httpServer.Switcher.UpdateHandler(httpHandler)
 	e.httpsServer.Switcher.UpdateHandler(httpsHandler)
+
 	e.switcher.Switch(router)
+}
+
+// writeCloserWrapper wraps together a connection, and the concrete underlying
+// connection type that was found to satisfy WriteCloser.
+type writeCloserWrapper struct {
+	net.Conn
+	writeCloser tcp.WriteCloser
+}
+
+func (c *writeCloserWrapper) CloseWrite() error {
+	return c.writeCloser.CloseWrite()
+}
+
+// writeCloser returns the given connection, augmented with the WriteCloser
+// implementation, if any was found within the underlying conn.
+func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
+	switch typedConn := conn.(type) {
+	case *proxyprotocol.Conn:
+		underlying, err := writeCloser(typedConn.Conn)
+		if err != nil {
+			return nil, err
+		}
+		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
+	case *net.TCPConn:
+		return typedConn, nil
+	default:
+		return nil, fmt.Errorf("unknown connection type %T", typedConn)
+	}
 }
 
 // tcpKeepAliveListener sets TCP keep-alive timeouts on accepted
