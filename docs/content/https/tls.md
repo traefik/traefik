@@ -160,32 +160,6 @@ tls:
       minVersion: VersionTLS13
 ```
 
-### Maximum TLS Version
-
-```toml tab="File (TOML)"
-# Dynamic configuration
-
-[tls.options]
-
-  [tls.options.default]
-    maxVersion = "VersionTLS12"
-
-  [tls.options.maxtls13]
-    maxVersion = "VersionTLS12"
-```
-
-```yaml tab="File (YAML)"
-# Dynamic configuration
-
-tls:
-  options:
-    default:
-      maxVersion: VersionTLS12
-
-    maxtls13:
-      maxVersion: VersionTLS12
-```
-
 ```yaml tab="Kubernetes"
 apiVersion: traefik.containo.us/v1alpha1
 kind: TLSOption
@@ -205,6 +179,53 @@ metadata:
 
 spec:
   minVersion: VersionTLS13
+```
+
+### Maximum TLS Version
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+
+  [tls.options.default]
+    maxVersion = "VersionTLS13"
+
+  [tls.options.maxtls12]
+    maxVersion = "VersionTLS12"
+```
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      maxVersion: VersionTLS13
+
+    maxtls12:
+      maxVersion: VersionTLS12
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  maxVersion: VersionTLS13
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: maxtls12
+  namespace: default
+
+spec:
+  maxVersion: VersionTLS12
 ```
 
 ### Cipher Suites
