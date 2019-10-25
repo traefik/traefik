@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -20,6 +19,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/containous/traefik/v2/pkg/types"
+	"github.com/mitchellh/hashstructure"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -139,10 +139,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// track more information about the dropped events.
 					conf := p.loadConfigurationFromIngresses(ctxLog, k8sClient)
 
-					if reflect.DeepEqual(p.lastConfiguration.Get(), conf) {
+					confHash, err := hashstructure.Hash(conf, nil)
+					switch {
+					case err != nil:
+						logger.Error("Unable to hash the configuration")
+					case p.lastConfiguration.Get() == confHash:
 						logger.Debugf("Skipping Kubernetes event kind %T", event)
-					} else {
-						p.lastConfiguration.Set(conf)
+					default:
+						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
 							ProviderName:  "kubernetes",
 							Configuration: conf,
