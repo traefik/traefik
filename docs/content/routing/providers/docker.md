@@ -49,8 +49,12 @@ Attach labels to your containers and let Traefik do the rest!
         labels:
           - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
           # Tell Traefik to use the port 12345 to connect to `my-container`
-          - "traefik.http.services.my-service.loadbalancer.server.port=12345"
+          - traefik.http.services.my-service.loadbalancer.server.port="12345"
     ```
+
+    !!! important
+        Traefik automatically uses the first port exposed in the container, this configuration will override that behavior.
+        This is useful for when traefik is connecting to the wrong port and you are receiveing a 502 gateway error.
 
 ??? example "Configuring Docker Swarm & Deploying / Exposing Services"
 

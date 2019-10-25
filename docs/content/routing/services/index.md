@@ -55,9 +55,10 @@ The `Services` are responsible for configuring how to reach the actual services 
             - address: "xx.xx.xx.xx:xx"
     ```
 
-??? example "Specify the port that Traefik uses to connect to the service"
+??? example "Specify the port that Traefik uses to connect to the service -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="File (TOML)"
+    ## Dynamic configuration
     [http.services]
       [http.services.my-service.loadBalancer]
         [[http.services.my-service.loadBalancer.server]]
@@ -65,17 +66,16 @@ The `Services` are responsible for configuring how to reach the actual services 
     ```
 
     ```yaml tab="File (YAML)"
+    ## Dynamic configuration
     http:
       services:
         my-service:
           loadbalancer:
             server:
-              port=12345
+              port: "12345"
     ```
 
-!!! important
-    Traefik automatically uses the first port exposed in the container, this configuration will override that behavior.
-    This is useful for when traefik is connecting to the wrong port and you are receiveing a 502 gateway error.
+    For other providers, please look in the dedicated sections (Docker, Kubernetes IngressRoute, etc.).
 
 ## Configuring HTTP Services
 
