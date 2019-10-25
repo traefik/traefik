@@ -211,13 +211,13 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		}
 	}
 
-	// Set the minimum TLS version if set in the config TOML
+	// Set the minimum TLS version if set in the config
 	if minConst, exists := MinVersion[tlsOption.MinVersion]; exists {
 		conf.PreferServerCipherSuites = true
 		conf.MinVersion = minConst
 	}
 
-	// Set the list of CipherSuites if set in the config TOML
+	// Set the list of CipherSuites if set in the config
 	if tlsOption.CipherSuites != nil {
 		// if our list of CipherSuites is defined in the entryPoint config, we can re-initialize the suites list as empty
 		conf.CipherSuites = make([]uint16, 0)
@@ -231,7 +231,7 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		}
 	}
 
-	// Set the list of CurvePreferences/CurveIDs if set in the config TOML
+	// Set the list of CurvePreferences/CurveIDs if set in the config
 	if tlsOption.CurvePreferences != nil {
 		conf.CurvePreferences = make([]tls.CurveID, 0)
 		// if our list of CurvePreferences/CurveIDs is defined in the config, we can re-initialize the list as empty
