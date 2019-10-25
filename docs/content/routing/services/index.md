@@ -5,9 +5,55 @@ Configuring How to Reach the Services
 
 ![services](../../assets/img/services.png)
 
-The `Services` are responsible for configuring how to reach the actual services that will eventually handle the incoming requests. 
+The `Services` are responsible for configuring how to reach the actual services that will eventually handle the incoming requests.
 
-## Configuration Example
+## Configuration Examples
+
+??? example "Declaring an HTTP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+    ```
+
+??? example "Declaring a TCP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [tcp.services]
+      [tcp.services.my-service.loadBalancer]
+         [[tcp.services.my-service.loadBalancer.servers]]
+           address = "xx.xx.xx.xx:xx"
+         [[tcp.services.my-service.loadBalancer.servers]]
+           address = "xx.xx.xx.xx:xx"
+    ```
+
+    ```yaml tab="YAML"
+    tcp:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+            - address: "xx.xx.xx.xx:xx"
+            - address: "xx.xx.xx.xx:xx"
+    ```
 
 ??? example "Specify the port that traefik will use to connect to the service"
 
@@ -36,52 +82,6 @@ The `Services` are responsible for configuring how to reach the actual services 
 !!! important
     Traefik automatically uses the first port exposed in the container, this configuration will override that behavior.
     This is useful for when traefik is connecting to the wrong port and you are receiveing a 502 gateway error.
-
-??? example "Declaring an HTTP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [http.services]
-      [http.services.my-service.loadBalancer]
-
-        [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-1/"
-        [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-2/"
-    ```
-    
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    http:
-      services:
-        my-service:
-          loadBalancer:
-            servers:
-            - url: "http://private-ip-server-1/"
-            - url: "http://private-ip-server-2/"
-    ```
-
-??? example "Declaring a TCP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [tcp.services]
-      [tcp.services.my-service.loadBalancer]
-         [[tcp.services.my-service.loadBalancer.servers]]
-           address = "xx.xx.xx.xx:xx"
-         [[tcp.services.my-service.loadBalancer.servers]]
-           address = "xx.xx.xx.xx:xx"
-    ```
-    
-    ```yaml tab="YAML"
-    tcp:
-      services:
-        my-service:
-          loadBalancer:         
-            servers:
-            - address: "xx.xx.xx.xx:xx"
-            - address: "xx.xx.xx.xx:xx"
-    ```
 
 ## Configuring HTTP Services
 
@@ -115,10 +115,10 @@ The load balancers are able to load balance the requests between multiple instan
 #### Servers
 
 Servers declare a single instance of your program.
-The `url` option point to a specific instance. 
+The `url` option point to a specific instance.
 
 !!! info ""
-    Paths in the servers' `url` have no effect. 
+    Paths in the servers' `url` have no effect.
     If you want the requests to be sent to a specific path on your servers,
     configure your [`routers`](../routers/index.md) to use a corresponding [middleware](../../middlewares/overview.md) (e.g. the [AddPrefix](../../middlewares/addprefix.md) or [ReplacePath](../../middlewares/replacepath.md)) middlewares.
 
@@ -131,7 +131,7 @@ The `url` option point to a specific instance.
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-1/"
     ```
-    
+
     ```yaml tab="YAML"
     ## Dynamic configuration
     http:
@@ -170,21 +170,21 @@ For now, only round robin load balancing is supported:
     ```
 
 #### Sticky sessions
-  
+
 When sticky sessions are enabled, a cookie is set on the initial request to track which server handles the first response.
 On subsequent requests, the client is forwarded to the same server.
 
 !!! info "Stickiness & Unhealthy Servers"
-   
+
     If the server specified in the cookie becomes unhealthy, the request will be forwarded to a new server (and the cookie will keep track of the new server).
 
-!!! info "Cookie Name" 
-    
+!!! info "Cookie Name"
+
     The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
 
 !!! info "Secure & HTTPOnly flags"
 
-    By default, the affinity cookie is created without those flags. One however can change that through configuration. 
+    By default, the affinity cookie is created without those flags. One however can change that through configuration.
 
 ??? example "Adding Stickiness -- Using the [File Provider](../../providers/file.md)"
 
@@ -194,7 +194,7 @@ On subsequent requests, the client is forwarded to the same server.
       [http.services.my-service]
         [http.services.my-service.loadBalancer.sticky.cookie]
     ```
-    
+
     ```yaml tab="YAML"
     ## Dynamic configuration
     http:
@@ -251,8 +251,8 @@ Below are the available options for the health check mechanism:
     The interval must be greater than the timeout. If configuration doesn't reflect this, the interval will be set to timeout + 1 second.
 
 !!! info "Recovering Servers"
-   
-    Traefik keeps monitoring the health of unhealthy servers. 
+
+    Traefik keeps monitoring the health of unhealthy servers.
     If a server has recovered (returning `2xx` -> `3xx` responses again), it will be added back to the load balacer rotation pool.
 
 ??? example "Custom Interval & Timeout -- Using the [File Provider](../../providers/file.md)"
@@ -289,7 +289,7 @@ Below are the available options for the health check mechanism:
           path = "/health"
           port = 8080
     ```
-    
+
     ```yaml tab="YAML"
     ## Dynamic configuration
     http:
@@ -311,7 +311,7 @@ Below are the available options for the health check mechanism:
           path = "/health"
           scheme = "http"
     ```
-    
+
     ```yaml tab="YAML"
     ## Dynamic configuration
     http:
@@ -336,7 +336,7 @@ Below are the available options for the health check mechanism:
             My-Custom-Header = "foo"
             My-Header = "bar"
     ```
-    
+
     ```yaml tab="YAML"
     ## Dynamic configuration
     http:
@@ -365,7 +365,7 @@ By default, `passHostHeader` is true.
         [http.services.Service01.loadBalancer]
           passHostHeader = false
     ```
-    
+
     ```yaml tab="YAML"
     ## Dynamic configuration
     http:
@@ -386,7 +386,7 @@ Below are the available options for the Response Forwarding mechanism:
   A negative value means to flush immediately after each write to the client.
   The FlushInterval is ignored when ReverseProxy recognizes a response as a streaming response;
   for such responses, writes are flushed to the client immediately.
-  
+
 ??? example "Using a custom FlushInterval -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
@@ -396,7 +396,7 @@ Below are the available options for the Response Forwarding mechanism:
         [http.services.Service-1.loadBalancer.responseForwarding]
           flushInterval = "1s"
     ```
-    
+
     ```yaml tab="YAML"
     ## Dynamic configuration
     http:
