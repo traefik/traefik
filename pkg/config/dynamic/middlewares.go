@@ -92,7 +92,9 @@ type CircuitBreaker struct {
 // +k8s:deepcopy-gen=true
 
 // Compress holds the compress configuration.
-type Compress struct{}
+type Compress struct {
+	ExcludedContentTypes []string `json:"excludedContentTypes,omitempty" toml:"excludedContentTypes,omitempty" yaml:"excludedContentTypes,omitempty" export:"true"`
+}
 
 // +k8s:deepcopy-gen=true
 
