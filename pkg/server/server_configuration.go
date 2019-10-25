@@ -212,12 +212,12 @@ func (s *Server) preLoadConfiguration(configMsg dynamic.Message) {
 	}
 
 	if isEmptyConfiguration(configMsg.Configuration) {
-		logger.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
+		logger.Debugf("Skipping empty configuration for provider %s", configMsg.ProviderName)
 		return
 	}
 
 	if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-		logger.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
+		logger.Debugf("Skipping same configuration for provider %s", configMsg.ProviderName)
 		return
 	}
 
