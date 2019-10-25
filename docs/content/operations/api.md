@@ -47,6 +47,14 @@ labels:
   - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
+```yaml tab="Consul Catalog"
+# Declaring the user list
+- "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+- "traefik.http.routers.api.service=api@internal"
+- "traefik.http.routers.api.middlewares=auth"
+- "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.routers.api.rule": "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"

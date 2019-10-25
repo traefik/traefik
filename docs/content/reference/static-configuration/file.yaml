@@ -115,6 +115,24 @@ providers:
     refreshSeconds: 42
     intervalPoll: true
     prefix: foobar
+  consulcatalog:
+    constraints: foobar
+    prefix: traefik
+    defaultRule: foobar
+    exposedByDefault: true
+    refreshInterval: 15
+    endpoint:
+      address: foobar
+      scheme: foobar
+      datacenter: foobar
+      token: foobar
+      endpointWaitTime: 15s
+      tls:
+        ca: foobar
+        caOptional: true
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
 api:
   insecure: true
   dashboard: true

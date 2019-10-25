@@ -28,6 +28,11 @@ spec:
     address: https://authserver.com/auth
 ```
 
+```yaml tab="Consul Catalog"
+# Forward authentication to authserver.com
+- "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-auth.forwardauth.address": "https://authserver.com/auth"
@@ -77,6 +82,10 @@ spec:
     address: https://authserver.com/auth 
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-auth.forwardauth.address": "https://authserver.com/auth"
@@ -120,6 +129,10 @@ spec:
   forwardAuth:
     address: https://authserver.com/auth
     trustForwardHeader: true
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
 ```
 
 ```json tab="Marathon"
@@ -169,6 +182,10 @@ spec:
     authResponseHeaders:
       - X-Auth-User
       - X-Secret
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
 ```
 
 ```json tab="Marathon"
@@ -235,6 +252,10 @@ data:
   ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-auth.forwardauth.tls.ca": "path/to/local.crt"
@@ -288,6 +309,10 @@ spec:
     address: https://authserver.com/auth
     tls:
       caOptional: true
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.tls.caOptional=true"
 ```
 
 ```json tab="Marathon"
@@ -350,6 +375,11 @@ metadata:
 data:
   tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
   tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+- "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
 ```
 
 ```json tab="Marathon"
@@ -421,6 +451,11 @@ data:
   tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+- "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-auth.forwardauth.tls.cert": "path/to/foo.cert",
@@ -475,6 +510,10 @@ spec:
   forwardAuth:
     address: https://authserver.com/auth
     insecureSkipVerify: true
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.tls.InsecureSkipVerify=true"
 ```
 
 ```json tab="Marathon"

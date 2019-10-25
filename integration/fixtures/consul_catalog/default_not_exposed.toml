@@ -1,0 +1,20 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[api]
+  insecure = true
+
+[providers]
+  [providers.consulcatalog]
+    exposedByDefault = false
+    refreshInterval = "500ms"
+  [providers.consulcatalog.endpoint]
+    address = "{{ .ConsulAddress }}"
