@@ -55,13 +55,7 @@ The `Services` are responsible for configuring how to reach the actual services 
             - address: "xx.xx.xx.xx:xx"
     ```
 
-??? example "Specify the port that traefik will use to connect to the service"
-
-    ```yaml tab="Docker"
-    # Sets the port traefik will use to connect to the container
-    labels:
-    - "traefik.http.services.my-service.loadbalancer.server.port=12345"
-    ```
+??? example "Specify the port that Traefik uses to connect to the service"
 
     ```toml tab="File (TOML)"
     [http.services]

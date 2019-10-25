@@ -12,16 +12,16 @@ Attach labels to your containers and let Traefik do the rest!
 ??? example "Configuring Docker & Deploying / Exposing Services"
 
     Enabling the docker provider
-    
+
     ```toml tab="File (TOML)"
     [providers.docker]
     ```
-    
+
     ```yaml tab="File (YAML)"
     providers:
       docker: {}
     ```
-    
+
     ```bash tab="CLI"
     --providers.docker=true
     ```
@@ -37,6 +37,21 @@ Attach labels to your containers and let Traefik do the rest!
           - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
     ```
 
+??? example "Specify the port that Traefik uses to connect to the service"
+
+    Forward requests for `http://mydomain.com` to `http://<IP of my-container>:12345`:
+
+    ```yaml
+    version: "3"
+    services:
+      my-container:
+        # ...
+        labels:
+          - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
+          # Tell Traefik to use the port 12345 to connect to `my-container`
+          - "traefik.http.services.my-service.loadbalancer.server.port=12345"
+    ```
+
 ??? example "Configuring Docker Swarm & Deploying / Exposing Services"
 
     Enabling the docker provider (Swarm Mode)
@@ -49,7 +64,7 @@ Attach labels to your containers and let Traefik do the rest!
       endpoint = "tcp://127.0.0.1:2377"
       swarmMode = true
     ```
-    
+
     ```yaml tab="File (YAML)"
     providers:
       docker:
@@ -59,7 +74,7 @@ Attach labels to your containers and let Traefik do the rest!
         endpoint: "tcp://127.0.0.1:2375"
         swarmMode: true
     ```
-    
+
     ```bash tab="CLI"
     --providers.docker.endpoint="tcp://127.0.0.1:2375"
     --providers.docker.swarmMode=true
@@ -85,7 +100,7 @@ Attach labels to your containers and let Traefik do the rest!
 ## Routing Configuration
 
 !!! info "Labels"
-    
+
     - Labels are case insensitive.
     - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/docker.md).
 
@@ -132,81 +147,81 @@ For example, to change the rule, you could add the label ```traefik.http.routers
 !!! warning "The character `@` is not authorized in the router name `<router_name>`."
 
 ??? info "`traefik.http.routers.<router_name>.rule`"
-    
-    See [rule](../routers/index.md#rule) for more information. 
-    
+
+    See [rule](../routers/index.md#rule) for more information.
+
     ```yaml
     - "traefik.http.routers.myrouter.rule=Host(`mydomain.com`)"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.entrypoints`"
-    
-    See [entry points](../routers/index.md#entrypoints) for more information. 
-    
+
+    See [entry points](../routers/index.md#entrypoints) for more information.
+
     ```yaml
     - "traefik.http.routers.myrouter.entrypoints=web,websecure"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.middlewares`"
-    
-    See [middlewares](../routers/index.md#middlewares) and [middlewares overview](../../middlewares/overview.md) for more information. 
-    
+
+    See [middlewares](../routers/index.md#middlewares) and [middlewares overview](../../middlewares/overview.md) for more information.
+
     ```yaml
     - "traefik.http.routers.myrouter.middlewares=auth,prefix,cb"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.service`"
-    
-    See [rule](../routers/index.md#service) for more information. 
-    
+
+    See [rule](../routers/index.md#service) for more information.
+
     ```yaml
     - "traefik.http.routers.myrouter.service=myservice"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls`"
-    
+
     See [tls](../routers/index.md#tls) for more information.
-    
+
     ```yaml
     - "traefik.http.routers.myrouter.tls=true"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.certresolver`"
-    
+
     See [certResolver](../routers/index.md#certresolver) for more information.
-    
+
     ```yaml
     - "traefik.http.routers.myrouter.tls.certresolver=myresolver"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.domains[n].main`"
-    
+
     See [domains](../routers/index.md#domains) for more information.
-    
+
     ```yaml
     - "traefik.http.routers.myrouter.tls.domains[0].main=foobar.com"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.domains[n].sans`"
-    
+
     See [domains](../routers/index.md#domains) for more information.
-    
+
     ```yaml
     - "traefik.http.routers.myrouter.tls.domains[0].sans=test.foobar.com,dev.foobar.com"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.options`"
-    
+
     See [options](../routers/index.md#options) for more information.
-    
+
     ```yaml
     - "traefik.http.routers.myrouter.tls.options=foobar"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.priority`"
-    
+
     See [options](../routers/index.md#priority) for more information.
-    
+
     ```yaml
     - "traefik.http.routers.myrouter.priority=42"
     ```
@@ -222,124 +237,124 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 !!! warning "The character `@` is not authorized in the service name `<service_name>`."
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.server.port`"
-    
+
     Registers a port.
     Useful when the container exposes multiples ports.
-    
+
     Mandatory for Docker Swarm.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.server.port=8080"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.server.scheme`"
-    
+
     Overrides the default scheme.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.server.scheme=http"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
-    
+
     See [pass Host header](../services/index.md#pass-host-header) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.passhostheader=true"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.headers.<header_name>`"
-    
+
     See [health check](../services/index.md#health-check) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.healthcheck.headers.X-Foo=foobar"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.hostname`"
-    
+
     See [health check](../services/index.md#health-check) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.healthcheck.hostname=foobar.com"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.interval`"
-    
+
     See [health check](../services/index.md#health-check) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.healthcheck.interval=10"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.path`"
-    
+
     See [health check](../services/index.md#health-check) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.healthcheck.path=/foo"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.port`"
-    
+
     See [health check](../services/index.md#health-check) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.healthcheck.port=42"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.scheme`"
-    
+
     See [health check](../services/index.md#health-check) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.healthcheck.scheme=http"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.timeout`"
-    
+
     See [health check](../services/index.md#health-check) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.healthcheck.timeout=10"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky`"
-    
+
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.sticky=true"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.httponly`"
-    
+
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.sticky.cookie.httponly=true"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.name`"
-    
+
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.sticky.cookie.name=foobar"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.secure`"
-    
+
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.sticky.cookie.secure=true"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
-    
+
     See [response forwarding](../services/index.md#response-forwarding) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10"
     ```
@@ -397,73 +412,73 @@ You can declare TCP Routers and/or Services using labels.
 #### TCP Routers
 
 ??? info "`traefik.tcp.routers.<router_name>.entrypoints`"
-    
+
     See [entry points](../routers/index.md#entrypoints_1) for more information.
-    
+
     ```yaml
     - "traefik.tcp.routers.mytcprouter.entrypoints=ep1,ep2"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.rule`"
-    
+
     See [rule](../routers/index.md#rule_1) for more information.
-    
+
     ```yaml
     - "traefik.tcp.routers.mytcprouter.rule=HostSNI(`myhost.com`)"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.service`"
-    
+
     See [service](../routers/index.md#services) for more information.
-    
+
     ```yaml
     - "traefik.tcp.routers.mytcprouter.service=myservice"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls`"
-    
+
     See [TLS](../routers/index.md#tls_1) for more information.
-    
+
     ```yaml
     - "traefik.tcp.routers.mytcprouter.tls=true"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.certresolver`"
-    
+
     See [certResolver](../routers/index.md#certresolver_1) for more information.
-    
+
     ```yaml
     - "traefik.tcp.routers.mytcprouter.tls.certresolver=myresolver"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.domains[n].main`"
-    
+
     See [domains](../routers/index.md#domains_1) for more information.
-    
+
     ```yaml
     - "traefik.tcp.routers.mytcprouter.tls.domains[0].main=foobar.com"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.domains[n].sans`"
-    
+
     See [domains](../routers/index.md#domains_1) for more information.
-    
+
     ```yaml
     - "traefik.tcp.routers.mytcprouter.tls.domains[0].sans=test.foobar.com,dev.foobar.com"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.options`"
-    
+
     See [options](../routers/index.md#options_1) for more information.
-    
+
     ```yaml
     - "traefik.tcp.routers.mytcprouter.tls.options=mysoptions"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.passthrough`"
-    
+
     See [TLS](../routers/index.md#tls_1) for more information.
-    
+
     ```yaml
     - "traefik.tcp.routers.mytcprouter.tls.passthrough=true"
     ```
@@ -471,17 +486,17 @@ You can declare TCP Routers and/or Services using labels.
 #### TCP Services
 
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.server.port`"
-    
+
     Registers a port of the application.
-    
+
     ```yaml
     - "traefik.tcp.services.mytcpservice.loadbalancer.server.port=423"
     ```
 
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.terminationdelay`"
-        
+
     See [termination delay](../services/index.md#termination-delay) for more information.
-    
+
     ```yaml
     - "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100"
     ```
