@@ -17,9 +17,9 @@ The `Services` are responsible for configuring how to reach the actual services 
       [http.services.my-service.loadBalancer]
 
         [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-1/"
+          url = "http://<private-ip-server-1>:<private-port-server-1>/"
         [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-2/"
+          url = "http://<private-ip-server-2>:<private-port-server-2>/"
     ```
 
     ```yaml tab="YAML"
@@ -29,8 +29,8 @@ The `Services` are responsible for configuring how to reach the actual services 
         my-service:
           loadBalancer:
             servers:
-            - url: "http://private-ip-server-1/"
-            - url: "http://private-ip-server-2/"
+            - url: "http://<private-ip-server-1>:<private-port-server-1>/"
+            - url: "http://<private-ip-server-2>:<private-port-server-2>/"
     ```
 
 ??? example "Declaring a TCP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
@@ -40,9 +40,9 @@ The `Services` are responsible for configuring how to reach the actual services 
     [tcp.services]
       [tcp.services.my-service.loadBalancer]
          [[tcp.services.my-service.loadBalancer.servers]]
-           address = "xx.xx.xx.xx:xx"
+           address = "<private-ip-server-1>:<private-port-server-1>"
          [[tcp.services.my-service.loadBalancer.servers]]
-           address = "xx.xx.xx.xx:xx"
+           address = "<private-ip-server-2>:<private-port-server-2>"
     ```
 
     ```yaml tab="YAML"
@@ -51,31 +51,9 @@ The `Services` are responsible for configuring how to reach the actual services 
         my-service:
           loadBalancer:
             servers:
-            - address: "xx.xx.xx.xx:xx"
-            - address: "xx.xx.xx.xx:xx"
+            - address: "<private-ip-server-1>:<private-port-server-1>"
+            - address: "<private-ip-server-2>:<private-port-server-2>"
     ```
-
-??? example "Custom Port for the Service -- Using the [File Provider](../../providers/file.md)"
-
-    ```toml tab="File (TOML)"
-    ## Dynamic configuration
-    [http.services]
-      [http.services.my-service.loadBalancer]
-        [[http.services.my-service.loadBalancer.server]]
-          url = "http://private-ip-server-1:12345/"
-    ```
-
-    ```yaml tab="File (YAML)"
-    ## Dynamic configuration
-    http:
-      services:
-        my-service:
-          loadbalancer:
-            server:
-              - url: "http://private-ip-server-1:12345/"
-    ```
-
-    For other providers, please look in the dedicated sections (Docker, Kubernetes IngressRoute, etc.).
 
 ## Configuring HTTP Services
 
