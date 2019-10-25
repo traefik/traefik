@@ -225,19 +225,18 @@ spec:
 
 ### Curve Preferences
 
-See [CurveID](https://godoc.org/crypto/tls#CurveID) for more information. With this option you 
-can set the preferred elliptic curves. This option is order specific. You can use the names of 
-the curves defined by crypto (e.g. CurveP521) and the RFC defined names (e. g. secp521r1).
+This option allow to set the preferred elliptic curves in a specific order.
+
+The names of the curves defined by [`crypto`](https://godoc.org/crypto/tls#CurveID) (e.g. `CurveP521`) and the [RFC defined names](https://tools.ietf.org/html/rfc8446#section-4.2.7) (e. g. `secp521r1`) can be used.
+
+See [CurveID](https://godoc.org/crypto/tls#CurveID) for more information.
 
 ```toml tab="File (TOML)"
 # Dynamic configuration
 
 [tls.options]
   [tls.options.default]
-    curvePreferences = [
-      "CurveP521",
-      "CurveP384"
-    ]
+    curvePreferences = ["CurveP521", "CurveP384"]
 ```
 
 ```yaml tab="File (YAML)"
