@@ -320,6 +320,7 @@
       minVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
       sniStrict = true
+      curvePreferences = ["foobar", "foobar"]
       [tls.options.Options0.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"
@@ -327,6 +328,7 @@
       minVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
       sniStrict = true
+      curvePreferences = ["foobar", "foobar"]
       [tls.options.Options1.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"
