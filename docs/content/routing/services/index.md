@@ -81,7 +81,9 @@ The `Services` are responsible for configuring how to reach the actual services 
 
 ### Servers Load Balancer
 
-The load balancers are able to load balance the requests between multiple instances of your programs. This is the default service used by traefik to communicate with your container, even if you choose not to load balance your containers.
+The load balancers are able to load balance the requests between multiple instances of your programs.
+
+Each service has a load-balancer, even if there is only one server to forward traffic to.
 
 ??? example "Declaring a Service with Two Servers (with Load Balancing) -- Using the [File Provider](../../providers/file.md)"
 
