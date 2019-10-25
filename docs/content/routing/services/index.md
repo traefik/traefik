@@ -55,14 +55,14 @@ The `Services` are responsible for configuring how to reach the actual services 
             - address: "xx.xx.xx.xx:xx"
     ```
 
-??? example "Specify the port that Traefik uses to connect to the service -- Using the [File Provider](../../providers/file.md)"
+??? example "Custom Port for the Service -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="File (TOML)"
     ## Dynamic configuration
     [http.services]
       [http.services.my-service.loadBalancer]
         [[http.services.my-service.loadBalancer.server]]
-          port = "12345"
+          url = "http://private-ip-server-1:12345/"
     ```
 
     ```yaml tab="File (YAML)"
@@ -72,7 +72,7 @@ The `Services` are responsible for configuring how to reach the actual services 
         my-service:
           loadbalancer:
             server:
-              port: "12345"
+              - url: "http://private-ip-server-1:12345/"
     ```
 
     For other providers, please look in the dedicated sections (Docker, Kubernetes IngressRoute, etc.).
