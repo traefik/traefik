@@ -37,9 +37,9 @@ Attach labels to your containers and let Traefik do the rest!
           - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
     ```
 
-??? example "Specify the port that Traefik uses to connect to the service"
+??? example "Specify a Custom Port for the Container"
 
-    Forward requests for `http://mydomain.com` to `http://<IP of my-container>:12345`:
+    Forward requests for `http://mydomain.com` to `http://<private IP of container>:12345`:
 
     ```yaml
     version: "3"
@@ -49,12 +49,14 @@ Attach labels to your containers and let Traefik do the rest!
         labels:
           - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
           # Tell Traefik to use the port 12345 to connect to `my-container`
-          - traefik.http.services.my-service.loadbalancer.server.port="12345"
+          - traefik.http.services.my-service.loadbalancer.server.port=12345
     ```
 
-    !!! important
-        Traefik automatically uses the first port exposed in the container, this configuration will override that behavior.
-        This is useful for when traefik is connecting to the wrong port and you are receiveing a 502 gateway error.
+    !!! important "Traefik Connecting to the Wrong Port: `HTTP/502 Gateway Error`"
+        By default, Traefik uses the first exposed port of a container.
+
+        Setting the label `raefik.http.services.xxx.loadbalancer.server.port`
+        overrides that behavior.
 
 ??? example "Configuring Docker Swarm & Deploying / Exposing Services"
 
