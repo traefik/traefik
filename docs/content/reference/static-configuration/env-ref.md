@@ -225,6 +225,9 @@ StatsD address. (Default: ```localhost:8125```)
 `TRAEFIK_METRICS_STATSD_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
+`TRAEFIK_METRICS_STATSD_PREFIX`:  
+Prefix to use for metrics collection. (Default: ```traefik```)
+
 `TRAEFIK_METRICS_STATSD_PUSHINTERVAL`:  
 StatsD push interval. (Default: ```10```)
 
