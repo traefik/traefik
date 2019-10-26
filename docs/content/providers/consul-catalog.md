@@ -210,7 +210,7 @@ See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-sc
 
 ### `endpoint`
 
-Defines Consul Catalog Provider endpoint.
+Defines Consul server endpoint.
 
 #### `address`
 
@@ -236,7 +236,7 @@ providers:
 # ...
 ```
 
-Defines the consul address endpoint.
+Defines the address of the Consul server.
 
 #### `scheme`
 
@@ -262,7 +262,7 @@ providers:
 # ...
 ```
 
-Defines the scheme used.
+Defines the URI scheme for the Consul server.
 
 #### `datacenter`
 
@@ -288,7 +288,8 @@ providers:
 # ...
 ```
 
-Defines the DC.
+Defines the Data center to use.
+If not provided, the default agent data center is used.
 
 #### `token`
 
@@ -314,13 +315,11 @@ providers:
 # ...
 ```
 
-Defines the token.
+Token is used to provide a per-request ACL token which overrides the agent's default token.
 
 #### `endpointWaitTime`
 
 _Optional, Default=""_
-
-If not provided, the agent default values will be used
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -342,17 +341,70 @@ providers:
 # ...
 ```
 
-Defines the endpoint wait time.
+WaitTime limits how long a Watch will block.
+If not provided, the agent default values will be used
+
+#### `httpAuth`
+
+_Optional_
+
+Used to authenticate http client with HTTP Basic Authentication.
+
+##### `username`
+
+_Optional_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog.endpoint.httpAuth]
+  username = "test"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      httpAuth:
+        username: test
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.httpauth.username=test
+```
+
+Username to use for HTTP Basic Authentication
+
+##### `password`
+
+_Optional_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog.endpoint.httpAuth]
+  password = "test"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      httpAuth:
+        password: test
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.httpauth.password=test
+```
+
+Password to use for HTTP Basic Authentication
 
 #### `tls`
 
 _Optional_
 
-Defines TLS options for Consul Catalog Provider endpoint.
+Defines TLS options for Consul server endpoint.
 
 ##### `ca`
 
-Certificate Authority used for the secured connection to Consul Catalog.
+_Optional_
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.tls]
@@ -371,14 +423,11 @@ providers:
 --providers.consulcatalog.endpoint.tls.ca=path/to/ca.crt
 ```
 
+`ca` is the path to the CA certificate used for Consul communication, defaults to the system bundle if not specified.
+
 ##### `caOptional`
 
-Policy followed for the secured connection with TLS Client Authentication to Consul Catalog.
-Requires `tls.ca` to be defined.
-
-- `true`: VerifyClientCertIfGiven
-- `false`: RequireAndVerifyClientCert
-- if `tls.ca` is undefined NoClientCert
+_Optional_
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.tls]
@@ -397,9 +446,16 @@ providers:
 --providers.consulcatalog.endpoint.tls.caOptional=true
 ```
 
+Policy followed for the secured connection with TLS Client Authentication to Consul.
+Requires `tls.ca` to be defined.
+
+- `true`: VerifyClientCertIfGiven
+- `false`: RequireAndVerifyClientCert
+- if `tls.ca` is undefined NoClientCert
+
 ##### `cert`
 
-Public certificate used for the secured connection to Consul Catalog.
+_Optional_
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.tls]
@@ -420,10 +476,13 @@ providers:
 --providers.consulcatalog.endpoint.tls.cert=path/to/foo.cert
 --providers.consulcatalog.endpoint.tls.key=path/to/foo.key
 ```
+
+`cert` is the path to the public certificate for Consul communication.
+If this is set then you need to also set `key.
 
 ##### `key`
 
-Private certificate used for the secured connection to Consul Catalog.
+_Optional_
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.tls]
@@ -445,9 +504,12 @@ providers:
 --providers.consulcatalog.endpoint.tls.key=path/to/foo.key
 ```
 
+`key` is the path to the private key for Consul communication.
+If this is set then you need to also set `cert`.
+
 ##### `insecureSkipVerify`
 
-If `insecureSkipVerify` is `true`, TLS for the connection to Consul Catalog accepts any certificate presented by the server and any host name in that certificate.
+_Optional_
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.tls]
@@ -465,3 +527,5 @@ providers:
 ```bash tab="CLI"
 --providers.consulcatalog.endpoint.tls.insecureSkipVerify=true
 ```
+
+If `insecureSkipVerify` is `true`, TLS for the connection to Consul server accepts any certificate presented by the server and any host name in that certificate.
