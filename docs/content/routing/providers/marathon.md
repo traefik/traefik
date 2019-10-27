@@ -52,6 +52,8 @@ add labels starting with `traefik.http.routers.{router-name-of-your-choice}.` an
 
 For example, to change the routing rule, you could add the label ```"traefik.http.routers.routername.rule": "Host(`mydomain.com`)"```.
 
+!!! warning "The character `@` is not authorized in the router name `<router_name>`."
+
 ??? info "`traefik.http.routers.<router_name>.rule`"
     
     See [rule](../routers/index.md#rule) for more information. 
@@ -138,6 +140,8 @@ To update the configuration of the Service automatically attached to the contain
 add labels starting with `traefik.http.services.{service-name-of-your-choice}.`, followed by the option you want to change.
 
 For example, to change the passHostHeader behavior, you'd add the label `"traefik.http.services.servicename.loadbalancer.passhostheader": "false"`.
+
+!!! warning "The character `@` is not authorized in the service name `<service_name>`."
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.server.port`"
     
@@ -267,6 +271,8 @@ You can declare pieces of middleware using labels starting with `traefik.http.mi
 For example, to declare a middleware [`redirectscheme`](../../middlewares/redirectscheme.md) named `my-redirect`, you'd write `"traefik.http.middlewares.my-redirect.redirectscheme.scheme": "https"`.
 
 More information about available middlewares in the dedicated [middlewares section](../../middlewares/overview.md).
+
+!!! warning "The character `@` is not authorized in the middleware name."
 
 ??? example "Declaring and Referencing a Middleware"
 

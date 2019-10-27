@@ -84,6 +84,8 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
 
 ## Configuring HTTP Routers
 
+!!! warning "The character `@` is not authorized in the router name"
+
 ### EntryPoints
 
 If not specified, HTTP routers will accept requests from all defined entry points.
@@ -342,6 +344,8 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 You can attach a list of [middlewares](../../middlewares/overview.md) to each HTTP router.
 The middlewares will take effect only if the rule matches, and before forwarding the request to the service.
 
+!!! warning "The character `@` is not authorized in the middleware name."
+
 !!! tip "Middlewares order"
     
     Middlewares are applied in the same order as their declaration in **router**.
@@ -380,6 +384,8 @@ In general, a service assigned to a router should have been defined,
 but there are exceptions for label-based providers.
 See the specific [docker](../providers/docker.md#service-definition), [rancher](../providers/rancher.md#service-definition),
 or [marathon](../providers/marathon.md#service-definition) documentation.
+
+!!! warning "The character `@` is not authorized in the middleware name."
 
 !!! important "HTTP routers can only target HTTP services (not TCP services)."
 
@@ -628,6 +634,8 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
     It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
 
 ## Configuring TCP Routers
+
+!!! warning "The character `@` is not authorized in the router name"
 
 ### General
 

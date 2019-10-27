@@ -346,7 +346,7 @@ By default, `passHostHeader` is true.
           loadBalancer:
             passHostHeader: false
     ```
-   
+
 #### Response Forwarding
 
 This section is about configuring how Traefik forwards the response from the backend server to the client.
@@ -378,7 +378,7 @@ Below are the available options for the Response Forwarding mechanism:
             responseForwarding:
               flushInterval: 1s
     ```
-    
+
 ### Weighted Round Robin (service)
 
 The WRR is able to load balance the requests between multiple services based on weights.
