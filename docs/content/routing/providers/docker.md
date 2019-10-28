@@ -226,7 +226,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
 
 ??? info "`traefik.http.routers.<router_name>.priority`"
 
-    See [options](../routers/index.md#priority) for more information.
+    See [priority](../routers/index.md#priority) for more information.
 
     ```yaml
     - "traefik.http.routers.myrouter.priority=42"
