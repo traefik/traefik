@@ -55,7 +55,7 @@ Attach labels to your containers and let Traefik do the rest!
     !!! important "Traefik Connecting to the Wrong Port: `HTTP/502 Gateway Error`"
         By default, Traefik uses the first exposed port of a container.
 
-        Setting the label `raefik.http.services.xxx.loadbalancer.server.port`
+        Setting the label `traefik.http.services.xxx.loadbalancer.server.port`
         overrides that behavior.
 
 ??? example "Configuring Docker Swarm & Deploying / Exposing Services"
