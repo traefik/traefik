@@ -105,7 +105,6 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rl.bucketsMu.Lock()
-	defer rl.bucketsMu.Unlock()
 
 	var bucket *rate.Limiter
 	if rlSource, exists := rl.buckets.Get(source); exists {
@@ -118,6 +117,8 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	rl.bucketsMu.Unlock()
 
 	res := bucket.Reserve()
 	if !res.OK() {
