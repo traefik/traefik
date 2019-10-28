@@ -45,7 +45,7 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	mediaType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
 	if err != nil {
-		log.FromContext(middlewares.GetLoggerCtx(context.Background(), c.name, typeName)).Error(err)
+		log.FromContext(middlewares.GetLoggerCtx(context.Background(), c.name, typeName)).Debug(err)
 	}
 
 	if contains(c.excludes, mediaType) {
