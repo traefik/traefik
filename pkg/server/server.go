@@ -94,8 +94,9 @@ func setupTracing(conf *static.Tracing) tracing.Backend {
 
 	if backend == nil {
 		log.WithoutContext().Debug("Could not initialize tracing, use Jaeger by default")
-		backend := &jaeger.Config{}
-		backend.SetDefaults()
+		bcd := &jaeger.Config{}
+		bcd.SetDefaults()
+		backend = bcd
 	}
 
 	return backend
