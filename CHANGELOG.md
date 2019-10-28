@@ -1,3 +1,36 @@
+## [v2.0.3](https://github.com/containous/traefik/tree/v2.0.3) (2019-10-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.2...v2.0.3)
+
+**Bug fixes:**
+- **[acme,logs]** Use debug for log about skipping addition of cert ([#5641](https://github.com/containous/traefik/pull/5641) by [sylr](https://github.com/sylr))
+- **[file]** fix: add filename in the file provider logs. ([#5636](https://github.com/containous/traefik/pull/5636) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/crd,k8s/ingress]** Remove unnecessary reload of the configuration. ([#5707](https://github.com/containous/traefik/pull/5707) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/crd,k8s/ingress]** Fixing support for HTTPs backends with Kubernetes ExternalName services ([#5660](https://github.com/containous/traefik/pull/5660) by [kpeiruza](https://github.com/kpeiruza))
+- **[k8s,k8s/ingress]** Normalize service and router names for ingress. ([#5623](https://github.com/containous/traefik/pull/5623) by [ldez](https://github.com/ldez))
+- **[logs]** Set proxy protocol logger to DEBUG level ([#5712](https://github.com/containous/traefik/pull/5712) by [mmatur](https://github.com/mmatur))
+- **[middleware]** fix: add stacktrace when recover. ([#5654](https://github.com/containous/traefik/pull/5654) by [ldez](https://github.com/ldez))
+- **[tracing]** Let instana/go-sensor handle default agent host ([#5658](https://github.com/containous/traefik/pull/5658) by [sylr](https://github.com/sylr))
+- **[tracing]** fix: default tracing backend. ([#5717](https://github.com/containous/traefik/pull/5717) by [ldez](https://github.com/ldez))
+- fix: deep copy of passHostHeader on ServersLoadBalancer. ([#5720](https://github.com/containous/traefik/pull/5720) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** Fix acme storage file docker mounting example ([#5633](https://github.com/containous/traefik/pull/5633) by [jansauer](https://github.com/jansauer))
+- **[acme]** fix incorrect DNS reference ([#5666](https://github.com/containous/traefik/pull/5666) by [oskapt](https://github.com/oskapt))
+- **[logs]** Clarify unit of duration field in access log ([#5664](https://github.com/containous/traefik/pull/5664) by [Sarke](https://github.com/Sarke))
+- **[middleware]** Fix Security Headers Doc ([#5706](https://github.com/containous/traefik/pull/5706) by [FlorianPerrot](https://github.com/FlorianPerrot))
+- **[middleware]** Migration guide: pathprefixstrip migration ([#5600](https://github.com/containous/traefik/pull/5600) by [dduportal](https://github.com/dduportal))
+- **[middleware]** fix ForwardAuth tls.skipverify examples ([#5683](https://github.com/containous/traefik/pull/5683) by [remche](https://github.com/remche))
+- **[rules]** Add documentation about backtick for rule definition. ([#5714](https://github.com/containous/traefik/pull/5714) by [ldez](https://github.com/ldez))
+- **[webui]** Improve documentation of the router rules for API and dashboard ([#5625](https://github.com/containous/traefik/pull/5625) by [dduportal](https://github.com/dduportal))
+- doc: @ is not authorized in names definition. ([#5734](https://github.com/containous/traefik/pull/5734) by [ldez](https://github.com/ldez))
+- Remove obsolete v2 remark from README ([#5669](https://github.com/containous/traefik/pull/5669) by [dragetd](https://github.com/dragetd))
+- Fix spelling mistake: &#34;founded&#34; -&gt; &#34;found&#34; ([#5674](https://github.com/containous/traefik/pull/5674) by [ocanty](https://github.com/ocanty))
+- fix typo for stripPrefix in tab File (YAML) ([#5694](https://github.com/containous/traefik/pull/5694) by [nalakawula](https://github.com/nalakawula))
+- Add example for changing the port used by traefik to connect to a service ([#5224](https://github.com/containous/traefik/pull/5224) by [robertbaker](https://github.com/robertbaker))
+
+**Misc:**
+- **[logs,middleware]** Cherry pick v1.7 into v2.0 ([#5735](https://github.com/containous/traefik/pull/5735) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.0.2](https://github.com/containous/traefik/tree/v2.0.2) (2019-10-09)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.1...v2.0.2)
 
