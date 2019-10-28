@@ -183,6 +183,10 @@ spec:
 
 ### Maximum TLS Version
 
+We discourages the use of this setting to disable TLS1.3.
+
+The right approach is to update the clients to support TLS1.3.
+
 ```toml tab="File (TOML)"
 # Dynamic configuration
 
