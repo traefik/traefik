@@ -803,6 +803,11 @@ func (in *TLSOptionSpec) DeepCopyInto(out *TLSOptionSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.CurvePreferences != nil {
+		in, out := &in.CurvePreferences, &out.CurvePreferences
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	in.ClientAuth.DeepCopyInto(&out.ClientAuth)
 	return
 }
