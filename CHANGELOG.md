@@ -1,5 +1,16 @@
 # Change Log
 
+## [v1.7.19](https://github.com/containous/traefik/tree/v1.7.19) (2019-10-25)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.18...v1.7.19)
+
+**Bug fixes:**
+- **[k8s,k8s/ingress]** Add functions to support precise float compute of weight ([#5663](https://github.com/containous/traefik/pull/5663) by [rmrfself](https://github.com/rmrfself))
+- **[middleware]** Fix Location response header http to https when SSL ([#5574](https://github.com/containous/traefik/pull/5574) by [elielgoncalves](https://github.com/elielgoncalves))
+- **[tls]** Allow Default Certificate to work on macOS 10.15 ([#5662](https://github.com/containous/traefik/pull/5662) by [dtomcej](https://github.com/dtomcej))
+
+**Documentation:**
+- **[k8s]** Update DaemonSet apiVersion ([#5682](https://github.com/containous/traefik/pull/5682) by [ialidzhikov](https://github.com/ialidzhikov))
+
 ## [v1.7.18](https://github.com/containous/traefik/tree/v1.7.18) (2019-09-23)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.17...v1.7.18)
 
