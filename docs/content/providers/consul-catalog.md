@@ -337,7 +337,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.endpoint.endpointWaitTime=15s
+--providers.consulcatalog.endpoint.endpointwaittime=15s
 # ...
 ```
 
@@ -443,7 +443,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.endpoint.tls.caOptional=true
+--providers.consulcatalog.endpoint.tls.caoptional=true
 ```
 
 Policy followed for the secured connection with TLS Client Authentication to Consul.
@@ -525,7 +525,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.endpoint.tls.insecureSkipVerify=true
+--providers.consulcatalog.endpoint.tls.insecureskipverify=true
 ```
 
 If `insecureSkipVerify` is `true`, TLS for the connection to Consul server accepts any certificate presented by the server and any host name in that certificate.
