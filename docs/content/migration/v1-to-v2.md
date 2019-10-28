@@ -238,11 +238,9 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     [tls.options]
       [tls.options.default]
         minVersion = "VersionTLS12"
-        maxVersion = "VersionTLS12"
     
       [tls.options.myTLSOptions]
         minVersion = "VersionTLS13"
-        maxVersion = "VersionTLS13"
         cipherSuites = [
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
             "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
