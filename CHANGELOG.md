@@ -1,3 +1,9 @@
+## [v2.0.4](https://github.com/containous/traefik/tree/v2.0.4) (2019-10-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.3...v2.0.4)
+
+Fixes releases system.
+Same changelog as v2.0.3.
+
 ## [v2.0.3](https://github.com/containous/traefik/tree/v2.0.3) (2019-10-28)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.2...v2.0.3)
 
