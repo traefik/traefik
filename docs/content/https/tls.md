@@ -181,6 +181,57 @@ spec:
   minVersion: VersionTLS13
 ```
 
+### Maximum TLS Version
+
+We discourages the use of this setting to disable TLS1.3.
+
+The right approach is to update the clients to support TLS1.3.
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+
+  [tls.options.default]
+    maxVersion = "VersionTLS13"
+
+  [tls.options.maxtls12]
+    maxVersion = "VersionTLS12"
+```
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      maxVersion: VersionTLS13
+
+    maxtls12:
+      maxVersion: VersionTLS12
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  maxVersion: VersionTLS13
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: maxtls12
+  namespace: default
+
+spec:
+  maxVersion: VersionTLS12
+```
+
 ### Cipher Suites
 
 See [cipherSuites](https://godoc.org/crypto/tls#pkg-constants) for more information.

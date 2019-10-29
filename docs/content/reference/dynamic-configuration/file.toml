@@ -318,6 +318,7 @@
   [tls.options]
     [tls.options.Options0]
       minVersion = "foobar"
+      maxVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
       sniStrict = true
       [tls.options.Options0.clientAuth]
@@ -325,6 +326,7 @@
         clientAuthType = "foobar"
     [tls.options.Options1]
       minVersion = "foobar"
+      maxVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
       sniStrict = true
       [tls.options.Options1.clientAuth]
