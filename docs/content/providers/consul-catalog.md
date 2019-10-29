@@ -14,12 +14,12 @@ Attach labels to your services and let Traefik do the rest!
     Enabling the consulcatalog provider
 
     ```toml tab="File (TOML)"
-    [providers.consulcatalog]
+    [providers.consulCatalog]
     ```
     
     ```yaml tab="File (YAML)"
     providers:
-      consulcatalog: {}
+      consulCatalog: {}
     ```
     
     ```bash tab="CLI"
@@ -39,34 +39,19 @@ See the dedicated section in [routing](../routing/providers/consul-catalog.md).
 
 ## Provider Configuration
 
-??? tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the configuration reference:
-    
-    ```toml tab="File (TOML)"
-    --8<-- "content/providers/consul-catalog.toml"
-    ```
-    
-    ```yaml tab="File (YAML)"
-    --8<-- "content/providers/consul-catalog.yml"
-    ```
-    
-    ```bash tab="CLI"
-    --8<-- "content/providers/consul-catalog.txt"
-    ```
-
 ### `exposedByDefault`
 
 _Optional, Default=true_
 
 ```toml tab="File (TOML)"
-[providers.consulcatalog]
+[providers.consulCatalog]
   exposedByDefault = false
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
-  consulcatalog:
+  consulCatalog:
     exposedByDefault: false
     # ...
 ```
@@ -86,14 +71,14 @@ See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-sc
 _Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
 ```toml tab="File (TOML)"
-[providers.consulcatalog]
+[providers.consulCatalog]
   defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
-  consulcatalog:
+  consulCatalog:
     defaultRule: "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
     # ...
 ```
@@ -113,92 +98,43 @@ and the template has access to all the labels defined on this container.
 
 This option can be overridden on a container basis with the `traefik.http.routers.Router1.rule` label.
 
-### `enableServiceHealthFilter`
+### `refreshInterval`
 
-_Optional, Default=true_
+_Optional, Default=15s_
 
 ```toml tab="File (TOML)"
-[providers.consulcatalog]
-  enableServiceHealthFilter = false
+[providers.consulCatalog]
+  refreshInterval = "30s"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
-  consulcatalog:
-    enableServiceHealthFilter: false
+  consulCatalog:
+    refreshInterval: 30s
     # ...
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.enableServiceHealthFilter=false
+--providers.consulcatalog.refreshInterval=30s
 # ...
 ```
 
-Filter services with unhealthy states and inactive states.
-
-### `refreshSeconds`
-
-_Optional, Default=15_
-
-```toml tab="File (TOML)"
-[providers.consulcatalog]
-  refreshSeconds = 30
-  # ...
-```
-
-```yaml tab="File (YAML)"
-providers:
-  consulcatalog:
-    refreshSeconds: 30
-    # ...
-```
-
-```bash tab="CLI"
---providers.consulcatalog.refreshSeconds=30
-# ...
-```
-
-Defines the polling interval (in seconds).
-
-### `intervalPoll`
-
-_Optional, Default=false_
-
-```toml tab="File (TOML)"
-[providers.consulcatalog]
-  intervalPoll = true
-  # ...
-```
-
-```yaml tab="File (YAML)"
-providers:
-  consulcatalog:
-    intervalPoll: true
-    # ...
-```
-
-```bash tab="CLI"
---providers.consulcatalog.intervalPoll=true
-# ...
-```
-
-Poll the Consul Catalog metadata service for changes every `consulcatalog.refreshSeconds`,
-which is less accurate than the default long polling technique which will provide near instantaneous updates to Traefik.
+Defines the polling interval.
 
 ### `prefix`
 
 _Optional, Default=/latest_
 
 ```toml tab="File (TOML)"
-[providers.consulcatalog]
+[providers.consulCatalog]
   prefix = "/test"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
-  consulcatalog:
+  consulCatalog:
     prefix: "/test"
     # ...
 ```
@@ -208,21 +144,21 @@ providers:
 # ...
 ```
 
-Prefix used for accessing the Consul Catalog service
+Prefix used for accessing the Consul service metadata.
 
 ### `constraints`
 
 _Optional, Default=""_
 
 ```toml tab="File (TOML)"
-[providers.consulcatalog]
+[providers.consulCatalog]
   constraints = "Label(`a.label.name`, `foo`)"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
-  consulcatalog:
+  consulCatalog:
     constraints: "Label(`a.label.name`, `foo`)"
     # ...
 ```
@@ -271,3 +207,325 @@ The expression syntax is based on the `Label("key", "value")`, and `LabelRegex("
     ```
 
 See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+
+### `endpoint`
+
+Defines Consul server endpoint.
+
+#### `address`
+
+_Optional, Default="http://127.0.0.1:8500"_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  [providers.consulCatalog.endpoint]
+    address = "http://127.0.0.1:8500"
+    # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      address: http://127.0.0.1:8500
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.address=http://127.0.0.1:8500
+# ...
+```
+
+Defines the address of the Consul server.
+
+#### `scheme`
+
+_Optional, Default=""_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  [providers.consulCatalog.endpoint]
+    scheme = "https"
+    # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      scheme: https
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.scheme=https
+# ...
+```
+
+Defines the URI scheme for the Consul server.
+
+#### `datacenter`
+
+_Optional, Default=""_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  [providers.consulCatalog.endpoint]
+    datacenter = "test"
+    # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      datacenter: test
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.datacenter=test
+# ...
+```
+
+Defines the Data center to use.
+If not provided, the default agent data center is used.
+
+#### `token`
+
+_Optional, Default=""_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  [providers.consulCatalog.endpoint]
+    token = "test"
+    # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      token: test
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.token=test
+# ...
+```
+
+Token is used to provide a per-request ACL token which overrides the agent's default token.
+
+#### `endpointWaitTime`
+
+_Optional, Default=""_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  [providers.consulCatalog.endpoint]
+    endpointWaitTime = "15s"
+    # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      endpointWaitTime: 15s
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.endpointwaittime=15s
+# ...
+```
+
+WaitTime limits how long a Watch will block.
+If not provided, the agent default values will be used
+
+#### `httpAuth`
+
+_Optional_
+
+Used to authenticate http client with HTTP Basic Authentication.
+
+##### `username`
+
+_Optional_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog.endpoint.httpAuth]
+  username = "test"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      httpAuth:
+        username: test
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.httpauth.username=test
+```
+
+Username to use for HTTP Basic Authentication
+
+##### `password`
+
+_Optional_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog.endpoint.httpAuth]
+  password = "test"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      httpAuth:
+        password: test
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.httpauth.password=test
+```
+
+Password to use for HTTP Basic Authentication
+
+#### `tls`
+
+_Optional_
+
+Defines TLS options for Consul server endpoint.
+
+##### `ca`
+
+_Optional_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog.endpoint.tls]
+  ca = "path/to/ca.crt"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      tls:
+        ca: path/to/ca.crt
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.tls.ca=path/to/ca.crt
+```
+
+`ca` is the path to the CA certificate used for Consul communication, defaults to the system bundle if not specified.
+
+##### `caOptional`
+
+_Optional_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog.endpoint.tls]
+  caOptional = true
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      tls:
+        caOptional: true
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.tls.caoptional=true
+```
+
+Policy followed for the secured connection with TLS Client Authentication to Consul.
+Requires `tls.ca` to be defined.
+
+- `true`: VerifyClientCertIfGiven
+- `false`: RequireAndVerifyClientCert
+- if `tls.ca` is undefined NoClientCert
+
+##### `cert`
+
+_Optional_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog.endpoint.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.tls.cert=path/to/foo.cert
+--providers.consulcatalog.endpoint.tls.key=path/to/foo.key
+```
+
+`cert` is the path to the public certificate for Consul communication.
+If this is set then you need to also set `key.
+
+##### `key`
+
+_Optional_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog.endpoint.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.tls.cert=path/to/foo.cert
+--providers.consulcatalog.endpoint.tls.key=path/to/foo.key
+```
+
+`key` is the path to the private key for Consul communication.
+If this is set then you need to also set `cert`.
+
+##### `insecureSkipVerify`
+
+_Optional_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog.endpoint.tls]
+  insecureSkipVerify = true
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    endpoint:
+      tls:
+        insecureSkipVerify: true
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.endpoint.tls.insecureskipverify=true
+```
+
+If `insecureSkipVerify` is `true`, TLS for the connection to Consul server accepts any certificate presented by the server and any host name in that certificate.
