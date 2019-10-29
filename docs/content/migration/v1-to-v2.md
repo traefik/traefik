@@ -3,13 +3,13 @@
 How to Migrate from Traefik v1 to Traefik v2.
 {: .subtitle }
 
-The version 2 of Traefik introduces a number of breaking changes, 
+The version 2 of Traefik introduces a number of breaking changes,
 which require one to update their configuration when they migrate from v1 to v2.
-The goal of this page is to recapitulate all of these changes, and in particular to give examples, 
+The goal of this page is to recapitulate all of these changes, and in particular to give examples,
 feature by feature, of how the configuration looked like in v1, and how it now looks like in v2.
 
 !!! info "Migration Helper"
-    
+
     We created a tool to help during the migration: [traefik-migration-tool](https://github.com/containous/traefik-migration-tool)
 
     This tool allows to:
@@ -32,7 +32,7 @@ Then any router can refer to an instance of the wanted middleware.
 !!! example "One frontend with basic auth and one backend, become one router, one service, and one basic auth middleware."
 
     !!! info "v1"
-    
+
     ```yaml tab="Docker"
     labels:
       - "traefik.frontend.rule=Host:test.localhost;PathPrefix:/test"
@@ -92,9 +92,9 @@ Then any router can refer to an instance of the wanted middleware.
         [backends.backend1.loadBalancer]
           method = "wrr"
     ```
-    
+
     !!! info "v2"
-    
+
     ```yaml tab="Docker"
     labels:
       - "traefik.http.routers.router0.rule=Host(`bar.com`) && PathPrefix(`/test`)"
@@ -103,7 +103,7 @@ Then any router can refer to an instance of the wanted middleware.
     ```
 
     ```yaml tab="K8s IngressRoute"
-    # The definitions below require the definitions for the Middleware and IngressRoute kinds.  
+    # The definitions below require the definitions for the Middleware and IngressRoute kinds.
     # https://docs.traefik.io/v2.0/providers/kubernetes-crd/#traefik-ingressroute-definition
     apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
@@ -155,7 +155,7 @@ Then any router can refer to an instance of the wanted middleware.
     [http.middlewares]
       [http.middlewares.auth.basicAuth]
         users = [
-          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
+          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
           "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
         ]
     ```
@@ -184,7 +184,7 @@ Then any router can refer to an instance of the wanted middleware.
               - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
     ```
 
-## TLS configuration is now dynamic, per router.
+## TLS Configuration Is Now Dynamic, per Router.
 
 TLS parameters used to be specified in the static configuration, as an entryPoint field.
 With Traefik v2, a new dynamic TLS section at the root contains all the desired TLS configurations.
@@ -214,13 +214,13 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
             certFile = "path/to/my.cert"
             keyFile = "path/to/my.key"
     ```
-    
+
     ```bash tab="CLI"
     --entryPoints='Name:web-secure Address::443 TLS:path/to/my.cert,path/to/my.key TLS.MinVersion:VersionTLS12 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256'
     ```
-    
+
     !!! info "v2"
-    
+
     ```toml tab="File (TOML)"
     # dynamic configuration
     [http.routers]
@@ -250,7 +250,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
             ]
     ```
-    
+
     ```yaml tab="File (YAML)"
     http:
       routers:
@@ -275,9 +275,9 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
 	        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 	        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     ```
-    
+
     ```yaml tab="K8s IngressRoute"
-    # The definitions below require the definitions for the TLSOption and IngressRoute kinds.  
+    # The definitions below require the definitions for the TLSOption and IngressRoute kinds.
     # https://docs.traefik.io/v2.0/providers/kubernetes-crd/#traefik-ingressroute-definition
     apiVersion: traefik.containo.us/v1alpha1
     kind: TLSOption
@@ -310,11 +310,11 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
             - name: whoami
               port: 80
       tls:
-        options: 
+        options:
           name: mytlsoption
           namespace: default
     ```
-    
+
     ```yaml tab="Docker"
     labels:
       # myTLSOptions must be defined by another provider, in this instance in the File Provider.
@@ -322,7 +322,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       - "traefik.http.routers.router0.tls.options=myTLSOptions@file"
     ```
 
-## HTTP to HTTPS Redirection is now configured on Routers
+## HTTP to HTTPS Redirection Is Now Configured on Routers
 
 Previously on Traefik v1, the redirection was applied on an entry point or on a frontend.
 With Traefik v2 it is applied on a [Router](../routing/routers/index.md). 
@@ -350,14 +350,14 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
             certFile = "examples/traefik.crt"
             keyFile = "examples/traefik.key"
     ```
-    
+
     ```bash tab="CLI"
     --entrypoints=Name:web Address::80 Redirect.EntryPoint:web-secure
     --entryPoints='Name:web-secure Address::443 TLS:path/to/my.cert,path/to/my.key'
     ```
-    
+
     !!! info "v2"
-    
+
     ```yaml tab="Docker"
     labels:
     - traefik.http.routers.web.rule=Host(`foo.com`)
@@ -454,9 +454,9 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     
     [[tls.certificates]]
       certFile = "/path/to/domain.cert"
-      keyFile = "/path/to/domain.key"    
+      keyFile = "/path/to/domain.key"
     ```
-    
+
     ```yaml tab="File (YAML)"
     ## static configuration
     # traefik.yml
@@ -506,7 +506,139 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
       certificates:
         - certFile: /app/certs/server/server.pem
           keyFile: /app/certs/server/server.pem
-    ``` 
+    ```
+
+## Strip and Rewrite Path Prefixes
+
+With the new core notions of v2 (introduced earlier in the section
+["Frontends and Backends Are Dead... Long Live Routers, Middlewares, and Services"](#frontends-and-backends-are-dead-long-live-routers-middlewares-and-services)),
+transforming the URL path prefix of incoming requests is configured with [middlewares](../../middlewares/overview/),
+after the routing step with [router rule `PathPrefix`](https://docs.traefik.io/v2.0/routing/routers/#rule).
+
+Use Case: Incoming requests to `http://company.org/admin` are forwarded to the webapplication "admin",
+with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
+
+* First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
+* Then, define a middlware of type [`stripprefix`](../../middlewares/stripprefix/), which remove the prefix `/admin`, associated to the router `admin`.
+
+!!! example "Strip Path Prefix When Forwarding to Backend"
+
+    !!! info "v1"
+
+    ```yaml tab="Docker"
+    labels:
+      - "traefik.frontend.rule=Host:company.org;PathPrefixStrip:/admin"
+    ```
+
+    ```yaml tab="Kubernetes Ingress"
+    apiVersion: networking.k8s.io/v1beta1
+    kind: Ingress
+    metadata:
+      name: traefik
+      annotations:
+        kubernetes.io/ingress.class: traefik
+        traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip
+    spec:
+      rules:
+      - host: company.org
+        http:
+          paths:
+          - path: /admin
+            backend:
+              serviceName: admin-svc
+              servicePort: admin
+    ```
+
+    ```toml tab="File (TOML)"
+    [frontends.admin]
+      [frontends.admin.routes.admin_1]
+      rule = "Host:company.org;PathPrefixStrip:/admin"
+    ```
+
+    !!! info "v2"
+
+    ```yaml tab="Docker"
+    labels:
+      - "traefik.http.routers.admin.rule=Host(`company.org`) && PathPrefix(`/admin`)"
+      - "traefik.http.middlewares.admin-stripprefix.stripprefix.prefixes=/admin"
+      - "traefik.http.routers.web.middlewares=admin-stripprefix@docker"
+    ```
+
+    ```yaml tab="Kubernetes IngressRoute"
+    ---
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: http-redirect-ingressRoute
+      namespace: admin-web
+    spec:
+      entryPoints:
+        - web
+      routes:
+        - match: Host(`company.org`) && PathPrefix(`/admin`)
+          kind: Rule
+          services:
+            - name: admin-svc
+              port: admin
+          middlewares:
+            - name: admin-stripprefix
+    ---
+    kind: Middleware
+    metadata:
+      name: admin-stripprefix
+    spec:
+      stripPrefix:
+        prefixes:
+          - /admin
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    # dynamic-conf.toml
+
+    [http.routers.router1]
+        rule = "Host(`company.org`) && PathPrefix(`/admin`)"
+        service = "admin-svc"
+        entrypoints = ["web"]
+        middlewares = ["admin-stripprefix"]
+
+    [http.middlewares]
+      [http.middlewares.admin-stripprefix.stripPrefix]
+      prefixes = ["/admin"]
+    
+    # ...
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic Configuration
+    # dynamic-conf.yml
+
+    # As YAML Configuration File
+    http:
+      routers:
+        admin:
+          service: admin-svc
+          middlewares:
+            - "admin-stripprefix"
+          rule: "Host(`company.org`) && PathPrefix(`/admin`)"
+
+      middlewares:
+        admin-stripprefix:
+          stripPrefix:
+            prefixes: 
+            - "/admin"
+
+    # ...
+    ```
+
+??? question "What About Other Path Transformations?"
+
+    Instead of removing the path prefix with the [`stripprefix` middleware](../../middlewares/stripprefix/), you can also:
+
+    * Add a path prefix with the [`addprefix` middleware](../../middlewares/addprefix/)
+    * Replace the complete path of the request with the [`replacepath` middleware](../../middlewares/replacepath/)
+    * ReplaceRewrite path using Regexp with the [`replacepathregex` middleware](../../middlewares/replacepathregex/)
+    * And a lot more on the [`middlewares` page](../../middlewares/overview/)
 
 ## ACME (LetsEncrypt)
 
@@ -536,7 +668,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
       [acme.httpChallenge]
         entryPoint = "web"
     ```
-    
+
     ```bash tab="CLI"
     --defaultentrypoints=web-secure,web
     --entryPoints=Name:web Address::80 Redirect.EntryPoint:web-secure
@@ -547,9 +679,9 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     --acme.onHostRule=true
     --acme.httpchallenge.entrypoint=http
     ```
-    
+
     !!! info "v2"
-    
+
     ```toml tab="File (TOML)"
     # static configuration
     [entryPoints]
@@ -566,7 +698,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         # used during the challenge
         entryPoint = "web"
     ```
-    
+
     ```yaml tab="File (YAML)"
     entryPoints:
       web:
@@ -583,8 +715,8 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
           httpChallenge:
             # used during the challenge
             entryPoint: web
-    ``` 
-    
+    ```
+
     ```bash tab="CLI"
     --entryPoints.web.address=":80"
     --entryPoints.websecure.address=":443"
@@ -601,7 +733,7 @@ There is no more log configuration at the root level.
 !!! example "Simple log configuration"
 
     !!! info "v1"
-    
+
     ```toml tab="File (TOML)"
     # static configuration
     logLevel = "DEBUG"
@@ -610,15 +742,15 @@ There is no more log configuration at the root level.
       filePath = "/path/to/traefik.log"
       format   = "json"
     ```
-    
+
     ```bash tab="CLI"
     --logLevel="DEBUG"
     --traefikLog.filePath="/path/to/traefik.log"
     --traefikLog.format="json"
     ```
-    
+
     !!! info "v2"
-    
+
     ```toml tab="File (TOML)"
     # static configuration
     [log]
@@ -626,15 +758,15 @@ There is no more log configuration at the root level.
       filePath = "/path/to/log-file.log"
       format = "json"
     ```
-    
+
     ```yaml tab="File (YAML)"
     # static configuration
     log:
       level: DEBUG
       filePath: /path/to/log-file.log
       format: json
-    ``` 
-    
+    ```
+
     ```bash tab="CLI"
     --log.level="DEBUG"
     --log.filePath="/path/to/traefik.log"
@@ -644,11 +776,11 @@ There is no more log configuration at the root level.
 ## Tracing
 
 Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is gone, you just have to set your [tracing configuration](../observability/tracing/overview.md).
-	
+
 !!! example "Simple Jaeger tracing configuration"
 
     !!! info "v1"
-    
+
     ```toml tab="File (TOML)"
     # static configuration
     [tracing]
@@ -660,18 +792,18 @@ Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is
         samplingType = "const"
         localAgentHostPort = "12.0.0.1:6831"
     ```
-    
+
     ```bash tab="CLI"
     --tracing.backend="jaeger"
     --tracing.servicename="tracing"
     --tracing.jaeger.localagenthostport="12.0.0.1:6831"
     --tracing.jaeger.samplingparam="1.0"
     --tracing.jaeger.samplingserverurl="http://12.0.0.1:5778/sampling"
-    --tracing.jaeger.samplingtype="const" 
+    --tracing.jaeger.samplingtype="const"
     ```
-    
+
     !!! info "v2"
-    
+
     ```toml tab="File (TOML)"
     # static configuration
     [tracing]
@@ -682,7 +814,7 @@ Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is
         samplingType = "const"
         localAgentHostPort = "12.0.0.1:6831"
     ```
-    
+
     ```yaml tab="File (YAML)"
     # static configuration
     tracing:
@@ -692,8 +824,8 @@ Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is
         samplingServerURL: 'http://12.0.0.1:5778/sampling'
         samplingType: const
         localAgentHostPort: '12.0.0.1:6831'
-    ``` 
-    
+    ```
+
     ```bash tab="CLI"
     --tracing.servicename="tracing"
     --tracing.jaeger.localagenthostport="12.0.0.1:6831"
@@ -705,33 +837,33 @@ Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is
 ## Metrics
 
 The v2 retains metrics tools and allows metrics to be configured for the entrypoints and/or services.
-For a basic configuration, the [metrics configuration](../observability/metrics/overview.md) remains the same.     
+For a basic configuration, the [metrics configuration](../observability/metrics/overview.md) remains the same.
 
 !!! example "Simple Prometheus metrics configuration"
 
     !!! info "v1"
-    
+
     ```toml tab="File (TOML)"
     # static configuration
     [metrics.prometheus]
       buckets = [0.1,0.3,1.2,5.0]
       entryPoint = "traefik"
     ```
-    
+
     ```bash tab="CLI"
     --metrics.prometheus.buckets=[0.1,0.3,1.2,5.0]
     --metrics.prometheus.entrypoint="traefik"
     ```
-    
+
     !!! info "v2"
-    
+
     ```toml tab="File (TOML)"
     # static configuration
     [metrics.prometheus]
       buckets = [0.1,0.3,1.2,5.0]
       entryPoint = "metrics"
     ```
-    
+
     ```yaml tab="File (YAML)"
     # static configuration
     metrics:
@@ -742,22 +874,22 @@ For a basic configuration, the [metrics configuration](../observability/metrics/
           - 1.2
           - 5
         entryPoint: metrics
-    ``` 
-    
+    ```
+
     ```bash tab="CLI"
     --metrics.prometheus.buckets=[0.1,0.3,1.2,5.0]
     --metrics.prometheus.entrypoint="metrics"
     ```
 
-## No more root level key/values
+## No More Root Level Key/Values
 
 To avoid any source of confusion, there are no more configuration at the root level.
 Each root item has been moved to a related section or removed.
 
 !!! example "From root to dedicated section"
- 
+
     !!! info "v1"
- 
+
     ```toml tab="File (TOML)"
     # static configuration
     checkNewVersion = false
@@ -772,7 +904,7 @@ Each root item has been moved to a related section or removed.
     defaultEntryPoints = ["web", "web-secure"]
     keepTrailingSlash = false
     ```
-    
+
     ```bash tab="CLI"
     --checknewversion=false
     --sendanonymoususage=true
@@ -786,9 +918,9 @@ Each root item has been moved to a related section or removed.
     --defaultentrypoints="web","web-secure"
     --keeptrailingslash=true
     ```
-    
+
     !!! info "v2"
-    
+
     ```toml tab="File (TOML)"
     # static configuration
     [global]
@@ -804,9 +936,9 @@ Each root item has been moved to a related section or removed.
       maxIdleConnsPerHost = 42
     
     [providers]
-      providersThrottleDuration = 42    
+      providersThrottleDuration = 42
     ```
-    
+
     ```yaml tab="File (YAML)"
     # static configuration
     global:
@@ -824,8 +956,8 @@ Each root item has been moved to a related section or removed.
     
     providers:
       providersThrottleDuration: 42
-    ``` 
-    
+    ```
+
     ```bash tab="CLI"
     --global.checknewversion=true
     --global.sendanonymoususage=true
@@ -835,7 +967,7 @@ Each root item has been moved to a related section or removed.
     --serverstransport.maxidleconnsperhost=42
     --providers.providersthrottleduration=42
     ```
-    
+
 ## Dashboard
 
 You need to activate the API to access the [dashboard](../operations/dashboard.md).
@@ -847,11 +979,11 @@ As the dashboard access is now secured by default you can either:
 !!! info "Dashboard with k8s and dedicated router"
 
     As `api@internal` is not a Kubernetes service, you have to use the file provider or the `insecure` API option.
-    
+
 !!! example "Activate and access the dashboard"
 
     !!! info "v1"
-    
+
     ```toml tab="File (TOML)"
     ## static configuration
     # traefik.toml
@@ -868,14 +1000,14 @@ As the dashboard access is now secured by default you can either:
     [api]
       entryPoint = "web-secure"
     ```
-    
+
     ```bash tab="CLI"
     --entryPoints='Name:web-secure Address::443 TLS Auth.Basic.Users:test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/'
     --api
     ```
-    
+
     !!! info "v2"
-    
+
     ```yaml tab="Docker"
     # dynamic configuration
     labels:
@@ -916,7 +1048,7 @@ As the dashboard access is now secured by default you can either:
         "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
       ]
     ```
-    
+
     ```yaml tab="File (YAML)"
     ## static configuration
     # traefik.yaml
@@ -952,8 +1084,8 @@ As the dashboard access is now secured by default you can either:
           basicAuth:
             users:
               - 'test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/'
-    ``` 
-    
+    ```
+
 ## Providers
 
 Supported [providers](../providers/overview.md), for now:
@@ -976,7 +1108,7 @@ Supported [providers](../providers/overview.md), for now:
 * [x] Rest
 * [ ] Zookeeper
 
-## Some Tips You Should Known
+## Some Tips You Should Know
 
 * Different sources of static configuration (file, CLI flags, ...) cannot be [mixed](../getting-started/configuration-overview.md#the-static-configuration).
 * Now, configuration elements can be referenced between different providers by using the provider namespace notation: `@<provider>`.

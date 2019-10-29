@@ -254,6 +254,15 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	return tc, nil
 }
 
+type proxyProtocolLogger struct {
+	log.Logger
+}
+
+// Printf force log level to debug.
+func (p proxyProtocolLogger) Printf(format string, v ...interface{}) {
+	p.Debugf(format, v...)
+}
+
 func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoint, listener net.Listener) (net.Listener, error) {
 	var sourceCheck func(addr net.Addr) (bool, error)
 	if entryPoint.ProxyProtocol.Insecure {
@@ -280,7 +289,7 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 
 	return proxyprotocol.NewDefaultListener(listener).
 		WithSourceChecker(sourceCheck).
-		WithLogger(log.FromContext(ctx)), nil
+		WithLogger(proxyProtocolLogger{Logger: log.FromContext(ctx)}), nil
 }
 
 func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {

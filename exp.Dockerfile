@@ -1,5 +1,5 @@
 # WEBUI
-FROM node:8.15.0 as webui
+FROM node:12.11 as webui
 
 ENV WEBUI_DIR /src/webui
 RUN mkdir -p $WEBUI_DIR
@@ -7,7 +7,7 @@ RUN mkdir -p $WEBUI_DIR
 COPY ./webui/ $WEBUI_DIR/
 
 WORKDIR $WEBUI_DIR
-RUN yarn install
+RUN npm install
 
 RUN npm run build
 
