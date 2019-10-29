@@ -3,6 +3,7 @@ package accesslog
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -31,6 +32,19 @@ const (
 	JSONFormat string = "json"
 )
 
+type noopCloser struct {
+	*os.File
+}
+
+func (n noopCloser) Write(p []byte) (int, error) {
+	return n.File.Write(p)
+}
+
+func (n noopCloser) Close() error {
+	// noop
+	return nil
+}
+
 type handlerParams struct {
 	logDataTable *LogData
 	crr          *captureRequestReader
@@ -41,7 +55,7 @@ type handlerParams struct {
 type Handler struct {
 	config         *types.AccessLog
 	logger         *logrus.Logger
-	file           *os.File
+	file           io.WriteCloser
 	mu             sync.Mutex
 	httpCodeRanges types.HTTPCodeRanges
 	logHandlerChan chan handlerParams
@@ -59,7 +73,7 @@ func WrapHandler(handler *Handler) alice.Constructor {
 
 // NewHandler creates a new Handler.
 func NewHandler(config *types.AccessLog) (*Handler, error) {
-	file := os.Stdout
+	var file io.WriteCloser = noopCloser{os.Stdout}
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
 		if err != nil {
@@ -213,14 +227,15 @@ func (h *Handler) Close() error {
 
 // Rotate closes and reopens the log file to allow for rotation by an external source.
 func (h *Handler) Rotate() error {
-	var err error
-
-	if h.file != nil {
-		defer func(f *os.File) {
-			f.Close()
-		}(h.file)
+	if h.config.FilePath == "" {
+		return nil
 	}
 
+	if h.file != nil {
+		defer func(f io.Closer) { _ = f.Close() }(h.file)
+	}
+
+	var err error
 	h.file, err = os.OpenFile(h.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
 		return err

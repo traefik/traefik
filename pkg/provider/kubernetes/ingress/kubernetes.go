@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,9 +15,11 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/containous/traefik/v2/pkg/types"
+	"github.com/mitchellh/hashstructure"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -138,10 +139,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// track more information about the dropped events.
 					conf := p.loadConfigurationFromIngresses(ctxLog, k8sClient)
 
-					if reflect.DeepEqual(p.lastConfiguration.Get(), conf) {
+					confHash, err := hashstructure.Hash(conf, nil)
+					switch {
+					case err != nil:
+						logger.Error("Unable to hash the configuration")
+					case p.lastConfiguration.Get() == confHash:
 						logger.Debugf("Skipping Kubernetes event kind %T", event)
-					} else {
-						p.lastConfiguration.Set(conf)
+					default:
+						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
 							ProviderName:  "kubernetes",
 							Configuration: conf,
@@ -202,8 +207,13 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		protocol := "http"
+		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
+			protocol = "https"
+		}
+
 		servers = append(servers, dynamic.Server{
-			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
+			URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, portSpec.Port),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, backend.ServiceName)
@@ -324,8 +334,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				serviceName := ingress.Namespace + "-" + p.Backend.ServiceName + "-" + p.Backend.ServicePort.String()
-				serviceName = strings.ReplaceAll(serviceName, ".", "-")
+				serviceName := provider.Normalize(ingress.Namespace + "-" + p.Backend.ServiceName + "-" + p.Backend.ServicePort.String())
 				var rules []string
 				if len(rule.Host) > 0 {
 					rules = []string{"Host(`" + rule.Host + "`)"}
@@ -335,10 +344,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					rules = append(rules, "PathPrefix(`"+p.Path+"`)")
 				}
 
-				routerKey := strings.Replace(rule.Host, ".", "-", -1) + strings.Replace(p.Path, "/", "-", 1)
-				if strings.HasPrefix(routerKey, "-") {
-					routerKey = strings.Replace(routerKey, "-", "", 1)
-				}
+				routerKey := strings.TrimPrefix(provider.Normalize(rule.Host+p.Path), "-")
 				conf.HTTP.Routers[routerKey] = &dynamic.Router{
 					Rule:    strings.Join(rules, " && "),
 					Service: serviceName,

@@ -16,8 +16,8 @@ The _dynamic configuration_ contains everything that defines how the requests ar
 This configuration can change and is seamlessly hot-reloaded, without any request interruption or connection loss.    
 
 !!! warning "Incompatible Configuration"
-    Please be aware that the old configurations for Traefik v1.X are NOT compatible with the v2.X config as of now.
-    If you're testing out v2, please ensure you are using a v2 configuration.
+    Please be aware that the old configurations for Traefik v1.x are NOT compatible with the v2.x config as of now.
+    If you are running v2, please ensure you are using a v2 configuration.
 
 ## The Dynamic Configuration 
 

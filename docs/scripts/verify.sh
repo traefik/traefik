@@ -21,7 +21,7 @@ find "${PATH_TO_SITE}" -type f -not -path "/app/site/theme/*" \
   --check_external_hash \
   --alt_ignore="/traefik.logo.png/" \
   --http_status_ignore="0,500,501,503" \
-  --url_ignore="/https://groups.google.com/a/traefik.io/forum/#!forum/security/,/localhost:/,/127.0.0.1:/,/fonts.gstatic.com/,/.minikube/,/github.com\/containous\/traefik\/*edit*/,/github.com\/containous\/traefik\/$/,/docs.traefik.io/,/github\.com\/golang\/oauth2\/blob\/36a7019397c4c86cf59eeab3bc0d188bac444277\/.+/" \
+  --url_ignore="/https://groups.google.com/a/traefik.io/forum/#!forum/security/,/localhost:/,/127.0.0.1:/,/fonts.gstatic.com/,/.minikube/,/github.com\/containous\/traefik\/*edit*/,/github.com\/containous\/traefik\/$/,/docs.traefik.io/,/github\.com\/golang\/oauth2\/blob\/36a7019397c4c86cf59eeab3bc0d188bac444277\/.+/,/www.akamai.com/" \
   '{}' 1>/dev/null
 ## HTML-proofer options at https://github.com/gjtorikian/html-proofer#configuration
 
