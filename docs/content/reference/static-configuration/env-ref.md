@@ -234,6 +234,9 @@ Enable ping. (Default: ```false```)
 `TRAEFIK_PING_ENTRYPOINT`:  
 EntryPoint (Default: ```traefik```)
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG_CACHE`:  
+Use local agent caching for catalog reads. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_CONSULCATALOG_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
@@ -284,6 +287,12 @@ Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_REFRESHINTERVAL`:  
 Interval for check Consul API. Default 100ms (Default: ```15```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_REQUIRECONSISTENT`:  
+Forces the read to be fully consistent. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_STALE`:  
+Use stale consistency for catalog reads. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_DOCKER`:  
 Enable Docker backend with default settings. (Default: ```false```)

@@ -114,6 +114,9 @@
     defaultRule = "foobar"
     exposedByDefault = true
     refreshInterval = 15
+    requireConsistent = true
+    stale = true
+    cache = true
     [providers.consulCatalog.endpoint]
      address = "foobar"
      scheme = "foobar"
