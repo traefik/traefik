@@ -115,7 +115,7 @@ providers:
     refreshSeconds: 42
     intervalPoll: true
     prefix: foobar
-  consulcatalog:
+  consulCatalog:
     constraints: foobar
     prefix: traefik
     defaultRule: foobar

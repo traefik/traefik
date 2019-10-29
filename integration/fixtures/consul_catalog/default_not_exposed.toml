@@ -13,8 +13,8 @@
   insecure = true
 
 [providers]
-  [providers.consulcatalog]
+  [providers.consulCatalog]
     exposedByDefault = false
     refreshInterval = "500ms"
-  [providers.consulcatalog.endpoint]
+  [providers.consulCatalog.endpoint]
     address = "{{ .ConsulAddress }}"
