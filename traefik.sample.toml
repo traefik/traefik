@@ -25,7 +25,7 @@
   [entryPoints.web]
     address = ":80"
 
-  [entryPoints.websecure]
+  [entryPoints.web-secure]
     address = ":443"
 
 ################################################################
