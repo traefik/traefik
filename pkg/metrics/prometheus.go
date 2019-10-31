@@ -229,8 +229,10 @@ func OnConfigurationUpdate(dynConf dynamic.Configurations, entryPoints []string)
 
 		for serviceName, service := range config.HTTP.Services {
 			dynamicConfig.services[fmt.Sprintf("%s@%s", serviceName, key)] = make(map[string]bool)
-			for _, server := range service.LoadBalancer.Servers {
-				dynamicConfig.services[fmt.Sprintf("%s@%s", serviceName, key)][server.URL] = true
+			if service.LoadBalancer != nil {
+				for _, server := range service.LoadBalancer.Servers {
+					dynamicConfig.services[fmt.Sprintf("%s@%s", serviceName, key)][server.URL] = true
+				}
 			}
 		}
 	}
