@@ -553,7 +553,7 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 	if in.Compress != nil {
 		in, out := &in.Compress, &out.Compress
 		*out = new(dynamic.Compress)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.PassTLSClientCert != nil {
 		in, out := &in.PassTLSClientCert, &out.PassTLSClientCert

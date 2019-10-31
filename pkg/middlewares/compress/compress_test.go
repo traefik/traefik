@@ -1,12 +1,14 @@
 package compress
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/NYTimes/gziphandler"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -86,26 +88,57 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
 }
 
-func TestShouldNotCompressWhenGRPC(t *testing.T) {
-	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
-	req.Header.Add(acceptEncodingHeader, gzipValue)
-	req.Header.Add(contentTypeHeader, "application/grpc")
-
+func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 	baseBody := generateBytes(gziphandler.DefaultMinSize)
+
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		_, err := rw.Write(baseBody)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler := &compress{next: next}
 
-	rw := httptest.NewRecorder()
-	handler.ServeHTTP(rw, req)
+	testCases := []struct {
+		desc           string
+		conf           dynamic.Compress
+		reqContentType string
+	}{
+		{
+			desc: "text/event-stream",
+			conf: dynamic.Compress{
+				ExcludedContentTypes: []string{"text/event-stream"},
+			},
+			reqContentType: "text/event-stream",
+		},
+		{
+			desc:           "application/grpc",
+			conf:           dynamic.Compress{},
+			reqContentType: "application/grpc",
+		},
+	}
 
-	assert.Empty(t, rw.Header().Get(acceptEncodingHeader))
-	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), baseBody)
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+			req.Header.Add(acceptEncodingHeader, gzipValue)
+			if test.reqContentType != "" {
+				req.Header.Add(contentTypeHeader, test.reqContentType)
+			}
+
+			handler, err := New(context.Background(), next, test.conf, "test")
+			require.NoError(t, err)
+
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			assert.Empty(t, rw.Header().Get(acceptEncodingHeader))
+			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+			assert.EqualValues(t, rw.Body.Bytes(), baseBody)
+		})
+	}
 }
 
 func TestIntegrationShouldNotCompress(t *testing.T) {
