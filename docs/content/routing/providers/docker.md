@@ -165,7 +165,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [entry points](../routers/index.md#entrypoints) for more information.
 
     ```yaml
-    - "traefik.http.routers.myrouter.entrypoints=web,websecure"
+    - "traefik.http.routers.myrouter.entrypoints=web,another-web"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.middlewares`"
