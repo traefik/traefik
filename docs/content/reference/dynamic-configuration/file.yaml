@@ -353,6 +353,9 @@ tls:
       cipherSuites:
         - foobar
         - foobar
+      curvePreferences:
+        - foobar
+        - foobar
       clientAuth:
         caFiles:
           - foobar
@@ -363,6 +366,9 @@ tls:
       minVersion: foobar
       maxVersion: foobar
       cipherSuites:
+        - foobar
+        - foobar
+      curvePreferences:
         - foobar
         - foobar
       clientAuth:

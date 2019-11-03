@@ -274,6 +274,46 @@ spec:
     With TLS 1.3, the cipher suites are not configurable (all supported cipher suites are safe in this case).
     <https://golang.org/doc/go1.12#tls_1_3>
 
+### Curve Preferences
+
+This option allows to set the preferred elliptic curves in a specific order.
+
+The names of the curves defined by [`crypto`](https://godoc.org/crypto/tls#CurveID) (e.g. `CurveP521`) and the [RFC defined names](https://tools.ietf.org/html/rfc8446#section-4.2.7) (e. g. `secp521r1`) can be used.
+
+See [CurveID](https://godoc.org/crypto/tls#CurveID) for more information.
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+  [tls.options.default]
+    curvePreferences = ["CurveP521", "CurveP384"]
+```
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      curvePreferences:
+        - CurveP521
+        - CurveP384
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  curvePreferences:
+    - CurveP521
+    - CurveP384
+```
+
 ### Strict SNI Checking
 
 With strict SNI checking, Traefik won't allow connections from clients connections

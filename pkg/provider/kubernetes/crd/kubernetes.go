@@ -481,9 +481,10 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 		}
 
 		tlsOptions[makeID(tlsOption.Namespace, tlsOption.Name)] = tls.Options{
-			MinVersion:   tlsOption.Spec.MinVersion,
-			MaxVersion:   tlsOption.Spec.MaxVersion,
-			CipherSuites: tlsOption.Spec.CipherSuites,
+			MinVersion:       tlsOption.Spec.MinVersion,
+			MaxVersion:       tlsOption.Spec.MaxVersion,
+			CipherSuites:     tlsOption.Spec.CipherSuites,
+			CurvePreferences: tlsOption.Spec.CurvePreferences,
 			ClientAuth: tls.ClientAuth{
 				CAFiles:        clientCAs,
 				ClientAuthType: tlsOption.Spec.ClientAuth.ClientAuthType,

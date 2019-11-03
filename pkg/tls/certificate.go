@@ -60,6 +60,20 @@ var (
 		"TLS_CHACHA20_POLY1305_SHA256":            tls.TLS_CHACHA20_POLY1305_SHA256,
 		"TLS_FALLBACK_SCSV":                       tls.TLS_FALLBACK_SCSV,
 	}
+
+	// CurveIDs is a Map of TLS elliptic curves from crypto/tls
+	// Available CurveIDs defined at https://godoc.org/crypto/tls#CurveID,
+	// also allowing rfc names defined at https://tools.ietf.org/html/rfc8446#section-4.2.7
+	CurveIDs = map[string]tls.CurveID{
+		`secp256r1`: tls.CurveP256,
+		`CurveP256`: tls.CurveP256,
+		`secp384r1`: tls.CurveP384,
+		`CurveP384`: tls.CurveP384,
+		`secp521r1`: tls.CurveP521,
+		`CurveP521`: tls.CurveP521,
+		`x25519`:    tls.X25519,
+		`X25519`:    tls.X25519,
+	}
 )
 
 // Certificate holds a SSL cert/key pair
