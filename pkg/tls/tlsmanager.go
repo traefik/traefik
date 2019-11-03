@@ -217,6 +217,12 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		conf.MinVersion = minConst
 	}
 
+	// Set the maximum TLS version if set in the config TOML
+	if maxConst, exists := MaxVersion[tlsOption.MaxVersion]; exists {
+		conf.PreferServerCipherSuites = true
+		conf.MaxVersion = maxConst
+	}
+
 	// Set the list of CipherSuites if set in the config
 	if tlsOption.CipherSuites != nil {
 		// if our list of CipherSuites is defined in the entryPoint config, we can re-initialize the suites list as empty

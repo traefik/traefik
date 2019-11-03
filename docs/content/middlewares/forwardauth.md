@@ -509,7 +509,8 @@ metadata:
 spec:
   forwardAuth:
     address: https://authserver.com/auth
-    insecureSkipVerify: true
+    tls:
+      insecureSkipVerify: true
 ```
 
 ```yaml tab="Consul Catalog"
@@ -531,7 +532,8 @@ labels:
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
     address = "https://authserver.com/auth"
-    insecureSkipVerify: true
+    [http.middlewares.test-auth.forwardAuth.tls]
+      insecureSkipVerify: true
 ```
 
 ```yaml tab="File (YAML)"
@@ -540,5 +542,6 @@ http:
     test-auth:
       forwardAuth:
         address: "https://authserver.com/auth"
-        insecureSkipVerify: true
+        tls:
+          insecureSkipVerify: true
 ```

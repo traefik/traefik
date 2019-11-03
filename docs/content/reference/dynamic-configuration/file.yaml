@@ -349,6 +349,7 @@ tls:
   options:
     Options0:
       minVersion: foobar
+      maxVersion: foobar
       cipherSuites:
         - foobar
         - foobar
@@ -363,6 +364,7 @@ tls:
       sniStrict: true
     Options1:
       minVersion: foobar
+      maxVersion: foobar
       cipherSuites:
         - foobar
         - foobar

@@ -245,7 +245,10 @@ PassTLSClientCert can add two headers to the request:
 - `X-Forwarded-Tls-Client-Cert-Info` that contains all the selected certificate information in an escaped string.
 
 !!! info
-    The headers are filled with escaped string so it can be safely placed inside a URL query.
+
+    * The headers are filled with escaped string so it can be safely placed inside a URL query.
+    * These options only work accordingly to the [MutualTLS configuration](../https/tls.md#client-authentication-mtls).
+    That is to say, only the certificates that match the `clientAuth.clientAuthType` policy are passed.
 
 In the following example, you can see a complete certificate. We will use each part of it to explain the middleware options.
 

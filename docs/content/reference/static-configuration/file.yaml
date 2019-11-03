@@ -115,12 +115,15 @@ providers:
     refreshSeconds: 42
     intervalPoll: true
     prefix: foobar
-  consulcatalog:
+  consulCatalog:
     constraints: foobar
     prefix: traefik
     defaultRule: foobar
     exposedByDefault: true
     refreshInterval: 15
+    requireConsistent: true
+    stale: true
+    cache: true
     endpoint:
       address: foobar
       scheme: foobar

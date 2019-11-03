@@ -168,7 +168,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return compress.New(ctx, next, middlewareName)
+			return compress.New(ctx, next, *config.Compress, middlewareName)
 		}
 	}
 

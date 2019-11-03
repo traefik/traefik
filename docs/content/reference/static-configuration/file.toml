@@ -108,19 +108,22 @@
     refreshSeconds = 42
     intervalPoll = true
     prefix = "foobar"
-  [providers.consulcatalog]
+  [providers.consulCatalog]
     constraints = "foobar"
     prefix = "traefik"
     defaultRule = "foobar"
     exposedByDefault = true
     refreshInterval = 15
-    [providers.consulcatalog.endpoint]
+    requireConsistent = true
+    stale = true
+    cache = true
+    [providers.consulCatalog.endpoint]
      address = "foobar"
      scheme = "foobar"
      datacenter = "foobar"
      token = "foobar"
      endpointWaitTime = "15s"
-     [providers.consulcatalog.endpoint.tls]
+     [providers.consulCatalog.endpoint.tls]
       ca = "foobar"
       caOptional = true
       cert = "foobar"

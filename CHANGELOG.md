@@ -1,3 +1,42 @@
+## [v2.0.4](https://github.com/containous/traefik/tree/v2.0.4) (2019-10-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.3...v2.0.4)
+
+Fixes releases system.
+Same changelog as v2.0.3.
+
+## [v2.0.3](https://github.com/containous/traefik/tree/v2.0.3) (2019-10-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.2...v2.0.3)
+
+**Bug fixes:**
+- **[acme,logs]** Use debug for log about skipping addition of cert ([#5641](https://github.com/containous/traefik/pull/5641) by [sylr](https://github.com/sylr))
+- **[file]** fix: add filename in the file provider logs. ([#5636](https://github.com/containous/traefik/pull/5636) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/crd,k8s/ingress]** Remove unnecessary reload of the configuration. ([#5707](https://github.com/containous/traefik/pull/5707) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/crd,k8s/ingress]** Fixing support for HTTPs backends with Kubernetes ExternalName services ([#5660](https://github.com/containous/traefik/pull/5660) by [kpeiruza](https://github.com/kpeiruza))
+- **[k8s,k8s/ingress]** Normalize service and router names for ingress. ([#5623](https://github.com/containous/traefik/pull/5623) by [ldez](https://github.com/ldez))
+- **[logs]** Set proxy protocol logger to DEBUG level ([#5712](https://github.com/containous/traefik/pull/5712) by [mmatur](https://github.com/mmatur))
+- **[middleware]** fix: add stacktrace when recover. ([#5654](https://github.com/containous/traefik/pull/5654) by [ldez](https://github.com/ldez))
+- **[tracing]** Let instana/go-sensor handle default agent host ([#5658](https://github.com/containous/traefik/pull/5658) by [sylr](https://github.com/sylr))
+- **[tracing]** fix: default tracing backend. ([#5717](https://github.com/containous/traefik/pull/5717) by [ldez](https://github.com/ldez))
+- fix: deep copy of passHostHeader on ServersLoadBalancer. ([#5720](https://github.com/containous/traefik/pull/5720) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** Fix acme storage file docker mounting example ([#5633](https://github.com/containous/traefik/pull/5633) by [jansauer](https://github.com/jansauer))
+- **[acme]** fix incorrect DNS reference ([#5666](https://github.com/containous/traefik/pull/5666) by [oskapt](https://github.com/oskapt))
+- **[logs]** Clarify unit of duration field in access log ([#5664](https://github.com/containous/traefik/pull/5664) by [Sarke](https://github.com/Sarke))
+- **[middleware]** Fix Security Headers Doc ([#5706](https://github.com/containous/traefik/pull/5706) by [FlorianPerrot](https://github.com/FlorianPerrot))
+- **[middleware]** Migration guide: pathprefixstrip migration ([#5600](https://github.com/containous/traefik/pull/5600) by [dduportal](https://github.com/dduportal))
+- **[middleware]** fix ForwardAuth tls.skipverify examples ([#5683](https://github.com/containous/traefik/pull/5683) by [remche](https://github.com/remche))
+- **[rules]** Add documentation about backtick for rule definition. ([#5714](https://github.com/containous/traefik/pull/5714) by [ldez](https://github.com/ldez))
+- **[webui]** Improve documentation of the router rules for API and dashboard ([#5625](https://github.com/containous/traefik/pull/5625) by [dduportal](https://github.com/dduportal))
+- doc: @ is not authorized in names definition. ([#5734](https://github.com/containous/traefik/pull/5734) by [ldez](https://github.com/ldez))
+- Remove obsolete v2 remark from README ([#5669](https://github.com/containous/traefik/pull/5669) by [dragetd](https://github.com/dragetd))
+- Fix spelling mistake: &#34;founded&#34; -&gt; &#34;found&#34; ([#5674](https://github.com/containous/traefik/pull/5674) by [ocanty](https://github.com/ocanty))
+- fix typo for stripPrefix in tab File (YAML) ([#5694](https://github.com/containous/traefik/pull/5694) by [nalakawula](https://github.com/nalakawula))
+- Add example for changing the port used by traefik to connect to a service ([#5224](https://github.com/containous/traefik/pull/5224) by [robertbaker](https://github.com/robertbaker))
+
+**Misc:**
+- **[logs,middleware]** Cherry pick v1.7 into v2.0 ([#5735](https://github.com/containous/traefik/pull/5735) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.0.2](https://github.com/containous/traefik/tree/v2.0.2) (2019-10-09)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.1...v2.0.2)
 
@@ -69,6 +108,24 @@
 - Update links in readme. ([#5411](https://github.com/containous/traefik/pull/5411) by [ldez](https://github.com/ldez))
 - Add the router priority documentation ([#5481](https://github.com/containous/traefik/pull/5481) by [jbdoumenjou](https://github.com/jbdoumenjou))
 - Improve the Migration Guide ([#5391](https://github.com/containous/traefik/pull/5391) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
+## [v1.7.18](https://github.com/containous/traefik/tree/v1.7.18) (2019-09-23)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.17...v1.7.18)
+
+**Bug fixes:**
+- **[go,security]** This version is compiled with [Go 1.12.10](https://groups.google.com/d/msg/golang-announce/cszieYyuL9Q/g4Z7pKaqAgAJ), which fixes a vulnerability in previous versions. See the [CVE](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-16276) about it for more details.
+
+## [v1.7.17](https://github.com/containous/traefik/tree/v1.7.17) (2019-09-23)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.16...v1.7.17)
+
+**Bug fixes:**
+- **[logs,middleware]** Avoid closing stdout when the accesslog handler is closed ([#5459](https://github.com/containous/traefik/pull/5459) by [nrwiersma](https://github.com/nrwiersma))
+- **[middleware]** Actually send header and code during WriteHeader, if needed ([#5404](https://github.com/containous/traefik/pull/5404) by [mpl](https://github.com/mpl))
+
+**Documentation:**
+- **[k8s]** Add note clarifying client certificate header ([#5362](https://github.com/containous/traefik/pull/5362) by [bradjones1](https://github.com/bradjones1))
+- **[webui]** Update docs links. ([#5412](https://github.com/containous/traefik/pull/5412) by [ldez](https://github.com/ldez))
+- Update Traefik image version. ([#5399](https://github.com/containous/traefik/pull/5399) by [ldez](https://github.com/ldez))
 
 ## [v2.0.0](https://github.com/containous/traefik/tree/v2.0.0) (2019-09-16)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-alpha1...v2.0.0)
@@ -413,6 +470,29 @@
 **Documentation:**
 - fix a service with one server .yaml example ([#5373](https://github.com/containous/traefik/pull/5373) by [zaverden](https://github.com/zaverden))
 - fix: services configuration documentation. ([#5359](https://github.com/containous/traefik/pull/5359) by [ldez](https://github.com/ldez))
+
+## [v1.7.16](https://github.com/containous/traefik/tree/v1.7.16) (2019-09-13)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.15...v1.7.16)
+
+**Bug fixes:**
+- **[middleware,websocket]** implement Flusher and Hijacker for codeCatcher ([#5376](https://github.com/containous/traefik/pull/5376) by [mpl](https://github.com/mpl))
+
+## [v1.7.15](https://github.com/containous/traefik/tree/v1.7.15) (2019-09-12)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.14...v1.7.15)
+
+**Bug fixes:**
+- **[authentication,k8s/ingress]** Kubernetes support for Auth.HeaderField ([#5235](https://github.com/containous/traefik/pull/5235) by [ErikWegner](https://github.com/ErikWegner))
+- **[k8s,k8s/ingress]** Finish kubernetes throttling refactoring ([#5269](https://github.com/containous/traefik/pull/5269) by [mpl](https://github.com/mpl))
+- **[k8s]** Throttle Kubernetes config refresh ([#4716](https://github.com/containous/traefik/pull/4716) by [benweissmann](https://github.com/benweissmann))
+- **[k8s]** Fix wrong handling of insecure tls auth forward ingress annotation ([#5319](https://github.com/containous/traefik/pull/5319) by [majkrzak](https://github.com/majkrzak))
+- **[middleware]** error pages: do not buffer response when it&#39;s not an error ([#5285](https://github.com/containous/traefik/pull/5285) by [mpl](https://github.com/mpl))
+- **[tls]** Consider default cert domain in certificate store ([#5353](https://github.com/containous/traefik/pull/5353) by [nrwiersma](https://github.com/nrwiersma))
+- **[tls]** Add TLS minversion constraint ([#5356](https://github.com/containous/traefik/pull/5356) by [dtomcej](https://github.com/dtomcej))
+
+**Documentation:**
+- **[acme]** Update Acme doc - Vultr Wildcard &amp; Root ([#5320](https://github.com/containous/traefik/pull/5320) by [ddymko](https://github.com/ddymko))
+- **[consulcatalog]** Typo in basic auth usersFile label consul-catalog ([#5230](https://github.com/containous/traefik/pull/5230) by [pitan](https://github.com/pitan))
+- **[logs]** Improve Access Logs Documentation page ([#5238](https://github.com/containous/traefik/pull/5238) by [dduportal](https://github.com/dduportal))
 
 ## [v2.0.0-rc3](https://github.com/containous/traefik/tree/v2.0.0-rc3) (2019-09-10)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc2...v2.0.0-rc3)

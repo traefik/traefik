@@ -20,7 +20,7 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 
 ## How to build (only for frontend developer)
 
-- prerequisite: [Node 6+](https://nodejs.org) [Npm](https://www.npmjs.com/)
+- prerequisite: [Node 12.11+](https://nodejs.org) [Npm](https://www.npmjs.com/)
 
 - Go to the directory `webui`
 

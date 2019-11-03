@@ -22,6 +22,14 @@ var (
 		`VersionTLS13`: tls.VersionTLS13,
 	}
 
+	// MaxVersion Map of allowed TLS minimum versions
+	MaxVersion = map[string]uint16{
+		`VersionTLS10`: tls.VersionTLS10,
+		`VersionTLS11`: tls.VersionTLS11,
+		`VersionTLS12`: tls.VersionTLS12,
+		`VersionTLS13`: tls.VersionTLS13,
+	}
+
 	// CipherSuites Map of TLS CipherSuites from crypto/tls
 	// Available CipherSuites defined at https://golang.org/pkg/crypto/tls/#pkg-constants
 	CipherSuites = map[string]uint16{
@@ -203,7 +211,7 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 		}
 	}
 	if certExists {
-		log.Warnf("Skipping addition of certificate for domain(s) %q, to EntryPoint %s, as it already exists for this Entrypoint.", certKey, ep)
+		log.Debugf("Skipping addition of certificate for domain(s) %q, to EntryPoint %s, as it already exists for this Entrypoint.", certKey, ep)
 	} else {
 		log.Debugf("Adding certificate for domain(s) %s", certKey)
 		certs[ep][certKey] = &tlsCert

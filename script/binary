@@ -28,7 +28,7 @@ fi
 # Build binaries
 # shellcheck disable=SC2086
 CGO_ENABLED=0 GOGC=off go build ${FLAGS[*]} -ldflags "-s -w \
-    -X github.com/containous/traefik/pkg/v2/version.Version=$VERSION \
-    -X github.com/containous/traefik/pkg/v2/version.Codename=$CODENAME \
-    -X github.com/containous/traefik/pkg/v2/version.BuildDate=$DATE" \
+    -X github.com/containous/traefik/v2/pkg/version.Version=$VERSION \
+    -X github.com/containous/traefik/v2/pkg/version.Codename=$CODENAME \
+    -X github.com/containous/traefik/v2/pkg/version.BuildDate=$DATE" \
     -a -installsuffix nocgo -o dist/traefik ./cmd/traefik
