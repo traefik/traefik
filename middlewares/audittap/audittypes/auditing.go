@@ -203,6 +203,22 @@ func (obs *AuditObfuscation) ObfuscateURLEncoded(b []byte) ([]byte, error) {
 	return src, nil
 }
 
+// ObfuscateJSON applies the obfuscation criteria against the supplied byte slice than contains
+// Json "key": "value" content
+func (obs *AuditObfuscation) ObfuscateJSON(b []byte) ([]byte, error) {
+	src := b
+	for _, field := range obs.MaskFields {
+		expr := fmt.Sprintf(`"%s"\s*:\s*"[^"]+?([^"]+)"`, field)
+		re, err := regexp.Compile(expr)
+		replacement := fmt.Sprintf(`"%s": "%s"`, field, obs.MaskValue)
+		if err != nil {
+			return nil, fmt.Errorf("Obfuscation error for required mask '%s'. %v", expr, err)
+		}
+		src = re.ReplaceAll(src, []byte(replacement))
+	}
+	return src, nil
+}
+
 func enforcePrecedentConstraints(ev *AuditEvent, constraints AuditConstraints) {
 	reqLen, _ := ev.RequestPayload[keyPayloadLength].(int) // Zero if not int or missing
 	lenRequest := int64(reqLen)

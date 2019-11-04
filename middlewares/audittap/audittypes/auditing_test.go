@@ -186,6 +186,63 @@ func TestAuditObfuscateUrlEncoded(t *testing.T) {
 	assert.Equal(t, "x1=@++@&d1=dere%20e&x1=@++@&d2=ziefjef&x1=@++@", string(masked))
 }
 
+func TestAuditObfuscateJSON(t *testing.T) {
+
+	obs := AuditObfuscation{MaskValue: "@++@", MaskFields: []string{"x1", "x2", "my_secret"}}
+
+	j1 := `{"x1":"blah"}`
+	masked, err := obs.ObfuscateJSON([]byte(j1))
+	assert.NoError(t, err)
+	assert.Equal(t, `{"x1": "@++@"}`, string(masked))
+
+	j2 := `{
+		"a1": "foo",
+		"x1":     "blah",
+		"a2": "bar"
+	}`
+	masked, err = obs.ObfuscateJSON([]byte(j2))
+	assert.NoError(t, err)
+	assert.Equal(t, `{
+		"a1": "foo",
+		"x1": "@++@",
+		"a2": "bar"
+	}`, string(masked))
+
+	j3 := `{"my_secret": "e336a67a-c598-4800-a1af-dcca0aaee3ea", "grant_type": "cred", "x2": "y0tr1pp1ng", "redirect_uri": "http://localhost:8080"}`
+	expectedBody := `{"my_secret": "@++@", "grant_type": "cred", "x2": "@++@", "redirect_uri": "http://localhost:8080"}`
+	masked, err = obs.ObfuscateJSON([]byte(j3))
+	assert.NoError(t, err)
+	assert.Equal(t, expectedBody, string(masked))
+
+	j4 := `{"my_secret": "e336a67a-c598-4800-a1af-dcca0aaee3ea", "x2": "hideme", "grant_type": "cred", "x2": "y0tr1pp1ng", "redirect_uri": "http://localhost:8080"}`
+	expectedBody = `{"my_secret": "@++@", "x2": "@++@", "grant_type": "cred", "x2": "@++@", "redirect_uri": "http://localhost:8080"}`
+	masked, err = obs.ObfuscateJSON([]byte(j4))
+	assert.NoError(t, err)
+	assert.Equal(t, expectedBody, string(masked))
+
+	j5 := `{ 
+		"x2": 
+		  "foo"
+	}`
+	expectedBody = `{ 
+		"x2": "@++@"
+	}`
+	masked, err = obs.ObfuscateJSON([]byte(j5))
+	assert.NoError(t, err)
+	assert.Equal(t, expectedBody, string(masked))
+
+	j6 := `{ 
+		"x2"
+		  : "foo"
+	}`
+	expectedBody = `{ 
+		"x2": "@++@"
+	}`
+	masked, err = obs.ObfuscateJSON([]byte(j6))
+	assert.NoError(t, err)
+	assert.Equal(t, expectedBody, string(masked))
+}
+
 func TestAuditExclusion(t *testing.T) {
 
 	excludes := []*Filter{

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"encoding/json"
@@ -48,6 +49,56 @@ func TestApiAuditEvent(t *testing.T) {
 	assert.Equal(t, string(responseBody), ev.ResponsePayload["contents"])
 
 	assert.Equal(t, "404", ev.ResponseStatus)
+
+	assert.True(t, ev.EnforceConstraints(AuditConstraints{}))
+}
+
+func TestFormEncodedContentMasking(t *testing.T) {
+
+	requestBody := "say=Hi&password=ishouldbesecret&secret=notforyoureyes&to=Dave"
+
+	ev := APIAuditEvent{}
+	req := httptest.NewRequest("POST", "/some/api/resource?p1=v1", strings.NewReader(requestBody))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	obfuscate := AuditObfuscation{MaskFields: []string{"password", "secret"}, MaskValue: "@@@"}
+	spec := &AuditSpecification{}
+	spec.AuditObfuscation = obfuscate
+	ev.AppendRequest(NewRequestContext(req), spec)
+
+	expectedBody := "say=Hi&password=@@@&secret=@@@&to=Dave"
+	assert.EqualValues(t, len(requestBody), ev.RequestPayload.Get("length"))
+	assert.Equal(t, expectedBody, ev.RequestPayload["contents"])
+
+	assert.True(t, ev.EnforceConstraints(AuditConstraints{}))
+}
+
+func TestJsonContentMasking(t *testing.T) {
+
+	requestBody := `{
+		"password": "keepmesecret",
+		"foo": "bar",
+		"secret": "notforyoureyes",
+		"baz": "phew"
+	}`
+
+	ev := APIAuditEvent{}
+	req := httptest.NewRequest("POST", "/some/api/resource?p1=v1", strings.NewReader(requestBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	obfuscate := AuditObfuscation{MaskFields: []string{"password", "secret"}, MaskValue: "@@@"}
+	spec := &AuditSpecification{}
+	spec.AuditObfuscation = obfuscate
+	ev.AppendRequest(NewRequestContext(req), spec)
+	expectedBody := `{
+		"password": "@@@",
+		"foo": "bar",
+		"secret": "@@@",
+		"baz": "phew"
+	}`
+
+	assert.EqualValues(t, len(requestBody), ev.RequestPayload.Get("length"))
+	assert.Equal(t, expectedBody, ev.RequestPayload["contents"])
 
 	assert.True(t, ev.EnforceConstraints(AuditConstraints{}))
 }

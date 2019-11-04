@@ -18,7 +18,23 @@ func (ev *APIAuditEvent) AppendRequest(ctx *RequestContext, auditSpec *AuditSpec
 	appendCommonRequestFields(&ev.AuditEvent, ctx)
 	ev.AuthorisationToken = ctx.FlatHeaders.GetString("authorization")
 	if body, _, err := copyRequestBody(ctx.Req); err == nil {
-		ev.addRequestPayloadContents(string(body))
+		if &auditSpec.AuditObfuscation != nil {
+			ct := ctx.FlatHeaders.GetString("content-type")
+			var fnObfuscate func(b []byte) ([]byte, error)
+			if ct == "application/x-www-form-urlencoded" {
+				fnObfuscate = auditSpec.AuditObfuscation.ObfuscateURLEncoded
+			} else if ct == "application/json" {
+				fnObfuscate = auditSpec.AuditObfuscation.ObfuscateJSON
+			}
+			if fnObfuscate != nil {
+				if sanitised, err := fnObfuscate(body); err == nil {
+					ev.addRequestPayloadContents(strings.TrimSpace(string(sanitised)))
+					ev.RequestPayload[keyPayloadLength] = len(body)
+				}
+			} else {
+				ev.addRequestPayloadContents(string(body))
+			}
+		}
 	}
 }
 
