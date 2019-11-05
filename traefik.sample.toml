@@ -100,7 +100,6 @@
   # Optional
   # Default: "traefik"
   #
-  # entryPoint = "traefik"
 
   # Enabled Dashboard
   #
