@@ -209,10 +209,7 @@ metadata:
   name: testHeader
 spec:
   headers:
-    accessControlAllowMethods:
-      - "GET"
-      - "OPTIONS"
-      - "PUT"
+    accessControlAllowMethods: "GET,OPTIONS,PUT"
     accessControlAllowOrigin: "origin-list-or-null"
     accessControlMaxAge: 100
     addVaryHeader: "true"
