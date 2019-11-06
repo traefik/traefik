@@ -95,6 +95,13 @@
 # Enable API and dashboard
 [api]
 
+  # Enable the API in insecure mode
+  #
+  # Optional
+  # Default: true
+  #
+  # insecure = false
+
   # Enabled Dashboard
   #
   # Optional
