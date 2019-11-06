@@ -95,12 +95,6 @@
 # Enable API and dashboard
 [api]
 
-  # Name of the related entry point
-  #
-  # Optional
-  # Default: "traefik"
-  #
-
   # Enabled Dashboard
   #
   # Optional
