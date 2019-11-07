@@ -60,8 +60,8 @@ api:
 --api.dashboard=true
 ```
 
-Then define a routing configuration on Traefik itself, 
-with a router attached to the service `api@internal` in the 
+Then define a routing configuration on Traefik itself,
+with a router attached to the service `api@internal` in the
 [dynamic configuration](../getting-started/configuration-overview.md#the-dynamic-configuration),
 to allow defining:
 
@@ -74,11 +74,21 @@ to allow defining:
 
 ??? example "Dashboard Dynamic Configuration Examples"
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker (Standalone)"
     # Dynamic Configuration
     labels:
       - "traefik.http.routers.api.rule=Host(`traefik.domain.com`)"
       - "traefik.http.routers.api.service=api@internal"
+      - "traefik.http.routers.api.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+    ```
+
+    ```yaml tab="Docker (Swarm)"
+    # Dynamic Configuration
+    labels:
+      - "traefik.http.routers.api.rule=Host(`traefik.domain.com`)"
+      - "traefik.http.routers.api.service=api@internal"
+      - "traefik.http.services.api-dummy-svc.loadbalancer.server.port=9999" # Dummy service for Swarm port detection. The port can be any valid integer value.
       - "traefik.http.routers.api.middlewares=auth"
       - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     ```
