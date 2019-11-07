@@ -3,3 +3,4 @@ pymdown-extensions==6.0
 mkdocs-bootswatch==1.0
 mkdocs-material==4.0.2
 markdown-include==0.5.1
+mkdocs-exclude==1.0.2
