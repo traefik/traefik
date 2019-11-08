@@ -51,13 +51,16 @@ type TLSOptionRef struct {
 // LoadBalancerSpec can reference either a Kubernetes Service object (a load-balancer of servers),
 // or a TraefikService object (a traefik load-balancer of services).
 type LoadBalancerSpec struct {
-	// Name is a reference to a Kubernetes Service object for a load-balancer of servers.
-	// It (and all the other related fields below), is mutually exclusive with ServiceName.
+	// Name is a reference to a Kubernetes Service object (for a load-balancer of servers),
+	// or to a TraefikService object (service load-balancer, mirroring, etc). The differentiation
+	// between the two is specified in the Kind field.
 	Name      string          `json:"name"`
 	Kind      string          `json:"kind"`
 	Namespace string          `json:"namespace"`
 	Sticky    *dynamic.Sticky `json:"sticky,omitempty"`
 
+	// Port and all the fields below are related to a servers load-balancer,
+	// and therefore should only be specified when Name references a Kubernetes Service.
 	Port               int32                       `json:"port"`
 	Scheme             string                      `json:"scheme,omitempty"`
 	HealthCheck        *HealthCheck                `json:"healthCheck,omitempty"`
@@ -65,10 +68,8 @@ type LoadBalancerSpec struct {
 	PassHostHeader     *bool                       `json:"passHostHeader,omitempty"`
 	ResponseForwarding *dynamic.ResponseForwarding `json:"responseForwarding,omitempty"`
 
-	// ServiceName is a reference to a TraefikService object. It is mutually exclusive
-	// with Name and all the other fields above, which are related to the direct
-	// load-balancing of servers.
-	//	ServiceName string `json:"serviceName"`
+	// Weight should only be specified when Name references a TraefikService object (and to be precise,
+	// one that embeds a Weighted Round Robin).
 	Weight *int `json:"weight,omitempty"`
 }
 

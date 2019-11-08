@@ -245,7 +245,7 @@ func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alp
 		Query:  errorPage.Query,
 	}
 
-	balancerServerHTTP, err := createLoadBalancerServerHTTP(client, namespace, errorPage.Service)
+	balancerServerHTTP, err := configBuilder{client: client}.buildServersLB(context.TODO(), namespace, errorPage.Service)
 	if err != nil {
 		return nil, nil, err
 	}
