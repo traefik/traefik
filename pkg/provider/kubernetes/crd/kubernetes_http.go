@@ -180,9 +180,15 @@ func fullServiceName(ctx context.Context, namespace, serviceName string, port in
 		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, name))
 	}
 
-	log.FromContext(ctx).
-		WithField(log.ServiceName, serviceName).
-		Warnf("namespace %q is ignored in cross-provider context", namespace)
+	// At this point, if namespace == "default", we do not know whether it had been
+	// intentionnally set as such, or if we're simply hitting the value set by default.
+	// But as it is most likely very much the latter, and we do not want to systematically log spam
+	// users in that case, we skip logging whenever the namespace is "default".
+	if namespace != "default" {
+		log.FromContext(ctx).
+			WithField(log.ServiceName, serviceName).
+			Warnf("namespace %q is ignored in cross-provider context", namespace)
+	}
 
 	return provider.Normalize(name) + "@" + providerName
 }
