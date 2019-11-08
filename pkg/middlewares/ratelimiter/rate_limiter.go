@@ -55,7 +55,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		return nil, err
 	}
 
-	buckets, err := ttlmap.NewMap(maxSources)
+	buckets, err := ttlmap.NewConcurrent(maxSources)
 	if err != nil {
 		return nil, err
 	}
