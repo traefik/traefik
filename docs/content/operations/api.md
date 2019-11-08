@@ -43,7 +43,7 @@ api: {}
 And then define a routing configuration on Traefik itself with the
 [dynamic configuration](../getting-started/configuration-overview.md#the-dynamic-configuration):
 
-{!operations-api-examples.md!}
+--8<-- "content/operations/include-api-examples.md"
 
 ??? warning "The router's [rule](../../routing/routers#rule) must catch requests for the URI path `/api`"
     Using an "Host" rule is recommended, by catching all the incoming traffic on this host domain to the API.

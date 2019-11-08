@@ -72,9 +72,8 @@ to allow defining:
 - A [router rule](#dashboard-router-rule) for accessing the dashboard,
   through Traefik itself (sometimes referred as "Traefik-ception").
 
-### Dashboard Dynamic Configuration Examples
-
-{!operations-api-examples.md!}
+??? example "Dashboard Dynamic Configuration Examples"
+    --8<-- "content/operations/include-api-examples.md"
 
 ### Dashboard Router Rule
 
