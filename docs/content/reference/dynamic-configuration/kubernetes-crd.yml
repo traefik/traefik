@@ -84,6 +84,7 @@ spec:
       - name: s1
         weight: 1
         port: 80
+        # Optional, as it is the default value
         kind: Service
       - name: s3
         weight: 1
@@ -138,6 +139,7 @@ spec:
     kind: TraefikService
     mirrors:
       - name: s2
+        # Optional, as it is the default value
         kind: Service
         percent: 20
         port: 80
@@ -186,6 +188,7 @@ spec:
     - match: PathPrefix(`/misc`)
       services:
         - name: s3
+          # Optional, as it is the default value
           kind: Service
           port: 8443
           # scheme allow to override the scheme for the service. (ex: https or h2c)

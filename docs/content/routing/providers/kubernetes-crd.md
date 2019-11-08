@@ -171,6 +171,8 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroutebar
+  namespace: default
+
 
 spec:
   entryPoints:
@@ -180,8 +182,17 @@ spec:
     kind: Rule
     services:
     - name: mirror1
+      namespace: default
       kind: TraefikService
 ```
+
+!!! important "References and namespaces"
+
+    If the optional `namespace` attribute is not set, the configuration will be applied with the namespace of the current resource.
+    
+    Additionally, when the definition of the `TraefikService` is from another provider,
+    the cross-provider syntax (service@provider) should be used to refer to the `TraefikService`, just as in the middleware case.
+    Specifying a namespace attribute in this case would not make any sense, and will be ignored (except if the provider is `kubernetescrd`).
 
 ### TLS Option
 
