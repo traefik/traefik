@@ -599,12 +599,12 @@ This strategy can only be defined with [File](../../providers/file.md).
   [tcp.services.appv1]
     [tcp.services.appv1.loadBalancer]
       [[tcp.services.appv1.loadBalancer.servers]]
-        address = "private-ip-server-1/:8080"
+        address = "private-ip-server-1:8080/"
 
   [tcp.services.appv2]
     [tcp.services.appv2.loadBalancer]
       [[tcp.services.appv2.loadBalancer.servers]]
-        address = "private-ip-server-2/:8080"
+        address = "private-ip-server-2:8080/"
 ```
 
 ```yaml tab="YAML"
