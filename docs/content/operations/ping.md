@@ -58,3 +58,23 @@ ping:
 --entryPoints.ping.address=":8082"
 --ping.entryPoint="ping"
 ```
+
+#### `manualRouting`
+
+_Optional, Default=false_
+
+If `manualRouting` is `true`, it disable the default internal router to allow to create a custom router for the `ping@internal` service.
+
+```toml tab="File (TOML)"
+[ping]
+  manualRouting = true
+```
+
+```yaml tab="File (YAML)"
+ping:
+  manualRouting: true
+```
+
+```bash tab="CLI"
+--ping.manualRouting=true
+```

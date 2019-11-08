@@ -141,6 +141,7 @@
     addEntryPointsLabels = true
     addServicesLabels = true
     entryPoint = "foobar"
+    manualRouting = true
   [metrics.datadog]
     address = "foobar"
     pushInterval = "10s"
@@ -165,6 +166,7 @@
 
 [ping]
   entryPoint = "foobar"
+  manualRouting = true
 
 [log]
   level = "foobar"

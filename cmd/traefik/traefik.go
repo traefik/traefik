@@ -23,9 +23,11 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/provider/acme"
 	"github.com/containous/traefik/v2/pkg/provider/aggregator"
+	"github.com/containous/traefik/v2/pkg/provider/traefik"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/server"
-	"github.com/containous/traefik/v2/pkg/server/router"
+	"github.com/containous/traefik/v2/pkg/server/middleware"
+	"github.com/containous/traefik/v2/pkg/server/service"
 	traefiktls "github.com/containous/traefik/v2/pkg/tls"
 	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/containous/traefik/v2/pkg/version"
@@ -79,7 +81,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	if err := roundrobin.SetDefaultWeight(0); err != nil {
-		log.WithoutContext().Errorf("Could not set roundrobin default weight: %v", err)
+		log.WithoutContext().Errorf("Could not set round robin default weight: %v", err)
 	}
 
 	staticConfiguration.SetEffectiveConfiguration()
@@ -161,6 +163,12 @@ func runCmd(staticConfiguration *static.Configuration) error {
 func setupServer(staticConfiguration *static.Configuration) (*server.Server, error) {
 	providerAggregator := aggregator.NewProviderAggregator(*staticConfiguration.Providers)
 
+	// adds internal provider
+	err := providerAggregator.AddProvider(traefik.New(*staticConfiguration))
+	if err != nil {
+		return nil, err
+	}
+
 	tlsManager := traefiktls.NewManager()
 
 	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager)
@@ -170,23 +178,14 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		return nil, err
 	}
 
-	routeAppenderFactories := make(map[string]server.RouteAppenderFactory)
-	for entryPointName := range staticConfiguration.EntryPoints {
-		routeAppenderFactories[entryPointName] = router.NewRouteAppenderFactory(*staticConfiguration, entryPointName, acmeProviders)
-	}
-
 	ctx := context.Background()
 	routinesPool := safe.NewPool(ctx)
 
 	metricsRegistry := registerMetricClients(staticConfiguration.Metrics)
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
-
-	chainBuilder := server.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
-
-	tcpRouterFactory := server.NewTCPRouterFactory(*staticConfiguration, routinesPool, routeAppenderFactories, tlsManager, metricsRegistry, chainBuilder)
-
-	// Use an empty configuration in order to initialize the default handlers with internal routes
-	serverEntryPointsTCP.Switch(tcpRouterFactory.CreateTCPRouters(dynamic.Configuration{}))
+	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
+	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry)
+	tcpRouterFactory := server.NewTCPRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder)
 
 	watcher := server.NewConfigurationWatcher(routinesPool, providerAggregator, time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration))
 
@@ -200,9 +199,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 	})
 
-	watcher.AddListener(func(conf dynamic.Configuration) {
-		serverEntryPointsTCP.Switch(tcpRouterFactory.CreateTCPRouters(conf))
-	})
+	watcher.AddListener(switchRouter(tcpRouterFactory, acmeProviders, serverEntryPointsTCP))
 
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		if metricsRegistry.IsEpEnabled() || metricsRegistry.IsSvcEnabled() {
@@ -234,6 +231,21 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	})
 
 	return server.NewServer(routinesPool, serverEntryPointsTCP, watcher, chainBuilder, accessLog), nil
+}
+
+func switchRouter(tcpRouterFactory *server.TCPRouterFactory, acmeProviders []*acme.Provider, serverEntryPointsTCP server.TCPEntryPoints) func(conf dynamic.Configuration) {
+	return func(conf dynamic.Configuration) {
+		routers := tcpRouterFactory.CreateTCPRouters(conf)
+		for entryPointName, rt := range routers {
+			for _, p := range acmeProviders {
+				if p != nil && p.HTTPChallenge != nil && p.HTTPChallenge.EntryPoint == entryPointName {
+					rt.HTTPHandler(p.CreateHandler(rt.GetHTTPHandler()))
+					break
+				}
+			}
+		}
+		serverEntryPointsTCP.Switch(routers)
+	}
 }
 
 // initACMEProvider creates an acme provider from the ACME part of globalConfiguration

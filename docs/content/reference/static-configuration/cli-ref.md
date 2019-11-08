@@ -213,6 +213,9 @@ Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000
 `--metrics.prometheus.entrypoint`:  
 EntryPoint (Default: ```traefik```)
 
+`--metrics.prometheus.manualrouting`:  
+Manual routing (Default: ```false```)
+
 `--metrics.statsd`:  
 StatsD metrics exporter type. (Default: ```false```)
 
@@ -236,6 +239,9 @@ Enable ping. (Default: ```false```)
 
 `--ping.entrypoint`:  
 EntryPoint (Default: ```traefik```)
+
+`--ping.manualrouting`:  
+Manual routing (Default: ```false```)
 
 `--providers.consulcatalog.cache`:  
 Use local agent caching for catalog reads. (Default: ```false```)

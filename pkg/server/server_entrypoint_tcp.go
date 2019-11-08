@@ -16,6 +16,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/middlewares/forwardedheaders"
 	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/server/router"
 	"github.com/containous/traefik/v2/pkg/tcp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
@@ -236,26 +237,26 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 }
 
 // SwitchRouter switches the TCP router handler.
-func (e *TCPEntryPoint) SwitchRouter(router *tcp.Router) {
-	router.HTTPForwarder(e.httpServer.Forwarder)
+func (e *TCPEntryPoint) SwitchRouter(rt *tcp.Router) {
+	rt.HTTPForwarder(e.httpServer.Forwarder)
 
-	httpHandler := router.GetHTTPHandler()
+	httpHandler := rt.GetHTTPHandler()
 	if httpHandler == nil {
-		httpHandler = buildDefaultHTTPRouter()
+		httpHandler = router.BuildDefaultHTTPRouter()
 	}
 
 	e.httpServer.Switcher.UpdateHandler(httpHandler)
 
-	router.HTTPSForwarder(e.httpsServer.Forwarder)
+	rt.HTTPSForwarder(e.httpsServer.Forwarder)
 
-	httpsHandler := router.GetHTTPSHandler()
+	httpsHandler := rt.GetHTTPSHandler()
 	if httpsHandler == nil {
-		httpsHandler = buildDefaultHTTPRouter()
+		httpsHandler = router.BuildDefaultHTTPRouter()
 	}
 
 	e.httpsServer.Switcher.UpdateHandler(httpsHandler)
 
-	e.switcher.Switch(router)
+	e.switcher.Switch(rt)
 }
 
 // writeCloserWrapper wraps together a connection, and the concrete underlying
@@ -437,7 +438,7 @@ type httpServer struct {
 }
 
 func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool) (*httpServer, error) {
-	httpSwitcher := middlewares.NewHandlerSwitcher(buildDefaultHTTPRouter())
+	httpSwitcher := middlewares.NewHandlerSwitcher(router.BuildDefaultHTTPRouter())
 
 	var handler http.Handler
 	var err error

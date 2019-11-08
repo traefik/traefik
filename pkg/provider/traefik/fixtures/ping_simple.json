@@ -1,0 +1,19 @@
+{
+  "http": {
+    "routers": {
+      "ping": {
+        "entryPoints": [
+          "test"
+        ],
+        "service": "ping@internal",
+        "rule": "PathPrefix(`/ping`)",
+        "priority": 9223372036854775807
+      }
+    },
+    "services": {
+      "ping": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

@@ -101,6 +101,10 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 	router.HTTPSHandler(handlerHTTPS, defaultTLSConf)
 
+	if len(configsHTTP) > 0 {
+		router.AddRouteHTTPTLS("*", defaultTLSConf)
+	}
+
 	// Keyed by domain, then by options reference.
 	tlsOptionsForHostSNI := map[string]map[string]nameAndConfig{}
 	for routerHTTPName, routerHTTPConfig := range configsHTTP {

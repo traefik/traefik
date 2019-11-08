@@ -1,4 +1,4 @@
-package server
+package middleware
 
 import (
 	"context"
@@ -45,7 +45,7 @@ func (c *ChainBuilder) Build(ctx context.Context, entryPointName string) alice.C
 		chain = chain.Append(mTracing.WrapEntryPointHandler(ctx, c.tracer, entryPointName))
 	}
 
-	if c.metricsRegistry.IsEpEnabled() {
+	if c.metricsRegistry != nil && c.metricsRegistry.IsEpEnabled() {
 		chain = chain.Append(metricsmiddleware.WrapEntryPointHandler(ctx, c.metricsRegistry, entryPointName))
 	}
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/containous/traefik/v2/pkg/responsemodifiers"
@@ -24,7 +25,7 @@ import (
 func TestRouterManager_Get(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
-	type ExpectedResult struct {
+	type expectedResult struct {
 		StatusCode     int
 		RequestHeaders map[string]string
 	}
@@ -35,7 +36,7 @@ func TestRouterManager_Get(t *testing.T) {
 		serviceConfig     map[string]*dynamic.Service
 		middlewaresConfig map[string]*dynamic.Middleware
 		entryPoints       []string
-		expected          ExpectedResult
+		expected          expectedResult
 	}{
 		{
 			desc: "no middleware",
@@ -58,7 +59,7 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web"},
-			expected:    ExpectedResult{StatusCode: http.StatusOK},
+			expected:    expectedResult{StatusCode: http.StatusOK},
 		},
 		{
 			desc: "no load balancer",
@@ -73,7 +74,7 @@ func TestRouterManager_Get(t *testing.T) {
 				"foo-service": {},
 			},
 			entryPoints: []string{"web"},
-			expected:    ExpectedResult{StatusCode: http.StatusNotFound},
+			expected:    expectedResult{StatusCode: http.StatusNotFound},
 		},
 		{
 			desc: "no middleware, default entry point",
@@ -95,7 +96,7 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web"},
-			expected:    ExpectedResult{StatusCode: http.StatusOK},
+			expected:    expectedResult{StatusCode: http.StatusOK},
 		},
 		{
 			desc: "no middleware, no matching",
@@ -118,7 +119,7 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web"},
-			expected:    ExpectedResult{StatusCode: http.StatusNotFound},
+			expected:    expectedResult{StatusCode: http.StatusNotFound},
 		},
 		{
 			desc: "middleware: headers > auth",
@@ -154,7 +155,7 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web"},
-			expected: ExpectedResult{
+			expected: expectedResult{
 				StatusCode: http.StatusUnauthorized,
 				RequestHeaders: map[string]string{
 					"X-Apero": "beer",
@@ -195,7 +196,7 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web"},
-			expected: ExpectedResult{
+			expected: expectedResult{
 				StatusCode: http.StatusUnauthorized,
 				RequestHeaders: map[string]string{
 					"X-Apero": "",
@@ -223,7 +224,7 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web"},
-			expected:    ExpectedResult{StatusCode: http.StatusOK},
+			expected:    expectedResult{StatusCode: http.StatusOK},
 		},
 		{
 			desc: "no middleware with specified provider name",
@@ -246,7 +247,7 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web"},
-			expected:    ExpectedResult{StatusCode: http.StatusOK},
+			expected:    expectedResult{StatusCode: http.StatusOK},
 		},
 		{
 			desc: "middleware: chain with provider name",
@@ -285,7 +286,7 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			},
 			entryPoints: []string{"web"},
-			expected: ExpectedResult{
+			expected: expectedResult{
 				StatusCode: http.StatusUnauthorized,
 				RequestHeaders: map[string]string{
 					"X-Apero": "",
@@ -310,7 +311,9 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
+			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
+
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -411,7 +414,9 @@ func TestAccessLog(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
+			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
+
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -697,7 +702,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
+			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
+
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -767,7 +774,9 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
+	chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
+
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
 
 	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -824,7 +833,9 @@ func BenchmarkRouterServe(b *testing.B) {
 	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory)
+	chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
+
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
 
 	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
 

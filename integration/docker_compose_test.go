@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/containous/traefik/v2/integration/try"
@@ -71,14 +72,17 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// check that we have only one router
-	c.Assert(rtconf.Routers, checker.HasLen, 1)
+	c.Assert(rtconf.Routers, checker.HasLen, 3)
 
 	// check that we have only one service with n servers
 	services := rtconf.Services
-	c.Assert(services, checker.HasLen, 1)
-	for k, v := range services {
-		c.Assert(k, checker.Equals, composeService+"-integrationtest"+composeProject+"@docker")
-		c.Assert(v.LoadBalancer.Servers, checker.HasLen, serviceCount)
+	c.Assert(services, checker.HasLen, 3)
+	for name, service := range services {
+		if strings.HasSuffix(name, "@internal") {
+			continue
+		}
+		c.Assert(name, checker.Equals, composeService+"-integrationtest"+composeProject+"@docker")
+		c.Assert(service.LoadBalancer.Servers, checker.HasLen, serviceCount)
 		// We could break here, but we don't just to keep us honest.
 	}
 }

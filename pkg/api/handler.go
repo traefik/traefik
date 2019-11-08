@@ -44,23 +44,19 @@ type RunTimeRepresentation struct {
 
 // Handler serves the configuration and status of Traefik on API endpoints.
 type Handler struct {
-	dashboard bool
-	debug     bool
+	dashboard       bool
+	debug           bool
+	staticConfig    static.Configuration
+	dashboardAssets *assetfs.AssetFS
+
 	// runtimeConfiguration is the data set used to create all the data representations exposed by the API.
 	runtimeConfiguration *runtime.Configuration
-	staticConfig         static.Configuration
-	// statistics           *types.Statistics
-	// stats                *thoasstats.Stats // FIXME stats
-	// StatsRecorder         *middlewares.StatsRecorder // FIXME stats
-	dashboardAssets *assetfs.AssetFS
 }
 
 // NewBuilder returns a http.Handler builder based on runtime.Configuration
 func NewBuilder(staticConfig static.Configuration) func(*runtime.Configuration) http.Handler {
 	return func(configuration *runtime.Configuration) http.Handler {
-		router := mux.NewRouter()
-		New(staticConfig, configuration).Append(router)
-		return router
+		return New(staticConfig, configuration).CreateRouter()
 	}
 }
 
@@ -73,8 +69,7 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 	}
 
 	return &Handler{
-		dashboard: staticConfig.API.Dashboard,
-		// statistics:           staticConfig.API.Statistics,
+		dashboard:            staticConfig.API.Dashboard,
 		dashboardAssets:      staticConfig.API.DashboardAssets,
 		runtimeConfiguration: rConfig,
 		staticConfig:         staticConfig,
@@ -82,8 +77,10 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 	}
 }
 
-// Append add api routes on a router
-func (h Handler) Append(router *mux.Router) {
+// CreateRouter creates API routes and router.
+func (h Handler) CreateRouter() *mux.Router {
+	router := mux.NewRouter()
+
 	if h.debug {
 		DebugHandler{}.Append(router)
 	}
@@ -108,15 +105,13 @@ func (h Handler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/api/tcp/services").HandlerFunc(h.getTCPServices)
 	router.Methods(http.MethodGet).Path("/api/tcp/services/{serviceID}").HandlerFunc(h.getTCPService)
 
-	// FIXME stats
-	// health route
-	// router.Methods(http.MethodGet).Path("/health").HandlerFunc(p.getHealthHandler)
-
 	version.Handler{}.Append(router)
 
 	if h.dashboard {
 		DashboardHandler{Assets: h.dashboardAssets}.Append(router)
 	}
+
+	return router
 }
 
 func (h Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.Request) {

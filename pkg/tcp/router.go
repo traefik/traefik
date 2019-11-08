@@ -28,7 +28,7 @@ type Router struct {
 func (r *Router) ServeTCP(conn WriteCloser) {
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
 
-	if r.catchAllNoTLS != nil && len(r.routingTable) == 0 && r.httpsHandler == nil {
+	if r.catchAllNoTLS != nil && len(r.routingTable) == 0 {
 		r.catchAllNoTLS.ServeTCP(conn)
 		return
 	}

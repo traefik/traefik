@@ -11,6 +11,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/metrics"
 	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/server/middleware"
 	"github.com/containous/traefik/v2/pkg/types"
 )
 
@@ -23,7 +24,7 @@ type RouteAppenderFactory interface {
 type Server struct {
 	watcher        *ConfigurationWatcher
 	tcpEntryPoints TCPEntryPoints
-	chainBuilder   *ChainBuilder
+	chainBuilder   *middleware.ChainBuilder
 
 	accessLoggerMiddleware *accesslog.Handler
 
@@ -35,7 +36,7 @@ type Server struct {
 
 // NewServer returns an initialized Server.
 func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, watcher *ConfigurationWatcher,
-	chainBuilder *ChainBuilder, accessLoggerMiddleware *accesslog.Handler) *Server {
+	chainBuilder *middleware.ChainBuilder, accessLoggerMiddleware *accesslog.Handler) *Server {
 	srv := &Server{
 		watcher:                watcher,
 		tcpEntryPoints:         entryPoints,

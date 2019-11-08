@@ -1,16 +1,17 @@
 package server
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/metrics"
+	"github.com/containous/traefik/v2/pkg/server/middleware"
+	"github.com/containous/traefik/v2/pkg/server/service"
 	th "github.com/containous/traefik/v2/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,11 +21,11 @@ func TestReuseService(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	routeAppenderFactories := map[string]RouteAppenderFactory{
-		"http": nil,
+	staticConfig := static.Configuration{
+		EntryPoints: map[string]*static.EntryPoint{
+			"http": {},
+		},
 	}
-
-	staticConfig := static.Configuration{}
 
 	dynamicConfigs := th.BuildConfiguration(
 		th.WithRouters(
@@ -45,15 +46,17 @@ func TestReuseService(t *testing.T) {
 		),
 	)
 
-	factory := NewTCPRouterFactory(staticConfig, nil, routeAppenderFactories, nil, metrics.NewVoidRegistry(), NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil))
+	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
+	tlsManager := tls.NewManager()
 
-	rtConf := runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs})
-	entrypointsHandlers, _ := factory.createHTTPHandlers(context.Background(), rtConf, []string{"http"})
+	factory := NewTCPRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil))
+
+	entryPointsHandlers := factory.CreateTCPRouters(dynamic.Configuration{HTTP: dynamicConfigs})
 
 	// Test that the /ok path returns a status 200.
 	responseRecorderOk := &httptest.ResponseRecorder{}
 	requestOk := httptest.NewRequest(http.MethodGet, testServer.URL+"/ok", nil)
-	entrypointsHandlers["http"].ServeHTTP(responseRecorderOk, requestOk)
+	entryPointsHandlers["http"].GetHTTPHandler().ServeHTTP(responseRecorderOk, requestOk)
 
 	assert.Equal(t, http.StatusOK, responseRecorderOk.Result().StatusCode, "status code")
 
@@ -61,7 +64,7 @@ func TestReuseService(t *testing.T) {
 	// the basic authentication defined on the frontend.
 	responseRecorderUnauthorized := &httptest.ResponseRecorder{}
 	requestUnauthorized := httptest.NewRequest(http.MethodGet, testServer.URL+"/unauthorized", nil)
-	entrypointsHandlers["http"].ServeHTTP(responseRecorderUnauthorized, requestUnauthorized)
+	entryPointsHandlers["http"].GetHTTPHandler().ServeHTTP(responseRecorderUnauthorized, requestUnauthorized)
 
 	assert.Equal(t, http.StatusUnauthorized, responseRecorderUnauthorized.Result().StatusCode, "status code")
 }
@@ -171,20 +174,23 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			globalConfig := static.Configuration{}
-			entryPointsConfig := map[string]RouteAppenderFactory{
-				"http": nil,
+			staticConfig := static.Configuration{
+				EntryPoints: map[string]*static.EntryPoint{
+					"http": {},
+				},
 			}
 
-			factory := NewTCPRouterFactory(globalConfig, nil, entryPointsConfig, nil, metrics.NewVoidRegistry(), NewChainBuilder(globalConfig, metrics.NewVoidRegistry(), nil))
+			managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
+			tlsManager := tls.NewManager()
 
-			rtConf := runtime.NewConfig(dynamic.Configuration{HTTP: test.config(testServer.URL)})
-			entryPoints, _ := factory.createHTTPHandlers(context.Background(), rtConf, []string{"http"})
+			factory := NewTCPRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil))
+
+			entryPointsHandlers := factory.CreateTCPRouters(dynamic.Configuration{HTTP: test.config(testServer.URL)})
 
 			responseRecorder := &httptest.ResponseRecorder{}
 			request := httptest.NewRequest(http.MethodGet, testServer.URL+requestPath, nil)
 
-			entryPoints["http"].ServeHTTP(responseRecorder, request)
+			entryPointsHandlers["http"].GetHTTPHandler().ServeHTTP(responseRecorder, request)
 
 			assert.Equal(t, test.expectedStatusCode, responseRecorder.Result().StatusCode, "status code")
 		})
@@ -197,12 +203,11 @@ func TestInternalServices(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	routeAppenderFactories := map[string]RouteAppenderFactory{
-		"http": nil,
-	}
-
 	staticConfig := static.Configuration{
 		API: &static.API{},
+		EntryPoints: map[string]*static.EntryPoint{
+			"http": {},
+		},
 	}
 
 	dynamicConfigs := th.BuildConfiguration(
@@ -213,15 +218,17 @@ func TestInternalServices(t *testing.T) {
 		),
 	)
 
-	factory := NewTCPRouterFactory(staticConfig, nil, routeAppenderFactories, nil, metrics.NewVoidRegistry(), NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil))
+	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
+	tlsManager := tls.NewManager()
 
-	rtConf := runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs})
-	entrypointsHandlers, _ := factory.createHTTPHandlers(context.Background(), rtConf, []string{"http"})
+	factory := NewTCPRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil))
+
+	entryPointsHandlers := factory.CreateTCPRouters(dynamic.Configuration{HTTP: dynamicConfigs})
 
 	// Test that the /ok path returns a status 200.
 	responseRecorderOk := &httptest.ResponseRecorder{}
 	requestOk := httptest.NewRequest(http.MethodGet, testServer.URL+"/api/rawdata", nil)
-	entrypointsHandlers["http"].ServeHTTP(responseRecorderOk, requestOk)
+	entryPointsHandlers["http"].GetHTTPHandler().ServeHTTP(responseRecorderOk, requestOk)
 
 	assert.Equal(t, http.StatusOK, responseRecorderOk.Result().StatusCode, "status code")
 }
