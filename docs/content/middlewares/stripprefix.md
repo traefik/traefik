@@ -85,3 +85,84 @@ If your backend is serving assets (e.g., images or Javascript files), chances ar
 Continuing on the example, the backend should return `/products/shoes/image.png` (and not `/images.png` which Traefik would likely not be able to associate with the same backend).  
 
 The `X-Forwarded-Prefix` header can be queried to build such URLs dynamically.
+
+### `forceSlash`
+
+_Optional, Default=true_
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.example.stripprefix.prefixes=/foobar"
+  - "traefik.http.middlewares.example.stripprefix.forceSlash=false"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: example
+spec:
+  stripPrefix:
+    prefixes:
+      - "/foobar"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.example.stripprefix.prefixes": "/foobar",
+  "traefik.http.middlewares.example.stripprefix.forceSlash": "false"
+}
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.example.stripprefix.prefixes=/foobar"
+  - "traefik.http.middlewares.example.stripprefix.forceSlash=false"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.example.stripPrefix]
+    prefixes = ["/foobar"]
+    forceSlash = false
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    example:
+      stripPrefix:
+        prefixes:
+          - "/foobar"
+        forceSlash: false
+```
+
+The `forceSlash` option force, when the resulting striped path is empty, to use slash `/` instead of empty.
+
+The option was made to keep the previous (buggy) behavior of this middleware, to not introduce a breaking change.
+
+It's recommended to explicitly set `forceSlach` to `false`.
+
+??? info "Behavior examples"
+    
+    - `forceSlash=true`
+    
+    | Path       | Prefix to strip | Result |
+    |------------|-----------------|--------|
+    | `/`        | `/`             | `/`    |
+    | `/foo`     | `/foo`          | `/`    |
+    | `/foo/`    | `/foo`          | `/`    |
+    | `/foo/`    | `/foo/`         | `/`    |
+    | `/bar`     | `/foo`          | `/bar` |
+    | `/foo/bar` | `/foo`          | `/bar` |
+    
+    - `forceSlash=false`
+    
+    | Path       | Prefix to strip | Result |
+    |------------|-----------------|--------|
+    | `/`        | `/`             | empty  |
+    | `/foo`     | `/foo`          | empty  |
+    | `/foo/`    | `/foo`          | `/`    |
+    | `/foo/`    | `/foo/`         | empty  |
+    | `/bar`     | `/foo`          | `/bar` |
+    | `/foo/bar` | `/foo`          | `/bar` |
