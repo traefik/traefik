@@ -3,7 +3,9 @@
 Updating the Path and Query Before Forwarding the Request (Using a Regex)
 {: .subtitle }
 
-`TODO: add schema`
+<!--
+TODO: add schema
+-->
 
 The ReplaceRegex replace a path or query from a url to another with regex matching and replacement.
 
@@ -13,7 +15,7 @@ The ReplaceRegex replace a path or query from a url to another with regex matchi
 # Replace path and query with regex
 labels:
 - "traefik.http.middlewares.test-replacepathqueryregex.replacepathqueryregex.regex=^/foo/(.*)"
-- "traefik.http.middlewares.test-replacepathqueryregex.replacepathqueryregex.replacement=/bar?$1"
+- "traefik.http.middlewares.test-replacepathqueryregex.replacepathqueryregex.replacement=/bar?$${1}"
 ```
 
 ```yaml tab="Kubernetes"
@@ -25,14 +27,14 @@ metadata:
 spec:
   replacePathQueryRegex:
     regex: ^/foo/(.*)
-    replacement: /bar?$1
+    replacement: /bar?${1}
 ```
 
 ```json tab="Marathon"
 # Replace path and query with regex
 "labels": {
   "traefik.http.middlewares.test-replacepathqueryregex.replacepathqueryregex.regex": "^/foo/(.*)",
-  "traefik.http.middlewares.test-replacepathqueryregex.replacepathqueryregex.replacement": "/bar?$1"
+  "traefik.http.middlewares.test-replacepathqueryregex.replacepathqueryregex.replacement": "/bar?${1}"
 }
 ```
 
@@ -40,15 +42,25 @@ spec:
 # Replace path and query with regex
 labels:
 - "traefik.http.middlewares.test-replacepathqueryregex.replacepathqueryregex.regex=^/foo/(.*)"
-- "traefik.http.middlewares.test-replacepathqueryregex.replacepathqueryregex.replacement=/bar?$1"
+- "traefik.http.middlewares.test-replacepathqueryregex.replacepathqueryregex.replacement=/bar?${1}"
 ```
 
-```toml tab="File"
-# Redirect with domain replacement
+```toml tab="File (TOML)"
+# Replace path and query with regex
 [http.middlewares]
   [http.middlewares.test-replacepathqueryregex.replacePathQueryRegex]
     regex = "^/foo/(.*)"
-    replacement = "/bar?$1"
+    replacement = "/bar?${1}"
+```
+
+```yaml tab="File (YAML)"
+# Replace path and query with regex
+http:
+  middlewares:
+    test-replacepathqueryregex:
+      replacePathQueryRegex:
+        regex: ^/foo/(.*)
+        replacement: /bar?${1}
 ```
 
 ## Configuration Options
@@ -61,7 +73,7 @@ The ReplacePathQueryRegex middleware will:
 
 ### `regex`
 
-The `Regex` option is the regular expression to match and capture the path and query from the request URL.
+The `regex` option is the regular expression to match and capture the path and query from the request URL.
 
 !!! warning
 

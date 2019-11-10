@@ -3,7 +3,9 @@
 Updating the Query Before Forwarding the Request (Using a Regex)
 {: .subtitle }
 
-`TODO: add schema`
+<!--
+TODO: add schema
+-->
 
 The ReplaceRegex replace a query from a url to another with regex matching and replacement.
 
@@ -13,7 +15,7 @@ The ReplaceRegex replace a query from a url to another with regex matching and r
 # Replace query with regex
 labels:
 - "traefik.http.middlewares.test-replacequeryregex.replacequeryregex.regex=(.*)"
-- "traefik.http.middlewares.test-replacequeryregex.replacequeryregex.replacement=$1&bar=foo"
+- "traefik.http.middlewares.test-replacequeryregex.replacequeryregex.replacement=$${1}&bar=foo"
 ```
 
 ```yaml tab="Kubernetes"
@@ -25,14 +27,14 @@ metadata:
 spec:
   replaceQueryRegex:
     regex: (.*)
-    replacement: $1&bar=foo
+    replacement: ${1}&bar=foo
 ```
 
 ```json tab="Marathon"
 # Replace query with regex
 "labels": {
   "traefik.http.middlewares.test-replacequeryregex.replacequeryregex.regex": "(.*)",
-  "traefik.http.middlewares.test-replacequeryregex.replacequeryregex.replacement": "$1&bar=foo"
+  "traefik.http.middlewares.test-replacequeryregex.replacequeryregex.replacement": "${1}&bar=foo"
 }
 ```
 
@@ -40,15 +42,25 @@ spec:
 # Replace query with regex
 labels:
 - "traefik.http.middlewares.test-replacequeryregex.replacequeryregex.regex=(.*)"
-- "traefik.http.middlewares.test-replacequeryregex.replacequeryregex.replacement=$1&bar=foo"
+- "traefik.http.middlewares.test-replacequeryregex.replacequeryregex.replacement=${1}&bar=foo"
 ```
 
-```toml tab="File"
-# Redirect with domain replacement
+```toml tab="File (TOML)"
+# Replace query with regex
 [http.middlewares]
   [http.middlewares.test-replacequeryregex.replaceQueryRegex]
     regex = "(.*)"
-    replacement = "$1&bar=foo"
+    replacement = "${1}&bar=foo"
+```
+
+```yaml tab="File (YAML)"
+# Replace query with regex
+http:
+  middlewares:
+    test-replacequeryregex:
+      replaceQueryRegex:
+        regex: (.*)
+        replacement: '${1}&bar=foo'
 ```
 
 ## Configuration Options
@@ -61,17 +73,17 @@ The ReplaceQueryRegex middleware will:
 
 ### `regex`
 
-The `Regex` option is the regular expression to match and capture the query from the request URL.
+The `regex` option is the regular expression to match and capture the query from the request URL.
 
 !!! warning
 
     Care should be taken when defining replacement expand variables: `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax.
 
-!!! tip
+!!! info
 
     Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
     
-!!! tip
+!!! info
 
     This middleware only matches and modifies the query parameters of the request.
     You cannot match a non-existent query.
