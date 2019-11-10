@@ -40,6 +40,16 @@ func TestReplaceQueryRegex(t *testing.T) {
 			expectedRequestURI: "/foo?bar=baz",
 		},
 		{
+			desc:    "no query but match, no path",
+			request: "",
+			config: dynamic.ReplaceQueryRegex{
+				Regex:       `(.*)`,
+				Replacement: "bar=baz",
+			},
+			expectedQuery:      "bar=baz",
+			expectedRequestURI: "/?bar=baz",
+		},
+		{
 			desc:    "remove query parameter",
 			request: "/foo?remove=yes",
 			config: dynamic.ReplaceQueryRegex{
