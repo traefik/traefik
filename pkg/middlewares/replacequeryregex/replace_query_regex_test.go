@@ -15,56 +15,67 @@ func TestReplaceQueryRegex(t *testing.T) {
 	testCases := []struct {
 		desc               string
 		request            string
-		regex              string
-		replacement        string
+		config             dynamic.ReplaceQueryRegex
 		expectedQuery      string
 		expectedRequestURI string
 	}{
 		{
-			desc:               "no query no match",
-			request:            "/foo",
-			regex:              `(.+)`,
-			replacement:        "bar=baz",
+			desc:    "no query no match",
+			request: "/foo",
+			config: dynamic.ReplaceQueryRegex{
+				Regex:       `(.+)`,
+				Replacement: "bar=baz",
+			},
 			expectedQuery:      "",
 			expectedRequestURI: "/foo",
 		},
 		{
-			desc:               "no query but match",
-			request:            "/foo",
-			regex:              `(.*)`,
-			replacement:        "bar=baz",
+			desc:    "no query but match",
+			request: "/foo",
+			config: dynamic.ReplaceQueryRegex{
+				Regex:       `(.*)`,
+				Replacement: "bar=baz",
+			},
 			expectedQuery:      "bar=baz",
 			expectedRequestURI: "/foo?bar=baz",
 		},
 		{
-			desc:               "remove query parameter",
-			request:            "/foo?remove=yes",
-			regex:              `.*(.*)`, // greedy leaves nothing
-			replacement:        "$1",
+			desc:    "remove query parameter",
+			request: "/foo?remove=yes",
+			config: dynamic.ReplaceQueryRegex{
+				Regex:       `.*(.*)`, // greedy leaves nothing
+				Replacement: "$1",
+			},
 			expectedQuery:      "",
 			expectedRequestURI: "/foo",
 		},
 		{
-			desc:               "overwrite query parameters",
-			request:            "/foo?dropped=yes",
-			regex:              `.*`,
-			replacement:        "bar=baz",
+			desc:    "overwrite query parameters",
+			request: "/foo?dropped=yes",
+			config: dynamic.ReplaceQueryRegex{
+				Regex:       `.*`,
+				Replacement: "bar=baz",
+			},
 			expectedQuery:      "bar=baz",
 			expectedRequestURI: "/foo?bar=baz",
 		},
 		{
-			desc:               "append query parameter",
-			request:            "/foo?keep=yes",
-			regex:              `(.*)`,
-			replacement:        "$1&bar=baz",
+			desc:    "append query parameter",
+			request: "/foo?keep=yes",
+			config: dynamic.ReplaceQueryRegex{
+				Regex:       `(.*)`,
+				Replacement: "$1&bar=baz",
+			},
 			expectedQuery:      "keep=yes&bar=baz",
 			expectedRequestURI: "/foo?keep=yes&bar=baz",
 		},
 		{
-			desc:               "modify query parameter",
-			request:            "/foo?@=a",
-			regex:              `@=a`,
-			replacement:        "a=A",
+			desc:    "modify query parameter",
+			request: "/foo?@=a",
+			config: dynamic.ReplaceQueryRegex{
+				Regex:       `@=a`,
+				Replacement: "a=A",
+			},
 			expectedQuery:      "a=A",
 			expectedRequestURI: "/foo?a=A",
 		},
@@ -78,12 +89,7 @@ func TestReplaceQueryRegex(t *testing.T) {
 				actualQuery = r.URL.RawQuery
 			})
 
-			config := dynamic.ReplaceQueryRegex{
-				Regex:       test.regex,
-				Replacement: test.replacement,
-			}
-
-			handler, err := New(context.Background(), next, config, "foo-replace-query-regexp")
+			handler, err := New(context.Background(), next, test.config, "foo-replace-query-regexp")
 			require.NoError(t, err)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.request, nil)
@@ -101,15 +107,16 @@ func TestReplaceQueryRegexError(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		target        string
-		regex         string
-		replacement   string
+		config        dynamic.ReplaceQueryRegex
 		expectedQuery string
 	}{
 		{
-			desc:          "bad regex",
-			target:        "/foo",
-			regex:         `(?!`,
-			replacement:   "",
+			desc:   "bad regex",
+			target: "/foo",
+			config: dynamic.ReplaceQueryRegex{
+				Regex:       `(?!`,
+				Replacement: "",
+			},
 			expectedQuery: "",
 		},
 	}
@@ -118,12 +125,7 @@ func TestReplaceQueryRegexError(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-			config := dynamic.ReplaceQueryRegex{
-				Regex:       test.regex,
-				Replacement: test.replacement,
-			}
-
-			_, err := New(context.Background(), next, config, "foo-replace-query-regexp")
+			_, err := New(context.Background(), next, test.config, "foo-replace-query-regexp")
 			require.Error(t, err)
 		})
 	}

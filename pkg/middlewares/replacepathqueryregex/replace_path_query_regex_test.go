@@ -15,64 +15,77 @@ func TestReplaceQueryRegex(t *testing.T) {
 	testCases := []struct {
 		desc               string
 		request            string
-		regex              string
-		replacement        string
+		config             dynamic.ReplacePathQueryRegex
 		expectedQuery      string
 		expectedRequestURI string
 	}{
 		{
-			desc:               "add query parameter",
-			request:            "/foo",
-			regex:              `.*`,
-			replacement:        "bar=baz",
+			desc:    "add query parameter",
+			request: "/foo",
+			config: dynamic.ReplacePathQueryRegex{
+				Regex:       `.*`,
+				Replacement: "bar=baz",
+			},
 			expectedQuery:      "bar=baz",
 			expectedRequestURI: "/foo?bar=baz",
 		},
 		{
-			desc:               "remove query parameter",
-			request:            "/foo?remove=yes",
-			regex:              `.*(.*)`, // greedy leaves nothing
-			replacement:        "$1",
+			desc:    "remove query parameter",
+			request: "/foo?remove=yes",
+			config: dynamic.ReplacePathQueryRegex{
+				Regex:       `.*(.*)`, // greedy leaves nothing
+				Replacement: "$1",
+			},
 			expectedQuery:      "",
 			expectedRequestURI: "/foo",
 		},
 		{
-			desc:               "overwrite query parameters",
-			request:            "/foo?dropped=yes",
-			regex:              `.*`,
-			replacement:        "bar=baz",
+			desc:    "overwrite query parameters",
+			request: "/foo?dropped=yes",
+			config: dynamic.ReplacePathQueryRegex{
+				Regex:       `.*`,
+				Replacement: "bar=baz",
+			},
 			expectedQuery:      "bar=baz",
 			expectedRequestURI: "/foo?bar=baz",
 		},
 		{
-			desc:               "append query parameter",
-			request:            "/foo?keep=yes",
-			regex:              `^/foo\?(.*)$`,
-			replacement:        "$1&bar=baz",
+			desc:    "append query parameter",
+			request: "/foo?keep=yes",
+			config: dynamic.ReplacePathQueryRegex{
+				Regex:       `^/foo\?(.*)$`,
+				Replacement: "$1&bar=baz",
+			},
 			expectedQuery:      "keep=yes&bar=baz",
 			expectedRequestURI: "/foo?keep=yes&bar=baz",
 		},
 		{
-			desc:               "modify query parameter",
-			request:            "/foo?a=a",
-			regex:              `^/foo\?a=a$`,
-			replacement:        "a=A",
+			desc:    "modify query parameter",
+			request: "/foo?a=a",
+			config: dynamic.ReplacePathQueryRegex{
+				Regex:       `^/foo\?a=a$`,
+				Replacement: "a=A",
+			},
 			expectedQuery:      "a=A",
 			expectedRequestURI: "/foo?a=A",
 		},
 		{
-			desc:               "use path component as new query parameters",
-			request:            "/foo/animal/CAT/food/FISH?keep=no",
-			regex:              `^/foo/animal/([^/]+)/food/([^?]+)(\?.*)?$`,
-			replacement:        "animal=$1&food=$2",
+			desc:    "use path component as new query parameters",
+			request: "/foo/animal/CAT/food/FISH?keep=no",
+			config: dynamic.ReplacePathQueryRegex{
+				Regex:       `^/foo/animal/([^/]+)/food/([^?]+)(\?.*)?$`,
+				Replacement: "animal=$1&food=$2",
+			},
 			expectedQuery:      "animal=CAT&food=FISH",
 			expectedRequestURI: "/foo/animal/CAT/food/FISH?animal=CAT&food=FISH",
 		},
 		{
-			desc:               "use path component as new query parameters, keep existing query params",
-			request:            "/foo/animal/CAT/food/FISH?keep=yes",
-			regex:              `^/foo/animal/([^/]+)/food/([^/]+)\?(.*)$`,
-			replacement:        "$3&animal=$1&food=$2",
+			desc:    "use path component as new query parameters, keep existing query params",
+			request: "/foo/animal/CAT/food/FISH?keep=yes",
+			config: dynamic.ReplacePathQueryRegex{
+				Regex:       `^/foo/animal/([^/]+)/food/([^/]+)\?(.*)$`,
+				Replacement: "$3&animal=$1&food=$2",
+			},
 			expectedQuery:      "keep=yes&animal=CAT&food=FISH",
 			expectedRequestURI: "/foo/animal/CAT/food/FISH?keep=yes&animal=CAT&food=FISH",
 		},
@@ -86,10 +99,7 @@ func TestReplaceQueryRegex(t *testing.T) {
 				actualQuery = r.URL.RawQuery
 			})
 
-			handler, err := New(context.Background(), next, dynamic.ReplacePathQueryRegex{
-				Regex:       test.regex,
-				Replacement: test.replacement,
-			}, "foo-replace-path-query-regexp")
+			handler, err := New(context.Background(), next, test.config, "foo-replace-path-query-regexp")
 			require.NoError(t, err)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.request, nil)
@@ -107,15 +117,16 @@ func TestReplacePathQueryRegexError(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		request       string
-		regex         string
-		replacement   string
+		config        dynamic.ReplacePathQueryRegex
 		expectedQuery string
 	}{
 		{
-			desc:          "bad regex",
-			request:       "/foo",
-			regex:         `(?!`,
-			replacement:   "",
+			desc:    "bad regex",
+			request: "/foo",
+			config: dynamic.ReplacePathQueryRegex{
+				Regex:       `(?!`,
+				Replacement: "",
+			},
 			expectedQuery: "",
 		},
 	}
@@ -124,12 +135,7 @@ func TestReplacePathQueryRegexError(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-			config := dynamic.ReplacePathQueryRegex{
-				Regex:       test.regex,
-				Replacement: test.replacement,
-			}
-
-			_, err := New(context.Background(), next, config, "foo-replace-path-query-regexp")
+			_, err := New(context.Background(), next, test.config, "foo-replace-path-query-regexp")
 			require.Error(t, err)
 		})
 	}
