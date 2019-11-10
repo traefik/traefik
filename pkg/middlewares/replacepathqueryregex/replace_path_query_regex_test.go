@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestReplaceQueryRegex(t *testing.T) {
+func TestReplacePathQueryRegex(t *testing.T) {
 	testCases := []struct {
 		desc               string
 		request            string

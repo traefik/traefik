@@ -18,7 +18,7 @@ const (
 	typeName = "ReplaceQueryRegex"
 )
 
-// ReplaceQueryRegex is a middleware used to replace the query of a URL request with a regular expression
+// replaceQueryRegex is a middleware used to replace the query of a URL request with a regular expression
 type replaceQueryRegex struct {
 	next        http.Handler
 	regexp      *regexp.Regexp

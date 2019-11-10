@@ -18,7 +18,7 @@ const (
 	typeName = "ReplacePathQueryRegex"
 )
 
-// ReplacePathQueryRegex is a middleware used to replace the path and query of a URL request with a regular expression
+// replacePathQueryRegex is a middleware used to replace the path and query of a URL request with a regular expression
 type replacePathQueryRegex struct {
 	next        http.Handler
 	regexp      *regexp.Regexp
