@@ -43,30 +43,39 @@ func New(ctx context.Context, next http.Handler, config dynamic.ReplaceQueryRege
 	}, nil
 }
 
-func (rq *replaceQueryRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return rq.name, tracing.SpanKindNoneEnum
+func (r *replaceQueryRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
+	return r.name, tracing.SpanKindNoneEnum
 }
 
-func (rq *replaceQueryRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (r *replaceQueryRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	splitURI := strings.SplitN(req.RequestURI, "?", 2)
 	if len(splitURI) < 2 {
-		rq.next.ServeHTTP(rw, req)
+		r.next.ServeHTTP(rw, req)
 		return
 	}
 
 	rawPath := splitURI[0]
 	rawQuery := splitURI[1]
 
-	if rq.regexp != nil && rq.regexp.MatchString(rawQuery) {
-		newQuery := rq.regexp.ReplaceAllString(rawQuery, rq.replacement)
-		path := rawPath
-		if newQuery != "" {
-			path = path + "?" + newQuery
-		}
-		if u, err := req.URL.Parse(path); err == nil {
-			req.URL = u
-			req.RequestURI = u.RequestURI()
-		}
+	if r.regexp == nil || !r.regexp.MatchString(rawQuery) {
+		r.next.ServeHTTP(rw, req)
+		return
 	}
-	rq.next.ServeHTTP(rw, req)
+
+	newQuery := r.regexp.ReplaceAllString(rawQuery, r.replacement)
+	path := rawPath
+	if newQuery != "" {
+		path = path + "?" + newQuery
+	}
+
+	u, err := req.URL.Parse(path)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	req.URL = u
+	req.RequestURI = u.RequestURI()
+
+	r.next.ServeHTTP(rw, req)
 }
