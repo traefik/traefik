@@ -58,4 +58,5 @@ http:
 
 ### `prefix`
 
-`prefix` is the string to add before the current path in the requested URL. It should include the leading slash (`/`).
+`prefix` is the string to add before the current path in the requested URL.
+It should include the leading slash (`/`).
