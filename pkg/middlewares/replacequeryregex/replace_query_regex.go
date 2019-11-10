@@ -48,34 +48,13 @@ func (r *replaceQueryRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (r *replaceQueryRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	splitURI := strings.SplitN(req.RequestURI, "?", 2)
-	if len(splitURI) < 2 {
+	if r.regexp == nil || !r.regexp.MatchString(req.URL.RawQuery) {
 		r.next.ServeHTTP(rw, req)
 		return
 	}
 
-	rawPath := splitURI[0]
-	rawQuery := splitURI[1]
-
-	if r.regexp == nil || !r.regexp.MatchString(rawQuery) {
-		r.next.ServeHTTP(rw, req)
-		return
-	}
-
-	newQuery := r.regexp.ReplaceAllString(rawQuery, r.replacement)
-	path := rawPath
-	if newQuery != "" {
-		path = path + "?" + newQuery
-	}
-
-	u, err := req.URL.Parse(path)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	req.URL = u
-	req.RequestURI = u.RequestURI()
+	req.URL.RawQuery = r.regexp.ReplaceAllString(req.URL.RawQuery, r.replacement)
+	req.RequestURI = req.URL.RequestURI()
 
 	r.next.ServeHTTP(rw, req)
 }

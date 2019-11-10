@@ -53,20 +53,8 @@ func (r *replacePathQueryRegex) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	replacement := r.regexp.ReplaceAllString(req.RequestURI, r.replacement)
-	path := strings.SplitN(req.RequestURI, "?", 2)[0]
-	if replacement != "" {
-		path = path + "?" + replacement
-	}
-
-	u, err := req.URL.Parse(path)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	req.URL = u
-	req.RequestURI = u.RequestURI()
+	req.URL.RawQuery = r.regexp.ReplaceAllString(req.RequestURI, r.replacement)
+	req.RequestURI = req.URL.RequestURI()
 
 	r.next.ServeHTTP(rw, req)
 }
