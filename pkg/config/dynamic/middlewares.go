@@ -350,16 +350,16 @@ type ReplacePathRegex struct {
 
 // ReplaceQueryRegex holds the ReplaceQueryRegex configuration.
 type ReplaceQueryRegex struct {
-	Regex       string `json:"regex,omitempty"`
-	Replacement string `json:"replacement,omitempty"`
+	Regex       string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty"`
+	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // ReplacePathQueryRegex holds the ReplacePathQueryRegex configuration.
 type ReplacePathQueryRegex struct {
-	Regex       string `json:"regex,omitempty"`
-	Replacement string `json:"replacement,omitempty"`
+	Regex       string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty"`
+	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
