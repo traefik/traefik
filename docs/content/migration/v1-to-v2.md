@@ -974,7 +974,7 @@ You need to activate the API to access the [dashboard](../operations/dashboard.m
 As the dashboard access is now secured by default you can either:
 
 * define a  [specific router](../operations/api.md#configuration) with the `api@internal` service and one authentication middleware like the following example
-* or use the [unsecure](../operations/api.md#insecure) option of the API
+* or use the [insecure](../operations/api.md#insecure) option of the API
 
 !!! info "Dashboard with k8s and dedicated router"
 
