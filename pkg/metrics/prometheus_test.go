@@ -291,6 +291,11 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 			th.WithLoadBalancerServices(th.WithService("bar",
 				th.WithServers(th.WithServer("http://localhost:9000"))),
 			),
+			func(cfg *dynamic.HTTPConfiguration) {
+				cfg.Services["fii"] = &dynamic.Service{
+					Weighted: &dynamic.WeightedRoundRobin{},
+				}
+			},
 		),
 	}
 
