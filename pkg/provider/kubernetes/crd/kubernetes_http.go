@@ -2,6 +2,7 @@ package crd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/v2/pkg/tls"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -44,6 +46,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			ingressName = ingressRoute.GenerateName
 		}
 
+		cb := configBuilder{client}
 		for _, route := range ingressRoute.Spec.Routes {
 			if route.Kind != "Rule" {
 				logger.Errorf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
@@ -95,13 +98,13 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					},
 				}
 
-				errBuild := buildServicesLB(ctx, client, ingressRoute.Namespace, spec, serviceName, conf.Services)
+				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, conf.Services)
 				if errBuild != nil {
 					logger.Error(err)
 					continue
 				}
 			} else if len(route.Services) == 1 {
-				fullName, serversLB, err := foo(ctx, client, ingressRoute.Namespace, route.Services[0])
+				fullName, serversLB, err := cb.foo(ctx, ingressRoute.Namespace, route.Services[0])
 				if err != nil {
 					logger.Error(err)
 					continue
@@ -153,16 +156,243 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	return conf
 }
 
-// configBuilder holds parameters to help recursively build a dynamic config from a CRD.
 type configBuilder struct {
-	toplevel bool   // whether we're in the first buildServicesLB call.
-	parent   string // to help with infinite recursion detection.
-
-	conf   *dynamic.HTTPConfiguration // the configuration we're building.
 	client Client
-	// seen keeps track of the parent->child relations we've already seen, to detect
-	// infinite recursions. it is keyed by "parent:child".
-	seen map[string]struct{}
+}
+
+func (c configBuilder) buildTraefikService(ctx context.Context, tsvc *v1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
+	stsvc := tsvc.Spec
+	id := provider.Normalize(makeID(tsvc.Namespace, tsvc.Name))
+	if stsvc.Weighted != nil {
+		return c.buildServicesLB(ctx, tsvc.Namespace, stsvc, id, conf)
+
+	} else if stsvc.Mirroring != nil {
+		return c.buildMirroring(ctx, tsvc, id, conf)
+	}
+
+	return errors.New("unspecified service type")
+}
+
+// buildServicesLB creates the configuration for the load-balancer of services
+// named serviceName, and defined in tsvc.
+func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tsvc v1alpha1.ServiceSpec, id string, conf map[string]*dynamic.Service) error {
+	services := tsvc.Weighted.Services
+	var wrrsvcs []dynamic.WRRService
+
+	for _, service := range services {
+		fullName, serviceGenerated, err := c.foo(ctx, namespace, service)
+		if err != nil {
+			return err
+		}
+
+		if serviceGenerated != nil {
+			conf[fullName] = serviceGenerated
+		}
+
+		weight := service.Weight
+		if weight == nil {
+			weight = func(i int) *int { return &i }(1)
+		}
+
+		wrrsvcs = append(wrrsvcs, dynamic.WRRService{
+			Name:   fullName,
+			Weight: weight,
+		})
+	}
+
+	conf[id] = &dynamic.Service{
+		Weighted: &dynamic.WeightedRoundRobin{
+			Services: wrrsvcs,
+			Sticky:   tsvc.Weighted.Sticky,
+		},
+	}
+	return nil
+}
+
+// buildMirroring creates the configuration for the mirroring service named serviceName,
+// and defined by tsvc.
+func (c configBuilder) buildMirroring(ctx context.Context, tsvc *v1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
+	mirroring := tsvc.Spec.Mirroring
+	namespace := tsvc.Namespace
+
+	fullNameMain, serviceGenerated, err := c.foo(ctx, tsvc.Namespace, tsvc.Spec.Mirroring)
+	if err != nil {
+		return err
+	}
+
+	if serviceGenerated != nil {
+		conf[fullNameMain] = serviceGenerated
+	}
+
+	var mirrorServices []dynamic.MirrorService
+	for _, mirror := range mirroring.Mirrors {
+		mirroredName, serviceGenerated, err := c.foo(ctx, namespace, mirror)
+		if err != nil {
+			return err
+		}
+
+		if serviceGenerated != nil {
+			conf[mirroredName] = serviceGenerated
+		}
+
+		mirrorServices = append(mirrorServices, dynamic.MirrorService{
+			Name:    mirroredName,
+			Percent: mirror.Percent,
+		})
+	}
+
+	conf[id] = &dynamic.Service{
+		Mirroring: &dynamic.Mirroring{
+			Service: fullNameMain,
+			Mirrors: mirrorServices,
+		},
+	}
+
+	return nil
+}
+
+func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc v1alpha1.HasBalancer) (*dynamic.Service, error) {
+	servers, err := c.loadServers(namespace, svc)
+	if err != nil {
+		return nil, err
+	}
+
+	lb := &dynamic.ServersLoadBalancer{}
+	lb.SetDefaults()
+	lb.Servers = servers
+
+	conf := svc.LoadBalancer()
+	lb.PassHostHeader = conf.PassHostHeader
+	if lb.PassHostHeader == nil {
+		passHostHeader := true
+		lb.PassHostHeader = &passHostHeader
+	}
+	lb.ResponseForwarding = conf.ResponseForwarding
+
+	ssvc, ok := svc.(v1alpha1.Service)
+	if ok {
+		lb.Sticky = ssvc.Sticky
+	}
+
+	return &dynamic.Service{LoadBalancer: lb}, nil
+}
+
+func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.HasBalancer) ([]dynamic.Server, error) {
+	conf := svc.LoadBalancer()
+	client := c.client
+
+	strategy := conf.Strategy
+
+	if strategy == "" {
+		strategy = roundRobinStrategy
+	}
+	if strategy != roundRobinStrategy {
+		return nil, fmt.Errorf("load balancing strategy %v is not supported", strategy)
+	}
+
+	name := conf.Name
+	namespace := namespaceOrFallback(conf, fallbackNamespace)
+
+	// If the service uses explicitly the @kubernetescrd provider suffix
+	sanitizedName := strings.TrimSuffix(name, "@kubernetescrd")
+
+	service, exists, err := client.GetService(namespace, sanitizedName)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, fmt.Errorf("kubernetes service not found: %s/%s", namespace, sanitizedName)
+	}
+
+	confPort := conf.Port
+	var portSpec *corev1.ServicePort
+	for _, p := range service.Spec.Ports {
+		if confPort == p.Port {
+			portSpec = &p
+			break
+		}
+	}
+	if portSpec == nil {
+		return nil, errors.New("service port not found")
+	}
+
+	var servers []dynamic.Server
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		return append(servers, dynamic.Server{
+			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
+		}), nil
+	}
+
+	endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, sanitizedName)
+	if endpointsErr != nil {
+		return nil, endpointsErr
+	}
+	if !endpointsExists {
+		return nil, fmt.Errorf("endpoints not found for %v/%v", namespace, sanitizedName)
+	}
+	if len(endpoints.Subsets) == 0 {
+		return nil, fmt.Errorf("subset not found for %v/%v", namespace, sanitizedName)
+	}
+
+	var port int32
+	for _, subset := range endpoints.Subsets {
+		for _, p := range subset.Ports {
+			if portSpec.Name == p.Name {
+				port = p.Port
+				break
+			}
+		}
+
+		if port == 0 {
+			return nil, fmt.Errorf("cannot define a port for %v/%v", namespace, sanitizedName)
+		}
+
+		protocol := http
+		scheme := conf.Scheme
+		switch scheme {
+		case http, https, "h2c":
+			protocol = scheme
+		case "":
+			if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, https) {
+				protocol = https
+			}
+		default:
+			return nil, fmt.Errorf("invalid scheme %q specified", scheme)
+		}
+
+		for _, addr := range subset.Addresses {
+			servers = append(servers, dynamic.Server{
+				URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
+			})
+		}
+	}
+
+	return servers, nil
+}
+
+func (c configBuilder) foo(ctx context.Context, namespaceService string, b v1alpha1.HasBalancer) (string, *dynamic.Service, error) {
+	service := b.LoadBalancer()
+	namespace := namespaceOrFallback(service, namespaceService)
+	var fullName string
+	switch {
+	case service.Kind == "" || service.Kind == "Service":
+		fullName = fullServiceName(ctx, namespace, service.Name, service.Port)
+		serversLB, err := c.buildServersLB(ctx, namespace, b)
+		if err != nil {
+			return "", nil, err
+		}
+		return fullName, serversLB, nil
+		// TODO Service creation
+	case service.Kind == "TraefikService":
+		fullName = fullServiceName(ctx, namespace, service.Name, 0)
+	default:
+		return "", nil, fmt.Errorf("unsupported service kind %v", service.Kind)
+	}
+	return fullName, nil, nil
+	// ref service
+	// 1. TraefikService @kubernetescrd (kind: TraefikService)
+	// 2. TraefikService @other (kind: TraefikService)
+	// 3. ServiceLoadBalancers (kind: Service)
 }
 
 func splitSvcNameProvider(name string) (string, string) {
