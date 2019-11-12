@@ -165,7 +165,6 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tsvc *v1alpha1.T
 	id := provider.Normalize(makeID(tsvc.Namespace, tsvc.Name))
 	if stsvc.Weighted != nil {
 		return c.buildServicesLB(ctx, tsvc.Namespace, stsvc, id, conf)
-
 	} else if stsvc.Mirroring != nil {
 		return c.buildMirroring(ctx, tsvc, id, conf)
 	}
