@@ -43,63 +43,7 @@ api: {}
 And then define a routing configuration on Traefik itself with the
 [dynamic configuration](../getting-started/configuration-overview.md#the-dynamic-configuration):
 
-```yaml tab="Docker"
-# Dynamic Configuration
-labels:
-  - "traefik.http.routers.api.rule=Host(`traefik.domain.com`)"
-  - "traefik.http.routers.api.service=api@internal"
-  - "traefik.http.routers.api.middlewares=auth"
-  - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.routers.api.rule": "Host(`traefik.domain.com`)",
-  "traefik.http.routers.api.service": "api@internal",
-  "traefik.http.routers.api.middlewares": "auth",
-  "traefik.http.middlewares.auth.basicauth.users": "test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
-}
-```
-
-```yaml tab="Rancher"
-# Dynamic Configuration
-labels:
-  - "traefik.http.routers.api.rule=Host(`traefik.domain.com`)"
-  - "traefik.http.routers.api.service=api@internal"
-  - "traefik.http.routers.api.middlewares=auth"
-  - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
-```
-
-```toml tab="File (TOML)"
-# Dynamic Configuration
-[http.routers.my-api]
-  rule = "Host(`traefik.domain.com`)"
-  service = "api@internal"
-  middlewares = ["auth"]
-  
-[http.middlewares.auth.basicAuth]
-  users = [
-    "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-    "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-  ]
-```
-
-```yaml tab="File (YAML)"
-# Dynamic Configuration
-http:
-  routers:
-    api:
-      rule: Host(`traefik.domain.com`)
-      service: api@internal
-      middlewares:
-        - auth
-  middlewares:
-    auth:
-      basicAuth:
-        users:
-          - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
-          - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-```
+--8<-- "content/operations/include-api-examples.md"
 
 ??? warning "The router's [rule](../../routing/routers#rule) must catch requests for the URI path `/api`"
     Using an "Host" rule is recommended, by catching all the incoming traffic on this host domain to the API.

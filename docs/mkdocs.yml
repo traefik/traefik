@@ -42,6 +42,9 @@ extra_javascript:
 
 plugins:
   - search
+  - exclude:
+      glob:
+        - include-*.md
 
 # https://squidfunk.github.io/mkdocs-material/extensions/admonition/
 # https://facelessuser.github.io/pymdown-extensions/
