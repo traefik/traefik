@@ -104,7 +104,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					continue
 				}
 			} else if len(route.Services) == 1 {
-				fullName, serversLB, err := cb.foo(ctx, ingressRoute.Namespace, route.Services[0])
+				fullName, serversLB, err := cb.createRef(ctx, ingressRoute.Namespace, route.Services[0])
 				if err != nil {
 					logger.Error(err)
 					continue
@@ -179,7 +179,7 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, ts
 	var wrrsvcs []dynamic.WRRService
 
 	for _, service := range services {
-		fullName, serviceGenerated, err := c.foo(ctx, namespace, service)
+		fullName, serviceGenerated, err := c.createRef(ctx, namespace, service)
 		if err != nil {
 			return err
 		}
@@ -214,7 +214,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tsvc *v1alpha1.Traefi
 	mirroring := tsvc.Spec.Mirroring
 	namespace := tsvc.Namespace
 
-	fullNameMain, serviceGenerated, err := c.foo(ctx, tsvc.Namespace, tsvc.Spec.Mirroring)
+	fullNameMain, serviceGenerated, err := c.createRef(ctx, tsvc.Namespace, tsvc.Spec.Mirroring)
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tsvc *v1alpha1.Traefi
 
 	var mirrorServices []dynamic.MirrorService
 	for _, mirror := range mirroring.Mirrors {
-		mirroredName, serviceGenerated, err := c.foo(ctx, namespace, mirror)
+		mirroredName, serviceGenerated, err := c.createRef(ctx, namespace, mirror)
 		if err != nil {
 			return err
 		}
@@ -369,7 +369,7 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.HasBal
 	return servers, nil
 }
 
-func (c configBuilder) foo(ctx context.Context, namespaceService string, b v1alpha1.HasBalancer) (string, *dynamic.Service, error) {
+func (c configBuilder) createRef(ctx context.Context, namespaceService string, b v1alpha1.HasBalancer) (string, *dynamic.Service, error) {
 	service := b.LoadBalancer()
 	namespace := namespaceOrFallback(service, namespaceService)
 	var fullName string
@@ -381,17 +381,12 @@ func (c configBuilder) foo(ctx context.Context, namespaceService string, b v1alp
 			return "", nil, err
 		}
 		return fullName, serversLB, nil
-		// TODO Service creation
 	case service.Kind == "TraefikService":
 		fullName = fullServiceName(ctx, namespace, service.Name, 0)
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %v", service.Kind)
 	}
 	return fullName, nil, nil
-	// ref service
-	// 1. TraefikService @kubernetescrd (kind: TraefikService)
-	// 2. TraefikService @other (kind: TraefikService)
-	// 3. ServiceLoadBalancers (kind: Service)
 }
 
 func splitSvcNameProvider(name string) (string, string) {
