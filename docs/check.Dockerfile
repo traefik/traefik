@@ -9,7 +9,7 @@ RUN apk --no-cache --no-progress add \
     ruby-ffi \
     ruby-json \
     ruby-nokogiri
-RUN NOKOGIRI_USE_SYSTEM_LIBRARIES=true gem install --no-document html-proofer -v 3.13.0
+RUN gem install html-proofer --version 3.13.0 --no-document -- --use-system-libraries
 
 # After Ruby, some NodeJS YAY!
 RUN apk --no-cache --no-progress add \
