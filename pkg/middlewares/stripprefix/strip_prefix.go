@@ -65,7 +65,7 @@ func (s *stripPrefix) getPrefixStripped(urlPath, prefix string) string {
 	if s.forceSlash {
 		// Only for compatibility reason with the previous behavior,
 		// but the previous behavior is wrong.
-		// This need to be remove in the next breaking version.
+		// This needs to be removed in the next breaking version.
 		return "/" + strings.TrimPrefix(strings.TrimPrefix(urlPath, prefix), "/")
 	}
 

@@ -137,9 +137,9 @@ http:
         forceSlash: false
 ```
 
-The `forceSlash` option force, when the resulting striped path is empty, to use slash `/` instead of empty.
+The `forceSlash` option makes sure that the resulting stripped path is not the empty string, by replacing it with `/` when necessary.
 
-The option was made to keep the previous (buggy) behavior of this middleware, to not introduce a breaking change.
+This option was added to keep the initial (non-intuitive) behavior of this middleware, in order to avoid introducing a breaking change.
 
 It's recommended to explicitly set `forceSlach` to `false`.
 
