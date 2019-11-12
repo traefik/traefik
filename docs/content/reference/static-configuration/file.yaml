@@ -158,6 +158,7 @@ metrics:
     pushInterval: 42
     addEntryPointsLabels: true
     addServicesLabels: true
+    prefix: traefik
   influxDB:
     address: foobar
     protocol: foobar

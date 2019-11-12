@@ -151,6 +151,7 @@
     pushInterval = "10s"
     addEntryPointsLabels = true
     addServicesLabels = true
+    prefix = "traefik"
   [metrics.influxDB]
     address = "foobar"
     protocol = "foobar"
