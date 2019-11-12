@@ -142,7 +142,7 @@ The `forceSlash` option makes sure that the resulting stripped path is not the e
 
 This option was added to keep the initial (non-intuitive) behavior of this middleware, in order to avoid introducing a breaking change.
 
-It's recommended to explicitly set `forceSlach` to `false`.
+It's recommended to explicitly set `forceSlash` to `false`.
 
 ??? info "Behavior examples"
     
