@@ -519,7 +519,7 @@ Use Case: Incoming requests to `http://company.org/admin` are forwarded to the w
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
 
 * First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
-* Then, define a middlware of type [`stripprefix`](../../middlewares/stripprefix/), which remove the prefix `/admin`, associated to the router `admin`.
+* Then, define a middleware of type [`stripprefix`](../../middlewares/stripprefix/), which remove the prefix `/admin`, associated to the router `admin`.
 
 !!! example "Strip Path Prefix When Forwarding to Backend"
 
@@ -974,7 +974,7 @@ You need to activate the API to access the [dashboard](../operations/dashboard.m
 As the dashboard access is now secured by default you can either:
 
 * define a  [specific router](../operations/api.md#configuration) with the `api@internal` service and one authentication middleware like the following example
-* or use the [unsecure](../operations/api.md#insecure) option of the API
+* or use the [insecure](../operations/api.md#insecure) option of the API
 
 !!! info "Dashboard with k8s and dedicated router"
 
