@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
@@ -35,8 +34,7 @@ type rateLimiter struct {
 	sourceMatcher utils.SourceExtractor
 	next          http.Handler
 
-	bucketsMu sync.Mutex
-	buckets   *ttlmap.TtlMap // actual buckets, keyed by source.
+	buckets *ttlmap.TtlMap // actual buckets, keyed by source.
 }
 
 // New returns a rate limiter middleware.
@@ -57,7 +55,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		return nil, err
 	}
 
-	buckets, err := ttlmap.NewMap(maxSources)
+	buckets, err := ttlmap.NewConcurrent(maxSources)
 	if err != nil {
 		return nil, err
 	}
@@ -103,9 +101,6 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if amount != 1 {
 		logger.Infof("ignoring token bucket amount > 1: %d", amount)
 	}
-
-	rl.bucketsMu.Lock()
-	defer rl.bucketsMu.Unlock()
 
 	var bucket *rate.Limiter
 	if rlSource, exists := rl.buckets.Get(source); exists {
