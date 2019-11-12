@@ -1,4 +1,4 @@
-FROM alpine:3.9
+FROM alpine:3.10
 
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin
 
