@@ -95,7 +95,7 @@ metadata:
 
 spec:
   entryPoints:
-    - web
+    - websecure
   routes:
   - match: Host(`bar.com`) && PathPrefix(`/stripit`)
     kind: Rule
