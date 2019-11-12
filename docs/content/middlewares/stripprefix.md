@@ -105,6 +105,7 @@ spec:
   stripPrefix:
     prefixes:
       - "/foobar"
+    forceSlash: false
 ```
 
 ```json tab="Marathon"
