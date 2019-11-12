@@ -33,7 +33,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-test3-route-7d0ac22d3d8db4b82618",
+			"service": "default-wrr1",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/wrr1`)",
 			"status": "enabled",
 			"using": [
@@ -78,10 +78,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.2:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true
@@ -91,18 +91,18 @@
 				"default-test-route-6b204d94623b3df4370c@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.2:80": "UP",
-				"http://10.42.0.3:80": "UP"
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.5:80": "UP"
 			}
 		},
 		"default-test2-route-23c7f4c450289ee29016@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.2:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true
@@ -112,40 +112,26 @@
 				"default-test2-route-23c7f4c450289ee29016@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.2:80": "UP",
-				"http://10.42.0.3:80": "UP"
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.5:80": "UP"
 			}
-		},
-		"default-test3-route-7d0ac22d3d8db4b82618@kubernetescrd": {
-			"weighted": {
-				"services": [
-					{
-						"name": "default-wrr1",
-						"weight": 1
-					}
-				]
-			},
-			"status": "enabled",
-			"usedBy": [
-				"default-test3-route-7d0ac22d3d8db4b82618@kubernetescrd"
-			]
 		},
 		"default-whoami-80@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.2:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"http://10.42.0.2:80": "UP",
-				"http://10.42.0.3:80": "UP"
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.5:80": "UP"
 			}
 		},
 		"default-wrr1@kubernetescrd": {
@@ -161,7 +147,10 @@
 					}
 				]
 			},
-			"status": "enabled"
+			"status": "enabled",
+			"usedBy": [
+				"default-test3-route-7d0ac22d3d8db4b82618@kubernetescrd"
+			]
 		}
 	},
 	"tcpRouters": {
@@ -190,7 +179,7 @@
 						"address": "10.42.0.4:8080"
 					},
 					{
-						"address": "10.42.0.5:8080"
+						"address": "10.42.0.6:8080"
 					}
 				]
 			},
