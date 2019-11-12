@@ -16,7 +16,9 @@ RUN apk --no-cache --no-progress add \
     git \
     nodejs \
     npm \
-  && npm install markdownlint@0.12.0 markdownlint-cli@0.13.0 --global
+  && npm install --global \
+    markdownlint@0.17.2 \
+    markdownlint-cli@0.19.0
 
 # Finally the shell tools we need for later
 # tini helps to terminate properly all the parallelized tasks when sending CTRL-C
