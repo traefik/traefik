@@ -167,7 +167,6 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tsvc *v1alpha1.T
 	id := provider.Normalize(makeID(tsvc.Namespace, tsvc.Name))
 	if stsvc.Weighted != nil {
 		return c.buildServicesLB(ctx, tsvc.Namespace, stsvc, id, conf)
-
 	} else if stsvc.Mirroring != nil {
 		return c.buildMirroring(ctx, tsvc, id, conf)
 	}
@@ -217,13 +216,13 @@ func (c configBuilder) buildMirroring(ctx context.Context, tsvc *v1alpha1.Traefi
 	mirroring := tsvc.Spec.Mirroring
 	namespace := tsvc.Namespace
 
-	fullNameMain, serviceGenerated, err := c.nameAndService(ctx, tsvc.Namespace, tsvc.Spec.Mirroring)
+	fullNameMain, k8sService, err := c.nameAndService(ctx, tsvc.Namespace, tsvc.Spec.Mirroring)
 	if err != nil {
 		return err
 	}
 
-	if serviceGenerated != nil {
-		conf[fullNameMain] = serviceGenerated
+	if k8sService != nil {
+		conf[fullNameMain] = k8sService
 	}
 
 	var mirrorServices []dynamic.MirrorService
