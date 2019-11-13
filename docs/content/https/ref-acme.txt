@@ -4,13 +4,13 @@
 #
 # Required
 #
---certificatesResolvers.sample.acme.email="test@traefik.io"
+--certificatesResolvers.sample.acme.email=test@traefik.io
 
 # File or key used for certificates storage.
 #
 # Required
 #
---certificatesResolvers.sample.acme.storage="acme.json"
+--certificatesResolvers.sample.acme.storage=acme.json
 
 # CA server to use.
 # Uncomment the line to use Let's Encrypt's staging server,
@@ -19,7 +19,7 @@
 # Optional
 # Default: "https://acme-v02.api.letsencrypt.org/directory"
 #
---certificatesResolvers.sample.acme.caServer="https://acme-staging-v02.api.letsencrypt.org/directory"
+--certificatesResolvers.sample.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
 
 # KeyType to use.
 #
@@ -75,7 +75,7 @@
 # Optional
 # Default: empty
 #
---certificatesResolvers.sample.acme.dnsChallenge.resolvers="1.1.1.1:53,8.8.8.8:53"
+--certificatesResolvers.sample.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53
 
 # Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready.
 #

@@ -55,6 +55,6 @@ ping:
 ```
 
 ```bash tab="CLI"
---entryPoints.ping.address=":8082"
---ping.entryPoint="ping"
+--entryPoints.ping.address=:8082
+--ping.entryPoint=ping
 ```

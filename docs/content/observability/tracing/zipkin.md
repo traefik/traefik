@@ -35,7 +35,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.zipkin.httpEndpoint="http://localhost:9411/api/v2/spans"
+--tracing.zipkin.httpEndpoint=http://localhost:9411/api/v2/spans
 ```
 
 #### `sameSpan`
@@ -101,5 +101,5 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.zipkin.sampleRate="0.2"
+--tracing.zipkin.sampleRate=0.2
 ```

@@ -47,11 +47,11 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     ```
     
     ```bash tab="CLI"
-    --entryPoints.web.address=":80"
-    --entryPoints.websecure.address=":443"
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
     # ...
-    --certificatesResolvers.sample.acme.email="your-email@your-domain.org"
-    --certificatesResolvers.sample.acme.storage="acme.json"
+    --certificatesResolvers.sample.acme.email=your-email@your-domain.org
+    --certificatesResolvers.sample.acme.storage=acme.json
     # used during the challenge
     --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
     ```
@@ -156,8 +156,8 @@ when using the `HTTP-01` challenge, `certificatesResolvers.sample.acme.httpChall
     ```
     
     ```bash tab="CLI"
-    --entryPoints.web.address=":80"
-    --entryPoints.websecure.address=":443"
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
     # ...
     --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
     ```
@@ -312,7 +312,7 @@ certificatesResolvers:
 
 ```bash tab="CLI"
 # ...
---certificatesResolvers.sample.acme.dnsChallenge.resolvers:="1.1.1.1:53,8.8.8.8:53"
+--certificatesResolvers.sample.acme.dnsChallenge.resolvers:=1.1.1.1:53,8.8.8.8:53
 ```
 
 #### Wildcard Domains
@@ -342,7 +342,7 @@ As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/stagi
 
     ```bash tab="CLI"
     # ...
-    --certificatesResolvers.sample.acme.caServer="https://acme-staging-v02.api.letsencrypt.org/directory"
+    --certificatesResolvers.sample.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
     # ...
     ```
 

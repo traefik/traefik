@@ -35,7 +35,7 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics.statsd.address="localhost:8125"
+--metrics.statsd.address=localhost:8125
 ```
 
 #### `addEntryPointsLabels`

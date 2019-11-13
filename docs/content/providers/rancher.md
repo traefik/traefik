@@ -104,7 +104,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.rancher.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+--providers.rancher.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
 # ...
 ```
 
@@ -209,7 +209,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.rancher.prefix="/test"
+--providers.rancher.prefix=/test
 # ...
 ```
 
@@ -221,19 +221,19 @@ _Optional, Default=""_
 
 ```toml tab="File (TOML)"
 [providers.rancher]
-  constraints = "Label(`a.label.name`, `foo`)"
+  constraints = "Label(`a.label.name`,`foo`)"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   rancher:
-    constraints: "Label(`a.label.name`, `foo`)"
+    constraints: "Label(`a.label.name`,`foo`)"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.rancher.constraints="Label(`a.label.name`, `foo`)"
+--providers.rancher.constraints=Label(`a.label.name`,`foo`)
 # ...
 ```
 

@@ -67,7 +67,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.endpoint="http://localhost:8080"
+--providers.kubernetesingress.endpoint=http://localhost:8080
 ```
 
 The Kubernetes server endpoint as URL, which is only used when the behavior based on environment variables described below does not apply.
@@ -99,7 +99,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.token="mytoken"
+--providers.kubernetesingress.token=mytoken
 ```
 
 Bearer token used for the Kubernetes client configuration.
@@ -122,7 +122,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.certauthfilepath="/my/ca.crt"
+--providers.kubernetesingress.certauthfilepath=/my/ca.crt
 ```
 
 Path to the certificate authority file.
@@ -171,7 +171,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.namespaces="default,production"
+--providers.kubernetesingress.namespaces=default,production
 ```
 
 Array of namespaces to watch.
@@ -220,7 +220,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.ingressclass="traefik-internal"
+--providers.kubernetesingress.ingressclass=traefik-internal
 ```
 
 Value of `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
@@ -249,7 +249,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.ingressendpoint.hostname="foo.com"
+--providers.kubernetesingress.ingressendpoint.hostname=foo.com
 ```
 
 Hostname used for Kubernetes Ingress endpoints.
@@ -273,7 +273,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.ingressendpoint.ip="1.2.3.4"
+--providers.kubernetesingress.ingressendpoint.ip=1.2.3.4
 ```
 
 IP used for Kubernetes Ingress endpoints.
@@ -297,7 +297,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.ingressendpoint.publishedservice="foo-service"
+--providers.kubernetesingress.ingressendpoint.publishedservice=foo-service
 ```
 
 Published Kubernetes Service to copy status from.
@@ -320,7 +320,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.throttleDuration="10s"
+--providers.kubernetesingress.throttleDuration=10s
 ```
 
 ## Further
