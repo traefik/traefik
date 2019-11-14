@@ -71,7 +71,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 
 			var mds []string
 			for _, mi := range route.Middlewares {
-				if strings.Contains(mi.Name, "@") {
+				if strings.Contains(mi.Name, providerNamespaceSeparator) {
 					if len(mi.Namespace) > 0 {
 						logger.
 							WithField(log.MiddlewareName, mi.Name).
@@ -135,7 +135,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					tlsOptionsName := ingressRoute.Spec.TLS.Options.Name
 					// Is a Kubernetes CRD reference, (i.e. not a cross-provider reference)
 					ns := ingressRoute.Spec.TLS.Options.Namespace
-					if !strings.Contains(tlsOptionsName, "@") {
+					if !strings.Contains(tlsOptionsName, providerNamespaceSeparator) {
 						if len(ns) == 0 {
 							ns = ingressRoute.Namespace
 						}
@@ -296,7 +296,7 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.HasBal
 	namespace := namespaceOrFallback(conf, fallbackNamespace)
 
 	// If the service uses explicitly the provider suffix
-	sanitizedName := strings.TrimSuffix(name, "@"+providerName)
+	sanitizedName := strings.TrimSuffix(name, providerNamespaceSeparator+providerName)
 
 	service, exists, err := client.GetService(namespace, sanitizedName)
 	if err != nil {
@@ -395,9 +395,9 @@ func (c configBuilder) nameAndService(ctx context.Context, namespaceService stri
 }
 
 func splitSvcNameProvider(name string) (string, string) {
-	parts := strings.Split(name, "@")
+	parts := strings.Split(name, providerNamespaceSeparator)
 
-	svc := strings.Join(parts[:len(parts)-1], "@")
+	svc := strings.Join(parts[:len(parts)-1], providerNamespaceSeparator)
 	pvd := parts[len(parts)-1]
 
 	return svc, pvd
@@ -408,7 +408,7 @@ func fullServiceName(ctx context.Context, namespace, serviceName string, port in
 		return provider.Normalize(fmt.Sprintf("%s-%s-%d", namespace, serviceName, port))
 	}
 
-	if !strings.Contains(serviceName, "@") {
+	if !strings.Contains(serviceName, providerNamespaceSeparator) {
 		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, serviceName))
 	}
 
@@ -428,7 +428,7 @@ func fullServiceName(ctx context.Context, namespace, serviceName string, port in
 			Warnf("namespace %q is ignored in cross-provider context", namespace)
 	}
 
-	return provider.Normalize(name) + "@" + providerName
+	return provider.Normalize(name) + providerNamespaceSeparator + providerName
 }
 
 func namespaceOrFallback(lb v1alpha1.LoadBalancerSpec, fallback string) string {

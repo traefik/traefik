@@ -31,7 +31,10 @@ const (
 	traefikDefaultIngressClass       = "traefik"
 )
 
-const providerName = "kubernetescrd"
+const (
+	providerName               = "kubernetescrd"
+	providerNamespaceSeparator = "@"
+)
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -440,7 +443,7 @@ func createChainMiddleware(ctx context.Context, namespace string, chain *v1alpha
 
 	var mds []string
 	for _, mi := range chain.Middlewares {
-		if strings.Contains(mi.Name, "@") {
+		if strings.Contains(mi.Name, providerNamespaceSeparator) {
 			if len(mi.Namespace) > 0 {
 				log.FromContext(ctx).
 					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
