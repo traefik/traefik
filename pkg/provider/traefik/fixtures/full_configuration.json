@@ -1,0 +1,76 @@
+{
+  "http": {
+    "routers": {
+      "api": {
+        "entryPoints": [
+          "traefik"
+        ],
+        "service": "api@internal",
+        "rule": "PathPrefix(`/api`)",
+        "priority": 9223372036854775806
+      },
+      "dashboard": {
+        "entryPoints": [
+          "traefik"
+        ],
+        "middlewares": [
+          "dashboard_redirect@internal",
+          "dashboard_stripprefix@internal"
+        ],
+        "service": "dashboard@internal",
+        "rule": "PathPrefix(`/`)",
+        "priority": 9223372036854775805
+      },
+      "ping": {
+        "entryPoints": [
+          "test"
+        ],
+        "service": "ping@internal",
+        "rule": "PathPrefix(`/ping`)",
+        "priority": 9223372036854775807
+      },
+      "prometheus": {
+        "entryPoints": [
+          "test"
+        ],
+        "service": "prometheus@internal",
+        "rule": "PathPrefix(`/metrics`)",
+        "priority": 9223372036854775807
+      },
+      "rest": {
+        "entryPoints": [
+          "traefik"
+        ],
+        "service": "rest@internal",
+        "rule": "PathPrefix(`/api/providers`)",
+        "priority": 9223372036854775807
+      }
+    },
+    "middlewares": {
+      "dashboard_redirect": {
+        "redirectRegex": {
+          "regex": "^(http:\\/\\/[^:]+(:\\d+)?)/$",
+          "replacement": "${1}/dashboard/",
+          "permanent": true
+        }
+      },
+      "dashboard_stripprefix": {
+        "stripPrefix": {
+          "prefixes": [
+            "/dashboard/",
+            "/dashboard"
+          ]
+        }
+      }
+    },
+    "services": {
+      "api": {},
+      "dashboard": {},
+      "ping": {},
+      "prometheus": {},
+      "rest": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

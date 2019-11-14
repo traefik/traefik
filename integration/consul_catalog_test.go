@@ -175,6 +175,37 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *ConsulCatalogSuite) TestRegisterServiceWithoutIP(c *check.C) {
+	tempObjects := struct {
+		ConsulAddress string
+		DefaultRule   string
+	}{
+		ConsulAddress: s.consulAddress,
+		DefaultRule:   "Host(`{{ normalize .Name }}.consul.localhost`)",
+	}
+
+	file := s.adaptFile(c, "fixtures/consul_catalog/simple.toml", tempObjects)
+	defer os.Remove(file)
+
+	err := s.registerService("whoami1", "whoami", "", "80", []string{"traefik.enable=true"})
+	c.Assert(err, checker.IsNil)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/api/http/services", nil)
+	c.Assert(err, checker.IsNil)
+
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(200), try.BodyContainsOr("whoami@consulcatalog", "\"http://127.0.0.1:80\": \"UP\""))
+	c.Assert(err, checker.IsNil)
+
+	err = s.deregisterService("whoami1")
+	c.Assert(err, checker.IsNil)
+}
+
 func (s *ConsulCatalogSuite) TestDefaultConsulService(c *check.C) {
 	tempObjects := struct {
 		ConsulAddress string

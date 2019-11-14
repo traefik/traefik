@@ -1,4 +1,4 @@
-package server
+package service
 
 import (
 	"crypto/tls"
@@ -97,4 +97,14 @@ func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
 	}
 
 	return roots
+}
+
+func setupDefaultRoundTripper(conf *static.ServersTransport) http.RoundTripper {
+	transport, err := createHTTPTransport(conf)
+	if err != nil {
+		log.WithoutContext().Errorf("Could not configure HTTP Transport, fallbacking on default transport: %v", err)
+		return http.DefaultTransport
+	}
+
+	return transport
 }

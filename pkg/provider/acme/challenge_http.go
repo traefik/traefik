@@ -35,8 +35,11 @@ func (c *challengeHTTP) Timeout() (timeout, interval time.Duration) {
 	return 60 * time.Second, 5 * time.Second
 }
 
-// Append adds routes on internal router
-func (p *Provider) Append(router *mux.Router) {
+// CreateHandler creates a HTTP handler to expose the token for the HTTP challenge.
+func (p *Provider) CreateHandler(notFoundHandler http.Handler) http.Handler {
+	router := mux.NewRouter().SkipClean(true)
+	router.NotFoundHandler = notFoundHandler
+
 	router.Methods(http.MethodGet).
 		Path(http01.ChallengePath("{token}")).
 		Handler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -64,6 +67,8 @@ func (p *Provider) Append(router *mux.Router) {
 			}
 			rw.WriteHeader(http.StatusNotFound)
 		}))
+
+	return router
 }
 
 func getTokenValue(ctx context.Context, token, domain string, store ChallengeStore) []byte {

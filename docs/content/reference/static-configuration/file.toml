@@ -141,6 +141,7 @@
     addEntryPointsLabels = true
     addServicesLabels = true
     entryPoint = "foobar"
+    manualRouting = true
   [metrics.datadog]
     address = "foobar"
     pushInterval = "10s"
@@ -151,6 +152,7 @@
     pushInterval = "10s"
     addEntryPointsLabels = true
     addServicesLabels = true
+    prefix = "traefik"
   [metrics.influxDB]
     address = "foobar"
     protocol = "foobar"
@@ -164,6 +166,7 @@
 
 [ping]
   entryPoint = "foobar"
+  manualRouting = true
 
 [log]
   level = "foobar"

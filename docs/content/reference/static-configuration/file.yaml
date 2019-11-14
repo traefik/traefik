@@ -148,6 +148,7 @@ metrics:
     addEntryPointsLabels: true
     addServicesLabels: true
     entryPoint: foobar
+    manualRouting: true
   datadog:
     address: foobar
     pushInterval: 42
@@ -158,6 +159,7 @@ metrics:
     pushInterval: 42
     addEntryPointsLabels: true
     addServicesLabels: true
+    prefix: traefik
   influxDB:
     address: foobar
     protocol: foobar
@@ -170,6 +172,7 @@ metrics:
     addServicesLabels: true
 ping:
   entryPoint: foobar
+  manualRouting: true
 log:
   level: foobar
   filePath: foobar

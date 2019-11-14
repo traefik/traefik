@@ -177,9 +177,9 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	}
 
 	if (c.API != nil && c.API.Insecure) ||
-		(c.Ping != nil && c.Ping.EntryPoint == DefaultInternalEntryPointName) ||
-		(c.Metrics != nil && c.Metrics.Prometheus != nil && c.Metrics.Prometheus.EntryPoint == DefaultInternalEntryPointName) ||
-		(c.Providers.Rest != nil) {
+		(c.Ping != nil && !c.Ping.ManualRouting && c.Ping.EntryPoint == DefaultInternalEntryPointName) ||
+		(c.Metrics != nil && c.Metrics.Prometheus != nil && !c.Metrics.Prometheus.ManualRouting && c.Metrics.Prometheus.EntryPoint == DefaultInternalEntryPointName) ||
+		(c.Providers != nil && c.Providers.Rest != nil && c.Providers.Rest.Insecure) {
 		if _, ok := c.EntryPoints[DefaultInternalEntryPointName]; !ok {
 			ep := &EntryPoint{Address: ":8080"}
 			ep.SetDefaults()

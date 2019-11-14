@@ -213,6 +213,9 @@ Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000
 `TRAEFIK_METRICS_PROMETHEUS_ENTRYPOINT`:  
 EntryPoint (Default: ```traefik```)
 
+`TRAEFIK_METRICS_PROMETHEUS_MANUALROUTING`:  
+Manual routing (Default: ```false```)
+
 `TRAEFIK_METRICS_STATSD`:  
 StatsD metrics exporter type. (Default: ```false```)
 
@@ -225,6 +228,9 @@ StatsD address. (Default: ```localhost:8125```)
 `TRAEFIK_METRICS_STATSD_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
+`TRAEFIK_METRICS_STATSD_PREFIX`:  
+Prefix to use for metrics collection. (Default: ```traefik```)
+
 `TRAEFIK_METRICS_STATSD_PUSHINTERVAL`:  
 StatsD push interval. (Default: ```10```)
 
@@ -233,6 +239,9 @@ Enable ping. (Default: ```false```)
 
 `TRAEFIK_PING_ENTRYPOINT`:  
 EntryPoint (Default: ```traefik```)
+
+`TRAEFIK_PING_MANUALROUTING`:  
+Manual routing (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_CACHE`:  
 Use local agent caching for catalog reads. (Default: ```false```)

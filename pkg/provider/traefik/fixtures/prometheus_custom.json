@@ -1,0 +1,9 @@
+{
+  "http": {
+    "services": {
+      "prometheus": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

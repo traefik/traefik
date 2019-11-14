@@ -1,0 +1,49 @@
+{
+  "http": {
+    "routers": {
+      "api": {
+        "entryPoints": [
+          "traefik"
+        ],
+        "service": "api@internal",
+        "rule": "PathPrefix(`/api`)",
+        "priority": 9223372036854775806
+      },
+      "dashboard": {
+        "entryPoints": [
+          "traefik"
+        ],
+        "middlewares": [
+          "dashboard_redirect@internal",
+          "dashboard_stripprefix@internal"
+        ],
+        "service": "dashboard@internal",
+        "rule": "PathPrefix(`/`)",
+        "priority": 9223372036854775805
+      }
+    },
+    "middlewares": {
+      "dashboard_redirect": {
+        "redirectRegex": {
+          "regex": "^(http:\\/\\/[^:]+(:\\d+)?)/$",
+          "replacement": "${1}/dashboard/",
+          "permanent": true
+        }
+      },
+      "dashboard_stripprefix": {
+        "stripPrefix": {
+          "prefixes": [
+            "/dashboard/",
+            "/dashboard"
+          ]
+        }
+      }
+    },
+    "services": {
+      "api": {},
+      "dashboard": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

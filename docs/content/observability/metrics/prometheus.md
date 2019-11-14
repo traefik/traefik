@@ -116,3 +116,25 @@ metrics:
 --entryPoints.metrics.address=":8082"
 --metrics.prometheus.entryPoint="metrics"
 ```
+
+#### `manualRouting`
+
+_Optional, Default=false_
+
+If `manualRouting` is `true`, it disables the default internal router in order to allow one to create a custom router for the `prometheus@internal` service.
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.prometheus]
+    manualRouting = true
+```
+
+```yaml tab="File (YAML)"
+metrics:
+  prometheus:
+    manualRouting: true
+```
+
+```bash tab="CLI"
+--metrics.prometheus.manualrouting=true
+```

@@ -3,7 +3,7 @@
     <q-scroll-area :thumb-style="appThumbStyle" style="height:100%;">
       <q-card-section>
         <div class="row items-start no-wrap">
-          <div class="col">
+          <div class="col" v-if="data.type">
             <div class="text-subtitle2">TYPE</div>
             <q-chip
               dense

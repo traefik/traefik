@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"sort"
 	"strings"
@@ -13,7 +12,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/go-kit/kit/metrics"
-	"github.com/gorilla/mux"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -63,11 +61,8 @@ var promState = newPrometheusState()
 var promRegistry = stdprometheus.NewRegistry()
 
 // PrometheusHandler exposes Prometheus routes.
-type PrometheusHandler struct{}
-
-// Append adds Prometheus routes on a router.
-func (h PrometheusHandler) Append(router *mux.Router) {
-	router.Methods(http.MethodGet).Path("/metrics").Handler(promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{}))
+func PrometheusHandler() http.Handler {
+	return promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{})
 }
 
 // RegisterPrometheus registers all Prometheus metrics.
@@ -216,21 +211,22 @@ func registerPromState(ctx context.Context) bool {
 // OnConfigurationUpdate receives the current configuration from Traefik.
 // It then converts the configuration to the optimized package internal format
 // and sets it to the promState.
-func OnConfigurationUpdate(dynConf dynamic.Configurations, entryPoints []string) {
+func OnConfigurationUpdate(conf dynamic.Configuration, entryPoints []string) {
 	dynamicConfig := newDynamicConfig()
 
 	for _, value := range entryPoints {
 		dynamicConfig.entryPoints[value] = true
 	}
-	for key, config := range dynConf {
-		for name := range config.HTTP.Routers {
-			dynamicConfig.routers[fmt.Sprintf("%s@%s", name, key)] = true
-		}
 
-		for serviceName, service := range config.HTTP.Services {
-			dynamicConfig.services[fmt.Sprintf("%s@%s", serviceName, key)] = make(map[string]bool)
+	for name := range conf.HTTP.Routers {
+		dynamicConfig.routers[name] = true
+	}
+
+	for serviceName, service := range conf.HTTP.Services {
+		dynamicConfig.services[serviceName] = make(map[string]bool)
+		if service.LoadBalancer != nil {
 			for _, server := range service.LoadBalancer.Servers {
-				dynamicConfig.services[fmt.Sprintf("%s@%s", serviceName, key)][server.URL] = true
+				dynamicConfig.services[serviceName][server.URL] = true
 			}
 		}
 	}

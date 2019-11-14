@@ -16,6 +16,11 @@ import (
 	traefiktls "github.com/containous/traefik/v2/pkg/tls"
 )
 
+const (
+	defaultTLSConfigName = "default"
+	defaultTLSStoreName  = "default"
+)
+
 // NewManager Creates a new Manager
 func NewManager(conf *runtime.Configuration,
 	serviceManager *tcpservice.Manager,
@@ -88,14 +93,17 @@ type nameAndConfig struct {
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP http.Handler, handlerHTTPS http.Handler) (*tcp.Router, error) {
 	router := &tcp.Router{}
 	router.HTTPHandler(handlerHTTP)
-	const defaultTLSConfigName = "default"
 
-	defaultTLSConf, err := m.tlsManager.Get("default", defaultTLSConfigName)
+	defaultTLSConf, err := m.tlsManager.Get(defaultTLSStoreName, defaultTLSConfigName)
 	if err != nil {
 		log.FromContext(ctx).Errorf("Error during the build of the default TLS configuration: %v", err)
 	}
 
 	router.HTTPSHandler(handlerHTTPS, defaultTLSConf)
+
+	if len(configsHTTP) > 0 {
+		router.AddRouteHTTPTLS("*", defaultTLSConf)
+	}
 
 	// Keyed by domain, then by options reference.
 	tlsOptionsForHostSNI := map[string]map[string]nameAndConfig{}
@@ -126,12 +134,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 					tlsOptionsName = internal.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
 				}
 
-				tlsConf, err := m.tlsManager.Get("default", tlsOptionsName)
+				tlsConf, err := m.tlsManager.Get(defaultTLSStoreName, tlsOptionsName)
 				if err != nil {
 					routerHTTPConfig.AddError(err, true)
 					logger.Debug(err)
 					continue
 				}
+
 				if tlsOptionsForHostSNI[domain] == nil {
 					tlsOptionsForHostSNI[domain] = make(map[string]nameAndConfig)
 				}
@@ -153,7 +162,9 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 				config = v.TLSConfig
 				break
 			}
+
 			logger.Debugf("Adding route for %s with TLS options %s", hostSNI, optionsName)
+
 			router.AddRouteHTTPTLS(hostSNI, config)
 		} else {
 			routers := make([]string, 0, len(tlsConfigs))
@@ -161,7 +172,9 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 				configsHTTP[v.routerName].AddError(fmt.Errorf("found different TLS options for routers on the same host %v, so using the default TLS options instead", hostSNI), false)
 				routers = append(routers, v.routerName)
 			}
+
 			logger.Warnf("Found different TLS options for routers on the same host %v, so using the default TLS options instead for these routers: %#v", hostSNI, routers)
+
 			router.AddRouteHTTPTLS(hostSNI, defaultTLSConf)
 		}
 	}
@@ -216,7 +229,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 						tlsOptionsName = internal.GetQualifiedName(ctxRouter, tlsOptionsName)
 					}
 
-					tlsConf, err := m.tlsManager.Get("default", tlsOptionsName)
+					tlsConf, err := m.tlsManager.Get(defaultTLSStoreName, tlsOptionsName)
 					if err != nil {
 						routerConfig.AddError(err, true)
 						logger.Debug(err)
