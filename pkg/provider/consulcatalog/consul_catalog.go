@@ -157,10 +157,15 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 
 		for _, consulService := range consulServices {
 			labels := tagsToNeutralLabels(consulService.ServiceTags, p.Prefix)
+			address := consulService.ServiceAddress
+			if address == "" {
+				address = consulService.Address
+			}
+
 			item := itemData{
 				ID:      consulService.ServiceID,
 				Name:    consulService.ServiceName,
-				Address: consulService.ServiceAddress,
+				Address: address,
 				Port:    strconv.Itoa(consulService.ServicePort),
 				Labels:  labels,
 				Status:  consulService.Checks.AggregatedStatus(),

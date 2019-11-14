@@ -163,6 +163,10 @@ func (p *Provider) addServerTCP(ctx context.Context, item itemData, loadBalancer
 		return errors.New("port is missing")
 	}
 
+	if item.Address == "" {
+		return errors.New("address is missing")
+	}
+
 	loadBalancer.Servers[0].Address = net.JoinHostPort(item.Address, port)
 	return nil
 }
@@ -191,6 +195,10 @@ func (p *Provider) addServer(ctx context.Context, item itemData, loadBalancer *d
 
 	if port == "" {
 		return errors.New("port is missing")
+	}
+
+	if item.Address == "" {
+		return errors.New("address is missing")
 	}
 
 	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(item.Address, port))
