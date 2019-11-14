@@ -82,7 +82,7 @@ func (c *ConfigurationWatcher) startProvider() {
 	safe.Go(func() {
 		err := currentProvider.Provide(c.configurationChan, c.routinesPool)
 		if err != nil {
-			logger.Errorf("Error starting provider %T: %s", c.provider, err)
+			logger.Errorf("Error starting provider %T: %s", currentProvider, err)
 		}
 	})
 }
