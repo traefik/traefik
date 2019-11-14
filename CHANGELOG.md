@@ -1,3 +1,24 @@
+## [v2.0.5](https://github.com/containous/traefik/tree/v2.0.5) (2019-11-14)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.4...v2.0.5)
+
+**Bug fixes:**
+- **[metrics]** fix: metric with services LB. ([#5759](https://github.com/containous/traefik/pull/5759) by [ldez](https://github.com/ldez))
+- **[middleware]** fix: stripPrefix middleware with empty resulting path. ([#5806](https://github.com/containous/traefik/pull/5806) by [ldez](https://github.com/ldez))
+- **[middleware]** Fix rate limiting and SSE ([#5737](https://github.com/containous/traefik/pull/5737) by [sylr](https://github.com/sylr))
+- **[tracing]** Upgrades zipkin library to avoid errors when using textMap. ([#5754](https://github.com/containous/traefik/pull/5754) by [jcchavezs](https://github.com/jcchavezs))
+
+**Documentation:**
+- **[acme,cluster]** Update ACME storage docs to remove reference to KV store in CE ([#5433](https://github.com/containous/traefik/pull/5433) by [bradjones1](https://github.com/bradjones1))
+- **[api]** docs: remove field api.entryPoint ([#5776](https://github.com/containous/traefik/pull/5776) by [waitingsong](https://github.com/waitingsong))
+- **[api]** Adds missed quotes in api.md ([#5787](https://github.com/containous/traefik/pull/5787) by [woto](https://github.com/woto))
+- **[docker/swarm]** Dashboard example with swarm ([#5795](https://github.com/containous/traefik/pull/5795) by [dduportal](https://github.com/dduportal))
+- **[docker]** Fix error in link description for priority ([#5746](https://github.com/containous/traefik/pull/5746) by [ASDFGamer](https://github.com/ASDFGamer))
+- **[k8s]** Wrong endpoint on the TLS secret example ([#5817](https://github.com/containous/traefik/pull/5817) by [yacinelazaar](https://github.com/yacinelazaar))
+- **[middleware,docker]** Double dollar on docker-compose config ([#5775](https://github.com/containous/traefik/pull/5775) by [clery](https://github.com/clery))
+- Fix quickstart link in README ([#5794](https://github.com/containous/traefik/pull/5794) by [mcky](https://github.com/mcky))
+- fix typo in v1 to v2 migration guide ([#5820](https://github.com/containous/traefik/pull/5820) by [fschl](https://github.com/fschl))
+- slashes ended up in bad place. ([#5798](https://github.com/containous/traefik/pull/5798) by [icepic](https://github.com/icepic))
+
 ## [v2.0.4](https://github.com/containous/traefik/tree/v2.0.4) (2019-10-28)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.3...v2.0.4)
 
