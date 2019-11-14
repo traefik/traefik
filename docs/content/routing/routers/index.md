@@ -300,7 +300,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     
     The previous table shows that `Router-1` has a higher priority than `Router-2`.
     
-    To solve this issue, the priority must be setted.
+    To solve this issue, the priority must be set.
 
 ??? example "Set priorities -- using the [File Provider](../../providers/file.md)"
     
