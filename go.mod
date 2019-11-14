@@ -82,7 +82,7 @@ require (
 	github.com/uber/jaeger-client-go v2.16.0+incompatible
 	github.com/uber/jaeger-lib v2.0.0+incompatible
 	github.com/unrolled/render v1.0.1
-	github.com/unrolled/secure v1.0.4
+	github.com/unrolled/secure v1.0.5
 	github.com/vdemeester/shakers v0.1.0
 	github.com/vulcand/oxy v1.0.0
 	github.com/vulcand/predicate v1.1.0
