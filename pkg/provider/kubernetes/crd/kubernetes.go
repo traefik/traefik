@@ -121,11 +121,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				case <-stop:
 					return nil
 				case event := <-eventsChan:
-					// Note that event is the *first* event that came in during this
-					// throttling interval -- if we're hitting our throttle, we may have
-					// dropped events. This is fine, because we don't treat different
-					// event types differently. But if we do in the future, we'll need to
-					// track more information about the dropped events.
+					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
+					// This is fine, because we don't treat different event types differently.
+					// But if we do in the future, we'll need to track more information about the dropped events.
 					conf := p.loadConfigurationFromCRD(ctxLog, k8sClient)
 
 					confHash, err := hashstructure.Hash(conf, nil)
@@ -142,9 +140,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						}
 					}
 
-					// If we're throttling, we sleep here for the throttle duration to
-					// enforce that we don't refresh faster than our throttle. time.Sleep
-					// returns immediately if p.ThrottleDuration is 0 (no throttle).
+					// If we're throttling,
+					// we sleep here for the throttle duration to enforce that we don't refresh faster than our throttle.
+					// time.Sleep returns immediately if p.ThrottleDuration is 0 (no throttle).
 					time.Sleep(throttleDuration)
 				}
 			}
@@ -632,10 +630,9 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop ch
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling)
 	eventsChanBuffered := make(chan interface{}, 1)
 
-	// Run a goroutine that reads events from eventChan and does a
-	// non-blocking write to pendingEvent. This guarantees that writing to
-	// eventChan will never block, and that pendingEvent will have
-	// something in it if there's been an event since we read from that channel.
+	// Run a goroutine that reads events from eventChan and does a non-blocking write to pendingEvent.
+	// This guarantees that writing to eventChan will never block,
+	// and that pendingEvent will have something in it if there's been an event since we read from that channel.
 	go func() {
 		for {
 			select {
@@ -645,10 +642,8 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop ch
 				select {
 				case eventsChanBuffered <- nextEvent:
 				default:
-					// We already have an event in eventsChanBuffered, so we'll
-					// do a refresh as soon as our throttle allows us to. It's fine
-					// to drop the event and keep whatever's in the buffer -- we
-					// don't do different things for different events
+					// We already have an event in eventsChanBuffered, so we'll do a refresh as soon as our throttle allows us to.
+					// It's fine to drop the event and keep whatever's in the buffer -- we don't do different things for different events
 					log.FromContext(ctx).Debugf("Dropping event kind %T due to throttling", nextEvent)
 				}
 			}

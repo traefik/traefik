@@ -160,25 +160,25 @@ type configBuilder struct {
 	client Client
 }
 
-// buildTraefikService creates the configuration for the traefik service defined in tsvc,
+// buildTraefikService creates the configuration for the traefik service defined in tService,
 // and adds it to the given conf map.
-func (c configBuilder) buildTraefikService(ctx context.Context, tsvc *v1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
-	stsvc := tsvc.Spec
-	id := provider.Normalize(makeID(tsvc.Namespace, tsvc.Name))
-	if stsvc.Weighted != nil {
-		return c.buildServicesLB(ctx, tsvc.Namespace, stsvc, id, conf)
-	} else if stsvc.Mirroring != nil {
-		return c.buildMirroring(ctx, tsvc, id, conf)
+func (c configBuilder) buildTraefikService(ctx context.Context, tService *v1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
+	id := provider.Normalize(makeID(tService.Namespace, tService.Name))
+
+	if tService.Spec.Weighted != nil {
+		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
+	} else if tService.Spec.Mirroring != nil {
+		return c.buildMirroring(ctx, tService, id, conf)
 	}
 
 	return errors.New("unspecified service type")
 }
 
-// buildServicesLB creates the configuration for the load-balancer of services
-// named id, and defined in tsvc. It adds it to the given conf map.
-func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tsvc v1alpha1.ServiceSpec, id string, conf map[string]*dynamic.Service) error {
-	services := tsvc.Weighted.Services
-	var wrrsvcs []dynamic.WRRService
+// buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
+// It adds it to the given conf map.
+func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService v1alpha1.ServiceSpec, id string, conf map[string]*dynamic.Service) error {
+	services := tService.Weighted.Services
+	var wrrServices []dynamic.WRRService
 
 	for _, service := range services {
 		fullName, k8sService, err := c.nameAndService(ctx, namespace, service)
@@ -195,7 +195,7 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, ts
 			weight = func(i int) *int { return &i }(1)
 		}
 
-		wrrsvcs = append(wrrsvcs, dynamic.WRRService{
+		wrrServices = append(wrrServices, dynamic.WRRService{
 			Name:   fullName,
 			Weight: weight,
 		})
@@ -203,20 +203,20 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, ts
 
 	conf[id] = &dynamic.Service{
 		Weighted: &dynamic.WeightedRoundRobin{
-			Services: wrrsvcs,
-			Sticky:   tsvc.Weighted.Sticky,
+			Services: wrrServices,
+			Sticky:   tService.Weighted.Sticky,
 		},
 	}
 	return nil
 }
 
-// buildMirroring creates the configuration for the mirroring service named id,
-// and defined by tsvc. It adds it to the given conf map.
-func (c configBuilder) buildMirroring(ctx context.Context, tsvc *v1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
-	mirroring := tsvc.Spec.Mirroring
-	namespace := tsvc.Namespace
+// buildMirroring creates the configuration for the mirroring service named id, and defined by tService.
+// It adds it to the given conf map.
+func (c configBuilder) buildMirroring(ctx context.Context, tService *v1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
+	mirroring := tService.Spec.Mirroring
+	namespace := tService.Namespace
 
-	fullNameMain, k8sService, err := c.nameAndService(ctx, tsvc.Namespace, tsvc.Spec.Mirroring)
+	fullNameMain, k8sService, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Mirroring)
 	if err != nil {
 		return err
 	}
@@ -372,10 +372,10 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.HasBal
 	return servers, nil
 }
 
-// nameAndService returns the name that should be used for the svc service in
-// the generated config. In addition, if the service is a Kubernetes one, it
-// generates and returns the configuration part for such a service, so that the
-// caller can add it to the global config map.
+// nameAndService returns the name that should be used for the svc service in the generated config.
+// In addition, if the service is a Kubernetes one,
+// it generates and returns the configuration part for such a service,
+// so that the caller can add it to the global config map.
 func (c configBuilder) nameAndService(ctx context.Context, namespaceService string, svc v1alpha1.HasBalancer) (string, *dynamic.Service, error) {
 	service := svc.LoadBalancer()
 	namespace := namespaceOrFallback(service, namespaceService)
@@ -396,9 +396,11 @@ func (c configBuilder) nameAndService(ctx context.Context, namespaceService stri
 
 func splitSvcNameProvider(name string) (string, string) {
 	parts := strings.Split(name, "@")
-	provider := parts[len(parts)-1]
+
 	svc := strings.Join(parts[:len(parts)-1], "@")
-	return svc, provider
+	pvd := parts[len(parts)-1]
+
+	return svc, pvd
 }
 
 func fullServiceName(ctx context.Context, namespace, serviceName string, port int32) string {
@@ -415,10 +417,11 @@ func fullServiceName(ctx context.Context, namespace, serviceName string, port in
 		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, name))
 	}
 
-	// At this point, if namespace == "default", we do not know whether it had been
-	// intentionnally set as such, or if we're simply hitting the value set by default.
-	// But as it is most likely very much the latter, and we do not want to systematically log spam
-	// users in that case, we skip logging whenever the namespace is "default".
+	// At this point, if namespace == "default", we do not know whether it had been intentionally set as such,
+	// or if we're simply hitting the value set by default.
+	// But as it is most likely very much the latter,
+	// and we do not want to systematically log spam users in that case,
+	// we skip logging whenever the namespace is "default".
 	if namespace != "default" {
 		log.FromContext(ctx).
 			WithField(log.ServiceName, serviceName).
