@@ -25,13 +25,14 @@ type Route struct {
 	Middlewares []MiddlewareRef `json:"middlewares"`
 }
 
-// TLS contains the TLS certificates configuration of the routes. To enable
-// Let's Encrypt, use an empty TLS struct, e.g. in YAML:
+// TLS contains the TLS certificates configuration of the routes.
+// To enable Let's Encrypt, use an empty TLS struct,
+// e.g. in YAML:
 //
-// tls: {} # inline format
+//	 tls: {} # inline format
 //
-// tls:
-//   secretName: # block format
+//	 tls:
+//	   secretName: # block format
 type TLS struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
@@ -52,8 +53,8 @@ type TLSOptionRef struct {
 // or a TraefikService object (a traefik load-balancer of services).
 type LoadBalancerSpec struct {
 	// Name is a reference to a Kubernetes Service object (for a load-balancer of servers),
-	// or to a TraefikService object (service load-balancer, mirroring, etc). The differentiation
-	// between the two is specified in the Kind field.
+	// or to a TraefikService object (service load-balancer, mirroring, etc).
+	// The differentiation between the two is specified in the Kind field.
 	Name      string          `json:"name"`
 	Kind      string          `json:"kind"`
 	Namespace string          `json:"namespace"`
@@ -68,13 +69,13 @@ type LoadBalancerSpec struct {
 	PassHostHeader     *bool                       `json:"passHostHeader,omitempty"`
 	ResponseForwarding *dynamic.ResponseForwarding `json:"responseForwarding,omitempty"`
 
-	// Weight should only be specified when Name references a TraefikService object (and to be precise,
-	// one that embeds a Weighted Round Robin).
+	// Weight should only be specified when Name references a TraefikService object
+	// (and to be precise, one that embeds a Weighted Round Robin).
 	Weight *int `json:"weight,omitempty"`
 }
 
-// IsServersLB reports whether lb is a load-balancer of servers (as opposed to a
-// traefik load-balancer of services).
+// IsServersLB reports whether lb is a load-balancer of servers
+// (as opposed to a traefik load-balancer of services).
 func (lb LoadBalancerSpec) IsServersLB() (bool, error) {
 	if lb.Name == "" {
 		return false, errors.New("missing Name field in service")

@@ -47,12 +47,22 @@ type Mirroring struct {
 	Mirrors []MirrorService `json:"mirrors,omitempty"`
 }
 
+// LoadBalancer returns the embedded LoadBalancer
+func (m Mirroring) LoadBalancer() LoadBalancerSpec {
+	return m.LoadBalancerSpec
+}
+
 // +k8s:deepcopy-gen=true
 
 // MirrorService defines one of the mirrors of a Mirroring service.
 type MirrorService struct {
 	LoadBalancerSpec
 	Percent int `json:"percent,omitempty"`
+}
+
+// LoadBalancer returns the embedded LoadBalancer
+func (m MirrorService) LoadBalancer() LoadBalancerSpec {
+	return m.LoadBalancerSpec
 }
 
 // +k8s:deepcopy-gen=true
@@ -63,19 +73,7 @@ type WeightedRoundRobin struct {
 	Sticky   *dynamic.Sticky `json:"sticky,omitempty"`
 }
 
-// +k8s:deepcopy-gen=true
-
 // HasBalancer is satisfied by any type including a load-balancer of services or servers.
 type HasBalancer interface {
 	LoadBalancer() LoadBalancerSpec
-}
-
-// LoadBalancer returns the embedded LoadBalancer
-func (m Mirroring) LoadBalancer() LoadBalancerSpec {
-	return m.LoadBalancerSpec
-}
-
-// LoadBalancer returns the embedded LoadBalancer
-func (m MirrorService) LoadBalancer() LoadBalancerSpec {
-	return m.LoadBalancerSpec
 }
