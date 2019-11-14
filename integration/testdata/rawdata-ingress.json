@@ -1,5 +1,33 @@
 {
 	"routers": {
+		"api@internal": {
+			"entryPoints": [
+				"traefik"
+			],
+			"service": "api@internal",
+			"rule": "PathPrefix(`/api`)",
+			"priority": 9223372036854775806,
+			"status": "enabled",
+			"using": [
+				"traefik"
+			]
+		},
+		"dashboard@internal": {
+			"entryPoints": [
+				"traefik"
+			],
+			"middlewares": [
+				"dashboard_redirect@internal",
+				"dashboard_stripprefix@internal"
+			],
+			"service": "dashboard@internal",
+			"rule": "PathPrefix(`/`)",
+			"priority": 9223372036854775805,
+			"status": "enabled",
+			"using": [
+				"traefik"
+			]
+		},
 		"whoami-test-https-whoami-tls@kubernetes": {
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
@@ -29,7 +57,44 @@
 			]
 		}
 	},
+	"middlewares": {
+		"dashboard_redirect@internal": {
+			"redirectRegex": {
+				"regex": "^(http:\\/\\/[^:]+(:\\d+)?)/$",
+				"replacement": "${1}/dashboard/",
+				"permanent": true
+			},
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		},
+		"dashboard_stripprefix@internal": {
+			"stripPrefix": {
+				"prefixes": [
+					"/dashboard/",
+					"/dashboard"
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		}
+	},
 	"services": {
+		"api@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"api@internal"
+			]
+		},
+		"dashboard@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		},
 		"default-whoami-http@kubernetes": {
 			"loadBalancer": {
 				"servers": [
@@ -37,7 +102,7 @@
 						"url": "http://10.42.0.2:80"
 					},
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.3:80"
 					}
 				],
 				"passHostHeader": true
@@ -50,7 +115,7 @@
 			],
 			"serverStatus": {
 				"http://10.42.0.2:80": "UP",
-				"http://10.42.0.4:80": "UP"
+				"http://10.42.0.3:80": "UP"
 			}
 		}
 	}

@@ -1,5 +1,33 @@
 {
 	"routers": {
+		"api@internal": {
+			"entryPoints": [
+				"traefik"
+			],
+			"service": "api@internal",
+			"rule": "PathPrefix(`/api`)",
+			"priority": 9223372036854775806,
+			"status": "enabled",
+			"using": [
+				"traefik"
+			]
+		},
+		"dashboard@internal": {
+			"entryPoints": [
+				"traefik"
+			],
+			"middlewares": [
+				"dashboard_redirect@internal",
+				"dashboard_stripprefix@internal"
+			],
+			"service": "dashboard@internal",
+			"rule": "PathPrefix(`/`)",
+			"priority": 9223372036854775805,
+			"status": "enabled",
+			"using": [
+				"traefik"
+			]
+		},
 		"default-test.route-6b204d94623b3df4370c@kubernetescrd": {
 			"entryPoints": [
 				"web"
@@ -31,6 +59,29 @@
 		}
 	},
 	"middlewares": {
+		"dashboard_redirect@internal": {
+			"redirectRegex": {
+				"regex": "^(http:\\/\\/[^:]+(:\\d+)?)/$",
+				"replacement": "${1}/dashboard/",
+				"permanent": true
+			},
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		},
+		"dashboard_stripprefix@internal": {
+			"stripPrefix": {
+				"prefixes": [
+					"/dashboard/",
+					"/dashboard"
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		},
 		"default-mychain@kubernetescrd": {
 			"chain": {
 				"middlewares": [
@@ -52,11 +103,23 @@
 		}
 	},
 	"services": {
+		"api@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"api@internal"
+			]
+		},
+		"dashboard@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		},
 		"default-test.route-6b204d94623b3df4370c@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.2:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
 						"url": "http://10.42.0.6:80"
@@ -69,7 +132,7 @@
 				"default-test.route-6b204d94623b3df4370c@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.2:80": "UP",
+				"http://10.42.0.3:80": "UP",
 				"http://10.42.0.6:80": "UP"
 			}
 		},
@@ -77,7 +140,7 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.2:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
 						"url": "http://10.42.0.6:80"
@@ -90,7 +153,7 @@
 				"default-test2.route-23c7f4c450289ee29016@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.2:80": "UP",
+				"http://10.42.0.3:80": "UP",
 				"http://10.42.0.6:80": "UP"
 			}
 		}
@@ -118,7 +181,7 @@
 				"terminationDelay": 100,
 				"servers": [
 					{
-						"address": "10.42.0.4:8080"
+						"address": "10.42.0.2:8080"
 					},
 					{
 						"address": "10.42.0.5:8080"

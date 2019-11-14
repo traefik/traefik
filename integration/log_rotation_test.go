@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"syscall"
 	"time"
 
@@ -155,10 +156,14 @@ func verifyLogLines(c *check.C, fileName string, countInit int, accessLog bool) 
 		line := rotatedLog.Text()
 		if accessLog {
 			if len(line) > 0 {
-				CheckAccessLogFormat(c, line, count)
+				if !strings.Contains(line, "/api/rawdata") {
+					CheckAccessLogFormat(c, line, count)
+					count++
+				}
 			}
+		} else {
+			count++
 		}
-		count++
 	}
 
 	return count

@@ -15,6 +15,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// DefaultTLSOptions the default TLS options.
+var DefaultTLSOptions = Options{}
+
 // Manager is the TLS option/store/configuration factory
 type Manager struct {
 	storesConfig  map[string]Store
@@ -27,7 +30,12 @@ type Manager struct {
 
 // NewManager creates a new Manager
 func NewManager() *Manager {
-	return &Manager{}
+	return &Manager{
+		stores: map[string]*CertificateStore{},
+		configs: map[string]Options{
+			"default": DefaultTLSOptions,
+		},
+	}
 }
 
 // UpdateConfigs updates the TLS* configuration options

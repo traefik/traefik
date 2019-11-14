@@ -28,12 +28,6 @@ func (g DashboardHandler) Append(router *mux.Router) {
 		})
 
 	router.Methods(http.MethodGet).
-		Path("/dashboard/status").
-		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			http.Redirect(response, request, "/dashboard/", http.StatusFound)
-		})
-
-	router.Methods(http.MethodGet).
 		PathPrefix("/dashboard/").
 		Handler(http.StripPrefix("/dashboard/", http.FileServer(g.Assets)))
 }

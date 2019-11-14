@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	stdlog "log"
 	"net/http"
 	"os"
@@ -20,12 +19,17 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/metrics"
+	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/provider/acme"
 	"github.com/containous/traefik/v2/pkg/provider/aggregator"
+	"github.com/containous/traefik/v2/pkg/provider/traefik"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/server"
-	"github.com/containous/traefik/v2/pkg/server/router"
+	"github.com/containous/traefik/v2/pkg/server/middleware"
+	"github.com/containous/traefik/v2/pkg/server/service"
 	traefiktls "github.com/containous/traefik/v2/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/containous/traefik/v2/pkg/version"
 	"github.com/coreos/go-systemd/daemon"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
@@ -77,7 +81,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	if err := roundrobin.SetDefaultWeight(0); err != nil {
-		log.WithoutContext().Errorf("Could not set roundrobin default weight: %v", err)
+		log.WithoutContext().Errorf("Could not set round robin default weight: %v", err)
 	}
 
 	staticConfiguration.SetEffectiveConfiguration()
@@ -105,42 +109,10 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	stats(staticConfiguration)
 
-	providerAggregator := aggregator.NewProviderAggregator(*staticConfiguration.Providers)
-
-	tlsManager := traefiktls.NewManager()
-
-	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager)
-
-	serverEntryPointsTCP := make(server.TCPEntryPoints)
-	for entryPointName, config := range staticConfiguration.EntryPoints {
-		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
-		serverEntryPointsTCP[entryPointName], err = server.NewTCPEntryPoint(ctx, config)
-		if err != nil {
-			return fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
-		}
-		serverEntryPointsTCP[entryPointName].RouteAppenderFactory = router.NewRouteAppenderFactory(*staticConfiguration, entryPointName, acmeProviders)
+	svr, err := setupServer(staticConfiguration)
+	if err != nil {
+		return err
 	}
-
-	svr := server.NewServer(*staticConfiguration, providerAggregator, serverEntryPointsTCP, tlsManager)
-
-	resolverNames := map[string]struct{}{}
-
-	for _, p := range acmeProviders {
-		resolverNames[p.ResolverName] = struct{}{}
-		svr.AddListener(p.ListenConfiguration)
-	}
-
-	svr.AddListener(func(config dynamic.Configuration) {
-		for rtName, rt := range config.HTTP.Routers {
-			if rt.TLS == nil || rt.TLS.CertResolver == "" {
-				continue
-			}
-
-			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok {
-				log.WithoutContext().Errorf("the router %s uses a non-existent resolver: %s", rtName, rt.TLS.CertResolver)
-			}
-		}
-	})
 
 	ctx := cmd.ContextWithSignal(context.Background())
 
@@ -168,7 +140,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 			for range tick {
 				resp, errHealthCheck := healthcheck.Do(*staticConfiguration)
 				if resp != nil {
-					resp.Body.Close()
+					_ = resp.Body.Close()
 				}
 
 				if staticConfiguration.Ping == nil || errHealthCheck == nil {
@@ -186,6 +158,94 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	log.WithoutContext().Info("Shutting down")
 	logrus.Exit(0)
 	return nil
+}
+
+func setupServer(staticConfiguration *static.Configuration) (*server.Server, error) {
+	providerAggregator := aggregator.NewProviderAggregator(*staticConfiguration.Providers)
+
+	// adds internal provider
+	err := providerAggregator.AddProvider(traefik.New(*staticConfiguration))
+	if err != nil {
+		return nil, err
+	}
+
+	tlsManager := traefiktls.NewManager()
+
+	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager)
+
+	serverEntryPointsTCP, err := server.NewTCPEntryPoints(*staticConfiguration)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := context.Background()
+	routinesPool := safe.NewPool(ctx)
+
+	metricsRegistry := registerMetricClients(staticConfiguration.Metrics)
+	accessLog := setupAccessLog(staticConfiguration.AccessLog)
+	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
+	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry)
+	tcpRouterFactory := server.NewTCPRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder)
+
+	watcher := server.NewConfigurationWatcher(routinesPool, providerAggregator, time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration))
+
+	watcher.AddListener(func(conf dynamic.Configuration) {
+		ctx := context.Background()
+		tlsManager.UpdateConfigs(ctx, conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
+	})
+
+	watcher.AddListener(func(_ dynamic.Configuration) {
+		metricsRegistry.ConfigReloadsCounter().Add(1)
+		metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
+	})
+
+	watcher.AddListener(switchRouter(tcpRouterFactory, acmeProviders, serverEntryPointsTCP))
+
+	watcher.AddListener(func(conf dynamic.Configuration) {
+		if metricsRegistry.IsEpEnabled() || metricsRegistry.IsSvcEnabled() {
+			var eps []string
+			for key := range serverEntryPointsTCP {
+				eps = append(eps, key)
+			}
+
+			metrics.OnConfigurationUpdate(conf, eps)
+		}
+	})
+
+	resolverNames := map[string]struct{}{}
+	for _, p := range acmeProviders {
+		resolverNames[p.ResolverName] = struct{}{}
+		watcher.AddListener(p.ListenConfiguration)
+	}
+
+	watcher.AddListener(func(config dynamic.Configuration) {
+		for rtName, rt := range config.HTTP.Routers {
+			if rt.TLS == nil || rt.TLS.CertResolver == "" {
+				continue
+			}
+
+			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok {
+				log.WithoutContext().Errorf("the router %s uses a non-existent resolver: %s", rtName, rt.TLS.CertResolver)
+			}
+		}
+	})
+
+	return server.NewServer(routinesPool, serverEntryPointsTCP, watcher, chainBuilder, accessLog), nil
+}
+
+func switchRouter(tcpRouterFactory *server.TCPRouterFactory, acmeProviders []*acme.Provider, serverEntryPointsTCP server.TCPEntryPoints) func(conf dynamic.Configuration) {
+	return func(conf dynamic.Configuration) {
+		routers := tcpRouterFactory.CreateTCPRouters(conf)
+		for entryPointName, rt := range routers {
+			for _, p := range acmeProviders {
+				if p != nil && p.HTTPChallenge != nil && p.HTTPChallenge.EntryPoint == entryPointName {
+					rt.HTTPHandler(p.CreateHandler(rt.GetHTTPHandler()))
+					break
+				}
+			}
+		}
+		serverEntryPointsTCP.Switch(routers)
+	}
 }
 
 // initACMEProvider creates an acme provider from the ACME part of globalConfiguration
@@ -220,6 +280,60 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 		}
 	}
 	return resolvers
+}
+
+func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
+	if metricsConfig == nil {
+		return metrics.NewVoidRegistry()
+	}
+
+	var registries []metrics.Registry
+
+	if metricsConfig.Prometheus != nil {
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "prometheus"))
+		prometheusRegister := metrics.RegisterPrometheus(ctx, metricsConfig.Prometheus)
+		if prometheusRegister != nil {
+			registries = append(registries, prometheusRegister)
+			log.FromContext(ctx).Debug("Configured Prometheus metrics")
+		}
+	}
+
+	if metricsConfig.Datadog != nil {
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "datadog"))
+		registries = append(registries, metrics.RegisterDatadog(ctx, metricsConfig.Datadog))
+		log.FromContext(ctx).Debugf("Configured Datadog metrics: pushing to %s once every %s",
+			metricsConfig.Datadog.Address, metricsConfig.Datadog.PushInterval)
+	}
+
+	if metricsConfig.StatsD != nil {
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "statsd"))
+		registries = append(registries, metrics.RegisterStatsd(ctx, metricsConfig.StatsD))
+		log.FromContext(ctx).Debugf("Configured StatsD metrics: pushing to %s once every %s",
+			metricsConfig.StatsD.Address, metricsConfig.StatsD.PushInterval)
+	}
+
+	if metricsConfig.InfluxDB != nil {
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "influxdb"))
+		registries = append(registries, metrics.RegisterInfluxDB(ctx, metricsConfig.InfluxDB))
+		log.FromContext(ctx).Debugf("Configured InfluxDB metrics: pushing to %s once every %s",
+			metricsConfig.InfluxDB.Address, metricsConfig.InfluxDB.PushInterval)
+	}
+
+	return metrics.NewMultiRegistry(registries)
+}
+
+func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
+	if conf == nil {
+		return nil
+	}
+
+	accessLoggerMiddleware, err := accesslog.NewHandler(conf)
+	if err != nil {
+		log.WithoutContext().Warnf("Unable to create access logger : %v", err)
+		return nil
+	}
+
+	return accessLoggerMiddleware
 }
 
 func configureLogging(staticConfiguration *static.Configuration) {

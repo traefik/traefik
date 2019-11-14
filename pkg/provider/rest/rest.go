@@ -3,7 +3,6 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
@@ -23,8 +22,7 @@ type Provider struct {
 }
 
 // SetDefaults sets the default values.
-func (p *Provider) SetDefaults() {
-}
+func (p *Provider) SetDefaults() {}
 
 var templatesRenderer = render.New(render.Options{Directory: "nowhere"})
 
@@ -33,40 +31,32 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// Handler creates an http.Handler for the Rest API
-func (p *Provider) Handler() http.Handler {
+// CreateRouter creates a router for the Rest API
+func (p *Provider) CreateRouter() *mux.Router {
 	router := mux.NewRouter()
-	p.Append(router)
+	router.Methods(http.MethodPut).Path("/api/providers/{provider}").Handler(p)
 	return router
 }
 
-// Append add rest provider routes on a router.
-func (p *Provider) Append(systemRouter *mux.Router) {
-	systemRouter.
-		Methods(http.MethodPut).
-		Path("/api/providers/{provider}").
-		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			vars := mux.Vars(request)
-			if vars["provider"] != "rest" {
-				response.WriteHeader(http.StatusBadRequest)
-				fmt.Fprint(response, "Only 'rest' provider can be updated through the REST API")
-				return
-			}
+func (p *Provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	if vars["provider"] != "rest" {
+		http.Error(rw, "Only 'rest' provider can be updated through the REST API", http.StatusBadRequest)
+		return
+	}
 
-			configuration := new(dynamic.Configuration)
-			body, _ := ioutil.ReadAll(request.Body)
+	configuration := new(dynamic.Configuration)
 
-			if err := json.Unmarshal(body, configuration); err != nil {
-				log.WithoutContext().Errorf("Error parsing configuration %+v", err)
-				http.Error(response, fmt.Sprintf("%+v", err), http.StatusBadRequest)
-				return
-			}
+	if err := json.NewDecoder(req.Body).Decode(configuration); err != nil {
+		log.WithoutContext().Errorf("Error parsing configuration %+v", err)
+		http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
+		return
+	}
 
-			p.configurationChan <- dynamic.Message{ProviderName: "rest", Configuration: configuration}
-			if err := templatesRenderer.JSON(response, http.StatusOK, configuration); err != nil {
-				log.WithoutContext().Error(err)
-			}
-		})
+	p.configurationChan <- dynamic.Message{ProviderName: "rest", Configuration: configuration}
+	if err := templatesRenderer.JSON(rw, http.StatusOK, configuration); err != nil {
+		log.WithoutContext().Error(err)
+	}
 }
 
 // Provide allows the provider to provide configurations to traefik

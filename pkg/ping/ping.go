@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 // Handler expose ping routes.
 type Handler struct {
-	EntryPoint  string `description:"EntryPoint" export:"true" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
-	terminating bool
+	EntryPoint    string `description:"EntryPoint" export:"true" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
+	ManualRouting bool   `description:"Manual routing" json:"manualRouting,omitempty" toml:"manualRouting,omitempty" yaml:"manualRouting,omitempty"`
+	terminating   bool
 }
 
 // SetDefaults sets the default values.
@@ -27,15 +26,11 @@ func (h *Handler) WithContext(ctx context.Context) {
 	}()
 }
 
-// Append adds ping routes on a router.
-func (h *Handler) Append(router *mux.Router) {
-	router.Methods(http.MethodGet, http.MethodHead).Path("/ping").
-		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			statusCode := http.StatusOK
-			if h.terminating {
-				statusCode = http.StatusServiceUnavailable
-			}
-			response.WriteHeader(statusCode)
-			fmt.Fprint(response, http.StatusText(statusCode))
-		})
+func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	statusCode := http.StatusOK
+	if h.terminating {
+		statusCode = http.StatusServiceUnavailable
+	}
+	response.WriteHeader(statusCode)
+	fmt.Fprint(response, http.StatusText(statusCode))
 }

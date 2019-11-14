@@ -34,7 +34,7 @@ const (
 )
 
 // NewManager creates a new Manager
-func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry, routinePool *safe.Pool, api http.Handler, rest http.Handler) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry, routinePool *safe.Pool) *Manager {
 	return &Manager{
 		routinePool:         routinePool,
 		metricsRegistry:     metricsRegistry,
@@ -42,8 +42,6 @@ func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper htt
 		defaultRoundTripper: defaultRoundTripper,
 		balancers:           make(map[string][]healthcheck.BalancerHandler),
 		configs:             configs,
-		api:                 api,
-		rest:                rest,
 	}
 }
 
@@ -55,26 +53,10 @@ type Manager struct {
 	defaultRoundTripper http.RoundTripper
 	balancers           map[string][]healthcheck.BalancerHandler
 	configs             map[string]*runtime.ServiceInfo
-	api                 http.Handler
-	rest                http.Handler
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
 func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
-	if serviceName == "api@internal" {
-		if m.api == nil {
-			return nil, errors.New("api is not enabled")
-		}
-		return m.api, nil
-	}
-
-	if serviceName == "rest@internal" {
-		if m.rest == nil {
-			return nil, errors.New("rest is not enabled")
-		}
-		return m.rest, nil
-	}
-
 	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
 
 	serviceName = internal.GetQualifiedName(ctx, serviceName)

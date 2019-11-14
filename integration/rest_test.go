@@ -30,6 +30,10 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("rest@internal"))
+	c.Assert(err, checker.IsNil)
+
 	// Expected a 404 as we did not configure anything.
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
@@ -44,15 +48,15 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 			config: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"router1": {
+						"routerHTTP": {
 							EntryPoints: []string{"web"},
 							Middlewares: []string{},
-							Service:     "service1",
+							Service:     "serviceHTTP",
 							Rule:        "PathPrefix(`/`)",
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"service1": {
+						"serviceHTTP": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -71,14 +75,14 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 			config: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"router1": {
+						"routerTCP": {
 							EntryPoints: []string{"web"},
-							Service:     "service1",
+							Service:     "serviceTCP",
 							Rule:        "HostSNI(`*`)",
 						},
 					},
 					Services: map[string]*dynamic.TCPService{
-						"service1": {
+						"serviceTCP": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
@@ -95,17 +99,17 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 	}
 
 	for _, test := range testCase {
-		json, err := json.Marshal(test.config)
+		data, err := json.Marshal(test.config)
 		c.Assert(err, checker.IsNil)
 
-		request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", bytes.NewReader(json))
+		request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", bytes.NewReader(data))
 		c.Assert(err, checker.IsNil)
 
 		response, err := http.DefaultClient.Do(request)
 		c.Assert(err, checker.IsNil)
 		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
 
-		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains(test.ruleMatch))
+		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 3*time.Second, try.BodyContains(test.ruleMatch))
 		c.Assert(err, checker.IsNil)
 
 		err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))

@@ -19,7 +19,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/provider/rest"
 	"github.com/containous/traefik/v2/pkg/tracing/jaeger"
 	"github.com/containous/traefik/v2/pkg/types"
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -252,10 +251,7 @@ func TestHandler_Overview(t *testing.T) {
 			t.Parallel()
 
 			handler := New(test.confStatic, &test.confDyn)
-			router := mux.NewRouter()
-			handler.Append(router)
-
-			server := httptest.NewServer(router)
+			server := httptest.NewServer(handler.createRouter())
 
 			resp, err := http.DefaultClient.Get(server.URL + test.path)
 			require.NoError(t, err)
