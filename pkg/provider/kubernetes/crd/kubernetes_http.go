@@ -16,8 +16,8 @@ import (
 
 const (
 	roundRobinStrategy = "RoundRobin"
-	https              = "https"
-	http               = "http"
+	httpsProtocol      = "https"
+	httpProtocol       = "http"
 )
 
 func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
@@ -349,14 +349,14 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.HasBal
 			return nil, fmt.Errorf("cannot define a port for %v/%v", namespace, sanitizedName)
 		}
 
-		protocol := http
+		protocol := httpProtocol
 		scheme := conf.Scheme
 		switch scheme {
-		case http, https, "h2c":
+		case httpProtocol, httpsProtocol, "h2c":
 			protocol = scheme
 		case "":
-			if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, https) {
-				protocol = https
+			if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, httpsProtocol) {
+				protocol = httpsProtocol
 			}
 		default:
 			return nil, fmt.Errorf("invalid scheme %q specified", scheme)
@@ -412,8 +412,8 @@ func fullServiceName(ctx context.Context, namespace, serviceName string, port in
 		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, serviceName))
 	}
 
-	name, providerName := splitSvcNameProvider(serviceName)
-	if providerName == "kubernetescrd" {
+	name, pName := splitSvcNameProvider(serviceName)
+	if pName == providerName {
 		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, name))
 	}
 
@@ -428,7 +428,7 @@ func fullServiceName(ctx context.Context, namespace, serviceName string, port in
 			Warnf("namespace %q is ignored in cross-provider context", namespace)
 	}
 
-	return provider.Normalize(name) + providerNamespaceSeparator + providerName
+	return provider.Normalize(name) + providerNamespaceSeparator + pName
 }
 
 func namespaceOrFallback(lb v1alpha1.LoadBalancerSpec, fallback string) string {
