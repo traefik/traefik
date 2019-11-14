@@ -121,7 +121,7 @@ metrics:
 
 _Optional, Default=false_
 
-If `manualRouting` is `true`, it disable the default internal router to allow to create a custom router for the `prometheus@internal` service.
+If `manualRouting` is `true`, it disables the default internal router to allow to create a custom router for the `prometheus@internal` service.
 
 ```toml tab="File (TOML)"
 [metrics]
