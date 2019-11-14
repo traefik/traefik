@@ -1,0 +1,62 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: mirror1
+  namespace: default
+
+spec:
+  mirroring:
+    name: whoami
+    port: 80
+    mirrors:
+      - name: whoami
+        port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: wrr1
+  namespace: default
+
+spec:
+  weighted:
+    services:
+      - name: mirror1
+        kind: TraefikService
+      - name: whoami
+        port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test3.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`foo.com`) && PathPrefix(`/wrr1`)
+      kind: Rule
+      services:
+        - name: wrr1
+          kind: TraefikService
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: PathPrefix(`/api`)
+      kind: Rule
+      services:
+        - name: api@internal
+          kind: TraefikService

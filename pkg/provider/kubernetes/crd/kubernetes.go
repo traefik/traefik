@@ -16,6 +16,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
@@ -28,6 +29,11 @@ import (
 const (
 	annotationKubernetesIngressClass = "kubernetes.io/ingress.class"
 	traefikDefaultIngressClass       = "traefik"
+)
+
+const (
+	providerName               = "kubernetescrd"
+	providerNamespaceSeparator = "@"
 )
 
 // Provider holds configurations of the provider.
@@ -52,7 +58,7 @@ func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*cli
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
-		withEndpoint = fmt.Sprintf(" with endpoint %v", p.Endpoint)
+		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
 	}
 
 	var client *clientWrapper
@@ -83,7 +89,7 @@ func (p *Provider) Init() error {
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, "kubernetescrd"))
+	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, providerName))
 	logger := log.FromContext(ctxLog)
 
 	logger.Debugf("Using label selector: %q", p.LabelSelector)
@@ -120,11 +126,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				case <-stop:
 					return nil
 				case event := <-eventsChan:
-					// Note that event is the *first* event that came in during this
-					// throttling interval -- if we're hitting our throttle, we may have
-					// dropped events. This is fine, because we don't treat different
-					// event types differently. But if we do in the future, we'll need to
-					// track more information about the dropped events.
+					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
+					// This is fine, because we don't treat different event types differently.
+					// But if we do in the future, we'll need to track more information about the dropped events.
 					conf := p.loadConfigurationFromCRD(ctxLog, k8sClient)
 
 					confHash, err := hashstructure.Hash(conf, nil)
@@ -136,25 +140,25 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					default:
 						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
-							ProviderName:  "kubernetescrd",
+							ProviderName:  providerName,
 							Configuration: conf,
 						}
 					}
 
-					// If we're throttling, we sleep here for the throttle duration to
-					// enforce that we don't refresh faster than our throttle. time.Sleep
-					// returns immediately if p.ThrottleDuration is 0 (no throttle).
+					// If we're throttling,
+					// we sleep here for the throttle duration to enforce that we don't refresh faster than our throttle.
+					// time.Sleep returns immediately if p.ThrottleDuration is 0 (no throttle).
 					time.Sleep(throttleDuration)
 				}
 			}
 		}
 
 		notify := func(err error, time time.Duration) {
-			logger.Errorf("Provider connection error: %s; retrying in %s", err, time)
+			logger.Errorf("Provider connection error: %v; retrying in %s", err, time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
-			logger.Errorf("Cannot connect to Provider: %s", err)
+			logger.Errorf("Cannot connect to Provider: %v", err)
 		}
 	})
 
@@ -173,7 +177,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, middleware := range client.GetMiddlewares() {
-		id := makeID(middleware.Namespace, middleware.Name)
+		id := provider.Normalize(makeID(middleware.Namespace, middleware.Name))
 		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, id))
 
 		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth)
@@ -231,6 +235,16 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 	}
 
+	cb := configBuilder{client}
+	for _, service := range client.GetTraefikServices() {
+		err := cb.buildTraefikService(ctx, service, conf.HTTP.Services)
+		if err != nil {
+			log.FromContext(ctx).WithField(log.ServiceName, service.Name).
+				Errorf("Error while building TraefikService: %v", err)
+			continue
+		}
+	}
+
 	return conf
 }
 
@@ -244,7 +258,7 @@ func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alp
 		Query:  errorPage.Query,
 	}
 
-	balancerServerHTTP, err := createLoadBalancerServerHTTP(client, namespace, errorPage.Service)
+	balancerServerHTTP, err := configBuilder{client}.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -286,7 +300,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 	if len(auth.TLS.CertSecret) > 0 {
 		authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, k8sClient)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load auth secret: %s", err)
+			return nil, fmt.Errorf("failed to load auth secret: %v", err)
 		}
 		forwardAuth.TLS.Cert = authSecretCert
 		forwardAuth.TLS.Key = authSecretKey
@@ -298,7 +312,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 func loadCASecret(namespace, secretName string, k8sClient Client) (string, error) {
 	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
+		return "", fmt.Errorf("failed to fetch secret '%s/%s': %v", namespace, secretName, err)
 	}
 	if !ok {
 		return "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
@@ -377,7 +391,7 @@ func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]strin
 
 	auth, err := loadAuthCredentials(namespace, authSecret, k8sClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load auth credentials: %s", err)
+		return nil, fmt.Errorf("failed to load auth credentials: %v", err)
 	}
 
 	return auth, nil
@@ -386,7 +400,7 @@ func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]strin
 func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
 	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
+		return nil, fmt.Errorf("failed to fetch secret '%s/%s': %v", namespace, secretName, err)
 	}
 	if !ok {
 		return nil, fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
@@ -412,7 +426,7 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading secret for %v/%v: %v", namespace, secretName, err)
+		return nil, fmt.Errorf("error reading secret for %s/%s: %v", namespace, secretName, err)
 	}
 	if len(credentials) == 0 {
 		return nil, fmt.Errorf("secret '%s/%s' does not contain any credentials", namespace, secretName)
@@ -428,7 +442,7 @@ func createChainMiddleware(ctx context.Context, namespace string, chain *v1alpha
 
 	var mds []string
 	for _, mi := range chain.Middlewares {
-		if strings.Contains(mi.Name, "@") {
+		if strings.Contains(mi.Name, providerNamespaceSeparator) {
 			if len(mi.Namespace) > 0 {
 				log.FromContext(ctx).
 					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
@@ -600,14 +614,12 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, error) {
 	tlsCrtData, tlsCrtExists := secret.Data["tls.ca"]
 	if !tlsCrtExists {
-		return "", fmt.Errorf("the tls.ca entry is missing from secret %s/%s",
-			namespace, secretName)
+		return "", fmt.Errorf("the tls.ca entry is missing from secret %s/%s", namespace, secretName)
 	}
 
 	cert := string(tlsCrtData)
 	if cert == "" {
-		return "", fmt.Errorf("the tls.ca entry in secret %s/%s is empty",
-			namespace, secretName)
+		return "", fmt.Errorf("the tls.ca entry in secret %s/%s is empty", namespace, secretName)
 	}
 
 	return cert, nil
@@ -620,10 +632,9 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop ch
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling)
 	eventsChanBuffered := make(chan interface{}, 1)
 
-	// Run a goroutine that reads events from eventChan and does a
-	// non-blocking write to pendingEvent. This guarantees that writing to
-	// eventChan will never block, and that pendingEvent will have
-	// something in it if there's been an event since we read from that channel.
+	// Run a goroutine that reads events from eventChan and does a non-blocking write to pendingEvent.
+	// This guarantees that writing to eventChan will never block,
+	// and that pendingEvent will have something in it if there's been an event since we read from that channel.
 	go func() {
 		for {
 			select {
@@ -633,10 +644,8 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop ch
 				select {
 				case eventsChanBuffered <- nextEvent:
 				default:
-					// We already have an event in eventsChanBuffered, so we'll
-					// do a refresh as soon as our throttle allows us to. It's fine
-					// to drop the event and keep whatever's in the buffer -- we
-					// don't do different things for different events
+					// We already have an event in eventsChanBuffered, so we'll do a refresh as soon as our throttle allows us to.
+					// It's fine to drop the event and keep whatever's in the buffer -- we don't do different things for different events
 					log.FromContext(ctx).Debugf("Dropping event kind %T due to throttling", nextEvent)
 				}
 			}

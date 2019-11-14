@@ -1,0 +1,271 @@
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami6
+  namespace: baz
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.5
+      - ip: 10.10.0.6
+    ports:
+      - name: web
+        port: 8080
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami5
+  namespace: foo
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.3
+      - ip: 10.10.0.4
+    ports:
+      - name: web
+        port: 8080
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami4
+  namespace: foo
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.1
+      - ip: 10.10.0.2
+    ports:
+      - name: web
+        port: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami6
+  namespace: baz
+
+spec:
+  ports:
+    - name: web
+      port: 8080
+  selector:
+    app: containous
+    task: whoami6
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami5
+  namespace: foo
+
+spec:
+  ports:
+    - name: web
+      port: 8080
+  selector:
+    app: containous
+    task: whoami5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami4
+  namespace: foo
+
+spec:
+  ports:
+    - name: web
+      port: 8080
+  selector:
+    app: containous
+    task: whoami4
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: mirror1
+  namespace: foo
+
+spec:
+  mirroring:
+    name: whoami5
+    port: 8080
+    namespace: foo
+    mirrors:
+      - name: whoami4
+        port: 8080
+      - name: whoami6
+        port: 8080
+        namespace: baz
+      - name: mirrored
+        kind: TraefikService
+        namespace: bar
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: wrr2
+  namespace: bar
+
+spec:
+  weighted:
+    services:
+      - name: whoami5
+        namespace: foo
+        weight: 1
+        port: 8080
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: mirror2
+  namespace: foo
+
+spec:
+  mirroring:
+    name: whoami5
+    port: 8080
+    mirrors:
+      - name: whoami4
+        port: 8080
+      - name: whoami6
+        port: 8080
+        namespace: baz
+      - name: mirrored
+        kind: TraefikService
+        namespace: bar
+      - name: wrr1
+        kind: TraefikService
+        namespace: foo
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: mirror3
+  namespace: foo
+
+spec:
+  mirroring:
+    name: wrr1
+    kind: TraefikService
+    namespace: foo
+    mirrors:
+      - name: whoami4
+        port: 8080
+      - name: whoami6
+        port: 8080
+        namespace: baz
+      - name: mirrored
+        kind: TraefikService
+        namespace: bar
+      - name: wrr1
+        kind: TraefikService
+        namespace: foo
+
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: mirror4
+  namespace: foo
+
+spec:
+  mirroring:
+    name: wrr1
+    kind: TraefikService
+    mirrors:
+      - name: whoami4
+        port: 8080
+      - name: whoami6
+        port: 8080
+        namespace: baz
+      - name: mirrored
+        kind: TraefikService
+        namespace: bar
+      - name: wrr1
+        kind: TraefikService
+        namespace: foo
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: mirrored
+  namespace: bar
+
+spec:
+  mirroring:
+    name: whoami6
+    port: 8080
+    namespace: baz
+    mirrors:
+      - name: whoami4
+        percent: 50
+        port: 8080
+        namespace: foo
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: wrr1
+  namespace: foo
+
+spec:
+  weighted:
+    services:
+      - name: whoami4
+        port: 8080
+      - name: whoami6
+        port: 8080
+        namespace: baz
+      - name: mirror1
+        kind: TraefikService
+      - name: wrr2
+        kind: TraefikService
+        namespace: bar
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+    - match: Host(`foo.com`) && PathPrefix(`/foo`)
+      kind: Rule
+      priority: 12
+      services:
+      - name: whoami6
+        port: 8080
+        namespace: baz
+      - name: wrr1
+        kind: TraefikService
+        namespace: foo
+      - name: mirror2
+        kind: TraefikService
+        namespace: foo
+      - name: mirror3
+        kind: TraefikService
+        namespace: foo
+      - name: mirror4
+        kind: TraefikService
+        namespace: foo

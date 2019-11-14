@@ -2,11 +2,11 @@
   checkNewVersion = false
   sendAnonymousUsage = false
 
-[api]
-  insecure = true
-
 [log]
   level = "DEBUG"
+
+[api]
+  insecure = true
 
 [entryPoints]
   [entryPoints.web]

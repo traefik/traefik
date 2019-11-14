@@ -116,6 +116,84 @@ spec:
 
 More information about available middlewares in the dedicated [middlewares section](../../middlewares/overview.md).
 
+### Services
+
+If one needs a setup more sophisticated than a load-balancer of servers (which is a Kubernetes Service kind behind the scenes),
+one can define and use additional service objects specific to Traefik, based on the `TraefikService` kind defined in the CRD below.
+
+```yaml
+--8<-- "content/routing/providers/crd_traefikservice.yml"
+```
+
+Once the `TraefikService` kind has been registered with the Kubernetes cluster, it can then be used in `IngressRoute` definitions
+(as well as recursively in other Traefik Services), such as below.
+Note how the `name` field in the IngressRoute definition now refers to a TraefikService instead of a (Kubernetes) Service.
+The reason this is allowed, and why a `name` can refer either to a TraefikService or a Service,
+is because the `kind` field is used to break the ambiguity. The allowed values for this field are `TraefikService`, or `Service`
+(which is the default value).
+
+```yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: wrr1
+  namespace: default
+
+spec:
+  weighted:
+    services:
+      - name: s2
+        kind: Service
+        port: 80
+        weight: 1
+      - name: s3
+        weight: 1
+        port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: mirror1
+  namespace: default
+
+spec:
+  mirroring:
+    name: wrr1
+    kind: TraefikService
+    mirrors:
+      - name: s1
+        percent: 20
+        port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingressroutebar
+  namespace: default
+
+
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`bar.com`) && PathPrefix(`/foo`)
+    kind: Rule
+    services:
+    - name: mirror1
+      namespace: default
+      kind: TraefikService
+```
+
+!!! important "References and namespaces"
+
+    If the optional `namespace` attribute is not set, the configuration will be applied with the namespace of the current resource.
+    
+    Additionally, when the definition of the `TraefikService` is from another provider,
+    the cross-provider syntax (service@provider) should be used to refer to the `TraefikService`, just as in the middleware case.
+    Specifying a namespace attribute in this case would not make any sense, and will be ignored (except if the provider is `kubernetescrd`).
+
 ### TLS Option
 
 Additionally, to allow for the use of TLS options in an IngressRoute, we defined the CRD below for the TLSOption kind.

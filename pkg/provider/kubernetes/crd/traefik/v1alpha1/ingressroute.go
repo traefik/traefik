@@ -1,6 +1,9 @@
 package v1alpha1
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,13 +25,14 @@ type Route struct {
 	Middlewares []MiddlewareRef `json:"middlewares"`
 }
 
-// TLS contains the TLS certificates configuration of the routes. To enable
-// Let's Encrypt, use an empty TLS struct, e.g. in YAML:
+// TLS contains the TLS certificates configuration of the routes.
+// To enable Let's Encrypt, use an empty TLS struct,
+// e.g. in YAML:
 //
-// tls: {} # inline format
+//	 tls: {} # inline format
 //
-// tls:
-//   secretName: # block format
+//	 tls:
+//	   secretName: # block format
 type TLS struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
@@ -45,16 +49,58 @@ type TLSOptionRef struct {
 	Namespace string `json:"namespace"`
 }
 
-// Service defines an upstream to proxy traffic.
-type Service struct {
-	Name               string                      `json:"name"`
+// LoadBalancerSpec can reference either a Kubernetes Service object (a load-balancer of servers),
+// or a TraefikService object (a traefik load-balancer of services).
+type LoadBalancerSpec struct {
+	// Name is a reference to a Kubernetes Service object (for a load-balancer of servers),
+	// or to a TraefikService object (service load-balancer, mirroring, etc).
+	// The differentiation between the two is specified in the Kind field.
+	Name      string          `json:"name"`
+	Kind      string          `json:"kind"`
+	Namespace string          `json:"namespace"`
+	Sticky    *dynamic.Sticky `json:"sticky,omitempty"`
+
+	// Port and all the fields below are related to a servers load-balancer,
+	// and therefore should only be specified when Name references a Kubernetes Service.
 	Port               int32                       `json:"port"`
 	Scheme             string                      `json:"scheme,omitempty"`
 	HealthCheck        *HealthCheck                `json:"healthCheck,omitempty"`
 	Strategy           string                      `json:"strategy,omitempty"`
 	PassHostHeader     *bool                       `json:"passHostHeader,omitempty"`
 	ResponseForwarding *dynamic.ResponseForwarding `json:"responseForwarding,omitempty"`
-	Weight             *int                        `json:"weight,omitempty"`
+
+	// Weight should only be specified when Name references a TraefikService object
+	// (and to be precise, one that embeds a Weighted Round Robin).
+	Weight *int `json:"weight,omitempty"`
+}
+
+// IsServersLB reports whether lb is a load-balancer of servers
+// (as opposed to a traefik load-balancer of services).
+func (lb LoadBalancerSpec) IsServersLB() (bool, error) {
+	if lb.Name == "" {
+		return false, errors.New("missing Name field in service")
+	}
+	if lb.Kind == "" || lb.Kind == "Service" {
+		return true, nil
+	}
+	if lb.Kind != "TraefikService" {
+		return false, fmt.Errorf("invalid kind value: %v", lb.Kind)
+	}
+	if lb.Port != 0 ||
+		lb.Scheme != "" ||
+		lb.HealthCheck != nil ||
+		lb.Strategy != "" ||
+		lb.PassHostHeader != nil ||
+		lb.ResponseForwarding != nil ||
+		lb.Sticky != nil {
+		return false, fmt.Errorf("service of kind %v is incompatible with Kubernetes Service related fields", lb.Kind)
+	}
+	return false, nil
+}
+
+// Service defines an upstream to proxy traffic.
+type Service struct {
+	LoadBalancerSpec
 }
 
 // MiddlewareRef is a ref to the Middleware resources.

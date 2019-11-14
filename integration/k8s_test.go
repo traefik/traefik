@@ -71,7 +71,7 @@ func (s *K8sSuite) TestIngressConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	testConfiguration(c, "testdata/rawdata-ingress.json")
+	testConfiguration(c, "testdata/rawdata-ingress.json", "8080")
 }
 
 func (s *K8sSuite) TestCRDConfiguration(c *check.C) {
@@ -82,11 +82,11 @@ func (s *K8sSuite) TestCRDConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	testConfiguration(c, "testdata/rawdata-crd.json")
+	testConfiguration(c, "testdata/rawdata-crd.json", "8000")
 }
 
-func testConfiguration(c *check.C, path string) {
-	err := try.GetRequest("http://127.0.0.1:8080/api/entrypoints", 20*time.Second, try.BodyContains(`"name":"web"`))
+func testConfiguration(c *check.C, path, apiPort string) {
+	err := try.GetRequest("http://127.0.0.1:"+apiPort+"/api/entrypoints", 20*time.Second, try.BodyContains(`"name":"web"`))
 	c.Assert(err, checker.IsNil)
 
 	expectedJSON := filepath.FromSlash(path)
@@ -99,7 +99,7 @@ func testConfiguration(c *check.C, path string) {
 	}
 
 	var buf bytes.Buffer
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 40*time.Second, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
+	err = try.GetRequest("http://127.0.0.1:"+apiPort+"/api/rawdata", 40*time.Second, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
 
 	if !*updateExpected {
 		if err != nil {

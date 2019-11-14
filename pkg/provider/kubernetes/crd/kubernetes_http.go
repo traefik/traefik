@@ -8,9 +8,16 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
+)
+
+const (
+	roundRobinStrategy = "RoundRobin"
+	httpsProtocol      = "https"
+	httpProtocol       = "http"
 )
 
 func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
@@ -39,6 +46,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			ingressName = ingressRoute.GenerateName
 		}
 
+		cb := configBuilder{client}
 		for _, route := range ingressRoute.Spec.Routes {
 			if route.Kind != "Rule" {
 				logger.Errorf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
@@ -55,49 +63,15 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				continue
 			}
 
-			key, err := makeServiceKey(route.Match, ingressName)
+			serviceKey, err := makeServiceKey(route.Match, ingressName)
 			if err != nil {
 				logger.Error(err)
 				continue
 			}
 
-			serviceName := makeID(ingressRoute.Namespace, key)
-
-			for _, service := range route.Services {
-				balancerServerHTTP, err := createLoadBalancerServerHTTP(client, ingressRoute.Namespace, service)
-				if err != nil {
-					logger.
-						WithField("serviceName", service.Name).
-						WithField("servicePort", service.Port).
-						Errorf("Cannot create service: %v", err)
-					continue
-				}
-
-				// If there is only one service defined, we skip the creation of the load balancer of services,
-				// i.e. the service on top is directly a load balancer of servers.
-				if len(route.Services) == 1 {
-					conf.Services[serviceName] = balancerServerHTTP
-					break
-				}
-
-				serviceKey := fmt.Sprintf("%s-%s-%d", serviceName, service.Name, service.Port)
-				conf.Services[serviceKey] = balancerServerHTTP
-
-				srv := dynamic.WRRService{Name: serviceKey}
-				srv.SetDefaults()
-				if service.Weight != nil {
-					srv.Weight = service.Weight
-				}
-
-				if conf.Services[serviceName] == nil {
-					conf.Services[serviceName] = &dynamic.Service{Weighted: &dynamic.WeightedRoundRobin{}}
-				}
-				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
-			}
-
 			var mds []string
 			for _, mi := range route.Middlewares {
-				if strings.Contains(mi.Name, "@") {
+				if strings.Contains(mi.Name, providerNamespaceSeparator) {
 					if len(mi.Namespace) > 0 {
 						logger.
 							WithField(log.MiddlewareName, mi.Name).
@@ -114,7 +88,36 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				mds = append(mds, makeID(ns, mi.Name))
 			}
 
-			conf.Routers[serviceName] = &dynamic.Router{
+			normalized := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
+			serviceName := normalized
+
+			if len(route.Services) > 1 {
+				spec := v1alpha1.ServiceSpec{
+					Weighted: &v1alpha1.WeightedRoundRobin{
+						Services: route.Services,
+					},
+				}
+
+				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, conf.Services)
+				if errBuild != nil {
+					logger.Error(err)
+					continue
+				}
+			} else if len(route.Services) == 1 {
+				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec)
+				if err != nil {
+					logger.Error(err)
+					continue
+				}
+
+				if serversLB != nil {
+					conf.Services[serviceName] = serversLB
+				} else {
+					serviceName = fullName
+				}
+			}
+
+			conf.Routers[normalized] = &dynamic.Router{
 				Middlewares: mds,
 				Priority:    route.Priority,
 				EntryPoints: ingressRoute.Spec.EntryPoints,
@@ -132,7 +135,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					tlsOptionsName := ingressRoute.Spec.TLS.Options.Name
 					// Is a Kubernetes CRD reference, (i.e. not a cross-provider reference)
 					ns := ingressRoute.Spec.TLS.Options.Namespace
-					if !strings.Contains(tlsOptionsName, "@") {
+					if !strings.Contains(tlsOptionsName, providerNamespaceSeparator) {
 						if len(ns) == 0 {
 							ns = ingressRoute.Namespace
 						}
@@ -145,7 +148,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 
 					tlsConf.Options = tlsOptionsName
 				}
-				conf.Routers[serviceName].TLS = tlsConf
+				conf.Routers[normalized].TLS = tlsConf
 			}
 		}
 	}
@@ -153,118 +156,275 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	return conf
 }
 
-func createLoadBalancerServerHTTP(client Client, namespace string, service v1alpha1.Service) (*dynamic.Service, error) {
-	servers, err := loadServers(client, namespace, service)
+type configBuilder struct {
+	client Client
+}
+
+// buildTraefikService creates the configuration for the traefik service defined in tService,
+// and adds it to the given conf map.
+func (c configBuilder) buildTraefikService(ctx context.Context, tService *v1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
+	id := provider.Normalize(makeID(tService.Namespace, tService.Name))
+
+	if tService.Spec.Weighted != nil {
+		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
+	} else if tService.Spec.Mirroring != nil {
+		return c.buildMirroring(ctx, tService, id, conf)
+	}
+
+	return errors.New("unspecified service type")
+}
+
+// buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
+// It adds it to the given conf map.
+func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService v1alpha1.ServiceSpec, id string, conf map[string]*dynamic.Service) error {
+	var wrrServices []dynamic.WRRService
+
+	for _, service := range tService.Weighted.Services {
+		fullName, k8sService, err := c.nameAndService(ctx, namespace, service.LoadBalancerSpec)
+		if err != nil {
+			return err
+		}
+
+		if k8sService != nil {
+			conf[fullName] = k8sService
+		}
+
+		weight := service.Weight
+		if weight == nil {
+			weight = func(i int) *int { return &i }(1)
+		}
+
+		wrrServices = append(wrrServices, dynamic.WRRService{
+			Name:   fullName,
+			Weight: weight,
+		})
+	}
+
+	conf[id] = &dynamic.Service{
+		Weighted: &dynamic.WeightedRoundRobin{
+			Services: wrrServices,
+			Sticky:   tService.Weighted.Sticky,
+		},
+	}
+	return nil
+}
+
+// buildMirroring creates the configuration for the mirroring service named id, and defined by tService.
+// It adds it to the given conf map.
+func (c configBuilder) buildMirroring(ctx context.Context, tService *v1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
+	fullNameMain, k8sService, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Mirroring.LoadBalancerSpec)
+	if err != nil {
+		return err
+	}
+
+	if k8sService != nil {
+		conf[fullNameMain] = k8sService
+	}
+
+	var mirrorServices []dynamic.MirrorService
+	for _, mirror := range tService.Spec.Mirroring.Mirrors {
+		mirroredName, k8sService, err := c.nameAndService(ctx, tService.Namespace, mirror.LoadBalancerSpec)
+		if err != nil {
+			return err
+		}
+
+		if k8sService != nil {
+			conf[mirroredName] = k8sService
+		}
+
+		mirrorServices = append(mirrorServices, dynamic.MirrorService{
+			Name:    mirroredName,
+			Percent: mirror.Percent,
+		})
+	}
+
+	conf[id] = &dynamic.Service{
+		Mirroring: &dynamic.Mirroring{
+			Service: fullNameMain,
+			Mirrors: mirrorServices,
+		},
+	}
+
+	return nil
+}
+
+// buildServersLB creates the configuration for the load-balancer of servers defined by svc.
+func (c configBuilder) buildServersLB(namespace string, svc v1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
+	servers, err := c.loadServers(namespace, svc)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: support other strategies.
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
-
 	lb.Servers = servers
 
-	lb.PassHostHeader = service.PassHostHeader
+	conf := svc
+	lb.PassHostHeader = conf.PassHostHeader
 	if lb.PassHostHeader == nil {
 		passHostHeader := true
 		lb.PassHostHeader = &passHostHeader
 	}
-	lb.ResponseForwarding = service.ResponseForwarding
+	lb.ResponseForwarding = conf.ResponseForwarding
 
-	return &dynamic.Service{
-		LoadBalancer: lb,
-	}, nil
+	lb.Sticky = svc.Sticky
+
+	return &dynamic.Service{LoadBalancer: lb}, nil
 }
 
-func loadServers(client Client, namespace string, svc v1alpha1.Service) ([]dynamic.Server, error) {
+func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
 	strategy := svc.Strategy
 	if strategy == "" {
-		strategy = "RoundRobin"
+		strategy = roundRobinStrategy
 	}
-	if strategy != "RoundRobin" {
-		return nil, fmt.Errorf("load balancing strategy %v is not supported", strategy)
+	if strategy != roundRobinStrategy {
+		return nil, fmt.Errorf("load balancing strategy %s is not supported", strategy)
 	}
 
-	service, exists, err := client.GetService(namespace, svc.Name)
+	namespace := namespaceOrFallback(svc, fallbackNamespace)
+
+	// If the service uses explicitly the provider suffix
+	sanitizedName := strings.TrimSuffix(svc.Name, providerNamespaceSeparator+providerName)
+	service, exists, err := c.client.GetService(namespace, sanitizedName)
 	if err != nil {
 		return nil, err
 	}
-
 	if !exists {
-		return nil, fmt.Errorf("service not found %s/%s", namespace, svc.Name)
+		return nil, fmt.Errorf("kubernetes service not found: %s/%s", namespace, sanitizedName)
 	}
 
+	confPort := svc.Port
 	var portSpec *corev1.ServicePort
 	for _, p := range service.Spec.Ports {
-		if svc.Port == p.Port {
+		if confPort == p.Port {
 			portSpec = &p
 			break
 		}
 	}
-
 	if portSpec == nil {
 		return nil, errors.New("service port not found")
 	}
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		protocol := "http"
-		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
-			protocol = "https"
+		return append(servers, dynamic.Server{
+			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
+		}), nil
+	}
+
+	endpoints, endpointsExists, endpointsErr := c.client.GetEndpoints(namespace, sanitizedName)
+	if endpointsErr != nil {
+		return nil, endpointsErr
+	}
+	if !endpointsExists {
+		return nil, fmt.Errorf("endpoints not found for %s/%s", namespace, sanitizedName)
+	}
+	if len(endpoints.Subsets) == 0 {
+		return nil, fmt.Errorf("subset not found for %s/%s", namespace, sanitizedName)
+	}
+
+	var port int32
+	for _, subset := range endpoints.Subsets {
+		for _, p := range subset.Ports {
+			if portSpec.Name == p.Name {
+				port = p.Port
+				break
+			}
 		}
 
-		servers = append(servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, portSpec.Port),
-		})
-	} else {
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
-		if endpointsErr != nil {
-			return nil, endpointsErr
+		if port == 0 {
+			return nil, fmt.Errorf("cannot define a port for %s/%s", namespace, sanitizedName)
 		}
 
-		if !endpointsExists {
-			return nil, errors.New("endpoints not found")
+		protocol := httpProtocol
+		scheme := svc.Scheme
+		switch scheme {
+		case httpProtocol, httpsProtocol, "h2c":
+			protocol = scheme
+		case "":
+			if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, httpsProtocol) {
+				protocol = httpsProtocol
+			}
+		default:
+			return nil, fmt.Errorf("invalid scheme %q specified", scheme)
 		}
 
-		if len(endpoints.Subsets) == 0 {
-			return nil, errors.New("subset not found")
-		}
-
-		var port int32
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
-					port = p.Port
-					break
-				}
-			}
-
-			if port == 0 {
-				return nil, errors.New("cannot define a port")
-			}
-
-			protocol := "http"
-			switch svc.Scheme {
-			case "http", "https", "h2c":
-				protocol = svc.Scheme
-			case "":
-				if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
-					protocol = "https"
-				}
-			default:
-				return nil, fmt.Errorf("invalid scheme %q specified", svc.Scheme)
-			}
-
-			for _, addr := range subset.Addresses {
-				servers = append(servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
-				})
-			}
+		for _, addr := range subset.Addresses {
+			servers = append(servers, dynamic.Server{
+				URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
+			})
 		}
 	}
 
 	return servers, nil
+}
+
+// nameAndService returns the name that should be used for the svc service in the generated config.
+// In addition, if the service is a Kubernetes one,
+// it generates and returns the configuration part for such a service,
+// so that the caller can add it to the global config map.
+func (c configBuilder) nameAndService(ctx context.Context, namespaceService string, service v1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
+	svcCtx := log.With(ctx, log.Str(log.ServiceName, service.Name))
+
+	namespace := namespaceOrFallback(service, namespaceService)
+
+	switch {
+	case service.Kind == "" || service.Kind == "Service":
+		serversLB, err := c.buildServersLB(namespace, service)
+		if err != nil {
+			return "", nil, err
+		}
+
+		fullName := fullServiceName(svcCtx, namespace, service.Name, service.Port)
+
+		return fullName, serversLB, nil
+	case service.Kind == "TraefikService":
+		return fullServiceName(svcCtx, namespace, service.Name, 0), nil, nil
+	default:
+		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
+	}
+}
+
+func splitSvcNameProvider(name string) (string, string) {
+	parts := strings.Split(name, providerNamespaceSeparator)
+
+	svc := strings.Join(parts[:len(parts)-1], providerNamespaceSeparator)
+	pvd := parts[len(parts)-1]
+
+	return svc, pvd
+}
+
+func fullServiceName(ctx context.Context, namespace, serviceName string, port int32) string {
+	if port != 0 {
+		return provider.Normalize(fmt.Sprintf("%s-%s-%d", namespace, serviceName, port))
+	}
+
+	if !strings.Contains(serviceName, providerNamespaceSeparator) {
+		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, serviceName))
+	}
+
+	name, pName := splitSvcNameProvider(serviceName)
+	if pName == providerName {
+		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, name))
+	}
+
+	// At this point, if namespace == "default", we do not know whether it had been intentionally set as such,
+	// or if we're simply hitting the value set by default.
+	// But as it is most likely very much the latter,
+	// and we do not want to systematically log spam users in that case,
+	// we skip logging whenever the namespace is "default".
+	if namespace != "default" {
+		log.FromContext(ctx).Warnf("namespace %q is ignored in cross-provider context", namespace)
+	}
+
+	return provider.Normalize(name) + providerNamespaceSeparator + pName
+}
+
+func namespaceOrFallback(lb v1alpha1.LoadBalancerSpec, fallback string) string {
+	if lb.Namespace != "" {
+		return lb.Namespace
+	}
+	return fallback
 }
 
 func getTLSHTTP(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
