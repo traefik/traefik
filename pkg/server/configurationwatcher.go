@@ -96,12 +96,14 @@ func (c *ConfigurationWatcher) listenProviders(stop chan bool) {
 			if !ok {
 				return
 			}
+
 			if configMsg.Configuration == nil {
 				log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName).
 					Debug("Received nil configuration from provider, skipping.")
-			} else {
-				c.preLoadConfiguration(configMsg)
+				return
 			}
+
+			c.preLoadConfiguration(configMsg)
 		}
 	}
 }
