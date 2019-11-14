@@ -63,7 +63,7 @@ ping:
 
 _Optional, Default=false_
 
-If `manualRouting` is `true`, it disables the default internal router to allow to create a custom router for the `ping@internal` service.
+If `manualRouting` is `true`, it disables the default internal router in order to allow one to create a custom router for the `ping@internal` service.
 
 ```toml tab="File (TOML)"
 [ping]
