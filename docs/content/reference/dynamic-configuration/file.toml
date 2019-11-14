@@ -245,6 +245,7 @@
     [http.middlewares.Middleware19]
       [http.middlewares.Middleware19.stripPrefix]
         prefixes = ["foobar", "foobar"]
+        forceSlash = true
     [http.middlewares.Middleware20]
       [http.middlewares.Middleware20.stripPrefixRegex]
         regex = ["foobar", "foobar"]
@@ -284,25 +285,25 @@
           main = "foobar"
           sans = ["foobar", "foobar"]
   [tcp.services]
-    [tcp.services.TCPService0]
-      [tcp.services.TCPService0.loadBalancer]
-        terminationDelay = 100
+    [tcp.services.TCPService01]
+      [tcp.services.TCPService01.loadBalancer]
+        terminationDelay = 42
 
-        [[tcp.services.TCPService0.loadBalancer.servers]]
+        [[tcp.services.TCPService01.loadBalancer.servers]]
           address = "foobar"
 
-        [[tcp.services.TCPService0.loadBalancer.servers]]
+        [[tcp.services.TCPService01.loadBalancer.servers]]
           address = "foobar"
+    [tcp.services.TCPService02]
+      [tcp.services.TCPService02.weighted]
 
-    [tcp.services.TCPService1]
-      [tcp.services.TCPService1.loadBalancer]
-        terminationDelay = 100
+        [[tcp.services.TCPService02.weighted.services]]
+          name = "foobar"
+          weight = 42
 
-        [[tcp.services.TCPService1.loadBalancer.servers]]
-          address = "foobar"
-
-        [[tcp.services.TCPService1.loadBalancer.servers]]
-          address = "foobar"
+        [[tcp.services.TCPService02.weighted.services]]
+          name = "foobar"
+          weight = 42
 
 [tls]
 

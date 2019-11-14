@@ -7,7 +7,6 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/testhelpers"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,7 +46,6 @@ func TestNewAddPrefix(t *testing.T) {
 }
 
 func TestAddPrefix(t *testing.T) {
-	logrus.SetLevel(logrus.DebugLevel)
 	testCases := []struct {
 		desc            string
 		prefix          dynamic.AddPrefix
@@ -60,6 +58,12 @@ func TestAddPrefix(t *testing.T) {
 			prefix:       dynamic.AddPrefix{Prefix: "/a"},
 			path:         "/b",
 			expectedPath: "/a/b",
+		},
+		{
+			desc:         "Works with missing leading slash",
+			prefix:       dynamic.AddPrefix{Prefix: "a"},
+			path:         "/",
+			expectedPath: "/a/",
 		},
 		{
 			desc:            "Works with a raw path",

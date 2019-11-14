@@ -41,23 +41,35 @@ func New(ctx context.Context, next http.Handler, config dynamic.AddPrefix, name 
 	return result, nil
 }
 
-func (ap *addPrefix) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return ap.name, tracing.SpanKindNoneEnum
+func (a *addPrefix) GetTracingInformation() (string, ext.SpanKindEnum) {
+	return a.name, tracing.SpanKindNoneEnum
 }
 
-func (ap *addPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), ap.name, typeName))
+func (a *addPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), a.name, typeName))
 
 	oldURLPath := req.URL.Path
-	req.URL.Path = ap.prefix + req.URL.Path
+	req.URL.Path = ensureLeadingSlash(a.prefix + req.URL.Path)
 	logger.Debugf("URL.Path is now %s (was %s).", req.URL.Path, oldURLPath)
 
 	if req.URL.RawPath != "" {
 		oldURLRawPath := req.URL.RawPath
-		req.URL.RawPath = ap.prefix + req.URL.RawPath
+		req.URL.RawPath = ensureLeadingSlash(a.prefix + req.URL.RawPath)
 		logger.Debugf("URL.RawPath is now %s (was %s).", req.URL.RawPath, oldURLRawPath)
 	}
 	req.RequestURI = req.URL.RequestURI()
 
-	ap.next.ServeHTTP(rw, req)
+	a.next.ServeHTTP(rw, req)
+}
+
+func ensureLeadingSlash(str string) string {
+	if str == "" {
+		return str
+	}
+
+	if str[0] == '/' {
+		return str
+	}
+
+	return "/" + str
 }
