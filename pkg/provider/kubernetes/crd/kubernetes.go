@@ -31,6 +31,8 @@ const (
 	traefikDefaultIngressClass       = "traefik"
 )
 
+const providerName = "kubernetescrd"
+
 // Provider holds configurations of the provider.
 type Provider struct {
 	Endpoint               string         `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
@@ -84,7 +86,7 @@ func (p *Provider) Init() error {
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, "kubernetescrd"))
+	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, providerName))
 	logger := log.FromContext(ctxLog)
 
 	logger.Debugf("Using label selector: %q", p.LabelSelector)
@@ -135,7 +137,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					default:
 						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
-							ProviderName:  "kubernetescrd",
+							ProviderName:  providerName,
 							Configuration: conf,
 						}
 					}

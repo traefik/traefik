@@ -295,8 +295,8 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.HasBal
 	name := conf.Name
 	namespace := namespaceOrFallback(conf, fallbackNamespace)
 
-	// If the service uses explicitly the @kubernetescrd provider suffix
-	sanitizedName := strings.TrimSuffix(name, "@kubernetescrd")
+	// If the service uses explicitly the provider suffix
+	sanitizedName := strings.TrimSuffix(name, "@"+providerName)
 
 	service, exists, err := client.GetService(namespace, sanitizedName)
 	if err != nil {
