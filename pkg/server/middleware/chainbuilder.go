@@ -15,7 +15,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/tracing/jaeger"
 )
 
-// ChainBuilder Creates a middleware chain by entry point.
+// ChainBuilder Creates a middleware chain by entry point. It is used for middlewares that are created almost systematically and that need to be created before all others.
 type ChainBuilder struct {
 	metricsRegistry        metrics.Registry
 	accessLoggerMiddleware *accesslog.Handler
@@ -23,7 +23,7 @@ type ChainBuilder struct {
 	requestDecorator       *requestdecorator.RequestDecorator
 }
 
-// NewChainBuilder Creates a mew ChainBuilder.
+// NewChainBuilder Creates a new ChainBuilder.
 func NewChainBuilder(staticConfiguration static.Configuration, metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler) *ChainBuilder {
 	return &ChainBuilder{
 		metricsRegistry:        metricsRegistry,
@@ -109,7 +109,7 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 	}
 
 	if backend == nil {
-		log.WithoutContext().Debug("Could not initialize tracing, use Jaeger by default")
+		log.WithoutContext().Debug("Could not initialize tracing, using Jaeger by default")
 		defaultBackend := &jaeger.Config{}
 		defaultBackend.SetDefaults()
 		backend = defaultBackend
