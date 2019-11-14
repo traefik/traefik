@@ -104,7 +104,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					continue
 				}
 			} else if len(route.Services) == 1 {
-				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0])
+				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec)
 				if err != nil {
 					logger.Error(err)
 					continue
@@ -177,11 +177,10 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *v1alph
 // buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
 // It adds it to the given conf map.
 func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService v1alpha1.ServiceSpec, id string, conf map[string]*dynamic.Service) error {
-	services := tService.Weighted.Services
 	var wrrServices []dynamic.WRRService
 
-	for _, service := range services {
-		fullName, k8sService, err := c.nameAndService(ctx, namespace, service)
+	for _, service := range tService.Weighted.Services {
+		fullName, k8sService, err := c.nameAndService(ctx, namespace, service.LoadBalancerSpec)
 		if err != nil {
 			return err
 		}
@@ -213,10 +212,7 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 // buildMirroring creates the configuration for the mirroring service named id, and defined by tService.
 // It adds it to the given conf map.
 func (c configBuilder) buildMirroring(ctx context.Context, tService *v1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
-	mirroring := tService.Spec.Mirroring
-	namespace := tService.Namespace
-
-	fullNameMain, k8sService, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Mirroring)
+	fullNameMain, k8sService, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Mirroring.LoadBalancerSpec)
 	if err != nil {
 		return err
 	}
@@ -226,8 +222,8 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *v1alpha1.Tr
 	}
 
 	var mirrorServices []dynamic.MirrorService
-	for _, mirror := range mirroring.Mirrors {
-		mirroredName, k8sService, err := c.nameAndService(ctx, namespace, mirror)
+	for _, mirror := range tService.Spec.Mirroring.Mirrors {
+		mirroredName, k8sService, err := c.nameAndService(ctx, tService.Namespace, mirror.LoadBalancerSpec)
 		if err != nil {
 			return err
 		}
@@ -253,7 +249,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *v1alpha1.Tr
 }
 
 // buildServersLB creates the configuration for the load-balancer of servers defined by svc.
-func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc v1alpha1.HasBalancer) (*dynamic.Service, error) {
+func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc v1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
 	servers, err := c.loadServers(namespace, svc)
 	if err != nil {
 		return nil, err
@@ -263,7 +259,7 @@ func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc
 	lb.SetDefaults()
 	lb.Servers = servers
 
-	conf := svc.LoadBalancer()
+	conf := svc
 	lb.PassHostHeader = conf.PassHostHeader
 	if lb.PassHostHeader == nil {
 		passHostHeader := true
@@ -271,34 +267,26 @@ func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc
 	}
 	lb.ResponseForwarding = conf.ResponseForwarding
 
-	ssvc, ok := svc.(v1alpha1.Service)
-	if ok {
-		lb.Sticky = ssvc.Sticky
-	}
+	lb.Sticky = svc.Sticky
 
 	return &dynamic.Service{LoadBalancer: lb}, nil
 }
 
-func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.HasBalancer) ([]dynamic.Server, error) {
-	conf := svc.LoadBalancer()
-	client := c.client
-
-	strategy := conf.Strategy
-
+func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
+	strategy := svc.Strategy
 	if strategy == "" {
 		strategy = roundRobinStrategy
 	}
 	if strategy != roundRobinStrategy {
-		return nil, fmt.Errorf("load balancing strategy %v is not supported", strategy)
+		return nil, fmt.Errorf("load balancing strategy %s is not supported", strategy)
 	}
 
-	name := conf.Name
-	namespace := namespaceOrFallback(conf, fallbackNamespace)
+	name := svc.Name
+	namespace := namespaceOrFallback(svc, fallbackNamespace)
 
 	// If the service uses explicitly the provider suffix
 	sanitizedName := strings.TrimSuffix(name, providerNamespaceSeparator+providerName)
-
-	service, exists, err := client.GetService(namespace, sanitizedName)
+	service, exists, err := c.client.GetService(namespace, sanitizedName)
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +294,7 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.HasBal
 		return nil, fmt.Errorf("kubernetes service not found: %s/%s", namespace, sanitizedName)
 	}
 
-	confPort := conf.Port
+	confPort := svc.Port
 	var portSpec *corev1.ServicePort
 	for _, p := range service.Spec.Ports {
 		if confPort == p.Port {
@@ -325,15 +313,15 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.HasBal
 		}), nil
 	}
 
-	endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, sanitizedName)
+	endpoints, endpointsExists, endpointsErr := c.client.GetEndpoints(namespace, sanitizedName)
 	if endpointsErr != nil {
 		return nil, endpointsErr
 	}
 	if !endpointsExists {
-		return nil, fmt.Errorf("endpoints not found for %v/%v", namespace, sanitizedName)
+		return nil, fmt.Errorf("endpoints not found for %s/%s", namespace, sanitizedName)
 	}
 	if len(endpoints.Subsets) == 0 {
-		return nil, fmt.Errorf("subset not found for %v/%v", namespace, sanitizedName)
+		return nil, fmt.Errorf("subset not found for %s/%s", namespace, sanitizedName)
 	}
 
 	var port int32
@@ -346,11 +334,11 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.HasBal
 		}
 
 		if port == 0 {
-			return nil, fmt.Errorf("cannot define a port for %v/%v", namespace, sanitizedName)
+			return nil, fmt.Errorf("cannot define a port for %s/%s", namespace, sanitizedName)
 		}
 
 		protocol := httpProtocol
-		scheme := conf.Scheme
+		scheme := svc.Scheme
 		switch scheme {
 		case httpProtocol, httpsProtocol, "h2c":
 			protocol = scheme
@@ -376,21 +364,23 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.HasBal
 // In addition, if the service is a Kubernetes one,
 // it generates and returns the configuration part for such a service,
 // so that the caller can add it to the global config map.
-func (c configBuilder) nameAndService(ctx context.Context, namespaceService string, svc v1alpha1.HasBalancer) (string, *dynamic.Service, error) {
-	service := svc.LoadBalancer()
+func (c configBuilder) nameAndService(ctx context.Context, namespaceService string, service v1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
 	namespace := namespaceOrFallback(service, namespaceService)
+
 	switch {
 	case service.Kind == "" || service.Kind == "Service":
-		fullName := fullServiceName(ctx, namespace, service.Name, service.Port)
-		serversLB, err := c.buildServersLB(ctx, namespace, svc)
+		serversLB, err := c.buildServersLB(ctx, namespace, service)
 		if err != nil {
 			return "", nil, err
 		}
+
+		fullName := fullServiceName(ctx, namespace, service.Name, service.Port)
+
 		return fullName, serversLB, nil
 	case service.Kind == "TraefikService":
 		return fullServiceName(ctx, namespace, service.Name, 0), nil, nil
 	default:
-		return "", nil, fmt.Errorf("unsupported service kind %v", service.Kind)
+		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
 	}
 }
 

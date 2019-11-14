@@ -103,11 +103,6 @@ type Service struct {
 	LoadBalancerSpec
 }
 
-// LoadBalancer returns the embedded LoadBalancer
-func (m Service) LoadBalancer() LoadBalancerSpec {
-	return m.LoadBalancerSpec
-}
-
 // MiddlewareRef is a ref to the Middleware resources.
 type MiddlewareRef struct {
 	Name      string `json:"name"`

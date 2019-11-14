@@ -58,7 +58,7 @@ func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*cli
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
-		withEndpoint = fmt.Sprintf(" with endpoint %v", p.Endpoint)
+		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
 	}
 
 	var client *clientWrapper
@@ -154,11 +154,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		notify := func(err error, time time.Duration) {
-			logger.Errorf("Provider connection error: %s; retrying in %s", err, time)
+			logger.Errorf("Provider connection error: %v; retrying in %s", err, time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
-			logger.Errorf("Cannot connect to Provider: %s", err)
+			logger.Errorf("Cannot connect to Provider: %v", err)
 		}
 	})
 
@@ -301,7 +301,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 	if len(auth.TLS.CertSecret) > 0 {
 		authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, k8sClient)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load auth secret: %s", err)
+			return nil, fmt.Errorf("failed to load auth secret: %v", err)
 		}
 		forwardAuth.TLS.Cert = authSecretCert
 		forwardAuth.TLS.Key = authSecretKey
@@ -313,7 +313,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 func loadCASecret(namespace, secretName string, k8sClient Client) (string, error) {
 	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
+		return "", fmt.Errorf("failed to fetch secret '%s/%s': %v", namespace, secretName, err)
 	}
 	if !ok {
 		return "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
@@ -392,7 +392,7 @@ func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]strin
 
 	auth, err := loadAuthCredentials(namespace, authSecret, k8sClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load auth credentials: %s", err)
+		return nil, fmt.Errorf("failed to load auth credentials: %v", err)
 	}
 
 	return auth, nil
@@ -401,7 +401,7 @@ func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]strin
 func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
 	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
+		return nil, fmt.Errorf("failed to fetch secret '%s/%s': %v", namespace, secretName, err)
 	}
 	if !ok {
 		return nil, fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
@@ -427,7 +427,7 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading secret for %v/%v: %v", namespace, secretName, err)
+		return nil, fmt.Errorf("error reading secret for %s/%s: %v", namespace, secretName, err)
 	}
 	if len(credentials) == 0 {
 		return nil, fmt.Errorf("secret '%s/%s' does not contain any credentials", namespace, secretName)
@@ -615,14 +615,12 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, error) {
 	tlsCrtData, tlsCrtExists := secret.Data["tls.ca"]
 	if !tlsCrtExists {
-		return "", fmt.Errorf("the tls.ca entry is missing from secret %s/%s",
-			namespace, secretName)
+		return "", fmt.Errorf("the tls.ca entry is missing from secret %s/%s", namespace, secretName)
 	}
 
 	cert := string(tlsCrtData)
 	if cert == "" {
-		return "", fmt.Errorf("the tls.ca entry in secret %s/%s is empty",
-			namespace, secretName)
+		return "", fmt.Errorf("the tls.ca entry in secret %s/%s is empty", namespace, secretName)
 	}
 
 	return cert, nil
