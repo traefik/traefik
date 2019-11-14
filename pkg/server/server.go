@@ -6,19 +6,12 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/metrics"
 	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/server/middleware"
-	"github.com/containous/traefik/v2/pkg/types"
 )
-
-// RouteAppenderFactory the route appender factory interface
-type RouteAppenderFactory interface {
-	NewAppender(ctx context.Context, runtimeConfiguration *runtime.Configuration) types.RouteAppender
-}
 
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
