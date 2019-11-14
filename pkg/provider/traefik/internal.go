@@ -63,82 +63,94 @@ func (i *Provider) createConfiguration() *dynamic.Configuration {
 }
 
 func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
-	if i.staticCfg.API != nil {
-		if i.staticCfg.API.Insecure {
-			cfg.HTTP.Routers["api"] = &dynamic.Router{
-				EntryPoints: []string{"traefik"},
-				Service:     "api@internal",
-				Priority:    math.MaxInt64 - 1,
-				Rule:        "PathPrefix(`/api`)",
-			}
+	if i.staticCfg.API == nil {
+		return
+	}
 
-			if i.staticCfg.API.Dashboard {
-				cfg.HTTP.Routers["dashboard"] = &dynamic.Router{
-					EntryPoints: []string{"traefik"},
-					Service:     "dashboard@internal",
-					Priority:    math.MaxInt64 - 2,
-					Rule:        "PathPrefix(`/`)",
-					Middlewares: []string{"dashboard_redirect@internal", "dashboard_stripprefix@internal"},
-				}
-
-				cfg.HTTP.Middlewares["dashboard_redirect"] = &dynamic.Middleware{
-					RedirectRegex: &dynamic.RedirectRegex{
-						Regex:       `^(http:\/\/[^:]+(:\d+)?)/$`,
-						Replacement: "${1}/dashboard/",
-						Permanent:   true,
-					},
-				}
-				cfg.HTTP.Middlewares["dashboard_stripprefix"] = &dynamic.Middleware{
-					StripPrefix: &dynamic.StripPrefix{Prefixes: []string{"/dashboard/", "/dashboard"}},
-				}
-			}
+	if i.staticCfg.API.Insecure {
+		cfg.HTTP.Routers["api"] = &dynamic.Router{
+			EntryPoints: []string{"traefik"},
+			Service:     "api@internal",
+			Priority:    math.MaxInt64 - 1,
+			Rule:        "PathPrefix(`/api`)",
 		}
-		cfg.HTTP.Services["api"] = &dynamic.Service{}
 
 		if i.staticCfg.API.Dashboard {
-			cfg.HTTP.Services["dashboard"] = &dynamic.Service{}
+			cfg.HTTP.Routers["dashboard"] = &dynamic.Router{
+				EntryPoints: []string{"traefik"},
+				Service:     "dashboard@internal",
+				Priority:    math.MaxInt64 - 2,
+				Rule:        "PathPrefix(`/`)",
+				Middlewares: []string{"dashboard_redirect@internal", "dashboard_stripprefix@internal"},
+			}
+
+			cfg.HTTP.Middlewares["dashboard_redirect"] = &dynamic.Middleware{
+				RedirectRegex: &dynamic.RedirectRegex{
+					Regex:       `^(http:\/\/[^:]+(:\d+)?)/$`,
+					Replacement: "${1}/dashboard/",
+					Permanent:   true,
+				},
+			}
+			cfg.HTTP.Middlewares["dashboard_stripprefix"] = &dynamic.Middleware{
+				StripPrefix: &dynamic.StripPrefix{Prefixes: []string{"/dashboard/", "/dashboard"}},
+			}
 		}
+	}
+
+	cfg.HTTP.Services["api"] = &dynamic.Service{}
+
+	if i.staticCfg.API.Dashboard {
+		cfg.HTTP.Services["dashboard"] = &dynamic.Service{}
 	}
 }
 
 func (i *Provider) pingConfiguration(cfg *dynamic.Configuration) {
-	if i.staticCfg.Ping != nil {
-		if !i.staticCfg.Ping.ManualRouting {
-			cfg.HTTP.Routers["ping"] = &dynamic.Router{
-				EntryPoints: []string{i.staticCfg.Ping.EntryPoint},
-				Service:     "ping@internal",
-				Priority:    math.MaxInt64,
-				Rule:        "PathPrefix(`/ping`)",
-			}
-		}
-		cfg.HTTP.Services["ping"] = &dynamic.Service{}
+	if i.staticCfg.Ping == nil {
+		return
 	}
+
+	if !i.staticCfg.Ping.ManualRouting {
+		cfg.HTTP.Routers["ping"] = &dynamic.Router{
+			EntryPoints: []string{i.staticCfg.Ping.EntryPoint},
+			Service:     "ping@internal",
+			Priority:    math.MaxInt64,
+			Rule:        "PathPrefix(`/ping`)",
+		}
+	}
+
+	cfg.HTTP.Services["ping"] = &dynamic.Service{}
 }
 
 func (i *Provider) restConfiguration(cfg *dynamic.Configuration) {
-	if i.staticCfg.Providers != nil && i.staticCfg.Providers.Rest != nil {
-		if i.staticCfg.Providers.Rest.Insecure {
-			cfg.HTTP.Routers["rest"] = &dynamic.Router{
-				EntryPoints: []string{"traefik"},
-				Service:     "rest@internal",
-				Priority:    math.MaxInt64,
-				Rule:        "PathPrefix(`/api/providers`)",
-			}
-		}
-		cfg.HTTP.Services["rest"] = &dynamic.Service{}
+	if i.staticCfg.Providers == nil || i.staticCfg.Providers.Rest == nil {
+		return
 	}
+
+	if i.staticCfg.Providers.Rest.Insecure {
+		cfg.HTTP.Routers["rest"] = &dynamic.Router{
+			EntryPoints: []string{"traefik"},
+			Service:     "rest@internal",
+			Priority:    math.MaxInt64,
+			Rule:        "PathPrefix(`/api/providers`)",
+		}
+	}
+
+	cfg.HTTP.Services["rest"] = &dynamic.Service{}
 }
 
 func (i *Provider) prometheusConfiguration(cfg *dynamic.Configuration) {
-	if i.staticCfg.Metrics != nil && i.staticCfg.Metrics.Prometheus != nil {
-		if !i.staticCfg.Metrics.Prometheus.ManualRouting {
-			cfg.HTTP.Routers["prometheus"] = &dynamic.Router{
-				EntryPoints: []string{i.staticCfg.Metrics.Prometheus.EntryPoint},
-				Service:     "prometheus@internal",
-				Priority:    math.MaxInt64,
-				Rule:        "PathPrefix(`/metrics`)",
-			}
-		}
-		cfg.HTTP.Services["prometheus"] = &dynamic.Service{}
+	if i.staticCfg.Metrics == nil || i.staticCfg.Metrics.Prometheus == nil {
+		return
 	}
+
+	if !i.staticCfg.Metrics.Prometheus.ManualRouting {
+		cfg.HTTP.Routers["prometheus"] = &dynamic.Router{
+			EntryPoints: []string{i.staticCfg.Metrics.Prometheus.EntryPoint},
+			Service:     "prometheus@internal",
+			Priority:    math.MaxInt64,
+			Rule:        "PathPrefix(`/metrics`)",
+		}
+	}
+
+	cfg.HTTP.Services["prometheus"] = &dynamic.Service{}
 }
