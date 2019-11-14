@@ -251,7 +251,7 @@ func TestHandler_Overview(t *testing.T) {
 			t.Parallel()
 
 			handler := New(test.confStatic, &test.confDyn)
-			server := httptest.NewServer(handler.CreateRouter())
+			server := httptest.NewServer(handler.createRouter())
 
 			resp, err := http.DefaultClient.Get(server.URL + test.path)
 			require.NoError(t, err)

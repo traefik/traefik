@@ -56,7 +56,7 @@ type Handler struct {
 // NewBuilder returns a http.Handler builder based on runtime.Configuration
 func NewBuilder(staticConfig static.Configuration) func(*runtime.Configuration) http.Handler {
 	return func(configuration *runtime.Configuration) http.Handler {
-		return New(staticConfig, configuration).CreateRouter()
+		return New(staticConfig, configuration).createRouter()
 	}
 }
 
@@ -77,8 +77,8 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 	}
 }
 
-// CreateRouter creates API routes and router.
-func (h Handler) CreateRouter() *mux.Router {
+// createRouter creates API routes and router.
+func (h Handler) createRouter() *mux.Router {
 	router := mux.NewRouter()
 
 	if h.debug {
