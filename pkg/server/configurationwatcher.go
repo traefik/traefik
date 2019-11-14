@@ -87,6 +87,9 @@ func (c *ConfigurationWatcher) startProvider() {
 	})
 }
 
+// listenProviders receives configuration changes from the providers.
+// The configuration message then gets passed along a series of check
+// to finally end up in a throttler that sends it to listenConfigurations (through c. configurationValidatedChan).
 func (c *ConfigurationWatcher) listenProviders(stop chan bool) {
 	for {
 		select {

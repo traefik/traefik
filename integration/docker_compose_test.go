@@ -71,10 +71,10 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 	err = json.NewDecoder(resp.Body).Decode(&rtconf)
 	c.Assert(err, checker.IsNil)
 
-	// check that we have only one router
+	// check that we have only three routers (the one from this test + 2 unrelated internal ones)
 	c.Assert(rtconf.Routers, checker.HasLen, 3)
 
-	// check that we have only one service with n servers
+	// check that we have only one service (not counting the internal ones) with n servers
 	services := rtconf.Services
 	c.Assert(services, checker.HasLen, 3)
 	for name, service := range services {
