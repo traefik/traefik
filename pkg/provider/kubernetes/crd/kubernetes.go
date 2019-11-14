@@ -237,11 +237,10 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 	cb := configBuilder{client}
 	for _, service := range client.GetTraefikServices() {
-		// TODO add fields on ctx
 		err := cb.buildTraefikService(ctx, service, conf.HTTP.Services)
 		if err != nil {
-			// TODO add fields on log
-			log.FromContext(ctx).Errorf("Error while building TraefikService: %v", err)
+			log.FromContext(ctx).WithField(log.ServiceName, service.Name).
+				Errorf("Error while building TraefikService: %v", err)
 			continue
 		}
 	}
@@ -259,7 +258,7 @@ func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alp
 		Query:  errorPage.Query,
 	}
 
-	balancerServerHTTP, err := configBuilder{client}.buildServersLB(context.TODO(), namespace, errorPage.Service)
+	balancerServerHTTP, err := configBuilder{client}.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
 	if err != nil {
 		return nil, nil, err
 	}

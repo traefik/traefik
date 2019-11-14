@@ -249,7 +249,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *v1alpha1.Tr
 }
 
 // buildServersLB creates the configuration for the load-balancer of servers defined by svc.
-func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc v1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
+func (c configBuilder) buildServersLB(namespace string, svc v1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
 	servers, err := c.loadServers(namespace, svc)
 	if err != nil {
 		return nil, err
@@ -281,11 +281,10 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 		return nil, fmt.Errorf("load balancing strategy %s is not supported", strategy)
 	}
 
-	name := svc.Name
 	namespace := namespaceOrFallback(svc, fallbackNamespace)
 
 	// If the service uses explicitly the provider suffix
-	sanitizedName := strings.TrimSuffix(name, providerNamespaceSeparator+providerName)
+	sanitizedName := strings.TrimSuffix(svc.Name, providerNamespaceSeparator+providerName)
 	service, exists, err := c.client.GetService(namespace, sanitizedName)
 	if err != nil {
 		return nil, err
@@ -365,20 +364,22 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 // it generates and returns the configuration part for such a service,
 // so that the caller can add it to the global config map.
 func (c configBuilder) nameAndService(ctx context.Context, namespaceService string, service v1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
+	svcCtx := log.With(ctx, log.Str(log.ServiceName, service.Name))
+
 	namespace := namespaceOrFallback(service, namespaceService)
 
 	switch {
 	case service.Kind == "" || service.Kind == "Service":
-		serversLB, err := c.buildServersLB(ctx, namespace, service)
+		serversLB, err := c.buildServersLB(namespace, service)
 		if err != nil {
 			return "", nil, err
 		}
 
-		fullName := fullServiceName(ctx, namespace, service.Name, service.Port)
+		fullName := fullServiceName(svcCtx, namespace, service.Name, service.Port)
 
 		return fullName, serversLB, nil
 	case service.Kind == "TraefikService":
-		return fullServiceName(ctx, namespace, service.Name, 0), nil, nil
+		return fullServiceName(svcCtx, namespace, service.Name, 0), nil, nil
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
 	}
@@ -413,9 +414,7 @@ func fullServiceName(ctx context.Context, namespace, serviceName string, port in
 	// and we do not want to systematically log spam users in that case,
 	// we skip logging whenever the namespace is "default".
 	if namespace != "default" {
-		log.FromContext(ctx).
-			WithField(log.ServiceName, serviceName).
-			Warnf("namespace %q is ignored in cross-provider context", namespace)
+		log.FromContext(ctx).Warnf("namespace %q is ignored in cross-provider context", namespace)
 	}
 
 	return provider.Normalize(name) + providerNamespaceSeparator + pName
