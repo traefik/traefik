@@ -19,6 +19,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		config         dynamic.RedirectScheme
 		method         string
 		url            string
+		headers        map[string]string
 		secured        bool
 		expectedURL    string
 		expectedStatus int
@@ -36,6 +37,18 @@ func TestRedirectSchemeHandler(t *testing.T) {
 				Scheme: "https",
 			},
 			url:            "http://foo",
+			expectedURL:    "https://foo",
+			expectedStatus: http.StatusFound,
+		},
+		{
+			desc: "HTTP to HTTPS, with X-Forwarded-Proto",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+			},
+			url: "http://foo",
+			headers: map[string]string{
+				"X-Forwarded-Proto": "https",
+			},
 			expectedURL:    "https://foo",
 			expectedStatus: http.StatusFound,
 		},
@@ -197,13 +210,17 @@ func TestRedirectSchemeHandler(t *testing.T) {
 				if test.method != "" {
 					method = test.method
 				}
-				r := httptest.NewRequest(method, test.url, nil)
+				req := httptest.NewRequest(method, test.url, nil)
+
+				for k, v := range test.headers {
+					req.Header.Set(k, v)
+				}
 
 				if test.secured {
-					r.TLS = &tls.ConnectionState{}
+					req.TLS = &tls.ConnectionState{}
 				}
-				r.Header.Set("X-Foo", "bar")
-				handler.ServeHTTP(recorder, r)
+				req.Header.Set("X-Foo", "bar")
+				handler.ServeHTTP(recorder, req)
 
 				assert.Equal(t, test.expectedStatus, recorder.Code)
 
@@ -223,9 +240,9 @@ func TestRedirectSchemeHandler(t *testing.T) {
 
 				if re.Match([]byte(test.url)) {
 					match := re.FindStringSubmatch(test.url)
-					r.RequestURI = match[4]
+					req.RequestURI = match[4]
 
-					handler.ServeHTTP(recorder, r)
+					handler.ServeHTTP(recorder, req)
 
 					assert.Equal(t, test.expectedStatus, recorder.Code)
 					if test.expectedStatus == http.StatusMovedPermanently ||
