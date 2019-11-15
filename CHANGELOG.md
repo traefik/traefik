@@ -1,3 +1,9 @@
+## [v2.0.4](https://github.com/containous/traefik/tree/v2.0.4) (2019-10-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.3...v2.0.4)
+
+Fixes int overflow.
+Same changelog as v2.1.0-rc1
+
 ## [v2.1.0-rc1](https://github.com/containous/traefik/tree/v2.1.0-rc1) (2019-11-15)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc1...v2.1.0-rc1)
 
