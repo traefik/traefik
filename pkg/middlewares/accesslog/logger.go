@@ -222,9 +222,7 @@ func deepCopy(h http.Header) http.Header {
 	newHeader := make(http.Header, len(h))
 	for k, v := range h {
 		val := make([]string, len(v))
-		for l, w := range v {
-			val[l] = w
-		}
+		copy(val, v)
 		newHeader[k] = val
 	}
 	return newHeader
