@@ -15,7 +15,7 @@ The ReplaceRegex replace a path from an url to another with regex matching and r
 # Replace path with regex
 labels:
   - "traefik.http.middlewares.test-replacepathregex.replacepathregex.regex=^/foo/(.*)"
-  - "traefik.http.middlewares.test-replacepathregex.replacepathregex.replacement=/bar/$1"
+  - "traefik.http.middlewares.test-replacepathregex.replacepathregex.replacement=/bar/$$1"
 ```
 
 ```yaml tab="Kubernetes"

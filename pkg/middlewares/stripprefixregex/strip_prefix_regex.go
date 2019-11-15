@@ -60,12 +60,12 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 
 			req.Header.Add(stripprefix.ForwardedPrefixHeader, prefix)
 
-			req.URL.Path = strings.Replace(req.URL.Path, prefix, "", 1)
+			req.URL.Path = ensureLeadingSlash(strings.Replace(req.URL.Path, prefix, "", 1))
 			if req.URL.RawPath != "" {
-				req.URL.RawPath = req.URL.RawPath[len(prefix):]
+				req.URL.RawPath = ensureLeadingSlash(req.URL.RawPath[len(prefix):])
 			}
 
-			req.RequestURI = ensureLeadingSlash(req.URL.RequestURI())
+			req.RequestURI = req.URL.RequestURI()
 			s.next.ServeHTTP(rw, req)
 			return
 		}
@@ -75,5 +75,13 @@ func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 }
 
 func ensureLeadingSlash(str string) string {
-	return "/" + strings.TrimPrefix(str, "/")
+	if str == "" {
+		return str
+	}
+
+	if str[0] == '/' {
+		return str
+	}
+
+	return "/" + str
 }

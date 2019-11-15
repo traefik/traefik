@@ -267,7 +267,7 @@ metadata:
 
 spec:
   entryPoints:
-    - web
+    - websecure
   routes:
   - match: Host(`foo.com`) && PathPrefix(`/bar`)
     kind: Rule

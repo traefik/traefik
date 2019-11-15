@@ -215,6 +215,7 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 | [ACME DNS](https://github.com/joohoi/acme-dns)              | `acme-dns`     | `ACME_DNS_API_BASE`, `ACME_DNS_STORAGE_PATH`                                                                                                | [Additional configuration](https://go-acme.github.io/lego/dns/acme-dns)     |
 | [Alibaba Cloud](https://www.alibabacloud.com)               | `alidns`       | `ALICLOUD_ACCESS_KEY`, `ALICLOUD_SECRET_KEY`, `ALICLOUD_REGION_ID`                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/alidns)       |
 | [Auroradns](https://www.pcextreme.com/aurora/dns)           | `auroradns`    | `AURORA_USER_ID`, `AURORA_KEY`, `AURORA_ENDPOINT`                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/auroradns)    |
+| [Autodns](https://www.internetx.com/domains/autodns/)       | `autodns`      | `AUTODNS_API_USER`, `AUTODNS_API_PASSWORD`                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/autodns)      |
 | [Azure](https://azure.microsoft.com/services/dns/)          | `azure`        | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`, `[AZURE_METADATA_ENDPOINT]`   | [Additional configuration](https://go-acme.github.io/lego/dns/azure)        |
 | [Bindman](https://github.com/labbsr0x/bindman-dns-webhook)  | `bindman`      | `BINDMAN_MANAGER_ADDRESS`                                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/bindman)      |
 | [Blue Cat](https://www.bluecatnetworks.com/)                | `bluecat`      | `BLUECAT_SERVER_URL`, `BLUECAT_USER_NAME`, `BLUECAT_PASSWORD`, `BLUECAT_CONFIG_NAME`, `BLUECAT_DNS_VIEW`                                    | [Additional configuration](https://go-acme.github.io/lego/dns/bluecat)      |
@@ -390,7 +391,7 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 ```
 
 !!! warning
-    For concurrency reason, this file cannot be shared across multiple instances of Traefik. Use a key value store entry instead.
+    For concurrency reason, this file cannot be shared across multiple instances of Traefik.
 
 ## Fallback
 

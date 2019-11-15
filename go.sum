@@ -193,8 +193,8 @@ github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMo
 github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2 h1:df6OFl8WNXk82xxP3R9ZPZ5seOA8XZkwLdbEzZF1/xI=
 github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2/go.mod h1:GLyXJD41gBO/NPKVPGQbhyyC06eugGy15QEZyUkE2/s=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
-github.com/go-acme/lego/v3 v3.1.0 h1:yanYFoYW8azFkCvJfIk7edWWfjkYkhDxe45ZsxoW4Xk=
-github.com/go-acme/lego/v3 v3.1.0/go.mod h1:074uqt+JS6plx+c9Xaiz6+L+GBb+7itGtzfcDM2AhEE=
+github.com/go-acme/lego/v3 v3.2.0 h1:z0zvNlL1niv/1qA06V5X1BRC5PeLoGKAlVaWthXQz9c=
+github.com/go-acme/lego/v3 v3.2.0/go.mod h1:074uqt+JS6plx+c9Xaiz6+L+GBb+7itGtzfcDM2AhEE=
 github.com/go-cmd/cmd v1.0.5/go.mod h1:y8q8qlK5wQibcw63djSl/ntiHUHXHGdCkPk0j4QeW4s=
 github.com/go-errors/errors v1.0.1 h1:LUHzmkK3GUKUrL/1gfBUxAHzcev3apQlezX/+O7ma6w=
 github.com/go-errors/errors v1.0.1/go.mod h1:f4zRHt4oKfwPJE5k8C9vpYG+aDHdBFUsgrm6/TyX73Q=
@@ -454,8 +454,8 @@ github.com/opentracing/basictracer-go v1.0.0 h1:YyUAhaEfjoWXclZVJ9sGoNct7j4TVk7l
 github.com/opentracing/basictracer-go v1.0.0/go.mod h1:QfBfYuafItcjQuMwinw9GhYKwFXS9KnPs5lxoYwgW74=
 github.com/opentracing/opentracing-go v1.1.0 h1:pWlfV3Bxv7k65HYwkikxat0+s3pV4bsqf19k25Ur8rU=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
-github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.3 h1:XudIMByQMXJ6oDHy4SipNyo35LxjA69Z7v1nL0aAZvA=
-github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.3/go.mod h1:/wsWhb9smxSfWAKL3wpBW7V8scJMt8N8gnaMCS9E/cA=
+github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.4 h1:bzTJRoOZEN7uI1gq594S5HhMYNSud4FKUEwd4aFbsEI=
+github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.4/go.mod h1:/wsWhb9smxSfWAKL3wpBW7V8scJMt8N8gnaMCS9E/cA=
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
 github.com/openzipkin/zipkin-go v0.2.1 h1:noL5/5Uf1HpVl3wNsfkZhIKbSWCVi5jgqkONNx8PXcA=
 github.com/openzipkin/zipkin-go v0.2.1/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
@@ -560,8 +560,8 @@ github.com/uber/jaeger-lib v2.2.0+incompatible h1:MxZXOiR2JuoANZ3J6DE/U0kSFv/eJ/
 github.com/uber/jaeger-lib v2.2.0+incompatible/go.mod h1:ComeNDZlWwrWnDv8aPp0Ba6+uUTzImX/AauajbLI56U=
 github.com/unrolled/render v1.0.1 h1:VDDnQQVfBMsOsp3VaCJszSO0nkBIVEYoPWeRThk9spY=
 github.com/unrolled/render v1.0.1/go.mod h1:gN9T0NhL4Bfbwu8ann7Ry/TGHYfosul+J0obPf6NBdM=
-github.com/unrolled/secure v1.0.4 h1:DksfKsRTyXP2R8quDdOOuRpRO45VprFL0X9t9+JX1PU=
-github.com/unrolled/secure v1.0.4/go.mod h1:R6rugAuzh4TQpbFAq69oqZggyBQxFRFQIewtz5z7Jsc=
+github.com/unrolled/secure v1.0.5 h1:KRGJ8DQC3jKpERjBKF3H6b3HcAsM/SRTVwfNJnWs25E=
+github.com/unrolled/secure v1.0.5/go.mod h1:R6rugAuzh4TQpbFAq69oqZggyBQxFRFQIewtz5z7Jsc=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/vdemeester/shakers v0.1.0 h1:K+n9sSyUCg2ywmZkv+3c7vsYZfivcfKhMh8kRxCrONM=
 github.com/vdemeester/shakers v0.1.0/go.mod h1:IZ1HHynUOQt32iQ3rvAeVddXLd19h/6LWiKsh9RZtAQ=

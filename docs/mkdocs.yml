@@ -42,6 +42,9 @@ extra_javascript:
 
 plugins:
   - search
+  - exclude:
+      glob:
+        - include-*.md
 
 # https://squidfunk.github.io/mkdocs-material/extensions/admonition/
 # https://facelessuser.github.io/pymdown-extensions/
@@ -156,6 +159,7 @@ nav:
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'
       - 'Submitting PRs': 'contributing/submitting-pull-requests.md'
+      - 'Security': 'contributing/submitting-security-issues.md'
       - 'Building and Testing': 'contributing/building-testing.md'
       - 'Documentation': 'contributing/documentation.md'
       - 'Data Collection': 'contributing/data-collection.md'

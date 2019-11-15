@@ -39,7 +39,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.0 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
-	github.com/go-acme/lego/v3 v3.1.0
+	github.com/go-acme/lego/v3 v3.2.0
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.9.0
 	github.com/golang/protobuf v1.3.2
@@ -67,7 +67,7 @@ require (
 	github.com/opencontainers/runc v1.0.0-rc8 // indirect
 	github.com/opentracing/basictracer-go v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.3
+	github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.4
 	github.com/openzipkin/zipkin-go v0.2.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/philhofer/fwd v1.0.0 // indirect
@@ -83,7 +83,7 @@ require (
 	github.com/uber/jaeger-client-go v2.19.0+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/unrolled/render v1.0.1
-	github.com/unrolled/secure v1.0.4
+	github.com/unrolled/secure v1.0.5
 	github.com/vdemeester/shakers v0.1.0
 	github.com/vulcand/oxy v1.0.0
 	github.com/vulcand/predicate v1.1.0

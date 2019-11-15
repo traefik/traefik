@@ -368,6 +368,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
+						ForceSlash: true,
 					},
 				},
 				"Middleware18": {
@@ -771,6 +772,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
+						ForceSlash: true,
 					},
 				},
 				"Middleware18": {
@@ -1091,6 +1093,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Replacement":                       "foobar",
 		"traefik.HTTP.Middlewares.Middleware16.Retry.Attempts":                                     "42",
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":                               "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.ForceSlash":                             "true",
 		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":                             "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware19.Compress":                                           "true",
 

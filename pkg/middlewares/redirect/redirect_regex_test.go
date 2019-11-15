@@ -19,6 +19,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 		config         dynamic.RedirectRegex
 		method         string
 		url            string
+		headers        map[string]string
 		secured        bool
 		expectedURL    string
 		expectedStatus int
@@ -105,6 +106,19 @@ func TestRedirectRegexHandler(t *testing.T) {
 			expectedStatus: http.StatusFound,
 		},
 		{
+			desc: "HTTP to HTTPS, with X-Forwarded-Proto",
+			config: dynamic.RedirectRegex{
+				Regex:       `http://foo:80`,
+				Replacement: "https://foo:443",
+			},
+			url: "http://foo:80",
+			headers: map[string]string{
+				"X-Forwarded-Proto": "https",
+			},
+			expectedURL:    "https://foo:443",
+			expectedStatus: http.StatusFound,
+		},
+		{
 			desc: "HTTPS to HTTP",
 			config: dynamic.RedirectRegex{
 				Regex:       `https://foo:443`,
@@ -171,12 +185,18 @@ func TestRedirectRegexHandler(t *testing.T) {
 				if test.method != "" {
 					method = test.method
 				}
-				r := testhelpers.MustNewRequest(method, test.url, nil)
+
+				req := testhelpers.MustNewRequest(method, test.url, nil)
 				if test.secured {
-					r.TLS = &tls.ConnectionState{}
+					req.TLS = &tls.ConnectionState{}
 				}
-				r.Header.Set("X-Foo", "bar")
-				handler.ServeHTTP(recorder, r)
+
+				for k, v := range test.headers {
+					req.Header.Set(k, v)
+				}
+
+				req.Header.Set("X-Foo", "bar")
+				handler.ServeHTTP(recorder, req)
 
 				assert.Equal(t, test.expectedStatus, recorder.Code)
 				switch test.expectedStatus {

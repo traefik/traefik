@@ -300,7 +300,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     
     The previous table shows that `Router-1` has a higher priority than `Router-2`.
     
-    To solve this issue, the priority must be setted.
+    To solve this issue, the priority must be set.
 
 ??? example "Set priorities -- using the [File Provider](../../providers/file.md)"
     
@@ -418,10 +418,6 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
           # will terminate the TLS request
           tls: {}
     ```
-
-!!! info "HTTPS & ACME"
-
-    In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
 
 !!! important "Routers for HTTP & HTTPS"
 
@@ -845,10 +841,6 @@ Services are the target for the router.
           tls:
             passthrough: true
     ```
-
-!!! info "TLS & ACME"
-
-    In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
 
 #### `options`
 
