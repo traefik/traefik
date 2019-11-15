@@ -218,15 +218,12 @@ func (m *Manager) LaunchHealthCheck() {
 	for serviceName, balancers := range m.balancers {
 		ctx := log.With(context.Background(), log.Str(log.ServiceName, serviceName))
 
-		// TODO aggregate
-		balancer := balancers[0]
-
 		// TODO Should all the services handle healthcheck? Handle different types
 		service := m.configs[serviceName].LoadBalancer
 
 		// Health Check
 		var backendHealthCheck *healthcheck.BackendConfig
-		if hcOpts := buildHealthCheckOptions(ctx, balancer, serviceName, service.HealthCheck); hcOpts != nil {
+		if hcOpts := buildHealthCheckOptions(ctx, balancers, serviceName, service.HealthCheck); hcOpts != nil {
 			log.FromContext(ctx).Debugf("Setting up healthcheck for service %s with %s", serviceName, *hcOpts)
 
 			hcOpts.Transport = m.defaultRoundTripper
@@ -242,7 +239,7 @@ func (m *Manager) LaunchHealthCheck() {
 	healthcheck.GetHealthCheck().SetBackendsConfiguration(context.Background(), backendConfigs)
 }
 
-func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler, backend string, hc *dynamic.HealthCheck) *healthcheck.Options {
+func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandlers, backend string, hc *dynamic.HealthCheck) *healthcheck.Options {
 	if hc == nil || hc.Path == "" {
 		return nil
 	}

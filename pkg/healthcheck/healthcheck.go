@@ -281,3 +281,41 @@ func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.Server
 	}
 	return err
 }
+
+// BalancerHandlers includes functionality for a list of load balancer.
+type BalancerHandlers []BalancerHandler
+
+func (b BalancerHandlers) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+}
+
+// Servers return the servers url from all the BalancerHandler
+func (b BalancerHandlers) Servers() []*url.URL {
+	var servers []*url.URL
+	for _, lb := range b {
+		servers = append(servers, lb.Servers()...)
+	}
+
+	return servers
+}
+
+// RemoveServer removes the given server from all the BalancerHandler,
+// and updates the status of the server to "DOWN".
+func (b BalancerHandlers) RemoveServer(u *url.URL) error {
+	for _, lb := range b {
+		if err := lb.RemoveServer(u); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// UpsertServer adds the given server to all the BalancerHandler,
+// and updates the status of the server to "UP".
+func (b BalancerHandlers) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
+	for _, lb := range b {
+		if err := lb.UpsertServer(u, options...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
