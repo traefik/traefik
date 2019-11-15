@@ -10,7 +10,7 @@ else
   export VERSION=''
 fi
 
-export CODENAME=montdor
+export CODENAME=cantal
 
 export N_MAKE_JOBS=2
 

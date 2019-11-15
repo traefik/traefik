@@ -1,3 +1,32 @@
+## [v2.1.0-rc1](https://github.com/containous/traefik/tree/v2.1.0-rc1) (2019-11-15)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc1...v2.1.0-rc1)
+
+**Enhancements:**
+- **[consulcatalog]** Add consul catalog options: requireConsistent, stale, cache ([#5752](https://github.com/containous/traefik/pull/5752) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Add Consul Catalog provider ([#5395](https://github.com/containous/traefik/pull/5395) by [negasus](https://github.com/negasus))
+- **[k8s,k8s/crd,service]** Support for all services kinds (and sticky) in CRD ([#5711](https://github.com/containous/traefik/pull/5711) by [mpl](https://github.com/mpl))
+- **[metrics]** Added configurable prefix for statsd metrics collection ([#5336](https://github.com/containous/traefik/pull/5336) by [schulterklopfer](https://github.com/schulterklopfer))
+- **[middleware]** Conditional compression based on request Content-Type ([#5721](https://github.com/containous/traefik/pull/5721) by [ldez](https://github.com/ldez))
+- **[server]** Add internal provider ([#5815](https://github.com/containous/traefik/pull/5815) by [ldez](https://github.com/ldez))
+- **[tls]** Add support for MaxVersion in tls.Options ([#5650](https://github.com/containous/traefik/pull/5650) by [kmeekva](https://github.com/kmeekva))
+- **[tls]** Add tls option for Elliptic Curve Preferences ([#5466](https://github.com/containous/traefik/pull/5466) by [ksarink](https://github.com/ksarink))
+- **[tracing]** Update jaeger dependencies ([#5637](https://github.com/containous/traefik/pull/5637) by [mmatur](https://github.com/mmatur))
+
+**Bug fixes:**
+- **[consulcatalog]** Fix empty address for registering service without IP ([#5826](https://github.com/containous/traefik/pull/5826) by [mmatur](https://github.com/mmatur))
+
+**Documentation:**
+- **[consulcatalog]** fix: Consul Catalog documentation. ([#5725](https://github.com/containous/traefik/pull/5725) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Fix consul catalog documentation ([#5661](https://github.com/containous/traefik/pull/5661) by [mmatur](https://github.com/mmatur))
+
+**Misc:**
+- Merge current v2.0 branch into master  ([#5749](https://github.com/containous/traefik/pull/5749) by [ldez](https://github.com/ldez))
+- Merge current v2.0 branch into master  ([#5619](https://github.com/containous/traefik/pull/5619) by [ldez](https://github.com/ldez))
+- Merge current v2.0 branch into master  ([#5464](https://github.com/containous/traefik/pull/5464) by [ldez](https://github.com/ldez))
+- Merge v2.0.0 into master ([#5402](https://github.com/containous/traefik/pull/5402) by [ldez](https://github.com/ldez))
+- Merge v2.0.0-rc3 into master ([#5354](https://github.com/containous/traefik/pull/5354) by [ldez](https://github.com/ldez))
+- Merge v2.0.0-rc1 into master  ([#5253](https://github.com/containous/traefik/pull/5253) by [ldez](https://github.com/ldez))
+
 ## [v2.0.5](https://github.com/containous/traefik/tree/v2.0.5) (2019-11-14)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.4...v2.0.5)
 
