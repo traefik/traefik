@@ -71,7 +71,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["api"] = &dynamic.Router{
 			EntryPoints: []string{"traefik"},
 			Service:     "api@internal",
-			Priority:    math.MaxInt64 - 1,
+			Priority:    math.MaxInt32 - 1,
 			Rule:        "PathPrefix(`/api`)",
 		}
 
@@ -79,7 +79,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 			cfg.HTTP.Routers["dashboard"] = &dynamic.Router{
 				EntryPoints: []string{"traefik"},
 				Service:     "dashboard@internal",
-				Priority:    math.MaxInt64 - 2,
+				Priority:    math.MaxInt32 - 2,
 				Rule:        "PathPrefix(`/`)",
 				Middlewares: []string{"dashboard_redirect@internal", "dashboard_stripprefix@internal"},
 			}
@@ -113,7 +113,7 @@ func (i *Provider) pingConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["ping"] = &dynamic.Router{
 			EntryPoints: []string{i.staticCfg.Ping.EntryPoint},
 			Service:     "ping@internal",
-			Priority:    math.MaxInt64,
+			Priority:    math.MaxInt32,
 			Rule:        "PathPrefix(`/ping`)",
 		}
 	}
@@ -130,7 +130,7 @@ func (i *Provider) restConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["rest"] = &dynamic.Router{
 			EntryPoints: []string{"traefik"},
 			Service:     "rest@internal",
-			Priority:    math.MaxInt64,
+			Priority:    math.MaxInt32,
 			Rule:        "PathPrefix(`/api/providers`)",
 		}
 	}
@@ -147,7 +147,7 @@ func (i *Provider) prometheusConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["prometheus"] = &dynamic.Router{
 			EntryPoints: []string{i.staticCfg.Metrics.Prometheus.EntryPoint},
 			Service:     "prometheus@internal",
-			Priority:    math.MaxInt64,
+			Priority:    math.MaxInt32,
 			Rule:        "PathPrefix(`/metrics`)",
 		}
 	}
