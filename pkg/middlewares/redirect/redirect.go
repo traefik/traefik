@@ -132,17 +132,11 @@ func rawURL(req *http.Request) string {
 		uri = match[4]
 	}
 
-	if req.TLS != nil || isXForwardedHTTPS(req) {
+	if req.TLS != nil {
 		scheme = "https"
 	}
 
 	return strings.Join([]string{scheme, "://", host, port, uri}, "")
-}
-
-func isXForwardedHTTPS(request *http.Request) bool {
-	xForwardedProto := request.Header.Get("X-Forwarded-Proto")
-
-	return len(xForwardedProto) > 0 && xForwardedProto == "https"
 }
 
 func applyString(in string, out io.Writer, req *http.Request) error {
