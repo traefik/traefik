@@ -419,10 +419,6 @@ Traefik will terminate the SSL connections (meaning that it will send decrypted 
           tls: {}
     ```
 
-!!! info "HTTPS & ACME"
-
-    In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
-
 !!! important "Routers for HTTP & HTTPS"
 
     If you need to define the same route for both HTTP and HTTPS requests, you will need to define two different routers:
@@ -845,10 +841,6 @@ Services are the target for the router.
           tls:
             passthrough: true
     ```
-
-!!! info "TLS & ACME"
-
-    In the current version, with [ACME](../../https/acme.md) enabled, automatic certificate generation will apply to every router declaring a TLS section.
 
 #### `options`
 
