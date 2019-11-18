@@ -72,7 +72,7 @@ log:
 ```
 
 ```bash tab="CLI"
---log.level="DEBUG"
+--log.level=DEBUG
 ```
 
 ## Log Rotation
