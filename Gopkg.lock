@@ -1915,12 +1915,12 @@
   revision = "50716a0a853771bb36bfce61a45cdefdb98c2e6e"
 
 [[projects]]
-  branch = "v1"
-  digest = "1:819d4566276aed820b412b7e72683edfe99f53d2ac54e5b13eda197b523a369b"
+  digest = "1:649756d307b6d8ddb369d1cca0465b679aa7d1a956ddfa8eb18f8072a1a2b7a4"
   name = "github.com/unrolled/secure"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "232c938a6a69cfd83e26e2bfe100a20486d3a9a0"
+  revision = "996bc0cd7e5be6e6a1c5f34b0259bc47c8bcfbc9"
+  version = "v1.0.5"
 
 [[projects]]
   digest = "1:e84e99d5f369afaa9a5c41f55b57fa03047ecd3bac2a65861607882693ceea81"
