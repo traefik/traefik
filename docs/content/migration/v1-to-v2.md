@@ -720,9 +720,9 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```bash tab="CLI"
     --entryPoints.web.address=:80
     --entryPoints.websecure.address=:443
-    --certificatesResolvers.sample.acme.email: your-email@your-domain.org
-    --certificatesResolvers.sample.acme.storage: acme.json
-    --certificatesResolvers.sample.acme.httpChallenge.entryPoint: web
+    --certificatesResolvers.sample.acme.email=your-email@your-domain.org
+    --certificatesResolvers.sample.acme.storage=acme.json
+    --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
     ```
 
 ## Traefik Logs
@@ -1029,7 +1029,7 @@ As the dashboard access is now secured by default you can either:
     [api]
     
     [providers.file]
-        filename = "/dynamic-conf.toml"
+      filename = "/dynamic-conf.toml"
     
     ##---------------------##
     
