@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"sync"
 
 	"github.com/containous/traefik/v2/pkg/middlewares"
 )
@@ -16,7 +17,9 @@ var (
 // captureResponseWriter is a wrapper of type http.ResponseWriter
 // that tracks request status and size
 type captureResponseWriter struct {
-	rw     http.ResponseWriter
+	sync.RWMutex // guards rw.Header
+	rw           http.ResponseWriter
+
 	status int
 	size   int64
 }
@@ -26,6 +29,12 @@ func (crw *captureResponseWriter) Header() http.Header {
 }
 
 func (crw *captureResponseWriter) Write(b []byte) (int, error) {
+	crw.Lock()
+	defer crw.Unlock()
+	return crw.writeLocked(b)
+}
+
+func (crw *captureResponseWriter) writeLocked(b []byte) (int, error) {
 	if crw.status == 0 {
 		crw.status = http.StatusOK
 	}
@@ -35,6 +44,12 @@ func (crw *captureResponseWriter) Write(b []byte) (int, error) {
 }
 
 func (crw *captureResponseWriter) WriteHeader(s int) {
+	crw.Lock()
+	defer crw.Unlock()
+	crw.writeHeaderLocked(s)
+}
+
+func (crw *captureResponseWriter) writeHeaderLocked(s int) {
 	crw.rw.WriteHeader(s)
 	crw.status = s
 }

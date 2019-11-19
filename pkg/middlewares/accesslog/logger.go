@@ -205,8 +205,6 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
 	}
 
-	logDataTable.DownstreamResponse = deepCopy(crw.Header())
-
 	if h.config.BufferingSize > 0 {
 		h.logHandlerChan <- handlerParams{
 			logDataTable: logDataTable,
@@ -216,16 +214,6 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	} else {
 		h.logTheRoundTrip(logDataTable, crr, crw)
 	}
-}
-
-func deepCopy(h http.Header) http.Header {
-	newHeader := make(http.Header, len(h))
-	for k, v := range h {
-		val := make([]string, len(v))
-		copy(val, v)
-		newHeader[k] = val
-	}
-	return newHeader
 }
 
 // Close closes the Logger (i.e. the file, drain logHandlerChan, etc).
@@ -317,7 +305,9 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestRead
 
 		h.redactHeaders(logDataTable.Request, fields, "request_")
 		h.redactHeaders(logDataTable.OriginResponse, fields, "origin_")
-		h.redactHeaders(logDataTable.DownstreamResponse, fields, "downstream_")
+		crw.RLock()
+		h.redactHeaders(crw.Header(), fields, "downstream_")
+		crw.RUnlock()
 
 		h.mu.Lock()
 		defer h.mu.Unlock()
