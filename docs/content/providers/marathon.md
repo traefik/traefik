@@ -74,8 +74,8 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.marathon.basic.httpbasicauthuser="foo"
---providers.marathon.basic.httpbasicpassword="bar"
+--providers.marathon.basic.httpbasicauthuser=foo
+--providers.marathon.basic.httpbasicpassword=bar
 ```
 
 Enables Marathon basic authentication.
@@ -98,7 +98,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.marathon.dcosToken="xxxxxx"
+--providers.marathon.dcosToken=xxxxxx
 ```
 
 DCOSToken for DCOS environment.
@@ -123,7 +123,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.marathon.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+--providers.marathon.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
 # ...
 ```
 
@@ -182,7 +182,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.marathon.endpoint="http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"
+--providers.marathon.endpoint=http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080
 ```
 
 Marathon server endpoint.
@@ -223,19 +223,19 @@ _Optional, Default=""_
 
 ```toml tab="File (TOML)"
 [providers.marathon]
-  constraints = "Label(`a.label.name`, `foo`)"
+  constraints = "Label(`a.label.name`,`foo`)"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   marathon:
-    constraints: "Label(`a.label.name`, `foo`)"
+    constraints: "Label(`a.label.name`,`foo`)"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.marathon.constraints="Label(`a.label.name`, `foo`)"
+--providers.marathon.constraints=Label(`a.label.name`,`foo`)
 # ...
 ```
 
@@ -389,7 +389,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.marathon.responseHeaderTimeout="66s"
+--providers.marathon.responseHeaderTimeout=66s
 # ...
 ```
 
@@ -532,7 +532,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.marathon.responseHeaderTimeout="10s"
+--providers.marathon.responseHeaderTimeout=10s
 # ...
 ```
 

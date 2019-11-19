@@ -52,7 +52,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.serviceName="traefik"
+--tracing.serviceName=traefik
 ```
 
 #### `spanNameLimit`

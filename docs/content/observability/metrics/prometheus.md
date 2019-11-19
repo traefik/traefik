@@ -113,6 +113,6 @@ metrics:
 ```
 
 ```bash tab="CLI"
---entryPoints.metrics.address=":8082"
---metrics.prometheus.entryPoint="metrics"
+--entryPoints.metrics.address=:8082
+--metrics.prometheus.entryPoint=metrics
 ```

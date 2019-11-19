@@ -61,7 +61,7 @@ accessLog:
 ```bash tab="CLI"
 # Configuring a buffer of 100 lines
 --accesslog=true
---accesslog.filepath="/path/to/access.log"
+--accesslog.filepath=/path/to/access.log
 --accesslog.bufferingsize=100
 ```
 
@@ -104,11 +104,11 @@ accessLog:
 ```bash tab="CLI"
 # Configuring Multiple Filters
 --accesslog=true
---accesslog.filepath="/path/to/access.log"
---accesslog.format="json"
---accesslog.filters.statuscodes="200, 300-302"
+--accesslog.filepath=/path/to/access.log
+--accesslog.format=json
+--accesslog.filters.statuscodes=200,300-302
 --accesslog.filters.retryattempts
---accesslog.filters.minduration="10ms"
+--accesslog.filters.minduration=10ms
 ```
 
 ### Limiting the Fields
@@ -164,14 +164,14 @@ accessLog:
 ```bash tab="CLI"
 # Limiting the Logs to Specific Fields
 --accesslog=true
---accesslog.filepath="/path/to/access.log"
---accesslog.format="json"
---accesslog.fields.defaultmode="keep"
---accesslog.fields.names.ClientUsername="drop"
---accesslog.fields.headers.defaultmode="keep"
---accesslog.fields.headers.names.User-Agent="redact"
---accesslog.fields.headers.names.Authorization="drop"
---accesslog.fields.headers.names.Content-Type="keep"
+--accesslog.filepath=/path/to/access.log
+--accesslog.format=json
+--accesslog.fields.defaultmode=keep
+--accesslog.fields.names.ClientUsername=drop
+--accesslog.fields.headers.defaultmode=keep
+--accesslog.fields.headers.names.User-Agent=redact
+--accesslog.fields.headers.names.Authorization=drop
+--accesslog.fields.headers.names.Content-Type=keep
 ```
 
 ??? info "Available Fields"

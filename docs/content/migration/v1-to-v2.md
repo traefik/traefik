@@ -718,11 +718,11 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```
 
     ```bash tab="CLI"
-    --entryPoints.web.address=":80"
-    --entryPoints.websecure.address=":443"
-    --certificatesResolvers.sample.acme.email: your-email@your-domain.org
-    --certificatesResolvers.sample.acme.storage: acme.json
-    --certificatesResolvers.sample.acme.httpChallenge.entryPoint: web
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
+    --certificatesResolvers.sample.acme.email=your-email@your-domain.org
+    --certificatesResolvers.sample.acme.storage=acme.json
+    --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
     ```
 
 ## Traefik Logs
@@ -744,9 +744,9 @@ There is no more log configuration at the root level.
     ```
 
     ```bash tab="CLI"
-    --logLevel="DEBUG"
-    --traefikLog.filePath="/path/to/traefik.log"
-    --traefikLog.format="json"
+    --logLevel=DEBUG
+    --traefikLog.filePath=/path/to/traefik.log
+    --traefikLog.format=json
     ```
 
     !!! info "v2"
@@ -768,9 +768,9 @@ There is no more log configuration at the root level.
     ```
 
     ```bash tab="CLI"
-    --log.level="DEBUG"
-    --log.filePath="/path/to/traefik.log"
-    --log.format="json"
+    --log.level=DEBUG
+    --log.filePath=/path/to/traefik.log
+    --log.format=json
     ```
 
 ## Tracing
@@ -794,12 +794,12 @@ Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is
     ```
 
     ```bash tab="CLI"
-    --tracing.backend="jaeger"
-    --tracing.servicename="tracing"
-    --tracing.jaeger.localagenthostport="12.0.0.1:6831"
-    --tracing.jaeger.samplingparam="1.0"
-    --tracing.jaeger.samplingserverurl="http://12.0.0.1:5778/sampling"
-    --tracing.jaeger.samplingtype="const"
+    --tracing.backend=jaeger
+    --tracing.servicename=tracing
+    --tracing.jaeger.localagenthostport=12.0.0.1:6831
+    --tracing.jaeger.samplingparam=1.0
+    --tracing.jaeger.samplingserverurl=http://12.0.0.1:5778/sampling
+    --tracing.jaeger.samplingtype=const
     ```
 
     !!! info "v2"
@@ -827,11 +827,11 @@ Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is
     ```
 
     ```bash tab="CLI"
-    --tracing.servicename="tracing"
-    --tracing.jaeger.localagenthostport="12.0.0.1:6831"
-    --tracing.jaeger.samplingparam="1.0"
-    --tracing.jaeger.samplingserverurl="http://12.0.0.1:5778/sampling"
-    --tracing.jaeger.samplingtype="const"
+    --tracing.servicename=tracing
+    --tracing.jaeger.localagenthostport=12.0.0.1:6831
+    --tracing.jaeger.samplingparam=1.0
+    --tracing.jaeger.samplingserverurl=http://12.0.0.1:5778/sampling
+    --tracing.jaeger.samplingtype=const
     ```
 
 ## Metrics
@@ -852,7 +852,7 @@ For a basic configuration, the [metrics configuration](../observability/metrics/
 
     ```bash tab="CLI"
     --metrics.prometheus.buckets=[0.1,0.3,1.2,5.0]
-    --metrics.prometheus.entrypoint="traefik"
+    --metrics.prometheus.entrypoint=traefik
     ```
 
     !!! info "v2"
@@ -878,7 +878,7 @@ For a basic configuration, the [metrics configuration](../observability/metrics/
 
     ```bash tab="CLI"
     --metrics.prometheus.buckets=[0.1,0.3,1.2,5.0]
-    --metrics.prometheus.entrypoint="metrics"
+    --metrics.prometheus.entrypoint=metrics
     ```
 
 ## No More Root Level Key/Values
@@ -908,14 +908,14 @@ Each root item has been moved to a related section or removed.
     ```bash tab="CLI"
     --checknewversion=false
     --sendanonymoususage=true
-    --loglevel="DEBUG"
+    --loglevel=DEBUG
     --insecureskipverify=true
-    --rootcas="/mycert.cert"
+    --rootcas=/mycert.cert
     --maxidleconnsperhost=200
-    --providersthrottleduration="2s"
+    --providersthrottleduration=2s
     --allowminweightzero=true
     --debug=true
-    --defaultentrypoints="web","web-secure"
+    --defaultentrypoints=web,web-secure
     --keeptrailingslash=true
     ```
 
@@ -961,9 +961,9 @@ Each root item has been moved to a related section or removed.
     ```bash tab="CLI"
     --global.checknewversion=true
     --global.sendanonymoususage=true
-    --log.level="DEBUG"
+    --log.level=DEBUG
     --serverstransport.insecureskipverify=true
-    --serverstransport.rootcas="/mycert.cert"
+    --serverstransport.rootcas=/mycert.cert
     --serverstransport.maxidleconnsperhost=42
     --providers.providersthrottleduration=42
     ```
@@ -1029,7 +1029,7 @@ As the dashboard access is now secured by default you can either:
     [api]
     
     [providers.file]
-        filename = "/dynamic-conf.toml"
+      filename = "/dynamic-conf.toml"
     
     ##---------------------##
     

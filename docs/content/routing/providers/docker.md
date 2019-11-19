@@ -82,7 +82,7 @@ Attach labels to your containers and let Traefik do the rest!
     ```
 
     ```bash tab="CLI"
-    --providers.docker.endpoint="tcp://127.0.0.1:2375"
+    --providers.docker.endpoint=tcp://127.0.0.1:2375
     --providers.docker.swarmMode=true
     ```
 

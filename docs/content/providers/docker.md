@@ -64,7 +64,7 @@ Attach labels to your containers and let Traefik do the rest!
     ```
     
     ```bash tab="CLI"
-    --providers.docker.endpoint="tcp://127.0.0.1:2375"
+    --providers.docker.endpoint=tcp://127.0.0.1:2375
     --providers.docker.swarmMode=true
     ```
 
@@ -108,7 +108,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.docker.endpoint="unix:///var/run/docker.sock"
+--providers.docker.endpoint=unix:///var/run/docker.sock
 ```
 
 Traefik requires access to the docker socket to get its dynamic configuration.
@@ -186,7 +186,7 @@ Traefik requires access to the docker socket to get its dynamic configuration.
     ```
     
     ```bash tab="CLI"
-    --providers.docker.endpoint="unix:///var/run/docker.sock"
+    --providers.docker.endpoint=unix:///var/run/docker.sock
     # ...
     ```
 
@@ -311,7 +311,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.docker.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+--providers.docker.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
 # ...
 ```
 
@@ -375,19 +375,19 @@ _Optional, Default=""_
 
 ```toml tab="File (TOML)"
 [providers.docker]
-  constraints = "Label(`a.label.name`, `foo`)"
+  constraints = "Label(`a.label.name`,`foo`)"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   docker:
-    constraints: "Label(`a.label.name`, `foo`)"
+    constraints: "Label(`a.label.name`,`foo`)"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.constraints="Label(`a.label.name`, `foo`)"
+--providers.docker.constraints=Label(`a.label.name`,`foo`)
 # ...
 ```
 
