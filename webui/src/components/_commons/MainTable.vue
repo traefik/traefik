@@ -1,94 +1,114 @@
 <template>
   <div class="table-wrapper">
-    <q-table
-      :data="data"
-      :columns="columns"
-      row-key="name"
-      :pagination.sync="syncPagination"
-      :rows-per-page-options="[10, 20, 40, 80, 100, 0]"
-      :loading="loading"
-      :filter="filter"
-      @request="request"
-      binary-state-sort
-      :visible-columns="visibleColumns"
-      color="primary"
-      table-header-class="table-header">
-
-      <template v-slot:body="props">
-        <q-tr :props="props" class="cursor-pointer" @click.native="$router.push({ path: `/${getPath}/${props.row.name}`})">
-          <q-td key="status" :props="props" auto-width>
-            <avatar-state :state="props.row.status | status "/>
-          </q-td>
-          <q-td key="tls" :props="props" auto-width>
-            <t-l-s-state :is-t-l-s="props.row.tls"/>
-          </q-td>
-          <q-td key="rule" :props="props">
-            <q-chip
-              v-if="props.row.rule"
-              dense
-              class="app-chip app-chip-rule">
-              {{ props.row.rule }}
-            </q-chip>
-          </q-td>
-          <q-td key="entryPoints" :props="props">
-            <div v-if="props.row.using">
+    <q-infinite-scroll @load="handleLoadMore" :offset="250" ref="scroller">
+      <q-markup-table>
+        <thead>
+          <tr class="table-header">
+            <th
+              v-for="column in getColumns()"
+              v-bind:class="`text-${column.align}`"
+              v-bind:key="column.name">
+              {{ column.label }}
+            </th>
+          </tr>
+        </thead>
+        <tfoot v-if="!data.length">
+          <tr>
+            <td colspan="100%">
+              <q-icon name="warning" style="font-size: 1.5rem"/> No data available
+            </td>
+          </tr>
+        </tfoot>
+        <tbody>
+          <tr v-for="row in data" :key="row.name" @click.native="$router.push({ path: `/${getPath}/${row.name}`})">
+            <td v-if="hasColumn('status')" v-bind:class="`text-${getColumn('status').align}`">
+              <avatar-state :state="row.status | status "/>
+            </td>
+            <td v-if="hasColumn('tls')" v-bind:class="`text-${getColumn('tls').align}`">
+              <t-l-s-state :is-t-l-s="row.tls"/>
+            </td>
+            <td v-if="hasColumn('rule')" v-bind:class="`text-${getColumn('rule').align}`">
               <q-chip
-                v-for="(entryPoints, index) in props.row.using" :key="index"
+                :v-if="row.rule"
+                dense
+                class="app-chip app-chip-rule">
+                {{ row.rule }}
+              </q-chip>
+            </td>
+            <td v-if="hasColumn('entryPoints')" v-bind:class="`text-${getColumn('entryPoints').align}`">
+              <div v-if="row.using">
+                <q-chip
+                  v-for="(entryPoints, index) in row.using" :key="index"
+                  dense
+                  class="app-chip app-chip-entry-points">
+                  {{ entryPoints }}
+                </q-chip>
+              </div>
+            </td>
+            <td v-if="hasColumn('name')" v-bind:class="`text-${getColumn('name').align}`">
+              <q-chip
+                v-if="row.name"
+                dense
+                class="app-chip app-chip-name">
+                {{ row.name }}
+              </q-chip>
+            </td>
+            <td v-if="hasColumn('type')" v-bind:class="`text-${getColumn('type').align}`">
+              <q-chip
+                v-if="row.type"
                 dense
                 class="app-chip app-chip-entry-points">
-                {{ entryPoints }}
+                {{ row.type }}
               </q-chip>
-            </div>
-          </q-td>
-          <q-td key="name" :props="props">
-            <q-chip
-              v-if="props.row.name"
-              dense
-              class="app-chip app-chip-name">
-              {{ props.row.name }}
-            </q-chip>
-          </q-td>
-          <q-td key="type" :props="props">
-            <q-chip
-              v-if="props.row.type"
-              dense
-              class="app-chip app-chip-entry-points">
-              {{ props.row.type }}
-            </q-chip>
-          </q-td>
-          <q-td key="servers" :props="props">
-            <span class="servers-label">{{ props.row | servers }}</span>
-          </q-td>
-          <q-td key="service" :props="props">
-            <q-chip
-              v-if="props.row.service"
-              dense
-              class="app-chip app-chip-service">
-              {{ props.row.service }}
-            </q-chip>
-          </q-td>
-          <q-td key="provider" :props="props" auto-width>
-            <q-avatar class="provider-logo">
-              <q-icon :name="`img:statics/providers/${props.row.provider}.svg`" />
-            </q-avatar>
-          </q-td>
-        </q-tr>
+            </td>
+            <td v-if="hasColumn('servers')" v-bind:class="`text-${getColumn('servers').align}`">
+              <span class="servers-label">{{ row | servers }}</span>
+            </td>
+            <td v-if="hasColumn('service')" v-bind:class="`text-${getColumn('service').align}`">
+              <q-chip
+                v-if="row.service"
+                dense
+                class="app-chip app-chip-service">
+                {{ row.service }}
+              </q-chip>
+            </td>
+            <td v-if="hasColumn('provider')" v-bind:class="`text-${getColumn('provider').align}`">
+              <q-avatar class="provider-logo">
+                <q-icon :name="`img:statics/providers/${row.provider}.svg`" />
+              </q-avatar>
+            </td>
+          </tr>
+        </tbody>
+      </q-markup-table>
+      <template v-slot:loading v-if="loading">
+        <div class="row justify-center q-my-md">
+          <q-spinner-dots color="app-grey" size="40px" />
+        </div>
       </template>
-
-    </q-table>
+    </q-infinite-scroll>
+    <q-page-scroller position="bottom" :scroll-offset="150" class="back-to-top">
+      <q-btn color="primary" v-back-to-top small>
+        Back to top
+      </q-btn>
+    </q-page-scroller>
   </div>
 </template>
 
 <script>
 import AvatarState from './AvatarState'
 import TLSState from './TLSState'
+import { QMarkupTable, QInfiniteScroll, QSpinnerDots, QPageScroller } from 'quasar'
 
 export default {
   name: 'MainTable',
-  props: ['data', 'request', 'loading', 'pagination', 'filter', 'type'],
+  props: ['data', 'request', 'loading', 'pagination', 'type', 'onLoadMore', 'endReached'],
   components: {
     TLSState,
-    AvatarState
+    AvatarState,
+    QMarkupTable,
+    QInfiniteScroll,
+    QSpinnerDots,
+    QPageScroller
   },
   data () {
     return {
@@ -155,19 +175,6 @@ export default {
       ]
     }
   },
-  computed: {
-    syncPagination: {
-      get () {
-        return this.pagination
-      },
-      set (newValue) {
-        this.$emit('update:pagination', newValue)
-      }
-    },
-    getPath () {
-      return this.type.replace('-', '/', 'gi')
-    }
-  },
   filters: {
     status (value) {
       if (value === 'enabled') {
@@ -194,6 +201,20 @@ export default {
     }
     if (this.type === 'http-middlewares') {
       this.visibleColumns = this.visibleColumnsHttpMiddlewares
+    }
+  },
+  methods: {
+    hasColumn (columnName) {
+      return this.visibleColumns.includes(columnName)
+    },
+    getColumns () {
+      return this.columns.filter(c => this.visibleColumns.includes(c.name))
+    },
+    getColumn (columnName) {
+      return this.columns.find(c => c.name === columnName) || {}
+    },
+    handleLoadMore (index, done) {
+      this.onLoadMore({ page: index }).then(done).catch(e => {})
     }
   }
 }
@@ -230,6 +251,10 @@ export default {
           }
         }
       }
+    }
+
+    .back-to-top {
+      margin: 16px 0;
     }
   }
 
