@@ -19,6 +19,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/provider/rest"
 	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/containous/traefik/v2/pkg/tracing/datadog"
+	"github.com/containous/traefik/v2/pkg/tracing/elastic"
 	"github.com/containous/traefik/v2/pkg/tracing/haystack"
 	"github.com/containous/traefik/v2/pkg/tracing/instana"
 	"github.com/containous/traefik/v2/pkg/tracing/jaeger"
@@ -144,6 +145,7 @@ type Tracing struct {
 	Datadog       *datadog.Config  `description:"Settings for Datadog." json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" export:"true" label:"allowEmpty"`
 	Instana       *instana.Config  `description:"Settings for Instana." json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" export:"true" label:"allowEmpty"`
 	Haystack      *haystack.Config `description:"Settings for Haystack." json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty" export:"true" label:"allowEmpty"`
+	Elastic       *elastic.Config  `description:"Settings for Elastic." json:"elastic,omitempty" toml:"elastic,omitempty" yaml:"elastic,omitempty" export:"true" label:"allowEmpty"`
 }
 
 // SetDefaults sets the default values.

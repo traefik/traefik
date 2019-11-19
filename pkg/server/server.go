@@ -92,6 +92,14 @@ func setupTracing(conf *static.Tracing) tracing.Backend {
 		}
 	}
 
+	if conf.Elastic != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Elastic backend.")
+		} else {
+			backend = conf.Elastic
+		}
+	}
+
 	if backend == nil {
 		log.WithoutContext().Debug("Could not initialize tracing, use Jaeger by default")
 		bcd := &jaeger.Config{}
