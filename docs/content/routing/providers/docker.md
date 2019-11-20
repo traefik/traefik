@@ -243,11 +243,12 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 !!! warning "The character `@` is not authorized in the service name `<service_name>`."
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.server.port`"
-
+    
     Registers a port.
     Useful when the container exposes multiples ports.
 
-    Mandatory for Docker Swarm.
+    Mandatory for Docker Swarm (see the section ["Port Detection with Docker Swarm"](../../providers/docker.md#port-detection_1)).
+    {: #port }
 
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.server.port=8080"

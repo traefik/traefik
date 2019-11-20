@@ -7,9 +7,143 @@ A Story of Labels & Containers
 
 Attach labels to your containers and let Traefik do the rest!
 
+Traefik works with both [Docker (standalone) Engine](https://docs.docker.com/engine/)
+and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
+
 !!! tip "The Quick Start Uses Docker"
     If you haven't already, maybe you'd like to go through the [quick start](../getting-started/quick-start.md) that uses the docker provider!
 
+## Routing Configuration
+
+When using Docker as a [provider](https://docs.traefik.io/providers/overview/),
+Trafik uses [containers labels](https://docs.docker.com/engine/reference/commandline/run/#set-metadata-on-container--l---label---label-file) to retrieve its routing configuration.
+
+See the list of labels in the dedicated section in [routing](../routing/providers/docker.md).
+
+### Routing Configuration with Labels
+
+By default, Traefik watches for [container level's labels](https://docs.docker.com/config/labels-custom-metadata/) on a standalone Docker Engine.
+
+When using Docker Compose, labels are specified by the directive
+[`labels`](https://docs.docker.com/compose/compose-file/#labels) from the
+["services" objects](https://docs.docker.com/compose/compose-file/#service-configuration-reference).
+
+!!! tip "Not Only Docker"
+    Please note that any tool like Nomad, Terraform, Ansible, etc.
+    is able to define Docker container with label can work
+    with Traefik & the Docker provider.
+
+### Port Detection
+
+Traefik retrieves the private IP and port of containers from the Docker API.
+
+Ports detection works as follow:
+
+- If a container only [exposes](https://docs.docker.com/engine/reference/builder/#expose) one port,
+  then Traefik uses this port for private communication.
+- If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) multiple ports,
+  or does not expose any port, then you must specify to Traefik which port to use for communication 
+  by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
+  (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#port)).
+
+### Docker API Access
+
+Traefik requires access to the docker socket to get its dynamic configuration.
+
+You can specify which Docker API Endpoint to use with the directive [`endpoint`](#endpoint).
+
+!!! warning "Security Note"
+
+    Accessing the Docker API without any restriction is a security concern:
+    If Traefik is attacked, then the attacker might get access to the underlying host.
+    {: #security-note }
+    
+    As explained in the Docker documentation: ([Docker Daemon Attack Surface page](https://docs.docker.com/engine/security/security/#docker-daemon-attack-surface)):
+
+    !!! quote
+        [...] only **trusted** users should be allowed to control your Docker daemon [...]
+
+    ??? success "Solutions"
+
+        Expose the Docker socket over TCP, instead of the default Unix socket file.
+        It allows different implementation levels of the [AAA (Authentication, Authorization, Accounting) concepts](https://en.wikipedia.org/wiki/AAA_(computer_security)), depending on your security assessment:
+
+        - Authentication with Client Certificates as described in ["Protect the Docker daemon socket."](https://docs.docker.com/engine/security/https/)
+        - Authorize and filter requests to restrict possible actions with [the TecnativaDocker Socket Proxy](https://github.com/Tecnativa/docker-socket-proxy).
+        - Authorization with the [Docker Authorization Plugin Mechanism](https://docs.docker.com/engine/extend/plugins_authorization/)
+        - Accounting at networking level, by exposing the socket only inside a Docker private network, only available for Traefik.
+        - Accounting at container level, by exposing the socket on a another container than Traefik's.
+          With Swarm mode, it allows scheduling of Traefik on worker nodes, with only the "socket exposer" container on the manager nodes.
+        - Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), to only allows an identified set of actions for Traefik's process (or the "socket exposer" process).
+
+    ??? info "More Resources and Examples"
+        - ["Paranoid about mounting /var/run/docker.sock?"](https://medium.com/@containeroo/traefik-2-0-paranoid-about-mounting-var-run-docker-sock-22da9cb3e78c)
+        - [Traefik and Docker: A Discussion with Docker Captain, Bret Fisher](https://blog.containo.us/traefik-and-docker-a-discussion-with-docker-captain-bret-fisher-7f0b9a54ff88)
+        - [KubeCon EU 2018 Keynote, Running with Scissors, from Liz Rice](https://www.youtube.com/watch?v=ltrV-Qmh3oY)
+        - [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container/)
+        - [A thread on Stack Overflow about sharing the `/var/run/docker.sock` file](https://news.ycombinator.com/item?id=17983623)
+        - [To DinD or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
+        - [Traefik issue GH-4174 about security with Docker socket](https://github.com/containous/traefik/issues/4174)
+        - [Inspecting Docker Activity with Socat](https://developers.redhat.com/blog/2015/02/25/inspecting-docker-activity-with-socat/)
+        - [Letting Traefik run on Worker Nodes](https://blog.mikesir87.io/2018/07/letting-traefik-run-on-worker-nodes/)
+        - [Docker Socket Proxy from Tecnativa](https://github.com/Tecnativa/docker-socket-proxy)
+
+## Docker Swarm Mode
+
+To enable Docker Swarm (instead of standalone Docker) as a configuration provider,
+set the [`swarmMode`](#swarmmode) directive to `true`.
+
+### Routing Configuration with Labels
+
+While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
+
+Therefore, if you use a compose file with Swarm Mode, labels should be defined in the
+[`deploy`](https://docs.docker.com/compose/compose-file/#labels-1) part of your service.
+
+This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
+
+### Port Detection
+
+Docker Swarm does not provide any [port exposition](port-detection) information to Traefik.
+
+Therefore you **must** specify the port to use for communication by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
+(Check the reference for this label in the [routing section for Docker](../routing/providers/docker.md#port)).
+
+### Docker API Access
+
+Docker Swarm Mode follows the same rules as Docker [API Access](#docker-api-access).
+
+As the Swarm API is only exposed on the [manager nodes](it is mandatory to schedule Traefik on the Swarm manager nodes), you should schedule Traefik on the Swarm manager nodes by default,
+by deploying Traefik with a [constraint](https://success.docker.com/article/using-contraints-and-labels-to-control-the-placement-of-containers) on the node's "role":
+
+```shell tab="With Docker CLI"
+docker service create \
+  --constraint=node.role==manager \
+  #... \
+```
+
+```yml tab="With Docker Compose"
+version: '3'
+
+services:
+  traefik:
+    # ...
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+```
+
+!!! tip "Scheduling Traefik on Worker Nodes"
+    
+    Following the guidelines given in the previous section ["Docker API Access"](#docker-api-access),
+    if you expose the Docker API through TCP, then Traefik can be scheduled on any node if the TCP
+    socket is reachable.
+    
+    Please consider the security implications by reading the [Security Note](#security-note).
+    
+    A good example can be found on [Bret Fisher's repository](https://github.com/BretFisher/dogvscat/blob/master/stack-proxy-global.yml#L124).
+    
 ## Configuration Examples
 
 ??? example "Configuring Docker & Deploying / Exposing Services"
@@ -80,16 +214,6 @@ Attach labels to your containers and let Traefik do the rest!
             - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
-    !!! important "Labels in Docker Swarm Mode"
-        While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
-        
-        Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
-        This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
-
-## Routing Configuration
-
-See the dedicated section in [routing](../routing/providers/docker.md).
-
 ## Provider Configuration
 
 ### `endpoint`
@@ -111,48 +235,7 @@ providers:
 --providers.docker.endpoint=unix:///var/run/docker.sock
 ```
 
-Traefik requires access to the docker socket to get its dynamic configuration.
-
-??? warning "Security Notes"
-
-    Depending on your context, accessing the Docker API without any restriction can be a security concern: If Traefik is attacked, then the attacker might get access to the Docker (or Swarm Mode) backend.
-
-    As explained in the Docker documentation: ([Docker Daemon Attack Surface page](https://docs.docker.com/engine/security/security/#docker-daemon-attack-surface)):
-
-    `[...] only **trusted** users should be allowed to control your Docker daemon [...]`
-
-    !!! tip "Improved Security"
-
-        [TraefikEE](https://containo.us/traefikee) solves this problem by separating the control plane (connected to Docker) and the data plane (handling the requests).
-
-    ??? info "Resources about Docker's Security"
-
-        - [KubeCon EU 2018 Keynote, Running with Scissors, from Liz Rice](https://www.youtube.com/watch?v=ltrV-Qmh3oY)
-        - [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container/)
-        - [A thread on Stack Overflow about sharing the `/var/run/docker.sock` file](https://news.ycombinator.com/item?id=17983623)
-        - [To DinD or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
-
-??? tip "Security Compensation"
-
-    Expose the Docker socket over TCP, instead of the default Unix socket file.
-    It allows different implementation levels of the [AAA (Authentication, Authorization, Accounting) concepts](https://en.wikipedia.org/wiki/AAA_(computer_security)), depending on your security assessment:
-
-    - Authentication with Client Certificates as described in ["Protect the Docker daemon socket."](https://docs.docker.com/engine/security/https/)
-    - Authorization with the [Docker Authorization Plugin Mechanism](https://docs.docker.com/engine/extend/plugins_authorization/)
-    - Accounting at networking level, by exposing the socket only inside a Docker private network, only available for Traefik.
-    - Accounting at container level, by exposing the socket on a another container than Traefik's.
-      With Swarm mode, it allows scheduling of Traefik on worker nodes, with only the "socket exposer" container on the manager nodes.
-    - Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), to only allows an identified set of actions for Traefik's process (or the "socket exposer" process).
-
-    ??? info "Additional Resources"
-
-        - [Traefik issue GH-4174 about security with Docker socket](https://github.com/containous/traefik/issues/4174)
-        - [Inspecting Docker Activity with Socat](https://developers.redhat.com/blog/2015/02/25/inspecting-docker-activity-with-socat/)
-        - [Letting Traefik run on Worker Nodes](https://blog.mikesir87.io/2018/07/letting-traefik-run-on-worker-nodes/)
-        - [Docker Socket Proxy from Tecnativa](https://github.com/Tecnativa/docker-socket-proxy)
-
-!!! info "Traefik & Swarm Mode"
-    To let Traefik access the Docker Socket of the Swarm manager, it is mandatory to schedule Traefik on the Swarm manager nodes.
+See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API Access](#docker-api-access-1) for more informations.
 
 ??? example "Using the docker.sock"
 
@@ -343,7 +426,7 @@ providers:
 # ...
 ```
 
-Activates the Swarm Mode.
+Activates the Swarm Mode (instead of standalone Docker).
 
 ### `swarmModeRefreshSeconds`
 
