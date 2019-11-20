@@ -26,6 +26,8 @@
 </template>
 
 <script>
+import Helps from '../../_helpers/Helps'
+
 export default {
   name: 'ToolBarTable',
   props: ['status', 'filter'],
@@ -36,6 +38,9 @@ export default {
     return {
     }
   },
+  mounted () {
+    this.routeToState(this.$route)
+  },
   computed: {
     getStatus: {
       get () {
@@ -43,6 +48,7 @@ export default {
       },
       set (newValue) {
         this.$emit('update:status', newValue)
+        this.stateToRoute(this.$route, { status: newValue })
       }
     },
     getFilter: {
@@ -51,11 +57,30 @@ export default {
       },
       set (newValue) {
         this.$emit('update:filter', newValue)
+        this.stateToRoute(this.$route, { filter: newValue })
       }
     }
   },
+  watch: {
+    $route (to, from) {
+      this.routeToState(to)
+    }
+  },
   methods: {
-
+    routeToState (route) {
+      for (const query in route.query) {
+        this.$emit(`update:${query}`, route.query[query])
+      }
+    },
+    stateToRoute (route, values) {
+      this.$router.push({
+        path: route.path,
+        query: Helps.removeEmptyObjects({
+          ...route.query,
+          ...values
+        })
+      })
+    }
   },
   created () {
 
