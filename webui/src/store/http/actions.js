@@ -56,7 +56,7 @@ export function getAllMiddlewares ({ commit }, params) {
   commit('getAllMiddlewaresRequest')
   return HttpService.getAllMiddlewares(params)
     .then(body => {
-      commit('getAllMiddlewaresSuccess', body)
+      commit('getAllMiddlewaresSuccess', { body, ...params })
       return body
     })
     .catch(error => {
