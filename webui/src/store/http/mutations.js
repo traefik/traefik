@@ -123,12 +123,33 @@ export function getAllMiddlewaresRequest (state) {
   state.allMiddlewares.loading = true
 }
 
-export function getAllMiddlewaresSuccess (state, body) {
-  state.allMiddlewares = { items: body.data, total: body.total, loading: false }
+export function getAllMiddlewaresSuccess (state, data) {
+  const { body, query = '', status = '', page } = data
+  const currentState = state.allMiddlewares
+
+  const isSameContext = currentState.currentQuery === query && currentState.currentStatus === status
+
+  state.allMiddlewares = {
+    ...state.allMiddlewares,
+    items: [
+      ...(isSameContext && currentState.items && page !== 1 ? currentState.items : []),
+      ...(body.data || [])
+    ],
+    currentPage: page,
+    total: body.total,
+    loading: false,
+    currentQuery: query,
+    currentStatus: status
+  }
 }
 
 export function getAllMiddlewaresFailure (state, error) {
-  state.allMiddlewares = { error }
+  state.allMiddlewares = {
+    ...state.allMiddlewares,
+    loading: false,
+    error,
+    endReached: error.message.includes('invalid request: page:')
+  }
 }
 
 export function getAllMiddlewaresClear (state) {
