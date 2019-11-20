@@ -15,7 +15,7 @@ export function getAllRoutersSuccess (state, data) {
     ...state.allRouters,
     items: [
       ...(isSameContext && currentState.items && page !== 1 ? currentState.items : []),
-      ...body.data
+      ...(body.data || [])
     ],
     currentPage: page,
     total: body.total,
