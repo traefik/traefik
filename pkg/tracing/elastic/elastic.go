@@ -3,7 +3,6 @@ package elastic
 import (
 	"io"
 	"net/url"
-	"os"
 
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/version"
@@ -25,7 +24,7 @@ type Config struct {
 
 // Setup sets up the tracer
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
-
+	// Create default transport
 	ht, err := transport.NewHTTPTransport()
 	if err != nil {
 		return nil, nil, err
@@ -62,23 +61,4 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	log.WithoutContext().Debug("Elastic tracer configured")
 
 	return otracer, nil, nil
-}
-
-// Since most of Elastic APM Agent is done using environment variables
-func patchEnv(key, value string) func() {
-	old, had := os.LookupEnv(key)
-	if err := os.Setenv(key, value); err != nil {
-		panic(err)
-	}
-	return func() {
-		var err error
-		if !had {
-			err = os.Unsetenv(key)
-		} else {
-			err = os.Setenv(key, old)
-		}
-		if err != nil {
-			panic(err)
-		}
-	}
 }
