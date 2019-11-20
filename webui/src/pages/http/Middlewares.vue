@@ -14,7 +14,7 @@
               :onLoadMore="handleLoadMore"
               :endReached="allMiddlewares.endReached"
               :loading="allMiddlewares.loading"
-              type="http-semiddlewaresrvices"
+              type="http-middlewares"
             />
           </div>
         </div>
