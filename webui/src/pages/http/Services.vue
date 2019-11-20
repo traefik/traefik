@@ -8,7 +8,14 @@
         </div>
         <div class="row items-center q-col-gutter-lg">
           <div class="col-12">
-            <main-table :data="allServices.items" :request="onGetAll" :loading="loading" :pagination.sync="pagination" :filter="filter" type="http-services"/>
+            <main-table
+              ref="mainTable"
+              :data="allServices.items"
+              :onLoadMore="handleLoadMore"
+              :endReached="allServices.endReached"
+              :loading="allServices.loading"
+              type="http-services"
+            />
           </div>
         </div>
       </div>
@@ -49,12 +56,30 @@ export default {
   },
   methods: {
     ...mapActions('http', { getAllServices: 'getAllServices' }),
+    initData () {
+      const scrollerRef = this.$refs.mainTable.$refs.scroller
+      if (scrollerRef) {
+        scrollerRef.stop()
+        scrollerRef.reset()
+      }
+
+      this.handleLoadMore({ page: 1 }).then(() => {
+        if (scrollerRef) {
+          scrollerRef.resume()
+          scrollerRef.poll()
+        }
+      })
+    },
     refreshAll () {
       if (this.allServices.loading) {
         return
       }
-      this.pagination.page = 1
-      this.onGetAll({
+
+      this.handleLoadMore({ page: 1 })
+    },
+    handleLoadMore ({ page = 1 } = {}) {
+      this.pagination.page = page
+      return this.onGetAll({
         pagination: this.pagination,
         filter: this.filter
       })
@@ -62,12 +87,8 @@ export default {
     onGetAll (props) {
       let { page, rowsPerPage, sortBy, descending } = props.pagination
 
-      this.getAllServices({ query: props.filter, status: this.status, page, limit: rowsPerPage, sortBy, descending })
+      return this.getAllServices({ query: props.filter, status: this.status, page, limit: rowsPerPage, sortBy, descending })
         .then(body => {
-          if (!body) {
-            this.loading = false
-            return
-          }
           this.loading = false
           console.log('Success -> http/services', body)
           // update rowsNumber with appropriate value
@@ -78,17 +99,14 @@ export default {
           this.pagination.sortBy = sortBy
           this.pagination.descending = descending
         })
-        .catch(error => {
-          console.log('Error -> http/services', error)
-        })
     }
   },
   watch: {
     'status' () {
-      this.refreshAll()
+      this.initData()
     },
     'filter' () {
-      this.refreshAll()
+      this.initData()
     }
   },
   created () {

@@ -64,12 +64,33 @@ export function getAllServicesRequest (state) {
   state.allServices.loading = true
 }
 
-export function getAllServicesSuccess (state, body) {
-  state.allServices = { items: body.data, total: body.total, loading: false }
+export function getAllServicesSuccess (state, data) {
+  const { body, query = '', status = '', page } = data
+  const currentState = state.allServices
+
+  const isSameContext = currentState.currentQuery === query && currentState.currentStatus === status
+
+  state.allServices = {
+    ...state.allServices,
+    items: [
+      ...(isSameContext && currentState.items && page !== 1 ? currentState.items : []),
+      ...(body.data || [])
+    ],
+    currentPage: page,
+    total: body.total,
+    loading: false,
+    currentQuery: query,
+    currentStatus: status
+  }
 }
 
 export function getAllServicesFailure (state, error) {
-  state.allServices = { error }
+  state.allServices = {
+    ...state.allServices,
+    loading: false,
+    error,
+    endReached: error.message.includes('invalid request: page:')
+  }
 }
 
 export function getAllServicesClear (state) {

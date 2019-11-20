@@ -30,7 +30,7 @@ export function getAllServices ({ commit }, params) {
   commit('getAllServicesRequest')
   return HttpService.getAllServices(params)
     .then(body => {
-      commit('getAllServicesSuccess', body)
+      commit('getAllServicesSuccess', { body, ...params })
       return body
     })
     .catch(error => {
