@@ -100,11 +100,11 @@ While in Swarm Mode, Traefik uses labels found on services, not on individual co
 Therefore, if you use a compose file with Swarm Mode, labels should be defined in the
 [`deploy`](https://docs.docker.com/compose/compose-file/#labels-1) part of your service.
 
-This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
+This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file)).
 
 ### Port Detection
 
-Docker Swarm does not provide any [port exposition](port-detection) information to Traefik.
+Docker Swarm does not provide any [port detection](#port-detection) information to Traefik.
 
 Therefore you **must** specify the port to use for communication by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
 (Check the reference for this label in the [routing section for Docker](../routing/providers/docker.md#port)).
@@ -113,7 +113,7 @@ Therefore you **must** specify the port to use for communication by using the la
 
 Docker Swarm Mode follows the same rules as Docker [API Access](#docker-api-access).
 
-As the Swarm API is only exposed on the [manager nodes](it is mandatory to schedule Traefik on the Swarm manager nodes), you should schedule Traefik on the Swarm manager nodes by default,
+As the Swarm API is only exposed on the [manager nodes](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes), you should schedule Traefik on the Swarm manager nodes by default,
 by deploying Traefik with a [constraint](https://success.docker.com/article/using-contraints-and-labels-to-control-the-placement-of-containers) on the node's "role":
 
 ```shell tab="With Docker CLI"
@@ -235,7 +235,7 @@ providers:
 --providers.docker.endpoint=unix:///var/run/docker.sock
 ```
 
-See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API Access](#docker-api-access-1) for more informations.
+See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API Access](#docker-api-access_1) for more informations.
 
 ??? example "Using the docker.sock"
 
