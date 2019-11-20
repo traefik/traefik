@@ -4,7 +4,7 @@ export function getAllRouters ({ commit }, params) {
   commit('getAllRoutersRequest')
   return TcpService.getAllRouters(params)
     .then(body => {
-      commit('getAllRoutersSuccess', { body, params })
+      commit('getAllRoutersSuccess', { body, ...params })
       return body
     })
     .catch(error => {
