@@ -13,9 +13,7 @@
               :data="allRouters.items"
               :onLoadMore="handleLoadMore"
               :endReached="allRouters.endReached"
-              :request="onGetAll"
               :loading="allRouters.loading"
-              :pagination.sync="pagination"
               type="http-routers"
             />
           </div>
@@ -61,12 +59,14 @@ export default {
     initData () {
       const scrollerRef = this.$refs.mainTable.$refs.scroller
       if (scrollerRef) {
+        scrollerRef.stop()
         scrollerRef.reset()
       }
 
       this.handleLoadMore({ page: 1 }).then(() => {
         if (scrollerRef) {
-          scrollerRef.trigger()
+          scrollerRef.resume()
+          scrollerRef.poll()
         }
       })
     },
@@ -89,10 +89,6 @@ export default {
 
       return this.getAllRouters({ query: props.filter, status: this.status, page, limit: rowsPerPage, sortBy, descending })
         .then(body => {
-          if (!body) {
-            this.loading = false
-            return
-          }
           this.loading = false
           console.log('Success -> http/routers', body)
           // update rowsNumber with appropriate value

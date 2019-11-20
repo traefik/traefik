@@ -214,7 +214,9 @@ export default {
       return this.columns.find(c => c.name === columnName) || {}
     },
     handleLoadMore (index, done) {
-      this.onLoadMore({ page: index }).then(done).catch(e => {})
+      this.onLoadMore({ page: index })
+        .then(() => done())
+        .catch(() => done(true))
     }
   }
 }
