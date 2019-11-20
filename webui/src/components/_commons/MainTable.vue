@@ -20,7 +20,7 @@
           </tr>
         </tfoot>
         <tbody>
-          <tr v-for="row in data" :key="row.name" @click.native="$router.push({ path: `/${getPath}/${row.name}`})">
+          <tr v-for="row in data" :key="row.name" class="cursor-pointer" @click="$router.push({ path: `/${getPath}/${row.name}`})">
             <td v-if="hasColumn('status')" v-bind:class="`text-${getColumn('status').align}`">
               <avatar-state :state="row.status | status "/>
             </td>
@@ -173,6 +173,11 @@ export default {
           field: row => row.provider
         }
       ]
+    }
+  },
+  computed: {
+    getPath () {
+      return this.type.replace('-', '/', 'gi')
     }
   },
   filters: {
