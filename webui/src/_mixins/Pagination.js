@@ -10,13 +10,15 @@ export default function PaginationMixin (opts = {}) {
     methods: {
       fetchWithInterval () {
         this.initFetch({ limit: listLength })
-        this.pollingInterval = setTimeout(
-          () => this.fetchMore({ limit: listLength }),
+        this.pollingInterval = setInterval(
+          () => {
+            this.fetchMore({ limit: listLength, refresh: true })
+          },
           pollingIntervalTime
         )
       },
-      fetchMore ({ page = 1, limit = rowsPerPage, ...params } = {}) {
-        if (page === currentPage && limit === currentLimit) {
+      fetchMore ({ page = 1, limit = rowsPerPage, refresh, ...params } = {}) {
+        if (page === currentPage && limit === currentLimit && !refresh) {
           return Promise.resolve()
         }
 
@@ -45,6 +47,7 @@ export default function PaginationMixin (opts = {}) {
 
         return this.fetchMore({
           page: 1,
+          refresh: true,
           ...params
         }).then(() => {
           if (scrollerRef) {
