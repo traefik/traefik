@@ -25,12 +25,18 @@ const (
 var singleton *HealthCheck
 var once sync.Once
 
-// BalancerHandler includes functionality for load-balancing management.
-type BalancerHandler interface {
-	ServeHTTP(w http.ResponseWriter, req *http.Request)
+// Balancer is the set of operations required to manage the list of servers in a
+// load-balancer.
+type Balancer interface {
 	Servers() []*url.URL
 	RemoveServer(u *url.URL) error
 	UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error
+}
+
+// BalancerHandler includes functionality for load-balancing management.
+type BalancerHandler interface {
+	ServeHTTP(w http.ResponseWriter, req *http.Request)
+	Balancer
 }
 
 // metricsRegistry is a local interface in the health check package, exposing only the required metrics
@@ -49,7 +55,7 @@ type Options struct {
 	Transport http.RoundTripper
 	Interval  time.Duration
 	Timeout   time.Duration
-	LB        BalancerHandler
+	LB        Balancer
 }
 
 func (opt Options) String() string {
@@ -282,14 +288,11 @@ func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.Server
 	return err
 }
 
-// BalancerHandlers is a list of BalancerHandler(s) that implements BalancerHandler.
-type BalancerHandlers []BalancerHandler
-
-func (b BalancerHandlers) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-}
+// Balancers is a list of Balancers(s) that implements the Balancer interface.
+type Balancers []Balancer
 
 // Servers returns the servers url from all the BalancerHandler
-func (b BalancerHandlers) Servers() []*url.URL {
+func (b Balancers) Servers() []*url.URL {
 	var servers []*url.URL
 	for _, lb := range b {
 		servers = append(servers, lb.Servers()...)
@@ -300,7 +303,7 @@ func (b BalancerHandlers) Servers() []*url.URL {
 
 // RemoveServer removes the given server from all the BalancerHandler,
 // and updates the status of the server to "DOWN".
-func (b BalancerHandlers) RemoveServer(u *url.URL) error {
+func (b Balancers) RemoveServer(u *url.URL) error {
 	for _, lb := range b {
 		if err := lb.RemoveServer(u); err != nil {
 			return err
@@ -311,7 +314,7 @@ func (b BalancerHandlers) RemoveServer(u *url.URL) error {
 
 // UpsertServer adds the given server to all the BalancerHandler,
 // and updates the status of the server to "UP".
-func (b BalancerHandlers) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
+func (b Balancers) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
 	for _, lb := range b {
 		if err := lb.UpsertServer(u, options...); err != nil {
 			return err
