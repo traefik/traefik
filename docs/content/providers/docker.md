@@ -16,13 +16,13 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
 ## Routing Configuration
 
 When using Docker as a [provider](https://docs.traefik.io/providers/overview/),
-Trafik uses [containers labels](https://docs.docker.com/engine/reference/commandline/run/#set-metadata-on-container--l---label---label-file) to retrieve its routing configuration.
+Trafik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#set-metadata-on-container--l---label---label-file) to retrieve its routing configuration.
 
-See the list of labels in the dedicated section in [routing](../routing/providers/docker.md).
+See the list of labels in the dedicated [routing](../routing/providers/docker.md) section.
 
 ### Routing Configuration with Labels
 
-By default, Traefik watches for [container level's labels](https://docs.docker.com/config/labels-custom-metadata/) on a standalone Docker Engine.
+By default, Traefik watches for [container level labels](https://docs.docker.com/config/labels-custom-metadata/) on a standalone Docker Engine.
 
 When using Docker Compose, labels are specified by the directive
 [`labels`](https://docs.docker.com/compose/compose-file/#labels) from the
@@ -39,10 +39,10 @@ Traefik retrieves the private IP and port of containers from the Docker API.
 
 Ports detection works as follow:
 
-- If a container only [exposes](https://docs.docker.com/engine/reference/builder/#expose) one port,
+- If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) only one port,
   then Traefik uses this port for private communication.
 - If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) multiple ports,
-  or does not expose any port, then you must specify to Traefik which port to use for communication 
+  or does not expose any ports, then you must manually specify which port Traefik should use for communication 
   by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
   (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#port)).
 
