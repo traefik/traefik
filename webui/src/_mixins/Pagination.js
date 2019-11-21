@@ -12,7 +12,10 @@ export default function PaginationMixin (opts = {}) {
         this.initFetch({ limit: listLength })
         this.pollingInterval = setInterval(
           () => {
-            this.fetchMore({ limit: listLength, refresh: true })
+            this.fetchMore({
+              limit: Math.ceil(listLength / rowsPerPage) * rowsPerPage, // round up to multiple of rowsPerPage
+              refresh: true
+            })
           },
           pollingIntervalTime
         )
