@@ -223,11 +223,6 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	c.Assert(err, checker.IsNil)
 
-	// check healthcheck on web1 entrypoint
-	healthReqWeb1, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
-	c.Assert(err, checker.IsNil)
-	healthReqWeb1.Host = "test.localhost"
-
 	// Set whoami health to 200 to be sure to start with the wanted status
 	client := &http.Client{}
 	statusOkReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("200")))
@@ -235,6 +230,10 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService(c *check.C) {
 	_, err = client.Do(statusOkReq)
 	c.Assert(err, checker.IsNil)
 
+	// check healthcheck on web1 entrypoint
+	healthReqWeb1, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
+	c.Assert(err, checker.IsNil)
+	healthReqWeb1.Host = "test.localhost"
 	err = try.Request(healthReqWeb1, 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 

@@ -146,18 +146,18 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 	enabledURLs := backend.LB.Servers()
 	var newDisabledURLs []backendURL
 	// FIXME re enable metrics
-	for _, disableURL := range backend.disabledURLs {
+	for _, disabledURL := range backend.disabledURLs {
 		// FIXME serverUpMetricValue := float64(0)
-		if err := checkHealth(disableURL.url, backend); err == nil {
+		if err := checkHealth(disabledURL.url, backend); err == nil {
 			logger.Warnf("Health check up: Returning to server list. Backend: %q URL: %q Weight: %d",
-				backend.name, disableURL.url.String(), disableURL.weight)
-			if err = backend.LB.UpsertServer(disableURL.url, roundrobin.Weight(disableURL.weight)); err != nil {
+				backend.name, disabledURL.url.String(), disabledURL.weight)
+			if err = backend.LB.UpsertServer(disabledURL.url, roundrobin.Weight(disabledURL.weight)); err != nil {
 				logger.Error(err)
 			}
 			// FIXME serverUpMetricValue = 1
 		} else {
-			logger.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disableURL.url.String(), err)
-			newDisabledURLs = append(newDisabledURLs, disableURL)
+			logger.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disabledURL.url.String(), err)
+			newDisabledURLs = append(newDisabledURLs, disabledURL)
 		}
 		// FIXME labelValues := []string{"backend", backend.name, "url", backendurl.url.String()}
 		// FIXME hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
@@ -177,7 +177,7 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 					weight = 1
 				}
 			}
-			logger.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Weight: %d Reason: %s", backend.name, enableURL.String(), weight, err)
+			logger.Warnf("Health check failed, removing from server list. Backend: %q URL: %q Weight: %d Reason: %s", backend.name, enableURL.String(), weight, err)
 			if err := backend.LB.RemoveServer(enableURL); err != nil {
 				logger.Error(err)
 			}
@@ -282,13 +282,13 @@ func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.Server
 	return err
 }
 
-// BalancerHandlers includes functionality for a list of load balancer.
+// BalancerHandlers is a list of BalancerHandler(s) that implements BalancerHandler.
 type BalancerHandlers []BalancerHandler
 
 func (b BalancerHandlers) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
-// Servers return the servers url from all the BalancerHandler
+// Servers returns the servers url from all the BalancerHandler
 func (b BalancerHandlers) Servers() []*url.URL {
 	var servers []*url.URL
 	for _, lb := range b {

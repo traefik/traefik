@@ -53,10 +53,14 @@ type Manager struct {
 	metricsRegistry     metrics.Registry
 	bufferPool          httputil.BufferPool
 	defaultRoundTripper http.RoundTripper
-	balancers           map[string][]healthcheck.BalancerHandler
-	configs             map[string]*runtime.ServiceInfo
-	api                 http.Handler
-	rest                http.Handler
+	// balancers is the map of all balancer handlers, keyed by service name.
+	// There is one BalancerHandler per service handler, and there is one service handler per reference to a service
+	// (e.g. if 2 routers refer to the same service name, 2 service handlers are created),
+	// which is why there is not just one balancer handler per service name.
+	balancers map[string][]healthcheck.BalancerHandler
+	configs   map[string]*runtime.ServiceInfo
+	api       http.Handler
+	rest      http.Handler
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
@@ -110,14 +114,14 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 		}
 	case conf.Weighted != nil:
 		var err error
-		lb, err = m.getLoadBalancerWRRServiceHandler(ctx, serviceName, conf.Weighted, responseModifier)
+		lb, err = m.getWRRServiceHandler(ctx, serviceName, conf.Weighted, responseModifier)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
 		}
 	case conf.Mirroring != nil:
 		var err error
-		lb, err = m.getLoadBalancerMirrorServiceHandler(ctx, serviceName, conf.Mirroring, responseModifier)
+		lb, err = m.getMirrorServiceHandler(ctx, serviceName, conf.Mirroring, responseModifier)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
@@ -131,7 +135,7 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 	return lb, nil
 }
 
-func (m *Manager) getLoadBalancerMirrorServiceHandler(ctx context.Context, serviceName string, config *dynamic.Mirroring, responseModifier func(*http.Response) error) (http.Handler, error) {
+func (m *Manager) getMirrorServiceHandler(ctx context.Context, serviceName string, config *dynamic.Mirroring, responseModifier func(*http.Response) error) (http.Handler, error) {
 	serviceHandler, err := m.BuildHTTP(ctx, config.Service, responseModifier)
 	if err != nil {
 		return nil, err
@@ -152,7 +156,7 @@ func (m *Manager) getLoadBalancerMirrorServiceHandler(ctx context.Context, servi
 	return handler, nil
 }
 
-func (m *Manager) getLoadBalancerWRRServiceHandler(ctx context.Context, serviceName string, config *dynamic.WeightedRoundRobin, responseModifier func(*http.Response) error) (http.Handler, error) {
+func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, config *dynamic.WeightedRoundRobin, responseModifier func(*http.Response) error) (http.Handler, error) {
 	// TODO Handle accesslog and metrics with multiple service name
 	if config.Sticky != nil && config.Sticky.Cookie != nil {
 		config.Sticky.Cookie.Name = cookie.GetName(config.Sticky.Cookie.Name, serviceName)
