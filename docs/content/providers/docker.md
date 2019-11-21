@@ -30,19 +30,19 @@ When using Docker Compose, labels are specified by the directive
 
 !!! tip "Not Only Docker"
     Please note that any tool like Nomad, Terraform, Ansible, etc.
-    is able to define Docker container with label can work
+    that is able to define a Docker container with labels can work
     with Traefik & the Docker provider.
 
 ### Port Detection
 
 Traefik retrieves the private IP and port of containers from the Docker API.
 
-Ports detection works as follow:
+Ports detection works as follows:
 
 - If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) only one port,
   then Traefik uses this port for private communication.
 - If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) multiple ports,
-  or does not expose any ports, then you must manually specify which port Traefik should use for communication 
+  or does not expose any port, then you must manually specify which port Traefik should use for communication 
   by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
   (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#port)).
 
@@ -235,7 +235,7 @@ providers:
 --providers.docker.endpoint=unix:///var/run/docker.sock
 ```
 
-See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API Access](#docker-api-access_1) for more informations.
+See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API Access](#docker-api-access_1) for more information.
 
 ??? example "Using the docker.sock"
 
