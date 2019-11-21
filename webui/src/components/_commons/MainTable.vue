@@ -87,7 +87,7 @@
       </template>
     </q-infinite-scroll>
     <q-page-scroller position="bottom" :scroll-offset="150" class="back-to-top" v-if="endReached">
-      <q-btn color="primary" v-back-to-top small>
+      <q-btn color="primary" small>
         Back to top
       </q-btn>
     </q-page-scroller>
