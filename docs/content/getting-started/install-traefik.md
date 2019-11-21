@@ -29,7 +29,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 
 !!! warning "Experimental Helm Chart"
     
-    Please note that that the Helm Chart for Traefik v2 is still experimental.
+    Please note that the Helm Chart for Traefik v2 is still experimental.
     
     The Traefik Stable Chart from 
     [Helm's default charts repository](https://github.com/helm/charts/tree/master/stable/traefik) is still using [Traefik v1.7](https://docs.traefik.io/v1.7).
