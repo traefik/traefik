@@ -197,9 +197,11 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[ClientHost] = forwardedFor
 	}
 
-	crw := &captureResponseWriter{rw: rw}
+	crw := newCaptureResponseWriter(rw)
 
 	next.ServeHTTP(crw, reqWithDataTable)
+
+	crw.LockHeader()
 
 	if _, ok := core[ClientUsername]; !ok {
 		core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
@@ -305,9 +307,7 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestRead
 
 		h.redactHeaders(logDataTable.Request, fields, "request_")
 		h.redactHeaders(logDataTable.OriginResponse, fields, "origin_")
-		crw.RLock()
 		h.redactHeaders(crw.Header(), fields, "downstream_")
-		crw.RUnlock()
 
 		h.mu.Lock()
 		defer h.mu.Unlock()
