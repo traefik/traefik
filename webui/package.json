@@ -21,7 +21,7 @@
     "bowser": "^2.5.2",
     "chart.js": "^2.8.0",
     "dot-prop": "^5.2.0",
-    "lodash": "^4.17.15",
+    "lodash.isequal": "4.5.0",
     "moment": "^2.24.0",
     "quasar": "^1.4.4",
     "vh-check": "^2.0.5",
