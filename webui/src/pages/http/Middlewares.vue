@@ -49,16 +49,8 @@ export default {
   },
   data () {
     return {
-      loading: true,
       filter: '',
-      status: '',
-      pagination: {
-        sortBy: '',
-        descending: true,
-        page: 1,
-        rowsPerPage: 10,
-        rowsNumber: 0
-      }
+      status: ''
     }
   },
   computed: {
