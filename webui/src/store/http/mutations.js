@@ -10,8 +10,9 @@ export function getAllRoutersRequest (state) {
 export function getAllRoutersSuccess (state, data) {
   const { query = '', status = '' } = data
   const currentState = state.allRouters
+  const { currentQuery = '', currentStatus = '' } = currentState
 
-  const isSameContext = currentState.currentQuery === query && currentState.currentStatus === status
+  const isSameContext = currentQuery === query && currentStatus === status
 
   state.allRouters = {
     ...state.allRouters,

@@ -9,6 +9,7 @@ export const withPagination = (type, opts = {}) => (state, data) => {
   switch (type) {
     case 'request':
       newState = {
+        ...currentState,
         loading: true
       }
       break
@@ -21,12 +22,15 @@ export const withPagination = (type, opts = {}) => (state, data) => {
           ...(body.data || [])
         ],
         currentPage: page,
-        total: body.total,
+        total: isSameContext && currentState.items && page !== 1
+          ? body.total + currentState.total
+          : body.total,
         loading: false
       }
       break
     case 'failure':
       newState = {
+        ...currentState,
         loading: false,
         error: data,
         endReached: data.message.includes('invalid request: page:')
