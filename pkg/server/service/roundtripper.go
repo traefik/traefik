@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -20,6 +21,15 @@ type h2cTransportWrapper struct {
 
 func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.URL.Scheme = "http"
+	return t.Transport.RoundTrip(req)
+}
+
+type unixTransport struct {
+	http.Transport
+}
+
+func (t *unixTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.URL.Scheme = req.URL.Scheme[len("unix+"):]
 	return t.Transport.RoundTrip(req)
 }
 
@@ -56,6 +66,34 @@ func createHTTPTransport(transportConfiguration *static.ServersTransport) (*http
 		Transport: &http2.Transport{
 			DialTLS: func(netw, addr string, cfg *tls.Config) (net.Conn, error) {
 				return net.Dial(netw, addr)
+			},
+			AllowHTTP: true,
+		},
+	})
+
+	transport.RegisterProtocol("unix+http", &unixTransport{
+		Transport: http.Transport{
+			MaxIdleConnsPerHost:   transportConfiguration.MaxIdleConnsPerHost,
+			IdleConnTimeout:       90 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			DialContext: func(ctx context.Context, netw, addr string) (net.Conn, error) {
+				host, _, err := net.SplitHostPort(addr)
+				if err != nil {
+					return nil, err
+				}
+				return dialer.DialContext(ctx, "unix", host)
+			},
+		},
+	})
+
+	transport.RegisterProtocol("unix+h2c", &h2cTransportWrapper{
+		Transport: &http2.Transport{
+			DialTLS: func(netw, addr string, cfg *tls.Config) (net.Conn, error) {
+				host, _, err := net.SplitHostPort(addr)
+				if err != nil {
+					return nil, err
+				}
+				return net.Dial("unix", host)
 			},
 			AllowHTTP: true,
 		},

@@ -96,6 +96,10 @@ The `url` option point to a specific instance.
     If you want the requests to be sent to a specific path on your servers,
     configure your [`routers`](../routers/index.md) to use a corresponding [middleware](../../middlewares/overview.md) (e.g. the [AddPrefix](../../middlewares/addprefix.md) or [ReplacePath](../../middlewares/replacepath.md)) middlewares.
 
+!!! info ""
+    If your server is listening on a HTTP/1 Unix socket, you can use `unix+http:/path/to/socket`.
+    If your server is listening on a non-encrypted HTTP/2 Unix socket (commonly refered as H2C), you can use `unix+h2c:/path/to/socket`.
+
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"

@@ -8,6 +8,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/containous/alice"
@@ -307,6 +308,11 @@ func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHand
 		u, err := url.Parse(srv.URL)
 		if err != nil {
 			return fmt.Errorf("error parsing server URL %s: %v", srv.URL, err)
+		}
+
+		if strings.HasPrefix(u.Scheme, "unix+") {
+			u.Host = u.Path
+			u.Path = ""
 		}
 
 		logger.WithField(log.ServerName, name).Debugf("Creating server %d %s", name, u)

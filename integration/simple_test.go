@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,6 +17,8 @@ import (
 	"github.com/containous/traefik/v2/integration/try"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/go-check/check"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -447,6 +450,70 @@ func (s *SimpleSuite) TestMultiProvider(c *check.C) {
 
 	err = try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("CustomValue"))
 	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestUnixSocket(c *check.C) {
+	server := http.Server{
+		Handler: http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			res.WriteHeader(200)
+		}),
+	}
+	unixListener, err := net.Listen("unix", "/tmp/test.sock")
+	c.Assert(err, checker.IsNil)
+	go server.Serve(unixListener)
+	defer os.Remove("/tmp/test.sock")
+
+	file := s.adaptFile(c, "fixtures/file/simple-hosts.toml", struct {
+		Server string
+	}{Server: "unix+http:/tmp/test.sock"})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	req.Host = "test.localhost"
+	c.Assert(err, checker.IsNil)
+	err = try.Request(req, 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	if err != nil {
+		c.Fatalf("Error while testing http service on unix socket: %v", err)
+	}
+}
+
+func (s *SimpleSuite) TestH2CSocket(c *check.C) {
+	server := http.Server{
+		Handler: h2c.NewHandler(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			res.WriteHeader(200)
+		}), &http2.Server{}),
+	}
+	unixListener, err := net.Listen("unix", "/tmp/test2.sock")
+	c.Assert(err, checker.IsNil)
+	go server.Serve(unixListener)
+	defer os.Remove("/tmp/test2.sock")
+
+	file := s.adaptFile(c, "fixtures/file/simple-hosts.toml", struct {
+		Server string
+	}{Server: "unix+h2c:/tmp/test2.sock"})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	req.Host = "test.localhost"
+	c.Assert(err, checker.IsNil)
+	err = try.Request(req, 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	if err != nil {
+		c.Fatalf("Error while testing http service on unix socket: %v", err)
+	}
 }
 
 func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.C) {
