@@ -246,6 +246,8 @@ github.com/google/btree v1.0.0/go.mod h1:lNA+9X1NB3Zf8V7Ke586lFgjr2dZNuvo3lPJSGZ
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
 github.com/google/go-cmp v0.3.0 h1:crn/baboCvb5fXaQ0IJ1SGTsTVrWpDsCWC8EGETZijY=
 github.com/google/go-cmp v0.3.0/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
+github.com/google/go-cmp v0.3.1 h1:Xye71clBPdm5HgqGwUkwhbynsUJZhDbS20FvLhQ2izg=
+github.com/google/go-cmp v0.3.1/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
 github.com/google/go-github/v28 v28.0.0 h1:+UjHI4+1W/vsXR4jJBWt0ZA74XHbvt5yBAvsf1M3bgM=
 github.com/google/go-github/v28 v28.0.0/go.mod h1:+5GboIspo7F0NG2qsvfYh7en6F3EK37uyqv+c35AR3s=
 github.com/google/go-querystring v1.0.0 h1:Xkwi/a1rcvNg1PPYe5vI8GbeBY/jrVuDX5ASuANWTrk=
@@ -592,12 +594,12 @@ github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415/go.mod h1:
 github.com/xeipuuv/gojsonschema v1.1.0 h1:ngVtJC9TY/lg0AA/1k48FYhBrhRoFlEmWzsehpNAaZg=
 github.com/xeipuuv/gojsonschema v1.1.0/go.mod h1:5yf86TLmAcydyeJq5YvxkGPE2fm/u4myDekKRoLuqhs=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
-go.elastic.co/apm v1.5.0 h1:arba7i+CVc36Jptww3R1ttW+O10ydvnBtidyd85DLpg=
-go.elastic.co/apm v1.5.0/go.mod h1:OdB9sPtM6Vt7oz3VXt7+KR96i9li74qrxBGHTQygFvk=
-go.elastic.co/apm/module/apmhttp v1.5.0 h1:sxntP97oENyWWi+6GAwXUo05oEpkwbiarZLqrzLRA4o=
-go.elastic.co/apm/module/apmhttp v1.5.0/go.mod h1:1FbmNuyD3ddauwzgVwFB0fqY6KbZt3JkV187tGCYYhY=
-go.elastic.co/apm/module/apmot v1.5.0 h1:rPyHRI6Ooqjwny67au6e2eIxLZshqd7bJfAUpdgOw/4=
-go.elastic.co/apm/module/apmot v1.5.0/go.mod h1:d2KYwhJParTpyw2WnTNy8geNlHKKFX+4oK3YLlsesWE=
+go.elastic.co/apm v1.6.0 h1:RzyNj9Qx2iXh4A8DIg/aMUdtwGFNw3R8sKO3/Hf4pqk=
+go.elastic.co/apm v1.6.0/go.mod h1:/VByR6FBtuNu1YnPHz7Gri7YiIqAoFBGVp+2xkSE8tI=
+go.elastic.co/apm/module/apmhttp v1.6.0 h1:Y67VwDNnUyq4akeiem8Wtpb222RbZCRfY3FBI0swoJk=
+go.elastic.co/apm/module/apmhttp v1.6.0/go.mod h1:pf6GS5vDxdrSF0Qy6wESRBZCRZqATSZpr658ehD5QA4=
+go.elastic.co/apm/module/apmot v1.6.0 h1:3Tjwu25SfB2Bq+UsO8JOKYOuMzUu4s8/fS8BGkliocg=
+go.elastic.co/apm/module/apmot v1.6.0/go.mod h1:JIGFfrixcGjp8oD22PTTCvdNMfp+O+lOb5Hw4MtqxQ4=
 go.elastic.co/fastjson v1.0.0 h1:ooXV/ABvf+tBul26jcVViPT3sBir0PvXgibYB1IQQzg=
 go.elastic.co/fastjson v1.0.0/go.mod h1:PmeUOMMtLHQr9ZS9J9owrAVg0FkaZDRZJEFTTGHtchs=
 go.etcd.io/bbolt v1.3.1-etcd.8/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
