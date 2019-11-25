@@ -12,19 +12,19 @@ import (
 	"go.elastic.co/apm/transport"
 )
 
-// Name sets the name of this tracer
+// Name sets the name of this tracer.
 const Name = "elastic"
 
-// Config provides configuration settings for a elastic.co tracer
+// Config provides configuration settings for a elastic.co tracer.
 type Config struct {
 	ApmServerURL          string `description:"Set the URL of the Elastic APM server." json:"apmServerURL,omitempty" toml:"apmServerURL,omitempty" yaml:"apmServerURL,omitempty"`
-	ApmSecretToken        string `description:"Set the token used to connect to Elastic APM Server." json:"ApmSecretToken,omitempty" toml:"ApmSecretToken,omitempty" yaml:"ApmSecretToken,omitempty"`
+	ApmSecretToken        string `description:"Set the token used to connect to Elastic APM Server." json:"apmSecretToken,omitempty" toml:"apmSecretToken,omitempty" yaml:"apmSecretToken,omitempty"`
 	ApmServiceEnvironment string `description:"Set the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'." json:"serviceEnvironment,omitempty" toml:"serviceEnvironment,omitempty" yaml:"serviceEnvironment,omitempty"`
 }
 
-// Setup sets up the tracer
+// Setup sets up the tracer.
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
-	// Create default transport
+	// Create default transport.
 	ht, err := transport.NewHTTPTransport()
 	if err != nil {
 		return nil, nil, err
