@@ -7,8 +7,22 @@ import (
 	"strings"
 )
 
+type MetadataOpts struct {
+	TagName            string
+	AllowSliceAsStruct bool
+}
+
 // AddMetadata adds metadata such as type, inferred from element, to a node.
-func AddMetadata(element interface{}, node *Node) error {
+func AddMetadata(element interface{}, node *Node, opts MetadataOpts) error {
+	return metadata{MetadataOpts: opts}.Add(element, node)
+}
+
+type metadata struct {
+	MetadataOpts
+}
+
+// Add adds metadata such as type, inferred from element, to a node.
+func (m metadata) Add(element interface{}, node *Node) error {
 	if node == nil {
 		return nil
 	}
@@ -24,25 +38,25 @@ func AddMetadata(element interface{}, node *Node) error {
 	rootType := reflect.TypeOf(element)
 	node.Kind = rootType.Kind()
 
-	return browseChildren(rootType, node)
+	return m.browseChildren(rootType, node)
 }
 
-func browseChildren(fType reflect.Type, node *Node) error {
+func (m metadata) browseChildren(fType reflect.Type, node *Node) error {
 	for _, child := range node.Children {
-		if err := addMetadata(fType, child); err != nil {
+		if err := m.add(fType, child); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func addMetadata(rootType reflect.Type, node *Node) error {
+func (m metadata) add(rootType reflect.Type, node *Node) error {
 	rType := rootType
 	if rootType.Kind() == reflect.Ptr {
 		rType = rootType.Elem()
 	}
 
-	field, err := findTypedField(rType, node)
+	field, err := m.findTypedField(rType, node)
 	if err != nil {
 		return err
 	}
@@ -57,11 +71,11 @@ func addMetadata(rootType reflect.Type, node *Node) error {
 
 	if fType.Kind() == reflect.Struct || fType.Kind() == reflect.Ptr && fType.Elem().Kind() == reflect.Struct ||
 		fType.Kind() == reflect.Map {
-		if len(node.Children) == 0 && field.Tag.Get(TagLabel) != TagLabelAllowEmpty {
+		if len(node.Children) == 0 && field.Tag.Get(m.TagName) != TagLabelAllowEmpty {
 			return fmt.Errorf("%s cannot be a standalone element (type %s)", node.Name, fType)
 		}
 
-		node.Disabled = len(node.Value) > 0 && !strings.EqualFold(node.Value, "true") && field.Tag.Get(TagLabel) == TagLabelAllowEmpty
+		node.Disabled = len(node.Value) > 0 && !strings.EqualFold(node.Value, "true") && field.Tag.Get(m.TagName) == TagLabelAllowEmpty
 	}
 
 	if len(node.Children) == 0 {
@@ -69,7 +83,7 @@ func addMetadata(rootType reflect.Type, node *Node) error {
 	}
 
 	if fType.Kind() == reflect.Struct || fType.Kind() == reflect.Ptr && fType.Elem().Kind() == reflect.Struct {
-		return browseChildren(fType, node)
+		return m.browseChildren(fType, node)
 	}
 
 	if fType.Kind() == reflect.Map {
@@ -80,7 +94,7 @@ func addMetadata(rootType reflect.Type, node *Node) error {
 
 			if elem.Kind() == reflect.Map || elem.Kind() == reflect.Struct ||
 				(elem.Kind() == reflect.Ptr && elem.Elem().Kind() == reflect.Struct) {
-				if err = browseChildren(elem, child); err != nil {
+				if err = m.browseChildren(elem, child); err != nil {
 					return err
 				}
 			}
@@ -89,13 +103,13 @@ func addMetadata(rootType reflect.Type, node *Node) error {
 	}
 
 	if fType.Kind() == reflect.Slice {
-		if field.Tag.Get(TagLabelSliceAsStruct) != "" {
-			return browseChildren(fType.Elem(), node)
+		if m.AllowSliceAsStruct && field.Tag.Get(TagLabelSliceAsStruct) != "" {
+			return m.browseChildren(fType.Elem(), node)
 		}
 
 		for _, ch := range node.Children {
 			ch.Kind = fType.Elem().Kind()
-			if err = browseChildren(fType.Elem(), ch); err != nil {
+			if err = m.browseChildren(fType.Elem(), ch); err != nil {
 				return err
 			}
 		}
@@ -105,19 +119,19 @@ func addMetadata(rootType reflect.Type, node *Node) error {
 	return fmt.Errorf("invalid node %s: %v", node.Name, fType.Kind())
 }
 
-func findTypedField(rType reflect.Type, node *Node) (reflect.StructField, error) {
+func (m metadata) findTypedField(rType reflect.Type, node *Node) (reflect.StructField, error) {
 	for i := 0; i < rType.NumField(); i++ {
 		cField := rType.Field(i)
 
 		fieldName := cField.Tag.Get(TagLabelSliceAsStruct)
-		if len(fieldName) == 0 {
+		if !m.AllowSliceAsStruct || len(fieldName) == 0 {
 			fieldName = cField.Name
 		}
 
 		if IsExported(cField) {
 			if cField.Anonymous {
 				if cField.Type.Kind() == reflect.Struct {
-					structField, err := findTypedField(cField.Type, node)
+					structField, err := m.findTypedField(cField.Type, node)
 					if err != nil {
 						continue
 					}

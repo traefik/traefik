@@ -14,8 +14,21 @@ type initializer interface {
 	SetDefaults()
 }
 
+type FillerOpts struct {
+	AllowSliceAsStruct bool
+}
+
 // Fill populates the fields of the element using the information in node.
-func Fill(element interface{}, node *Node) error {
+func Fill(element interface{}, node *Node, opts FillerOpts) error {
+	return filler{FillerOpts: opts}.Fill(element, node)
+}
+
+type filler struct {
+	FillerOpts
+}
+
+// Fill populates the fields of the element using the information in node.
+func (f filler) Fill(element interface{}, node *Node) error {
 	if element == nil || node == nil {
 		return nil
 	}
@@ -29,10 +42,10 @@ func Fill(element interface{}, node *Node) error {
 		return fmt.Errorf("struct are not supported, use pointer instead")
 	}
 
-	return fill(root.Elem(), node)
+	return f.fill(root.Elem(), node)
 }
 
-func fill(field reflect.Value, node *Node) error {
+func (f filler) fill(field reflect.Value, node *Node) error {
 	// related to allow-empty tag
 	if node.Disabled {
 		return nil
@@ -70,19 +83,19 @@ func fill(field reflect.Value, node *Node) error {
 	case reflect.Float64:
 		return setFloat(field, node.Value, 64)
 	case reflect.Struct:
-		return setStruct(field, node)
+		return f.setStruct(field, node)
 	case reflect.Ptr:
-		return setPtr(field, node)
+		return f.setPtr(field, node)
 	case reflect.Map:
-		return setMap(field, node)
+		return f.setMap(field, node)
 	case reflect.Slice:
-		return setSlice(field, node)
+		return f.setSlice(field, node)
 	default:
 		return nil
 	}
 }
 
-func setPtr(field reflect.Value, node *Node) error {
+func (f filler) setPtr(field reflect.Value, node *Node) error {
 	if field.IsNil() {
 		field.Set(reflect.New(field.Type().Elem()))
 
@@ -94,10 +107,10 @@ func setPtr(field reflect.Value, node *Node) error {
 		}
 	}
 
-	return fill(field.Elem(), node)
+	return f.fill(field.Elem(), node)
 }
 
-func setStruct(field reflect.Value, node *Node) error {
+func (f filler) setStruct(field reflect.Value, node *Node) error {
 	for _, child := range node.Children {
 		fd := field.FieldByName(child.FieldName)
 
@@ -106,7 +119,7 @@ func setStruct(field reflect.Value, node *Node) error {
 			return fmt.Errorf("field not found, node: %s (%s)", child.Name, child.FieldName)
 		}
 
-		err := fill(fd, child)
+		err := f.fill(fd, child)
 		if err != nil {
 			return err
 		}
@@ -115,10 +128,10 @@ func setStruct(field reflect.Value, node *Node) error {
 	return nil
 }
 
-func setSlice(field reflect.Value, node *Node) error {
+func (f filler) setSlice(field reflect.Value, node *Node) error {
 	if field.Type().Elem().Kind() == reflect.Struct ||
 		field.Type().Elem().Kind() == reflect.Ptr && field.Type().Elem().Elem().Kind() == reflect.Struct {
-		return setSliceStruct(field, node)
+		return f.setSliceStruct(field, node)
 	}
 
 	if len(node.Value) == 0 {
@@ -211,9 +224,9 @@ func setSlice(field reflect.Value, node *Node) error {
 	return nil
 }
 
-func setSliceStruct(field reflect.Value, node *Node) error {
-	if node.Tag.Get(TagLabelSliceAsStruct) != "" {
-		return setSliceAsStruct(field, node)
+func (f filler) setSliceStruct(field reflect.Value, node *Node) error {
+	if f.AllowSliceAsStruct && node.Tag.Get(TagLabelSliceAsStruct) != "" {
+		return f.setSliceAsStruct(field, node)
 	}
 
 	field.Set(reflect.MakeSlice(field.Type(), len(node.Children), len(node.Children)))
@@ -221,7 +234,7 @@ func setSliceStruct(field reflect.Value, node *Node) error {
 	for i, child := range node.Children {
 		// use Ptr to allow "SetDefaults"
 		value := reflect.New(reflect.PtrTo(field.Type().Elem()))
-		err := setPtr(value, child)
+		err := f.setPtr(value, child)
 		if err != nil {
 			return err
 		}
@@ -232,14 +245,14 @@ func setSliceStruct(field reflect.Value, node *Node) error {
 	return nil
 }
 
-func setSliceAsStruct(field reflect.Value, node *Node) error {
+func (f filler) setSliceAsStruct(field reflect.Value, node *Node) error {
 	if len(node.Children) == 0 {
 		return fmt.Errorf("invalid slice: node %s", node.Name)
 	}
 
 	// use Ptr to allow "SetDefaults"
 	value := reflect.New(reflect.PtrTo(field.Type().Elem()))
-	err := setPtr(value, node)
+	err := f.setPtr(value, node)
 	if err != nil {
 		return err
 	}
@@ -252,7 +265,7 @@ func setSliceAsStruct(field reflect.Value, node *Node) error {
 	return nil
 }
 
-func setMap(field reflect.Value, node *Node) error {
+func (f filler) setMap(field reflect.Value, node *Node) error {
 	if field.IsNil() {
 		field.Set(reflect.MakeMap(field.Type()))
 	}
@@ -260,7 +273,7 @@ func setMap(field reflect.Value, node *Node) error {
 	for _, child := range node.Children {
 		ptrValue := reflect.New(reflect.PtrTo(field.Type().Elem()))
 
-		err := fill(ptrValue, child)
+		err := f.fill(ptrValue, child)
 		if err != nil {
 			return err
 		}
