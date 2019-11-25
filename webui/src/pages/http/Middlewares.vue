@@ -10,11 +10,11 @@
           <div class="col-12">
             <main-table
               ref="mainTable"
+              v-bind="getTableProps({ type: 'http-middlewares' })"
               :data="allMiddlewares.items"
               :onLoadMore="handleLoadMore"
               :endReached="allMiddlewares.endReached"
               :loading="allMiddlewares.loading"
-              type="http-middlewares"
             />
           </div>
         </div>
@@ -26,12 +26,14 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import GetTablePropsMixin from '../../_mixins/GetTableProps'
 import PageDefault from '../../components/_commons/PageDefault'
 import ToolBarTable from '../../components/_commons/ToolBarTable'
 import MainTable from '../../components/_commons/MainTable'
 
 export default {
   name: 'PageHTTPMiddlewares',
+  mixins: [GetTablePropsMixin],
   components: {
     PageDefault,
     ToolBarTable,
