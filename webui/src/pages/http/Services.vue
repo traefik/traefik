@@ -10,11 +10,11 @@
           <div class="col-12">
             <main-table
               ref="mainTable"
+              v-bind="getTableProps({ type: 'http-services' })"
               :data="allServices.items"
               :onLoadMore="handleLoadMore"
               :endReached="allServices.endReached"
               :loading="allServices.loading"
-              type="http-services"
             />
           </div>
         </div>
@@ -26,12 +26,14 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import GetTablePropsMixin from '../../_mixins/GetTableProps'
 import PageDefault from '../../components/_commons/PageDefault'
 import ToolBarTable from '../../components/_commons/ToolBarTable'
 import MainTable from '../../components/_commons/MainTable'
 
 export default {
   name: 'PageHTTPServices',
+  mixins: [GetTablePropsMixin],
   components: {
     PageDefault,
     ToolBarTable,
