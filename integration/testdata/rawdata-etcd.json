@@ -1,0 +1,219 @@
+{
+  "routers": {
+    "Router0@etcd": {
+      "entryPoints": [
+        "web"
+      ],
+      "middlewares": [
+        "compressor@etcd",
+        "striper@etcd"
+      ],
+      "service": "simplesvc",
+      "rule": "Host(`kv1.localhost`)",
+      "priority": 42,
+      "tls": {},
+      "status": "enabled",
+      "using": [
+        "web"
+      ]
+    },
+    "Router1@etcd": {
+      "entryPoints": [
+        "web"
+      ],
+      "service": "simplesvc",
+      "rule": "Host(`kv2.localhost`)",
+      "priority": 42,
+      "tls": {
+        "domains": [
+          {
+            "main": "aaa.localhost",
+            "sans": [
+              "aaa.aaa.localhost",
+              "bbb.aaa.localhost"
+            ]
+          },
+          {
+            "main": "bbb.localhost",
+            "sans": [
+              "aaa.bbb.localhost",
+              "bbb.bbb.localhost"
+            ]
+          }
+        ]
+      },
+      "status": "enabled",
+      "using": [
+        "web"
+      ]
+    },
+    "api@internal": {
+      "entryPoints": [
+        "traefik"
+      ],
+      "service": "api@internal",
+      "rule": "PathPrefix(`/api`)",
+      "priority": 2147483646,
+      "status": "enabled",
+      "using": [
+        "traefik"
+      ]
+    },
+    "dashboard@internal": {
+      "entryPoints": [
+        "traefik"
+      ],
+      "middlewares": [
+        "dashboard_redirect@internal",
+        "dashboard_stripprefix@internal"
+      ],
+      "service": "dashboard@internal",
+      "rule": "PathPrefix(`/`)",
+      "priority": 2147483645,
+      "status": "enabled",
+      "using": [
+        "traefik"
+      ]
+    }
+  },
+  "middlewares": {
+    "compressor@etcd": {
+      "compress": {},
+      "status": "enabled",
+      "usedBy": [
+        "Router0@etcd"
+      ]
+    },
+    "dashboard_redirect@internal": {
+      "redirectRegex": {
+        "regex": "^(http:\\/\\/[^:]+(:\\d+)?)/$",
+        "replacement": "${1}/dashboard/",
+        "permanent": true
+      },
+      "status": "enabled",
+      "usedBy": [
+        "dashboard@internal"
+      ]
+    },
+    "dashboard_stripprefix@internal": {
+      "stripPrefix": {
+        "prefixes": [
+          "/dashboard/",
+          "/dashboard"
+        ]
+      },
+      "status": "enabled",
+      "usedBy": [
+        "dashboard@internal"
+      ]
+    },
+    "striper@etcd": {
+      "stripPrefix": {
+        "prefixes": [
+          "foo",
+          "bar"
+        ],
+        "forceSlash": true
+      },
+      "status": "enabled",
+      "usedBy": [
+        "Router0@etcd"
+      ]
+    }
+  },
+  "services": {
+    "Service03@etcd": {
+      "weighted": {
+        "services": [
+          {
+            "name": "srvcA",
+            "weight": 42
+          },
+          {
+            "name": "srvcB",
+            "weight": 42
+          }
+        ]
+      },
+      "status": "enabled"
+    },
+    "api@internal": {
+      "status": "enabled",
+      "usedBy": [
+        "api@internal"
+      ]
+    },
+    "dashboard@internal": {
+      "status": "enabled",
+      "usedBy": [
+        "dashboard@internal"
+      ]
+    },
+    "mirror@etcd": {
+      "mirroring": {
+        "service": "simplesvc",
+        "mirrors": [
+          {
+            "name": "srvcA",
+            "percent": 42
+          },
+          {
+            "name": "srvcB",
+            "percent": 42
+          }
+        ]
+      },
+      "status": "enabled"
+    },
+    "simplesvc@etcd": {
+      "loadBalancer": {
+        "servers": [
+          {
+            "url": "http://10.0.1.1:8888"
+          },
+          {
+            "url": "http://10.0.1.1:8889"
+          }
+        ],
+        "passHostHeader": true
+      },
+      "status": "enabled",
+      "usedBy": [
+        "Router0@etcd",
+        "Router1@etcd"
+      ],
+      "serverStatus": {
+        "http://10.0.1.1:8888": "UP",
+        "http://10.0.1.1:8889": "UP"
+      }
+    },
+    "srvcA@etcd": {
+      "loadBalancer": {
+        "servers": [
+          {
+            "url": "http://10.0.1.2:8888"
+          },
+          {
+            "url": "http://10.0.1.2:8889"
+          }
+        ],
+        "passHostHeader": true
+      },
+      "status": "enabled"
+    },
+    "srvcB@etcd": {
+      "loadBalancer": {
+        "servers": [
+          {
+            "url": "http://10.0.1.3:8888"
+          },
+          {
+            "url": "http://10.0.1.3:8889"
+          }
+        ],
+        "passHostHeader": true
+      },
+      "status": "enabled"
+    }
+  }
+}

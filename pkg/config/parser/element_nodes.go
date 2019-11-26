@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// EncoderToNodeOpts Options for the encoderToNode.
 type EncoderToNodeOpts struct {
 	OmitEmpty          bool
 	TagName            string

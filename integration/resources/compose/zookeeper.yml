@@ -1,0 +1,4 @@
+zookeeper:
+  image: zookeeper
+  ports:
+    - "2181:2181"

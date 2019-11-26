@@ -14,6 +14,7 @@ type initializer interface {
 	SetDefaults()
 }
 
+// FillerOpts Options for the filler.
 type FillerOpts struct {
 	AllowSliceAsStruct bool
 }

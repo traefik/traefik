@@ -15,6 +15,8 @@ import (
 func DecodeToNode(pairs []*store.KVPair, rootName string, filters ...string) (*parser.Node, error) {
 	sortedPairs := filterPairs(pairs, filters)
 
+	exp := regexp.MustCompile(`^\d+$`)
+
 	var node *parser.Node
 
 	for i, pair := range sortedPairs {
@@ -26,7 +28,7 @@ func DecodeToNode(pairs []*store.KVPair, rootName string, filters ...string) (*p
 
 		var parts []string
 		for _, fragment := range split {
-			if ok, _ := regexp.MatchString(`^\d+$`, fragment); ok {
+			if exp.MatchString(fragment) {
 				parts = append(parts, "["+fragment+"]")
 			} else {
 				parts = append(parts, fragment)

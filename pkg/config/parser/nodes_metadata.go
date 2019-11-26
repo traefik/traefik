@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// MetadataOpts Options for the metadata.
 type MetadataOpts struct {
 	TagName            string
 	AllowSliceAsStruct bool

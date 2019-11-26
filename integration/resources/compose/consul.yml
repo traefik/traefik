@@ -1,0 +1,4 @@
+consul:
+  image: consul
+  ports:
+    - "8500:8500"

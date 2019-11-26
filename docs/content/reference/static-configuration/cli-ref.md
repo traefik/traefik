@@ -243,6 +243,36 @@ EntryPoint (Default: ```traefik```)
 `--ping.manualrouting`:  
 Manual routing (Default: ```false```)
 
+`--providers.consul`:  
+Enable Consul backend with default settings. (Default: ```false```)
+
+`--providers.consul.endpoints`:  
+KV store endpoints (Default: ```127.0.0.1:8500```)
+
+`--providers.consul.password`:  
+KV Password
+
+`--providers.consul.rootkey`:  
+Root key used for KV store (Default: ```traefik```)
+
+`--providers.consul.tls.ca`:  
+TLS CA
+
+`--providers.consul.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.consul.tls.cert`:  
+TLS cert
+
+`--providers.consul.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.consul.tls.key`:  
+TLS key
+
+`--providers.consul.username`:  
+KV Username
+
 `--providers.consulcatalog.cache`:  
 Use local agent caching for catalog reads. (Default: ```false```)
 
@@ -347,6 +377,36 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 
 `--providers.docker.watch`:  
 Watch provider. (Default: ```true```)
+
+`--providers.etcd`:  
+Enable Etcd backend with default settings. (Default: ```false```)
+
+`--providers.etcd.endpoints`:  
+KV store endpoints (Default: ```127.0.0.1:2379```)
+
+`--providers.etcd.password`:  
+KV Password
+
+`--providers.etcd.rootkey`:  
+Root key used for KV store (Default: ```traefik```)
+
+`--providers.etcd.tls.ca`:  
+TLS CA
+
+`--providers.etcd.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.etcd.tls.cert`:  
+TLS cert
+
+`--providers.etcd.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.etcd.tls.key`:  
+TLS key
+
+`--providers.etcd.username`:  
+KV Username
 
 `--providers.file.debugloggeneratedtemplate`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
@@ -516,11 +576,71 @@ Defines the polling interval in seconds. (Default: ```15```)
 `--providers.rancher.watch`:  
 Watch provider. (Default: ```true```)
 
+`--providers.redis`:  
+Enable Redis backend with default settings. (Default: ```false```)
+
+`--providers.redis.endpoints`:  
+KV store endpoints (Default: ```127.0.0.1:6379```)
+
+`--providers.redis.password`:  
+KV Password
+
+`--providers.redis.rootkey`:  
+Root key used for KV store (Default: ```traefik```)
+
+`--providers.redis.tls.ca`:  
+TLS CA
+
+`--providers.redis.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.redis.tls.cert`:  
+TLS cert
+
+`--providers.redis.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.redis.tls.key`:  
+TLS key
+
+`--providers.redis.username`:  
+KV Username
+
 `--providers.rest`:  
 Enable Rest backend with default settings. (Default: ```false```)
 
 `--providers.rest.insecure`:  
 Activate REST Provider directly on the entryPoint named traefik. (Default: ```false```)
+
+`--providers.zookeeper`:  
+Enable ZooKeeper backend with default settings. (Default: ```false```)
+
+`--providers.zookeeper.endpoints`:  
+KV store endpoints (Default: ```127.0.0.1:2181```)
+
+`--providers.zookeeper.password`:  
+KV Password
+
+`--providers.zookeeper.rootkey`:  
+Root key used for KV store (Default: ```traefik```)
+
+`--providers.zookeeper.tls.ca`:  
+TLS CA
+
+`--providers.zookeeper.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.zookeeper.tls.cert`:  
+TLS cert
+
+`--providers.zookeeper.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.zookeeper.tls.key`:  
+TLS key
+
+`--providers.zookeeper.username`:  
+KV Username
 
 `--serverstransport.forwardingtimeouts.dialtimeout`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
