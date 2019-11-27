@@ -238,6 +238,10 @@ tracing:
     parentIDHeaderName: foobar
     spanIDHeaderName: foobar
     baggagePrefixHeaderName: foobar
+  elastic:
+    serverURL: foobar
+    secretToken: foobar
+    serviceEnvironment: foobar
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
