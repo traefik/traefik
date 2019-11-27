@@ -4,7 +4,7 @@ export function getAllRouters ({ commit }, params) {
   commit('getAllRoutersRequest')
   return HttpService.getAllRouters(params)
     .then(body => {
-      commit('getAllRoutersSuccess', body)
+      commit('getAllRoutersSuccess', { body, ...params })
       return body
     })
     .catch(error => {
@@ -30,7 +30,7 @@ export function getAllServices ({ commit }, params) {
   commit('getAllServicesRequest')
   return HttpService.getAllServices(params)
     .then(body => {
-      commit('getAllServicesSuccess', body)
+      commit('getAllServicesSuccess', { body, ...params })
       return body
     })
     .catch(error => {
@@ -56,7 +56,7 @@ export function getAllMiddlewares ({ commit }, params) {
   commit('getAllMiddlewaresRequest')
   return HttpService.getAllMiddlewares(params)
     .then(body => {
-      commit('getAllMiddlewaresSuccess', body)
+      commit('getAllMiddlewaresSuccess', { body, ...params })
       return body
     })
     .catch(error => {

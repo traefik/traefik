@@ -5,12 +5,33 @@ export function getAllRoutersRequest (state) {
   state.allRouters.loading = true
 }
 
-export function getAllRoutersSuccess (state, body) {
-  state.allRouters = { items: body.data, total: body.total, loading: false }
+export function getAllRoutersSuccess (state, data) {
+  const { body, query = '', status = '', page } = data
+  const currentState = state.allRouters
+
+  const isSameContext = currentState.currentQuery === query && currentState.currentStatus === status
+
+  state.allRouters = {
+    ...state.allRouters,
+    items: [
+      ...(isSameContext && currentState.items && page !== 1 ? currentState.items : []),
+      ...(body.data || [])
+    ],
+    currentPage: page,
+    total: body.total,
+    loading: false,
+    currentQuery: query,
+    currentStatus: status
+  }
 }
 
 export function getAllRoutersFailure (state, error) {
-  state.allRouters = { error }
+  state.allRouters = {
+    ...state.allRouters,
+    loading: false,
+    error,
+    endReached: error.message.includes('invalid request: page:')
+  }
 }
 
 export function getAllRoutersClear (state) {
@@ -43,12 +64,33 @@ export function getAllServicesRequest (state) {
   state.allServices.loading = true
 }
 
-export function getAllServicesSuccess (state, body) {
-  state.allServices = { items: body.data, total: body.total, loading: false }
+export function getAllServicesSuccess (state, data) {
+  const { body, query = '', status = '', page } = data
+  const currentState = state.allServices
+
+  const isSameContext = currentState.currentQuery === query && currentState.currentStatus === status
+
+  state.allServices = {
+    ...state.allServices,
+    items: [
+      ...(isSameContext && currentState.items && page !== 1 ? currentState.items : []),
+      ...(body.data || [])
+    ],
+    currentPage: page,
+    total: body.total,
+    loading: false,
+    currentQuery: query,
+    currentStatus: status
+  }
 }
 
 export function getAllServicesFailure (state, error) {
-  state.allServices = { error }
+  state.allServices = {
+    ...state.allServices,
+    loading: false,
+    error,
+    endReached: error.message.includes('invalid request: page:')
+  }
 }
 
 export function getAllServicesClear (state) {
@@ -81,12 +123,33 @@ export function getAllMiddlewaresRequest (state) {
   state.allMiddlewares.loading = true
 }
 
-export function getAllMiddlewaresSuccess (state, body) {
-  state.allMiddlewares = { items: body.data, total: body.total, loading: false }
+export function getAllMiddlewaresSuccess (state, data) {
+  const { body, query = '', status = '', page } = data
+  const currentState = state.allMiddlewares
+
+  const isSameContext = currentState.currentQuery === query && currentState.currentStatus === status
+
+  state.allMiddlewares = {
+    ...state.allMiddlewares,
+    items: [
+      ...(isSameContext && currentState.items && page !== 1 ? currentState.items : []),
+      ...(body.data || [])
+    ],
+    currentPage: page,
+    total: body.total,
+    loading: false,
+    currentQuery: query,
+    currentStatus: status
+  }
 }
 
 export function getAllMiddlewaresFailure (state, error) {
-  state.allMiddlewares = { error }
+  state.allMiddlewares = {
+    ...state.allMiddlewares,
+    loading: false,
+    error,
+    endReached: error.message.includes('invalid request: page:')
+  }
 }
 
 export function getAllMiddlewaresClear (state) {
