@@ -705,7 +705,7 @@ func (s *SimpleSuite) TestMirrorCanceled(c *check.C) {
 
 	main := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		atomic.AddInt32(&count, 1)
-		time.Sleep(time.Second * 2)
+		time.Sleep(2 * time.Second)
 	}))
 
 	mirror1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

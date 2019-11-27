@@ -8,7 +8,14 @@
         </div>
         <div class="row items-center q-col-gutter-lg">
           <div class="col-12">
-            <main-table :data="allMiddlewares.items" :request="onGetAll" :loading="loading" :pagination.sync="pagination" :filter="filter" type="http-middlewares"/>
+            <main-table
+              ref="mainTable"
+              :data="allMiddlewares.items"
+              :onLoadMore="handleLoadMore"
+              :endReached="allMiddlewares.endReached"
+              :loading="allMiddlewares.loading"
+              type="http-middlewares"
+            />
           </div>
         </div>
       </div>
@@ -49,12 +56,30 @@ export default {
   },
   methods: {
     ...mapActions('http', { getAllMiddlewares: 'getAllMiddlewares' }),
+    initData () {
+      const scrollerRef = this.$refs.mainTable.$refs.scroller
+      if (scrollerRef) {
+        scrollerRef.stop()
+        scrollerRef.reset()
+      }
+
+      this.handleLoadMore({ page: 1 }).then(() => {
+        if (scrollerRef) {
+          scrollerRef.resume()
+          scrollerRef.poll()
+        }
+      })
+    },
     refreshAll () {
       if (this.allMiddlewares.loading) {
         return
       }
-      this.pagination.page = 1
-      this.onGetAll({
+
+      this.handleLoadMore({ page: 1 })
+    },
+    handleLoadMore ({ page = 1 } = {}) {
+      this.pagination.page = page
+      return this.onGetAll({
         pagination: this.pagination,
         filter: this.filter
       })
@@ -62,12 +87,8 @@ export default {
     onGetAll (props) {
       let { page, rowsPerPage, sortBy, descending } = props.pagination
 
-      this.getAllMiddlewares({ query: props.filter, status: this.status, page, limit: rowsPerPage, sortBy, descending })
+      return this.getAllMiddlewares({ query: props.filter, status: this.status, page, limit: rowsPerPage, sortBy, descending })
         .then(body => {
-          if (!body) {
-            this.loading = false
-            return
-          }
           this.loading = false
           console.log('Success -> http/middlewares', body)
           // update rowsNumber with appropriate value
@@ -78,17 +99,14 @@ export default {
           this.pagination.sortBy = sortBy
           this.pagination.descending = descending
         })
-        .catch(error => {
-          console.log('Error -> http/middlewares', error)
-        })
     }
   },
   watch: {
     'status' () {
-      this.refreshAll()
+      this.initData()
     },
     'filter' () {
-      this.refreshAll()
+      this.initData()
     }
   },
   created () {
