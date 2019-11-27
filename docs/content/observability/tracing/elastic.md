@@ -35,7 +35,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.elastic.serverURL="http://apm:8200"
+--tracing.elastic.serverurl="http://apm:8200"
 ```
 
 #### `secretToken`
@@ -57,7 +57,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.elastic.secretToken="mytoken"
+--tracing.elastic.secrettoken="mytoken"
 ```
 
 #### `serviceEnvironment`
@@ -79,7 +79,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.elastic.serviceEnvironment="production"
+--tracing.elastic.serviceenvironment="production"
 ```
 
 ### Further

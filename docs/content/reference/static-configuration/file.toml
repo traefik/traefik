@@ -233,7 +233,7 @@
     parentIDHeaderName = "foobar"
     spanIDHeaderName = "foobar"
     baggagePrefixHeaderName = "foobar"
-  [tracing.elactic]
+  [tracing.elastic]
     serverURL = "foobar"
     secretToken = "foobar"
     serviceEnvironment = "foobar"
