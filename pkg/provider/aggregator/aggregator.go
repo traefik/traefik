@@ -57,10 +57,6 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 		p.quietAddProvider(conf.Consul)
 	}
 
-	if conf.Consul != nil {
-		p.quietAddProvider(conf.Consul)
-	}
-
 	if conf.Etcd != nil {
 		p.quietAddProvider(conf.Etcd)
 	}
