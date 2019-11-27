@@ -3,7 +3,7 @@
 You can install Traefik with the following flavors:
 
 * [Use the official Docker image](./#use-the-official-docker-image)
-* [(Experimental) Use the Helm Chart](./#experimental-use-the-helm-chart)
+* [(Experimental) Use the Helm Chart](./#use-the-helm-chart)
 * [Use the binary distribution](./#use-the-binary-distribution)
 * [Compile your binary from the sources](./#compile-your-binary-from-the-sources)
 
@@ -25,7 +25,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
     * Docker images are based from the [Alpine Linux Official image](https://hub.docker.com/_/alpine).
     * All the orchestrator using docker images could fetch the official Traefik docker image.
 
-## (Experimental) Use the Helm Chart
+## Use the Helm Chart
 
 !!! warning "Experimental Helm Chart"
     
@@ -39,7 +39,7 @@ Traefik can be installed in Kubernetes using the v2.0 Helm chart from <https://g
 Ensure that the following requirements are met:
 
 * Kubernetes 1.14+
-* Helm version 2.x is [installed](https://v2.helm.sh/docs/using_helm/#installing-helm) and [initialized with Tiller](https://v2.helm.sh/docs/using_helm/#easy-in-cluster-installation)
+* Helm version 2.x is [installed](https://v2.helm.sh/docs/using_helm/) and initialized with Tiller
 
 Retrieve the latest chart version from the repository:
 
