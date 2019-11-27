@@ -13,6 +13,76 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
 !!! tip "The Quick Start Uses Docker"
     If you haven't already, maybe you'd like to go through the [quick start](../getting-started/quick-start.md) that uses the docker provider!
 
+## Configuration Examples
+
+??? example "Configuring Docker & Deploying / Exposing Services"
+
+    Enabling the docker provider
+    
+    ```toml tab="File (TOML)"
+    [providers.docker]
+    ```
+    
+    ```yaml tab="File (YAML)"
+    providers:
+      docker: {}
+    ```
+    
+    ```bash tab="CLI"
+    --providers.docker=true
+    ```
+
+    Attaching labels to containers (in your docker compose file)
+
+    ```yaml
+    version: "3"
+    services:
+      my-container:
+        # ...
+        labels:
+          - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
+    ```
+
+??? example "Configuring Docker Swarm & Deploying / Exposing Services"
+
+    Enabling the docker provider (Swarm Mode)
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      # swarm classic (1.12-)
+      # endpoint = "tcp://127.0.0.1:2375"
+      # docker swarm mode (1.12+)
+      endpoint = "tcp://127.0.0.1:2377"
+      swarmMode = true
+    ```
+    
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        # swarm classic (1.12-)
+        # endpoint = "tcp://127.0.0.1:2375"
+        # docker swarm mode (1.12+)
+        endpoint: "tcp://127.0.0.1:2375"
+        swarmMode: true
+    ```
+    
+    ```bash tab="CLI"
+    --providers.docker.endpoint=tcp://127.0.0.1:2375
+    --providers.docker.swarmMode=true
+    ```
+
+    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
+
+    ```yaml
+    version: "3"
+    services:
+      my-container:
+        deploy:
+          labels:
+            - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
+            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
+    ```
+
 ## Routing Configuration
 
 When using Docker as a [provider](https://docs.traefik.io/providers/overview/),
@@ -143,76 +213,6 @@ services:
     Please consider the security implications by reading the [Security Note](#security-note).
     
     A good example can be found on [Bret Fisher's repository](https://github.com/BretFisher/dogvscat/blob/master/stack-proxy-global.yml#L124).
-    
-## Configuration Examples
-
-??? example "Configuring Docker & Deploying / Exposing Services"
-
-    Enabling the docker provider
-    
-    ```toml tab="File (TOML)"
-    [providers.docker]
-    ```
-    
-    ```yaml tab="File (YAML)"
-    providers:
-      docker: {}
-    ```
-    
-    ```bash tab="CLI"
-    --providers.docker=true
-    ```
-
-    Attaching labels to containers (in your docker compose file)
-
-    ```yaml
-    version: "3"
-    services:
-      my-container:
-        # ...
-        labels:
-          - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
-    ```
-
-??? example "Configuring Docker Swarm & Deploying / Exposing Services"
-
-    Enabling the docker provider (Swarm Mode)
-
-    ```toml tab="File (TOML)"
-    [providers.docker]
-      # swarm classic (1.12-)
-      # endpoint = "tcp://127.0.0.1:2375"
-      # docker swarm mode (1.12+)
-      endpoint = "tcp://127.0.0.1:2377"
-      swarmMode = true
-    ```
-    
-    ```yaml tab="File (YAML)"
-    providers:
-      docker:
-        # swarm classic (1.12-)
-        # endpoint = "tcp://127.0.0.1:2375"
-        # docker swarm mode (1.12+)
-        endpoint: "tcp://127.0.0.1:2375"
-        swarmMode: true
-    ```
-    
-    ```bash tab="CLI"
-    --providers.docker.endpoint=tcp://127.0.0.1:2375
-    --providers.docker.swarmMode=true
-    ```
-
-    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
-
-    ```yaml
-    version: "3"
-    services:
-      my-container:
-        deploy:
-          labels:
-            - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
-            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
-    ```
 
 ## Provider Configuration
 
