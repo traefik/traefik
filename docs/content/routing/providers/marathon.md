@@ -67,7 +67,7 @@ For example, to change the routing rule, you could add the label ```"traefik.htt
     See [entry points](../routers/index.md#entrypoints) for more information. 
     
     ```json
-    "traefik.http.routers.myrouter.entrypoints": "web,websecure"
+    "traefik.http.routers.myrouter.entrypoints": "ep1,ep2"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.middlewares`"
