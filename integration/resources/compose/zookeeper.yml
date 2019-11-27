@@ -1,4 +1,4 @@
 zookeeper:
-  image: zookeeper
+  image: zookeeper:3.5
   ports:
     - "2181:2181"
