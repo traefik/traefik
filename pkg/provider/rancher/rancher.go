@@ -193,7 +193,7 @@ func (p *Provider) parseMetadataSourcedRancherData(ctx context.Context, stacks [
 			}
 
 			service := rancherData{
-				Name:       service.Name + "/" + stack.Name,
+				Name:       service.Name + "_" + stack.Name,
 				State:      service.State,
 				Labels:     service.Labels,
 				Port:       servicePort,
