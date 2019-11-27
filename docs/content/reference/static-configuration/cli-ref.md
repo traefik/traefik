@@ -570,6 +570,18 @@ Specifies the header name that will be used to store the sampling priority.
 `--tracing.datadog.traceidheadername`:  
 Specifies the header name that will be used to store the trace ID.
 
+`--tracing.elastic`:  
+Settings for Elastic. (Default: ```false```)
+
+`--tracing.elastic.secrettoken`:  
+Set the token used to connect to Elastic APM Server.
+
+`--tracing.elastic.serverurl`:  
+Set the URL of the Elastic APM server.
+
+`--tracing.elastic.serviceenvironment`:  
+Set the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
+
 `--tracing.haystack`:  
 Settings for Haystack. (Default: ```false```)
 
