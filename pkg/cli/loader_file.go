@@ -25,7 +25,7 @@ func (f *FileLoader) GetFilename() string {
 func (f *FileLoader) Load(args []string, cmd *Command) (bool, error) {
 	ref, err := flag.Parse(args, cmd.Configuration)
 	if err != nil {
-		_ = PrintHelp(os.Stdout, cmd)
+		_ = cmd.PrintHelp(os.Stdout)
 		return false, err
 	}
 

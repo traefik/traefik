@@ -1,6 +1,10 @@
 package cli
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -51,6 +55,65 @@ func TestCommand_AddCommand(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestCommand_PrintHelp(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		command        *Command
+		expectedOutput string
+		expectedError  error
+	}{
+		{
+			desc:           "print default help",
+			command:        &Command{},
+			expectedOutput: "    \n\nUsage:  [command] [flags] [arguments]\n\nUse \" [command] --help\" for help on any command.\n\n",
+		},
+		{
+			desc: "print custom help",
+			command: func() *Command {
+				return &Command{
+					Name:        "root",
+					Description: "Description for root",
+					Configuration: &struct {
+						Foo []struct {
+							Field string
+						}
+					}{},
+					Run: func(args []string) error {
+						return nil
+					},
+					CustomHelpFunc: func(w io.Writer, _ *Command) error {
+						_, _ = fmt.Fprintln(w, "test")
+						return nil
+					},
+				}
+			}(),
+			expectedOutput: "test\n",
+		},
+		{
+			desc: "error is returned from called help",
+			command: &Command{
+				CustomHelpFunc: func(_ io.Writer, _ *Command) error {
+					return errors.New("test")
+				},
+			},
+			expectedError: errors.New("test"),
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			buffer := &bytes.Buffer{}
+			err := test.command.PrintHelp(buffer)
+
+			assert.Equal(t, test.expectedError, err)
+			assert.Equal(t, test.expectedOutput, buffer.String())
 		})
 	}
 }
