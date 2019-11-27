@@ -18,7 +18,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, item := range items {
-		svcName := item.Name + "-" + item.ID
+		svcName := item.Node + "-" + item.Name + "-" + item.ID
 		ctxSvc := log.With(ctx, log.Str("serviceName", svcName))
 
 		if !p.keepContainer(ctxSvc, item) {
