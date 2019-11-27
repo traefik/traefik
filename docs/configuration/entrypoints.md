@@ -239,11 +239,14 @@ TLS Mutual Authentication can be `optional` or not.
 * If `optional = true`, if a certificate is provided, verifies if it is signed by a specified Certificate Authority (CA). Otherwise proceeds without any certificate.
 * If `optional = false`, Traefik will only accept clients that present a certificate signed by a specified Certificate Authority (CA).
 
+!!! warning
+    While the TLS [1.1](https://tools.ietf.org/html/rfc4346#section-7.4.6) and [1.2](https://tools.ietf.org/html/rfc5246#section-7.4.6) RFCs specify that clients should proceed with handshaking by sending an empty list should they have no certs for the CAs specified by the server, not all do so in practice.
+    Use this feature with caution should you require maximum compatibility with a wide variety of client user agents which may not strictly implement these specs.
+
 `ClientCAFiles` can be configured with multiple `CA:s` in the same file or use multiple files containing one or several `CA:s`.
 The `CA:s` has to be in PEM format.
 
-By default, `ClientCAFiles` is not optional, all clients will be required to present a valid cert.
-The requirement will apply to all server certs in the entrypoint.
+By default, `ClientCAFiles` is not optional, all clients will be required to present a valid cert. The requirement will apply to all server certs in the entrypoint.
 
 In the example below both `snitest.com` and `snitest.org` will require client certs
 
