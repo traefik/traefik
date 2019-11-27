@@ -61,10 +61,12 @@ func execute(cmd *Command, args []string, root bool) error {
 
 	// Calls command by its name.
 	if len(args) >= 2 && cmd.Name == args[1] {
-		if err := run(cmd, args[2:]); err != nil {
-			return fmt.Errorf("command %s error: %v", cmd.Name, err)
+		if len(args) < 3 || !contains(cmd.subCommands, args[2]) {
+			if err := run(cmd, args[2:]); err != nil {
+				return fmt.Errorf("command %s error: %v", cmd.Name, err)
+			}
+			return nil
 		}
-		return nil
 	}
 
 	// No sub-command, calls the current command.
@@ -78,6 +80,9 @@ func execute(cmd *Command, args []string, root bool) error {
 	// Trying to find the sub-command.
 	for _, subCmd := range cmd.subCommands {
 		if len(args) >= 2 && subCmd.Name == args[1] {
+			return execute(subCmd, args, false)
+		}
+		if len(args) >= 3 && subCmd.Name == args[2] {
 			return execute(subCmd, args[1:], false)
 		}
 	}
