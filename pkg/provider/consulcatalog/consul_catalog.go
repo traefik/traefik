@@ -24,6 +24,7 @@ var _ provider.Provider = (*Provider)(nil)
 
 type itemData struct {
 	ID        string
+	Node      string
 	Name      string
 	Address   string
 	Port      string
@@ -164,6 +165,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 
 			item := itemData{
 				ID:      consulService.ServiceID,
+				Node:    consulService.Node,
 				Name:    consulService.ServiceName,
 				Address: address,
 				Port:    strconv.Itoa(consulService.ServicePort),

@@ -25,6 +25,7 @@ func TestDefaultRule(t *testing.T) {
 			items: []itemData{
 				{
 					ID:      "id",
+					Node:    "Node1",
 					Name:    "Test",
 					Address: "127.0.0.1",
 					Port:    "80",
@@ -66,6 +67,7 @@ func TestDefaultRule(t *testing.T) {
 			items: []itemData{
 				{
 					ID:      "id",
+					Node:    "Node1",
 					Name:    "Test",
 					Address: "127.0.0.1",
 					Port:    "80",
@@ -109,6 +111,7 @@ func TestDefaultRule(t *testing.T) {
 			items: []itemData{
 				{
 					ID:      "Test",
+					Node:    "Node1",
 					Name:    "Test",
 					Labels:  map[string]string{},
 					Address: "127.0.0.1",
@@ -145,6 +148,7 @@ func TestDefaultRule(t *testing.T) {
 			items: []itemData{
 				{
 					ID:      "Test",
+					Node:    "Node1",
 					Name:    "Test",
 					Labels:  map[string]string{},
 					Address: "127.0.0.1",
@@ -181,6 +185,7 @@ func TestDefaultRule(t *testing.T) {
 			items: []itemData{
 				{
 					ID:      "Test",
+					Node:    "Node1",
 					Name:    "Test",
 					Labels:  map[string]string{},
 					Address: "127.0.0.1",
@@ -257,6 +262,7 @@ func Test_buildConfiguration(t *testing.T) {
 			items: []itemData{
 				{
 					ID:      "Test",
+					Node:    "Node1",
 					Name:    "Test",
 					Labels:  map[string]string{},
 					Address: "127.0.0.1",
@@ -297,6 +303,7 @@ func Test_buildConfiguration(t *testing.T) {
 			items: []itemData{
 				{
 					ID:      "Test",
+					Node:    "Node1",
 					Name:    "Test",
 					Labels:  map[string]string{},
 					Address: "127.0.0.1",
@@ -305,6 +312,7 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				{
 					ID:      "Test2",
+					Node:    "Node1",
 					Name:    "Test2",
 					Labels:  map[string]string{},
 					Address: "127.0.0.2",
@@ -359,6 +367,7 @@ func Test_buildConfiguration(t *testing.T) {
 			items: []itemData{
 				{
 					ID:      "1",
+					Node:    "Node1",
 					Name:    "Test",
 					Labels:  map[string]string{},
 					Address: "127.0.0.1",
@@ -367,6 +376,110 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				{
 					ID:      "2",
+					Node:    "Node1",
+					Name:    "Test",
+					Labels:  map[string]string{},
+					Address: "127.0.0.2",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service: "Test",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://127.0.0.1:80",
+									},
+									{
+										URL: "http://127.0.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "two containers with same service name & id no label on same node",
+			items: []itemData{
+				{
+					ID:      "1",
+					Node:    "Node1",
+					Name:    "Test",
+					Labels:  map[string]string{},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+				{
+					ID:      "1",
+					Node:    "Node1",
+					Name:    "Test",
+					Labels:  map[string]string{},
+					Address: "127.0.0.2",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service: "Test",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://127.0.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "two containers with same service name & id no label on different nodes",
+			items: []itemData{
+				{
+					ID:      "1",
+					Node:    "Node1",
+					Name:    "Test",
+					Labels:  map[string]string{},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+				{
+					ID:      "1",
+					Node:    "Node2",
 					Name:    "Test",
 					Labels:  map[string]string{},
 					Address: "127.0.0.2",
@@ -1320,6 +1433,7 @@ func Test_buildConfiguration(t *testing.T) {
 			items: []itemData{
 				{
 					ID:      "Test",
+					Node:    "Node1",
 					Name:    "Test",
 					Labels:  map[string]string{},
 					Address: "127.0.0.2",
@@ -1393,6 +1507,7 @@ func Test_buildConfiguration(t *testing.T) {
 			items: []itemData{
 				{
 					ID:      "Test",
+					Node:    "Node1",
 					Name:    "Test",
 					Labels:  map[string]string{},
 					Address: "127.0.0.1",

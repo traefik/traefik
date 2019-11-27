@@ -1,7 +1,15 @@
 consul:
-  image: consul:1.6.1
+  image: consul:1.6.2
   ports:
     - 8500:8500
+  command: "agent -server -bootstrap -ui -client 0.0.0.0"
+consul-agent:
+  image: consul:1.6.2
+  ports:
+    - 8501:8500
+  command: "agent -retry-join consul -client 0.0.0.0"
+  links:
+    - consul
 whoami1:
   image: containous/whoami:v1.3.0
   hostname: whoami1
