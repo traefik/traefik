@@ -946,3 +946,148 @@ tcp:
             sans: 
               - "*.snitest.com"
 ```
+
+## Configuring UDP Routers
+
+!!! warning "The character `@` is not allowed in the router name"
+
+### General
+
+Similarly to TCP, as UDP is the transport layer, there is no concept of a
+request, so there is no notion of an URL path prefix to match an incoming UDP
+packet with. Furthermore, as there is no good TLS support at the moment for
+multiple hosts, there is no Host SNI notion to match against either. Therefore,
+there is no criterion that could be used as a rule to match incoming packets in
+order to route them. So UDP "routers" at this time are pretty much only
+load-balancers in one form or another.
+
+### EntryPoints
+
+If not specified, UDP routers will accept packets from all defined (UDP) entry points.
+If one wants to limit the router scope to a set of entry points, one should set the entry points option.
+
+??? example "Listens to Every Entry Point"
+
+    **Dynamic Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+
+    [udp.routers]
+      [udp.routers.Router-1]
+        # By default, routers listen to all UDP entrypoints,
+        # i.e. "other", and "streaming".
+        service = "service-1"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+
+    udp:
+      routers:
+        Router-1:
+          # By default, routers listen to all UDP entrypoints
+          # i.e. "other", and "streaming".
+          service: "service-1"
+    ```
+
+    **Static Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+
+    [entryPoints]
+      # not used by UDP routers
+      [entryPoints.web]
+        address = ":80"
+      # used by UDP routers
+      [entryPoints.other]
+        address = ":9090/udp"
+      [entryPoints.streaming]
+        address = ":9191/udp"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+
+    entryPoints:
+      # not used by UDP routers
+      web:
+        address: ":80"
+      # used by UDP routers
+      other:
+        address: ":9090/udp"
+      streaming:
+        address: ":9191/udp"
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entrypoints.web.address=":80"
+    --entrypoints.other.address=":9090/udp"
+    --entrypoints.streaming.address=":9191/udp"
+    ```
+
+??? example "Listens to Specific Entry Points"
+
+    **Dynamic Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    [udp.routers]
+      [udp.routers.Router-1]
+        # does not listen on "other" entry point
+        entryPoints = ["streaming"]
+        service = "service-1"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    udp:
+      routers:
+        Router-1:
+          # does not listen on "other" entry point
+          entryPoints:
+            - "streaming"
+          service: "service-1"
+    ```
+
+    **Static Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+      [entryPoints.other]
+        address = ":9090/udp"
+      [entryPoints.streaming]
+        address = ":9191/udp"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+
+    entryPoints:
+      web:
+        address: ":80"
+      other:
+        address: ":9090/udp"
+      streaming:
+        address: ":9191/udp"
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entrypoints.web.address=":80"
+    --entrypoints.other.address=":9090/udp"
+    --entrypoints.streaming.address=":9191/udp"
+    ```
+
+### Services
+
+There must be one (and only one) UDP [service](../services/index.md) referenced per UDP router.
+Services are the target for the router.
+
+!!! important "UDP routers can only target UDP services (and not HTTP or TCP services)."

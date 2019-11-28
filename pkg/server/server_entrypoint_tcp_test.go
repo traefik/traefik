@@ -125,7 +125,7 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 }
 
 func startEntrypoint(entryPoint *TCPEntryPoint, router *tcp.Router) (net.Conn, error) {
-	go entryPoint.StartTCP(context.Background())
+	go entryPoint.Start(context.Background())
 
 	entryPoint.SwitchRouter(router)
 

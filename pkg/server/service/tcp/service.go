@@ -81,7 +81,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		}
 		return loadBalancer, nil
 	default:
-		err := fmt.Errorf("the service %q doesn't have any TCP load balancer", serviceQualifiedName)
+		err := fmt.Errorf("the service %q does not have any type defined", serviceQualifiedName)
 		conf.AddError(err, true)
 		return nil, err
 	}

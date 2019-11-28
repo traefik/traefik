@@ -55,9 +55,17 @@ type TCPEntryPoints map[string]*TCPEntryPoint
 func NewTCPEntryPoints(entryPointsConfig static.EntryPoints) (TCPEntryPoints, error) {
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
+		protocol, err := config.GetProtocol()
+		if err != nil {
+			return nil, fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
+		}
+
+		if protocol != "tcp" {
+			continue
+		}
+
 		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
 
-		var err error
 		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config)
 		if err != nil {
 			return nil, fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
@@ -70,7 +78,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints) (TCPEntryPoints, er
 func (eps TCPEntryPoints) Start() {
 	for entryPointName, serverEntryPoint := range eps {
 		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
-		go serverEntryPoint.StartTCP(ctx)
+		go serverEntryPoint.Start(ctx)
 	}
 }
 
@@ -149,8 +157,8 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 	}, nil
 }
 
-// StartTCP starts the TCP server.
-func (e *TCPEntryPoint) StartTCP(ctx context.Context) {
+// Start starts the TCP server.
+func (e *TCPEntryPoint) Start(ctx context.Context) {
 	logger := log.FromContext(ctx)
 	logger.Debugf("Start TCP Server")
 
@@ -370,7 +378,7 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 }
 
 func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {
-	listener, err := net.Listen("tcp", entryPoint.Address)
+	listener, err := net.Listen("tcp", entryPoint.GetAddress())
 
 	if err != nil {
 		return nil, fmt.Errorf("error opening listener: %v", err)

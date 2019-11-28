@@ -311,6 +311,32 @@
           name = "foobar"
           weight = 42
 
+[udp]
+  [udp.routers]
+    [udp.routers.UDPRouter0]
+      entryPoints = ["foobar", "foobar"]
+      service = "foobar"
+
+  [udp.services]
+    [udp.services.UDPService01]
+      [udp.services.UDPService01.loadBalancer]
+
+        [[udp.services.UDPService01.loadBalancer.servers]]
+          address = "foobar"
+
+        [[udp.services.UDPService01.loadBalancer.servers]]
+          address = "foobar"
+    [udp.services.UDPService02]
+      [udp.services.UDPService02.weighted]
+
+        [[udp.services.UDPService02.weighted.services]]
+          name = "foobar"
+          weight = 42
+
+        [[udp.services.UDPService02.weighted.services]]
+          name = "foobar"
+          weight = 42
+
 [tls]
 
   [[tls.certificates]]

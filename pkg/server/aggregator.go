@@ -18,6 +18,10 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 			Routers:  make(map[string]*dynamic.TCPRouter),
 			Services: make(map[string]*dynamic.TCPService),
 		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  make(map[string]*dynamic.UDPRouter),
+			Services: make(map[string]*dynamic.UDPService),
+		},
 		TLS: &dynamic.TLSConfiguration{
 			Stores:  make(map[string]tls.Store),
 			Options: make(map[string]tls.Options),
@@ -44,6 +48,15 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 			}
 			for serviceName, service := range configuration.TCP.Services {
 				conf.TCP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
+			}
+		}
+
+		if configuration.UDP != nil {
+			for routerName, router := range configuration.UDP.Routers {
+				conf.UDP.Routers[internal.MakeQualifiedName(provider, routerName)] = router
+			}
+			for serviceName, service := range configuration.UDP.Services {
+				conf.UDP.Services[internal.MakeQualifiedName(provider, serviceName)] = service
 			}
 		}
 

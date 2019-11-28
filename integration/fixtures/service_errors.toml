@@ -33,3 +33,37 @@
     [http.services.service2.loadBalancer]
       [[http.services.service2.loadBalancer.servers]]
         url = "http://127.0.0.1:9010"
+
+[tcp.routers]
+  [tcp.routers.router4]
+    service = "service1"
+    rule = "HostSNI(`snitest.net`)"
+
+  [tcp.routers.router5]
+    service = "service2"
+    rule = "HostSNI(`snitest.com`)"
+
+[tcp.services]
+  [tcp.services.service1]
+
+  [tcp.services.service2]
+    [tcp.services.service2.loadBalancer]
+      [[tcp.services.service2.loadBalancer.servers]]
+        address = "127.0.0.1:9010"
+
+[udp.routers]
+  [udp.routers.router4]
+    service = "service1"
+    rule = "HostSNI(`snitest.net`)"
+
+  [udp.routers.router5]
+    service = "service2"
+    rule = "HostSNI(`snitest.com`)"
+
+[udp.services]
+  [udp.services.service1]
+
+  [udp.services.service2]
+    [udp.services.service2.loadBalancer]
+      [[udp.services.service2.loadBalancer.servers]]
+        address = "127.0.0.1:9010"

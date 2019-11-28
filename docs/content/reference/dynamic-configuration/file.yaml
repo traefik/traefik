@@ -344,6 +344,27 @@ tcp:
           weight: 42
         - name: foobar
           weight: 42
+udp:
+  routers:
+    UDPRouter0:
+      entryPoints:
+      - foobar
+      - foobar
+      service: foobar
+  services:
+    UDPService01:
+      loadBalancer:
+        terminationDelay: 42
+        servers:
+        - address: foobar
+        - address: foobar
+    UDPService02:
+      weighted:
+        services:
+        - name: foobar
+          weight: 42
+        - name: foobar
+          weight: 42
 tls:
   certificates:
   - certFile: foobar

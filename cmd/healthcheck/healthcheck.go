@@ -75,5 +75,5 @@ func Do(staticConfiguration static.Configuration) (*http.Response, error) {
 
 	path := "/"
 
-	return client.Head(protocol + "://" + pingEntryPoint.Address + path + "ping")
+	return client.Head(protocol + "://" + pingEntryPoint.GetAddress() + path + "ping")
 }
