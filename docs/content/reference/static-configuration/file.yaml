@@ -136,6 +136,58 @@ providers:
         cert: foobar
         key: foobar
         insecureSkipVerify: true
+  consul:
+    rootKey: traefik
+    endpoints:
+      - foobar
+      - foobar
+    username: foobar
+    password: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+  etcd:
+    rootKey: traefik
+    endpoints:
+      - foobar
+      - foobar
+    username: foobar
+    password: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+  zooKeeper:
+    rootKey: traefik
+    endpoints:
+      - foobar
+      - foobar
+    username: foobar
+    password: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+  redis:
+    rootKey: traefik
+    endpoints:
+      - foobar
+      - foobar
+    username: foobar
+    password: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
 api:
   insecure: true
   dashboard: true

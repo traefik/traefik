@@ -1,0 +1,16 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints.web]
+  address = ":8000"
+
+[api]
+  insecure = true
+
+[providers.etcd]
+  rootKey = "traefik"
+  endpoints = ["{{ .EtcdAddress }}"]

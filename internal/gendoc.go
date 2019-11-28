@@ -4,8 +4,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
+	"sort"
+	"strconv"
 	"strings"
 
+	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/v2/pkg/config/env"
 	"github.com/containous/traefik/v2/pkg/config/flag"
 	"github.com/containous/traefik/v2/pkg/config/generator"
@@ -17,6 +21,7 @@ import (
 func main() {
 	genStaticConfDoc("./docs/content/reference/static-configuration/env-ref.md", "", env.Encode)
 	genStaticConfDoc("./docs/content/reference/static-configuration/cli-ref.md", "--", flag.Encode)
+	genKVDynConfDoc("./docs/content/reference/dynamic-configuration/kv-ref.md")
 }
 
 func genStaticConfDoc(outputFile string, prefix string, encodeFn func(interface{}) ([]parser.Flat, error)) {
@@ -80,4 +85,95 @@ func (ew *errWriter) writeln(a ...interface{}) {
 	}
 
 	_, ew.err = fmt.Fprintln(ew.w, a...)
+}
+
+func genKVDynConfDoc(outputFile string) {
+	dynConfPath := "./docs/content/reference/dynamic-configuration/file.toml"
+	conf := map[string]interface{}{}
+	_, err := toml.DecodeFile(dynConfPath, &conf)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file, err := os.Create(outputFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	store := storeWriter{data: map[string]string{}}
+	c := client{store: store}
+	err = c.load("traefik", conf)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var keys []string
+	for k := range store.data {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		_, _ = fmt.Fprintf(file, "| `%s` | `%s` |\n", k, store.data[k])
+	}
+}
+
+type storeWriter struct {
+	data map[string]string
+}
+
+func (f storeWriter) Put(key string, value []byte, options []string) error {
+	f.data[key] = string(value)
+	return nil
+}
+
+type client struct {
+	store storeWriter
+}
+
+func (c client) load(parentKey string, conf map[string]interface{}) error {
+	for k, v := range conf {
+		switch entry := v.(type) {
+		case map[string]interface{}:
+			key := path.Join(parentKey, k)
+
+			if len(entry) == 0 {
+				err := c.store.Put(key, nil, nil)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := c.load(key, entry)
+				if err != nil {
+					return err
+				}
+			}
+		case []map[string]interface{}:
+			for i, o := range entry {
+				key := path.Join(parentKey, k, strconv.Itoa(i))
+
+				if err := c.load(key, o); err != nil {
+					return err
+				}
+			}
+		case []interface{}:
+			for i, o := range entry {
+				key := path.Join(parentKey, k, strconv.Itoa(i))
+
+				err := c.store.Put(key, []byte(fmt.Sprintf("%v", o)), nil)
+				if err != nil {
+					return err
+				}
+			}
+		default:
+			key := path.Join(parentKey, k)
+
+			err := c.store.Put(key, []byte(fmt.Sprintf("%v", v)), nil)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
