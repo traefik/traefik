@@ -1,11 +1,25 @@
 # Traefik & Consul Catalog
 
-A Story of Labels, Services & Containers
+A Story of Labels, Services & Instances
 {: .subtitle }
 
 ![Consul Catalog](../assets/img/providers/consul.png)
 
 Attach labels to your services and let Traefik do the rest!
+
+!!! info "Labels"
+
+    - Labels are defined by Consul Catalog service tags starting with the `traefik` prefix.
+    - The prefix can be customized with the `prefix` option of the provider
+    - Labels are case insensitive.
+    - Labels always consist of a key/value pair
+    - The complete list of labels can be found on [the reference page](../reference/dynamic-configuration/consul-catalog.md)
+
+    ```toml
+    # Label examples
+    traefik.my_custom_label=value
+    traefik.enable=true
+    ```
 
 ## Configuration Examples
 
@@ -16,12 +30,12 @@ Attach labels to your services and let Traefik do the rest!
     ```toml tab="File (TOML)"
     [providers.consulCatalog]
     ```
-    
+
     ```yaml tab="File (YAML)"
     providers:
       consulCatalog: {}
     ```
-    
+
     ```bash tab="CLI"
     --providers.consulcatalog=true
     ```
@@ -65,27 +79,27 @@ Defines the polling interval.
 
 ### `prefix`
 
-_Optional, Default=/latest_
+_Optional, Default=traefik_
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
-  prefix = "/test"
+  prefix = "test"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   consulCatalog:
-    prefix: /test
+    prefix: test
     # ...
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.prefix=/test
+--providers.consulcatalog.prefix=test
 # ...
 ```
 
-Prefix used for accessing the Consul service metadata.
+The prefix for Consul Catalog tags defining traefik labels.
 
 ### `requireConsistent`
 
@@ -161,7 +175,7 @@ Use local agent caching for catalog reads.
 
 ### `endpoint`
 
-Defines Consul server endpoint.
+Defines the Consul server endpoint.
 
 #### `address`
 
@@ -532,13 +546,11 @@ providers:
 
 The default host rule for all services.
 
-For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
-It must be a valid [Go template](https://golang.org/pkg/text/template/),
-augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
-The service name can be accessed as the `Name` identifier,
-and the template has access to all the labels defined on this container.
+For a given instance of a service, if no routing rule was defined by a label, it is defined by this defaultRule instead.
+It must be a valid [Go template](https://golang.org/pkg/text/template/), augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
+The service name can be accessed as the `Name` identifier, and the template has access to all the labels defined on this instance of the service.
 
-This option can be overridden on a container basis with the `traefik.http.routers.Router1.rule` label.
+The option can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.rule` label.
 
 ### `constraints`
 
@@ -546,58 +558,63 @@ _Optional, Default=""_
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
-  constraints = "Label(`a.label.name`, `foo`)"
+  constraints = "Label(`traefik.label.name`, `foo`)"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   consulCatalog:
-    constraints: "Label(`a.label.name`, `foo`)"
+    constraints: "Label(`traefik.label.name`, `foo`)"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.constraints="Label(`a.label.name`, `foo`)"
+--providers.consulcatalog.constraints="Label(`traefik.label.name`, `foo`)"
 # ...
 ```
 
-Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
-That is to say, if none of the container's labels match the expression, no route for the container is created.
-If the expression is empty, all detected containers are included.
+Constraints is an expression that Traefik matches against the labels of a service to determine whether to create any route for it.
+That is to say, if none of the serivce's labels match the expression, no route for that service is created.
+If the expression is empty, all detected services are included.
 
-The expression syntax is based on the `Label("key", "value")`, and `LabelRegex("key", "value")` functions, as well as the usual boolean logic, as shown in examples below.
+The expression syntax is based on the `Label("key", "value")`, and `LabelRegex("key", "value")` functions,
+as well as the usual boolean logic, as shown in examples below.
+
+!!! warning Labels used for constraints
+
+    Labels must allways start with the `traefik` or custom defined prefix.
 
 ??? example "Constraints Expression Examples"
 
     ```toml
-    # Includes only containers having a label with key `a.label.name` and value `foo`
-    constraints = "Label(`a.label.name`, `foo`)"
+    # Includes only services having a label with key `traefik.label.name` and value `foo`
+    constraints = "Label(`traefik.label.name`, `foo`)"
     ```
-    
+
     ```toml
-    # Excludes containers having any label with key `a.label.name` and value `foo`
-    constraints = "!Label(`a.label.name`, `value`)"
+    # Excludes services having any label with key `traefik.label.name` and value `foo`
+    constraints = "!Label(`traefik.label.name`, `foo`)"
     ```
-    
+
     ```toml
     # With logical AND.
-    constraints = "Label(`a.label.name`, `valueA`) && Label(`another.label.name`, `valueB`)"
+    constraints = "Label(`traefik.label.name`, `valueA`) && Label(`traefik.other.name`, `valueB`)"
     ```
-    
+
     ```toml
     # With logical OR.
-    constraints = "Label(`a.label.name`, `valueA`) || Label(`another.label.name`, `valueB`)"
+    constraints = "Label(`traefik.label.name`, `valueA`) || Label(`traefik.other.name`, `valueB`)"
     ```
-    
+
     ```toml
     # With logical AND and OR, with precedence set by parentheses.
-    constraints = "Label(`a.label.name`, `valueA`) && (Label(`another.label.name`, `valueB`) || Label(`yet.another.label.name`, `valueC`))"
+    constraints = "Label(`traefik.label.name`, `valueA`) && (Label(`traefik.other.name`, `valueB`) || Label(`traefik.another.label.name`, `valueC`))"
     ```
-    
+
     ```toml
-    # Includes only containers having a label with key `a.label.name` and a value matching the `a.+` regular expression.
-    constraints = "LabelRegex(`a.label.name`, `a.+`)"
+    # Includes only services having a label with key `traefik.label.name` and a value matching the `a.+` regular expression.
+    constraints = "LabelRegex(`traefik.label.name`, `a.+`)"
     ```
 
 See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
