@@ -47,7 +47,6 @@ func (n noopCloser) Close() error {
 
 type handlerParams struct {
 	logDataTable *LogData
-	crr          *captureRequestReader
 }
 
 // Handler will write each request and its response to the access log.
@@ -221,7 +220,6 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	if h.config.BufferingSize > 0 {
 		h.logHandlerChan <- handlerParams{
 			logDataTable: logDataTable,
-			crr:          crr,
 		}
 	} else {
 		h.logTheRoundTrip(logDataTable)
