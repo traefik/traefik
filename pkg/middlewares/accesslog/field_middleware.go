@@ -49,7 +49,7 @@ func AddServiceFields(rw http.ResponseWriter, req *http.Request, next http.Handl
 
 // AddOriginFields add origin fields
 func AddOriginFields(rw http.ResponseWriter, req *http.Request, next http.Handler, data *LogData) {
-	crw := newCaptureResponseWriter(rw)
+	crw := &captureResponseWriter{rw: rw}
 	start := time.Now().UTC()
 
 	next.ServeHTTP(crw, req)
