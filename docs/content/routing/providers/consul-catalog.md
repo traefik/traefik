@@ -1,61 +1,61 @@
 # Traefik & Consul Catalog
 
-A Story of Labels, Services & Containers
+A Story of Tags, Services & Instances
 {: .subtitle }
 
 ![Rancher](../../assets/img/providers/consul.png)
 
-Attach labels to your services and let Traefik do the rest!
+Attach tags to your services and let Traefik do the rest!
 
 ## Routing Configuration
 
-!!! info "Labels"
+!!! info "tags"
     
-    - Labels are case insensitive.
-    - The complete list of labels can be found [the reference page](../../reference/dynamic-configuration/consul-catalog.md)
+    - tags are case insensitive.
+    - The complete list of tags can be found [the reference page](../../reference/dynamic-configuration/consul-catalog.md)
 
 ### General
 
 Traefik creates, for each consul Catalog service, a corresponding [service](../services/index.md) and [router](../routers/index.md).
 
-The Service automatically gets a server per container in this consul Catalog service, and the router gets a default rule attached to it, based on the service name.
+The Service automatically gets a server per instance in this consul Catalog service, and the router gets a default rule attached to it, based on the service name.
 
 ### Routers
 
-To update the configuration of the Router automatically attached to the container, add labels starting with `traefik.routers.{name-of-your-choice}.` and followed by the option you want to change.
+To update the configuration of the Router automatically attached to the service, add tags starting with `traefik.routers.{name-of-your-choice}.` and followed by the option you want to change.
 
-For example, to change the rule, you could add the label ```traefik.http.routers.my-container.rule=Host(`mydomain.com`)```.
+For example, to change the rule, you could add the tag ```traefik.http.routers.my-service.rule=Host(`mydomain.com`)```.
 
 ??? info "`traefik.http.routers.<router_name>.rule`"
     
-    See [rule](../routers/index.md#rule) for more information. 
+    See [rule](../routers/index.md#rule) for more information.
     
     ```yaml
-    - "traefik.http.routers.myrouter.rule=Host(`mydomain.com`)"
+    traefik.http.routers.myrouter.rule=Host(`mydomain.com`)
     ```
 
 ??? info "`traefik.http.routers.<router_name>.entrypoints`"
     
-    See [entry points](../routers/index.md#entrypoints) for more information. 
+    See [entry points](../routers/index.md#entrypoints) for more information.
     
     ```yaml
-    - "traefik.http.routers.myrouter.entrypoints=web,websecure"
+    traefik.http.routers.myrouter.entrypoints=web,websecure
     ```
 
 ??? info "`traefik.http.routers.<router_name>.middlewares`"
     
-    See [middlewares](../routers/index.md#middlewares) and [middlewares overview](../../middlewares/overview.md) for more information. 
+    See [middlewares](../routers/index.md#middlewares) and [middlewares overview](../../middlewares/overview.md) for more information.
     
     ```yaml
-    - "traefik.http.routers.myrouter.middlewares=auth,prefix,cb"
+    traefik.http.routers.myrouter.middlewares=auth,prefix,cb
     ```
 
 ??? info "`traefik.http.routers.<router_name>.service`"
     
-    See [rule](../routers/index.md#service) for more information. 
+    See [rule](../routers/index.md#service) for more information.
     
     ```yaml
-    - "traefik.http.routers.myrouter.service=myservice"
+    traefik.http.routers.myrouter.service=myservice
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls`"
@@ -63,7 +63,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [tls](../routers/index.md#tls) for more information.
     
     ```yaml
-    - "traefik.http.routers.myrouter>.tls=true"
+    traefik.http.routers.myrouter>.tls=true
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.certresolver`"
@@ -71,7 +71,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [certResolver](../routers/index.md#certresolver) for more information.
     
     ```yaml
-    - "traefik.http.routers.myrouter.tls.certresolver=myresolver"
+    traefik.http.routers.myrouter.tls.certresolver=myresolver
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.domains[n].main`"
@@ -79,7 +79,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [domains](../routers/index.md#domains) for more information.
     
     ```yaml
-    - "traefik.http.routers.myrouter.tls.domains[0].main=foobar.com"
+    traefik.http.routers.myrouter.tls.domains[0].main=foobar.com
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.domains[n].sans`"
@@ -87,7 +87,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [domains](../routers/index.md#domains) for more information.
     
     ```yaml
-    - "traefik.http.routers.myrouter.tls.domains[0].sans=test.foobar.com,dev.foobar.com"
+    traefik.http.routers.myrouter.tls.domains[0].sans=test.foobar.com,dev.foobar.com
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.options`"
@@ -95,31 +95,31 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [options](../routers/index.md#options) for more information.
     
     ```yaml
-    - "traefik.http.routers.myrouter.tls.options=foobar"
+    traefik.http.routers.myrouter.tls.options=foobar
     ```
 
 ??? info "`traefik.http.routers.<router_name>.priority`"
     <!-- TODO doc priority in routers page -->
     
     ```yaml
-    - "traefik.http.routers.myrouter.priority=42"
+    traefik.http.routers.myrouter.priority=42
     ```
 
 ### Services
 
-To update the configuration of the Service automatically attached to the container,
-add labels starting with `traefik.http.services.{name-of-your-choice}.`, followed by the option you want to change.
+To update the configuration of the Service automatically attached to the service,
+add tags starting with `traefik.http.services.{name-of-your-choice}.`, followed by the option you want to change.
 
 For example, to change the `passHostHeader` behavior,
-you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.passhostheader=false`.
+you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.passhostheader=false`.
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.server.port`"
     
     Registers a port.
-    Useful when the container exposes multiples ports.
+    Useful when the service exposes multiples ports.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.server.port=8080"
+    traefik.http.services.myservice.loadbalancer.server.port=8080
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.server.scheme`"
@@ -127,14 +127,14 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     Overrides the default scheme.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.server.scheme=http"
+    traefik.http.services.myservice.loadbalancer.server.scheme=http
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
     <!-- TODO doc passHostHeader in services page -->
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.passhostheader=true"
+    traefik.http.services.myservice.loadbalancer.passhostheader=true
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.headers.<header_name>`"
@@ -142,7 +142,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [health check](../services/index.md#health-check) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.healthcheck.headers.X-Foo=foobar"
+    traefik.http.services.myservice.loadbalancer.healthcheck.headers.X-Foo=foobar
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.hostname`"
@@ -150,7 +150,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [health check](../services/index.md#health-check) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.healthcheck.hostname=foobar.com"
+    traefik.http.services.myservice.loadbalancer.healthcheck.hostname=foobar.com
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.interval`"
@@ -158,7 +158,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [health check](../services/index.md#health-check) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.healthcheck.interval=10"
+    traefik.http.services.myservice.loadbalancer.healthcheck.interval=10
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.path`"
@@ -166,7 +166,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [health check](../services/index.md#health-check) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.healthcheck.path=/foo"
+    traefik.http.services.myservice.loadbalancer.healthcheck.path=/foo
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.port`"
@@ -174,7 +174,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [health check](../services/index.md#health-check) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.healthcheck.port=42"
+    traefik.http.services.myservice.loadbalancer.healthcheck.port=42
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.scheme`"
@@ -182,7 +182,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [health check](../services/index.md#health-check) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.healthcheck.scheme=http"
+    traefik.http.services.myservice.loadbalancer.healthcheck.scheme=http
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.timeout`"
@@ -190,7 +190,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [health check](../services/index.md#health-check) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.healthcheck.timeout=10"
+    traefik.http.services.myservice.loadbalancer.healthcheck.timeout=10
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky`"
@@ -198,7 +198,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.sticky=true"
+    traefik.http.services.myservice.loadbalancer.sticky=true
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.httponly`"
@@ -206,7 +206,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.sticky.cookie.httponly=true"
+    traefik.http.services.myservice.loadbalancer.sticky.cookie.httponly=true
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.name`"
@@ -214,7 +214,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.sticky.cookie.name=foobar"
+    traefik.http.services.myservice.loadbalancer.sticky.cookie.name=foobar
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.secure`"
@@ -222,7 +222,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.sticky.cookie.secure=true"
+    traefik.http.services.myservice.loadbalancer.sticky.cookie.secure=true
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
@@ -231,12 +231,12 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     FlushInterval specifies the flush interval to flush to the client while copying the response body.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10"
+    traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10
     ```
 
 ### Middleware
 
-You can declare pieces of middleware using labels starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.
+You can declare pieces of middleware using tags starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.
 
 For example, to declare a middleware [`redirectscheme`](../../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme: https`.
 
@@ -246,11 +246,10 @@ More information about available middlewares in the dedicated [middlewares secti
     
     ```yaml
     # ...
-    labels:
-      # Declaring a middleware
-      - traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
-      # Referencing a middleware
-      - traefik.http.routers.my-container.middlewares=my-redirect
+    # Declaring a middleware
+    traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
+    # Referencing a middleware
+    traefik.http.routers.my-service.middlewares=my-redirect
     ```
 
 !!! warning "Conflicts in Declaration"
@@ -259,24 +258,20 @@ More information about available middlewares in the dedicated [middlewares secti
 
 ### TCP
 
-You can declare TCP Routers and/or Services using labels.
+You can declare TCP Routers and/or Services using tags.
 
 ??? example "Declaring TCP Routers and Services"
 
     ```yaml
-       services:
-         my-container:
-           # ...
-           labels:
-             - "traefik.tcp.routers.my-router.rule=HostSNI(`my-host.com`)"
-             - "traefik.tcp.routers.my-router.tls=true"
-             - "traefik.tcp.services.my-service.loadbalancer.server.port=4123"
+    traefik.tcp.routers.my-router.rule=HostSNI(`my-host.com`)
+    traefik.tcp.routers.my-router.tls=true
+    traefik.tcp.services.my-service.loadbalancer.server.port=4123
     ```
 
 !!! warning "TCP and HTTP"
 
     If you declare a TCP Router/Service, it will prevent Traefik from automatically creating an HTTP Router/Service (like it does by default if no TCP Router/Service is defined).
-    You can declare both a TCP Router/Service and an HTTP Router/Service for the same container (but you have to do so manually).
+    You can declare both a TCP Router/Service and an HTTP Router/Service for the same consul service (but you have to do so manually).
 
 #### TCP Routers
 
@@ -285,7 +280,7 @@ You can declare TCP Routers and/or Services using labels.
     See [entry points](../routers/index.md#entrypoints_1) for more information.
     
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.entrypoints=ep1,ep2"
+    traefik.tcp.routers.mytcprouter.entrypoints=ep1,ep2
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.rule`"
@@ -293,7 +288,7 @@ You can declare TCP Routers and/or Services using labels.
     See [rule](../routers/index.md#rule_1) for more information.
     
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.rule=HostSNI(`myhost.com`)"
+    traefik.tcp.routers.mytcprouter.rule=HostSNI(`myhost.com`)
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.service`"
@@ -301,7 +296,7 @@ You can declare TCP Routers and/or Services using labels.
     See [service](../routers/index.md#services) for more information.
     
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.service=myservice"
+    traefik.tcp.routers.mytcprouter.service=myservice
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls`"
@@ -309,7 +304,7 @@ You can declare TCP Routers and/or Services using labels.
     See [TLS](../routers/index.md#tls_1) for more information.
     
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.tls=true"
+    traefik.tcp.routers.mytcprouter.tls=true
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.certresolver`"
@@ -317,7 +312,7 @@ You can declare TCP Routers and/or Services using labels.
     See [certResolver](../routers/index.md#certresolver_1) for more information.
     
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.tls.certresolver=myresolver"
+    traefik.tcp.routers.mytcprouter.tls.certresolver=myresolver
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.domains[n].main`"
@@ -325,7 +320,7 @@ You can declare TCP Routers and/or Services using labels.
     See [domains](../routers/index.md#domains_1) for more information.
     
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.tls.domains[0].main=foobar.com"
+    traefik.tcp.routers.mytcprouter.tls.domains[0].main=foobar.com
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.domains[n].sans`"
@@ -333,7 +328,7 @@ You can declare TCP Routers and/or Services using labels.
     See [domains](../routers/index.md#domains_1) for more information.
     
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.tls.domains[0].sans=test.foobar.com,dev.foobar.com"
+    traefik.tcp.routers.mytcprouter.tls.domains[0].sans=test.foobar.com,dev.foobar.com
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.options`"
@@ -341,7 +336,7 @@ You can declare TCP Routers and/or Services using labels.
     See [options](../routers/index.md#options_1) for more information.
     
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.tls.options=mysoptions"
+    traefik.tcp.routers.mytcprouter.tls.options=mysoptions
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.passthrough`"
@@ -349,7 +344,7 @@ You can declare TCP Routers and/or Services using labels.
     See [TLS](../routers/index.md#tls_1) for more information.
     
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.tls.passthrough=true"
+    traefik.tcp.routers.mytcprouter.tls.passthrough=true
     ```
 
 #### TCP Services
@@ -359,7 +354,7 @@ You can declare TCP Routers and/or Services using labels.
     Registers a port of the application.
     
     ```yaml
-    - "traefik.tcp.services.mytcpservice.loadbalancer.server.port=423"
+    traefik.tcp.services.mytcpservice.loadbalancer.server.port=423
     ```
 
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.terminationdelay`"
@@ -367,7 +362,7 @@ You can declare TCP Routers and/or Services using labels.
     See [termination delay](../services/index.md#termination-delay) for more information.
     
     ```yaml
-    - "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100"
+    traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100
     ```
 
 ### Specific Provider Options
@@ -375,10 +370,10 @@ You can declare TCP Routers and/or Services using labels.
 #### `traefik.enable`
 
 ```yaml
-- "traefik.enable=true"
+traefik.enable=true
 ```
 
-You can tell Traefik to consider (or not) the container by setting `traefik.enable` to true or false.
+You can tell Traefik to consider (or not) the service by setting `traefik.enable` to true or false.
 
 This option overrides the value of `exposedByDefault`.
 

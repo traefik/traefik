@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMatch(t *testing.T) {
+func TestMatchLabels(t *testing.T) {
 	testCases := []struct {
 		expr        string
 		labels      map[string]string
@@ -192,7 +192,7 @@ func TestMatch(t *testing.T) {
 		t.Run(test.expr, func(t *testing.T) {
 			t.Parallel()
 
-			matches, err := Match(test.labels, test.expr)
+			matches, err := MatchLabels(test.labels, test.expr)
 			if test.expectedErr {
 				require.Error(t, err)
 			} else {

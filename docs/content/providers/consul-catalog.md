@@ -1,17 +1,17 @@
 # Traefik & Consul Catalog
 
-A Story of Labels, Services & Containers
+A Story of Tags, Services & Instances
 {: .subtitle }
 
 ![Consul Catalog](../assets/img/providers/consul.png)
 
-Attach labels to your services and let Traefik do the rest!
+Attach tags to your services and let Traefik do the rest!
 
 ## Configuration Examples
 
 ??? example "Configuring Consul Catalog & Deploying / Exposing Services"
 
-    Enabling the consulcatalog provider
+    Enabling the consul catalog provider
 
     ```toml tab="File (TOML)"
     [providers.consulCatalog]
@@ -26,11 +26,10 @@ Attach labels to your services and let Traefik do the rest!
     --providers.consulcatalog=true
     ```
 
-    Attaching labels to services
+    Attaching tags to services
 
     ```yaml
-    labels:
-      - traefik.http.services.my-service.rule=Host(`mydomain.com`)
+    - traefik.http.services.my-service.rule=Host(`mydomain.com`)
     ```
 
 ## Routing Configuration
@@ -65,27 +64,27 @@ Defines the polling interval.
 
 ### `prefix`
 
-_Optional, Default=/latest_
+_required, Default="traefik"_
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
-  prefix = "/test"
+  prefix = "test"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   consulCatalog:
-    prefix: /test
+    prefix: test
     # ...
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.prefix=/test
+--providers.consulcatalog.prefix=test
 # ...
 ```
 
-Prefix used for accessing the Consul service metadata.
+The prefix for Consul Catalog tags defining traefik labels.
 
 ### `requireConsistent`
 
@@ -161,7 +160,7 @@ Use local agent caching for catalog reads.
 
 ### `endpoint`
 
-Defines Consul server endpoint.
+Defines the Consul server endpoint.
 
 #### `address`
 
@@ -504,7 +503,7 @@ providers:
 ```
 
 Expose Consul Catalog services by default in Traefik.
-If set to false, services that don't have a `traefik.enable=true` label will be ignored from the resulting routing configuration.
+If set to false, services that don't have a `traefik.enable=true` tag will be ignored from the resulting routing configuration.
 
 See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
 
@@ -532,13 +531,13 @@ providers:
 
 The default host rule for all services.
 
-For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
+For a given service if no routing rule was defined by a tag, it is defined by this defaultRule instead.
 It must be a valid [Go template](https://golang.org/pkg/text/template/),
 augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
 The service name can be accessed as the `Name` identifier,
-and the template has access to all the labels defined on this container.
+and the template has access to all the labels (i.e. tags beginning with the `prefix`) defined on this service.
 
-This option can be overridden on a container basis with the `traefik.http.routers.Router1.rule` label.
+The option can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.rule` tag.
 
 ### `constraints`
 
@@ -546,58 +545,59 @@ _Optional, Default=""_
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
-  constraints = "Label(`a.label.name`, `foo`)"
+  constraints = "Tag(`a.tag.name`)"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   consulCatalog:
-    constraints: "Label(`a.label.name`, `foo`)"
+    constraints: "Tag(`a.tag.name`)"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.constraints="Label(`a.label.name`, `foo`)"
+--providers.consulcatalog.constraints="Tag(`a.tag.name`)"
 # ...
 ```
 
-Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
-That is to say, if none of the container's labels match the expression, no route for the container is created.
-If the expression is empty, all detected containers are included.
+Constraints is an expression that Traefik matches against the service's tags to determine whether to create any route for that service.
+That is to say, if none of the service's tags match the expression, no route for that service is created.
+If the expression is empty, all detected services are included.
 
-The expression syntax is based on the `Label("key", "value")`, and `LabelRegex("key", "value")` functions, as well as the usual boolean logic, as shown in examples below.
+The expression syntax is based on the `Tag("tag")`, and `TagRegex("tag")` functions,
+as well as the usual boolean logic, as shown in examples below.
 
 ??? example "Constraints Expression Examples"
 
     ```toml
-    # Includes only containers having a label with key `a.label.name` and value `foo`
-    constraints = "Label(`a.label.name`, `foo`)"
+    # Includes only services having the tag `a.tag.name=foo`
+    constraints = "Tag(`a.tag.name=foo`)"
     ```
     
     ```toml
-    # Excludes containers having any label with key `a.label.name` and value `foo`
-    constraints = "!Label(`a.label.name`, `value`)"
+    # Excludes services having any tag `a.tag.name=foo`
+    constraints = "!Tag(`a.tag.name=foo`)"
     ```
     
     ```toml
     # With logical AND.
-    constraints = "Label(`a.label.name`, `valueA`) && Label(`another.label.name`, `valueB`)"
+    constraints = "Tag(`a.tag.name`) && Tag(`another.tag.name`)"
     ```
     
     ```toml
     # With logical OR.
-    constraints = "Label(`a.label.name`, `valueA`) || Label(`another.label.name`, `valueB`)"
+    constraints = "Tag(`a.tag.name`) || Tag(`another.tag.name`)"
     ```
     
     ```toml
     # With logical AND and OR, with precedence set by parentheses.
-    constraints = "Label(`a.label.name`, `valueA`) && (Label(`another.label.name`, `valueB`) || Label(`yet.another.label.name`, `valueC`))"
+    constraints = "Tag(`a.tag.name`) && (Tag(`another.tag.name`) || Tag(`yet.another.tag.name`))"
     ```
     
     ```toml
-    # Includes only containers having a label with key `a.label.name` and a value matching the `a.+` regular expression.
-    constraints = "LabelRegex(`a.label.name`, `a.+`)"
+    # Includes only services having a tag matching the `a\.tag\.t.+` regular expression.
+    constraints = "TagRegex(`a\.tag\.t.+`)"
     ```
 
 See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).

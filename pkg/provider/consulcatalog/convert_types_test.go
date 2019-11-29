@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTagsToNeutralLabels(t *testing.T) {
+func Test_tagsToNeutralLabels(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		tags     []string
