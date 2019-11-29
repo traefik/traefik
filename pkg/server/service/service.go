@@ -40,7 +40,7 @@ func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper htt
 		metricsRegistry:     metricsRegistry,
 		bufferPool:          newBufferPool(),
 		defaultRoundTripper: defaultRoundTripper,
-		balancers:           make(map[string][]healthcheck.Balancer),
+		balancers:           make(map[string]healthcheck.Balancers),
 		configs:             configs,
 		api:                 api,
 		rest:                rest,
@@ -57,7 +57,7 @@ type Manager struct {
 	// There is one Balancer per service handler, and there is one service handler per reference to a service
 	// (e.g. if 2 routers refer to the same service name, 2 service handlers are created),
 	// which is why there is not just one Balancer per service name.
-	balancers map[string][]healthcheck.Balancer
+	balancers map[string]healthcheck.Balancers
 	configs   map[string]*runtime.ServiceInfo
 	api       http.Handler
 	rest      http.Handler
@@ -243,7 +243,7 @@ func (m *Manager) LaunchHealthCheck() {
 	healthcheck.GetHealthCheck().SetBackendsConfiguration(context.Background(), backendConfigs)
 }
 
-func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancers, backend string, hc *dynamic.HealthCheck) *healthcheck.Options {
+func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backend string, hc *dynamic.HealthCheck) *healthcheck.Options {
 	if hc == nil || hc.Path == "" {
 		return nil
 	}
