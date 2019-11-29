@@ -80,7 +80,7 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 		return false
 	}
 
-	matches, err := constraints.Match(item.Labels, p.Constraints)
+	matches, err := constraints.MatchTags(item.Tags, p.Constraints)
 	if err != nil {
 		logger.Errorf("Error matching constraints expression: %v", err)
 		return false

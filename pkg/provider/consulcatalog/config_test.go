@@ -2,6 +2,7 @@ package consulcatalog
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
@@ -1541,7 +1542,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Status:  api.HealthPassing,
 				},
 			},
-			constraints: `Label("traefik.tags", "bar")`,
+			constraints: `Tag("traefik.tags=bar")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:  map[string]*dynamic.TCPRouter{},
@@ -1568,7 +1569,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Status:  api.HealthPassing,
 				},
 			},
-			constraints: `Label("traefik.tags", "foo")`,
+			constraints: `Tag("traefik.tags=foo")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:  map[string]*dynamic.TCPRouter{},
@@ -1955,6 +1956,12 @@ func Test_buildConfiguration(t *testing.T) {
 				var err error
 				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i])
 				require.NoError(t, err)
+
+				var tags []string
+				for k, v := range test.items[i].Labels {
+					tags = append(tags, fmt.Sprintf("%s=%s", k, v))
+				}
+				test.items[i].Tags = tags
 			}
 
 			configuration := p.buildConfiguration(context.Background(), test.items)

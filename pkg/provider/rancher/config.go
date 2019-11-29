@@ -121,7 +121,7 @@ func (p *Provider) keepService(ctx context.Context, service rancherData) bool {
 		return false
 	}
 
-	matches, err := constraints.Match(service.Labels, p.Constraints)
+	matches, err := constraints.MatchLabels(service.Labels, p.Constraints)
 	if err != nil {
 		logger.Errorf("Error matching constraints expression: %v", err)
 		return false

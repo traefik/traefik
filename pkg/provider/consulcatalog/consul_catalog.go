@@ -30,6 +30,7 @@ type itemData struct {
 	Port      string
 	Status    string
 	Labels    map[string]string
+	Tags      []string
 	ExtraConf configuration
 }
 
@@ -157,7 +158,6 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 		}
 
 		for _, consulService := range consulServices {
-			labels := tagsToNeutralLabels(consulService.ServiceTags, p.Prefix)
 			address := consulService.ServiceAddress
 			if address == "" {
 				address = consulService.Address
@@ -169,7 +169,8 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 				Name:    consulService.ServiceName,
 				Address: address,
 				Port:    strconv.Itoa(consulService.ServicePort),
-				Labels:  labels,
+				Labels:  tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
+				Tags:    consulService.ServiceTags,
 				Status:  consulService.Checks.AggregatedStatus(),
 			}
 
