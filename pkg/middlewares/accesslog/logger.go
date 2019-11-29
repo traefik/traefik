@@ -48,7 +48,6 @@ func (n noopCloser) Close() error {
 type handlerParams struct {
 	logDataTable *LogData
 	crr          *captureRequestReader
-	crw          *captureResponseWriter
 }
 
 // Handler will write each request and its response to the access log.
@@ -122,7 +121,7 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 		go func() {
 			defer logHandler.wg.Done()
 			for handlerParams := range logHandler.logHandlerChan {
-				logHandler.logTheRoundTrip(handlerParams.logDataTable, handlerParams.crr, handlerParams.crw)
+				logHandler.logTheRoundTrip(handlerParams.logDataTable)
 			}
 		}()
 	}
@@ -162,7 +161,12 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		StartLocal: now.Local(),
 	}
 
-	logDataTable := &LogData{Core: core, Request: req.Header}
+	logDataTable := &LogData{
+		Core: core,
+		Request: request{
+			headers: req.Header,
+		},
+	}
 
 	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
 
@@ -205,16 +209,22 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
 	}
 
-	logDataTable.DownstreamResponse = deepCopy(crw.Header())
+	logDataTable.DownstreamResponse = downstreamResponse{
+		headers: deepCopy(crw.Header()),
+		status:  crw.Status(),
+		size:    crw.Size(),
+	}
+	if crr != nil {
+		logDataTable.Request.count = crr.count
+	}
 
 	if h.config.BufferingSize > 0 {
 		h.logHandlerChan <- handlerParams{
 			logDataTable: logDataTable,
 			crr:          crr,
-			crw:          crw,
 		}
 	} else {
-		h.logTheRoundTrip(logDataTable, crr, crw)
+		h.logTheRoundTrip(logDataTable)
 	}
 }
 
@@ -274,7 +284,7 @@ func usernameIfPresent(theURL *url.URL) string {
 }
 
 // Logging handler to log frontend name, backend name, and elapsed time.
-func (h *Handler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestReader, crw *captureResponseWriter) {
+func (h *Handler) logTheRoundTrip(logDataTable *LogData) {
 	core := logDataTable.Core
 
 	retryAttempts, ok := core[RetryAttempts].(int)
@@ -282,23 +292,22 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestRead
 		retryAttempts = 0
 	}
 	core[RetryAttempts] = retryAttempts
+	core[RequestContentSize] = logDataTable.Request.count
 
-	if crr != nil {
-		core[RequestContentSize] = crr.count
-	}
-
-	core[DownstreamStatus] = crw.Status()
+	status := logDataTable.DownstreamResponse.status
+	core[DownstreamStatus] = status
 
 	// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries.
 	totalDuration := time.Now().UTC().Sub(core[StartUTC].(time.Time))
 	core[Duration] = totalDuration
 
-	if h.keepAccessLog(crw.Status(), retryAttempts, totalDuration) {
-		core[DownstreamContentSize] = crw.Size()
+	if h.keepAccessLog(status, retryAttempts, totalDuration) {
+		size := logDataTable.DownstreamResponse.size
+		core[DownstreamContentSize] = size
 		if original, ok := core[OriginContentSize]; ok {
 			o64 := original.(int64)
-			if crw.Size() != o64 && crw.Size() != 0 {
-				core[GzipRatio] = float64(o64) / float64(crw.Size())
+			if size != o64 && size != 0 {
+				core[GzipRatio] = float64(o64) / float64(size)
 			}
 		}
 
@@ -315,9 +324,9 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestRead
 			}
 		}
 
-		h.redactHeaders(logDataTable.Request, fields, "request_")
+		h.redactHeaders(logDataTable.Request.headers, fields, "request_")
 		h.redactHeaders(logDataTable.OriginResponse, fields, "origin_")
-		h.redactHeaders(logDataTable.DownstreamResponse, fields, "downstream_")
+		h.redactHeaders(logDataTable.DownstreamResponse.headers, fields, "downstream_")
 
 		h.mu.Lock()
 		defer h.mu.Unlock()
