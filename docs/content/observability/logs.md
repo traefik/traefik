@@ -30,7 +30,7 @@ log:
 
 ```bash tab="CLI"
 # Writing Logs to a File
---log.filePath="/path/to/traefik.log"
+--log.filePath=/path/to/traefik.log
 ```
 
 #### `format`
@@ -53,8 +53,8 @@ log:
 
 ```bash tab="CLI"
 # Writing Logs to a File, in JSON
---log.filePath="/path/to/traefik.log"
---log.format="json"
+--log.filePath=/path/to/traefik.log
+--log.format=json
 ```
 
 #### `level`
@@ -72,7 +72,7 @@ log:
 ```
 
 ```bash tab="CLI"
---log.level="DEBUG"
+--log.level=DEBUG
 ```
 
 ## Log Rotation

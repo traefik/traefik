@@ -27,7 +27,7 @@
             <div class="text-subtitle2">RULE</div>
             <q-chip
               dense
-              class="app-chip app-chip-rule">
+              class="app-chip app-chip-wrap app-chip-rule">
               {{ data.rule }}
             </q-chip>
           </div>
@@ -39,7 +39,7 @@
             <div class="text-subtitle2">NAME</div>
             <q-chip
               dense
-              class="app-chip app-chip-name">
+              class="app-chip app-chip-wrap app-chip-name">
               {{ data.name }}
             </q-chip>
           </div>
@@ -66,7 +66,7 @@
               dense
               clickable
               @click.native="$router.push({ path: `/${protocol}/services/${getServiceId()}`})"
-              class="app-chip app-chip-service">
+              class="app-chip app-chip-wrap app-chip-service">
               {{ data.service }}
             </q-chip>
           </div>

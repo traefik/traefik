@@ -3,15 +3,12 @@ import { APP } from '../_helpers/APP'
 const apiBase = '/tcp'
 
 function getAllRouters (params) {
-  return APP.api.get(`${apiBase}/routers?search=${params.query}&status=${params.status}`)
+  return APP.api.get(`${apiBase}/routers?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
     .then(body => {
       const total = body.data ? body.data.length : 0
-      return APP.api.get(`${apiBase}/routers?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
-        .then(body => {
-          console.log('Success -> HttpService -> getAllRouters', body.data)
-          // TODO - suggestion: add the total-pages in api response to optimize the query
-          return { data: body.data || [], total }
-        })
+      console.log('Success -> HttpService -> getAllRouters', body.data)
+      // TODO - suggestion: add the total-pages in api response to optimize the query
+      return { data: body.data || [], total }
     })
 }
 
@@ -24,15 +21,12 @@ function getRouterByName (name) {
 }
 
 function getAllServices (params) {
-  return APP.api.get(`${apiBase}/services?search=${params.query}&status=${params.status}`)
+  return APP.api.get(`${apiBase}/services?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
     .then(body => {
       const total = body.data ? body.data.length : 0
-      return APP.api.get(`${apiBase}/services?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
-        .then(body => {
-          console.log('Success -> HttpService -> getAllServices', body.data)
-          // TODO - suggestion: add the total-pages in api response to optimize the query
-          return { data: body.data || [], total }
-        })
+      console.log('Success -> HttpService -> getAllServices', body.data)
+      // TODO - suggestion: add the total-pages in api response to optimize the query
+      return { data: body.data || [], total }
     })
 }
 

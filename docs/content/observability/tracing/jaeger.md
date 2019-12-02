@@ -39,7 +39,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.jaeger.samplingServerURL="http://localhost:5778/sampling"
+--tracing.jaeger.samplingServerURL=http://localhost:5778/sampling
 ```
 
 #### `samplingType`
@@ -61,7 +61,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.jaeger.samplingType="const"
+--tracing.jaeger.samplingType=const
 ```
 
 #### `samplingParam`
@@ -89,7 +89,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.jaeger.samplingParam="1.0"
+--tracing.jaeger.samplingParam=1.0
 ```
 
 #### `localAgentHostPort`
@@ -111,7 +111,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.jaeger.localAgentHostPort="127.0.0.1:6831"
+--tracing.jaeger.localAgentHostPort=127.0.0.1:6831
 ```
 
 #### `gen128Bit`
@@ -159,7 +159,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.jaeger.propagation="jaeger"
+--tracing.jaeger.propagation=jaeger
 ```
 
 #### `traceContextHeaderName`
@@ -182,7 +182,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.jaeger.traceContextHeaderName="uber-trace-id"
+--tracing.jaeger.traceContextHeaderName=uber-trace-id
 ```
 
 ### `collector`
@@ -206,7 +206,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.jaeger.collector.endpoint="http://127.0.0.1:14268/api/traces?format=jaeger.thrift"
+--tracing.jaeger.collector.endpoint=http://127.0.0.1:14268/api/traces?format=jaeger.thrift
 ```
 
 #### `user`
@@ -229,7 +229,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.jaeger.collector.user="my-user"
+--tracing.jaeger.collector.user=my-user
 ```
 
 #### `password`
@@ -252,5 +252,5 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.jaeger.collector.password="my-password"
+--tracing.jaeger.collector.password=my-password
 ```

@@ -32,7 +32,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetescrd.endpoint="http://localhost:8080"
+--providers.kubernetescrd.endpoint=http://localhost:8080
 ```
 
 The Kubernetes server endpoint as URL.
@@ -66,7 +66,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetescrd.token="mytoken"
+--providers.kubernetescrd.token=mytoken
 ```
 
 Bearer token used for the Kubernetes client configuration.
@@ -89,7 +89,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetescrd.certauthfilepath="/my/ca.crt"
+--providers.kubernetescrd.certauthfilepath=/my/ca.crt
 ```
 
 Path to the certificate authority file.
@@ -115,7 +115,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetescrd.namespaces="default,production"
+--providers.kubernetescrd.namespaces=default,production
 ```
 
 Array of namespaces to watch.
@@ -164,7 +164,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetescrd.ingressclass="traefik-internal"
+--providers.kubernetescrd.ingressclass=traefik-internal
 ```
 
 Value of `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
@@ -190,7 +190,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.kubernetescrd.throttleDuration="10s"
+--providers.kubernetescrd.throttleDuration=10s
 ```
 
 ## Further

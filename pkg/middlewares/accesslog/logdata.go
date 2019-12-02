@@ -116,7 +116,18 @@ type CoreLogData map[string]interface{}
 // LogData is the data captured by the middleware so that it can be logged.
 type LogData struct {
 	Core               CoreLogData
-	Request            http.Header
+	Request            request
 	OriginResponse     http.Header
-	DownstreamResponse http.Header
+	DownstreamResponse downstreamResponse
+}
+
+type downstreamResponse struct {
+	headers http.Header
+	status  int
+	size    int64
+}
+
+type request struct {
+	headers http.Header
+	count   int64
 }

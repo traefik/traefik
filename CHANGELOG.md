@@ -1,3 +1,29 @@
+## [v2.0.6](https://github.com/containous/traefik/tree/v2.0.6) (2019-12-02)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.5...v2.0.6)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to 3.2.0 ([#5839](https://github.com/containous/traefik/pull/5839) by [kolaente](https://github.com/kolaente))
+- **[cli,healthcheck]** Uses, if it exists, the ping entry point provided in the static configuration ([#5867](https://github.com/containous/traefik/pull/5867) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[healthcheck]** Healthcheck managed for all related services ([#5860](https://github.com/containous/traefik/pull/5860) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[logs,middleware]** Do not give responsewriter or its headers to asynchronous logging goroutine ([#5840](https://github.com/containous/traefik/pull/5840) by [mpl](https://github.com/mpl))
+- **[middleware]** X-Forwarded-Proto must not skip the redirection. ([#5836](https://github.com/containous/traefik/pull/5836) by [ldez](https://github.com/ldez))
+- **[middleware]** fix: location header rewrite. ([#5835](https://github.com/containous/traefik/pull/5835) by [ldez](https://github.com/ldez))
+- **[middleware]** Remove Request Headers CORS Preflight Requirement ([#5903](https://github.com/containous/traefik/pull/5903) by [dtomcej](https://github.com/dtomcej))
+- **[rancher]** Change service name in rancher provider to make webui service details view work ([#5895](https://github.com/containous/traefik/pull/5895) by [SantoDE](https://github.com/SantoDE))
+- **[tracing]** Fix extraction for zipkin tracing ([#5920](https://github.com/containous/traefik/pull/5920) by [jcchavezs](https://github.com/jcchavezs))
+- **[webui]** Web UI: Avoid unnecessary duplicated api calls ([#5884](https://github.com/containous/traefik/pull/5884) by [matthieuh](https://github.com/matthieuh))
+- **[webui]** Web UI: Avoid some router properties to overflow their container ([#5872](https://github.com/containous/traefik/pull/5872) by [matthieuh](https://github.com/matthieuh))
+- **[webui]** Web UI: Fix displayed tcp service details ([#5868](https://github.com/containous/traefik/pull/5868) by [matthieuh](https://github.com/matthieuh))
+
+**Documentation:**
+- **[acme]** doc: fix wrong acme information ([#5837](https://github.com/containous/traefik/pull/5837) by [ldez](https://github.com/ldez))
+- **[docker,docker/swarm]** Add Swarm section to the Docker Provider Documentation ([#5874](https://github.com/containous/traefik/pull/5874) by [dduportal](https://github.com/dduportal))
+- **[docker]** Update router entrypoint example ([#5766](https://github.com/containous/traefik/pull/5766) by [woto](https://github.com/woto))
+- **[k8s/helm]** Mention the experimental Helm Chart in the installation section of documentation ([#5879](https://github.com/containous/traefik/pull/5879) by [dduportal](https://github.com/dduportal))
+- doc: remove double quotes on CLI flags. ([#5862](https://github.com/containous/traefik/pull/5862) by [ldez](https://github.com/ldez))
+- Fixed spelling error ([#5834](https://github.com/containous/traefik/pull/5834) by [blakebuthod](https://github.com/blakebuthod))
+- Add back the security section from v1 ([#5832](https://github.com/containous/traefik/pull/5832) by [pascalandy](https://github.com/pascalandy))
+
 ## [v2.1.0-rc2](https://github.com/containous/traefik/tree/v2.0.4) (2019-11-15)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc1...v2.1.0-rc2)
 
