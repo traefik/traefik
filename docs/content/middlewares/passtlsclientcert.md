@@ -380,7 +380,7 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
 !!! info "Extracted data"
     
     The delimiters and `\n` will be removed.  
-    If there are more than one certificate, they are separated by a "`;`".
+    If there are more than one certificate, they are separated by a "`,`".
 
 !!! warning "`X-Forwarded-Tls-Client-Cert` value could exceed the web server header size limit"
 
