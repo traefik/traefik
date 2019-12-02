@@ -104,9 +104,73 @@ func (p *passTLSClientCert) GetTracingInformation() (string, ext.SpanKindEnum) {
 
 func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	ctx := middlewares.GetLoggerCtx(req.Context(), p.name, typeName)
+	logger := log.FromContext(ctx)
 
-	p.modifyRequestHeaders(ctx, req)
+	if p.pem {
+		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
+			req.Header.Set(xForwardedTLSClientCert, getXForwardedTLSClientCert(ctx, req.TLS.PeerCertificates))
+		} else {
+			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
+		}
+	}
+
+	if p.info != nil {
+		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
+			headerContent := p.getXForwardedTLSClientCertInfo(ctx, req.TLS.PeerCertificates)
+			req.Header.Set(xForwardedTLSClientCertInfo, url.QueryEscape(headerContent))
+		} else {
+			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
+		}
+	}
+
 	p.next.ServeHTTP(rw, req)
+}
+
+// getXForwardedTLSClientCertInfo Build a string with the wanted client certificates information
+// like Subject="C=%s,ST=%s,L=%s,O=%s,CN=%s",NB=%d,NA=%d,SAN=%s;
+func (p *passTLSClientCert) getXForwardedTLSClientCertInfo(ctx context.Context, certs []*x509.Certificate) string {
+	var headerValues []string
+
+	for _, peerCert := range certs {
+		var values []string
+		var sans string
+		var nb string
+		var na string
+
+		if p.info != nil {
+			subject := getDNInfo(ctx, "Subject", p.info.subject, &peerCert.Subject)
+			if len(subject) > 0 {
+				values = append(values, subject)
+			}
+
+			issuer := getDNInfo(ctx, "Issuer", p.info.issuer, &peerCert.Issuer)
+			if len(issuer) > 0 {
+				values = append(values, issuer)
+			}
+		}
+
+		ci := p.info
+		if ci != nil {
+			if ci.notBefore {
+				nb = fmt.Sprintf("NB=%d", uint64(peerCert.NotBefore.Unix()))
+				values = append(values, nb)
+			}
+			if ci.notAfter {
+				na = fmt.Sprintf("NA=%d", uint64(peerCert.NotAfter.Unix()))
+				values = append(values, na)
+			}
+
+			if ci.sans {
+				sans = fmt.Sprintf("SAN=%s", strings.Join(getSANs(peerCert), ","))
+				values = append(values, sans)
+			}
+		}
+
+		value := strings.Join(values, ",")
+		headerValues = append(headerValues, value)
+	}
+
+	return strings.Join(headerValues, ";")
 }
 
 func getDNInfo(ctx context.Context, prefix string, options *DistinguishedNameOptions, cs *pkix.Name) string {
@@ -170,95 +234,15 @@ func writePart(ctx context.Context, content io.StringWriter, entry string, prefi
 	}
 }
 
-// getXForwardedTLSClientCertInfo Build a string with the wanted client certificates information
-// like Subject="C=%s,ST=%s,L=%s,O=%s,CN=%s",NB=%d,NA=%d,SAN=%s;
-func (p *passTLSClientCert) getXForwardedTLSClientCertInfo(ctx context.Context, certs []*x509.Certificate) string {
-	var headerValues []string
-
-	for _, peerCert := range certs {
-		var values []string
-		var sans string
-		var nb string
-		var na string
-
-		if p.info != nil {
-			subject := getDNInfo(ctx, "Subject", p.info.subject, &peerCert.Subject)
-			if len(subject) > 0 {
-				values = append(values, subject)
-			}
-
-			issuer := getDNInfo(ctx, "Issuer", p.info.issuer, &peerCert.Issuer)
-			if len(issuer) > 0 {
-				values = append(values, issuer)
-			}
-		}
-
-		ci := p.info
-		if ci != nil {
-			if ci.notBefore {
-				nb = fmt.Sprintf("NB=%d", uint64(peerCert.NotBefore.Unix()))
-				values = append(values, nb)
-			}
-			if ci.notAfter {
-				na = fmt.Sprintf("NA=%d", uint64(peerCert.NotAfter.Unix()))
-				values = append(values, na)
-			}
-
-			if ci.sans {
-				sans = fmt.Sprintf("SAN=%s", strings.Join(getSANs(peerCert), ","))
-				values = append(values, sans)
-			}
-		}
-
-		value := strings.Join(values, ",")
-		headerValues = append(headerValues, value)
-	}
-
-	return strings.Join(headerValues, ";")
-}
-
-// modifyRequestHeaders set the wanted headers with the certificates information.
-func (p *passTLSClientCert) modifyRequestHeaders(ctx context.Context, r *http.Request) {
-	logger := log.FromContext(ctx)
-
-	if p.pem {
-		if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
-			r.Header.Set(xForwardedTLSClientCert, getXForwardedTLSClientCert(ctx, r.TLS.PeerCertificates))
-		} else {
-			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
-		}
-	}
-
-	if p.info != nil {
-		if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
-			headerContent := p.getXForwardedTLSClientCertInfo(ctx, r.TLS.PeerCertificates)
-			r.Header.Set(xForwardedTLSClientCertInfo, url.QueryEscape(headerContent))
-		} else {
-			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
-		}
-	}
-}
-
 // sanitize As we pass the raw certificates, remove the useless data and make it http request compliant.
 func sanitize(cert []byte) string {
-	s := string(cert)
-	r := strings.NewReplacer("-----BEGIN CERTIFICATE-----", "",
+	cleaned := strings.NewReplacer(
+		"-----BEGIN CERTIFICATE-----", "",
 		"-----END CERTIFICATE-----", "",
-		"\n", "")
-	cleaned := r.Replace(s)
+		"\n", "",
+	).Replace(string(cert))
 
 	return url.QueryEscape(cleaned)
-}
-
-// extractCertificate extract the certificate from the request.
-func extractCertificate(ctx context.Context, cert *x509.Certificate) string {
-	b := pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw}
-	certPEM := pem.EncodeToMemory(&b)
-	if certPEM == nil {
-		log.FromContext(ctx).Error("Cannot extract the certificate content")
-		return ""
-	}
-	return sanitize(certPEM)
 }
 
 // getXForwardedTLSClientCert Build a string with the client certificates.
@@ -270,6 +254,17 @@ func getXForwardedTLSClientCert(ctx context.Context, certs []*x509.Certificate) 
 	}
 
 	return strings.Join(headerValues, ",")
+}
+
+// extractCertificate extract the certificate from the request.
+func extractCertificate(ctx context.Context, cert *x509.Certificate) string {
+	b := pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw}
+	certPEM := pem.EncodeToMemory(&b)
+	if certPEM == nil {
+		log.FromContext(ctx).Error("Cannot extract the certificate content")
+		return ""
+	}
+	return sanitize(certPEM)
 }
 
 // getSANs get the Subject Alternate Name values.
