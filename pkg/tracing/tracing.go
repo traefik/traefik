@@ -134,7 +134,7 @@ func InjectRequestHeaders(r *http.Request) {
 		err := opentracing.GlobalTracer().Inject(
 			span.Context(),
 			opentracing.HTTPHeaders,
-			HTTPHeadersCarrier(r.Header))
+			opentracing.HTTPHeadersCarrier(r.Header))
 		if err != nil {
 			log.FromContext(r.Context()).Error(err)
 		}

@@ -34,7 +34,7 @@ type entryPointMiddleware struct {
 }
 
 func (e *entryPointMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	spanCtx, _ := e.Extract(opentracing.HTTPHeaders, tracing.HTTPHeadersCarrier(req.Header))
+	spanCtx, _ := e.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 
 	span, req, finish := e.StartSpanf(req, ext.SpanKindRPCServerEnum, "EntryPoint", []string{e.entryPoint, req.Host}, " ", ext.RPCServerOption(spanCtx))
 	defer finish()
