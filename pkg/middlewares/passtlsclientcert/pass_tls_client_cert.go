@@ -133,7 +133,6 @@ func (p *passTLSClientCert) getXForwardedTLSClientCertInfo(ctx context.Context, 
 
 	for _, peerCert := range certs {
 		var values []string
-		var sans string
 		var nb string
 		var na string
 
@@ -161,16 +160,19 @@ func (p *passTLSClientCert) getXForwardedTLSClientCertInfo(ctx context.Context, 
 			}
 
 			if ci.sans {
-				sans = fmt.Sprintf("SAN=%s", strings.Join(getSANs(peerCert), ","))
-				values = append(values, sans)
+				ss := getSANs(peerCert)
+				if len(ss) > 0 {
+					sans := fmt.Sprintf(`SAN="%s"`, strings.Join(ss, ","))
+					values = append(values, sans)
+				}
 			}
 		}
 
-		value := strings.Join(values, ",")
+		value := strings.Join(values, ";")
 		headerValues = append(headerValues, value)
 	}
 
-	return strings.Join(headerValues, ";")
+	return strings.Join(headerValues, ",")
 }
 
 func getDNInfo(ctx context.Context, prefix string, options *DistinguishedNameOptions, cs *pkix.Name) string {

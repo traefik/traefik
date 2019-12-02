@@ -479,8 +479,8 @@ func TestGetSans(t *testing.T) {
 }
 
 func TestTLSClientHeadersWithCertInfo(t *testing.T) {
-	minimalCheeseCertAllInfo := `Subject="C=FR,ST=Some-State,O=Cheese",Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2",NB=1544094636,NA=1632568236,SAN=`
-	completeCertAllInfo := `Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.cheese.com",Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2",NB=1544094616,NA=1607166616,SAN=*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2`
+	minimalCheeseCertAllInfo := `Subject="C=FR,ST=Some-State,O=Cheese";Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2";NB=1544094636;NA=1632568236`
+	completeCertAllInfo := `Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.cheese.com";Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2";NB=1544094616;NA=1607166616;SAN="*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2"`
 
 	testCases := []struct {
 		desc           string
@@ -564,7 +564,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 					},
 				},
 			},
-			expectedHeader: url.QueryEscape(`Subject="O=Cheese",Issuer="C=FR,C=US",NA=1632568236,SAN=`),
+			expectedHeader: url.QueryEscape(`Subject="O=Cheese";Issuer="C=FR,C=US";NA=1632568236`),
 		},
 		{
 			desc:         "TLS with complete certificate, with all info",
@@ -624,7 +624,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 					},
 				},
 			},
-			expectedHeader: url.QueryEscape(strings.Join([]string{minimalCheeseCertAllInfo, completeCertAllInfo}, ";")),
+			expectedHeader: url.QueryEscape(strings.Join([]string{minimalCheeseCertAllInfo, completeCertAllInfo}, ",")),
 		},
 	}
 
