@@ -73,24 +73,22 @@ func TestCommand_PrintHelp(t *testing.T) {
 		},
 		{
 			desc: "print custom help",
-			command: func() *Command {
-				return &Command{
-					Name:        "root",
-					Description: "Description for root",
-					Configuration: &struct {
-						Foo []struct {
-							Field string
-						}
-					}{},
-					Run: func(args []string) error {
-						return nil
-					},
-					CustomHelpFunc: func(w io.Writer, _ *Command) error {
-						_, _ = fmt.Fprintln(w, "test")
-						return nil
-					},
-				}
-			}(),
+			command: &Command{
+				Name:        "root",
+				Description: "Description for root",
+				Configuration: &struct {
+					Foo []struct {
+						Field string
+					}
+				}{},
+				Run: func(args []string) error {
+					return nil
+				},
+				CustomHelpFunc: func(w io.Writer, _ *Command) error {
+					_, _ = fmt.Fprintln(w, "test")
+					return nil
+				},
+			},
 			expectedOutput: "test\n",
 		},
 		{
