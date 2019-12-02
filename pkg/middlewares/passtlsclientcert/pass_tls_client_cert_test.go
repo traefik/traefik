@@ -547,7 +547,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 					},
 				},
 			},
-			expectedHeader: url.QueryEscape(minimalCheeseCertAllInfo),
+			expectedHeader: minimalCheeseCertAllInfo,
 		},
 		{
 			desc:         "TLS with simple certificate, with some info",
@@ -564,7 +564,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 					},
 				},
 			},
-			expectedHeader: url.QueryEscape(`Subject="O=Cheese";Issuer="C=FR,C=US";NA=1632568236`),
+			expectedHeader: `Subject="O=Cheese";Issuer="C=FR,C=US";NA=1632568236`,
 		},
 		{
 			desc:         "TLS with complete certificate, with all info",
@@ -594,7 +594,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 					},
 				},
 			},
-			expectedHeader: url.QueryEscape(completeCertAllInfo),
+			expectedHeader: completeCertAllInfo,
 		},
 		{
 			desc:         "TLS with 2 certificates, with all info",
@@ -624,7 +624,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 					},
 				},
 			},
-			expectedHeader: url.QueryEscape(strings.Join([]string{minimalCheeseCertAllInfo, completeCertAllInfo}, ",")),
+			expectedHeader: strings.Join([]string{minimalCheeseCertAllInfo, completeCertAllInfo}, ","),
 		},
 	}
 
@@ -649,7 +649,9 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 			require.Equal(t, "bar", res.Body.String(), "Should be the expected body")
 
 			if test.expectedHeader != "" {
-				require.Equal(t, test.expectedHeader, req.Header.Get(xForwardedTLSClientCertInfo), "The request header should contain the cleaned certificate")
+				unescape, err := url.QueryUnescape(req.Header.Get(xForwardedTLSClientCertInfo))
+				require.NoError(t, err)
+				require.Equal(t, test.expectedHeader, unescape, "The request header should contain the cleaned certificate")
 			} else {
 				require.Empty(t, req.Header.Get(xForwardedTLSClientCertInfo))
 			}
