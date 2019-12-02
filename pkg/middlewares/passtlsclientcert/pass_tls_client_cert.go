@@ -127,7 +127,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 }
 
 // getXForwardedTLSClientCertInfo Build a string with the wanted client certificates information
-// like Subject="C=%s,ST=%s,L=%s,O=%s,CN=%s",NB=%d,NA=%d,SAN=%s;
+// like Subject="C=%s,ST=%s,L=%s,O=%s,CN=%s";NB=%d;NA=%d;SAN=%s;
 func (p *passTLSClientCert) getXForwardedTLSClientCertInfo(ctx context.Context, certs []*x509.Certificate) string {
 	var headerValues []string
 
