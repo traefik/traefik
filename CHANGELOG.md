@@ -1,3 +1,16 @@
+## [v2.1.0-rc3](https://github.com/containous/traefik/tree/v2.1.0-rc3) (2019-12-02)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.0-rc2...v2.1.0-rc3)
+
+**Bug fixes:**
+- **[cli]** fix: sub command help ([#5887](https://github.com/containous/traefik/pull/5887) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** fix: consul catalog constraints. ([#5913](https://github.com/containous/traefik/pull/5913) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Service registered with same id on Consul Catalog ([#5900](https://github.com/containous/traefik/pull/5900) by [mmatur](https://github.com/mmatur))
+- **[webui]** Web UI: Avoid polling on /api/entrypoints ([#5863](https://github.com/containous/traefik/pull/5863) by [matthieuh](https://github.com/matthieuh))
+- **[webui]** Web UI: Sync toolbar table state with url query params ([#5861](https://github.com/containous/traefik/pull/5861) by [matthieuh](https://github.com/matthieuh))
+
+**Misc:**
+- **[cli]** Add custom help function to command ([#5923](https://github.com/containous/traefik/pull/5923) by [Ullaakut](https://github.com/Ullaakut))
+
 ## [v2.0.6](https://github.com/containous/traefik/tree/v2.0.6) (2019-12-02)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.5...v2.0.6)
 
