@@ -127,43 +127,39 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 }
 
 // getXForwardedTLSClientCertInfo Build a string with the wanted client certificates information
-// like Subject="C=%s,ST=%s,L=%s,O=%s,CN=%s";NB=%d;NA=%d;SAN=%s;
+// - the `,` is used to separate certificates
+// - the `;` is used to separate root fields
+// - the value of root fields is always wrapped by double quote
+// - if a field is empty, the field is removed
 func (p *passTLSClientCert) getXForwardedTLSClientCertInfo(ctx context.Context, certs []*x509.Certificate) string {
 	var headerValues []string
 
 	for _, peerCert := range certs {
 		var values []string
-		var nb string
-		var na string
 
 		if p.info != nil {
-			subject := getDNInfo(ctx, "Subject", p.info.subject, &peerCert.Subject)
-			if len(subject) > 0 {
-				values = append(values, subject)
+			subject := getDNInfo(ctx, p.info.subject, &peerCert.Subject)
+			if subject != "" {
+				values = append(values, fmt.Sprintf(`Subject="%s"`, strings.TrimSuffix(subject, ",")))
 			}
 
-			issuer := getDNInfo(ctx, "Issuer", p.info.issuer, &peerCert.Issuer)
-			if len(issuer) > 0 {
-				values = append(values, issuer)
-			}
-		}
-
-		ci := p.info
-		if ci != nil {
-			if ci.notBefore {
-				nb = fmt.Sprintf("NB=%d", uint64(peerCert.NotBefore.Unix()))
-				values = append(values, nb)
-			}
-			if ci.notAfter {
-				na = fmt.Sprintf("NA=%d", uint64(peerCert.NotAfter.Unix()))
-				values = append(values, na)
+			issuer := getDNInfo(ctx, p.info.issuer, &peerCert.Issuer)
+			if issuer != "" {
+				values = append(values, fmt.Sprintf(`Issuer="%s"`, strings.TrimSuffix(issuer, ",")))
 			}
 
-			if ci.sans {
-				ss := getSANs(peerCert)
-				if len(ss) > 0 {
-					sans := fmt.Sprintf(`SAN="%s"`, strings.Join(ss, ","))
-					values = append(values, sans)
+			if p.info.notBefore {
+				values = append(values, fmt.Sprintf(`NB="%d"`, uint64(peerCert.NotBefore.Unix())))
+			}
+
+			if p.info.notAfter {
+				values = append(values, fmt.Sprintf(`NA="%d"`, uint64(peerCert.NotAfter.Unix())))
+			}
+
+			if p.info.sans {
+				sans := getSANs(peerCert)
+				if len(sans) > 0 {
+					values = append(values, fmt.Sprintf(`SAN="%s"`, strings.Join(sans, ",")))
 				}
 			}
 		}
@@ -175,7 +171,7 @@ func (p *passTLSClientCert) getXForwardedTLSClientCertInfo(ctx context.Context, 
 	return strings.Join(headerValues, ",")
 }
 
-func getDNInfo(ctx context.Context, prefix string, options *DistinguishedNameOptions, cs *pkix.Name) string {
+func getDNInfo(ctx context.Context, options *DistinguishedNameOptions, cs *pkix.Name) string {
 	if options == nil {
 		return ""
 	}
@@ -214,11 +210,7 @@ func getDNInfo(ctx context.Context, prefix string, options *DistinguishedNameOpt
 		writePart(ctx, content, cs.CommonName, "CN")
 	}
 
-	if content.Len() > 0 {
-		return prefix + `="` + strings.TrimSuffix(content.String(), ",") + `"`
-	}
-
-	return ""
+	return content.String()
 }
 
 func writeParts(ctx context.Context, content io.StringWriter, entries []string, prefix string) {
