@@ -166,6 +166,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware07/errors/service":                                       "foobar",
 		"traefik/http/middlewares/Middleware07/errors/query":                                         "foobar",
 		"traefik/http/middlewares/Middleware13/rateLimit/average":                                    "42",
+		"traefik/http/middlewares/Middleware13/rateLimit/period":                                     "1s",
 		"traefik/http/middlewares/Middleware13/rateLimit/burst":                                      "42",
 		"traefik/http/middlewares/Middleware13/rateLimit/sourceCriterion/requestHeaderName":          "foobar",
 		"traefik/http/middlewares/Middleware13/rateLimit/sourceCriterion/requestHost":                "true",
@@ -331,6 +332,7 @@ func Test_buildConfiguration(t *testing.T) {
 					RateLimit: &dynamic.RateLimit{
 						Average: 42,
 						Burst:   42,
+						Period:  types.Duration(time.Second),
 						SourceCriterion: &dynamic.SourceCriterion{
 							IPStrategy: &dynamic.IPStrategy{
 								Depth: 42,

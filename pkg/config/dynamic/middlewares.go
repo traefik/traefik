@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/containous/traefik/v2/pkg/ip"
+	"github.com/containous/traefik/v2/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true
@@ -296,9 +298,14 @@ type SourceCriterion struct {
 
 // RateLimit holds the rate limiting configuration for a given router.
 type RateLimit struct {
-	// Average is the maximum rate, in requests/s, allowed for the given source.
+	// Average is the maximum rate, by default in requests/s, allowed for the given source.
 	// It defaults to 0, which means no rate limiting.
+	// The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
+	// one needs to define a Period larger than a second.
 	Average int64 `json:"average,omitempty" toml:"average,omitempty" yaml:"average,omitempty"`
+	// Period, in combination with Average, defines the actual maximum rate, such as:
+	// r = Average / Period. It defaults to a second.
+	Period types.Duration
 	// Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
 	// It defaults to 1.
 	Burst           int64            `json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty"`
@@ -308,6 +315,7 @@ type RateLimit struct {
 // SetDefaults sets the default values on a RateLimit.
 func (r *RateLimit) SetDefaults() {
 	r.Burst = 1
+	r.Period = types.Duration(time.Second)
 	r.SourceCriterion = &SourceCriterion{
 		IPStrategy: &IPStrategy{},
 	}

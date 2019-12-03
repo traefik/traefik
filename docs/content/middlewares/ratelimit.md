@@ -3,7 +3,7 @@
 To Control the Number of Requests Going to a Service
 {: .subtitle }
 
-The RateLimit middleware ensures that services will receive a _fair_ number of requests, and allows you define what is fair.
+The RateLimit middleware ensures that services will receive a _fair_ number of requests, and allows one to define what fair is.
 
 ## Configuration Example
 
@@ -74,11 +74,14 @@ http:
 
 ### `average`
 
-Average is the maximum rate, in requests/s, allowed for the given source.
+Average is the maximum rate, by default in `requests/s`, allowed for the given source.
 It defaults to 0, which means no rate limiting.
+The rate is actually defined by dividing Average by Period. So for a rate below `1req/s`,
+one needs to define a Period larger than a second.
 
 ```yaml tab="Docker"
 labels:
+  # 100 reqs/s
   - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
@@ -89,27 +92,32 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-      average: 100
+     # 100 reqs/s
+     average: 100
 ```
 
 ```yaml tab="Consul Catalog"
+# 100 reqs/s
 - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
 ```json tab="Marathon"
 "labels": {
+  # 100 reqs/s
   "traefik.http.middlewares.test-ratelimit.ratelimit.average": "100",
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
+  # 100 reqs/s
   - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
+    # 100 reqs/s
     average = 100
 ```
 
@@ -118,7 +126,72 @@ http:
   middlewares:
     test-ratelimit:
       rateLimit:
+        # 100 reqs/s
         average: 100
+```
+
+### `period`
+
+Period, in combination with Average, defines the actual maximum rate, such as:<br>
+`r = Average / Period.`<br>
+It defaults to a second.
+
+```yaml tab="Docker"
+labels:
+  # 6 reqs/minute
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=6"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+      # 6 reqs/minute
+      period: 1m
+      average: 6
+```
+
+```yaml tab="Consul Catalog"
+# 6 reqs/minute
+- "traefik.http.middlewares.test-ratelimit.ratelimit.average=6"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
+```
+
+```json tab="Marathon"
+"labels": {
+  # 6 reqs/minute
+  "traefik.http.middlewares.test-ratelimit.ratelimit.average": "6",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.period": "1m",
+}
+```
+
+```yaml tab="Rancher"
+labels:
+  # 6 reqs/minute
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=6"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    # 6 reqs/minute
+    average = 6
+    period = 1m
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        # 6 reqs/minute
+        average: 6
+        period: 1m
 ```
 
 ### `burst`
