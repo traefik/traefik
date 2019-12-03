@@ -35,7 +35,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.datadog.localAgentHostPort="127.0.0.1:8126"
+--tracing.datadog.localAgentHostPort=127.0.0.1:8126
 ```
 
 #### `debug`
@@ -79,7 +79,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.datadog.globalTag="sample"
+--tracing.datadog.globalTag=sample
 ```
 
 #### `prioritySampling`

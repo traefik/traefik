@@ -35,7 +35,7 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics.influxdb.address="localhost:8089"
+--metrics.influxdb.address=localhost:8089
 ```
 
 #### `protocol`
@@ -57,7 +57,7 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics.influxdb.protocol="udp"
+--metrics.influxdb.protocol=udp
 ```
 
 #### `database`
@@ -69,17 +69,17 @@ InfluxDB database used when protocol is http.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxDB]
-    database = ""
+    database = "db"
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
-    database: ""
+    database: "db"
 ```
 
 ```bash tab="CLI"
---metrics.influxdb.database=""
+--metrics.influxdb.database=db
 ```
 
 #### `retentionPolicy`
@@ -91,17 +91,17 @@ InfluxDB retention policy used when protocol is http.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxDB]
-    retentionPolicy = ""
+    retentionPolicy = "two_hours"
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
-    retentionPolicy: ""
+    retentionPolicy: "two_hours"
 ```
 
 ```bash tab="CLI"
---metrics.influxdb.retentionPolicy=""
+--metrics.influxdb.retentionPolicy=two_hours
 ```
 
 #### `username`
@@ -113,17 +113,17 @@ InfluxDB username (only with http).
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxDB]
-    username = ""
+    username = "john"
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
-    username: ""
+    username: "john"
 ```
 
 ```bash tab="CLI"
---metrics.influxdb.username=""
+--metrics.influxdb.username=john
 ```
 
 #### `password`
@@ -135,17 +135,17 @@ InfluxDB password (only with http).
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxDB]
-    password = ""
+    password = "secret"
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
-    password: ""
+    password: "secret"
 ```
 
 ```bash tab="CLI"
---metrics.influxdb.password=""
+--metrics.influxdb.password=secret
 ```
 
 #### `addEntryPointsLabels`

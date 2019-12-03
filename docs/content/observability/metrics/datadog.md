@@ -35,7 +35,7 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics.datadog.address="127.0.0.1:8125"
+--metrics.datadog.address=127.0.0.1:8125
 ```
 
 #### `addEntryPointsLabels`

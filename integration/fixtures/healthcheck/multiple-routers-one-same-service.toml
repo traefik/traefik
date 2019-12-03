@@ -1,0 +1,40 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web1]
+    address = ":8000"
+  [entryPoints.web2]
+    address = ":9000"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    entryPoints = ["web1"]
+    service = "service1"
+    rule = "Host(`test.localhost`)"
+
+  [http.routers.router2]
+    entryPoints = ["web2"]
+    service = "service1"
+    rule = "Host(`test.localhost`)"
+
+[http.services]
+  [http.services.service1.loadBalancer]
+    [http.services.service1.loadBalancer.healthcheck]
+      path = "/health"
+      interval = "1s"
+      timeout = "0.9s"
+    [[http.services.service1.loadBalancer.servers]]
+      url = "http://{{.Server1}}:80"

@@ -192,6 +192,7 @@ func TestLoggerJSON(t *testing.T) {
 				Format:   JSONFormat,
 			},
 			expected: map[string]func(t *testing.T, value interface{}){
+				RequestContentSize:        assertFloat64(0),
 				RequestHost:               assertString(testHostname),
 				RequestAddr:               assertString(testHostname),
 				RequestMethod:             assertString(testMethod),

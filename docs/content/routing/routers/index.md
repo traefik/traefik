@@ -78,8 +78,8 @@ In the process, routers may use pieces of [middleware](../../middlewares/overvie
     
     ```bash tab="CLI"
     ## Static configuration
-    --entryPoints.web.address=":80"
-    --entryPoints.mysql.address=":3306"   
+    --entryPoints.web.address=:80
+    --entryPoints.mysql.address=:3306
     ```
 
 ## Configuring HTTP Routers
@@ -140,9 +140,9 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
     
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=":80"
-    --entrypoints.websecure.address=":443"
-    --entrypoints.other.address=":9090"
+    --entrypoints.web.address=:80
+    --entrypoints.websecure.address=:443
+    --entrypoints.other.address=:9090
     ```
 
 ??? example "Listens to Specific EntryPoints"
@@ -198,9 +198,9 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
     
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=":80"
-    --entrypoints.websecure.address=":443"
-    --entrypoints.other.address=":9090"
+    --entrypoints.web.address=:80
+    --entrypoints.websecure.address=:443
+    --entrypoints.other.address=:9090
     ```
 
 ### Rule
@@ -700,9 +700,9 @@ If you want to limit the router scope to a set of entry points, set the entry po
     
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=":80"
-    --entrypoints.websecure.address=":443"
-    --entrypoints.other.address=":9090"
+    --entrypoints.web.address=:80
+    --entrypoints.websecure.address=:443
+    --entrypoints.other.address=:9090
     ```
 
 ??? example "Listens to Specific Entry Points"
@@ -764,9 +764,9 @@ If you want to limit the router scope to a set of entry points, set the entry po
     
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=":80"
-    --entrypoints.websecure.address=":443"
-    --entrypoints.other.address=":9090"
+    --entrypoints.web.address=:80
+    --entrypoints.websecure.address=:443
+    --entrypoints.other.address=:9090
     ```
 
 ### Rule

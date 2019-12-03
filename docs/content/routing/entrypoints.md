@@ -128,9 +128,9 @@ You can define them using a toml file, CLI arguments, or a key-value store.
     --entryPoints.name.transport.respondingTimeouts.writeTimeout=42
     --entryPoints.name.transport.respondingTimeouts.idleTimeout=42
     --entryPoints.name.proxyProtocol.insecure=true
-    --entryPoints.name.proxyProtocol.trustedIPs="127.0.0.1,192.168.0.1"
+    --entryPoints.name.proxyProtocol.trustedIPs=127.0.0.1,192.168.0.1
     --entryPoints.name.forwardedHeaders.insecure=true
-    --entryPoints.name.forwardedHeaders.trustedIPs="127.0.0.1,192.168.0.1"
+    --entryPoints.name.forwardedHeaders.trustedIPs=127.0.0.1,192.168.0.1
     ```
 
 ### Forwarded Header

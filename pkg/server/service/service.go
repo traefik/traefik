@@ -40,7 +40,7 @@ func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper htt
 		metricsRegistry:     metricsRegistry,
 		bufferPool:          newBufferPool(),
 		defaultRoundTripper: defaultRoundTripper,
-		balancers:           make(map[string][]healthcheck.BalancerHandler),
+		balancers:           make(map[string]healthcheck.Balancers),
 		configs:             configs,
 	}
 }
@@ -51,8 +51,12 @@ type Manager struct {
 	metricsRegistry     metrics.Registry
 	bufferPool          httputil.BufferPool
 	defaultRoundTripper http.RoundTripper
-	balancers           map[string][]healthcheck.BalancerHandler
-	configs             map[string]*runtime.ServiceInfo
+	// balancers is the map of all Balancers, keyed by service name.
+	// There is one Balancer per service handler, and there is one service handler per reference to a service
+	// (e.g. if 2 routers refer to the same service name, 2 service handlers are created),
+	// which is why there is not just one Balancer per service name.
+	balancers map[string]healthcheck.Balancers
+	configs   map[string]*runtime.ServiceInfo
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
@@ -92,14 +96,14 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 		}
 	case conf.Weighted != nil:
 		var err error
-		lb, err = m.getLoadBalancerWRRServiceHandler(ctx, serviceName, conf.Weighted, responseModifier)
+		lb, err = m.getWRRServiceHandler(ctx, serviceName, conf.Weighted, responseModifier)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
 		}
 	case conf.Mirroring != nil:
 		var err error
-		lb, err = m.getLoadBalancerMirrorServiceHandler(ctx, serviceName, conf.Mirroring, responseModifier)
+		lb, err = m.getMirrorServiceHandler(ctx, conf.Mirroring, responseModifier)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
@@ -113,7 +117,7 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 	return lb, nil
 }
 
-func (m *Manager) getLoadBalancerMirrorServiceHandler(ctx context.Context, serviceName string, config *dynamic.Mirroring, responseModifier func(*http.Response) error) (http.Handler, error) {
+func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.Mirroring, responseModifier func(*http.Response) error) (http.Handler, error) {
 	serviceHandler, err := m.BuildHTTP(ctx, config.Service, responseModifier)
 	if err != nil {
 		return nil, err
@@ -134,7 +138,7 @@ func (m *Manager) getLoadBalancerMirrorServiceHandler(ctx context.Context, servi
 	return handler, nil
 }
 
-func (m *Manager) getLoadBalancerWRRServiceHandler(ctx context.Context, serviceName string, config *dynamic.WeightedRoundRobin, responseModifier func(*http.Response) error) (http.Handler, error) {
+func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, config *dynamic.WeightedRoundRobin, responseModifier func(*http.Response) error) (http.Handler, error) {
 	// TODO Handle accesslog and metrics with multiple service name
 	if config.Sticky != nil && config.Sticky.Cookie != nil {
 		config.Sticky.Cookie.Name = cookie.GetName(config.Sticky.Cookie.Name, serviceName)
@@ -200,15 +204,12 @@ func (m *Manager) LaunchHealthCheck() {
 	for serviceName, balancers := range m.balancers {
 		ctx := log.With(context.Background(), log.Str(log.ServiceName, serviceName))
 
-		// TODO aggregate
-		balancer := balancers[0]
-
 		// TODO Should all the services handle healthcheck? Handle different types
 		service := m.configs[serviceName].LoadBalancer
 
 		// Health Check
 		var backendHealthCheck *healthcheck.BackendConfig
-		if hcOpts := buildHealthCheckOptions(ctx, balancer, serviceName, service.HealthCheck); hcOpts != nil {
+		if hcOpts := buildHealthCheckOptions(ctx, balancers, serviceName, service.HealthCheck); hcOpts != nil {
 			log.FromContext(ctx).Debugf("Setting up healthcheck for service %s with %s", serviceName, *hcOpts)
 
 			hcOpts.Transport = m.defaultRoundTripper
@@ -224,7 +225,7 @@ func (m *Manager) LaunchHealthCheck() {
 	healthcheck.GetHealthCheck().SetBackendsConfiguration(context.Background(), backendConfigs)
 }
 
-func buildHealthCheckOptions(ctx context.Context, lb healthcheck.BalancerHandler, backend string, hc *dynamic.HealthCheck) *healthcheck.Options {
+func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backend string, hc *dynamic.HealthCheck) *healthcheck.Options {
 	if hc == nil || hc.Path == "" {
 		return nil
 	}

@@ -151,7 +151,7 @@ http:
         
         ```bash tab="CLI"
         # Listen on port 8081 for incoming requests
-        --entryPoints.web.address=":8081"
+        --entryPoints.web.address=:8081
         
         # Enable the file provider to define routers / middlewares / services in a file
         --providers.file.filename=dynamic_conf.toml

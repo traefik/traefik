@@ -18,7 +18,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, item := range items {
-		svcName := item.Name + "-" + item.ID
+		svcName := item.Node + "-" + item.Name + "-" + item.ID
 		ctxSvc := log.With(ctx, log.Str("serviceName", svcName))
 
 		if !p.keepContainer(ctxSvc, item) {
@@ -80,7 +80,7 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 		return false
 	}
 
-	matches, err := constraints.Match(item.Labels, p.Constraints)
+	matches, err := constraints.MatchTags(item.Tags, p.Constraints)
 	if err != nil {
 		logger.Errorf("Error matching constraints expression: %v", err)
 		return false
