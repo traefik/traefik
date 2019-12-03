@@ -62,6 +62,29 @@ func newDistinguishedNameOptions(info *dynamic.TLSCLientCertificateDNInfo) *Dist
 	}
 }
 
+// tlsClientCertificateInfo is a struct for specifying the configuration for the passTLSClientCert middleware.
+type tlsClientCertificateInfo struct {
+	notAfter  bool
+	notBefore bool
+	sans      bool
+	subject   *DistinguishedNameOptions
+	issuer    *DistinguishedNameOptions
+}
+
+func newTLSClientCertificateInfo(info *dynamic.TLSClientCertificateInfo) *tlsClientCertificateInfo {
+	if info == nil {
+		return nil
+	}
+
+	return &tlsClientCertificateInfo{
+		issuer:    newDistinguishedNameOptions(info.Issuer),
+		notAfter:  info.NotAfter,
+		notBefore: info.NotBefore,
+		subject:   newDistinguishedNameOptions(info.Subject),
+		sans:      info.Sans,
+	}
+}
+
 // passTLSClientCert is a middleware that helps setup a few tls info features.
 type passTLSClientCert struct {
 	next http.Handler
@@ -78,31 +101,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCer
 		next: next,
 		name: name,
 		pem:  config.PEM,
-		info: newTLSClientInfo(config.Info),
+		info: newTLSClientCertificateInfo(config.Info),
 	}, nil
-}
-
-// tlsClientCertificateInfo is a struct for specifying the configuration for the passTLSClientCert middleware.
-type tlsClientCertificateInfo struct {
-	notAfter  bool
-	notBefore bool
-	sans      bool
-	subject   *DistinguishedNameOptions
-	issuer    *DistinguishedNameOptions
-}
-
-func newTLSClientInfo(info *dynamic.TLSClientCertificateInfo) *tlsClientCertificateInfo {
-	if info == nil {
-		return nil
-	}
-
-	return &tlsClientCertificateInfo{
-		issuer:    newDistinguishedNameOptions(info.Issuer),
-		notAfter:  info.NotAfter,
-		notBefore: info.NotBefore,
-		subject:   newDistinguishedNameOptions(info.Subject),
-		sans:      info.Sans,
-	}
 }
 
 func (p *passTLSClientCert) GetTracingInformation() (string, ext.SpanKindEnum) {
@@ -115,7 +115,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	if p.pem {
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
-			req.Header.Set(xForwardedTLSClientCert, getXForwardedTLSClientCert(ctx, req.TLS.PeerCertificates))
+			req.Header.Set(xForwardedTLSClientCert, getCertificates(ctx, req.TLS.PeerCertificates))
 		} else {
 			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
 		}
@@ -123,7 +123,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	if p.info != nil {
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
-			headerContent := p.getXForwardedTLSClientCertInfo(ctx, req.TLS.PeerCertificates)
+			headerContent := p.getCertInfo(ctx, req.TLS.PeerCertificates)
 			req.Header.Set(xForwardedTLSClientCertInfo, url.QueryEscape(headerContent))
 		} else {
 			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
@@ -133,12 +133,12 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	p.next.ServeHTTP(rw, req)
 }
 
-// getXForwardedTLSClientCertInfo Build a string with the wanted client certificates information
+// getCertInfo Build a string with the wanted client certificates information
 // - the `,` is used to separate certificates
 // - the `;` is used to separate root fields
 // - the value of root fields is always wrapped by double quote
 // - if a field is empty, the field is ignored
-func (p *passTLSClientCert) getXForwardedTLSClientCertInfo(ctx context.Context, certs []*x509.Certificate) string {
+func (p *passTLSClientCert) getCertInfo(ctx context.Context, certs []*x509.Certificate) string {
 	var headerValues []string
 
 	for _, peerCert := range certs {
@@ -246,8 +246,8 @@ func sanitize(cert []byte) string {
 	return url.QueryEscape(cleaned)
 }
 
-// getXForwardedTLSClientCert Build a string with the client certificates.
-func getXForwardedTLSClientCert(ctx context.Context, certs []*x509.Certificate) string {
+// getCertificates Build a string with the client certificates.
+func getCertificates(ctx context.Context, certs []*x509.Certificate) string {
 	var headerValues []string
 
 	for _, peerCert := range certs {
@@ -259,35 +259,32 @@ func getXForwardedTLSClientCert(ctx context.Context, certs []*x509.Certificate) 
 
 // extractCertificate extract the certificate from the request.
 func extractCertificate(ctx context.Context, cert *x509.Certificate) string {
-	b := pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw}
-	certPEM := pem.EncodeToMemory(&b)
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
 	if certPEM == nil {
 		log.FromContext(ctx).Error("Cannot extract the certificate content")
 		return ""
 	}
+
 	return sanitize(certPEM)
 }
 
 // getSANs get the Subject Alternate Name values.
 func getSANs(cert *x509.Certificate) []string {
-	var sans []string
 	if cert == nil {
-		return sans
+		return nil
 	}
 
+	var sans []string
 	sans = append(sans, cert.DNSNames...)
 	sans = append(sans, cert.EmailAddresses...)
 
-	var ips []string
 	for _, ip := range cert.IPAddresses {
-		ips = append(ips, ip.String())
+		sans = append(sans, ip.String())
 	}
-	sans = append(sans, ips...)
 
-	var uris []string
 	for _, uri := range cert.URIs {
-		uris = append(uris, uri.String())
+		sans = append(sans, uri.String())
 	}
 
-	return append(sans, uris...)
+	return sans
 }
