@@ -137,7 +137,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 // - the `,` is used to separate certificates
 // - the `;` is used to separate root fields
 // - the value of root fields is always wrapped by double quote
-// - if a field is empty, the field is removed
+// - if a field is empty, the field is ignored
 func (p *passTLSClientCert) getXForwardedTLSClientCertInfo(ctx context.Context, certs []*x509.Certificate) string {
 	var headerValues []string
 

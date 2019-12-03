@@ -416,7 +416,7 @@ The data are taken from the following certificate part:
 The escape `notAfter` info part will be like:
 
 ```text
-NA=1607166616
+NA="1607166616"
 ```
 
 #### `info.notBefore`
@@ -433,7 +433,7 @@ Validity
 The escape `notBefore` info part will be like:
 
 ```text
-NB=1544094616
+NB="1544094616"
 ```
 
 #### `info.sans`
