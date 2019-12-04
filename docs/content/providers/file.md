@@ -23,17 +23,17 @@ You can write one of these mutually exclusive configuration elements:
     
     ```toml tab="File (TOML)"
     [providers.file]
-      filename = "/my/path/to/dynamic-conf.toml"
+      directory = "/path/to/dynamic/conf"
     ```
     
     ```yaml tab="File (YAML)"
     providers:
       file:
-        filename: "/my/path/to/dynamic-conf.yml"
+        directory: "/path/to/dynamic/conf"
     ```
     
     ```bash tab="CLI"
-    --providers.file.filename=/my/path/to/dynamic_conf.toml
+    --providers.file.directory=/path/to/dynamic/conf
     ```
     
     Declaring Routers, Middlewares & Services:
@@ -100,6 +100,22 @@ You can write one of these mutually exclusive configuration elements:
 
 If you're in a hurry, maybe you'd rather go through the [dynamic configuration](../reference/dynamic-configuration/file.md) references and the [static configuration](../reference/static-configuration/overview.md).
 
+!!! warning "Limitations"
+
+    With the file provider, Traefik listen to the file system notifications to update the dynamic configuration.
+    
+    If you use a mounted/binded file system in your orchestrator (like docker or kubernetes), the way the files are linked may be a source of errors.
+    If the link between the file systems is broken, when a source file/directory is changed/renamed, nothing will be reported to the linked file/directory, so the file system notifications will be neither triggered neither catched. 
+    
+    For example, in docker, if the host file is renamed, the link with the mounted file will be broken and the container file will not be updated.
+    To avoid this kind of issue, a good practice is to:
+        
+    * set the Traefik [**directory**](#directory) configuration with the parent directory
+    * mount/bind the parent directory
+
+    As it is very difficult to listen to all file system notifications, Traefik use [fsnotify](https://github.com/fsnotify/fsnotify).
+    If using a directory with a mounted directory does not fix your issue, please check your file system compatibility with fsnotify.
+    
 ### `filename`
 
 Defines the path of the configuration file.
@@ -148,19 +164,19 @@ It works with both the `filename` and the `directory` options.
 ```toml tab="File (TOML)"
 [providers]
   [providers.file]
-    filename = "dynamic_conf.toml"
+    directory = "/path/to/dynamic/conf"
     watch = true
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   file:
-    filename: dynamic_conf.yml
+    directory: /path/to/dynamic/conf
     watch: true
 ```
 
 ```bash tab="CLI"
---providers.file.filename=dynamic_conf.toml
+--providers.file.directory=/my/path/to/dynamic/conf
 --providers.file.watch=true
 ```
 
