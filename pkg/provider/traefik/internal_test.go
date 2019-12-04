@@ -28,6 +28,7 @@ func Test_createConfiguration(t *testing.T) {
 				API: &static.API{
 					Insecure:  true,
 					Dashboard: true,
+					Debug:     true,
 				},
 				Ping: &ping.Handler{
 					EntryPoint:    "test",
