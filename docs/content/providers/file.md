@@ -102,12 +102,12 @@ If you're in a hurry, maybe you'd rather go through the [dynamic configuration](
 
 !!! warning "Limitations"
 
-    With the file provider, Traefik listen to the file system notifications to update the dynamic configuration.
+    With the file provider, Traefik listens for file system notifications to update the dynamic configuration.
     
-    If you use a mounted/binded file system in your orchestrator (like docker or kubernetes), the way the files are linked may be a source of errors.
-    If the link between the file systems is broken, when a source file/directory is changed/renamed, nothing will be reported to the linked file/directory, so the file system notifications will be neither triggered neither catched. 
+    If you use a mounted/bound file system in your orchestrator (like docker or kubernetes), the way the files are linked may be a source of errors.
+    If the link between the file systems is broken, when a source file/directory is changed/renamed, nothing will be reported to the linked file/directory, so the file system notifications will be neither triggered nor caught. 
     
-    For example, in docker, if the host file is renamed, the link with the mounted file will be broken and the container file will not be updated.
+    For example, in docker, if the host file is renamed, the link to the mounted file will be broken and the container's file will not be updated.
     To avoid this kind of issue, a good practice is to:
         
     * set the Traefik [**directory**](#directory) configuration with the parent directory
