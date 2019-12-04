@@ -21,6 +21,14 @@
         "rule": "PathPrefix(`/`)",
         "priority": 2147483645
       },
+      "debug": {
+        "entryPoints": [
+          "traefik"
+        ],
+        "service": "api@internal",
+        "rule": "PathPrefix(`/debug`)",
+        "priority": 2147483646
+      },
       "ping": {
         "entryPoints": [
           "test"

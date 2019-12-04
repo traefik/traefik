@@ -95,6 +95,15 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 				StripPrefix: &dynamic.StripPrefix{Prefixes: []string{"/dashboard/", "/dashboard"}},
 			}
 		}
+
+		if i.staticCfg.API.Debug {
+			cfg.HTTP.Routers["debug"] = &dynamic.Router{
+				EntryPoints: []string{"traefik"},
+				Service:     "api@internal",
+				Priority:    math.MaxInt32 - 1,
+				Rule:        "PathPrefix(`/debug`)",
+			}
+		}
 	}
 
 	cfg.HTTP.Services["api"] = &dynamic.Service{}
