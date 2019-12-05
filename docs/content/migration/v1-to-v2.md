@@ -561,7 +561,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     labels:
       - "traefik.http.routers.admin.rule=Host(`company.org`) && PathPrefix(`/admin`)"
       - "traefik.http.middlewares.admin-stripprefix.stripprefix.prefixes=/admin"
-      - "traefik.http.routers.web.middlewares=admin-stripprefix@docker"
+      - "traefik.http.routers.admin.middlewares=admin-stripprefix@docker"
     ```
 
     ```yaml tab="Kubernetes IngressRoute"
