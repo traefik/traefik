@@ -112,11 +112,11 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 	}
 
 	keySnippet := ""
-	if a.PrivateKey != nil && len(a.PrivateKey) >= 16 {
+	if len(a.PrivateKey) >= 16 {
 		keySnippet = string(a.PrivateKey[:16])
 	}
 
-	log.Errorf("Cannot unmarshall private key beginning with %+v", keySnippet)
+	log.Errorf("Cannot unmarshall private key beginning with %s", keySnippet)
 	return nil
 }
 
