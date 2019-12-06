@@ -18,8 +18,9 @@ type TCPConfiguration struct {
 
 // TCPService holds a tcp service configuration (can only be of one type at the same time).
 type TCPService struct {
-	LoadBalancer *TCPServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty"`
-	Weighted     *TCPWeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-"`
+	ProxyProtocol bool                    `json:"proxyProtocol" toml:"proxyProtocol" yaml:"proxyProtocol"`
+	LoadBalancer  *TCPServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty"`
+	Weighted      *TCPWeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-"`
 }
 
 // +k8s:deepcopy-gen=true

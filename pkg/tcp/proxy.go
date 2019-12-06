@@ -1,8 +1,10 @@
 package tcp
 
 import (
+	"bytes"
 	"io"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/containous/traefik/v2/pkg/log"
@@ -12,16 +14,17 @@ import (
 type Proxy struct {
 	target           *net.TCPAddr
 	terminationDelay time.Duration
+	proxyProtocol    bool
 }
 
 // NewProxy creates a new Proxy
-func NewProxy(address string, terminationDelay time.Duration) (*Proxy, error) {
+func NewProxy(address string, terminationDelay time.Duration, proxyProtocol bool) (*Proxy, error) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Proxy{target: tcpAddr, terminationDelay: terminationDelay}, nil
+	return &Proxy{target: tcpAddr, terminationDelay: terminationDelay, proxyProtocol: proxyProtocol}, nil
 }
 
 // ServeTCP forwards the connection to a service
@@ -39,6 +42,10 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 
 	// maybe not needed, but just in case
 	defer connBackend.Close()
+
+	if p.proxyProtocol {
+		writeProxyHeaderV1(connBackend, conn.RemoteAddr().String(), p.target.String())
+	}
 
 	errChan := make(chan error)
 	go p.connCopy(conn, connBackend, errChan)
@@ -68,4 +75,32 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 			log.WithoutContext().Debugf("Error while setting deadline: %v", err)
 		}
 	}
+}
+
+func writeProxyHeaderV1(tcpConn *net.TCPConn, srcAddr, dstAddr string) {
+	headerBuf := new(bytes.Buffer)
+	headerBuf.WriteString("PROXY")
+	headerBuf.WriteString(" ")
+
+	if strings.HasPrefix(srcAddr, "[") {
+		headerBuf.WriteString("TCP6")
+	} else {
+		headerBuf.WriteString("TCP4")
+	}
+	headerBuf.WriteString(" ")
+
+	srcIP, srcPort, _ := net.SplitHostPort(srcAddr)
+	dstIP, dstPort, _ := net.SplitHostPort(dstAddr)
+
+	headerBuf.WriteString(srcIP)
+	headerBuf.WriteString(" ")
+	headerBuf.WriteString(dstIP)
+	headerBuf.WriteString(" ")
+
+	headerBuf.WriteString(srcPort)
+	headerBuf.WriteString(" ")
+	headerBuf.WriteString(dstPort)
+	headerBuf.WriteString("\r\n")
+
+	tcpConn.Write(headerBuf.Bytes())
 }
