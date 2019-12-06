@@ -107,6 +107,8 @@ github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd h1:qMd81Ts1T
 github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd/go.mod h1:sE/e/2PUdi/liOCUjSTXgM1o87ZssimdTWN964YiIeI=
 github.com/codegangsta/negroni v1.0.0 h1:+aYywywx4bnKXWvoWtRfJ91vC59NbEhEY03sZjQhbVY=
 github.com/codegangsta/negroni v1.0.0/go.mod h1:v0y3T5G7Y1UlFfyxFn/QLRU4a2EuNau2iZY63YTKWo0=
+github.com/containerd/containerd v1.3.2 h1:ForxmXkA6tPIvffbrDAcPUIB32QgXkt2XFj+F0UxetA=
+github.com/containerd/containerd v1.3.2/go.mod h1:bC6axHOhabU15QhwfG7w5PipXdVtMXFTttgp+kVtyUA=
 github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc h1:TP+534wVlf61smEIq1nwLLAjQVEK2EADoW3CX9AuT+8=
 github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc/go.mod h1:GL3xCUCBDV3CZiTSEKksMWbLE66hEyuu9qyDOOqM47Y=
 github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd h1:0n+lFLh5zU0l6KSk3KpnDwfbPGAR44aRLgTbCnhRBHU=
@@ -156,8 +158,8 @@ github.com/docker/distribution v2.7.1+incompatible h1:a5mlkVzth6W5A4fOsS3D2EO5BU
 github.com/docker/distribution v2.7.1+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/docker-credential-helpers v0.6.3 h1:zI2p9+1NQYdnG6sMU26EX4aVGlqbInSQxQXLvzJ4RPQ=
 github.com/docker/docker-credential-helpers v0.6.3/go.mod h1:WRaJzqw3CTB9bk10avuGsjVBZsD05qeibJ1/TYlvc0Y=
-github.com/docker/engine v0.0.0-20190725163905-fa8dd90ceb7b h1:rN+GLmgWe6Yb5E8yfvGmgKfksvla7QyvqFCUKWTD8Qo=
-github.com/docker/engine v0.0.0-20190725163905-fa8dd90ceb7b/go.mod h1:3CPr2caMgTHxxIAZgEMd3uLYPDlRvPqCpyeRf6ncPcY=
+github.com/docker/engine v1.4.2-0.20191113042239-ea84732a7725 h1:aEPcmLOLK4xi6fKbzrWyiAAM+SN9sN1Pi6WrfLnPDog=
+github.com/docker/engine v1.4.2-0.20191113042239-ea84732a7725/go.mod h1:3CPr2caMgTHxxIAZgEMd3uLYPDlRvPqCpyeRf6ncPcY=
 github.com/docker/go-connections v0.4.0 h1:El9xVISelRB7BuFusrZozjnkIM5YnzCViNKohAFqRJQ=
 github.com/docker/go-connections v0.4.0/go.mod h1:Gbd7IOopHjR8Iph03tsViu4nIes5XhDvyHbTtUxmeec=
 github.com/docker/go-metrics v0.0.0-20181218153428-b84716841b82 h1:X0fj836zx99zFu83v/M79DuBn84IL/Syx1SY6Y5ZEMA=

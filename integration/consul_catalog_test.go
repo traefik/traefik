@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/containous/traefik/v2/integration/try"
-	"github.com/docker/docker/integration-cli/checker"
 	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
+	checker "github.com/vdemeester/shakers"
 )
 
 type ConsulCatalogSuite struct {

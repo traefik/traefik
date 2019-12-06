@@ -18,6 +18,7 @@ require (
 	github.com/abronan/valkeyrie v0.0.0-20191010124425-1ae9442de16e
 	github.com/c0va23/go-proxyprotocol v0.9.1
 	github.com/cenkalti/backoff/v3 v3.1.1
+	github.com/containerd/containerd v1.3.2 // indirect
 	github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc // indirect
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
@@ -102,9 +103,10 @@ require (
 	mvdan.cc/xurls/v2 v2.1.0
 )
 
+// Docker v19.03.5
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v12.4.1+incompatible
-	github.com/docker/docker => github.com/docker/engine v0.0.0-20190725163905-fa8dd90ceb7b
+	github.com/docker/docker => github.com/docker/engine v1.4.2-0.20191113042239-ea84732a7725
 )
 
 // Containous forks
