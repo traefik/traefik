@@ -130,7 +130,7 @@ func (c *ConfigurationWatcher) loadMessage(configMsg dynamic.Message) {
 	currentConfigurations := c.currentConfigurations.Get().(dynamic.Configurations)
 
 	if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-                logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
+		logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
 		logger.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
 		return
 	}

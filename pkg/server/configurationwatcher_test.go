@@ -195,13 +195,13 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 	pvd := &mockProvider{
 		wait: 5 * time.Millisecond, // The last message needs to be received before the second has been fully processed
 		messages: []dynamic.Message{
-                        {ProviderName: "mock", Configuration: configuration},
-                        {ProviderName: "mock", Configuration: transientConfiguration},
-                        {ProviderName: "mock", Configuration: configuration},
+			{ProviderName: "mock", Configuration: configuration},
+			{ProviderName: "mock", Configuration: transientConfiguration},
+			{ProviderName: "mock", Configuration: configuration},
 		},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, 15 * time.Millisecond)
+	watcher := NewConfigurationWatcher(routinesPool, pvd, 15*time.Millisecond)
 
 	var lastConfig dynamic.Configuration
 	watcher.AddListener(func(conf dynamic.Configuration) {
