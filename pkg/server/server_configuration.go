@@ -32,6 +32,12 @@ import (
 func (s *Server) loadConfiguration(configMsg dynamic.Message) {
 	currentConfigurations := s.currentConfigurations.Get().(dynamic.Configurations)
 
+	if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
+		logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
+		logger.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
+		return
+	}
+
 	// Copy configurations to new map so we don't change current if LoadConfig fails
 	newConfigurations := currentConfigurations.DeepCopy()
 	newConfigurations[configMsg.ProviderName] = configMsg.Configuration
@@ -189,7 +195,6 @@ func isEmptyConfiguration(conf *dynamic.Configuration) bool {
 
 func (s *Server) preLoadConfiguration(configMsg dynamic.Message) {
 	s.defaultConfigurationValues(configMsg.Configuration.HTTP)
-	currentConfigurations := s.currentConfigurations.Get().(dynamic.Configurations)
 
 	logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
 	if log.GetLevel() == logrus.DebugLevel {
@@ -213,11 +218,6 @@ func (s *Server) preLoadConfiguration(configMsg dynamic.Message) {
 
 	if isEmptyConfiguration(configMsg.Configuration) {
 		logger.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
-		return
-	}
-
-	if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-		logger.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
 		return
 	}
 

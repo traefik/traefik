@@ -36,50 +36,6 @@ func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
-	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
-	defer invokeStopChan()
-
-	publishedConfigCount := 0
-	go func() {
-		for {
-			select {
-			case <-stop:
-				return
-			case conf := <-server.configurationValidatedChan:
-				// set the current configuration
-				// this is usually done in the processing part of the published configuration
-				// so we have to emulate the behavior here
-				currentConfigurations := server.currentConfigurations.Get().(dynamic.Configurations)
-				currentConfigurations[conf.ProviderName] = conf.Configuration
-				server.currentConfigurations.Set(currentConfigurations)
-
-				publishedConfigCount++
-				if publishedConfigCount > 1 {
-					t.Error("Same configuration should not be published multiple times")
-				}
-			}
-		}
-	}()
-	conf := &dynamic.Configuration{}
-	conf.HTTP = th.BuildConfiguration(
-		th.WithRouters(th.WithRouter("foo")),
-		th.WithLoadBalancerServices(th.WithService("bar")),
-	)
-
-	// provide a configuration
-	server.configurationChan <- dynamic.Message{ProviderName: "kubernetes", Configuration: conf}
-
-	// give some time so that the configuration can be processed
-	time.Sleep(20 * time.Millisecond)
-
-	// provide the same configuration a second time
-	server.configurationChan <- dynamic.Message{ProviderName: "kubernetes", Configuration: conf}
-
-	// give some time so that the configuration can be processed
-	time.Sleep(100 * time.Millisecond)
-}
-
 func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
 	defer invokeStopChan()
