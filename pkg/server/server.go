@@ -59,9 +59,7 @@ func (s *Server) Start(ctx context.Context) {
 	s.tcpEntryPoints.Start()
 	s.watcher.Start()
 
-	s.routinesPool.Go(func(stop chan bool) {
-		s.listenSignals(stop)
-	})
+	s.routinesPool.Go(s.listenSignals)
 }
 
 // Wait blocks until the server shutdown.

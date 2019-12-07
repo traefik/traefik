@@ -49,8 +49,8 @@ func NewConfigurationWatcher(routinesPool *safe.Pool, pvd provider.Provider, pro
 
 // Start the configuration watcher.
 func (c *ConfigurationWatcher) Start() {
-	c.routinesPool.Go(func(stop chan bool) { c.listenProviders(stop) })
-	c.routinesPool.Go(func(stop chan bool) { c.listenConfigurations(stop) })
+	c.routinesPool.Go(c.listenProviders)
+	c.routinesPool.Go(c.listenConfigurations)
 	c.startProvider()
 }
 
