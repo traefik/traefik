@@ -85,21 +85,23 @@ We recommend to use a "Host Based rule" as ```Host(`traefik.domain.com`)``` to m
 or to make sure that the defined rule captures both prefixes:
 
 ```bash tab="Host Rule"
-# Matches http://traefik.domain.com/api or http://traefik.domain.com/dashboard
+# Matches http://traefik.domain.com/api/ or http://traefik.domain.com/dashboard/
 rule = "Host(`traefik.domain.com`)"
 ```
 
 ```bash tab="Path Prefix Rule"
-# Matches http://traefik.domain.com/api , http://domain.com/api or http://traefik.domain.com/dashboard
+# Matches http://traefik.domain.com/api/ , http://domain.com/api/ or http://traefik.domain.com/dashboard/
 # but does not match http://traefik.domain.com/hello
 rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
 ```
 
 ```bash tab="Combination of Rules"
-# Matches http://traefik.domain.com/api or http://traefik.domain.com/dashboard
+# Matches http://traefik.domain.com/api/ or http://traefik.domain.com/dashboard/
 # but does not match http://traefik.domain.com/hello
 rule = "Host(`traefik.domain.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
 ```
+
+You can now access the dashboard using the URL: `http://<traefik.domain.com>:<endpointport>/dashboard/` (trailing slash is mandatory).
 
 ## Insecure Mode
 
