@@ -30,7 +30,9 @@ func (f *FieldHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	table.coreMutex.Lock()
 	table.Core[f.name] = f.value
+	table.coreMutex.Unlock()
 
 	if f.applyFn != nil {
 		f.applyFn(rw, req, f.next, table)
@@ -41,8 +43,10 @@ func (f *FieldHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // AddServiceFields add service fields
 func AddServiceFields(rw http.ResponseWriter, req *http.Request, next http.Handler, data *LogData) {
+	data.coreMutex.Lock()
 	data.Core[ServiceURL] = req.URL // note that this is *not* the original incoming URL
 	data.Core[ServiceAddr] = req.URL.Host
+	data.coreMutex.Unlock()
 
 	next.ServeHTTP(rw, req)
 }
@@ -53,6 +57,9 @@ func AddOriginFields(rw http.ResponseWriter, req *http.Request, next http.Handle
 	start := time.Now().UTC()
 
 	next.ServeHTTP(crw, req)
+
+	data.coreMutex.Lock()
+	defer data.coreMutex.Unlock()
 
 	// use UTC to handle switchover of daylight saving correctly
 	data.Core[OriginDuration] = time.Now().UTC().Sub(start)

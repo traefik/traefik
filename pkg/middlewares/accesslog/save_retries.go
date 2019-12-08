@@ -16,6 +16,8 @@ func (s *SaveRetries) Retried(req *http.Request, attempt int) {
 
 	table := GetLogData(req)
 	if table != nil {
+		table.coreMutex.Lock()
 		table.Core[RetryAttempts] = attempt
+		table.coreMutex.Unlock()
 	}
 }

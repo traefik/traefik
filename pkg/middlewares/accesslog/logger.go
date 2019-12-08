@@ -279,6 +279,10 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData) {
 	if !ok {
 		retryAttempts = 0
 	}
+
+	logDataTable.coreMutex.Lock()
+	defer logDataTable.coreMutex.Unlock()
+
 	core[RetryAttempts] = retryAttempts
 	core[RequestContentSize] = logDataTable.Request.count
 

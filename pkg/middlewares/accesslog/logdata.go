@@ -2,6 +2,7 @@ package accesslog
 
 import (
 	"net/http"
+	"sync"
 )
 
 const (
@@ -116,6 +117,7 @@ type CoreLogData map[string]interface{}
 // LogData is the data captured by the middleware so that it can be logged.
 type LogData struct {
 	Core               CoreLogData
+	coreMutex          sync.Mutex
 	Request            request
 	OriginResponse     http.Header
 	DownstreamResponse downstreamResponse
