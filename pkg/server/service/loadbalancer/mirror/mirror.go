@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/safe"
 )
 
@@ -63,11 +64,17 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			if handler.count*100 < total*uint64(handler.percent) {
 				handler.count++
 				handler.lock.Unlock()
+
+				// We remove the accesslog's datatable in the context because we don't
+				// want to change the serviceName in the accesslog and in addition, it fixes some
+				// concurrent map write issues.
+				ctx := context.WithValue(req.Context(), accesslog.DataTableKey, nil)
+
 				// When a request served by m.handler is successful, req.Context will be canceled,
 				// which would trigger a cancellation of the ongoing mirrored requests.
 				// Therefore, we give a new, non-cancellable context  to each of the mirrored calls,
 				// so they can terminate by themselves.
-				handler.ServeHTTP(m.rw, req.WithContext(contextStopPropagation{req.Context()}))
+				handler.ServeHTTP(m.rw, req.WithContext(contextStopPropagation{ctx}))
 			} else {
 				handler.lock.Unlock()
 			}
