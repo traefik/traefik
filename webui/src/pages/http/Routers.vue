@@ -48,6 +48,7 @@ export default {
     ...mapGetters('http', { allRouters: 'allRouters' })
   },
   methods: {
+    ...mapActions('core', { getOverview: 'getOverview' }),
     ...mapActions('http', { getAllRouters: 'getAllRouters' }),
     refreshAll () {
       if (this.allRouters.loading) {
@@ -61,7 +62,6 @@ export default {
     },
     onGetAll (props) {
       let { page, rowsPerPage, sortBy, descending } = props.pagination
-
       this.getAllRouters({ query: props.filter, status: this.status, page, limit: rowsPerPage, sortBy, descending })
         .then(body => {
           if (!body) {
@@ -70,8 +70,6 @@ export default {
           }
           this.loading = false
           console.log('Success -> http/routers', body)
-          // update rowsNumber with appropriate value
-          this.pagination.rowsNumber = body.total
           // update local pagination object
           this.pagination.page = page
           this.pagination.rowsPerPage = rowsPerPage
@@ -92,7 +90,15 @@ export default {
     }
   },
   created () {
-
+    // Get overview to initialize the number of http routers available
+    this.getOverview()
+      .then(body => {
+        console.log('Success -> http/routers/overview', body)
+        this.pagination.rowsNumber = (body && body['http'] && body['http']['routers'] && body['http']['routers']['total']) || 0
+      })
+      .catch(error => {
+        console.log('Error -> http/routers/overview', error)
+      })
   },
   mounted () {
     this.refreshAll()

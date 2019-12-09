@@ -48,6 +48,7 @@ export default {
     ...mapGetters('http', { allServices: 'allServices' })
   },
   methods: {
+    ...mapActions('core', { getOverview: 'getOverview' }),
     ...mapActions('http', { getAllServices: 'getAllServices' }),
     refreshAll () {
       if (this.allServices.loading) {
@@ -70,8 +71,6 @@ export default {
           }
           this.loading = false
           console.log('Success -> http/services', body)
-          // update rowsNumber with appropriate value
-          this.pagination.rowsNumber = body.total
           // update local pagination object
           this.pagination.page = page
           this.pagination.rowsPerPage = rowsPerPage
@@ -92,7 +91,15 @@ export default {
     }
   },
   created () {
-
+    // Get overview to initialize the number of http services available
+    this.getOverview()
+      .then(body => {
+        console.log('Success -> http/services/overview', body)
+        this.pagination.rowsNumber = (body && body['http'] && body['http']['services'] && body['http']['services']['total']) || 0
+      })
+      .catch(error => {
+        console.log('Error -> http/services/overview', error)
+      })
   },
   mounted () {
     this.refreshAll()

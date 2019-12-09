@@ -48,6 +48,7 @@ export default {
     ...mapGetters('http', { allMiddlewares: 'allMiddlewares' })
   },
   methods: {
+    ...mapActions('core', { getOverview: 'getOverview' }),
     ...mapActions('http', { getAllMiddlewares: 'getAllMiddlewares' }),
     refreshAll () {
       if (this.allMiddlewares.loading) {
@@ -70,8 +71,6 @@ export default {
           }
           this.loading = false
           console.log('Success -> http/middlewares', body)
-          // update rowsNumber with appropriate value
-          this.pagination.rowsNumber = body.total
           // update local pagination object
           this.pagination.page = page
           this.pagination.rowsPerPage = rowsPerPage
@@ -92,7 +91,15 @@ export default {
     }
   },
   created () {
-
+    // Get overview to initialize the number of http middlewares available
+    this.getOverview()
+      .then(body => {
+        console.log('Success -> http/middlewares/overview', body)
+        this.pagination.rowsNumber = (body && body['http'] && body['http']['middlewares'] && body['http']['middlewares']['total']) || 0
+      })
+      .catch(error => {
+        console.log('Error -> http/middlewares/overview', error)
+      })
   },
   mounted () {
     this.refreshAll()

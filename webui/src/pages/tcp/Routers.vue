@@ -48,6 +48,7 @@ export default {
     ...mapGetters('tcp', { allRouters: 'allRouters' })
   },
   methods: {
+    ...mapActions('core', { getOverview: 'getOverview' }),
     ...mapActions('tcp', { getAllRouters: 'getAllRouters' }),
     refreshAll () {
       if (this.allRouters.loading) {
@@ -70,8 +71,6 @@ export default {
           }
           this.loading = false
           console.log('Success -> tcp/routers', body)
-          // update rowsNumber with appropriate value
-          this.pagination.rowsNumber = body.total
           // update local pagination object
           this.pagination.page = page
           this.pagination.rowsPerPage = rowsPerPage
@@ -92,7 +91,15 @@ export default {
     }
   },
   created () {
-
+  // Get overview to initialize the number of tcp routers available
+    this.getOverview()
+      .then(body => {
+        console.log('Success -> tcp/routers/overview', body)
+        this.pagination.rowsNumber = (body && body['tcp'] && body['tcp']['routers'] && body['tcp']['routers']['total']) || 0
+      })
+      .catch(error => {
+        console.log('Error -> tcp/routers/overview', error)
+      })
   },
   mounted () {
     this.refreshAll()
