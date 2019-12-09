@@ -109,41 +109,9 @@ type networkData struct {
 }
 
 func (p *Provider) createClient() (client.APIClient, error) {
-	host := p.Endpoint
-	var httpClient *http.Client
-
-	helper, _ := connhelper.GetConnectionHelper(p.Endpoint)
-
-	if helper != nil {
-		httpClient = &http.Client{
-			// No tls
-			// No proxy
-			Transport: &http.Transport{
-				DialContext: helper.Dialer,
-			},
-		}
-		host = "http://docker" // To avoid 400 Bad Request: malformed Host header daemon error
-	} else if p.TLS != nil {
-		ctx := log.With(context.Background(), log.Str(log.ProviderName, "docker"))
-		conf, err := p.TLS.CreateTLSConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-		tr := &http.Transport{
-			TLSClientConfig: conf,
-		}
-
-		hostURL, err := client.ParseHostURL(p.Endpoint)
-		if err != nil {
-			return nil, err
-		}
-		if err := sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host); err != nil {
-			return nil, err
-		}
-
-		httpClient = &http.Client{
-			Transport: tr,
-		}
+	httpClient, host, err := p.getHTTPClient()
+	if err != nil {
+		return nil, err
 	}
 
 	httpHeaders := map[string]string{
@@ -161,6 +129,49 @@ func (p *Provider) createClient() (client.APIClient, error) {
 		client.WithHTTPClient(httpClient),
 		client.WithHTTPHeaders(httpHeaders),
 	)
+}
+
+func (p *Provider) getHTTPClient() (*http.Client, string, error) {
+	helper, err := connhelper.GetConnectionHelper(p.Endpoint)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if helper != nil {
+		return &http.Client{
+				Transport: &http.Transport{
+					DialContext: helper.Dialer,
+				},
+			},
+			helper.Host, // To avoid 400 Bad Request: malformed Host header daemon error
+			nil
+	}
+
+	if p.TLS != nil {
+		ctx := log.With(context.Background(), log.Str(log.ProviderName, "docker"))
+
+		conf, err := p.TLS.CreateTLSConfig(ctx)
+		if err != nil {
+			return nil, "", err
+		}
+
+		tr := &http.Transport{
+			TLSClientConfig: conf,
+		}
+
+		hostURL, err := client.ParseHostURL(p.Endpoint)
+		if err != nil {
+			return nil, "", err
+		}
+
+		if err := sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host); err != nil {
+			return nil, "", err
+		}
+
+		return &http.Client{Transport: tr}, p.Endpoint, err
+	}
+
+	return nil, p.Endpoint, nil
 }
 
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
