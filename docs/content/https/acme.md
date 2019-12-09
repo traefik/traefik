@@ -31,7 +31,7 @@ inferred from routers, with the following logic:
 - If the router has a [`tls.domains`](../routing/routers/index.md#domains) option set,
   then the certificate resolver uses the `main` (and optionally `sans`) option of `tls.domains` to know the domain names for this router.
 
-- If no [`tls.domains`](../routing/routers/index.md#domains) directive is set, 
+- If no [`tls.domains`](../routing/routers/index.md#domains) option is set, 
   then the certificate resolver uses the [router's rule](../routing/routers/index.md#rule), 
   by checking the `Host()` matchers. 
   Please note that [multiple `Host()` matchers can be used](../routing/routers/index.md#certresolver)) for specifying multiple domain names for this router.
