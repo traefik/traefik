@@ -72,7 +72,6 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				// server. Especially since it would result in unguarded concurrent reads/writes on
 				// the datatable. Therefore, we reset any potential datatable key in the new
 				// context that we pass around.
-				// want to change the serviceName in the accesslog and in addition, it fixes some
 				// concurrent map write issues.
 				ctx := context.WithValue(req.Context(), accesslog.DataTableKey, nil)
 
