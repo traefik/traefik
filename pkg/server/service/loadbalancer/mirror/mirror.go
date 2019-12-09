@@ -65,7 +65,13 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				handler.count++
 				handler.lock.Unlock()
 
-				// We remove the accesslog's datatable in the context because we don't
+				// In ServeHTTP, we rely on the presence of the accesslog datatable found in the
+				// request's context to know whether we should mutate said datatable (and
+				// contribute some fields to the log). In this instance, we do not want the mirrors
+				// mutating (i.e. changing the service name in) the logs related to the mirrored
+				// server. Especially since it would result in unguarded concurrent reads/writes on
+				// the datatable. Therefore, we reset any potential datatable key in the new
+				// context that we pass around.
 				// want to change the serviceName in the accesslog and in addition, it fixes some
 				// concurrent map write issues.
 				ctx := context.WithValue(req.Context(), accesslog.DataTableKey, nil)
