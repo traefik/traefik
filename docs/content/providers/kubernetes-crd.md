@@ -12,6 +12,23 @@ we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/co
 
 See the dedicated section in [routing](../routing/providers/kubernetes-crd.md).
 
+## LetsEncrypt Support with the Custom Resource Definition Provider
+
+By design, Traefik is a stateless application, meaning that it only derives its configuration from the environment it runs in, without additional configuration.
+For this reason, users can run multiple instances of Traefik at the same time to achieve HA, as is a common pattern in the kubernetes ecosystem.
+
+When using a single instance of Traefik with LetsEncrypt, no issues should be encountered, however this could be a single point of failure.
+Unfortunately, it is not possible to run multiple instances of Traefik 2.0 with LetsEncrypt enabled, because there is no way to ensure that the correct instance of Traefik will receive the challenge request, and subsequent responses.
+Previous versions of Traefik used a [KV store](https://docs.traefik.io/v1.7/configuration/acme/#storage) to attempt to achieve this, but due to sub-optimal performance was dropped as a feature in 2.0.
+
+If you require LetsEncrypt with HA in a kubernetes environment, we recommend using [TraefikEE](https://containo.us/traefikee/) where distributed LetsEncrypt is a supported feature.
+
+If you are wanting to continue to run Traefik Community Edition, LetsEncrypt HA can be achieved by using a Certificate Controller such as [Cert-Manager](https://docs.cert-manager.io/en/latest/index.html).
+When using Cert-Manager to manage certificates, it will create secrets in your namespaces that can be referenced as TLS secrets in your [ingress objects](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls).
+When using the Traefik Kubernetes CRD Provider, unfortunately Cert-Manager cannot interface directly with the CRDs _yet_, but this is being worked on by our team.
+A workaround it to enable the [Kubernetes Ingress provider](./kubernetes-ingress.md) to allow Cert-Manager to create ingress objects to complete the challenges.
+Please note that this still requires manual intervention to create the certificates through Cert-Manager, but once created, Cert-Manager will keep the certificate renewed.
+
 ## Provider Configuration
 
 ### `endpoint`

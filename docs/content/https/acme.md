@@ -84,6 +84,13 @@ If there are less than 30 days remaining before the certificate expires, Traefik
 !!! info ""
     Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
 
+## Using LetsEncrypt with Kubernetes
+
+When using LetsEncrypt with kubernetes, there are some known caveats with both the [ingress](../providers/kubernetes-ingress.md) and [crd](../providers/kubernetes-crd.md) providers.
+
+!!! info ""
+    If you intend to run multiple instances of Traefik with LetsEncrypt, please ensure you read the sections on those provider pages.
+
 ## The Different ACME Challenges
 
 !!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
