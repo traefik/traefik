@@ -23,7 +23,7 @@ require (
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
 	github.com/davecgh/go-spew v1.1.1
-	github.com/docker/cli v0.0.0-20190711175710-5b38d82aa076 // indirect
+	github.com/docker/cli v0.0.0-20190711175710-5b38d82aa076
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v0.0.0-00010101000000-000000000000
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect

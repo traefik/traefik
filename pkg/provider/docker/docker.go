@@ -19,6 +19,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/containous/traefik/v2/pkg/version"
+	"github.com/docker/cli/cli/connhelper"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainertypes "github.com/docker/docker/api/types/container"
 	eventtypes "github.com/docker/docker/api/types/events"
@@ -108,9 +109,21 @@ type networkData struct {
 }
 
 func (p *Provider) createClient() (client.APIClient, error) {
+	host := p.Endpoint
 	var httpClient *http.Client
 
-	if p.TLS != nil {
+	helper, _ := connhelper.GetConnectionHelper(p.Endpoint)
+
+	if helper != nil {
+		httpClient = &http.Client{
+			// No tls
+			// No proxy
+			Transport: &http.Transport{
+				DialContext: helper.Dialer,
+			},
+		}
+		host = "http://docker" // To avoid 400 Bad Request: malformed Host header daemon error
+	} else if p.TLS != nil {
 		ctx := log.With(context.Background(), log.Str(log.ProviderName, "docker"))
 		conf, err := p.TLS.CreateTLSConfig(ctx)
 		if err != nil {
@@ -143,7 +156,7 @@ func (p *Provider) createClient() (client.APIClient, error) {
 	}
 
 	return client.NewClientWithOpts(
-		client.WithHost(p.Endpoint),
+		client.WithHost(host),
 		client.WithVersion(apiVersion),
 		client.WithHTTPClient(httpClient),
 		client.WithHTTPHeaders(httpHeaders),
