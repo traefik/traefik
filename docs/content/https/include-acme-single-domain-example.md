@@ -1,23 +1,4 @@
 
-```toml tab="Single Domain"
-## Dynamic configuration
-[http.routers]
-    [http.routers.blog]
-    rule = "Host(`company.com`) && Path(`/blog`)"
-    [http.routers.blog.tls]
-        certResolver = "le" # From static configuration
-```
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-http:
-  routers:
-    blog:
-      rule: "Host(`company.com`) && Path(`/blog`)"
-      tls:
-        certResolver: le
-```
-
 ```yaml tab="Docker"
 ## Dynamic configuration
 labels:
@@ -69,4 +50,23 @@ labels:
   - traefik.http.routers.blog.rule=Host(`company.com`) && Path(`/blog`)
   - traefik.http.routers.blog.tls=true
   - traefik.http.routers.blog.tls.certresolver=le
+```
+
+```toml tab="Single Domain"
+## Dynamic configuration
+[http.routers]
+    [http.routers.blog]
+    rule = "Host(`company.com`) && Path(`/blog`)"
+    [http.routers.blog.tls]
+        certResolver = "le" # From static configuration
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  routers:
+    blog:
+      rule: "Host(`company.com`) && Path(`/blog`)"
+      tls:
+        certResolver: le
 ```

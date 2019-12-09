@@ -1,30 +1,4 @@
 
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.routers]
-  [http.routers.blog]
-    rule = "Host(`company.com`) && Path(`/blog`)"
-    [http.routers.blog.tls]
-      certResolver = "le" # From static configuration
-      [[http.routers.blog.tls.domains]]
-        main = "company.org"
-        sans = ["*.company.org"]
-```
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-http:
-  routers:
-    blog:
-      rule: "Host(`company.com`) && Path(`/blog`)"
-      tls:
-        certResolver: le
-        domains:
-          - main: "company.org"
-            sans:
-              - "*.company.org"
-```
-
 ```yaml tab="Docker"
 ## Dynamic configuration
 labels:
@@ -85,4 +59,30 @@ labels:
   - traefik.http.routers.blog.tls.certresolver=le
   - traefik.http.routers.blog.tls.domains[0].main=company.org
   - traefik.http.routers.blog.tls.domains[0].sans=*.company.org
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.routers]
+  [http.routers.blog]
+    rule = "Host(`company.com`) && Path(`/blog`)"
+    [http.routers.blog.tls]
+      certResolver = "le" # From static configuration
+      [[http.routers.blog.tls.domains]]
+        main = "company.org"
+        sans = ["*.company.org"]
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  routers:
+    blog:
+      rule: "Host(`company.com`) && Path(`/blog`)"
+      tls:
+        certResolver: le
+        domains:
+          - main: "company.org"
+            sans:
+              - "*.company.org"
 ```

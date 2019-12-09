@@ -133,7 +133,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
       is requested:
       
     --8<-- "content/https/include-acme-multiple-domains-example.md"
- 
+
 ## Automatic Renewals
 
 Traefik automatically tracks the expiry date of ACME certificates it generates.
@@ -386,7 +386,7 @@ certificatesResolvers:
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
 As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](#dnschallenge).
 
-## More Configuration Directives
+## More Configuration
 
 ### `caServer`
 
