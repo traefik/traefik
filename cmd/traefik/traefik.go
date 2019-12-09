@@ -69,10 +69,10 @@ Complete documentation is available at https://traefik.io`,
 	err = cli.Execute(cmdTraefik)
 	if err != nil {
 		stdlog.Println(err)
-		os.Exit(1)
+		logrus.Exit(1)
 	}
 
-	os.Exit(0)
+	logrus.Exit(0)
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
@@ -156,7 +156,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	svr.Wait()
 	log.WithoutContext().Info("Shutting down")
-	logrus.Exit(0)
 	return nil
 }
 
