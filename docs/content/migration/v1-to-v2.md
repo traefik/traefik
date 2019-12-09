@@ -560,8 +560,8 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```yaml tab="Docker"
     labels:
       - "traefik.http.routers.admin.rule=Host(`company.org`) && PathPrefix(`/admin`)"
+      - "traefik.http.routers.admin.middlewares=admin-stripprefix"
       - "traefik.http.middlewares.admin-stripprefix.stripprefix.prefixes=/admin"
-      - "traefik.http.routers.web.middlewares=admin-stripprefix@docker"
     ```
 
     ```yaml tab="Kubernetes IngressRoute"
@@ -1029,12 +1029,12 @@ As the dashboard access is now secured by default you can either:
     [api]
     
     [providers.file]
-      filename = "/dynamic-conf.toml"
+      directory = "/path/to/dynamic/config"
     
     ##---------------------##
     
     ## dynamic configuration
-    # dynamic-conf.toml
+    # /path/to/dynamic/config/dynamic-conf.toml
     
     [http.routers.api]
       rule = "Host(`traefik.docker.localhost`)"
@@ -1061,12 +1061,12 @@ As the dashboard access is now secured by default you can either:
     
     providers:
       file:
-        filename: /dynamic-conf.yaml
+        directory: /path/to/dynamic/config
    
     ##---------------------##
     
     ## dynamic configuration
-    # dynamic-conf.yaml
+    # /path/to/dynamic/config/dynamic-conf.yaml
     
      http:
       routers:

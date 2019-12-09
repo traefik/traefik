@@ -15,8 +15,12 @@ RUN gem install html-proofer --version 3.13.0 --no-document -- --use-system-libr
 RUN apk --no-cache --no-progress add \
     git \
     nodejs \
-    npm \
-  && npm install --global \
+    npm
+
+# To handle 'not get uid/gid'
+RUN npm config set unsafe-perm true
+
+RUN npm install --global \
     markdownlint@0.17.2 \
     markdownlint-cli@0.19.0
 

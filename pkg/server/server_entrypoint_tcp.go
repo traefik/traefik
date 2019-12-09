@@ -158,6 +158,10 @@ func (e *TCPEntryPoint) StartTCP(ctx context.Context) {
 		conn, err := e.listener.Accept()
 		if err != nil {
 			logger.Error(err)
+			if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
+				continue
+			}
+
 			return
 		}
 

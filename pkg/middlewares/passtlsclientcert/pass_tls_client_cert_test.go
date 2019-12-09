@@ -15,6 +15,7 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/testhelpers"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -113,6 +114,7 @@ Cg+XKmHzexmTnKaKac2w9ZECpRsQ9IBdQq9OghIwPtOnERTOUJEEgNcqA+9xELjb
 pQ==
 -----END CERTIFICATE-----
 `
+
 	minimalCheeseCrt = `-----BEGIN CERTIFICATE-----
 MIIEQDCCAygCFFRY0OBk/L5Se0IZRj3CMljawL2UMA0GCSqGSIb3DQEBCwUAMIIB
 hDETMBEGCgmSJomT8ixkARkWA29yZzEWMBQGCgmSJomT8ixkARkWBmNoZWVzZTEP
@@ -262,47 +264,6 @@ jECvgAY7Nfd9mZ1KtyNaW31is+kag7NsvjxU/kM=
 -----END CERTIFICATE-----`
 )
 
-func getCleanCertContents(certContents []string) string {
-	var re = regexp.MustCompile("-----BEGIN CERTIFICATE-----(?s)(.*)")
-
-	var cleanedCertContent []string
-	for _, certContent := range certContents {
-		cert := re.FindString(certContent)
-		cleanedCertContent = append(cleanedCertContent, sanitize([]byte(cert)))
-	}
-
-	return strings.Join(cleanedCertContent, ",")
-}
-
-func getCertificate(certContent string) *x509.Certificate {
-	roots := x509.NewCertPool()
-	ok := roots.AppendCertsFromPEM([]byte(signingCA))
-	if !ok {
-		panic("failed to parse root certificate")
-	}
-
-	block, _ := pem.Decode([]byte(certContent))
-	if block == nil {
-		panic("failed to parse certificate PEM")
-	}
-	cert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		panic("failed to parse certificate: " + err.Error())
-	}
-
-	return cert
-}
-
-func buildTLSWith(certContents []string) *tls.ConnectionState {
-	var peerCertificates []*x509.Certificate
-
-	for _, certContent := range certContents {
-		peerCertificates = append(peerCertificates, getCertificate(certContent))
-	}
-
-	return &tls.ConnectionState{PeerCertificates: peerCertificates}
-}
-
 var next = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	_, err := w.Write([]byte("bar"))
 	if err != nil {
@@ -310,59 +271,7 @@ var next = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	}
 })
 
-func getExpectedSanitized(s string) string {
-	return url.QueryEscape(strings.Replace(s, "\n", "", -1))
-}
-
-func TestSanitize(t *testing.T) {
-	testCases := []struct {
-		desc       string
-		toSanitize []byte
-		expected   string
-	}{
-		{
-			desc: "Empty",
-		},
-		{
-			desc:       "With a minimal cert",
-			toSanitize: []byte(minimalCheeseCrt),
-			expected: getExpectedSanitized(`MIIEQDCCAygCFFRY0OBk/L5Se0IZRj3CMljawL2UMA0GCSqGSIb3DQEBCwUAMIIB
-hDETMBEGCgmSJomT8ixkARkWA29yZzEWMBQGCgmSJomT8ixkARkWBmNoZWVzZTEP
-MA0GA1UECgwGQ2hlZXNlMREwDwYDVQQKDAhDaGVlc2UgMjEfMB0GA1UECwwWU2lt
-cGxlIFNpZ25pbmcgU2VjdGlvbjEhMB8GA1UECwwYU2ltcGxlIFNpZ25pbmcgU2Vj
-dGlvbiAyMRowGAYDVQQDDBFTaW1wbGUgU2lnbmluZyBDQTEcMBoGA1UEAwwTU2lt
-cGxlIFNpZ25pbmcgQ0EgMjELMAkGA1UEBhMCRlIxCzAJBgNVBAYTAlVTMREwDwYD
-VQQHDAhUT1VMT1VTRTENMAsGA1UEBwwETFlPTjEWMBQGA1UECAwNU2lnbmluZyBT
-dGF0ZTEYMBYGA1UECAwPU2lnbmluZyBTdGF0ZSAyMSEwHwYJKoZIhvcNAQkBFhJz
-aW1wbGVAc2lnbmluZy5jb20xIjAgBgkqhkiG9w0BCQEWE3NpbXBsZTJAc2lnbmlu
-Zy5jb20wHhcNMTgxMjA2MTExMDM2WhcNMjEwOTI1MTExMDM2WjAzMQswCQYDVQQG
-EwJGUjETMBEGA1UECAwKU29tZS1TdGF0ZTEPMA0GA1UECgwGQ2hlZXNlMIIBIjAN
-BgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAskX/bUtwFo1gF2BTPNaNcTUMaRFu
-FMZozK8IgLjccZ4kZ0R9oFO6Yp8Zl/IvPaf7tE26PI7XP7eHriUdhnQzX7iioDd0
-RZa68waIhAGc+xPzRFrP3b3yj3S2a9Rve3c0K+SCV+EtKAwsxMqQDhoo9PcBfo5B
-RHfht07uD5MncUcGirwN+/pxHV5xzAGPcc7On0/5L7bq/G+63nhu78zw9XyuLaHC
-PM5VbOUvpyIESJHbMMzTdFGL8ob9VKO+Kr1kVGdEA9i8FLGl3xz/GBKuW/JD0xyW
-DrU29mri5vYWHmkuv7ZWHGXnpXjTtPHwveE9/0/ArnmpMyR9JtqFr1oEvQIDAQAB
-MA0GCSqGSIb3DQEBCwUAA4IBAQBHta+NWXI08UHeOkGzOTGRiWXsOH2dqdX6gTe9
-xF1AIjyoQ0gvpoGVvlnChSzmlUj+vnx/nOYGIt1poE3hZA3ZHZD/awsvGyp3GwWD
-IfXrEViSCIyF+8tNNKYyUcEO3xdAsAUGgfUwwF/mZ6MBV5+A/ZEEILlTq8zFt9dV
-vdKzIt7fZYxYBBHFSarl1x8pDgWXlf3hAufevGJXip9xGYmznF0T5cq1RbWJ4be3
-/9K7yuWhuBYC3sbTbCneHBa91M82za+PIISc1ygCYtWSBoZKSAqLk0rkZpHaekDP
-WqeUSNGYV//RunTeuRDAf5OxehERb1srzBXhRZ3cZdzXbgR/`),
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, test.expected, sanitize(test.toSanitize), "The sanitized certificates should be equal")
-		})
-	}
-}
-
-func TestTLSClientHeadersWithPEM(t *testing.T) {
+func TestPassTLSClientCert_PEM(t *testing.T) {
 	testCases := []struct {
 		desc           string
 		certContents   []string // set the request TLS attribute if defined
@@ -417,70 +326,36 @@ func TestTLSClientHeadersWithPEM(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, http.StatusOK, res.Code, "Http Status should be OK")
-			require.Equal(t, "bar", res.Body.String(), "Should be the expected body")
+			assert.Equal(t, http.StatusOK, res.Code, "Http Status should be OK")
+			assert.Equal(t, "bar", res.Body.String(), "Should be the expected body")
 
 			if test.expectedHeader != "" {
-				require.Equal(t, getCleanCertContents(test.certContents), req.Header.Get(xForwardedTLSClientCert), "The request header should contain the cleaned certificate")
+				expected := getCleanCertContents(test.certContents)
+				assert.Equal(t, expected, req.Header.Get(xForwardedTLSClientCert), "The request header should contain the cleaned certificate")
 			} else {
-				require.Empty(t, req.Header.Get(xForwardedTLSClientCert))
+				assert.Empty(t, req.Header.Get(xForwardedTLSClientCert))
 			}
-			require.Empty(t, res.Header().Get(xForwardedTLSClientCert), "The response header should be always empty")
+
+			assert.Empty(t, res.Header().Get(xForwardedTLSClientCert), "The response header should be always empty")
 		})
 	}
 }
 
-func TestGetSans(t *testing.T) {
-	urlFoo, err := url.Parse("my.foo.com")
-	require.NoError(t, err)
-	urlBar, err := url.Parse("my.bar.com")
-	require.NoError(t, err)
+func TestPassTLSClientCert_certInfo(t *testing.T) {
+	minimalCheeseCertAllInfo := strings.Join([]string{
+		`Subject="C=FR,ST=Some-State,O=Cheese"`,
+		`Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2"`,
+		`NB="1544094636"`,
+		`NA="1632568236"`,
+	}, fieldSeparator)
 
-	testCases := []struct {
-		desc     string
-		cert     *x509.Certificate // set the request TLS attribute if defined
-		expected []string
-	}{
-		{
-			desc: "With nil",
-		},
-		{
-			desc: "Certificate without Sans",
-			cert: &x509.Certificate{},
-		},
-		{
-			desc: "Certificate with all Sans",
-			cert: &x509.Certificate{
-				DNSNames:       []string{"foo", "bar"},
-				EmailAddresses: []string{"test@test.com", "test2@test.com"},
-				IPAddresses:    []net.IP{net.IPv4(10, 0, 0, 1), net.IPv4(10, 0, 0, 2)},
-				URIs:           []*url.URL{urlFoo, urlBar},
-			},
-			expected: []string{"foo", "bar", "test@test.com", "test2@test.com", "10.0.0.1", "10.0.0.2", urlFoo.String(), urlBar.String()},
-		},
-	}
-
-	for _, test := range testCases {
-		sans := getSANs(test.cert)
-
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			if len(test.expected) > 0 {
-				for i, expected := range test.expected {
-					require.Equal(t, expected, sans[i])
-				}
-			} else {
-				require.Empty(t, sans)
-			}
-		})
-	}
-}
-
-func TestTLSClientHeadersWithCertInfo(t *testing.T) {
-	minimalCheeseCertAllInfo := `Subject="C=FR,ST=Some-State,O=Cheese",Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2",NB=1544094636,NA=1632568236,SAN=`
-	completeCertAllInfo := `Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.cheese.com",Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2",NB=1544094616,NA=1607166616,SAN=*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2`
+	completeCertAllInfo := strings.Join([]string{
+		`Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.cheese.com"`,
+		`Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2"`,
+		`NB="1544094616"`,
+		`NA="1607166616"`,
+		`SAN="*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2"`,
+	}, fieldSeparator)
 
 	testCases := []struct {
 		desc           string
@@ -547,7 +422,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 					},
 				},
 			},
-			expectedHeader: url.QueryEscape(minimalCheeseCertAllInfo),
+			expectedHeader: minimalCheeseCertAllInfo,
 		},
 		{
 			desc:         "TLS with simple certificate, with some info",
@@ -564,7 +439,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 					},
 				},
 			},
-			expectedHeader: url.QueryEscape(`Subject="O=Cheese",Issuer="C=FR,C=US",NA=1632568236,SAN=`),
+			expectedHeader: `Subject="O=Cheese";Issuer="C=FR,C=US";NA="1632568236"`,
 		},
 		{
 			desc:         "TLS with complete certificate, with all info",
@@ -594,7 +469,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 					},
 				},
 			},
-			expectedHeader: url.QueryEscape(completeCertAllInfo),
+			expectedHeader: completeCertAllInfo,
 		},
 		{
 			desc:         "TLS with 2 certificates, with all info",
@@ -624,7 +499,7 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 					},
 				},
 			},
-			expectedHeader: url.QueryEscape(strings.Join([]string{minimalCheeseCertAllInfo, completeCertAllInfo}, ";")),
+			expectedHeader: strings.Join([]string{minimalCheeseCertAllInfo, completeCertAllInfo}, certSeparator),
 		},
 	}
 
@@ -645,15 +520,157 @@ func TestTLSClientHeadersWithCertInfo(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, http.StatusOK, res.Code, "Http Status should be OK")
-			require.Equal(t, "bar", res.Body.String(), "Should be the expected body")
+			assert.Equal(t, http.StatusOK, res.Code, "Http Status should be OK")
+			assert.Equal(t, "bar", res.Body.String(), "Should be the expected body")
 
 			if test.expectedHeader != "" {
-				require.Equal(t, test.expectedHeader, req.Header.Get(xForwardedTLSClientCertInfo), "The request header should contain the cleaned certificate")
+				unescape, err := url.QueryUnescape(req.Header.Get(xForwardedTLSClientCertInfo))
+				require.NoError(t, err)
+				assert.Equal(t, test.expectedHeader, unescape, "The request header should contain the cleaned certificate")
 			} else {
-				require.Empty(t, req.Header.Get(xForwardedTLSClientCertInfo))
+				assert.Empty(t, req.Header.Get(xForwardedTLSClientCertInfo))
 			}
-			require.Empty(t, res.Header().Get(xForwardedTLSClientCertInfo), "The response header should be always empty")
+
+			assert.Empty(t, res.Header().Get(xForwardedTLSClientCertInfo), "The response header should be always empty")
 		})
 	}
+}
+
+func Test_sanitize(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		toSanitize []byte
+		expected   string
+	}{
+		{
+			desc: "Empty",
+		},
+		{
+			desc:       "With a minimal cert",
+			toSanitize: []byte(minimalCheeseCrt),
+			expected: `MIIEQDCCAygCFFRY0OBk/L5Se0IZRj3CMljawL2UMA0GCSqGSIb3DQEBCwUAMIIB
+hDETMBEGCgmSJomT8ixkARkWA29yZzEWMBQGCgmSJomT8ixkARkWBmNoZWVzZTEP
+MA0GA1UECgwGQ2hlZXNlMREwDwYDVQQKDAhDaGVlc2UgMjEfMB0GA1UECwwWU2lt
+cGxlIFNpZ25pbmcgU2VjdGlvbjEhMB8GA1UECwwYU2ltcGxlIFNpZ25pbmcgU2Vj
+dGlvbiAyMRowGAYDVQQDDBFTaW1wbGUgU2lnbmluZyBDQTEcMBoGA1UEAwwTU2lt
+cGxlIFNpZ25pbmcgQ0EgMjELMAkGA1UEBhMCRlIxCzAJBgNVBAYTAlVTMREwDwYD
+VQQHDAhUT1VMT1VTRTENMAsGA1UEBwwETFlPTjEWMBQGA1UECAwNU2lnbmluZyBT
+dGF0ZTEYMBYGA1UECAwPU2lnbmluZyBTdGF0ZSAyMSEwHwYJKoZIhvcNAQkBFhJz
+aW1wbGVAc2lnbmluZy5jb20xIjAgBgkqhkiG9w0BCQEWE3NpbXBsZTJAc2lnbmlu
+Zy5jb20wHhcNMTgxMjA2MTExMDM2WhcNMjEwOTI1MTExMDM2WjAzMQswCQYDVQQG
+EwJGUjETMBEGA1UECAwKU29tZS1TdGF0ZTEPMA0GA1UECgwGQ2hlZXNlMIIBIjAN
+BgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAskX/bUtwFo1gF2BTPNaNcTUMaRFu
+FMZozK8IgLjccZ4kZ0R9oFO6Yp8Zl/IvPaf7tE26PI7XP7eHriUdhnQzX7iioDd0
+RZa68waIhAGc+xPzRFrP3b3yj3S2a9Rve3c0K+SCV+EtKAwsxMqQDhoo9PcBfo5B
+RHfht07uD5MncUcGirwN+/pxHV5xzAGPcc7On0/5L7bq/G+63nhu78zw9XyuLaHC
+PM5VbOUvpyIESJHbMMzTdFGL8ob9VKO+Kr1kVGdEA9i8FLGl3xz/GBKuW/JD0xyW
+DrU29mri5vYWHmkuv7ZWHGXnpXjTtPHwveE9/0/ArnmpMyR9JtqFr1oEvQIDAQAB
+MA0GCSqGSIb3DQEBCwUAA4IBAQBHta+NWXI08UHeOkGzOTGRiWXsOH2dqdX6gTe9
+xF1AIjyoQ0gvpoGVvlnChSzmlUj+vnx/nOYGIt1poE3hZA3ZHZD/awsvGyp3GwWD
+IfXrEViSCIyF+8tNNKYyUcEO3xdAsAUGgfUwwF/mZ6MBV5+A/ZEEILlTq8zFt9dV
+vdKzIt7fZYxYBBHFSarl1x8pDgWXlf3hAufevGJXip9xGYmznF0T5cq1RbWJ4be3
+/9K7yuWhuBYC3sbTbCneHBa91M82za+PIISc1ygCYtWSBoZKSAqLk0rkZpHaekDP
+WqeUSNGYV//RunTeuRDAf5OxehERb1srzBXhRZ3cZdzXbgR/`,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			content := sanitize(test.toSanitize)
+
+			expected := url.QueryEscape(strings.Replace(test.expected, "\n", "", -1))
+			assert.Equal(t, expected, content, "The sanitized certificates should be equal")
+		})
+	}
+}
+
+func Test_getSANs(t *testing.T) {
+	urlFoo := testhelpers.MustParseURL("my.foo.com")
+	urlBar := testhelpers.MustParseURL("my.bar.com")
+
+	testCases := []struct {
+		desc     string
+		cert     *x509.Certificate // set the request TLS attribute if defined
+		expected []string
+	}{
+		{
+			desc: "With nil",
+		},
+		{
+			desc: "Certificate without Sans",
+			cert: &x509.Certificate{},
+		},
+		{
+			desc: "Certificate with all Sans",
+			cert: &x509.Certificate{
+				DNSNames:       []string{"foo", "bar"},
+				EmailAddresses: []string{"test@test.com", "test2@test.com"},
+				IPAddresses:    []net.IP{net.IPv4(10, 0, 0, 1), net.IPv4(10, 0, 0, 2)},
+				URIs:           []*url.URL{urlFoo, urlBar},
+			},
+			expected: []string{"foo", "bar", "test@test.com", "test2@test.com", "10.0.0.1", "10.0.0.2", urlFoo.String(), urlBar.String()},
+		},
+	}
+
+	for _, test := range testCases {
+		sans := getSANs(test.cert)
+
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			if len(test.expected) > 0 {
+				for i, expected := range test.expected {
+					assert.Equal(t, expected, sans[i])
+				}
+			} else {
+				assert.Empty(t, sans)
+			}
+		})
+	}
+}
+
+func getCleanCertContents(certContents []string) string {
+	exp := regexp.MustCompile("-----BEGIN CERTIFICATE-----(?s)(.*)")
+
+	var cleanedCertContent []string
+	for _, certContent := range certContents {
+		cert := sanitize([]byte(exp.FindString(certContent)))
+		cleanedCertContent = append(cleanedCertContent, cert)
+	}
+
+	return strings.Join(cleanedCertContent, certSeparator)
+}
+
+func buildTLSWith(certContents []string) *tls.ConnectionState {
+	var peerCertificates []*x509.Certificate
+
+	for _, certContent := range certContents {
+		peerCertificates = append(peerCertificates, getCertificate(certContent))
+	}
+
+	return &tls.ConnectionState{PeerCertificates: peerCertificates}
+}
+
+func getCertificate(certContent string) *x509.Certificate {
+	roots := x509.NewCertPool()
+	ok := roots.AppendCertsFromPEM([]byte(signingCA))
+	if !ok {
+		panic("failed to parse root certificate")
+	}
+
+	block, _ := pem.Decode([]byte(certContent))
+	if block == nil {
+		panic("failed to parse certificate PEM")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		panic("failed to parse certificate: " + err.Error())
+	}
+
+	return cert
 }

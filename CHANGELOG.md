@@ -1,3 +1,20 @@
+## [v2.0.7](https://github.com/containous/traefik/tree/v2.0.7) (2019-12-09)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.6...v2.0.7)
+
+**Bug fixes:**
+- **[logs,middleware]** Remove mirroring impact in accesslog ([#5967](https://github.com/containous/traefik/pull/5967) by [juliens](https://github.com/juliens))
+- **[middleware]** fix: PassClientTLSCert middleware separators and formatting ([#5921](https://github.com/containous/traefik/pull/5921) by [ldez](https://github.com/ldez))
+- **[server]** Do not stop to listen on tcp listeners on temporary errors  ([#5935](https://github.com/containous/traefik/pull/5935) by [skwair](https://github.com/skwair))
+
+**Documentation:**
+- **[acme,k8s/crd,k8s/ingress]** Document LE caveats with Kubernetes on v2 ([#5902](https://github.com/containous/traefik/pull/5902) by [dtomcej](https://github.com/dtomcej))
+- **[acme]** The Cloudflare hint for the GLOBAL API KEY for CF MAIL/API_KEY ([#5964](https://github.com/containous/traefik/pull/5964) by [EugenMayer](https://github.com/EugenMayer))
+- **[acme]** Improve documentation for ACME/Let&#39;s Encrypt ([#5819](https://github.com/containous/traefik/pull/5819) by [dduportal](https://github.com/dduportal))
+- **[file]** Improve documentation on file provider limitations with file system notifications ([#5939](https://github.com/containous/traefik/pull/5939) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Make trailing slash more prominent for the &#34;secure dashboard setup&#34; too ([#5963](https://github.com/containous/traefik/pull/5963) by [EugenMayer](https://github.com/EugenMayer))
+- Fix Docker example in &#34;Strip and Rewrite Path Prefixes&#34; in migration guide ([#5949](https://github.com/containous/traefik/pull/5949) by [q210](https://github.com/q210))
+- readme: Fix link to file backend/provider documentation ([#5945](https://github.com/containous/traefik/pull/5945) by [hartwork](https://github.com/hartwork))
+
 ## [v2.1.0-rc3](https://github.com/containous/traefik/tree/v2.1.0-rc3) (2019-12-02)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.0-rc2...v2.1.0-rc3)
 
