@@ -109,7 +109,7 @@ type networkData struct {
 }
 
 func (p *Provider) createClient() (client.APIClient, error) {
-	httpClient, host, err := p.getHTTPClient()
+	opts, err := p.getClientOpts()
 	if err != nil {
 		return nil, err
 	}
@@ -117,34 +117,40 @@ func (p *Provider) createClient() (client.APIClient, error) {
 	httpHeaders := map[string]string{
 		"User-Agent": "Traefik " + version.Version,
 	}
+	opts = append(opts, client.WithHTTPHeaders(httpHeaders))
 
 	apiVersion := DockerAPIVersion
 	if p.SwarmMode {
 		apiVersion = SwarmAPIVersion
 	}
+	opts = append(opts, client.WithVersion(apiVersion))
 
-	return client.NewClientWithOpts(
-		client.WithHost(host),
-		client.WithVersion(apiVersion),
-		client.WithHTTPClient(httpClient),
-		client.WithHTTPHeaders(httpHeaders),
-	)
+	return client.NewClientWithOpts(opts...)
 }
 
-func (p *Provider) getHTTPClient() (*http.Client, string, error) {
+func (p *Provider) getClientOpts() ([]client.Opt, error) {
 	helper, err := connhelper.GetConnectionHelper(p.Endpoint)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
+	// SSH
 	if helper != nil {
-		return &http.Client{
-				Transport: &http.Transport{
-					DialContext: helper.Dialer,
-				},
+		httpClient := &http.Client{
+			Transport: &http.Transport{
+				DialContext: helper.Dialer,
 			},
-			helper.Host, // To avoid 400 Bad Request: malformed Host header daemon error
-			nil
+		}
+
+		return []client.Opt{
+			client.WithHTTPClient(httpClient),
+			client.WithHost(helper.Host), // To avoid 400 Bad Request: malformed Host header daemon error
+			client.WithDialContext(helper.Dialer),
+		}, nil
+	}
+
+	opts := []client.Opt{
+		client.WithHost(p.Endpoint),
 	}
 
 	if p.TLS != nil {
@@ -152,26 +158,26 @@ func (p *Provider) getHTTPClient() (*http.Client, string, error) {
 
 		conf, err := p.TLS.CreateTLSConfig(ctx)
 		if err != nil {
-			return nil, "", err
+			return nil, err
+		}
+
+		hostURL, err := client.ParseHostURL(p.Endpoint)
+		if err != nil {
+			return nil, err
 		}
 
 		tr := &http.Transport{
 			TLSClientConfig: conf,
 		}
 
-		hostURL, err := client.ParseHostURL(p.Endpoint)
-		if err != nil {
-			return nil, "", err
-		}
-
 		if err := sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host); err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
-		return &http.Client{Transport: tr}, p.Endpoint, err
+		opts = append(opts, client.WithHTTPClient(&http.Client{Transport: tr}))
 	}
 
-	return nil, p.Endpoint, nil
+	return opts, nil
 }
 
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
