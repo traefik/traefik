@@ -44,7 +44,7 @@ plugins:
   - search
   - exclude:
       glob:
-        - include-*.md
+        - "**/include-*.md"
 
 # https://squidfunk.github.io/mkdocs-material/extensions/admonition/
 # https://facelessuser.github.io/pymdown-extensions/

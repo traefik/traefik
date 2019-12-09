@@ -8,6 +8,45 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 !!! warning "Let's Encrypt and Rate Limiting"
     Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits).
 
+    Use Let's Encrypt staging server with the [`caServer`](#caserver) configuration option
+    when experimenting to avoid hitting this limit too fast.
+    
+## Certificate Resolvers
+
+Traefik requires you to define "Certificate Resolvers" in the [static configuration](../getting-started/configuration-overview.md#the-static-configuration), 
+which are responsible for retrieving certificates from an ACME server.
+
+Then, each ["router"](../routing/routers/index.md) is configured to enable TLS,
+and is associated to a certificate resolver through the [`tls.certresolver` configuration option](../routing/routers/index.md#certresolver).
+
+Certificates are requested for domain names retrieved from the router's [dynamic configuration](../getting-started/configuration-overview.md#the-dynamic-configuration).
+
+You can read more about this retrieval mechanism in the following section: [ACME Domain Definition](#domain-definition).
+
+## Domain Definition
+
+Certificate resolvers request certificates for a set of the domain names 
+inferred from routers, with the following logic:
+
+- If the router has a [`tls.domains`](../routing/routers/index.md#domains) option set,
+  then the certificate resolver uses the `main` (and optionally `sans`) option of `tls.domains` to know the domain names for this router.
+
+- If no [`tls.domains`](../routing/routers/index.md#domains) option is set, 
+  then the certificate resolver uses the [router's rule](../routing/routers/index.md#rule), 
+  by checking the `Host()` matchers. 
+  Please note that [multiple `Host()` matchers can be used](../routing/routers/index.md#certresolver)) for specifying multiple domain names for this router.
+
+Please note that:
+
+- When multiple domain names are inferred from a given router,
+  only **one** certificate is requested with the first domain name as the main domain,
+  and the other domains as ["SANs" (Subject Alternative Name)](https://en.wikipedia.org/wiki/Subject_Alternative_Name).
+
+- As [ACME V2 supports "wildcard domains"](#wildcard-domains),
+  any router can provide a [wildcard domain](https://en.wikipedia.org/wiki/Wildcard_certificate) name, as "main" domain or as "SAN" domain.
+
+Please check the [configuration examples below](#configuration-examples) for more details.
+
 ## Configuration Examples
 
 ??? example "Enabling ACME"
@@ -74,6 +113,26 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     ```bash tab="CLI"
     --8<-- "content/https/ref-acme.txt"
     ```
+
+??? example "Single Domain from Router's Rule Example"
+    
+    * A certificate for the domain `company.com` is requested:
+
+    --8<-- "content/https/include-acme-single-domain-example.md"
+
+??? example "Multiple Domains from Router's Rule Example"
+ 
+    * A certificate for the domains `company.com` (main) and `blog.company.org`
+      is requested:
+    
+    --8<-- "content/https/include-acme-multiple-domains-from-rule-example.md"
+    
+??? example "Multiple Domains from Router's `tls.domain` Example"
+
+    * A certificate for the domains `company.com` (main) and `*.company.org` (SAN)
+      is requested:
+      
+    --8<-- "content/https/include-acme-multiple-domains-example.md"
 
 ## Automatic Renewals
 
@@ -327,7 +386,9 @@ certificatesResolvers:
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
 As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](#dnschallenge).
 
-## `caServer`
+## More Configuration
+
+### `caServer`
 
 ??? example "Using the Let's Encrypt staging server"
 
@@ -353,7 +414,7 @@ As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/stagi
     # ...
     ```
 
-## `storage`
+### `storage`
 
 The `storage` option sets the location where your ACME certificates are saved to.
 
@@ -383,7 +444,7 @@ The value can refer to some kinds of storage:
 
 - a JSON file
 
-### In a File
+#### In a File
 
 ACME certificates can be stored in a JSON file that needs to have a `600` file mode .
 
