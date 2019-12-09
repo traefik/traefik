@@ -8,7 +8,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 !!! warning "Let's Encrypt and Rate Limiting"
     Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits).
 
-    Use Let's Encrypt staging server with the [`caServer`](#caserver) configuration directives
+    Use Let's Encrypt staging server with the [`caServer`](#caserver) configuration option
     when experimenting to avoid hitting this limit too fast.
     
 ## Certificate Resolvers
@@ -17,7 +17,7 @@ Traefik requires you to define "Certificate Resolvers" in the [static configurat
 which are responsible for retrieving certificates from an ACME server.
 
 Then, each ["router"](../routing/routers/index.md) is configured to enable TLS,
-and is associated to a certificate resolver through the [`tls.certresolver` configuration directive](../routing/routers/index.md#certresolver).
+and is associated to a certificate resolver through the [`tls.certresolver` configuration option](../routing/routers/index.md#certresolver).
 
 Certificates are requested for domain names retrieved from the router's [dynamic configuration](../getting-started/configuration-overview.md#the-dynamic-configuration).
 
@@ -28,7 +28,7 @@ You can read more about this retrieval mechanism in the following section: [ACME
 Certificate resolvers request certificates for a set of the domain names 
 inferred from routers, with the following logic:
 
-- If the router has a directive [`tls.domains`](../routing/routers/index.md#domains) set,
+- If the router has a [`tls.domains`](../routing/routers/index.md#domains) option set,
   then the certificate resolver uses the `main` (and optionally `sans`) option of `tls.domains` to know the domain names for this router.
 
 - If no [`tls.domains`](../routing/routers/index.md#domains) directive is set, 
