@@ -21,7 +21,7 @@ and is associated to a certificate resolver through the [`tls.certresolver` conf
 
 Certificates are requested for domain names retrieved from the router's [dynamic configuration](../getting-started/configuration-overview.md#the-dynamic-configuration).
 
-You can read more about this retrieval mechanism on the following section: [ACME Domain Definition](#domain-definition).
+You can read more about this retrieval mechanism in the following section: [ACME Domain Definition](#domain-definition).
 
 ## Domain Definition
 
@@ -29,14 +29,14 @@ Certificate resolvers request certificates for a set of the domain names
 inferred from routers, with the following logic:
 
 - If the router has a directive [`tls.domains`](../routing/routers/index.md#domains) set,
-  then the certificate resolver uses the sub-directives `main` (and optionnaly `sans`) of `tls.domains` to know the domain names for this router.
+  then the certificate resolver uses the `main` (and optionally `sans`) option of `tls.domains` to know the domain names for this router.
 
 - If no [`tls.domains`](../routing/routers/index.md#domains) directive is set, 
   then the certificate resolver uses the [router's rule](../routing/routers/index.md#rule), 
   by checking the `Host()` matchers. 
   Please note that [multiple `Host()` matchers can be used](../routing/routers/index.md#certresolver)) for specifying multiple domain names for this router.
 
-Please note that that:
+Please note that:
 
 - When multiple domain names are inferred from a given router,
   only **one** certificate is requested with the first domain name as the main domain,
