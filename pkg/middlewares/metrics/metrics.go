@@ -89,10 +89,10 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	}(labels)
 
 	start := time.Now()
-	recorder := &responseRecorder{rw, http.StatusOK}
+	recorder := newResponseRecorder(rw)
 	m.next.ServeHTTP(recorder, req)
 
-	labels = append(labels, "code", strconv.Itoa(recorder.statusCode))
+	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
 	m.reqsCounter.With(labels...).Add(1)
 	m.reqDurationHistogram.With(labels...).Observe(time.Since(start).Seconds())
 }
