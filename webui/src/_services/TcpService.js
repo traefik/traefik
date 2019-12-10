@@ -1,14 +1,15 @@
 import { APP } from '../_helpers/APP'
+import { getTotal } from './utils'
 
 const apiBase = '/tcp'
 
 function getAllRouters (params) {
   return APP.api.get(`${apiBase}/routers?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
-    .then(body => {
-      const total = body.data ? body.data.length : 0
-      console.log('Success -> HttpService -> getAllRouters', body.data)
-      // TODO - suggestion: add the total-pages in api response to optimize the query
-      return { data: body.data || [], total }
+    .then(response => {
+      const { data = [], headers } = response
+      const total = getTotal(headers, params)
+      console.log('Success -> HttpService -> getAllRouters', response.data)
+      return { data, total }
     })
 }
 
@@ -22,11 +23,11 @@ function getRouterByName (name) {
 
 function getAllServices (params) {
   return APP.api.get(`${apiBase}/services?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
-    .then(body => {
-      const total = body.data ? body.data.length : 0
-      console.log('Success -> HttpService -> getAllServices', body.data)
-      // TODO - suggestion: add the total-pages in api response to optimize the query
-      return { data: body.data || [], total }
+    .then(response => {
+      const { data = [], headers } = response
+      const total = getTotal(headers, params)
+      console.log('Success -> HttpService -> getAllServices', response.data)
+      return { data, total }
     })
 }
 
