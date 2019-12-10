@@ -387,7 +387,9 @@ The WRR is able to load balance the requests between multiple services based on 
 
 This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
 
-!!! info "This strategy can be defined only with [File](../../providers/file.md)."
+!!! info "Supported Providers"
+
+    This strategy can be defined only with [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md).
 
 ```toml tab="TOML"
 ## Dynamic configuration
@@ -438,7 +440,9 @@ http:
 
 The mirroring is able to mirror requests sent to a service to other services.
 
-!!! info "This strategy can be defined only with [File](../../providers/file.md)."
+!!! info "Supported Providers"
+
+    This strategy can be defined only with [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md).
 
 ```toml tab="TOML"
 ## Dynamic configuration
@@ -583,7 +587,9 @@ The Weighted Round Robin (alias `WRR`) load-balancer of services is in charge of
 
 This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
 
-This strategy can only be defined with [File](../../providers/file.md).
+!!! info "Supported Providers"
+
+    This strategy can only be defined with [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md)
 
 ```toml tab="TOML"
 ## Dynamic configuration
