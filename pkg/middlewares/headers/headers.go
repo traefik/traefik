@@ -159,29 +159,6 @@ func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 	}
 }
 
-// preRequestModifyCorsResponseHeaders sets during request processing time,
-// all the CORS response headers that we already know that are supposed to be set,
-// and which do not depend on a later state of the response.
-// One notable example of a header that can only be modified later on is "Vary",
-// And this is set in the post-response response modifier method
-func (s *Header) preRequestModifyCorsResponseHeaders(rw http.ResponseWriter, req *http.Request) {
-	originHeader := req.Header.Get("Origin")
-	allowOrigin := s.getAllowOrigin(originHeader)
-
-	if allowOrigin != "" {
-		rw.Header().Set("Access-Control-Allow-Origin", allowOrigin)
-	}
-
-	if s.headers.AccessControlAllowCredentials {
-		rw.Header().Set("Access-Control-Allow-Credentials", "true")
-	}
-
-	if len(s.headers.AccessControlExposeHeaders) > 0 {
-		exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
-		rw.Header().Set("Access-Control-Expose-Headers", exposeHeaders)
-	}
-}
-
 // PostRequestModifyResponseHeaders set or delete response headers.
 // This method is called AFTER the response is generated from the backend
 // and can merge/override headers from the backend response.
@@ -194,6 +171,25 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 			res.Header.Set(header, value)
 		}
 	}
+
+	if res != nil && res.Request != nil {
+		originHeader := res.Request.Header.Get("Origin")
+		allowed, match := s.isOriginAllowed(originHeader)
+
+		if allowed {
+			res.Header.Set("Access-Control-Allow-Origin", match)
+		}
+	}
+
+	if s.headers.AccessControlAllowCredentials {
+		res.Header.Set("Access-Control-Allow-Credentials", "true")
+	}
+
+	if len(s.headers.AccessControlExposeHeaders) > 0 {
+		exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
+		res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
+	}
+
 	if !s.headers.AddVaryHeader {
 		return nil
 	}
@@ -210,6 +206,7 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 
 	res.Header.Set("Vary", varyHeader)
 	return nil
+
 }
 
 // processCorsHeaders processes the incoming request,
@@ -241,30 +238,24 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 			rw.Header().Set("Access-Control-Allow-Methods", allowMethods)
 		}
 
-		allowOrigin := s.getAllowOrigin(originHeader)
-
-		if allowOrigin != "" {
-			rw.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+		allowed, match := s.isOriginAllowed(originHeader)
+		if allowed {
+			rw.Header().Set("Access-Control-Allow-Origin", match)
 		}
 
 		rw.Header().Set("Access-Control-Max-Age", strconv.Itoa(int(s.headers.AccessControlMaxAge)))
 		return true
 	}
 
-	s.preRequestModifyCorsResponseHeaders(rw, req)
 	return false
 }
 
-func (s *Header) getAllowOrigin(header string) string {
-	switch s.headers.AccessControlAllowOrigin {
-	case "origin-list-or-null":
-		if len(header) == 0 {
-			return "null"
+func (s *Header) isOriginAllowed(origin string) (bool, string) {
+	for _, item := range s.headers.AccessControlAllowOrigin {
+		if item == "*" || item == origin {
+			return true, item
 		}
-		return header
-	case "*":
-		return "*"
-	default:
-		return ""
 	}
+
+	return false, ""
 }
