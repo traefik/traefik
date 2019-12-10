@@ -389,7 +389,7 @@ This strategy is only available to load balance between [services](./index.md) a
 
 !!! info "Supported Providers"
 
-    This strategy can be defined only with [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md).
+    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
 
 ```toml tab="TOML"
 ## Dynamic configuration
