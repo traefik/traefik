@@ -56,7 +56,7 @@ export default {
     getProvider (service) {
       const words = service.name.split('@')
       if (words.length !== 2) {
-        return this.provider
+        return this.data.provider
       }
 
       return words[1]
