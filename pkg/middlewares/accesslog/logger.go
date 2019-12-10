@@ -200,7 +200,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[ClientHost] = forwardedFor
 	}
 
-	crw := &captureResponseWriter{rw: rw}
+	crw := newCaptureResponseWriter(rw)
 
 	next.ServeHTTP(crw, reqWithDataTable)
 
