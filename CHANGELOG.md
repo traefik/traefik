@@ -1,5 +1,15 @@
 # Change Log
 
+## [v1.7.20](https://github.com/containous/traefik/tree/v1.7.20) (2019-12-09)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.19...v1.7.20)
+
+**Bug fixes:**
+- **[acme]** Truncate key for identification in log ([#5941](https://github.com/containous/traefik/pull/5941) by [dtomcej](https://github.com/dtomcej))
+- **[middleware]** fix: location header rewrite. ([#5857](https://github.com/containous/traefik/pull/5857) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Add a warning note regarding optional TLS mutual auth ([#5434](https://github.com/containous/traefik/pull/5434) by [bradjones1](https://github.com/bradjones1))
+
 ## [v1.7.19](https://github.com/containous/traefik/tree/v1.7.19) (2019-10-25)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.18...v1.7.19)
 
