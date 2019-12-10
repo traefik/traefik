@@ -1,4 +1,5 @@
 import { APP } from '../_helpers/APP'
+import { getTotal } from './utils'
 
 const apiBase = '/http'
 
@@ -6,12 +7,8 @@ function getAllRouters (params) {
   return APP.api.get(`${apiBase}/routers?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
     .then(response => {
       const { data = [], headers } = response
-      const nextPage = parseInt(headers['x-next-page'], 10) || 1
-      const hasNextPage = nextPage > 1
-      const total = hasNextPage
-        ? (params.page + 1) * params.limit
-        : params.page * params.limit
-      console.log('Success -> HttpService -> getAllRouters', response.data)
+      const total = getTotal(headers, params)
+      console.log('Success -> HttpService -> getAllRouters', response, response.data)
       return { data, total }
     })
 }
@@ -28,11 +25,7 @@ function getAllServices (params) {
   return APP.api.get(`${apiBase}/services?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
     .then(response => {
       const { data = [], headers } = response
-      const nextPage = parseInt(headers['x-next-page'], 10) || 1
-      const hasNextPage = nextPage > 1
-      const total = hasNextPage
-        ? (params.page + 1) * params.limit
-        : params.page * params.limit
+      const total = getTotal(headers, params)
       console.log('Success -> HttpService -> getAllServices', response.data)
       return { data, total }
     })
@@ -50,11 +43,7 @@ function getAllMiddlewares (params) {
   return APP.api.get(`${apiBase}/middlewares?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
     .then(response => {
       const { data = [], headers } = response
-      const nextPage = parseInt(headers['x-next-page'], 10) || 1
-      const hasNextPage = nextPage > 1
-      const total = hasNextPage
-        ? (params.page + 1) * params.limit
-        : params.page * params.limit
+      const total = getTotal(headers, params)
       console.log('Success -> HttpService -> getAllMiddlewares', response.data)
       return { data, total }
     })
