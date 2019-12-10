@@ -59,7 +59,7 @@ ping:
 --ping.entryPoint=ping
 ```
 
-#### `manualRouting`
+### `manualRouting`
 
 _Optional, Default=false_
 
