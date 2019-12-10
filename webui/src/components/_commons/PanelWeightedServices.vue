@@ -55,11 +55,11 @@ export default {
   methods: {
     getProvider (service) {
       const words = service.name.split('@')
-      if (words.length !== 2) {
-        return this.data.provider
+      if (words.length === 2) {
+        return words[1]
       }
 
-      return words[1]
+      return this.data.provider
     }
   }
 }
