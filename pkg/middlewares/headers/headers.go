@@ -206,7 +206,6 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 
 	res.Header.Set("Vary", varyHeader)
 	return nil
-
 }
 
 // processCorsHeaders processes the incoming request,
