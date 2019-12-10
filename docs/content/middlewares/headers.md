@@ -307,15 +307,12 @@ A wildcard origin `*` can also be configured, and will match all requests.
 If this value is set by a backend server, it will be overwritten by Traefik
 
 More information including how to use the settings can be found on:
+
 - [Mozilla.org](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin)
 - [w3](https://www.w3.org/TR/cors/#access-control-allow-origin-response-header)
 - [IETF](https://tools.ietf.org/html/rfc6454#section-7.1)
 
 Traefik no longer supports the null value, as it is [no longer recommended as a return value](https://w3c.github.io/webappsec-cors-for-developers/#avoid-returning-access-control-allow-origin-null).
-
-- `origin-list-or-null`
-- `*`
-- `null`
 
 ### `accessControlExposeHeaders`
 
