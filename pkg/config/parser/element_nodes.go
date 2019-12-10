@@ -7,13 +7,20 @@ import (
 	"strings"
 )
 
+// EncoderToNodeOpts Options for the encoderToNode.
+type EncoderToNodeOpts struct {
+	OmitEmpty          bool
+	TagName            string
+	AllowSliceAsStruct bool
+}
+
 // EncodeToNode converts an element to a node.
 // element -> nodes
-func EncodeToNode(element interface{}, rootName string, omitEmpty bool) (*Node, error) {
+func EncodeToNode(element interface{}, rootName string, opts EncoderToNodeOpts) (*Node, error) {
 	rValue := reflect.ValueOf(element)
 	node := &Node{Name: rootName}
 
-	encoder := encoderToNode{omitEmpty: omitEmpty}
+	encoder := encoderToNode{EncoderToNodeOpts: opts}
 
 	err := encoder.setNodeValue(node, rValue)
 	if err != nil {
@@ -24,7 +31,7 @@ func EncodeToNode(element interface{}, rootName string, omitEmpty bool) (*Node, 
 }
 
 type encoderToNode struct {
-	omitEmpty bool
+	EncoderToNodeOpts
 }
 
 func (e encoderToNode) setNodeValue(node *Node, rValue reflect.Value) error {
@@ -65,7 +72,7 @@ func (e encoderToNode) setStructValue(node *Node, rValue reflect.Value) error {
 			continue
 		}
 
-		if field.Tag.Get(TagLabel) == "-" {
+		if field.Tag.Get(e.TagName) == "-" {
 			continue
 		}
 
@@ -78,7 +85,7 @@ func (e encoderToNode) setStructValue(node *Node, rValue reflect.Value) error {
 		}
 
 		nodeName := field.Name
-		if field.Type.Kind() == reflect.Slice && len(field.Tag.Get(TagLabelSliceAsStruct)) != 0 {
+		if e.AllowSliceAsStruct && field.Type.Kind() == reflect.Slice && len(field.Tag.Get(TagLabelSliceAsStruct)) != 0 {
 			nodeName = field.Tag.Get(TagLabelSliceAsStruct)
 		}
 
@@ -101,7 +108,7 @@ func (e encoderToNode) setStructValue(node *Node, rValue reflect.Value) error {
 			}
 
 			if field.Type.Elem().Kind() == reflect.Struct && len(child.Children) == 0 {
-				if field.Tag.Get(TagLabel) != TagLabelAllowEmpty {
+				if field.Tag.Get(e.TagName) != TagLabelAllowEmpty {
 					continue
 				}
 
@@ -181,7 +188,7 @@ func (e encoderToNode) setSliceValue(node *Node, rValue reflect.Value) error {
 }
 
 func (e encoderToNode) isSkippedField(field reflect.StructField, fieldValue reflect.Value) bool {
-	if e.omitEmpty && field.Type.Kind() == reflect.String && fieldValue.Len() == 0 {
+	if e.OmitEmpty && field.Type.Kind() == reflect.String && fieldValue.Len() == 0 {
 		return true
 	}
 
@@ -189,7 +196,7 @@ func (e encoderToNode) isSkippedField(field reflect.StructField, fieldValue refl
 		return true
 	}
 
-	if e.omitEmpty && (field.Type.Kind() == reflect.Slice) &&
+	if e.OmitEmpty && (field.Type.Kind() == reflect.Slice) &&
 		(fieldValue.IsNil() || fieldValue.Len() == 0) {
 		return true
 	}

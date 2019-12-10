@@ -46,17 +46,20 @@ func Encode(element interface{}) ([]parser.Flat, error) {
 		return nil, nil
 	}
 
-	node, err := parser.EncodeToNode(element, parser.DefaultRootName, false)
+	etnOpts := parser.EncoderToNodeOpts{OmitEmpty: false, TagName: parser.TagLabel, AllowSliceAsStruct: true}
+	node, err := parser.EncodeToNode(element, parser.DefaultRootName, etnOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	err = parser.AddMetadata(element, node)
+	metaOpts := parser.MetadataOpts{TagName: parser.TagLabel, AllowSliceAsStruct: true}
+	err = parser.AddMetadata(element, node, metaOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	return parser.EncodeToFlat(element, node, parser.FlatOpts{Case: "upper", Separator: "_"})
+	flatOpts := parser.FlatOpts{Case: "upper", Separator: "_", TagName: parser.TagLabel}
+	return parser.EncodeToFlat(element, node, flatOpts)
 }
 
 func checkPrefix(prefix string) error {

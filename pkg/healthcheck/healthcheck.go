@@ -25,12 +25,18 @@ const (
 var singleton *HealthCheck
 var once sync.Once
 
-// BalancerHandler includes functionality for load-balancing management.
-type BalancerHandler interface {
-	ServeHTTP(w http.ResponseWriter, req *http.Request)
+// Balancer is the set of operations required to manage the list of servers in a
+// load-balancer.
+type Balancer interface {
 	Servers() []*url.URL
 	RemoveServer(u *url.URL) error
 	UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error
+}
+
+// BalancerHandler includes functionality for load-balancing management.
+type BalancerHandler interface {
+	ServeHTTP(w http.ResponseWriter, req *http.Request)
+	Balancer
 }
 
 // metricsRegistry is a local interface in the health check package, exposing only the required metrics
@@ -49,7 +55,7 @@ type Options struct {
 	Transport http.RoundTripper
 	Interval  time.Duration
 	Timeout   time.Duration
-	LB        BalancerHandler
+	LB        Balancer
 }
 
 func (opt Options) String() string {
@@ -146,18 +152,18 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 	enabledURLs := backend.LB.Servers()
 	var newDisabledURLs []backendURL
 	// FIXME re enable metrics
-	for _, disableURL := range backend.disabledURLs {
+	for _, disabledURL := range backend.disabledURLs {
 		// FIXME serverUpMetricValue := float64(0)
-		if err := checkHealth(disableURL.url, backend); err == nil {
+		if err := checkHealth(disabledURL.url, backend); err == nil {
 			logger.Warnf("Health check up: Returning to server list. Backend: %q URL: %q Weight: %d",
-				backend.name, disableURL.url.String(), disableURL.weight)
-			if err = backend.LB.UpsertServer(disableURL.url, roundrobin.Weight(disableURL.weight)); err != nil {
+				backend.name, disabledURL.url.String(), disabledURL.weight)
+			if err = backend.LB.UpsertServer(disabledURL.url, roundrobin.Weight(disabledURL.weight)); err != nil {
 				logger.Error(err)
 			}
 			// FIXME serverUpMetricValue = 1
 		} else {
-			logger.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disableURL.url.String(), err)
-			newDisabledURLs = append(newDisabledURLs, disableURL)
+			logger.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disabledURL.url.String(), err)
+			newDisabledURLs = append(newDisabledURLs, disabledURL)
 		}
 		// FIXME labelValues := []string{"backend", backend.name, "url", backendurl.url.String()}
 		// FIXME hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
@@ -177,7 +183,7 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 					weight = 1
 				}
 			}
-			logger.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Weight: %d Reason: %s", backend.name, enableURL.String(), weight, err)
+			logger.Warnf("Health check failed, removing from server list. Backend: %q URL: %q Weight: %d Reason: %s", backend.name, enableURL.String(), weight, err)
 			if err := backend.LB.RemoveServer(enableURL); err != nil {
 				logger.Error(err)
 			}
@@ -280,4 +286,39 @@ func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.Server
 		lb.serviceInfo.UpdateServerStatus(u.String(), serverUp)
 	}
 	return err
+}
+
+// Balancers is a list of Balancers(s) that implements the Balancer interface.
+type Balancers []Balancer
+
+// Servers returns the servers url from all the BalancerHandler
+func (b Balancers) Servers() []*url.URL {
+	var servers []*url.URL
+	for _, lb := range b {
+		servers = append(servers, lb.Servers()...)
+	}
+
+	return servers
+}
+
+// RemoveServer removes the given server from all the BalancerHandler,
+// and updates the status of the server to "DOWN".
+func (b Balancers) RemoveServer(u *url.URL) error {
+	for _, lb := range b {
+		if err := lb.RemoveServer(u); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// UpsertServer adds the given server to all the BalancerHandler,
+// and updates the status of the server to "UP".
+func (b Balancers) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
+	for _, lb := range b {
+		if err := lb.UpsertServer(u, options...); err != nil {
+			return err
+		}
+	}
+	return nil
 }

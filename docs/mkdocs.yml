@@ -84,6 +84,10 @@ nav:
       - 'Marathon': 'providers/marathon.md'
       - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
+      - 'Consul': 'providers/consul.md'
+      - 'Etcd': 'providers/etcd.md'
+      - 'ZooKeeper': 'providers/zookeeper.md'
+      - 'Redis': 'providers/redis.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'EntryPoints': 'routing/entrypoints.md'
@@ -95,6 +99,7 @@ nav:
           - 'Consul Catalog': 'routing/providers/consul-catalog.md'
           - 'Marathon': 'routing/providers/marathon.md'
           - 'Rancher': 'routing/providers/rancher.md'
+          - 'KV': 'routing/providers/kv.md'
   - 'HTTPS & TLS':
       - 'Overview': 'https/overview.md'
       - 'TLS': 'https/tls.md'
@@ -143,6 +148,7 @@ nav:
           - 'Datadog': 'observability/tracing/datadog.md'
           - 'Instana': 'observability/tracing/instana.md'
           - 'Haystack': 'observability/tracing/haystack.md'
+          - 'Elastic': 'observability/tracing/elastic.md'
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
@@ -179,3 +185,4 @@ nav:
         - 'Consul Catalog': 'reference/dynamic-configuration/consul-catalog.md'
         - 'Marathon': 'reference/dynamic-configuration/marathon.md'
         - 'Rancher': 'reference/dynamic-configuration/rancher.md'
+        - 'KV': 'reference/dynamic-configuration/kv.md'

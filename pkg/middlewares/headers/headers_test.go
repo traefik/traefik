@@ -275,6 +275,25 @@ func TestCORSPreflights(t *testing.T) {
 				"Access-Control-Allow-Headers": {"origin,X-Forwarded-For"},
 			},
 		},
+		{
+			desc: "No Request Headers Preflight",
+			header: NewHeader(emptyHandler, dynamic.Headers{
+				AccessControlAllowMethods: []string{"GET", "OPTIONS", "PUT"},
+				AccessControlAllowOrigin:  "*",
+				AccessControlAllowHeaders: []string{"origin", "X-Forwarded-For"},
+				AccessControlMaxAge:       600,
+			}),
+			requestHeaders: map[string][]string{
+				"Access-Control-Request-Method": {"GET", "OPTIONS"},
+				"Origin":                        {"https://foo.bar.org"},
+			},
+			expected: map[string][]string{
+				"Access-Control-Allow-Origin":  {"*"},
+				"Access-Control-Max-Age":       {"600"},
+				"Access-Control-Allow-Methods": {"GET,OPTIONS,PUT"},
+				"Access-Control-Allow-Headers": {"origin,X-Forwarded-For"},
+			},
+		},
 	}
 
 	for _, test := range testCases {

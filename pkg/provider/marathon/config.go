@@ -185,7 +185,7 @@ func (p *Provider) keepApplication(ctx context.Context, extraConf configuration,
 	}
 
 	// Filter by constraints.
-	matches, err := constraints.Match(labels, p.Constraints)
+	matches, err := constraints.MatchLabels(labels, p.Constraints)
 	if err != nil {
 		logger.Errorf("Error matching constraints expression: %v", err)
 		return false

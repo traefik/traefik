@@ -129,6 +129,50 @@
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
+  [providers.consul]
+	rootKey = "traefik"
+    endpoints = ["foobar", "foobar"]
+	username = "foobar"
+	password = "foobar"
+    [providers.consul.tls]
+      ca = "foobar"
+      caOptional = true
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
+  [providers.etcd]
+	rootKey = "traefik"
+    endpoints = ["foobar", "foobar"]
+	username = "foobar"
+	password = "foobar"
+    [providers.etcd.tls]
+      ca = "foobar"
+      caOptional = true
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
+  [providers.zooKeeper]
+	rootKey = "traefik"
+    endpoints = ["foobar", "foobar"]
+	username = "foobar"
+	password = "foobar"
+    [providers.zooKeeper.tls]
+      ca = "foobar"
+      caOptional = true
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
+  [providers.redis]
+	rootKey = "traefik"
+    endpoints = ["foobar", "foobar"]
+	username = "foobar"
+	password = "foobar"
+    [providers.redis.tls]
+      ca = "foobar"
+      caOptional = true
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
 
 [api]
   insecure = true
@@ -233,6 +277,10 @@
     parentIDHeaderName = "foobar"
     spanIDHeaderName = "foobar"
     baggagePrefixHeaderName = "foobar"
+  [tracing.elastic]
+    serverURL = "foobar"
+    secretToken = "foobar"
+    serviceEnvironment = "foobar"
 
 [hostResolver]
   cnameFlattening = true

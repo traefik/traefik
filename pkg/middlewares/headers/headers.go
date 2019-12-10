@@ -221,13 +221,11 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 	}
 
 	reqAcMethod := req.Header.Get("Access-Control-Request-Method")
-	reqAcHeaders := req.Header.Get("Access-Control-Request-Headers")
 	originHeader := req.Header.Get("Origin")
 
-	if reqAcMethod != "" && reqAcHeaders != "" && originHeader != "" && req.Method == http.MethodOptions {
+	if reqAcMethod != "" && originHeader != "" && req.Method == http.MethodOptions {
 		// If the request is an OPTIONS request with an Access-Control-Request-Method header,
-		// and Access-Control-Request-Headers headers, and Origin headers,
-		// then it is a CORS preflight request,
+		// and Origin headers, then it is a CORS preflight request,
 		// and we need to build a custom response: https://www.w3.org/TR/cors/#preflight-request
 		if s.headers.AccessControlAllowCredentials {
 			rw.Header().Set("Access-Control-Allow-Credentials", "true")

@@ -17,4 +17,4 @@
 --providers.rancher.intervalPoll=false
 
 # Prefix used for accessing the Rancher metadata service
---providers.rancher.prefix="/latest"
+--providers.rancher.prefix=/latest

@@ -82,7 +82,7 @@ Attach labels to your containers and let Traefik do the rest!
     ```
 
     ```bash tab="CLI"
-    --providers.docker.endpoint="tcp://127.0.0.1:2375"
+    --providers.docker.endpoint=tcp://127.0.0.1:2375
     --providers.docker.swarmMode=true
     ```
 
@@ -165,7 +165,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [entry points](../routers/index.md#entrypoints) for more information.
 
     ```yaml
-    - "traefik.http.routers.myrouter.entrypoints=web,websecure"
+    - "traefik.http.routers.myrouter.entrypoints=ep1,ep2"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.middlewares`"
@@ -243,11 +243,12 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 !!! warning "The character `@` is not authorized in the service name `<service_name>`."
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.server.port`"
-
+    
     Registers a port.
     Useful when the container exposes multiples ports.
 
-    Mandatory for Docker Swarm.
+    Mandatory for Docker Swarm (see the section ["Port Detection with Docker Swarm"](../../providers/docker.md#port-detection_1)).
+    {: #port }
 
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.server.port=8080"

@@ -34,7 +34,11 @@ type entryPointMiddleware struct {
 }
 
 func (e *entryPointMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	spanCtx, _ := e.Extract(opentracing.HTTPHeaders, tracing.HTTPHeadersCarrier(req.Header))
+	spanCtx, err := e.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	if err != nil {
+		log.FromContext(middlewares.GetLoggerCtx(req.Context(), "tracing", entryPointTypeName)).
+			Debugf("Failed to extract the context: %v", err)
+	}
 
 	span, req, finish := e.StartSpanf(req, ext.SpanKindRPCServerEnum, "EntryPoint", []string{e.entryPoint, req.Host}, " ", ext.RPCServerOption(spanCtx))
 	defer finish()

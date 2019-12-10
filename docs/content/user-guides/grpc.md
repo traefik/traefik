@@ -32,7 +32,7 @@ api: {}
 ```
 
 ```yaml tab="CLI"
---entryPoints.web.address=":80"
+--entryPoints.web.address=:80
 --providers.file.filename=dynamic_conf.toml
 --api.insecure=true
 ```
@@ -153,7 +153,7 @@ api: {}
 ```
 
 ```yaml tab="CLI"
---entryPoints.websecure.address=":4443"
+--entryPoints.websecure.address=:4443
 # For secure connection on backend.local
 --serversTransport.rootCAs=./backend.cert
 --providers.file.filename=dynamic_conf.toml

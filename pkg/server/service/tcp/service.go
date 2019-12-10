@@ -51,7 +51,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 			defaultTerminationDelay := 100
 			conf.LoadBalancer.TerminationDelay = &defaultTerminationDelay
 		}
-		duration := time.Millisecond * time.Duration(*conf.LoadBalancer.TerminationDelay)
+		duration := time.Duration(*conf.LoadBalancer.TerminationDelay) * time.Millisecond
 
 		for name, server := range conf.LoadBalancer.Servers {
 			if _, _, err := net.SplitHostPort(server.Address); err != nil {

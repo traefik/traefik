@@ -156,6 +156,7 @@ func TestEncodeToFlat(t *testing.T) {
 				Case:      "upper",
 				Separator: "_",
 				SkipRoot:  false,
+				TagName:   TagLabel,
 			},
 			expected: []Flat{{
 				Name:        "TRAEFIK_FIELD",
@@ -1236,7 +1237,7 @@ func TestEncodeToFlat(t *testing.T) {
 
 			var opts FlatOpts
 			if test.opts == nil {
-				opts = FlatOpts{Separator: ".", SkipRoot: true}
+				opts = FlatOpts{Separator: ".", SkipRoot: true, TagName: TagLabel}
 			} else {
 				opts = *test.opts
 			}

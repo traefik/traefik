@@ -18,4 +18,4 @@ providers:
   intervalPoll: false
 
   # Prefix used for accessing the Rancher metadata service
-  prefix: "/latest"
+  prefix: /latest

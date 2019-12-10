@@ -24,7 +24,7 @@ func fakeRedis(t *testing.T, listener net.Listener) {
 			}
 
 			if string(buf[:4]) == "ping" {
-				time.Sleep(time.Millisecond * 1)
+				time.Sleep(1 * time.Millisecond)
 				if _, err := conn.Write([]byte("PONG")); err != nil {
 					conn.Close()
 					return

@@ -144,8 +144,8 @@ export default {
       loadingOverview: true,
       timeOutEntryGetAll: null,
       timeOutOverviewAll: null,
-      intervalRefreshAll: null,
-      intervalRefreshAllTime: 5000
+      intervalRefresh: null,
+      intervalRefreshTime: 5000
     }
   },
   computed: {
@@ -167,10 +167,7 @@ export default {
   methods: {
     ...mapActions('entrypoints', { entryGetAll: 'getAll' }),
     ...mapActions('core', { getOverview: 'getOverview' }),
-    refreshAll () {
-      this.onGetAll()
-    },
-    onGetAll () {
+    fetchEntries () {
       this.entryGetAll()
         .then(body => {
           console.log('Success -> dashboard/entrypoints', body)
@@ -182,6 +179,8 @@ export default {
         .catch(error => {
           console.log('Error -> dashboard/entrypoints', error)
         })
+    },
+    fetchOverview () {
       this.getOverview()
         .then(body => {
           console.log('Success -> dashboard/overview', body)
@@ -193,16 +192,18 @@ export default {
         .catch(error => {
           console.log('Error -> dashboard/overview', error)
         })
+    },
+    fetchAll () {
+      this.fetchEntries()
+      this.fetchOverview()
     }
   },
   created () {
-    this.refreshAll()
-    this.intervalRefreshAll = setInterval(() => {
-      this.refreshAll()
-    }, this.intervalRefreshAllTime)
+    this.fetchAll()
+    this.intervalRefresh = setInterval(this.fetchOverview, this.intervalRefreshTime)
   },
   beforeDestroy () {
-    clearInterval(this.intervalRefreshAll)
+    clearInterval(this.intervalRefresh)
     clearTimeout(this.timeOutEntryGetAll)
     clearTimeout(this.timeOutOverviewAll)
     this.$store.commit('entrypoints/getAllClear')

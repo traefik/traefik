@@ -1,6 +1,10 @@
 package cli
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -51,6 +55,63 @@ func TestCommand_AddCommand(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestCommand_PrintHelp(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		command        *Command
+		expectedOutput string
+		expectedError  error
+	}{
+		{
+			desc:           "print default help",
+			command:        &Command{},
+			expectedOutput: "    \n\nUsage:  [command] [flags] [arguments]\n\nUse \" [command] --help\" for help on any command.\n\n",
+		},
+		{
+			desc: "print custom help",
+			command: &Command{
+				Name:        "root",
+				Description: "Description for root",
+				Configuration: &struct {
+					Foo []struct {
+						Field string
+					}
+				}{},
+				Run: func(args []string) error {
+					return nil
+				},
+				CustomHelpFunc: func(w io.Writer, _ *Command) error {
+					_, _ = fmt.Fprintln(w, "test")
+					return nil
+				},
+			},
+			expectedOutput: "test\n",
+		},
+		{
+			desc: "error is returned from called help",
+			command: &Command{
+				CustomHelpFunc: func(_ io.Writer, _ *Command) error {
+					return errors.New("test")
+				},
+			},
+			expectedError: errors.New("test"),
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			buffer := &bytes.Buffer{}
+			err := test.command.PrintHelp(buffer)
+
+			assert.Equal(t, test.expectedError, err)
+			assert.Equal(t, test.expectedOutput, buffer.String())
 		})
 	}
 }
@@ -559,6 +620,88 @@ func Test_execute(t *testing.T) {
 			},
 			expected: expected{result: "root---foo=bar--fii=bir"},
 		},
+		{
+			desc: "sub command help",
+			args: []string{"", "test", "subtest", "--help"},
+			command: func() *Command {
+				rootCmd := &Command{
+					Name:      "test",
+					Resources: []ResourceLoader{&FlagLoader{}},
+				}
+
+				subCmd := &Command{
+					Name:      "subtest",
+					Resources: []ResourceLoader{&FlagLoader{}},
+				}
+
+				err := rootCmd.AddCommand(subCmd)
+				require.NoError(t, err)
+
+				subSubCmd := &Command{
+					Name:      "subsubtest",
+					Resources: []ResourceLoader{&FlagLoader{}},
+				}
+
+				err = subCmd.AddCommand(subSubCmd)
+				require.NoError(t, err)
+
+				subSubSubCmd := &Command{
+					Name:      "subsubsubtest",
+					Resources: []ResourceLoader{&FlagLoader{}},
+					Run: func([]string) error {
+						called = "subsubsubtest"
+						return nil
+					},
+				}
+
+				err = subSubCmd.AddCommand(subSubSubCmd)
+				require.NoError(t, err)
+
+				return rootCmd
+			},
+			expected: expected{},
+		},
+		{
+			desc: "sub sub command help",
+			args: []string{"", "test", "subtest", "subsubtest", "--help"},
+			command: func() *Command {
+				rootCmd := &Command{
+					Name:      "test",
+					Resources: []ResourceLoader{&FlagLoader{}},
+				}
+
+				subCmd := &Command{
+					Name:      "subtest",
+					Resources: []ResourceLoader{&FlagLoader{}},
+				}
+
+				err := rootCmd.AddCommand(subCmd)
+				require.NoError(t, err)
+
+				subSubCmd := &Command{
+					Name:      "subsubtest",
+					Resources: []ResourceLoader{&FlagLoader{}},
+				}
+
+				err = subCmd.AddCommand(subSubCmd)
+				require.NoError(t, err)
+
+				subSubSubCmd := &Command{
+					Name:      "subsubsubtest",
+					Resources: []ResourceLoader{&FlagLoader{}},
+					Run: func([]string) error {
+						called = "subsubsubtest"
+						return nil
+					},
+				}
+
+				err = subSubCmd.AddCommand(subSubSubCmd)
+				require.NoError(t, err)
+
+				return rootCmd
+			},
+			expected: expected{},
+		},
 	}
 
 	for _, test := range testCases {
@@ -755,4 +898,44 @@ Flags:
     --yu.fuu  (Default: "")
 
 `, string(out))
+}
+
+func TestName(t *testing.T) {
+	rootCmd := &Command{
+		Name:      "test",
+		Resources: []ResourceLoader{&FlagLoader{}},
+	}
+
+	subCmd := &Command{
+		Name:      "subtest",
+		Resources: []ResourceLoader{&FlagLoader{}},
+	}
+
+	err := rootCmd.AddCommand(subCmd)
+	require.NoError(t, err)
+
+	subSubCmd := &Command{
+		Name:      "subsubtest",
+		Resources: []ResourceLoader{&FlagLoader{}},
+		Run: func([]string) error {
+			return nil
+		},
+	}
+
+	err = subCmd.AddCommand(subSubCmd)
+	require.NoError(t, err)
+
+	subSubSubCmd := &Command{
+		Name:      "subsubsubtest",
+		Resources: []ResourceLoader{&FlagLoader{}},
+		Run: func([]string) error {
+			return nil
+		},
+	}
+
+	err = subSubCmd.AddCommand(subSubSubCmd)
+	require.NoError(t, err)
+
+	err = execute(rootCmd, []string{"", "test", "subtest", "subsubtest", "subsubsubtest", "--help"}, true)
+	require.NoError(t, err)
 }
