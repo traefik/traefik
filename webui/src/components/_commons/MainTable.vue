@@ -24,6 +24,9 @@
             <td v-if="hasColumn('status')" v-bind:class="`text-${getColumn('status').align}`">
               <avatar-state :state="row.status | status "/>
             </td>
+            <td v-if="hasColumn('priority')" v-bind:class="`text-${getColumn('priority').align}`">
+              {{ row.priority }}
+            </td>
             <td v-if="hasColumn('tls')" v-bind:class="`text-${getColumn('tls').align}`">
               <t-l-s-state :is-t-l-s="row.tls"/>
             </td>
@@ -112,7 +115,7 @@ export default {
   },
   data () {
     return {
-      visibleColumnsHttpRouters: ['status', 'rule', 'entryPoints', 'name', 'service', 'tls', 'provider'],
+      visibleColumnsHttpRouters: ['status', 'rule', 'entryPoints', 'name', 'service', 'tls', 'provider', 'priority'],
       visibleColumnsHttpServices: ['status', 'name', 'type', 'servers', 'provider'],
       visibleColumnsHttpMiddlewares: ['status', 'name', 'type', 'provider'],
       visibleColumns: ['status', 'name', 'provider'],
@@ -123,6 +126,12 @@ export default {
           label: 'Status',
           align: 'left',
           field: row => row.status
+        },
+        {
+          name: 'priority',
+          align: 'center',
+          label: 'Priority',
+          field: row => row.priority
         },
         {
           name: 'tls',
