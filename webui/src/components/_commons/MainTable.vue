@@ -24,9 +24,6 @@
             <td v-if="hasColumn('status')" v-bind:class="`text-${getColumn('status').align}`">
               <avatar-state :state="row.status | status "/>
             </td>
-            <td v-if="hasColumn('priority')" v-bind:class="`text-${getColumn('priority').align}`">
-              {{ row.priority }}
-            </td>
             <td v-if="hasColumn('tls')" v-bind:class="`text-${getColumn('tls').align}`">
               <t-l-s-state :is-t-l-s="row.tls"/>
             </td>
@@ -63,6 +60,9 @@
                 class="app-chip app-chip-entry-points">
                 {{ row.type }}
               </q-chip>
+            </td>
+            <td v-if="hasColumn('priority')" v-bind:class="`text-${getColumn('priority').align}`">
+              {{ row.priority }}
             </td>
             <td v-if="hasColumn('servers')" v-bind:class="`text-${getColumn('servers').align}`">
               <span class="servers-label">{{ row | servers }}</span>
@@ -128,12 +128,6 @@ export default {
           field: row => row.status
         },
         {
-          name: 'priority',
-          align: 'center',
-          label: 'Priority',
-          field: row => row.priority
-        },
-        {
           name: 'tls',
           align: 'left',
           label: 'TLS',
@@ -162,6 +156,12 @@ export default {
           align: 'left',
           label: 'Type',
           field: row => row.type
+        },
+        {
+          name: 'priority',
+          align: 'center',
+          label: 'Priority',
+          field: row => row.priority
         },
         {
           name: 'servers',
