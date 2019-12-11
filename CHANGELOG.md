@@ -2,20 +2,15 @@
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc1...v2.1.0)
 
 **Enhancements:**
-- **[consul,etcd,kv,redis,zk]** Add KV store providers (dynamic configuration only) ([#5899](https://github.com/containous/traefik/pull/5899) by [ldez](https://github.com/ldez))
 - **[consulcatalog]** Add consul catalog options: requireConsistent, stale, cache ([#5752](https://github.com/containous/traefik/pull/5752) by [ldez](https://github.com/ldez))
 - **[consulcatalog]** Add Consul Catalog provider ([#5395](https://github.com/containous/traefik/pull/5395) by [negasus](https://github.com/negasus))
 - **[k8s,k8s/crd,service]** Support for all services kinds (and sticky) in CRD ([#5711](https://github.com/containous/traefik/pull/5711) by [mpl](https://github.com/mpl))
-- **[k8s,k8s/ingress]** Update deprecated function call in k8s providers  ([#5241](https://github.com/containous/traefik/pull/5241) by [Wagum](https://github.com/Wagum))
 - **[metrics]** Added configurable prefix for statsd metrics collection ([#5336](https://github.com/containous/traefik/pull/5336) by [schulterklopfer](https://github.com/schulterklopfer))
 - **[middleware]** Conditional compression based on request Content-Type ([#5721](https://github.com/containous/traefik/pull/5721) by [ldez](https://github.com/ldez))
-- **[rancher]** Duration order consistency when multiplying number by time unit ([#5885](https://github.com/containous/traefik/pull/5885) by [maxifom](https://github.com/maxifom))
 - **[server]** Add internal provider ([#5815](https://github.com/containous/traefik/pull/5815) by [ldez](https://github.com/ldez))
 - **[tls]** Add support for MaxVersion in tls.Options ([#5650](https://github.com/containous/traefik/pull/5650) by [kmeekva](https://github.com/kmeekva))
 - **[tls]** Add tls option for Elliptic Curve Preferences ([#5466](https://github.com/containous/traefik/pull/5466) by [ksarink](https://github.com/ksarink))
 - **[tracing]** Update jaeger dependencies ([#5637](https://github.com/containous/traefik/pull/5637) by [mmatur](https://github.com/mmatur))
-- **[tracing]** Elastic APM tracer implementation ([#5870](https://github.com/containous/traefik/pull/5870) by [amine7536](https://github.com/amine7536))
-- **[webui]** Web UI: Table infinite scroll ([#5875](https://github.com/containous/traefik/pull/5875) by [matthieuh](https://github.com/matthieuh))
 
 **Bug fixes:**
 - **[api]** fix: debug endpoint when insecure API. ([#5937](https://github.com/containous/traefik/pull/5937) by [ldez](https://github.com/ldez))
