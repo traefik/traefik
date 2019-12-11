@@ -377,11 +377,12 @@ type StripPrefixRegex struct {
 
 // TLSClientCertificateInfo holds the client TLS certificate info configuration.
 type TLSClientCertificateInfo struct {
-	NotAfter  bool                        `json:"notAfter,omitempty" toml:"notAfter,omitempty" yaml:"notAfter,omitempty"`
-	NotBefore bool                        `json:"notBefore,omitempty" toml:"notBefore,omitempty" yaml:"notBefore,omitempty"`
-	Sans      bool                        `json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty"`
-	Subject   *TLSCLientCertificateDNInfo `json:"subject,omitempty" toml:"subject,omitempty" yaml:"subject,omitempty"`
-	Issuer    *TLSCLientCertificateDNInfo `json:"issuer,omitempty" toml:"issuer,omitempty" yaml:"issuer,omitempty"`
+	NotAfter     bool                        `json:"notAfter,omitempty" toml:"notAfter,omitempty" yaml:"notAfter,omitempty"`
+	NotBefore    bool                        `json:"notBefore,omitempty" toml:"notBefore,omitempty" yaml:"notBefore,omitempty"`
+	Sans         bool                        `json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty"`
+	Subject      *TLSCLientCertificateDNInfo `json:"subject,omitempty" toml:"subject,omitempty" yaml:"subject,omitempty"`
+	Issuer       *TLSCLientCertificateDNInfo `json:"issuer,omitempty" toml:"issuer,omitempty" yaml:"issuer,omitempty"`
+	SerialNumber bool                        `json:"serialNumber,omitempty" toml:"serialNumber,omitempty" yaml:"serialNumber,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

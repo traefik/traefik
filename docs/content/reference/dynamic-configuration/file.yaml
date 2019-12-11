@@ -239,6 +239,7 @@ http:
             commonName: true
             serialNumber: true
             domainComponent: true
+          serialNumber: true
     Middleware13:
       rateLimit:
         average: 42
