@@ -406,7 +406,7 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
 !!! info "Extracted data"
     
     The delimiters and `\n` will be removed.  
-    If there are more than one certificate, they are separated by a "`;`".
+    If there are more than one certificate, they are separated by a "`,`".
 
 !!! warning "`X-Forwarded-Tls-Client-Cert` value could exceed the web server header size limit"
 
@@ -421,12 +421,12 @@ The value of the header will be an escaped concatenation of all the selected cer
 The following example shows an unescaped result that uses all the available fields: 
 
 ```text
-Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.cheese.com",Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2",NB=1544094616,NA=1607166616,SAN=*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2
+Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.cheese.com";Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2";NB="1544094616";NA="1607166616";SAN="*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2"
 ```
 
 !!! info "Multiple certificates"
 
-    If there are more than one certificate, they are separated by a `;`.
+    If there are more than one certificate, they are separated by a `,`.
 
 #### `info.notAfter`
 
@@ -442,7 +442,7 @@ The data are taken from the following certificate part:
 The escape `notAfter` info part will be like:
 
 ```text
-NA=1607166616
+NA="1607166616"
 ```
 
 #### `info.notBefore`
@@ -459,7 +459,7 @@ Validity
 The escape `notBefore` info part will be like:
 
 ```text
-NB=1544094616
+NB="1544094616"
 ```
 
 #### `info.sans`
@@ -476,7 +476,7 @@ The data are taken from the following certificate part:
 The escape SANs info part will be like:
 
 ```text
-SAN=*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2
+SAN="*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2"
 ```
 
 !!! info "multiple values"
