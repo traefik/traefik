@@ -674,6 +674,12 @@ func getRuleForPath(pa extensionsv1beta1.HTTPIngressPath, i *extensionsv1beta1.I
 			return "", fmt.Errorf("rewrite-target must not be used together with annotation %q", annotationKubernetesRuleType)
 		}
 		rewriteTargetRule := fmt.Sprintf("ReplacePathRegex: ^%s(.*) %s$1", pa.Path, strings.TrimRight(rewriteTarget, "/"))
+		if pa.Path == "/" {
+			// If path = /, then just append the cap group, as if we don't cap the path as part of the regex,
+			// then when we strip the right / from the rewrite target, it ends up being missed, as removed but never returned
+			// this only happens when path = / because it is the only case where TrimRight will catch a leading /.
+			rewriteTargetRule = fmt.Sprintf("ReplacePathRegex: ^(.*) %s$1", strings.TrimRight(rewriteTarget, "/"))
+		}
 		rules = append(rules, rewriteTargetRule)
 	}
 
