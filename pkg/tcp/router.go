@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"github.com/gorilla/mux"
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/containous/traefik/v2/pkg/log"
@@ -53,6 +55,20 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 		if target, ok := r.routingTable[serverName]; ok {
 			target.ServeTCP(r.GetConn(conn, peeked))
 			return
+		}
+	}
+
+	for routingKey, _ := range r.routingTable {
+		route := &mux.Route{}
+		route.Host(routingKey)
+
+		req := &http.Request{URL: &url.URL{Host:serverName,Scheme:"https"}}
+
+		if route.Match(req, &mux.RouteMatch{Route:route}) {
+			r.routingTable[routingKey].ServeTCP(r.GetConn(conn, peeked))
+			return
+		} else {
+			continue
 		}
 	}
 
