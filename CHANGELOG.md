@@ -1,3 +1,58 @@
+## [v2.1.0](https://github.com/containous/traefik/tree/v2.1.0) (2019-12-10)
+[All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc1...v2.1.0)
+
+**Enhancements:**
+- **[consul,etcd,kv,redis,zk]** Add KV store providers (dynamic configuration only) ([#5899](https://github.com/containous/traefik/pull/5899) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Add consul catalog options: requireConsistent, stale, cache ([#5752](https://github.com/containous/traefik/pull/5752) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Add Consul Catalog provider ([#5395](https://github.com/containous/traefik/pull/5395) by [negasus](https://github.com/negasus))
+- **[k8s,k8s/crd,service]** Support for all services kinds (and sticky) in CRD ([#5711](https://github.com/containous/traefik/pull/5711) by [mpl](https://github.com/mpl))
+- **[k8s,k8s/ingress]** Update deprecated function call in k8s providers  ([#5241](https://github.com/containous/traefik/pull/5241) by [Wagum](https://github.com/Wagum))
+- **[metrics]** Added configurable prefix for statsd metrics collection ([#5336](https://github.com/containous/traefik/pull/5336) by [schulterklopfer](https://github.com/schulterklopfer))
+- **[middleware]** Conditional compression based on request Content-Type ([#5721](https://github.com/containous/traefik/pull/5721) by [ldez](https://github.com/ldez))
+- **[rancher]** Duration order consistency when multiplying number by time unit ([#5885](https://github.com/containous/traefik/pull/5885) by [maxifom](https://github.com/maxifom))
+- **[server]** Add internal provider ([#5815](https://github.com/containous/traefik/pull/5815) by [ldez](https://github.com/ldez))
+- **[tls]** Add support for MaxVersion in tls.Options ([#5650](https://github.com/containous/traefik/pull/5650) by [kmeekva](https://github.com/kmeekva))
+- **[tls]** Add tls option for Elliptic Curve Preferences ([#5466](https://github.com/containous/traefik/pull/5466) by [ksarink](https://github.com/ksarink))
+- **[tracing]** Update jaeger dependencies ([#5637](https://github.com/containous/traefik/pull/5637) by [mmatur](https://github.com/mmatur))
+- **[tracing]** Elastic APM tracer implementation ([#5870](https://github.com/containous/traefik/pull/5870) by [amine7536](https://github.com/amine7536))
+- **[webui]** Web UI: Table infinite scroll ([#5875](https://github.com/containous/traefik/pull/5875) by [matthieuh](https://github.com/matthieuh))
+
+**Bug fixes:**
+- **[api]** fix: debug endpoint when insecure API. ([#5937](https://github.com/containous/traefik/pull/5937) by [ldez](https://github.com/ldez))
+- **[cli]** fix: sub command help ([#5887](https://github.com/containous/traefik/pull/5887) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** fix: consul catalog constraints. ([#5913](https://github.com/containous/traefik/pull/5913) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Service registered with same id on Consul Catalog ([#5900](https://github.com/containous/traefik/pull/5900) by [mmatur](https://github.com/mmatur))
+- **[consulcatalog]** Fix empty address for registering service without IP ([#5826](https://github.com/containous/traefik/pull/5826) by [mmatur](https://github.com/mmatur))
+- **[logs,middleware,metrics]** detect CloseNotify capability in accesslog and metrics ([#5985](https://github.com/containous/traefik/pull/5985) by [mpl](https://github.com/mpl))
+- **[server]** fix: remove double call to server Close. ([#5960](https://github.com/containous/traefik/pull/5960) by [ldez](https://github.com/ldez))
+- **[webui]** Fix weighted service provider icon ([#5983](https://github.com/containous/traefik/pull/5983) by [sh7dm](https://github.com/sh7dm))
+- **[webui]** Fix http/tcp resources pagination ([#5986](https://github.com/containous/traefik/pull/5986) by [matthieuh](https://github.com/matthieuh))
+- **[webui]** Use valid condition in the service details panel UI ([#5984](https://github.com/containous/traefik/pull/5984) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[webui]** Web UI: Avoid polling on /api/entrypoints ([#5863](https://github.com/containous/traefik/pull/5863) by [matthieuh](https://github.com/matthieuh))
+- **[webui]** Web UI: Sync toolbar table state with url query params ([#5861](https://github.com/containous/traefik/pull/5861) by [matthieuh](https://github.com/matthieuh))
+
+**Documentation:**
+- **[consulcatalog]** fix: Consul Catalog documentation. ([#5725](https://github.com/containous/traefik/pull/5725) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Fix consul catalog documentation ([#5661](https://github.com/containous/traefik/pull/5661) by [mmatur](https://github.com/mmatur))
+- Prepare release v2.1.0-rc2 ([#5846](https://github.com/containous/traefik/pull/5846) by [ldez](https://github.com/ldez))
+- Prepare release v2.1.0-rc1 ([#5844](https://github.com/containous/traefik/pull/5844) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Several documentation fixes ([#5987](https://github.com/containous/traefik/pull/5987) by [ldez](https://github.com/ldez))
+- Prepare release v2.1.0-rc3 ([#5929](https://github.com/containous/traefik/pull/5929) by [ldez](https://github.com/ldez))
+
+**Misc:**
+- **[cli]** Add custom help function to command ([#5923](https://github.com/containous/traefik/pull/5923) by [Ullaakut](https://github.com/Ullaakut))
+- **[server]** fix: use MaxInt32. ([#5845](https://github.com/containous/traefik/pull/5845) by [ldez](https://github.com/ldez))
+- Merge current v2.0 branch into master ([#5841](https://github.com/containous/traefik/pull/5841) by [ldez](https://github.com/ldez))
+- Merge current v2.0 branch into master  ([#5749](https://github.com/containous/traefik/pull/5749) by [ldez](https://github.com/ldez))
+- Merge current v2.0 branch into master  ([#5619](https://github.com/containous/traefik/pull/5619) by [ldez](https://github.com/ldez))
+- Merge current v2.0 branch into master  ([#5464](https://github.com/containous/traefik/pull/5464) by [ldez](https://github.com/ldez))
+- Merge v2.0.0 into master ([#5402](https://github.com/containous/traefik/pull/5402) by [ldez](https://github.com/ldez))
+- Merge v2.0.0-rc3 into master ([#5354](https://github.com/containous/traefik/pull/5354) by [ldez](https://github.com/ldez))
+- Merge v2.0.0-rc1 into master  ([#5253](https://github.com/containous/traefik/pull/5253) by [ldez](https://github.com/ldez))
+- Merge current v2.0 branch into v2.1 ([#5977](https://github.com/containous/traefik/pull/5977) by [ldez](https://github.com/ldez))
+- Merge current v2.0 branch into v2.1 ([#5931](https://github.com/containous/traefik/pull/5931) by [ldez](https://github.com/ldez))
+- Merge current v2.0 branch into v2.1 ([#5928](https://github.com/containous/traefik/pull/5928) by [ldez](https://github.com/ldez))
+
 ## [v2.0.7](https://github.com/containous/traefik/tree/v2.0.7) (2019-12-09)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.6...v2.0.7)
 
