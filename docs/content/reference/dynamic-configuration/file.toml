@@ -196,6 +196,7 @@
           notAfter = true
           notBefore = true
           sans = true
+          serialNumber = true
           [http.middlewares.Middleware12.passTLSClientCert.info.subject]
             country = true
             province = true

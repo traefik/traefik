@@ -92,6 +92,7 @@
 | `traefik/http/middlewares/Middleware12/passTLSClientCert/info/notAfter` | `true` |
 | `traefik/http/middlewares/Middleware12/passTLSClientCert/info/notBefore` | `true` |
 | `traefik/http/middlewares/Middleware12/passTLSClientCert/info/sans` | `true` |
+| `traefik/http/middlewares/Middleware12/passTLSClientCert/info/serialNumber` | `true` |
 | `traefik/http/middlewares/Middleware12/passTLSClientCert/info/subject/commonName` | `true` |
 | `traefik/http/middlewares/Middleware12/passTLSClientCert/info/subject/country` | `true` |
 | `traefik/http/middlewares/Middleware12/passTLSClientCert/info/subject/domainComponent` | `true` |

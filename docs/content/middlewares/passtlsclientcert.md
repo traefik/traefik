@@ -70,6 +70,7 @@ http:
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notbefore=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.sans=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.serialnumber=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.commonname=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.country=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true"
@@ -482,7 +483,7 @@ SAN="*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0
 !!! info "multiple values"
 
     All the SANs data are separated by a `,`.
-    
+
 #### `info.subject`
 
 The `info.subject` select the specific client certificate subject details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header.
