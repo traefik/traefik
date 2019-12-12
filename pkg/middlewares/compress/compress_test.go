@@ -20,6 +20,7 @@ const (
 	contentTypeHeader     = "Content-Type"
 	varyHeader            = "Vary"
 	gzipValue             = "gzip"
+	brotliValue           = "br"
 )
 
 func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
@@ -45,9 +46,56 @@ func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
 	}
 }
 
+func TestShouldCompressBrWhenNoContentEncodingHeader(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, brotliValue)
+
+	baseBody := generateBytes(gziphandler.DefaultMinSize)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(baseBody)
+		assert.NoError(t, err)
+	})
+	handler := &compress{next: next}
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, brotliValue, rw.Header().Get(contentEncodingHeader))
+	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
+
+	if assert.ObjectsAreEqualValues(rw.Body.Bytes(), baseBody) {
+		assert.Fail(t, "expected a compressed body", "got %v", rw.Body.Bytes())
+	}
+}
+
 func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 	req.Header.Add(acceptEncodingHeader, gzipValue)
+
+	fakeCompressedBody := generateBytes(gziphandler.DefaultMinSize)
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Add(contentEncodingHeader, gzipValue)
+		rw.Header().Add(varyHeader, acceptEncodingHeader)
+		_, err := rw.Write(fakeCompressedBody)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	handler := &compress{next: next}
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, gzipValue, rw.Header().Get(contentEncodingHeader))
+	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
+
+	assert.EqualValues(t, rw.Body.Bytes(), fakeCompressedBody)
+}
+
+func TestShouldNotCompressBrWhenContentEncodingHeader(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, brotliValue)
 
 	fakeCompressedBody := generateBytes(gziphandler.DefaultMinSize)
 	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
@@ -124,6 +172,59 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 			req.Header.Add(acceptEncodingHeader, gzipValue)
+			if test.reqContentType != "" {
+				req.Header.Add(contentTypeHeader, test.reqContentType)
+			}
+
+			handler, err := New(context.Background(), next, test.conf, "test")
+			require.NoError(t, err)
+
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			assert.Empty(t, rw.Header().Get(acceptEncodingHeader))
+			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+			assert.EqualValues(t, rw.Body.Bytes(), baseBody)
+		})
+	}
+}
+
+func TestShouldNotCompressBrWhenSpecificContentType(t *testing.T) {
+	baseBody := generateBytes(gziphandler.DefaultMinSize)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(baseBody)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	})
+
+	testCases := []struct {
+		desc           string
+		conf           dynamic.Compress
+		reqContentType string
+	}{
+		{
+			desc: "text/event-stream",
+			conf: dynamic.Compress{
+				ExcludedContentTypes: []string{"text/event-stream"},
+			},
+			reqContentType: "text/event-stream",
+		},
+		{
+			desc:           "application/grpc",
+			conf:           dynamic.Compress{},
+			reqContentType: "application/grpc",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+			req.Header.Add(acceptEncodingHeader, brotliValue)
 			if test.reqContentType != "" {
 				req.Header.Add(contentTypeHeader, test.reqContentType)
 			}
