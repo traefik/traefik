@@ -1091,13 +1091,12 @@ As the dashboard access is now secured by default you can either:
 Supported [providers](../providers/overview.md), for now:
 
 * [ ] Azure Service Fabric
-* [ ] BoltDB
-* [ ] Consul
+* [x] Consul
 * [x] Consul Catalog
 * [x] Docker
 * [ ] DynamoDB
 * [ ] ECS
-* [ ] Etcd
+* [x] Etcd
 * [ ] Eureka
 * [x] File
 * [x] Kubernetes Ingress (without annotations)
@@ -1105,8 +1104,9 @@ Supported [providers](../providers/overview.md), for now:
 * [x] Marathon
 * [ ] Mesos
 * [x] Rancher
+* [x] Redis
 * [x] Rest
-* [ ] Zookeeper
+* [x] Zookeeper
 
 ## Some Tips You Should Know
 
