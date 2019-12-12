@@ -5,18 +5,18 @@ Compressing the Response before Sending it to the Client
 
 ![Compress](../assets/img/middleware/compress.png)
 
-The Compress middleware enables the gzip compression. 
+The Compress middleware enables the Brotli or gzip compression. 
 
 ## Configuration Examples
 
 ```yaml tab="Docker"
-# Enable gzip compression
+# Enable compression
 labels:
   - "traefik.http.middlewares.test-compress.compress=true"
 ```
 
 ```yaml tab="Kubernetes"
-# Enable gzip compression
+# Enable compression
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
@@ -26,7 +26,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-# Enable gzip compression
+# Enable compression
 - "traefik.http.middlewares.test-compress.compress=true"
 ```
 
@@ -37,19 +37,19 @@ spec:
 ```
 
 ```yaml tab="Rancher"
-# Enable gzip compression
+# Enable compression
 labels:
   - "traefik.http.middlewares.test-compress.compress=true"
 ```
 
 ```toml tab="File (TOML)"
-# Enable gzip compression
+# Enable compression
 [http.middlewares]
   [http.middlewares.test-compress.compress]
 ```
 
 ```yaml tab="File (YAML)"
-# Enable gzip compression
+# Enable compression
 http:
   middlewares:
     test-compress:
@@ -61,8 +61,8 @@ http:
     Responses are compressed when:
     
     * The response body is larger than `1400` bytes.
-    * The `Accept-Encoding` request header contains `gzip`.
-    * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
+    * The `Accept-Encoding` request header contains `gzip` or `br`.
+    * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set to `gzip`, `br` or `deflate`.
 
 ## Configuration Options
 
