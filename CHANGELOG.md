@@ -1,3 +1,12 @@
+## [v2.1.1](https://github.com/containous/traefik/tree/v2.1.1) (2019-12-12)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.0...v2.1.1)
+
+**Bug fixes:**
+- **[logs,middleware,metrics]** CloseNotifier: return pointer instead of value ([#6010](https://github.com/containous/traefik/pull/6010) by [mpl](https://github.com/mpl))
+
+**Documentation:**
+- Add Migration Guide for Traefik v2.1 ([#6017](https://github.com/containous/traefik/pull/6017) by [SantoDE](https://github.com/SantoDE))
+
 ## [v2.1.0](https://github.com/containous/traefik/tree/v2.1.0) (2019-12-10)
 [All Commits](https://github.com/containous/traefik/compare/v2.0.0-rc1...v2.1.0)
 
