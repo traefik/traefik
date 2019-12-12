@@ -20,7 +20,9 @@ const (
 	contentTypeHeader     = "Content-Type"
 	varyHeader            = "Vary"
 	gzipValue             = "gzip"
+	gzipLength            = 306
 	brotliValue           = "br"
+	brotliLength          = 269
 )
 
 func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
@@ -40,6 +42,7 @@ func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
 
 	assert.Equal(t, gzipValue, rw.Header().Get(contentEncodingHeader))
 	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
+	assert.Equal(t, gzipLength, len(rw.Body.Bytes()))
 
 	if assert.ObjectsAreEqualValues(rw.Body.Bytes(), baseBody) {
 		assert.Fail(t, "expected a compressed body", "got %v", rw.Body.Bytes())
@@ -63,6 +66,7 @@ func TestShouldCompressBrWhenNoContentEncodingHeader(t *testing.T) {
 
 	assert.Equal(t, brotliValue, rw.Header().Get(contentEncodingHeader))
 	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
+	assert.Equal(t, brotliLength, len(rw.Body.Bytes()))
 
 	if assert.ObjectsAreEqualValues(rw.Body.Bytes(), baseBody) {
 		assert.Fail(t, "expected a compressed body", "got %v", rw.Body.Bytes())
