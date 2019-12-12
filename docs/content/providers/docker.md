@@ -274,6 +274,30 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
     # ...
     ```
 
+??? example "Using SSH"
+
+    Using Docker 18.09+ you can connect Traefik to daemon using SSH
+    We specify the SSH host and user in Traefik's configuration file.
+    Note that is server requires public keys for authentication you must have those accessible for user who runs Traefik.
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      endpoint = "ssh://traefik@192.168.2.5:2022"
+      # ...
+    ```
+    
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        endpoint: "ssh://traefik@192.168.2.5:2022"
+         # ...
+    ```
+    
+    ```bash tab="CLI"
+    --providers.docker.endpoint=ssh://traefik@192.168.2.5:2022
+    # ...
+    ```
+
 ### `useBindPortIP`
 
 _Optional, Default=false_
