@@ -61,7 +61,8 @@ type TraceStarter struct {
 }
 
 func (ts *TraceStarter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	_, err := tracing.FromContext(req.Context())
+	parentContext := req.Context()
+	_, err := tracing.FromContext(parentContext)
 	if err != nil {
 		if ts.middleware != nil {
 			ts.middleware.ServeHTTP(rw, req)
@@ -74,6 +75,7 @@ func (ts *TraceStarter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if ts.finisher != nil {
 		ts.finisher.finish = ts.finish
+		ts.finisher.ctx = parentContext
 	}
 
 	if ts.middleware != nil {
@@ -99,12 +101,16 @@ func NewTraceFinisher(next http.Handler) *TraceFinisher {
 // TraceFinisher is used to finish tracing, started by TraceStarter
 type TraceFinisher struct {
 	next   http.Handler
+	ctx    context.Context
 	finish func()
 }
 
 func (tf *TraceFinisher) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if tf.finish != nil {
 		tf.finish()
+	}
+	if tf.ctx != nil {
+		req = req.WithContext(tf.ctx)
 	}
 
 	if tf.next != nil {
