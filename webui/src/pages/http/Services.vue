@@ -35,7 +35,7 @@ import MainTable from '../../components/_commons/MainTable'
 export default {
   name: 'PageHTTPServices',
   mixins: [
-  GetTablePropsMixin,
+    GetTablePropsMixin,
     PaginationMixin({
       fetchMethod: 'getAllServicesWithParams',
       scrollerRef: 'mainTable.$refs.scroller',

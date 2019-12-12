@@ -35,7 +35,7 @@ import MainTable from '../../components/_commons/MainTable'
 export default {
   name: 'PageTCPRouters',
   mixins: [
-  GetTablePropsMixin,
+    GetTablePropsMixin,
     PaginationMixin({
       fetchMethod: 'getAllRoutersWithParams',
       scrollerRef: 'mainTable.$refs.scroller',
