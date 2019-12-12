@@ -59,7 +59,7 @@ func (w *Wrapper) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var finish func()
-	_, req, finish = tracing.StartSpan(req, w.name, w.spanKind)
+	_, req, finish = tracing.StartSpan(req, req.Context(), w.name, w.spanKind)
 	defer finish()
 
 	if w.next != nil {

@@ -76,7 +76,14 @@ func (t *Tracing) StartSpan(operationName string, opts ...opentracing.StartSpanO
 func (t *Tracing) StartSpanf(r *http.Request, spanKind ext.SpanKindEnum, opPrefix string, opParts []string, separator string, opts ...opentracing.StartSpanOption) (opentracing.Span, *http.Request, func()) {
 	operationName := generateOperationName(opPrefix, opParts, separator, t.SpanNameLimit)
 
-	return StartSpan(r, operationName, spanKind, opts...)
+	return StartSpan(r, r.Context(), operationName, spanKind, opts...)
+}
+
+// StartSpanfWithContext delegates to StartSpan.
+func (t *Tracing) StartSpanfWithContext(r *http.Request, ctx context.Context, spanKind ext.SpanKindEnum, opPrefix string, opParts []string, separator string, opts ...opentracing.StartSpanOption) (opentracing.Span, *http.Request, func()) {
+	operationName := generateOperationName(opPrefix, opParts, separator, t.SpanNameLimit)
+
+	return StartSpan(r, ctx, operationName, spanKind, opts...)
 }
 
 // Inject delegates to opentracing.Tracer.
@@ -148,9 +155,9 @@ func LogEventf(r *http.Request, format string, args ...interface{}) {
 	}
 }
 
-// StartSpan starts a new span from the one in the request context
-func StartSpan(r *http.Request, operationName string, spanKind ext.SpanKindEnum, opts ...opentracing.StartSpanOption) (opentracing.Span, *http.Request, func()) {
-	span, ctx := opentracing.StartSpanFromContext(r.Context(), operationName, opts...)
+// StartSpan starts a new span from the span in provided context
+func StartSpan(r *http.Request, providedCtx context.Context, operationName string, spanKind ext.SpanKindEnum, opts ...opentracing.StartSpanOption) (opentracing.Span, *http.Request, func()) {
+	span, ctx := opentracing.StartSpanFromContext(providedCtx, operationName, opts...)
 
 	switch spanKind {
 	case ext.SpanKindRPCClientEnum:

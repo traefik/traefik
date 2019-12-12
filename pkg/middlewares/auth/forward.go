@@ -88,6 +88,14 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	tr, err := tracing.FromContext(req.Context())
+	if err == nil {
+		opParts := []string{fa.name}
+		_, forwardReqWithCtx, finish := tr.StartSpanfWithContext(forwardReq, req.Context(), ext.SpanKindRPCClientEnum, "forward-auth", opParts, "/")
+		forwardReq = forwardReqWithCtx
+		defer finish()
+	}
+
 	writeHeader(req, forwardReq, fa.trustForwardHeader)
 
 	tracing.InjectRequestHeaders(forwardReq)
