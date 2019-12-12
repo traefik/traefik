@@ -21,7 +21,12 @@ func Wrap(ctx context.Context, constructor alice.Constructor) alice.Constructor 
 		if constructor == nil {
 			return nil, nil
 		}
-		handler, err := constructor(next)
+		// we need to start tracing when middleware (provided by `constructor`) starts
+		// and finish when middleware ends, but before calling `next`
+		// so we need to wrap `next` into TraceFinisher
+		// and call TraceFinisher when middleware processed
+		tracingFinisher := NewTraceFinisher(next)
+		handler, err := constructor(tracingFinisher)
 		if err != nil {
 			return nil, err
 		}
@@ -29,40 +34,79 @@ func Wrap(ctx context.Context, constructor alice.Constructor) alice.Constructor 
 		if tracableHandler, ok := handler.(Tracable); ok {
 			name, spanKind := tracableHandler.GetTracingInformation()
 			log.FromContext(ctx).WithField(log.MiddlewareName, name).Debug("Adding tracing to middleware")
-			return NewWrapper(handler, name, spanKind), nil
+			return NewTraceStarted(handler, name, spanKind, tracingFinisher), nil
 		}
 		return handler, nil
 	}
 }
 
-// NewWrapper returns a http.Handler struct
-func NewWrapper(next http.Handler, name string, spanKind ext.SpanKindEnum) http.Handler {
-	return &Wrapper{
-		next:     next,
-		name:     name,
-		spanKind: spanKind,
+// NewTraceStarted returns a *TracingStarted struct
+func NewTraceStarted(middleware http.Handler, name string, spanKind ext.SpanKindEnum, finisher *TraceFinisher) *TraceStarter {
+	return &TraceStarter{
+		middleware: middleware,
+		name:       name,
+		spanKind:   spanKind,
+		finisher:   finisher,
 	}
 }
 
-// Wrapper is used to wrap http handler middleware.
-type Wrapper struct {
-	next     http.Handler
-	name     string
-	spanKind ext.SpanKindEnum
+// TraceStarter is used to start tracing for provided middleware and setup TraceFinisher to finish tracing
+type TraceStarter struct {
+	middleware http.Handler
+	name       string
+	spanKind   ext.SpanKindEnum
+	finisher   *TraceFinisher
 }
 
-func (w *Wrapper) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (ts *TraceStarter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	_, err := tracing.FromContext(req.Context())
 	if err != nil {
-		w.next.ServeHTTP(rw, req)
+		if ts.middleware != nil {
+			ts.middleware.ServeHTTP(rw, req)
+		}
 		return
 	}
 
-	var finish func()
-	_, req, finish = tracing.StartSpan(req, w.name, w.spanKind)
+	var doFinish func()
+	_, req, doFinish = tracing.StartSpan(req, ts.name, ts.spanKind)
+
+	finished := false
+	finish := func() {
+		if !finished {
+			doFinish()
+			finished = true
+		}
+	}
 	defer finish()
 
-	if w.next != nil {
-		w.next.ServeHTTP(rw, req)
+	if ts.finisher != nil {
+		ts.finisher.finish = finish
+	}
+
+	if ts.middleware != nil {
+		ts.middleware.ServeHTTP(rw, req)
+	}
+}
+
+// NewTraceFinisher returns a *TraceFinisher struct
+func NewTraceFinisher(next http.Handler) *TraceFinisher {
+	return &TraceFinisher{
+		next: next,
+	}
+}
+
+// TraceFinisher is used to finish tracing, started by TraceStarter
+type TraceFinisher struct {
+	next   http.Handler
+	finish func()
+}
+
+func (tf *TraceFinisher) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if tf.finish != nil {
+		tf.finish()
+	}
+
+	if tf.next != nil {
+		tf.next.ServeHTTP(rw, req)
 	}
 }
