@@ -171,7 +171,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 	var crr *captureRequestReader
 	if req.Body != nil {
-		crr = &captureRequestReader{source: req.Body, count: 0}
+		crr = &captureRequestReader{req: req, count: 0}
 		reqWithDataTable.Body = crr
 	}
 
