@@ -56,6 +56,8 @@ type TraceStarter struct {
 	name       string
 	spanKind   ext.SpanKindEnum
 	finisher   *TraceFinisher
+	finishFn   func()
+	finished   bool
 }
 
 func (ts *TraceStarter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -67,25 +69,24 @@ func (ts *TraceStarter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var doFinish func()
-	_, req, doFinish = tracing.StartSpan(req, ts.name, ts.spanKind)
-
-	finished := false
-	finish := func() {
-		if !finished {
-			doFinish()
-			finished = true
-		}
-	}
-	defer finish()
+	_, req, ts.finishFn = tracing.StartSpan(req, ts.name, ts.spanKind)
+	defer ts.finish()
 
 	if ts.finisher != nil {
-		ts.finisher.finish = finish
+		ts.finisher.finish = ts.finish
 	}
 
 	if ts.middleware != nil {
 		ts.middleware.ServeHTTP(rw, req)
 	}
+}
+
+func (ts *TraceStarter) finish() {
+	if ts.finished {
+		return
+	}
+	ts.finishFn()
+	ts.finished = true
 }
 
 // NewTraceFinisher returns a *TraceFinisher struct
