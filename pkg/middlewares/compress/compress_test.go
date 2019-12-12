@@ -73,6 +73,30 @@ func TestShouldCompressBrWhenNoContentEncodingHeader(t *testing.T) {
 	}
 }
 
+func TestShouldCompressBrWhenBrAndGzipSupported(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, "gzip,br")
+
+	baseBody := generateBytes(gziphandler.DefaultMinSize)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(baseBody)
+		assert.NoError(t, err)
+	})
+	handler := &compress{next: next}
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, brotliValue, rw.Header().Get(contentEncodingHeader))
+	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
+	assert.Equal(t, brotliLength, len(rw.Body.Bytes()))
+
+	if assert.ObjectsAreEqualValues(rw.Body.Bytes(), baseBody) {
+		assert.Fail(t, "expected a compressed body", "got %v", rw.Body.Bytes())
+	}
+}
+
 func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 	req.Header.Add(acceptEncodingHeader, gzipValue)
