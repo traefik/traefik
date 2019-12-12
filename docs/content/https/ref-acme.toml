@@ -35,13 +35,13 @@
   #
   # Optional (but recommended)
   #
-  [certificatesResolvers.sample.acme.tlsChallenge]
+  [certificatesResolvers.le.acme.tlsChallenge]
 
   # Use a HTTP-01 ACME challenge.
   #
   # Optional
   #
-  # [certificatesResolvers.sample.acme.httpChallenge]
+  # [certificatesResolvers.le.acme.httpChallenge]
 
     # EntryPoint to use for the HTTP-01 challenges.
     #
@@ -54,7 +54,7 @@
   #
   # Optional
   #
-  # [certificatesResolvers.sample.acme.dnsChallenge]
+  # [certificatesResolvers.le.acme.dnsChallenge]
 
     # DNS provider used.
     #
