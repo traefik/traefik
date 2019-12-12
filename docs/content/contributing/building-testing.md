@@ -105,13 +105,18 @@ cd ~/go/src/github.com/containous/traefik
 
 # Get go-bindata. (Important: the ellipses are required.)
 GO111MODULE=off go get github.com/containous/go-bindata/...
+```
 
-# Let's build
+```bash
+# Generate UI static files
+rm -rf static/ autogen/; make generate-webui
 
-# generate
-# (required to merge non-code components into the final binary, such as the web dashboard and the provider's templates)
+# required to merge non-code components into the final binary,
+# such as the web dashboard/UI
 go generate
+```
 
+```bash
 # Standard go build
 go build ./cmd/traefik
 ```
