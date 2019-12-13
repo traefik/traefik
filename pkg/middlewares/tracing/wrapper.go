@@ -34,14 +34,14 @@ func Wrap(ctx context.Context, constructor alice.Constructor) alice.Constructor 
 		if tracableHandler, ok := handler.(Tracable); ok {
 			name, spanKind := tracableHandler.GetTracingInformation()
 			log.FromContext(ctx).WithField(log.MiddlewareName, name).Debug("Adding tracing to middleware")
-			return NewTraceStarted(handler, name, spanKind, tracingFinisher), nil
+			return NewTraceStarter(handler, name, spanKind, tracingFinisher), nil
 		}
 		return handler, nil
 	}
 }
 
-// NewTraceStarted returns a *TracingStarted struct
-func NewTraceStarted(middleware http.Handler, name string, spanKind ext.SpanKindEnum, finisher *TraceFinisher) *TraceStarter {
+// NewTraceStarter returns a *TracingStarted struct
+func NewTraceStarter(middleware http.Handler, name string, spanKind ext.SpanKindEnum, finisher *TraceFinisher) *TraceStarter {
 	return &TraceStarter{
 		middleware: middleware,
 		name:       name,
