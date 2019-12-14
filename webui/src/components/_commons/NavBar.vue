@@ -13,13 +13,14 @@
             <q-route-tab to="/udp" icon="eva-globe-2-outline" no-caps label="UDP" />
           </q-tabs>
           <q-space />
+          <q-btn @click="$q.dark.toggle()" stretch flat no-caps icon="invert_colors" label="Switch theme" class="btn-menu" />
           <q-btn type="a" :href="`https://docs.traefik.io/${parsedVersion}`" target="_blank" stretch flat no-caps label="Documentation" class="btn-menu" />
           <q-btn v-if="version" type="a" href="https://github.com/containous/traefik/" target="_blank" stretch flat no-caps :label="`${name} ${version}`" class="btn-menu" />
         </q-toolbar>
       </div>
     </section>
 
-    <section class="app-section bg-white text-black">
+    <section class="app-section text-black" :class="{ 'bg-white': !$q.dark.isActive }">
       <div class="app-section-wrap app-boxed app-boxed-xl">
         <slot />
       </div>
