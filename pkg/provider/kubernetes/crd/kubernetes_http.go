@@ -307,8 +307,13 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
+                protocol := "http"
+                if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
+                        protocol = "https"
+                }
+
 		return append(servers, dynamic.Server{
-			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
+                        URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, portSpec.Port),
 		}), nil
 	}
 
