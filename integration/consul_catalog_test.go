@@ -62,7 +62,7 @@ func (s *ConsulCatalogSuite) TearDownSuite(c *check.C) {
 	}
 }
 
-func (s *ConsulCatalogSuite) registerService(id, name, address, port string, tags []string, onAgent bool) error {
+func (s *ConsulCatalogSuite) registerService(id, name, address, port string, tags []string, onAgent bool, check *api.AgentServiceCheck) error {
 	iPort, err := strconv.Atoi(port)
 	if err != nil {
 		return err
@@ -78,6 +78,7 @@ func (s *ConsulCatalogSuite) registerService(id, name, address, port string, tag
 		Address: address,
 		Port:    iPort,
 		Tags:    tags,
+		Check:   check,
 	})
 }
 
@@ -90,11 +91,11 @@ func (s *ConsulCatalogSuite) deregisterService(id string, onAgent bool) error {
 }
 
 func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *check.C) {
-	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", []string{"traefik.enable=true"}, false)
+	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", []string{"traefik.enable=true"}, false, nil)
 	c.Assert(err, checker.IsNil)
-	err = s.registerService("whoami2", "whoami", s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress, "80", []string{"traefik.enable=true"}, false)
+	err = s.registerService("whoami2", "whoami", s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress, "80", []string{"traefik.enable=true"}, false, nil)
 	c.Assert(err, checker.IsNil)
-	err = s.registerService("whoami3", "whoami", s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress, "80", []string{"traefik.enable=true"}, false)
+	err = s.registerService("whoami3", "whoami", s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress, "80", []string{"traefik.enable=true"}, false, nil)
 	c.Assert(err, checker.IsNil)
 
 	tempObjects := struct {
@@ -135,7 +136,7 @@ func (s *ConsulCatalogSuite) TestByLabels(c *check.C) {
 		"traefik.http.services.service1.loadBalancer.server.url=http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
 	}
 
-	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", labels, false)
+	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", labels, false, nil)
 	c.Assert(err, checker.IsNil)
 
 	tempObjects := struct {
@@ -172,7 +173,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/consul_catalog/simple.toml", tempObjects)
 	defer os.Remove(file)
 
-	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", []string{"traefik.enable=true"}, false)
+	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", []string{"traefik.enable=true"}, false, nil)
 	c.Assert(err, checker.IsNil)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -204,7 +205,7 @@ func (s *ConsulCatalogSuite) TestRegisterServiceWithoutIP(c *check.C) {
 	file := s.adaptFile(c, "fixtures/consul_catalog/simple.toml", tempObjects)
 	defer os.Remove(file)
 
-	err := s.registerService("whoami1", "whoami", "", "80", []string{"traefik.enable=true"}, false)
+	err := s.registerService("whoami1", "whoami", "", "80", []string{"traefik.enable=true"}, false, nil)
 	c.Assert(err, checker.IsNil)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -236,7 +237,7 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService(c *check.C) {
 	file := s.adaptFile(c, "fixtures/consul_catalog/simple.toml", tempObjects)
 	defer os.Remove(file)
 
-	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", nil, false)
+	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", nil, false, nil)
 	c.Assert(err, checker.IsNil)
 
 	// Start traefik
@@ -276,7 +277,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels(c *check.C) {
 		"traefik.tcp.Services.Super.Loadbalancer.server.port=8080",
 	}
 
-	err := s.registerService("whoamitcp", "whoamitcp", s.composeProject.Container(c, "whoamitcp").NetworkSettings.IPAddress, "8080", labels, false)
+	err := s.registerService("whoamitcp", "whoamitcp", s.composeProject.Container(c, "whoamitcp").NetworkSettings.IPAddress, "8080", labels, false, nil)
 	c.Assert(err, checker.IsNil)
 
 	// Start traefik
@@ -314,14 +315,14 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels(c *check.C) {
 	labels := []string{
 		"traefik.http.Routers.Super.Rule=Host(`my.super.host`)",
 	}
-	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", labels, false)
+	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", labels, false, nil)
 	c.Assert(err, checker.IsNil)
 
 	// Start another container by replacing a '.' by a '-'
 	labels = []string{
 		"traefik.http.Routers.SuperHost.Rule=Host(`my-super.host`)",
 	}
-	err = s.registerService("whoami2", "whoami", s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress, "80", labels, false)
+	err = s.registerService("whoami2", "whoami", s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress, "80", labels, false, nil)
 	c.Assert(err, checker.IsNil)
 
 	// Start traefik
@@ -370,10 +371,10 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent(c *check.C)
 		"traefik.http.Routers.Super.service=whoami",
 		"traefik.http.Routers.Super.Rule=Host(`my.super.host`)",
 	}
-	err := s.registerService("whoami", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", labels, false)
+	err := s.registerService("whoami", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", labels, false, nil)
 	c.Assert(err, checker.IsNil)
 
-	err = s.registerService("whoami", "whoami", s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress, "80", labels, true)
+	err = s.registerService("whoami", "whoami", s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress, "80", labels, true, nil)
 	c.Assert(err, checker.IsNil)
 
 	// Start traefik
@@ -421,7 +422,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels(c *check.C) {
 	labels := []string{
 		"traefik.random.value=my.super.host",
 	}
-	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", labels, false)
+	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", labels, false, nil)
 	c.Assert(err, checker.IsNil)
 
 	// Start traefik
@@ -439,5 +440,70 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels(c *check.C) {
 	// TODO validate : run on 80
 	// Expected a 404 as we did not configure anything
 	err = try.Request(req, 1500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck(c *check.C) {
+	labels := []string{
+		"traefik.enable=true",
+		"traefik.http.routers.router1.rule=Path(`/whoami`)",
+		"traefik.http.routers.router1.service=service1",
+		"traefik.http.services.service1.loadBalancer.server.url=http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
+	}
+
+	failedCheck := api.AgentServiceCheck{
+		CheckID:  "some-failed-check",
+		TCP:      "127.0.0.1:1234",
+		Name:     "some-failed-check",
+		Interval: "1s",
+		Timeout:  "1s",
+	}
+
+	err := s.registerService("whoami1", "whoami", s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress, "80", labels, false, &failedCheck)
+	c.Assert(err, checker.IsNil)
+
+	tempObjects := struct {
+		ConsulAddress string
+	}{
+		ConsulAddress: s.consulAddress,
+	}
+
+	file := s.adaptFile(c, "fixtures/consul_catalog/simple.toml", tempObjects)
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	err = s.deregisterService("whoami1", false)
+	c.Assert(err, checker.IsNil)
+
+	containerip := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+
+	okCheck := api.AgentServiceCheck{
+		CheckID:  "some-ok-check",
+		TCP:      containerip + ":80",
+		Name:     "some-ok-check",
+		Interval: "1s",
+		Timeout:  "1s",
+	}
+
+	err = s.registerService("whoami2", "whoami", containerip, "80", labels, false, &okCheck)
+	c.Assert(err, checker.IsNil)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "whoami"
+
+	// FIXME Need to wait for up to 10 seconds (for consul discovery or traefik to boot up ?)
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(200), try.BodyContainsOr("Hostname: whoami2"))
+	c.Assert(err, checker.IsNil)
+
+	err = s.deregisterService("whoami2", false)
 	c.Assert(err, checker.IsNil)
 }
