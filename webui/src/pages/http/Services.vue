@@ -27,13 +27,21 @@
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import GetTablePropsMixin from '../../_mixins/GetTableProps'
+import PaginationMixin from '../../_mixins/Pagination'
 import PageDefault from '../../components/_commons/PageDefault'
 import ToolBarTable from '../../components/_commons/ToolBarTable'
 import MainTable from '../../components/_commons/MainTable'
 
 export default {
   name: 'PageHTTPServices',
-  mixins: [GetTablePropsMixin],
+  mixins: [
+    GetTablePropsMixin,
+    PaginationMixin({
+      fetchMethod: 'getAllServicesWithParams',
+      scrollerRef: 'mainTable.$refs.scroller',
+      pollingIntervalTime: 5000
+    })
+  ],
   components: {
     PageDefault,
     ToolBarTable,
@@ -41,16 +49,8 @@ export default {
   },
   data () {
     return {
-      loading: true,
       filter: '',
-      status: '',
-      pagination: {
-        sortBy: '',
-        descending: true,
-        page: 1,
-        rowsPerPage: 10,
-        rowsNumber: 0
-      }
+      status: ''
     }
   },
   computed: {
@@ -58,18 +58,11 @@ export default {
   },
   methods: {
     ...mapActions('http', { getAllServices: 'getAllServices' }),
-    initData () {
-      const scrollerRef = this.$refs.mainTable.$refs.scroller
-      if (scrollerRef) {
-        scrollerRef.stop()
-        scrollerRef.reset()
-      }
-
-      this.handleLoadMore({ page: 1 }).then(() => {
-        if (scrollerRef) {
-          scrollerRef.resume()
-          scrollerRef.poll()
-        }
+    getAllServicesWithParams (params) {
+      return this.getAllServices({
+        query: this.filter,
+        status: this.status,
+        ...params
       })
     },
     refreshAll () {
@@ -77,45 +70,19 @@ export default {
         return
       }
 
-      this.handleLoadMore({ page: 1 })
+      this.initFetch()
     },
     handleLoadMore ({ page = 1 } = {}) {
-      this.pagination.page = page
-      return this.onGetAll({
-        pagination: this.pagination,
-        filter: this.filter
-      })
-    },
-    onGetAll (props) {
-      let { page, rowsPerPage, sortBy, descending } = props.pagination
-
-      return this.getAllServices({ query: props.filter, status: this.status, page, limit: rowsPerPage, sortBy, descending })
-        .then(body => {
-          this.loading = false
-          console.log('Success -> http/services', body)
-          // update rowsNumber with appropriate value
-          this.pagination.rowsNumber = body.total
-          // update local pagination object
-          this.pagination.page = page
-          this.pagination.rowsPerPage = rowsPerPage
-          this.pagination.sortBy = sortBy
-          this.pagination.descending = descending
-        })
+      return this.fetchMore({ page })
     }
   },
   watch: {
     'status' () {
-      this.initData()
+      this.refreshAll()
     },
     'filter' () {
-      this.initData()
+      this.refreshAll()
     }
-  },
-  created () {
-
-  },
-  mounted () {
-    this.refreshAll()
   },
   beforeDestroy () {
     this.$store.commit('http/getAllServicesClear')

@@ -24,10 +24,10 @@ export default {
   props: ['featureKey', 'featureVal'],
   computed: {
     isString () {
-      return this.$_.isString(this.featureVal)
+      return typeof this.featureVal === 'string'
     },
     isBoolean () {
-      return this.$_.isBoolean(this.featureVal) || this.featureVal === ''
+      return typeof variable === 'boolean' || this.featureVal === ''
     },
     isTrue () {
       return this.isBoolean && this.featureVal === true
