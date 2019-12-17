@@ -170,7 +170,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
 
 	var crr *captureRequestReader
-	if req.Body != nil {
+	if req.Body != nil && req.GetBody != nil {
 		body, err := req.GetBody()
 		if err == nil {
 			crr = &captureRequestReader{source: body, count: 0}
