@@ -157,7 +157,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 			return nil, err
 		}
 
-		for k, consulService := range consulServices {
+		for i, consulService := range consulServices {
 			address := consulService.ServiceAddress
 			if address == "" {
 				address = consulService.Address
@@ -171,7 +171,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 				Port:    strconv.Itoa(consulService.ServicePort),
 				Labels:  tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
 				Tags:    consulService.ServiceTags,
-				Status:  healthServices[k].Checks.AggregatedStatus(),
+				Status:  healthServices[i].Checks.AggregatedStatus(),
 			}
 
 			extraConf, err := p.getConfiguration(item)
@@ -194,9 +194,13 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Catalo
 	}
 
 	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
-	consulServices, _, _ := p.client.Catalog().Service(name, tagFilter, opts)
-	healthServices, _, err := p.client.Health().Service(name, tagFilter, false, opts)
 
+	consulServices, _, err := p.client.Catalog().Service(name, tagFilter, opts)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	healthServices, _, err := p.client.Health().Service(name, tagFilter, false, opts)
 	return consulServices, healthServices, err
 }
 
