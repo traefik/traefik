@@ -9,6 +9,10 @@ type captureRequestReader struct {
 
 func (r *captureRequestReader) Read(p []byte) (int, error) {
 	n, err := r.source.Read(p)
+	if err != nil {
+		return 0, err
+	}
+
 	r.count += int64(n)
 	return n, err
 }
