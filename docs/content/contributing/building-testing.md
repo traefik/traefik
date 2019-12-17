@@ -62,7 +62,7 @@ Requirements:
 
 - `go` v1.13+
 - environment variable `GO111MODULE=on`
-- go-bindata `GO111MODULE=off go get -u github.com/containous/go-bindata/...`
+- [go-bindata](https://github.com/containous/go-bindata) `GO111MODULE=off go get -u github.com/containous/go-bindata/...`
 
 !!! tip "Source Directory"
 
@@ -98,7 +98,8 @@ Requirements:
 #### Build Traefik
 
 Once you've set up your go environment and cloned the source repository, you can build Traefik.
-Beforehand, you need to get `go-bindata` (the first time) in order to be able to use the `go generate` command (which is part of the build process).
+
+Beforehand, you need to get [go-bindata](https://github.com/containous/go-bindata) (the first time) in order to be able to use the `go generate` command (which is part of the build process).
 
 ```bash
 cd ~/go/src/github.com/containous/traefik
@@ -122,10 +123,6 @@ go build ./cmd/traefik
 ```
 
 You will find the Traefik executable (`traefik`) in the `~/go/src/github.com/containous/traefik` directory.
-
-### Updating the templates
-
-If you happen to update the provider's templates (located in `/templates`), you must run `go generate` to update the `autogen` package.
 
 ## Testing
 
