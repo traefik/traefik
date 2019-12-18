@@ -19,6 +19,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/containous/traefik/v2/pkg/version"
+	"github.com/docker/cli/cli/connhelper"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainertypes "github.com/docker/docker/api/types/container"
 	eventtypes "github.com/docker/docker/api/types/events"
@@ -108,46 +109,77 @@ type networkData struct {
 }
 
 func (p *Provider) createClient() (client.APIClient, error) {
-	var httpClient *http.Client
+	opts, err := p.getClientOpts()
+	if err != nil {
+		return nil, err
+	}
+
+	httpHeaders := map[string]string{
+		"User-Agent": "Traefik " + version.Version,
+	}
+	opts = append(opts, client.WithHTTPHeaders(httpHeaders))
+
+	apiVersion := DockerAPIVersion
+	if p.SwarmMode {
+		apiVersion = SwarmAPIVersion
+	}
+	opts = append(opts, client.WithVersion(apiVersion))
+
+	return client.NewClientWithOpts(opts...)
+}
+
+func (p *Provider) getClientOpts() ([]client.Opt, error) {
+	helper, err := connhelper.GetConnectionHelper(p.Endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	// SSH
+	if helper != nil {
+		// https://github.com/docker/cli/blob/ebca1413117a3fcb81c89d6be226dcec74e5289f/cli/context/docker/load.go#L112-L123
+
+		httpClient := &http.Client{
+			Transport: &http.Transport{
+				DialContext: helper.Dialer,
+			},
+		}
+
+		return []client.Opt{
+			client.WithHTTPClient(httpClient),
+			client.WithHost(helper.Host), // To avoid 400 Bad Request: malformed Host header daemon error
+			client.WithDialContext(helper.Dialer),
+		}, nil
+	}
+
+	opts := []client.Opt{
+		client.WithHost(p.Endpoint),
+	}
 
 	if p.TLS != nil {
 		ctx := log.With(context.Background(), log.Str(log.ProviderName, "docker"))
+
 		conf, err := p.TLS.CreateTLSConfig(ctx)
 		if err != nil {
 			return nil, err
-		}
-		tr := &http.Transport{
-			TLSClientConfig: conf,
 		}
 
 		hostURL, err := client.ParseHostURL(p.Endpoint)
 		if err != nil {
 			return nil, err
 		}
+
+		tr := &http.Transport{
+			TLSClientConfig: conf,
+		}
+
 		if err := sockets.ConfigureTransport(tr, hostURL.Scheme, hostURL.Host); err != nil {
 			return nil, err
 		}
 
-		httpClient = &http.Client{
-			Transport: tr,
-		}
+		opts = append(opts, client.WithHTTPClient(&http.Client{Transport: tr}))
 	}
 
-	httpHeaders := map[string]string{
-		"User-Agent": "Traefik " + version.Version,
-	}
-
-	apiVersion := DockerAPIVersion
-	if p.SwarmMode {
-		apiVersion = SwarmAPIVersion
-	}
-
-	return client.NewClientWithOpts(
-		client.WithHost(p.Endpoint),
-		client.WithVersion(apiVersion),
-		client.WithHTTPClient(httpClient),
-		client.WithHTTPHeaders(httpHeaders),
-	)
+	return opts, nil
 }
 
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.

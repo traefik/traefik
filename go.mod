@@ -23,7 +23,7 @@ require (
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
 	github.com/davecgh/go-spew v1.1.1
-	github.com/docker/cli v0.0.0-20190711175710-5b38d82aa076 // indirect
+	github.com/docker/cli v0.0.0-20190711175710-5b38d82aa076
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v0.0.0-00010101000000-000000000000
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
@@ -43,6 +43,7 @@ require (
 	github.com/go-acme/lego/v3 v3.2.0
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.9.0
+	github.com/gogo/protobuf v1.3.0 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/google/go-github/v28 v28.1.1
 	github.com/googleapis/gnostic v0.1.0 // indirect
@@ -75,6 +76,7 @@ require (
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 	github.com/rancher/go-rancher-metadata v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.4.2
+	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tinylib/msgp v1.0.2 // indirect
@@ -92,6 +94,7 @@ require (
 	golang.org/x/net v0.0.0-20191204025024-5ee1b9f4859a
 	golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
+	google.golang.org/genproto v0.0.0-20190522204451-c2c4e71fbf69 // indirect
 	google.golang.org/grpc v1.22.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.19.0
 	gopkg.in/fsnotify.v1 v1.4.7
