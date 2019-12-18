@@ -3,6 +3,7 @@ package static
 import (
 	"fmt"
 	stdlog "log"
+	"runtime"
 	"strings"
 	"time"
 
@@ -169,7 +170,12 @@ type Providers struct {
 // It also takes care of maintaining backwards compatibility.
 func (c *Configuration) SetEffectiveConfiguration() {
 	if len(c.EntryPoints) == 0 {
-		ep := &EntryPoint{Address: ":80"}
+		var ep *EntryPoint
+		if runtime.GOOS == "darwin" {
+			ep = &EntryPoint{Address: "localhost:80"}
+		} else {
+			ep = &EntryPoint{Address: ":80"}
+		}
 		ep.SetDefaults()
 		c.EntryPoints = EntryPoints{
 			"http": ep,
@@ -181,7 +187,12 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		(c.Metrics != nil && c.Metrics.Prometheus != nil && !c.Metrics.Prometheus.ManualRouting && c.Metrics.Prometheus.EntryPoint == DefaultInternalEntryPointName) ||
 		(c.Providers != nil && c.Providers.Rest != nil && c.Providers.Rest.Insecure) {
 		if _, ok := c.EntryPoints[DefaultInternalEntryPointName]; !ok {
-			ep := &EntryPoint{Address: ":8080"}
+			var ep *EntryPoint
+			if runtime.GOOS == "darwin" {
+				ep = &EntryPoint{Address: "localhost:8080"}
+			} else {
+				ep = &EntryPoint{Address: ":8080"}
+			}
 			ep.SetDefaults()
 			c.EntryPoints[DefaultInternalEntryPointName] = ep
 		}
