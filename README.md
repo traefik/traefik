@@ -91,7 +91,7 @@ You can find the complete documentation of Traefik v2 at [https://docs.traefik.i
 
 If you are using Traefik v1, you can find the complete documentation at [https://docs.traefik.io/v1.7/](https://docs.traefik.io/v1.7/)
 
-A collection of contributions around Traefik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
+A collection of contributions around Traefik can be found at [https://github.com/containous/traefik/wiki/Awesome-Traefik](https://github.com/containous/traefik/wiki/Awesome-Traefik).
 
 ## Support
 
