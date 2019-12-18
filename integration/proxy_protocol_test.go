@@ -3,6 +3,7 @@ package integration
 import (
 	"net/http"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/containous/traefik/v2/integration/try"
@@ -18,6 +19,10 @@ func (s *ProxyProtocolSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
+	if runtime.GOOS == "darwin" {
+		c.Skip("This test can't be ran on MacOS because there docker bridge networking does not work")
+	}
+
 	gatewayIP := s.composeProject.Container(c, "haproxy").NetworkSettings.Gateway
 	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
 	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
@@ -41,6 +46,10 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
+	if runtime.GOOS == "darwin" {
+		c.Skip("This test can't be ran on MacOS because there docker bridge networking does not work")
+	}
+
 	gatewayIP := s.composeProject.Container(c, "haproxy").NetworkSettings.Gateway
 	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
 	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
@@ -64,6 +73,10 @@ func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
+	if runtime.GOOS == "darwin" {
+		c.Skip("This test can't be ran on MacOS because there docker bridge networking does not work")
+	}
+
 	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
 	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
 
@@ -86,6 +99,10 @@ func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolV2NotTrusted(c *check.C) {
+	if runtime.GOOS == "darwin" {
+		c.Skip("This test can't be ran on MacOS because there docker bridge networking does not work")
+	}
+
 	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
 	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
 
