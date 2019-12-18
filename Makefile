@@ -109,7 +109,7 @@ test-integration: docker-build-test
 # Pull all images for integration tests
 pull-images:
 	@echo "== pull-images ====================================================="
-	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq | xargs -P 6 -n 1 docker pull -q
+	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq | xargs -P 6 -n 1 docker pull
 
 # -- validation ----------------------------------------------------------------
 
