@@ -136,6 +136,8 @@ func (p *Provider) getClientOpts() ([]client.Opt, error) {
 
 	// SSH
 	if helper != nil {
+		// https://github.com/docker/cli/blob/ebca1413117a3fcb81c89d6be226dcec74e5289f/cli/context/docker/load.go#L112-L123
+
 		httpClient := &http.Client{
 			Transport: &http.Transport{
 				DialContext: helper.Dialer,
