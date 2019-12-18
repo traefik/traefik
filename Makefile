@@ -1,135 +1,152 @@
 .PHONY: all docs docs-serve
 
-SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/')
-
-TAG_NAME := $(shell git tag -l --contains HEAD)
-SHA := $(shell git rev-parse HEAD)
+SRCS         = $(shell git ls-files '*.go' | grep -v '^vendor/')
+TAG_NAME    := $(shell git tag -l --contains HEAD)
+SHA         := $(shell git rev-parse HEAD)
 VERSION_GIT := $(if $(TAG_NAME),$(TAG_NAME),$(SHA))
-VERSION := $(if $(VERSION),$(VERSION),$(VERSION_GIT))
+VERSION     := $(if $(VERSION),$(VERSION),$(VERSION_GIT))
+BIN_DIR     := "dist"
 
-BIND_DIR := "dist"
+GIT_BRANCH          := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
+TRAEFIK_DEV_VERSION := $(if $(GIT_BRANCH),$(subst /,-,$(GIT_BRANCH)))
+TRAEFIK_DEV_IMAGE   := traefik-dev$(if $(GIT_BRANCH),:$(TRAEFIK_DEV_VERSION))
 
-GIT_BRANCH := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
-TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(subst /,-,$(GIT_BRANCH)))
-
-REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
+REPONAME      := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"containous/traefik")
 
-INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock")
+INTEGRATION_OPTS  := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock")
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
+DOCKER_BUILD_ARGS += --build-arg="TRAEFIK_IMAGE_VERSION=$(TRAEFIK_DEV_VERSION)"
 
-TRAEFIK_ENVS := \
-	-e OS_ARCH_ARG \
-	-e OS_PLATFORM_ARG \
-	-e TESTFLAGS \
-	-e VERBOSE \
-	-e VERSION \
-	-e CODENAME \
-	-e TESTDIRS \
-	-e CI \
-	-e CONTAINER=DOCKER		# Indicator for integration tests that we are running inside a container.
+DOCKER_ENV_VARS := -e CROSSBUILD_ARCH -e CROSSBUILD_OS
+DOCKER_ENV_VARS += -e TESTFLAGS
+DOCKER_ENV_VARS += -e VERBOSE
+DOCKER_ENV_VARS += -e VERSION
+DOCKER_ENV_VARS += -e CODENAME
+DOCKER_ENV_VARS += -e TESTDIRS
+DOCKER_ENV_VARS += -e CI
+DOCKER_ENV_VARS += -e CONTAINER=DOCKER		# Indicator for integration tests that we are running inside a container.
 
-TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/containous/traefik/$(BIND_DIR)"
-DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
-DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) -it $(DOCKER_RUN_OPTS)
-DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) -i $(DOCKER_RUN_OPTS)
+TRAEFIK_DIST_MOUNT        := -v "$(CURDIR)/$(BIN_DIR):/go/src/github.com/containous/traefik/$(BIN_DIR)"
+DOCKER_RUN_OPTS           := $(TRAEFIK_ENVS) "$(TRAEFIK_DEV_IMAGE)"
+DOCKER_RUN_TRAEFIK        := docker run $(INTEGRATION_OPTS) -it $(DOCKER_RUN_OPTS)
+DOCKER_RUN_TRAEFIK_NOTTY  := docker run $(INTEGRATION_OPTS) -i $(DOCKER_RUN_OPTS)
+DOCKER_NO_CACHE           := $(if $(DOCKER_NO_CACHE),--no-cache)
 
-PRE_TARGET ?= build-dev-image
+CROSSBUILD_DEFAULT ?= true
 
-default: binary
+default: build
 
-## Build Dev Docker image
-build-dev-image: dist
-	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+# -- docker --------------------------------------------------------------------
 
-## Build Dev Docker image without cache
-build-dev-image-no-cache: dist
-	docker build --no-cache -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+docker-build-frontend:
+	@echo "== docker-build-frontend ==========================================="
+	docker build $(DOCKER_NO_CACHE) $(DOCKER_BUILD_ARGS) -t "traefik-frontend:$(TRAEFIK_DEV_VERSION)" -f traefik-frontend.Dockerfile .
 
-## Create the "dist" directory
-dist:
-	mkdir dist
+docker-build-backend: docker-build-frontend
+	@echo "== docker-build-backend ============================================"
+	docker build $(DOCKER_NO_CACHE) $(DOCKER_BUILD_ARGS) -t "traefik-backend:$(TRAEFIK_DEV_VERSION)" -f traefik-backend.Dockerfile .
 
-## Build WebUI Docker image
-build-webui-image:
-	docker build -t traefik-webui -f webui/Dockerfile webui
+docker-build-test: docker-build-backend
+	@echo "== docker-build-test ==============================================="
+	docker build $(DOCKER_NO_CACHE) $(DOCKER_BUILD_ARGS) -t "traefik-test:$(TRAEFIK_DEV_VERSION)" -f traefik-test.Dockerfile .
 
-## Generate WebUI
-generate-webui: build-webui-image
-	if [ ! -d "static" ]; then \
-		mkdir -p static; \
-		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui npm run build:nc; \
-		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ../static; \
-		echo 'For more informations show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md; \
-	fi
+docker-build: docker-build-backend
+	@echo "== docker-build ===================================================="
+	docker build $(DOCKER_NO_CACHE) $(DOCKER_BUILD_ARGS) -t "traefik:$(TRAEFIK_DEV_VERSION)" -f traefik.Dockerfile .
 
-## Build the linux binary
-binary: generate-webui $(PRE_TARGET)
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate binary
+docker-crossbuild:
+	@echo "== docker-crossbuild ==============================================="
+	docker run -it $(TRAEFIK_DIST_MOUNT) $(DOCKER_ENV_VARS) -e CROSSBUILD_DEFAULT="" "traefik-backend:$(TRAEFIK_DEV_VERSION)" make crossbuild
 
-## Build the binary for the standard plaforms (linux, darwin, windows)
-crossbinary-default: generate-webui build-dev-image
-	$(DOCKER_RUN_TRAEFIK_NOTTY) ./script/make.sh generate crossbinary-default
+# -- build ---------------------------------------------------------------------
 
-## Build the binary for the standard plaforms (linux, darwin, windows) in parallel
-crossbinary-default-parallel:
-	$(MAKE) generate-webui
-	$(MAKE) build-dev-image crossbinary-default
+build-generate:
+	@echo "== generate ========================================================="
+	./script/make.sh generate
 
-## Run the unit and integration tests
-test: build-dev-image
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit binary test-integration
+build-frontend:
+	@echo "== build-frontend =================================================="
+	npm run --prefix=webui build:nc
+	cp -R webui/dist/pwa/* static/
+	echo 'For more informations show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
 
-## Run the unit tests
-test-unit: $(PRE_TARGET)
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate test-unit
+build-backend: build-frontend build-generate
+	@echo "== binary =========================================================="
+	./script/make.sh binary
 
-## Pull all images for integration tests
+build: build-backend
+
+# -- crossbuild ---------------------------------------------------------------------
+
+crossbuild: build-generate
+	@echo "== crossbuild ======================================================"
+ifdef (CROSSBUILD_DEFAULT)
+	OS= ARCH= ./script/make.sh binary
+endif
+	for os in linux windows darwin; do \
+		for arch in amd64 386; do \
+			OS=$$os ARCH=$$arch ./script/make.sh binary; \
+		done; \
+	done;
+	OS=linux ARCH=arm64 ./script/make.sh binary
+
+# -- tests ---------------------------------------------------------------------
+
+test: build
+	@echo "== test ============================================================"
+	./script/make.sh test-unit test-integration
+
+test-unit: 
+	@echo "== test-unit ======================================================="
+	./script/make.sh test-unit
+
+test-integration: docker-build-test
+	@echo "== test-integration ================================================"
+	CI=1 TEST_CONTAINER=1 docker run -it $(DOCKER_ENV_VARS) $(INTEGRATION_OPTS) traefik-test:$(TRAEFIK_DEV_VERSION) ./script/make.sh test-integration
+	CI=1 TEST_HOST=1 ./script/make.sh test-integration
+
+# Pull all images for integration tests
 pull-images:
+	@echo "== pull-images ====================================================="
 	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq | xargs -P 6 -n 1 docker pull
 
-## Run the integration tests
-test-integration: $(PRE_TARGET)
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh generate binary test-integration
-	TEST_HOST=1 ./script/make.sh test-integration
+# -- validation ----------------------------------------------------------------
 
-## Validate code and docs
-validate-files: $(PRE_TARGET)
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate validate-lint validate-misspell
+validate-files:
+	@echo "== validate-files =================================================="
+	./script/make.sh generate validate-lint validate-misspell
 	bash $(CURDIR)/script/validate-shell-script.sh
 
-## Validate code, docs, and vendor
-validate: $(PRE_TARGET)
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate validate-lint validate-misspell validate-vendor
+# Validate code, docs, and vendor
+validate:
+	@echo "== validate ========================================================"
+	./script/make.sh generate validate-lint validate-misspell validate-vendor
 	bash $(CURDIR)/script/validate-shell-script.sh
 
-## Clean up static directory and build a Docker Traefik image
-build-image: binary
-	rm -rf static
-	docker build -t $(TRAEFIK_IMAGE) .
+# -- docs ----------------------------------------------------------------------
 
-## Build a Docker Traefik image
-build-image-dirty: binary
-	docker build -t $(TRAEFIK_IMAGE) .
-
-## Start a shell inside the build env
-shell: build-dev-image
-	$(DOCKER_RUN_TRAEFIK) /bin/bash
-
-## Build documentation site
 docs:
 	make -C ./docs docs
 
-## Serve the documentation site localy
 docs-serve:
 	make -C ./docs docs-serve
+
+# -- misc ----------------------------------------------------------------------
+
+dist:
+	mkdir dist
+
+shell:
+	@echo "== shell ==========================================================="
+	docker run -it $(TRAEFIK_DIST_MOUNT) $(DOCKER_ENV_VARS) "traefik-backend:$(TRAEFIK_DEV_VERSION)" /bin/bash
 
 ## Generate CRD clientset
 generate-crd:
 	./script/update-generated-crd-code.sh
 
 ## Create packages for the release
-release-packages: generate-webui build-dev-image
+release-packages: build
 	rm -rf dist
 	$(DOCKER_RUN_TRAEFIK_NOTTY) goreleaser release --skip-publish --timeout="60m"
 	$(DOCKER_RUN_TRAEFIK_NOTTY) tar cfz dist/traefik-${VERSION}.src.tar.gz \

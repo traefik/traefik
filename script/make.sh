@@ -30,5 +30,4 @@ else
 fi
 for bundle in ${bundles[*]}; do
     bundle "$bundle"
-    echo
 done

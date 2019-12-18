@@ -6,8 +6,6 @@ if ! test -e autogen/genstatic/gen.go; then
 	false
 fi
 
-rm -f dist/traefik
-
 FLAGS=()
 if [ -n "$VERBOSE" ]; then
     FLAGS+=(-v)
@@ -25,10 +23,29 @@ if [ -z "$DATE" ]; then
     DATE=$(date -u '+%Y-%m-%d_%I:%M:%S%p')
 fi
 
+# Output
+if [[ -n "$ARCH" && -n "$OS" ]]; then
+    if [ "$OS" == "windows" ]; then
+        BIN_EXT='.exe'
+    fi
+
+    OUTPUT="dist/traefik_${OS}-${ARCH}${BIN_EXT}"
+else
+    OUTPUT="dist/traefik"
+fi
+
+if [ -z "$ARCH" ]; then
+    ARCH=$(go env GOARCH)
+fi
+
+if [ -z "$OS" ]; then
+    OS=$(go env GOOS)
+fi
+
 # Build binaries
 # shellcheck disable=SC2086
-CGO_ENABLED=0 GOGC=off go build ${FLAGS[*]} -ldflags "-s -w \
+GOARCH=${ARCH} GOOS=${OS} CGO_ENABLED=0 GOGC=off go build ${FLAGS[*]} -ldflags "-s -w \
     -X github.com/containous/traefik/v2/pkg/version.Version=$VERSION \
     -X github.com/containous/traefik/v2/pkg/version.Codename=$CODENAME \
     -X github.com/containous/traefik/v2/pkg/version.BuildDate=$DATE" \
-    -a -installsuffix nocgo -o dist/traefik ./cmd/traefik
+    -a -installsuffix nocgo -o ${OUTPUT} ./cmd/traefik
