@@ -5,7 +5,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
 
 ## Configuration Examples
 
-??? example "Configuring KubernetesCRD & Deploying / Exposing Services"
+??? example "Configuring KubernetesCRD and Deploying/Exposing Services"
 
     ```yaml tab="Resource Definition"
     # All resources definition must be declared
@@ -211,10 +211,10 @@ Once the `IngressRoute` kind has been registered with the Kubernetes cluster, it
 
 | Ref  | Attribute                  | Purpose                                                                                                                                                                     |
 |------|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `entryPoints`              | List of [entrypoints](../routers/index.md#entrypoints) name                                                                                                                 |
+| [1]  | `entryPoints`              | List of [entry points](../routers/index.md#entrypoints) name                                                                                                                |
 | [2]  | `routes`                   | List of route                                                                                                                                                               |
 | [3]  | `routes[n].match`          | Defines the [rule](../routers/index.md#rule) corresponding to an underlying router.                                                                                         |
-| [4]  | `routes[n].priority`       | [Disambiguates](../routers/index.md#priority) rules of the same length, for route matching                                                                                  |
+| [4]  | `routes[n].priority`       | [Disambiguate](../routers/index.md#priority) rules of the same length, for route matching                                                                                   |
 | [5]  | `routes[n].middlewares`    | List of reference to [Middleware](#kind-middleware)                                                                                                                         |
 | [6]  | `middlewares[n].name`      | Defines the [Middleware](#kind-middleware) name                                                                                                                             |
 | [7]  | `middlewares[n].namespace` | Defines the [Middleware](#kind-middleware) namespace                                                                                                                        |
@@ -439,7 +439,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
 
 More information in the dedicated [Weighted Round Robin](../services/index.md#weighted-round-robin-service) service load balancing section.
 
-??? "Declaring and Using Wheighted Round Robin"
+??? "Declaring and Using Weighted Round Robin"
 
     ```yaml tab="IngressRoute"
     apiVersion: traefik.containo.us/v1alpha1
