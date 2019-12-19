@@ -33,7 +33,7 @@ we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/co
 ## Resource Configuration
 
 When using KubernetesCRD as a provider,
-Trafik uses [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to retrieve its routing configuration.
+Traefik uses [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to retrieve its routing configuration.
 Traefik Custom Resource Definitions are a Kubernetes implementation of the Traefik concepts. The main particularities are:
 
 * The usage of `name` **and** `namespace` to refer to another Kubernetes resource.
