@@ -415,6 +415,12 @@ func TestProvider_loadIngresses(t *testing.T) {
 							server("http://example.com", weight(1))),
 						lbMethod("wrr"),
 					),
+					backend("rewritetargetrootpath/",
+						servers(
+							server("http://example.com", weight(1)),
+							server("http://example.com", weight(1))),
+						lbMethod("wrr"),
+					),
 					backend("error-pages/errorpages",
 						servers(
 							server("http://example.com", weight(1)),
@@ -523,6 +529,12 @@ func TestProvider_loadIngresses(t *testing.T) {
 							route("/whitelist-source-range", "PathPrefix:/whitelist-source-range"),
 							route("test", "Host:test")),
 					),
+					frontend("rewritetargetrootpath/",
+						passHostHeader(),
+						routes(
+							route("/", "PathPrefix:/;ReplacePathRegex: ^(.*) /app$1"),
+							route("rewritetargetrootpath", "Host:rewritetargetrootpath")),
+					),
 					frontend("rewrite/api",
 						passHostHeader(),
 						routes(
@@ -596,7 +608,7 @@ func TestProvider_loadIngresses(t *testing.T) {
 						passHostHeader(),
 						redirectRegex("root2/$", "root2/root2"),
 						routes(
-							route("/", "PathPrefix:/;ReplacePathRegex: ^/(.*) /abc$1"),
+							route("/", "PathPrefix:/;ReplacePathRegex: ^(.*) /abc$1"),
 							route("root2", "Host:root2"),
 						),
 					),
