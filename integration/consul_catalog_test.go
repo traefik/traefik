@@ -61,13 +61,13 @@ func (s *ConsulCatalogSuite) TearDownSuite(c *check.C) {
 	}
 }
 
-func (s *ConsulCatalogSuite) registerService(foo *api.AgentServiceRegistration, onAgent bool) error {
+func (s *ConsulCatalogSuite) registerService(reg *api.AgentServiceRegistration, onAgent bool) error {
 	client := s.consulClient
 	if onAgent {
 		client = s.consulAgentClient
 	}
 
-	return client.Agent().ServiceRegister(foo)
+	return client.Agent().ServiceRegister(reg)
 }
 
 func (s *ConsulCatalogSuite) deregisterService(id string, onAgent bool) error {
