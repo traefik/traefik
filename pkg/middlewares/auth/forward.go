@@ -88,9 +88,11 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	writeHeader(req, forwardReq, fa.trustForwardHeader)
+	// Ensure tracing headers are in the request before we copy the headers to the
+	// forwardReq.
+	tracing.InjectRequestHeaders(req)
 
-	tracing.InjectRequestHeaders(forwardReq)
+	writeHeader(req, forwardReq, fa.trustForwardHeader)
 
 	forwardResponse, forwardErr := httpClient.Do(forwardReq)
 	if forwardErr != nil {
