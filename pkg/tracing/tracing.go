@@ -155,7 +155,7 @@ func LogEventf(r *http.Request, format string, args ...interface{}) {
 	}
 }
 
-// StartSpan starts a new span from the span in provided context
+// StartSpan starts a new span from the one in provided context and adds tracing information to provided request
 func StartSpan(providedCtx context.Context, r *http.Request, operationName string, spanKind ext.SpanKindEnum, opts ...opentracing.StartSpanOption) (opentracing.Span, *http.Request, func()) {
 	span, ctx := opentracing.StartSpanFromContext(providedCtx, operationName, opts...)
 
