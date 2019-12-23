@@ -51,6 +51,6 @@
     [http.routers.test.tls]
 
 [tls.stores]
-  [tls.stores.default.defaultCertificate]
+  [[tls.stores.default.defaultCertificates]]
     certFile = "fixtures/acme/ssl/wildcard.crt"
     keyFile = "fixtures/acme/ssl/wildcard.key"
