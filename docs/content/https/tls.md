@@ -106,7 +106,7 @@ tls:
 
     The `stores` list will actually be ignored and automatically set to `["default"]`.
 
-### Default Certificate
+### Default Certificates
 
 Traefik can use default certificates for connections without a SNI, or without a matching domain.
 These default certificates should be defined in a TLS store:
