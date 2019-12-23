@@ -86,8 +86,8 @@ func (c CertificateStore) GetAllDomains() []string {
 
 	// Get dynamic certificates
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for domains := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
-			allCerts = append(allCerts, domains)
+		for key := range c.DynamicCerts.Get().(map[certificateKey]*tls.Certificate) {
+			allCerts = append(allCerts, key.hostname)
 		}
 	}
 	return allCerts
