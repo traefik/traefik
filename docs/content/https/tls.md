@@ -124,24 +124,28 @@ These default certificates should be defined in a TLS store:
       keyFile  = "path/to/ec-cert.key"
 ```
 
-If you only provide an RSA certificate, clients without SNI support will always receive this certificate. If you only provide an EC certificate, a default RSA certificte will be generated and served for clients lacking both SNI and EC support.
-
-!!! warning "Deprecation of defaultCertificate"
-    
-    While this version of Traefik supports the old configuration key `defaultCertificate` to provide a single default certificate, it is deprecated and instead you should supply certificates via `defaultCertificates` as shown above.
-
 ```yaml tab="File (YAML)"
 # Dynamic configuration
 
 tls:
   stores:
     default:
-      defaultCertificate:
-        certFile: path/to/cert.crt
-        keyFile: path/to/cert.key
+      defaultCertificates:
+        - certFile: path/to/rsa-cert.crt
+          keyFile: path/to/rsa-cert.key
+        - certFile: path/to/ec-cert.crt
+          keyFile: path/to/ec-cert.key
 ```
 
-If no default certificate is provided, Traefik generates and uses a self-signed certificate.
+If you only provide an RSA certificate, clients without SNI support will always receive this certificate.
+
+If you only provide an EC certificate, a default self-signed RSA certificate will be generated and served for clients lacking both SNI and EC support.
+
+If no default certificates are provided, Traefik generates and uses self-signed RSA and ECDSA certificates.
+
+!!! warning "Deprecation of defaultCertificate"
+    
+    While this version of Traefik supports the old configuration key `defaultCertificate` to provide a single default certificate, it is deprecated and instead you should supply certificates via `defaultCertificates` as shown above.
 
 ## TLS Options
 
