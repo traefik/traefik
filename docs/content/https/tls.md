@@ -36,6 +36,10 @@ tls:
       keyFile: /path/to/other-domain.key
 ```
 
+Traefik will automatically serve the first matching certificate for a domain it can find.
+
+A domain can have an RSA and an EC (ECDSA or Ed25519) certificate assigned at the same time. In this case, Traefik will check whether the client supports EC and then serve the EC certificate if true, otherwise it will serve the RSA certificate. You can not assign multiple RSA certificates or multiple EC certificates to the same domain, Traefik will ignore such redundant certificates.
+
 !!! important "Restriction"
 
     In the above example, we've used the [file provider](../providers/file.md) to handle these definitions.
@@ -104,18 +108,27 @@ tls:
 
 ### Default Certificate
 
-Traefik can use a default certificate for connections without a SNI, or without a matching domain.
-This default certificate should be defined in a TLS store:
+Traefik can use default certificates for connections without a SNI, or without a matching domain.
+These default certificates should be defined in a TLS store:
 
 ```toml tab="File (TOML)"
 # Dynamic configuration
 
 [tls.stores]
   [tls.stores.default]
-    [tls.stores.default.defaultCertificate]
-      certFile = "path/to/cert.crt"
-      keyFile  = "path/to/cert.key"
+    [[tls.stores.default.defaultCertificates]]
+      certFile = "path/to/rsa-cert.crt"
+      keyFile  = "path/to/rsa-cert.key"
+    [[tls.stores.default.defaultCertificates]]
+      certFile = "path/to/ec-cert.crt"
+      keyFile  = "path/to/ec-cert.key"
 ```
+
+If you only provide an RSA certificate, clients without SNI support will always receive this certificate. If you only provide an EC certificate, a default RSA certificte will be generated and served for clients lacking both SNI and EC support.
+
+!!! warning "Deprecation of defaultCertificate"
+    
+    While this version of Traefik supports the old configuration key `defaultCertificate` to provide a single default certificate, it is deprecated and instead you should supply certificates via `defaultCertificates` as shown above.
 
 ```yaml tab="File (YAML)"
 # Dynamic configuration

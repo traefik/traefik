@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/tls/certificate"
 	"github.com/containous/traefik/v2/pkg/tls/generate"
 )
 
@@ -86,17 +87,22 @@ func (f FileOrContent) Read() ([]byte, error) {
 // CreateTLSConfig creates a TLS config from Certificate structures
 func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, error) {
 	config := &tls.Config{}
-	domainsCertificates := make(map[string]map[string]*tls.Certificate)
+	domainsCertificates := make(map[string]map[certificateKey]*tls.Certificate)
 
 	if c.isEmpty() {
 		config.Certificates = []tls.Certificate{}
 
-		cert, err := generate.DefaultCertificate()
+		rsaCert, err := generate.DefaultCertificate(certificate.RSA)
 		if err != nil {
 			return nil, err
 		}
 
-		config.Certificates = append(config.Certificates, *cert)
+		ecCert, err := generate.DefaultCertificate(certificate.EC)
+		if err != nil {
+			return nil, err
+		}
+
+		config.Certificates = append(config.Certificates, *rsaCert, *ecCert)
 	} else {
 		for _, certificate := range *c {
 			err := certificate.AppendCertificate(domainsCertificates, entryPointName)
@@ -131,7 +137,7 @@ func (c *Certificates) isEmpty() bool {
 }
 
 // AppendCertificate appends a Certificate to a certificates map keyed by entrypoint.
-func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certificate, ep string) error {
+func (c *Certificate) AppendCertificate(certs map[string]map[certificateKey]*tls.Certificate, ep string) error {
 	certContent, err := c.CertFile.Read()
 	if err != nil {
 		return fmt.Errorf("unable to read CertFile : %v", err)
@@ -167,11 +173,22 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 			}
 		}
 	}
-	certKey := strings.Join(SANs, ",")
+	certKey := certificateKey{
+		hostname: strings.Join(SANs, ","),
+	}
+	switch parsedCert.PublicKeyAlgorithm {
+	case x509.RSA:
+		certKey.certType = certificate.RSA
+	case x509.ECDSA,
+		x509.Ed25519:
+		certKey.certType = certificate.EC
+	default:
+		return fmt.Errorf("Unsupported certificate public key algorithm %s", parsedCert.PublicKeyAlgorithm)
+	}
 
 	certExists := false
 	if certs[ep] == nil {
-		certs[ep] = make(map[string]*tls.Certificate)
+		certs[ep] = make(map[certificateKey]*tls.Certificate)
 	} else {
 		for domains := range certs[ep] {
 			if domains == certKey {
