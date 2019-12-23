@@ -183,7 +183,7 @@ func (c *Certificate) AppendCertificate(certs map[string]map[certificateKey]*tls
 		x509.Ed25519:
 		certKey.certType = certificate.EC
 	default:
-		return fmt.Errorf("Unsupported certificate public key algorithm %s", parsedCert.PublicKeyAlgorithm)
+		return fmt.Errorf("unsupported certificate public key algorithm %s", parsedCert.PublicKeyAlgorithm)
 	}
 
 	certExists := false

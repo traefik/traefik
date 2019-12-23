@@ -93,8 +93,8 @@ func (c CertificateStore) GetAllDomains() []string {
 	return allCerts
 }
 
-func getCertTypeForClientHello(hello *tls.ClientHelloInfo) (retval certificate.CertificateType) {
-	retval = certificate.RSA
+func getCertTypeForClientHello(hello *tls.ClientHelloInfo) certificate.CertificateType {
+	determinedCertificateType := certificate.RSA
 
 	// The "signature_algorithms" extension, if present, limits the key exchange
 	// algorithms allowed by the cipher suites. See RFC 5246, section 7.4.1.4.1.
@@ -107,16 +107,16 @@ func getCertTypeForClientHello(hello *tls.ClientHelloInfo) (retval certificate.C
 				tls.ECDSAWithP384AndSHA384,
 				tls.ECDSAWithP521AndSHA512,
 				tls.Ed25519:
-				retval = certificate.EC
+				determinedCertificateType = certificate.EC
 				break schemeLoop
 			}
 		}
-		if retval != certificate.EC {
-			return
+		if determinedCertificateType != certificate.EC {
+			return determinedCertificateType
 		}
 	}
 	if hello.SupportedCurves != nil {
-		retval = certificate.RSA
+		determinedCertificateType = certificate.RSA
 	curveLoop:
 		for _, curve := range hello.SupportedCurves {
 			switch curve {
@@ -124,16 +124,16 @@ func getCertTypeForClientHello(hello *tls.ClientHelloInfo) (retval certificate.C
 				tls.CurveP384,
 				tls.CurveP521,
 				tls.X25519:
-				retval = certificate.EC
+				determinedCertificateType = certificate.EC
 				break curveLoop
 			}
 		}
-		if retval != certificate.EC {
-			return
+		if determinedCertificateType != certificate.EC {
+			return determinedCertificateType
 		}
 	}
 	for _, suite := range hello.CipherSuites {
-		retval = certificate.RSA
+		determinedCertificateType = certificate.RSA
 		switch suite {
 		case tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
@@ -142,11 +142,11 @@ func getCertTypeForClientHello(hello *tls.ClientHelloInfo) (retval certificate.C
 			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305:
-			retval = certificate.EC
-			return retval
+			determinedCertificateType = certificate.EC
+			return determinedCertificateType
 		}
 	}
-	return
+	return determinedCertificateType
 }
 
 // GetBestCertificate returns the best match certificate, and caches the response

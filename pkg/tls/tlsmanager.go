@@ -175,19 +175,20 @@ func buildCertificateStore(ctx context.Context, tlsStore Store) (*CertificateSto
 
 	hasRSACertificate := false
 
-	if len(tlsStore.DefaultCertificates) > 0 {
+	switch {
+	case len(tlsStore.DefaultCertificates) > 0:
 		cert, err := buildDefaultCertificates(tlsStore.DefaultCertificates)
 		if err != nil {
 			return certificateStore, err
 		}
 		certificateStore.DefaultCertificates = cert
-	} else if tlsStore.DefaultCertificate != nil {
+	case tlsStore.DefaultCertificate != nil:
 		cert, err := buildDefaultCertificate(tlsStore.DefaultCertificate)
 		if err != nil {
 			return certificateStore, err
 		}
 		certificateStore.DefaultCertificates = []*tls.Certificate{cert}
-	} else {
+	default:
 		log.FromContext(ctx).Debug("No default certificates configured, generating")
 		rsaCert, err := generate.DefaultCertificate(certificate.RSA)
 		if err != nil {

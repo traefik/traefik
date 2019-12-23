@@ -126,7 +126,7 @@ func derCert(privKey crypto.PrivateKey, expiration time.Time, domain string) ([]
 	case *rsa.PrivateKey:
 		pubKey = &v.PublicKey
 	default:
-		return nil, errors.New("Unknown public key algorithm")
+		return nil, errors.New("unknown public key algorithm")
 	}
 
 	return x509.CreateCertificate(rand.Reader, &template, &template, pubKey, privKey)
