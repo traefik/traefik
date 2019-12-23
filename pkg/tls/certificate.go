@@ -178,10 +178,10 @@ func (c *Certificate) AppendCertificate(certs map[string]map[certificateKey]*tls
 	}
 	switch parsedCert.PublicKeyAlgorithm {
 	case x509.RSA:
-		certKey.certType = certificate.RSA
+		certKey.publicKeyAlgorithmType = certificate.RSA
 	case x509.ECDSA,
 		x509.Ed25519:
-		certKey.certType = certificate.EC
+		certKey.publicKeyAlgorithmType = certificate.EC
 	default:
 		return fmt.Errorf("unsupported certificate public key algorithm %s", parsedCert.PublicKeyAlgorithm)
 	}

@@ -25,7 +25,7 @@ import (
 const DefaultDomain = "TRAEFIK DEFAULT CERT"
 
 // DefaultCertificate generates random TLS certificates
-func DefaultCertificate(certType certificate.CertificateType) (*tls.Certificate, error) {
+func DefaultCertificate(certType certificate.PublicKeyAlgorithmType) (*tls.Certificate, error) {
 	randomBytes := make([]byte, 100)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
@@ -49,7 +49,7 @@ func DefaultCertificate(certType certificate.CertificateType) (*tls.Certificate,
 }
 
 // KeyPair generates cert and key files
-func KeyPair(domain string, expiration time.Time, certType certificate.CertificateType) ([]byte, []byte, error) {
+func KeyPair(domain string, expiration time.Time, certType certificate.PublicKeyAlgorithmType) ([]byte, []byte, error) {
 	var keyPEM []byte
 	var privKey crypto.PrivateKey
 

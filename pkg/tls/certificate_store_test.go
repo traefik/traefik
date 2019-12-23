@@ -117,9 +117,9 @@ func TestGetBestCertificate(t *testing.T) {
 
 				switch cert.PrivateKey.(type) {
 				case *rsa.PrivateKey:
-					key.certType = certificate.RSA
+					key.publicKeyAlgorithmType = certificate.RSA
 				case *ecdsa.PrivateKey, *ed25519.PrivateKey:
-					key.certType = certificate.EC
+					key.publicKeyAlgorithmType = certificate.EC
 				}
 
 				dynamicMap[key] = cert

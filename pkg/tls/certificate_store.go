@@ -21,12 +21,12 @@ const (
 
 // certificateKey contains information by which certificates are tracked in certificate cache
 type certificateKey struct {
-	hostname string
-	certType certificate.CertificateType
+	hostname               string
+	publicKeyAlgorithmType certificate.PublicKeyAlgorithmType
 }
 
 func (c certificateKey) String() string {
-	return fmt.Sprintf("%s (%s)", c.hostname, c.certType)
+	return fmt.Sprintf("%s (%s)", c.hostname, c.publicKeyAlgorithmType)
 }
 
 // CertificateStore store for dynamic and static certificates
@@ -93,7 +93,7 @@ func (c CertificateStore) GetAllDomains() []string {
 	return allCerts
 }
 
-func getCertTypeForClientHello(hello *tls.ClientHelloInfo) certificate.CertificateType {
+func getCertTypeForClientHello(hello *tls.ClientHelloInfo) certificate.PublicKeyAlgorithmType {
 	determinedCertificateType := certificate.RSA
 
 	// The "signature_algorithms" extension, if present, limits the key exchange
@@ -173,11 +173,11 @@ func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *
 
 	// Build list of certificate types allowed for this client in order of preference
 	// (EC would come before RSA for clients compatible with it)
-	certTypePreferences := []certificate.CertificateType{certificate.RSA}
-	matchedCerts := map[certificate.CertificateType]map[string]*tls.Certificate{certificate.RSA: {}}
+	certTypePreferences := []certificate.PublicKeyAlgorithmType{certificate.RSA}
+	matchedCerts := map[certificate.PublicKeyAlgorithmType]map[string]*tls.Certificate{certificate.RSA: {}}
 	if preferredCertType != certificate.RSA {
 		matchedCerts[preferredCertType] = map[string]*tls.Certificate{}
-		certTypePreferences = append([]certificate.CertificateType{preferredCertType}, certTypePreferences...)
+		certTypePreferences = append([]certificate.PublicKeyAlgorithmType{preferredCertType}, certTypePreferences...)
 	}
 
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
@@ -185,14 +185,14 @@ func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *
 			domains := key.hostname
 
 			// Compatible certificate?
-			if _, ok := matchedCerts[key.certType]; !ok {
+			if _, ok := matchedCerts[key.publicKeyAlgorithmType]; !ok {
 				continue
 			}
 
 			// Requested domain found in certificate?
 			for _, certDomain := range strings.Split(domains, ",") {
 				if MatchDomain(domainToCheck, certDomain) {
-					matchedCerts[key.certType][certDomain] = cert
+					matchedCerts[key.publicKeyAlgorithmType][certDomain] = cert
 				}
 			}
 		}
