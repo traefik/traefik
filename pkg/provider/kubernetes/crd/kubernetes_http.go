@@ -400,19 +400,17 @@ func splitSvcNameProvider(name string) (string, string) {
 }
 
 func fullServiceName(ctx context.Context, namespace string, service v1alpha1.LoadBalancerSpec, port int32) string {
-	ns := namespaceOrFallback(service, namespace)
-
 	if port != 0 {
-		return provider.Normalize(fmt.Sprintf("%s-%s-%d", ns, service.Name, port))
+		return provider.Normalize(fmt.Sprintf("%s-%s-%d", namespace, service.Name, port))
 	}
 
 	if !strings.Contains(service.Name, providerNamespaceSeparator) {
-		return provider.Normalize(fmt.Sprintf("%s-%s", ns, service.Name))
+		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, service.Name))
 	}
 
 	name, pName := splitSvcNameProvider(service.Name)
 	if pName == providerName {
-		return provider.Normalize(fmt.Sprintf("%s-%s", ns, name))
+		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, name))
 	}
 
 	if service.Namespace != "" {
