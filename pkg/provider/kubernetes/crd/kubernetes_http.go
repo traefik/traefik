@@ -380,11 +380,11 @@ func (c configBuilder) nameAndService(ctx context.Context, namespaceService stri
 			return "", nil, err
 		}
 
-		fullName := fullServiceName(svcCtx, namespace, service.Name, service.Port)
+		fullName := fullServiceName(svcCtx, namespace, service, service.Port)
 
 		return fullName, serversLB, nil
 	case service.Kind == "TraefikService":
-		return fullServiceName(svcCtx, namespace, service.Name, 0), nil, nil
+		return fullServiceName(svcCtx, namespace, service, 0), nil, nil
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
 	}
@@ -399,27 +399,24 @@ func splitSvcNameProvider(name string) (string, string) {
 	return svc, pvd
 }
 
-func fullServiceName(ctx context.Context, namespace, serviceName string, port int32) string {
+func fullServiceName(ctx context.Context, namespace string, service v1alpha1.LoadBalancerSpec, port int32) string {
+	ns := namespaceOrFallback(service, namespace)
+
 	if port != 0 {
-		return provider.Normalize(fmt.Sprintf("%s-%s-%d", namespace, serviceName, port))
+		return provider.Normalize(fmt.Sprintf("%s-%s-%d", ns, service.Name, port))
 	}
 
-	if !strings.Contains(serviceName, providerNamespaceSeparator) {
-		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, serviceName))
+	if !strings.Contains(service.Name, providerNamespaceSeparator) {
+		return provider.Normalize(fmt.Sprintf("%s-%s", ns, service.Name))
 	}
 
-	name, pName := splitSvcNameProvider(serviceName)
+	name, pName := splitSvcNameProvider(service.Name)
 	if pName == providerName {
-		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, name))
+		return provider.Normalize(fmt.Sprintf("%s-%s", ns, name))
 	}
 
-	// At this point, if namespace == "default", we do not know whether it had been intentionally set as such,
-	// or if we're simply hitting the value set by default.
-	// But as it is most likely very much the latter,
-	// and we do not want to systematically log spam users in that case,
-	// we skip logging whenever the namespace is "default".
-	if namespace != "default" {
-		log.FromContext(ctx).Warnf("namespace %q is ignored in cross-provider context", namespace)
+	if service.Namespace != "" {
+		log.FromContext(ctx).Warnf("namespace %q is ignored in cross-provider context", service.Namespace)
 	}
 
 	return provider.Normalize(name) + providerNamespaceSeparator + pName
