@@ -779,3 +779,42 @@ func (s *SimpleSuite) TestSecureAPI(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 }
+
+func (s *SimpleSuite) TestContentTypeDisableAutoDetect(c *check.C) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/withoutcontenttype" {
+			w.Header()["Content-Type"] = nil
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(".testcss { }"))
+	}))
+
+	file := s.adaptFile(c, "fixtures/simple_contenttype.toml", struct {
+		Server string
+	}{
+		Server: srv.URL,
+	})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/withoutcontenttype", time.Second, func(res *http.Response) error {
+		if ct, ok := res.Header["Content-Type"]; ok {
+			return fmt.Errorf("should have no content type and %s is present", ct)
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/contenttype", time.Second, try.HasHeader("Content-Type"))
+	c.Assert(err, checker.IsNil)
+}
