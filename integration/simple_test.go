@@ -786,8 +786,10 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect(c *check.C) {
 			w.Header()["Content-Type"] = nil
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(".testcss { }"))
+		_, err := w.Write([]byte(".testcss { }"))
+		c.Assert(err, checker.IsNil)
 	}))
+	defer srv.Close()
 
 	file := s.adaptFile(c, "fixtures/simple_contenttype.toml", struct {
 		Server string
