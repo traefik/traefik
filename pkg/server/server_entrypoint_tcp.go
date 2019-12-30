@@ -52,9 +52,9 @@ func (h *httpForwarder) Accept() (net.Conn, error) {
 type TCPEntryPoints map[string]*TCPEntryPoint
 
 // NewTCPEntryPoints creates a new TCPEntryPoints.
-func NewTCPEntryPoints(staticConfiguration static.Configuration) (TCPEntryPoints, error) {
+func NewTCPEntryPoints(entryPointsConfig static.EntryPoints) (TCPEntryPoints, error) {
 	serverEntryPointsTCP := make(TCPEntryPoints)
-	for entryPointName, config := range staticConfiguration.EntryPoints {
+	for entryPointName, config := range entryPointsConfig {
 		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
 
 		var err error
@@ -171,6 +171,21 @@ func (e *TCPEntryPoint) StartTCP(ctx context.Context) {
 		}
 
 		safe.Go(func() {
+			// Set read/write for respect timeout even without first byte.
+			if e.transportConfiguration.RespondingTimeouts.ReadTimeout > 0 {
+				err := writeCloser.SetReadDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.ReadTimeout)))
+				if err != nil {
+					logger.Errorf("Error while setting read deadline: %v", err)
+				}
+			}
+
+			if e.transportConfiguration.RespondingTimeouts.WriteTimeout > 0 {
+				err = writeCloser.SetWriteDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.WriteTimeout)))
+				if err != nil {
+					log.WithoutContext().Errorf("Error while setting write deadline: %v", err)
+				}
+			}
+
 			e.switcher.ServeTCP(newTrackedConnection(writeCloser, e.tracker))
 		})
 	}
@@ -195,15 +210,22 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := e.httpServer.Server.Shutdown(ctx); err != nil {
-				if ctx.Err() == context.DeadlineExceeded {
-					logger.Debugf("Wait server shutdown is overdue to: %s", err)
-					err = e.httpServer.Server.Close()
-					if err != nil {
-						logger.Error(err)
-					}
-				}
+			err := e.httpServer.Server.Shutdown(ctx)
+			if err == nil {
+				return
 			}
+			if ctx.Err() == context.DeadlineExceeded {
+				logger.Debugf("Server failed to shutdown within deadline because: %s", err)
+				if err = e.httpServer.Server.Close(); err != nil {
+					logger.Error(err)
+				}
+				return
+			}
+			logger.Error(err)
+			// We expect Close to fail again because Shutdown most likely failed when trying
+			// to close a listener. We still call it however, to make sure that all connections
+			// get closed as well.
+			e.httpServer.Server.Close()
 		}()
 	}
 
@@ -211,15 +233,22 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := e.httpsServer.Server.Shutdown(ctx); err != nil {
-				if ctx.Err() == context.DeadlineExceeded {
-					logger.Debugf("Wait server shutdown is overdue to: %s", err)
-					err = e.httpsServer.Server.Close()
-					if err != nil {
-						logger.Error(err)
-					}
-				}
+			err := e.httpsServer.Server.Shutdown(ctx)
+			if err == nil {
+				return
 			}
+			if ctx.Err() == context.DeadlineExceeded {
+				logger.Debugf("Wait server shutdown is overdue to: %s", err)
+				if err = e.httpsServer.Server.Close(); err != nil {
+					logger.Error(err)
+				}
+				return
+			}
+			logger.Error(err)
+			// We expect Close to fail again because Shutdown most likely failed when trying
+			// to close a listener. We still call it however, to make sure that all connections
+			// get closed as well.
+			e.httpsServer.Server.Close()
 		}()
 	}
 
@@ -227,12 +256,14 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := e.tracker.Shutdown(ctx); err != nil {
-				if ctx.Err() == context.DeadlineExceeded {
-					logger.Debugf("Wait hijack connection is overdue to: %s", err)
-					e.tracker.Close()
-				}
+			err := e.tracker.Shutdown(ctx)
+			if err == nil {
+				return
 			}
+			if ctx.Err() == context.DeadlineExceeded {
+				logger.Debugf("Wait hijack connection is overdue to: %s", err)
+			}
+			e.tracker.Close()
 		}()
 	}
 
@@ -459,8 +490,11 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	serverHTTP := &http.Server{
-		Handler:  handler,
-		ErrorLog: httpServerLogger,
+		Handler:      handler,
+		ErrorLog:     httpServerLogger,
+		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 	}
 
 	listener := newHTTPForwarder(ln)
