@@ -114,6 +114,11 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Add I-D
+	w.Header().Set("X-RateLimit-Info", fmt.Sprintf("amount=%d, source=%s, burst=%d, maxDelay=%f", amount, source, rl.burst, rl.maxDelay))
+	w.Header().Set("RateLimit-Limit", fmt.Sprintf("%.0f", rl.rate))
+
+
 	res := bucket.Reserve()
 	if !res.OK() {
 		http.Error(w, "No bursty traffic allowed", http.StatusTooManyRequests)
@@ -126,6 +131,12 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		rl.serveDelayError(ctx, w, r, delay)
 		return
 	}
+
+	// Add I-D
+	w.Header().Set("RateLimit-Reset", "1")
+	percentage_free :=  float64(rl.maxDelay - delay) / float64(rl.maxDelay)
+	w.Header().Set("RateLimit-Remaining", fmt.Sprintf("%.0f", float64(rl.rate) * percentage_free))
+	w.Header().Set("X-RateLimit-Debug", fmt.Sprintf("pc=%.2f, delay=%.0f", percentage_free, delay))
 
 	time.Sleep(delay)
 	rl.next.ServeHTTP(w, r)
