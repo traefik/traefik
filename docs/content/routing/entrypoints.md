@@ -58,7 +58,7 @@ They define the port which will receive the requests (whether HTTP or TCP).
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.web.address=:80
-    --entryPoints.web-secure.address=:443
+    --entryPoints.websecure.address=:443
     ```
 
     - Two entrypoints are defined: one called `web`, and the other called `web-secure`.
