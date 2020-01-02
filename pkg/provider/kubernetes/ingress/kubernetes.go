@@ -319,6 +319,10 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				continue
 			}
 
+			if rule.HTTP == nil {
+				continue
+			}
+
 			for _, p := range rule.HTTP.Paths {
 				service, err := loadService(client, ingress.Namespace, p.Backend)
 				if err != nil {
