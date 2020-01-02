@@ -68,7 +68,9 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 	epConfig.LifeCycle.GraceTimeOut = types.Duration(5 * time.Second)
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
-		Address:          ":0",
+		// We explicitly use an IPV4 address because on Alpine, with an IPV6 address
+		// there seems to be shenanigans related to properly cleaning up file descriptors
+		Address:          "127.0.0.1:0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 	})
@@ -106,7 +108,7 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 			time.Sleep(time.Millisecond * 100)
 			continue
 		}
-		if !strings.HasSuffix(err.Error(), "connection refused") && !strings.HasSuffix(err.Error(), "reset by peer") && !strings.Contains(err.Error(), "connect: cannot assign") {
+		if !strings.HasSuffix(err.Error(), "connection refused") && !strings.HasSuffix(err.Error(), "reset by peer") {
 			t.Fatalf(`unexpected error: got %v, wanted "connection refused" or "reset by peer"`, err)
 		}
 		testOk = true
