@@ -171,7 +171,9 @@ func (e *TCPEntryPoint) StartTCP(ctx context.Context) {
 		}
 
 		safe.Go(func() {
-			// Set read/write for respect timeout even without first byte.
+			// Enforce read/write deadlines at the connection level, because when we're
+			// peeking the first byte to determine whether we are doing TLS, the deadlines at
+			// the server level are not taken into account.
 			if e.transportConfiguration.RespondingTimeouts.ReadTimeout > 0 {
 				err := writeCloser.SetReadDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.ReadTimeout)))
 				if err != nil {
@@ -182,7 +184,7 @@ func (e *TCPEntryPoint) StartTCP(ctx context.Context) {
 			if e.transportConfiguration.RespondingTimeouts.WriteTimeout > 0 {
 				err = writeCloser.SetWriteDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.WriteTimeout)))
 				if err != nil {
-					log.WithoutContext().Errorf("Error while setting write deadline: %v", err)
+					logger.Errorf("Error while setting write deadline: %v", err)
 				}
 			}
 
@@ -206,50 +208,35 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	logger.Debugf("Waiting %s seconds before killing connections.", graceTimeOut)
 
 	var wg sync.WaitGroup
+
+	shutdownServer := func(server stoppableServer) {
+		defer wg.Done()
+		err := server.Shutdown(ctx)
+		if err == nil {
+			return
+		}
+		if ctx.Err() == context.DeadlineExceeded {
+			logger.Debugf("Server failed to shutdown within deadline because: %s", err)
+			if err = server.Close(); err != nil {
+				logger.Error(err)
+			}
+			return
+		}
+		logger.Error(err)
+		// We expect Close to fail again because Shutdown most likely failed when trying
+		// to close a listener. We still call it however, to make sure that all connections
+		// get closed as well.
+		server.Close()
+	}
+
 	if e.httpServer.Server != nil {
 		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			err := e.httpServer.Server.Shutdown(ctx)
-			if err == nil {
-				return
-			}
-			if ctx.Err() == context.DeadlineExceeded {
-				logger.Debugf("Server failed to shutdown within deadline because: %s", err)
-				if err = e.httpServer.Server.Close(); err != nil {
-					logger.Error(err)
-				}
-				return
-			}
-			logger.Error(err)
-			// We expect Close to fail again because Shutdown most likely failed when trying
-			// to close a listener. We still call it however, to make sure that all connections
-			// get closed as well.
-			e.httpServer.Server.Close()
-		}()
+		go shutdownServer(e.httpServer.Server)
 	}
 
 	if e.httpsServer.Server != nil {
 		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			err := e.httpsServer.Server.Shutdown(ctx)
-			if err == nil {
-				return
-			}
-			if ctx.Err() == context.DeadlineExceeded {
-				logger.Debugf("Wait server shutdown is overdue to: %s", err)
-				if err = e.httpsServer.Server.Close(); err != nil {
-					logger.Error(err)
-				}
-				return
-			}
-			logger.Error(err)
-			// We expect Close to fail again because Shutdown most likely failed when trying
-			// to close a listener. We still call it however, to make sure that all connections
-			// get closed as well.
-			e.httpsServer.Server.Close()
-		}()
+		go shutdownServer(e.httpsServer.Server)
 	}
 
 	if e.tracker != nil {
