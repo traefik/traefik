@@ -171,9 +171,9 @@ func (e *TCPEntryPoint) StartTCP(ctx context.Context) {
 		}
 
 		safe.Go(func() {
-			// Enforce read/write deadlines at the connection level, because when we're
-			// peeking the first byte to determine whether we are doing TLS, the deadlines at
-			// the server level are not taken into account.
+			// Enforce read/write deadlines at the connection level,
+			// because when we're peeking the first byte to determine whether we are doing TLS,
+			// the deadlines at the server level are not taken into account.
 			if e.transportConfiguration.RespondingTimeouts.ReadTimeout > 0 {
 				err := writeCloser.SetReadDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.ReadTimeout)))
 				if err != nil {
@@ -223,9 +223,8 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 			return
 		}
 		logger.Error(err)
-		// We expect Close to fail again because Shutdown most likely failed when trying
-		// to close a listener. We still call it however, to make sure that all connections
-		// get closed as well.
+		// We expect Close to fail again because Shutdown most likely failed when trying to close a listener.
+		// We still call it however, to make sure that all connections get closed as well.
 		server.Close()
 	}
 

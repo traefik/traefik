@@ -87,19 +87,18 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 	time.Sleep(time.Millisecond * 100)
 
 	// We need to do a write on the conn before the shutdown to make it "exist".
-	// Because the connection indeed exists as far as TCP is concerned, but since we
-	// only pass it along to the HTTP server after at least one byte is peaked, the
-	// HTTP server (and hence its shutdown) does not know about the connection until
-	// that first byte peaking.
+	// Because the connection indeed exists as far as TCP is concerned,
+	// but since we only pass it along to the HTTP server after at least one byte is peaked,
+	// the HTTP server (and hence its shutdown) does not know about the connection until that first byte peaking.
 	err = request.Write(conn)
 	require.NoError(t, err)
 
 	go entryPoint.Shutdown(context.Background())
 
 	// Make sure that new connections are not permitted anymore.
-	// Note that this should be true not only after Shutdown has returned, but
-	// technically also as early as the Shutdown has closed the listener, i.e. during
-	// the shutdown and before the gracetime is over.
+	// Note that this should be true not only after Shutdown has returned,
+	// but technically also as early as the Shutdown has closed the listener,
+	// i.e. during the shutdown and before the gracetime is over.
 	var testOk bool
 	for i := 0; i < 10; i++ {
 		loopConn, err := net.Dial("tcp", epAddr)
@@ -118,8 +117,7 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 		t.Fatal("entry point never closed")
 	}
 
-	// And make sure that the connection we had opened before shutting things
-	// down is still operational
+	// And make sure that the connection we had opened before shutting things down is still operational
 
 	resp, err := http.ReadResponse(bufio.NewReader(conn), request)
 	require.NoError(t, err)
