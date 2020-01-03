@@ -171,7 +171,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 	var crr *captureRequestReader
 	if req.Body != nil {
-		crr = &captureRequestReader{source: req.Body, count: 0}
+		crr = &captureRequestReader{req: req, logger: h.logger}
 		reqWithDataTable.Body = crr
 	}
 
@@ -214,7 +214,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		size:    crw.Size(),
 	}
 	if crr != nil {
-		logDataTable.Request.count = crr.count
+		logDataTable.Request.count = crr.GetCount()
 	}
 
 	if h.config.BufferingSize > 0 {
