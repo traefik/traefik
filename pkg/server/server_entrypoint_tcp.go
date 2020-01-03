@@ -248,7 +248,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 				return
 			}
 			if ctx.Err() == context.DeadlineExceeded {
-				logger.Debugf("Wait hijack connection is overdue to: %s", err)
+				logger.Debugf("Server failed to shutdown before deadline because: %s", err)
 			}
 			e.tracker.Close()
 		}()
