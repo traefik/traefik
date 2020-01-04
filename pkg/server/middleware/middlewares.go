@@ -16,6 +16,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/circuitbreaker"
 	"github.com/containous/traefik/v2/pkg/middlewares/compress"
 	"github.com/containous/traefik/v2/pkg/middlewares/customerrors"
+	"github.com/containous/traefik/v2/pkg/middlewares/h2push"
 	"github.com/containous/traefik/v2/pkg/middlewares/headers"
 	"github.com/containous/traefik/v2/pkg/middlewares/inflightreq"
 	"github.com/containous/traefik/v2/pkg/middlewares/ipwhitelist"
@@ -199,6 +200,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return auth.NewForward(ctx, next, *config.ForwardAuth, middlewareName)
+		}
+	}
+
+	// H2Push
+	if config.H2Push != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return h2push.New(ctx, next, *config.H2Push, middlewareName)
 		}
 	}
 

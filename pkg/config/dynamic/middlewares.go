@@ -35,6 +35,7 @@ type Middleware struct {
 	Compress          *Compress          `json:"compress,omitempty" toml:"compress,omitempty" yaml:"compress,omitempty" label:"allowEmpty"`
 	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty" toml:"passTLSClientCert,omitempty" yaml:"passTLSClientCert,omitempty"`
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty"`
+	H2Push            *H2Push            `json:"h2push,omitempty" toml:"h2push,omitempty" yaml:"h2push,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -124,6 +125,13 @@ type ForwardAuth struct {
 	TLS                 *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
 	TrustForwardHeader  bool       `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
 	AuthResponseHeaders []string   `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// H2Push holds the HTTP2 push configuration
+type H2Push struct {
+	PushPath string `json:"pushPath,omitempty" toml:"pushPath,omitempty" yaml:"pushPath,omitempty"`;
 }
 
 // +k8s:deepcopy-gen=true
