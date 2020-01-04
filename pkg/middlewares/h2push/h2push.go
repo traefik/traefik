@@ -17,14 +17,16 @@ const (
 	typeName = "H2Push"
 )
 
+var (
+	linkRegex = regexp.MustCompile(`(?m)<([^>]+)>;\s+rel=(\w+);\s+as=(\w+)`)
+	absoluteURLRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z\d+\-.]*:`)
+)
+
 // H2Push is a middleware used to push resources with HTTP2.
 type h2push struct {
 	name string
 	next http.Handler
 	files []dynamic.H2PushFile
-
-	linkRegex *regexp.Regexp
-	absoluteURLRegex *regexp.Regexp
 }
 
 // New creates a new handler.
@@ -35,15 +37,13 @@ func New(ctx context.Context, next http.Handler, config dynamic.H2Push, name str
 		name: name,
 		next: next,
 		files: config.Files,
-		linkRegex: regexp.MustCompile(`(?m)<([^>]+)>;\s+rel=(\w+);\s+as=(\w+)`),
-		absoluteURLRegex: regexp.MustCompile(`^[a-zA-Z][a-zA-Z\d+\-.]*:`),
 	}, nil
 }
 
 func (h *h2push) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	pusher, isPushable := rw.(http.Pusher)
-	
-	if isPushable {
+
+	if isPushable && h.files != nil {
 		for _, file := range h.files {
 			if file.Match != "" {
 				matched, err := regexp.MatchString(file.Match, req.URL.Path)
@@ -60,7 +60,7 @@ func (h *h2push) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				}
 			}
 
-			pusher.Push(file.URL, nil)
+			pusher.Push(normalizePath(file.URL), nil)
 		}
 	}
 	
@@ -81,11 +81,9 @@ func (h *h2push) pushLinks(p http.Pusher, linkHeaders []string) error {
 		if rel != "preload" {
 			continue
 		}
-		
-		if !strings.HasPrefix(fname, "/") && !h.absoluteURLRegex.MatchString(fname) {
-			fname = "/" + fname
-		}
-		
+
+		fname = normalizePath(fname);
+				
 		fmt.Printf("Link file name: %v, kind: %v\n", fname, kind); //debug
 		
 		p.Push(fname, nil)
@@ -95,7 +93,7 @@ func (h *h2push) pushLinks(p http.Pusher, linkHeaders []string) error {
 }
 
 func (h *h2push) parseLink(link string) (fileName string, rel string, kind string, err error) {
-	groups := h.linkRegex.FindStringSubmatch(link)
+	groups := linkRegex.FindStringSubmatch(link)
 
 	if len(groups) != 4 {
 		err = errors.New("invalid link header")
@@ -103,4 +101,12 @@ func (h *h2push) parseLink(link string) (fileName string, rel string, kind strin
 	}
 
 	return groups[1], groups[2], groups[3], nil;
+}
+
+func normalizePath(path string) (absolutePath string) {
+	if !strings.HasPrefix(path, "/") && !absoluteURLRegex.MatchString(path) {
+		return "/" + path
+	}
+
+	return path
 }
