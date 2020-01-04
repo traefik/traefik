@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 	"errors"
-	"fmt"
 	"net/http"
 	"regexp"
 
@@ -73,7 +72,7 @@ func (h *h2push) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func (h *h2push) pushLinks(p http.Pusher, linkHeaders []string) error {
 	for _, link := range linkHeaders {
-		fname, rel, kind, err := h.parseLink(link)
+		fname, rel, _, err := parseLink(link)
 		if err != nil {
 			return err
 		}
@@ -83,16 +82,14 @@ func (h *h2push) pushLinks(p http.Pusher, linkHeaders []string) error {
 		}
 
 		fname = normalizePath(fname);
-				
-		fmt.Printf("Link file name: %v, kind: %v\n", fname, kind); //debug
-		
+
 		p.Push(fname, nil)
 	}
 
 	return nil
 }
 
-func (h *h2push) parseLink(link string) (fileName string, rel string, kind string, err error) {
+func parseLink(link string) (fileName string, rel string, kind string, err error) {
 	groups := linkRegex.FindStringSubmatch(link)
 
 	if len(groups) != 4 {
