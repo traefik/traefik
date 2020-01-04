@@ -19,37 +19,60 @@ const (
 
 // H2Push is a middleware used to push resources with HTTP2.
 type h2push struct {
+	name string
 	next http.Handler
-	path string
+	files []dynamic.H2PushFile
 
 	linkRegex *regexp.Regexp
+	absoluteURLRegex *regexp.Regexp
 }
 
 // New creates a new handler.
 func New(ctx context.Context, next http.Handler, config dynamic.H2Push, name string) (http.Handler, error) {
 	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
 
-	fmt.Println("Path: " + config.PushPath)
-
 	return &h2push{
+		name: name,
 		next: next,
-		path: config.PushPath,
+		files: config.Files,
 		linkRegex: regexp.MustCompile(`(?m)<([^>]+)>;\s+rel=(\w+);\s+as=(\w+)`),
+		absoluteURLRegex: regexp.MustCompile(`^[a-zA-Z][a-zA-Z\d+\-.]*:`),
 	}, nil
 }
 
 func (h *h2push) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	pusher, isPushable := rw.(http.Pusher)
+	
+	if isPushable {
+		for _, file := range h.files {
+			if file.Match != "" {
+				matched, err := regexp.MatchString(file.Match, req.URL.Path)
+
+				if err != nil {
+					log.FromContext(middlewares.GetLoggerCtx(req.Context(), h.name, typeName)).
+						Errorf("Invalid Regex pattern: %v", file.Match)
+
+					continue
+				}
+
+				if !matched {
+					continue
+				}
+			}
+
+			pusher.Push(file.URL, nil)
+		}
+	}
+	
 	h.next.ServeHTTP(rw, req)
 
-	if pusher, ok := rw.(http.Pusher); ok {
+	if isPushable {
 		h.pushLinks(pusher, rw.Header()["Link"])
-
-		pusher.Push(h.path, nil)
 	}
 }
 
-func (h *h2push) pushLinks(p http.Pusher, links []string) error {
-	for _, link := range links {
+func (h *h2push) pushLinks(p http.Pusher, linkHeaders []string) error {
+	for _, link := range linkHeaders {
 		fname, rel, kind, err := h.parseLink(link)
 		if err != nil {
 			return err
@@ -58,12 +81,12 @@ func (h *h2push) pushLinks(p http.Pusher, links []string) error {
 		if rel != "preload" {
 			continue
 		}
-
-		fmt.Printf("Link file name: %v, kind: %v\n", fname, kind);
-
-		if !strings.HasPrefix(fname, "/") {
+		
+		if !strings.HasPrefix(fname, "/") && !h.absoluteURLRegex.MatchString(fname) {
 			fname = "/" + fname
 		}
+		
+		fmt.Printf("Link file name: %v, kind: %v\n", fname, kind); //debug
 		
 		p.Push(fname, nil)
 	}
@@ -75,7 +98,8 @@ func (h *h2push) parseLink(link string) (fileName string, rel string, kind strin
 	groups := h.linkRegex.FindStringSubmatch(link)
 
 	if len(groups) != 4 {
-		return "", "", "", errors.New("invalid Link header");
+		err = errors.New("invalid link header")
+		return
 	}
 
 	return groups[1], groups[2], groups[3], nil;

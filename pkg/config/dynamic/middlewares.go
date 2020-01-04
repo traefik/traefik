@@ -131,7 +131,7 @@ type ForwardAuth struct {
 
 // H2Push holds the HTTP2 push configuration
 type H2Push struct {
-	PushPath string `json:"pushPath,omitempty" toml:"pushPath,omitempty" yaml:"pushPath,omitempty"`;
+	Files []H2PushFile `json:"files,omitempty" toml:"files,omitempty" yaml:"files,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -379,6 +379,14 @@ func (s *StripPrefix) SetDefaults() {
 // StripPrefixRegex holds the StripPrefixRegex configuration.
 type StripPrefixRegex struct {
 	Regex []string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// H2PushFile holds files that H2Push can push
+type H2PushFile struct {
+	URL string `json:"url" toml:"url" yaml:"url"`
+	Match string `json:"match,omitempty" toml:"match,omitempty" yaml:"match,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
