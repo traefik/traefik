@@ -255,6 +255,10 @@ func loadService(client Client, namespace string, backend v1beta1.IngressBackend
 		}
 	}
 
+	if len(servers) == 0 {
+		return nil, errors.New("no healthy endpoints found")
+	}
+
 	return &dynamic.Service{
 		LoadBalancer: &dynamic.ServersLoadBalancer{
 			Servers:        servers,

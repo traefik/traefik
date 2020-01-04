@@ -356,6 +356,10 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 		}
 	}
 
+	if len(servers) == 0 {
+		return nil, fmt.Errorf("no healthy endpoints found for %s/%s", namespace, sanitizedName)
+	}
+
 	return servers, nil
 }
 
