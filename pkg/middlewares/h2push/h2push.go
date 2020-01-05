@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	linkRegex = regexp.MustCompile(`(?m)<([^>]+)>;\s+rel=(\w+);\s+as=(\w+)`)
+	linkRegex = regexp.MustCompile(`(?m)<([^>]+)>;\s+rel="?(\w+)"?;\s+as="?(\w+)"?`)
 	absoluteURLRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z\d+\-.]*:`)
 )
 
@@ -73,11 +73,7 @@ func (h *h2push) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (h *h2push) pushLinks(p http.Pusher, linkHeaders []string) error {
 	for _, link := range linkHeaders {
 		fname, rel, _, err := parseLink(link)
-		if err != nil {
-			return err
-		}
-
-		if rel != "preload" {
+		if err != nil || rel != "preload" {
 			continue
 		}
 
