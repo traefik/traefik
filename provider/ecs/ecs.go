@@ -309,6 +309,11 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 						state:     aws.StringValue(task.LastStatus),
 					}
 				} else {
+					if containerInstance == nil {
+						log.Errorf("Unable to find container instance information for %s", aws.StringValue(container.Name))
+						continue
+					}
+
 					var ports []portMapping
 					for _, mapping := range container.NetworkBindings {
 						if mapping != nil {
