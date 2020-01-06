@@ -20,7 +20,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/emptybackendhandler"
 	metricsMiddle "github.com/containous/traefik/v2/pkg/middlewares/metrics"
 	"github.com/containous/traefik/v2/pkg/middlewares/pipelining"
-	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/server/cookie"
 	"github.com/containous/traefik/v2/pkg/server/internal"
 	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/mirror"
@@ -34,9 +33,8 @@ const (
 )
 
 // NewManager creates a new Manager
-func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry, routinePool *safe.Pool) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry) *Manager {
 	return &Manager{
-		routinePool:         routinePool,
 		metricsRegistry:     metricsRegistry,
 		bufferPool:          newBufferPool(),
 		defaultRoundTripper: defaultRoundTripper,
@@ -47,7 +45,6 @@ func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper htt
 
 // Manager The service manager
 type Manager struct {
-	routinePool         *safe.Pool
 	metricsRegistry     metrics.Registry
 	bufferPool          httputil.BufferPool
 	defaultRoundTripper http.RoundTripper
@@ -123,7 +120,7 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		return nil, err
 	}
 
-	handler := mirror.New(serviceHandler, m.routinePool)
+	handler := mirror.New(serviceHandler)
 	for _, mirrorConfig := range config.Mirrors {
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name, responseModifier)
 		if err != nil {

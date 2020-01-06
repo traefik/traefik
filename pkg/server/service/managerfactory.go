@@ -21,8 +21,6 @@ type ManagerFactory struct {
 	dashboardHandler http.Handler
 	metricsHandler   http.Handler
 	pingHandler      http.Handler
-
-	routinesPool *safe.Pool
 }
 
 // NewManagerFactory creates a new ManagerFactory.
@@ -30,7 +28,6 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 	factory := &ManagerFactory{
 		metricsRegistry:     metricsRegistry,
 		defaultRoundTripper: setupDefaultRoundTripper(staticConfiguration.ServersTransport),
-		routinesPool:        routinesPool,
 	}
 
 	if staticConfiguration.API != nil {
@@ -56,6 +53,6 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 
 // Build creates a service manager.
 func (f *ManagerFactory) Build(configuration *runtime.Configuration) *InternalHandlers {
-	svcManager := NewManager(configuration.Services, f.defaultRoundTripper, f.metricsRegistry, f.routinesPool)
+	svcManager := NewManager(configuration.Services, f.defaultRoundTripper, f.metricsRegistry)
 	return NewInternalHandlers(f.api, configuration, f.restHandler, f.metricsHandler, f.pingHandler, f.dashboardHandler, svcManager)
 }

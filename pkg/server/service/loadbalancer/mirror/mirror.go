@@ -17,18 +17,20 @@ type Mirroring struct {
 	handler        http.Handler
 	mirrorHandlers []*mirrorHandler
 	rw             http.ResponseWriter
-	routinePool    *safe.Pool
 
 	lock  sync.RWMutex
 	total uint64
+
+	// TODO(mpl): remove that hack for tests once we have fixed safe.Pool to not leak anymore,
+	// and revert to using safe.GoCtx.
+	routineTestHook func()
 }
 
 // New returns a new instance of *Mirroring.
-func New(handler http.Handler, pool *safe.Pool) *Mirroring {
+func New(handler http.Handler) *Mirroring {
 	return &Mirroring{
-		routinePool: pool,
-		handler:     handler,
-		rw:          blackholeResponseWriter{},
+		handler: handler,
+		rw:      blackholeResponseWriter{},
 	}
 }
 
@@ -57,7 +59,7 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	default:
 	}
 
-	m.routinePool.GoCtx(func(_ context.Context) {
+	safe.Go(func() {
 		total := m.inc()
 		for _, handler := range m.mirrorHandlers {
 			handler.lock.Lock()
@@ -83,6 +85,9 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				handler.lock.Unlock()
 			}
 		}
+		if m.routineTestHook != nil {
+			m.routineTestHook()
+		}
 	})
 }
 
@@ -100,7 +105,7 @@ type blackholeResponseWriter struct{}
 func (b blackholeResponseWriter) Flush() {}
 
 func (b blackholeResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return nil, nil, errors.New("you can hijack connection on blackholeResponseWriter")
+	return nil, nil, errors.New("connection on blackholeResponseWriter cannot be hijacked")
 }
 
 func (b blackholeResponseWriter) Header() http.Header {
