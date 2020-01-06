@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/containous/traefik/v2/pkg/log"
 )
@@ -34,7 +35,23 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	}
 
 	br := bufio.NewReader(conn)
-	serverName, tls, peeked := clientHelloServerName(br)
+	serverName, tls, peeked, err := clientHelloServerName(br)
+	if err != nil {
+		conn.Close()
+		return
+	}
+
+	// Remove read/write deadline and delegate this to underlying tcp server (for now only handled by HTTP Server)
+	err = conn.SetReadDeadline(time.Time{})
+	if err != nil {
+		log.WithoutContext().Errorf("Error while setting read deadline: %v", err)
+	}
+
+	err = conn.SetWriteDeadline(time.Time{})
+	if err != nil {
+		log.WithoutContext().Errorf("Error while setting write deadline: %v", err)
+	}
+
 	if !tls {
 		switch {
 		case r.catchAllNoTLS != nil:
@@ -176,33 +193,34 @@ func (c *Conn) Read(p []byte) (n int, err error) {
 // clientHelloServerName returns the SNI server name inside the TLS ClientHello,
 // without consuming any bytes from br.
 // On any error, the empty string is returned.
-func clientHelloServerName(br *bufio.Reader) (string, bool, string) {
+func clientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
 	hdr, err := br.Peek(1)
 	if err != nil {
-		if err != io.EOF {
-			log.Errorf("Error while Peeking first byte: %s", err)
+		opErr, ok := err.(*net.OpError)
+		if err != io.EOF && (!ok || !opErr.Timeout()) {
+			log.WithoutContext().Errorf("Error while Peeking first byte: %s", err)
 		}
-		return "", false, ""
+		return "", false, "", err
 	}
 
 	const recordTypeHandshake = 0x16
 	if hdr[0] != recordTypeHandshake {
 		// log.Errorf("Error not tls")
-		return "", false, getPeeked(br) // Not TLS.
+		return "", false, getPeeked(br), nil // Not TLS.
 	}
 
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
 		log.Errorf("Error while Peeking hello: %s", err)
-		return "", false, getPeeked(br)
+		return "", false, getPeeked(br), nil
 	}
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
 		log.Errorf("Error while Hello: %s", err)
-		return "", true, getPeeked(br)
+		return "", true, getPeeked(br), nil
 	}
 
 	sni := ""
@@ -214,7 +232,7 @@ func clientHelloServerName(br *bufio.Reader) (string, bool, string) {
 	})
 	_ = server.Handshake()
 
-	return sni, true, getPeeked(br)
+	return sni, true, getPeeked(br), nil
 }
 
 func getPeeked(br *bufio.Reader) string {
