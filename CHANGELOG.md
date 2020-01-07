@@ -1,3 +1,26 @@
+## [v2.1.2](https://github.com/containous/traefik/tree/v2.1.2) (2020-01-07)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.1...v2.1.2)
+
+**Bug fixes:**
+- **[authentication,middleware,tracing]** fix(tracing): makes sure tracing headers are being propagated when using forwardAuth ([#6072](https://github.com/containous/traefik/pull/6072) by [jcchavezs](https://github.com/jcchavezs))
+- **[cli]** fix: invalid label/flag parsing. ([#6028](https://github.com/containous/traefik/pull/6028) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Query consul catalog for service health separately ([#6046](https://github.com/containous/traefik/pull/6046) by [SantoDE](https://github.com/SantoDE))
+- **[k8s,k8s/crd]** Restore ExternalName https support for Kubernetes CRD ([#6037](https://github.com/containous/traefik/pull/6037) by [kpeiruza](https://github.com/kpeiruza))
+- **[k8s,k8s/crd]** Log the ignored namespace only when needed ([#6087](https://github.com/containous/traefik/pull/6087) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[k8s,k8s/ingress]** k8s Ingress: fix crash on rules with nil http ([#6121](https://github.com/containous/traefik/pull/6121) by [grimmy](https://github.com/grimmy))
+- **[logs]** Improves error message when a configuration file is empty. ([#6135](https://github.com/containous/traefik/pull/6135) by [ldez](https://github.com/ldez))
+- **[server]** Handle respondingTimeout and better shutdown tests. ([#6115](https://github.com/containous/traefik/pull/6115) by [juliens](https://github.com/juliens))
+- **[server]** Don&#39;t set user-agent to Go-http-client/1.1 ([#6030](https://github.com/containous/traefik/pull/6030) by [sh7dm](https://github.com/sh7dm))
+- **[tracing]** fix: Malformed x-b3-traceid Header ([#6079](https://github.com/containous/traefik/pull/6079) by [ldez](https://github.com/ldez))
+- **[webui]** fix: dashboard redirect loop ([#6078](https://github.com/containous/traefik/pull/6078) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** Use consistent name in ACME documentation ([#6019](https://github.com/containous/traefik/pull/6019) by [ldez](https://github.com/ldez))
+- **[api,k8s/crd]** Add a documentation example for dashboard and api for kubernetes CRD ([#6022](https://github.com/containous/traefik/pull/6022) by [dduportal](https://github.com/dduportal))
+- **[cli]** Fix examples for the use of websecure via CLI ([#6116](https://github.com/containous/traefik/pull/6116) by [tiagoboeing](https://github.com/tiagoboeing))
+- **[k8s,k8s/crd]** Improve documentation about Kubernetes IngressRoute ([#6058](https://github.com/containous/traefik/pull/6058) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[middleware]** Improve sourceRange explanation for ipWhiteList ([#6070](https://github.com/containous/traefik/pull/6070) by [der-domi](https://github.com/der-domi))
+
 ## [v2.1.1](https://github.com/containous/traefik/tree/v2.1.1) (2019-12-12)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.0...v2.1.1)
 
