@@ -8,9 +8,43 @@ Traefik used to support Kubernetes only through the [Kubernetes Ingress provider
 However, as the community expressed the need to benefit from Traefik features without resorting to (lots of) annotations,
 we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (alias CRD in the following) for an IngressRoute type, defined below, in order to provide a better way to configure access to a Kubernetes cluster.
 
+## Configuration Requirements
+
+!!! tip "All Steps for a Successful Deployment"
+
+    * Add/update **all** the Traefik resources [definitions](../reference/dynamic-configuration/kubernetes-crd.md#definitions)
+    * Add/update the [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for the Traefik custom resources
+    * Use [Helm Chart](../getting-started/install-traefik.md#use-the-helm-chart) or use a custom Traefik Deployment 
+        * Enable the kubernetesCRD provider
+        * Apply the needed kubernetesCRD provider [configuration](#provider-configuration)
+    * Add all needed traefik custom [resources](../reference/dynamic-configuration/kubernetes-crd.md#resources)
+ 
+??? example "Initializing Resource Definition and RBAC"
+
+    ```yaml tab="Traefik Resource Definition"
+    # All resources definition must be declared
+    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition.yml"
+    ```
+
+    ```yaml tab="RBAC for Traefik CRD"
+    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-rbac.yml"
+    ```
+
 ## Resource Configuration
 
-See the dedicated section in [routing](../routing/providers/kubernetes-crd.md).
+When using KubernetesCRD as a provider,
+Traefik uses [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to retrieve its routing configuration.
+Traefik Custom Resource Definitions are a Kubernetes implementation of the Traefik concepts. The main particularities are:
+
+* The usage of `name` **and** `namespace` to refer to another Kubernetes resource.
+* The usage of [secret](https://kubernetes.io/docs/concepts/configuration/secret/) for sensible data like:
+    * TLS certificate.
+    * Authentication data.
+* The structure of the configuration.
+* The obligation to declare all the [definitions](../reference/dynamic-configuration/kubernetes-crd.md#definitions).
+
+The Traefik CRD are building blocks which you can assemble according to your needs.
+See the list of CRDs in the dedicated [routing section](../routing/providers/kubernetes-crd.md).
 
 ## LetsEncrypt Support with the Custom Resource Definition Provider
 

@@ -66,7 +66,7 @@ http:
 
 ### `sourceRange`
 
-The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs).
+The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using CIDR notation).
 
 ### `ipStrategy`
 

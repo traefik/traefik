@@ -20,7 +20,7 @@ func newResponseRecorder(rw http.ResponseWriter) recorder {
 	if _, ok := rw.(http.CloseNotifier); !ok {
 		return rec
 	}
-	return responseRecorderWithCloseNotify{rec}
+	return &responseRecorderWithCloseNotify{rec}
 }
 
 // responseRecorder captures information from the response and preserves it for
@@ -53,13 +53,6 @@ func (r *responseRecorder) WriteHeader(status int) {
 // Hijack hijacks the connection
 func (r *responseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return r.ResponseWriter.(http.Hijacker).Hijack()
-}
-
-// CloseNotify returns a channel that receives at most a
-// single value (true) when the client connection has gone
-// away.
-func (r *responseRecorder) CloseNotify() <-chan bool {
-	return r.ResponseWriter.(http.CloseNotifier).CloseNotify()
 }
 
 // Flush sends any buffered data to the client.

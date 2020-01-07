@@ -40,7 +40,7 @@ tls:
 
     In the above example, we've used the [file provider](../providers/file.md) to handle these definitions.
     It is the only available method to configure the certificates (as well as the options and the stores).
-    However, in [Kubernetes](../providers/kubernetes-crd.md), the certificates can and must be provided by [secrets](../routing/providers/kubernetes-crd.md#tls). 
+    However, in [Kubernetes](../providers/kubernetes-crd.md), the certificates can and must be provided by [secrets](https://kubernetes.io/docs/concepts/configuration/secret/). 
 
 ## Certificates Stores
 

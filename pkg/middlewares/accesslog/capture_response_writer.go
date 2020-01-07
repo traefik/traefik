@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ middlewares.Stateful = &captureResponseWriter{}
+	_ middlewares.Stateful = &captureResponseWriterWithCloseNotify{}
 )
 
 type capturer interface {
@@ -24,7 +24,7 @@ func newCaptureResponseWriter(rw http.ResponseWriter) capturer {
 	if _, ok := rw.(http.CloseNotifier); !ok {
 		return capt
 	}
-	return captureResponseWriterWithCloseNotify{capt}
+	return &captureResponseWriterWithCloseNotify{capt}
 }
 
 // captureResponseWriter is a wrapper of type http.ResponseWriter
@@ -74,13 +74,6 @@ func (crw *captureResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 		return h.Hijack()
 	}
 	return nil, nil, fmt.Errorf("not a hijacker: %T", crw.rw)
-}
-
-func (crw *captureResponseWriter) CloseNotify() <-chan bool {
-	if c, ok := crw.rw.(http.CloseNotifier); ok {
-		return c.CloseNotify()
-	}
-	return nil
 }
 
 func (crw *captureResponseWriter) Status() int {

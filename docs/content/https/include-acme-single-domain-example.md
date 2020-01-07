@@ -12,9 +12,9 @@ labels:
 deploy:
   labels:
     - traefik.http.routers.blog.rule=Host(`company.com`) && Path(`/blog`)
-    - traefik.http.services.blog-svc.loadbalancer.server.port=8080"
     - traefik.http.routers.blog.tls=true
     - traefik.http.routers.blog.tls.certresolver=le
+    - traefik.http.services.blog-svc.loadbalancer.server.port=8080"
 ```
 
 ```yaml tab="Kubernetes"

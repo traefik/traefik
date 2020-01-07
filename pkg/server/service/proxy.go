@@ -52,6 +52,10 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 			outReq.ProtoMajor = 1
 			outReq.ProtoMinor = 1
 
+			if _, ok := outReq.Header["User-Agent"]; !ok {
+				outReq.Header.Set("User-Agent", "")
+			}
+
 			// Do not pass client Host header unless optsetter PassHostHeader is set.
 			if passHostHeader != nil && !*passHostHeader {
 				outReq.Host = outReq.URL.Host
