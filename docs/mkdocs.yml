@@ -107,6 +107,7 @@ nav:
       - 'Chain': 'middlewares/chain.md'
       - 'CircuitBreaker': 'middlewares/circuitbreaker.md'
       - 'Compress': 'middlewares/compress.md'
+      - 'ContentType': 'middlewares/contenttype.md'
       - 'DigestAuth': 'middlewares/digestauth.md'
       - 'Errors': 'middlewares/errorpages.md'
       - 'ForwardAuth': 'middlewares/forwardauth.md'

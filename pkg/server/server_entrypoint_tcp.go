@@ -461,17 +461,12 @@ type httpServer struct {
 func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool) (*httpServer, error) {
 	httpSwitcher := middlewares.NewHandlerSwitcher(router.BuildDefaultHTTPRouter())
 
-	var handler http.Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		// This will create an empty entry in the header map which disable auto-detect Content-Type.
-		rw.Header()["Content-Type"] = nil
-		httpSwitcher.ServeHTTP(rw, req)
-	})
-
+	var handler http.Handler
 	var err error
 	handler, err = forwardedheaders.NewXForwarded(
 		configuration.ForwardedHeaders.Insecure,
 		configuration.ForwardedHeaders.TrustedIPs,
-		handler)
+		httpSwitcher)
 
 	if err != nil {
 		return nil, err
