@@ -139,15 +139,15 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         task: whoami
     ```
 
-## Traefik Resource Configuration
+## Routing Configuration
 
-!!! tip "Custom Resources"
+### Custom Resource Definition (CRD)
 
-    * The complete list of custom resources can be found in [the reference page](../../reference/dynamic-configuration/kubernetes-crd.md).
-    * Don't forget to apply [the prerequisites](../../providers/kubernetes-crd.md#configuration-requirements) before using the Traefik custom resources.
-    * Traefik CRD are bricks that you can assemble according to your needs, choose from the [Available Custom Resources](#available-custom-resources) list.
+* You can find an exhaustive list, generated from Traefik's source code, of the custom resources and their attributes in [the reference page](../../reference/dynamic-configuration/kubernetes-crd.md).
+* Validate that [the prerequisites](../../providers/kubernetes-crd.md#configuration-requirements) are fulfilled before using the Traefik custom resources.
+* Traefik CRDs are building blocks that you can assemble according to your needs.
     
-### Available Custom Resources
+You can find an excerpt of the available custom resources in the table below:
 
 | Kind                                     | Purpose                                                       | Concept Behind                                                 |
 |------------------------------------------|---------------------------------------------------------------|----------------------------------------------------------------|
@@ -159,8 +159,9 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
 
 ### Kind: `IngressRoute`
 
-`IngressRoute` is the CRD implementation of an HTTP [router](../routers/index.md#configuring-http-routers).
-Once the `IngressRoute` kind has been registered with the Kubernetes cluster, it can then be used as `IngressRoute` object.
+`IngressRoute` is the CRD implementation of a [Traefik HTTP router](../routers/index.md#configuring-http-routers).
+
+Register the `IngressRoute` kind in the Kubernetes cluster before creating `IngressRoute` objects.
 
 !!! info "IngressRoute Attributes"
 
@@ -314,8 +315,9 @@ Once the `IngressRoute` kind has been registered with the Kubernetes cluster, it
 
 ### Kind: `Middleware`
 
-To allow for the use of [middlewares](../../middlewares/overview.md) in an [IngressRoute](#kind-ingressroute), we defined a CRD for the `Middleware` kind.
-Once the `Middleware` kind has been registered with the Kubernetes cluster, it can then be used in `IngressRoute` object.
+`Middleware` is the CRD implementation of a [Traefik middleware](../../middlewares/overview.md).
+
+Register the `Middleware` kind in the Kubernetes cluster before creating `Middleware` objects or referencing middlewares in the [`IngressRoute`](#kind-ingressroute) objects.
 
 ??? "Declaring and Referencing a Middleware"
     
@@ -363,14 +365,19 @@ More information about available middlewares in the dedicated [middlewares secti
 
 ### Kind: `TraefikService`
 
-To take advantage of all the capabilities of the Traefik [services](../services/index.md), we defined a CRD for the `TraefikService` kind.
-Once the `TraefikService` kind has been registered with the Kubernetes cluster,
-it can then be used in `IngressRoute` definitions (as well as recursively in other Traefik Services).
+`TraefikService` is the CRD implementation of a ["Traefik Service"](../services/index.md).
+
+Register the `TraefikService` kind in the Kubernetes cluster before creating `TraefikService` objects,
+referencing services in the [`IngressRoute`](#kind-ingressroute)/[`IngressRouteTCP`](#kind-ingressroutetcp) objects or recursively in others `TraefikService` objects.
 
 !!! info "Disambiguate Traefik and Kubernetes Services "
 
-    A `name` can refer either to a TraefikService or a Service, the `kind` field is used to break the ambiguity.
-    The allowed values for this field are `TraefikService`, or `Service` (which is the default value and refers to a Kubernetes service).
+    As the field `name` can reference different types of objects, use the field `kind` to avoid any ambiguity.
+    
+    The field `kind` allows the following values:
+    
+    * `Service` (default value): to reference a [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)
+    * `TraefikService`: to reference another [Traefik Service](../services/index.md)
 
 `TraefikService` object allows to use any (valid) combinations of:
 
@@ -650,8 +657,9 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
 
 ### Kind `IngressRouteTCP`
 
-`IngressRouteTCP` is the CRD implementation of an TCP [router](../routers/index.md#configuring-tcp-routers).
-Once the `IngressRouteTCP` kind has been registered with the Kubernetes cluster, it can then be used as `IngressRouteTCP` object.
+`IngressRouteTCP` is the CRD implementation of a [Traefik TCP router](../routers/index.md#configuring-tcp-routers).
+
+Register the `IngressRouteTCP` kind in the Kubernetes cluster before creating `IngressRouteTCP` objects.
 
 !!! info "IngressRouteTCP Attributes"
 
@@ -767,8 +775,10 @@ Once the `IngressRouteTCP` kind has been registered with the Kubernetes cluster,
 
 ### Kind: `TLSOption`
 
-`TLSOption` is the CRD implementation of [TLS Options](../../https/tls.md#tls-options).
-Once the TLSOption kind has been registered with the Kubernetes cluster or defined in the File Provider, it can then be referenced in `IngressRoute` or `IngressRouteTCP` definitions.
+`TLSOption` is the CRD implementation of a [Traefik "TLS Option"](../../https/tls.md#tls-options).
+
+Register the `TLSOption` kind in the Kubernetes cluster before creating `TLSOption` objects
+or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
 
 !!! info "TLSOption Attributes"
    

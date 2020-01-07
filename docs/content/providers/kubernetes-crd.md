@@ -43,8 +43,8 @@ Traefik Custom Resource Definitions are a Kubernetes implementation of the Traef
 * The structure of the configuration.
 * The obligation to declare all the [definitions](../reference/dynamic-configuration/kubernetes-crd.md#definitions).
 
-The Traefik CRD are bricks that you can assemble according to your needs. 
-See the list of CRD in the dedicated [routing](../routing/providers/kubernetes-crd.md).
+The Traefik CRD are building blocks which you can assemble according to your needs.
+See the list of CRDs in the dedicated [routing section](../routing/providers/kubernetes-crd.md).
 
 ## LetsEncrypt Support with the Custom Resource Definition Provider
 
