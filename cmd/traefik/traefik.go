@@ -172,7 +172,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager)
 
-	serverEntryPointsTCP, err := server.NewTCPEntryPoints(*staticConfiguration)
+	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints)
 	if err != nil {
 		return nil, err
 	}
