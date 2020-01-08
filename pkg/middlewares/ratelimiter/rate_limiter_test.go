@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -193,8 +192,8 @@ func TestRateLimit(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			if strings.HasPrefix(test.desc, "lower than 1/s, longer") && testing.Short() {
-				return
+			if test.loadDuration >= time.Minute && testing.Short() {
+				t.Skip("skipping test in short mode.")
 			}
 			t.Parallel()
 

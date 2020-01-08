@@ -76,10 +76,9 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	var rtl float64
 	if config.Average > 0 {
 		rtl = float64(config.Average*int64(time.Second)) / float64(period)
-		// maxDelay does not scale well for rates below 1 , so we just cap it to the
-		// corresponding value, i.e. 0.5s, in order to keep the effective rate predictable.
-		// One alternative would be to switch to a no-reservation mode (Allow() method)
-		// whenever we are in such a low rate regime.
+		// maxDelay does not scale well for rates below 1,
+		// so we just cap it to the corresponding value, i.e. 0.5s, in order to keep the effective rate predictable.
+		// One alternative would be to switch to a no-reservation mode (Allow() method) whenever we are in such a low rate regime.
 		if rtl < 1 {
 			maxDelay = 500 * time.Millisecond
 		} else {
