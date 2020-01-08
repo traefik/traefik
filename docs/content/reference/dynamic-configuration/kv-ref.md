@@ -102,6 +102,7 @@
 | `traefik/http/middlewares/Middleware12/passTLSClientCert/info/subject/serialNumber` | `true` |
 | `traefik/http/middlewares/Middleware12/passTLSClientCert/pem` | `true` |
 | `traefik/http/middlewares/Middleware13/rateLimit/average` | `42` |
+| `traefik/http/middlewares/Middleware13/rateLimit/period` | `42` |
 | `traefik/http/middlewares/Middleware13/rateLimit/burst` | `42` |
 | `traefik/http/middlewares/Middleware13/rateLimit/sourceCriterion/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware13/rateLimit/sourceCriterion/ipStrategy/excludedIPs/0` | `foobar` |

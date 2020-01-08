@@ -216,7 +216,7 @@
     [http.middlewares.Middleware13]
       [http.middlewares.Middleware13.rateLimit]
         average = 42
-        period = "1s"
+        period = 42
         burst = 42
         [http.middlewares.Middleware13.rateLimit.sourceCriterion]
           requestHeaderName = "foobar"
