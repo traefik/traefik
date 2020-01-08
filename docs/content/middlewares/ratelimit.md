@@ -24,8 +24,8 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-      average: 100
-      burst: 50
+    average: 100
+    burst: 50
 ```
 
 ```yaml tab="Consul Catalog"
@@ -74,26 +74,28 @@ http:
 
 ### `average`
 
-Average is the maximum rate, by default in `requests/s`, allowed for the given source.
-It defaults to 0, which means no rate limiting.
-The rate is actually defined by dividing Average by Period. So for a rate below `1req/s`,
-one needs to define a Period larger than a second.
+`average` is the maximum rate, by default in requests by second, allowed for the given source.
+
+It defaults to `0`, which means no rate limiting.
+
+The rate is actually defined by dividing `average` by `period`.
+So for a rate below 1 req/s, one needs to define a `period` larger than a second.
 
 ```yaml tab="Docker"
+# 100 reqs/s
 labels:
-  # 100 reqs/s
   - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
 ```yaml tab="Kubernetes"
+# 100 reqs/s
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-     # 100 reqs/s
-     average: 100
+    average: 100
 ```
 
 ```yaml tab="Consul Catalog"
@@ -103,56 +105,58 @@ spec:
 
 ```json tab="Marathon"
 "labels": {
-  # 100 reqs/s
   "traefik.http.middlewares.test-ratelimit.ratelimit.average": "100",
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
-  # 100 reqs/s
   - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
 ```toml tab="File (TOML)"
+# 100 reqs/s
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
-    # 100 reqs/s
     average = 100
 ```
 
 ```yaml tab="File (YAML)"
+# 100 reqs/s
 http:
   middlewares:
     test-ratelimit:
       rateLimit:
-        # 100 reqs/s
         average: 100
 ```
 
 ### `period`
 
-Period, in combination with Average, defines the actual maximum rate, such as:<br>
-`r = Average / Period.`<br>
-It defaults to a second.
+`period`, in combination with `average`, defines the actual maximum rate, such as:
+
+```go
+r = average / period
+```
+
+It defaults to `1` second.
 
 ```yaml tab="Docker"
+# 6 reqs/minute
 labels:
-  # 6 reqs/minute
   - "traefik.http.middlewares.test-ratelimit.ratelimit.average=6"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
 ```
 
 ```yaml tab="Kubernetes"
+# 6 reqs/minute
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-      # 6 reqs/minute
-      period: 1m
-      average: 6
+    period: 1m
+    average: 6
 ```
 
 ```yaml tab="Consul Catalog"
@@ -163,41 +167,41 @@ spec:
 
 ```json tab="Marathon"
 "labels": {
-  # 6 reqs/minute
   "traefik.http.middlewares.test-ratelimit.ratelimit.average": "6",
   "traefik.http.middlewares.test-ratelimit.ratelimit.period": "1m",
 }
 ```
 
 ```yaml tab="Rancher"
+# 6 reqs/minute
 labels:
-  # 6 reqs/minute
   - "traefik.http.middlewares.test-ratelimit.ratelimit.average=6"
   - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
 ```
 
 ```toml tab="File (TOML)"
+# 6 reqs/minute
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
-    # 6 reqs/minute
     average = 6
     period = 1m
 ```
 
 ```yaml tab="File (YAML)"
+# 6 reqs/minute
 http:
   middlewares:
     test-ratelimit:
       rateLimit:
-        # 6 reqs/minute
         average: 6
         period: 1m
 ```
 
 ### `burst`
 
-Burst is the maximum number of requests allowed to go through in the same arbitrarily small period of time.
-It defaults to 1.
+`burst` is the maximum number of requests allowed to go through in the same arbitrarily small period of time.
+
+It defaults to `1`.
 
 ```yaml tab="Docker"
 labels:
@@ -211,7 +215,7 @@ metadata:
   name: test-ratelimit
 spec:
   rateLimit:
-      burst: 100
+    burst: 100
 ```
 
 ```yaml tab="Consul Catalog"
