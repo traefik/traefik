@@ -243,6 +243,7 @@ http:
     Middleware13:
       rateLimit:
         average: 42
+        period: 42
         burst: 42
         sourceCriterion:
           ipstrategy:
