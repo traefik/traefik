@@ -60,6 +60,7 @@ func (ip *IP) IsAuthorized(req *http.Request) error {
 	if ip.useXForwardedFor {
 		xFFs := req.Header[XForwardedFor]
 		if len(xFFs) > 0 {
+			match := false
 			for _, xFF := range xFFs {
 				xffs := strings.Split(xFF, ",")
 				for _, xff := range xffs {
@@ -70,11 +71,15 @@ func (ip *IP) IsAuthorized(req *http.Request) error {
 					}
 
 					if ok {
+						match = true
 						return nil
 					}
 
 					invalidMatches = append(invalidMatches, xffTrimmed)
 				}
+			}
+			if !match {
+				return fmt.Errorf("%q matched none of the white list", strings.Join(invalidMatches, ", "))
 			}
 		}
 	}
