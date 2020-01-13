@@ -1,26 +1,23 @@
 package mirror
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"sync/atomic"
 	"testing"
 
+	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMirroringOn100(t *testing.T) {
 	var countMirror1, countMirror2 int32
-	var wg sync.WaitGroup
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		wg.Add(1)
 		rw.WriteHeader(http.StatusOK)
 	})
-	mirror := New(handler)
-	mirror.routineTestHook = func() {
-		wg.Done()
-	}
+	pool := safe.NewPool(context.Background())
+	mirror := New(handler, pool)
 	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		atomic.AddInt32(&countMirror1, 1)
 	}), 10)
@@ -35,7 +32,7 @@ func TestMirroringOn100(t *testing.T) {
 		mirror.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	wg.Wait()
+	pool.Stop()
 
 	val1 := atomic.LoadInt32(&countMirror1)
 	val2 := atomic.LoadInt32(&countMirror2)
@@ -43,17 +40,13 @@ func TestMirroringOn100(t *testing.T) {
 	assert.Equal(t, 50, int(val2))
 }
 
-func TestMirroringOn10Z(t *testing.T) {
+func TestMirroringOn10(t *testing.T) {
 	var countMirror1, countMirror2 int32
-	var wg sync.WaitGroup
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		wg.Add(1)
 		rw.WriteHeader(http.StatusOK)
 	})
-	mirror := New(handler)
-	mirror.routineTestHook = func() {
-		wg.Done()
-	}
+	pool := safe.NewPool(context.Background())
+	mirror := New(handler, pool)
 	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		atomic.AddInt32(&countMirror1, 1)
 	}), 10)
@@ -68,7 +61,7 @@ func TestMirroringOn10Z(t *testing.T) {
 		mirror.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	wg.Wait()
+	pool.Stop()
 
 	val1 := atomic.LoadInt32(&countMirror1)
 	val2 := atomic.LoadInt32(&countMirror2)
@@ -77,13 +70,7 @@ func TestMirroringOn10Z(t *testing.T) {
 }
 
 func TestInvalidPercent(t *testing.T) {
-	var wg sync.WaitGroup
-	mirror := New(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		wg.Add(1)
-	}))
-	mirror.routineTestHook = func() {
-		wg.Done()
-	}
+	mirror := New(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), safe.NewPool(context.Background()))
 	err := mirror.AddMirror(nil, -1)
 	assert.Error(t, err)
 
@@ -95,20 +82,14 @@ func TestInvalidPercent(t *testing.T) {
 
 	err = mirror.AddMirror(nil, 0)
 	assert.NoError(t, err)
-
-	wg.Wait()
 }
 
 func TestHijack(t *testing.T) {
-	var wg sync.WaitGroup
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		wg.Add(1)
 		rw.WriteHeader(http.StatusOK)
 	})
-	mirror := New(handler)
-	mirror.routineTestHook = func() {
-		wg.Done()
-	}
+	pool := safe.NewPool(context.Background())
+	mirror := New(handler, pool)
 
 	var mirrorRequest bool
 	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -123,21 +104,16 @@ func TestHijack(t *testing.T) {
 
 	mirror.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
 
-	wg.Wait()
-
+	pool.Stop()
 	assert.Equal(t, true, mirrorRequest)
 }
 
 func TestFlush(t *testing.T) {
-	var wg sync.WaitGroup
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		wg.Add(1)
 		rw.WriteHeader(http.StatusOK)
 	})
-	mirror := New(handler)
-	mirror.routineTestHook = func() {
-		wg.Done()
-	}
+	pool := safe.NewPool(context.Background())
+	mirror := New(handler, pool)
 
 	var mirrorRequest bool
 	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -152,7 +128,6 @@ func TestFlush(t *testing.T) {
 
 	mirror.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
 
-	wg.Wait()
-
+	pool.Stop()
 	assert.Equal(t, true, mirrorRequest)
 }

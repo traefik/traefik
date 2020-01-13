@@ -17,20 +17,18 @@ type Mirroring struct {
 	handler        http.Handler
 	mirrorHandlers []*mirrorHandler
 	rw             http.ResponseWriter
+	routinePool    *safe.Pool
 
 	lock  sync.RWMutex
 	total uint64
-
-	// TODO(mpl): remove that hack for tests once we have fixed safe.Pool to not leak anymore,
-	// and revert to using safe.GoCtx.
-	routineTestHook func()
 }
 
 // New returns a new instance of *Mirroring.
-func New(handler http.Handler) *Mirroring {
+func New(handler http.Handler, pool *safe.Pool) *Mirroring {
 	return &Mirroring{
-		handler: handler,
-		rw:      blackholeResponseWriter{},
+		routinePool: pool,
+		handler:     handler,
+		rw:          blackholeResponseWriter{},
 	}
 }
 
@@ -59,7 +57,7 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	default:
 	}
 
-	safe.Go(func() {
+	m.routinePool.GoCtx(func(_ context.Context) {
 		total := m.inc()
 		for _, handler := range m.mirrorHandlers {
 			handler.lock.Lock()
@@ -84,9 +82,6 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			} else {
 				handler.lock.Unlock()
 			}
-		}
-		if m.routineTestHook != nil {
-			m.routineTestHook()
 		}
 	})
 }
