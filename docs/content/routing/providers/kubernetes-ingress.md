@@ -269,7 +269,7 @@ TLS certificates can be managed in Secrets objects.
 !!! info
     
     Only TLS certificates provided by users can be stored in Kubernetes Secrets.
-    [Let's Encrypt](../../https/acme.md) certificates cannot be managed in Kubernets Secrets yet.
+    [Let's Encrypt](../../https/acme.md) certificates cannot be managed in Kubernetes Secrets yet.
 
 ## Global Default Backend Ingresses
 
