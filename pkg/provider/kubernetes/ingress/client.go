@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/gogo/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -42,7 +44,7 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // The stores can then be accessed via the Get* functions.
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
-	GetIngresses() []*extensionsv1beta1.Ingress
+	GetIngresses() []*networkingv1beta1.Ingress
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
@@ -165,16 +167,47 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 }
 
 // GetIngresses returns all Ingresses for observed namespaces in the cluster.
-func (c *clientWrapper) GetIngresses() []*extensionsv1beta1.Ingress {
-	var result []*extensionsv1beta1.Ingress
+func (c *clientWrapper) GetIngresses() []*networkingv1beta1.Ingress {
+	var results []*networkingv1beta1.Ingress
+
 	for ns, factory := range c.factories {
+		// extensions
 		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
 		if err != nil {
-			log.Errorf("Failed to list ingresses in namespace %s: %s", ns, err)
+			log.Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
 		}
-		result = append(result, ings...)
+
+		for _, ing := range ings {
+			n, err := extensionsToNetworking(ing)
+			if err != nil {
+				log.Errorf("Failed to convert ingress %s from extensions/v1beta1 to networking/v1beta1: %v", ns, err)
+				continue
+			}
+			results = append(results, n)
+		}
+
+		// networking
+		list, err := factory.Networking().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
+		if err != nil {
+			log.Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
+		}
+		results = append(results, list...)
 	}
-	return result
+	return results
+}
+
+func extensionsToNetworking(i proto.Marshaler) (*networkingv1beta1.Ingress, error) {
+	data, err := i.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	ni := &networkingv1beta1.Ingress{}
+	err = ni.Unmarshal(data)
+	if err != nil {
+		return nil, err
+	}
+	return ni, nil
 }
 
 // UpdateIngressStatus updates an Ingress with a provided status.

@@ -21,7 +21,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/mitchellh/hashstructure"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
