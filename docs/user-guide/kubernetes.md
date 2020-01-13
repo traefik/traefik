@@ -98,7 +98,7 @@ metadata:
   namespace: kube-system
 ---
 kind: Deployment
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: traefik-ingress-controller
   namespace: kube-system
@@ -164,7 +164,7 @@ metadata:
   namespace: kube-system
 ---
 kind: DaemonSet
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: traefik-ingress-controller
   namespace: kube-system
@@ -503,7 +503,7 @@ First lets start by launching the pods for the cheese websites.
 ```yaml
 ---
 kind: Deployment
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: stilton
   labels:
@@ -529,7 +529,7 @@ spec:
         - containerPort: 80
 ---
 kind: Deployment
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: cheddar
   labels:
@@ -555,7 +555,7 @@ spec:
         - containerPort: 80
 ---
 kind: Deployment
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: wensleydale
   labels:
