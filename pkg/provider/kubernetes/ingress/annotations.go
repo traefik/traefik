@@ -45,8 +45,8 @@ type ServiceIng struct {
 }
 
 // SetDefaults sets the default values.
-func (r *ServiceIng) SetDefaults() {
-	r.PassHostHeader = func(v bool) *bool { return &v }(true)
+func (s *ServiceIng) SetDefaults() {
+	s.PassHostHeader = func(v bool) *bool { return &v }(true)
 }
 
 func parseRouterConfig(annotations map[string]string) (*RouterConfig, error) {
