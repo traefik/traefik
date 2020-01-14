@@ -182,7 +182,6 @@ func TestShutdown(t *testing.T) {
 					_, err = conn.Write(b[:n])
 					require.NoError(t, err)
 				}
-
 			}()
 		}
 	}()
