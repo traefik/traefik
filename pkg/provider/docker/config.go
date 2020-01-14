@@ -331,5 +331,9 @@ func getServiceName(container dockerData) string {
 		serviceName = values[labelDockerComposeService] + "_" + values[labelDockerComposeProject]
 	}
 
+	if values, err := getStringMultipleStrict(container.Labels, labelDockerSwarmServiceName); err == nil {
+		serviceName = values[labelDockerSwarmServiceName]
+	}
+
 	return provider.Normalize(serviceName)
 }

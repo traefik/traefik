@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	labelDockerComposeProject = "com.docker.compose.project"
-	labelDockerComposeService = "com.docker.compose.service"
+	labelDockerComposeProject   = "com.docker.compose.project"
+	labelDockerComposeService   = "com.docker.compose.service"
+	labelDockerSwarmServiceName = "com.docker.swarm.service.name"
 )
 
 // configuration Contains information from the labels that are globals (not related to the dynamic configuration) or specific to the provider.
