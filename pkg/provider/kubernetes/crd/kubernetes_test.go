@@ -192,6 +192,83 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			},
 		},
 		{
+			desc:  "One ingress Route with different services namespaces",
+			paths: []string{"tcp/services.yml", "tcp/with_different_services_ns.yml"},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp-8000",
+										Weight: func(i int) *int { return &i }(2),
+									},
+									{
+										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp2-8080",
+										Weight: func(i int) *int { return &i }(3),
+									},
+									{
+										Name:   "default-test.route-fdd3e9338e47a45efefc-whoamitcp3-8083",
+										Weight: func(i int) *int { return &i }(4),
+									},
+								},
+							},
+						},
+						"default-test.route-fdd3e9338e47a45efefc-whoamitcp-8000": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+						"default-test.route-fdd3e9338e47a45efefc-whoamitcp2-8080": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.3:8080",
+									},
+									{
+										Address: "10.10.0.4:8080",
+									},
+								},
+							},
+						},
+						"default-test.route-fdd3e9338e47a45efefc-whoamitcp3-8083": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.7:8083",
+									},
+									{
+										Address: "10.10.0.8:8083",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:         "Ingress class does not match",
 			paths:        []string{"tcp/services.yml", "tcp/simple.yml"},
 			ingressClass: "tchouk",

@@ -129,7 +129,12 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 }
 
 func createLoadBalancerServerTCP(client Client, namespace string, service v1alpha1.ServiceTCP) (*dynamic.TCPService, error) {
-	servers, err := loadTCPServers(client, namespace, service)
+	ns := namespace
+	if len(service.Namespace) > 0 {
+		ns = service.Namespace
+	}
+
+	servers, err := loadTCPServers(client, ns, service)
 	if err != nil {
 		return nil, err
 	}

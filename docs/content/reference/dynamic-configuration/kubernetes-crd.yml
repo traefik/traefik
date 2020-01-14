@@ -222,6 +222,7 @@ spec:
     - match: HostSNI(`bar.com`)
       services:
         - name: whoamitcp
+          namespace: default
           port: 8080
   tls:
     secretName: foosecret
