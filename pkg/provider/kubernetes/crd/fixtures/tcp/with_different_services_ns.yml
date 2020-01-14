@@ -11,11 +11,11 @@ spec:
   routes:
   - match: HostSNI(`foo.com`)
     services:
-#     without namespace
+    # without namespace
     - name: whoamitcp
       port: 8000
       weight: 2
-#     with default namespace
+    # with default namespace
     - name: whoamitcp2
       namespace: default
       port: 8080
