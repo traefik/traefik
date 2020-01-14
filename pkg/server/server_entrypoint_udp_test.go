@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"io"
 	"net"
 	"testing"
 	"time"
@@ -103,7 +104,7 @@ func TestShutdownUDPConn(t *testing.T) {
 // data through it, and expecting the same data as a response when reading on it.
 // It fatals if the read blocks longer than timeout, which is useful to detect
 // regressions that would make a test wait forever.
-func requireEcho(t *testing.T, data string, conn net.Conn, timeout time.Duration) {
+func requireEcho(t *testing.T, data string, conn io.ReadWriter, timeout time.Duration) {
 	_, err := conn.Write([]byte(data))
 	require.NoError(t, err)
 

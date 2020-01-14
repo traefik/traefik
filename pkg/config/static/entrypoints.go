@@ -13,11 +13,15 @@ type EntryPoint struct {
 	ForwardedHeaders *ForwardedHeaders     `description:"Trust client forwarding headers." json:"forwardedHeaders,omitempty" toml:"forwardedHeaders,omitempty" yaml:"forwardedHeaders,omitempty"`
 }
 
+// GetAddress strips any potential protocol part of the address field of the
+// entry point, in order to return the actual address.
 func (ep EntryPoint) GetAddress() string {
 	splitN := strings.SplitN(ep.Address, "/", 2)
 	return splitN[0]
 }
 
+// GetProtocol returns the protocol part of the address field of the entry point.
+// If none is specified, it defaults to "tcp".
 func (ep EntryPoint) GetProtocol() (string, error) {
 	splitN := strings.SplitN(ep.Address, "/", 2)
 	if len(splitN) < 2 {
@@ -33,10 +37,10 @@ func (ep EntryPoint) GetProtocol() (string, error) {
 }
 
 // SetDefaults sets the default values.
-func (e *EntryPoint) SetDefaults() {
-	e.Transport = &EntryPointsTransport{}
-	e.Transport.SetDefaults()
-	e.ForwardedHeaders = &ForwardedHeaders{}
+func (ep *EntryPoint) SetDefaults() {
+	ep.Transport = &EntryPointsTransport{}
+	ep.Transport.SetDefaults()
+	ep.ForwardedHeaders = &ForwardedHeaders{}
 }
 
 // ForwardedHeaders Trust client forwarding headers.
