@@ -313,53 +313,57 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				conf.HTTP.Services["default-backend"] = service
 			}
 		}
+
 		for _, rule := range ingress.Spec.Rules {
 			if err := checkStringQuoteValidity(rule.Host); err != nil {
 				log.FromContext(ctx).Errorf("Invalid syntax for host: %s", rule.Host)
 				continue
 			}
 
-			for _, p := range rule.HTTP.Paths {
-				service, err := loadService(client, ingress.Namespace, p.Backend)
-				if err != nil {
-					log.FromContext(ctx).
-						WithField("serviceName", p.Backend.ServiceName).
-						WithField("servicePort", p.Backend.ServicePort.String()).
-						Errorf("Cannot create service: %v", err)
-					continue
-				}
+			if rule.HTTP != nil {
+				for _, p := range rule.HTTP.Paths {
+					service, err := loadService(client, ingress.Namespace, p.Backend)
+					if err != nil {
+						log.FromContext(ctx).
+							WithField("serviceName", p.Backend.ServiceName).
+							WithField("servicePort", p.Backend.ServicePort.String()).
+							Errorf("Cannot create service: %v", err)
+						continue
+					}
 
-				if err = checkStringQuoteValidity(p.Path); err != nil {
-					log.FromContext(ctx).Errorf("Invalid syntax for path: %s", p.Path)
-					continue
-				}
+					if err = checkStringQuoteValidity(p.Path); err != nil {
+						log.FromContext(ctx).Errorf("Invalid syntax for path: %s", p.Path)
+						continue
+					}
 
-				serviceName := provider.Normalize(ingress.Namespace + "-" + p.Backend.ServiceName + "-" + p.Backend.ServicePort.String())
-				var rules []string
-				if len(rule.Host) > 0 {
-					rules = []string{"Host(`" + rule.Host + "`)"}
-				}
+					serviceName := provider.Normalize(ingress.Namespace + "-" + p.Backend.ServiceName + "-" + p.Backend.ServicePort.String())
+					var rules []string
+					if len(rule.Host) > 0 {
+						rules = []string{"Host(`" + rule.Host + "`)"}
+					}
 
-				if len(p.Path) > 0 {
-					rules = append(rules, "PathPrefix(`"+p.Path+"`)")
-				}
+					if len(p.Path) > 0 {
+						rules = append(rules, "PathPrefix(`"+p.Path+"`)")
+					}
 
-				routerKey := strings.TrimPrefix(provider.Normalize(rule.Host+p.Path), "-")
-				conf.HTTP.Routers[routerKey] = &dynamic.Router{
-					Rule:    strings.Join(rules, " && "),
-					Service: serviceName,
-				}
-
-				if len(ingress.Spec.TLS) > 0 {
-					// TLS enabled for this ingress, add TLS router
-					conf.HTTP.Routers[routerKey+"-tls"] = &dynamic.Router{
+					routerKey := strings.TrimPrefix(provider.Normalize(rule.Host+p.Path), "-")
+					conf.HTTP.Routers[routerKey] = &dynamic.Router{
 						Rule:    strings.Join(rules, " && "),
 						Service: serviceName,
-						TLS:     &dynamic.RouterTLSConfig{},
 					}
+
+					if len(ingress.Spec.TLS) > 0 {
+						// TLS enabled for this ingress, add TLS router
+						conf.HTTP.Routers[routerKey+"-tls"] = &dynamic.Router{
+							Rule:    strings.Join(rules, " && "),
+							Service: serviceName,
+							TLS:     &dynamic.RouterTLSConfig{},
+						}
+					}
+					conf.HTTP.Services[serviceName] = service
 				}
-				conf.HTTP.Services[serviceName] = service
 			}
+
 			err := p.updateIngressStatus(ingress, client)
 			if err != nil {
 				log.FromContext(ctx).Errorf("Error while updating ingress status: %v", err)

@@ -307,8 +307,13 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		protocol := "http"
+		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
+			protocol = "https"
+		}
+
 		return append(servers, dynamic.Server{
-			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
+			URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, portSpec.Port),
 		}), nil
 	}
 
@@ -375,11 +380,11 @@ func (c configBuilder) nameAndService(ctx context.Context, namespaceService stri
 			return "", nil, err
 		}
 
-		fullName := fullServiceName(svcCtx, namespace, service.Name, service.Port)
+		fullName := fullServiceName(svcCtx, namespace, service, service.Port)
 
 		return fullName, serversLB, nil
 	case service.Kind == "TraefikService":
-		return fullServiceName(svcCtx, namespace, service.Name, 0), nil, nil
+		return fullServiceName(svcCtx, namespace, service, 0), nil, nil
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
 	}
@@ -394,27 +399,22 @@ func splitSvcNameProvider(name string) (string, string) {
 	return svc, pvd
 }
 
-func fullServiceName(ctx context.Context, namespace, serviceName string, port int32) string {
+func fullServiceName(ctx context.Context, namespace string, service v1alpha1.LoadBalancerSpec, port int32) string {
 	if port != 0 {
-		return provider.Normalize(fmt.Sprintf("%s-%s-%d", namespace, serviceName, port))
+		return provider.Normalize(fmt.Sprintf("%s-%s-%d", namespace, service.Name, port))
 	}
 
-	if !strings.Contains(serviceName, providerNamespaceSeparator) {
-		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, serviceName))
+	if !strings.Contains(service.Name, providerNamespaceSeparator) {
+		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, service.Name))
 	}
 
-	name, pName := splitSvcNameProvider(serviceName)
+	name, pName := splitSvcNameProvider(service.Name)
 	if pName == providerName {
 		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, name))
 	}
 
-	// At this point, if namespace == "default", we do not know whether it had been intentionally set as such,
-	// or if we're simply hitting the value set by default.
-	// But as it is most likely very much the latter,
-	// and we do not want to systematically log spam users in that case,
-	// we skip logging whenever the namespace is "default".
-	if namespace != "default" {
-		log.FromContext(ctx).Warnf("namespace %q is ignored in cross-provider context", namespace)
+	if service.Namespace != "" {
+		log.FromContext(ctx).Warnf("namespace %q is ignored in cross-provider context", service.Namespace)
 	}
 
 	return provider.Normalize(name) + providerNamespaceSeparator + pName

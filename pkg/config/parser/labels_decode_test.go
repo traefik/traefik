@@ -27,6 +27,15 @@ func TestDecodeToNode(t *testing.T) {
 			expected: expected{node: nil},
 		},
 		{
+			desc: "invalid label, ending by a dot",
+			in: map[string]string{
+				"traefik.http.": "bar",
+			},
+			expected: expected{
+				error: true,
+			},
+		},
+		{
 			desc: "level 1",
 			in: map[string]string{
 				"traefik.foo": "bar",

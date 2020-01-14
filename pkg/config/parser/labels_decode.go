@@ -21,6 +21,10 @@ func DecodeToNode(labels map[string]string, rootName string, filters ...string) 
 
 		var parts []string
 		for _, v := range split {
+			if v == "" {
+				return nil, fmt.Errorf("invalid element: %s", key)
+			}
+
 			if v[0] == '[' {
 				return nil, fmt.Errorf("invalid leading character '[' in field name (bracket is a slice delimiter): %s", v)
 			}

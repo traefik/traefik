@@ -25,7 +25,7 @@
     "middlewares": {
       "dashboard_redirect": {
         "redirectRegex": {
-          "regex": "^(http:\\/\\/[^:]+(:\\d+)?)/$",
+          "regex": "^(http:\\/\\/[^:\\/]+(:\\d+)?)\\/$",
           "replacement": "${1}/dashboard/",
           "permanent": true
         }

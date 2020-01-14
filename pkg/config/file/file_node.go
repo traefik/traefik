@@ -13,8 +13,7 @@ import (
 )
 
 // decodeFileToNode decodes the configuration in filePath in a tree of untyped nodes.
-// If filters is not empty, it skips any configuration element whose name is
-// not among filters.
+// If filters is not empty, it skips any configuration element whose name is not among filters.
 func decodeFileToNode(filePath string, filters ...string) (*parser.Node, error) {
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
@@ -40,7 +39,20 @@ func decodeFileToNode(filePath string, filters ...string) (*parser.Node, error) 
 		return nil, fmt.Errorf("unsupported file extension: %s", filePath)
 	}
 
-	return decodeRawToNode(data, parser.DefaultRootName, filters...)
+	if len(data) == 0 {
+		return nil, fmt.Errorf("no configuration found in file: %s", filePath)
+	}
+
+	node, err := decodeRawToNode(data, parser.DefaultRootName, filters...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(node.Children) == 0 {
+		return nil, fmt.Errorf("no valid configuration found in file: %s", filePath)
+	}
+
+	return node, nil
 }
 
 func getRootFieldNames(element interface{}) []string {
