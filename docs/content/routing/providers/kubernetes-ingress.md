@@ -11,7 +11,7 @@ which in turn will create the resulting routers, services, handlers, etc.
 
 ```yaml
 kind: Ingress
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 metadata:
   name: foo
   namespace: production
@@ -40,7 +40,7 @@ spec:
     
     ```yaml tab="Ingress"
     kind: Ingress
-    apiVersion: extensions/v1beta1
+    apiVersion: networking.k8s.io/v1beta1
     metadata:
       name: foo
       namespace: production
@@ -234,7 +234,7 @@ and will connect via TLS automatically.
     
     ```yaml tab="Ingress"
     kind: Ingress
-    apiVersion: extensions/v1beta1
+    apiVersion: networking.k8s.io/v1beta1
     metadata:
       name: foo
       namespace: production
@@ -276,7 +276,7 @@ TLS certificates can be managed in Secrets objects.
 Ingresses can be created that look like the following:
 
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
  name: cheese

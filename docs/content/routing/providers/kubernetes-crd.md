@@ -24,7 +24,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
     
     ---
     kind: Deployment
-    apiVersion: extensions/v1beta1
+    apiVersion: apps/v1
     metadata:
       name: traefik
       labels:
@@ -97,7 +97,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
 
     ```yaml tab="Whoami"
     kind: Deployment
-    apiVersion: extensions/v1beta1
+    apiVersion: apps/v1
     metadata:
       name: whoami
       namespace: default

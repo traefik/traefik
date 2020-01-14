@@ -40,7 +40,7 @@ Then any router can refer to an instance of the wanted middleware.
     ```
 
     ```yaml tab="K8s Ingress"
-    apiVersion: extensions/v1beta1
+    apiVersion: networking.k8s.io/v1beta1
     kind: Ingress
     metadata:
       name: traefik
