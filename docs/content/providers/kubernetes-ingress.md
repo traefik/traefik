@@ -6,7 +6,11 @@ The Kubernetes Ingress Controller.
 The Traefik Kubernetes Ingress provider is a Kubernetes Ingress controller; that is to say,
 it manages access to a cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
 
-## Enabling and using the provider
+## Routing Configuration
+
+See the dedicated section in [routing](../routing/providers/kubernetes-ingress.md).
+
+## Enabling and Using the Provider
 
 As usual, the provider is enabled through the static configuration:
 
@@ -23,43 +27,9 @@ providers:
 --providers.kubernetesingress=true
 ```
 
-The provider then watches for incoming ingresses events, such as the example below, and derives the corresponding dynamic configuration from it, which in turn will create the resulting routers, services, handlers, etc.
-
-```yaml tab="File (YAML)"
-kind: Ingress
-apiVersion: extensions/v1beta1
-metadata:
-  name: "foo"
-  namespace: production
-
-spec:
-  rules:
-    - host: foo.com
-      http:
-        paths:
-          - path: /bar
-            backend:
-              serviceName: service1
-              servicePort: 80
-          - path: /foo
-            backend:
-              serviceName: service1
-              servicePort: 80
-```
-
-## LetsEncrypt Support with the Ingress Provider
-
-By design, Traefik is a stateless application, meaning that it only derives its configuration from the environment it runs in, without additional configuration.
-For this reason, users can run multiple instances of Traefik at the same time to achieve HA, as is a common pattern in the kubernetes ecosystem.
-
-When using a single instance of Traefik with LetsEncrypt, no issues should be encountered, however this could be a single point of failure.
-Unfortunately, it is not possible to run multiple instances of Traefik 2.0 with LetsEncrypt enabled, because there is no way to ensure that the correct instance of Traefik will receive the challenge request, and subsequent responses.
-Previous versions of Traefik used a [KV store](https://docs.traefik.io/v1.7/configuration/acme/#storage) to attempt to achieve this, but due to sub-optimal performance was dropped as a feature in 2.0.
-
-If you require LetsEncrypt with HA in a kubernetes environment, we recommend using [TraefikEE](https://containo.us/traefikee/) where distributed LetsEncrypt is a supported feature.
-
-If you are wanting to continue to run Traefik Community Edition, LetsEncrypt HA can be achieved by using a Certificate Controller such as [Cert-Manager](https://docs.cert-manager.io/en/latest/index.html).
-When using Cert-Manager to manage certificates, it will create secrets in your namespaces that can be referenced as TLS secrets in your [ingress objects](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls).
+The provider then watches for incoming ingresses events, such as the example below,
+and derives the corresponding dynamic configuration from it,
+which in turn will create the resulting routers, services, handlers, etc.
 
 ## Provider Configuration
 
@@ -337,6 +307,20 @@ providers:
 --providers.kubernetesingress.throttleDuration=10s
 ```
 
-## Further
+### Further
 
 If one wants to know more about the various aspects of the Ingress spec that Traefik supports, many examples of Ingresses definitions are located in the tests [data](https://github.com/containous/traefik/tree/v2.0/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+
+## LetsEncrypt Support with the Ingress Provider
+
+By design, Traefik is a stateless application, meaning that it only derives its configuration from the environment it runs in, without additional configuration.
+For this reason, users can run multiple instances of Traefik at the same time to achieve HA, as is a common pattern in the kubernetes ecosystem.
+
+When using a single instance of Traefik with LetsEncrypt, no issues should be encountered, however this could be a single point of failure.
+Unfortunately, it is not possible to run multiple instances of Traefik 2.0 with LetsEncrypt enabled, because there is no way to ensure that the correct instance of Traefik will receive the challenge request, and subsequent responses.
+Previous versions of Traefik used a [KV store](https://docs.traefik.io/v1.7/configuration/acme/#storage) to attempt to achieve this, but due to sub-optimal performance was dropped as a feature in 2.0.
+
+If you require LetsEncrypt with HA in a kubernetes environment, we recommend using [TraefikEE](https://containo.us/traefikee/) where distributed LetsEncrypt is a supported feature.
+
+If you are wanting to continue to run Traefik Community Edition, LetsEncrypt HA can be achieved by using a Certificate Controller such as [Cert-Manager](https://docs.cert-manager.io/en/latest/index.html).
+When using Cert-Manager to manage certificates, it will create secrets in your namespaces that can be referenced as TLS secrets in your [ingress objects](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls).
