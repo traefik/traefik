@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/gogo/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
@@ -48,7 +47,7 @@ type Client interface {
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
-	UpdateIngressStatus(namespace, name, ip, hostname string) error
+	UpdateIngressStatus(ing *networkingv1beta1.Ingress, ip, hostname string) error
 }
 
 type clientWrapper struct {
@@ -196,8 +195,10 @@ func (c *clientWrapper) GetIngresses() []*networkingv1beta1.Ingress {
 	return results
 }
 
-func extensionsToNetworking(i proto.Marshaler) (*networkingv1beta1.Ingress, error) {
-	data, err := i.Marshal()
+func extensionsToNetworking(ing *extensionsv1beta1.Ingress) (*networkingv1beta1.Ingress, error) {
+	log.Warnf("Ingress %s/%s: the apiVersion 'extensions/v1beta1' is deprecated, use 'networking.k8s.io/v1beta1' instead.", ing.Namespace, ing.Name)
+
+	data, err := ing.Marshal()
 	if err != nil {
 		return nil, err
 	}
@@ -207,18 +208,23 @@ func extensionsToNetworking(i proto.Marshaler) (*networkingv1beta1.Ingress, erro
 	if err != nil {
 		return nil, err
 	}
+
 	return ni, nil
 }
 
 // UpdateIngressStatus updates an Ingress with a provided status.
-func (c *clientWrapper) UpdateIngressStatus(namespace, name, ip, hostname string) error {
-	if !c.isWatchedNamespace(namespace) {
-		return fmt.Errorf("failed to get ingress %s/%s: namespace is not within watched namespaces", namespace, name)
+func (c *clientWrapper) UpdateIngressStatus(src *networkingv1beta1.Ingress, ip, hostname string) error {
+	if !c.isWatchedNamespace(src.Namespace) {
+		return fmt.Errorf("failed to get ingress %s/%s: namespace is not within watched namespaces", src.Namespace, src.Name)
 	}
 
-	ing, err := c.factories[c.lookupNamespace(namespace)].Extensions().V1beta1().Ingresses().Lister().Ingresses(namespace).Get(name)
+	if src.GetObjectKind().GroupVersionKind().Group != "networking.k8s.io" {
+		return c.updateIngressStatusOld(src, ip, hostname)
+	}
+
+	ing, err := c.factories[c.lookupNamespace(src.Namespace)].Networking().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
 	if err != nil {
-		return fmt.Errorf("failed to get ingress %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to get ingress %s/%s: %v", src.Namespace, src.Name, err)
 	}
 
 	if len(ing.Status.LoadBalancer.Ingress) > 0 {
@@ -228,14 +234,42 @@ func (c *clientWrapper) UpdateIngressStatus(namespace, name, ip, hostname string
 			return nil
 		}
 	}
+
+	ingCopy := ing.DeepCopy()
+	ingCopy.Status = networkingv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: []corev1.LoadBalancerIngress{{IP: ip, Hostname: hostname}}}}
+
+	_, err = c.clientset.NetworkingV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
+	if err != nil {
+		return fmt.Errorf("failed to update ingress status %s/%s: %v", src.Namespace, src.Name, err)
+	}
+
+	log.Infof("Updated status on ingress %s/%s", src.Namespace, src.Name)
+	return nil
+}
+
+func (c *clientWrapper) updateIngressStatusOld(src *networkingv1beta1.Ingress, ip, hostname string) error {
+	ing, err := c.factories[c.lookupNamespace(src.Namespace)].Extensions().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
+	if err != nil {
+		return fmt.Errorf("failed to get ingress %s/%s: %v", src.Namespace, src.Name, err)
+	}
+
+	if len(ing.Status.LoadBalancer.Ingress) > 0 {
+		if ing.Status.LoadBalancer.Ingress[0].Hostname == hostname && ing.Status.LoadBalancer.Ingress[0].IP == ip {
+			// If status is already set, skip update
+			log.Debugf("Skipping status update on ingress %s/%s", ing.Namespace, ing.Name)
+			return nil
+		}
+	}
+
 	ingCopy := ing.DeepCopy()
 	ingCopy.Status = extensionsv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: []corev1.LoadBalancerIngress{{IP: ip, Hostname: hostname}}}}
 
 	_, err = c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
 	if err != nil {
-		return fmt.Errorf("failed to update ingress status %s/%s: %v", namespace, name, err)
+		return fmt.Errorf("failed to update ingress status %s/%s: %v", src.Namespace, src.Name, err)
 	}
-	log.Infof("Updated status on ingress %s/%s", namespace, name)
+
+	log.Infof("Updated status on ingress %s/%s", src.Namespace, src.Name)
 	return nil
 }
 
@@ -289,11 +323,16 @@ func (c *clientWrapper) newResourceEventHandler(events chan<- interface{}) cache
 	return &cache.FilteringResourceEventHandler{
 		FilterFunc: func(obj interface{}) bool {
 			// Ignore Ingresses that do not match our custom label selector.
-			if ing, ok := obj.(*extensionsv1beta1.Ingress); ok {
-				lbls := labels.Set(ing.GetLabels())
+			switch v := obj.(type) {
+			case *extensionsv1beta1.Ingress:
+				lbls := labels.Set(v.GetLabels())
 				return c.ingressLabelSelector.Matches(lbls)
+			case *networkingv1beta1.Ingress:
+				lbls := labels.Set(v.GetLabels())
+				return c.ingressLabelSelector.Matches(lbls)
+			default:
+				return true
 			}
-			return true
 		},
 		Handler: &resourceEventHandler{ev: events},
 	}
