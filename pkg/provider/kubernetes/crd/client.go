@@ -11,7 +11,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -335,11 +334,20 @@ func (c *clientWrapper) newResourceEventHandler(events chan<- interface{}) cache
 	return &cache.FilteringResourceEventHandler{
 		FilterFunc: func(obj interface{}) bool {
 			// Ignore Ingresses that do not match our custom label selector.
-			if ing, ok := obj.(*extensionsv1beta1.Ingress); ok {
-				lbls := labels.Set(ing.GetLabels())
-				return c.labelSelector.Matches(lbls)
+			switch v := obj.(type) {
+			case *v1alpha1.IngressRoute:
+				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
+			case *v1alpha1.IngressRouteTCP:
+				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
+			case *v1alpha1.TraefikService:
+				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
+			case *v1alpha1.TLSOption:
+				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
+			case *v1alpha1.Middleware:
+				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
+			default:
+				return true
 			}
-			return true
 		},
 		Handler: &resourceEventHandler{ev: events},
 	}
