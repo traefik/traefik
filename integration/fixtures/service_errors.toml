@@ -8,6 +8,8 @@
 [entryPoints]
   [entryPoints.websecure]
     address = ":4443"
+  [entryPoints.udp]
+    address = ":4443/udp"
 
 [api]
   insecure = true
@@ -54,11 +56,9 @@
 [udp.routers]
   [udp.routers.router4]
     service = "service1"
-    rule = "HostSNI(`snitest.net`)"
 
   [udp.routers.router5]
     service = "service2"
-    rule = "HostSNI(`snitest.com`)"
 
 [udp.services]
   [udp.services.service1]
