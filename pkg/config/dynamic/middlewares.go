@@ -40,8 +40,16 @@ type Middleware struct {
 
 // +k8s:deepcopy-gen=true
 
-// ContentType holds the ContentType configuration.
+// ContentType holds the configuration for behaviours specifically related to the Content-Type header.
 type ContentType struct {
+	// AutoDetect specifies whether to let the Content-Type header, if it hasn't
+	// been set by the backend, be automatically set to a value derived from the
+	// contents of the response. As a proxy, the default behaviour should be to leave
+	// the header alone, regardless of what the backend did with it. Unfortunately, the
+	// historic default was to always auto-detect and set the header if it was nil, and
+	// it is going to be kept that way in order to support users currently relying on
+	// it. This middleware exists to enable the correct behaviour until the default
+	// one can be changed in a future version.
 	AutoDetect bool `json:"autoDetect,omitempty" toml:"autoDetect,omitempty" yaml:"autoDetect,omitempty"`
 }
 
