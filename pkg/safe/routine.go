@@ -20,7 +20,7 @@ type routineCtx func(ctx context.Context)
 
 // Pool is a pool of go routines
 type Pool struct {
-	routines    []routine
+	routines    map[string]*routine   // keyed by a randomly generated id
 	routinesCtx map[string]routineCtx // keyed by a randomly generated id
 	waitGroup   sync.WaitGroup
 	lock        sync.Mutex
@@ -40,6 +40,7 @@ func NewPool(parentCtx context.Context) *Pool {
 		ctx:         ctx,
 		cancel:      cancel,
 		routinesCtx: make(map[string]routineCtx),
+		routines:    make(map[string]*routine),
 	}
 }
 
@@ -57,20 +58,35 @@ func genID() string {
 	return fmt.Sprintf("%x", buf)
 }
 
-// AddGoCtx adds a recoverable goroutine with a context without starting it
-func (p *Pool) AddGoCtx(goroutine routineCtx) {
-	p.lock.Lock()
+// genUUID generates an ID that is not already in use for a goroutine.
+func (p *Pool) genUUID() string {
 	var id string
 	for {
 		id = genID()
 		if id == "" {
 			continue
 		}
-		if _, ok := p.routinesCtx[id]; ok {
-			continue
+		// Ideally, if we had generics, genUUID could take either one of the maps as argument,
+		// and we would therefore only check here in one of the two.
+		if p.routinesCtx != nil {
+			if _, ok := p.routinesCtx[id]; ok {
+				continue
+			}
+		}
+		if p.routines != nil {
+			if _, ok := p.routines[id]; ok {
+				continue
+			}
 		}
 		break
 	}
+	return id
+}
+
+// AddGoCtx adds a recoverable goroutine with a context without starting it
+func (p *Pool) AddGoCtx(goroutine routineCtx) {
+	p.lock.Lock()
+	id := p.genUUID()
 	p.routinesCtx[id] = goroutine
 	p.lock.Unlock()
 }
@@ -78,17 +94,7 @@ func (p *Pool) AddGoCtx(goroutine routineCtx) {
 // GoCtx starts a recoverable goroutine with a context
 func (p *Pool) GoCtx(goroutine routineCtx) {
 	p.lock.Lock()
-	var id string
-	for {
-		id = genID()
-		if id == "" {
-			continue
-		}
-		if _, ok := p.routinesCtx[id]; ok {
-			continue
-		}
-		break
-	}
+	id := p.genUUID()
 	p.routinesCtx[id] = goroutine
 	p.waitGroup.Add(1)
 	Go(func() {
@@ -106,24 +112,31 @@ func (p *Pool) GoCtx(goroutine routineCtx) {
 // addGo adds a recoverable goroutine, and can be stopped with stop chan
 func (p *Pool) addGo(goroutine func(stop chan bool)) {
 	p.lock.Lock()
-	newRoutine := routine{
+	newRoutine := &routine{
 		goroutine: goroutine,
 		stop:      make(chan bool, 1),
 	}
-	p.routines = append(p.routines, newRoutine)
+	id := p.genUUID()
+	p.routines[id] = newRoutine
 	p.lock.Unlock()
 }
 
 // Go starts a recoverable goroutine, and can be stopped with stop chan
 func (p *Pool) Go(goroutine func(stop chan bool)) {
 	p.lock.Lock()
-	newRoutine := routine{
+	newRoutine := &routine{
 		goroutine: goroutine,
 		stop:      make(chan bool, 1),
 	}
-	p.routines = append(p.routines, newRoutine)
+	id := p.genUUID()
+	p.routines[id] = newRoutine
 	p.waitGroup.Add(1)
 	Go(func() {
+		defer func() {
+			p.lock.Lock()
+			delete(p.routines, id)
+			p.lock.Unlock()
+		}()
 		defer p.waitGroup.Done()
 		goroutine(newRoutine.stop)
 	})
@@ -157,13 +170,20 @@ func (p *Pool) Start() {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	p.ctx, p.cancel = context.WithCancel(p.baseCtx)
-	for i := range p.routines {
-		i := i
+	for id, routine := range p.routines {
+		id := id
+		routine := routine
+		routine.stop = make(chan bool, 1)
 		p.waitGroup.Add(1)
-		p.routines[i].stop = make(chan bool, 1)
+
 		Go(func() {
+			defer func() {
+				p.lock.Lock()
+				delete(p.routines, id)
+				p.lock.Unlock()
+			}()
 			defer p.waitGroup.Done()
-			p.routines[i].goroutine(p.routines[i].stop)
+			routine.goroutine(routine.stop)
 		})
 	}
 

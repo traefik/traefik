@@ -154,7 +154,8 @@ func TestPoolStartWithStopChan(t *testing.T) {
 	newRoutine := routine{
 		goroutine: testRoutine.routine,
 	}
-	p.routines = append(p.routines, newRoutine)
+	id := p.genUUID()
+	p.routines[id] = &newRoutine
 	p.lock.Unlock()
 	p.Start()
 
