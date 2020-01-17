@@ -266,6 +266,8 @@ To avoid path overlap, routes are sorted, by default, in descending order using 
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
+If the length of a rule with `0` priority greater than another rule's priority value, the fore rule precedes the latter.
+
 ??? info "How default priorities are computed"
 
     ```toml tab="File (TOML)"
@@ -301,6 +303,21 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     The previous table shows that `Router-1` has a higher priority than `Router-2`.
     
     To solve this issue, the priority must be set.
+    
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    http:
+      routers:
+        Router-1:
+          rule: "PathPrefix(`/foo`)"
+          priority: 3
+          # ...
+        Router-2:
+          rule: "PathPrefix(`/foobar`)"
+          # ...
+    ```
+    
+    In this case, `/foobar` will be routed through `Router-2` (21 > 3)
 
 ??? example "Set priorities -- using the [File Provider](../../providers/file.md)"
     
