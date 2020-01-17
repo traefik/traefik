@@ -13,8 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO make a trimmed down version of this test in pkg/udp?
-
 func TestShutdownUDPConn(t *testing.T) {
 	entryPoint, err := NewUDPEntryPoint(&static.EntryPoint{
 		Address: ":0",

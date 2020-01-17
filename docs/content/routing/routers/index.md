@@ -961,6 +961,18 @@ there is no criterion that could be used as a rule to match incoming packets in
 order to route them. So UDP "routers" at this time are pretty much only
 load-balancers in one form or another.
 
+!!! important "Sessions and timeout"
+
+	Even though UDP is connectionless (and because of that),
+	the implementation of an UDP router in Traefik relies on what we call a `session`
+	(very similarly to the one coined by [the Envoy documentation](https://www.envoyproxy.io/docs/envoy/latest/configuration/listeners/udp_filters/udp_proxy)).
+	It basically means that some state is kept about an ongoing communication between a client and a backend,
+	notably so that the proxy knows where to forward a response packet from a backend.
+	As expected, a `timeout` is associated to each of these sessions,
+	so that they get cleaned out if they go through a period of inactivity longer than a given duration
+	(that is hardcoded to 3 seconds for now).
+	Making this timeout configurable will be considered later if we get more usage feedback on this matter.
+
 ### EntryPoints
 
 If not specified, UDP routers will accept packets from all defined (UDP) entry points.
