@@ -133,7 +133,7 @@ You can define them using a toml file, CLI arguments, or a key-value store.
     --entryPoints.name.forwardedHeaders.trustedIPs=127.0.0.1,192.168.0.1
     ```
 
-### Forwarded Header
+### Forwarded Headers
 
 You can configure Traefik to trust the forwarded headers information (`X-Forwarded-*`).
 
