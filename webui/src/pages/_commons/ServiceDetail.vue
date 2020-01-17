@@ -111,7 +111,14 @@
         </div>
         <div class="row items-center q-col-gutter-lg">
           <div class="col-12">
-            <main-table :data="allRouters" :request="()=>{}" :loading="routersLoading" :pagination.sync="routersPagination" :filter="routersFilter" :type="`${protocol}-routers`"/>
+            <main-table
+              :data="allRouters"
+              v-bind="getTableProps({ type: `${protocol}-routers` })"
+              :request="()=>{}"
+              :loading="routersLoading"
+              :pagination.sync="routersPagination"
+              :filter="routersFilter"
+            />
           </div>
         </div>
       </div>
@@ -122,6 +129,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import GetTablePropsMixin from '../../_mixins/GetTableProps'
 import PageDefault from '../../components/_commons/PageDefault'
 import SkeletonBox from '../../components/_commons/SkeletonBox'
 import PanelServiceDetails from '../../components/_commons/PanelServiceDetails'
@@ -134,6 +142,7 @@ import PanelMirroringServices from '../../components/_commons/PanelMirroringServ
 export default {
   name: 'PageServiceDetail',
   props: ['name', 'type'],
+  mixins: [GetTablePropsMixin],
   components: {
     PanelMirroringServices,
     PanelWeightedServices,

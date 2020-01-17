@@ -64,11 +64,12 @@ func newDistinguishedNameOptions(info *dynamic.TLSCLientCertificateDNInfo) *Dist
 
 // tlsClientCertificateInfo is a struct for specifying the configuration for the passTLSClientCert middleware.
 type tlsClientCertificateInfo struct {
-	notAfter  bool
-	notBefore bool
-	sans      bool
-	subject   *DistinguishedNameOptions
-	issuer    *DistinguishedNameOptions
+	notAfter     bool
+	notBefore    bool
+	sans         bool
+	subject      *DistinguishedNameOptions
+	issuer       *DistinguishedNameOptions
+	serialNumber bool
 }
 
 func newTLSClientCertificateInfo(info *dynamic.TLSClientCertificateInfo) *tlsClientCertificateInfo {
@@ -77,11 +78,12 @@ func newTLSClientCertificateInfo(info *dynamic.TLSClientCertificateInfo) *tlsCli
 	}
 
 	return &tlsClientCertificateInfo{
-		issuer:    newDistinguishedNameOptions(info.Issuer),
-		notAfter:  info.NotAfter,
-		notBefore: info.NotBefore,
-		subject:   newDistinguishedNameOptions(info.Subject),
-		sans:      info.Sans,
+		issuer:       newDistinguishedNameOptions(info.Issuer),
+		notAfter:     info.NotAfter,
+		notBefore:    info.NotBefore,
+		subject:      newDistinguishedNameOptions(info.Subject),
+		serialNumber: info.SerialNumber,
+		sans:         info.Sans,
 	}
 }
 
@@ -153,6 +155,13 @@ func (p *passTLSClientCert) getCertInfo(ctx context.Context, certs []*x509.Certi
 			issuer := getDNInfo(ctx, p.info.issuer, &peerCert.Issuer)
 			if issuer != "" {
 				values = append(values, fmt.Sprintf(`Issuer="%s"`, strings.TrimSuffix(issuer, subFieldSeparator)))
+			}
+
+			if p.info.serialNumber && peerCert.SerialNumber != nil {
+				sn := peerCert.SerialNumber.String()
+				if sn != "" {
+					values = append(values, fmt.Sprintf(`SerialNumber="%s"`, strings.TrimSuffix(sn, subFieldSeparator)))
+				}
 			}
 
 			if p.info.notBefore {

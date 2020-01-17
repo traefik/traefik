@@ -7,7 +7,6 @@ module.exports = function (ctx) {
     // --> boot files are part of "main.js"
     boot: [
       '_globals',
-      'lodash',
       'api',
       '_hacks',
       '_init'
@@ -115,7 +114,7 @@ module.exports = function (ctx) {
     supportIE: false,
 
     build: {
-      publicPath: process.env.APP_PUBLIC_PATH || '/dashboard',
+      publicPath: process.env.APP_PUBLIC_PATH || '',
       env: process.env.APP_ENV === 'development'
         ? { // staging:
           APP_ENV: JSON.stringify(process.env.APP_ENV),

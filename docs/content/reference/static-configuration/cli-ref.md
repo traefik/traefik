@@ -213,6 +213,9 @@ Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000
 `--metrics.prometheus.entrypoint`:  
 EntryPoint (Default: ```traefik```)
 
+`--metrics.prometheus.manualrouting`:  
+Manual routing (Default: ```false```)
+
 `--metrics.statsd`:  
 StatsD metrics exporter type. (Default: ```false```)
 
@@ -225,6 +228,9 @@ StatsD address. (Default: ```localhost:8125```)
 `--metrics.statsd.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
 
+`--metrics.statsd.prefix`:  
+Prefix to use for metrics collection. (Default: ```traefik```)
+
 `--metrics.statsd.pushinterval`:  
 StatsD push interval. (Default: ```10```)
 
@@ -233,6 +239,99 @@ Enable ping. (Default: ```false```)
 
 `--ping.entrypoint`:  
 EntryPoint (Default: ```traefik```)
+
+`--ping.manualrouting`:  
+Manual routing (Default: ```false```)
+
+`--providers.consul`:  
+Enable Consul backend with default settings. (Default: ```false```)
+
+`--providers.consul.endpoints`:  
+KV store endpoints (Default: ```127.0.0.1:8500```)
+
+`--providers.consul.password`:  
+KV Password
+
+`--providers.consul.rootkey`:  
+Root key used for KV store (Default: ```traefik```)
+
+`--providers.consul.tls.ca`:  
+TLS CA
+
+`--providers.consul.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.consul.tls.cert`:  
+TLS cert
+
+`--providers.consul.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.consul.tls.key`:  
+TLS key
+
+`--providers.consul.username`:  
+KV Username
+
+`--providers.consulcatalog.cache`:  
+Use local agent caching for catalog reads. (Default: ```false```)
+
+`--providers.consulcatalog.constraints`:  
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`--providers.consulcatalog.defaultrule`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`--providers.consulcatalog.endpoint.address`:  
+The address of the Consul server (Default: ```http://127.0.0.1:8500```)
+
+`--providers.consulcatalog.endpoint.datacenter`:  
+Data center to use. If not provided, the default agent data center is used
+
+`--providers.consulcatalog.endpoint.endpointwaittime`:  
+WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
+
+`--providers.consulcatalog.endpoint.httpauth.password`:  
+Basic Auth password
+
+`--providers.consulcatalog.endpoint.httpauth.username`:  
+Basic Auth username
+
+`--providers.consulcatalog.endpoint.scheme`:  
+The URI scheme for the Consul server
+
+`--providers.consulcatalog.endpoint.tls.ca`:  
+TLS CA
+
+`--providers.consulcatalog.endpoint.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.consulcatalog.endpoint.tls.cert`:  
+TLS cert
+
+`--providers.consulcatalog.endpoint.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.consulcatalog.endpoint.tls.key`:  
+TLS key
+
+`--providers.consulcatalog.endpoint.token`:  
+Token is used to provide a per-request ACL token which overrides the agent's default token
+
+`--providers.consulcatalog.exposedbydefault`:  
+Expose containers by default. (Default: ```true```)
+
+`--providers.consulcatalog.prefix`:  
+Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
+
+`--providers.consulcatalog.refreshinterval`:  
+Interval for check Consul API. Default 100ms (Default: ```15```)
+
+`--providers.consulcatalog.requireconsistent`:  
+Forces the read to be fully consistent. (Default: ```false```)
+
+`--providers.consulcatalog.stale`:  
+Use stale consistency for catalog reads. (Default: ```false```)
 
 `--providers.docker`:  
 Enable Docker backend with default settings. (Default: ```false```)
@@ -278,6 +377,36 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 
 `--providers.docker.watch`:  
 Watch provider. (Default: ```true```)
+
+`--providers.etcd`:  
+Enable Etcd backend with default settings. (Default: ```false```)
+
+`--providers.etcd.endpoints`:  
+KV store endpoints (Default: ```127.0.0.1:2379```)
+
+`--providers.etcd.password`:  
+KV Password
+
+`--providers.etcd.rootkey`:  
+Root key used for KV store (Default: ```traefik```)
+
+`--providers.etcd.tls.ca`:  
+TLS CA
+
+`--providers.etcd.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.etcd.tls.cert`:  
+TLS cert
+
+`--providers.etcd.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.etcd.tls.key`:  
+TLS key
+
+`--providers.etcd.username`:  
+KV Username
 
 `--providers.file.debugloggeneratedtemplate`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
@@ -447,11 +576,71 @@ Defines the polling interval in seconds. (Default: ```15```)
 `--providers.rancher.watch`:  
 Watch provider. (Default: ```true```)
 
+`--providers.redis`:  
+Enable Redis backend with default settings. (Default: ```false```)
+
+`--providers.redis.endpoints`:  
+KV store endpoints (Default: ```127.0.0.1:6379```)
+
+`--providers.redis.password`:  
+KV Password
+
+`--providers.redis.rootkey`:  
+Root key used for KV store (Default: ```traefik```)
+
+`--providers.redis.tls.ca`:  
+TLS CA
+
+`--providers.redis.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.redis.tls.cert`:  
+TLS cert
+
+`--providers.redis.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.redis.tls.key`:  
+TLS key
+
+`--providers.redis.username`:  
+KV Username
+
 `--providers.rest`:  
 Enable Rest backend with default settings. (Default: ```false```)
 
 `--providers.rest.insecure`:  
 Activate REST Provider directly on the entryPoint named traefik. (Default: ```false```)
+
+`--providers.zookeeper`:  
+Enable ZooKeeper backend with default settings. (Default: ```false```)
+
+`--providers.zookeeper.endpoints`:  
+KV store endpoints (Default: ```127.0.0.1:2181```)
+
+`--providers.zookeeper.password`:  
+KV Password
+
+`--providers.zookeeper.rootkey`:  
+Root key used for KV store (Default: ```traefik```)
+
+`--providers.zookeeper.tls.ca`:  
+TLS CA
+
+`--providers.zookeeper.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.zookeeper.tls.cert`:  
+TLS cert
+
+`--providers.zookeeper.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.zookeeper.tls.key`:  
+TLS key
+
+`--providers.zookeeper.username`:  
+KV Username
 
 `--serverstransport.forwardingtimeouts.dialtimeout`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
@@ -500,6 +689,18 @@ Specifies the header name that will be used to store the sampling priority.
 
 `--tracing.datadog.traceidheadername`:  
 Specifies the header name that will be used to store the trace ID.
+
+`--tracing.elastic`:  
+Settings for Elastic. (Default: ```false```)
+
+`--tracing.elastic.secrettoken`:  
+Set the token used to connect to Elastic APM Server.
+
+`--tracing.elastic.serverurl`:  
+Set the URL of the Elastic APM server.
+
+`--tracing.elastic.serviceenvironment`:  
+Set the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
 
 `--tracing.haystack`:  
 Settings for Haystack. (Default: ```false```)

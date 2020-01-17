@@ -1,16 +1,32 @@
+import { withPagination } from '../../_helpers/Mutations'
+
 // ----------------------------
 // Get All Routers
 // ----------------------------
 export function getAllRoutersRequest (state) {
-  state.allRouters.loading = true
+  withPagination('request', { statePath: 'allRouters' })(state)
 }
 
-export function getAllRoutersSuccess (state, body) {
-  state.allRouters = { items: body.data, total: body.total, loading: false }
+export function getAllRoutersSuccess (state, data) {
+  const { query = '', status = '' } = data
+  const currentState = state.allRouters
+
+  const isSameContext = currentState.currentQuery === query && currentState.currentStatus === status
+
+  state.allRouters = {
+    ...state.allRouters,
+    currentQuery: query,
+    currentStatus: status
+  }
+
+  withPagination('success', {
+    isSameContext,
+    statePath: 'allRouters'
+  })(state, data)
 }
 
 export function getAllRoutersFailure (state, error) {
-  state.allRouters = { error }
+  withPagination('failure', { statePath: 'allRouters' })(state, error)
 }
 
 export function getAllRoutersClear (state) {
@@ -40,15 +56,29 @@ export function getRouterByNameClear (state) {
 // Get All Services
 // ----------------------------
 export function getAllServicesRequest (state) {
-  state.allServices.loading = true
+  withPagination('request', { statePath: 'allServices' })(state)
 }
 
-export function getAllServicesSuccess (state, body) {
-  state.allServices = { items: body.data, total: body.total, loading: false }
+export function getAllServicesSuccess (state, data) {
+  const { query = '', status = '' } = data
+  const currentState = state.allServices
+
+  const isSameContext = currentState.currentQuery === query && currentState.currentStatus === status
+
+  state.allServices = {
+    ...state.allServices,
+    currentQuery: query,
+    currentStatus: status
+  }
+
+  withPagination('success', {
+    isSameContext,
+    statePath: 'allServices'
+  })(state, data)
 }
 
 export function getAllServicesFailure (state, error) {
-  state.allServices = { error }
+  withPagination('failure', { statePath: 'allServices' })(state, error)
 }
 
 export function getAllServicesClear (state) {

@@ -19,6 +19,7 @@
     samplingParam = 1.0
     samplingServerURL = "http://{{.IP}}:5778/sampling"
     localAgentHostPort = "{{.IP}}:6831"
+    traceContextHeaderName = "{{.TraceContextHeaderName}}"
 
 [providers.file]
   filename = "{{ .SelfFilename }}"

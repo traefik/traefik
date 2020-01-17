@@ -22,6 +22,14 @@ var (
 		`VersionTLS13`: tls.VersionTLS13,
 	}
 
+	// MaxVersion Map of allowed TLS minimum versions
+	MaxVersion = map[string]uint16{
+		`VersionTLS10`: tls.VersionTLS10,
+		`VersionTLS11`: tls.VersionTLS11,
+		`VersionTLS12`: tls.VersionTLS12,
+		`VersionTLS13`: tls.VersionTLS13,
+	}
+
 	// CipherSuites Map of TLS CipherSuites from crypto/tls
 	// Available CipherSuites defined at https://golang.org/pkg/crypto/tls/#pkg-constants
 	CipherSuites = map[string]uint16{
@@ -51,6 +59,20 @@ var (
 		"TLS_AES_256_GCM_SHA384":                  tls.TLS_AES_256_GCM_SHA384,
 		"TLS_CHACHA20_POLY1305_SHA256":            tls.TLS_CHACHA20_POLY1305_SHA256,
 		"TLS_FALLBACK_SCSV":                       tls.TLS_FALLBACK_SCSV,
+	}
+
+	// CurveIDs is a Map of TLS elliptic curves from crypto/tls
+	// Available CurveIDs defined at https://godoc.org/crypto/tls#CurveID,
+	// also allowing rfc names defined at https://tools.ietf.org/html/rfc8446#section-4.2.7
+	CurveIDs = map[string]tls.CurveID{
+		`secp256r1`: tls.CurveP256,
+		`CurveP256`: tls.CurveP256,
+		`secp384r1`: tls.CurveP384,
+		`CurveP384`: tls.CurveP384,
+		`secp521r1`: tls.CurveP521,
+		`CurveP521`: tls.CurveP521,
+		`x25519`:    tls.X25519,
+		`X25519`:    tls.X25519,
 	}
 )
 

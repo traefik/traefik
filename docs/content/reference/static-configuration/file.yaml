@@ -115,6 +115,79 @@ providers:
     refreshSeconds: 42
     intervalPoll: true
     prefix: foobar
+  consulCatalog:
+    constraints: foobar
+    prefix: traefik
+    defaultRule: foobar
+    exposedByDefault: true
+    refreshInterval: 15
+    requireConsistent: true
+    stale: true
+    cache: true
+    endpoint:
+      address: foobar
+      scheme: foobar
+      datacenter: foobar
+      token: foobar
+      endpointWaitTime: 15s
+      tls:
+        ca: foobar
+        caOptional: true
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
+  consul:
+    rootKey: traefik
+    endpoints:
+      - foobar
+      - foobar
+    username: foobar
+    password: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+  etcd:
+    rootKey: traefik
+    endpoints:
+      - foobar
+      - foobar
+    username: foobar
+    password: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+  zooKeeper:
+    rootKey: traefik
+    endpoints:
+      - foobar
+      - foobar
+    username: foobar
+    password: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+  redis:
+    rootKey: traefik
+    endpoints:
+      - foobar
+      - foobar
+    username: foobar
+    password: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
 api:
   insecure: true
   dashboard: true
@@ -127,6 +200,7 @@ metrics:
     addEntryPointsLabels: true
     addServicesLabels: true
     entryPoint: foobar
+    manualRouting: true
   datadog:
     address: foobar
     pushInterval: 42
@@ -137,6 +211,7 @@ metrics:
     pushInterval: 42
     addEntryPointsLabels: true
     addServicesLabels: true
+    prefix: traefik
   influxDB:
     address: foobar
     protocol: foobar
@@ -149,6 +224,7 @@ metrics:
     addServicesLabels: true
 ping:
   entryPoint: foobar
+  manualRouting: true
 log:
   level: foobar
   filePath: foobar
@@ -214,6 +290,10 @@ tracing:
     parentIDHeaderName: foobar
     spanIDHeaderName: foobar
     baggagePrefixHeaderName: foobar
+  elastic:
+    serverURL: foobar
+    secretToken: foobar
+    serviceEnvironment: foobar
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar

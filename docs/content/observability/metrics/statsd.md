@@ -103,3 +103,25 @@ metrics:
 ```bash tab="CLI"
 --metrics.statsd.pushInterval=10s
 ```
+
+#### `prefix`
+
+_Optional, Default="traefik"_
+
+The prefix to use for metrics collection.
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.statsD]
+    prefix = "traefik"
+```
+
+```yaml tab="File (YAML)"
+metrics:
+  statsD:
+    prefix: traefik
+```
+
+```bash tab="CLI"
+--metrics.statsd.prefix="traefik"
+```

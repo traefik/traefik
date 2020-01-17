@@ -35,6 +35,13 @@ spec:
       port: 80
 ```
 
+```yaml tab="Consul Catalog"
+# Dynamic Custom Error Page for 5XX Status Code
+- "traefik.http.middlewares.test-errorpage.errors.status=500-599"
+- "traefik.http.middlewares.test-errorpage.errors.service=serviceError"
+- "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-errorpage.errors.status": "500-599",

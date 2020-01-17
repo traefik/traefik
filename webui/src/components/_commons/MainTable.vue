@@ -1,199 +1,85 @@
 <template>
   <div class="table-wrapper">
-    <q-table
-      :data="data"
-      :columns="columns"
-      row-key="name"
-      :pagination.sync="syncPagination"
-      :rows-per-page-options="[10, 20, 40, 80, 100, 0]"
-      :loading="loading"
-      :filter="filter"
-      @request="request"
-      binary-state-sort
-      :visible-columns="visibleColumns"
-      color="primary"
-      table-header-class="table-header">
-
-      <template v-slot:body="props">
-        <q-tr :props="props" class="cursor-pointer" @click.native="$router.push({ path: `/${getPath}/${props.row.name}`})">
-          <q-td key="status" :props="props" auto-width>
-            <avatar-state :state="props.row.status | status "/>
-          </q-td>
-          <q-td key="tls" :props="props" auto-width>
-            <t-l-s-state :is-t-l-s="props.row.tls"/>
-          </q-td>
-          <q-td key="rule" :props="props">
-            <q-chip
-              v-if="props.row.rule"
-              dense
-              class="app-chip app-chip-rule">
-              {{ props.row.rule }}
-            </q-chip>
-          </q-td>
-          <q-td key="entryPoints" :props="props">
-            <div v-if="props.row.using">
-              <q-chip
-                v-for="(entryPoints, index) in props.row.using" :key="index"
-                dense
-                class="app-chip app-chip-entry-points">
-                {{ entryPoints }}
-              </q-chip>
-            </div>
-          </q-td>
-          <q-td key="name" :props="props">
-            <q-chip
-              v-if="props.row.name"
-              dense
-              class="app-chip app-chip-name">
-              {{ props.row.name }}
-            </q-chip>
-          </q-td>
-          <q-td key="type" :props="props">
-            <q-chip
-              v-if="props.row.type"
-              dense
-              class="app-chip app-chip-entry-points">
-              {{ props.row.type }}
-            </q-chip>
-          </q-td>
-          <q-td key="servers" :props="props">
-            <span class="servers-label">{{ props.row | servers }}</span>
-          </q-td>
-          <q-td key="service" :props="props">
-            <q-chip
-              v-if="props.row.service"
-              dense
-              class="app-chip app-chip-service">
-              {{ props.row.service }}
-            </q-chip>
-          </q-td>
-          <q-td key="provider" :props="props" auto-width>
-            <q-avatar class="provider-logo">
-              <q-icon :name="`img:statics/providers/${props.row.provider}.svg`" />
-            </q-avatar>
-          </q-td>
-        </q-tr>
+    <q-infinite-scroll @load="handleLoadMore" :offset="250" ref="scroller">
+      <q-markup-table>
+        <thead>
+          <tr class="table-header">
+            <th
+              v-for="column in columns"
+              v-bind:class="`text-${column.align}`"
+              v-bind:key="column.name">
+              {{ column.label }}
+            </th>
+          </tr>
+        </thead>
+        <tfoot v-if="!data.length">
+          <tr>
+            <td colspan="100%">
+              <q-icon name="warning" style="font-size: 1.5rem"/> No data available
+            </td>
+          </tr>
+        </tfoot>
+        <tbody>
+          <tr v-for="row in data" :key="row.name" class="cursor-pointer" @click="onRowClick(row)">
+            <template v-for="column in columns">
+              <td :key="column.name" v-if="getColumn(column.name).component" v-bind:class="`text-${getColumn(column.name).align}`">
+                <component
+                  v-bind:is="getColumn(column.name).component"
+                  v-bind="getColumn(column.name).fieldToProps(row)"
+                >
+                  <template v-if="getColumn(column.name).content">
+                    {{ getColumn(column.name).content(row) }}
+                  </template>
+                </component>
+              </td>
+              <td
+                :key="column.name"
+                v-if="!getColumn(column.name).component"
+                v-bind:class="`text-${getColumn(column.name).align}`"
+                v-bind="getColumn(column.name).fieldToProps(row)"
+              >
+                 <span>
+                  {{getColumn(column.name).content ? getColumn(column.name).content(row) : row[column.name]}}
+                </span>
+              </td>
+            </template>
+          </tr>
+        </tbody>
+      </q-markup-table>
+      <template v-slot:loading v-if="loading">
+        <div class="row justify-center q-my-md">
+          <q-spinner-dots color="app-grey" size="40px" />
+        </div>
       </template>
-
-    </q-table>
+    </q-infinite-scroll>
+    <q-page-scroller position="bottom" :scroll-offset="150" class="back-to-top" v-if="endReached">
+      <q-btn color="primary" small>
+        Back to top
+      </q-btn>
+    </q-page-scroller>
   </div>
 </template>
 
 <script>
-import AvatarState from './AvatarState'
-import TLSState from './TLSState'
+import { QMarkupTable, QInfiniteScroll, QSpinnerDots, QPageScroller } from 'quasar'
 
 export default {
   name: 'MainTable',
-  props: ['data', 'request', 'loading', 'pagination', 'filter', 'type'],
+  props: ['data', 'columns', 'loading', 'onLoadMore', 'endReached', 'onRowClick'],
   components: {
-    TLSState,
-    AvatarState
+    QMarkupTable,
+    QInfiniteScroll,
+    QSpinnerDots,
+    QPageScroller
   },
-  data () {
-    return {
-      visibleColumnsHttpRouters: ['status', 'rule', 'entryPoints', 'name', 'service', 'tls', 'provider'],
-      visibleColumnsHttpServices: ['status', 'name', 'type', 'servers', 'provider'],
-      visibleColumnsHttpMiddlewares: ['status', 'name', 'type', 'provider'],
-      visibleColumns: ['status', 'name', 'provider'],
-      columns: [
-        {
-          name: 'status',
-          required: true,
-          label: 'Status',
-          align: 'left',
-          field: row => row.status
-        },
-        {
-          name: 'tls',
-          align: 'left',
-          label: 'TLS',
-          field: row => row
-        },
-        {
-          name: 'rule',
-          align: 'left',
-          label: 'Rule',
-          field: row => row.rule
-        },
-        {
-          name: 'entryPoints',
-          align: 'left',
-          label: 'Entrypoints',
-          field: row => row.entryPoints
-        },
-        {
-          name: 'name',
-          align: 'left',
-          label: 'Name',
-          field: row => row.name
-        },
-        {
-          name: 'type',
-          align: 'left',
-          label: 'Type',
-          field: row => row.type
-        },
-        {
-          name: 'servers',
-          align: 'right',
-          label: 'Servers',
-          field: row => row.servers
-        },
-        {
-          name: 'service',
-          align: 'left',
-          label: 'Service',
-          field: row => row.service
-        },
-        {
-          name: 'provider',
-          align: 'center',
-          label: 'Provider',
-          field: row => row.provider
-        }
-      ]
-    }
-  },
-  computed: {
-    syncPagination: {
-      get () {
-        return this.pagination
-      },
-      set (newValue) {
-        this.$emit('update:pagination', newValue)
-      }
+  methods: {
+    getColumn (columnName) {
+      return this.columns.find(c => c.name === columnName) || {}
     },
-    getPath () {
-      return this.type.replace('-', '/', 'gi')
-    }
-  },
-  filters: {
-    status (value) {
-      if (value === 'enabled') {
-        return 'positive'
-      }
-      if (value === 'disabled') {
-        return 'negative'
-      }
-      return value
-    },
-    servers (value) {
-      if (value.loadBalancer && value.loadBalancer.servers) {
-        return value.loadBalancer.servers.length
-      }
-      return 0
-    }
-  },
-  created () {
-    if (this.type === 'http-routers' || this.type === 'tcp-routers') {
-      this.visibleColumns = this.visibleColumnsHttpRouters
-    }
-    if (this.type === 'http-services' || this.type === 'tcp-services') {
-      this.visibleColumns = this.visibleColumnsHttpServices
-    }
-    if (this.type === 'http-middlewares') {
-      this.visibleColumns = this.visibleColumnsHttpMiddlewares
+    handleLoadMore (index, done) {
+      this.onLoadMore({ page: index })
+        .then(() => done())
+        .catch(() => done(true))
     }
   }
 }
@@ -231,19 +117,14 @@ export default {
         }
       }
     }
+
+    .back-to-top {
+      margin: 16px 0;
+    }
   }
 
-  .servers-label{
+  .servers-label {
     font-size: 14px;
     font-weight: 600;
-  }
-
-  .provider-logo {
-    width: 32px;
-    height: 32px;
-    img {
-      width: 100%;
-      height: 100%;
-    }
   }
 </style>

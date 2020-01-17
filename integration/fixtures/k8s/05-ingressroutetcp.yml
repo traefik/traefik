@@ -11,6 +11,7 @@ spec:
   - match: HostSNI(`*`)
     services:
     - name: whoamitcp
+      namespace: default
       port: 8080
   tls:
     options:

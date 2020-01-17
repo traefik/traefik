@@ -18,13 +18,14 @@ type RouteTCP struct {
 	Services []ServiceTCP `json:"services,omitempty"`
 }
 
-// TLSTCP contains the TLS certificates configuration of the routes. To enable
-// Let's Encrypt, use an empty TLS struct, e.g. in YAML:
+// TLSTCP contains the TLS certificates configuration of the routes.
+// To enable Let's Encrypt, use an empty TLS struct,
+// e.g. in YAML:
 //
-// tls: {} # inline format
+//	 tls: {} # inline format
 //
-// tls:
-//   secretName: # block format
+//	 tls:
+//	   secretName: # block format
 type TLSTCP struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
@@ -45,6 +46,7 @@ type TLSOptionTCPRef struct {
 // ServiceTCP defines an upstream to proxy traffic.
 type ServiceTCP struct {
 	Name             string `json:"name"`
+	Namespace        string `json:"namespace"`
 	Port             int32  `json:"port"`
 	Weight           *int   `json:"weight,omitempty"`
 	TerminationDelay *int   `json:"terminationDelay,omitempty"`

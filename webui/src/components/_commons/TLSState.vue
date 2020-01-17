@@ -17,8 +17,8 @@ export default {
   .q-avatar{
     font-size: 32px;
     border-radius: 4px;
-    color: green;
     .q-icon {
+      color: green;
       font-size: 22px;
       margin: 0 0 0 1px;
     }

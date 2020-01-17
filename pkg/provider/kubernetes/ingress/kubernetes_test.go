@@ -11,9 +11,10 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -29,6 +30,17 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 	}{
 		{
 			desc: "Empty ingresses",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc: "Ingress one rule host only",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -60,6 +72,60 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 									},
 									{
 										URL: "http://10.21.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Ingress with annotations",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"bar": {
+							Rule:        "Path(`/bar`)",
+							EntryPoints: []string{"ep1", "ep2"},
+							Service:     "testing-service1-80",
+							Middlewares: []string{"md1", "md2"},
+							Priority:    42,
+							TLS: &dynamic.RouterTLSConfig{
+								CertResolver: "foobar",
+								Domains: []types.Domain{
+									{
+										Main: "domain.com",
+										SANs: []string{"one.domain.com", "two.domain.com"},
+									},
+									{
+										Main: "example.com",
+										SANs: []string{"one.example.com", "two.example.com"},
+									},
+								},
+								Options: "foobar",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "foobar",
+										Secure:   true,
+										HTTPOnly: true,
+									},
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "protocol://10.10.0.1:8080",
+									},
+									{
+										URL: "protocol://10.21.0.1:8080",
 									},
 								},
 							},
@@ -165,7 +231,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 				},
 			},
-		}, {
+		},
+		{
 			desc: "Ingress with one host without path",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
@@ -689,10 +756,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 						"example-com": {
 							Rule:    "Host(`example.com`)",
 							Service: "testing-example-com-80",
-						},
-						"example-com-tls": {
-							Rule:    "Host(`example.com`)",
-							Service: "testing-example-com-80",
 							TLS:     &dynamic.RouterTLSConfig{},
 						},
 					},
@@ -956,7 +1019,7 @@ func generateTestFilename(suffix, desc string) string {
 	return "./fixtures/" + strings.ReplaceAll(desc, " ", "-") + suffix + ".yml"
 }
 
-func TestGetTLS(t *testing.T) {
+func TestGetCertificates(t *testing.T) {
 	testIngressWithoutHostname := buildIngress(
 		iNamespace("testing"),
 		iRules(
@@ -1118,7 +1181,7 @@ func TestGetTLS(t *testing.T) {
 			t.Parallel()
 
 			tlsConfigs := map[string]*tls.CertAndStores{}
-			err := getTLS(context.Background(), test.ingress, test.client, tlsConfigs)
+			err := getCertificates(context.Background(), test.ingress, test.client, tlsConfigs)
 
 			if test.errResult != "" {
 				assert.EqualError(t, err, test.errResult)

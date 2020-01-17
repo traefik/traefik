@@ -5,6 +5,7 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/parser"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_getRootFieldNames(t *testing.T) {
@@ -42,17 +43,43 @@ func Test_getRootFieldNames(t *testing.T) {
 	}
 }
 
+func Test_decodeFileToNode_errors(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		confFile string
+	}{
+		{
+			desc:     "non existing file",
+			confFile: "./fixtures/not_existing.toml",
+		},
+		{
+			desc:     "file without content",
+			confFile: "./fixtures/empty.toml",
+		},
+		{
+			desc:     "file without any valid configuration",
+			confFile: "./fixtures/no_conf.toml",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			node, err := decodeFileToNode(test.confFile,
+				"Global", "ServersTransport", "EntryPoints", "Providers", "API", "Metrics", "Ping", "Log", "AccessLog", "Tracing", "HostResolver", "CertificatesResolvers")
+
+			require.Error(t, err)
+			assert.Nil(t, node)
+		})
+	}
+}
+
 func Test_decodeFileToNode_compare(t *testing.T) {
 	nodeToml, err := decodeFileToNode("./fixtures/sample.toml",
 		"Global", "ServersTransport", "EntryPoints", "Providers", "API", "Metrics", "Ping", "Log", "AccessLog", "Tracing", "HostResolver", "CertificatesResolvers")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	nodeYaml, err := decodeFileToNode("./fixtures/sample.yml")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	assert.Equal(t, nodeToml, nodeYaml)
 }
@@ -60,9 +87,7 @@ func Test_decodeFileToNode_compare(t *testing.T) {
 func Test_decodeFileToNode_Toml(t *testing.T) {
 	node, err := decodeFileToNode("./fixtures/sample.toml",
 		"Global", "ServersTransport", "EntryPoints", "Providers", "API", "Metrics", "Ping", "Log", "AccessLog", "Tracing", "HostResolver", "CertificatesResolvers")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	expected := &parser.Node{
 		Name: "traefik",
@@ -294,9 +319,7 @@ func Test_decodeFileToNode_Toml(t *testing.T) {
 
 func Test_decodeFileToNode_Yaml(t *testing.T) {
 	node, err := decodeFileToNode("./fixtures/sample.yml")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	expected := &parser.Node{
 		Name: "traefik",

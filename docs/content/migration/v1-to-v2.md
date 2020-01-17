@@ -40,7 +40,7 @@ Then any router can refer to an instance of the wanted middleware.
     ```
 
     ```yaml tab="K8s Ingress"
-    apiVersion: extensions/v1beta1
+    apiVersion: networking.k8s.io/v1beta1
     kind: Ingress
     metadata:
       name: traefik
@@ -104,7 +104,7 @@ Then any router can refer to an instance of the wanted middleware.
 
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the Middleware and IngressRoute kinds.
-    # https://docs.traefik.io/v2.0/providers/kubernetes-crd/#traefik-ingressroute-definition
+    # https://docs.traefik.io/v2.1/reference/dynamic-configuration/kubernetes-crd/#definitions
     apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
     metadata:
@@ -278,7 +278,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
 
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the TLSOption and IngressRoute kinds.
-    # https://docs.traefik.io/v2.0/providers/kubernetes-crd/#traefik-ingressroute-definition
+    # https://docs.traefik.io/v2.1/reference/dynamic-configuration/kubernetes-crd/#definitions
     apiVersion: traefik.containo.us/v1alpha1
     kind: TLSOption
     metadata:
@@ -1091,13 +1091,12 @@ As the dashboard access is now secured by default you can either:
 Supported [providers](../providers/overview.md), for now:
 
 * [ ] Azure Service Fabric
-* [ ] BoltDB
-* [ ] Consul
-* [ ] Consul Catalog
+* [x] Consul
+* [x] Consul Catalog
 * [x] Docker
 * [ ] DynamoDB
 * [ ] ECS
-* [ ] Etcd
+* [x] Etcd
 * [ ] Eureka
 * [x] File
 * [x] Kubernetes Ingress (without annotations)
@@ -1105,8 +1104,9 @@ Supported [providers](../providers/overview.md), for now:
 * [x] Marathon
 * [ ] Mesos
 * [x] Rancher
+* [x] Redis
 * [x] Rest
-* [ ] Zookeeper
+* [x] Zookeeper
 
 ## Some Tips You Should Know
 

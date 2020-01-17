@@ -3,10 +3,11 @@ package compress
 import (
 	"compress/gzip"
 	"context"
+	"mime"
 	"net/http"
-	"strings"
 
 	"github.com/NYTimes/gziphandler"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/tracing"
@@ -19,23 +20,35 @@ const (
 
 // Compress is a middleware that allows to compress the response.
 type compress struct {
-	next http.Handler
-	name string
+	next     http.Handler
+	name     string
+	excludes []string
 }
 
 // New creates a new compress middleware.
-func New(ctx context.Context, next http.Handler, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name string) (http.Handler, error) {
 	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
 
-	return &compress{
-		next: next,
-		name: name,
-	}, nil
+	excludes := []string{"application/grpc"}
+	for _, v := range conf.ExcludedContentTypes {
+		mediaType, _, err := mime.ParseMediaType(v)
+		if err != nil {
+			return nil, err
+		}
+
+		excludes = append(excludes, mediaType)
+	}
+
+	return &compress{next: next, name: name, excludes: excludes}, nil
 }
 
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	contentType := req.Header.Get("Content-Type")
-	if strings.HasPrefix(contentType, "application/grpc") {
+	mediaType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
+	if err != nil {
+		log.FromContext(middlewares.GetLoggerCtx(context.Background(), c.name, typeName)).Debug(err)
+	}
+
+	if contains(c.excludes, mediaType) {
 		c.next.ServeHTTP(rw, req)
 	} else {
 		ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
@@ -56,4 +69,13 @@ func gzipHandler(ctx context.Context, h http.Handler) http.Handler {
 	}
 
 	return wrapper(h)
+}
+
+func contains(values []string, val string) bool {
+	for _, v := range values {
+		if v == val {
+			return true
+		}
+	}
+	return false
 }

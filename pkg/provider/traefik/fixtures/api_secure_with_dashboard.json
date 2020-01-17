@@ -1,0 +1,10 @@
+{
+  "http": {
+    "services": {
+      "api": {},
+      "dashboard": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

@@ -30,6 +30,11 @@ spec:
       - /fiibar
 ```
 
+```yaml tab="Consul Catalog"
+# Strip prefix /foobar and /fiibar
+- "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes": "/foobar,/fiibar"

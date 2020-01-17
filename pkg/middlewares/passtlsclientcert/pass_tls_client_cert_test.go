@@ -345,6 +345,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 	minimalCheeseCertAllInfo := strings.Join([]string{
 		`Subject="C=FR,ST=Some-State,O=Cheese"`,
 		`Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2"`,
+		`SerialNumber="481535886039632329873080491016862977516759989652"`,
 		`NB="1544094636"`,
 		`NA="1632568236"`,
 	}, fieldSeparator)
@@ -352,6 +353,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 	completeCertAllInfo := strings.Join([]string{
 		`Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.cheese.com"`,
 		`Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2"`,
+		`SerialNumber="1"`,
 		`NB="1544094616"`,
 		`NA="1607166616"`,
 		`SAN="*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2"`,
@@ -399,9 +401,10 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 			certContents: []string{minimalCheeseCrt},
 			config: dynamic.PassTLSClientCert{
 				Info: &dynamic.TLSClientCertificateInfo{
-					NotAfter:  true,
-					NotBefore: true,
-					Sans:      true,
+					NotAfter:     true,
+					NotBefore:    true,
+					Sans:         true,
+					SerialNumber: true,
 					Subject: &dynamic.TLSCLientCertificateDNInfo{
 						CommonName:      true,
 						Country:         true,
@@ -446,9 +449,10 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 			certContents: []string{completeCheeseCrt},
 			config: dynamic.PassTLSClientCert{
 				Info: &dynamic.TLSClientCertificateInfo{
-					NotAfter:  true,
-					NotBefore: true,
-					Sans:      true,
+					NotAfter:     true,
+					NotBefore:    true,
+					Sans:         true,
+					SerialNumber: true,
 					Subject: &dynamic.TLSCLientCertificateDNInfo{
 						Country:         true,
 						Province:        true,
@@ -476,9 +480,10 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 			certContents: []string{minimalCheeseCrt, completeCheeseCrt},
 			config: dynamic.PassTLSClientCert{
 				Info: &dynamic.TLSClientCertificateInfo{
-					NotAfter:  true,
-					NotBefore: true,
-					Sans:      true,
+					NotAfter:     true,
+					NotBefore:    true,
+					Sans:         true,
+					SerialNumber: true,
 					Subject: &dynamic.TLSCLientCertificateDNInfo{
 						Country:         true,
 						Province:        true,

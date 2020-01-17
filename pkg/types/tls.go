@@ -69,7 +69,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 					return nil, fmt.Errorf("failed to load TLS keypair: %v", err)
 				}
 			} else {
-				return nil, fmt.Errorf("tls cert is a file, but tls key is not")
+				return nil, fmt.Errorf("TLS cert is a file, but tls key is not")
 			}
 		} else {
 			if errKeyIsFile != nil {
@@ -83,11 +83,10 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		}
 	}
 
-	TLSConfig := &tls.Config{
+	return &tls.Config{
 		Certificates:       []tls.Certificate{cert},
 		RootCAs:            caPool,
 		InsecureSkipVerify: clientTLS.InsecureSkipVerify,
 		ClientAuth:         clientAuth,
-	}
-	return TLSConfig, nil
+	}, nil
 }

@@ -18,6 +18,7 @@ type FlatOpts struct {
 	Case      string // "lower" or "upper", defaults to "lower".
 	Separator string
 	SkipRoot  bool
+	TagName   string
 }
 
 // Flat is a configuration item representation.
@@ -69,7 +70,7 @@ func (e encoderToFlat) createFlat(field reflect.Value, name string, node *Node) 
 	var entries []Flat
 	if node.Kind != reflect.Map && node.Description != "-" {
 		if !(node.Kind == reflect.Ptr && len(node.Children) > 0) ||
-			(node.Kind == reflect.Ptr && node.Tag.Get("label") == TagLabelAllowEmpty) {
+			(node.Kind == reflect.Ptr && node.Tag.Get(e.TagName) == TagLabelAllowEmpty) {
 			if node.Name[0] != '[' {
 				entries = append(entries, Flat{
 					Name:        e.getName(name),

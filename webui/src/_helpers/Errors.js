@@ -1,5 +1,4 @@
 import { Notify } from 'quasar'
-import { APP } from './APP'
 
 class Errors {
   // Getters
@@ -12,7 +11,7 @@ class Errors {
   // ------------------------------------------------------------------------
 
   static showError (body) {
-    body = APP._.isString(body) ? JSON.parse(body) : body
+    body = typeof body === 'string' ? JSON.parse(body) : body
     Notify.create({
       color: 'negative',
       position: 'top',
@@ -27,7 +26,11 @@ class Errors {
     if (error.response.status === 401) {
       // TODO - actions...
     }
-    Errors.showError(body)
+
+    // Avoid to notify when reaching end of an infinite scroll
+    if (!error.response.data.message.includes('invalid request: page:')) {
+      Errors.showError(body)
+    }
     return Promise.reject(body)
   }
 

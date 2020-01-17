@@ -991,7 +991,7 @@ func TestAddMetadata(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			err := AddMetadata(test.structure, test.tree)
+			err := metadata{MetadataOpts{TagName: TagLabel, AllowSliceAsStruct: true}}.Add(test.structure, test.tree)
 
 			if test.expected.error {
 				assert.Error(t, err)

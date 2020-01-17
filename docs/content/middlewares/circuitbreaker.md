@@ -45,6 +45,11 @@ spec:
     expression: LatencyAtQuantileMS(50.0) > 100
 ```
 
+```yaml tab="Consul Catalog"
+# Latency Check
+- "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.latency-check.circuitbreaker.expression": "LatencyAtQuantileMS(50.0) > 100"

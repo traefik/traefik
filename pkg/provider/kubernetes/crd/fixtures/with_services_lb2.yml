@@ -1,0 +1,79 @@
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami5
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.3
+      - ip: 10.10.0.4
+    ports:
+      - name: web
+        port: 8080
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: wrr2
+  namespace: default
+
+spec:
+  weighted:
+    services:
+      - name: whoami5
+        weight: 1
+        port: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami5
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      port: 8080
+  selector:
+    app: containous
+    task: whoami5
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: wrr1
+  namespace: default
+
+spec:
+  weighted:
+    services:
+    - name: wrr2
+      kind: TraefikService
+      weight: 1
+    - name: whoami5
+      weight: 1
+      port: 8080
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+  - match: Host(`foo.com`) && PathPrefix(`/foo`)
+    kind: Rule
+    priority: 12
+    services:
+    - name: wrr1
+      kind: TraefikService

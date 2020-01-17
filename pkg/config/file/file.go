@@ -22,10 +22,11 @@ func Decode(filePath string, element interface{}) error {
 		return err
 	}
 
-	err = parser.AddMetadata(element, root)
+	metaOpts := parser.MetadataOpts{TagName: parser.TagLabel, AllowSliceAsStruct: true}
+	err = parser.AddMetadata(element, root, metaOpts)
 	if err != nil {
 		return err
 	}
 
-	return parser.Fill(element, root)
+	return parser.Fill(element, root, parser.FillerOpts{AllowSliceAsStruct: true})
 }

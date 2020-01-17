@@ -13,12 +13,13 @@ func Decode(labels map[string]string, element interface{}, rootName string, filt
 		return err
 	}
 
-	err = AddMetadata(element, node)
+	metaOpts := MetadataOpts{TagName: TagLabel, AllowSliceAsStruct: true}
+	err = AddMetadata(element, node, metaOpts)
 	if err != nil {
 		return err
 	}
 
-	err = Fill(element, node)
+	err = Fill(element, node, FillerOpts{AllowSliceAsStruct: true})
 	if err != nil {
 		return err
 	}
@@ -29,7 +30,8 @@ func Decode(labels map[string]string, element interface{}, rootName string, filt
 // Encode converts an element to labels.
 // element -> node (value) -> label (node)
 func Encode(element interface{}, rootName string) (map[string]string, error) {
-	node, err := EncodeToNode(element, rootName, true)
+	etnOpts := EncoderToNodeOpts{OmitEmpty: true, TagName: TagLabel, AllowSliceAsStruct: true}
+	node, err := EncodeToNode(element, rootName, etnOpts)
 	if err != nil {
 		return nil, err
 	}

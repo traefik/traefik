@@ -7,13 +7,13 @@ import (
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
-	v1beta12 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 )
 
 var _ Client = (*clientMock)(nil)
 
 type clientMock struct {
-	ingresses []*extensionsv1beta1.Ingress
+	ingresses []*v1beta1.Ingress
 	services  []*corev1.Service
 	secrets   []*corev1.Secret
 	endpoints []*corev1.Endpoints
@@ -44,8 +44,14 @@ func newClientMock(paths ...string) clientMock {
 				c.secrets = append(c.secrets, o)
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
-			case *v1beta12.Ingress:
+			case *v1beta1.Ingress:
 				c.ingresses = append(c.ingresses, o)
+			case *extensionsv1beta1.Ingress:
+				ing, err := extensionsToNetworking(o)
+				if err != nil {
+					panic(err)
+				}
+				c.ingresses = append(c.ingresses, ing)
 			default:
 				panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
 			}
@@ -55,7 +61,7 @@ func newClientMock(paths ...string) clientMock {
 	return c
 }
 
-func (c clientMock) GetIngresses() []*extensionsv1beta1.Ingress {
+func (c clientMock) GetIngresses() []*v1beta1.Ingress {
 	return c.ingresses
 }
 
@@ -103,6 +109,6 @@ func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-cha
 	return c.watchChan, nil
 }
 
-func (c clientMock) UpdateIngressStatus(namespace, name, ip, hostname string) error {
+func (c clientMock) UpdateIngressStatus(_ *v1beta1.Ingress, _, _ string) error {
 	return c.apiIngressStatusError
 }

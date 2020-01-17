@@ -88,6 +88,7 @@
 "traefik.http.middlewares.middleware12.passtlsclientcert.info.subject.serialnumber": "true",
 "traefik.http.middlewares.middleware12.passtlsclientcert.pem": "true",
 "traefik.http.middlewares.middleware13.ratelimit.average": "42",
+"traefik.http.middlewares.middleware13.ratelimit.period": "42",
 "traefik.http.middlewares.middleware13.ratelimit.burst": "42",
 "traefik.http.middlewares.middleware13.ratelimit.sourcecriterion.ipstrategy.depth": "42",
 "traefik.http.middlewares.middleware13.ratelimit.sourcecriterion.ipstrategy.excludedips": "foobar, foobar",
