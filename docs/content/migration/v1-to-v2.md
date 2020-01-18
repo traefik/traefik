@@ -329,7 +329,167 @@ With Traefik v2 it is applied on a [Router](../routing/routers/index.md).
 
 To apply a redirection, one of the redirect middlewares, [RedirectRegex](../middlewares/redirectregex.md) or [RedirectScheme](../middlewares/redirectscheme.md), has to be configured and added to the router middlewares list.
 
-!!! example "HTTP to HTTPS redirection"
+!!! example "Global HTTP to HTTPS redirection"
+
+    !!! info "v1"
+    
+    ```toml tab="File (TOML)"
+    # static configuration
+    defaultEntryPoints = ["http", "https"]
+    
+    [entryPoints]
+      [entryPoints.http]
+        address = ":80"
+        [entryPoints.http.redirect]
+          entryPoint = "https"
+
+      [entryPoints.https]
+        address = ":443"
+        [entryPoints.https.tls]
+    ```
+
+    ```bash tab="CLI"
+    --entrypoints=Name:web Address::80 Redirect.EntryPoint:web-secure
+    --entryPoints='Name:web-secure Address::443 TLS'
+    ```
+
+    !!! info "v2"
+    
+    ```yaml tab="Docker"
+    # ...
+      traefik:
+        image: traefik:v2.1.2
+        command:
+          - --entrypoints.web.address=:80
+          - --entrypoints.websecure.address=:443
+          - --providers.docker=true
+        ports:
+          - 80:80
+          - 443:443
+        labels:
+          traefik.http.routers.http_catchall.rule: hostregexp(`{any:.+}`)
+          traefik.http.routers.http_catchall.entrypoints: web
+          traefik.http.routers.http_catchall.middlewares: https_redirect
+          traefik.http.middlewares.https_redirect.redirectscheme.scheme: https
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+    ```
+    
+    ```yaml tab="K8s IngressRoute"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: http_catchall
+      namespace: traefik
+    spec:
+      entryPoints:
+        - web
+      routes:
+        - match: HostRegexp(`{any:.+}`)
+          kind: Rule
+          services:
+            # any service in the namespace
+            # the service will be never called
+            - name: noop 
+              port: 80
+          middlewares:
+            - name: https_redirect
+              # case the Middleware has distinct namespace
+              namespace: traefik
+    
+    ---
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: Middleware 
+    metadata:
+      name: https_redirect
+      namespace: traefik
+    spec:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    ```
+    
+    ```toml tab="File (TOML)"
+    # traefik.toml
+    ## static configuration
+    
+    [entryPoints]
+      [entryPoints.web]
+        address = 80
+      [entryPoints.websecure]
+        address = 443
+    
+    [providers.file]
+      directory = "/dynamic/"
+    
+    ##--------------------##
+    
+    # /dynamic/redirect.toml
+    ## dynamic configuration
+    
+    [http.routers]
+      [http.routers.http_catchall]
+        entryPoints = ["web"]
+        middlewares = ["https_redirect"]
+        rule = "HostRegexp(`{any:.+}`)"
+        service = "noop"
+    
+    [http.services]
+      # noop service, the URL will be never called
+      [http.services.noop.loadBalancer]
+        [[http.services.noop.loadBalancer.servers]]
+          url = "http://192.168.0.1:1337"
+    
+    [http.middlewares]
+      [http.middlewares.https_redirect.redirectScheme]
+        scheme = "https"
+        permanent = true
+    ```
+    
+    ```yaml tab="File (YAML)"
+    # traefik.yaml
+    ## static configuration
+    
+    entryPoints:
+      web:
+        address: 80
+      websecure:
+        address: 443
+    
+    providers:
+      file:
+        directory: /dynamic/
+    
+    ##--------------------##
+    
+    # /dynamic/redirect.yml
+    ## dynamic configuration
+    
+    http:
+      routers:
+        http_catchall:
+          entryPoints:
+            - web
+          middlewares:
+            - https_redirect
+          rule: "HostRegexp(`{any:.+}`)"
+          service: noop
+    
+      services:
+        # noop service, the URL will be never called
+        noop:
+          loadBalancer:
+            servers:
+              - url: http://192.168.0.1:1337
+    
+      middlewares:
+        https_redirect:
+          redirectScheme:
+            scheme: https
+            permanent: true
+    ```
+
+!!! example "HTTP to HTTPS redirection per domain"
 
     !!! info "v1"
     
