@@ -75,7 +75,10 @@ Passwords must be encoded using MD5, SHA1, or BCrypt.
 
 !!! tip 
 
-    Use `htpasswd` to generate the passwords.
+    Use `htpasswd` to generate the passwords and encode it to base64. To generate a BCrypt string you can use this combination:
+    ```
+    htpasswd -bnBC 10 admin secret | openssl base64
+    ```
 
 ### `users`
 
