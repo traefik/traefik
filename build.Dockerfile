@@ -19,7 +19,7 @@ RUN mkdir -p /usr/local/bin \
     && chmod +x /usr/local/bin/go-bindata
 
 # Download golangci-lint binary to bin folder in $GOPATH
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.20.0
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.23.0
 
 # Download golangci-lint and misspell binary to bin folder in $GOPATH
 RUN GO111MODULE=off go get github.com/client9/misspell/cmd/misspell
