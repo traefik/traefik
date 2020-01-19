@@ -184,7 +184,7 @@ Then any router can refer to an instance of the wanted middleware.
               - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
     ```
 
-## TLS Configuration Is Now Dynamic, per Router.
+## TLS Configuration is Now Dynamic, per Router.
 
 TLS parameters used to be specified in the static configuration, as an entryPoint field.
 With Traefik v2, a new dynamic TLS section at the root contains all the desired TLS configurations.
@@ -322,7 +322,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       - "traefik.http.routers.router0.tls.options=myTLSOptions@file"
     ```
 
-## HTTP to HTTPS Redirection Is Now Configured on Routers
+## HTTP to HTTPS Redirection is Now Configured on Routers
 
 Previously on Traefik v1, the redirection was applied on an entry point or on a frontend.
 With Traefik v2 it is applied on a [Router](../routing/routers/index.md). 
@@ -358,7 +358,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     ```yaml tab="Docker"
     # ...
       traefik:
-        image: traefik:v2.1.2
+        image: traefik:v2.1
         command:
           - --entrypoints.web.address=:80
           - --entrypoints.websecure.address=:443
@@ -371,6 +371,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
           traefik.http.routers.http_catchall.entrypoints: web
           traefik.http.routers.http_catchall.middlewares: https_redirect
           traefik.http.middlewares.https_redirect.redirectscheme.scheme: https
+          traefik.http.middlewares.https_redirect.redirectscheme.permanent: true
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
     ```
@@ -390,11 +391,11 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
           services:
             # any service in the namespace
             # the service will be never called
-            - name: noop 
+            - name: noop
               port: 80
           middlewares:
             - name: https_redirect
-              # case the Middleware has distinct namespace
+              # if the Middleware has distinct namespace
               namespace: traefik
     
     ---
@@ -520,12 +521,16 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 
     ```yaml tab="Docker"
     labels:
-    - traefik.http.routers.web.rule=Host(`foo.com`)
-    - traefik.http.routers.web.entrypoints=web
-    - traefik.http.routers.web.middlewares=redirect@file
-    - traefik.http.routers.web-secured.rule=Host(`foo.com`)
-    - traefik.http.routers.web-secured.entrypoints=web-secure
-    - traefik.http.routers.web-secured.tls=true
+      traefik.http.routers.web.rule: Host(`foo.com`)
+      traefik.http.routers.web.entrypoints: web
+      traefik.http.routers.web.middlewares: https_redirect
+    
+      traefik.http.routers.web-secured.rule: Host(`foo.com`)
+      traefik.http.routers.web-secured.entrypoints: web-secure
+      traefik.http.routers.web-secured.tls: true
+    
+      traefik.http.middlewares.https_redirect.redirectscheme.scheme: https
+      traefik.http.middlewares.https_redirect.redirectscheme.permanent: true
     ```
 
     ```yaml tab="K8s IngressRoute"
@@ -544,7 +549,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
             - name: whoami
               port: 80
           middlewares:
-            - name: redirect
+            - name: https_redirect
     
     ---
     apiVersion: traefik.containo.us/v1alpha1
@@ -567,11 +572,11 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
     metadata:
-      name: redirect
+      name: https_redirect
     spec:
       redirectScheme:
         scheme: https
-      
+        permanent: true
     ```
 
     ```toml tab="File (TOML)"
@@ -594,7 +599,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         rule = "Host(`foo.com`)"
         service = "my-service"
         entrypoints = ["web"]
-        middlewares = ["redirect"]
+        middlewares = ["https_redirect"]
     
     [http.routers.router1]
         rule = "Host(`foo.com`)"
@@ -609,8 +614,9 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         url = "http://10.10.10.2:80"
     
     [http.middlewares]
-      [http.middlewares.redirect.redirectScheme]
+      [http.middlewares.https_redirect.redirectScheme]
         scheme = "https"
+        permanent = true
     
     [[tls.certificates]]
       certFile = "/path/to/domain.cert"
@@ -640,7 +646,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
           entryPoints:
             - web
           middlewares:
-            - redirect
+            - https_redirect
           service: my-service
     
         router1:
@@ -658,9 +664,10 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
               - url: http://10.10.10.2:80
     
       middlewares:
-        redirect:
+        https_redirect:
           redirectScheme:
             scheme: https
+            permanent: true
     
     tls:
       certificates:
@@ -672,14 +679,14 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 
 With the new core notions of v2 (introduced earlier in the section
 ["Frontends and Backends Are Dead... Long Live Routers, Middlewares, and Services"](#frontends-and-backends-are-dead-long-live-routers-middlewares-and-services)),
-transforming the URL path prefix of incoming requests is configured with [middlewares](../../middlewares/overview/),
+transforming the URL path prefix of incoming requests is configured with [middlewares](../middlewares/overview.md),
 after the routing step with [router rule `PathPrefix`](https://docs.traefik.io/v2.0/routing/routers/#rule).
 
 Use Case: Incoming requests to `http://company.org/admin` are forwarded to the webapplication "admin",
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
 
 * First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
-* Then, define a middleware of type [`stripprefix`](../../middlewares/stripprefix/), which remove the prefix `/admin`, associated to the router `admin`.
+* Then, define a middleware of type [`stripprefix`](../middlewares/stripprefix.md), which remove the prefix `/admin`, associated to the router `admin`.
 
 !!! example "Strip Path Prefix When Forwarding to Backend"
 
