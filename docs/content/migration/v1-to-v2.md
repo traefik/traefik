@@ -335,22 +335,22 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     
     ```toml tab="File (TOML)"
     # static configuration
-    defaultEntryPoints = ["http", "https"]
+    defaultEntryPoints = ["web", "websecure"]
     
     [entryPoints]
-      [entryPoints.http]
+      [entryPoints.web]
         address = ":80"
-        [entryPoints.http.redirect]
-          entryPoint = "https"
+        [entryPoints.web.redirect]
+          entryPoint = "websecure"
 
-      [entryPoints.https]
+      [entryPoints.websecure]
         address = ":443"
-        [entryPoints.https.tls]
+        [entryPoints.websecure.tls]
     ```
 
     ```bash tab="CLI"
-    --entrypoints=Name:web Address::80 Redirect.EntryPoint:web-secure
-    --entryPoints='Name:web-secure Address::443 TLS'
+    --entrypoints=Name:web Address::80 Redirect.EntryPoint:websecure
+    --entryPoints='Name:websecure Address::443 TLS'
     ```
 
     !!! info "v2"
@@ -497,38 +497,38 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     
     ```toml tab="File (TOML)"
     # static configuration
-    defaultEntryPoints = ["http", "https"]
+    defaultEntryPoints = ["web", "websecure"]
     
     [entryPoints]
-      [entryPoints.http]
+      [entryPoints.web]
         address = ":80"
-        [entryPoints.http.redirect]
-          entryPoint = "https"
+        [entryPoints.web.redirect]
+          entryPoint = "websecure"
 
-      [entryPoints.https]
+      [entryPoints.websecure]
         address = ":443"
-        [entryPoints.https.tls]
-          [[entryPoints.https.tls.certificates]]
+        [entryPoints.websecure.tls]
+          [[entryPoints.websecure.tls.certificates]]
             certFile = "examples/traefik.crt"
             keyFile = "examples/traefik.key"
     ```
 
     ```bash tab="CLI"
-    --entrypoints=Name:web Address::80 Redirect.EntryPoint:web-secure
-    --entryPoints='Name:web-secure Address::443 TLS:path/to/my.cert,path/to/my.key'
+    --entrypoints=Name:web Address::80 Redirect.EntryPoint:websecure
+    --entryPoints='Name:websecure Address::443 TLS:path/to/my.cert,path/to/my.key'
     ```
 
     !!! info "v2"
 
     ```yaml tab="Docker"
     labels:
-      traefik.http.routers.web.rule: Host(`foo.com`)
-      traefik.http.routers.web.entrypoints: web
-      traefik.http.routers.web.middlewares: https_redirect
+      traefik.http.routers.app.rule: Host(`foo.com`)
+      traefik.http.routers.app.entrypoints: web
+      traefik.http.routers.app.middlewares: https_redirect
     
-      traefik.http.routers.web-secured.rule: Host(`foo.com`)
-      traefik.http.routers.web-secured.entrypoints: web-secure
-      traefik.http.routers.web-secured.tls: true
+      traefik.http.routers.appsecured.rule: Host(`foo.com`)
+      traefik.http.routers.appsecured.entrypoints: websecure
+      traefik.http.routers.appsecured.tls: true
     
       traefik.http.middlewares.https_redirect.redirectscheme.scheme: https
       traefik.http.middlewares.https_redirect.redirectscheme.permanent: true
@@ -560,7 +560,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     
     spec:
       entryPoints:
-        - web-secure
+        - websecure
       routes:
         - match: Host(`foo`)
           kind: Rule
@@ -587,7 +587,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     [entryPoints.web]
       address = ":80"
     
-    [entryPoints.web-secure]
+    [entryPoints.websecure]
       address = ":443"
     
     ##---------------------##
@@ -605,7 +605,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     [http.routers.router1]
         rule = "Host(`foo.com`)"
         service = "my-service"
-        entrypoints = ["web-secure"]
+        entrypoints = ["websecure"]
         [http.routers.router1.tls]
         
     [http.services]
@@ -632,7 +632,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
       web:
         address: ":80"
     
-      web-secure:
+      websecure:
         address: ":443"
     
     ##---------------------##
@@ -653,7 +653,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         router1:
           rule: "Host(`foo.com`)"
           entryPoints:
-            - web-secure
+            - websecure
           service: my-service
           tls: {}
     
