@@ -150,7 +150,7 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 		return errors.New("load-balancer is not defined")
 	}
 
-	serverPort := ""
+	var serverPort string
 	if len(loadBalancer.Servers) > 0 {
 		serverPort = loadBalancer.Servers[0].Port
 		loadBalancer.Servers[0].Port = ""
@@ -180,7 +180,7 @@ func (p *Provider) addServer(ctx context.Context, container dockerData, loadBala
 		return errors.New("load-balancer is not defined")
 	}
 
-	serverPort := ""
+	var serverPort string
 	if len(loadBalancer.Servers) > 0 {
 		serverPort = loadBalancer.Servers[0].Port
 		loadBalancer.Servers[0].Port = ""
