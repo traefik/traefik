@@ -72,7 +72,7 @@ helm install ./traefik-helm-chart
     {: #helm-custom-values }
     
     The values are not (yet) documented, but are self-explanatory:
-    you can look at the [default `values.yaml`](https://github.com/containous/traefik-helm-chart/blob/master/values.yaml) file to explore possibilities.
+    you can look at the [default `values.yaml`](https://github.com/containous/traefik-helm-chart/blob/master/traefik/values.yaml) file to explore possibilities.
     
     Example of installation with logging set to `DEBUG`:
     
