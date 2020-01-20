@@ -687,7 +687,7 @@ Use Case: Incoming requests to `http://company.org/admin` are forwarded to the w
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
 
 * First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
-* Then, define a middleware of type [`stripprefix`](../middlewares/stripprefix.md), which remove the prefix `/admin`, associated to the router `admin`.
+* Then, define a middleware of type [`stripprefix`](../middlewares/stripprefix.md), which removes the prefix `/admin`, associated to the router `admin`.
 
 !!! example "Strip Path Prefix When Forwarding to Backend"
 
