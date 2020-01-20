@@ -1,6 +1,7 @@
 package wrr
 
 import (
+	"container/heap"
 	"fmt"
 	"net/http"
 	"sync"
@@ -11,8 +12,10 @@ import (
 
 type namedHandler struct {
 	http.Handler
-	name   string
-	weight int
+	name     string
+	weight   float64
+	index    int64
+	deadline float64
 }
 
 type stickyCookie struct {
@@ -23,9 +26,10 @@ type stickyCookie struct {
 
 // New creates a new load balancer.
 func New(sticky *dynamic.Sticky) *Balancer {
+	handlers := make(namedHandlers, 0)
 	balancer := &Balancer{
-		mutex: &sync.Mutex{},
-		index: -1,
+		handlers: &handlers,
+		mutex:    &sync.Mutex{},
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
@@ -37,79 +41,69 @@ func New(sticky *dynamic.Sticky) *Balancer {
 	return balancer
 }
 
-// Balancer is a WeightedRoundRobin load balancer.
+type namedHandlers []*namedHandler
+
+// Len implements heap.Interface/sort.Interface
+func (n namedHandlers) Len() int { return len(n) }
+
+// Less implements heap.Interface/sort.Interface
+func (n namedHandlers) Less(i, j int) bool {
+	// We want Pop to give us the highest, not lowest, priority so we use greater than here.
+	if n[i].deadline == n[j].deadline {
+		return n[i].index < n[j].index
+	}
+	return n[i].deadline < n[j].deadline
+}
+
+// Swap implements heap.Interface/sort.Interface
+func (n namedHandlers) Swap(i, j int) {
+	n[i], n[j] = n[j], n[i]
+}
+
+// Push implements heap.Interface for pushing an item into the heap
+func (n *namedHandlers) Push(x interface{}) {
+	h := x.(*namedHandler)
+	*n = append(*n, h)
+}
+
+// Pop implements heap.Interface for poping an item from the heap
+func (n *namedHandlers) Pop() interface{} {
+	old := *n
+	h := old[len(old)-1]
+	*n = old[0 : len(old)-1]
+	return h
+}
+
+// Balancer is a WeightedRoundRobin load balancer based on Earliest Deadline First (EDF).
+// (https://en.wikipedia.org/wiki/Earliest_deadline_first_scheduling)
+// Each pick from the schedule has the earliest deadline entry selected. Entries have deadlines set
+// at current time + 1 / weight, providing weighted round robin behavior with floating point
+// weights and an O(log n) pick time.
 type Balancer struct {
-	handlers []*namedHandler
-	mutex    *sync.Mutex
-	// Current index (starts from -1)
-	index         int
-	currentWeight int
-	stickyCookie  *stickyCookie
-}
-
-func (b *Balancer) maxWeight() int {
-	max := -1
-	for _, s := range b.handlers {
-		if s.weight > max {
-			max = s.weight
-		}
-	}
-	return max
-}
-
-func (b *Balancer) weightGcd() int {
-	divisor := -1
-	for _, s := range b.handlers {
-		if divisor == -1 {
-			divisor = s.weight
-		} else {
-			divisor = gcd(divisor, s.weight)
-		}
-	}
-	return divisor
-}
-
-func gcd(a, b int) int {
-	for b != 0 {
-		a, b = b, a%b
-	}
-	return a
+	handlers     *namedHandlers
+	mutex        *sync.Mutex
+	curIndex     int64
+	curDeadline  float64
+	stickyCookie *stickyCookie
 }
 
 func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
-
-	if len(b.handlers) == 0 {
+	if b.handlers == nil || len(*b.handlers) == 0 {
 		return nil, fmt.Errorf("no servers in the pool")
 	}
-
-	// The algo below may look messy, but is actually very simple
-	// it calculates the GCD  and subtracts it on every iteration, what interleaves servers
-	// and allows us not to build an iterator every time we readjust weights
-
-	// GCD across all enabled servers
-	gcd := b.weightGcd()
-	// Maximum weight across all enabled servers
-	max := b.maxWeight()
-
-	for {
-		b.index = (b.index + 1) % len(b.handlers)
-		if b.index == 0 {
-			b.currentWeight -= gcd
-			if b.currentWeight <= 0 {
-				b.currentWeight = max
-				if b.currentWeight == 0 {
-					return nil, fmt.Errorf("all servers have 0 weight")
-				}
-			}
-		}
-		srv := b.handlers[b.index]
-		if srv.weight >= b.currentWeight {
-			log.WithoutContext().Debugf("Service Select: %s", srv.name)
-			return srv, nil
-		}
-	}
+	// Pick handler with closest deadline.
+	handler := heap.Pop(b.handlers).(*namedHandler)
+	// curDeadline should be handler's deadline so that new added entry would have a fair
+	// competition environment with the old ones.
+	b.curDeadline = handler.deadline
+	handler.deadline = handler.deadline + 1/handler.weight
+	b.curIndex++
+	handler.index = b.curIndex
+	heap.Push(b.handlers, handler)
+	log.WithoutContext().Debugf("Service Select: %s", handler.name)
+	return handler, nil
 }
 
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -121,7 +115,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if err == nil && cookie != nil {
-			for _, handler := range b.handlers {
+			for _, handler := range *b.handlers {
 				if handler.name == cookie.Value {
 					handler.ServeHTTP(w, req)
 					return
@@ -151,5 +145,12 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	if weight != nil {
 		w = *weight
 	}
-	b.handlers = append(b.handlers, &namedHandler{Handler: handler, name: name, weight: w})
+	if w <= 0 { // non-positive weight is meaningless
+		return
+	}
+	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
+	h.deadline = b.curDeadline + 1/h.weight
+	b.curIndex++
+	h.index = b.curIndex
+	heap.Push(b.handlers, h)
 }

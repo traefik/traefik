@@ -112,3 +112,24 @@ func TestSticky(t *testing.T) {
 	assert.Equal(t, 0, recorder.save["first"])
 	assert.Equal(t, 3, recorder.save["second"])
 }
+
+func TestBalancerBias(t *testing.T) {
+	balancer := New(nil)
+
+	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(7))
+
+	balancer.AddService("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "second")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(3))
+
+	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	for i := 0; i < 4; i++ {
+		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	}
+	assert.Less(t, recorder.save["first"], 4)
+	assert.Less(t, 0, recorder.save["second"])
+}
