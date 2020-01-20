@@ -105,21 +105,6 @@ func (p *Pool) Cleanup() {
 	p.baseCancel()
 }
 
-// Start starts all stopped routines
-func (p *Pool) Start() {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	p.ctx, p.cancel = context.WithCancel(p.baseCtx)
-	for i := range p.routines {
-		p.waitGroup.Add(1)
-		p.routines[i].stop = make(chan bool, 1)
-		Go(func() {
-			defer p.waitGroup.Done()
-			p.routines[i].goroutine(p.routines[i].stop)
-		})
-	}
-}
-
 // Go starts a recoverable goroutine
 func Go(goroutine func()) {
 	GoWithRecover(goroutine, defaultRecoverGoroutine)
