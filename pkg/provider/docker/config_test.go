@@ -339,10 +339,11 @@ func TestDefaultRule(t *testing.T) {
 
 func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		containers  []dockerData
-		constraints string
-		expected    *dynamic.Configuration
+		desc          string
+		containers    []dockerData
+		useBindPortIP bool
+		constraints   string
+		expected      *dynamic.Configuration
 	}{
 		{
 			desc: "invalid HTTP service definition",
@@ -2515,6 +2516,64 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "useBindPortIP with LblPort |	ExtIp:ExtPort:LblPort => ExtIp:ExtPort",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.http.services.Test.loadbalancer.server.port": "80",
+					},
+					NetworkSettings: networkSettings{
+						Ports: nat.PortMap{
+							nat.Port("79/tcp"): []nat.PortBinding{{
+								HostIP:   "192.168.0.1",
+								HostPort: "8080",
+							}},
+							nat.Port("80/tcp"): []nat.PortBinding{{
+								HostIP:   "192.168.0.1",
+								HostPort: "8081",
+							}},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			useBindPortIP: true,
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service: "Test",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://192.168.0.1:8081",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -2526,6 +2585,7 @@ func Test_buildConfiguration(t *testing.T) {
 			p := Provider{
 				ExposedByDefault: true,
 				DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
+				UseBindPortIP:    test.useBindPortIP,
 			}
 			p.Constraints = test.constraints
 
