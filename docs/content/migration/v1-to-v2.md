@@ -377,6 +377,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     ```
     
     ```yaml tab="K8s IngressRoute"
+    # The entry points web (port 80) and websecure (port 443) must be defined the static configuration.
     apiVersion: traefik.containo.us/v1alpha1
     kind: IngressRoute
     metadata:
