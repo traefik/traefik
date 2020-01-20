@@ -98,7 +98,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	// curDeadline should be handler's deadline so that new added entry would have a fair
 	// competition environment with the old ones.
 	b.curDeadline = handler.deadline
-	handler.deadline = handler.deadline + 1/handler.weight
+	handler.deadline += 1 / handler.weight
 	b.curIndex++
 	handler.index = b.curIndex
 	heap.Push(b.handlers, handler)
