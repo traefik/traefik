@@ -242,33 +242,34 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				continue
 			}
 
-			if rule.HTTP != nil {
-				for _, pa := range rule.HTTP.Paths {
-					if err = checkStringQuoteValidity(pa.Path); err != nil {
-						log.FromContext(ctx).Errorf("Invalid syntax for path: %s", pa.Path)
-						continue
-					}
-
-					service, err := loadService(client, ingress.Namespace, pa.Backend)
-					if err != nil {
-						log.FromContext(ctx).
-							WithField("serviceName", pa.Backend.ServiceName).
-							WithField("servicePort", pa.Backend.ServicePort.String()).
-							Errorf("Cannot create service: %v", err)
-						continue
-					}
-
-					serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.ServiceName + "-" + pa.Backend.ServicePort.String())
-					conf.HTTP.Services[serviceName] = service
-
-					routerKey := strings.TrimPrefix(provider.Normalize(rule.Host+pa.Path), "-")
-					conf.HTTP.Routers[routerKey] = loadRouter(ingress, rule, pa, rtConfig, serviceName)
-				}
+			if err := p.updateIngressStatus(ingress, client); err != nil {
+				log.FromContext(ctx).Errorf("Error while updating ingress status: %v", err)
 			}
 
-			err := p.updateIngressStatus(ingress, client)
-			if err != nil {
-				log.FromContext(ctx).Errorf("Error while updating ingress status: %v", err)
+			if rule.HTTP == nil {
+				continue
+			}
+
+			for _, pa := range rule.HTTP.Paths {
+				if err = checkStringQuoteValidity(pa.Path); err != nil {
+					log.FromContext(ctx).Errorf("Invalid syntax for path: %s", pa.Path)
+					continue
+				}
+
+				service, err := loadService(client, ingress.Namespace, pa.Backend)
+				if err != nil {
+					log.FromContext(ctx).
+						WithField("serviceName", pa.Backend.ServiceName).
+						WithField("servicePort", pa.Backend.ServicePort.String()).
+						Errorf("Cannot create service: %v", err)
+					continue
+				}
+
+				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.ServiceName + "-" + pa.Backend.ServicePort.String())
+				conf.HTTP.Services[serviceName] = service
+
+				routerKey := strings.TrimPrefix(provider.Normalize(rule.Host+pa.Path), "-")
+				conf.HTTP.Routers[routerKey] = loadRouter(ingress, rule, pa, rtConfig, serviceName)
 			}
 		}
 	}
