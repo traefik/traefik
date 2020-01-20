@@ -67,13 +67,6 @@ func TestPoolWithCtx(t *testing.T) {
 				p.GoCtx(testRoutine.routineCtx)
 			},
 		},
-		{
-			desc: "AddGoCtx()",
-			fn: func(p *Pool) {
-				p.AddGoCtx(testRoutine.routineCtx)
-				p.Start()
-			},
-		},
 	}
 
 	for _, test := range testCases {
@@ -87,9 +80,6 @@ func TestPoolWithCtx(t *testing.T) {
 
 			test.fn(p)
 			defer p.Cleanup()
-			if len(p.routinesCtx) != 1 {
-				t.Fatalf("After %s, Pool did have %d goroutineCtxs, expected 1", test.desc, len(p.routinesCtx))
-			}
 
 			testDone := make(chan bool, 1)
 			go func() {
@@ -140,40 +130,6 @@ func TestPoolWithStopChan(t *testing.T) {
 	}
 }
 
-func TestPoolStartWithStopChan(t *testing.T) {
-	testRoutine := newFakeRoutine()
-
-	p := NewPool(context.Background())
-
-	timer := time.NewTimer(500 * time.Millisecond)
-	defer timer.Stop()
-
-	// Insert the stopped test goroutine via private fields into the Pool.
-	// There currently is no way to insert a routine via exported funcs that is not started immediately.
-	p.lock.Lock()
-	newRoutine := routine{
-		goroutine: testRoutine.routine,
-	}
-	p.routines = append(p.routines, newRoutine)
-	p.lock.Unlock()
-	p.Start()
-
-	testDone := make(chan bool, 1)
-	go func() {
-		<-testRoutine.startSig
-		p.Cleanup()
-		testDone <- true
-	}()
-	select {
-	case <-timer.C:
-		testRoutine.Lock()
-		defer testRoutine.Unlock()
-		t.Fatalf("Pool.Start() did not complete in time, goroutine started equals '%t'", testRoutine.started)
-	case <-testDone:
-		return
-	}
-}
-
 func TestPoolCleanupWithGoPanicking(t *testing.T) {
 	testRoutine := func(stop chan bool) {
 		panic("BOOM")
@@ -194,23 +150,9 @@ func TestPoolCleanupWithGoPanicking(t *testing.T) {
 			},
 		},
 		{
-			desc: "addGo() and Start()",
-			fn: func(p *Pool) {
-				p.addGo(testRoutine)
-				p.Start()
-			},
-		},
-		{
 			desc: "GoCtx()",
 			fn: func(p *Pool) {
 				p.GoCtx(testCtxRoutine)
-			},
-		},
-		{
-			desc: "AddGoCtx() and Start()",
-			fn: func(p *Pool) {
-				p.AddGoCtx(testCtxRoutine)
-				p.Start()
 			},
 		},
 	}

@@ -100,7 +100,7 @@ type blackholeResponseWriter struct{}
 func (b blackholeResponseWriter) Flush() {}
 
 func (b blackholeResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return nil, nil, errors.New("you can hijack connection on blackholeResponseWriter")
+	return nil, nil, errors.New("connection on blackholeResponseWriter cannot be hijacked")
 }
 
 func (b blackholeResponseWriter) Header() http.Header {
