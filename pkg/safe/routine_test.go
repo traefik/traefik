@@ -67,13 +67,6 @@ func TestPoolWithCtx(t *testing.T) {
 				p.GoCtx(testRoutine.routineCtx)
 			},
 		},
-		{
-			desc: "AddGoCtx()",
-			fn: func(p *Pool) {
-				p.AddGoCtx(testRoutine.routineCtx)
-				p.Start()
-			},
-		},
 	}
 
 	for _, test := range testCases {
@@ -87,9 +80,6 @@ func TestPoolWithCtx(t *testing.T) {
 
 			test.fn(p)
 			defer p.Cleanup()
-			if len(p.routinesCtx) != 1 {
-				t.Fatalf("After %s, Pool did have %d goroutineCtxs, expected 1", test.desc, len(p.routinesCtx))
-			}
 
 			testDone := make(chan bool, 1)
 			go func() {
@@ -154,8 +144,7 @@ func TestPoolStartWithStopChan(t *testing.T) {
 	newRoutine := routine{
 		goroutine: testRoutine.routine,
 	}
-	id := p.genUUID()
-	p.routines[id] = &newRoutine
+	p.routines = append(p.routines, newRoutine)
 	p.lock.Unlock()
 	p.Start()
 
@@ -205,13 +194,6 @@ func TestPoolCleanupWithGoPanicking(t *testing.T) {
 			desc: "GoCtx()",
 			fn: func(p *Pool) {
 				p.GoCtx(testCtxRoutine)
-			},
-		},
-		{
-			desc: "AddGoCtx() and Start()",
-			fn: func(p *Pool) {
-				p.AddGoCtx(testCtxRoutine)
-				p.Start()
 			},
 		},
 	}
