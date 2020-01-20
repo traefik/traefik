@@ -44,7 +44,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	defer connBackend.Close()
 
 	if p.proxyProtocol {
-		writeProxyHeaderV1(connBackend, conn.RemoteAddr().String(), p.target.String())
+		writeProxyHeaderV1(connBackend, conn.RemoteAddr().String(), conn.LocalAddr().String())
 	}
 
 	errChan := make(chan error)
