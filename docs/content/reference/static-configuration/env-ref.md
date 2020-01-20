@@ -213,6 +213,9 @@ Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000
 `TRAEFIK_METRICS_PROMETHEUS_ENTRYPOINT`:  
 EntryPoint (Default: ```traefik```)
 
+`TRAEFIK_METRICS_PROMETHEUS_MANUALROUTING`:  
+Manual routing (Default: ```false```)
+
 `TRAEFIK_METRICS_STATSD`:  
 StatsD metrics exporter type. (Default: ```false```)
 
@@ -225,6 +228,9 @@ StatsD address. (Default: ```localhost:8125```)
 `TRAEFIK_METRICS_STATSD_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
+`TRAEFIK_METRICS_STATSD_PREFIX`:  
+Prefix to use for metrics collection. (Default: ```traefik```)
+
 `TRAEFIK_METRICS_STATSD_PUSHINTERVAL`:  
 StatsD push interval. (Default: ```10```)
 
@@ -233,6 +239,99 @@ Enable ping. (Default: ```false```)
 
 `TRAEFIK_PING_ENTRYPOINT`:  
 EntryPoint (Default: ```traefik```)
+
+`TRAEFIK_PING_MANUALROUTING`:  
+Manual routing (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSUL`:  
+Enable Consul backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_CACHE`:  
+Use local agent caching for catalog reads. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_CONSTRAINTS`:  
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_DEFAULTRULE`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_ADDRESS`:  
+The address of the Consul server (Default: ```http://127.0.0.1:8500```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_DATACENTER`:  
+Data center to use. If not provided, the default agent data center is used
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_ENDPOINTWAITTIME`:  
+WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_HTTPAUTH_PASSWORD`:  
+Basic Auth password
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_HTTPAUTH_USERNAME`:  
+Basic Auth username
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_SCHEME`:  
+The URI scheme for the Consul server
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TOKEN`:  
+Token is used to provide a per-request ACL token which overrides the agent's default token
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_EXPOSEDBYDEFAULT`:  
+Expose containers by default. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_PREFIX`:  
+Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_REFRESHINTERVAL`:  
+Interval for check Consul API. Default 100ms (Default: ```15```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_REQUIRECONSISTENT`:  
+Forces the read to be fully consistent. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_STALE`:  
+Use stale consistency for catalog reads. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSUL_ENDPOINTS`:  
+KV store endpoints (Default: ```127.0.0.1:8500```)
+
+`TRAEFIK_PROVIDERS_CONSUL_PASSWORD`:  
+KV Password
+
+`TRAEFIK_PROVIDERS_CONSUL_ROOTKEY`:  
+Root key used for KV store (Default: ```traefik```)
+
+`TRAEFIK_PROVIDERS_CONSUL_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_CONSUL_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSUL_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_CONSUL_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSUL_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_PROVIDERS_CONSUL_USERNAME`:  
+KV Username
 
 `TRAEFIK_PROVIDERS_DOCKER`:  
 Enable Docker backend with default settings. (Default: ```false```)
@@ -278,6 +377,36 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 
 `TRAEFIK_PROVIDERS_DOCKER_WATCH`:  
 Watch provider. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_ETCD`:  
+Enable Etcd backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_ETCD_ENDPOINTS`:  
+KV store endpoints (Default: ```127.0.0.1:2379```)
+
+`TRAEFIK_PROVIDERS_ETCD_PASSWORD`:  
+KV Password
+
+`TRAEFIK_PROVIDERS_ETCD_ROOTKEY`:  
+Root key used for KV store (Default: ```traefik```)
+
+`TRAEFIK_PROVIDERS_ETCD_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_ETCD_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_ETCD_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_ETCD_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_ETCD_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_PROVIDERS_ETCD_USERNAME`:  
+KV Username
 
 `TRAEFIK_PROVIDERS_FILE_DEBUGLOGGENERATEDTEMPLATE`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
@@ -447,11 +576,71 @@ Defines the polling interval in seconds. (Default: ```15```)
 `TRAEFIK_PROVIDERS_RANCHER_WATCH`:  
 Watch provider. (Default: ```true```)
 
+`TRAEFIK_PROVIDERS_REDIS`:  
+Enable Redis backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_REDIS_ENDPOINTS`:  
+KV store endpoints (Default: ```127.0.0.1:6379```)
+
+`TRAEFIK_PROVIDERS_REDIS_PASSWORD`:  
+KV Password
+
+`TRAEFIK_PROVIDERS_REDIS_ROOTKEY`:  
+Root key used for KV store (Default: ```traefik```)
+
+`TRAEFIK_PROVIDERS_REDIS_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_REDIS_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_REDIS_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_REDIS_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_REDIS_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_PROVIDERS_REDIS_USERNAME`:  
+KV Username
+
 `TRAEFIK_PROVIDERS_REST`:  
 Enable Rest backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_REST_INSECURE`:  
 Activate REST Provider directly on the entryPoint named traefik. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER`:  
+Enable ZooKeeper backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_ENDPOINTS`:  
+KV store endpoints (Default: ```127.0.0.1:2181```)
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_PASSWORD`:  
+KV Password
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_ROOTKEY`:  
+Root key used for KV store (Default: ```traefik```)
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_USERNAME`:  
+KV Username
 
 `TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_DIALTIMEOUT`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
@@ -500,6 +689,18 @@ Specifies the header name that will be used to store the sampling priority.
 
 `TRAEFIK_TRACING_DATADOG_TRACEIDHEADERNAME`:  
 Specifies the header name that will be used to store the trace ID.
+
+`TRAEFIK_TRACING_ELASTIC`:  
+Settings for Elastic. (Default: ```false```)
+
+`TRAEFIK_TRACING_ELASTIC_SECRETTOKEN`:  
+Set the token used to connect to Elastic APM Server.
+
+`TRAEFIK_TRACING_ELASTIC_SERVERURL`:  
+Set the URL of the Elastic APM server.
+
+`TRAEFIK_TRACING_ELASTIC_SERVICEENVIRONMENT`:  
+Set the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
 
 `TRAEFIK_TRACING_HAYSTACK`:  
 Settings for Haystack. (Default: ```false```)

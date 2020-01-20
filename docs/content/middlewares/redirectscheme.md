@@ -28,6 +28,12 @@ spec:
     scheme: https
 ```
 
+```yaml tab="Consul Catalog"
+# Redirect to https
+labels:
+- "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme": "https"

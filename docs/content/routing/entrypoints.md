@@ -41,7 +41,7 @@ They define the port which will receive the requests (whether HTTP or TCP).
       [entryPoints.web]
         address = ":80"
     
-      [entryPoints.web-secure]
+      [entryPoints.websecure]
         address = ":443"
     ```
     
@@ -51,18 +51,18 @@ They define the port which will receive the requests (whether HTTP or TCP).
       web:
         address: ":80"
      
-      web-secure:
+      websecure:
         address: ":443"
     ```
     
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.web.address=:80
-    --entryPoints.web-secure.address=:443
+    --entryPoints.websecure.address=:443
     ```
 
-    - Two entrypoints are defined: one called `web`, and the other called `web-secure`.
-    - `web` listens on port `80`, and `web-secure` on port `443`. 
+    - Two entrypoints are defined: one called `web`, and the other called `websecure`.
+    - `web` listens on port `80`, and `websecure` on port `443`. 
 
 ## Configuration
 
@@ -133,7 +133,7 @@ You can define them using a toml file, CLI arguments, or a key-value store.
     --entryPoints.name.forwardedHeaders.trustedIPs=127.0.0.1,192.168.0.1
     ```
 
-### Forwarded Header
+### Forwarded Headers
 
 You can configure Traefik to trust the forwarded headers information (`X-Forwarded-*`).
 

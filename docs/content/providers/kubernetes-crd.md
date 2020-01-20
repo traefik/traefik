@@ -8,9 +8,60 @@ Traefik used to support Kubernetes only through the [Kubernetes Ingress provider
 However, as the community expressed the need to benefit from Traefik features without resorting to (lots of) annotations,
 we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (alias CRD in the following) for an IngressRoute type, defined below, in order to provide a better way to configure access to a Kubernetes cluster.
 
+## Configuration Requirements
+
+!!! tip "All Steps for a Successful Deployment"
+
+    * Add/update **all** the Traefik resources [definitions](../reference/dynamic-configuration/kubernetes-crd.md#definitions)
+    * Add/update the [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for the Traefik custom resources
+    * Use [Helm Chart](../getting-started/install-traefik.md#use-the-helm-chart) or use a custom Traefik Deployment 
+        * Enable the kubernetesCRD provider
+        * Apply the needed kubernetesCRD provider [configuration](#provider-configuration)
+    * Add all needed traefik custom [resources](../reference/dynamic-configuration/kubernetes-crd.md#resources)
+ 
+??? example "Initializing Resource Definition and RBAC"
+
+    ```yaml tab="Traefik Resource Definition"
+    # All resources definition must be declared
+    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition.yml"
+    ```
+
+    ```yaml tab="RBAC for Traefik CRD"
+    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-rbac.yml"
+    ```
+
 ## Resource Configuration
 
-See the dedicated section in [routing](../routing/providers/kubernetes-crd.md).
+When using KubernetesCRD as a provider,
+Traefik uses [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to retrieve its routing configuration.
+Traefik Custom Resource Definitions are a Kubernetes implementation of the Traefik concepts. The main particularities are:
+
+* The usage of `name` **and** `namespace` to refer to another Kubernetes resource.
+* The usage of [secret](https://kubernetes.io/docs/concepts/configuration/secret/) for sensible data like:
+    * TLS certificate.
+    * Authentication data.
+* The structure of the configuration.
+* The obligation to declare all the [definitions](../reference/dynamic-configuration/kubernetes-crd.md#definitions).
+
+The Traefik CRD are building blocks which you can assemble according to your needs.
+See the list of CRDs in the dedicated [routing section](../routing/providers/kubernetes-crd.md).
+
+## LetsEncrypt Support with the Custom Resource Definition Provider
+
+By design, Traefik is a stateless application, meaning that it only derives its configuration from the environment it runs in, without additional configuration.
+For this reason, users can run multiple instances of Traefik at the same time to achieve HA, as is a common pattern in the kubernetes ecosystem.
+
+When using a single instance of Traefik with LetsEncrypt, no issues should be encountered, however this could be a single point of failure.
+Unfortunately, it is not possible to run multiple instances of Traefik 2.0 with LetsEncrypt enabled, because there is no way to ensure that the correct instance of Traefik will receive the challenge request, and subsequent responses.
+Previous versions of Traefik used a [KV store](https://docs.traefik.io/v1.7/configuration/acme/#storage) to attempt to achieve this, but due to sub-optimal performance was dropped as a feature in 2.0.
+
+If you require LetsEncrypt with HA in a kubernetes environment, we recommend using [TraefikEE](https://containo.us/traefikee/) where distributed LetsEncrypt is a supported feature.
+
+If you are wanting to continue to run Traefik Community Edition, LetsEncrypt HA can be achieved by using a Certificate Controller such as [Cert-Manager](https://docs.cert-manager.io/en/latest/index.html).
+When using Cert-Manager to manage certificates, it will create secrets in your namespaces that can be referenced as TLS secrets in your [ingress objects](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls).
+When using the Traefik Kubernetes CRD Provider, unfortunately Cert-Manager cannot interface directly with the CRDs _yet_, but this is being worked on by our team.
+A workaround it to enable the [Kubernetes Ingress provider](./kubernetes-ingress.md) to allow Cert-Manager to create ingress objects to complete the challenges.
+Please note that this still requires manual intervention to create the certificates through Cert-Manager, but once created, Cert-Manager will keep the certificate renewed.
 
 ## Provider Configuration
 

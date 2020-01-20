@@ -349,7 +349,7 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 		received <- true
 	}()
 
-	err = try.Do(time.Second*10, func() error {
+	err = try.Do(10*time.Second, func() error {
 		select {
 		case <-received:
 			return nil

@@ -26,6 +26,11 @@ spec:
     prefix: /foo
 ```
 
+```yaml tab="Consul Catalog"
+# Prefixing with /foo
+- "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.add-foo.addprefix.prefix": "/foo"

@@ -67,7 +67,7 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 	}
 
 	if len(defaultTLSOptionProviders) == 0 {
-		conf.TLS.Options["default"] = tls.Options{}
+		conf.TLS.Options["default"] = tls.DefaultTLSOptions
 	} else if len(defaultTLSOptionProviders) > 1 {
 		log.WithoutContext().Errorf("Default TLS Options defined multiple times in %v", defaultTLSOptionProviders)
 		// We do not set an empty tls.TLS{} as above so that we actually get a "cascading failure" later on,

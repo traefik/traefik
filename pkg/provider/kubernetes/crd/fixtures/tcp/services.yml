@@ -86,3 +86,48 @@ subsets:
     ports:
       - name: web-secure
         port: 443
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp3
+  namespace: ns3
+
+spec:
+  ports:
+    - name: myapp3
+      port: 8083
+  selector:
+    app: containous
+    task: whoamitcp3
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamitcp3
+  namespace: ns3
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.7
+      - ip: 10.10.0.8
+    ports:
+      - name: myapp3
+        port: 8083
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamitcp3
+  namespace: ns4
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.9
+      - ip: 10.10.0.10
+    ports:
+      - name: myapp4
+        port: 8084

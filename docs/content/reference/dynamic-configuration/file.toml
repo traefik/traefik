@@ -196,6 +196,7 @@
           notAfter = true
           notBefore = true
           sans = true
+          serialNumber = true
           [http.middlewares.Middleware12.passTLSClientCert.info.subject]
             country = true
             province = true
@@ -215,6 +216,7 @@
     [http.middlewares.Middleware13]
       [http.middlewares.Middleware13.rateLimit]
         average = 42
+        period = 42
         burst = 42
         [http.middlewares.Middleware13.rateLimit.sourceCriterion]
           requestHeaderName = "foobar"
@@ -319,15 +321,19 @@
   [tls.options]
     [tls.options.Options0]
       minVersion = "foobar"
+      maxVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
       sniStrict = true
+      curvePreferences = ["foobar", "foobar"]
       [tls.options.Options0.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"
     [tls.options.Options1]
       minVersion = "foobar"
+      maxVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
       sniStrict = true
+      curvePreferences = ["foobar", "foobar"]
       [tls.options.Options1.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"

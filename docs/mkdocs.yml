@@ -44,7 +44,7 @@ plugins:
   - search
   - exclude:
       glob:
-        - include-*.md
+        - "**/include-*.md"
 
 # https://squidfunk.github.io/mkdocs-material/extensions/admonition/
 # https://facelessuser.github.io/pymdown-extensions/
@@ -80,9 +80,14 @@ nav:
       - 'Docker': 'providers/docker.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
       - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
+      - 'Consul Catalog': 'providers/consul-catalog.md'
+      - 'Marathon': 'providers/marathon.md'
       - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
-      - 'Marathon': 'providers/marathon.md'
+      - 'Consul': 'providers/consul.md'
+      - 'Etcd': 'providers/etcd.md'
+      - 'ZooKeeper': 'providers/zookeeper.md'
+      - 'Redis': 'providers/redis.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'EntryPoints': 'routing/entrypoints.md'
@@ -91,8 +96,11 @@ nav:
       - 'Providers':
           - 'Docker': 'routing/providers/docker.md'
           - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
-          - 'Rancher': 'routing/providers/rancher.md'
+          - 'Kubernetes Ingress': 'routing/providers/kubernetes-ingress.md'
+          - 'Consul Catalog': 'routing/providers/consul-catalog.md'
           - 'Marathon': 'routing/providers/marathon.md'
+          - 'Rancher': 'routing/providers/rancher.md'
+          - 'KV': 'routing/providers/kv.md'
   - 'HTTPS & TLS':
       - 'Overview': 'https/overview.md'
       - 'TLS': 'https/tls.md'
@@ -141,6 +149,7 @@ nav:
           - 'Datadog': 'observability/tracing/datadog.md'
           - 'Instana': 'observability/tracing/instana.md'
           - 'Haystack': 'observability/tracing/haystack.md'
+          - 'Elastic': 'observability/tracing/elastic.md'
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
@@ -152,6 +161,7 @@ nav:
           - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
           - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
   - 'Migration':
+      - 'Traefik v2 minor migrations': 'migration/v2.md'
       - 'Traefik v1 to v2': 'migration/v1-to-v2.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
@@ -174,5 +184,7 @@ nav:
         - 'File': 'reference/dynamic-configuration/file.md'
         - 'Docker': 'reference/dynamic-configuration/docker.md'
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
+        - 'Consul Catalog': 'reference/dynamic-configuration/consul-catalog.md'
         - 'Marathon': 'reference/dynamic-configuration/marathon.md'
         - 'Rancher': 'reference/dynamic-configuration/rancher.md'
+        - 'KV': 'reference/dynamic-configuration/kv.md'

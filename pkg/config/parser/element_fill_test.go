@@ -1390,7 +1390,7 @@ func TestFill(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			err := Fill(test.element, test.node)
+			err := filler{FillerOpts: FillerOpts{AllowSliceAsStruct: true}}.Fill(test.element, test.node)
 			if test.expected.error {
 				require.Error(t, err)
 			} else {

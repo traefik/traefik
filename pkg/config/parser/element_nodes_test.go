@@ -723,7 +723,8 @@ func TestEncodeToNode(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			node, err := EncodeToNode(test.element, DefaultRootName, true)
+			etnOpts := EncoderToNodeOpts{OmitEmpty: true, TagName: TagLabel, AllowSliceAsStruct: true}
+			node, err := EncodeToNode(test.element, DefaultRootName, etnOpts)
 
 			if test.expected.error {
 				require.Error(t, err)

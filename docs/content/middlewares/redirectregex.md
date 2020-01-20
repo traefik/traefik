@@ -31,6 +31,13 @@ spec:
     replacement: http://mydomain/${1}
 ```
 
+```yaml tab="Consul Catalog"
+# Redirect with domain replacement
+# Note: all dollar signs need to be doubled for escaping.
+- "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
+- "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-redirectregex.redirectregex.regex": "^http://localhost/(.*)",

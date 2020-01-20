@@ -8,8 +8,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
-	v1beta12 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -24,20 +22,19 @@ func init() {
 }
 
 type clientMock struct {
-	ingresses []*extensionsv1beta1.Ingress
 	services  []*corev1.Service
 	secrets   []*corev1.Secret
 	endpoints []*corev1.Endpoints
 
-	apiServiceError       error
-	apiSecretError        error
-	apiEndpointsError     error
-	apiIngressStatusError error
+	apiServiceError   error
+	apiSecretError    error
+	apiEndpointsError error
 
 	ingressRoutes    []*v1alpha1.IngressRoute
 	ingressRouteTCPs []*v1alpha1.IngressRouteTCP
 	middlewares      []*v1alpha1.Middleware
 	tlsOptions       []*v1alpha1.TLSOption
+	traefikServices  []*v1alpha1.TraefikService
 
 	watchChan chan interface{}
 }
@@ -64,10 +61,10 @@ func newClientMock(paths ...string) clientMock {
 				c.ingressRouteTCPs = append(c.ingressRouteTCPs, o)
 			case *v1alpha1.Middleware:
 				c.middlewares = append(c.middlewares, o)
+			case *v1alpha1.TraefikService:
+				c.traefikServices = append(c.traefikServices, o)
 			case *v1alpha1.TLSOption:
 				c.tlsOptions = append(c.tlsOptions, o)
-			case *v1beta12.Ingress:
-				c.ingresses = append(c.ingresses, o)
 			case *corev1.Secret:
 				c.secrets = append(c.secrets, o)
 			default:
@@ -91,6 +88,20 @@ func (c clientMock) GetMiddlewares() []*v1alpha1.Middleware {
 	return c.middlewares
 }
 
+func (c clientMock) GetTraefikService(namespace, name string) (*v1alpha1.TraefikService, bool, error) {
+	for _, svc := range c.traefikServices {
+		if svc.Namespace == namespace && svc.Name == name {
+			return svc, true, nil
+		}
+	}
+
+	return nil, false, nil
+}
+
+func (c clientMock) GetTraefikServices() []*v1alpha1.TraefikService {
+	return c.traefikServices
+}
+
 func (c clientMock) GetTLSOptions() []*v1alpha1.TLSOption {
 	return c.tlsOptions
 }
@@ -103,10 +114,6 @@ func (c clientMock) GetTLSOption(namespace, name string) (*v1alpha1.TLSOption, b
 	}
 
 	return nil, false, nil
-}
-
-func (c clientMock) GetIngresses() []*extensionsv1beta1.Ingress {
-	return c.ingresses
 }
 
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
@@ -151,8 +158,4 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 
 func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	return c.watchChan, nil
-}
-
-func (c clientMock) UpdateIngressStatus(namespace, name, ip, hostname string) error {
-	return c.apiIngressStatusError
 }

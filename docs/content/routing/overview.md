@@ -33,9 +33,9 @@ Static configuration:
     address = ":8081"
 
 [providers]
-  # Enable the file provider to define routers / middlewares / services in a file
+  # Enable the file provider to define routers / middlewares / services in file
   [providers.file]
-    filename = "dynamic_conf.toml"
+    directory = "/path/to/dynamic/conf"
 ```
 
 ```yaml tab="File (YAML)"
@@ -45,17 +45,17 @@ entryPoints:
     address: :8081
 
 providers:
-  # Enable the file provider to define routers / middlewares / services in a file
+  # Enable the file provider to define routers / middlewares / services in file
   file:
-    filename: dynamic_conf.yml
+    directory: /path/to/dynamic/conf
 ```
 
 ```bash tab="CLI"
 # Listen on port 8081 for incoming requests
 --entryPoints.web.address=:8081
 
-# Enable the file provider to define routers / middlewares / services in a file
---providers.file.filename=dynamic_conf.toml
+# Enable the file provider to define routers / middlewares / services in file
+--providers.file.directory=/path/to/dynamic/conf
 ```
 
 Dynamic configuration:
@@ -133,9 +133,9 @@ http:
             address = ":8081"
 
         [providers]
-          # Enable the file provider to define routers / middlewares / services in a file
+          # Enable the file provider to define routers / middlewares / services in file
           [providers.file]
-            filename = "dynamic_conf.toml"
+            directory = "/path/to/dynamic/conf"
         ```
         
         ```yaml tab="File (YAML)"
@@ -144,17 +144,17 @@ http:
             # Listen on port 8081 for incoming requests
             address: :8081
         providers:
-          # Enable the file provider to define routers / middlewares / services in a file
+          # Enable the file provider to define routers / middlewares / services in file
           file:
-            filename: dynamic_conf.yml
+            directory: /path/to/dynamic/conf
         ```
         
         ```bash tab="CLI"
         # Listen on port 8081 for incoming requests
         --entryPoints.web.address=:8081
         
-        # Enable the file provider to define routers / middlewares / services in a file
-        --providers.file.filename=dynamic_conf.toml
+        # Enable the file provider to define routers / middlewares / services in file
+        --providers.file.directory=/path/to/dynamic/conf
         ```
         
         **Dynamic Configuration**

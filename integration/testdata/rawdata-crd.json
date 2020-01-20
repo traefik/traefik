@@ -1,10 +1,21 @@
 {
 	"routers": {
-		"default-test.route-6b204d94623b3df4370c@kubernetescrd": {
+		"default-api-route-29f28a463fb5d5ba16d2@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-test.route-6b204d94623b3df4370c",
+			"service": "api@internal",
+			"rule": "PathPrefix(`/api`)",
+			"status": "enabled",
+			"using": [
+				"web"
+			]
+		},
+		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "default-test-route-6b204d94623b3df4370c",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/bar`)",
 			"priority": 12,
 			"tls": {
@@ -15,15 +26,26 @@
 				"web"
 			]
 		},
-		"default-test2.route-23c7f4c450289ee29016@kubernetescrd": {
+		"default-test2-route-23c7f4c450289ee29016@kubernetescrd": {
 			"entryPoints": [
 				"web"
 			],
 			"middlewares": [
 				"default-mychain@kubernetescrd"
 			],
-			"service": "default-test2.route-23c7f4c450289ee29016",
+			"service": "default-test2-route-23c7f4c450289ee29016",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/tobestripped`)",
+			"status": "enabled",
+			"using": [
+				"web"
+			]
+		},
+		"default-test3-route-7d0ac22d3d8db4b82618@kubernetescrd": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "default-wrr1",
+			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/wrr1`)",
 			"status": "enabled",
 			"using": [
 				"web"
@@ -39,7 +61,7 @@
 			},
 			"status": "enabled",
 			"usedBy": [
-				"default-test2.route-23c7f4c450289ee29016@kubernetescrd"
+				"default-test2-route-23c7f4c450289ee29016@kubernetescrd"
 			]
 		},
 		"default-stripprefix@kubernetescrd": {
@@ -52,47 +74,103 @@
 		}
 	},
 	"services": {
-		"default-test.route-6b204d94623b3df4370c@kubernetescrd": {
+		"api@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"default-api-route-29f28a463fb5d5ba16d2@kubernetescrd"
+			]
+		},
+		"dashboard@internal": {
+			"status": "enabled"
+		},
+		"default-mirror1@kubernetescrd": {
+			"mirroring": {
+				"service": "default-whoami-80",
+				"mirrors": [
+					{
+						"name": "default-whoami-80"
+					}
+				]
+			},
+			"status": "enabled"
+		},
+		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.2:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.6:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true
 			},
 			"status": "enabled",
 			"usedBy": [
-				"default-test.route-6b204d94623b3df4370c@kubernetescrd"
+				"default-test-route-6b204d94623b3df4370c@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.2:80": "UP",
-				"http://10.42.0.6:80": "UP"
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.5:80": "UP"
 			}
 		},
-		"default-test2.route-23c7f4c450289ee29016@kubernetescrd": {
+		"default-test2-route-23c7f4c450289ee29016@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.2:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.6:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true
 			},
 			"status": "enabled",
 			"usedBy": [
-				"default-test2.route-23c7f4c450289ee29016@kubernetescrd"
+				"default-test2-route-23c7f4c450289ee29016@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.2:80": "UP",
-				"http://10.42.0.6:80": "UP"
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.5:80": "UP"
 			}
+		},
+		"default-whoami-80@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.3:80"
+					},
+					{
+						"url": "http://10.42.0.5:80"
+					}
+				],
+				"passHostHeader": true
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.5:80": "UP"
+			}
+		},
+		"default-wrr1@kubernetescrd": {
+			"weighted": {
+				"services": [
+					{
+						"name": "default-mirror1",
+						"weight": 1
+					},
+					{
+						"name": "default-whoami-80",
+						"weight": 1
+					}
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-test3-route-7d0ac22d3d8db4b82618@kubernetescrd"
+			]
 		}
 	},
 	"tcpRouters": {
@@ -121,7 +199,7 @@
 						"address": "10.42.0.4:8080"
 					},
 					{
-						"address": "10.42.0.5:8080"
+						"address": "10.42.0.6:8080"
 					}
 				]
 			},

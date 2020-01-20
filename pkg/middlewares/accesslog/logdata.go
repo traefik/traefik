@@ -129,5 +129,6 @@ type downstreamResponse struct {
 
 type request struct {
 	headers http.Header
-	count   int64
+	// Request body size
+	size int64
 }

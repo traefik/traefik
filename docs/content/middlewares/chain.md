@@ -83,6 +83,17 @@ spec:
     - 127.0.0.1/32
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.routers.router1.service=service1"
+- "traefik.http.routers.router1.middlewares=secured"
+- "traefik.http.routers.router1.rule=Host(`mydomain`)"
+- "traefik.http.middlewares.secured.chain.middlewares=https-only,known-ips,auth-users"
+- "traefik.http.middlewares.auth-users.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+- "traefik.http.middlewares.https-only.redirectscheme.scheme=https"
+- "traefik.http.middlewares.known-ips.ipwhitelist.sourceRange=192.168.1.7,127.0.0.1/32"
+- "http.services.service1.loadbalancer.server.port=80"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.routers.router1.service": "service1",

@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -546,8 +547,16 @@ func checkAccessLogExactValuesOutput(c *check.C, values []accessLogValue) int {
 func extractLines(c *check.C) []string {
 	accessLog, err := ioutil.ReadFile(traefikTestAccessLogFile)
 	c.Assert(err, checker.IsNil)
+
 	lines := strings.Split(string(accessLog), "\n")
-	return lines
+
+	var clean []string
+	for _, line := range lines {
+		if !strings.Contains(line, "/api/rawdata") {
+			clean = append(clean, line)
+		}
+	}
+	return clean
 }
 
 func checkStatsForLogFile(c *check.C) {
@@ -580,28 +589,31 @@ func CheckAccessLogFormat(c *check.C, line string, i int) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(results, checker.HasLen, 14)
 	c.Assert(results[accesslog.OriginStatus], checker.Matches, `^(-|\d{3})$`)
-	c.Assert(results[accesslog.RequestCount], checker.Equals, fmt.Sprintf("%d", i+1))
-	c.Assert(results[accesslog.RouterName], checker.Matches, `"rt-.+@docker"`)
-	c.Assert(results[accesslog.ServiceURL], checker.HasPrefix, "\"http://")
+	count, _ := strconv.Atoi(results[accesslog.RequestCount])
+	c.Assert(count, checker.GreaterOrEqualThan, i+1)
+	c.Assert(results[accesslog.RouterName], checker.Matches, `"(rt-.+@docker|api@internal)"`)
+	c.Assert(results[accesslog.ServiceURL], checker.HasPrefix, `"http://`)
 	c.Assert(results[accesslog.Duration], checker.Matches, `^\d+ms$`)
 }
 
 func checkAccessLogExactValues(c *check.C, line string, i int, v accessLogValue) {
 	results, err := accesslog.ParseAccessLog(line)
-	// c.Assert(nil, checker.Equals, line)
 	c.Assert(err, checker.IsNil)
 	c.Assert(results, checker.HasLen, 14)
 	if len(v.user) > 0 {
 		c.Assert(results[accesslog.ClientUsername], checker.Equals, v.user)
 	}
 	c.Assert(results[accesslog.OriginStatus], checker.Equals, v.code)
-	c.Assert(results[accesslog.RequestCount], checker.Equals, fmt.Sprintf("%d", i+1))
+	count, _ := strconv.Atoi(results[accesslog.RequestCount])
+	c.Assert(count, checker.GreaterOrEqualThan, i+1)
 	c.Assert(results[accesslog.RouterName], checker.Matches, `^"?`+v.routerName+`.*(@docker)?$`)
 	c.Assert(results[accesslog.ServiceURL], checker.Matches, `^"?`+v.serviceURL+`.*$`)
 	c.Assert(results[accesslog.Duration], checker.Matches, `^\d+ms$`)
 }
 
 func waitForTraefik(c *check.C, containerName string) {
+	time.Sleep(1 * time.Second)
+
 	// Wait for Traefik to turn ready.
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/api/rawdata", nil)
 	c.Assert(err, checker.IsNil)

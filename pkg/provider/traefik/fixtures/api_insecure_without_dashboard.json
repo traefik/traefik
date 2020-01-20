@@ -1,0 +1,19 @@
+{
+  "http": {
+    "routers": {
+      "api": {
+        "entryPoints": [
+          "traefik"
+        ],
+        "service": "api@internal",
+        "rule": "PathPrefix(`/api`)",
+        "priority": 2147483646
+      }
+    },
+    "services": {
+      "api": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

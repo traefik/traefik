@@ -8,7 +8,14 @@
         </div>
         <div class="row items-center q-col-gutter-lg">
           <div class="col-12">
-            <main-table :data="allRouters.items" :request="onGetAll" :loading="loading" :pagination.sync="pagination" :filter="filter" type="http-routers"/>
+            <main-table
+              ref="mainTable"
+              v-bind="getTableProps({ type: 'http-routers' })"
+              :data="allRouters.items"
+              :onLoadMore="handleLoadMore"
+              :endReached="allRouters.endReached"
+              :loading="allRouters.loading"
+            />
           </div>
         </div>
       </div>
@@ -19,12 +26,22 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import GetTablePropsMixin from '../../_mixins/GetTableProps'
+import PaginationMixin from '../../_mixins/Pagination'
 import PageDefault from '../../components/_commons/PageDefault'
 import ToolBarTable from '../../components/_commons/ToolBarTable'
 import MainTable from '../../components/_commons/MainTable'
 
 export default {
   name: 'PageHTTPRouters',
+  mixins: [
+    GetTablePropsMixin,
+    PaginationMixin({
+      fetchMethod: 'getAllRoutersWithParams',
+      scrollerRef: 'mainTable.$refs.scroller',
+      pollingIntervalTime: 5000
+    })
+  ],
   components: {
     PageDefault,
     ToolBarTable,
@@ -32,16 +49,8 @@ export default {
   },
   data () {
     return {
-      loading: true,
       filter: '',
-      status: '',
-      pagination: {
-        sortBy: '',
-        descending: true,
-        page: 1,
-        rowsPerPage: 10,
-        rowsNumber: 0
-      }
+      status: ''
     }
   },
   computed: {
@@ -49,38 +58,22 @@ export default {
   },
   methods: {
     ...mapActions('http', { getAllRouters: 'getAllRouters' }),
+    getAllRoutersWithParams (params) {
+      return this.getAllRouters({
+        query: this.filter,
+        status: this.status,
+        ...params
+      })
+    },
     refreshAll () {
       if (this.allRouters.loading) {
         return
       }
-      this.pagination.page = 1
-      this.onGetAll({
-        pagination: this.pagination,
-        filter: this.filter
-      })
-    },
-    onGetAll (props) {
-      let { page, rowsPerPage, sortBy, descending } = props.pagination
 
-      this.getAllRouters({ query: props.filter, status: this.status, page, limit: rowsPerPage, sortBy, descending })
-        .then(body => {
-          if (!body) {
-            this.loading = false
-            return
-          }
-          this.loading = false
-          console.log('Success -> http/routers', body)
-          // update rowsNumber with appropriate value
-          this.pagination.rowsNumber = body.total
-          // update local pagination object
-          this.pagination.page = page
-          this.pagination.rowsPerPage = rowsPerPage
-          this.pagination.sortBy = sortBy
-          this.pagination.descending = descending
-        })
-        .catch(error => {
-          console.log('Error -> http/router', error)
-        })
+      this.initFetch()
+    },
+    handleLoadMore ({ page = 1 } = {}) {
+      return this.fetchMore({ page })
     }
   },
   watch: {
@@ -90,12 +83,6 @@ export default {
     'filter' () {
       this.refreshAll()
     }
-  },
-  created () {
-
-  },
-  mounted () {
-    this.refreshAll()
   },
   beforeDestroy () {
     this.$store.commit('http/getAllRoutersClear')

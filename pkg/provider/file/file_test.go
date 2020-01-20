@@ -139,7 +139,7 @@ func TestProvideWithWatch(t *testing.T) {
 				}
 			}
 
-			timeout = time.After(time.Second * 1)
+			timeout = time.After(1 * time.Second)
 			var numUpdates, numServices, numRouters, numTLSConfs int
 			for {
 				select {

@@ -86,7 +86,7 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
 ## Routing Configuration
 
 When using Docker as a [provider](https://docs.traefik.io/providers/overview/),
-Trafik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#set-metadata-on-container--l---label---label-file) to retrieve its routing configuration.
+Traefik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#set-metadata-on-container--l---label---label-file) to retrieve its routing configuration.
 
 See the list of labels in the dedicated [routing](../routing/providers/docker.md) section.
 
@@ -135,7 +135,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
 
     ??? success "Solutions"
 
-        Expose the Docker socket over TCP, instead of the default Unix socket file.
+        Expose the Docker socket over TCP or SSH, instead of the default Unix socket file.
         It allows different implementation levels of the [AAA (Authentication, Authorization, Accounting) concepts](https://en.wikipedia.org/wiki/AAA_(computer_security)), depending on your security assessment:
 
         - Authentication with Client Certificates as described in ["Protect the Docker daemon socket."](https://docs.docker.com/engine/security/https/)
@@ -145,6 +145,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
         - Accounting at container level, by exposing the socket on a another container than Traefik's.
           With Swarm mode, it allows scheduling of Traefik on worker nodes, with only the "socket exposer" container on the manager nodes.
         - Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), to only allows an identified set of actions for Traefik's process (or the "socket exposer" process).
+        - SSH public key authentication (SSH is supported with Docker > 18.09)
 
     ??? info "More Resources and Examples"
         - ["Paranoid about mounting /var/run/docker.sock?"](https://medium.com/@containeroo/traefik-2-0-paranoid-about-mounting-var-run-docker-sock-22da9cb3e78c)
@@ -270,6 +271,30 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
     
     ```bash tab="CLI"
     --providers.docker.endpoint=unix:///var/run/docker.sock
+    # ...
+    ```
+
+??? example "Using SSH"
+
+    Using Docker 18.09+ you can connect Traefik to daemon using SSH
+    We specify the SSH host and user in Traefik's configuration file.
+    Note that is server requires public keys for authentication you must have those accessible for user who runs Traefik.
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      endpoint = "ssh://traefik@192.168.2.5:2022"
+      # ...
+    ```
+    
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        endpoint: "ssh://traefik@192.168.2.5:2022"
+         # ...
+    ```
+    
+    ```bash tab="CLI"
+    --providers.docker.endpoint=ssh://traefik@192.168.2.5:2022
     # ...
     ```
 

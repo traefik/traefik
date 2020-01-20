@@ -85,19 +85,17 @@ We recommend to use a "Host Based rule" as ```Host(`traefik.domain.com`)``` to m
 or to make sure that the defined rule captures both prefixes:
 
 ```bash tab="Host Rule"
-# Matches http://traefik.domain.com/api or http://traefik.domain.com/dashboard
+# The dashboard can be accessed on http://traefik.domain.com/dashboard/
 rule = "Host(`traefik.domain.com`)"
 ```
 
 ```bash tab="Path Prefix Rule"
-# Matches http://traefik.domain.com/api , http://domain.com/api or http://traefik.domain.com/dashboard
-# but does not match http://traefik.domain.com/hello
+# The dashboard can be accessed on http://domain.com/dashboard/ or http://traefik.domain.com/dashboard/
 rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
 ```
 
 ```bash tab="Combination of Rules"
-# Matches http://traefik.domain.com/api or http://traefik.domain.com/dashboard
-# but does not match http://traefik.domain.com/hello
+# The dashboard can be accessed on http://traefik.domain.com/dashboard/
 rule = "Host(`traefik.domain.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
 ```
 

@@ -16,6 +16,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/middlewares/forwardedheaders"
 	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/server/router"
 	"github.com/containous/traefik/v2/pkg/tcp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
@@ -50,11 +51,60 @@ func (h *httpForwarder) Accept() (net.Conn, error) {
 // TCPEntryPoints holds a map of TCPEntryPoint (the entrypoint names being the keys)
 type TCPEntryPoints map[string]*TCPEntryPoint
 
+// NewTCPEntryPoints creates a new TCPEntryPoints.
+func NewTCPEntryPoints(entryPointsConfig static.EntryPoints) (TCPEntryPoints, error) {
+	serverEntryPointsTCP := make(TCPEntryPoints)
+	for entryPointName, config := range entryPointsConfig {
+		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+
+		var err error
+		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config)
+		if err != nil {
+			return nil, fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
+		}
+	}
+	return serverEntryPointsTCP, nil
+}
+
+// Start the server entry points.
+func (eps TCPEntryPoints) Start() {
+	for entryPointName, serverEntryPoint := range eps {
+		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+		go serverEntryPoint.StartTCP(ctx)
+	}
+}
+
+// Stop the server entry points.
+func (eps TCPEntryPoints) Stop() {
+	var wg sync.WaitGroup
+
+	for epn, ep := range eps {
+		wg.Add(1)
+
+		go func(entryPointName string, entryPoint *TCPEntryPoint) {
+			defer wg.Done()
+
+			ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+			entryPoint.Shutdown(ctx)
+
+			log.FromContext(ctx).Debugf("Entry point %s closed", entryPointName)
+		}(epn, ep)
+	}
+
+	wg.Wait()
+}
+
+// Switch the TCP routers.
+func (eps TCPEntryPoints) Switch(routersTCP map[string]*tcp.Router) {
+	for entryPointName, rt := range routersTCP {
+		eps[entryPointName].SwitchRouter(rt)
+	}
+}
+
 // TCPEntryPoint is the TCP server
 type TCPEntryPoint struct {
 	listener               net.Listener
 	switcher               *tcp.HandlerSwitcher
-	RouteAppenderFactory   RouteAppenderFactory
 	transportConfiguration *static.EntryPointsTransport
 	tracker                *connectionTracker
 	httpServer             *httpServer
@@ -99,6 +149,137 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 	}, nil
 }
 
+// StartTCP starts the TCP server.
+func (e *TCPEntryPoint) StartTCP(ctx context.Context) {
+	logger := log.FromContext(ctx)
+	logger.Debugf("Start TCP Server")
+
+	for {
+		conn, err := e.listener.Accept()
+		if err != nil {
+			logger.Error(err)
+			if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
+				continue
+			}
+
+			return
+		}
+
+		writeCloser, err := writeCloser(conn)
+		if err != nil {
+			panic(err)
+		}
+
+		safe.Go(func() {
+			// Enforce read/write deadlines at the connection level,
+			// because when we're peeking the first byte to determine whether we are doing TLS,
+			// the deadlines at the server level are not taken into account.
+			if e.transportConfiguration.RespondingTimeouts.ReadTimeout > 0 {
+				err := writeCloser.SetReadDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.ReadTimeout)))
+				if err != nil {
+					logger.Errorf("Error while setting read deadline: %v", err)
+				}
+			}
+
+			if e.transportConfiguration.RespondingTimeouts.WriteTimeout > 0 {
+				err = writeCloser.SetWriteDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.WriteTimeout)))
+				if err != nil {
+					logger.Errorf("Error while setting write deadline: %v", err)
+				}
+			}
+
+			e.switcher.ServeTCP(newTrackedConnection(writeCloser, e.tracker))
+		})
+	}
+}
+
+// Shutdown stops the TCP connections
+func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
+	logger := log.FromContext(ctx)
+
+	reqAcceptGraceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.RequestAcceptGraceTimeout)
+	if reqAcceptGraceTimeOut > 0 {
+		logger.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
+		time.Sleep(reqAcceptGraceTimeOut)
+	}
+
+	graceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.GraceTimeOut)
+	ctx, cancel := context.WithTimeout(ctx, graceTimeOut)
+	logger.Debugf("Waiting %s seconds before killing connections.", graceTimeOut)
+
+	var wg sync.WaitGroup
+
+	shutdownServer := func(server stoppableServer) {
+		defer wg.Done()
+		err := server.Shutdown(ctx)
+		if err == nil {
+			return
+		}
+		if ctx.Err() == context.DeadlineExceeded {
+			logger.Debugf("Server failed to shutdown within deadline because: %s", err)
+			if err = server.Close(); err != nil {
+				logger.Error(err)
+			}
+			return
+		}
+		logger.Error(err)
+		// We expect Close to fail again because Shutdown most likely failed when trying to close a listener.
+		// We still call it however, to make sure that all connections get closed as well.
+		server.Close()
+	}
+
+	if e.httpServer.Server != nil {
+		wg.Add(1)
+		go shutdownServer(e.httpServer.Server)
+	}
+
+	if e.httpsServer.Server != nil {
+		wg.Add(1)
+		go shutdownServer(e.httpsServer.Server)
+	}
+
+	if e.tracker != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := e.tracker.Shutdown(ctx)
+			if err == nil {
+				return
+			}
+			if ctx.Err() == context.DeadlineExceeded {
+				logger.Debugf("Server failed to shutdown before deadline because: %s", err)
+			}
+			e.tracker.Close()
+		}()
+	}
+
+	wg.Wait()
+	cancel()
+}
+
+// SwitchRouter switches the TCP router handler.
+func (e *TCPEntryPoint) SwitchRouter(rt *tcp.Router) {
+	rt.HTTPForwarder(e.httpServer.Forwarder)
+
+	httpHandler := rt.GetHTTPHandler()
+	if httpHandler == nil {
+		httpHandler = router.BuildDefaultHTTPRouter()
+	}
+
+	e.httpServer.Switcher.UpdateHandler(httpHandler)
+
+	rt.HTTPSForwarder(e.httpsServer.Forwarder)
+
+	httpsHandler := rt.GetHTTPSHandler()
+	if httpsHandler == nil {
+		httpsHandler = router.BuildDefaultHTTPRouter()
+	}
+
+	e.httpsServer.Switcher.UpdateHandler(httpsHandler)
+
+	e.switcher.Switch(rt)
+}
+
 // writeCloserWrapper wraps together a connection, and the concrete underlying
 // connection type that was found to satisfy WriteCloser.
 type writeCloserWrapper struct {
@@ -125,110 +306,6 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 	default:
 		return nil, fmt.Errorf("unknown connection type %T", typedConn)
 	}
-}
-
-func (e *TCPEntryPoint) startTCP(ctx context.Context) {
-	logger := log.FromContext(ctx)
-	logger.Debugf("Start TCP Server")
-
-	for {
-		conn, err := e.listener.Accept()
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-
-		writeCloser, err := writeCloser(conn)
-		if err != nil {
-			panic(err)
-		}
-
-		safe.Go(func() {
-			e.switcher.ServeTCP(newTrackedConnection(writeCloser, e.tracker))
-		})
-	}
-}
-
-// Shutdown stops the TCP connections
-func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
-	logger := log.FromContext(ctx)
-
-	reqAcceptGraceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.RequestAcceptGraceTimeout)
-	if reqAcceptGraceTimeOut > 0 {
-		logger.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
-		time.Sleep(reqAcceptGraceTimeOut)
-	}
-
-	graceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.GraceTimeOut)
-	ctx, cancel := context.WithTimeout(ctx, graceTimeOut)
-	logger.Debugf("Waiting %s seconds before killing connections.", graceTimeOut)
-
-	var wg sync.WaitGroup
-	if e.httpServer.Server != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := e.httpServer.Server.Shutdown(ctx); err != nil {
-				if ctx.Err() == context.DeadlineExceeded {
-					logger.Debugf("Wait server shutdown is overdue to: %s", err)
-					err = e.httpServer.Server.Close()
-					if err != nil {
-						logger.Error(err)
-					}
-				}
-			}
-		}()
-	}
-
-	if e.httpsServer.Server != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := e.httpsServer.Server.Shutdown(ctx); err != nil {
-				if ctx.Err() == context.DeadlineExceeded {
-					logger.Debugf("Wait server shutdown is overdue to: %s", err)
-					err = e.httpsServer.Server.Close()
-					if err != nil {
-						logger.Error(err)
-					}
-				}
-			}
-		}()
-	}
-
-	if e.tracker != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := e.tracker.Shutdown(ctx); err != nil {
-				if ctx.Err() == context.DeadlineExceeded {
-					logger.Debugf("Wait hijack connection is overdue to: %s", err)
-					e.tracker.Close()
-				}
-			}
-		}()
-	}
-
-	wg.Wait()
-	cancel()
-}
-
-func (e *TCPEntryPoint) switchRouter(router *tcp.Router) {
-	router.HTTPForwarder(e.httpServer.Forwarder)
-	router.HTTPSForwarder(e.httpsServer.Forwarder)
-
-	httpHandler := router.GetHTTPHandler()
-	httpsHandler := router.GetHTTPSHandler()
-	if httpHandler == nil {
-		httpHandler = buildDefaultHTTPRouter()
-	}
-	if httpsHandler == nil {
-		httpsHandler = buildDefaultHTTPRouter()
-	}
-
-	e.httpServer.Switcher.UpdateHandler(httpHandler)
-	e.httpsServer.Switcher.UpdateHandler(httpsHandler)
-	e.switcher.Switch(router)
 }
 
 // tcpKeepAliveListener sets TCP keep-alive timeouts on accepted
@@ -382,7 +459,7 @@ type httpServer struct {
 }
 
 func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool) (*httpServer, error) {
-	httpSwitcher := middlewares.NewHandlerSwitcher(buildDefaultHTTPRouter())
+	httpSwitcher := middlewares.NewHandlerSwitcher(router.BuildDefaultHTTPRouter())
 
 	var handler http.Handler
 	var err error
@@ -399,8 +476,11 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	serverHTTP := &http.Server{
-		Handler:  handler,
-		ErrorLog: httpServerLogger,
+		Handler:      handler,
+		ErrorLog:     httpServerLogger,
+		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 	}
 
 	listener := newHTTPForwarder(ln)

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/safe"
 )
 
@@ -63,11 +64,21 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			if handler.count*100 < total*uint64(handler.percent) {
 				handler.count++
 				handler.lock.Unlock()
+
+				// In ServeHTTP, we rely on the presence of the accesslog datatable found in the
+				// request's context to know whether we should mutate said datatable (and
+				// contribute some fields to the log). In this instance, we do not want the mirrors
+				// mutating (i.e. changing the service name in) the logs related to the mirrored
+				// server. Especially since it would result in unguarded concurrent reads/writes on
+				// the datatable. Therefore, we reset any potential datatable key in the new
+				// context that we pass around.
+				ctx := context.WithValue(req.Context(), accesslog.DataTableKey, nil)
+
 				// When a request served by m.handler is successful, req.Context will be canceled,
 				// which would trigger a cancellation of the ongoing mirrored requests.
 				// Therefore, we give a new, non-cancellable context  to each of the mirrored calls,
 				// so they can terminate by themselves.
-				handler.ServeHTTP(m.rw, req.WithContext(contextStopPropagation{req.Context()}))
+				handler.ServeHTTP(m.rw, req.WithContext(contextStopPropagation{ctx}))
 			} else {
 				handler.lock.Unlock()
 			}

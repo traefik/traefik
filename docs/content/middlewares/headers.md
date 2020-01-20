@@ -32,6 +32,11 @@ spec:
       X-Custom-Response-Header: "value"
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
@@ -91,6 +96,10 @@ spec:
       X-Custom-Response-Header: "" # Removes
 ```
 
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+```
+
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
@@ -144,6 +153,11 @@ spec:
   headers:
     frameDeny: "true"
     sslRedirect: "true"
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.testheader.headers.framedeny=true"
+- "traefik.http.middlewares.testheader.headers.sslredirect=true"
 ```
 
 ```json tab="Marathon"
@@ -202,6 +216,13 @@ spec:
     accessControlAllowOrigin: "origin-list-or-null"
     accessControlMaxAge: 100
     addVaryHeader: "true"
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
+- "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin=origin-list-or-null"
+- "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
+- "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
 
 ```json tab="Marathon"

@@ -239,9 +239,11 @@ http:
             commonName: true
             serialNumber: true
             domainComponent: true
+          serialNumber: true
     Middleware13:
       rateLimit:
         average: 42
+        period: 42
         burst: 42
         sourceCriterion:
           ipstrategy:
@@ -351,7 +353,11 @@ tls:
   options:
     Options0:
       minVersion: foobar
+      maxVersion: foobar
       cipherSuites:
+        - foobar
+        - foobar
+      curvePreferences:
       - foobar
       - foobar
       clientAuth:
@@ -362,7 +368,11 @@ tls:
       sniStrict: true
     Options1:
       minVersion: foobar
+      maxVersion: foobar
       cipherSuites:
+        - foobar
+        - foobar
+      curvePreferences:
       - foobar
       - foobar
       clientAuth:

@@ -1,0 +1,9 @@
+{
+  "http": {
+    "services": {
+      "ping": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

@@ -1,0 +1,19 @@
+{
+  "http": {
+    "routers": {
+      "rest": {
+        "entryPoints": [
+          "traefik"
+        ],
+        "service": "rest@internal",
+        "rule": "PathPrefix(`/api/providers`)",
+        "priority": 2147483647
+      }
+    },
+    "services": {
+      "rest": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

@@ -40,7 +40,7 @@ tls:
 
     In the above example, we've used the [file provider](../providers/file.md) to handle these definitions.
     It is the only available method to configure the certificates (as well as the options and the stores).
-    However, in [Kubernetes](../providers/kubernetes-crd.md), the certificates can and must be provided by [secrets](../routing/providers/kubernetes-crd.md#tls). 
+    However, in [Kubernetes](../providers/kubernetes-crd.md), the certificates can and must be provided by [secrets](https://kubernetes.io/docs/concepts/configuration/secret/). 
 
 ## Certificates Stores
 
@@ -181,6 +181,57 @@ spec:
   minVersion: VersionTLS13
 ```
 
+### Maximum TLS Version
+
+We discourages the use of this setting to disable TLS1.3.
+
+The right approach is to update the clients to support TLS1.3.
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+
+  [tls.options.default]
+    maxVersion = "VersionTLS13"
+
+  [tls.options.maxtls12]
+    maxVersion = "VersionTLS12"
+```
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      maxVersion: VersionTLS13
+
+    maxtls12:
+      maxVersion: VersionTLS12
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  maxVersion: VersionTLS13
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: maxtls12
+  namespace: default
+
+spec:
+  maxVersion: VersionTLS12
+```
+
 ### Cipher Suites
 
 See [cipherSuites](https://godoc.org/crypto/tls#pkg-constants) for more information.
@@ -222,6 +273,46 @@ spec:
     Cipher suites defined for TLS 1.2 and below cannot be used in TLS 1.3, and vice versa. (<https://tools.ietf.org/html/rfc8446>)  
     With TLS 1.3, the cipher suites are not configurable (all supported cipher suites are safe in this case).
     <https://golang.org/doc/go1.12#tls_1_3>
+
+### Curve Preferences
+
+This option allows to set the preferred elliptic curves in a specific order.
+
+The names of the curves defined by [`crypto`](https://godoc.org/crypto/tls#CurveID) (e.g. `CurveP521`) and the [RFC defined names](https://tools.ietf.org/html/rfc8446#section-4.2.7) (e. g. `secp521r1`) can be used.
+
+See [CurveID](https://godoc.org/crypto/tls#CurveID) for more information.
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+  [tls.options.default]
+    curvePreferences = ["CurveP521", "CurveP384"]
+```
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      curvePreferences:
+        - CurveP521
+        - CurveP384
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  curvePreferences:
+    - CurveP521
+    - CurveP384
+```
 
 ### Strict SNI Checking
 
