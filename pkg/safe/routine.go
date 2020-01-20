@@ -56,17 +56,6 @@ func (p *Pool) GoCtx(goroutine routineCtx) {
 	p.lock.Unlock()
 }
 
-// addGo adds a recoverable goroutine, and can be stopped with stop chan
-func (p *Pool) addGo(goroutine func(stop chan bool)) {
-	p.lock.Lock()
-	newRoutine := routine{
-		goroutine: goroutine,
-		stop:      make(chan bool, 1),
-	}
-	p.routines = append(p.routines, newRoutine)
-	p.lock.Unlock()
-}
-
 // Go starts a recoverable goroutine, and can be stopped with stop chan
 func (p *Pool) Go(goroutine func(stop chan bool)) {
 	p.lock.Lock()
