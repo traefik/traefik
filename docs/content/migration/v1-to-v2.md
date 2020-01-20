@@ -209,7 +209,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
             "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
             "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-           ]
+          ]
           [[entryPoints.web-secure.tls.certificates]]
             certFile = "path/to/my.cert"
             keyFile = "path/to/my.key"
@@ -242,13 +242,13 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       [tls.options.myTLSOptions]
         minVersion = "VersionTLS13"
         cipherSuites = [
-            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
-            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-            ]
+          "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+          "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+          "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+        ]
     ```
 
     ```yaml tab="File (YAML)"
@@ -367,7 +367,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
           - 80:80
           - 443:443
         labels:
-          traefik.http.routers.http_catchall.rule: hostregexp(`{any:.+}`)
+          traefik.http.routers.http_catchall.rule: HostRegexp(`{any:.+}`)
           traefik.http.routers.http_catchall.entrypoints: web
           traefik.http.routers.http_catchall.middlewares: https_redirect
           traefik.http.middlewares.https_redirect.redirectscheme.scheme: https
