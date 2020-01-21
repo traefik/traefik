@@ -89,7 +89,7 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
 		err := p.addServerTCP(ctxSvc, container, service.LoadBalancer)
 		if err != nil {
-			return err
+			return fmt.Errorf("service %q error: %w", name, err)
 		}
 	}
 
@@ -112,7 +112,7 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
 		err := p.addServer(ctxSvc, container, service.LoadBalancer)
 		if err != nil {
-			return err
+			return fmt.Errorf("service %q error: %w", name, err)
 		}
 	}
 
@@ -146,10 +146,16 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 }
 
 func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadBalancer *dynamic.TCPServersLoadBalancer) error {
-	serverPort := ""
-	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
-		serverPort = loadBalancer.Servers[0].Port
+	if loadBalancer == nil {
+		return errors.New("load-balancer is not defined")
 	}
+
+	var serverPort string
+	if len(loadBalancer.Servers) > 0 {
+		serverPort = loadBalancer.Servers[0].Port
+		loadBalancer.Servers[0].Port = ""
+	}
+
 	ip, port, err := p.getIPPort(ctx, container, serverPort)
 	if err != nil {
 		return err
@@ -161,11 +167,6 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 		loadBalancer.Servers = []dynamic.TCPServer{server}
 	}
 
-	if serverPort != "" {
-		port = serverPort
-		loadBalancer.Servers[0].Port = ""
-	}
-
 	if port == "" {
 		return errors.New("port is missing")
 	}
@@ -175,7 +176,16 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 }
 
 func (p *Provider) addServer(ctx context.Context, container dockerData, loadBalancer *dynamic.ServersLoadBalancer) error {
-	serverPort := getLBServerPort(loadBalancer)
+	if loadBalancer == nil {
+		return errors.New("load-balancer is not defined")
+	}
+
+	var serverPort string
+	if len(loadBalancer.Servers) > 0 {
+		serverPort = loadBalancer.Servers[0].Port
+		loadBalancer.Servers[0].Port = ""
+	}
+
 	ip, port, err := p.getIPPort(ctx, container, serverPort)
 	if err != nil {
 		return err
@@ -186,11 +196,6 @@ func (p *Provider) addServer(ctx context.Context, container dockerData, loadBala
 		server.SetDefaults()
 
 		loadBalancer.Servers = []dynamic.Server{server}
-	}
-
-	if serverPort != "" {
-		port = serverPort
-		loadBalancer.Servers[0].Port = ""
 	}
 
 	if port == "" {
@@ -292,13 +297,6 @@ func (p *Provider) getPortBinding(container dockerData, serverPort string) (*nat
 	}
 
 	return nil, fmt.Errorf("unable to find the external IP:Port for the container %q", container.Name)
-}
-
-func getLBServerPort(loadBalancer *dynamic.ServersLoadBalancer) string {
-	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
-		return loadBalancer.Servers[0].Port
-	}
-	return ""
 }
 
 func getPort(container dockerData, serverPort string) string {

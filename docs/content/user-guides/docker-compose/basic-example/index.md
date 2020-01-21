@@ -1,7 +1,7 @@
 # Docker-compose basic example
 
 In this section we quickly go over a basic docker-compose file exposing a simple service using the docker provider.  
-This will also be used as a starting point for the the other docker-compose guides.  
+This will also be used as a starting point for the other docker-compose guides.  
 
 ## Setup
 

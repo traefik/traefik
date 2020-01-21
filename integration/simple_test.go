@@ -779,3 +779,98 @@ func (s *SimpleSuite) TestSecureAPI(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 }
+
+func (s *SimpleSuite) TestContentTypeDisableAutoDetect(c *check.C) {
+	srv1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header()["Content-Type"] = nil
+		switch req.URL.Path[:4] {
+		case "/css":
+			if !strings.Contains(req.URL.Path, "noct") {
+				rw.Header().Set("Content-Type", "text/css")
+			}
+
+			rw.WriteHeader(http.StatusOK)
+
+			_, err := rw.Write([]byte(".testcss { }"))
+			c.Assert(err, checker.IsNil)
+		case "/pdf":
+			if !strings.Contains(req.URL.Path, "noct") {
+				rw.Header().Set("Content-Type", "application/pdf")
+			}
+
+			rw.WriteHeader(http.StatusOK)
+
+			bytes, err := ioutil.ReadFile("fixtures/test.pdf")
+			c.Assert(err, checker.IsNil)
+
+			_, err = rw.Write(bytes)
+			c.Assert(err, checker.IsNil)
+		}
+	}))
+
+	defer srv1.Close()
+
+	file := s.adaptFile(c, "fixtures/simple_contenttype.toml", struct {
+		Server string
+	}{
+		Server: srv1.URL,
+	})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/css/ct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/css/ct/middlewareauto", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddlewareauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/css/ct/middlewarenoauto", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddlewarenoauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/css/noct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/css/noct/middlewareauto", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/nomiddlewareauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/css/noct/middlewarenoauto", time.Second, func(res *http.Response) error {
+		if ct, ok := res.Header["Content-Type"]; ok {
+			return fmt.Errorf("should have no content type and %s is present", ct)
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/middlewarenoauto", time.Second, func(res *http.Response) error {
+		if ct, ok := res.Header["Content-Type"]; ok {
+			return fmt.Errorf("should have no content type and %s is present", ct)
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+}

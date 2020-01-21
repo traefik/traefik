@@ -1,3 +1,21 @@
+## [v2.1.3](https://github.com/containous/traefik/tree/v2.1.3) (2020-01-21)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.2...v2.1.3)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v3.3.0 ([#6192](https://github.com/containous/traefik/pull/6192) by [shilch](https://github.com/shilch))
+- **[docker]** Use the calculated port when useBindPortIP is enabled ([#6199](https://github.com/containous/traefik/pull/6199) by [juliens](https://github.com/juliens))
+- **[docker]** fix: invalid service definition. ([#6198](https://github.com/containous/traefik/pull/6198) by [ldez](https://github.com/ldez))
+- **[server]** Remove Content-Type auto-detection ([#6097](https://github.com/containous/traefik/pull/6097) by [juliens](https://github.com/juliens))
+- **[service]** fix memleak in safe.Pool ([#6140](https://github.com/containous/traefik/pull/6140) by [mpl](https://github.com/mpl))
+
+**Documentation:**
+- **[docker]** Fix typo in docker routing documentation ([#6147](https://github.com/containous/traefik/pull/6147) by [tvrg](https://github.com/tvrg))
+- **[k8s]** Fixed typo in k8s doc ([#6163](https://github.com/containous/traefik/pull/6163) by [MyIgel](https://github.com/MyIgel))
+- **[marathon]** Fix typo in Marathon doc. ([#6150](https://github.com/containous/traefik/pull/6150) by [thatshubham](https://github.com/thatshubham))
+- **[middleware]** Adding an explanation how to use `htpasswd` for k8s secret ([#6194](https://github.com/containous/traefik/pull/6194) by [jamct](https://github.com/jamct))
+- doc: adds an explanation of the global redirection pattern. ([#6195](https://github.com/containous/traefik/pull/6195) by [ldez](https://github.com/ldez))
+- Fix small typo in user-guides documentation ([#6154](https://github.com/containous/traefik/pull/6154) by [evert-arias](https://github.com/evert-arias))
+
 ## [v2.1.2](https://github.com/containous/traefik/tree/v2.1.2) (2020-01-07)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.1...v2.1.2)
 

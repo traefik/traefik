@@ -172,6 +172,21 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// ContentType
+	if config.ContentType != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				if !config.ContentType.AutoDetect {
+					rw.Header()["Content-Type"] = nil
+				}
+				next.ServeHTTP(rw, req)
+			}), nil
+		}
+	}
+
 	// CustomErrors
 	if config.Errors != nil {
 		if middleware != nil {

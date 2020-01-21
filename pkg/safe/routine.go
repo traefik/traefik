@@ -19,14 +19,13 @@ type routineCtx func(ctx context.Context)
 
 // Pool is a pool of go routines
 type Pool struct {
-	routines    []routine
-	routinesCtx []routineCtx
-	waitGroup   sync.WaitGroup
-	lock        sync.Mutex
-	baseCtx     context.Context
-	baseCancel  context.CancelFunc
-	ctx         context.Context
-	cancel      context.CancelFunc
+	routines   []routine
+	waitGroup  sync.WaitGroup
+	lock       sync.Mutex
+	baseCtx    context.Context
+	baseCancel context.CancelFunc
+	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
 // NewPool creates a Pool
@@ -46,33 +45,14 @@ func (p *Pool) Ctx() context.Context {
 	return p.baseCtx
 }
 
-// AddGoCtx adds a recoverable goroutine with a context without starting it
-func (p *Pool) AddGoCtx(goroutine routineCtx) {
-	p.lock.Lock()
-	p.routinesCtx = append(p.routinesCtx, goroutine)
-	p.lock.Unlock()
-}
-
 // GoCtx starts a recoverable goroutine with a context
 func (p *Pool) GoCtx(goroutine routineCtx) {
 	p.lock.Lock()
-	p.routinesCtx = append(p.routinesCtx, goroutine)
 	p.waitGroup.Add(1)
 	Go(func() {
 		defer p.waitGroup.Done()
 		goroutine(p.ctx)
 	})
-	p.lock.Unlock()
-}
-
-// addGo adds a recoverable goroutine, and can be stopped with stop chan
-func (p *Pool) addGo(goroutine func(stop chan bool)) {
-	p.lock.Lock()
-	newRoutine := routine{
-		goroutine: goroutine,
-		stop:      make(chan bool, 1),
-	}
-	p.routines = append(p.routines, newRoutine)
 	p.lock.Unlock()
 }
 
@@ -112,29 +92,6 @@ func (p *Pool) Cleanup() {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	p.baseCancel()
-}
-
-// Start starts all stopped routines
-func (p *Pool) Start() {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	p.ctx, p.cancel = context.WithCancel(p.baseCtx)
-	for i := range p.routines {
-		p.waitGroup.Add(1)
-		p.routines[i].stop = make(chan bool, 1)
-		Go(func() {
-			defer p.waitGroup.Done()
-			p.routines[i].goroutine(p.routines[i].stop)
-		})
-	}
-
-	for _, routine := range p.routinesCtx {
-		p.waitGroup.Add(1)
-		Go(func() {
-			defer p.waitGroup.Done()
-			routine(p.ctx)
-		})
-	}
 }
 
 // Go starts a recoverable goroutine
