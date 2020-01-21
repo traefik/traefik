@@ -606,6 +606,11 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(dynamic.Retry)
 		**out = **in
 	}
+	if in.ContentType != nil {
+		in, out := &in.ContentType, &out.ContentType
+		*out = new(dynamic.ContentType)
+		**out = **in
+	}
 	return
 }
 

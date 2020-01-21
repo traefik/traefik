@@ -93,6 +93,9 @@
  [[issues.exclude-rules]]
     path = "cmd/configuration.go"
     text = "string `traefik` has (\\d) occurrences, make it a constant"
+ [[issues.exclude-rules]]
+    path = "pkg/server/middleware/middlewares.go"
+    text = "Function 'buildConstructor' is too long \\(\\d+ > 230\\)"
  [[issues.exclude-rules]] # FIXME must be fixed
     path = "cmd/context.go"
     text = "S1000: should use a simple channel send/receive instead of `select` with a single case"

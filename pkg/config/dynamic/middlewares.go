@@ -35,6 +35,22 @@ type Middleware struct {
 	Compress          *Compress          `json:"compress,omitempty" toml:"compress,omitempty" yaml:"compress,omitempty" label:"allowEmpty"`
 	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty" toml:"passTLSClientCert,omitempty" yaml:"passTLSClientCert,omitempty"`
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty"`
+	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ContentType middleware - or rather its unique `autoDetect` option -
+// specifies whether to let the `Content-Type` header,
+// if it has not been set by the backend,
+// be automatically set to a value derived from the contents of the response.
+// As a proxy, the default behavior should be to leave the header alone,
+// regardless of what the backend did with it.
+// However, the historic default was to always auto-detect and set the header if it was nil,
+// and it is going to be kept that way in order to support users currently relying on it.
+// This middleware exists to enable the correct behavior until at least the default one can be changed in a future version.
+type ContentType struct {
+	AutoDetect bool `json:"autoDetect,omitempty" toml:"autoDetect,omitempty" yaml:"autoDetect,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
