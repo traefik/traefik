@@ -5,11 +5,11 @@ Tweaking the Request
 
 ![Overview](../assets/img/middleware/overview.png)
 
-Attached to the routers, pieces of middleware are a mean of tweaking the requests before they are sent to your [service](../routing/services/index.md) (or before the answer from the services are sent to the clients).
+Attached to the routers, pieces of middleware are a means of tweaking the requests before they are sent to your [service](../routing/services/index.md) (or before the answer from the services are sent to the clients).
 
-There are many different available middlewares in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
+There are several available middleware in Traefik, some can modify the request or the headers, some are in charge of redirections, some add authentication, and so on.
 
-Pieces of middleware can be combined in chains to fit every scenario.
+Middleware can be combined in chains to fit every scenario.
 
 ## Configuration Example
 
@@ -130,7 +130,7 @@ http:
 
 ## Provider Namespace
 
-When you declare a middleware, it lives in its provider namespace.
+When you declare a middleware, it lives in its provider's namespace.
 For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker provider namespace.
 
 If you use multiple providers and wish to reference a middleware declared in another provider
