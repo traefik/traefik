@@ -43,7 +43,7 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider
 func (p *Provider) Init(storeType store.Backend, name string) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, string(storeType)))
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, name))
 
 	p.storeType = storeType
 	p.name = name
@@ -60,7 +60,7 @@ func (p *Provider) Init(storeType store.Backend, name string) error {
 
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, string(p.storeType)))
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.name))
 
 	logger := log.FromContext(ctx)
 
@@ -122,7 +122,7 @@ func (p *Provider) watchKv(ctx context.Context, configurationChan chan<- dynamic
 
 				if configuration != nil {
 					configurationChan <- dynamic.Message{
-						ProviderName:  string(p.storeType),
+						ProviderName:  p.name,
 						Configuration: configuration,
 					}
 				}
