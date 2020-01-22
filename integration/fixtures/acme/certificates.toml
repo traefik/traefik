@@ -5,7 +5,7 @@
 
 [http.routers]
   [http.routers.test]
-    entryPoints = ["web-secure"]
+    entryPoints = ["websecure"]
     rule = "Host(`traefik.acme.wtf`)"
     service = "test"
     [http.routers.test.tls]
