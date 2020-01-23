@@ -9,7 +9,7 @@
   [entryPoints.web]
     address = ":8888"
 
-  [entryPoints.web-secure]
+  [entryPoints.websecure]
     address = ":8443"
 
 [api]
@@ -28,7 +28,7 @@
     service = "service1"
 
   [http.routers.router1TLS]
-    entryPoints = [ "web-secure" ]
+    entryPoints = [ "websecure" ]
     rule = "Host(`example.com`)"
     service = "service1"
     [http.routers.router1TLS.tls]
@@ -40,7 +40,7 @@
     service = "service1"
 
   [http.routers.router2TLS]
-    entryPoints = [ "web-secure" ]
+    entryPoints = [ "websecure" ]
     rule = "Host(`example2.com`)"
     service = "service1"
     [http.routers.router2TLS.tls]
@@ -52,7 +52,7 @@
     service = "service1"
 
   [http.routers.router3TLS]
-    entryPoints = [ "web-secure" ]
+    entryPoints = [ "websecure" ]
     rule = "Host(`test.com`)"
     service = "service1"
     [http.routers.router3TLS.tls]
@@ -64,7 +64,7 @@
     service = "service1"
 
   [http.routers.router4TLS]
-    entryPoints = [ "web-secure" ]
+    entryPoints = [ "websecure" ]
     rule = "Host(`test2.com`)"
     service = "service1"
     [http.routers.router4TLS.tls]
@@ -76,7 +76,7 @@
     service = "service1"
 
   [http.routers.router5TLS]
-    entryPoints = [ "web-secure" ]
+    entryPoints = [ "websecure" ]
     rule = "Host(`foo.com`)"
     service = "service1"
     [http.routers.router5TLS.tls]
@@ -88,7 +88,7 @@
     service = "service1"
 
   [http.routers.router6TLS]
-    entryPoints = [ "web-secure" ]
+    entryPoints = [ "websecure" ]
     rule = "Host(`foo2.com`)"
     service = "service1"
     [http.routers.router6TLS.tls]
@@ -100,7 +100,7 @@
     service = "service1"
 
   [http.routers.router7TLS]
-    entryPoints = [ "web-secure" ]
+    entryPoints = [ "websecure" ]
     rule = "Host(`bar.com`)"
     service = "service1"
     [http.routers.router7TLS.tls]
@@ -112,7 +112,7 @@
     service = "service1"
 
   [http.routers.router8TLS]
-    entryPoints = [ "web-secure" ]
+    entryPoints = [ "websecure" ]
     rule = "Host(`bar2.com`)"
     service = "service1"
     [http.routers.router8TLS.tls]
@@ -124,7 +124,7 @@
     service = "service1"
 
   [http.routers.router9TLS]
-    entryPoints = [ "web-secure" ]
+    entryPoints = [ "websecure" ]
     rule = "Host(`pow.com`)"
     service = "service1"
     [http.routers.router9TLS.tls]
@@ -136,7 +136,7 @@
     service = "service1"
 
   [http.routers.router10TLS]
-    entryPoints = [ "web-secure" ]
+    entryPoints = [ "websecure" ]
     rule = "Host(`pow2.com`)"
     service = "service1"
     [http.routers.router10TLS.tls]

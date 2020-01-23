@@ -8,7 +8,7 @@
 [entryPoints]
   [entryPoints.web]
     address = "{{ .PortHTTP }}"
-  [entryPoints.web-secure]
+  [entryPoints.websecure]
     address = "{{ .PortHTTPS }}"
 
 {{range $name, $resolvers := .Acme }}
