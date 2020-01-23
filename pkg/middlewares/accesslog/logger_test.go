@@ -31,6 +31,7 @@ var (
 	testPath                = "testpath"
 	testPort                = 8181
 	testProto               = "HTTP/0.0"
+	testScheme              = "http"
 	testMethod              = http.MethodPost
 	testReferer             = "testReferer"
 	testUserAgent           = "testUserAgent"
@@ -198,6 +199,7 @@ func TestLoggerJSON(t *testing.T) {
 				RequestMethod:             assertString(testMethod),
 				RequestPath:               assertString(testPath),
 				RequestProtocol:           assertString(testProto),
+				RequestScheme:             assertString(testScheme),
 				RequestPort:               assertString("-"),
 				DownstreamStatus:          assertFloat64(float64(testStatus)),
 				DownstreamContentSize:     assertFloat64(float64(len(testContent))),

@@ -42,6 +42,8 @@ const (
 	RequestPath = "RequestPath"
 	// RequestProtocol is the map key used for the version of HTTP requested.
 	RequestProtocol = "RequestProtocol"
+	// RequestScheme is the map key used for the HTTP request scheme.
+	RequestScheme = "RequestScheme"
 	// RequestContentSize is the map key used for the number of bytes in the request entity (a.k.a. body) sent by the client.
 	RequestContentSize = "RequestContentSize"
 	// RequestRefererHeader is the Referer header in the request
@@ -85,6 +87,7 @@ var defaultCoreKeys = [...]string{
 	RequestMethod,
 	RequestPath,
 	RequestProtocol,
+	RequestScheme,
 	RequestContentSize,
 	OriginDuration,
 	OriginContentSize,
