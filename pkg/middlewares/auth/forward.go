@@ -19,9 +19,10 @@ import (
 )
 
 const (
-	xForwardedURI     = "X-Forwarded-Uri"
-	xForwardedMethod  = "X-Forwarded-Method"
-	forwardedTypeName = "ForwardedAuthType"
+	xForwardedURI        = "X-Forwarded-Uri"
+	xForwardedMethod     = "X-Forwarded-Method"
+	forwardedTypeName    = "ForwardedAuthType"
+	xForwardedClientCert = "X-Forwarded-Tls-Client-Cert"
 )
 
 type forwardAuth struct {
@@ -216,5 +217,13 @@ func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader
 		forwardReq.Header.Set(xForwardedURI, req.URL.RequestURI())
 	default:
 		forwardReq.Header.Del(xForwardedURI)
+	}
+
+	xfCert := req.Header.Get(xForwardedClientCert)
+	switch {
+	case xfCert != "" && trustForwardHeader:
+		forwardReq.Header.Set(xForwardedClientCert, xfCert)
+	default:
+		forwardReq.Header.Del(xForwardedClientCert)
 	}
 }
