@@ -25,6 +25,7 @@ func (f *Builder) Build(ctx context.Context, names []string) func(*http.Response
 	for _, middleName := range names {
 		conf, ok := f.configs[middleName]
 		if !ok {
+			getLogger(ctx, middleName, "undefined").Debug("Middleware name not found in config (ResponseModifier)")
 			continue
 		}
 		if conf == nil || conf.Middleware == nil {
