@@ -10,7 +10,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/rules"
-	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 	tcpservice "github.com/containous/traefik/v2/pkg/server/service/tcp"
 	"github.com/containous/traefik/v2/pkg/tcp"
 	traefiktls "github.com/containous/traefik/v2/pkg/tls"
@@ -112,7 +112,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		ctxRouter := log.With(internal.AddProviderInContext(ctx, routerHTTPName), log.Str(log.RouterName, routerHTTPName))
+		ctxRouter := log.With(provider.AddInContext(ctx, routerHTTPName), log.Str(log.RouterName, routerHTTPName))
 		logger := log.FromContext(ctxRouter)
 
 		domains, err := rules.ParseDomains(routerHTTPConfig.Rule)
@@ -131,7 +131,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			if routerHTTPConfig.TLS != nil {
 				tlsOptionsName := routerHTTPConfig.TLS.Options
 				if tlsOptionsName != defaultTLSConfigName {
-					tlsOptionsName = internal.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
+					tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
 				}
 
 				tlsConf, err := m.tlsManager.Get(defaultTLSStoreName, tlsOptionsName)
@@ -180,7 +180,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	}
 
 	for routerName, routerConfig := range configs {
-		ctxRouter := log.With(internal.AddProviderInContext(ctx, routerName), log.Str(log.RouterName, routerName))
+		ctxRouter := log.With(provider.AddInContext(ctx, routerName), log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctxRouter)
 
 		if routerConfig.Service == "" {
@@ -226,7 +226,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 					}
 
 					if tlsOptionsName != defaultTLSConfigName {
-						tlsOptionsName = internal.GetQualifiedName(ctxRouter, tlsOptionsName)
+						tlsOptionsName = provider.GetQualifiedName(ctxRouter, tlsOptionsName)
 					}
 
 					tlsConf, err := m.tlsManager.Get(defaultTLSStoreName, tlsOptionsName)

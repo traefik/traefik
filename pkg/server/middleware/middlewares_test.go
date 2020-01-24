@@ -9,7 +9,7 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -262,7 +262,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 
 			ctx := context.Background()
 			if len(test.contextProvider) > 0 {
-				ctx = internal.AddProviderInContext(ctx, "foobar@"+test.contextProvider)
+				ctx = provider.AddInContext(ctx, "foobar@"+test.contextProvider)
 			}
 
 			rtConf := runtime.NewConfig(dynamic.Configuration{

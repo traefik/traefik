@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 	"github.com/containous/traefik/v2/pkg/tls"
 )
 
@@ -25,25 +25,25 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 	}
 
 	var defaultTLSOptionProviders []string
-	for provider, configuration := range configurations {
+	for pvd, configuration := range configurations {
 		if configuration.HTTP != nil {
 			for routerName, router := range configuration.HTTP.Routers {
-				conf.HTTP.Routers[internal.MakeQualifiedName(provider, routerName)] = router
+				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
 			for middlewareName, middleware := range configuration.HTTP.Middlewares {
-				conf.HTTP.Middlewares[internal.MakeQualifiedName(provider, middlewareName)] = middleware
+				conf.HTTP.Middlewares[provider.MakeQualifiedName(pvd, middlewareName)] = middleware
 			}
 			for serviceName, service := range configuration.HTTP.Services {
-				conf.HTTP.Services[internal.MakeQualifiedName(provider, serviceName)] = service
+				conf.HTTP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
 			}
 		}
 
 		if configuration.TCP != nil {
 			for routerName, router := range configuration.TCP.Routers {
-				conf.TCP.Routers[internal.MakeQualifiedName(provider, routerName)] = router
+				conf.TCP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
 			for serviceName, service := range configuration.TCP.Services {
-				conf.TCP.Services[internal.MakeQualifiedName(provider, serviceName)] = service
+				conf.TCP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
 			}
 		}
 
@@ -56,9 +56,9 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 
 			for tlsOptionsName, options := range configuration.TLS.Options {
 				if tlsOptionsName != "default" {
-					tlsOptionsName = internal.MakeQualifiedName(provider, tlsOptionsName)
+					tlsOptionsName = provider.MakeQualifiedName(pvd, tlsOptionsName)
 				} else {
-					defaultTLSOptionProviders = append(defaultTLSOptionProviders, provider)
+					defaultTLSOptionProviders = append(defaultTLSOptionProviders, pvd)
 				}
 
 				conf.TLS.Options[tlsOptionsName] = options
