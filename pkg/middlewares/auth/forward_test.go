@@ -356,24 +356,6 @@ func Test_writeHeader(t *testing.T) {
 			},
 		},
 		{
-			name: "trust Forward Header with forwarded tls certificate header, but its empty",
-			headers: map[string]string{
-				"X-Forwarded-Tls-Client-Cert": "",
-			},
-			trustForwardHeader: true,
-			expectedHeaders: map[string]string{
-			},
-		},
-		{
-			name: "not trust Forward Header with forwarded tls certificate",
-			headers: map[string]string{
-				"X-Forwarded-Tls-Client-Cert": "MY AWESOME CERTIFICATE",
-			},
-			trustForwardHeader: false,
-			expectedHeaders: map[string]string{
-			},
-		},
-		{
 			name: "remove hop-by-hop headers",
 			headers: map[string]string{
 				forward.Connection:         "Connection",
