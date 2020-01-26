@@ -16,18 +16,18 @@ type DomainsService struct {
 }
 
 type DomainInfo struct {
-	DomainTotal   int    `json:"domain_total,omitempty"`
-	AllTotal      int    `json:"all_total,omitempty"`
-	MineTotal     int    `json:"mine_total,omitempty"`
-	ShareTotal    string `json:"share_total,omitempty"`
-	VipTotal      int    `json:"vip_total,omitempty"`
-	IsMarkTotal   int    `json:"ismark_total,omitempty"`
-	PauseTotal    int    `json:"pause_total,omitempty"`
-	ErrorTotal    int    `json:"error_total,omitempty"`
-	LockTotal     int    `json:"lock_total,omitempty"`
-	SpamTotal     int    `json:"spam_total,omitempty"`
-	VipExpire     int    `json:"vip_expire,omitempty"`
-	ShareOutTotal int    `json:"share_out_total,omitempty"`
+	DomainTotal   json.Number `json:"domain_total,omitempty"`
+	AllTotal      json.Number `json:"all_total,omitempty"`
+	MineTotal     json.Number `json:"mine_total,omitempty"`
+	ShareTotal    json.Number `json:"share_total,omitempty"`
+	VipTotal      json.Number `json:"vip_total,omitempty"`
+	IsMarkTotal   json.Number `json:"ismark_total,omitempty"`
+	PauseTotal    json.Number `json:"pause_total,omitempty"`
+	ErrorTotal    json.Number `json:"error_total,omitempty"`
+	LockTotal     json.Number `json:"lock_total,omitempty"`
+	SpamTotal     json.Number `json:"spam_total,omitempty"`
+	VipExpire     json.Number `json:"vip_expire,omitempty"`
+	ShareOutTotal json.Number `json:"share_out_total,omitempty"`
 }
 
 type Domain struct {
