@@ -272,3 +272,7 @@
 [[override]]
   name = "contrib.go.opencensus.io/exporter/ocagent"
   version = "0.4.12"
+
+[[override]]
+  name = "github.com/decker502/dnspod-go"
+  revision = "071171b22a9b65e4f544b61c143befd54a08a64e"

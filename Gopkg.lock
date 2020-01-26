@@ -477,12 +477,11 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:fa62421bd924623ac10a160686cc55d529f7274b2caedf7d2c607d14bc50c118"
+  digest = "1:295f7aed734ab28daff7c0df7db42bcccf7a043d4e0a5daf5768129346b25f23"
   name = "github.com/decker502/dnspod-go"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "71fbbdbdf1a7eeac949586de15bf96d416d3dd63"
-  version = "v0.2.0"
+  revision = "071171b22a9b65e4f544b61c143befd54a08a64e"
 
 [[projects]]
   digest = "1:7a6852b35eb5bbc184561443762d225116ae630c26a7c4d90546619f1e7d2ad2"
