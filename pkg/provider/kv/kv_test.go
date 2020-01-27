@@ -93,8 +93,9 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware06/digestAuth/usersFile":                                 "foobar",
 		"traefik/http/middlewares/Middleware09/headers/accessControlAllowHeaders/0":                  "foobar",
 		"traefik/http/middlewares/Middleware09/headers/accessControlAllowHeaders/1":                  "foobar",
-		"traefik/http/middlewares/Middleware09/headers/accessControlAllowOrigin/0":                   "foobar",
-		"traefik/http/middlewares/Middleware09/headers/accessControlAllowOrigin/1":                   "foobar",
+		"traefik/http/middlewares/Middleware09/headers/accessControlAllowOrigin":                     "foobar",
+		"traefik/http/middlewares/Middleware09/headers/accessControlAllowOriginList/0":               "foobar",
+		"traefik/http/middlewares/Middleware09/headers/accessControlAllowOriginList/1":               "foobar",
 		"traefik/http/middlewares/Middleware09/headers/contentTypeNosniff":                           "true",
 		"traefik/http/middlewares/Middleware09/headers/accessControlAllowCredentials":                "true",
 		"traefik/http/middlewares/Middleware09/headers/featurePolicy":                                "foobar",
@@ -543,7 +544,8 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
-						AccessControlAllowOrigin: []string{
+						AccessControlAllowOrigin: "foobar",
+						AccessControlAllowOriginList: []string{
 							"foobar",
 							"foobar",
 						},

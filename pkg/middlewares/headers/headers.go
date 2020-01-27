@@ -250,7 +250,11 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 }
 
 func (s *Header) isOriginAllowed(origin string) (bool, string) {
-	for _, item := range s.headers.AccessControlAllowOrigin {
+	if s.headers.AccessControlAllowOrigin == "*" {
+		return true, "*"
+	}
+
+	for _, item := range s.headers.AccessControlAllowOriginList {
 		if item == "*" || item == origin {
 			return true, item
 		}
