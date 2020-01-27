@@ -180,7 +180,7 @@ func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
 		providerConfigUpdateCh = make(chan dynamic.Message)
 		c.providerConfigUpdateMap[configMsg.ProviderName] = providerConfigUpdateCh
 		c.routinesPool.GoCtx(func(ctxPool context.Context) {
-			c.throttleProviderConfigReload(c.providersThrottleDuration, c.configurationValidatedChan, providerConfigUpdateCh, ctxPool)
+			c.throttleProviderConfigReload(ctxPool, c.providersThrottleDuration, c.configurationValidatedChan, providerConfigUpdateCh)
 		})
 	}
 
@@ -191,7 +191,7 @@ func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
 // It will immediately publish a new configuration and then only publish the next configuration after the throttle duration.
 // Note that in the case it receives N new configs in the timeframe of the throttle duration after publishing,
 // it will publish the last of the newly received configurations.
-func (c *ConfigurationWatcher) throttleProviderConfigReload(throttle time.Duration, publish chan<- dynamic.Message, in <-chan dynamic.Message, ctx context.Context) {
+func (c *ConfigurationWatcher) throttleProviderConfigReload(ctx context.Context, throttle time.Duration, publish chan<- dynamic.Message, in <-chan dynamic.Message) {
 	ring := channels.NewRingChannel(1)
 	defer ring.Close()
 

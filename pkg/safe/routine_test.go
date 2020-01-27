@@ -25,7 +25,6 @@ func TestNewPoolContext(t *testing.T) {
 		}
 	})
 	p.Stop()
-
 }
 
 type fakeRoutine struct {
@@ -46,14 +45,6 @@ func (tr *fakeRoutine) routineCtx(ctx context.Context) {
 	tr.Unlock()
 	tr.startSig <- true
 	<-ctx.Done()
-}
-
-func (tr *fakeRoutine) routine(stop chan bool) {
-	tr.Lock()
-	tr.started = true
-	tr.Unlock()
-	tr.startSig <- true
-	<-stop
 }
 
 func TestPoolWithCtx(t *testing.T) {
