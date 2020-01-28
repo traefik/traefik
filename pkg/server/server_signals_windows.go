@@ -2,6 +2,8 @@
 
 package server
 
+import "context"
+
 func (s *Server) configureSignals() {}
 
-func (s *Server) listenSignals(stop chan bool) {}
+func (s *Server) listenSignals(ctx context.Context) {}
