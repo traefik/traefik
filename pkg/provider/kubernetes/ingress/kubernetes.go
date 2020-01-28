@@ -339,7 +339,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					serviceName := provider.Normalize(ingress.Namespace + "-" + p.Backend.ServiceName + "-" + p.Backend.ServicePort.String())
 					var rules []string
 					if len(rule.Host) > 0 {
-						rules = []string{"Host(`" + rule.Host + "`)"}
+						rules = append(rules, buildHostRule(rule.Host))
 					}
 
 					if len(p.Path) > 0 {
@@ -379,6 +379,14 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	}
 
 	return conf
+}
+
+func buildHostRule(host string) string {
+	if strings.HasPrefix(host, "*.") {
+		return "HostRegexp(`" + strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1) + "`)"
+	}
+
+	return "Host(`" + host + "`)"
 }
 
 func shouldProcessIngress(ingressClass string, ingressClassAnnotation string) bool {
