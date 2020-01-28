@@ -8,7 +8,7 @@
 [entryPoints]
   [entryPoints.udp]
     address = ":8093/udp"
-  [entryPoints.http]
+  [entryPoints.web]
     address = ":8093"
 
 [api]
@@ -45,7 +45,7 @@
   [http.routers]
     [http.routers.to-whoami-d]
       service = "whoami"
-      entryPoints = [ "http" ]
+      entryPoints = [ "web" ]
       rule = "PathPrefix(`/who`)"
 
     [http.services.whoami.loadBalancer]

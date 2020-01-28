@@ -61,7 +61,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	logger := log.FromContext(ctx)
 
 	if len(configs) > 1 {
-		logger.Error("Warning: config has more than one udp router for a given entrypoint")
+		logger.Warn("Warning: config has more than one udp router for a given entrypoint")
 	}
 	for routerName, routerConfig := range configs {
 		ctxRouter := log.With(internal.AddProviderInContext(ctx, routerName), log.Str(log.RouterName, routerName))
