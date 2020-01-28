@@ -1,6 +1,8 @@
 package metrics
 
 import (
+	"time"
+
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/multi"
 )
@@ -20,12 +22,12 @@ type Registry interface {
 
 	// entry point metrics
 	EntryPointReqsCounter() metrics.Counter
-	EntryPointReqDurationHistogram() metrics.Histogram
+	EntryPointReqDurationHistogram() ScalableHistogram
 	EntryPointOpenConnsGauge() metrics.Gauge
 
 	// service metrics
 	ServiceReqsCounter() metrics.Counter
-	ServiceReqDurationHistogram() metrics.Histogram
+	ServiceReqDurationHistogram() ScalableHistogram
 	ServiceOpenConnsGauge() metrics.Gauge
 	ServiceRetriesCounter() metrics.Counter
 	ServiceServerUpGauge() metrics.Gauge
@@ -46,10 +48,10 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var lastConfigReloadSuccessGauge []metrics.Gauge
 	var lastConfigReloadFailureGauge []metrics.Gauge
 	var entryPointReqsCounter []metrics.Counter
-	var entryPointReqDurationHistogram []metrics.Histogram
+	var entryPointReqDurationHistogram []ScalableHistogram
 	var entryPointOpenConnsGauge []metrics.Gauge
 	var serviceReqsCounter []metrics.Counter
-	var serviceReqDurationHistogram []metrics.Histogram
+	var serviceReqDurationHistogram []ScalableHistogram
 	var serviceOpenConnsGauge []metrics.Gauge
 	var serviceRetriesCounter []metrics.Counter
 	var serviceServerUpGauge []metrics.Gauge
@@ -101,10 +103,10 @@ func NewMultiRegistry(registries []Registry) Registry {
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		lastConfigReloadFailureGauge:   multi.NewGauge(lastConfigReloadFailureGauge...),
 		entryPointReqsCounter:          multi.NewCounter(entryPointReqsCounter...),
-		entryPointReqDurationHistogram: multi.NewHistogram(entryPointReqDurationHistogram...),
+		entryPointReqDurationHistogram: NewMultiHistogram(entryPointReqDurationHistogram...),
 		entryPointOpenConnsGauge:       multi.NewGauge(entryPointOpenConnsGauge...),
 		serviceReqsCounter:             multi.NewCounter(serviceReqsCounter...),
-		serviceReqDurationHistogram:    multi.NewHistogram(serviceReqDurationHistogram...),
+		serviceReqDurationHistogram:    NewMultiHistogram(serviceReqDurationHistogram...),
 		serviceOpenConnsGauge:          multi.NewGauge(serviceOpenConnsGauge...),
 		serviceRetriesCounter:          multi.NewCounter(serviceRetriesCounter...),
 		serviceServerUpGauge:           multi.NewGauge(serviceServerUpGauge...),
@@ -119,10 +121,10 @@ type standardRegistry struct {
 	lastConfigReloadSuccessGauge   metrics.Gauge
 	lastConfigReloadFailureGauge   metrics.Gauge
 	entryPointReqsCounter          metrics.Counter
-	entryPointReqDurationHistogram metrics.Histogram
+	entryPointReqDurationHistogram ScalableHistogram
 	entryPointOpenConnsGauge       metrics.Gauge
 	serviceReqsCounter             metrics.Counter
-	serviceReqDurationHistogram    metrics.Histogram
+	serviceReqDurationHistogram    ScalableHistogram
 	serviceOpenConnsGauge          metrics.Gauge
 	serviceRetriesCounter          metrics.Counter
 	serviceServerUpGauge           metrics.Gauge
@@ -156,7 +158,7 @@ func (r *standardRegistry) EntryPointReqsCounter() metrics.Counter {
 	return r.entryPointReqsCounter
 }
 
-func (r *standardRegistry) EntryPointReqDurationHistogram() metrics.Histogram {
+func (r *standardRegistry) EntryPointReqDurationHistogram() ScalableHistogram {
 	return r.entryPointReqDurationHistogram
 }
 
@@ -168,7 +170,7 @@ func (r *standardRegistry) ServiceReqsCounter() metrics.Counter {
 	return r.serviceReqsCounter
 }
 
-func (r *standardRegistry) ServiceReqDurationHistogram() metrics.Histogram {
+func (r *standardRegistry) ServiceReqDurationHistogram() ScalableHistogram {
 	return r.serviceReqDurationHistogram
 }
 
@@ -182,4 +184,91 @@ func (r *standardRegistry) ServiceRetriesCounter() metrics.Counter {
 
 func (r *standardRegistry) ServiceServerUpGauge() metrics.Gauge {
 	return r.serviceServerUpGauge
+}
+
+// ScalableHistogram is a Histogram with a predefined time unit used when
+// producing observations allowing the call to Start() and ObserveDuration()
+// without explicitly setting the observed value.
+type ScalableHistogram interface {
+	With(labelValues ...string) ScalableHistogram
+	Start()
+	Observe(v float64)
+	ObserveDuration()
+}
+
+// HistogramWithScale is a histogram that will convert its observed value to the specified unit.
+type HistogramWithScale struct {
+	histogram metrics.Histogram
+	unit      time.Duration
+	timer     *metrics.Timer
+}
+
+// With implements ScalableHistogram.
+func (s *HistogramWithScale) With(labelValues ...string) ScalableHistogram {
+	s.histogram = s.histogram.With(labelValues...)
+	return s
+}
+
+// Start implements ScalableHistogram.
+func (s *HistogramWithScale) Start() {
+	s.timer = metrics.NewTimer(s.histogram)
+	s.timer.Unit(s.unit)
+}
+
+// ObserveDuration implements ScalableHistogram.
+func (s *HistogramWithScale) ObserveDuration() {
+	if s.timer != nil {
+		s.timer.ObserveDuration()
+	}
+}
+
+// Observe implements ScalableHistogram.
+func (s *HistogramWithScale) Observe(v float64) {
+	s.histogram.Observe(v)
+}
+
+// NewHistogramWithScale returns a ScalableHistogram
+func NewHistogramWithScale(h metrics.Histogram, u time.Duration) ScalableHistogram {
+	return &HistogramWithScale{
+		histogram: h,
+		unit:      u,
+	}
+}
+
+// MultiHistogram collects multiple individual histograms and treats them as a unit.
+type MultiHistogram []ScalableHistogram
+
+// NewMultiHistogram returns a multi-histogram, wrapping the passed histograms.
+func NewMultiHistogram(h ...ScalableHistogram) MultiHistogram {
+	return MultiHistogram(h)
+}
+
+// Start implements ScalableHistogram.
+func (h MultiHistogram) Start() {
+	for _, histogram := range h {
+		histogram.Start()
+	}
+}
+
+// ObserveDuration implements ScalableHistogram.
+func (h MultiHistogram) ObserveDuration() {
+	for _, histogram := range h {
+		histogram.ObserveDuration()
+	}
+}
+
+// Observe implements ScalableHistogram.
+func (h MultiHistogram) Observe(v float64) {
+	for _, histogram := range h {
+		histogram.Observe(v)
+	}
+}
+
+// With implements ScalableHistogram.
+func (h MultiHistogram) With(labelValues ...string) ScalableHistogram {
+	next := make(MultiHistogram, len(h))
+	for i := range h {
+		next[i] = h[i].With(labelValues...)
+	}
+	return next
 }
