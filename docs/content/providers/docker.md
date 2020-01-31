@@ -116,6 +116,11 @@ Ports detection works as follows:
   by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
   (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#port)).
 
+### Host networking
+
+When exposing containers configured with [host networking](https://docs.docker.com/network/host/), you need to
+provide the IP adress of the bridge interface to the Traefik container using `extra_hosts`: `--add-host=host.docker.internal:host-gateway`
+
 ### Docker API Access
 
 Traefik requires access to the docker socket to get its dynamic configuration.
