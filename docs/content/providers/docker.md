@@ -118,8 +118,7 @@ Ports detection works as follows:
 
 ### Host networking
 
-When exposing containers configured with [host networking](https://docs.docker.com/network/host/), you need to
-provide the IP adress of the bridge interface to the Traefik container using `extra_hosts`: `--add-host=host.docker.internal:host-gateway`
+When exposing containers configured with [host networking](https://docs.docker.com/network/host/), you need to provide the IP adress of the bridge interface to the Traefik container using `extra_hosts`: `--add-host=host.docker.internal:host-gateway`
 
 ### Docker API Access
 
