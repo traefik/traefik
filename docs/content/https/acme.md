@@ -379,7 +379,7 @@ certificatesResolvers:
 
 ```bash tab="CLI"
 # ...
---certificatesResolvers.le.acme.dnsChallenge.resolvers:=1.1.1.1:53,8.8.8.8:53
+--certificatesResolvers.le.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53
 ```
 
 #### Wildcard Domains
