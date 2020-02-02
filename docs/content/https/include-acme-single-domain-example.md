@@ -18,7 +18,6 @@ deploy:
 ```
 
 ```yaml tab="Kubernetes"
----
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
@@ -32,7 +31,8 @@ spec:
     services:
     - name: blog
       port: 8080
-  tls: {}
+  tls:
+    certresolver: le
 ```
 
 ```json tab="Marathon"
@@ -55,10 +55,10 @@ labels:
 ```toml tab="Single Domain"
 ## Dynamic configuration
 [http.routers]
-    [http.routers.blog]
-    rule = "Host(`company.com`) && Path(`/blog`)"
-    [http.routers.blog.tls]
-        certResolver = "le" # From static configuration
+  [http.routers.blog]
+  rule = "Host(`company.com`) && Path(`/blog`)"
+  [http.routers.blog.tls]
+    certResolver = "le"
 ```
 
 ```yaml tab="File (YAML)"
