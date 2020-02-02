@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -29,7 +28,7 @@ type forwardAuth struct {
 	authResponseHeaders []string
 	next                http.Handler
 	name                string
-	tlsConfig           *tls.Config
+	client              http.Client
 	trustForwardHeader  bool
 }
 
@@ -45,13 +44,21 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		trustForwardHeader:  config.TrustForwardHeader,
 	}
 
+	// Ensure our request client does not follow redirects
+	fa.client = http.Client{
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
 	if config.TLS != nil {
 		tlsConfig, err := config.TLS.CreateTLSConfig()
 		if err != nil {
 			return nil, err
 		}
 
-		fa.tlsConfig = tlsConfig
+		fa.client.Transport = http.DefaultTransport.(*http.Transport).Clone()
+		fa.client.Transport.(*http.Transport).TLSClientConfig = tlsConfig
 	}
 
 	return fa, nil
@@ -63,19 +70,6 @@ func (fa *forwardAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), fa.name, forwardedTypeName))
-
-	// Ensure our request client does not follow redirects
-	httpClient := http.Client{
-		CheckRedirect: func(r *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-
-	if fa.tlsConfig != nil {
-		httpClient.Transport = &http.Transport{
-			TLSClientConfig: fa.tlsConfig,
-		}
-	}
 
 	forwardReq, err := http.NewRequest(http.MethodGet, fa.address, nil)
 	tracing.LogRequest(tracing.GetSpan(req), forwardReq)
@@ -94,7 +88,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	writeHeader(req, forwardReq, fa.trustForwardHeader)
 
-	forwardResponse, forwardErr := httpClient.Do(forwardReq)
+	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause: %s", fa.address, forwardErr)
 		logger.Debug(logMessage)
