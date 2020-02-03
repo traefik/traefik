@@ -23,7 +23,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
     * Prefer a fixed version than the latest that could be an unexpected version.
     ex: `traefik:v2.0.0`
     * Docker images are based from the [Alpine Linux Official image](https://hub.docker.com/_/alpine).
-    * All the orchestrators using docker images could fetch the official Traefik docker image.
+    * Any orchestrator using docker images can fetch the official Traefik docker image.
 
 ## Use the Helm Chart
 
