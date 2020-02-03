@@ -158,6 +158,32 @@ providers:
 
 Use local agent caching for catalog reads.
 
+### `filter`
+
+_Optional_
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  filter = "traefik.enable=true in ServiceTags"
+  # ...
+```
+
+```yaml tab="File (YAML)
+providers:
+  consulCatalog:
+    filter: "traefik.enable=true in ServiceTags"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.filter="traefik.enable=true in ServiceTags"
+# ...
+```
+
+Defines the Consul filter to send to the server.  See more details at https://www.consul.io/api/features/filtering.html.
+
+Suggested for deployments with large catalogs.
+
 ### `endpoint`
 
 Defines the Consul server endpoint.

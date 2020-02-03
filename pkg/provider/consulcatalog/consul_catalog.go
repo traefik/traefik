@@ -44,6 +44,7 @@ type Provider struct {
 	Stale             bool            `description:"Use stale consistency for catalog reads." json:"stale,omitempty" toml:"stale,omitempty" yaml:"stale,omitempty" export:"true"`
 	Cache             bool            `description:"Use local agent caching for catalog reads." json:"cache,omitempty" toml:"cache,omitempty" yaml:"cache,omitempty" export:"true"`
 	ExposedByDefault  bool            `description:"Expose containers by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
+	Filter            string          `description:"Filter to pass to Consul servers" export:"true"`
 	DefaultRule       string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 
 	client         *api.Client
@@ -193,7 +194,7 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Catalo
 		tagFilter = p.Prefix + ".enable=true"
 	}
 
-	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
+	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache, Filter: p.Filter}
 
 	consulServices, _, err := p.client.Catalog().Service(name, tagFilter, opts)
 	if err != nil {
@@ -205,7 +206,7 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Catalo
 }
 
 func (p *Provider) fetchServices(ctx context.Context) (map[string][]string, error) {
-	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
+	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache, Filter: p.Filter}
 	serviceNames, _, err := p.client.Catalog().Services(opts)
 	return serviceNames, err
 }
