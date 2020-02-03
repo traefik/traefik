@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -49,6 +50,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		CheckRedirect: func(r *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
+		Timeout: 30 * time.Second,
 	}
 
 	if config.TLS != nil {
@@ -57,8 +59,9 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 			return nil, err
 		}
 
-		fa.client.Transport = http.DefaultTransport.(*http.Transport).Clone()
-		fa.client.Transport.(*http.Transport).TLSClientConfig = tlsConfig
+		tr := http.DefaultTransport.(*http.Transport).Clone()
+		tr.TLSClientConfig = tlsConfig
+		fa.client.Transport = tr
 	}
 
 	return fa, nil
