@@ -171,6 +171,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		TLS: &dynamic.TLSConfiguration{
 			Certificates: getTLSConfig(tlsConfigs),
 			Options:      buildTLSOptions(ctx, client),
+			Stores:       buildTLSStores(ctx, client),
 		},
 	}
 
@@ -503,6 +504,55 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 			},
 			SniStrict:                tlsOption.Spec.SniStrict,
 			PreferServerCipherSuites: tlsOption.Spec.PreferServerCipherSuites,
+		}
+	}
+	return tlsOptions
+}
+
+func buildTLStores(ctx context.Context, client Client) map[string]tls.Store {
+	tlsOptionsCRD := client.GetTLSOptions()
+	var tlsOptions map[string]tls.Options
+
+	if len(tlsOptionsCRD) == 0 {
+		return tlsOptions
+	}
+	tlsOptions = make(map[string]tls.Options)
+
+	for _, tlsOption := range tlsOptionsCRD {
+		logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOption.Name), log.Str("namespace", tlsOption.Namespace)))
+		var clientCAs []tls.FileOrContent
+
+		for _, secretName := range tlsOption.Spec.ClientAuth.SecretNames {
+			secret, exists, err := client.GetSecret(tlsOption.Namespace, secretName)
+			if err != nil {
+				logger.Errorf("Failed to fetch secret %s/%s: %v", tlsOption.Namespace, secretName, err)
+				continue
+			}
+
+			if !exists {
+				logger.Warnf("Secret %s/%s does not exist", tlsOption.Namespace, secretName)
+				continue
+			}
+
+			cert, err := getCABlocks(secret, tlsOption.Namespace, secretName)
+			if err != nil {
+				logger.Errorf("Failed to extract CA from secret %s/%s: %v", tlsOption.Namespace, secretName, err)
+				continue
+			}
+
+			clientCAs = append(clientCAs, tls.FileOrContent(cert))
+		}
+
+		tlsOptions[makeID(tlsOption.Namespace, tlsOption.Name)] = tls.Options{
+			MinVersion:       tlsOption.Spec.MinVersion,
+			MaxVersion:       tlsOption.Spec.MaxVersion,
+			CipherSuites:     tlsOption.Spec.CipherSuites,
+			CurvePreferences: tlsOption.Spec.CurvePreferences,
+			ClientAuth: tls.ClientAuth{
+				CAFiles:        clientCAs,
+				ClientAuthType: tlsOption.Spec.ClientAuth.ClientAuthType,
+			},
+			SniStrict: tlsOption.Spec.SniStrict,
 		}
 	}
 	return tlsOptions
