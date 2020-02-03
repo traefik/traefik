@@ -206,7 +206,7 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Catalo
 }
 
 func (p *Provider) fetchServices(ctx context.Context) (map[string][]string, error) {
-	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache, Filter: p.Filter}
+	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
 	serviceNames, _, err := p.client.Catalog().Services(opts)
 	return serviceNames, err
 }
