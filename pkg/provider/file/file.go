@@ -103,11 +103,11 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 	}
 
 	// Process events
-	pool.Go(func(stop chan bool) {
+	pool.GoCtx(func(ctx context.Context) {
 		defer watcher.Close()
 		for {
 			select {
-			case <-stop:
+			case <-ctx.Done():
 				return
 			case evt := <-watcher.Events:
 				if p.Directory == "" {

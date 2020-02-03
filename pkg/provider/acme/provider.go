@@ -179,12 +179,12 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	p.renewCertificates(ctx)
 
 	ticker := time.NewTicker(24 * time.Hour)
-	pool.Go(func(stop chan bool) {
+	pool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
 			case <-ticker.C:
 				p.renewCertificates(ctx)
-			case <-stop:
+			case <-ctxPool.Done():
 				ticker.Stop()
 				return
 			}
@@ -341,7 +341,7 @@ func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStor
 }
 
 func (p *Provider) watchNewDomains(ctx context.Context) {
-	p.pool.Go(func(stop chan bool) {
+	p.pool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
 			case config := <-p.configFromListenerChan:
@@ -415,7 +415,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 						p.resolveDomains(ctxRouter, domains, tlsStore)
 					}
 				}
-			case <-stop:
+			case <-ctxPool.Done():
 				return
 			}
 		}
@@ -556,7 +556,7 @@ func deleteUnnecessaryDomains(ctx context.Context, domains []types.Domain) []typ
 func (p *Provider) watchCertificate(ctx context.Context) {
 	p.certsChan = make(chan *CertAndStore)
 
-	p.pool.Go(func(stop chan bool) {
+	p.pool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
 			case cert := <-p.certsChan:
@@ -576,7 +576,7 @@ func (p *Provider) watchCertificate(ctx context.Context) {
 				if err != nil {
 					log.FromContext(ctx).Error(err)
 				}
-			case <-stop:
+			case <-ctxPool.Done():
 				return
 			}
 		}
