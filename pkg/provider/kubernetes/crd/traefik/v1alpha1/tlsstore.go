@@ -19,12 +19,7 @@ type TLSStore struct {
 
 // TLSStoreSpec configures a TLSStore resource.
 type TLSStoreSpec struct {
-	DefaultCertificate DefaultCertificate `json:"defaultCertificate,omitempty"`
-	MaxVersion         string             `json:"maxVersion,omitempty"`
-	CipherSuites       []string           `json:"cipherSuites,omitempty"`
-	CurvePreferences   []string           `json:"curvePreferences,omitempty"`
-	ClientAuth         ClientAuth         `json:"clientAuth,omitempty"`
-	SniStrict          bool               `json:"sniStrict,omitempty"`
+	DefaultCertificate DefaultCertificate `json:"defaultCertificate"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -33,7 +28,7 @@ type TLSStoreSpec struct {
 type DefaultCertificate struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
-	SecretName string `json:",inline"`
+	SecretName string `json:"secretName,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

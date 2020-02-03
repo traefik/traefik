@@ -958,7 +958,7 @@ func (in *TLSStore) DeepCopyInto(out *TLSStore) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	in.Spec.DeepCopyInto(&out.Spec)
+	out.Spec = in.Spec
 	return
 }
 
@@ -1033,17 +1033,6 @@ func (in *TLSStoreRef) DeepCopy() *TLSStoreRef {
 func (in *TLSStoreSpec) DeepCopyInto(out *TLSStoreSpec) {
 	*out = *in
 	out.DefaultCertificate = in.DefaultCertificate
-	if in.CipherSuites != nil {
-		in, out := &in.CipherSuites, &out.CipherSuites
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
-	if in.CurvePreferences != nil {
-		in, out := &in.CurvePreferences, &out.CurvePreferences
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
-	in.ClientAuth.DeepCopyInto(&out.ClientAuth)
 	return
 }
 

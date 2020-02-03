@@ -509,53 +509,44 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	return tlsOptions
 }
 
-func buildTLStores(ctx context.Context, client Client) map[string]tls.Store {
-	tlsOptionsCRD := client.GetTLSOptions()
-	var tlsOptions map[string]tls.Options
+func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
+	tlsStoreCRD := client.GetTLSStores()
+	var tlsStores map[string]tls.Store
 
-	if len(tlsOptionsCRD) == 0 {
-		return tlsOptions
+	if len(tlsStoreCRD) == 0 {
+		return tlsStores
 	}
-	tlsOptions = make(map[string]tls.Options)
+	tlsStores = make(map[string]tls.Store)
 
-	for _, tlsOption := range tlsOptionsCRD {
-		logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOption.Name), log.Str("namespace", tlsOption.Namespace)))
-		var clientCAs []tls.FileOrContent
+	for _, tlsStore := range tlsStoreCRD {
+		namespace := tlsStore.Namespace
+		logger := log.FromContext(log.With(ctx, log.Str("tlsStore", tlsStore.Name), log.Str("namespace", namespace)))
+		secretName := tlsStore.Spec.DefaultCertificate.SecretName
 
-		for _, secretName := range tlsOption.Spec.ClientAuth.SecretNames {
-			secret, exists, err := client.GetSecret(tlsOption.Namespace, secretName)
-			if err != nil {
-				logger.Errorf("Failed to fetch secret %s/%s: %v", tlsOption.Namespace, secretName, err)
-				continue
-			}
-
-			if !exists {
-				logger.Warnf("Secret %s/%s does not exist", tlsOption.Namespace, secretName)
-				continue
-			}
-
-			cert, err := getCABlocks(secret, tlsOption.Namespace, secretName)
-			if err != nil {
-				logger.Errorf("Failed to extract CA from secret %s/%s: %v", tlsOption.Namespace, secretName, err)
-				continue
-			}
-
-			clientCAs = append(clientCAs, tls.FileOrContent(cert))
+		secret, exists, err := client.GetSecret(namespace, secretName)
+		if err != nil {
+			logger.Errorf("Failed to fetch secret %s/%s: %v", namespace, secretName, err)
+			return tlsStores
+		}
+		if !exists {
+			logger.Errorf("Secret %s/%s does not exist", namespace, secretName)
+			return tlsStores
 		}
 
-		tlsOptions[makeID(tlsOption.Namespace, tlsOption.Name)] = tls.Options{
-			MinVersion:       tlsOption.Spec.MinVersion,
-			MaxVersion:       tlsOption.Spec.MaxVersion,
-			CipherSuites:     tlsOption.Spec.CipherSuites,
-			CurvePreferences: tlsOption.Spec.CurvePreferences,
-			ClientAuth: tls.ClientAuth{
-				CAFiles:        clientCAs,
-				ClientAuthType: tlsOption.Spec.ClientAuth.ClientAuthType,
+		cert, key, err := getCertificateBlocks(secret, namespace, secretName)
+		if err != nil {
+			logger.Errorf("Could not get certificate blocks: %v", err)
+			return tlsStores
+		}
+
+		tlsStores[makeID(tlsStore.Namespace, tlsStore.Name)] = tls.Store{
+			DefaultCertificate: &tls.Certificate{
+				CertFile: tls.FileOrContent(cert),
+				KeyFile:  tls.FileOrContent(key),
 			},
-			SniStrict: tlsOption.Spec.SniStrict,
 		}
 	}
-	return tlsOptions
+	return tlsStores
 }
 
 func checkStringQuoteValidity(value string) error {
