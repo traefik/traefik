@@ -7,7 +7,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/server/service/udp"
-	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -121,23 +120,6 @@ func TestRuntimeConfiguration(t *testing.T) {
 				UDPRouters:  test.routerConfig,
 			}
 			serviceManager := udp.NewManager(conf)
-			tlsManager := tls.NewManager()
-			tlsManager.UpdateConfigs(
-				context.Background(),
-				map[string]tls.Store{},
-				map[string]tls.Options{
-					"default": {
-						MinVersion: "VersionTLS10",
-					},
-					"foo": {
-						MinVersion: "VersionTLS12",
-					},
-					"bar": {
-						MinVersion: "VersionTLS11",
-					},
-				},
-				[]*tls.CertAndStores{})
-
 			routerManager := NewManager(conf, serviceManager)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints)
