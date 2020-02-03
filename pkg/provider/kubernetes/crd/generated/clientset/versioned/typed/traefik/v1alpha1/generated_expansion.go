@@ -34,4 +34,6 @@ type MiddlewareExpansion interface{}
 
 type TLSOptionExpansion interface{}
 
+type TLSStoreExpansion interface{}
+
 type TraefikServiceExpansion interface{}
