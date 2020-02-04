@@ -3,6 +3,7 @@ package consulcatalog
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"text/template"
 	"time"
@@ -217,6 +218,10 @@ func createClient(cfg *EndpointConfig) (*api.Client, error) {
 		Datacenter: cfg.DataCenter,
 		WaitTime:   time.Duration(cfg.EndpointWaitTime),
 		Token:      cfg.Token,
+	}
+
+	if config.Token == "" {
+		config.Token = os.Getenv("CONSUL_HTTP_TOKEN")
 	}
 
 	if cfg.HTTPAuth != nil {

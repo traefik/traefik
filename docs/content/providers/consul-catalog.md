@@ -265,7 +265,7 @@ providers:
 # ...
 ```
 
-Token is used to provide a per-request ACL token which overrides the agent's default token.
+Token is used to provide a per-request ACL token which overrides the agent's default token. The environment variable `CONSUL_HTTP_TOKEN` will be used alternatively.
 
 #### `endpointWaitTime`
 

@@ -71,6 +71,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 - [Docker](https://docs.traefik.io/providers/docker/) / [Swarm mode](https://docs.traefik.io/providers/docker/)
 - [Kubernetes](https://docs.traefik.io/providers/kubernetes-crd/)
+- [Consul Catalog](https://docs.traefik.io/providers/consul-catalog/)
 - [Marathon](https://docs.traefik.io/providers/marathon/)
 - [Rancher](https://docs.traefik.io/providers/rancher/) (Metadata)
 - [File](https://docs.traefik.io/providers/file/)
