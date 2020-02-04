@@ -74,10 +74,11 @@ func WrapServiceHandler(ctx context.Context, registry metrics.Registry, serviceN
 }
 
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	// Initialize labels slice with correct size
+	// Initialize labels slice with correct size -> 6 + len(m.baseLabels)
 	labels := make([]string, 0, 6+len(m.baseLabels))
-	labels = append(labels, []string{"method", getMethod(req), "protocol", getRequestProtocol(req)}...)
 	labels = append(labels, m.baseLabels...)
+	// Adding 4 entries to labels
+	labels = append(labels, []string{"method", getMethod(req), "protocol", getRequestProtocol(req)}...)
 
 	m.openConnsGauge.With(labels...).Add(1)
 	defer m.openConnsGauge.With(labels...).Add(-1)
@@ -87,7 +88,9 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	m.next.ServeHTTP(recorder, req)
 	duration := time.Since(start).Seconds()
 
+	// Adding 2 entries to labels
 	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
+
 	m.reqsCounter.With(labels...).Add(1)
 	m.reqDurationHistogram.With(labels...).Observe(duration)
 }
