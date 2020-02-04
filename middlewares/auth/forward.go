@@ -18,7 +18,7 @@ const (
 	xForwardedMethod = "X-Forwarded-Method"
 )
 
-// Forward the authentication to a external server
+// Forward the authentication to an external server
 func Forward(config *types.Forward, httpClient http.Client, w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	forwardReq, err := http.NewRequest(http.MethodGet, config.Address, http.NoBody)
 	tracing.LogRequest(tracing.GetSpan(r), forwardReq)
