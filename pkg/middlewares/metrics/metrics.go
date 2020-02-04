@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+	"time"
 	"unicode/utf8"
 
 	"github.com/containous/alice"
@@ -88,7 +89,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	}(labels)
 
 	histograms := m.reqDurationHistogram.With(labels...)
-	histograms.Start()
+	histograms.StartAt(time.Now())
 
 	recorder := newResponseRecorder(rw)
 	m.next.ServeHTTP(recorder, req)

@@ -97,6 +97,8 @@ func (c *histogramMock) With(labelValues ...string) ScalableHistogram {
 
 func (c *histogramMock) Start() {}
 
+func (c *histogramMock) StartAt(t time.Time) {}
+
 func (c *histogramMock) ObserveDuration() {}
 
 func (c *histogramMock) Observe(v float64) {

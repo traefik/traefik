@@ -186,12 +186,12 @@ func (r *standardRegistry) ServiceServerUpGauge() metrics.Gauge {
 	return r.serviceServerUpGauge
 }
 
-// ScalableHistogram is a Histogram with a predefined time unit used when
-// producing observations allowing the call to Start() and ObserveDuration()
-// without explicitly setting the observed value.
+// ScalableHistogram is a Histogram with a predefined time unit, used when
+// producing observations without explicitly setting the observed value.
 type ScalableHistogram interface {
 	With(labelValues ...string) ScalableHistogram
 	Start()
+	StartAt(t time.Time)
 	Observe(v float64)
 	ObserveDuration()
 }
@@ -200,7 +200,7 @@ type ScalableHistogram interface {
 type HistogramWithScale struct {
 	histogram metrics.Histogram
 	unit      time.Duration
-	timer     *metrics.Timer
+	start     time.Time
 }
 
 // With implements ScalableHistogram.
@@ -211,15 +211,21 @@ func (s *HistogramWithScale) With(labelValues ...string) ScalableHistogram {
 
 // Start implements ScalableHistogram.
 func (s *HistogramWithScale) Start() {
-	s.timer = metrics.NewTimer(s.histogram)
-	s.timer.Unit(s.unit)
+	s.start = time.Now()
+}
+
+// StartAt implements ScalableHistogram.
+func (s *HistogramWithScale) StartAt(t time.Time) {
+	s.start = t
 }
 
 // ObserveDuration implements ScalableHistogram.
 func (s *HistogramWithScale) ObserveDuration() {
-	if s.timer != nil {
-		s.timer.ObserveDuration()
+	d := float64(time.Since(s.start).Nanoseconds()) / float64(s.unit)
+	if d < 0 {
+		d = 0
 	}
+	s.histogram.Observe(d)
 }
 
 // Observe implements ScalableHistogram.
@@ -243,10 +249,17 @@ func NewMultiHistogram(h ...ScalableHistogram) MultiHistogram {
 	return MultiHistogram(h)
 }
 
-// Start implements ScalableHistogram.
+// Start implements ScalableHistogram. Not atomic in time start for each histogram.
 func (h MultiHistogram) Start() {
 	for _, histogram := range h {
 		histogram.Start()
+	}
+}
+
+// StartAt implements ScalableHistogram.
+func (h MultiHistogram) StartAt(t time.Time) {
+	for _, histogram := range h {
+		histogram.StartAt(t)
 	}
 }
 
