@@ -3,8 +3,10 @@ package auth
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	goauth "github.com/abbot/go-http-auth"
 	"github.com/containous/traefik/log"
@@ -61,7 +63,10 @@ func NewAuthenticator(authConfig *types.Auth, tracingMiddleware *tracing.Tracing
 		tracingAuth.name = "Auth Digest"
 		tracingAuth.clientSpanKind = false
 	} else if authConfig.Forward != nil {
-		tracingAuth.handler = createAuthForwardHandler(authConfig)
+		tracingAuth.handler, err = createAuthForwardHandler(authConfig)
+		if err != nil {
+			return nil, err
+		}
 		tracingAuth.name = "Auth Forward"
 		tracingAuth.clientSpanKind = true
 	}
@@ -74,10 +79,38 @@ func NewAuthenticator(authConfig *types.Auth, tracingMiddleware *tracing.Tracing
 	return authenticator, nil
 }
 
-func createAuthForwardHandler(authConfig *types.Auth) negroni.HandlerFunc {
+func createAuthForwardHandler(authConfig *types.Auth) (negroni.HandlerFunc, error) {
+	// Ensure our request client does not follow redirects
+	client := http.Client{
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Timeout: 30 * time.Second,
+	}
+
+	if authConfig.Forward.TLS != nil {
+		tlsConfig, err := authConfig.Forward.TLS.CreateTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		client.Transport = &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			TLSClientConfig:       tlsConfig,
+		}
+	}
 	return negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		Forward(authConfig.Forward, w, r, next)
-	})
+		Forward(authConfig.Forward, client, w, r, next)
+	}), nil
 }
 func createAuthDigestHandler(digestAuth *goauth.DigestAuth, authConfig *types.Auth) negroni.HandlerFunc {
 	return negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {

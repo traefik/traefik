@@ -18,28 +18,8 @@ const (
 	xForwardedMethod = "X-Forwarded-Method"
 )
 
-// Forward the authentication to a external server
-func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	// Ensure our request client does not follow redirects
-	httpClient := http.Client{
-		CheckRedirect: func(r *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-
-	if config.TLS != nil {
-		tlsConfig, err := config.TLS.CreateTLSConfig()
-		if err != nil {
-			tracing.SetErrorAndDebugLog(r, "Unable to configure TLS to call %s. Cause %s", config.Address, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		httpClient.Transport = &http.Transport{
-			TLSClientConfig: tlsConfig,
-		}
-	}
-
+// Forward the authentication to an external server
+func Forward(config *types.Forward, httpClient http.Client, w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	forwardReq, err := http.NewRequest(http.MethodGet, config.Address, http.NoBody)
 	tracing.LogRequest(tracing.GetSpan(r), forwardReq)
 	if err != nil {
