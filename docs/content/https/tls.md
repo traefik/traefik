@@ -398,4 +398,15 @@ spec:
     secretNames:
       - secretCA
     clientAuthType: RequireAndVerifyClientCert
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secretCA
+type: Opaque
+stringData:
+  tls.ca: |-
+    -----BEGIN CERTIFICATE-----
+        ....PEM DATA....
+    -----END CERTIFICATE-----
 ```
