@@ -5,7 +5,7 @@
 
 [![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
-[![Go Report Card](https://goreportcard.com/badge/containous/traefik)](http://goreportcard.com/report/containous/traefik)
+[![Go Report Card](https://goreportcard.com/badge/containous/traefik)](https://goreportcard.com/report/containous/traefik)
 [![](https://images.microbadger.com/badges/image/traefik.svg)](https://microbadger.com/images/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
 [![Join the community support forum at https://community.containo.us/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.containo.us/)
@@ -143,7 +143,7 @@ By participating in this project, you agree to abide by its terms.
 
 Each version is supported until the next one is released (e.g. 1.1.x will be supported until 1.2.0 is out)
 
-We use [Semantic Versioning](http://semver.org/)
+We use [Semantic Versioning](https://semver.org/)
 
 ## Mailing lists
 
@@ -157,4 +157,4 @@ Kudos to [Peka](http://peka.byethost11.com/photoblog/) for his awesome work on t
 Traefik's logo is licensed under the Creative Commons 3.0 Attributions license.
 
 Traefik's logo was inspired by the gopher stickers made by Takuya Ueda (https://twitter.com/tenntenn).
-The original Go gopher was designed by Renee French (http://reneefrench.blogspot.com/).
+The original Go gopher was designed by Renee French (https://reneefrench.blogspot.com/).
