@@ -252,7 +252,7 @@ In the above example, frontend1 is configured to limit requests by the client's 
 A sustained rate of 100 requests every 10 seconds (10 req/s) is allowed for rateset1, and 5 requests every 3 seconds (~1.67 req/s) for rateset2.  
 In addition, these can "burst" up to 200 and 10 in each period respectively.
 
-Another way to see the above parameters, is along the [leaky bucket](https://en.wikipedia.org/wiki/Leaky_bucket) analogy:
+Another way to describe the above parameters, is to use the [leaky bucket](https://en.wikipedia.org/wiki/Leaky_bucket) analogy:
 for rateset1, the size of the bucket is 200 drops, and it is leaking at a rate of 10 drop/s.
 If the incoming rate of drops falling into the bucket gets high enough that the bucket gets filled,
 any subsequent drop overflows out of the bucket (i.e. discarded request).
