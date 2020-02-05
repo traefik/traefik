@@ -3,6 +3,8 @@ package wrr
 import (
 	"container/heap"
 	"fmt"
+	"math"
+	"math/rand"
 	"net/http"
 	"sync"
 
@@ -28,8 +30,9 @@ type stickyCookie struct {
 func New(sticky *dynamic.Sticky) *Balancer {
 	handlers := make(namedHandlers, 0)
 	balancer := &Balancer{
-		handlers: &handlers,
-		mutex:    &sync.Mutex{},
+		handlers:     &handlers,
+		mutex:        &sync.Mutex{},
+		baseDeadline: rand.Float64(),
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
@@ -84,6 +87,7 @@ type Balancer struct {
 	mutex        *sync.Mutex
 	curIndex     int64
 	curDeadline  float64
+	baseDeadline float64 // for fixing starting bias
 	stickyCookie *stickyCookie
 }
 
@@ -150,6 +154,9 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	}
 	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
 	h.deadline = b.curDeadline + 1/h.weight
+	if h.deadline < b.baseDeadline {
+		h.deadline = math.Ceil((b.baseDeadline-h.deadline)*h.weight) / h.weight
+	}
 	b.curIndex++
 	h.index = b.curIndex
 	heap.Push(b.handlers, h)
