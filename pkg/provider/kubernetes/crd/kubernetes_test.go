@@ -752,7 +752,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				TLS: &dynamic.TLSConfiguration{
 					Stores: map[string]tls.Store{
-						"default-foo": {
+						"default": {
 							DefaultCertificate: &tls.Certificate{
 								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
@@ -2422,7 +2422,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			expected: &dynamic.Configuration{
 				TLS: &dynamic.TLSConfiguration{
 					Stores: map[string]tls.Store{
-						"default-foo": {
+						"default": {
 							DefaultCertificate: &tls.Certificate{
 								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
 								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
