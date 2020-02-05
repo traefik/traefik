@@ -255,7 +255,7 @@ In addition, these can "burst" up to 200 and 10 in each period respectively.
 Another way to describe the above parameters, is to use the [leaky bucket](https://en.wikipedia.org/wiki/Leaky_bucket) analogy:
 for rateset1, the size of the bucket is 200 drops, and it is leaking at a rate of 10 drop/s.
 If the incoming rate of drops falling into the bucket gets high enough that the bucket gets filled,
-any subsequent drop overflows out of the bucket (i.e. discarded request).
+any subsequent drop overflows out of the bucket (i.e. the request is discarded).
 That situation holds until the incoming rate gets low enough again for the water level in the bucket to go down.
 
 Valid values for `extractorfunc` are:
