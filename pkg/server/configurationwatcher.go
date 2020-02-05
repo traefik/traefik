@@ -151,8 +151,10 @@ func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
 		if copyConf.TLS != nil {
 			copyConf.TLS.Certificates = nil
 
-			for _, v := range copyConf.TLS.Stores {
-				v.DefaultCertificate = nil
+			for k := range copyConf.TLS.Stores {
+				st := copyConf.TLS.Stores[k]
+				st.DeepCopy().DefaultCertificate = nil
+				copyConf.TLS.Stores[k] = st
 			}
 		}
 
