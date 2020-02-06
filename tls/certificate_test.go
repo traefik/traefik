@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,10 +31,9 @@ func TestCertificates_CreateTLSConfig(t *testing.T) {
 	config, err := cert.CreateTLSConfig("http")
 	require.NoError(t, err)
 
-	require.Len(t, config.NameToCertificate, 2)
-	require.Contains(t, config.NameToCertificate, "test1.traefik.com")
-	require.Contains(t, config.NameToCertificate, "test2.traefik.com")
-
+	assert.Len(t, config.NameToCertificate, 2)
+	assert.Contains(t, config.NameToCertificate, "test1.traefik.com")
+	assert.Contains(t, config.NameToCertificate, "test2.traefik.com")
 }
 
 func generateCertificate(domain string) (*Certificate, error) {
@@ -46,7 +46,6 @@ func generateCertificate(domain string) (*Certificate, error) {
 		CertFile: FileOrContent(certPEM),
 		KeyFile:  FileOrContent(keyPEM),
 	}, nil
-
 }
 
 // keyPair generates cert and key files
