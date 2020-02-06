@@ -1,3 +1,24 @@
+## [v2.1.4](https://github.com/containous/traefik/tree/v2.1.4) (2020-02-06)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.3...v2.1.4)
+
+**Bug fixes:**
+- **[acme,logs]** Improvement of the certificates resolvers logs ([#6225](https://github.com/containous/traefik/pull/6225) by [ldez](https://github.com/ldez))
+- **[acme]** Fix kubernetes providers shutdown and clean safe.Pool ([#6244](https://github.com/containous/traefik/pull/6244) by [juliens](https://github.com/juliens))
+- **[authentication,middleware]** don&#39;t create http client for each request in forwardAuth middleware ([#6267](https://github.com/containous/traefik/pull/6267) by [juliens](https://github.com/juliens))
+- **[k8s,k8s/ingress]** Allow wildcard hosts in ingress provider ([#6251](https://github.com/containous/traefik/pull/6251) by [dtomcej](https://github.com/dtomcej))
+- **[logs,tls]** Properly purge default certificate from stores before logging ([#6281](https://github.com/containous/traefik/pull/6281) by [dtomcej](https://github.com/dtomcej))
+- **[middleware]** use provider-qualified name when recursing for chain ([#6233](https://github.com/containous/traefik/pull/6233) by [mpl](https://github.com/mpl))
+
+**Documentation:**
+- **[acme,cli]** Documentation fix for acme.md CLI ([#6262](https://github.com/containous/traefik/pull/6262) by [altano](https://github.com/altano))
+- **[acme,k8s/crd]** Add missing certResolver in IngressRoute examples. ([#6265](https://github.com/containous/traefik/pull/6265) by [ldez](https://github.com/ldez))
+- **[k8s]** fix a typo ([#6279](https://github.com/containous/traefik/pull/6279) by [silenceshell](https://github.com/silenceshell))
+- **[middleware]** Minor documentation tweaks. ([#6218](https://github.com/containous/traefik/pull/6218) by [stevegroom](https://github.com/stevegroom))
+- Correct a trivial spelling mistake in the documentation. ([#6269](https://github.com/containous/traefik/pull/6269) by [nepella](https://github.com/nepella))
+- Update install-traefik.md ([#6260](https://github.com/containous/traefik/pull/6260) by [bitfactory-sander-lissenburg](https://github.com/bitfactory-sander-lissenburg))
+- doc: use the same entry point name everywhere ([#6219](https://github.com/containous/traefik/pull/6219) by [ldez](https://github.com/ldez))
+- readme: update links to use HTTPS ([#6274](https://github.com/containous/traefik/pull/6274) by [imba-tjd](https://github.com/imba-tjd))
+
 ## [v2.1.3](https://github.com/containous/traefik/tree/v2.1.3) (2020-01-21)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.2...v2.1.3)
 
