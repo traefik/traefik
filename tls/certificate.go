@@ -120,6 +120,7 @@ func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, erro
 			}
 		}
 	}
+	config.BuildNameToCertificate()
 	return config, nil
 }
 
