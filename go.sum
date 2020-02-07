@@ -75,8 +75,8 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible h1:TKdv8HiTLgE5wdJuEML90aBgNWso
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
-github.com/abronan/valkeyrie v0.0.0-20191010124425-1ae9442de16e h1:4SrbWyef51DHDc957/8Ms/fDM4D+3bkbXqg6OTnIEAo=
-github.com/abronan/valkeyrie v0.0.0-20191010124425-1ae9442de16e/go.mod h1:2RUNONRAQ8bS1QcVJF3dYO/faiEro6NAAIQ6CqBkpD0=
+github.com/abronan/valkeyrie v0.0.0-20200127174252-ef4277a138cd h1:UlQRt3CZdeD+WfDamDtdDDOu84CYbGIh9/B28TgzCZk=
+github.com/abronan/valkeyrie v0.0.0-20200127174252-ef4277a138cd/go.mod h1:2RUNONRAQ8bS1QcVJF3dYO/faiEro6NAAIQ6CqBkpD0=
 github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.0 h1:rXPPPxDA4GCPN0YWwyVHMzcxVpVg8gai2uGhJ3VqOSs=
 github.com/akamai/AkamaiOPEN-edgegrid-golang v0.9.0/go.mod h1:zpDJeKyp9ScW4NNrbdr+Eyxvry3ilGPewKoXw3XGN1k=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
