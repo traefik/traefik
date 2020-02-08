@@ -156,5 +156,5 @@ Kudos to [Peka](http://peka.byethost11.com/photoblog/) for his awesome work on t
 
 Traefik's logo is licensed under the Creative Commons 3.0 Attributions license.
 
-Traefik's logo was inspired by the gopher stickers made by Takuya Ueda (https://twitter.com/tenntenn).
-The original Go gopher was designed by Renee French (https://reneefrench.blogspot.com/).
+Traefik's logo was inspired by the gopher stickers made by [Takuya Ueda](https://twitter.com/tenntenn).
+The original Go gopher was designed by [Renee French](https://reneefrench.blogspot.com/).
