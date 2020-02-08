@@ -118,7 +118,9 @@ Ports detection works as follows:
 
 ### Host networking
 
-When exposing containers configured with [host networking](https://docs.docker.com/network/host/), you need to provide the IP adress of the bridge interface (docker0 by default) to the Traefik container using `extra_hosts`: `--add-host=host.docker.internal:172.17.0.1`
+When exposing containers are configured with [host networking](https://docs.docker.com/network/host/), we will try to resolve the DNS entry `host.docker.internal` and if it does not resolve, we will fall back to` 127.0.0.1`.
+On Docker Desktop for Windows and for Mac, this DNS entry is automatically configured with the IP address of the bridge interface.
+On other platform, you should provide the IP address of the bridge interface (docker0 by default) to the Traefik container using `extra_hosts`: `--add-host=host.docker.internal:172.17.0.1`.
 
 ### Docker API Access
 
