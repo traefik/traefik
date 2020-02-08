@@ -76,7 +76,7 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 		"traefik/http/routers/Router0/service":       "simplesvc",
 		"traefik/http/routers/Router0/rule":          "Host(`kv1.localhost`)",
 		"traefik/http/routers/Router0/priority":      "42",
-		"traefik/http/routers/Router0/tls":           "",
+		"traefik/http/routers/Router0/tls":           "true",
 
 		"traefik/http/routers/Router1/rule":                 "Host(`kv2.localhost`)",
 		"traefik/http/routers/Router1/priority":             "42",
@@ -109,7 +109,7 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 		"traefik/http/services/Service03/weighted/services/1/name":   "srvcB",
 		"traefik/http/services/Service03/weighted/services/1/weight": "42",
 
-		"traefik/http/middlewares/compressor/compress":            "",
+		"traefik/http/middlewares/compressor/compress":            "true",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/0": "foo",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/1": "bar",
 		"traefik/http/middlewares/striper/stripPrefix/forceSlash": "true",
