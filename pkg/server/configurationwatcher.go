@@ -143,8 +143,6 @@ func (c *ConfigurationWatcher) loadMessage(configMsg dynamic.Message) {
 }
 
 func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
-	currentConfigurations := c.currentConfigurations.Get().(dynamic.Configurations)
-
 	logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
 	if log.GetLevel() == logrus.DebugLevel {
 		copyConf := configMsg.Configuration.DeepCopy()
@@ -169,11 +167,6 @@ func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
 
 	if isEmptyConfiguration(configMsg.Configuration) {
 		logger.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
-		return
-	}
-
-	if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-		logger.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
 		return
 	}
 
@@ -211,11 +204,18 @@ func (c *ConfigurationWatcher) throttleProviderConfigReload(ctx context.Context,
 		}
 	})
 
+	var previousConfig dynamic.Message
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case nextConfig := <-in:
+			if reflect.DeepEqual(previousConfig, nextConfig) {
+				logger := log.WithoutContext().WithField(log.ProviderName, nextConfig.ProviderName)
+				logger.Info("Skipping same configuration")
+				continue
+			}
+			previousConfig = nextConfig
 			ring.In() <- nextConfig
 		}
 	}
