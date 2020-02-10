@@ -6,7 +6,7 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -184,7 +184,7 @@ func TestManager_BuildUDP(t *testing.T) {
 
 			ctx := context.Background()
 			if len(test.providerName) > 0 {
-				ctx = internal.AddProviderInContext(ctx, "foobar@"+test.providerName)
+				ctx = provider.AddInContext(ctx, "foobar@"+test.providerName)
 			}
 
 			handler, err := manager.BuildUDP(ctx, test.serviceName)

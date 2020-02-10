@@ -6,7 +6,7 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 	udpservice "github.com/containous/traefik/v2/pkg/server/service/udp"
 	"github.com/containous/traefik/v2/pkg/udp"
 )
@@ -64,7 +64,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		logger.Warn("Warning: config has more than one udp router for a given entrypoint")
 	}
 	for routerName, routerConfig := range configs {
-		ctxRouter := log.With(internal.AddProviderInContext(ctx, routerName), log.Str(log.RouterName, routerName))
+		ctxRouter := log.With(provider.AddInContext(ctx, routerName), log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctxRouter)
 
 		if routerConfig.Service == "" {

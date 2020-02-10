@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAddProviderInContext(t *testing.T) {
+func TestAddInContext(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		ctx      context.Context
