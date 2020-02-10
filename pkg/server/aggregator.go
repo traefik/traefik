@@ -53,10 +53,10 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 
 		if configuration.UDP != nil {
 			for routerName, router := range configuration.UDP.Routers {
-				conf.UDP.Routers[internal.MakeQualifiedName(provider, routerName)] = router
+				conf.UDP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
 			for serviceName, service := range configuration.UDP.Services {
-				conf.UDP.Services[internal.MakeQualifiedName(provider, serviceName)] = service
+				conf.UDP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
 			}
 		}
 
