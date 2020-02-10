@@ -526,29 +526,32 @@ func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
 		secret, exists, err := client.GetSecret(namespace, secretName)
 		if err != nil {
 			logger.Errorf("Failed to fetch secret %s/%s: %v", namespace, secretName, err)
-			return tlsStores
+			continue
 		}
 		if !exists {
 			logger.Errorf("Secret %s/%s does not exist", namespace, secretName)
-			return tlsStores
+			continue
 		}
 
 		cert, key, err := getCertificateBlocks(secret, namespace, secretName)
 		if err != nil {
 			logger.Errorf("Could not get certificate blocks: %v", err)
-			return tlsStores
+			continue
 		}
 
-		if _, ok := tlsStores["default"]; !ok {
-			// Since only the default TLS Store is used, we just need to set it if it doesn't exist.
-			tlsStores["default"] = tls.Store{
-				DefaultCertificate: &tls.Certificate{
-					CertFile: tls.FileOrContent(cert),
-					KeyFile:  tls.FileOrContent(key),
-				},
-			}
+		if _, ok := tlsStores["default"]; ok {
+			break
+		}
+
+		// Since only the default TLS Store is used, we just need to set it if it doesn't exist.
+		tlsStores["default"] = tls.Store{
+			DefaultCertificate: &tls.Certificate{
+				CertFile: tls.FileOrContent(cert),
+				KeyFile:  tls.FileOrContent(key),
+			},
 		}
 	}
+
 	return tlsStores
 }
 
