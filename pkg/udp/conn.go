@@ -10,6 +10,12 @@ import (
 
 const receiveMTU = 8192
 
+const closeRetryInterval = 500 * time.Millisecond
+
+// connTimeout determines how long to wait on an idle session,
+// before releasing all resources related to that session.
+const connTimeout = time.Second * 3
+
 var errClosedListener = errors.New("udp: listener closed")
 
 // Listener augments a session-oriented Listener over a UDP PacketConn.
@@ -18,11 +24,30 @@ type Listener struct {
 
 	mu    sync.RWMutex
 	conns map[string]*Conn
-	// accepting signifies whether the listener is still accepting new sessions. It
-	// also serves as a sentinel for Shutdown to be idempotent.
+	// accepting signifies whether the listener is still accepting new sessions.
+	// It also serves as a sentinel for Shutdown to be idempotent.
 	accepting bool
 
 	acceptCh chan *Conn // no need for a Once, already indirectly guarded by accepting.
+}
+
+// Listen creates a new listener.
+func Listen(network string, laddr *net.UDPAddr) (*Listener, error) {
+	conn, err := net.ListenUDP(network, laddr)
+	if err != nil {
+		return nil, err
+	}
+
+	l := &Listener{
+		pConn:     conn,
+		acceptCh:  make(chan *Conn),
+		conns:     make(map[string]*Conn),
+		accepting: true,
+	}
+
+	go l.readLoop()
+
+	return l, nil
 }
 
 // Accept waits for and returns the next connection to the listener.
@@ -40,7 +65,8 @@ func (l *Listener) Addr() net.Addr {
 	return l.pConn.LocalAddr()
 }
 
-// Close closes the listener. It is like Shutdown with a zero graceTimeout.
+// Close closes the listener.
+// It is like Shutdown with a zero graceTimeout.
 func (l *Listener) Close() error {
 	return l.Shutdown(0)
 }
@@ -58,12 +84,11 @@ func (l *Listener) close() error {
 	return err
 }
 
-const closeRetryInterval = 500 * time.Millisecond
-
 // Shutdown closes the listener.
-// It immediately stops accepting new sessions, and it waits for all existing
-// sessions to terminate, and a maximum of graceTimeout. Then it forces close any
-// session left.
+// It immediately stops accepting new sessions,
+// and it waits for all existing sessions to terminate,
+// and a maximum of graceTimeout.
+// Then it forces close any session left.
 func (l *Listener) Shutdown(graceTimeout time.Duration) error {
 	l.mu.Lock()
 	if !l.accepting {
@@ -96,28 +121,10 @@ func (l *Listener) Shutdown(graceTimeout time.Duration) error {
 	return l.close()
 }
 
-// Listen creates a new listener.
-func Listen(network string, laddr *net.UDPAddr) (*Listener, error) {
-	conn, err := net.ListenUDP(network, laddr)
-	if err != nil {
-		return nil, err
-	}
-
-	l := &Listener{
-		pConn:     conn,
-		acceptCh:  make(chan *Conn),
-		conns:     make(map[string]*Conn),
-		accepting: true,
-	}
-
-	go l.readLoop()
-
-	return l, nil
-}
-
-// readLoop receives all packets from all remotes. If a packet comes from a
-// remote that is already known to us (i.e. a "session"), we find that session, and
-// otherwise we create a new one. We then send the data the session's readLoop.
+// readLoop receives all packets from all remotes.
+// If a packet comes from a remote that is already known to us (i.e. a "session"),
+// we find that session, and otherwise we create a new one.
+// We then send the data the session's readLoop.
 func (l *Listener) readLoop() {
 	buf := make([]byte, receiveMTU)
 
@@ -160,6 +167,18 @@ func (l *Listener) getConn(raddr net.Addr) (*Conn, error) {
 	return conn, nil
 }
 
+func (l *Listener) newConn(rAddr net.Addr) *Conn {
+	return &Conn{
+		listener:  l,
+		rAddr:     rAddr,
+		receiveCh: make(chan []byte),
+		readCh:    make(chan []byte),
+		sizeCh:    make(chan int),
+		doneCh:    make(chan struct{}),
+		timer:     time.NewTimer(connTimeout),
+	}
+}
+
 // Conn represents an on-going session with a client, over UDP packets.
 type Conn struct {
 	listener *Listener
@@ -175,27 +194,10 @@ type Conn struct {
 	doneCh   chan struct{}
 }
 
-// connTimeout determines how long to wait on an idle session, before releasing
-// all resources related to that session.
-const connTimeout = time.Second * 3
-
-func (l *Listener) newConn(rAddr net.Addr) *Conn {
-	return &Conn{
-		listener:  l,
-		rAddr:     rAddr,
-		receiveCh: make(chan []byte),
-		readCh:    make(chan []byte),
-		sizeCh:    make(chan int),
-		doneCh:    make(chan struct{}),
-		timer:     time.NewTimer(connTimeout),
-	}
-}
-
-// readLoop waits for data to come from the listener's readLoop. It then waits
-// for a Read operation to be ready to consume said data, that is to say it waits
-// on readCh to receive the slice of bytes that the Read operation wants to read
-// onto. The Read operation receives the signal that the data has been written to
-// the slice of bytes through the sizeCh.
+// readLoop waits for data to come from the listener's readLoop.
+// It then waits for a Read operation to be ready to consume said data,
+// that is to say it waits on readCh to receive the slice of bytes that the Read operation wants to read onto.
+// The Read operation receives the signal that the data has been written to the slice of bytes through the sizeCh.
 func (c *Conn) readLoop() {
 	for {
 		if len(c.msgs) == 0 {

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,7 +37,7 @@ func TestUDPProxy(t *testing.T) {
 	b := make([]byte, 1024*1024)
 	n, err := udpConn.Read(b)
 	require.NoError(t, err)
-	require.Equal(t, "DATAWRITE", string(b[:n]))
+	assert.Equal(t, "DATAWRITE", string(b[:n]))
 }
 
 func newServer(t *testing.T, addr string, handler Handler) {

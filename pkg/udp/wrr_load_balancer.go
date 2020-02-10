@@ -94,9 +94,9 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 		return nil, fmt.Errorf("no servers in the pool")
 	}
 
-	// The algo below may look messy, but is actually very simple
-	// it calculates the GCD  and subtracts it on every iteration, what interleaves servers
-	// and allows us not to build an iterator every time we readjust weights
+	// The algorithm below may look messy,
+	// but is actually very simple it calculates the GCD  and subtracts it on every iteration,
+	// what interleaves servers and allows us not to build an iterator every time we readjust weights.
 
 	// GCD across all enabled servers
 	gcd := b.weightGcd()

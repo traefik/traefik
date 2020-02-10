@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -79,7 +80,7 @@ func TestListenNotBlocking(t *testing.T) {
 		n, err = udpConn2.Read(b)
 		require.NoError(t, err)
 
-		require.Equal(t, "TEST", string(b[:n]))
+		assert.Equal(t, "TEST", string(b[:n]))
 
 		_, err = udpConn2.Write([]byte("TEST2"))
 		require.NoError(t, err)
@@ -87,7 +88,7 @@ func TestListenNotBlocking(t *testing.T) {
 		n, err = udpConn2.Read(b)
 		require.NoError(t, err)
 
-		require.Equal(t, "TEST2", string(b[:n]))
+		assert.Equal(t, "TEST2", string(b[:n]))
 
 		close(done)
 	}()
@@ -125,7 +126,6 @@ func testTimeout(t *testing.T, withRead bool) {
 				return
 			}
 			require.NoError(t, err)
-			require.NoError(t, err)
 
 			if withRead {
 				buf := make([]byte, 1024)
@@ -146,10 +146,10 @@ func testTimeout(t *testing.T, withRead bool) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	require.Equal(t, 10, len(ln.conns))
+	assert.Equal(t, 10, len(ln.conns))
 
 	time.Sleep(3 * time.Second)
-	require.Equal(t, 0, len(ln.conns))
+	assert.Equal(t, 0, len(ln.conns))
 }
 
 func TestShutdown(t *testing.T) {
@@ -172,10 +172,12 @@ func TestShutdown(t *testing.T) {
 					b := make([]byte, 1024*1024)
 					n, err := conn.Read(b)
 					require.NoError(t, err)
-					// We control the termination, otherwise we would block on the Read above, until
-					// conn is closed by a timeout. Which means we would get an error, and even though
-					// we are in a goroutine and the current test might be over, go test would still
-					// yell at us if this happens while other tests are still running.
+					// We control the termination,
+					// otherwise we would block on the Read above,
+					// until conn is closed by a timeout.
+					// Which means we would get an error,
+					// and even though we are in a goroutine and the current test might be over,
+					// go test would still yell at us if this happens while other tests are still running.
 					if string(b[:n]) == "CLOSE" {
 						return
 					}
@@ -210,9 +212,9 @@ func TestShutdown(t *testing.T) {
 	// Packet is accepted, but dropped
 	require.NoError(t, err)
 
-	// Make sure that our session is yet again still live. This is specifically to
-	// make sure we don't create a regression in listener's readLoop, i.e. that we only
-	// terminate the listener's readLoop goroutine by closing its pConn.
+	// Make sure that our session is yet again still live.
+	// This is specifically to make sure we don't create a regression in listener's readLoop,
+	// i.e. that we only terminate the listener's readLoop goroutine by closing its pConn.
 	requireEcho(t, "TEST3", conn, time.Second)
 
 	done := make(chan bool)
@@ -221,7 +223,7 @@ func TestShutdown(t *testing.T) {
 		b := make([]byte, 1024*1024)
 		n, err := conn2.Read(b)
 		require.Error(t, err)
-		require.Equal(t, 0, n)
+		assert.Equal(t, 0, n)
 	}()
 
 	conn2.Close()
@@ -243,10 +245,10 @@ func TestShutdown(t *testing.T) {
 	}
 }
 
-// requireEcho tests that the conn session is live and functional, by writing
-// data through it, and expecting the same data as a response when reading on it.
-// It fatals if the read blocks longer than timeout, which is useful to detect
-// regressions that would make a test wait forever.
+// requireEcho tests that the conn session is live and functional,
+// by writing data through it, and expecting the same data as a response when reading on it.
+// It fatals if the read blocks longer than timeout,
+// which is useful to detect regressions that would make a test wait forever.
 func requireEcho(t *testing.T, data string, conn io.ReadWriter, timeout time.Duration) {
 	_, err := conn.Write([]byte(data))
 	require.NoError(t, err)
@@ -256,7 +258,7 @@ func requireEcho(t *testing.T, data string, conn io.ReadWriter, timeout time.Dur
 		b := make([]byte, 1024*1024)
 		n, err := conn.Read(b)
 		require.NoError(t, err)
-		require.Equal(t, data, string(b[:n]))
+		assert.Equal(t, data, string(b[:n]))
 		close(doneChan)
 	}()
 
