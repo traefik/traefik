@@ -157,16 +157,16 @@ You can define them using a toml file, CLI arguments, or a key-value store.
 
 ### Address
 
-The address defines the port, and optionally the hostname, on which to listen
-for incoming connections and packets. It also defines the protocol to use
-(TCP or UDP). If no protocol is specified, the default is TCP. The format is:
+The address defines the port, and optionally the hostname, on which to listen for incoming connections and packets.
+It also defines the protocol to use (TCP or UDP).
+If no protocol is specified, the default is TCP.
+The format is:
 
 ```bash
 [host]:port[/tcp|/udp]
 ```
 
-If both TCP and UDP are wanted for the same port, two entryPoints definitions
-are needed, such as in the example below.
+If both TCP and UDP are wanted for the same port, two entryPoints definitions are needed, such as in the example below.
 
 ??? example "Both TCP and UDP on port 3179"
 
