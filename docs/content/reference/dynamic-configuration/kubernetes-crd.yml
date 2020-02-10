@@ -254,4 +254,3 @@ spec:
     clientAuthType: foobar
   sniStrict: true
   preferServerCipherSuites: true
-        
