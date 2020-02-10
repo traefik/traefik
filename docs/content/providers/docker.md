@@ -118,8 +118,17 @@ Ports detection works as follows:
 
 ### Host networking
 
-When exposing containers that are configured with [host networking](https://docs.docker.com/network/host/), we will try to resolve the DNS entry `host.docker.internal` and if it does not resolve, we will fall back to `127.0.0.1`.
-With current versions of Docker, you should manually provide the IP address of the bridge interface (docker0 by default) to the Traefik container using `extra_hosts`: `--add-host=host.docker.internal:172.17.0.1`.
+When exposing containers that are configured with [host networking](https://docs.docker.com/network/host/),
+the IP address of the host is resolved as follows:
+
+<!-- - if in swarm mode, check whether the Node.IPAddress field of the container is provided by the API -->
+- try a lookup of `host.docker.internal`
+- otherwise fall back to `127.0.0.1`
+
+On Linux, (and until [github.com/moby/moby/pull/40007](https://github.com/moby/moby/pull/40007) is included in a release),
+for `host.docker.internal` to be defined, it should be provided as an `extra_host` to the Traefik container,
+using the `--add-host` flag. For example, to set it to the IP address of the bridge interface (docker0 by default):
+`--add-host=host.docker.internal:172.17.0.1`
 
 ### Docker API Access
 
