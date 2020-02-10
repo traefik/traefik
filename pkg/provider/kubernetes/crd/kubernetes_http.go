@@ -100,7 +100,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 
 				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, conf.Services)
 				if errBuild != nil {
-					logger.Error(err)
+					logger.Error(errBuild)
 					continue
 				}
 			} else if len(route.Services) == 1 {
