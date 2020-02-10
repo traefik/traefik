@@ -230,3 +230,28 @@ spec:
     options:
       name: myTLSOption
       namespace: default
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: tlsoption
+  namespace: default
+
+spec:
+  minVersion: foobar
+  maxVersion: foobar
+  cipherSuites:
+    - foobar
+    - foobar
+  curvePreferences:
+    - foobar
+    - foobar
+  clientAuth:
+    caFiles:
+      - foobar
+      - foobar
+    clientAuthType: foobar
+  sniStrict: true
+  preferServerCipherSuites: true
+        
