@@ -56,7 +56,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
       [entryPoints.web]
         address = ":80"
     
-      [entryPoints.web-secure]
+      [entryPoints.websecure]
         address = ":443"
     
     [certificatesResolvers.le.acme]
@@ -72,7 +72,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
       web:
         address: ":80"
     
-      web-secure:
+      websecure:
         address: ":443"
     
     certificatesResolvers:
@@ -196,7 +196,7 @@ when using the `HTTP-01` challenge, `certificatesResolvers.le.acme.httpChallenge
       [entryPoints.web]
         address = ":80"
       
-      [entryPoints.web-secure]
+      [entryPoints.websecure]
         address = ":443"
     
     [certificatesResolvers.le.acme]
@@ -210,7 +210,7 @@ when using the `HTTP-01` challenge, `certificatesResolvers.le.acme.httpChallenge
       web:
         address: ":80"
     
-      web-secure:
+      websecure:
         address: ":443"
     
     certificatesResolvers:
@@ -379,7 +379,7 @@ certificatesResolvers:
 
 ```bash tab="CLI"
 # ...
---certificatesResolvers.le.acme.dnsChallenge.resolvers:=1.1.1.1:53,8.8.8.8:53
+--certificatesResolvers.le.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53
 ```
 
 #### Wildcard Domains

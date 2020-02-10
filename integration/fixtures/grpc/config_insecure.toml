@@ -9,7 +9,7 @@
   insecureSkipVerify = true
 
 [entryPoints]
-  [entryPoints.web-secure]
+  [entryPoints.websecure]
     address = ":4443"
 
 [api]

@@ -22,7 +22,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/pipelining"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/server/cookie"
-	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/mirror"
 	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/wrr"
 	"github.com/vulcand/oxy/roundrobin"
@@ -63,8 +63,8 @@ type Manager struct {
 func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
 	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
 
-	serviceName = internal.GetQualifiedName(ctx, serviceName)
-	ctx = internal.AddProviderInContext(ctx, serviceName)
+	serviceName = provider.GetQualifiedName(ctx, serviceName)
+	ctx = provider.AddInContext(ctx, serviceName)
 
 	conf, ok := m.configs[serviceName]
 	if !ok {

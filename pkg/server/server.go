@@ -58,7 +58,7 @@ func (s *Server) Start(ctx context.Context) {
 	s.tcpEntryPoints.Start()
 	s.watcher.Start()
 
-	s.routinesPool.Go(s.listenSignals)
+	s.routinesPool.GoCtx(s.listenSignals)
 }
 
 // Wait blocks until the server shutdown.
@@ -90,7 +90,7 @@ func (s *Server) Close() {
 
 	stopMetricsClients()
 
-	s.routinesPool.Cleanup()
+	s.routinesPool.Stop()
 
 	signal.Stop(s.signals)
 	close(s.signals)

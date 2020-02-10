@@ -1,4 +1,4 @@
-package internal
+package provider
 
 import (
 	"context"
@@ -10,29 +10,29 @@ import (
 type contextKey int
 
 const (
-	providerKey contextKey = iota
+	key contextKey = iota
 )
 
-// AddProviderInContext Adds the provider name in the context
-func AddProviderInContext(ctx context.Context, elementName string) context.Context {
+// AddInContext Adds the provider name in the context
+func AddInContext(ctx context.Context, elementName string) context.Context {
 	parts := strings.Split(elementName, "@")
 	if len(parts) == 1 {
 		log.FromContext(ctx).Debugf("Could not find a provider for %s.", elementName)
 		return ctx
 	}
 
-	if name, ok := ctx.Value(providerKey).(string); ok && name == parts[1] {
+	if name, ok := ctx.Value(key).(string); ok && name == parts[1] {
 		return ctx
 	}
 
-	return context.WithValue(ctx, providerKey, parts[1])
+	return context.WithValue(ctx, key, parts[1])
 }
 
 // GetQualifiedName Gets the fully qualified name.
 func GetQualifiedName(ctx context.Context, elementName string) string {
 	parts := strings.Split(elementName, "@")
 	if len(parts) == 1 {
-		if providerName, ok := ctx.Value(providerKey).(string); ok {
+		if providerName, ok := ctx.Value(key).(string); ok {
 			return MakeQualifiedName(providerName, parts[0])
 		}
 	}
