@@ -316,7 +316,9 @@
     [udp.routers.UDPRouter0]
       entryPoints = ["foobar", "foobar"]
       service = "foobar"
-
+    [udp.routers.UDPRouter1]
+      entryPoints = ["foobar", "foobar"]
+      service = "foobar"
   [udp.services]
     [udp.services.UDPService01]
       [udp.services.UDPService01.loadBalancer]

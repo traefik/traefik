@@ -351,10 +351,14 @@ udp:
       - foobar
       - foobar
       service: foobar
+    UDPRouter1:
+      entryPoints:
+      - foobar
+      - foobar
+      service: foobar
   services:
     UDPService01:
       loadBalancer:
-        terminationDelay: 42
         servers:
         - address: foobar
         - address: foobar
