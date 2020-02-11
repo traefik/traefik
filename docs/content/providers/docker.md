@@ -121,7 +121,7 @@ Ports detection works as follows:
 When exposing containers that are configured with [host networking](https://docs.docker.com/network/host/),
 the IP address of the host is resolved as follows:
 
-<!-- - if in swarm mode, check whether the Node.IPAddress field of the container is provided by the API -->
+<!-- TODO: verify and document the swarm mode case with container.Node.IPAddress coming from the API -->
 - try a lookup of `host.docker.internal`
 - otherwise fall back to `127.0.0.1`
 
