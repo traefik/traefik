@@ -49,9 +49,9 @@ func TestReuseService(t *testing.T) {
 	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
 	tlsManager := tls.NewManager()
 
-	factory := NewTCPRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil))
+	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil))
 
-	entryPointsHandlers := factory.CreateTCPRouters(dynamic.Configuration{HTTP: dynamicConfigs})
+	entryPointsHandlers, _ := factory.CreateRouters(dynamic.Configuration{HTTP: dynamicConfigs})
 
 	// Test that the /ok path returns a status 200.
 	responseRecorderOk := &httptest.ResponseRecorder{}
@@ -183,9 +183,9 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
 			tlsManager := tls.NewManager()
 
-			factory := NewTCPRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil))
+			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil))
 
-			entryPointsHandlers := factory.CreateTCPRouters(dynamic.Configuration{HTTP: test.config(testServer.URL)})
+			entryPointsHandlers, _ := factory.CreateRouters(dynamic.Configuration{HTTP: test.config(testServer.URL)})
 
 			responseRecorder := &httptest.ResponseRecorder{}
 			request := httptest.NewRequest(http.MethodGet, testServer.URL+requestPath, nil)
@@ -221,9 +221,9 @@ func TestInternalServices(t *testing.T) {
 	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
 	tlsManager := tls.NewManager()
 
-	factory := NewTCPRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil))
+	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil))
 
-	entryPointsHandlers := factory.CreateTCPRouters(dynamic.Configuration{HTTP: dynamicConfigs})
+	entryPointsHandlers, _ := factory.CreateRouters(dynamic.Configuration{HTTP: dynamicConfigs})
 
 	// Test that the /ok path returns a status 200.
 	responseRecorderOk := &httptest.ResponseRecorder{}

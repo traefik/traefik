@@ -79,6 +79,10 @@ func TestNewConfigurationWatcher(t *testing.T) {
 				},
 				Stores: map[string]tls.Store{},
 			},
+			UDP: &dynamic.UDPConfiguration{
+				Routers:  map[string]*dynamic.UDPRouter{},
+				Services: map[string]*dynamic.UDPService{},
+			},
 		}
 
 		assert.Equal(t, expected, conf)
@@ -221,6 +225,10 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 				"default": {},
 			},
 			Stores: map[string]tls.Store{},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  map[string]*dynamic.UDPRouter{},
+			Services: map[string]*dynamic.UDPService{},
 		},
 	}
 

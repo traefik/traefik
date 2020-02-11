@@ -33,7 +33,7 @@ func TestManager_BuildTCP(t *testing.T) {
 					TCPService: &dynamic.TCPService{},
 				},
 			},
-			expectedError: `the service "test" doesn't have any TCP load balancer`,
+			expectedError: `the service "test" does not have any type defined`,
 		},
 		{
 			desc:        "no such host, server is skipped, error is logged",

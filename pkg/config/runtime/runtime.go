@@ -22,11 +22,13 @@ type Configuration struct {
 	Services    map[string]*ServiceInfo    `json:"services,omitempty"`
 	TCPRouters  map[string]*TCPRouterInfo  `json:"tcpRouters,omitempty"`
 	TCPServices map[string]*TCPServiceInfo `json:"tcpServices,omitempty"`
+	UDPRouters  map[string]*UDPRouterInfo  `json:"udpRouters,omitempty"`
+	UDPServices map[string]*UDPServiceInfo `json:"updServices,omitempty"`
 }
 
 // NewConfig returns a Configuration initialized with the given conf. It never returns nil.
 func NewConfig(conf dynamic.Configuration) *Configuration {
-	if conf.HTTP == nil && conf.TCP == nil {
+	if conf.HTTP == nil && conf.TCP == nil && conf.UDP == nil {
 		return &Configuration{}
 	}
 
@@ -70,6 +72,22 @@ func NewConfig(conf dynamic.Configuration) *Configuration {
 			runtimeConfig.TCPServices = make(map[string]*TCPServiceInfo, len(conf.TCP.Services))
 			for k, v := range conf.TCP.Services {
 				runtimeConfig.TCPServices[k] = &TCPServiceInfo{TCPService: v, Status: StatusEnabled}
+			}
+		}
+	}
+
+	if conf.UDP != nil {
+		if len(conf.UDP.Routers) > 0 {
+			runtimeConfig.UDPRouters = make(map[string]*UDPRouterInfo, len(conf.UDP.Routers))
+			for k, v := range conf.UDP.Routers {
+				runtimeConfig.UDPRouters[k] = &UDPRouterInfo{UDPRouter: v, Status: StatusEnabled}
+			}
+		}
+
+		if len(conf.UDP.Services) > 0 {
+			runtimeConfig.UDPServices = make(map[string]*UDPServiceInfo, len(conf.UDP.Services))
+			for k, v := range conf.UDP.Services {
+				runtimeConfig.UDPServices[k] = &UDPServiceInfo{UDPService: v, Status: StatusEnabled}
 			}
 		}
 	}
@@ -157,6 +175,34 @@ func (c *Configuration) PopulateUsedBy() {
 		}
 
 		sort.Strings(c.TCPServices[k].UsedBy)
+	}
+
+	for routerName, routerInfo := range c.UDPRouters {
+		// lazily initialize Status in case caller forgot to do it
+		if routerInfo.Status == "" {
+			routerInfo.Status = StatusEnabled
+		}
+
+		providerName := getProviderName(routerName)
+		if providerName == "" {
+			logger.WithField(log.RouterName, routerName).Error("udp router name is not fully qualified")
+			continue
+		}
+
+		serviceName := getQualifiedName(providerName, routerInfo.UDPRouter.Service)
+		if _, ok := c.UDPServices[serviceName]; !ok {
+			continue
+		}
+		c.UDPServices[serviceName].UsedBy = append(c.UDPServices[serviceName].UsedBy, routerName)
+	}
+
+	for k, serviceInfo := range c.UDPServices {
+		// lazily initialize Status in case caller forgot to do it
+		if serviceInfo.Status == "" {
+			serviceInfo.Status = StatusEnabled
+		}
+
+		sort.Strings(c.UDPServices[k].UsedBy)
 	}
 }
 
