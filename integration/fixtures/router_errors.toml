@@ -56,7 +56,7 @@
     service = "service1"
     rule = "HostSNI(`mydomain.com`)"
   [tcp.routers.router4]
-    entrypoints=["web-secure"]
+    entrypoints=["websecure"]
     service = "service1"
     rule = "Host(`mydomain.com`)"
 
