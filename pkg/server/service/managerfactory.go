@@ -49,7 +49,9 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 		factory.metricsHandler = metrics.PrometheusHandler()
 	}
 
-	factory.pingHandler = staticConfiguration.Ping
+	if staticConfiguration.Ping != nil {
+		factory.pingHandler = staticConfiguration.Ping
+	}
 
 	return factory
 }
