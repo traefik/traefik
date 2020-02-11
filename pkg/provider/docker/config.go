@@ -259,6 +259,9 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 		if container.Node != nil && container.Node.IPAddress != "" {
 			return container.Node.IPAddress
 		}
+		if host, err := net.LookupHost("host.docker.internal"); err == nil {
+			return host[0]
+		}
 		return "127.0.0.1"
 	}
 
