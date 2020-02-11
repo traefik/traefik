@@ -121,7 +121,9 @@ func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("@zookeeper"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+		try.BodyContains(`"striper@zookeeper":`, `"compressor@zookeeper":`, `"srvcA@zookeeper":`, `"srvcB@zookeeper":`),
+	)
 	c.Assert(err, checker.IsNil)
 
 	resp, err := http.Get("http://127.0.0.1:8080/api/rawdata")

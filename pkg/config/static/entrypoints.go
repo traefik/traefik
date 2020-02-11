@@ -1,5 +1,10 @@
 package static
 
+import (
+	"fmt"
+	"strings"
+)
+
 // EntryPoint holds the entry point configuration.
 type EntryPoint struct {
 	Address          string                `description:"Entry point address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
@@ -8,11 +13,34 @@ type EntryPoint struct {
 	ForwardedHeaders *ForwardedHeaders     `description:"Trust client forwarding headers." json:"forwardedHeaders,omitempty" toml:"forwardedHeaders,omitempty" yaml:"forwardedHeaders,omitempty"`
 }
 
+// GetAddress strips any potential protocol part of the address field of the
+// entry point, in order to return the actual address.
+func (ep EntryPoint) GetAddress() string {
+	splitN := strings.SplitN(ep.Address, "/", 2)
+	return splitN[0]
+}
+
+// GetProtocol returns the protocol part of the address field of the entry point.
+// If none is specified, it defaults to "tcp".
+func (ep EntryPoint) GetProtocol() (string, error) {
+	splitN := strings.SplitN(ep.Address, "/", 2)
+	if len(splitN) < 2 {
+		return "tcp", nil
+	}
+
+	protocol := strings.ToLower(splitN[1])
+	if protocol == "tcp" || protocol == "udp" {
+		return protocol, nil
+	}
+
+	return "", fmt.Errorf("invalid protocol: %s", splitN[1])
+}
+
 // SetDefaults sets the default values.
-func (e *EntryPoint) SetDefaults() {
-	e.Transport = &EntryPointsTransport{}
-	e.Transport.SetDefaults()
-	e.ForwardedHeaders = &ForwardedHeaders{}
+func (ep *EntryPoint) SetDefaults() {
+	ep.Transport = &EntryPointsTransport{}
+	ep.Transport.SetDefaults()
+	ep.ForwardedHeaders = &ForwardedHeaders{}
 }
 
 // ForwardedHeaders Trust client forwarding headers.

@@ -9,7 +9,7 @@
   rootCAs = [ """{{ .RootCertContent }}""" ]
 
 [entryPoints]
-  [entryPoints.web-secure]
+  [entryPoints.websecure]
     address = ":8443"
 
 [api]

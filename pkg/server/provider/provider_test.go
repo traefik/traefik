@@ -1,4 +1,4 @@
-package internal
+package provider
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAddProviderInContext(t *testing.T) {
+func TestAddInContext(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		ctx      context.Context
@@ -28,19 +28,19 @@ func TestAddProviderInContext(t *testing.T) {
 		},
 		{
 			desc:     "provider name in context",
-			ctx:      context.WithValue(context.Background(), providerKey, "foo"),
+			ctx:      context.WithValue(context.Background(), key, "foo"),
 			name:     "test",
 			expected: "foo",
 		},
 		{
 			desc:     "provider name in context and different provider name embedded in element name",
-			ctx:      context.WithValue(context.Background(), providerKey, "foo"),
+			ctx:      context.WithValue(context.Background(), key, "foo"),
 			name:     "test@fii",
 			expected: "fii",
 		},
 		{
 			desc:     "provider name in context and same provider name embedded in element name",
-			ctx:      context.WithValue(context.Background(), providerKey, "foo"),
+			ctx:      context.WithValue(context.Background(), key, "foo"),
 			name:     "test@foo",
 			expected: "foo",
 		},
@@ -51,10 +51,10 @@ func TestAddProviderInContext(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			newCtx := AddProviderInContext(test.ctx, test.name)
+			newCtx := AddInContext(test.ctx, test.name)
 
 			var providerName string
-			if name, ok := newCtx.Value(providerKey).(string); ok {
+			if name, ok := newCtx.Value(key).(string); ok {
 				providerName = name
 			}
 
@@ -90,13 +90,13 @@ func TestGetQualifiedName(t *testing.T) {
 		},
 		{
 			desc:     "with provider in context",
-			ctx:      context.WithValue(context.Background(), providerKey, "foo"),
+			ctx:      context.WithValue(context.Background(), key, "foo"),
 			name:     "test",
 			expected: "test@foo",
 		},
 		{
 			desc:     "with provider in context and explicit name",
-			ctx:      context.WithValue(context.Background(), providerKey, "foo"),
+			ctx:      context.WithValue(context.Background(), key, "foo"),
 			name:     "test@fii",
 			expected: "test@fii",
 		},

@@ -20,4 +20,9 @@ Developing Traefik, our main goal is to make it simple to use, and we're sure yo
 
 !!! info
 
-    If you're a business running critical services behind Traefik, know that [Containous](https://containo.us), the company that sponsors Traefik's development, can provide [commercial support](https://info.containo.us/commercial-services) and develops an [Enterprise Edition](https://containo.us/traefikee/) of Traefik. 
+    Join our user friendly and active [Community Forum](https://community.containo.us) to discuss, learn, and connect with the traefik community.
+    
+    If you're a business running critical services behind Traefik,
+    know that [Containous](https://containo.us), the company that sponsors Traefik's development,
+    can provide [commercial support](https://info.containo.us/commercial-services)
+    and develops an [Enterprise Edition](https://containo.us/traefikee/) of Traefik.

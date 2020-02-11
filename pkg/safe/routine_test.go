@@ -18,12 +18,13 @@ func TestNewPoolContext(t *testing.T) {
 	ctx := context.WithValue(context.Background(), testKey, "test")
 	p := NewPool(ctx)
 
-	retCtx := p.Ctx()
-
-	retCtxVal, ok := retCtx.Value(testKey).(string)
-	if !ok || retCtxVal != "test" {
-		t.Errorf("Pool.Ctx() did not return a derived context, got %#v, expected context with test value", retCtx)
-	}
+	p.GoCtx(func(ctx context.Context) {
+		retCtxVal, ok := ctx.Value(testKey).(string)
+		if !ok || retCtxVal != "test" {
+			t.Errorf("Pool.Ctx() did not return a derived context, got %#v, expected context with test value", ctx)
+		}
+	})
+	p.Stop()
 }
 
 type fakeRoutine struct {
@@ -44,14 +45,6 @@ func (tr *fakeRoutine) routineCtx(ctx context.Context) {
 	tr.Unlock()
 	tr.startSig <- true
 	<-ctx.Done()
-}
-
-func (tr *fakeRoutine) routine(stop chan bool) {
-	tr.Lock()
-	tr.started = true
-	tr.Unlock()
-	tr.startSig <- true
-	<-stop
 }
 
 func TestPoolWithCtx(t *testing.T) {
@@ -79,12 +72,12 @@ func TestPoolWithCtx(t *testing.T) {
 			defer timer.Stop()
 
 			test.fn(p)
-			defer p.Cleanup()
+			defer p.Stop()
 
 			testDone := make(chan bool, 1)
 			go func() {
 				<-testRoutine.startSig
-				p.Cleanup()
+				p.Stop()
 				testDone <- true
 			}()
 
@@ -100,86 +93,27 @@ func TestPoolWithCtx(t *testing.T) {
 	}
 }
 
-func TestPoolWithStopChan(t *testing.T) {
-	testRoutine := newFakeRoutine()
-
+func TestPoolCleanupWithGoPanicking(t *testing.T) {
 	p := NewPool(context.Background())
 
 	timer := time.NewTimer(500 * time.Millisecond)
 	defer timer.Stop()
 
-	p.Go(testRoutine.routine)
-	if len(p.routines) != 1 {
-		t.Fatalf("After Pool.Go(func), Pool did have %d goroutines, expected 1", len(p.routines))
-	}
+	p.GoCtx(func(ctx context.Context) {
+		panic("BOOM")
+	})
 
 	testDone := make(chan bool, 1)
 	go func() {
-		<-testRoutine.startSig
-		p.Cleanup()
+		p.Stop()
 		testDone <- true
 	}()
 
 	select {
 	case <-timer.C:
-		testRoutine.Lock()
-		defer testRoutine.Unlock()
-		t.Fatalf("Pool test did not complete in time, goroutine started equals '%t'", testRoutine.started)
+		t.Fatalf("Pool.Cleanup() did not complete in time with a panicking goroutine")
 	case <-testDone:
 		return
-	}
-}
-
-func TestPoolCleanupWithGoPanicking(t *testing.T) {
-	testRoutine := func(stop chan bool) {
-		panic("BOOM")
-	}
-
-	testCtxRoutine := func(ctx context.Context) {
-		panic("BOOM")
-	}
-
-	testCases := []struct {
-		desc string
-		fn   func(*Pool)
-	}{
-		{
-			desc: "Go()",
-			fn: func(p *Pool) {
-				p.Go(testRoutine)
-			},
-		},
-		{
-			desc: "GoCtx()",
-			fn: func(p *Pool) {
-				p.GoCtx(testCtxRoutine)
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			p := NewPool(context.Background())
-
-			timer := time.NewTimer(500 * time.Millisecond)
-			defer timer.Stop()
-
-			test.fn(p)
-
-			testDone := make(chan bool, 1)
-			go func() {
-				p.Cleanup()
-				testDone <- true
-			}()
-
-			select {
-			case <-timer.C:
-				t.Fatalf("Pool.Cleanup() did not complete in time with a panicking goroutine")
-			case <-testDone:
-				return
-			}
-		})
 	}
 }
 

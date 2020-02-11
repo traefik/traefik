@@ -6,7 +6,8 @@ Connecting Requests to Services
 ![routers](../../assets/img/routers.png)
 
 A router is in charge of connecting incoming requests to the services that can handle them.
-In the process, routers may use pieces of [middleware](../../middlewares/overview.md) to update the request, or act before forwarding the request to the service.
+In the process, routers may use pieces of [middleware](../../middlewares/overview.md) to update the request,
+or act before forwarding the request to the service.
 
 ## Configuration Example
 
@@ -792,9 +793,11 @@ Services are the target for the router.
 
 #### General
 
- When a TLS section is specified, it instructs Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-TLS requests).
+When a TLS section is specified,
+it instructs Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-TLS requests).
  
- By default, Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services), but Traefik can be configured in order to let the requests pass through (keeping the data encrypted), and be forwarded to the service "as is". 
+By default, Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services),
+but Traefik can be configured in order to let the requests pass through (keeping the data encrypted), and be forwarded to the service "as is". 
 
 ??? example "Configuring TLS Termination"
 
@@ -946,3 +949,157 @@ tcp:
             sans: 
               - "*.snitest.com"
 ```
+
+## Configuring UDP Routers
+
+!!! warning "The character `@` is not allowed in the router name"
+
+### General
+
+Similarly to TCP, as UDP is the transport layer, there is no concept of a request,
+so there is no notion of an URL path prefix to match an incoming UDP packet with.
+Furthermore, as there is no good TLS support at the moment for multiple hosts,
+there is no Host SNI notion to match against either.
+Therefore, there is no criterion that could be used as a rule to match incoming packets in order to route them.
+So UDP "routers" at this time are pretty much only load-balancers in one form or another.
+
+!!! important "Sessions and timeout"
+
+	Even though UDP is connectionless (and because of that),
+	the implementation of an UDP router in Traefik relies on what we (and a couple of other implementations) call a `session`.
+	It basically means that some state is kept about an ongoing communication between a client and a backend,
+	notably so that the proxy knows where to forward a response packet from a backend.
+	As expected, a `timeout` is associated to each of these sessions,
+	so that they get cleaned out if they go through a period of inactivity longer than a given duration (that is hardcoded to 3 seconds for now).
+	Making this timeout configurable will be considered later if we get more usage feedback on this matter.
+
+### EntryPoints
+
+If not specified, UDP routers will accept packets from all defined (UDP) entry points.
+If one wants to limit the router scope to a set of entry points, one should set the entry points option.
+
+??? example "Listens to Every Entry Point"
+
+    **Dynamic Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+
+    [udp.routers]
+      [udp.routers.Router-1]
+        # By default, routers listen to all UDP entrypoints,
+        # i.e. "other", and "streaming".
+        service = "service-1"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+
+    udp:
+      routers:
+        Router-1:
+          # By default, routers listen to all UDP entrypoints
+          # i.e. "other", and "streaming".
+          service: "service-1"
+    ```
+
+    **Static Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+
+    [entryPoints]
+      # not used by UDP routers
+      [entryPoints.web]
+        address = ":80"
+      # used by UDP routers
+      [entryPoints.other]
+        address = ":9090/udp"
+      [entryPoints.streaming]
+        address = ":9191/udp"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+
+    entryPoints:
+      # not used by UDP routers
+      web:
+        address: ":80"
+      # used by UDP routers
+      other:
+        address: ":9090/udp"
+      streaming:
+        address: ":9191/udp"
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entrypoints.web.address=":80"
+    --entrypoints.other.address=":9090/udp"
+    --entrypoints.streaming.address=":9191/udp"
+    ```
+
+??? example "Listens to Specific Entry Points"
+
+    **Dynamic Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    [udp.routers]
+      [udp.routers.Router-1]
+        # does not listen on "other" entry point
+        entryPoints = ["streaming"]
+        service = "service-1"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    udp:
+      routers:
+        Router-1:
+          # does not listen on "other" entry point
+          entryPoints:
+            - "streaming"
+          service: "service-1"
+    ```
+
+    **Static Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+      [entryPoints.other]
+        address = ":9090/udp"
+      [entryPoints.streaming]
+        address = ":9191/udp"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+
+    entryPoints:
+      web:
+        address: ":80"
+      other:
+        address: ":9090/udp"
+      streaming:
+        address: ":9191/udp"
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entrypoints.web.address=":80"
+    --entrypoints.other.address=":9090/udp"
+    --entrypoints.streaming.address=":9191/udp"
+    ```
+
+### Services
+
+There must be one (and only one) UDP [service](../services/index.md) referenced per UDP router.
+Services are the target for the router.
+
+!!! important "UDP routers can only target UDP services (and not HTTP or TCP services)."

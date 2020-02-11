@@ -15,7 +15,7 @@ require (
 	github.com/Shopify/sarama v1.23.1 // indirect
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
-	github.com/abronan/valkeyrie v0.0.0-20191010124425-1ae9442de16e
+	github.com/abronan/valkeyrie v0.0.0-20200127174252-ef4277a138cd
 	github.com/c0va23/go-proxyprotocol v0.9.1
 	github.com/cenkalti/backoff/v3 v3.1.1
 	github.com/containerd/containerd v1.3.2 // indirect

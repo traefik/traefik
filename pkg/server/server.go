@@ -17,6 +17,7 @@ import (
 type Server struct {
 	watcher        *ConfigurationWatcher
 	tcpEntryPoints TCPEntryPoints
+	udpEntryPoints UDPEntryPoints
 	chainBuilder   *middleware.ChainBuilder
 
 	accessLoggerMiddleware *accesslog.Handler
@@ -28,7 +29,7 @@ type Server struct {
 }
 
 // NewServer returns an initialized Server.
-func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, watcher *ConfigurationWatcher,
+func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsUDP UDPEntryPoints, watcher *ConfigurationWatcher,
 	chainBuilder *middleware.ChainBuilder, accessLoggerMiddleware *accesslog.Handler) *Server {
 	srv := &Server{
 		watcher:                watcher,
@@ -38,6 +39,7 @@ func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, watcher *Con
 		signals:                make(chan os.Signal, 1),
 		stopChan:               make(chan bool, 1),
 		routinesPool:           routinesPool,
+		udpEntryPoints:         entryPointsUDP,
 	}
 
 	srv.configureSignals()
@@ -56,9 +58,10 @@ func (s *Server) Start(ctx context.Context) {
 	}()
 
 	s.tcpEntryPoints.Start()
+	s.udpEntryPoints.Start()
 	s.watcher.Start()
 
-	s.routinesPool.Go(s.listenSignals)
+	s.routinesPool.GoCtx(s.listenSignals)
 }
 
 // Wait blocks until the server shutdown.
@@ -71,6 +74,7 @@ func (s *Server) Stop() {
 	defer log.WithoutContext().Info("Server stopped")
 
 	s.tcpEntryPoints.Stop()
+	s.udpEntryPoints.Stop()
 
 	s.stopChan <- true
 }
@@ -90,7 +94,7 @@ func (s *Server) Close() {
 
 	stopMetricsClients()
 
-	s.routinesPool.Cleanup()
+	s.routinesPool.Stop()
 
 	signal.Stop(s.signals)
 	close(s.signals)

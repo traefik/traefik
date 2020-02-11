@@ -28,7 +28,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/stripprefix"
 	"github.com/containous/traefik/v2/pkg/middlewares/stripprefixregex"
 	"github.com/containous/traefik/v2/pkg/middlewares/tracing"
-	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 )
 
 type middlewareStackType int
@@ -56,10 +56,10 @@ func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder servi
 func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.Chain {
 	chain := alice.New()
 	for _, name := range middlewares {
-		middlewareName := internal.GetQualifiedName(ctx, name)
+		middlewareName := provider.GetQualifiedName(ctx, name)
 
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-			constructorContext := internal.AddProviderInContext(ctx, middlewareName)
+			constructorContext := provider.AddInContext(ctx, middlewareName)
 			if midInf, ok := b.configs[middlewareName]; !ok || midInf.Middleware == nil {
 				return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
 			}
@@ -144,7 +144,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 
 		var qualifiedNames []string
 		for _, name := range config.Chain.Middlewares {
-			qualifiedNames = append(qualifiedNames, internal.GetQualifiedName(ctx, name))
+			qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
 		}
 		config.Chain.Middlewares = qualifiedNames
 		middleware = func(next http.Handler) (http.Handler, error) {

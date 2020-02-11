@@ -3,6 +3,7 @@
 package server
 
 import (
+	"context"
 	"os/signal"
 	"syscall"
 
@@ -13,10 +14,10 @@ func (s *Server) configureSignals() {
 	signal.Notify(s.signals, syscall.SIGUSR1)
 }
 
-func (s *Server) listenSignals(stop chan bool) {
+func (s *Server) listenSignals(ctx context.Context) {
 	for {
 		select {
-		case <-stop:
+		case <-ctx.Done():
 			return
 		case sig := <-s.signals:
 			if sig == syscall.SIGUSR1 {

@@ -549,6 +549,83 @@ func (s *SimpleSuite) TestServiceConfigErrors(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *SimpleSuite) TestTCPRouterConfigErrors(c *check.C) {
+	file := s.adaptFile(c, "fixtures/router_errors.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// router3 has an error because it uses an unknown entrypoint
+	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/routers/router3@file", 1000*time.Millisecond, try.BodyContains(`entryPoint \"unknown-entrypoint\" doesn't exist`, "no valid entryPoint for this router"))
+	c.Assert(err, checker.IsNil)
+
+	// router4 has an unsupported Rule
+	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/routers/router4@file", 1000*time.Millisecond, try.BodyContains("unknown rule Host(`mydomain.com`)"))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestTCPServiceConfigErrors(c *check.C) {
+	file := s.adaptFile(c, "fixtures/service_errors.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/services", 1000*time.Millisecond, try.BodyContains(`["the service \"service1@file\" does not have any type defined"]`))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/services/service2@file", 1000*time.Millisecond, try.BodyContains(`"status":"enabled"`))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestUDPRouterConfigErrors(c *check.C) {
+	file := s.adaptFile(c, "fixtures/router_errors.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/udp/routers/router3@file", 1000*time.Millisecond, try.BodyContains(`entryPoint \"unknown-entrypoint\" doesn't exist`, "no valid entryPoint for this router"))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestUDPServiceConfigErrors(c *check.C) {
+	file := s.adaptFile(c, "fixtures/service_errors.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services", 1000*time.Millisecond, try.BodyContains(`["the udp service \"service1@file\" does not have any type defined"]`))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services/service2@file", 1000*time.Millisecond, try.BodyContains(`"status":"enabled"`))
+	c.Assert(err, checker.IsNil)
+}
+
 func (s *SimpleSuite) TestWRR(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
