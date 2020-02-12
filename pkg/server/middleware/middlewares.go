@@ -239,7 +239,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 
 		var qualifiedWhiteListNames []string
 		for _, name := range config.IPWhiteList.AppendWhiteLists {
-			qualifiedWhiteListNames = append(qualifiedWhiteListNames, internal.GetQualifiedName(ctx, name))
+			qualifiedWhiteListNames = append(qualifiedWhiteListNames, provider.GetQualifiedName(ctx, name))
 		}
 		config.IPWhiteList.AppendWhiteLists = qualifiedWhiteListNames
 
