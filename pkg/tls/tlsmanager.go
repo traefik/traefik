@@ -219,6 +219,9 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		}
 	}
 
+	// Set PreferServerCipherSuites.
+	conf.PreferServerCipherSuites = tlsOption.PreferServerCipherSuites
+
 	// Set the minimum TLS version if set in the config
 	if minConst, exists := MinVersion[tlsOption.MinVersion]; exists {
 		conf.PreferServerCipherSuites = true

@@ -19,12 +19,13 @@ type TLSOption struct {
 
 // TLSOptionSpec configures TLS for an entry point
 type TLSOptionSpec struct {
-	MinVersion       string     `json:"minVersion,omitempty"`
-	MaxVersion       string     `json:"maxVersion,omitempty"`
-	CipherSuites     []string   `json:"cipherSuites,omitempty"`
-	CurvePreferences []string   `json:"curvePreferences,omitempty"`
-	ClientAuth       ClientAuth `json:"clientAuth,omitempty"`
-	SniStrict        bool       `json:"sniStrict,omitempty"`
+	MinVersion               string     `json:"minVersion,omitempty"`
+	MaxVersion               string     `json:"maxVersion,omitempty"`
+	CipherSuites             []string   `json:"cipherSuites,omitempty"`
+	CurvePreferences         []string   `json:"curvePreferences,omitempty"`
+	ClientAuth               ClientAuth `json:"clientAuth,omitempty"`
+	SniStrict                bool       `json:"sniStrict,omitempty"`
+	PreferServerCipherSuites bool       `json:"preferServerCipherSuites,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

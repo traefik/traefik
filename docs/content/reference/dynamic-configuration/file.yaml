@@ -397,6 +397,7 @@ tls:
         - foobar
         clientAuthType: foobar
       sniStrict: true
+      preferServerCipherSuites: true
     Options1:
       minVersion: foobar
       maxVersion: foobar
@@ -412,6 +413,7 @@ tls:
         - foobar
         clientAuthType: foobar
       sniStrict: true
+      preferServerCipherSuites: true
   stores:
     Store0:
       defaultCertificate:
