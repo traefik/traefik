@@ -671,6 +671,20 @@
             </div>
           </div>
         </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - appendWhiteLists -->
+        <q-card-section v-if="middleware.ipWhiteList">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Append White Lists</div>
+              <q-chip
+                v-for="(mi, key) in exData(middleware).appendWhiteLists" :key="key"
+                dense
+                class="app-chip app-chip-green">
+                {{ mi }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
         <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - ipStrategy -->
         <q-card-section v-if="middleware.ipWhiteList">
           <div class="row items-start">

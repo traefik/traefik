@@ -68,6 +68,24 @@ http:
 
 The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using CIDR notation).
 
+### `appendWhiteLists`
+
+The `appendWhiteLists` option defines other whitelists to combine with this one. This allows modular whitelisting
+    
+```yaml tab="Kubernetes"
+# Whitelisting appending IPs in other-whitelist
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: testIPwhitelist
+spec:
+  ipWhiteList:
+	sourceRange:
+	  - 192.168.1.7
+	appendWhiteList:
+	  - name: other-whitelist
+```
+
 ### `ipStrategy`
 
 The `ipStrategy` option defines two parameters that sets how Traefik will determine the client IP: `depth`, and `excludedIPs`.

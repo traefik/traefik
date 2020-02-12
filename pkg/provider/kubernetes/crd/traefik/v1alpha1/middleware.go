@@ -26,7 +26,7 @@ type MiddlewareSpec struct {
 	ReplacePath       *dynamic.ReplacePath       `json:"replacePath,omitempty"`
 	ReplacePathRegex  *dynamic.ReplacePathRegex  `json:"replacePathRegex,omitempty"`
 	Chain             *Chain                     `json:"chain,omitempty"`
-	IPWhiteList       *dynamic.IPWhiteList       `json:"ipWhiteList,omitempty"`
+	IPWhiteList       *IPWhiteList               `json:"ipWhiteList,omitempty"`
 	Headers           *dynamic.Headers           `json:"headers,omitempty"`
 	Errors            *ErrorPage                 `json:"errors,omitempty"`
 	RateLimit         *dynamic.RateLimit         `json:"rateLimit,omitempty"`
@@ -51,6 +51,15 @@ type ErrorPage struct {
 	Status  []string `json:"status,omitempty"`
 	Service Service  `json:"service,omitempty"`
 	Query   string   `json:"query,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// IPWhiteList holds the ip white list configuration.
+type IPWhiteList struct {
+	AppendWhiteLists []MiddlewareRef `json:"appendWhiteLists,omitempty"`
+	SourceRange []string             `json:"sourceRange,omitempty"`
+	IPStrategy  *dynamic.IPStrategy          `json:"ipStrategy,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

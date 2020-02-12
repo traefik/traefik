@@ -215,7 +215,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			ReplacePath:       middleware.Spec.ReplacePath,
 			ReplacePathRegex:  middleware.Spec.ReplacePathRegex,
 			Chain:             createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain),
-			IPWhiteList:       middleware.Spec.IPWhiteList,
+			IPWhiteList:       createIPWhiteListMiddleware(ctxMid, middleware.Namespace, middleware.Spec.IPWhiteList),
 			Headers:           middleware.Spec.Headers,
 			Errors:            errorPage,
 			RateLimit:         middleware.Spec.RateLimit,
@@ -456,6 +456,31 @@ func createChainMiddleware(ctx context.Context, namespace string, chain *v1alpha
 		mds = append(mds, makeID(ns, mi.Name))
 	}
 	return &dynamic.Chain{Middlewares: mds}
+}
+
+func createIPWhiteListMiddleware(ctx context.Context, namespace string, whitelist *v1alpha1.IPWhiteList) *dynamic.IPWhiteList {
+	if whitelist == nil {
+		return nil
+	}
+
+	var mds []string
+	for _, mi := range whitelist.AppendWhiteLists {
+		if strings.Contains(mi.Name, providerNamespaceSeparator) {
+			if len(mi.Namespace) > 0 {
+				log.FromContext(ctx).
+					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+			}
+			mds = append(mds, mi.Name)
+			continue
+		}
+
+		ns := mi.Namespace
+		if len(ns) == 0 {
+			ns = namespace
+		}
+		mds = append(mds, makeID(ns, mi.Name))
+	}
+	return &dynamic.IPWhiteList{AppendWhiteLists: mds, SourceRange: whitelist.SourceRange, IPStrategy: whitelist.IPStrategy}
 }
 
 func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {

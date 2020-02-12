@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/ip"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/middlewares"
@@ -18,6 +19,10 @@ const (
 	typeName = "IPWhiteLister"
 )
 
+type whiteListBuilder interface {
+	GetConfigs() map[string]*runtime.MiddlewareInfo
+}
+
 // ipWhiteLister is a middleware that provides Checks of the Requesting IP against a set of Whitelists
 type ipWhiteLister struct {
 	next        http.Handler
@@ -27,17 +32,28 @@ type ipWhiteLister struct {
 }
 
 // New builds a new IPWhiteLister given a list of CIDR-Strings to whitelist
-func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, builder whiteListBuilder, name string) (http.Handler, error) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
 
-	if len(config.SourceRange) == 0 {
+	sourceRange := config.SourceRange
+
+	configs := builder.GetConfigs()
+	for _, whitelistName := range config.AppendWhiteLists {
+		if whitelist, exists := configs[whitelistName]; exists {
+			if whitelist.IPWhiteList != nil {
+				sourceRange = append(sourceRange, whitelist.IPWhiteList.SourceRange...)
+			}
+		}
+	}
+
+	if len(sourceRange) == 0 {
 		return nil, errors.New("sourceRange is empty, IPWhiteLister not created")
 	}
 
-	checker, err := ip.NewChecker(config.SourceRange)
+	checker, err := ip.NewChecker(sourceRange)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse CIDR whitelist %s: %v", config.SourceRange, err)
+		return nil, fmt.Errorf("cannot parse CIDR whitelist %s: %v", sourceRange, err)
 	}
 
 	strategy, err := config.IPStrategy.Get()
@@ -45,7 +61,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, nam
 		return nil, err
 	}
 
-	logger.Debugf("Setting up IPWhiteLister with sourceRange: %s", config.SourceRange)
+	logger.Debugf("Setting up IPWhiteLister with sourceRange: %s", sourceRange)
 
 	return &ipWhiteLister{
 		strategy:    strategy,
