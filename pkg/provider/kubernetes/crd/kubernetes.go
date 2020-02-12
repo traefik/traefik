@@ -539,12 +539,8 @@ func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
 			continue
 		}
 
-		if _, ok := tlsStores["default"]; ok {
-			break
-		}
-
-		// Since only the default TLS Store is used, we just need to set it if it doesn't exist.
-		tlsStores["default"] = tls.Store{
+		// Create TLS store object with just the store name so that default can be created.
+		tlsStores[tlsStore.Name] = tls.Store{
 			DefaultCertificate: &tls.Certificate{
 				CertFile: tls.FileOrContent(cert),
 				KeyFile:  tls.FileOrContent(key),
