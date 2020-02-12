@@ -128,7 +128,18 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 	c.Assert(err, checker.IsNil)
 	req.Host = "whoami"
 
-	err = try.Request(req, 2*time.Second, try.StatusCodeIs(200), try.BodyContainsOr("Hostname: whoami1", "Hostname: whoami2", "Hostname: whoami3"))
+	err = try.Request(req, 2*time.Second,
+		try.StatusCodeIs(200),
+		try.BodyContainsOr("Hostname: whoami1", "Hostname: whoami2", "Hostname: whoami3"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+		try.StatusCodeIs(200),
+		try.BodyContains(
+			fmt.Sprintf(`"http://%s:80":"UP"`, reg1.Address),
+			fmt.Sprintf(`"http://%s:80":"UP"`, reg2.Address),
+			fmt.Sprintf(`"http://%s:80":"UP"`, reg3.Address),
+		))
 	c.Assert(err, checker.IsNil)
 
 	err = s.deregisterService("whoami1", false)
