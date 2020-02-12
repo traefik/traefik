@@ -349,9 +349,8 @@ spec:
 
 ### Prefer Server Cipher Suites
 
-This option allows the server to choose its most preferred cipher suite
-instead of the client's. Please note that this is enabled automatically
-when `minVersion` or `maxVersion` are set.
+This option allows the server to choose its most preferred cipher suite instead of the client's.
+Please note that this is enabled automatically when `minVersion` or `maxVersion` are set.
 
 ```toml tab="File (TOML)"
 # Dynamic configuration
