@@ -565,7 +565,7 @@ Constraints is an expression that Traefik matches against the service's tags to 
 That is to say, if none of the service's tags match the expression, no route for that service is created.
 If the expression is empty, all detected services are included.
 
-The expression syntax is based on the `Tag("tag")`, and `TagRegex("tag")` functions,
+The expression syntax is based on the ```Tag(`tag`)```, and ```TagRegex(`tag`)``` functions,
 as well as the usual boolean logic, as shown in examples below.
 
 ??? example "Constraints Expression Examples"
