@@ -14,6 +14,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/metrics"
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/middlewares/retry"
+	traefiktls "github.com/containous/traefik/v2/pkg/tls"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 )
 
@@ -166,60 +167,11 @@ func getRequestTLSVersion(req *http.Request) string {
 }
 
 func getRequestTLSCipher(req *http.Request) string {
-	switch req.TLS.CipherSuite {
-	case tls.TLS_RSA_WITH_RC4_128_SHA:
-		return "TLS_RSA_WITH_RC4_128_SHA"
-	case tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA:
-		return "TLS_RSA_WITH_3DES_EDE_CBC_SHA"
-	case tls.TLS_RSA_WITH_AES_128_CBC_SHA:
-		return "TLS_RSA_WITH_AES_128_CBC_SHA"
-	case tls.TLS_RSA_WITH_AES_256_CBC_SHA:
-		return "TLS_RSA_WITH_AES_256_CBC_SHA"
-	case tls.TLS_RSA_WITH_AES_128_CBC_SHA256:
-		return "TLS_RSA_WITH_AES_128_CBC_SHA256"
-	case tls.TLS_RSA_WITH_AES_128_GCM_SHA256:
-		return "TLS_RSA_WITH_AES_128_GCM_SHA256"
-	case tls.TLS_RSA_WITH_AES_256_GCM_SHA384:
-		return "TLS_RSA_WITH_AES_256_GCM_SHA384"
-	case tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA:
-		return "TLS_ECDHE_ECDSA_WITH_RC4_128_SHA"
-	case tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA:
-		return "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"
-	case tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA:
-		return "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA"
-	case tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA:
-		return "TLS_ECDHE_RSA_WITH_RC4_128_SHA"
-	case tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA:
-		return "TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA"
-	case tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA:
-		return "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"
-	case tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA:
-		return "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"
-	case tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256:
-		return "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
-	case tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256:
-		return "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
-	case tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:
-		return "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
-	case tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256:
-		return "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
-	case tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384:
-		return "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
-	case tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384:
-		return "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
-	case tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305:
-		return "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
-	case tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305:
-		return "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
-	case tls.TLS_AES_128_GCM_SHA256:
-		return "TLS_AES_128_GCM_SHA256"
-	case tls.TLS_AES_256_GCM_SHA384:
-		return "TLS_AES_256_GCM_SHA384"
-	case tls.TLS_CHACHA20_POLY1305_SHA256:
-		return "TLS_CHACHA20_POLY1305_SHA256"
-	default:
-		return "unknown"
+	if version, ok := traefiktls.CipherSuitesReversed[req.TLS.CipherSuite]; ok {
+		return version
 	}
+
+	return "unknown"
 }
 
 type retryMetrics interface {
