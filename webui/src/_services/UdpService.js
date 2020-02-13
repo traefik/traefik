@@ -1,14 +1,14 @@
 import { APP } from '../_helpers/APP'
 import { getTotal } from './utils'
 
-const apiBase = '/tcp'
+const apiBase = '/udp'
 
 function getAllRouters (params) {
   return APP.api.get(`${apiBase}/routers?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
     .then(response => {
       const { data = [], headers } = response
       const total = getTotal(headers, params)
-      console.log('Success -> TcpService -> getAllRouters', response.data)
+      console.log('Success -> UdpService -> getAllRouters', response.data)
       return { data, total }
     })
 }
@@ -16,7 +16,7 @@ function getAllRouters (params) {
 function getRouterByName (name) {
   return APP.api.get(`${apiBase}/routers/${name}`)
     .then(body => {
-      console.log('Success -> TcpService -> getRouterByName', body.data)
+      console.log('Success -> UdpService -> getRouterByName', body.data)
       return body.data
     })
 }
@@ -26,7 +26,7 @@ function getAllServices (params) {
     .then(response => {
       const { data = [], headers } = response
       const total = getTotal(headers, params)
-      console.log('Success -> TcpService -> getAllServices', response.data)
+      console.log('Success -> UdpService -> getAllServices', response.data)
       return { data, total }
     })
 }
@@ -34,7 +34,7 @@ function getAllServices (params) {
 function getServiceByName (name) {
   return APP.api.get(`${apiBase}/services/${name}`)
     .then(body => {
-      console.log('Success -> TcpService -> getServiceByName', body.data)
+      console.log('Success -> UdpService -> getServiceByName', body.data)
       return body.data
     })
 }
