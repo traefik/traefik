@@ -28,7 +28,6 @@ func New(sticky *dynamic.Sticky) *Balancer {
 	handlers := make(namedHandlers, 0)
 	balancer := &Balancer{
 		handlers: &handlers,
-		mutex:    &sync.RWMutex{},
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
@@ -79,7 +78,7 @@ func (n *namedHandlers) Pop() interface{} {
 // weights and an O(log n) pick time.
 type Balancer struct {
 	handlers     *namedHandlers
-	mutex        *sync.RWMutex
+	mutex        sync.RWMutex
 	curDeadline  float64
 	stickyCookie *stickyCookie
 }
