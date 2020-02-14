@@ -77,10 +77,11 @@ func (n *namedHandlers) Pop() interface{} {
 // at currentDeadline + 1 / weight, providing weighted round robin behavior with floating point
 // weights and an O(log n) pick time.
 type Balancer struct {
-	handlers     *namedHandlers
-	mutex        sync.RWMutex
-	curDeadline  float64
 	stickyCookie *stickyCookie
+
+	mutex       sync.RWMutex
+	handlers    *namedHandlers
+	curDeadline float64
 }
 
 func (b *Balancer) nextServer() (*namedHandler, error) {
