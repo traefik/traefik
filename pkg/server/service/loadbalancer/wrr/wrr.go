@@ -3,7 +3,6 @@ package wrr
 import (
 	"container/heap"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"sync"
 
@@ -28,9 +27,8 @@ type stickyCookie struct {
 func New(sticky *dynamic.Sticky) *Balancer {
 	handlers := make(namedHandlers, 0)
 	balancer := &Balancer{
-		handlers:     &handlers,
-		mutex:        &sync.Mutex{},
-		baseDeadline: rand.Float64(),
+		handlers: &handlers,
+		mutex:    &sync.RWMutex{},
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
@@ -81,10 +79,8 @@ func (n *namedHandlers) Pop() interface{} {
 // weights and an O(log n) pick time.
 type Balancer struct {
 	handlers     *namedHandlers
-	mutex        *sync.Mutex
+	mutex        *sync.RWMutex
 	curDeadline  float64
-	curLock      sync.RWMutex
-	baseDeadline float64 // for fixing starting bias
 	stickyCookie *stickyCookie
 }
 
@@ -98,9 +94,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	handler := heap.Pop(b.handlers).(*namedHandler)
 	// curDeadline should be handler's deadline so that new added entry would have a fair
 	// competition environment with the old ones.
-	b.curLock.Lock()
 	b.curDeadline = handler.deadline
-	b.curLock.Unlock()
 	handler.deadline += 1 / handler.weight
 	heap.Push(b.handlers, handler)
 	log.WithoutContext().Debugf("Service selected by WRR: %s", handler.name)
@@ -150,8 +144,9 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 		return
 	}
 	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
-	b.curLock.RLock()
+	// use RWLock to protect b.curDeadline
+	b.mutex.RLock()
 	h.deadline = b.curDeadline + 1/h.weight
-	b.curLock.RUnlock()
+	b.mutex.RUnlock()
 	heap.Push(b.handlers, h)
 }
