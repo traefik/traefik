@@ -116,6 +116,20 @@ Ports detection works as follows:
   by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
   (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#port)).
 
+### Host networking
+
+When exposing containers that are configured with [host networking](https://docs.docker.com/network/host/),
+the IP address of the host is resolved as follows:
+
+<!-- TODO: verify and document the swarm mode case with container.Node.IPAddress coming from the API -->
+- try a lookup of `host.docker.internal`
+- otherwise fall back to `127.0.0.1`
+
+On Linux, (and until [github.com/moby/moby/pull/40007](https://github.com/moby/moby/pull/40007) is included in a release),
+for `host.docker.internal` to be defined, it should be provided as an `extra_host` to the Traefik container,
+using the `--add-host` flag. For example, to set it to the IP address of the bridge interface (docker0 by default):
+`--add-host=host.docker.internal:172.17.0.1`
+
 ### Docker API Access
 
 Traefik requires access to the docker socket to get its dynamic configuration.

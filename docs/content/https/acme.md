@@ -56,7 +56,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
       [entryPoints.web]
         address = ":80"
     
-      [entryPoints.web-secure]
+      [entryPoints.websecure]
         address = ":443"
     
     [certificatesResolvers.le.acme]
@@ -72,7 +72,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
       web:
         address: ":80"
     
-      web-secure:
+      websecure:
         address: ":443"
     
     certificatesResolvers:
@@ -196,7 +196,7 @@ when using the `HTTP-01` challenge, `certificatesResolvers.le.acme.httpChallenge
       [entryPoints.web]
         address = ":80"
       
-      [entryPoints.web-secure]
+      [entryPoints.websecure]
         address = ":443"
     
     [certificatesResolvers.le.acme]
@@ -210,7 +210,7 @@ when using the `HTTP-01` challenge, `certificatesResolvers.le.acme.httpChallenge
       web:
         address: ":80"
     
-      web-secure:
+      websecure:
         address: ":443"
     
     certificatesResolvers:
@@ -285,6 +285,7 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 | [Azure](https://azure.microsoft.com/services/dns/)          | `azure`        | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`, `[AZURE_METADATA_ENDPOINT]`   | [Additional configuration](https://go-acme.github.io/lego/dns/azure)        |
 | [Bindman](https://github.com/labbsr0x/bindman-dns-webhook)  | `bindman`      | `BINDMAN_MANAGER_ADDRESS`                                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/bindman)      |
 | [Blue Cat](https://www.bluecatnetworks.com/)                | `bluecat`      | `BLUECAT_SERVER_URL`, `BLUECAT_USER_NAME`, `BLUECAT_PASSWORD`, `BLUECAT_CONFIG_NAME`, `BLUECAT_DNS_VIEW`                                    | [Additional configuration](https://go-acme.github.io/lego/dns/bluecat)      |
+| [Checkdomain](https://www.checkdomain.de/)                  | `checkdomain`  | `CHECKDOMAIN_TOKEN`,                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/checkdomain/) |
 | [ClouDNS](https://www.cloudns.net/)                         | `cloudns`      | `CLOUDNS_AUTH_ID`, `CLOUDNS_AUTH_PASSWORD`                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/cloudns)      |
 | [Cloudflare](https://www.cloudflare.com)                    | `cloudflare`   | `CF_API_EMAIL`, `CF_API_KEY` [^5] or `CF_DNS_API_TOKEN`, `[CF_ZONE_API_TOKEN]`                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/cloudflare)   |
 | [CloudXNS](https://www.cloudxns.net)                        | `cloudxns`     | `CLOUDXNS_API_KEY`, `CLOUDXNS_SECRET_KEY`                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/cloudxns)     |
@@ -378,7 +379,7 @@ certificatesResolvers:
 
 ```bash tab="CLI"
 # ...
---certificatesResolvers.le.acme.dnsChallenge.resolvers:=1.1.1.1:53,8.8.8.8:53
+--certificatesResolvers.le.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53
 ```
 
 #### Wildcard Domains

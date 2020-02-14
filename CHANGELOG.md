@@ -1,3 +1,42 @@
+## [v2.1.4](https://github.com/containous/traefik/tree/v2.1.4) (2020-02-06)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.3...v2.1.4)
+
+**Bug fixes:**
+- **[acme,logs]** Improvement of the certificates resolvers logs ([#6225](https://github.com/containous/traefik/pull/6225) by [ldez](https://github.com/ldez))
+- **[acme]** Fix kubernetes providers shutdown and clean safe.Pool ([#6244](https://github.com/containous/traefik/pull/6244) by [juliens](https://github.com/juliens))
+- **[authentication,middleware]** don&#39;t create http client for each request in forwardAuth middleware ([#6267](https://github.com/containous/traefik/pull/6267) by [juliens](https://github.com/juliens))
+- **[k8s,k8s/ingress]** Allow wildcard hosts in ingress provider ([#6251](https://github.com/containous/traefik/pull/6251) by [dtomcej](https://github.com/dtomcej))
+- **[logs,tls]** Properly purge default certificate from stores before logging ([#6281](https://github.com/containous/traefik/pull/6281) by [dtomcej](https://github.com/dtomcej))
+- **[middleware]** use provider-qualified name when recursing for chain ([#6233](https://github.com/containous/traefik/pull/6233) by [mpl](https://github.com/mpl))
+
+**Documentation:**
+- **[acme,cli]** Documentation fix for acme.md CLI ([#6262](https://github.com/containous/traefik/pull/6262) by [altano](https://github.com/altano))
+- **[acme,k8s/crd]** Add missing certResolver in IngressRoute examples. ([#6265](https://github.com/containous/traefik/pull/6265) by [ldez](https://github.com/ldez))
+- **[k8s]** fix a typo ([#6279](https://github.com/containous/traefik/pull/6279) by [silenceshell](https://github.com/silenceshell))
+- **[middleware]** Minor documentation tweaks. ([#6218](https://github.com/containous/traefik/pull/6218) by [stevegroom](https://github.com/stevegroom))
+- Correct a trivial spelling mistake in the documentation. ([#6269](https://github.com/containous/traefik/pull/6269) by [nepella](https://github.com/nepella))
+- Update install-traefik.md ([#6260](https://github.com/containous/traefik/pull/6260) by [bitfactory-sander-lissenburg](https://github.com/bitfactory-sander-lissenburg))
+- doc: use the same entry point name everywhere ([#6219](https://github.com/containous/traefik/pull/6219) by [ldez](https://github.com/ldez))
+- readme: update links to use HTTPS ([#6274](https://github.com/containous/traefik/pull/6274) by [imba-tjd](https://github.com/imba-tjd))
+
+## [v2.1.3](https://github.com/containous/traefik/tree/v2.1.3) (2020-01-21)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.2...v2.1.3)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v3.3.0 ([#6192](https://github.com/containous/traefik/pull/6192) by [shilch](https://github.com/shilch))
+- **[docker]** Use the calculated port when useBindPortIP is enabled ([#6199](https://github.com/containous/traefik/pull/6199) by [juliens](https://github.com/juliens))
+- **[docker]** fix: invalid service definition. ([#6198](https://github.com/containous/traefik/pull/6198) by [ldez](https://github.com/ldez))
+- **[server]** Remove Content-Type auto-detection ([#6097](https://github.com/containous/traefik/pull/6097) by [juliens](https://github.com/juliens))
+- **[service]** fix memleak in safe.Pool ([#6140](https://github.com/containous/traefik/pull/6140) by [mpl](https://github.com/mpl))
+
+**Documentation:**
+- **[docker]** Fix typo in docker routing documentation ([#6147](https://github.com/containous/traefik/pull/6147) by [tvrg](https://github.com/tvrg))
+- **[k8s]** Fixed typo in k8s doc ([#6163](https://github.com/containous/traefik/pull/6163) by [MyIgel](https://github.com/MyIgel))
+- **[marathon]** Fix typo in Marathon doc. ([#6150](https://github.com/containous/traefik/pull/6150) by [thatshubham](https://github.com/thatshubham))
+- **[middleware]** Adding an explanation how to use `htpasswd` for k8s secret ([#6194](https://github.com/containous/traefik/pull/6194) by [jamct](https://github.com/jamct))
+- doc: adds an explanation of the global redirection pattern. ([#6195](https://github.com/containous/traefik/pull/6195) by [ldez](https://github.com/ldez))
+- Fix small typo in user-guides documentation ([#6154](https://github.com/containous/traefik/pull/6154) by [evert-arias](https://github.com/evert-arias))
+
 ## [v2.1.2](https://github.com/containous/traefik/tree/v2.1.2) (2020-01-07)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.1...v2.1.2)
 

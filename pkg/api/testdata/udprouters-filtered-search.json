@@ -1,0 +1,14 @@
+[
+	{
+		"entryPoints": [
+			"web"
+		],
+		"name": "bar@myprovider",
+		"provider": "myprovider",
+		"service": "foo-service@myprovider",
+		"status": "warning",
+		"using": [
+			"web"
+		]
+	}
+]

@@ -347,6 +347,39 @@ spec:
   sniStrict: true
 ```
 
+### Prefer Server Cipher Suites
+
+This option allows the server to choose its most preferred cipher suite instead of the client's.
+Please note that this is enabled automatically when `minVersion` or `maxVersion` are set.
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+  [tls.options.default]
+    preferServerCipherSuites = true
+```
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      preferServerCipherSuites: true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  preferServerCipherSuites: true
+```
+
 ### Client Authentication (mTLS)
 
 Traefik supports mutual authentication, through the `clientAuth` section.

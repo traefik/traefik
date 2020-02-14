@@ -47,6 +47,7 @@
     "gocognit",
     "bodyclose", # Too many false-positive and panics.
     "wsl", # Too strict
+    "gomnd", # Too strict
     "stylecheck", # skip because report issues related to some generated files.
   ]
 
@@ -92,6 +93,15 @@
  [[issues.exclude-rules]]
     path = "cmd/configuration.go"
     text = "string `traefik` has (\\d) occurrences, make it a constant"
+ [[issues.exclude-rules]]
+    path = "pkg/server/middleware/middlewares.go"
+    text = "Function 'buildConstructor' is too long \\(\\d+ > 230\\)"
  [[issues.exclude-rules]] # FIXME must be fixed
     path = "cmd/context.go"
     text = "S1000: should use a simple channel send/receive instead of `select` with a single case"
+ [[issues.exclude-rules]]
+    path = "pkg/tracing/haystack/logger.go"
+    linters = ["goprintffuncname"]
+ [[issues.exclude-rules]]
+    path = "pkg/tracing/tracing.go"
+    text = "printf-like formatting function 'SetErrorWithEvent' should be named 'SetErrorWithEventf'"

@@ -5,7 +5,7 @@
 
 [![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
-[![Go Report Card](https://goreportcard.com/badge/containous/traefik)](http://goreportcard.com/report/containous/traefik)
+[![Go Report Card](https://goreportcard.com/badge/containous/traefik)](https://goreportcard.com/report/containous/traefik)
 [![](https://images.microbadger.com/badges/image/traefik.svg)](https://microbadger.com/images/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
 [![Join the community support forum at https://community.containo.us/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.containo.us/)
@@ -89,7 +89,7 @@ You can access the simple HTML frontend of Traefik.
 
 You can find the complete documentation of Traefik v2 at [https://docs.traefik.io](https://docs.traefik.io).
 
-If you are using Traefik v1, you can find the complete documentation at [https://docs.traefik.io/v1.7/](https://docs.traefik.io/v1.7/)
+If you are using Traefik v1, you can find the complete documentation at [https://docs.traefik.io/v1.7/](https://docs.traefik.io/v1.7/).
 
 A collection of contributions around Traefik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
 
@@ -122,7 +122,7 @@ git clone https://github.com/containous/traefik
 
 ## Introductory Videos
 
-You can find high level and deep dive videos on [videos.containo.us](https://videos.containo.us)
+You can find high level and deep dive videos on [videos.containo.us](https://videos.containo.us).
 
 ## Maintainers
 
@@ -138,16 +138,16 @@ By participating in this project, you agree to abide by its terms.
 ## Release Cycle
 
 - We release a new version (e.g. 1.1.0, 1.2.0, 1.3.0) every other month.
-- Release Candidates are available before the release (e.g. 1.1.0-rc1, 1.1.0-rc2, 1.1.0-rc3, 1.1.0-rc4, before 1.1.0)
-- Bug-fixes (e.g. 1.1.1, 1.1.2, 1.2.1, 1.2.3) are released as needed (no additional features are delivered in those versions, bug-fixes only)
+- Release Candidates are available before the release (e.g. 1.1.0-rc1, 1.1.0-rc2, 1.1.0-rc3, 1.1.0-rc4, before 1.1.0).
+- Bug-fixes (e.g. 1.1.1, 1.1.2, 1.2.1, 1.2.3) are released as needed (no additional features are delivered in those versions, bug-fixes only).
 
-Each version is supported until the next one is released (e.g. 1.1.x will be supported until 1.2.0 is out)
+Each version is supported until the next one is released (e.g. 1.1.x will be supported until 1.2.0 is out).
 
-We use [Semantic Versioning](http://semver.org/)
+We use [Semantic Versioning](https://semver.org/).
 
-## Mailing lists
+## Mailing Lists
 
-- General announcements, new releases: mail at news+subscribe@traefik.io or on [the online viewer](https://groups.google.com/a/traefik.io/forum/#!forum/news)
+- General announcements, new releases: mail at news+subscribe@traefik.io or on [the online viewer](https://groups.google.com/a/traefik.io/forum/#!forum/news).
 - Security announcements: mail at security+subscribe@traefik.io or on [the online viewer](https://groups.google.com/a/traefik.io/forum/#!forum/security).
 
 ## Credits
@@ -156,5 +156,5 @@ Kudos to [Peka](http://peka.byethost11.com/photoblog/) for his awesome work on t
 
 Traefik's logo is licensed under the Creative Commons 3.0 Attributions license.
 
-Traefik's logo was inspired by the gopher stickers made by Takuya Ueda (https://twitter.com/tenntenn).
-The original Go gopher was designed by Renee French (http://reneefrench.blogspot.com/).
+Traefik's logo was inspired by the gopher stickers made by [Takuya Ueda](https://twitter.com/tenntenn).
+The original Go gopher was designed by [Renee French](https://reneefrench.blogspot.com/).

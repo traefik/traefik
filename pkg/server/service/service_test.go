@@ -9,7 +9,7 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -336,7 +336,7 @@ func TestManager_Build(t *testing.T) {
 
 			ctx := context.Background()
 			if len(test.providerName) > 0 {
-				ctx = internal.AddProviderInContext(ctx, "foobar@"+test.providerName)
+				ctx = provider.AddInContext(ctx, "foobar@"+test.providerName)
 			}
 
 			_, err := manager.BuildHTTP(ctx, test.serviceName, nil)

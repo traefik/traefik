@@ -22,7 +22,6 @@ deploy:
 ```
 
 ```yaml tab="Kubernetes"
----
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:

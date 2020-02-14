@@ -23,7 +23,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
     * Prefer a fixed version than the latest that could be an unexpected version.
     ex: `traefik:v2.0.0`
     * Docker images are based from the [Alpine Linux Official image](https://hub.docker.com/_/alpine).
-    * All the orchestrator using docker images could fetch the official Traefik docker image.
+    * Any orchestrator using docker images can fetch the official Traefik docker image.
 
 ## Use the Helm Chart
 
@@ -72,7 +72,7 @@ helm install ./traefik-helm-chart
     {: #helm-custom-values }
     
     The values are not (yet) documented, but are self-explanatory:
-    you can look at the [default `values.yaml`](https://github.com/containous/traefik-helm-chart/blob/master/values.yaml) file to explore possibilities.
+    you can look at the [default `values.yaml`](https://github.com/containous/traefik-helm-chart/blob/master/traefik/values.yaml) file to explore possibilities.
     
     Example of installation with logging set to `DEBUG`:
     

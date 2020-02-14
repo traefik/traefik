@@ -35,7 +35,7 @@ spec:
       - secretCA1
       - secretCA2
     clientAuthType: VerifyClientCertIfGiven
-
+  preferServerCipherSuites: true
 ---
 apiVersion: v1
 kind: Secret

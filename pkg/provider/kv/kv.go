@@ -43,7 +43,7 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider
 func (p *Provider) Init(storeType store.Backend, name string) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, string(storeType)))
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, name))
 
 	p.storeType = storeType
 	p.name = name
@@ -60,8 +60,7 @@ func (p *Provider) Init(storeType store.Backend, name string) error {
 
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, string(p.storeType)))
-
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.name))
 	logger := log.FromContext(ctx)
 
 	operation := func() error {
@@ -89,8 +88,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 	}
 
-	pool.Go(func(stop chan bool) {
-		err := p.watchKv(ctx, configurationChan, p.RootKey, stop)
+	pool.GoCtx(func(ctxPool context.Context) {
+		ctxLog := log.With(ctxPool, log.Str(log.ProviderName, p.name))
+
+		err := p.watchKv(ctxLog, configurationChan)
 		if err != nil {
 			logger.Errorf("Cannot watch KV store: %v", err)
 		}
@@ -99,16 +100,16 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
-func (p *Provider) watchKv(ctx context.Context, configurationChan chan<- dynamic.Message, prefix string, stop chan bool) error {
+func (p *Provider) watchKv(ctx context.Context, configurationChan chan<- dynamic.Message) error {
 	operation := func() error {
-		events, err := p.kvClient.WatchTree(p.RootKey, make(chan struct{}), nil)
+		events, err := p.kvClient.WatchTree(p.RootKey, ctx.Done(), nil)
 		if err != nil {
 			return fmt.Errorf("failed to watch KV: %w", err)
 		}
 
 		for {
 			select {
-			case <-stop:
+			case <-ctx.Done():
 				return nil
 			case _, ok := <-events:
 				if !ok {
@@ -122,7 +123,7 @@ func (p *Provider) watchKv(ctx context.Context, configurationChan chan<- dynamic
 
 				if configuration != nil {
 					configurationChan <- dynamic.Message{
-						ProviderName:  string(p.storeType),
+						ProviderName:  p.name,
 						Configuration: configuration,
 					}
 				}
@@ -133,7 +134,9 @@ func (p *Provider) watchKv(ctx context.Context, configurationChan chan<- dynamic
 	notify := func(err error, time time.Duration) {
 		log.FromContext(ctx).Errorf("KV connection error: %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+
+	err := backoff.RetryNotify(safe.OperationWithRecover(operation),
+		backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctx), notify)
 	if err != nil {
 		return fmt.Errorf("cannot connect to KV server: %w", err)
 	}
