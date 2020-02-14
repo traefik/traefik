@@ -65,7 +65,10 @@ func (n namedHandlers) Swap(i, j int) {
 
 // Push implements heap.Interface for pushing an item into the heap
 func (n *namedHandlers) Push(x interface{}) {
-	h := x.(*namedHandler)
+	h, ok := x.(*namedHandler)
+	if !ok {
+		return
+	}
 	*n = append(*n, h)
 }
 
