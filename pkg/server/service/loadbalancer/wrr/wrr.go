@@ -3,7 +3,6 @@ package wrr
 import (
 	"container/heap"
 	"fmt"
-	"math"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -16,7 +15,6 @@ type namedHandler struct {
 	http.Handler
 	name     string
 	weight   float64
-	index    int64
 	deadline float64
 }
 
@@ -51,10 +49,6 @@ func (n namedHandlers) Len() int { return len(n) }
 
 // Less implements heap.Interface/sort.Interface
 func (n namedHandlers) Less(i, j int) bool {
-	// We want Pop to give us the highest, not lowest, priority so we use greater than here.
-	if n[i].deadline == n[j].deadline {
-		return n[i].index < n[j].index
-	}
 	return n[i].deadline < n[j].deadline
 }
 
@@ -83,13 +77,13 @@ func (n *namedHandlers) Pop() interface{} {
 // Balancer is a WeightedRoundRobin load balancer based on Earliest Deadline First (EDF).
 // (https://en.wikipedia.org/wiki/Earliest_deadline_first_scheduling)
 // Each pick from the schedule has the earliest deadline entry selected. Entries have deadlines set
-// at current time + 1 / weight, providing weighted round robin behavior with floating point
+// at currentDeadline + 1 / weight, providing weighted round robin behavior with floating point
 // weights and an O(log n) pick time.
 type Balancer struct {
 	handlers     *namedHandlers
 	mutex        *sync.Mutex
-	curIndex     int64
 	curDeadline  float64
+	curLock      sync.RWMutex
 	baseDeadline float64 // for fixing starting bias
 	stickyCookie *stickyCookie
 }
@@ -104,12 +98,12 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	handler := heap.Pop(b.handlers).(*namedHandler)
 	// curDeadline should be handler's deadline so that new added entry would have a fair
 	// competition environment with the old ones.
+	b.curLock.Lock()
 	b.curDeadline = handler.deadline
+	b.curLock.Unlock()
 	handler.deadline += 1 / handler.weight
-	b.curIndex++
-	handler.index = b.curIndex
 	heap.Push(b.handlers, handler)
-	log.WithoutContext().Debugf("Service Select: %s", handler.name)
+	log.WithoutContext().Debugf("Service selected by WRR: %s", handler.name)
 	return handler, nil
 }
 
@@ -156,11 +150,8 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 		return
 	}
 	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
+	b.curLock.RLock()
 	h.deadline = b.curDeadline + 1/h.weight
-	if h.deadline < b.baseDeadline {
-		h.deadline = math.Ceil((b.baseDeadline-h.deadline)*h.weight) / h.weight
-	}
-	b.curIndex++
-	h.index = b.curIndex
+	b.curLock.RUnlock()
 	heap.Push(b.handlers, h)
 }
