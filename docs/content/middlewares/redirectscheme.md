@@ -15,6 +15,132 @@ RedirectScheme redirect request from a scheme to another.
 # Redirect to https
 labels:
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
+```
+
+```yaml tab="Kubernetes"
+# Redirect to https
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-redirectscheme
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+```
+
+```yaml tab="Consul Catalog"
+# Redirect to https
+labels:
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme": "https"
+  "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent": "true"
+}
+```
+
+```yaml tab="Rancher"
+# Redirect to https
+labels:
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
+```
+
+```toml tab="File (TOML)"
+# Redirect to https
+[http.middlewares]
+  [http.middlewares.test-redirectscheme.redirectScheme]
+    scheme = "https"
+    permanent = true
+```
+
+```yaml tab="File (YAML)"
+# Redirect to https
+http:
+  middlewares:
+    test-redirectscheme:
+      redirectScheme:
+        scheme: https
+        permanent: true
+```
+
+## Configuration Options
+
+### `permanent`
+
+Set the `permanent` option to `true` to apply a permanent redirection.
+
+```yaml tab="Docker"
+# Redirect to https
+labels:
+  # ...
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
+```
+
+```yaml tab="Kubernetes"
+# Redirect to https
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-redirectscheme
+spec:
+  redirectScheme:
+    # ...
+    permanent: true
+```
+
+```yaml tab="Consul Catalog"
+# Redirect to https
+labels:
+  # ...
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
+```
+
+```json tab="Marathon"
+"labels": {
+
+  "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent": "true"
+}
+```
+
+```yaml tab="Rancher"
+# Redirect to https
+labels:
+  # ...
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
+```
+
+```toml tab="File (TOML)"
+# Redirect to https
+[http.middlewares]
+  [http.middlewares.test-redirectscheme.redirectScheme]
+    # ...
+    permanent = true
+```
+
+```yaml tab="File (YAML)"
+# Redirect to https
+http:
+  middlewares:
+    test-redirectscheme:
+      redirectScheme:
+        # ...
+        permanent: true
+```
+
+### `scheme`
+
+The `scheme` option defines the scheme of the new url.
+
+```yaml tab="Docker"
+# Redirect to https
+labels:
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
 ```
 
 ```yaml tab="Kubernetes"
@@ -31,7 +157,7 @@ spec:
 ```yaml tab="Consul Catalog"
 # Redirect to https
 labels:
-- "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
 ```
 
 ```json tab="Marathon"
@@ -62,16 +188,64 @@ http:
         scheme: https
 ```
 
-## Configuration Options
-
-### `permanent`
-
-Set the `permanent` option to `true` to apply a permanent redirection.
-
-### `scheme`
-
-The `scheme` option defines the scheme of the new url.
-
 ### `port`
 
 The `port` option defines the port of the new url.
+
+```yaml tab="Docker"
+# Redirect to https
+labels:
+  # ...
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.port=443"
+```
+
+```yaml tab="Kubernetes"
+# Redirect to https
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-redirectscheme
+spec:
+  redirectScheme:
+    # ...
+    port: 443
+```
+
+```yaml tab="Consul Catalog"
+# Redirect to https
+labels:
+  # ...
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.port=443"
+```
+
+```json tab="Marathon"
+"labels": {
+
+  "traefik.http.middlewares.test-redirectscheme.redirectscheme.port": "443"
+}
+```
+
+```yaml tab="Rancher"
+# Redirect to https
+labels:
+  # ...
+  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.port=443"
+```
+
+```toml tab="File (TOML)"
+# Redirect to https
+[http.middlewares]
+  [http.middlewares.test-redirectscheme.redirectScheme]
+    # ...
+    port = 443
+```
+
+```yaml tab="File (YAML)"
+# Redirect to https
+http:
+  middlewares:
+    test-redirectscheme:
+      redirectScheme:
+        # ...
+        port: 443
+```
