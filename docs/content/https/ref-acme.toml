@@ -1,5 +1,5 @@
 # Enable ACME (Let's Encrypt): automatic SSL.
-[certificatesResolvers.sample.acme]
+[certificatesResolvers.myresolver.acme]
 
   # Email address used for registration.
   #
@@ -35,13 +35,13 @@
   #
   # Optional (but recommended)
   #
-  [certificatesResolvers.le.acme.tlsChallenge]
+  [certificatesResolvers.myresolver.acme.tlsChallenge]
 
   # Use a HTTP-01 ACME challenge.
   #
   # Optional
   #
-  # [certificatesResolvers.le.acme.httpChallenge]
+  # [certificatesResolvers.myresolver.acme.httpChallenge]
 
     # EntryPoint to use for the HTTP-01 challenges.
     #
@@ -54,7 +54,7 @@
   #
   # Optional
   #
-  # [certificatesResolvers.le.acme.dnsChallenge]
+  # [certificatesResolvers.myresolver.acme.dnsChallenge]
 
     # DNS provider used.
     #

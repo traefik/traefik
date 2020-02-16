@@ -23,6 +23,25 @@ Certificates are requested for domain names retrieved from the router's [dynamic
 
 You can read more about this retrieval mechanism in the following section: [ACME Domain Definition](#domain-definition).
 
+!!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
+
+??? note "Configuration Reference"
+    
+    There are many available options for ACME.
+    For a quick glance at what's possible, browse the configuration reference:
+    
+    ```toml tab="File (TOML)"
+    --8<-- "content/https/ref-acme.toml"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    --8<-- "content/https/ref-acme.yaml"
+    ```
+    
+    ```bash tab="CLI"
+    --8<-- "content/https/ref-acme.txt"
+    ```
+
 ## Domain Definition
 
 Certificate resolvers request certificates for a set of the domain names 
@@ -59,10 +78,10 @@ Please check the [configuration examples below](#configuration-examples) for mor
       [entryPoints.websecure]
         address = ":443"
     
-    [certificatesResolvers.le.acme]
+    [certificatesResolvers.myresolver.acme]
       email = "your-email@your-domain.org"
       storage = "acme.json"
-      [certificatesResolvers.le.acme.httpChallenge]
+      [certificatesResolvers.myresolver.acme.httpChallenge]
         # used during the challenge
         entryPoint = "web"
     ```
@@ -89,30 +108,13 @@ Please check the [configuration examples below](#configuration-examples) for mor
     --entryPoints.web.address=:80
     --entryPoints.websecure.address=:443
     # ...
-    --certificatesResolvers.le.acme.email=your-email@your-domain.org
-    --certificatesResolvers.le.acme.storage=acme.json
+    --certificatesResolvers.myresolver.acme.email=your-email@your-domain.org
+    --certificatesResolvers.myresolver.acme.storage=acme.json
     # used during the challenge
-    --certificatesResolvers.le.acme.httpChallenge.entryPoint=web
+    --certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web
     ```
 
 !!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
-
-??? note "Configuration Reference"
-    
-    There are many available options for ACME.
-    For a quick glance at what's possible, browse the configuration reference:
-    
-    ```toml tab="File (TOML)"
-    --8<-- "content/https/ref-acme.toml"
-    ```
-    
-    ```yaml tab="File (YAML)"
-    --8<-- "content/https/ref-acme.yaml"
-    ```
-    
-    ```bash tab="CLI"
-    --8<-- "content/https/ref-acme.txt"
-    ```
 
 ??? example "Single Domain from Router's Rule Example"
     
@@ -164,9 +166,9 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
 ??? example "Configuring the `tlsChallenge`"
 
     ```toml tab="File (TOML)"
-    [certificatesResolvers.le.acme]
+    [certificatesResolvers.myresolver.acme]
       # ...
-      [certificatesResolvers.le.acme.tlsChallenge]
+      [certificatesResolvers.myresolver.acme.tlsChallenge]
     ```
 
     ```yaml tab="File (YAML)"
@@ -179,7 +181,7 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
     
     ```bash tab="CLI"
     # ...
-    --certificatesResolvers.le.acme.tlsChallenge=true
+    --certificatesResolvers.myresolver.acme.tlsChallenge=true
     ```
 
 ### `httpChallenge`
@@ -187,7 +189,7 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
 Use the `HTTP-01` challenge to generate and renew ACME certificates by provisioning an HTTP resource under a well-known URI.
 
 As described on the Let's Encrypt [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72),
-when using the `HTTP-01` challenge, `certificatesResolvers.le.acme.httpChallenge.entryPoint` must be reachable by Let's Encrypt through port 80.
+when using the `HTTP-01` challenge, `certificatesResolvers.myresolver.acme.httpChallenge.entryPoint` must be reachable by Let's Encrypt through port 80.
 
 ??? example "Using an EntryPoint Called http for the `httpChallenge`"
 
@@ -199,9 +201,9 @@ when using the `HTTP-01` challenge, `certificatesResolvers.le.acme.httpChallenge
       [entryPoints.websecure]
         address = ":443"
     
-    [certificatesResolvers.le.acme]
+    [certificatesResolvers.myresolver.acme]
       # ...
-      [certificatesResolvers.le.acme.httpChallenge]
+      [certificatesResolvers.myresolver.acme.httpChallenge]
         entryPoint = "web"
     ```
 
@@ -225,7 +227,7 @@ when using the `HTTP-01` challenge, `certificatesResolvers.le.acme.httpChallenge
     --entryPoints.web.address=:80
     --entryPoints.websecure.address=:443
     # ...
-    --certificatesResolvers.le.acme.httpChallenge.entryPoint=web
+    --certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web
     ```
 
 !!! info ""
@@ -238,9 +240,9 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
 ??? example "Configuring a `dnsChallenge` with the DigitalOcean Provider"
 
     ```toml tab="File (TOML)"
-    [certificatesResolvers.le.acme]
+    [certificatesResolvers.myresolver.acme]
       # ...
-      [certificatesResolvers.le.acme.dnsChallenge]
+      [certificatesResolvers.myresolver.acme.dnsChallenge]
         provider = "digitalocean"
         delayBeforeCheck = 0
     # ...
@@ -259,8 +261,8 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
     
     ```bash tab="CLI"
     # ...
-    --certificatesResolvers.le.acme.dnsChallenge.provider=digitalocean
-    --certificatesResolvers.le.acme.dnsChallenge.delayBeforeCheck=0
+    --certificatesResolvers.myresolver.acme.dnsChallenge.provider=digitalocean
+    --certificatesResolvers.myresolver.acme.dnsChallenge.delayBeforeCheck=0
     # ...
     ```
 
@@ -358,9 +360,9 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 Use custom DNS servers to resolve the FQDN authority.
 
 ```toml tab="File (TOML)"
-[certificatesResolvers.le.acme]
+[certificatesResolvers.myresolver.acme]
   # ...
-  [certificatesResolvers.le.acme.dnsChallenge]
+  [certificatesResolvers.myresolver.acme.dnsChallenge]
     # ...
     resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
 ```
@@ -379,7 +381,7 @@ certificatesResolvers:
 
 ```bash tab="CLI"
 # ...
---certificatesResolvers.le.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53
+--certificatesResolvers.myresolver.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53
 ```
 
 #### Wildcard Domains
@@ -394,7 +396,7 @@ As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/stagi
 ??? example "Using the Let's Encrypt staging server"
 
     ```toml tab="File (TOML)"
-    [certificatesResolvers.le.acme]
+    [certificatesResolvers.myresolver.acme]
       # ...
       caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
       # ...
@@ -411,7 +413,7 @@ As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/stagi
 
     ```bash tab="CLI"
     # ...
-    --certificatesResolvers.le.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+    --certificatesResolvers.myresolver.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
     # ...
     ```
 
@@ -420,7 +422,7 @@ As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/stagi
 The `storage` option sets the location where your ACME certificates are saved to.
 
 ```toml tab="File (TOML)"
-[certificatesResolvers.le.acme]
+[certificatesResolvers.myresolver.acme]
   # ...
   storage = "acme.json"
   # ...
@@ -437,7 +439,7 @@ certificatesResolvers:
 
 ```bash tab="CLI"
 # ...
---certificatesResolvers.le.acme.storage=acme.json
+--certificatesResolvers.myresolver.acme.storage=acme.json
 # ...
 ```
 

@@ -18,13 +18,13 @@ For the HTTP challenge you will need:
 --8<-- "content/user-guides/docker-compose/acme-http/docker-compose.yml"
 ```
 
-- Replace `postmaster@mydomain.com` by your **own email** within the `certificatesresolvers.myhttpchallenge.acme.email` command line argument of the `traefik` service.
+- Replace `postmaster@mydomain.com` by your **own email** within the `certificatesresolvers.myresolver.acme.email` command line argument of the `traefik` service.
 - Replace `whoami.mydomain.com` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
 - Optionally uncomment the following lines if you want to test/debug:
 
 	```yaml
 	#- "--log.level=DEBUG"
-	#- "--certificatesresolvers.myhttpchallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+	#- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
 	```
 
 - Run `docker-compose up -d` within the folder where you created the previous file.
@@ -54,12 +54,12 @@ ports:
 
 ```yaml
 command:
-  # Enable a http challenge named "myhttpchallenge"
-  - "--certificatesresolvers.myhttpchallenge.acme.httpchallenge=true"
+  # Enable a http challenge named "myresolver"
+  - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
   # Tell it to use our predefined entrypoint named "web"
-  - "--certificatesresolvers.myhttpchallenge.acme.httpchallenge.entrypoint=web"
+  - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
   # The email to provide to let's encrypt
-  - "--certificatesresolvers.myhttpchallenge.acme.email=postmaster@mydomain.com"
+  - "--certificatesresolvers.myresolver.acme.email=postmaster@mydomain.com"
 ```
 
 - We add a volume to store our certificates:
@@ -71,13 +71,13 @@ volumes:
 
 command:
   # Tell to store the certificate on a path under our volume
-  - "--certificatesresolvers.myhttpchallenge.acme.storage=/letsencrypt/acme.json"
+  - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
 ```
 
-- We configure the `whoami` service to tell Traefik to use the certificate resolver named `myhttpchallenge` we just configured:
+- We configure the `whoami` service to tell Traefik to use the certificate resolver named `myresolver` we just configured:
 
 ```yaml
 labels:
   # Uses the Host rule to define which certificate to issue
-  - "traefik.http.routers.whoami.tls.certresolver=myhttpchallenge"
+  - "traefik.http.routers.whoami.tls.certresolver=myresolver"
 ```

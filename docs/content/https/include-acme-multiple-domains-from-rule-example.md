@@ -4,7 +4,7 @@
 labels:
   - traefik.http.routers.blog.rule=(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)
   - traefik.http.routers.blog.tls=true
-  - traefik.http.routers.blog.tls.certresolver=le
+  - traefik.http.routers.blog.tls.certresolver=myresolver
 ```
 
 ```yaml tab="Docker (Swarm)"
@@ -13,7 +13,7 @@ deploy:
   labels:
     - traefik.http.routers.blog.rule=(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)
     - traefik.http.routers.blog.tls=true
-    - traefik.http.routers.blog.tls.certresolver=le
+    - traefik.http.routers.blog.tls.certresolver=myresolver
     - traefik.http.services.blog-svc.loadbalancer.server.port=8080"
 ```
 
@@ -32,14 +32,14 @@ spec:
     - name: blog
       port: 8080
   tls:
-    certresolver: le
+    certresolver: myresolver
 ```
 
 ```json tab="Marathon"
 labels: {
   "traefik.http.routers.blog.rule": "(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)",
   "traefik.http.routers.blog.tls": "true",
-  "traefik.http.routers.blog.tls.certresolver": "le",
+  "traefik.http.routers.blog.tls.certresolver": "myresolver",
   "traefik.http.services.blog-svc.loadbalancer.server.port": "8080"
 }
 ```
@@ -49,7 +49,7 @@ labels: {
 labels:
   - traefik.http.routers.blog.rule=(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)
   - traefik.http.routers.blog.tls=true
-  - traefik.http.routers.blog.tls.certresolver=le
+  - traefik.http.routers.blog.tls.certresolver=myresolver
 ```
 
 ```toml tab="File (TOML)"
@@ -58,7 +58,7 @@ labels:
   [http.routers.blog]
     rule = "(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)"
     [http.routers.blog.tls]
-      certResolver = "le"
+      certResolver = "myresolver"
 ```
 
 ```yaml tab="File (YAML)"
@@ -68,5 +68,5 @@ http:
     blog:
       rule: "(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)"
       tls:
-        certResolver: le
+        certResolver: myresolver
 ```

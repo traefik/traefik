@@ -681,7 +681,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 With the new core notions of v2 (introduced earlier in the section
 ["Frontends and Backends Are Dead... Long Live Routers, Middlewares, and Services"](#frontends-and-backends-are-dead-long-live-routers-middlewares-and-services)),
 transforming the URL path prefix of incoming requests is configured with [middlewares](../middlewares/overview.md),
-after the routing step with [router rule `PathPrefix`](https://docs.traefik.io/v2.0/routing/routers/#rule).
+after the routing step with [router rule `PathPrefix`](../routing/routers/index.md#rule).
 
 Use Case: Incoming requests to `http://company.org/admin` are forwarded to the webapplication "admin",
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
@@ -826,7 +826,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       entryPoint = "webs"
     [entryPoints.websecure]
       address = ":443"
-      [entryPoints.https.tls]
+      [entryPoints.websecure.tls]
     
     [acme]
       email = "your-email-here@my-awesome-app.org"
