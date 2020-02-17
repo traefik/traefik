@@ -520,8 +520,8 @@ func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
 
 	for _, tlsStore := range tlsStoreCRD {
 		namespace := tlsStore.Namespace
-		logger := log.FromContext(log.With(ctx, log.Str("tlsStore", tlsStore.Name), log.Str("namespace", namespace)))
 		secretName := tlsStore.Spec.DefaultCertificate.SecretName
+		logger := log.FromContext(log.With(ctx, log.Str("tlsStore", tlsStore.Name), log.Str("namespace", namespace), log.Str("secretName", secretName)))
 
 		secret, exists, err := client.GetSecret(namespace, secretName)
 		if err != nil {

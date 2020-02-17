@@ -897,13 +897,20 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
 Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore` objects
 or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
 
+!!! important "Default TLS Store"
+
+    Traefik currently only uses the [TLS Store named "default"](../../https/tls.md#certificates-stores).
+    This means that if you have two stores that are named default in different kubernetes namespaces,
+    they may be randomly chosen.
+    For the time being, please only configure one TLSSTore named default.
+
 !!! info "TLSStore Attributes"
    
     ```yaml tab="TLSStore"
     apiVersion: traefik.containo.us/v1alpha1
     kind: TLSStore
     metadata:
-      name: mytlsstore
+      name: default
       namespace: default
     
     spec:
@@ -921,7 +928,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
     apiVersion: traefik.containo.us/v1alpha1
     kind: TLSStore
     metadata:
-      name: mytlsstore
+      name: default
       namespace: default
     
     spec:
@@ -946,7 +953,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
           port: 80
       tls:
         store: 
-          name: mytlsstore
+          name: default
     ```
 
     ```yaml tab="Secret"
