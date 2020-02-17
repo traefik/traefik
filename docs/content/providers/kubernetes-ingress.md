@@ -326,7 +326,8 @@ providers:
 --providers.kubernetesingress.ingressendpoint.publishedservice=namespace/foo-service
 ```
 
-Published Kubernetes Service to copy status from. In the format of `namespace/service`.
+Published Kubernetes Service to copy status from.
+Format: `namespace/servicename`.
 
 ### `throttleDuration`
 
