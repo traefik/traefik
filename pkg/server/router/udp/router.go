@@ -3,6 +3,7 @@ package udp
 import (
 	"context"
 	"errors"
+	"sort"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -47,23 +48,40 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 
 		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
 
-		handler, err := m.buildEntryPointHandler(ctx, routers)
+		handlers, err := m.buildEntryPointHandler(ctx, routers)
 		if err != nil {
 			log.FromContext(ctx).Error(err)
 			continue
 		}
-		entryPointHandlers[entryPointName] = handler
+
+		if len(handlers) > 0 {
+			// As UDP support only one router per entrypoint, we only take the first one.
+			entryPointHandlers[entryPointName] = handlers[0]
+		}
 	}
 	return entryPointHandlers
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.UDPRouterInfo) (udp.Handler, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.UDPRouterInfo) ([]udp.Handler, error) {
+	var handlers []udp.Handler
 	logger := log.FromContext(ctx)
 
 	if len(configs) > 1 {
 		logger.Warn("Warning: config has more than one udp router for a given entrypoint")
 	}
-	for routerName, routerConfig := range configs {
+
+	var routersName []string
+	for routerName := range configs {
+		routersName = append(routersName, routerName)
+	}
+
+	sort.Slice(routersName, func(i, j int) bool {
+		return routersName[i] > routersName[j]
+	})
+
+	for _, routerName := range routersName {
+		routerConfig := configs[routerName]
+
 		ctxRouter := log.With(provider.AddInContext(ctx, routerName), log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctxRouter)
 
@@ -80,8 +98,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			logger.Error(err)
 			continue
 		}
-		return handler, nil
+		handlers = append(handlers, handler)
 	}
-
-	return nil, nil
+	return handlers, nil
 }
