@@ -570,7 +570,7 @@ func (s *SimpleSuite) TestTCPRouterConfigErrors(c *check.C) {
 }
 
 func (s *SimpleSuite) TestTCPServiceConfigErrors(c *check.C) {
-	file := s.adaptFile(c, "fixtures/service_errors.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/tcp/service_errors.toml", struct{}{})
 	defer os.Remove(file)
 
 	cmd, output := s.traefikCmd(withConfigFile(file))
@@ -606,7 +606,7 @@ func (s *SimpleSuite) TestUDPRouterConfigErrors(c *check.C) {
 }
 
 func (s *SimpleSuite) TestUDPServiceConfigErrors(c *check.C) {
-	file := s.adaptFile(c, "fixtures/service_errors.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/udp/service_errors.toml", struct{}{})
 	defer os.Remove(file)
 
 	cmd, output := s.traefikCmd(withConfigFile(file))
@@ -616,7 +616,7 @@ func (s *SimpleSuite) TestUDPServiceConfigErrors(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services", 3000*time.Millisecond, try.BodyContains(`["the udp service \"service1@file\" does not have any type defined"]`))
+	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services", 1000*time.Millisecond, try.BodyContains(`["the udp service \"service1@file\" does not have any type defined"]`))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
