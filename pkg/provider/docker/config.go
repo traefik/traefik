@@ -34,6 +34,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 			continue
 		}
 
+		var tcpOrUDP bool
 		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
 			err := p.buildTCPServiceConfiguration(ctxContainer, container, confFromLabel.TCP)
 			if err != nil {
@@ -41,6 +42,20 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 				continue
 			}
 			provider.BuildTCPRouterConfiguration(ctxContainer, confFromLabel.TCP)
+			tcpOrUDP = true
+		}
+
+		if len(confFromLabel.UDP.Routers) > 0 || len(confFromLabel.UDP.Services) > 0 {
+			err := p.buildUDPServiceConfiguration(ctxContainer, container, confFromLabel.UDP)
+			if err != nil {
+				logger.Error(err)
+				continue
+			}
+			provider.BuildUDPRouterConfiguration(ctxContainer, confFromLabel.UDP)
+			tcpOrUDP = true
+		}
+
+		if tcpOrUDP {
 			if len(confFromLabel.HTTP.Routers) == 0 &&
 				len(confFromLabel.HTTP.Middlewares) == 0 &&
 				len(confFromLabel.HTTP.Services) == 0 {
@@ -88,6 +103,28 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 	for name, service := range configuration.Services {
 		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
 		err := p.addServerTCP(ctxSvc, container, service.LoadBalancer)
+		if err != nil {
+			return fmt.Errorf("service %q error: %w", name, err)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.UDPConfiguration) error {
+	serviceName := getServiceName(container)
+
+	if len(configuration.Services) == 0 {
+		configuration.Services = make(map[string]*dynamic.UDPService)
+		lb := &dynamic.UDPServersLoadBalancer{}
+		configuration.Services[serviceName] = &dynamic.UDPService{
+			LoadBalancer: lb,
+		}
+	}
+
+	for name, service := range configuration.Services {
+		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
+		err := p.addServerUDP(ctxSvc, container, service.LoadBalancer)
 		if err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)
 		}
@@ -165,6 +202,36 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 		server := dynamic.TCPServer{}
 
 		loadBalancer.Servers = []dynamic.TCPServer{server}
+	}
+
+	if port == "" {
+		return errors.New("port is missing")
+	}
+
+	loadBalancer.Servers[0].Address = net.JoinHostPort(ip, port)
+	return nil
+}
+
+func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadBalancer *dynamic.UDPServersLoadBalancer) error {
+	if loadBalancer == nil {
+		return errors.New("load-balancer is not defined")
+	}
+
+	var serverPort string
+	if len(loadBalancer.Servers) > 0 {
+		serverPort = loadBalancer.Servers[0].Port
+		loadBalancer.Servers[0].Port = ""
+	}
+
+	ip, port, err := p.getIPPort(ctx, container, serverPort)
+	if err != nil {
+		return err
+	}
+
+	if len(loadBalancer.Servers) == 0 {
+		server := dynamic.UDPServer{}
+
+		loadBalancer.Servers = []dynamic.UDPServer{server}
 	}
 
 	if port == "" {
