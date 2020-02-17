@@ -52,7 +52,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 			log.FromContext(ctx).Warn("Config has more than one udp router for a given entrypoint.")
 		}
 
-		handlers, err := m.buildEntryPointHandler(ctx, routers)
+		handlers, err := m.buildEntryPointHandlers(ctx, routers)
 		if err != nil {
 			log.FromContext(ctx).Error(err)
 			continue
@@ -66,7 +66,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 	return entryPointHandlers
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.UDPRouterInfo) ([]udp.Handler, error) {
+func (m *Manager) buildEntryPointHandlers(ctx context.Context, configs map[string]*runtime.UDPRouterInfo) ([]udp.Handler, error) {
 	var rtNames []string
 	for routerName := range configs {
 		rtNames = append(rtNames, routerName)
