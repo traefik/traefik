@@ -310,7 +310,7 @@ _Optional, Default: empty_
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress.ingressEndpoint]
-  publishedService = "foo-service"
+  publishedService = "namespace/foo-service"
   # ...
 ```
 
@@ -318,15 +318,16 @@ _Optional, Default: empty_
 providers:
   kubernetesIngress:
     ingressEndpoint:
-      publishedService: "foo-service"
+      publishedService: "namespace/foo-service"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.ingressendpoint.publishedservice=foo-service
+--providers.kubernetesingress.ingressendpoint.publishedservice=namespace/foo-service
 ```
 
 Published Kubernetes Service to copy status from.
+Format: `namespace/servicename`.
 
 ### `throttleDuration`
 
