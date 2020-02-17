@@ -645,7 +645,7 @@ func createTempDir(t *testing.T, prefix string) string {
 	return tmpDir
 }
 
-func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, TLS bool) {
+func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 	logger, err := NewHandler(config)
 	require.NoError(t, err)
 	defer logger.Close()
@@ -669,7 +669,7 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, TLS bool) {
 			Path: testPath,
 		},
 	}
-	if TLS {
+	if enableTLS {
 		req.TLS = &tls.ConnectionState{}
 	}
 
