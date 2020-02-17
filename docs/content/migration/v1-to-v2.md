@@ -859,10 +859,10 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       [entryPoints.websecure]
         address = ":443"
     
-    [certificatesResolvers.sample.acme]
+    [certificatesResolvers.myresolver.acme]
       email = "your-email@your-domain.org"
       storage = "acme.json"
-      [certificatesResolvers.sample.acme.httpChallenge]
+      [certificatesResolvers.myresolver.acme.httpChallenge]
         # used during the challenge
         entryPoint = "web"
     ```
@@ -876,7 +876,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
         address: ":443"
     
     certificatesResolvers:
-      sample:
+      myresolver:
         acme:
           email: your-email@your-domain.org
           storage: acme.json
@@ -888,9 +888,9 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```bash tab="CLI"
     --entryPoints.web.address=:80
     --entryPoints.websecure.address=:443
-    --certificatesResolvers.sample.acme.email=your-email@your-domain.org
-    --certificatesResolvers.sample.acme.storage=acme.json
-    --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
+    --certificatesResolvers.myresolver.acme.email=your-email@your-domain.org
+    --certificatesResolvers.myresolver.acme.storage=acme.json
+    --certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web
     ```
 
 ## Traefik Logs

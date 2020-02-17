@@ -95,7 +95,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
         address: ":443"
     
     certificatesResolvers:
-      sample:
+      myresolver:
         acme:
           email: your-email@your-domain.org
           storage: acme.json
@@ -173,7 +173,7 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
 
     ```yaml tab="File (YAML)"
     certificatesResolvers:
-      sample:
+      myresolver:
         acme:
           # ...
           tlsChallenge: {}
@@ -216,7 +216,7 @@ when using the `HTTP-01` challenge, `certificatesResolvers.myresolver.acme.httpC
         address: ":443"
     
     certificatesResolvers:
-      sample:
+      myresolver:
         acme:
           # ...
           httpChallenge:
@@ -250,7 +250,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
     
     ```yaml tab="File (YAML)"
     certificatesResolvers:
-      sample:
+      myresolver:
         acme:
           # ...
           dnsChallenge:
@@ -369,7 +369,7 @@ Use custom DNS servers to resolve the FQDN authority.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
-  sample:
+  myresolver:
     acme:
       # ...
       dnsChallenge:
@@ -404,7 +404,7 @@ As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/stagi
     
     ```yaml tab="File (YAML)"
     certificatesResolvers:
-      sample:
+      myresolver:
         acme:
           # ...
           caServer: https://acme-staging-v02.api.letsencrypt.org/directory
@@ -430,7 +430,7 @@ The `storage` option sets the location where your ACME certificates are saved to
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
-  sample:
+  myresolver:
     acme:
       # ...
       storage: acme.json
