@@ -238,9 +238,6 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     [tls.options]
       [tls.options.default]
         minVersion = "VersionTLS12"
-    
-      [tls.options.myTLSOptions]
-        minVersion = "VersionTLS13"
         cipherSuites = [
           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
           "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
@@ -249,6 +246,9 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
           "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
         ]
+    
+      [tls.options.myTLSOptions]
+        minVersion = "VersionTLS13"
     ```
 
     ```yaml tab="File (YAML)"
@@ -268,12 +268,6 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       options:
         myTLSOptions:
           minVersion: VersionTLS13
-          cipherSuites:
-	        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-	        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
-	        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-	        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     ```
 
     ```yaml tab="K8s IngressRoute"
@@ -287,12 +281,6 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     
     spec:
       minVersion: VersionTLS13
-      cipherSuites:
-	    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-	    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
-	    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-	    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     
     ---
     apiVersion: traefik.containo.us/v1alpha1
