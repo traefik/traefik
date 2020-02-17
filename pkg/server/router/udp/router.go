@@ -49,7 +49,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
 
 		if len(routers) > 1 {
-			log.FromContext(ctx).Warn("Warning: config has more than one udp router for a given entrypoint")
+			log.FromContext(ctx).Warn("Config has more than one udp router for a given entrypoint.")
 		}
 
 		handlers, err := m.buildEntryPointHandler(ctx, routers)
@@ -67,18 +67,18 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.UDPRouterInfo) ([]udp.Handler, error) {
-	var handlers []udp.Handler
-
-	var routersName []string
+	var rtNames []string
 	for routerName := range configs {
-		routersName = append(routersName, routerName)
+		rtNames = append(rtNames, routerName)
 	}
 
-	sort.Slice(routersName, func(i, j int) bool {
-		return routersName[i] > routersName[j]
+	sort.Slice(rtNames, func(i, j int) bool {
+		return rtNames[i] > rtNames[j]
 	})
 
-	for _, routerName := range routersName {
+	var handlers []udp.Handler
+
+	for _, routerName := range rtNames {
 		routerConfig := configs[routerName]
 
 		ctxRouter := log.With(provider.AddInContext(ctx, routerName), log.Str(log.RouterName, routerName))
@@ -97,7 +97,9 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			logger.Error(err)
 			continue
 		}
+
 		handlers = append(handlers, handler)
 	}
+
 	return handlers, nil
 }
