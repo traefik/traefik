@@ -28,7 +28,7 @@
 				"traefik"
 			]
 		},
-		"whoami-test-https-whoami@kubernetes": {
+		"default-test-ingress-https-whoami-test-https-whoami@kubernetes": {
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"tls": {},
@@ -38,7 +38,7 @@
 				"web"
 			]
 		},
-		"whoami-test-whoami@kubernetes": {
+		"default-test-ingress-whoami-test-whoami@kubernetes": {
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"status": "enabled",
@@ -90,22 +90,22 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.6:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true
 			},
 			"status": "enabled",
 			"usedBy": [
-				"whoami-test-https-whoami@kubernetes",
-				"whoami-test-whoami@kubernetes"
+				"default-test-ingress-https-whoami-test-https-whoami@kubernetes",
+				"default-test-ingress-whoami-test-whoami@kubernetes"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
-				"http://10.42.0.6:80": "UP"
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.5:80": "UP"
 			}
 		}
 	}
