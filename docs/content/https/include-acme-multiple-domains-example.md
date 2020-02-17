@@ -4,7 +4,7 @@
 labels:
   - traefik.http.routers.blog.rule=Host(`company.com`) && Path(`/blog`)
   - traefik.http.routers.blog.tls=true
-  - traefik.http.routers.blog.tls.certresolver=le
+  - traefik.http.routers.blog.tls.certresolver=myresolver
   - traefik.http.routers.blog.tls.domains[0].main=company.org
   - traefik.http.routers.blog.tls.domains[0].sans=*.company.org
 ```
@@ -16,7 +16,7 @@ deploy:
     - traefik.http.routers.blog.rule=Host(`company.com`) && Path(`/blog`)
     - traefik.http.services.blog-svc.loadbalancer.server.port=8080"
     - traefik.http.routers.blog.tls=true
-    - traefik.http.routers.blog.tls.certresolver=le
+    - traefik.http.routers.blog.tls.certresolver=myresolver
     - traefik.http.routers.blog.tls.domains[0].main=company.org
     - traefik.http.routers.blog.tls.domains[0].sans=*.company.org
 ```
@@ -36,14 +36,14 @@ spec:
     - name: blog
       port: 8080
   tls:
-    certResolver: le
+    certResolver: myresolver
 ```
 
 ```json tab="Marathon"
 labels: {
   "traefik.http.routers.blog.rule": "Host(`company.com`) && Path(`/blog`)",
   "traefik.http.routers.blog.tls": "true",
-  "traefik.http.routers.blog.tls.certresolver": "le",
+  "traefik.http.routers.blog.tls.certresolver": "myresolver",
   "traefik.http.routers.blog.tls.domains[0].main": "company.com",
   "traefik.http.routers.blog.tls.domains[0].sans": "*.company.com",
   "traefik.http.services.blog-svc.loadbalancer.server.port": "8080"
@@ -55,7 +55,7 @@ labels: {
 labels:
   - traefik.http.routers.blog.rule=Host(`company.com`) && Path(`/blog`)
   - traefik.http.routers.blog.tls=true
-  - traefik.http.routers.blog.tls.certresolver=le
+  - traefik.http.routers.blog.tls.certresolver=myresolver
   - traefik.http.routers.blog.tls.domains[0].main=company.org
   - traefik.http.routers.blog.tls.domains[0].sans=*.company.org
 ```
@@ -66,7 +66,7 @@ labels:
   [http.routers.blog]
     rule = "Host(`company.com`) && Path(`/blog`)"
     [http.routers.blog.tls]
-      certResolver = "le" # From static configuration
+      certResolver = "myresolver" # From static configuration
       [[http.routers.blog.tls.domains]]
         main = "company.org"
         sans = ["*.company.org"]
@@ -79,7 +79,7 @@ http:
     blog:
       rule: "Host(`company.com`) && Path(`/blog`)"
       tls:
-        certResolver: le
+        certResolver: myresolver
         domains:
           - main: "company.org"
             sans:

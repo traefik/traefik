@@ -681,7 +681,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 With the new core notions of v2 (introduced earlier in the section
 ["Frontends and Backends Are Dead... Long Live Routers, Middlewares, and Services"](#frontends-and-backends-are-dead-long-live-routers-middlewares-and-services)),
 transforming the URL path prefix of incoming requests is configured with [middlewares](../middlewares/overview.md),
-after the routing step with [router rule `PathPrefix`](https://docs.traefik.io/v2.0/routing/routers/#rule).
+after the routing step with [router rule `PathPrefix`](../routing/routers/index.md#rule).
 
 Use Case: Incoming requests to `http://company.org/admin` are forwarded to the webapplication "admin",
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
@@ -826,7 +826,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       entryPoint = "webs"
     [entryPoints.websecure]
       address = ":443"
-      [entryPoints.https.tls]
+      [entryPoints.websecure.tls]
     
     [acme]
       email = "your-email-here@my-awesome-app.org"
@@ -859,10 +859,10 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       [entryPoints.websecure]
         address = ":443"
     
-    [certificatesResolvers.sample.acme]
+    [certificatesResolvers.myresolver.acme]
       email = "your-email@your-domain.org"
       storage = "acme.json"
-      [certificatesResolvers.sample.acme.httpChallenge]
+      [certificatesResolvers.myresolver.acme.httpChallenge]
         # used during the challenge
         entryPoint = "web"
     ```
@@ -876,7 +876,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
         address: ":443"
     
     certificatesResolvers:
-      sample:
+      myresolver:
         acme:
           email: your-email@your-domain.org
           storage: acme.json
@@ -888,9 +888,9 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```bash tab="CLI"
     --entryPoints.web.address=:80
     --entryPoints.websecure.address=:443
-    --certificatesResolvers.sample.acme.email=your-email@your-domain.org
-    --certificatesResolvers.sample.acme.storage=acme.json
-    --certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
+    --certificatesResolvers.myresolver.acme.email=your-email@your-domain.org
+    --certificatesResolvers.myresolver.acme.storage=acme.json
+    --certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web
     ```
 
 ## Traefik Logs
