@@ -507,7 +507,7 @@ You can declare TCP Routers and/or Services using labels.
     ```yaml
     - "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100"
     ```
-
+    
 ### UDP
 
 You can declare UDP Routers and/or Services using labels.
@@ -519,8 +519,8 @@ You can declare UDP Routers and/or Services using labels.
          my-container:
            # ...
            labels:
-             - "traefik.UDP.routers.my-router.entrypoints=mydns"
-             - "traefik.UDP.services.my-service.loadbalancer.server.port=4123"
+             - "traefik.udp.routers.my-router.entrypoint=udp"
+             - "traefik.udp.services.my-service.loadbalancer.server.port=4123"
     ```
 
 !!! warning "UDP and HTTP"
@@ -530,30 +530,30 @@ You can declare UDP Routers and/or Services using labels.
 
 #### UDP Routers
 
-??? info "`traefik.UDP.routers.<router_name>.entrypoints`"
+??? info "`traefik.udp.routers.<router_name>.entrypoints`"
 
     See [entry points](../routers/index.md#entrypoints_1) for more information.
 
     ```yaml
-    - "traefik.UDP.routers.myUDProuter.entrypoints=ep1,ep2"
+    - "traefik.udp.routers.myudprouter.entrypoints=ep1,ep2"
     ```
 
-??? info "`traefik.UDP.routers.<router_name>.service`"
+??? info "`traefik.udp.routers.<router_name>.service`"
 
     See [service](../routers/index.md#services) for more information.
 
     ```yaml
-    - "traefik.UDP.routers.myUDProuter.service=myservice"
+    - "traefik.udp.routers.myudprouter.service=myservice"
     ```
 
 #### UDP Services
 
-??? info "`traefik.UDP.services.<service_name>.loadbalancer.server.port`"
+??? info "`traefik.udp.services.<service_name>.loadbalancer.server.port`"
 
     Registers a port of the application.
 
     ```yaml
-    - "traefik.UDP.services.myUDPservice.loadbalancer.server.port=423"
+    - "traefik.udp.services.myudpservice.loadbalancer.server.port=423"
     ```
 
 ### Specific Provider Options
