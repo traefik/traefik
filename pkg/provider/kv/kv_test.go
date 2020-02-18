@@ -224,6 +224,16 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/tcp/services/TCPService02/weighted/services/0/weight":                               "42",
 		"traefik/tcp/services/TCPService02/weighted/services/1/name":                                 "foobar",
 		"traefik/tcp/services/TCPService02/weighted/services/1/weight":                               "43",
+		"traefik/udp/routers/UDPRouter0/entrypoints/0":                                               "foobar",
+		"traefik/udp/routers/UDPRouter0/entrypoints/1":                                               "foobar",
+		"traefik/udp/routers/UDPRouter0/service":                                                     "foobar",
+		"traefik/udp/routers/UDPRouter1/entrypoints/0":                                               "foobar",
+		"traefik/udp/routers/UDPRouter1/entrypoints/1":                                               "foobar",
+		"traefik/udp/routers/UDPRouter1/service":                                                     "foobar",
+		"traefik/udp/services/UDPService01/loadBalancer/servers/0/address":                           "foobar",
+		"traefik/udp/services/UDPService01/loadBalancer/servers/1/address":                           "foobar",
+		"traefik/udp/services/UDPService02/loadBalancer/servers/0/address":                           "foobar",
+		"traefik/udp/services/UDPService02/loadBalancer/servers/1/address":                           "foobar",
 		"traefik/tls/options/Options0/minVersion":                                                    "foobar",
 		"traefik/tls/options/Options0/maxVersion":                                                    "foobar",
 		"traefik/tls/options/Options0/cipherSuites/0":                                                "foobar",
@@ -735,6 +745,36 @@ func Test_buildConfiguration(t *testing.T) {
 								Name:   "foobar",
 								Weight: func(v int) *int { return &v }(43),
 							},
+						},
+					},
+				},
+			},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers: map[string]*dynamic.UDPRouter{
+				"UDPRouter0": {
+					EntryPoints: []string{"foobar", "foobar"},
+					Service:     "foobar",
+				},
+				"UDPRouter1": {
+					EntryPoints: []string{"foobar", "foobar"},
+					Service:     "foobar",
+				},
+			},
+			Services: map[string]*dynamic.UDPService{
+				"UDPService01": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
+							{Address: "foobar"},
+							{Address: "foobar"},
+						},
+					},
+				},
+				"UDPService02": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
+							{Address: "foobar"},
+							{Address: "foobar"},
 						},
 					},
 				},
