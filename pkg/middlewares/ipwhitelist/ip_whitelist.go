@@ -43,7 +43,11 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, bui
 		if whitelist, exists := configs[whitelistName]; exists {
 			if whitelist.IPWhiteList != nil {
 				sourceRange = append(sourceRange, whitelist.IPWhiteList.SourceRange...)
+			} else {
+				logger.Errorf("middleware is not a whitelist: %s", whitelistName)
 			}
+		} else {
+			logger.Errorf("middleware does not exist: %s", whitelistName)
 		}
 	}
 
