@@ -507,7 +507,7 @@ You can declare TCP Routers and/or Services using labels.
     ```yaml
     - "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100"
     ```
-    
+
 ### UDP
 
 You can declare UDP Routers and/or Services using labels.
@@ -532,7 +532,7 @@ You can declare UDP Routers and/or Services using labels.
 
 ??? info "`traefik.udp.routers.<router_name>.entrypoints`"
 
-    See [entry points](../routers/index.md#entrypoints_1) for more information.
+    See [entry points](../routers/index.md#entrypoints_2) for more information.
 
     ```yaml
     - "traefik.udp.routers.myudprouter.entrypoints=ep1,ep2"
@@ -540,7 +540,7 @@ You can declare UDP Routers and/or Services using labels.
 
 ??? info "`traefik.udp.routers.<router_name>.service`"
 
-    See [service](../routers/index.md#services) for more information.
+    See [service](../routers/index.md#services_1) for more information.
 
     ```yaml
     - "traefik.udp.routers.myudprouter.service=myservice"
