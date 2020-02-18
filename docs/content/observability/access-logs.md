@@ -195,6 +195,7 @@ accessLog:
     | `RequestMethod`         | The HTTP method.                                                                                                                                                    |
     | `RequestPath`           | The HTTP request URI, not including the scheme, host or port.                                                                                                       |
     | `RequestProtocol`       | The version of HTTP requested.                                                                                                                                      |
+    | `RequestScheme`         | The HTTP scheme requested `http` or `https`.                                                                                                                        |
     | `RequestLine`           | `RequestMethod` + `RequestPath` + `RequestProtocol`                                                                                                                 |
     | `RequestContentSize`    | The number of bytes in the request entity (a.k.a. body) sent by the client.                                                                                         |
     | `OriginDuration`        | The time taken by the origin server ('upstream') to return its response.                                                                                            |
