@@ -71,6 +71,12 @@ The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using
 ### `appendWhiteLists`
 
 The `appendWhiteLists` option defines other whitelists to combine with this one. This allows modular whitelisting
+
+```yaml tab="Docker"
+# Accepts request from defined IPs in another whitelist
+labels:
+  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.appendwhitelists=other-whitelist"
+```
     
 ```yaml tab="Kubernetes"
 # Whitelisting appending IPs in other-whitelist
@@ -80,10 +86,42 @@ metadata:
   name: testIPwhitelist
 spec:
   ipWhiteList:
-	sourceRange:
-	  - 192.168.1.7
 	appendWhiteList:
 	  - name: other-whitelist
+```
+
+```yaml tab="Consul Catalog"
+# Accepts request from defined IPs in another whitelist
+- "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.appendwhitelists=other-whitelist"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.appendwhitelists=other-whitelist.7"
+}
+```
+
+```yaml tab="Rancher"
+# Accepts request from defined IPs in another whitelist
+labels:
+  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.appendwhitelists=other-whitelist"
+```
+
+```toml tab="File (TOML)"
+# Accepts request from defined IPs in another whitelist
+[http.middlewares]
+  [http.middlewares.test-ipwhitelist.ipWhiteList]
+    aooendWhiteLists = ["other-whitelist"]
+```
+
+```yaml tab="File (YAML)"
+# Accepts request from defined IPs in another whitelist
+http:
+  middlewares:
+    test-ipwhitelist:
+      ipWhiteList:
+        appendWhiteLists:
+          - other-whitelist
 ```
 
 ### `ipStrategy`
