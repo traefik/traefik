@@ -41,7 +41,7 @@ func main() {
 	// traefik config inits
 	tConfig := cmd.NewTraefikConfiguration()
 
-	loaders := []cli.ResourceLoader{&cli.FileLoader{}, &cli.FlagLoader{}, &cli.EnvLoader{}}
+	loaders := []cli.ResourceLoader{&cli.DirLoader{}, &cli.FileLoader{}, &cli.FlagLoader{}, &cli.EnvLoader{}}
 
 	cmdTraefik := &cli.Command{
 		Name: "traefik",

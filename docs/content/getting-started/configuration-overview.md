@@ -64,6 +64,12 @@ You can override this using the `configFile` argument.
 traefik --configFile=foo/bar/myconfigfile.toml
 ```
 
+The `--configFile` option accepts a directory, in which case it will load any configuration files present on it in lexical order.
+
+```bash
+traefik --configFile=food/bar/config.d/
+```
+
 ### Arguments
 
 To get the list of all available arguments:
