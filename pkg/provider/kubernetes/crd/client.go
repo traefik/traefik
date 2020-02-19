@@ -47,6 +47,7 @@ type Client interface {
 
 	GetIngressRoutes() []*v1alpha1.IngressRoute
 	GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP
+	GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP
 	GetMiddlewares() []*v1alpha1.Middleware
 	GetTraefikService(namespace, name string) (*v1alpha1.TraefikService, bool, error)
 	GetTraefikServices() []*v1alpha1.TraefikService
@@ -159,6 +160,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryCrd.Traefik().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().Middlewares().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().IngressRouteTCPs().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1alpha1().IngressRouteUDPs().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TLSOptions().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TLSStores().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TraefikServices().Informer().AddEventHandler(eventHandler)
@@ -224,6 +226,20 @@ func (c *clientWrapper) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
 		ings, err := factory.Traefik().V1alpha1().IngressRouteTCPs().Lister().List(c.labelSelector)
 		if err != nil {
 			log.Errorf("Failed to list tcp ingress routes in namespace %s: %v", ns, err)
+		}
+		result = append(result, ings...)
+	}
+
+	return result
+}
+
+func (c *clientWrapper) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
+	var result []*v1alpha1.IngressRouteUDP
+
+	for ns, factory := range c.factoriesCrd {
+		ings, err := factory.Traefik().V1alpha1().IngressRouteUDPs().Lister().List(c.labelSelector)
+		if err != nil {
+			log.Errorf("Failed to list udp ingress routes in namespace %s: %v", ns, err)
 		}
 		result = append(result, ings...)
 	}

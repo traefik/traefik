@@ -208,5 +208,35 @@
 				"default-test3.route-673acf455cb2dab0b43a@kubernetescrd"
 			]
 		}
+	},
+	"udpRouters": {
+		"default-test3.route-0@kubernetescrd": {
+			"entryPoints": [
+				"fooudp"
+			],
+			"service": "default-test3.route-0",
+			"status": "enabled",
+			"using": [
+				"fooudp"
+			]
+		}
+	},
+	"udpServices": {
+		"default-test3.route-0@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"address": "10.42.0.4:8090"
+					},
+					{
+						"address": "10.42.0.6:8090"
+					}
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-test3.route-0@kubernetescrd"
+			]
+		}
 	}
 }

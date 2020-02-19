@@ -37,6 +37,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&IngressRouteList{},
 		&IngressRouteTCP{},
 		&IngressRouteTCPList{},
+		&IngressRouteUDP{},
+		&IngressRouteUDPList{},
 		&Middleware{},
 		&MiddlewareList{},
 		&TLSOption{},
