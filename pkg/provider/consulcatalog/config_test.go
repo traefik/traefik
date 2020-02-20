@@ -1371,7 +1371,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "h2c://127.0.0.1:80",
+										URL: "h2c://127.0.0.1:8080",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -1419,7 +1419,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:8080",
 									},
 								},
 								PassHostHeader: Bool(true),
