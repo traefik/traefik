@@ -139,13 +139,13 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 
 	for serviceName := range servicesUDPToDelete {
 		logger.WithField(log.ServiceName, serviceName).
-			Errorf("Service UDP defined multiple times with different configurations in %v", servicesUDP[serviceName])
+			Errorf("UDP service defined multiple times with different configurations in %v", servicesUDP[serviceName])
 		delete(configuration.UDP.Services, serviceName)
 	}
 
 	for routerName := range routersUDPToDelete {
 		logger.WithField(log.RouterName, routerName).
-			Errorf("Router UDP defined multiple times with different configurations in %v", routersUDP[routerName])
+			Errorf("UDP router defined multiple times with different configurations in %v", routersUDP[routerName])
 		delete(configuration.UDP.Routers, routerName)
 	}
 
@@ -173,7 +173,7 @@ func AddServiceTCP(configuration *dynamic.TCPConfiguration, serviceName string, 
 	return true
 }
 
-// AddServiceUDP Adds a service to a configurations.
+// AddServiceUDP adds a service to a configuration.
 func AddServiceUDP(configuration *dynamic.UDPConfiguration, serviceName string, service *dynamic.UDPService) bool {
 	if _, ok := configuration.Services[serviceName]; !ok {
 		configuration.Services[serviceName] = service
@@ -198,7 +198,7 @@ func AddRouterTCP(configuration *dynamic.TCPConfiguration, routerName string, ro
 	return reflect.DeepEqual(configuration.Routers[routerName], router)
 }
 
-// AddRouterUDP Adds a router to a configurations.
+// AddRouterUDP adds a router to a configuration.
 func AddRouterUDP(configuration *dynamic.UDPConfiguration, routerName string, router *dynamic.UDPRouter) bool {
 	if _, ok := configuration.Routers[routerName]; !ok {
 		configuration.Routers[routerName] = router
@@ -295,6 +295,7 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 
 			for serviceName := range configuration.Services {
 				router.Service = serviceName
+				break
 			}
 		}
 	}
