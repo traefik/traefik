@@ -36,20 +36,20 @@ func New(sticky *dynamic.Sticky) *Balancer {
 	return balancer
 }
 
-// Len implements heap.Interface/sort.Interface
+// Len implements heap.Interface/sort.Interface.
 func (b *Balancer) Len() int { return len(b.handlers) }
 
-// Less implements heap.Interface/sort.Interface
+// Less implements heap.Interface/sort.Interface.
 func (b *Balancer) Less(i, j int) bool {
 	return b.handlers[i].deadline < b.handlers[j].deadline
 }
 
-// Swap implements heap.Interface/sort.Interface
+// Swap implements heap.Interface/sort.Interface.
 func (b *Balancer) Swap(i, j int) {
 	b.handlers[i], b.handlers[j] = b.handlers[j], b.handlers[i]
 }
 
-// Push implements heap.Interface for pushing an item into the heap
+// Push implements heap.Interface for pushing an item into the heap.
 func (b *Balancer) Push(x interface{}) {
 	h, ok := x.(*namedHandler)
 	if !ok {
@@ -58,7 +58,8 @@ func (b *Balancer) Push(x interface{}) {
 	b.handlers = append(b.handlers, h)
 }
 
-// Pop implements heap.Interface for poping an item from the heap
+// Pop implements heap.Interface for poping an item from the heap.
+// It panics if b.Len() < 1.
 func (b *Balancer) Pop() interface{} {
 	h := b.handlers[len(b.handlers)-1]
 	b.handlers = b.handlers[0 : len(b.handlers)-1]
