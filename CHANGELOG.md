@@ -1,5 +1,20 @@
 # Change Log
 
+## [v1.7.21](https://github.com/containous/traefik/tree/v1.7.21) (2020-02-20)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.20...v1.7.21)
+
+**Bug fixes:**
+- **[acme]** Fix dnspod update. ([#6240](https://github.com/containous/traefik/pull/6240) by [iineva](https://github.com/iineva))
+- **[acme]** Fix finding proper provided certificate when ACME is enabled ([#5873](https://github.com/containous/traefik/pull/5873) by [yazd](https://github.com/yazd))
+- **[authentication,middleware]** don&#39;t create http client in each request in forward auth ([#6273](https://github.com/containous/traefik/pull/6273) by [juliens](https://github.com/juliens))
+- **[ecs]** fix: skip ECS container when information are missing instead of panic. ([#6071](https://github.com/containous/traefik/pull/6071) by [ldez](https://github.com/ldez))
+- **[k8s]** Add edge case for root path with rewrite-target ([#6005](https://github.com/containous/traefik/pull/6005) by [dtomcej](https://github.com/dtomcej))
+
+**Documentation:**
+- **[k8s,k8s/ingress]** Update the k8s api version in the documentation ([#6162](https://github.com/containous/traefik/pull/6162) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[middleware]** Improve rate-limiting doc ([#6277](https://github.com/containous/traefik/pull/6277) by [mpl](https://github.com/mpl))
+- **[provider]** Fix sample for ssl-header in docs ([#6337](https://github.com/containous/traefik/pull/6337) by [pierresteiner](https://github.com/pierresteiner))
+
 ## [v1.7.20](https://github.com/containous/traefik/tree/v1.7.20) (2019-12-09)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.19...v1.7.20)
 
