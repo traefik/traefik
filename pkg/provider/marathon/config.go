@@ -51,32 +51,32 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 
 		var tcpOrUDP bool
 		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
+			tcpOrUDP = true
+
 			err := p.buildTCPServiceConfiguration(ctxApp, app, extraConf, confFromLabel.TCP)
 			if err != nil {
 				logger.Error(err)
-				continue
+			} else {
+				provider.BuildTCPRouterConfiguration(ctxApp, confFromLabel.TCP)
 			}
-			provider.BuildTCPRouterConfiguration(ctxApp, confFromLabel.TCP)
-			tcpOrUDP = true
 		}
 
 		if len(confFromLabel.UDP.Routers) > 0 || len(confFromLabel.UDP.Services) > 0 {
+			tcpOrUDP = true
+
 			err := p.buildUDPServiceConfiguration(ctxApp, app, extraConf, confFromLabel.UDP)
 			if err != nil {
 				logger.Error(err)
-				continue
+			} else {
+				provider.BuildUDPRouterConfiguration(ctxApp, confFromLabel.UDP)
 			}
-			provider.BuildUDPRouterConfiguration(ctxApp, confFromLabel.UDP)
-			tcpOrUDP = true
 		}
 
-		if tcpOrUDP {
-			if len(confFromLabel.HTTP.Routers) == 0 &&
-				len(confFromLabel.HTTP.Middlewares) == 0 &&
-				len(confFromLabel.HTTP.Services) == 0 {
-				configurations[app.ID] = confFromLabel
-				continue
-			}
+		if tcpOrUDP && len(confFromLabel.HTTP.Routers) == 0 &&
+			len(confFromLabel.HTTP.Middlewares) == 0 &&
+			len(confFromLabel.HTTP.Services) == 0 {
+			configurations[app.ID] = confFromLabel
+			continue
 		}
 
 		err = p.buildServiceConfiguration(ctxApp, app, extraConf, confFromLabel.HTTP)
@@ -131,14 +131,15 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.A
 		}
 
 		for _, task := range app.Tasks {
-			if p.taskFilter(ctx, *task, app) {
-				server, err := p.getServer(app, *task, extraConf, defaultServer)
-				if err != nil {
-					log.FromContext(appCtx).Errorf("Skip task: %v", err)
-					continue
-				}
-				servers = append(servers, server)
+			if !p.taskFilter(ctx, *task, app) {
+				continue
 			}
+			server, err := p.getServer(app, *task, extraConf, defaultServer)
+			if err != nil {
+				log.FromContext(appCtx).Errorf("Skip task: %v", err)
+				continue
+			}
+			servers = append(servers, server)
 		}
 		if len(servers) == 0 {
 			return fmt.Errorf("no server for the service %s", serviceName)

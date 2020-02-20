@@ -36,32 +36,32 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 
 		var tcpOrUDP bool
 		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
+			tcpOrUDP = true
+
 			err := p.buildTCPServiceConfiguration(ctxContainer, container, confFromLabel.TCP)
 			if err != nil {
 				logger.Error(err)
-				continue
+			} else {
+				provider.BuildTCPRouterConfiguration(ctxContainer, confFromLabel.TCP)
 			}
-			provider.BuildTCPRouterConfiguration(ctxContainer, confFromLabel.TCP)
-			tcpOrUDP = true
 		}
 
 		if len(confFromLabel.UDP.Routers) > 0 || len(confFromLabel.UDP.Services) > 0 {
+			tcpOrUDP = true
+
 			err := p.buildUDPServiceConfiguration(ctxContainer, container, confFromLabel.UDP)
 			if err != nil {
 				logger.Error(err)
-				continue
+			} else {
+				provider.BuildUDPRouterConfiguration(ctxContainer, confFromLabel.UDP)
 			}
-			provider.BuildUDPRouterConfiguration(ctxContainer, confFromLabel.UDP)
-			tcpOrUDP = true
 		}
 
-		if tcpOrUDP {
-			if len(confFromLabel.HTTP.Routers) == 0 &&
-				len(confFromLabel.HTTP.Middlewares) == 0 &&
-				len(confFromLabel.HTTP.Services) == 0 {
-				configurations[containerName] = confFromLabel
-				continue
-			}
+		if tcpOrUDP && len(confFromLabel.HTTP.Routers) == 0 &&
+			len(confFromLabel.HTTP.Middlewares) == 0 &&
+			len(confFromLabel.HTTP.Services) == 0 {
+			configurations[containerName] = confFromLabel
+			continue
 		}
 
 		err = p.buildServiceConfiguration(ctxContainer, container, confFromLabel.HTTP)

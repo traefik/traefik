@@ -284,19 +284,20 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDPConfiguration) {
 	for routerName, router := range configuration.Routers {
 		loggerRouter := log.FromContext(ctx).WithField(log.RouterName, routerName)
+		if len(router.Service) > 0 {
+			continue
+		}
 
-		if len(router.Service) == 0 {
-			if len(configuration.Services) > 1 {
-				delete(configuration.Routers, routerName)
-				loggerRouter.
-					Error("Could not define the service name for the router: too many services")
-				continue
-			}
+		if len(configuration.Services) > 1 {
+			delete(configuration.Routers, routerName)
+			loggerRouter.
+				Error("Could not define the service name for the router: too many services")
+			continue
+		}
 
-			for serviceName := range configuration.Services {
-				router.Service = serviceName
-				break
-			}
+		for serviceName := range configuration.Services {
+			router.Service = serviceName
+			break
 		}
 	}
 }

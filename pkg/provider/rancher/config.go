@@ -34,32 +34,32 @@ func (p *Provider) buildConfiguration(ctx context.Context, services []rancherDat
 
 		var tcpOrUDP bool
 		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
+			tcpOrUDP = true
+
 			err := p.buildTCPServiceConfiguration(ctxService, service, confFromLabel.TCP)
 			if err != nil {
 				logger.Error(err)
-				continue
+			} else {
+				provider.BuildTCPRouterConfiguration(ctxService, confFromLabel.TCP)
 			}
-			provider.BuildTCPRouterConfiguration(ctxService, confFromLabel.TCP)
-			tcpOrUDP = true
 		}
 
 		if len(confFromLabel.UDP.Routers) > 0 || len(confFromLabel.UDP.Services) > 0 {
+			tcpOrUDP = true
+
 			err := p.buildUDPServiceConfiguration(ctxService, service, confFromLabel.UDP)
 			if err != nil {
 				logger.Error(err)
-				continue
+			} else {
+				provider.BuildUDPRouterConfiguration(ctxService, confFromLabel.UDP)
 			}
-			provider.BuildUDPRouterConfiguration(ctxService, confFromLabel.UDP)
-			tcpOrUDP = true
 		}
 
-		if tcpOrUDP {
-			if len(confFromLabel.HTTP.Routers) == 0 &&
-				len(confFromLabel.HTTP.Middlewares) == 0 &&
-				len(confFromLabel.HTTP.Services) == 0 {
-				configurations[service.Name] = confFromLabel
-				continue
-			}
+		if tcpOrUDP && len(confFromLabel.HTTP.Routers) == 0 &&
+			len(confFromLabel.HTTP.Middlewares) == 0 &&
+			len(confFromLabel.HTTP.Services) == 0 {
+			configurations[service.Name] = confFromLabel
+			continue
 		}
 
 		err = p.buildServiceConfiguration(ctx, service, confFromLabel.HTTP)
