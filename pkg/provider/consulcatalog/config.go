@@ -40,9 +40,9 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 			err := p.buildTCPServiceConfiguration(ctxSvc, item, confFromLabel.TCP)
 			if err != nil {
 				logger.Error(err)
-			} else {
-				provider.BuildTCPRouterConfiguration(ctxSvc, confFromLabel.TCP)
+				continue
 			}
+			provider.BuildTCPRouterConfiguration(ctxSvc, confFromLabel.TCP)
 		}
 
 		if len(confFromLabel.UDP.Routers) > 0 || len(confFromLabel.UDP.Services) > 0 {
@@ -51,9 +51,9 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 			err := p.buildUDPServiceConfiguration(ctxSvc, item, confFromLabel.UDP)
 			if err != nil {
 				logger.Error(err)
-			} else {
-				provider.BuildUDPRouterConfiguration(ctxSvc, confFromLabel.UDP)
+				continue
 			}
+			provider.BuildUDPRouterConfiguration(ctxSvc, confFromLabel.UDP)
 		}
 
 		if tcpOrUDP && len(confFromLabel.HTTP.Routers) == 0 &&

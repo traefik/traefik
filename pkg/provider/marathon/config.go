@@ -56,9 +56,9 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 			err := p.buildTCPServiceConfiguration(ctxApp, app, extraConf, confFromLabel.TCP)
 			if err != nil {
 				logger.Error(err)
-			} else {
-				provider.BuildTCPRouterConfiguration(ctxApp, confFromLabel.TCP)
+				continue
 			}
+			provider.BuildTCPRouterConfiguration(ctxApp, confFromLabel.TCP)
 		}
 
 		if len(confFromLabel.UDP.Routers) > 0 || len(confFromLabel.UDP.Services) > 0 {

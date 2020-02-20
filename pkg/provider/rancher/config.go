@@ -39,9 +39,9 @@ func (p *Provider) buildConfiguration(ctx context.Context, services []rancherDat
 			err := p.buildTCPServiceConfiguration(ctxService, service, confFromLabel.TCP)
 			if err != nil {
 				logger.Error(err)
-			} else {
-				provider.BuildTCPRouterConfiguration(ctxService, confFromLabel.TCP)
+				continue
 			}
+			provider.BuildTCPRouterConfiguration(ctxService, confFromLabel.TCP)
 		}
 
 		if len(confFromLabel.UDP.Routers) > 0 || len(confFromLabel.UDP.Services) > 0 {
@@ -50,9 +50,9 @@ func (p *Provider) buildConfiguration(ctx context.Context, services []rancherDat
 			err := p.buildUDPServiceConfiguration(ctxService, service, confFromLabel.UDP)
 			if err != nil {
 				logger.Error(err)
-			} else {
-				provider.BuildUDPRouterConfiguration(ctxService, confFromLabel.UDP)
+				continue
 			}
+			provider.BuildUDPRouterConfiguration(ctxService, confFromLabel.UDP)
 		}
 
 		if tcpOrUDP && len(confFromLabel.HTTP.Routers) == 0 &&
