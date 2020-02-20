@@ -57,20 +57,20 @@ func (s Server) Serve(l net.Listener) error {
 			if http2VerboseLogs {
 				log.Debugf("Attempting h2c with prior knowledge.")
 			}
-			conn, err := initH2CWithPriorKnowledge(w)
+			conn, err := initH2CWithPriorKnowledge(w, s.closeHijackedConnQuietly)
 			if err != nil {
 				if http2VerboseLogs {
 					log.Debugf("Error h2c with prior knowledge: %v", err)
 				}
 				return
 			}
-			defer conn.Close()
+			defer s.closeHijackedConnQuietly(conn)
 			h2cSrv := &http2.Server{}
 			h2cSrv.ServeConn(conn, &http2.ServeConnOpts{Handler: originalHandler})
 			return
 		}
-		if conn, err := h2cUpgrade(w, r); err == nil {
-			defer conn.Close()
+		if conn, err := h2cUpgrade(w, r, s.closeHijackedConnQuietly); err == nil {
+			defer s.closeHijackedConnQuietly(conn)
 			h2cSrv := &http2.Server{}
 			h2cSrv.ServeConn(conn, &http2.ServeConnOpts{Handler: originalHandler})
 			return
@@ -80,12 +80,24 @@ func (s Server) Serve(l net.Listener) error {
 	return s.Server.Serve(l)
 }
 
+func (s Server) closeHijackedConnQuietly(conn net.Conn) {
+	connStateKey := conn
+	if rwConn, ok := conn.(*rwConn); ok {
+		connStateKey = rwConn.Conn
+	}
+
+	s.ConnState(connStateKey, http.StateClosed)
+	if err := conn.Close(); err != nil {
+		log.Debugf("Error closing hijacked connection: %v", err)
+	}
+}
+
 // initH2CWithPriorKnowledge implements creating a h2c connection with prior
 // knowledge (Section 3.4) and creates a net.Conn suitable for http2.ServeConn.
 // All we have to do is look for the client preface that is suppose to be part
 // of the body, and reforward the client preface on the net.Conn this function
 // creates.
-func initH2CWithPriorKnowledge(w http.ResponseWriter) (net.Conn, error) {
+func initH2CWithPriorKnowledge(w http.ResponseWriter, onFailureAfterHijack func(conn net.Conn)) (net.Conn, error) {
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
 		return nil, errors.New("hijack not supported")
@@ -100,6 +112,7 @@ func initH2CWithPriorKnowledge(w http.ResponseWriter) (net.Conn, error) {
 	buf := make([]byte, len(expectedBody))
 	n, err := io.ReadFull(rw, buf)
 	if err != nil {
+		onFailureAfterHijack(conn)
 		return nil, fmt.Errorf("fail to read body: %v", err)
 	}
 
@@ -112,7 +125,7 @@ func initH2CWithPriorKnowledge(w http.ResponseWriter) (net.Conn, error) {
 		return c, nil
 	}
 
-	conn.Close()
+	onFailureAfterHijack(conn)
 	if http2VerboseLogs {
 		log.Printf(
 			"Missing the request body portion of the client preface. Wanted: %v Got: %v",
@@ -139,7 +152,7 @@ func drainClientPreface(r io.Reader) error {
 }
 
 // h2cUpgrade establishes a h2c connection using the HTTP/1 upgrade (Section 3.2).
-func h2cUpgrade(w http.ResponseWriter, r *http.Request) (net.Conn, error) {
+func h2cUpgrade(w http.ResponseWriter, r *http.Request, onFailureAfterHijack func(conn net.Conn)) (net.Conn, error) {
 	if !isH2CUpgrade(r.Header) {
 		return nil, errors.New("non-conforming h2c headers")
 	}
@@ -167,6 +180,7 @@ func h2cUpgrade(w http.ResponseWriter, r *http.Request) (net.Conn, error) {
 	// A conforming client will now send an H2 client preface which need to drain
 	// since we already sent this.
 	if err := drainClientPreface(rw); err != nil {
+		onFailureAfterHijack(conn)
 		return nil, err
 	}
 
