@@ -1,6 +1,7 @@
 package accesslog
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -31,6 +32,7 @@ var (
 	testPath                = "testpath"
 	testPort                = 8181
 	testProto               = "HTTP/0.0"
+	testScheme              = "http"
 	testMethod              = http.MethodPost
 	testReferer             = "testReferer"
 	testUserAgent           = "testUserAgent"
@@ -183,6 +185,7 @@ func TestLoggerJSON(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		config   *types.AccessLog
+		tls      bool
 		expected map[string]func(t *testing.T, value interface{})
 	}{
 		{
@@ -198,6 +201,47 @@ func TestLoggerJSON(t *testing.T) {
 				RequestMethod:             assertString(testMethod),
 				RequestPath:               assertString(testPath),
 				RequestProtocol:           assertString(testProto),
+				RequestScheme:             assertString(testScheme),
+				RequestPort:               assertString("-"),
+				DownstreamStatus:          assertFloat64(float64(testStatus)),
+				DownstreamContentSize:     assertFloat64(float64(len(testContent))),
+				OriginContentSize:         assertFloat64(float64(len(testContent))),
+				OriginStatus:              assertFloat64(float64(testStatus)),
+				RequestRefererHeader:      assertString(testReferer),
+				RequestUserAgentHeader:    assertString(testUserAgent),
+				RouterName:                assertString(testRouterName),
+				ServiceURL:                assertString(testServiceName),
+				ClientUsername:            assertString(testUsername),
+				ClientHost:                assertString(testHostname),
+				ClientPort:                assertString(fmt.Sprintf("%d", testPort)),
+				ClientAddr:                assertString(fmt.Sprintf("%s:%d", testHostname, testPort)),
+				"level":                   assertString("info"),
+				"msg":                     assertString(""),
+				"downstream_Content-Type": assertString("text/plain; charset=utf-8"),
+				RequestCount:              assertFloat64NotZero(),
+				Duration:                  assertFloat64NotZero(),
+				Overhead:                  assertFloat64NotZero(),
+				RetryAttempts:             assertFloat64(float64(testRetryAttempts)),
+				"time":                    assertNotEmpty(),
+				"StartLocal":              assertNotEmpty(),
+				"StartUTC":                assertNotEmpty(),
+			},
+		},
+		{
+			desc: "default config, with TLS request",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   JSONFormat,
+			},
+			tls: true,
+			expected: map[string]func(t *testing.T, value interface{}){
+				RequestContentSize:        assertFloat64(0),
+				RequestHost:               assertString(testHostname),
+				RequestAddr:               assertString(testHostname),
+				RequestMethod:             assertString(testMethod),
+				RequestPath:               assertString(testPath),
+				RequestProtocol:           assertString(testProto),
+				RequestScheme:             assertString("https"),
 				RequestPort:               assertString("-"),
 				DownstreamStatus:          assertFloat64(float64(testStatus)),
 				DownstreamContentSize:     assertFloat64(float64(len(testContent))),
@@ -319,7 +363,11 @@ func TestLoggerJSON(t *testing.T) {
 			logFilePath := filepath.Join(tmpDir, logFileNameSuffix)
 
 			test.config.FilePath = logFilePath
-			doLogging(t, test.config)
+			if test.tls {
+				doLoggingTLS(t, test.config)
+			} else {
+				doLogging(t, test.config)
+			}
 
 			logData, err := ioutil.ReadFile(logFilePath)
 			require.NoError(t, err)
@@ -597,7 +645,7 @@ func createTempDir(t *testing.T, prefix string) string {
 	return tmpDir
 }
 
-func doLogging(t *testing.T, config *types.AccessLog) {
+func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 	logger, err := NewHandler(config)
 	require.NoError(t, err)
 	defer logger.Close()
@@ -621,8 +669,19 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 			Path: testPath,
 		},
 	}
+	if enableTLS {
+		req.TLS = &tls.ConnectionState{}
+	}
 
 	logger.ServeHTTP(httptest.NewRecorder(), req, http.HandlerFunc(logWriterTestHandlerFunc))
+}
+
+func doLoggingTLS(t *testing.T, config *types.AccessLog) {
+	doLoggingTLSOpt(t, config, true)
+}
+
+func doLogging(t *testing.T, config *types.AccessLog) {
+	doLoggingTLSOpt(t, config, false)
 }
 
 func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {

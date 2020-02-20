@@ -570,7 +570,7 @@ func (s *SimpleSuite) TestTCPRouterConfigErrors(c *check.C) {
 }
 
 func (s *SimpleSuite) TestTCPServiceConfigErrors(c *check.C) {
-	file := s.adaptFile(c, "fixtures/service_errors.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/tcp/service_errors.toml", struct{}{})
 	defer os.Remove(file)
 
 	cmd, output := s.traefikCmd(withConfigFile(file))
@@ -606,7 +606,7 @@ func (s *SimpleSuite) TestUDPRouterConfigErrors(c *check.C) {
 }
 
 func (s *SimpleSuite) TestUDPServiceConfigErrors(c *check.C) {
-	file := s.adaptFile(c, "fixtures/service_errors.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/udp/service_errors.toml", struct{}{})
 	defer os.Remove(file)
 
 	cmd, output := s.traefikCmd(withConfigFile(file))

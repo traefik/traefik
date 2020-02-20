@@ -193,6 +193,11 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	core[RequestPath] = urlCopyString
 	core[RequestProtocol] = req.Proto
 
+	core[RequestScheme] = "http"
+	if req.TLS != nil {
+		core[RequestScheme] = "https"
+	}
+
 	core[ClientAddr] = req.RemoteAddr
 	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
 
