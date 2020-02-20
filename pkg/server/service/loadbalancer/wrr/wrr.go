@@ -25,10 +25,7 @@ type stickyCookie struct {
 
 // New creates a new load balancer.
 func New(sticky *dynamic.Sticky) *Balancer {
-	handlers := make(namedHandlers, 0)
-	balancer := &Balancer{
-		handlers: &handlers,
-	}
+	balancer := &Balancer{}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
 			name:     sticky.Cookie.Name,
@@ -39,35 +36,32 @@ func New(sticky *dynamic.Sticky) *Balancer {
 	return balancer
 }
 
-type namedHandlers []*namedHandler
-
 // Len implements heap.Interface/sort.Interface
-func (n namedHandlers) Len() int { return len(n) }
+func (b *Balancer) Len() int { return len(b.handlers) }
 
 // Less implements heap.Interface/sort.Interface
-func (n namedHandlers) Less(i, j int) bool {
-	return n[i].deadline < n[j].deadline
+func (b *Balancer) Less(i, j int) bool {
+	return b.handlers[i].deadline < b.handlers[j].deadline
 }
 
 // Swap implements heap.Interface/sort.Interface
-func (n namedHandlers) Swap(i, j int) {
-	n[i], n[j] = n[j], n[i]
+func (b *Balancer) Swap(i, j int) {
+	b.handlers[i], b.handlers[j] = b.handlers[j], b.handlers[i]
 }
 
 // Push implements heap.Interface for pushing an item into the heap
-func (n *namedHandlers) Push(x interface{}) {
+func (b *Balancer) Push(x interface{}) {
 	h, ok := x.(*namedHandler)
 	if !ok {
 		return
 	}
-	*n = append(*n, h)
+	b.handlers = append(b.handlers, h)
 }
 
 // Pop implements heap.Interface for poping an item from the heap
-func (n *namedHandlers) Pop() interface{} {
-	old := *n
-	h := old[len(old)-1]
-	*n = old[0 : len(old)-1]
+func (b *Balancer) Pop() interface{} {
+	h := b.handlers[len(b.handlers)-1]
+	b.handlers = b.handlers[0 : len(b.handlers)-1]
 	return h
 }
 
@@ -80,23 +74,23 @@ type Balancer struct {
 	stickyCookie *stickyCookie
 
 	mutex       sync.RWMutex
-	handlers    *namedHandlers
+	handlers    []*namedHandler
 	curDeadline float64
 }
 
 func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
-	if b.handlers == nil || len(*b.handlers) == 0 {
+	if len(b.handlers) == 0 {
 		return nil, fmt.Errorf("no servers in the pool")
 	}
 	// Pick handler with closest deadline.
-	handler := heap.Pop(b.handlers).(*namedHandler)
+	handler := heap.Pop(b).(*namedHandler)
 	// curDeadline should be handler's deadline so that new added entry would have a fair
 	// competition environment with the old ones.
 	b.curDeadline = handler.deadline
 	handler.deadline += 1 / handler.weight
-	heap.Push(b.handlers, handler)
+	heap.Push(b, handler)
 	log.WithoutContext().Debugf("Service selected by WRR: %s", handler.name)
 	return handler, nil
 }
@@ -110,7 +104,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if err == nil && cookie != nil {
-			for _, handler := range *b.handlers {
+			for _, handler := range b.handlers {
 				if handler.name == cookie.Value {
 					handler.ServeHTTP(w, req)
 					return
@@ -149,5 +143,5 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	b.mutex.RLock()
 	h.deadline = b.curDeadline + 1/h.weight
 	b.mutex.RUnlock()
-	heap.Push(b.handlers, h)
+	heap.Push(b, h)
 }
