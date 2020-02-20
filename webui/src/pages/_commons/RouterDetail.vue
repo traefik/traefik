@@ -109,7 +109,7 @@
             </div>
           </div>
 
-          <div class="col-12 col-md-4 q-mb-lg path-block">
+          <div class="col-12 col-md-4 q-mb-lg path-block" v-if="protocol !== 'udp'">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-shield"></q-icon>
               <div class="app-title-label">TLS</div>

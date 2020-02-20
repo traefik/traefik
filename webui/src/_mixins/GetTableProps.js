@@ -100,7 +100,7 @@ const columnsByResource = {
     'tls',
     'provider'
   ],
-  udpRouters: ['status', 'entryPoints', 'name', 'service', 'tls', 'provider'],
+  udpRouters: ['status', 'entryPoints', 'name', 'service', 'provider'],
   services: ['status', 'name', 'type', 'servers', 'provider'],
   middlewares: ['status', 'name', 'type', 'provider']
 }
