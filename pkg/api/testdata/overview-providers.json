@@ -41,5 +41,17 @@
 			"total": 0,
 			"warnings": 0
 		}
+	},
+	"udp": {
+		"routers": {
+			"errors": 0,
+			"total": 0,
+			"warnings": 0
+		},
+		"services": {
+			"errors": 0,
+			"total": 0,
+			"warnings": 0
+		}
 	}
 }
