@@ -58,6 +58,14 @@ type TLSOptionListerExpansion interface{}
 // TLSOptionNamespaceLister.
 type TLSOptionNamespaceListerExpansion interface{}
 
+// TLSStoreListerExpansion allows custom methods to be added to
+// TLSStoreLister.
+type TLSStoreListerExpansion interface{}
+
+// TLSStoreNamespaceListerExpansion allows custom methods to be added to
+// TLSStoreNamespaceLister.
+type TLSStoreNamespaceListerExpansion interface{}
+
 // TraefikServiceListerExpansion allows custom methods to be added to
 // TraefikServiceLister.
 type TraefikServiceListerExpansion interface{}

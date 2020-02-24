@@ -746,6 +746,53 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:  "TLS with tls Store",
+			paths: []string{"tcp/services.yml", "tcp/with_tls_store.yml"},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{
+						"default": {
+							DefaultCertificate: &tls.Certificate{
+								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+							TLS:         &dynamic.RouterTCPTLSConfig{},
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+									{
+										Address: "10.10.0.2:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -1938,6 +1985,107 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "TLS with two default tls options",
+			paths: []string{"services.yml", "with_default_tls_options.yml", "with_default_tls_options_default_namespace.yml"},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-foo",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "TLS with default tls options",
+			paths: []string{"services.yml", "with_default_tls_options.yml"},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"default": {
+							MinVersion: "VersionTLS12",
+							CipherSuites: []string{
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_RSA_WITH_AES_256_GCM_SHA384",
+							},
+							ClientAuth: tls.ClientAuth{
+								CAFiles: []tls.FileOrContent{
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+									tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								},
+								ClientAuthType: "VerifyClientCertIfGiven",
+							},
+							SniStrict:                true,
+							PreferServerCipherSuites: true,
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-foo",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc:  "TLS with tls options and specific namespace",
 			paths: []string{"services.yml", "with_tls_options_and_specific_namespace.yml"},
 			expected: &dynamic.Configuration{
@@ -2367,6 +2515,93 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "TLS with tls store",
+			paths: []string{"services.yml", "with_tls_store.yml"},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{
+						"default": {
+							DefaultCertificate: &tls.Certificate{
+								CertFile: tls.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+								KeyFile:  tls.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "TLS with tls store default two times",
+			paths: []string{"services.yml", "with_tls_store.yml", "with_default_tls_store.yml"},
+			expected: &dynamic.Configuration{
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
 			},
 		},
 		{
