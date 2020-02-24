@@ -103,8 +103,6 @@ require (
 // Docker v19.03.6
 replace github.com/docker/docker => github.com/docker/engine v1.4.2-0.20200204220554-5f6d6f3f2203
 
-replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v12.4.1+incompatible
-
 // Containous forks
 replace (
 	github.com/abbot/go-http-auth => github.com/containous/go-http-auth v0.4.1-0.20180112153951-65b0cdae8d7f
