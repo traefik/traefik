@@ -177,6 +177,13 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.tcp.services.Service0.loadbalancer.TerminationDelay":                  "42",
 		"traefik.tcp.services.Service1.loadbalancer.server.Port":                       "42",
 		"traefik.tcp.services.Service1.loadbalancer.TerminationDelay":                  "42",
+
+		"traefik.udp.routers.Router0.entrypoints":                "foobar, fiibar",
+		"traefik.udp.routers.Router0.service":                    "foobar",
+		"traefik.udp.routers.Router1.entrypoints":                "foobar, fiibar",
+		"traefik.udp.routers.Router1.service":                    "foobar",
+		"traefik.udp.services.Service0.loadbalancer.server.Port": "42",
+		"traefik.udp.services.Service1.loadbalancer.server.Port": "42",
 	}
 
 	configuration, err := DecodeConfiguration(labels)
@@ -229,6 +236,44 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
+					},
+				},
+			},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers: map[string]*dynamic.UDPRouter{
+				"Router0": {
+					EntryPoints: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service: "foobar",
+				},
+				"Router1": {
+					EntryPoints: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service: "foobar",
+				},
+			},
+			Services: map[string]*dynamic.UDPService{
+				"Service0": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
+							{
+								Port: "42",
+							},
+						},
+					},
+				},
+				"Service1": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
+							{
+								Port: "42",
+							},
+						},
 					},
 				},
 			},
@@ -627,11 +672,51 @@ func TestEncodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
+						TerminationDelay: func(i int) *int { return &i }(42),
 					},
 				},
 				"Service1": {
 					LoadBalancer: &dynamic.TCPServersLoadBalancer{
 						Servers: []dynamic.TCPServer{
+							{
+								Port: "42",
+							},
+						},
+						TerminationDelay: func(i int) *int { return &i }(42),
+					},
+				},
+			},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers: map[string]*dynamic.UDPRouter{
+				"Router0": {
+					EntryPoints: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service: "foobar",
+				},
+				"Router1": {
+					EntryPoints: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service: "foobar",
+				},
+			},
+			Services: map[string]*dynamic.UDPService{
+				"Service0": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
+							{
+								Port: "42",
+							},
+						},
+					},
+				},
+				"Service1": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
 							{
 								Port: "42",
 							},
@@ -1147,18 +1232,27 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 
-		"traefik.TCP.Routers.Router0.Rule":                       "foobar",
-		"traefik.TCP.Routers.Router0.EntryPoints":                "foobar, fiibar",
-		"traefik.TCP.Routers.Router0.Service":                    "foobar",
-		"traefik.TCP.Routers.Router0.TLS.Passthrough":            "false",
-		"traefik.TCP.Routers.Router0.TLS.Options":                "foo",
-		"traefik.TCP.Routers.Router1.Rule":                       "foobar",
-		"traefik.TCP.Routers.Router1.EntryPoints":                "foobar, fiibar",
-		"traefik.TCP.Routers.Router1.Service":                    "foobar",
-		"traefik.TCP.Routers.Router1.TLS.Passthrough":            "false",
-		"traefik.TCP.Routers.Router1.TLS.Options":                "foo",
-		"traefik.TCP.Services.Service0.LoadBalancer.server.Port": "42",
-		"traefik.TCP.Services.Service1.LoadBalancer.server.Port": "42",
+		"traefik.TCP.Routers.Router0.Rule":                            "foobar",
+		"traefik.TCP.Routers.Router0.EntryPoints":                     "foobar, fiibar",
+		"traefik.TCP.Routers.Router0.Service":                         "foobar",
+		"traefik.TCP.Routers.Router0.TLS.Passthrough":                 "false",
+		"traefik.TCP.Routers.Router0.TLS.Options":                     "foo",
+		"traefik.TCP.Routers.Router1.Rule":                            "foobar",
+		"traefik.TCP.Routers.Router1.EntryPoints":                     "foobar, fiibar",
+		"traefik.TCP.Routers.Router1.Service":                         "foobar",
+		"traefik.TCP.Routers.Router1.TLS.Passthrough":                 "false",
+		"traefik.TCP.Routers.Router1.TLS.Options":                     "foo",
+		"traefik.TCP.Services.Service0.LoadBalancer.server.Port":      "42",
+		"traefik.TCP.Services.Service0.LoadBalancer.TerminationDelay": "42",
+		"traefik.TCP.Services.Service1.LoadBalancer.server.Port":      "42",
+		"traefik.TCP.Services.Service1.LoadBalancer.TerminationDelay": "42",
+
+		"traefik.UDP.Routers.Router0.EntryPoints":                "foobar, fiibar",
+		"traefik.UDP.Routers.Router0.Service":                    "foobar",
+		"traefik.UDP.Routers.Router1.EntryPoints":                "foobar, fiibar",
+		"traefik.UDP.Routers.Router1.Service":                    "foobar",
+		"traefik.UDP.Services.Service0.LoadBalancer.server.Port": "42",
+		"traefik.UDP.Services.Service1.LoadBalancer.server.Port": "42",
 	}
 
 	for key, val := range expected {

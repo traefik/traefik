@@ -1384,6 +1384,46 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "one app with udp labels",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
+					withLabel("traefik.udp.routers.foo.entrypoints", "mydns"),
+				)),
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"foo": {
+							Service:     "app",
+							EntryPoints: []string{"mydns"},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"app": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "localhost:80",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
 			desc: "one app with tcp labels without rule",
 			applications: withApplications(
 				application(
@@ -1455,6 +1495,47 @@ func TestBuildConfiguration(t *testing.T) {
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
 					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc: "one app with udp labels with port",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
+					withLabel("traefik.udp.routers.foo.entrypoints", "mydns"),
+					withLabel("traefik.udp.services.foo.loadbalancer.server.port", "8080"),
+				)),
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"foo": {
+							Service:     "foo",
+							EntryPoints: []string{"mydns"},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"foo": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "localhost:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:     map[string]*dynamic.Router{},
@@ -1545,6 +1626,64 @@ func TestBuildConfiguration(t *testing.T) {
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
 					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"app": {
+							Service: "bar",
+							Rule:    "Host(`app.marathon.localhost`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"bar": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://localhost:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "one app with udp labels with port and http service",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80, 81),
+					withTasks(localhostTask(taskPorts(80, 81))),
+					withLabel("traefik.udp.routers.foo.entrypoints", "mydns"),
+					withLabel("traefik.udp.services.foo.loadbalancer.server.port", "8080"),
+					withLabel("traefik.http.services.bar.loadbalancer.passhostheader", "true"),
+				)),
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"foo": {
+							Service:     "foo",
+							EntryPoints: []string{"mydns"},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"foo": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "localhost:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
