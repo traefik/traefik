@@ -385,7 +385,7 @@ type StripPrefixRegex struct {
 
 // H2PushFile holds files that H2Push can push
 type H2PushFile struct {
-	URL string `json:"url" toml:"url" yaml:"url"`
+	URL   string `json:"url" toml:"url" yaml:"url"`
 	Match string `json:"match,omitempty" toml:"match,omitempty" yaml:"match,omitempty"`
 }
 
