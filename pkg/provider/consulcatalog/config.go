@@ -167,7 +167,7 @@ func (p *Provider) addServerTCP(ctx context.Context, item itemData, loadBalancer
 		return errors.New("port is missing")
 	}
 
-	if item.Address == "" && port == "" {
+	if item.Address == "" {
 		return errors.New("address is missing")
 	}
 
