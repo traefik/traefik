@@ -82,8 +82,8 @@ require (
 	github.com/transip/gotransip v5.8.2+incompatible // indirect
 	github.com/uber/jaeger-client-go v2.21.1+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
-	github.com/unrolled/render v1.0.1
-	github.com/unrolled/secure v1.0.6
+	github.com/unrolled/render v1.0.2
+	github.com/unrolled/secure v1.0.7
 	github.com/vdemeester/shakers v0.1.0
 	github.com/vulcand/oxy v1.0.0
 	github.com/vulcand/predicate v1.1.0
