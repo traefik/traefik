@@ -158,7 +158,7 @@ func (p *Provider) addServerTCP(ctx context.Context, item itemData, loadBalancer
 		loadBalancer.Servers = []dynamic.TCPServer{{}}
 	}
 
-	if item.Port != "" {
+	if item.Port != "" && port == "" {
 		port = item.Port
 	}
 	loadBalancer.Servers[0].Port = ""
