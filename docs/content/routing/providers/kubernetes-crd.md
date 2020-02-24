@@ -315,13 +315,13 @@ Register the `IngressRoute` kind in the Kubernetes cluster before creating `Ingr
 
 !!! important "Configuring Backend Protocol"
 
-	There are 3 ways to configure the backend protocol for communication between Traefik and your pods:
+    There are 3 ways to configure the backend protocol for communication between Traefik and your pods:
 	
     - Setting the scheme explicitly (http/https/h2c)
     - Configuring the name of the kubernetes service port to start with https (https)
     - Setting the kubernetes service port to use port 443 (https)
 
-  If you do not configure the above, Traefik will assume an http connection.
+    If you do not configure the above, Traefik will assume an http connection.
 
 ### Kind: `Middleware`
 
