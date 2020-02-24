@@ -1,6 +1,5 @@
 <template>
   <page-default>
-
     <section class="app-section">
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-xl q-pb-xl">
         <div class="row no-wrap items-center q-mb-lg">

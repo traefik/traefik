@@ -54,7 +54,7 @@
               <div class="col-12">
                 <div class="row items-start q-col-gutter-md">
                   <div class="col-12">
-                    <panel-servers dense :data="serviceByName.item"/>
+                    <panel-servers dense :data="serviceByName.item" :hasStatus="serviceByName.item.serverStatus"/>
                   </div>
                 </div>
               </div>
