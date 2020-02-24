@@ -58,7 +58,7 @@ require (
 	github.com/libkermit/docker-check v0.0.0-20171122104347-1113af38e591
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
-	github.com/miekg/dns v1.1.22
+	github.com/miekg/dns v1.1.27
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
