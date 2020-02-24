@@ -72,7 +72,6 @@ require (
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 	github.com/rancher/go-rancher-metadata v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.4.2
-	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.5.1
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tinylib/msgp v1.0.2 // indirect
@@ -94,10 +93,10 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.0.0-20190718183219-b59d8169aab5
-	k8s.io/apimachinery v0.0.0-20190612205821-1799e75a0719
-	k8s.io/client-go v0.0.0-20190718183610-8e956561bbf5
-	k8s.io/code-generator v0.0.0-20190612205613-18da4a14b22b
+	k8s.io/api v0.17.3
+	k8s.io/apimachinery v0.17.3
+	k8s.io/client-go v0.17.3
+	k8s.io/code-generator v0.17.3
 	mvdan.cc/xurls/v2 v2.1.0
 )
 
