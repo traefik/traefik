@@ -307,9 +307,9 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		protocol := "http"
-		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
-			protocol = "https"
+		protocol, err := parseServiceProtocol(svc.Scheme, portSpec.Name, portSpec.Port)
+		if err != nil {
+			return nil, err
 		}
 
 		return append(servers, dynamic.Server{
@@ -341,17 +341,9 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 			return nil, fmt.Errorf("cannot define a port for %s/%s", namespace, sanitizedName)
 		}
 
-		protocol := httpProtocol
-		scheme := svc.Scheme
-		switch scheme {
-		case httpProtocol, httpsProtocol, "h2c":
-			protocol = scheme
-		case "":
-			if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, httpsProtocol) {
-				protocol = httpsProtocol
-			}
-		default:
-			return nil, fmt.Errorf("invalid scheme %q specified", scheme)
+		protocol, err := parseServiceProtocol(svc.Scheme, portSpec.Name, portSpec.Port)
+		if err != nil {
+			return nil, err
 		}
 
 		for _, addr := range subset.Addresses {
@@ -447,4 +439,20 @@ func getTLSHTTP(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, k8sCli
 	}
 
 	return nil
+}
+
+// parseServiceProtocol parses the scheme, port name, and number to determine the correct protocol.
+// an error is returned if the scheme provided is invalid.
+func parseServiceProtocol(providedScheme string, portName string, portNumber int32) (string, error) {
+	switch providedScheme {
+	case httpProtocol, httpsProtocol, "h2c":
+		return providedScheme, nil
+	case "":
+		if portNumber == 443 || strings.HasPrefix(portName, httpsProtocol) {
+			return httpsProtocol, nil
+		}
+		return httpProtocol, nil
+	}
+
+	return "", fmt.Errorf("invalid scheme %q specified", providedScheme)
 }
