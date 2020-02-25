@@ -35,10 +35,12 @@ require (
 	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-github/v28 v28.1.1
+	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.2
-	github.com/hashicorp/consul/api v1.3.0
-	github.com/hashicorp/go-multierror v1.0.0
+	github.com/hashicorp/consul/api v1.7.0
+	github.com/hashicorp/go-hclog v0.12.0
+	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.5.1

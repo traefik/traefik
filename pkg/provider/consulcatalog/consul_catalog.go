@@ -8,6 +8,11 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/hashicorp/consul/api/watch"
+	"github.com/hashicorp/go-hclog"
+	"github.com/sirupsen/logrus"
+
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/consul/api"
 	ptypes "github.com/traefik/paerser/types"
@@ -20,21 +25,27 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-// DefaultTemplateRule The default template for the default rule.
-const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
+const (
+	// DefaultTemplateRule The default template for the default rule.
+	DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
+)
 
 var _ provider.Provider = (*Provider)(nil)
 
 type itemData struct {
-	ID        string
-	Node      string
-	Name      string
-	Address   string
-	Port      string
-	Status    string
-	Labels    map[string]string
-	Tags      []string
-	ExtraConf configuration
+	ID                 string
+	Node               string
+	Datacenter         string
+	Name               string
+	Namespace          string
+	Address            string
+	Port               string
+	Status             string
+	Labels             map[string]string
+	Tags               []string
+	ConnectEnabled     bool
+	ConnectDestination string
+	ExtraConf          configuration
 }
 
 // Provider holds configurations of the provider.
@@ -48,9 +59,20 @@ type Provider struct {
 	Cache             bool            `description:"Use local agent caching for catalog reads." json:"cache,omitempty" toml:"cache,omitempty" yaml:"cache,omitempty" export:"true"`
 	ExposedByDefault  bool            `description:"Expose containers by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
 	DefaultRule       string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
+	Connect           *ConnectConfig  `description:"Consul Connect settings." json:"connectAware,omitEmpty" toml:"connectAware,omitempty" yaml:"connectAware,omitEmpty"`
+	ServiceName       string          `description:"Name of the traefik service in Consul Catalog." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty"`
+	ServicePort       int             `description:"Port of the traefik service to register in Consul Catalog" json:"servicePort,omitempty" toml:"servicePort,omitempty" yaml:"servicePort,omitempty"`
 
 	client         *api.Client
 	defaultRuleTpl *template.Template
+	certChan       chan *connectCert
+}
+
+// ConnectConfig holds the configuration of the settings used to communicate through Consul Connect
+type ConnectConfig struct {
+	ConnectAware bool `description:"Enable Consul Connect support." json:"connectAware,omitEmpty" toml:"connectAware,omitempty" yaml:"connectAware,omitEmpty"`
+	// NOTE: Unless the certificates are issued by a trusted authority, this needs to be set as true
+	InsecureSkipVerify bool `description:"Skip verifying certificates for communicating with Consul Connect services." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty"`
 }
 
 // EndpointConfig holds configurations of the endpoint.
@@ -69,6 +91,12 @@ func (c *EndpointConfig) SetDefaults() {
 	c.Address = "127.0.0.1:8500"
 }
 
+// SetDefaults set the default values when using Consul Connect
+func (c *ConnectConfig) SetDefaults() {
+	c.ConnectAware = false
+	c.InsecureSkipVerify = true
+}
+
 // EndpointHTTPAuthConfig holds configurations of the authentication.
 type EndpointHTTPAuthConfig struct {
 	Username string `description:"Basic Auth username" json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty"`
@@ -79,11 +107,15 @@ type EndpointHTTPAuthConfig struct {
 func (p *Provider) SetDefaults() {
 	endpoint := &EndpointConfig{}
 	endpoint.SetDefaults()
+	connect := &ConnectConfig{}
+	connect.SetDefaults()
 	p.Endpoint = endpoint
 	p.RefreshInterval = ptypes.Duration(15 * time.Second)
 	p.Prefix = "traefik"
 	p.ExposedByDefault = true
 	p.DefaultRule = DefaultTemplateRule
+	p.Connect = connect
+	p.certChan = make(chan *connectCert)
 }
 
 // Init the provider.
@@ -99,20 +131,37 @@ func (p *Provider) Init() error {
 
 // Provide allows the consul catalog provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+	if p.Connect.ConnectAware {
+		pool.GoCtx(p.registerConnectService)
+		pool.GoCtx(p.watchConnectTLS)
+	}
+
 	pool.GoCtx(func(routineCtx context.Context) {
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "consulcatalog"))
 		logger := log.FromContext(ctxLog)
 
 		operation := func() error {
-			var err error
+			var (
+				err      error
+				certInfo *connectCert
+			)
 
 			p.client, err = createClient(p.Endpoint)
 			if err != nil {
 				return fmt.Errorf("unable to create consul client: %w", err)
 			}
 
+			// If we are running in connect aware mode then we need to
+			// make sure that we obtain the certificates before starting
+			// the service watcher, otherwise a connect enabled service
+			// that gets resolved before the certificates are available
+			// will cause an error condition.
+			if p.Connect.ConnectAware {
+				certInfo = <-p.certChan
+			}
+
 			// get configuration at the provider's startup.
-			err = p.loadConfiguration(routineCtx, configurationChan)
+			err = p.loadConfiguration(routineCtx, certInfo, configurationChan)
 			if err != nil {
 				return fmt.Errorf("failed to get consul catalog data: %w", err)
 			}
@@ -124,11 +173,13 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			for {
 				select {
 				case <-ticker.C:
-					err = p.loadConfiguration(routineCtx, configurationChan)
+					err = p.loadConfiguration(routineCtx, certInfo, configurationChan)
 					if err != nil {
 						return fmt.Errorf("failed to refresh consul catalog data: %w", err)
 					}
-
+				case certInfo = <-p.certChan:
+					// nothing much to do, next ticker cycle will propagate
+					// the updates.
 				case <-routineCtx.Done():
 					return nil
 				}
@@ -148,7 +199,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
-func (p *Provider) loadConfiguration(ctx context.Context, configurationChan chan<- dynamic.Message) error {
+func (p *Provider) loadConfiguration(ctx context.Context, certInfo *connectCert, configurationChan chan<- dynamic.Message) error {
 	data, err := p.getConsulServicesData(ctx)
 	if err != nil {
 		return err
@@ -156,7 +207,7 @@ func (p *Provider) loadConfiguration(ctx context.Context, configurationChan chan
 
 	configurationChan <- dynamic.Message{
 		ProviderName:  "consulcatalog",
-		Configuration: p.buildConfiguration(ctx, data),
+		Configuration: p.buildConfiguration(ctx, data, certInfo),
 	}
 
 	return nil
@@ -180,6 +231,10 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 			if address == "" {
 				address = consulService.Address
 			}
+			namespace := consulService.Namespace
+			if namespace == "" {
+				namespace = "default"
+			}
 
 			status, exists := statuses[consulService.ID+consulService.ServiceID]
 			if !exists {
@@ -187,14 +242,21 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 			}
 
 			item := itemData{
-				ID:      consulService.ServiceID,
-				Node:    consulService.Node,
-				Name:    consulService.ServiceName,
-				Address: address,
-				Port:    strconv.Itoa(consulService.ServicePort),
-				Labels:  tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
-				Tags:    consulService.ServiceTags,
-				Status:  status,
+				ID:             consulService.ServiceID,
+				Node:           consulService.Node,
+				Datacenter:     consulService.Datacenter,
+				Namespace:      namespace,
+				Name:           consulService.ServiceName,
+				Address:        address,
+				Port:           strconv.Itoa(consulService.ServicePort),
+				Labels:         tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
+				Tags:           consulService.ServiceTags,
+				Status:         status,
+				ConnectEnabled: isConnectProxy(consulService),
+			}
+
+			if item.ConnectEnabled {
+				item.ConnectDestination = consulService.ServiceProxy.DestinationServiceName
 			}
 
 			extraConf, err := p.getConfiguration(item)
@@ -208,6 +270,14 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 		}
 	}
 	return data, nil
+}
+
+func isConnectProxy(service *api.CatalogService) bool {
+	if service.ServiceProxy == nil {
+		return false
+	}
+
+	return service.ServiceProxy.DestinationServiceID != ""
 }
 
 func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.CatalogService, map[string]string, error) {
@@ -292,6 +362,194 @@ func contains(values []string, val string) bool {
 		}
 	}
 	return false
+}
+
+func (p *Provider) registerConnectService(ctx context.Context) {
+	if !p.Connect.ConnectAware {
+		return
+	}
+
+	ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
+	logger := log.FromContext(ctxLog)
+
+	if p.ServiceName == "" {
+		p.ServiceName = "traefik"
+	}
+
+	client, err := createClient(p.Endpoint)
+	if err != nil {
+		logger.WithError(err).Error("failed to create consul client")
+		return
+	}
+
+	serviceID := uuid.New().String()
+	operation := func() error {
+		regReq := &api.AgentServiceRegistration{
+			ID:   serviceID,
+			Kind: api.ServiceKindTypical,
+			Name: p.ServiceName,
+			Port: p.ServicePort,
+			Connect: &api.AgentServiceConnect{
+				Native: true,
+			},
+		}
+
+		err = client.Agent().ServiceRegister(regReq)
+		if err != nil {
+			return fmt.Errorf("failed to register service in consul catalog. %s", err)
+		}
+
+		return nil
+	}
+
+	notify := func(err error, time time.Duration) {
+		logger.Errorf("Failed to register traefik as Connect Native service in consul catalog. %s", err)
+	}
+
+	err = backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), context.Background()), notify)
+	if err != nil {
+		logger.WithError(err).Error("failed to register traefik in consul catalog as connect native service")
+		return
+	}
+
+	<-ctx.Done()
+	err = client.Agent().ServiceDeregister(serviceID)
+	if err != nil {
+		logger.WithError(err).Error("failed to deregister traefik from consul catalog")
+	}
+}
+
+func rootsWatchHandler(logger log.Logger, dest chan<- []string) func(watch.BlockingParamVal, interface{}) {
+	return func(_ watch.BlockingParamVal, raw interface{}) {
+		if raw == nil {
+			return
+		}
+
+		v, ok := raw.(*api.CARootList)
+		if !ok || v == nil {
+			logger.Errorf("invalid result for root certificate watcher")
+			return
+		}
+
+		roots := make([]string, len(v.Roots))
+		for _, root := range v.Roots {
+			roots = append(roots, root.RootCertPEM)
+		}
+
+		dest <- roots
+	}
+}
+
+type keyPair struct {
+	cert string
+	key  string
+}
+
+func leafWatcherHandler(logger log.Logger, dest chan<- keyPair) func(watch.BlockingParamVal, interface{}) {
+	return func(_ watch.BlockingParamVal, raw interface{}) {
+		if raw == nil {
+			return
+		}
+
+		v, ok := raw.(*api.LeafCert)
+		if !ok || v == nil {
+			logger.Errorf("invalid result for leaf certificate watcher")
+			return
+		}
+
+		dest <- keyPair{
+			cert: v.CertPEM,
+			key:  v.PrivateKeyPEM,
+		}
+	}
+}
+
+func (p *Provider) watchConnectTLS(ctx context.Context) {
+	ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
+	logger := log.FromContext(ctxLog)
+
+	client, err := createClient(p.Endpoint)
+	if err != nil {
+		logger.WithError(err).Errorf("failed to create consul client")
+		return
+	}
+
+	leafWatcher, err := watch.Parse(map[string]interface{}{
+		"type":    "connect_leaf",
+		"service": p.ServiceName,
+	})
+
+	if err != nil {
+		logger.WithError(err).Error("failed to create leaf cert watcher plan")
+		return
+	}
+
+	rootWatcher, err := watch.Parse(map[string]interface{}{
+		"type": "connect_roots",
+	})
+
+	if err != nil {
+		logger.WithError(err).Error("failed to create root cert watcher plan")
+	}
+
+	leafChan := make(chan keyPair)
+	rootChan := make(chan []string)
+
+	leafWatcher.HybridHandler = leafWatcherHandler(logger, leafChan)
+	rootWatcher.HybridHandler = rootsWatchHandler(logger, rootChan)
+
+	logOpts := &hclog.LoggerOptions{
+		Name:       "consulcatalog",
+		Level:      hclog.LevelFromString(logrus.GetLevel().String()),
+		JSONFormat: true,
+	}
+
+	hclogger := hclog.New(logOpts)
+
+	go func() {
+		err := leafWatcher.RunWithClientAndHclog(client, hclogger)
+		if err != nil {
+			logger.WithError(err).Errorf("Leaf certificate watcher failed with error")
+		}
+	}()
+
+	go func() {
+		err := rootWatcher.RunWithClientAndHclog(client, hclogger)
+		if err != nil {
+			logger.WithError(err).Errorf("Root certificate watcher failed with error")
+		}
+	}()
+
+	leafCerts := <-leafChan
+	rootCerts := <-rootChan
+
+	certInfo := &connectCert{
+		service: p.ServiceName,
+		root:    rootCerts,
+		leaf:    leafCerts,
+	}
+
+	p.certChan <- certInfo
+
+	ticker := time.NewTicker(time.Duration(p.RefreshInterval))
+
+	for {
+		select {
+		case <-ctx.Done():
+			ticker.Stop()
+			return
+
+		case rootCerts = <-rootChan:
+		case leafCerts = <-leafChan:
+
+		case <-ticker.C:
+			p.certChan <- &connectCert{
+				service: p.ServiceName,
+				root:    rootCerts,
+				leaf:    leafCerts,
+			}
+		}
+	}
 }
 
 func createClient(cfg *EndpointConfig) (*api.Client, error) {

@@ -2,9 +2,14 @@ package consulcatalog
 
 import (
 	"context"
+	gtls "crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
+	"strings"
+	"time"
 
 	"github.com/hashicorp/consul/api"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -12,9 +17,10 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/constraints"
+	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
-func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dynamic.Configuration {
+func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, certInfo *connectCert) *dynamic.Configuration {
 	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, item := range items {
@@ -63,6 +69,14 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 			continue
 		}
 
+		if len(confFromLabel.HTTP.ServersTransports) == 0 {
+			confFromLabel.HTTP.ServersTransports = make(map[string]*dynamic.ServersTransport)
+		}
+
+		if item.ConnectEnabled {
+			confFromLabel.HTTP.ServersTransports[connectTransportName(item.Name)] = certInfo.serverTransport(item)
+		}
+
 		err = p.buildServiceConfiguration(ctxSvc, item, confFromLabel.HTTP)
 		if err != nil {
 			logger.Error(err)
@@ -83,6 +97,83 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 	}
 
 	return provider.Merge(ctx, configurations)
+}
+
+func connectTransportName(n string) string {
+	return "connect-tls-" + n
+}
+
+type connectCert struct {
+	service string
+	root    []string
+	leaf    keyPair
+}
+
+func (c *connectCert) getRoot() []tls.FileOrContent {
+	var result []tls.FileOrContent
+	for _, r := range c.root {
+		result = append(result, tls.FileOrContent(r))
+	}
+	return result
+}
+
+func (c *connectCert) getLeaf() tls.Certificate {
+	return tls.Certificate{
+		CertFile: tls.FileOrContent(c.leaf.cert),
+		KeyFile:  tls.FileOrContent(c.leaf.key),
+	}
+}
+
+func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
+	sname := connectTransportName(item.Name)
+	return &dynamic.ServersTransport{
+		ServerName:         sname,
+		InsecureSkipVerify: true,
+		RootCAs:            c.getRoot(),
+		Certificates: tls.Certificates{
+			c.getLeaf(),
+		},
+		VerifyConnection: func(cfg *gtls.Config, cs gtls.ConnectionState) error {
+			// This is basically what Go itself does sans the hostname validation
+			t := cfg.Time
+			if t == nil {
+				t = time.Now
+			}
+			opts := x509.VerifyOptions{
+				Roots:         cfg.RootCAs,
+				CurrentTime:   t(),
+				Intermediates: x509.NewCertPool(),
+			}
+			for _, cert := range cs.PeerCertificates[1:] {
+				opts.Intermediates.AddCert(cert)
+			}
+			cert := cs.PeerCertificates[0]
+			_, err := cert.Verify(opts)
+			if err != nil {
+				return err
+			}
+			// Go cert validation done, validate SPIFFE URI now
+
+			// Our certs will only ever have a single URI for now so only check that
+			if len(cert.URIs) < 1 {
+				return errors.New("peer certificate invalid")
+			}
+			gotURI := cert.URIs[0]
+
+			var expectURI url.URL
+			expectURI.Host = gotURI.Host
+			expectURI.Scheme = "spiffe"
+			expectURI.Path = fmt.Sprintf("/ns/%s/dc/%s/svc/%s",
+				item.Namespace, item.Datacenter, item.ConnectDestination)
+
+			if strings.EqualFold(gotURI.String(), expectURI.String()) {
+				return nil
+			}
+
+			return fmt.Errorf("peer certificate mismatch got %s, want %s",
+				gotURI.String(), expectURI.String())
+		},
+	}
 }
 
 func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
@@ -265,6 +356,11 @@ func (p *Provider) addServer(ctx context.Context, item itemData, loadBalancer *d
 
 	if item.Address == "" {
 		return errors.New("address is missing")
+	}
+
+	if item.ConnectEnabled {
+		loadBalancer.ServersTransport = connectTransportName(item.Name)
+		loadBalancer.Servers[0].Scheme = "https"
 	}
 
 	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(item.Address, port))

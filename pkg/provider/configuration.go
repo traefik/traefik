@@ -20,9 +20,10 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 
 	configuration := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
-			Routers:     make(map[string]*dynamic.Router),
-			Middlewares: make(map[string]*dynamic.Middleware),
-			Services:    make(map[string]*dynamic.Service),
+			Routers:           make(map[string]*dynamic.Router),
+			Middlewares:       make(map[string]*dynamic.Middleware),
+			Services:          make(map[string]*dynamic.Service),
+			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
 			Routers:     make(map[string]*dynamic.TCPRouter),
@@ -59,6 +60,9 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 	middlewaresTCPToDelete := map[string]struct{}{}
 	middlewaresTCP := map[string][]string{}
 
+	transportsToDelete := map[string]struct{}{}
+	transports := map[string][]string{}
+
 	var sortedKeys []string
 	for key := range configurations {
 		sortedKeys = append(sortedKeys, key)
@@ -78,6 +82,13 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 			routers[routerName] = append(routers[routerName], root)
 			if !AddRouter(configuration.HTTP, routerName, router) {
 				routersToDelete[routerName] = struct{}{}
+			}
+		}
+
+		for transportName, transport := range conf.HTTP.ServersTransports {
+			transports[transportName] = append(transports[transportName], root)
+			if !AddTransport(configuration.HTTP, transportName, transport) {
+				transportsToDelete[transportName] = struct{}{}
 			}
 		}
 
@@ -134,6 +145,12 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 		logger.WithField(log.RouterName, routerName).
 			Errorf("Router defined multiple times with different configurations in %v", routers[routerName])
 		delete(configuration.HTTP.Routers, routerName)
+	}
+
+	for transportName := range transportsToDelete {
+		logger.WithField(log.ServersTransportName, transportName).
+			Errorf("ServersTransport defined multiple times with different configuration in %v", transports[transportName])
+		delete(configuration.HTTP.ServersTransports, transportName)
 	}
 
 	for serviceName := range servicesTCPToDelete {
@@ -288,6 +305,15 @@ func AddRouter(configuration *dynamic.HTTPConfiguration, routerName string, rout
 	}
 
 	return reflect.DeepEqual(configuration.Routers[routerName], router)
+}
+
+func AddTransport(configuration *dynamic.HTTPConfiguration, transportName string, transport *dynamic.ServersTransport) bool {
+	if _, ok := configuration.ServersTransports[transportName]; !ok {
+		configuration.ServersTransports[transportName] = transport
+		return true
+	}
+
+	return reflect.DeepEqual(configuration.ServersTransports[transportName], transport)
 }
 
 // AddMiddleware Adds a middleware to a configurations.

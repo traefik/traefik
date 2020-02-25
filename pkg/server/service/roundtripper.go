@@ -139,6 +139,11 @@ func createRoundTripper(cfg *dynamic.ServersTransport) (http.RoundTripper, error
 			RootCAs:            createRootCACertPool(cfg.RootCAs),
 			Certificates:       cfg.Certificates.GetCertificates(),
 		}
+		if cfg.VerifyConnection != nil {
+			transport.TLSClientConfig.VerifyConnection = func(cs tls.ConnectionState) error {
+				return cfg.VerifyConnection(transport.TLSClientConfig, cs)
+			}
+		}
 	}
 
 	// Return directly HTTP/1.1 transport when HTTP/2 is disabled
