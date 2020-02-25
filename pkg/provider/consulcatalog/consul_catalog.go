@@ -3,6 +3,7 @@ package consulcatalog
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"strconv"
 	"text/template"
 	"time"
@@ -45,9 +46,14 @@ type Provider struct {
 	Cache             bool            `description:"Use local agent caching for catalog reads." json:"cache,omitempty" toml:"cache,omitempty" yaml:"cache,omitempty" export:"true"`
 	ExposedByDefault  bool            `description:"Expose containers by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
 	DefaultRule       string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
+	ConnectAware      bool            `description:"Enable Consul Connect support." json:"connectAware,omitEmpty" toml:"connectAware,omitempty" yaml:"connectAware,omitEmpty"`
+	ConnectNative     bool            `description:"Register and manage traefik in Consul Catalog as a Connect Native service." json:"connectNative,omitempty" toml:"connectNative,omitempty" yaml:"connectNative,omitempty"`
+	ServiceName       string          `description:"Name of the traefik service in Consul Catalog." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty"`
+	ServicePort       int             `description:"Port of the traefik service to register in Consul Catalog" json:"servicePort,omitempty" toml:"servicePort,omitempty" yaml:"servicePort,omitempty"`
 
 	client         *api.Client
 	defaultRuleTpl *template.Template
+	tlsChan        chan *api.LeafCert
 }
 
 // EndpointConfig holds configurations of the endpoint.
@@ -81,6 +87,7 @@ func (p *Provider) SetDefaults() {
 	p.Prefix = "traefik"
 	p.ExposedByDefault = true
 	p.DefaultRule = DefaultTemplateRule
+	p.tlsChan = make(chan *api.LeafCert)
 }
 
 // Init the provider.
@@ -96,12 +103,20 @@ func (p *Provider) Init() error {
 
 // Provide allows the consul catalog provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+	if p.ConnectAware {
+		pool.GoCtx(p.registerConnectService)
+		pool.GoCtx(p.watchConnectTls)
+	}
+
 	pool.GoCtx(func(routineCtx context.Context) {
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "consulcatalog"))
 		logger := log.FromContext(ctxLog)
 
 		operation := func() error {
-			var err error
+			var (
+				err       error
+				tlsConfig *api.LeafCert
+			)
 
 			p.client, err = createClient(p.Endpoint)
 			if err != nil {
@@ -109,6 +124,15 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			}
 
 			ticker := time.NewTicker(time.Duration(p.RefreshInterval))
+
+			// If we are running in connect aware mode then we need to
+			// make sure that we obtain the certificates before starting
+			// the service watcher, otherwise a connect enabled service
+			// that gets resolved before the certificates are available
+			// will cause an error condition.
+			if p.ConnectAware {
+				tlsConfig = <-p.tlsChan
+			}
 
 			for {
 				select {
@@ -119,11 +143,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						return err
 					}
 
-					configuration := p.buildConfiguration(routineCtx, data)
+					configuration := p.buildConfiguration(routineCtx, data, tlsConfig)
 					configurationChan <- dynamic.Message{
 						ProviderName:  "consulcatalog",
 						Configuration: configuration,
 					}
+				case tlsConfig = <-p.tlsChan:
+					// nothing much to do, next ticker cycle will propagate
+					// the updates.
 				case <-routineCtx.Done():
 					ticker.Stop()
 					return nil
@@ -179,12 +206,22 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 				log.FromContext(ctx).Errorf("Skip item %s: %v", item.Name, err)
 				continue
 			}
+
+			extraConf.ConnectEnabled = isConnectEnabled(consulService)
 			item.ExtraConf = extraConf
 
 			data = append(data, item)
 		}
 	}
 	return data, nil
+}
+
+func isConnectEnabled(service *api.CatalogService) bool {
+	if service.ServiceProxy == nil {
+		return false
+	}
+
+	return service.ServiceProxy.DestinationServiceID != ""
 }
 
 func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.CatalogService, []*api.ServiceEntry, error) {
@@ -208,6 +245,104 @@ func (p *Provider) fetchServices(ctx context.Context) (map[string][]string, erro
 	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
 	serviceNames, _, err := p.client.Catalog().Services(opts)
 	return serviceNames, err
+}
+
+func (p *Provider) registerConnectService(ctx context.Context) {
+	if !p.ConnectNative {
+		return
+	}
+
+	ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
+	logger := log.FromContext(ctxLog)
+
+	if p.ServiceName == "" {
+		p.ServiceName = "traefik"
+	}
+
+	client, err := createClient(p.Endpoint)
+	if err != nil {
+		logger.WithError(err).Error("failed to create consul client")
+		return
+	}
+
+	serviceId := uuid.New().String()
+	operation := func() error {
+		regReq := &api.AgentServiceRegistration{
+			ID:   serviceId,
+			Kind: api.ServiceKindTypical,
+			Name: p.ServiceName,
+			Port: p.ServicePort,
+			Connect: &api.AgentServiceConnect{
+				Native: true,
+			},
+		}
+
+		err = client.Agent().ServiceRegister(regReq)
+		if err != nil {
+			return fmt.Errorf("failed to register service in consul catalog. %s", err)
+		}
+
+		return nil
+	}
+
+	notify := func(err error, time time.Duration) {
+		logger.Errorf("Failed to register traefik as Connect Native service in consul catalog. %s", err)
+	}
+
+	err = backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), context.Background()), notify)
+	if err != nil {
+		logger.WithError(err).Error("failed to register traefik in consul catalog as connect native service")
+		return
+	}
+
+	<-ctx.Done()
+	err = client.Agent().ServiceDeregister(serviceId)
+	if err != nil {
+		logger.WithError(err).Error("failed to deregister traefik from consul catalog")
+	}
+}
+
+func (p *Provider) watchConnectTls(ctx context.Context) {
+	ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
+	logger := log.FromContext(ctxLog)
+
+	operation := func() error {
+		client, err := createClient(p.Endpoint)
+		if err != nil {
+			return fmt.Errorf("failed to create consul client. %s", err)
+		}
+
+		qopts := &api.QueryOptions{
+			AllowStale:        p.Stale,
+			RequireConsistent: p.RequireConsistent,
+			UseCache:          p.Cache,
+		}
+
+		ticker := time.NewTicker(time.Duration(p.RefreshInterval))
+
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-ticker.C:
+				resp, _, err := client.Agent().ConnectCALeaf(p.ServiceName, qopts.WithContext(ctx))
+				if err != nil {
+					return fmt.Errorf("failed to fetch TLS leaf certificates. %s", err)
+				}
+
+				p.tlsChan <- resp
+			}
+		}
+	}
+
+	notify := func(err error, time time.Duration) {
+		logger.WithError(err).Errorf("failed to retrieve leaf certificates from consul. retrying in %s", time)
+	}
+
+	err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
+	if err != nil {
+		logger.WithError(err).Errorf("Cannot read Connect TLS certificates from consul agent")
+	}
 }
 
 func createClient(cfg *EndpointConfig) (*api.Client, error) {

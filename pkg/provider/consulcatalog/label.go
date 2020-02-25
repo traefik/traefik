@@ -6,7 +6,8 @@ import (
 
 // configuration Contains information from the labels that are globals (not related to the dynamic configuration) or specific to the provider.
 type configuration struct {
-	Enable bool
+	Enable         bool
+	ConnectEnabled bool
 }
 
 func (p *Provider) getConfiguration(item itemData) (configuration, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/containous/traefik/v2/pkg/tls"
 	"net"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
@@ -14,7 +15,7 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dynamic.Configuration {
+func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, tlsInfo *api.LeafCert) *dynamic.Configuration {
 	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, item := range items {
@@ -31,6 +32,10 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 		if err != nil {
 			logger.Error(err)
 			continue
+		}
+
+		if item.ExtraConf.ConnectEnabled {
+			confFromLabel.TLS = tlsFromLeafCert(tlsInfo)
 		}
 
 		var tcpOrUDP bool
@@ -83,6 +88,19 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 	}
 
 	return provider.Merge(ctx, configurations)
+}
+
+func tlsFromLeafCert(leaf *api.LeafCert) *dynamic.TLSConfiguration {
+	return &dynamic.TLSConfiguration{
+		Certificates: []*tls.CertAndStores{
+			{
+				Certificate: tls.Certificate{
+					CertFile: tls.FileOrContent(leaf.CertPEM),
+					KeyFile:  tls.FileOrContent(leaf.PrivateKeyPEM),
+				},
+			},
+		},
+	}
 }
 
 func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
