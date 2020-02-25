@@ -58,6 +58,8 @@ func (f *TCPRouterFactory) CreateTCPRouters(conf dynamic.Configuration) map[stri
 	handlersNonTLS := routerManager.BuildHandlers(ctx, f.entryPoints, false)
 	handlersTLS := routerManager.BuildHandlers(ctx, f.entryPoints, true)
 
+	serviceManager.LaunchHealthCheck()
+
 	// TCP
 	svcTCPManager := tcp.NewManager(rtConf)
 
