@@ -470,14 +470,6 @@ func TestLBStatusUpdater(t *testing.T) {
 	}
 }
 
-type redirectServer struct {
-	called *bool
-}
-
-func (server *redirectServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	*server.called = true
-}
-
 type redirectBackend struct {
 	redirectURL string
 	done        func()
@@ -490,63 +482,56 @@ func (backend *redirectBackend) ServeHTTP(w http.ResponseWriter, req *http.Reque
 }
 
 func TestNotFollowingRedirects(t *testing.T) {
-	t.Run("do not follow redirect", func(t *testing.T) {
-		t.Parallel()
+	redirectServerCalled := false
+	redirectTestServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		redirectServerCalled = true
+	}))
+	defer redirectTestServer.Close()
 
-		redirectServerCalled := false
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		redirectServer := &redirectServer{
-			called: &redirectServerCalled,
-		}
+	redirectBackend := &redirectBackend{
+		redirectURL: redirectTestServer.URL,
+		done:        cancel,
+	}
 
-		redirectTestServer := httptest.NewServer(redirectServer)
-		defer redirectTestServer.Close()
+	ts := httptest.NewServer(redirectBackend)
+	defer ts.Close()
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+	backend := NewBackendConfig(Options{
+		Path:            "/path",
+		Interval:        healthCheckInterval,
+		Timeout:         healthCheckTimeout,
+		LB:              lb,
+		FollowRedirects: false,
+	}, "backendName")
 
-		redirectBackend := &redirectBackend{
-			redirectURL: redirectTestServer.URL,
-			done:        cancel,
-		}
+	serverURL := testhelpers.MustParseURL(ts.URL)
+	lb.servers = append(lb.servers, serverURL)
 
-		ts := httptest.NewServer(redirectBackend)
-		defer ts.Close()
+	collectingMetrics := testhelpers.NewCollectingHealthCheckMetrics()
+	check := HealthCheck{
+		Backends: make(map[string]*BackendConfig),
+		metrics:  collectingMetrics,
+	}
 
-		lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
-		backend := NewBackendConfig(Options{
-			Path:            "/path",
-			Interval:        healthCheckInterval,
-			Timeout:         healthCheckTimeout,
-			LB:              lb,
-			FollowRedirects: false,
-		}, "backendName")
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 
-		serverURL := testhelpers.MustParseURL(ts.URL)
-		lb.servers = append(lb.servers, serverURL)
+	go func() {
+		check.execute(ctx, backend)
+		wg.Done()
+	}()
 
-		collectingMetrics := testhelpers.NewCollectingHealthCheckMetrics()
-		check := HealthCheck{
-			Backends: make(map[string]*BackendConfig),
-			metrics:  collectingMetrics,
-		}
+	timeout := time.Duration(int(healthCheckInterval) + 500)
+	select {
+	case <-time.After(timeout):
+		t.Fatal("test did not complete in time")
+	case <-ctx.Done():
+		wg.Wait()
+	}
 
-		wg := sync.WaitGroup{}
-		wg.Add(1)
-
-		go func() {
-			check.execute(ctx, backend)
-			wg.Done()
-		}()
-
-		timeout := time.Duration(int(healthCheckInterval) + 500)
-		select {
-		case <-time.After(timeout):
-			t.Fatal("test did not complete in time")
-		case <-ctx.Done():
-			wg.Wait()
-		}
-
-		assert.False(t, redirectServerCalled, "HTTP redirect must not be followed")
-	})
+	assert.False(t, redirectServerCalled, "HTTP redirect must not be followed")
 }
