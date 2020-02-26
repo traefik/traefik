@@ -41,6 +41,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&MiddlewareList{},
 		&TLSOption{},
 		&TLSOptionList{},
+		&TLSStore{},
+		&TLSStoreList{},
 		&TraefikService{},
 		&TraefikServiceList{},
 	)

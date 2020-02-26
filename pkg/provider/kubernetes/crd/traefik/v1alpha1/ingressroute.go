@@ -38,13 +38,21 @@ type TLS struct {
 	// certificate details.
 	SecretName string `json:"secretName"`
 	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
-	Options      *TLSOptionRef  `json:"options,omitempty"`
+	Options *TLSOptionRef `json:"options,omitempty"`
+	// Store is a reference to a TLSStore, that specifies the parameters of the TLS store.
+	Store        *TLSStoreRef   `json:"store,omitempty"`
 	CertResolver string         `json:"certResolver,omitempty"`
 	Domains      []types.Domain `json:"domains,omitempty"`
 }
 
 // TLSOptionRef is a ref to the TLSOption resources.
 type TLSOptionRef struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+// TLSStoreRef is a ref to the TLSStore resource.
+type TLSStoreRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }

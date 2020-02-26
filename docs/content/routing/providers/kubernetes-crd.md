@@ -890,6 +890,82 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
 	just as in the [middleware case](../../middlewares/overview.md#provider-namespace).
 	Specifying a namespace attribute in this case would not make any sense, and will be ignored.
 
+### Kind: `TLSStore`
+
+`TLSStore` is the CRD implementation of a [Traefik "TLS Store"](../../https/tls.md#certificates-stores).
+
+Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore` objects
+or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
+
+!!! important "Default TLS Store"
+
+    Traefik currently only uses the [TLS Store named "default"](../../https/tls.md#certificates-stores).
+    This means that if you have two stores that are named default in different kubernetes namespaces,
+    they may be randomly chosen.
+    For the time being, please only configure one TLSSTore named default.
+
+!!! info "TLSStore Attributes"
+   
+    ```yaml tab="TLSStore"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: TLSStore
+    metadata:
+      name: default
+      namespace: default
+    
+    spec:
+      defaultCertificate:
+        secretName: mySecret                      # [1]
+    ```
+
+| Ref | Attribute                   | Purpose                                                                                                                                                                    |
+|-----|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1] | `secretName`                | The name of the referenced Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) that holds the default certificate for the store.                                                                             |
+
+??? example "Declaring and referencing a TLSStore"
+   
+    ```yaml tab="TLSStore"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: TLSStore
+    metadata:
+      name: default
+      namespace: default
+    
+    spec:
+      defaultCertificate:
+        secretName:  supersecret
+    ```
+    
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: ingressroutebar
+    
+    spec:
+      entryPoints:
+        - web
+      routes:
+      - match: Host(`bar.com`) && PathPrefix(`/stripit`)
+        kind: Rule
+        services:
+        - name: whoami
+          port: 80
+      tls:
+        store: 
+          name: default
+    ```
+
+    ```yaml tab="Secret"
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: supersecret
+    
+    data:
+      tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+      tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+    ```
 ## Further
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.

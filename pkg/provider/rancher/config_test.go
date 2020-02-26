@@ -576,6 +576,51 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "udp with label",
+			containers: []rancherData{
+				{
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.udp.routers.foo.entrypoints": "mydns",
+					},
+					Port:       "80/tcp",
+					Containers: []string{"127.0.0.1"},
+					Health:     "",
+					State:      "",
+				},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"foo": {
+							Service:     "Test",
+							EntryPoints: []string{"mydns"},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"Test": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "127.0.0.1:80",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
 			desc: "tcp with label without rule",
 			containers: []rancherData{
 				{
@@ -664,6 +709,52 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "udp with label and port",
+			containers: []rancherData{
+				{
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.udp.routers.foo.entrypoints":               "mydns",
+						"traefik.udp.services.foo.loadbalancer.server.port": "8080",
+					},
+					Port:       "80/tcp",
+					Containers: []string{"127.0.0.1"},
+					Health:     "",
+					State:      "",
+				},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"foo": {
+							Service:     "foo",
+							EntryPoints: []string{"mydns"},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"foo": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "127.0.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
 			desc: "tcp with label and port and http service",
 			containers: []rancherData{
 				{
@@ -736,6 +827,75 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "udp with label and port and http service",
+			containers: []rancherData{
+				{
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.udp.routers.foo.entrypoints":                        "mydns",
+						"traefik.udp.services.foo.loadbalancer.server.port":          "8080",
+						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					},
+					Port:       "80/tcp",
+					Containers: []string{"127.0.0.1", "127.0.0.2"},
+					Health:     "",
+					State:      "",
+				},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"foo": {
+							Service:     "foo",
+							EntryPoints: []string{"mydns"},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"foo": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "127.0.0.1:8080",
+									},
+									{
+										Address: "127.0.0.2:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service: "Service1",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Service1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://127.0.0.1:80",
+									},
+									{
+										URL: "http://127.0.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "tcp with label for tcp service",
 			containers: []rancherData{
 				{
@@ -768,6 +928,46 @@ func Test_buildConfiguration(t *testing.T) {
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
 					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc: "udp with label for tcp service",
+			containers: []rancherData{
+				{
+					Name: "Test",
+					Labels: map[string]string{
+						"traefik.udp.services.foo.loadbalancer.server.port": "8080",
+					},
+					Port:       "80/tcp",
+					Containers: []string{"127.0.0.1"},
+					Health:     "",
+					State:      "",
+				},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{
+						"foo": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "127.0.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:     map[string]*dynamic.Router{},

@@ -32,13 +32,21 @@ type TLSTCP struct {
 	SecretName  string `json:"secretName"`
 	Passthrough bool   `json:"passthrough"`
 	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
-	Options      *TLSOptionTCPRef `json:"options"`
-	CertResolver string           `json:"certResolver"`
-	Domains      []types.Domain   `json:"domains,omitempty"`
+	Options *TLSOptionTCPRef `json:"options"`
+	// Store is a reference to a TLSStore, that specifies the parameters of the TLS store.
+	Store        *TLSStoreTCPRef `json:"store"`
+	CertResolver string          `json:"certResolver"`
+	Domains      []types.Domain  `json:"domains,omitempty"`
 }
 
 // TLSOptionTCPRef is a ref to the TLSOption resources.
 type TLSOptionTCPRef struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+// TLSStoreTCPRef is a ref to the TLSStore resources.
+type TLSStoreTCPRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }

@@ -29,6 +29,7 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 	}
 
 	var defaultTLSOptionProviders []string
+	var defaultTLSStoreProviders []string
 	for pvd, configuration := range configurations {
 		if configuration.HTTP != nil {
 			for routerName, router := range configuration.HTTP.Routers {
@@ -64,6 +65,11 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 			conf.TLS.Certificates = append(conf.TLS.Certificates, configuration.TLS.Certificates...)
 
 			for key, store := range configuration.TLS.Stores {
+				if key != "default" {
+					key = provider.MakeQualifiedName(pvd, key)
+				} else {
+					defaultTLSStoreProviders = append(defaultTLSStoreProviders, pvd)
+				}
 				conf.TLS.Stores[key] = store
 			}
 
@@ -77,6 +83,11 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 				conf.TLS.Options[tlsOptionsName] = options
 			}
 		}
+	}
+
+	if len(defaultTLSStoreProviders) > 1 {
+		log.WithoutContext().Errorf("Default TLS Stores defined multiple times in %v", defaultTLSOptionProviders)
+		delete(conf.TLS.Stores, "default")
 	}
 
 	if len(defaultTLSOptionProviders) == 0 {

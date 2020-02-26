@@ -109,7 +109,7 @@
             </div>
           </div>
 
-          <div class="col-12 col-md-4 q-mb-lg path-block">
+          <div class="col-12 col-md-4 q-mb-lg path-block" v-if="protocol !== 'udp'">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-shield"></q-icon>
               <div class="app-title-label">TLS</div>
@@ -192,6 +192,7 @@ export default {
     },
     ...mapGetters('http', { http_routerByName: 'routerByName' }),
     ...mapGetters('tcp', { tcp_routerByName: 'routerByName' }),
+    ...mapGetters('udp', { udp_routerByName: 'routerByName' }),
     hasMiddlewares () {
       return this.$route.meta.protocol === 'http' && this.middlewares.length > 0
     },
@@ -208,6 +209,7 @@ export default {
   methods: {
     ...mapActions('http', { http_getRouterByName: 'getRouterByName', getMiddlewareByName: 'getMiddlewareByName' }),
     ...mapActions('tcp', { tcp_getRouterByName: 'getRouterByName' }),
+    ...mapActions('udp', { udp_getRouterByName: 'getRouterByName' }),
     ...mapActions('entrypoints', { getEntrypointsByName: 'getByName' }),
     refreshAll () {
       if (this.routerByName.loading) {
@@ -274,6 +276,7 @@ export default {
     clearInterval(this.timeOutGetAll)
     this.$store.commit('http/getRouterByNameClear')
     this.$store.commit('tcp/getRouterByNameClear')
+    this.$store.commit('udp/getRouterByNameClear')
   }
 }
 </script>
