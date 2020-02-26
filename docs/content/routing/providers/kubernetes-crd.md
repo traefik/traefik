@@ -49,12 +49,18 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
                 - --api
                 - --api.insecure
                 - --entrypoints.web.address=:80
+                - --entrypoints.tcpep.address=:8000
+                - --entrypoints.udpep.address=:9000/udp
                 - --providers.kubernetescrd
               ports:
                 - name: web
                   containerPort: 80
                 - name: admin
                   containerPort: 8080
+                - name: tcpep
+                  containerPort: 8000
+                - name: udpep
+                  containerPort: 9000
     
     ---
     apiVersion: v1
@@ -74,6 +80,25 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           port: 8080
           name: admin
           targetPort: 8080
+        - protocol: TCP
+          port: 8000
+          name: tcpep
+          targetPort: 8000
+     
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: traefikudp
+    spec:
+      type: LoadBalancer
+      selector:
+        app: traefik
+      ports:
+        - protocol: UDP
+          port: 9000
+          name: udpep
+          targetPort: 9000
     ```
     
     ```yaml tab="IngressRoute"
@@ -93,8 +118,41 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         services:
         - name: whoami
           port: 80
+    
+    ---
+    apiVersion: traefik.containo.us/v1alpha1
+      kind: IngressRouteTCP
+      metadata:
+        name: ingressroute.tcp
+      namespace: default
+      
+      spec:
+        entryPoints:
+          - tcpep
+        routes:
+          - match: HostSNI(`bar`)
+            kind: Rule
+            services:
+              - name: whoamitcp
+                port: 8080
+        
+    ---
+    apiVersion: traefik.containo.us/v1alpha1
+       kind: IngressRouteUDP
+       metadata:
+         name: ingressroute.udp
+         namespace: default
+         
+       spec:
+         entryPoints:
+           - fooudp
+         routes:
+           - kind: Rule
+             services:
+               - name: whoamiudp
+                 port: 8080
     ```
-
+    
     ```yaml tab="Whoami"
     kind: Deployment
     apiVersion: apps/v1
@@ -137,6 +195,91 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       selector:
         app: containous
         task: whoami
+    
+    ---
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: whoamitcp
+      namespace: default
+      labels:
+        app: containous
+        name: whoamitcp
+    
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: containous
+          task: whoamitcp
+      template:
+        metadata:
+          labels:
+            app: containous
+            task: whoamitcp
+        spec:
+          containers:
+            - name: containouswhoamitcp
+              image: containous/whoamitcp
+              ports:
+                - containerPort: 8080
+    
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: whoamitcp
+      namespace: default
+    
+    spec:
+      ports:
+        - protocol: TCP
+          port: 8080
+      selector:
+        app: containous
+        task: whoamitcp
+    
+    ---
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: whoamiudp
+      namespace: default
+      labels:
+        app: containous
+        name: whoamiudp
+    
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: containous
+          task: whoamiudp
+      template:
+        metadata:
+          labels:
+            app: containous
+            task: whoamiudp
+        spec:
+          containers:
+            - name: containouswhoamiudp
+              image: containous/whoamiudp:dev
+              ports:
+                - containerPort: 8080
+    
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: whoamiudp
+      namespace: default
+    
+    spec:
+      ports:
+        - port: 8080
+      selector:
+        app: containous
+        task: whoamiudp
     ```
 
 ## Routing Configuration
@@ -155,13 +298,14 @@ You can find an excerpt of the available custom resources in the table below:
 | [Middleware](#kind-middleware)           | Tweaks the HTTP requests before they are sent to your service | [HTTP Middlewares](../../middlewares/overview.md)              |
 | [TraefikService](#kind-traefikservice)   | Abstraction for HTTP loadbalancing/mirroring                  | [HTTP service](../services/index.md#configuring-http-services) |
 | [IngressRouteTCP](#kind-ingressroutetcp) | TCP Routing                                                   | [TCP router](../routers/index.md#configuring-tcp-routers)      |
+| [IngressRouteUDP](#kind-ingressrouteudp) | UDP Routing                                                   | [UDP router](../routers/index.md#configuring-udp-routers)      |
 | [TLSOptions](#kind-tlsoption)            | Allows to configure some parameters of the TLS connection     | [TLSOptions](../../https/tls.md#tls-options)                   |
 
 ### Kind: `IngressRoute`
 
 `IngressRoute` is the CRD implementation of a [Traefik HTTP router](../routers/index.md#configuring-http-routers).
 
-Register the `IngressRoute` kind in the Kubernetes cluster before creating `IngressRoute` objects.
+Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `IngressRoute` objects.
 
 !!! info "IngressRoute Attributes"
 
@@ -212,8 +356,8 @@ Register the `IngressRoute` kind in the Kubernetes cluster before creating `Ingr
 
 | Ref  | Attribute                  | Purpose                                                                                                                                                                     |
 |------|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `entryPoints`              | List of [entry points](../routers/index.md#entrypoints) name                                                                                                                |
-| [2]  | `routes`                   | List of route                                                                                                                                                               |
+| [1]  | `entryPoints`              | List of [entry points](../routers/index.md#entrypoints) names                                                                                                               |
+| [2]  | `routes`                   | List of routes                                                                                                                                                              |
 | [3]  | `routes[n].match`          | Defines the [rule](../routers/index.md#rule) corresponding to an underlying router.                                                                                         |
 | [4]  | `routes[n].priority`       | [Disambiguate](../routers/index.md#priority) rules of the same length, for route matching                                                                                   |
 | [5]  | `routes[n].middlewares`    | List of reference to [Middleware](#kind-middleware)                                                                                                                         |
@@ -317,7 +461,7 @@ Register the `IngressRoute` kind in the Kubernetes cluster before creating `Ingr
 
 `Middleware` is the CRD implementation of a [Traefik middleware](../../middlewares/overview.md).
 
-Register the `Middleware` kind in the Kubernetes cluster before creating `Middleware` objects or referencing middlewares in the [`IngressRoute`](#kind-ingressroute) objects.
+Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `Middleware` objects or referencing middlewares in the [`IngressRoute`](#kind-ingressroute) objects.
 
 ??? "Declaring and Referencing a Middleware"
     
@@ -367,8 +511,8 @@ More information about available middlewares in the dedicated [middlewares secti
 
 `TraefikService` is the CRD implementation of a ["Traefik Service"](../services/index.md).
 
-Register the `TraefikService` kind in the Kubernetes cluster before creating `TraefikService` objects,
-referencing services in the [`IngressRoute`](#kind-ingressroute)/[`IngressRouteTCP`](#kind-ingressroutetcp) objects or recursively in others `TraefikService` objects.
+Register the `TraefikService` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `TraefikService` objects,
+referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or recursively in others `TraefikService` objects.
 
 !!! info "Disambiguate Traefik and Kubernetes Services "
 
@@ -659,7 +803,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
 
 `IngressRouteTCP` is the CRD implementation of a [Traefik TCP router](../routers/index.md#configuring-tcp-routers).
 
-Register the `IngressRouteTCP` kind in the Kubernetes cluster before creating `IngressRouteTCP` objects.
+Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `IngressRouteTCP` objects.
 
 !!! info "IngressRouteTCP Attributes"
 
@@ -695,10 +839,10 @@ Register the `IngressRouteTCP` kind in the Kubernetes cluster before creating `I
 
 | Ref  | Attribute                      | Purpose                                                                                                                                                                                                                                                                                                                                                                                  |
 |------|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `entryPoints`                  | List of [entrypoints](../routers/index.md#entrypoints_1) name                                                                                                                                                                                                                                                                                                                            |
-| [2]  | `routes`                       | List of route                                                                                                                                                                                                                                                                                                                                                                            |
-| [3]  | `routes[n].match`              | Defines the [rule](../routers/index.md#rule_1) corresponding to an underlying router.                                                                                                                                                                                                                                                                                                    |
-| [4]  | `routes[n].services`           | List of any combination of [TraefikService](#kind-traefikservice) and reference to a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                              |
+| [1]  | `entryPoints`                  | List of [entrypoints](../routers/index.md#entrypoints_1) names                                                                                                                                                                                                                                                                                                                           |
+| [2]  | `routes`                       | List of routes                                                                                                                                                                                                                                                                                                                                                                           |
+| [3]  | `routes[n].match`              | Defines the [rule](../routers/index.md#rule_1) corresponding to an underlying router                                                                                                                                                                                                                                                                                                     |
+| [4]  | `routes[n].services`           | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions                                                                                                                                                                                                                                                                               |
 | [5]  | `services[n].name`             | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                             |
 | [6]  | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                             |
 | [7]  | `services[n].weight`           | Defines the weight to apply to the server load balancing                                                                                                                                                                                                                                                                                                                                 |
@@ -708,7 +852,7 @@ Register the `IngressRouteTCP` kind in the Kubernetes cluster before creating `I
 | [11] | `tls.options`                  | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                                                                                                                  |
 | [12] | `options.name`                 | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                                                                                                                                                                                            |
 | [13] | `options.namespace`            | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                                                                                                                                                                                       |
-| [14] | `tls.certResolver`              | Defines the reference to a [CertResolver](../routers/index.md#certresolver_1)                                                                                                                                                                                                                                                                                                            |
+| [14] | `tls.certResolver`             | Defines the reference to a [CertResolver](../routers/index.md#certresolver_1)                                                                                                                                                                                                                                                                                                            |
 | [15] | `tls.domains`                  | List of [domains](../routers/index.md#domains_1)                                                                                                                                                                                                                                                                                                                                         |
 | [16] | `domains[n].main`              | Defines the main domain name                                                                                                                                                                                                                                                                                                                                                             |
 | [17] | `domains[n].sans`              | List of SANs (alternative domains)                                                                                                                                                                                                                                                                                                                                                       |
@@ -773,11 +917,65 @@ Register the `IngressRouteTCP` kind in the Kubernetes cluster before creating `I
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
     ```
 
+### Kind `IngressRouteUDP`
+
+`IngressRouteUDP` is the CRD implementation of a [Traefik UDP router](../routers/index.md#configuring-udp-routers).
+
+Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `IngressRouteUDP` objects.
+
+!!! info "IngressRouteUDP Attributes"
+
+    ```yaml
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRouteUDP
+    metadata:
+      name: ingressrouteudpfoo
+    
+    spec:
+      entryPoints:                  # [1]
+        - fooudp
+      routes:                       # [2]
+      - services:                   # [3]
+        - name: foo                 # [4]
+          port: 8080                # [5]
+          weight: 10                # [6]
+    ```
+
+| Ref  | Attribute                      | Purpose                                                                                                                                                                                                                                                                                                                                                                                  |
+|------|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `entryPoints`                  | List of [entrypoints](../routers/index.md#entrypoints_1) names                                                                                                                                                                                                                                                                                                                           |
+| [2]  | `routes`                       | List of routes                                                                                                                                                                                                                                                                                                                                                                           |
+| [3]  | `routes[n].services`           | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions                                                                                                                                                                                                                                                                               |
+| [4]  | `services[n].name`             | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                             |
+| [6]  | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                             |
+| [7]  | `services[n].weight`           | Defines the weight to apply to the server load balancing                                                                                                                                                                                                                                                                                                                                 |
+
+??? example "Declaring an IngressRouteUDP"
+
+    ```yaml
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRouteUDP
+    metadata:
+      name: ingressrouteudpfoo
+    
+    spec:
+      entryPoints:
+        - fooudp
+      routes:
+      - services:
+        - name: foo
+          port: 8080
+          weight: 10
+        - name: bar
+          port: 8081
+          weight: 10
+    ```
+    
 ### Kind: `TLSOption`
 
 `TLSOption` is the CRD implementation of a [Traefik "TLS Option"](../../https/tls.md#tls-options).
 
-Register the `TLSOption` kind in the Kubernetes cluster before creating `TLSOption` objects
+Register the `TLSOption` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `TLSOption` objects
 or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
 
 !!! info "TLSOption Attributes"
@@ -890,6 +1088,82 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
 	just as in the [middleware case](../../middlewares/overview.md#provider-namespace).
 	Specifying a namespace attribute in this case would not make any sense, and will be ignored.
 
+### Kind: `TLSStore`
+
+`TLSStore` is the CRD implementation of a [Traefik "TLS Store"](../../https/tls.md#certificates-stores).
+
+Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore` objects
+or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
+
+!!! important "Default TLS Store"
+
+    Traefik currently only uses the [TLS Store named "default"](../../https/tls.md#certificates-stores).
+    This means that if you have two stores that are named default in different kubernetes namespaces,
+    they may be randomly chosen.
+    For the time being, please only configure one TLSSTore named default.
+
+!!! info "TLSStore Attributes"
+   
+    ```yaml tab="TLSStore"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: TLSStore
+    metadata:
+      name: default
+      namespace: default
+    
+    spec:
+      defaultCertificate:
+        secretName: mySecret                      # [1]
+    ```
+
+| Ref | Attribute                   | Purpose                                                                                                                                                                    |
+|-----|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1] | `secretName`                | The name of the referenced Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) that holds the default certificate for the store.                                                                             |
+
+??? example "Declaring and referencing a TLSStore"
+   
+    ```yaml tab="TLSStore"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: TLSStore
+    metadata:
+      name: default
+      namespace: default
+    
+    spec:
+      defaultCertificate:
+        secretName:  supersecret
+    ```
+    
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: ingressroutebar
+    
+    spec:
+      entryPoints:
+        - web
+      routes:
+      - match: Host(`bar.com`) && PathPrefix(`/stripit`)
+        kind: Rule
+        services:
+        - name: whoami
+          port: 80
+      tls:
+        store: 
+          name: default
+    ```
+
+    ```yaml tab="Secret"
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: supersecret
+    
+    data:
+      tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+      tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+    ```
 ## Further
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.

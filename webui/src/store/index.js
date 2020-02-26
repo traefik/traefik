@@ -5,6 +5,7 @@ import core from './core'
 import entrypoints from './entrypoints'
 import http from './http'
 import tcp from './tcp'
+import udp from './udp'
 
 Vue.use(Vuex)
 
@@ -19,7 +20,8 @@ export default function (/* { ssrContext } */) {
       core,
       entrypoints,
       http,
-      tcp
+      tcp,
+      udp
     },
 
     // enable strict mode (adds overhead!)

@@ -42,6 +42,14 @@ type IngressRouteTCPListerExpansion interface{}
 // IngressRouteTCPNamespaceLister.
 type IngressRouteTCPNamespaceListerExpansion interface{}
 
+// IngressRouteUDPListerExpansion allows custom methods to be added to
+// IngressRouteUDPLister.
+type IngressRouteUDPListerExpansion interface{}
+
+// IngressRouteUDPNamespaceListerExpansion allows custom methods to be added to
+// IngressRouteUDPNamespaceLister.
+type IngressRouteUDPNamespaceListerExpansion interface{}
+
 // MiddlewareListerExpansion allows custom methods to be added to
 // MiddlewareLister.
 type MiddlewareListerExpansion interface{}
@@ -57,6 +65,14 @@ type TLSOptionListerExpansion interface{}
 // TLSOptionNamespaceListerExpansion allows custom methods to be added to
 // TLSOptionNamespaceLister.
 type TLSOptionNamespaceListerExpansion interface{}
+
+// TLSStoreListerExpansion allows custom methods to be added to
+// TLSStoreLister.
+type TLSStoreListerExpansion interface{}
+
+// TLSStoreNamespaceListerExpansion allows custom methods to be added to
+// TLSStoreNamespaceLister.
+type TLSStoreNamespaceListerExpansion interface{}
 
 // TraefikServiceListerExpansion allows custom methods to be added to
 // TraefikServiceLister.

@@ -1,0 +1,35 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.websecure]
+    address = ":4443"
+  [entryPoints.udp]
+    address = ":4443/udp"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[udp.routers]
+  [udp.routers.router1]
+    service = "service1"
+
+  [udp.routers.router2]
+    service = "service2"
+
+[udp.services]
+  [udp.services.service1]
+
+  [udp.services.service2]
+    [udp.services.service2.loadBalancer]
+      [[udp.services.service2.loadBalancer.servers]]
+        address = "127.0.0.1:9010"

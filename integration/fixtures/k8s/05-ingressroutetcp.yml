@@ -16,3 +16,5 @@ spec:
   tls:
     options:
       name: mytlsoption
+    store:
+      name: mytlsstore

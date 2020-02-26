@@ -73,6 +73,29 @@
     <section class="app-section">
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-lg q-pb-lg">
         <div class="row no-wrap items-center q-mb-lg app-title">
+          <q-icon name="eva-globe-3"></q-icon>
+          <div class="app-title-label">UDP</div>
+        </div>
+        <div v-if="!loadingOverview" class="row items-center q-col-gutter-lg">
+          <div
+            v-for="(overviewUDP, index) in allUDP" :key="index"
+            class="col-12 col-sm-6 col-md-4">
+            <panel-chart :name="index" :data="overviewUDP" type="udp"/>
+          </div>
+        </div>
+        <div v-else class="row items-center q-col-gutter-lg">
+          <div class="col-12 col-sm-6 col-md-4">
+            <p v-for="n in 6" :key="n" class="flex">
+              <SkeletonBox :min-width="15" :max-width="15" style="margin-right: 2%"/> <SkeletonBox :min-width="50" :max-width="83"/>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="app-section">
+      <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-lg q-pb-lg">
+        <div class="row no-wrap items-center q-mb-lg app-title">
           <q-icon name="eva-toggle-right"></q-icon>
           <div class="app-title-label">Features</div>
         </div>
@@ -156,6 +179,9 @@ export default {
     },
     allTCP () {
       return this.overviewAll.items.tcp
+    },
+    allUDP () {
+      return this.overviewAll.items.udp
     },
     allFeatures () {
       return this.overviewAll.items.features

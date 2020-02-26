@@ -36,10 +36,14 @@ type Interface interface {
 	IngressRoutes() IngressRouteInformer
 	// IngressRouteTCPs returns a IngressRouteTCPInformer.
 	IngressRouteTCPs() IngressRouteTCPInformer
+	// IngressRouteUDPs returns a IngressRouteUDPInformer.
+	IngressRouteUDPs() IngressRouteUDPInformer
 	// Middlewares returns a MiddlewareInformer.
 	Middlewares() MiddlewareInformer
 	// TLSOptions returns a TLSOptionInformer.
 	TLSOptions() TLSOptionInformer
+	// TLSStores returns a TLSStoreInformer.
+	TLSStores() TLSStoreInformer
 	// TraefikServices returns a TraefikServiceInformer.
 	TraefikServices() TraefikServiceInformer
 }
@@ -65,6 +69,11 @@ func (v *version) IngressRouteTCPs() IngressRouteTCPInformer {
 	return &ingressRouteTCPInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
+// IngressRouteUDPs returns a IngressRouteUDPInformer.
+func (v *version) IngressRouteUDPs() IngressRouteUDPInformer {
+	return &ingressRouteUDPInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
 // Middlewares returns a MiddlewareInformer.
 func (v *version) Middlewares() MiddlewareInformer {
 	return &middlewareInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
@@ -73,6 +82,11 @@ func (v *version) Middlewares() MiddlewareInformer {
 // TLSOptions returns a TLSOptionInformer.
 func (v *version) TLSOptions() TLSOptionInformer {
 	return &tLSOptionInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// TLSStores returns a TLSStoreInformer.
+func (v *version) TLSStores() TLSStoreInformer {
+	return &tLSStoreInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // TraefikServices returns a TraefikServiceInformer.

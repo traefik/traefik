@@ -8,7 +8,7 @@ function getAllRouters (params) {
     .then(response => {
       const { data = [], headers } = response
       const total = getTotal(headers, params)
-      console.log('Success -> HttpService -> getAllRouters', response.data)
+      console.log('Success -> TcpService -> getAllRouters', response.data)
       return { data, total }
     })
 }
@@ -16,7 +16,7 @@ function getAllRouters (params) {
 function getRouterByName (name) {
   return APP.api.get(`${apiBase}/routers/${name}`)
     .then(body => {
-      console.log('Success -> HttpService -> getRouterByName', body.data)
+      console.log('Success -> TcpService -> getRouterByName', body.data)
       return body.data
     })
 }
@@ -26,7 +26,7 @@ function getAllServices (params) {
     .then(response => {
       const { data = [], headers } = response
       const total = getTotal(headers, params)
-      console.log('Success -> HttpService -> getAllServices', response.data)
+      console.log('Success -> TcpService -> getAllServices', response.data)
       return { data, total }
     })
 }
@@ -34,7 +34,7 @@ function getAllServices (params) {
 function getServiceByName (name) {
   return APP.api.get(`${apiBase}/services/${name}`)
     .then(body => {
-      console.log('Success -> HttpService -> getServiceByName', body.data)
+      console.log('Success -> TcpService -> getServiceByName', body.data)
       return body.data
     })
 }
