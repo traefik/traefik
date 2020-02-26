@@ -240,7 +240,7 @@ Below are the available options for the health check mechanism:
 - `interval` defines the frequency of the health check calls.
 - `timeout` defines the maximum duration Traefik will wait for a health check request before considering the server failed (unhealthy).
 - `headers` defines custom headers to be sent to the health check endpoint.
-- `followRedirects` defines if redirects should be followed during the health check calls (default: true).
+- `followRedirects` defines whether redirects should be followed during the health check calls (default: true).
 
 !!! info "Interval & Timeout Format"
 
