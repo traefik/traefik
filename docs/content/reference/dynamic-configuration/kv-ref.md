@@ -156,6 +156,7 @@
 | `traefik/http/routers/Router1/tls/domains/1/sans/0` | `foobar` |
 | `traefik/http/routers/Router1/tls/domains/1/sans/1` | `foobar` |
 | `traefik/http/routers/Router1/tls/options` | `foobar` |
+| `traefik/http/services/Service01/loadBalancer/healthCheck/followRedirects` | `true` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/headers/name0` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/headers/name1` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/hostname` | `foobar` |

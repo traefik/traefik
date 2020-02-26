@@ -52,11 +52,11 @@ type Options struct {
 	Scheme          string
 	Path            string
 	Port            int
+	FollowRedirects bool
 	Transport       http.RoundTripper
 	Interval        time.Duration
 	Timeout         time.Duration
 	LB              Balancer
-	FollowRedirects bool
 }
 
 func (opt Options) String() string {
@@ -235,19 +235,14 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 
 	req = backend.addHeadersAndHost(req)
 
-	var client http.Client
-	if backend.FollowRedirects {
-		client = http.Client{
-			Timeout:   backend.Options.Timeout,
-			Transport: backend.Options.Transport,
-		}
-	} else {
-		client = http.Client{
-			Timeout:   backend.Options.Timeout,
-			Transport: backend.Options.Transport,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
+	client := &http.Client{
+		Timeout:   backend.Options.Timeout,
+		Transport: backend.Options.Transport,
+	}
+
+	if !backend.FollowRedirects {
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
 		}
 	}
 

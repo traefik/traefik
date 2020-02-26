@@ -56,6 +56,7 @@
           interval = "foobar"
           timeout = "foobar"
           hostname = "foobar"
+          followRedirects = true
           [http.services.Service01.loadBalancer.healthCheck.headers]
             name0 = "foobar"
             name1 = "foobar"
