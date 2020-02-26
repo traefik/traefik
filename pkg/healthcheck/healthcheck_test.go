@@ -470,17 +470,6 @@ func TestLBStatusUpdater(t *testing.T) {
 	}
 }
 
-type redirectBackend struct {
-	redirectURL string
-	done        func()
-}
-
-func (backend *redirectBackend) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	w.Header().Add("location", backend.redirectURL)
-	w.WriteHeader(http.StatusSeeOther)
-	backend.done()
-}
-
 func TestNotFollowingRedirects(t *testing.T) {
 	redirectServerCalled := false
 	redirectTestServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -491,15 +480,18 @@ func TestNotFollowingRedirects(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	redirectBackend := &redirectBackend{
-		redirectURL: redirectTestServer.URL,
-		done:        cancel,
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Add("location", redirectTestServer.URL)
+		rw.WriteHeader(http.StatusSeeOther)
+		cancel()
+	}))
+	defer server.Close()
+
+	lb := &testLoadBalancer{
+		RWMutex: &sync.RWMutex{},
+		servers: []*url.URL{testhelpers.MustParseURL(server.URL)},
 	}
 
-	ts := httptest.NewServer(redirectBackend)
-	defer ts.Close()
-
-	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
 	backend := NewBackendConfig(Options{
 		Path:            "/path",
 		Interval:        healthCheckInterval,
@@ -508,13 +500,9 @@ func TestNotFollowingRedirects(t *testing.T) {
 		FollowRedirects: false,
 	}, "backendName")
 
-	serverURL := testhelpers.MustParseURL(ts.URL)
-	lb.servers = append(lb.servers, serverURL)
-
-	collectingMetrics := testhelpers.NewCollectingHealthCheckMetrics()
 	check := HealthCheck{
 		Backends: make(map[string]*BackendConfig),
-		metrics:  collectingMetrics,
+		metrics:  testhelpers.NewCollectingHealthCheckMetrics(),
 	}
 
 	wg := sync.WaitGroup{}
