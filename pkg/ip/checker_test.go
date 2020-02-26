@@ -206,12 +206,14 @@ func TestContainsIsAllowed(t *testing.T) {
 			passIPs: []string{
 				"2a03:4000:6:d080::",
 				"2a03:4000:6:d080::1",
+				"[2a03:4000:6:d080::2]",
 				"2a03:4000:6:d080:dead:beef:ffff:ffff",
 				"2a03:4000:6:d080::42",
 			},
 			rejectIPs: []string{
 				"2a03:4000:7:d080::",
 				"2a03:4000:7:d080::1",
+				"[2a03:4000:7:d080::2]",
 				"fe80::",
 				"4242::1",
 			},
@@ -232,6 +234,7 @@ func TestContainsIsAllowed(t *testing.T) {
 			passIPs: []string{
 				"2a03:4000:6:d080::",
 				"2a03:4000:6:d080::1",
+				"[2a03:4000:6:d080::2]",
 				"2a03:4000:6:d080:dead:beef:ffff:ffff",
 				"2a03:4000:6:d080::42",
 				"fe80::1",
@@ -241,6 +244,7 @@ func TestContainsIsAllowed(t *testing.T) {
 			rejectIPs: []string{
 				"2a03:4000:7:d080::",
 				"2a03:4000:7:d080::1",
+				"[2a03:4000:7:d080::2]",
 				"4242::1",
 			},
 		},
@@ -252,6 +256,7 @@ func TestContainsIsAllowed(t *testing.T) {
 				"2a03:4000:6:d080::1",
 				"2a03:4000:6:d080:dead:beef:ffff:ffff",
 				"2a03:4000:6:d080::42",
+				"[2a03:4000:6:d080::43]",
 				"fe80::1",
 				"fe80:aa00:00bb:4232:ff00:eeee:00ff:1111",
 				"fe80::fe80",
@@ -267,6 +272,7 @@ func TestContainsIsAllowed(t *testing.T) {
 			rejectIPs: []string{
 				"2a03:4000:7:d080::",
 				"2a03:4000:7:d080::1",
+				"[2a03:4000:7:d080::2]",
 				"4242::1",
 				"1.2.16.1",
 				"1.2.32.1",

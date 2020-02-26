@@ -90,6 +90,9 @@ func (ip *Checker) ContainsIP(addr net.IP) bool {
 }
 
 func parseIP(addr string) (net.IP, error) {
+	addr = strings.ReplaceAll(addr, "[", "")
+	addr = strings.ReplaceAll(addr, "]", "")
+
 	userIP := net.ParseIP(addr)
 	if userIP == nil {
 		return nil, fmt.Errorf("can't parse IP from address %s", addr)
