@@ -17,7 +17,7 @@ require (
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
 	github.com/abronan/valkeyrie v0.0.0-20190822142731-f2e1850dc905
 	github.com/c0va23/go-proxyprotocol v0.9.1
-	github.com/cenkalti/backoff/v3 v3.0.0
+	github.com/cenkalti/backoff/v4 v4.0.0
 	github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc // indirect
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
