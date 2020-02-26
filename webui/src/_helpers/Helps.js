@@ -1,4 +1,4 @@
-import { APP } from './APP'
+import { get } from 'dot-prop'
 
 class Helps {
   // Getters
@@ -11,7 +11,7 @@ class Helps {
   // ------------------------------------------------------------------------
 
   static get (obj, prop, def = undefined) {
-    return APP._.get(obj, prop, def)
+    return get(obj, prop, def)
   }
 
   static hasIn (obj, prop) {

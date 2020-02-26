@@ -55,6 +55,28 @@ The `Services` are responsible for configuring how to reach the actual services 
             - address: "<private-ip-server-2>:<private-port-server-2>"
     ```
 
+??? example "Declaring a UDP Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [udp.services]
+      [udp.services.my-service.loadBalancer]
+         [[udp.services.my-service.loadBalancer.servers]]
+           address = "<private-ip-server-1>:<private-port-server-1>"
+         [[udp.services.my-service.loadBalancer.servers]]
+           address = "<private-ip-server-2>:<private-port-server-2>"
+    ```
+
+    ```yaml tab="YAML"
+    udp:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+            - address: "<private-ip-server-1>:<private-port-server-1>"
+            - address: "<private-ip-server-2>:<private-port-server-2>"
+    ```
+
 ## Configuring HTTP Services
 
 ### Servers Load Balancer
@@ -387,7 +409,9 @@ The WRR is able to load balance the requests between multiple services based on 
 
 This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
 
-!!! info "This strategy can be defined only with [File](../../providers/file.md)."
+!!! info "Supported Providers"
+    
+    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
 
 ```toml tab="TOML"
 ## Dynamic configuration
@@ -438,7 +462,9 @@ http:
 
 The mirroring is able to mirror requests sent to a service to other services.
 
-!!! info "This strategy can be defined only with [File](../../providers/file.md)."
+!!! info "Supported Providers"
+    
+    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
 
 ```toml tab="TOML"
 ## Dynamic configuration
@@ -583,7 +609,9 @@ The Weighted Round Robin (alias `WRR`) load-balancer of services is in charge of
 
 This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
 
-This strategy can only be defined with [File](../../providers/file.md).
+!!! info "Supported Providers"
+    
+    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
 
 ```toml tab="TOML"
 ## Dynamic configuration
@@ -610,6 +638,120 @@ This strategy can only be defined with [File](../../providers/file.md).
 ```yaml tab="YAML"
 ## Dynamic configuration
 tcp:
+  services:
+    app:
+      weighted:
+        services:
+        - name: appv1
+          weight: 3
+        - name: appv2
+          weight: 1
+
+    appv1:
+      loadBalancer:
+        servers:
+        - address: "xxx.xxx.xxx.xxx:8080"
+
+    appv2:
+      loadBalancer:
+        servers:
+        - address: "xxx.xxx.xxx.xxx:8080"
+```
+
+## Configuring UDP Services
+
+### General
+
+Each of the fields of the service section represents a kind of service.
+Which means, that for each specified service, one of the fields, and only one,
+has to be enabled to define what kind of service is created.
+Currently, the two available kinds are `LoadBalancer`, and `Weighted`.
+
+### Servers Load Balancer
+
+The servers load balancer is in charge of balancing the requests between the servers of the same service.
+
+??? example "Declaring a Service with Two Servers -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [udp.services]
+      [udp.services.my-service.loadBalancer]
+        [[udp.services.my-service.loadBalancer.servers]]
+          address = "xx.xx.xx.xx:xx"
+        [[udp.services.my-service.loadBalancer.servers]]
+          address = "xx.xx.xx.xx:xx"
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    udp:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+            - address: "xx.xx.xx.xx:xx"
+            - address: "xx.xx.xx.xx:xx"
+    ```
+
+#### Servers
+
+The Servers field defines all the servers that are part of this load-balancing group,
+i.e. each address (IP:Port) on which an instance of the service's program is deployed.
+
+??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [udp.services]
+      [udp.services.my-service.loadBalancer]
+        [[udp.services.my-service.loadBalancer.servers]]
+          address = "xx.xx.xx.xx:xx"
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    udp:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+              - address: "xx.xx.xx.xx:xx"
+    ```
+
+### Weighted Round Robin
+
+The Weighted Round Robin (alias `WRR`) load-balancer of services is in charge of balancing the requests between multiple services based on provided weights.
+
+This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
+
+This strategy can only be defined with [File](../../providers/file.md).
+
+```toml tab="TOML"
+## Dynamic configuration
+[udp.services]
+  [udp.services.app]
+    [[udp.services.app.weighted.services]]
+      name = "appv1"
+      weight = 3
+    [[udp.services.app.weighted.services]]
+      name = "appv2"
+      weight = 1
+
+  [udp.services.appv1]
+    [udp.services.appv1.loadBalancer]
+      [[udp.services.appv1.loadBalancer.servers]]
+        address = "private-ip-server-1:8080/"
+
+  [udp.services.appv2]
+    [udp.services.appv2.loadBalancer]
+      [[udp.services.appv2.loadBalancer.servers]]
+        address = "private-ip-server-2:8080/"
+```
+
+```yaml tab="YAML"
+## Dynamic configuration
+udp:
   services:
     app:
       weighted:

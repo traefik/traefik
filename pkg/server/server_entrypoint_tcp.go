@@ -52,12 +52,20 @@ func (h *httpForwarder) Accept() (net.Conn, error) {
 type TCPEntryPoints map[string]*TCPEntryPoint
 
 // NewTCPEntryPoints creates a new TCPEntryPoints.
-func NewTCPEntryPoints(staticConfiguration static.Configuration) (TCPEntryPoints, error) {
+func NewTCPEntryPoints(entryPointsConfig static.EntryPoints) (TCPEntryPoints, error) {
 	serverEntryPointsTCP := make(TCPEntryPoints)
-	for entryPointName, config := range staticConfiguration.EntryPoints {
+	for entryPointName, config := range entryPointsConfig {
+		protocol, err := config.GetProtocol()
+		if err != nil {
+			return nil, fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
+		}
+
+		if protocol != "tcp" {
+			continue
+		}
+
 		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
 
-		var err error
 		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config)
 		if err != nil {
 			return nil, fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
@@ -70,7 +78,7 @@ func NewTCPEntryPoints(staticConfiguration static.Configuration) (TCPEntryPoints
 func (eps TCPEntryPoints) Start() {
 	for entryPointName, serverEntryPoint := range eps {
 		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
-		go serverEntryPoint.StartTCP(ctx)
+		go serverEntryPoint.Start(ctx)
 	}
 }
 
@@ -149,8 +157,8 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 	}, nil
 }
 
-// StartTCP starts the TCP server.
-func (e *TCPEntryPoint) StartTCP(ctx context.Context) {
+// Start starts the TCP server.
+func (e *TCPEntryPoint) Start(ctx context.Context) {
 	logger := log.FromContext(ctx)
 	logger.Debugf("Start TCP Server")
 
@@ -158,6 +166,10 @@ func (e *TCPEntryPoint) StartTCP(ctx context.Context) {
 		conn, err := e.listener.Accept()
 		if err != nil {
 			logger.Error(err)
+			if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
+				continue
+			}
+
 			return
 		}
 
@@ -167,6 +179,23 @@ func (e *TCPEntryPoint) StartTCP(ctx context.Context) {
 		}
 
 		safe.Go(func() {
+			// Enforce read/write deadlines at the connection level,
+			// because when we're peeking the first byte to determine whether we are doing TLS,
+			// the deadlines at the server level are not taken into account.
+			if e.transportConfiguration.RespondingTimeouts.ReadTimeout > 0 {
+				err := writeCloser.SetReadDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.ReadTimeout)))
+				if err != nil {
+					logger.Errorf("Error while setting read deadline: %v", err)
+				}
+			}
+
+			if e.transportConfiguration.RespondingTimeouts.WriteTimeout > 0 {
+				err = writeCloser.SetWriteDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.WriteTimeout)))
+				if err != nil {
+					logger.Errorf("Error while setting write deadline: %v", err)
+				}
+			}
+
 			e.switcher.ServeTCP(newTrackedConnection(writeCloser, e.tracker))
 		})
 	}
@@ -187,48 +216,48 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	logger.Debugf("Waiting %s seconds before killing connections.", graceTimeOut)
 
 	var wg sync.WaitGroup
+
+	shutdownServer := func(server stoppableServer) {
+		defer wg.Done()
+		err := server.Shutdown(ctx)
+		if err == nil {
+			return
+		}
+		if ctx.Err() == context.DeadlineExceeded {
+			logger.Debugf("Server failed to shutdown within deadline because: %s", err)
+			if err = server.Close(); err != nil {
+				logger.Error(err)
+			}
+			return
+		}
+		logger.Error(err)
+		// We expect Close to fail again because Shutdown most likely failed when trying to close a listener.
+		// We still call it however, to make sure that all connections get closed as well.
+		server.Close()
+	}
+
 	if e.httpServer.Server != nil {
 		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := e.httpServer.Server.Shutdown(ctx); err != nil {
-				if ctx.Err() == context.DeadlineExceeded {
-					logger.Debugf("Wait server shutdown is overdue to: %s", err)
-					err = e.httpServer.Server.Close()
-					if err != nil {
-						logger.Error(err)
-					}
-				}
-			}
-		}()
+		go shutdownServer(e.httpServer.Server)
 	}
 
 	if e.httpsServer.Server != nil {
 		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := e.httpsServer.Server.Shutdown(ctx); err != nil {
-				if ctx.Err() == context.DeadlineExceeded {
-					logger.Debugf("Wait server shutdown is overdue to: %s", err)
-					err = e.httpsServer.Server.Close()
-					if err != nil {
-						logger.Error(err)
-					}
-				}
-			}
-		}()
+		go shutdownServer(e.httpsServer.Server)
 	}
 
 	if e.tracker != nil {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := e.tracker.Shutdown(ctx); err != nil {
-				if ctx.Err() == context.DeadlineExceeded {
-					logger.Debugf("Wait hijack connection is overdue to: %s", err)
-					e.tracker.Close()
-				}
+			err := e.tracker.Shutdown(ctx)
+			if err == nil {
+				return
 			}
+			if ctx.Err() == context.DeadlineExceeded {
+				logger.Debugf("Server failed to shutdown before deadline because: %s", err)
+			}
+			e.tracker.Close()
 		}()
 	}
 
@@ -349,7 +378,7 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 }
 
 func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {
-	listener, err := net.Listen("tcp", entryPoint.Address)
+	listener, err := net.Listen("tcp", entryPoint.GetAddress())
 
 	if err != nil {
 		return nil, fmt.Errorf("error opening listener: %v", err)
@@ -446,6 +475,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		configuration.ForwardedHeaders.Insecure,
 		configuration.ForwardedHeaders.TrustedIPs,
 		httpSwitcher)
+
 	if err != nil {
 		return nil, err
 	}
@@ -455,8 +485,11 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	serverHTTP := &http.Server{
-		Handler:  handler,
-		ErrorLog: httpServerLogger,
+		Handler:      handler,
+		ErrorLog:     httpServerLogger,
+		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 	}
 
 	listener := newHTTPForwarder(ln)

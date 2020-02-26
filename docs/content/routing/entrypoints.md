@@ -6,7 +6,8 @@ Opening Connections for Incoming Requests
 ![entryPoints](../assets/img/entrypoints.png)
 
 EntryPoints are the network entry points into Traefik.
-They define the port which will receive the requests (whether HTTP or TCP).
+They define the port which will receive the packets,
+and whether to listen for TCP or UDP.
 
 ## Configuration Examples
 
@@ -41,7 +42,7 @@ They define the port which will receive the requests (whether HTTP or TCP).
       [entryPoints.web]
         address = ":80"
     
-      [entryPoints.web-secure]
+      [entryPoints.websecure]
         address = ":443"
     ```
     
@@ -51,18 +52,39 @@ They define the port which will receive the requests (whether HTTP or TCP).
       web:
         address: ":80"
      
-      web-secure:
+      websecure:
         address: ":443"
     ```
     
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.web.address=:80
-    --entryPoints.web-secure.address=:443
+    --entryPoints.websecure.address=:443
     ```
 
-    - Two entrypoints are defined: one called `web`, and the other called `web-secure`.
-    - `web` listens on port `80`, and `web-secure` on port `443`. 
+    - Two entrypoints are defined: one called `web`, and the other called `websecure`.
+    - `web` listens on port `80`, and `websecure` on port `443`. 
+
+??? example "UDP on port 1704"
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.streaming]
+        address = ":1704/udp"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      streaming:
+        address: ":1704/udp"
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.streaming.address=:1704/udp
+    ```
 
 ## Configuration
 
@@ -77,7 +99,7 @@ You can define them using a toml file, CLI arguments, or a key-value store.
     ## Static configuration
     [entryPoints]
       [entryPoints.name]
-        address = ":8888"
+        address = ":8888" # same as ":8888/tcp"
         [entryPoints.name.transport]
           [entryPoints.name.transport.lifeCycle]
             requestAcceptGraceTimeout = 42
@@ -98,7 +120,7 @@ You can define them using a toml file, CLI arguments, or a key-value store.
     ## Static configuration
     entryPoints:
       name:
-        address: ":8888"
+        address: ":8888" # same as ":8888/tcp"
         transport:
           lifeCycle:
             requestAcceptGraceTimeout: 42
@@ -121,7 +143,7 @@ You can define them using a toml file, CLI arguments, or a key-value store.
     
     ```bash tab="CLI"
     ## Static configuration
-    --entryPoints.name.address=:8888
+    --entryPoints.name.address=:8888 # same as :8888/tcp
     --entryPoints.name.transport.lifeCycle.requestAcceptGraceTimeout=42
     --entryPoints.name.transport.lifeCycle.graceTimeOut=42
     --entryPoints.name.transport.respondingTimeouts.readTimeout=42
@@ -133,7 +155,46 @@ You can define them using a toml file, CLI arguments, or a key-value store.
     --entryPoints.name.forwardedHeaders.trustedIPs=127.0.0.1,192.168.0.1
     ```
 
-### Forwarded Header
+### Address
+
+The address defines the port, and optionally the hostname, on which to listen for incoming connections and packets.
+It also defines the protocol to use (TCP or UDP).
+If no protocol is specified, the default is TCP.
+The format is:
+
+```bash
+[host]:port[/tcp|/udp]
+```
+
+If both TCP and UDP are wanted for the same port, two entryPoints definitions are needed, such as in the example below.
+
+??? example "Both TCP and UDP on port 3179"
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.tcpep]
+        address = ":3179"
+      [entryPoints.udpep]
+        address = ":3179/udp"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      tcpep:
+       address: ":3179"
+      udpep:
+       address: ":3179/udp"
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.tcpep.address=:3179
+    --entryPoints.udpep.address=:3179/udp
+    ```
+
+### Forwarded Headers
 
 You can configure Traefik to trust the forwarded headers information (`X-Forwarded-*`).
 
@@ -202,6 +263,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
 #### `respondingTimeouts`
 
 `respondingTimeouts` are timeouts for incoming requests to the Traefik instance.
+Setting them has no effect for UDP entryPoints.
 
 ??? info "`transport.respondingTimeouts.readTimeout`"
     

@@ -28,19 +28,10 @@
 				"traefik"
 			]
 		},
-		"whoami-test-https-whoami-tls@kubernetes": {
-			"service": "default-whoami-http",
-			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
-			"tls": {},
-			"status": "enabled",
-			"using": [
-				"traefik",
-				"web"
-			]
-		},
 		"whoami-test-https-whoami@kubernetes": {
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
+			"tls": {},
 			"status": "enabled",
 			"using": [
 				"traefik",
@@ -60,7 +51,7 @@
 	"middlewares": {
 		"dashboard_redirect@internal": {
 			"redirectRegex": {
-				"regex": "^(http:\\/\\/[^:]+(:\\d+)?)/$",
+				"regex": "^(http:\\/\\/[^:\\/]+(:\\d+)?)\\/$",
 				"replacement": "${1}/dashboard/",
 				"permanent": true
 			},
@@ -109,7 +100,6 @@
 			},
 			"status": "enabled",
 			"usedBy": [
-				"whoami-test-https-whoami-tls@kubernetes",
 				"whoami-test-https-whoami@kubernetes",
 				"whoami-test-whoami@kubernetes"
 			],

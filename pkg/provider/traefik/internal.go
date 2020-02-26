@@ -86,13 +86,22 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 
 			cfg.HTTP.Middlewares["dashboard_redirect"] = &dynamic.Middleware{
 				RedirectRegex: &dynamic.RedirectRegex{
-					Regex:       `^(http:\/\/[^:]+(:\d+)?)/$`,
+					Regex:       `^(http:\/\/[^:\/]+(:\d+)?)\/$`,
 					Replacement: "${1}/dashboard/",
 					Permanent:   true,
 				},
 			}
 			cfg.HTTP.Middlewares["dashboard_stripprefix"] = &dynamic.Middleware{
 				StripPrefix: &dynamic.StripPrefix{Prefixes: []string{"/dashboard/", "/dashboard"}},
+			}
+		}
+
+		if i.staticCfg.API.Debug {
+			cfg.HTTP.Routers["debug"] = &dynamic.Router{
+				EntryPoints: []string{"traefik"},
+				Service:     "api@internal",
+				Priority:    math.MaxInt32 - 1,
+				Rule:        "PathPrefix(`/debug`)",
 			}
 		}
 	}

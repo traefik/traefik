@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -27,9 +26,6 @@ const (
 )
 
 type metricsMiddleware struct {
-	// Important: Since this int64 field is using sync/atomic, it has to be at the top of the struct due to a bug on 32-bit platform
-	// See: https://golang.org/pkg/sync/atomic/ for more information
-	openConns            int64
 	next                 http.Handler
 	reqsCounter          gokitmetrics.Counter
 	reqDurationHistogram gokitmetrics.Histogram
@@ -78,23 +74,22 @@ func WrapServiceHandler(ctx context.Context, registry metrics.Registry, serviceN
 }
 
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	labels := []string{"method", getMethod(req), "protocol", getRequestProtocol(req)}
+	var labels []string
 	labels = append(labels, m.baseLabels...)
+	labels = append(labels, "method", getMethod(req), "protocol", getRequestProtocol(req))
 
-	openConns := atomic.AddInt64(&m.openConns, 1)
-	m.openConnsGauge.With(labels...).Set(float64(openConns))
-	defer func(labelValues []string) {
-		openConns := atomic.AddInt64(&m.openConns, -1)
-		m.openConnsGauge.With(labelValues...).Set(float64(openConns))
-	}(labels)
+	m.openConnsGauge.With(labels...).Add(1)
+	defer m.openConnsGauge.With(labels...).Add(-1)
 
+	recorder := newResponseRecorder(rw)
 	start := time.Now()
-	recorder := &responseRecorder{rw, http.StatusOK}
 	m.next.ServeHTTP(recorder, req)
+	duration := time.Since(start).Seconds()
 
-	labels = append(labels, "code", strconv.Itoa(recorder.statusCode))
+	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
+
 	m.reqsCounter.With(labels...).Add(1)
-	m.reqDurationHistogram.With(labels...).Observe(time.Since(start).Seconds())
+	m.reqDurationHistogram.With(labels...).Observe(duration)
 }
 
 func getRequestProtocol(req *http.Request) string {

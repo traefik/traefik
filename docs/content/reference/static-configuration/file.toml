@@ -96,7 +96,7 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
-    throttleDuration = "10s"
+    throttleDuration = 42
   [providers.rest]
     insecure = true
   [providers.rancher]
@@ -110,25 +110,28 @@
     prefix = "foobar"
   [providers.consulCatalog]
     constraints = "foobar"
-    prefix = "traefik"
-    defaultRule = "foobar"
-    exposedByDefault = true
-    refreshInterval = 15
+    prefix = "foobar"
+    refreshInterval = 42
     requireConsistent = true
     stale = true
     cache = true
+    exposedByDefault = true
+    defaultRule = "foobar"
     [providers.consulCatalog.endpoint]
-     address = "foobar"
-     scheme = "foobar"
-     datacenter = "foobar"
-     token = "foobar"
-     endpointWaitTime = "15s"
-     [providers.consulCatalog.endpoint.tls]
-      ca = "foobar"
-      caOptional = true
-      cert = "foobar"
-      key = "foobar"
-      insecureSkipVerify = true
+      address = "foobar"
+      scheme = "foobar"
+      datacenter = "foobar"
+      token = "foobar"
+      endpointWaitTime = 42
+      [providers.consulCatalog.endpoint.tls]
+        ca = "foobar"
+        caOptional = true
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [providers.consulCatalog.endpoint.httpAuth]
+        username = "foobar"
+        password = "foobar"
   [providers.consul]
 	rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
@@ -188,19 +191,19 @@
     manualRouting = true
   [metrics.datadog]
     address = "foobar"
-    pushInterval = "10s"
+    pushInterval = "42s"
     addEntryPointsLabels = true
     addServicesLabels = true
   [metrics.statsD]
     address = "foobar"
-    pushInterval = "10s"
+    pushInterval = "42s"
     addEntryPointsLabels = true
     addServicesLabels = true
-    prefix = "traefik"
+    prefix = "foobar"
   [metrics.influxDB]
     address = "foobar"
     protocol = "foobar"
-    pushInterval = "10s"
+    pushInterval = "42s"
     database = "foobar"
     retentionPolicy = "foobar"
     username = "foobar"

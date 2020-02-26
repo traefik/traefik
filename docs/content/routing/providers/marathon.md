@@ -91,7 +91,7 @@ For example, to change the routing rule, you could add the label ```"traefik.htt
     See [tls](../routers/index.md#tls) for more information.
     
     ```json
-    "traefik.http.routers.myrouter>.tls": "true"
+    "traefik.http.routers.myrouter.tls": "true"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.certresolver`"

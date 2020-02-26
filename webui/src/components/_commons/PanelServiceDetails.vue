@@ -54,7 +54,7 @@
         </div>
       </q-card-section>
 
-      <q-card-section v-if="data.loadBalancer.terminationDelay">
+      <q-card-section v-if="data.loadBalancer && data.loadBalancer.terminationDelay">
         <div class="row items-start no-wrap">
           <div class="col">
             <div class="text-subtitle2">Termination Delay</div>

@@ -1,0 +1,28 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1beta1
+metadata:
+  name: ""
+  namespace: testing
+  annotations:
+    ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/router.pathmatcher: Path
+    traefik.ingress.kubernetes.io/router.entrypoints: ep1,ep2
+    traefik.ingress.kubernetes.io/router.middlewares: md1,md2
+    traefik.ingress.kubernetes.io/router.priority: "42"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver:   foobar
+    traefik.ingress.kubernetes.io/router.tls.domains.0.main: domain.com
+    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: one.domain.com,two.domain.com
+    traefik.ingress.kubernetes.io/router.tls.domains.1.main: example.com
+    traefik.ingress.kubernetes.io/router.tls.domains.1.sans: one.example.com,two.example.com
+    traefik.ingress.kubernetes.io/router.tls.options: foobar
+
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /bar
+            backend:
+              serviceName: service1
+              servicePort: 80

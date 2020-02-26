@@ -19,6 +19,28 @@ deploy:
     - "traefik.http.services.dummy-svc.loadbalancer.server.port=9999"
 ```
 
+```yaml tab="Kubernetes CRD"
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+spec:
+  routes:
+  - match: Host(`traefik.domain.com`)
+    kind: Rule
+    services:
+    - name: api@internal
+      kind: TraefikService
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: auth
+spec:
+  basicAuth:
+    secret: secretName # Kubernetes secret named "secretName"
+```
+
 ```yaml tab="Consul Catalog"
 # Dynamic Configuration
 - "traefik.http.routers.api.rule=Host(`traefik.domain.com`)"

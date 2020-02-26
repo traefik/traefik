@@ -7,7 +7,6 @@ module.exports = function (ctx) {
     // --> boot files are part of "main.js"
     boot: [
       '_globals',
-      'lodash',
       'api',
       '_hacks',
       '_init'
@@ -153,7 +152,14 @@ module.exports = function (ctx) {
     devServer: {
       // https: true,
       port: 8081,
-      open: true // opens browser window automatically
+      open: true, // opens browser window automatically
+      proxy: {
+        // proxy all API requests to real Traefik
+        '/api': {
+          target: 'http://localhost:8080',
+          changeOrigin: true
+        }
+      }
     },
 
     // animations: 'all', // --- includes all animations

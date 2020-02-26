@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 )
 
 // NewBuilder creates a builder.
@@ -22,21 +23,28 @@ func (f *Builder) Build(ctx context.Context, names []string) func(*http.Response
 	var modifiers []func(*http.Response) error
 
 	for _, middleName := range names {
-		if conf, ok := f.configs[middleName]; ok {
-			if conf == nil || conf.Middleware == nil {
-				getLogger(ctx, middleName, "undefined").Error("Invalid Middleware configuration (ResponseModifier)")
-				continue
+		conf, ok := f.configs[middleName]
+		if !ok {
+			getLogger(ctx, middleName, "undefined").Debug("Middleware name not found in config (ResponseModifier)")
+			continue
+		}
+		if conf == nil || conf.Middleware == nil {
+			getLogger(ctx, middleName, "undefined").Error("Invalid Middleware configuration (ResponseModifier)")
+			continue
+		}
+
+		if conf.Headers != nil {
+			getLogger(ctx, middleName, "Headers").Debug("Creating Middleware (ResponseModifier)")
+
+			modifiers = append(modifiers, buildHeaders(conf.Headers))
+		} else if conf.Chain != nil {
+			chainCtx := provider.AddInContext(ctx, middleName)
+			getLogger(chainCtx, middleName, "Chain").Debug("Creating Middleware (ResponseModifier)")
+			var qualifiedNames []string
+			for _, name := range conf.Chain.Middlewares {
+				qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(chainCtx, name))
 			}
-
-			if conf.Headers != nil {
-				getLogger(ctx, middleName, "Headers").Debug("Creating Middleware (ResponseModifier)")
-
-				modifiers = append(modifiers, buildHeaders(conf.Headers))
-			} else if conf.Chain != nil {
-				getLogger(ctx, middleName, "Chain").Debug("Creating Middleware (ResponseModifier)")
-
-				modifiers = append(modifiers, f.Build(ctx, conf.Chain.Middlewares))
-			}
+			modifiers = append(modifiers, f.Build(ctx, qualifiedNames))
 		}
 	}
 

@@ -6,7 +6,7 @@
   level = "DEBUG"
 
 [entryPoints]
-  [entryPoints.web-secure]
+  [entryPoints.websecure]
     address = ":4443"
 
 [api]
@@ -49,3 +49,30 @@
 
   [tls.options.baz]
     minversion = "VersionTLS11"
+
+[tcp.routers]
+  [tcp.routers.router3]
+    entrypoints=["unknown-entrypoint"]
+    service = "service1"
+    rule = "HostSNI(`mydomain.com`)"
+  [tcp.routers.router4]
+    entrypoints=["websecure"]
+    service = "service1"
+    rule = "Host(`mydomain.com`)"
+
+[tcp.services]
+  [tcp.services.service1]
+    [tcp.services.service1.loadBalancer]
+      [[tcp.services.service1.loadBalancer.servers]]
+        address = "127.0.0.1:9010"
+
+[udp.routers]
+  [udp.routers.router3]
+    entrypoints=["unknown-entrypoint"]
+    service = "service1"
+
+[udp.services]
+  [udp.services.service1]
+    [udp.services.service1.loadBalancer]
+      [[udp.services.service1.loadBalancer.servers]]
+        address = "127.0.0.1:9010"

@@ -88,7 +88,7 @@ providers:
     - foobar
     labelSelector: foobar
     ingressClass: foobar
-    throttleDuration: 10s
+    throttleDuration: 42s
     ingressEndpoint:
       ip: foobar
       hostname: foobar
@@ -117,25 +117,28 @@ providers:
     prefix: foobar
   consulCatalog:
     constraints: foobar
-    prefix: traefik
-    defaultRule: foobar
-    exposedByDefault: true
-    refreshInterval: 15
+    prefix: foobar
+    refreshInterval: 42s
     requireConsistent: true
     stale: true
     cache: true
+    exposedByDefault: true
+    defaultRule: foobar
     endpoint:
       address: foobar
       scheme: foobar
       datacenter: foobar
       token: foobar
-      endpointWaitTime: 15s
+      endpointWaitTime: 42s
       tls:
         ca: foobar
         caOptional: true
         cert: foobar
         key: foobar
         insecureSkipVerify: true
+      httpAuth:
+        username: foobar
+        password: foobar
   consul:
     rootKey: traefik
     endpoints:
@@ -211,7 +214,7 @@ metrics:
     pushInterval: 42
     addEntryPointsLabels: true
     addServicesLabels: true
-    prefix: traefik
+    prefix: foobar
   influxDB:
     address: foobar
     protocol: foobar

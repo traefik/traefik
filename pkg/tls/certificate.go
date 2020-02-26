@@ -102,7 +102,8 @@ func (f FileOrContent) IsPath() bool {
 
 func (f FileOrContent) Read() ([]byte, error) {
 	var content []byte
-	if _, err := os.Stat(f.String()); err == nil {
+	if f.IsPath() {
+		var err error
 		content, err = ioutil.ReadFile(f.String())
 		if err != nil {
 			return nil, err

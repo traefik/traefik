@@ -28,6 +28,10 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 			Routers:  make(map[string]*dynamic.TCPRouter),
 			Services: make(map[string]*dynamic.TCPService),
 		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  make(map[string]*dynamic.UDPRouter),
+			Services: make(map[string]*dynamic.UDPService),
+		},
 	}
 
 	servicesToDelete := map[string]struct{}{}
