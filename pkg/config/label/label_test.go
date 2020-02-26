@@ -143,6 +143,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.healthcheck.port":                 "42",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.scheme":               "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.timeout":              "foobar",
+		"traefik.http.services.Service0.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service0.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service0.loadbalancer.responseforwarding.flushinterval": "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.scheme":                    "foobar",
@@ -157,6 +158,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.healthcheck.port":                 "42",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.scheme":               "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.timeout":              "foobar",
+		"traefik.http.services.Service1.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service1.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service1.loadbalancer.responseforwarding.flushinterval": "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.scheme":                    "foobar",
@@ -595,6 +597,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								"name0": "foobar",
 								"name1": "foobar",
 							},
+							FollowRedirects: func(v bool) *bool { return &v }(true),
 						},
 						PassHostHeader: func(v bool) *bool { return &v }(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
@@ -621,6 +624,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								"name0": "foobar",
 								"name1": "foobar",
 							},
+							FollowRedirects: func(v bool) *bool { return &v }(true),
 						},
 						PassHostHeader: func(v bool) *bool { return &v }(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{

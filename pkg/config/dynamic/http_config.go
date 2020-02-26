@@ -164,7 +164,14 @@ type HealthCheck struct {
 	// FIXME change string to types.Duration
 	Interval string `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty"`
 	// FIXME change string to types.Duration
-	Timeout  string            `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
-	Hostname string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
-	Headers  map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty"`
+	Timeout         string            `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
+	Hostname        string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
+	FollowRedirects *bool             `json:"followRedirects" toml:"followRedirects" yaml:"followRedirects"`
+	Headers         map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty"`
+}
+
+// SetDefaults Default values for a HealthCheck.
+func (h *HealthCheck) SetDefaults() {
+	fr := true
+	h.FollowRedirects = &fr
 }

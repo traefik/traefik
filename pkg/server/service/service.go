@@ -262,15 +262,21 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backe
 		logger.Warnf("Health check timeout for backend '%s' should be lower than the health check interval. Interval set to timeout + 1 second (%s).", backend, interval)
 	}
 
+	followRedirects := true
+	if hc.FollowRedirects != nil {
+		followRedirects = *hc.FollowRedirects
+	}
+
 	return &healthcheck.Options{
-		Scheme:   hc.Scheme,
-		Path:     hc.Path,
-		Port:     hc.Port,
-		Interval: interval,
-		Timeout:  timeout,
-		LB:       lb,
-		Hostname: hc.Hostname,
-		Headers:  hc.Headers,
+		Scheme:          hc.Scheme,
+		Path:            hc.Path,
+		Port:            hc.Port,
+		Interval:        interval,
+		Timeout:         timeout,
+		LB:              lb,
+		Hostname:        hc.Hostname,
+		Headers:         hc.Headers,
+		FollowRedirects: followRedirects,
 	}
 }
 
