@@ -168,6 +168,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	conf := &dynamic.Configuration{
 		HTTP: p.loadIngressRouteConfiguration(ctx, client, tlsConfigs),
 		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
+		UDP:  p.loadIngressRouteUDPConfiguration(ctx, client),
 		TLS: &dynamic.TLSConfiguration{
 			Certificates: getTLSConfig(tlsConfigs),
 			Options:      buildTLSOptions(ctx, client),

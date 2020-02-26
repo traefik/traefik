@@ -32,6 +32,7 @@ type clientMock struct {
 
 	ingressRoutes    []*v1alpha1.IngressRoute
 	ingressRouteTCPs []*v1alpha1.IngressRouteTCP
+	ingressRouteUDPs []*v1alpha1.IngressRouteUDP
 	middlewares      []*v1alpha1.Middleware
 	tlsOptions       []*v1alpha1.TLSOption
 	tlsStores        []*v1alpha1.TLSStore
@@ -60,6 +61,8 @@ func newClientMock(paths ...string) clientMock {
 				c.ingressRoutes = append(c.ingressRoutes, o)
 			case *v1alpha1.IngressRouteTCP:
 				c.ingressRouteTCPs = append(c.ingressRouteTCPs, o)
+			case *v1alpha1.IngressRouteUDP:
+				c.ingressRouteUDPs = append(c.ingressRouteUDPs, o)
 			case *v1alpha1.Middleware:
 				c.middlewares = append(c.middlewares, o)
 			case *v1alpha1.TraefikService:
@@ -85,6 +88,10 @@ func (c clientMock) GetIngressRoutes() []*v1alpha1.IngressRoute {
 
 func (c clientMock) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
 	return c.ingressRouteTCPs
+}
+
+func (c clientMock) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
+	return c.ingressRouteUDPs
 }
 
 func (c clientMock) GetMiddlewares() []*v1alpha1.Middleware {

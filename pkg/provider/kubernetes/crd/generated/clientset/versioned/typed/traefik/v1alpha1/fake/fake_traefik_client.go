@@ -44,6 +44,10 @@ func (c *FakeTraefikV1alpha1) IngressRouteTCPs(namespace string) v1alpha1.Ingres
 	return &FakeIngressRouteTCPs{c, namespace}
 }
 
+func (c *FakeTraefikV1alpha1) IngressRouteUDPs(namespace string) v1alpha1.IngressRouteUDPInterface {
+	return &FakeIngressRouteUDPs{c, namespace}
+}
+
 func (c *FakeTraefikV1alpha1) Middlewares(namespace string) v1alpha1.MiddlewareInterface {
 	return &FakeMiddlewares{c, namespace}
 }

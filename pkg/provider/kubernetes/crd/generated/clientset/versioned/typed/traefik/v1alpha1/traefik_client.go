@@ -36,6 +36,7 @@ type TraefikV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	IngressRoutesGetter
 	IngressRouteTCPsGetter
+	IngressRouteUDPsGetter
 	MiddlewaresGetter
 	TLSOptionsGetter
 	TLSStoresGetter
@@ -53,6 +54,10 @@ func (c *TraefikV1alpha1Client) IngressRoutes(namespace string) IngressRouteInte
 
 func (c *TraefikV1alpha1Client) IngressRouteTCPs(namespace string) IngressRouteTCPInterface {
 	return newIngressRouteTCPs(c, namespace)
+}
+
+func (c *TraefikV1alpha1Client) IngressRouteUDPs(namespace string) IngressRouteUDPInterface {
+	return newIngressRouteUDPs(c, namespace)
 }
 
 func (c *TraefikV1alpha1Client) Middlewares(namespace string) MiddlewareInterface {

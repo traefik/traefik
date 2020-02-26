@@ -42,6 +42,14 @@ type IngressRouteTCPListerExpansion interface{}
 // IngressRouteTCPNamespaceLister.
 type IngressRouteTCPNamespaceListerExpansion interface{}
 
+// IngressRouteUDPListerExpansion allows custom methods to be added to
+// IngressRouteUDPLister.
+type IngressRouteUDPListerExpansion interface{}
+
+// IngressRouteUDPNamespaceListerExpansion allows custom methods to be added to
+// IngressRouteUDPNamespaceLister.
+type IngressRouteUDPNamespaceListerExpansion interface{}
+
 // MiddlewareListerExpansion allows custom methods to be added to
 // MiddlewareLister.
 type MiddlewareListerExpansion interface{}

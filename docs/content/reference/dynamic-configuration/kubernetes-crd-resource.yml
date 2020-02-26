@@ -158,6 +158,21 @@ spec:
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: ingressrouteudp.crd
+  namespace: default
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+    - services:
+        - name: whoamiudp
+          port: 8080
+
+---
+apiVersion: traefik.containo.us/v1alpha1
 kind: TLSOption
 metadata:
   name: tlsoption
