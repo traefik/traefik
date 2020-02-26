@@ -42,6 +42,9 @@ body {
 .bg-app-toggle {
   background-color: rgba( $accent, .1 );
 }
+.body--dark .bg-app-toggle {
+  background-color: rgba( $accent, .3 );
+}
 
 // Helps
 .xs-text-center {
