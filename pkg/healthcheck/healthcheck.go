@@ -235,7 +235,7 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 
 	req = backend.addHeadersAndHost(req)
 
-	client := &http.Client{
+	client := http.Client{
 		Timeout:   backend.Options.Timeout,
 		Transport: backend.Options.Transport,
 	}
