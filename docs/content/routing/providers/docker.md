@@ -49,7 +49,7 @@ Attach labels to your containers and let Traefik do the rest!
         labels:
           - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
           # Tell Traefik to use the port 12345 to connect to `my-container`
-          - traefik.http.services.my-service.loadbalancer.server.port=12345
+          - traefik.http.services.my-container.loadbalancer.server.port=12345
     ```
 
     !!! important "Traefik Connecting to the Wrong Port: `HTTP/502 Gateway Error`"
