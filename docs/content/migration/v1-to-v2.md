@@ -205,8 +205,8 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
           cipherSuites = [
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
             "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
             "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
             "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
           ]
@@ -216,7 +216,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     ```
 
     ```bash tab="CLI"
-    --entryPoints='Name:websecure Address::443 TLS:path/to/my.cert,path/to/my.key TLS.MinVersion:VersionTLS12 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256'
+    --entryPoints='Name:websecure Address::443 TLS:path/to/my.cert,path/to/my.key TLS.MinVersion:VersionTLS12 TLS.CipherSuites:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256'
     ```
 
     !!! info "v2"
@@ -244,8 +244,8 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
         cipherSuites = [
           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
           "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
           "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
         ]
@@ -270,8 +270,8 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
           minVersion: VersionTLS13
           cipherSuites:
 	        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-	        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+	        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+	        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 	        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 	        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     ```
@@ -289,8 +289,8 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       minVersion: VersionTLS13
       cipherSuites:
 	    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-	    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+	    - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+	    - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 	    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 	    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     
