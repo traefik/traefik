@@ -115,9 +115,8 @@ func TestSticky(t *testing.T) {
 	assert.Equal(t, 3, recorder.save["second"])
 }
 
-// TestBalancerBias makes sure that the WRR algorithm spreads elements evenly
-// right from the start, and that it does not "over-favor" the high-weighted ones
-// with a biased start-up regime.
+// TestBalancerBias makes sure that the WRR algorithm spreads elements evenly right from the start,
+// and that it does not "over-favor" the high-weighted ones with a biased start-up regime.
 func TestBalancerBias(t *testing.T) {
 	balancer := New(nil)
 
@@ -132,9 +131,12 @@ func TestBalancerBias(t *testing.T) {
 	}), Int(3))
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+
 	for i := 0; i < 14; i++ {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
+
 	wantSequence := []string{"A", "A", "A", "B", "A", "A", "A", "A", "B", "A", "A", "A", "B", "A"}
+
 	assert.Equal(t, wantSequence, recorder.sequence)
 }

@@ -55,6 +55,7 @@ func (b *Balancer) Push(x interface{}) {
 	if !ok {
 		return
 	}
+
 	b.handlers = append(b.handlers, h)
 }
 
@@ -68,9 +69,9 @@ func (b *Balancer) Pop() interface{} {
 
 // Balancer is a WeightedRoundRobin load balancer based on Earliest Deadline First (EDF).
 // (https://en.wikipedia.org/wiki/Earliest_deadline_first_scheduling)
-// Each pick from the schedule has the earliest deadline entry selected. Entries have deadlines set
-// at currentDeadline + 1 / weight, providing weighted round robin behavior with floating point
-// weights and an O(log n) pick time.
+// Each pick from the schedule has the earliest deadline entry selected.
+// Entries have deadlines set at currentDeadline + 1 / weight,
+// providing weighted round robin behavior with floating point weights and an O(log n) pick time.
 type Balancer struct {
 	stickyCookie *stickyCookie
 
@@ -82,16 +83,20 @@ type Balancer struct {
 func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
+
 	if len(b.handlers) == 0 {
 		return nil, fmt.Errorf("no servers in the pool")
 	}
+
 	// Pick handler with closest deadline.
 	handler := heap.Pop(b).(*namedHandler)
-	// curDeadline should be handler's deadline so that new added entry would have a fair
-	// competition environment with the old ones.
+
+	// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
 	b.curDeadline = handler.deadline
 	handler.deadline += 1 / handler.weight
+
 	heap.Push(b, handler)
+
 	log.WithoutContext().Debugf("Service selected by WRR: %s", handler.name)
 	return handler, nil
 }
@@ -139,10 +144,13 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	if w <= 0 { // non-positive weight is meaningless
 		return
 	}
+
 	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
+
 	// use RWLock to protect b.curDeadline
 	b.mutex.RLock()
 	h.deadline = b.curDeadline + 1/h.weight
 	b.mutex.RUnlock()
+
 	heap.Push(b, h)
 }
