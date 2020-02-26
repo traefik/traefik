@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -51,8 +52,11 @@ func (rp *replacePathRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
 func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if rp.regexp != nil && len(rp.replacement) > 0 && rp.regexp.MatchString(req.URL.Path) {
 		req.Header.Add(replacepath.ReplacedPathHeader, req.URL.Path)
-		req.URL.Path = rp.regexp.ReplaceAllString(req.URL.Path, rp.replacement)
+		newPath := rp.regexp.ReplaceAllString(req.URL.Path, rp.replacement)
+		req.URL.RawPath = newPath
+		req.URL.Path, _ = url.PathUnescape(newPath)
 		req.RequestURI = req.URL.RequestURI()
+		req.URL.Path = newPath
 	}
 	rp.next.ServeHTTP(rw, req)
 }

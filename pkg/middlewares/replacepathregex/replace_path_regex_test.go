@@ -70,6 +70,15 @@ func TestReplacePathRegex(t *testing.T) {
 			expectedPath: "/invalid/regexp/test",
 			expectsError: true,
 		},
+		{
+			desc: "pre-escaped replacement",
+			path: "/whoami/and/whoami",
+			config: dynamic.ReplacePathRegex{
+				Replacement: "/whoami%2Fand%2Fwhoami",
+				Regex:       `/whoami/and/whoami`,
+			},
+			expectedPath: "/whoami%2Fand%2Fwhoami",
+		},
 	}
 
 	for _, test := range testCases {
