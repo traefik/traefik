@@ -3,7 +3,7 @@
     <q-scroll-area :thumb-style="appThumbStyle" style="height:100%;">
       <q-card-section>
         <div class="row items-start no-wrap">
-          <div class="col-3">
+          <div class="col-3" v-if="showStatus">
             <div class="text-subtitle2 text-table">Status</div>
           </div>
           <div class="col-9">
@@ -15,7 +15,7 @@
       <div v-for="(server, index) in data.loadBalancer.servers" :key="index">
         <q-card-section>
           <div class="row items-center no-wrap">
-            <div class="col-3">
+            <div class="col-3" v-if="showStatus">
               <div class="block-right-text">
                 <avatar-state v-if="data.serverStatus" :state="data.serverStatus[server.url || server.address] | status "/>
                 <avatar-state v-if="!data.serverStatus" :state="'DOWN' | status"/>
@@ -41,13 +41,16 @@ import AvatarState from './AvatarState'
 
 export default {
   name: 'PanelServers',
-  props: ['data', 'dense'],
+  props: ['data', 'dense', 'hasStatus'],
   components: {
     AvatarState
   },
   computed: {
     isDense () {
       return this.dense !== undefined
+    },
+    showStatus () {
+      return this.hasStatus !== undefined
     }
   },
   filters: {
