@@ -235,13 +235,11 @@ Let's take a look at the labels themselves for the `app` service, which is a HTT
 - "traefik.admin.port=9443"
 ```
 
-We use both `container labels` and `service labels`.
+We use both `container labels` and `segment labels`.
 
 #### Container labels
 
-First, we specify the `backend` name which corresponds to the actual service we're routing **to**.
-
-We also tell Traefik to use the `web` network to route HTTP traffic to this container.
+We tell Traefik to use the `web` network to route HTTP traffic to this container.
 With the `traefik.enable` label, we tell Traefik to include this container in its internal configuration.
 
 With the `frontend.rule` label, we tell Traefik that we want to route to this container if the incoming HTTP request contains the `Host` `app.my-awesome-app.org`.
@@ -249,20 +247,20 @@ Essentially, this is the actual rule used for Layer-7 load balancing.
 
 Finally but not unimportantly, we tell Traefik to route **to** port `9000`, since that is the actual TCP/IP port the container actually listens on.
 
-### Service labels
+#### Segment labels
 
-`Service labels` allow managing many routes for the same container.
+`Segment labels` allow managing many routes for the same container.
 
-When both `container labels` and `service labels` are defined, `container labels` are just used as default values for missing `service labels` but no frontend/backend are going to be defined only with these labels.
-Obviously, labels `traefik.frontend.rule` and `traefik.port` described above, will only be used to complete information set in `service labels` during the container frontends/backends creation.
+When both `container labels` and `segment labels` are defined, `container labels` are just used as default values for missing `segment labels` but no frontend/backend are going to be defined only with these labels.
+Obviously, labels `traefik.frontend.rule` and `traefik.port` described above, will only be used to complete information set in `segment labels` during the container frontends/backends creation.
 
-In the example, two service names are defined : `basic` and `admin`.
+In the example, two segment names are defined : `basic` and `admin`.
 They allow creating two frontends and two backends.
 
-- `basic` has only one `service label` : `traefik.basic.protocol`.
+- `basic` has only one `segment label` : `traefik.basic.protocol`.
 Traefik will use values set in `traefik.frontend.rule` and `traefik.port` to create the `basic` frontend and backend.
 The frontend listens to incoming HTTP requests which contain the `Host` `app.my-awesome-app.org` and redirect them in `HTTP` to the port `9000` of the backend.
-- `admin` has all the `services labels` needed to create the `admin` frontend and backend (`traefik.admin.frontend.rule`, `traefik.admin.protocol`, `traefik.admin.port`).
+- `admin` has all the `segment labels` needed to create the `admin` frontend and backend (`traefik.admin.frontend.rule`, `traefik.admin.protocol`, `traefik.admin.port`).
 Traefik will create a frontend to listen to incoming HTTP requests which contain the `Host` `admin-app.my-awesome-app.org` and redirect them in `HTTPS` to the port `9443` of the backend.
 
 #### Gotchas and tips
