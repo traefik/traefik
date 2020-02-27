@@ -20,7 +20,7 @@
       </div>
     </section>
 
-    <section class="app-section text-black" :class="{ 'bg-white': !$q.dark.isActive }">
+    <section class="app-section text-black sub-nav" :class="{ 'bg-white': !$q.dark.isActive }">
       <div class="app-section-wrap app-boxed app-boxed-xl">
         <slot />
       </div>
@@ -71,6 +71,10 @@ export default {
 
   .q-toolbar {
     min-height: 64px;
+  }
+
+  .body--dark .sub-nav {
+    background-color: #0e204c;
   }
 
   .logo {
