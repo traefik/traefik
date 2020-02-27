@@ -42,6 +42,9 @@ body {
 .bg-app-toggle {
   background-color: rgba( $accent, .1 );
 }
+.body--dark .bg-app-toggle {
+  background-color: rgba( $accent, .3 );
+}
 
 // Helps
 .xs-text-center {
@@ -155,5 +158,28 @@ body {
   &-marine, &-interval {
     color: $app-text-marine;
     background-color: rgba($app-text-grey, 0.1);
+  }
+}
+.body--dark .app-chip {
+  &-accent, &-rule {
+    background-color: rgba($accent, 0.25);
+  }
+  &-green, &-entry-points {
+    background-color: rgba($app-text-green, 0.25);
+  }
+  &-purple, &-name {
+    background-color: rgba($app-text-purple, 0.25);
+  }
+  &-warning, &-service {
+    background-color: rgba($warning, 0.25);
+  }
+  &-negative, &-error {
+    background-color: rgba($negative, 0.25);
+  }
+  &-green-2, &-options {
+    background-color: rgba($app-text-green-2, 0.25);
+  }
+  &-marine, &-interval {
+    background-color: rgba($app-text-grey, 0.25);
   }
 }

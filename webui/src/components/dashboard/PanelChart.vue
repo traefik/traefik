@@ -138,7 +138,10 @@ export default {
         return {
           datasets: [{
             backgroundColor: [
-              '#f2f3f5'
+              this.$q.dark.isActive ? '#2d2d2d' : '#f2f3f5'
+            ],
+            borderColor: [
+              this.$q.dark.isActive ? '#1d1d1d' : '#fff'
             ],
             data: [1]
           }]
@@ -151,6 +154,11 @@ export default {
               '#00a697',
               '#db7d11',
               '#ff0039'
+            ],
+            borderColor: [
+              this.$q.dark.isActive ? '#1d1d1d' : '#fff',
+              this.$q.dark.isActive ? '#1d1d1d' : '#fff',
+              this.$q.dark.isActive ? '#1d1d1d' : '#fff'
             ],
             data: this.getData()
           }],
