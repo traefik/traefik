@@ -1,4 +1,4 @@
-FROM golang:1.12-alpine
+FROM golang:1.14-alpine
 
 RUN apk --update upgrade \
     && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \

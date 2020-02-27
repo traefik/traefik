@@ -12,7 +12,7 @@ RUN yarn install
 RUN npm run build
 
 # BUILD
-FROM golang:1.12-alpine as gobuild
+FROM golang:1.14-alpine as gobuild
 
 RUN apk --update upgrade \
     && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \

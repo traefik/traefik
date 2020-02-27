@@ -312,9 +312,7 @@ func TestSetEffectiveConfigurationTLSMinVersion(t *testing.T) {
 			expected: EntryPoint{
 				Address:          ":443",
 				ForwardedHeaders: &ForwardedHeaders{Insecure: true},
-				TLS: &tls.TLS{
-					MinVersion: "VersionTLS10",
-				},
+				TLS:              &tls.TLS{},
 			},
 		},
 	}
