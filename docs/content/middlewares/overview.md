@@ -143,11 +143,11 @@ then you'll have to append to the middleware name, the `@` separator, followed b
 
 !!! important "Kubernetes Namespace"
 
-	As Kubernetes also has its own notion of namespace, one should not confuse the "provider namespace"
-with the "kubernetes namespace" of a resource when in the context of a cross-provider usage.
-In this case, since the definition of the middleware is not in kubernetes,
-specifying a "kubernetes namespace" when referring to the resource does not make any sense,
-and therefore this specification would be ignored even if present.
+    As Kubernetes also has its own notion of namespace, one should not confuse the "provider namespace"
+    with the "kubernetes namespace" of a resource when in the context of a cross-provider usage.
+    In this case, since the definition of the middleware is not in kubernetes,
+    specifying a "kubernetes namespace" when referring to the resource does not make any sense,
+    and therefore this specification would be ignored even if present.
 
 !!! abstract "Referencing a Middleware from Another Provider"
 

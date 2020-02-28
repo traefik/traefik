@@ -138,6 +138,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factory.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		factory.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factory.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		factory.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		c.factories[ns] = factory
 	}
 
@@ -151,15 +152,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
 		}
-	}
-
-	// Do not wait for the Secrets store to get synced since we cannot rely on
-	// users having granted RBAC permissions for this object.
-	// https://github.com/containous/traefik/issues/1784 should improve the
-	// situation here in the future.
-	for _, ns := range namespaces {
-		c.factories[ns].Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
-		c.factories[ns].Start(stopCh)
 	}
 
 	return eventCh, nil

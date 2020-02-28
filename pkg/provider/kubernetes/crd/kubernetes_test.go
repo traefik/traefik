@@ -3186,3 +3186,72 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 		})
 	}
 }
+
+func TestParseServiceProtocol(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		scheme        string
+		portName      string
+		portNumber    int32
+		expected      string
+		expectedError bool
+	}{
+		{
+			desc:       "Empty scheme and name",
+			scheme:     "",
+			portName:   "",
+			portNumber: 1000,
+			expected:   "http",
+		},
+		{
+			desc:       "h2c scheme and emptyname",
+			scheme:     "h2c",
+			portName:   "",
+			portNumber: 1000,
+			expected:   "h2c",
+		},
+		{
+			desc:          "invalid scheme",
+			scheme:        "foo",
+			portName:      "",
+			portNumber:    1000,
+			expectedError: true,
+		},
+		{
+			desc:       "Empty scheme and https name",
+			scheme:     "",
+			portName:   "https-secure",
+			portNumber: 1000,
+			expected:   "https",
+		},
+		{
+			desc:       "Empty scheme and port number",
+			scheme:     "",
+			portName:   "",
+			portNumber: 443,
+			expected:   "https",
+		},
+		{
+			desc:       "https scheme",
+			scheme:     "https",
+			portName:   "",
+			portNumber: 1000,
+			expected:   "https",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			protocol, err := parseServiceProtocol(test.scheme, test.portName, test.portNumber)
+			if test.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.Equal(t, test.expected, protocol)
+			}
+		})
+	}
+}

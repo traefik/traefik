@@ -49,7 +49,12 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 		factory.metricsHandler = metrics.PrometheusHandler()
 	}
 
-	factory.pingHandler = staticConfiguration.Ping
+	// This check is necessary because even when staticConfiguration.Ping == nil ,
+	// the affectation would make factory.pingHandle become a typed nil, which does not pass the nil test,
+	// and would break things elsewhere.
+	if staticConfiguration.Ping != nil {
+		factory.pingHandler = staticConfiguration.Ping
+	}
 
 	return factory
 }

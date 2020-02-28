@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cenkalti/backoff/v3"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/go-acme/lego/v3/challenge"

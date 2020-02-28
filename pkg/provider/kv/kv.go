@@ -13,7 +13,7 @@ import (
 	etcdv3 "github.com/abronan/valkeyrie/store/etcd/v3"
 	"github.com/abronan/valkeyrie/store/redis"
 	"github.com/abronan/valkeyrie/store/zookeeper"
-	"github.com/cenkalti/backoff/v3"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/kv"
 	"github.com/containous/traefik/v2/pkg/job"

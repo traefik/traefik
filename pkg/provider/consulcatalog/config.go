@@ -184,15 +184,19 @@ func (p *Provider) addServerTCP(ctx context.Context, item itemData, loadBalancer
 		return errors.New("load-balancer is not defined")
 	}
 
+	var port string
+	if len(loadBalancer.Servers) > 0 {
+		port = loadBalancer.Servers[0].Port
+	}
+
 	if len(loadBalancer.Servers) == 0 {
 		loadBalancer.Servers = []dynamic.TCPServer{{}}
 	}
 
-	var port string
-	if item.Port != "" {
+	if item.Port != "" && port == "" {
 		port = item.Port
-		loadBalancer.Servers[0].Port = ""
 	}
+	loadBalancer.Servers[0].Port = ""
 
 	if port == "" {
 		return errors.New("port is missing")
@@ -250,10 +254,10 @@ func (p *Provider) addServer(ctx context.Context, item itemData, loadBalancer *d
 		loadBalancer.Servers = []dynamic.Server{server}
 	}
 
-	if item.Port != "" {
+	if item.Port != "" && port == "" {
 		port = item.Port
-		loadBalancer.Servers[0].Port = ""
 	}
+	loadBalancer.Servers[0].Port = ""
 
 	if port == "" {
 		return errors.New("port is missing")

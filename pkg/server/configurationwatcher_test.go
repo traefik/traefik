@@ -179,6 +179,70 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 }
 
+func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
+	routinesPool := safe.NewPool(context.Background())
+
+	configuration := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo")),
+			th.WithLoadBalancerServices(th.WithService("bar")),
+		),
+	}
+
+	transientConfiguration := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("bad")),
+			th.WithLoadBalancerServices(th.WithService("bad")),
+		),
+	}
+
+	pvd := &mockProvider{
+		wait: 5 * time.Millisecond, // The last message needs to be received before the second has been fully processed
+		messages: []dynamic.Message{
+			{ProviderName: "mock", Configuration: configuration},
+			{ProviderName: "mock", Configuration: transientConfiguration},
+			{ProviderName: "mock", Configuration: configuration},
+		},
+	}
+
+	watcher := NewConfigurationWatcher(routinesPool, pvd, 15*time.Millisecond)
+
+	var lastConfig dynamic.Configuration
+	watcher.AddListener(func(conf dynamic.Configuration) {
+		lastConfig = conf
+	})
+
+	watcher.Start()
+	defer watcher.Stop()
+
+	// give some time so that the configuration can be processed
+	time.Sleep(40 * time.Millisecond)
+
+	expected := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo@mock")),
+			th.WithLoadBalancerServices(th.WithService("bar@mock")),
+			th.WithMiddlewares(),
+		),
+		TCP: &dynamic.TCPConfiguration{
+			Routers:  map[string]*dynamic.TCPRouter{},
+			Services: map[string]*dynamic.TCPService{},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  map[string]*dynamic.UDPRouter{},
+			Services: map[string]*dynamic.UDPService{},
+		},
+		TLS: &dynamic.TLSConfiguration{
+			Options: map[string]tls.Options{
+				"default": {},
+			},
+			Stores: map[string]tls.Store{},
+		},
+	}
+
+	assert.Equal(t, expected, lastConfig)
+}
+
 func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
 
