@@ -497,7 +497,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		config.Certificates = []tls.Certificate{}
 	}
 
-	// workaround for user who used GODEBUG to activate TLS1.3
+	// workaround for users who used GODEBUG to activate TLS1.3
 	if strings.Contains(os.Getenv("GODEBUG"), "tls13=1") {
 		config.MaxVersion = tls.VersionTLS13
 	}
