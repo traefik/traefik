@@ -194,8 +194,11 @@ providers:
     Go Templating only works along with dedicated dynamic configuration files.
     Templating does not work in the Traefik main static configuration file.
 
-Traefik allows using Go templating.  
-Thus, it's possible to define easily lot of routers, services and TLS certificates as described in the file `template-rules.toml` :
+Traefik allows using Go templating,
+it must be a valid [Go template](https://golang.org/pkg/text/template/),
+augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
+
+Thus, it's possible to define easily lot of routers, services and TLS certificates as described in the following examples:
 
 ??? example "Configuring Using Templating"
     
@@ -205,7 +208,7 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
     
       [http.routers]
       {{ range $i, $e := until 100 }}
-        [http.routers.router{{ $e }}]
+        [http.routers.router{{ $e }}-{{ env "MY_ENV_VAR" }}]
         # ...
       {{ end }}  
       
@@ -247,40 +250,38 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
     
     ```yaml tab="YAML"
     http:
-    
-    {{range $i, $e := until 100 }}
       routers:
-        router{{ $e }:
+        {{range $i, $e := until 100 }}
+        router{{ $e }}-{{ env "MY_ENV_VAR" }}:
           # ...
-    {{end}}
+        {{end}}
     
-    {{range $i, $e := until 100 }}
       services:
+        {{range $i, $e := until 100 }}
         application{{ $e }}:
           # ...
-    {{end}}
+        {{end}}
     
     tcp:
-    
-    {{range $i, $e := until 100 }}
       routers:
-        router{{ $e }:
+        {{range $i, $e := until 100 }}
+        router{{ $e }}:
           # ...
-    {{end}}
+        {{end}}
     
-    {{range $i, $e := until 100 }}
       services:
+        {{range $i, $e := until 100 }}
         service{{ $e }}:
           # ...
-    {{end}}
+        {{end}}
     
-    {{ range $i, $e := until 10 }}
     tls:
       certificates:
+      {{ range $i, $e := until 10 }}
       - certFile: "/etc/traefik/cert-{{ $e }}.pem"
         keyFile: "/etc/traefik/cert-{{ $e }}.key"
         store:
         - "my-store-foo-{{ $e }}"
         - "my-store-bar-{{ $e }}"
-    {{end}}
+      {{end}}
     ```
