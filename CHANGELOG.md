@@ -1,5 +1,5 @@
-## [v2.1.5](https://github.com/containous/traefik/tree/v2.1.5) (2020-02-28)
-[All Commits](https://github.com/containous/traefik/compare/v2.1.4...v2.1.5)
+## [v2.1.6](https://github.com/containous/traefik/tree/v2.1.6) (2020-02-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.4...v2.1.6)
 
 **Bug fixes:**
 - **[acme]** Update go-acme/lego to v3.4.0 ([#6376](https://github.com/containous/traefik/pull/6376) by [ldez](https://github.com/ldez))
@@ -27,6 +27,10 @@
 - Use explicitly the word Kubernetes in the migration guide. ([#6380](https://github.com/containous/traefik/pull/6380) by [ldez](https://github.com/ldez))
 - Minor readme improvements ([#6293](https://github.com/containous/traefik/pull/6293) by [Rowayda-Khayri](https://github.com/Rowayda-Khayri))
 - Added link to community forum ([#6283](https://github.com/containous/traefik/pull/6283) by [isaacnewtonfx](https://github.com/isaacnewtonfx))
+
+## [v2.1.5](https://github.com/containous/traefik/tree/v2.1.5) (2020-02-28)
+
+Skipped.
 
 ## [v2.1.4](https://github.com/containous/traefik/tree/v2.1.4) (2020-02-06)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.3...v2.1.4)
