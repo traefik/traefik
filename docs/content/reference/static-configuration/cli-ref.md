@@ -580,7 +580,7 @@ Specifies the header name prefix that will be used to store baggage items in a m
 Key:Value tag to be set on all the spans.
 
 `--tracing.haystack.localagenthost`:  
-Set haystack-agent's host that the reporter will used. (Default: ```LocalAgentHost```)
+Set haystack-agent's host that the reporter will used. (Default: ```127.0.0.1```)
 
 `--tracing.haystack.localagentport`:  
 Set haystack-agent's port that the reporter will used. (Default: ```35000```)
