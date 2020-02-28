@@ -17,7 +17,7 @@ func TestScalableHistogram(t *testing.T) {
 
 	ticker := time.NewTicker(500 * time.Millisecond)
 	<-ticker.C
-	sh.Start()
+	sh.StartAt(time.Now())
 	<-ticker.C
 	sh.ObserveDuration()
 

@@ -190,7 +190,6 @@ func (r *standardRegistry) ServiceServerUpGauge() metrics.Gauge {
 // producing observations without explicitly setting the observed value.
 type ScalableHistogram interface {
 	With(labelValues ...string) ScalableHistogram
-	Start()
 	StartAt(t time.Time)
 	Observe(v float64)
 	ObserveDuration()
@@ -209,11 +208,6 @@ func (s *HistogramWithScale) With(labelValues ...string) ScalableHistogram {
 	return s
 }
 
-// Start implements ScalableHistogram.
-func (s *HistogramWithScale) Start() {
-	s.start = time.Now()
-}
-
 // StartAt implements ScalableHistogram.
 func (s *HistogramWithScale) StartAt(t time.Time) {
 	s.start = t
@@ -221,6 +215,10 @@ func (s *HistogramWithScale) StartAt(t time.Time) {
 
 // ObserveDuration implements ScalableHistogram.
 func (s *HistogramWithScale) ObserveDuration() {
+	if s.unit <= 0 {
+		return
+	}
+
 	d := float64(time.Since(s.start).Nanoseconds()) / float64(s.unit)
 	if d < 0 {
 		d = 0
@@ -247,13 +245,6 @@ type MultiHistogram []ScalableHistogram
 // NewMultiHistogram returns a multi-histogram, wrapping the passed histograms.
 func NewMultiHistogram(h ...ScalableHistogram) MultiHistogram {
 	return MultiHistogram(h)
-}
-
-// Start implements ScalableHistogram. Not atomic in time start for each histogram.
-func (h MultiHistogram) Start() {
-	for _, histogram := range h {
-		histogram.Start()
-	}
 }
 
 // StartAt implements ScalableHistogram.
