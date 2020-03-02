@@ -133,7 +133,7 @@
         username = "foobar"
         password = "foobar"
   [providers.consul]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
 	username = "foobar"
 	password = "foobar"
@@ -144,7 +144,7 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.etcd]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
 	username = "foobar"
 	password = "foobar"
@@ -155,7 +155,7 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.zooKeeper]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
 	username = "foobar"
 	password = "foobar"
@@ -166,7 +166,7 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.redis]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
 	username = "foobar"
 	password = "foobar"
