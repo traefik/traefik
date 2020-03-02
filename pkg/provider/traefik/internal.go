@@ -59,6 +59,8 @@ func (i *Provider) createConfiguration() *dynamic.Configuration {
 	i.restConfiguration(cfg)
 	i.prometheusConfiguration(cfg)
 
+	cfg.HTTP.Services["noop"] = &dynamic.Service{}
+
 	return cfg
 }
 
