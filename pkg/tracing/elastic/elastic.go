@@ -16,8 +16,8 @@ import (
 const Name = "elastic"
 
 func init() {
-	// The APM lib use the init() function to create a default tracer.
-	// So this default tracer must be disable.
+	// The APM lib uses the init() function to create a default tracer.
+	// So this default tracer must be disabled.
 	// https://github.com/elastic/apm-agent-go/blob/8dd383d0d21776faad8841fe110f35633d199a03/tracer.go#L61-L65
 	apm.DefaultTracer.Close()
 }
