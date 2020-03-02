@@ -99,6 +99,36 @@ Trust all forwarded headers. (Default: ```false```)
 `--entrypoints.<name>.forwardedheaders.trustedips`:  
 Trust only forwarded headers from selected IPs.
 
+`--entrypoints.<name>.http`:  
+HTTP configuration.
+
+`--entrypoints.<name>.http.middlewares`:  
+Default middlewares for the routers linked to the entry point.
+
+`--entrypoints.<name>.http.redirections.entrypoint.scheme`:  
+Use scheme for the redirection. (Default: ```https```)
+
+`--entrypoints.<name>.http.redirections.entrypoint.to`:  
+Targeted entry point of the redirection.
+
+`--entrypoints.<name>.http.tls`:  
+Default TLS configuration for the routers linked to the entry point. (Default: ```false```)
+
+`--entrypoints.<name>.http.tls.certresolver`:  
+Default certificate resolver for the routers linked to the entry point.
+
+`--entrypoints.<name>.http.tls.domains`:  
+Default TLS domains for an the routers linked to the entry point.
+
+`--entrypoints.<name>.http.tls.domains[n].main`:  
+Default subject name.
+
+`--entrypoints.<name>.http.tls.domains[n].sans`:  
+Subject alternative names.
+
+`--entrypoints.<name>.http.tls.options`:  
+Default TLS options for the routers linked to the entry point.
+
 `--entrypoints.<name>.proxyprotocol`:  
 Proxy-Protocol configuration. (Default: ```false```)
 

@@ -99,6 +99,36 @@ Trust all forwarded headers. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_TRUSTEDIPS`:  
 Trust only forwarded headers from selected IPs.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP`:  
+HTTP configuration.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
+Default middlewares for the routers linked to the entry point.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME`:  
+Use scheme for the redirection. (Default: ```https```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_REDIRECTIONS_ENTRYPOINT_TO`:  
+Targeted entry point of the redirection.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS`:  
+Default TLS configuration for the routers linked to the entry point. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_CERTRESOLVER`:  
+Default certificate resolver for the routers linked to the entry point.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_DOMAINS`:  
+Default TLS domains for an the routers linked to the entry point.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_DOMAINS[n]_MAIN`:  
+Default subject name.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_DOMAINS[n]_SANS`:  
+Subject alternative names.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_OPTIONS`:  
+Default TLS options for the routers linked to the entry point.
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_PROXYPROTOCOL`:  
 Proxy-Protocol configuration. (Default: ```false```)
 
