@@ -232,10 +232,10 @@ func (s *HistogramWithScale) Observe(v float64) {
 }
 
 // NewHistogramWithScale returns a ScalableHistogram
-func NewHistogramWithScale(h metrics.Histogram, u time.Duration) ScalableHistogram {
+func NewHistogramWithScale(histogram metrics.Histogram, unit time.Duration) ScalableHistogram {
 	return &HistogramWithScale{
-		histogram: h,
-		unit:      u,
+		histogram: histogram,
+		unit:      unit,
 	}
 }
 

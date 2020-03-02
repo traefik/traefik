@@ -88,13 +88,14 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		m.openConnsGauge.With(labelValues...).Set(float64(openConns))
 	}(labels)
 
+	recorder := newResponseRecorder(rw)
+	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
+
 	histograms := m.reqDurationHistogram.With(labels...)
 	histograms.StartAt(time.Now())
 
-	recorder := newResponseRecorder(rw)
 	m.next.ServeHTTP(recorder, req)
 
-	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
 	m.reqsCounter.With(labels...).Add(1)
 
 	histograms.ObserveDuration()
