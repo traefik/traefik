@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAggregator(t *testing.T) {
+func Test_mergeConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		given    dynamic.Configurations
@@ -42,7 +42,9 @@ func TestAggregator(t *testing.T) {
 			},
 			expected: &dynamic.HTTPConfiguration{
 				Routers: map[string]*dynamic.Router{
-					"router-1@provider-1": {},
+					"router-1@provider-1": {
+						EntryPoints: []string{"defaultEP"},
+					},
 				},
 				Middlewares: map[string]*dynamic.Middleware{
 					"middleware-1@provider-1": {},
@@ -84,8 +86,12 @@ func TestAggregator(t *testing.T) {
 			},
 			expected: &dynamic.HTTPConfiguration{
 				Routers: map[string]*dynamic.Router{
-					"router-1@provider-1": {},
-					"router-1@provider-2": {},
+					"router-1@provider-1": {
+						EntryPoints: []string{"defaultEP"},
+					},
+					"router-1@provider-2": {
+						EntryPoints: []string{"defaultEP"},
+					},
 				},
 				Middlewares: map[string]*dynamic.Middleware{
 					"middleware-1@provider-1": {},
@@ -104,13 +110,13 @@ func TestAggregator(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := mergeConfiguration(test.given)
+			actual := mergeConfiguration(test.given, []string{"defaultEP"})
 			assert.Equal(t, test.expected, actual.HTTP)
 		})
 	}
 }
 
-func TestAggregator_tlsoptions(t *testing.T) {
+func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		given    dynamic.Configurations
@@ -289,13 +295,13 @@ func TestAggregator_tlsoptions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := mergeConfiguration(test.given)
+			actual := mergeConfiguration(test.given, []string{"defaultEP"})
 			assert.Equal(t, test.expected, actual.TLS.Options)
 		})
 	}
 }
 
-func TestAggregator_tlsStore(t *testing.T) {
+func Test_mergeConfiguration_tlsStore(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		given    dynamic.Configurations
@@ -381,7 +387,7 @@ func TestAggregator_tlsStore(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := mergeConfiguration(test.given)
+			actual := mergeConfiguration(test.given, []string{"defaultEP"})
 			assert.Equal(t, test.expected, actual.TLS.Stores)
 		})
 	}

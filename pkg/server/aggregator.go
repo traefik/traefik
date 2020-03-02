@@ -7,7 +7,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/tls"
 )
 
-func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configuration {
+func mergeConfiguration(configurations dynamic.Configurations, entryPoints []string) dynamic.Configuration {
 	conf := dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:     make(map[string]*dynamic.Router),
@@ -33,6 +33,13 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 	for pvd, configuration := range configurations {
 		if configuration.HTTP != nil {
 			for routerName, router := range configuration.HTTP.Routers {
+				if len(router.EntryPoints) == 0 {
+					log.WithoutContext().
+						WithField(log.RouterName, routerName).
+						Debugf("No entryPoint defined for this router, using the default one(s) instead: %+v", entryPoints)
+					router.EntryPoints = entryPoints
+				}
+
 				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
 			for middlewareName, middleware := range configuration.HTTP.Middlewares {

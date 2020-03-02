@@ -77,28 +77,6 @@ func TestRouterManager_Get(t *testing.T) {
 			expected:    expectedResult{StatusCode: http.StatusNotFound},
 		},
 		{
-			desc: "no middleware, default entry point",
-			routersConfig: map[string]*dynamic.Router{
-				"foo": {
-					Service: "foo-service",
-					Rule:    "Host(`foo.bar`)",
-				},
-			},
-			serviceConfig: map[string]*dynamic.Service{
-				"foo-service": {
-					LoadBalancer: &dynamic.ServersLoadBalancer{
-						Servers: []dynamic.Server{
-							{
-								URL: server.URL,
-							},
-						},
-					},
-				},
-			},
-			entryPoints: []string{"web"},
-			expected:    expectedResult{StatusCode: http.StatusOK},
-		},
-		{
 			desc: "no middleware, no matching",
 			routersConfig: map[string]*dynamic.Router{
 				"foo": {
@@ -735,6 +713,14 @@ func TestRuntimeConfiguration(t *testing.T) {
 func TestProviderOnMiddlewares(t *testing.T) {
 	entryPoints := []string{"web"}
 
+	staticCfg := static.Configuration{
+		EntryPoints: map[string]*static.EntryPoint{
+			"web": {
+				Address: ":80",
+			},
+		},
+	}
+
 	rtConf := runtime.NewConfig(dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Services: map[string]*dynamic.Service{
@@ -746,11 +732,13 @@ func TestProviderOnMiddlewares(t *testing.T) {
 			},
 			Routers: map[string]*dynamic.Router{
 				"router@file": {
+					EntryPoints: []string{"web"},
 					Rule:        "Host(`test`)",
 					Service:     "test@file",
 					Middlewares: []string{"chain@file", "m1"},
 				},
 				"router@docker": {
+					EntryPoints: []string{"web"},
 					Rule:        "Host(`test`)",
 					Service:     "test@file",
 					Middlewares: []string{"chain", "m1@file"},
@@ -774,7 +762,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
 	responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
-	chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
+	chainBuilder := middleware.NewChainBuilder(staticCfg, nil, nil)
 
 	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
 
