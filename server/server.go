@@ -497,6 +497,12 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 		config.Certificates = []tls.Certificate{}
 	}
 
+	// workaround for users who used GODEBUG to activate TLS1.3
+	if strings.Contains(os.Getenv("GODEBUG"), "tls13=1") {
+		config.MaxVersion = tls.VersionTLS13
+	}
+	config.MaxVersion = tls.VersionTLS12
+
 	// Set the minimum TLS version if set in the config TOML
 	if minConst, exists := traefiktls.MinVersion[s.entryPoints[entryPointName].Configuration.TLS.MinVersion]; exists {
 		config.PreferServerCipherSuites = true
@@ -505,7 +511,7 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 
 	// Set the list of CipherSuites if set in the config TOML
 	if s.entryPoints[entryPointName].Configuration.TLS.CipherSuites != nil {
-		// if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
+		// if our list of CipherSuites is defined in the entrypoint config, we can re-initialize the suites list as empty
 		config.CipherSuites = make([]uint16, 0)
 		for _, cipher := range s.entryPoints[entryPointName].Configuration.TLS.CipherSuites {
 			if cipherConst, exists := traefiktls.CipherSuites[cipher]; exists {
