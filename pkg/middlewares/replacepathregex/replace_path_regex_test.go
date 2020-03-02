@@ -75,25 +75,36 @@ func TestReplacePathRegex(t *testing.T) {
 			expectsError: true,
 		},
 		{
-			desc: "escaped replacement",
-			path: "/foo%2Fbar",
+			desc: "replacement with escaped char",
+			path: "/aaa/bbb",
 			config: dynamic.ReplacePathRegex{
 				Replacement: "/foo%2Fbar",
-				Regex:       `/foo/bar`,
+				Regex:       `/aaa/bbb`,
 			},
 			expectedPath:    "/foo/bar",
 			expectedRawPath: "/foo%2Fbar",
-			expectedHeader:  "/foo/bar",
+			expectedHeader:  "/aaa/bbb",
 		},
 		{
-			desc: "no matches keeps escaping",
-			path: "/foo%2Fbar",
+			desc: "path and regex with escaped char",
+			path: "/aaa%2Fbbb",
 			config: dynamic.ReplacePathRegex{
-				Replacement: "",
-				Regex:       `nomatch`,
+				Replacement: "/foo/bar",
+				Regex:       `/aaa%2Fbbb`,
 			},
 			expectedPath:    "/foo/bar",
-			expectedRawPath: "/foo%2Fbar",
+			expectedRawPath: "/foo/bar",
+			expectedHeader:  "/aaa%2Fbbb",
+		},
+		{
+			desc: "path with escaped char (no match)",
+			path: "/aaa%2Fbbb",
+			config: dynamic.ReplacePathRegex{
+				Replacement: "/foo/bar",
+				Regex:       `/aaa/bbb`,
+			},
+			expectedPath:    "/aaa/bbb",
+			expectedRawPath: "/aaa%2Fbbb",
 		},
 	}
 
@@ -110,28 +121,29 @@ func TestReplacePathRegex(t *testing.T) {
 			handler, err := New(context.Background(), next, test.config, "foo-replace-path-regexp")
 			if test.expectsError {
 				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+
+			server := httptest.NewServer(handler)
+			defer server.Close()
+
+			resp, err := http.Get(server.URL + test.path)
+			require.NoError(t, err, "Unexpected error while making test request")
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+
+			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
+			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
+
+			if actualRawPath == "" {
+				assert.Equal(t, actualPath, requestURI, "Unexpected request URI.")
 			} else {
-				require.NoError(t, err)
+				assert.Equal(t, actualRawPath, requestURI, "Unexpected request URI.")
+			}
 
-				server := httptest.NewServer(handler)
-				defer server.Close()
-
-				_, err := http.Get(server.URL + test.path)
-				require.NoError(t, err, "Unexpected error while making test request")
-
-				assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
-
-				assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
-
-				if actualRawPath == "" {
-					assert.Equal(t, actualPath, requestURI, "Unexpected request URI.")
-				} else {
-					assert.Equal(t, actualRawPath, requestURI, "Unexpected request URI.")
-				}
-
-				if test.expectedHeader != "" {
-					assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", replacepath.ReplacedPathHeader)
-				}
+			if test.expectedHeader != "" {
+				assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", replacepath.ReplacedPathHeader)
 			}
 		})
 	}

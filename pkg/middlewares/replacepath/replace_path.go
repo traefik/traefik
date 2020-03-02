@@ -3,6 +3,7 @@ package replacepath
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -40,8 +41,22 @@ func (r *replacePath) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (r *replacePath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	req.Header.Add(ReplacedPathHeader, req.URL.Path)
-	req.URL.Path = r.path
+	if req.URL.RawPath == "" {
+		req.Header.Add(ReplacedPathHeader, req.URL.Path)
+	} else {
+		req.Header.Add(ReplacedPathHeader, req.URL.RawPath)
+	}
+
+	req.URL.RawPath = r.path
+
+	var err error
+	req.URL.Path, err = url.PathUnescape(req.URL.RawPath)
+	if err != nil {
+		log.FromContext(middlewares.GetLoggerCtx(context.Background(), r.name, typeName)).Error(err)
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	req.RequestURI = req.URL.RequestURI()
 
 	r.next.ServeHTTP(rw, req)

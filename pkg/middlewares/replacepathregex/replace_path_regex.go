@@ -50,10 +50,17 @@ func (rp *replacePathRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if rp.regexp != nil && len(rp.replacement) > 0 && rp.regexp.MatchString(req.URL.Path) {
-		req.Header.Add(replacepath.ReplacedPathHeader, req.URL.Path)
+	var currentPath string
+	if req.URL.RawPath == "" {
+		currentPath = req.URL.Path
+	} else {
+		currentPath = req.URL.RawPath
+	}
 
-		req.URL.RawPath = rp.regexp.ReplaceAllString(req.URL.Path, rp.replacement)
+	if rp.regexp != nil && len(rp.replacement) > 0 && rp.regexp.MatchString(currentPath) {
+		req.Header.Add(replacepath.ReplacedPathHeader, currentPath)
+
+		req.URL.RawPath = rp.regexp.ReplaceAllString(currentPath, rp.replacement)
 
 		// as replacement can introduce escaped characters
 		// Path must remain an unescaped version of RawPath
@@ -68,5 +75,6 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 		req.RequestURI = req.URL.RequestURI()
 	}
+
 	rp.next.ServeHTTP(rw, req)
 }
