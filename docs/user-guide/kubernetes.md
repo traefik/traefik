@@ -53,6 +53,12 @@ rules:
       - get
       - list
       - watch
+  - apiGroups:
+    - extensions
+    resources:
+    - ingresses/status
+    verbs:
+    - update
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -171,6 +177,10 @@ metadata:
   labels:
     k8s-app: traefik-ingress-lb
 spec:
+  selector:
+    matchLabels:
+      k8s-app: traefik-ingress-lb
+      name: traefik-ingress-lb
   template:
     metadata:
       labels:
@@ -188,6 +198,7 @@ spec:
           hostPort: 80
         - name: admin
           containerPort: 8080
+          hostPort: 8080
         securityContext:
           capabilities:
             drop:
