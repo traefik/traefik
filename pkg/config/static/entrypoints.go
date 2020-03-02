@@ -3,6 +3,8 @@ package static
 import (
 	"fmt"
 	"strings"
+
+	"github.com/containous/traefik/v2/pkg/types"
 )
 
 // EntryPoint holds the entry point configuration.
@@ -11,6 +13,7 @@ type EntryPoint struct {
 	Transport        *EntryPointsTransport `description:"Configures communication between clients and Traefik." json:"transport,omitempty" toml:"transport,omitempty" yaml:"transport,omitempty"`
 	ProxyProtocol    *ProxyProtocol        `description:"Proxy-Protocol configuration." json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty"`
 	ForwardedHeaders *ForwardedHeaders     `description:"Trust client forwarding headers." json:"forwardedHeaders,omitempty" toml:"forwardedHeaders,omitempty" yaml:"forwardedHeaders,omitempty"`
+	HTTP             HTTPConfig            `description:"HTTP configuration." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty"`
 }
 
 // GetAddress strips any potential protocol part of the address field of the
@@ -41,6 +44,36 @@ func (ep *EntryPoint) SetDefaults() {
 	ep.Transport = &EntryPointsTransport{}
 	ep.Transport.SetDefaults()
 	ep.ForwardedHeaders = &ForwardedHeaders{}
+}
+
+// HTTPConfig is the HTTP configuration of an entry point.
+type HTTPConfig struct {
+	Redirections *Redirections `description:"Set of redirection" json:"redirections,omitempty" toml:"redirections,omitempty" yaml:"redirections,omitempty"`
+	Middlewares  []string      `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty"`
+	TLS          *TLSConfig    `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
+}
+
+// Redirections is a set of an entry point redirection.
+type Redirections struct {
+	EntryPoint *RedirectEntryPoint `description:"Set of an entry point redirection." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
+}
+
+// RedirectEntryPoint is the definition of an entry point redirection.
+type RedirectEntryPoint struct {
+	To     string `description:"Targeted entry point of the redirection." json:"to,omitempty" toml:"to,omitempty" yaml:"to,omitempty"`
+	Scheme string `description:"Use scheme for the redirection." json:"https,omitempty" toml:"https,omitempty" yaml:"https,omitempty"`
+}
+
+// SetDefaults sets the default values.
+func (r *RedirectEntryPoint) SetDefaults() {
+	r.Scheme = "https"
+}
+
+// TLSConfig is a the default router configuration for an entry point.
+type TLSConfig struct {
+	Options      string         `description:"Default TLS options for the routers linked to the entry point." json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
+	CertResolver string         `description:"Default certificate resolver for the routers linked to the entry point." json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty"`
+	Domains      []types.Domain `description:"Default TLS domains for an the routers linked to the entry point." json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty"`
 }
 
 // ForwardedHeaders Trust client forwarding headers.

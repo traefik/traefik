@@ -41,7 +41,8 @@
     },
     "services": {
       "api": {},
-      "dashboard": {}
+      "dashboard": {},
+      "noop": {}
     }
   },
   "tcp": {},
