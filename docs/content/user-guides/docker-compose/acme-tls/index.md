@@ -18,13 +18,13 @@ For the TLS challenge you will need:
 --8<-- "content/user-guides/docker-compose/acme-tls/docker-compose.yml"
 ```
 
-- Replace `postmaster@mydomain.com` by your **own email** within the `certificatesresolvers.mytlschallenge.acme.email` command line argument of the `traefik` service.
+- Replace `postmaster@mydomain.com` by your **own email** within the `certificatesresolvers.myresolver.acme.email` command line argument of the `traefik` service.
 - Replace `whoami.mydomain.com` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
 - Optionally uncomment the following lines if you want to test/debug:
 
 	```yaml
 	#- "--log.level=DEBUG"
-	#- "--certificatesresolvers.mytlschallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+	#- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
 	```
 
 - Run `docker-compose up -d` within the folder where you created the previous file.
@@ -54,8 +54,8 @@ ports:
 
 ```yaml
 command:
-  # Enable a tls challenge named "mytlschallenge"
-  - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+  # Enable a tls challenge named "myresolver"
+  - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
 ```
 
 - We add a volume to store our certificates:
@@ -67,13 +67,13 @@ volumes:
 
 command:
   # Tell to store the certificate on a path under our volume
-  - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+  - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
 ```
 
-- We configure the `whoami` service to tell Traefik to use the certificate resolver named `mytlschallenge` we just configured:
+- We configure the `whoami` service to tell Traefik to use the certificate resolver named `myresolver` we just configured:
 
 ```yaml
 labels:
   # Uses the Host rule to define which certificate to issue
-  - "traefik.http.routers.whoami.tls.certresolver=mytlschallenge"
+  - "traefik.http.routers.whoami.tls.certresolver=myresolver"
 ```

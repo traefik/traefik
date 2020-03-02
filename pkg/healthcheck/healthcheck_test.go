@@ -469,3 +469,57 @@ func TestLBStatusUpdater(t *testing.T) {
 		break
 	}
 }
+
+func TestNotFollowingRedirects(t *testing.T) {
+	redirectServerCalled := false
+	redirectTestServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		redirectServerCalled = true
+	}))
+	defer redirectTestServer.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Add("location", redirectTestServer.URL)
+		rw.WriteHeader(http.StatusSeeOther)
+		cancel()
+	}))
+	defer server.Close()
+
+	lb := &testLoadBalancer{
+		RWMutex: &sync.RWMutex{},
+		servers: []*url.URL{testhelpers.MustParseURL(server.URL)},
+	}
+
+	backend := NewBackendConfig(Options{
+		Path:            "/path",
+		Interval:        healthCheckInterval,
+		Timeout:         healthCheckTimeout,
+		LB:              lb,
+		FollowRedirects: false,
+	}, "backendName")
+
+	check := HealthCheck{
+		Backends: make(map[string]*BackendConfig),
+		metrics:  testhelpers.NewCollectingHealthCheckMetrics(),
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		check.execute(ctx, backend)
+		wg.Done()
+	}()
+
+	timeout := time.Duration(int(healthCheckInterval) + 500)
+	select {
+	case <-time.After(timeout):
+		t.Fatal("test did not complete in time")
+	case <-ctx.Done():
+		wg.Wait()
+	}
+
+	assert.False(t, redirectServerCalled, "HTTP redirect must not be followed")
+}

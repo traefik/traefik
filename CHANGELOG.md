@@ -1,3 +1,37 @@
+## [v2.1.6](https://github.com/containous/traefik/tree/v2.1.6) (2020-02-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.4...v2.1.6)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v3.4.0 ([#6376](https://github.com/containous/traefik/pull/6376) by [ldez](https://github.com/ldez))
+- **[api]** Return an error when ping is not enabled. ([#6304](https://github.com/containous/traefik/pull/6304) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** Early filter of the catalog services. ([#6307](https://github.com/containous/traefik/pull/6307) by [ldez](https://github.com/ldez))
+- **[consulcatalog]** fix: consul-catalog uses port from label instead of item port. ([#6345](https://github.com/containous/traefik/pull/6345) by [ldez](https://github.com/ldez))
+- **[file]** fix: YML example of template for the file provider. ([#6402](https://github.com/containous/traefik/pull/6402) by [ldez](https://github.com/ldez))
+- **[file]** Allow fsnotify to reload config files on k8s (or symlinks) ([#5037](https://github.com/containous/traefik/pull/5037) by [dtomcej](https://github.com/dtomcej))
+- **[healthcheck]** Launch healthcheck only one time instead of two ([#6372](https://github.com/containous/traefik/pull/6372) by [juliens](https://github.com/juliens))
+- **[k8s,k8s/crd,k8s/ingress]** Fix secret informer load ([#6364](https://github.com/containous/traefik/pull/6364) by [mmatur](https://github.com/mmatur))
+- **[k8s,k8s/crd]** Use consistent protocol determination ([#6365](https://github.com/containous/traefik/pull/6365) by [dtomcej](https://github.com/dtomcej))
+- **[k8s,k8s/crd]** fix: use the right error in the log ([#6311](https://github.com/containous/traefik/pull/6311) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[provider]** Don&#39;t throw away valid configuration updates ([#5952](https://github.com/containous/traefik/pull/5952) by [zaphod42](https://github.com/zaphod42))
+- **[tls]** Consider SSLv2 as TLS in order to close the handshake correctly ([#6371](https://github.com/containous/traefik/pull/6371) by [juliens](https://github.com/juliens))
+- **[tracing]** Fix docs and code to match in haystack tracing. ([#6352](https://github.com/containous/traefik/pull/6352) by [evanlurvey](https://github.com/evanlurvey))
+
+**Documentation:**
+- **[acme]** Improve documentation. ([#6324](https://github.com/containous/traefik/pull/6324) by [ldez](https://github.com/ldez))
+- **[file]** Add information about filename and directory options. ([#6333](https://github.com/containous/traefik/pull/6333) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/ingress]** Docs: Clarifying format of ingress endpoint service name ([#6306](https://github.com/containous/traefik/pull/6306) by [BretFisher](https://github.com/BretFisher))
+- **[k8s/crd]** fix: dashboard example with k8s CRD. ([#6330](https://github.com/containous/traefik/pull/6330) by [ldez](https://github.com/ldez))
+- **[middleware,k8s]** Fix formatting in &#34;Kubernetes Namespace&#34; block ([#6305](https://github.com/containous/traefik/pull/6305) by [berekuk](https://github.com/berekuk))
+- **[tls]** Remove TLS cipher suites for TLS minVersion 1.3 ([#6328](https://github.com/containous/traefik/pull/6328) by [rYR79435](https://github.com/rYR79435))
+- **[tls]** Fix typo in the godoc of TLS option MaxVersion ([#6347](https://github.com/containous/traefik/pull/6347) by [pschaub](https://github.com/pschaub))
+- Use explicitly the word Kubernetes in the migration guide. ([#6380](https://github.com/containous/traefik/pull/6380) by [ldez](https://github.com/ldez))
+- Minor readme improvements ([#6293](https://github.com/containous/traefik/pull/6293) by [Rowayda-Khayri](https://github.com/Rowayda-Khayri))
+- Added link to community forum ([#6283](https://github.com/containous/traefik/pull/6283) by [isaacnewtonfx](https://github.com/isaacnewtonfx))
+
+## [v2.1.5](https://github.com/containous/traefik/tree/v2.1.5) (2020-02-28)
+
+Skipped.
+
 ## [v2.1.4](https://github.com/containous/traefik/tree/v2.1.4) (2020-02-06)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.3...v2.1.4)
 

@@ -62,6 +62,7 @@ http:
           interval: foobar
           timeout: foobar
           hostname: foobar
+          followRedirects: true
           headers:
             name0: foobar
             name1: foobar

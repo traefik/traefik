@@ -40,24 +40,24 @@ tracing:
 
 #### `localAgentPort`
 
-_Require, Default=42699_
+_Require, Default=35000_
 
 Local Agent port instructs reporter to send spans to the haystack-agent at this port.
 
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.haystack]
-    localAgentPort = 42699
+    localAgentPort = 35000
 ```
 
 ```yaml tab="File (YAML)"
 tracing:
   haystack:
-    localAgentPort: 42699
+    localAgentPort: 35000
 ```
 
 ```bash tab="CLI"
---tracing.haystack.localAgentPort=42699
+--tracing.haystack.localAgentPort=35000
 ```
 
 #### `globalTag`
@@ -91,20 +91,42 @@ Specifies the header name that will be used to store the trace ID.
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.haystack]
-    traceIDHeaderName = "sample"
+    traceIDHeaderName = "Trace-ID"
 ```
 
 ```yaml tab="File (YAML)"
 tracing:
   haystack:
-    traceIDHeaderName: sample
+    traceIDHeaderName: Trace-ID
 ```
 
 ```bash tab="CLI"
---tracing.haystack.traceIDHeaderName=sample
+--tracing.haystack.traceIDHeaderName=Trace-ID
 ```
 
 #### `parentIDHeaderName`
+
+_Optional, Default=empty_
+
+Specifies the header name that will be used to store the parent ID.
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.haystack]
+    parentIDHeaderName = "Parent-Message-ID"
+```
+
+```yaml tab="File (YAML)"
+tracing:
+  haystack:
+    parentIDHeaderName: Parent-Message-ID
+```
+
+```bash tab="CLI"
+--tracing.haystack.parentIDHeaderName=Parent-Message-ID
+```
+
+#### `spanIDHeaderName`
 
 _Optional, Default=empty_
 
@@ -113,39 +135,17 @@ Specifies the header name that will be used to store the span ID.
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.haystack]
-    parentIDHeaderName = "sample"
+    spanIDHeaderName = "Message-ID"
 ```
 
 ```yaml tab="File (YAML)"
 tracing:
   haystack:
-    parentIDHeaderName: "sample"
+    spanIDHeaderName: Message-ID
 ```
 
 ```bash tab="CLI"
---tracing.haystack.parentIDHeaderName=sample
-```
-
-#### `spanIDHeaderName`
-
-_Optional, Default=empty_
-
-Apply shared tag in a form of Key:Value to all the traces.
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.haystack]
-    spanIDHeaderName = "sample:test"
-```
-
-```yaml tab="File (YAML)"
-tracing:
-  haystack:
-    spanIDHeaderName: "sample:test"
-```
-
-```bash tab="CLI"
---tracing.haystack.spanIDHeaderName=sample:test
+--tracing.haystack.spanIDHeaderName=Message-ID
 ```
 
 #### `baggagePrefixHeaderName`

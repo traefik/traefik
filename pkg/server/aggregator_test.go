@@ -294,3 +294,95 @@ func TestAggregator_tlsoptions(t *testing.T) {
 		})
 	}
 }
+
+func TestAggregator_tlsStore(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		given    dynamic.Configurations
+		expected map[string]tls.Store
+	}{
+		{
+			desc: "Create a valid default tls store when appears only in one provider",
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
+						Stores: map[string]tls.Store{
+							"default": {
+								DefaultCertificate: &tls.Certificate{
+									CertFile: "foo",
+									KeyFile:  "bar",
+								},
+							},
+						},
+					},
+				},
+				"provider-2": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
+						Stores: map[string]tls.Store{
+							"foo": {
+								DefaultCertificate: &tls.Certificate{
+									CertFile: "foo",
+									KeyFile:  "bar",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]tls.Store{
+				"default": {
+					DefaultCertificate: &tls.Certificate{
+						CertFile: "foo",
+						KeyFile:  "bar",
+					},
+				},
+				"foo@provider-2": {
+					DefaultCertificate: &tls.Certificate{
+						CertFile: "foo",
+						KeyFile:  "bar",
+					},
+				},
+			},
+		},
+		{
+			desc: "Don't default tls store when appears two times",
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
+						Stores: map[string]tls.Store{
+							"default": {
+								DefaultCertificate: &tls.Certificate{
+									CertFile: "foo",
+									KeyFile:  "bar",
+								},
+							},
+						},
+					},
+				},
+				"provider-2": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
+						Stores: map[string]tls.Store{
+							"default": {
+								DefaultCertificate: &tls.Certificate{
+									CertFile: "foo",
+									KeyFile:  "bar",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]tls.Store{},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := mergeConfiguration(test.given)
+			assert.Equal(t, test.expected, actual.TLS.Stores)
+		})
+	}
+}

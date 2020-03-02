@@ -414,13 +414,13 @@ func stats(staticConfiguration *static.Configuration) {
 		logger.Info(`Stats collection is enabled.`)
 		logger.Info(`Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.`)
 		logger.Info(`Help us improve Traefik by leaving this feature on :)`)
-		logger.Info(`More details on: https://docs.traefik.io/v2.0/contributing/data-collection/`)
+		logger.Info(`More details on: https://docs.traefik.io/contributing/data-collection/`)
 		collect(staticConfiguration)
 	} else {
 		logger.Info(`
 Stats collection is disabled.
 Help us improve Traefik by turning this feature on :)
-More details on: https://docs.traefik.io/v2.0/contributing/data-collection/
+More details on: https://docs.traefik.io/contributing/data-collection/
 `)
 	}
 }

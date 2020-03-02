@@ -35,6 +35,7 @@ rules:
       - ingressroutes
       - traefikservices
       - ingressroutetcps
+      - ingressrouteudps
       - tlsoptions
     verbs:
       - get

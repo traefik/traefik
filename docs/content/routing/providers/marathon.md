@@ -224,6 +224,14 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     "traefik.http.services.myservice.loadbalancer.healthcheck.timeout": "10"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.followredirects`"
+    
+    See [health check](../services/index.md#health-check) for more information.
+    
+    ```json
+    "traefik.http.services.myservice.loadbalancer.healthcheck.followredirects": "true"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky`"
     
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.

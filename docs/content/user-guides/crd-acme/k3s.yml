@@ -1,5 +1,5 @@
 server:
-  image: rancher/k3s:v0.8.0
+  image: rancher/k3s:v1.17.2-k3s1
   command: server --disable-agent --no-deploy traefik
   environment:
     - K3S_CLUSTER_SECRET=somethingtotallyrandom
@@ -17,7 +17,7 @@ server:
     - 6443:6443
 
 node:
-  image: rancher/k3s:v0.8.0
+  image: rancher/k3s:v1.17.2-k3s1
   privileged: true
   links:
     - server
@@ -26,5 +26,5 @@ node:
     - K3S_CLUSTER_SECRET=somethingtotallyrandom
   volumes:
     # this is where you would place a alternative traefik image (saved as a .tar file with
-    # 'docker save'), if you want to use it, instead of the traefik:v2.0 image.
+    # 'docker save'), if you want to use it, instead of the traefik:v2.1 image.
     - /sowewhere/on/your/host/custom-image:/var/lib/rancher/k3s/agent/images

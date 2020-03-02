@@ -31,6 +31,8 @@ spec:
     services:
     - name: api@internal
       kind: TraefikService
+    middlewares:
+      - name: auth
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware

@@ -150,15 +150,13 @@ func getRequestTLSVersion(req *http.Request) string {
 
 	switch req.TLS.Version {
 	case tls.VersionTLS10:
-		tlsVersion = "TLS 1.0"
+		tlsVersion = "1.0"
 	case tls.VersionTLS11:
-		tlsVersion = "TLS 1.1"
+		tlsVersion = "1.1"
 	case tls.VersionTLS12:
-		tlsVersion = "TLS 1.2"
+		tlsVersion = "1.2"
 	case tls.VersionTLS13:
-		tlsVersion = "TLS 1.3"
-	case tls.VersionSSL30: //nolint
-		tlsVersion = "SSLv3"
+		tlsVersion = "1.3"
 	default:
 		tlsVersion = "unknown"
 	}

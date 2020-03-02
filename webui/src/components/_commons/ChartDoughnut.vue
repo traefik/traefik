@@ -22,6 +22,9 @@ export default {
         // this.$data._chart.update()
         this.renderChart(this.chartdata, this.options)
       }
+    },
+    '$q.dark.isActive' (val) {
+      this.renderChart(this.chartdata, this.options)
     }
   },
   mounted () {

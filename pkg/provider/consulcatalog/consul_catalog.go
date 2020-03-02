@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 
-	"github.com/cenkalti/backoff/v3"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/provider"
+	"github.com/containous/traefik/v2/pkg/provider/constraints"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/hashicorp/consul/api"
@@ -151,7 +153,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 	}
 
 	var data []itemData
-	for name := range consulServiceNames {
+	for _, name := range consulServiceNames {
 		consulServices, healthServices, err := p.fetchService(ctx, name)
 		if err != nil {
 			return nil, err
@@ -204,10 +206,55 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Catalo
 	return consulServices, healthServices, err
 }
 
-func (p *Provider) fetchServices(ctx context.Context) (map[string][]string, error) {
+func (p *Provider) fetchServices(ctx context.Context) ([]string, error) {
+	// The query option "Filter" is not supported by /catalog/services.
+	// https://www.consul.io/api/catalog.html#list-services
 	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
 	serviceNames, _, err := p.client.Catalog().Services(opts)
-	return serviceNames, err
+	if err != nil {
+		return nil, err
+	}
+
+	// The keys are the service names, and the array values provide all known tags for a given service.
+	// https://www.consul.io/api/catalog.html#list-services
+	var filtered []string
+	for svcName, tags := range serviceNames {
+		logger := log.FromContext(log.With(ctx, log.Str("serviceName", svcName)))
+
+		if !p.ExposedByDefault && !contains(tags, p.Prefix+".enable=true") {
+			logger.Debug("Filtering disabled item")
+			continue
+		}
+
+		if contains(tags, p.Prefix+".enable=false") {
+			logger.Debug("Filtering disabled item")
+			continue
+		}
+
+		matches, err := constraints.MatchTags(tags, p.Constraints)
+		if err != nil {
+			logger.Errorf("Error matching constraints expression: %v", err)
+			continue
+		}
+
+		if !matches {
+			logger.Debugf("Container pruned by constraint expression: %q", p.Constraints)
+			continue
+		}
+
+		filtered = append(filtered, svcName)
+	}
+
+	return filtered, err
+}
+
+func contains(values []string, val string) bool {
+	for _, value := range values {
+		if strings.EqualFold(value, val) {
+			return true
+		}
+	}
+	return false
 }
 
 func createClient(cfg *EndpointConfig) (*api.Client, error) {

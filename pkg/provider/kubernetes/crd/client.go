@@ -47,10 +47,12 @@ type Client interface {
 
 	GetIngressRoutes() []*v1alpha1.IngressRoute
 	GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP
+	GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP
 	GetMiddlewares() []*v1alpha1.Middleware
 	GetTraefikService(namespace, name string) (*v1alpha1.TraefikService, bool, error)
 	GetTraefikServices() []*v1alpha1.TraefikService
 	GetTLSOptions() []*v1alpha1.TLSOption
+	GetTLSStores() []*v1alpha1.TLSStore
 
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
@@ -158,13 +160,16 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryCrd.Traefik().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().Middlewares().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().IngressRouteTCPs().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1alpha1().IngressRouteUDPs().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TLSOptions().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1alpha1().TLSStores().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TraefikServices().Informer().AddEventHandler(eventHandler)
 
 		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, informers.WithNamespace(ns))
 		factoryKube.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		factoryKube.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 
 		c.factoriesCrd[ns] = factoryCrd
 		c.factoriesKube[ns] = factoryKube
@@ -187,15 +192,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
 		}
-	}
-
-	// Do not wait for the Secrets store to get synced since we cannot rely on
-	// users having granted RBAC permissions for this object.
-	// https://github.com/containous/traefik/issues/1784 should improve the
-	// situation here in the future.
-	for _, ns := range namespaces {
-		c.factoriesKube[ns].Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
-		c.factoriesKube[ns].Start(stopCh)
 	}
 
 	return eventCh, nil
@@ -222,6 +218,20 @@ func (c *clientWrapper) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
 		ings, err := factory.Traefik().V1alpha1().IngressRouteTCPs().Lister().List(c.labelSelector)
 		if err != nil {
 			log.Errorf("Failed to list tcp ingress routes in namespace %s: %v", ns, err)
+		}
+		result = append(result, ings...)
+	}
+
+	return result
+}
+
+func (c *clientWrapper) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
+	var result []*v1alpha1.IngressRouteUDP
+
+	for ns, factory := range c.factoriesCrd {
+		ings, err := factory.Traefik().V1alpha1().IngressRouteUDPs().Lister().List(c.labelSelector)
+		if err != nil {
+			log.Errorf("Failed to list udp ingress routes in namespace %s: %v", ns, err)
 		}
 		result = append(result, ings...)
 	}
@@ -279,6 +289,21 @@ func (c *clientWrapper) GetTLSOptions() []*v1alpha1.TLSOption {
 			log.Errorf("Failed to list tls options in namespace %s: %v", ns, err)
 		}
 		result = append(result, options...)
+	}
+
+	return result
+}
+
+// GetTLSStores returns all TLS stores.
+func (c *clientWrapper) GetTLSStores() []*v1alpha1.TLSStore {
+	var result []*v1alpha1.TLSStore
+
+	for ns, factory := range c.factoriesCrd {
+		stores, err := factory.Traefik().V1alpha1().TLSStores().Lister().List(c.labelSelector)
+		if err != nil {
+			log.Errorf("Failed to list tls stores in namespace %s: %v", ns, err)
+		}
+		result = append(result, stores...)
 	}
 
 	return result
@@ -342,6 +367,8 @@ func (c *clientWrapper) newResourceEventHandler(events chan<- interface{}) cache
 			case *v1alpha1.TraefikService:
 				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
 			case *v1alpha1.TLSOption:
+				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
+			case *v1alpha1.TLSStore:
 				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
 			case *v1alpha1.Middleware:
 				return c.labelSelector.Matches(labels.Set(v.GetLabels()))

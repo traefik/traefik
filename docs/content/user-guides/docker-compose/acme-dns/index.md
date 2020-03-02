@@ -7,7 +7,7 @@ Please also read the [basic example](../basic-example) for details on how to exp
 
 For the DNS challenge, you'll need:
 
-- A working [provider](https://docs.traefik.io/v2.0/https/acme/#providers) along with the credentials allowing to create and remove DNS records.  
+- A working [provider](../../../https/acme.md#providers) along with the credentials allowing to create and remove DNS records.  
 
 !!! info "Variables may vary depending on the Provider."
 	 Please note this guide may vary depending on the provider you use.
@@ -32,13 +32,13 @@ For the DNS challenge, you'll need:
       - "OVH_CONSUMER_KEY=[YOUR_OWN_VALUE]"
     ```
 
-- Replace `postmaster@mydomain.com` by your **own email** within the `certificatesresolvers.mydnschallenge.acme.email` command line argument of the `traefik` service.
+- Replace `postmaster@mydomain.com` by your **own email** within the `certificatesresolvers.myresolver.acme.email` command line argument of the `traefik` service.
 - Replace `whoami.mydomain.com` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
 - Optionally uncomment the following lines if you want to test/debug: 
 
 	```yaml
 	#- "--log.level=DEBUG"
-	#- "--certificatesresolvers.mydnschallenge.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+	#- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
 	```
 
 - Run `docker-compose up -d` within the folder where you created the previous file.
@@ -68,12 +68,12 @@ ports:
 
 ```yaml
 command:
-  # Enable a dns challenge named "mydnschallenge"
-  - "--certificatesresolvers.mydnschallenge.acme.dnschallenge=true"
+  # Enable a dns challenge named "myresolver"
+  - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
   # Tell which provider to use
-  - "--certificatesresolvers.mydnschallenge.acme.dnschallenge.provider=ovh"
+  - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=ovh"
   # The email to provide to let's encrypt
-  - "--certificatesresolvers.mydnschallenge.acme.email=postmaster@mydomain.com"
+  - "--certificatesresolvers.myresolver.acme.email=postmaster@mydomain.com"
 ```
 
 - We provide the required configuration to our provider via environment variables: 
@@ -101,14 +101,14 @@ volumes:
 
 command:
   # Tell to store the certificate on a path under our volume
-  - "--certificatesresolvers.mydnschallenge.acme.storage=/letsencrypt/acme.json"
+  - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
 ```
 
-- We configure the `whoami` service to tell Traefik to use the certificate resolver named `mydnschallenge` we just configured:
+- We configure the `whoami` service to tell Traefik to use the certificate resolver named `myresolver` we just configured:
 
 ```yaml
 labels:
-	- "traefik.http.routers.whoami.tls.certresolver=mydnschallenge" # Uses the Host rule to define which certificate to issue
+	- "traefik.http.routers.whoami.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
 ```
 
 ## Use Secrets

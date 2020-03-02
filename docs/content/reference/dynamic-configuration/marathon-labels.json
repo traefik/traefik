@@ -140,6 +140,7 @@
 "traefik.http.services.service01.loadbalancer.healthcheck.port": "42",
 "traefik.http.services.service01.loadbalancer.healthcheck.scheme": "foobar",
 "traefik.http.services.service01.loadbalancer.healthcheck.timeout": "foobar",
+"traefik.http.services.service01.loadbalancer.healthcheck.followredirects": "true",
 "traefik.http.services.service01.loadbalancer.passhostheader": "true",
 "traefik.http.services.service01.loadbalancer.responseforwarding.flushinterval": "foobar",
 "traefik.http.services.service01.loadbalancer.sticky.cookie.httponly": "true",

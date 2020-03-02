@@ -74,6 +74,8 @@ func (f *RouterFactory) CreateRouters(conf dynamic.Configuration) (map[string]*t
 	handlersNonTLS := routerManager.BuildHandlers(ctx, f.entryPointsTCP, false)
 	handlersTLS := routerManager.BuildHandlers(ctx, f.entryPointsTCP, true)
 
+	serviceManager.LaunchHealthCheck()
+
 	// TCP
 	svcTCPManager := tcp.NewManager(rtConf)
 

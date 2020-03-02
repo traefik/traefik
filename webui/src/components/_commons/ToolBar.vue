@@ -80,6 +80,10 @@ export default {
     padding: 0;
   }
 
+  .body--dark .q-toolbar {
+    background-color: #0e204c;
+  }
+
   .q-tabs {
     /deep/ .q-tabs__content {
       .q-tab__label {

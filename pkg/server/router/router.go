@@ -109,8 +109,6 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 		entryPointHandlers[entryPointName] = handlerWithMiddlewares
 	}
 
-	m.serviceManager.LaunchHealthCheck()
-
 	return entryPointHandlers
 }
 

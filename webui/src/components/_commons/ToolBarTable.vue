@@ -17,7 +17,7 @@
         ]"
     />
     <q-space />
-    <q-input v-model="getFilter" rounded dense outlined type="search" debounce="500" placeholder="Search" bg-color="white" class="bar-search">
+    <q-input v-model="getFilter" rounded dense outlined type="search" debounce="500" placeholder="Search" :bg-color="$q.dark.isActive ? undefined : 'white'" class="bar-search">
       <template v-slot:append>
         <q-icon name="eva-search-outline" />
       </template>
