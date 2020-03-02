@@ -64,10 +64,7 @@
       "type": "row"
     },
     {
-      "aliasColors": {
-        "Latency over 1 min": "rgb(9, 116, 190)",
-        "Latency over 5 min": "#bf1b00"
-      },
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -97,22 +94,17 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
-      "seriesOverrides": [
-        {
-          "alias": "Latency over 5 min",
-          "yaxis": 1
-        }
-      ],
+      "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.$percentiles, sum(rate(traefik_entrypoint_request_duration_seconds_bucket{code=\"200\",method=\"GET\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.$percentiles, sum(rate(traefik_entrypoint_request_duration_seconds_bucket{code=~\"2..\"}[5m])) by (le))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "Latency over 1 min",
+          "legendFormat": "Latency over 5 min",
           "refId": "A"
         }
       ],
@@ -195,7 +187,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.$percentiles, rate(traefik_entrypoint_request_duration_seconds_bucket{code=\"200\",method=\"GET\"}[5m]))",
+          "expr": "histogram_quantile(0.$percentiles, sum(rate(traefik_entrypoint_request_duration_seconds_bucket{code=~\"2..\"}[5m])) by (instance, le))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ instance }}",
@@ -257,13 +249,13 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "fill": 7,
           "gridPos": {
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2
+            "y": 16
           },
           "id": 19,
           "legend": {
@@ -345,13 +337,13 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "fill": 1,
           "gridPos": {
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2
+            "y": 16
           },
           "id": 22,
           "legend": {
@@ -379,7 +371,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(traefik_entrypoint_request_duration_seconds_bucket{le=\"0.1\",code=\"200\"}[5m])) by (job) / sum(rate(traefik_entrypoint_request_duration_seconds_count{code=\"200\"}[5m])) by (job)",
+              "expr": "(sum(rate(traefik_entrypoint_request_duration_seconds_bucket{le=\"0.1\",code=\"200\"}[5m])) by (job) + sum(rate(traefik_entrypoint_request_duration_seconds_bucket{le=\"0.3\",code=\"200\"}[5m])) by (job)) / 2 / sum(rate(traefik_entrypoint_request_duration_seconds_count{code=\"200\"}[5m])) by (job)",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "Code 200",
@@ -425,9 +417,97 @@
             "align": false,
             "alignLevel": null
           }
+        },
+        {
+          "aliasColors": {},
+          "bars": true,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "fill": 1,
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 23
+          },
+          "id": 3,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "sort": "avg",
+            "sortDesc": true,
+            "total": false,
+            "values": true
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(traefik_entrypoint_requests_total[1m])) by (entrypoint)",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "{{ entrypoint }}",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Service total requests over 1min per entrypoint",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
         }
       ],
-      "title": "Frontends (entrypoints)",
+      "title": "Entrypoints",
       "type": "row"
     },
     {
@@ -436,7 +516,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 33
       },
       "id": 24,
       "panels": [
@@ -445,13 +525,13 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "fill": 7,
           "gridPos": {
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 3
+            "y": 34
           },
           "id": 25,
           "legend": {
@@ -481,7 +561,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(traefik_backend_open_connections) by (method)",
+              "expr": "sum(traefik_service_open_connections) by (method)",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{ method }}",
@@ -533,13 +613,13 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": "${DS_PROMETHEUS}",
           "fill": 1,
           "gridPos": {
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 3
+            "y": 34
           },
           "id": 26,
           "legend": {
@@ -567,7 +647,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(traefik_backend_request_duration_seconds_bucket{le=\"0.1\",code=\"200\"}[5m])) by (job) / sum(rate(traefik_backend_request_duration_seconds_count{code=\"200\"}[5m])) by (job)",
+              "expr": "(sum(rate(traefik_service_request_duration_seconds_bucket{le=\"0.1\",code=\"200\"}[5m])) by (job) + sum(rate(traefik_service_request_duration_seconds_bucket{le=\"0.3\",code=\"200\"}[5m])) by (job)) / 2 / sum(rate(traefik_service_request_duration_seconds_count{code=\"200\"}[5m])) by (job)",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "Code 200",
@@ -613,9 +693,97 @@
             "align": false,
             "alignLevel": null
           }
+        },
+        {
+          "aliasColors": {},
+          "bars": true,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_PROMETHEUS}",
+          "fill": 1,
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 41
+          },
+          "id": 4,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": false,
+            "rightSide": false,
+            "show": true,
+            "sort": "avg",
+            "sortDesc": true,
+            "total": false,
+            "values": true
+          },
+          "lines": false,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "sum(rate(traefik_service_requests_total[1m])) by (service)",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "{{ service }}",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Service total requests over 1min per service",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
         }
       ],
-      "title": "Backends",
+      "title": "Services",
       "type": "row"
     },
     {
@@ -624,7 +792,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 51
       },
       "id": 15,
       "panels": [
@@ -639,7 +807,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 4
+            "y": 52
           },
           "id": 5,
           "legend": {
@@ -669,7 +837,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(traefik_backend_requests_total{code=~\"2..\"}[5m])) by (method, code)",
+              "expr": "sum(rate(traefik_service_requests_total{code=~\"2..\"}[5m])) by (method, code)",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{method}} : {{code}}",
@@ -727,7 +895,7 @@
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 4
+            "y": 52
           },
           "id": 27,
           "legend": {
@@ -755,7 +923,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(traefik_backend_requests_total{code=~\"5..\"}[5m])) by (method, code)",
+              "expr": "sum(rate(traefik_service_requests_total{code=~\"5..\"}[5m])) by (method, code)",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{method}} : {{code}}",
@@ -813,95 +981,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 13
-          },
-          "id": 3,
-          "legend": {
-            "alignAsTable": true,
-            "avg": true,
-            "current": true,
-            "max": true,
-            "min": false,
-            "rightSide": true,
-            "show": true,
-            "sort": "avg",
-            "sortDesc": true,
-            "total": false,
-            "values": true
-          },
-          "lines": false,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "sum(rate(traefik_backend_requests_total[1m])) by (backend)",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "{{ backend }}",
-              "refId": "A"
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Backend total requests over 1min per backend",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ],
-          "yaxis": {
-            "align": false,
-            "alignLevel": null
-          }
-        },
-        {
-          "aliasColors": {},
-          "bars": true,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "${DS_PROMETHEUS}",
-          "fill": 1,
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 12,
-            "y": 13
+            "y": 61
           },
           "id": 6,
           "legend": {
@@ -930,7 +1010,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(traefik_backend_requests_total{code!~\"2..|5..\"}[5m])) by (method, code)",
+              "expr": "sum(rate(traefik_service_requests_total{code!~\"2..|5..\"}[5m])) by (method, code)",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{ method }} : {{code}}",
@@ -940,7 +1020,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Others status code over 5min",
+          "title": "Others statuses code over 5min",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -978,7 +1058,7 @@
           }
         }
       ],
-      "title": "HTTP Codes  stats",
+      "title": "HTTP Codes stats",
       "type": "row"
     }
   ],
@@ -1051,5 +1131,5 @@
   "timezone": "",
   "title": "Traefik",
   "uid": "traefik",
-  "version": 1
+  "version": 2
 }
