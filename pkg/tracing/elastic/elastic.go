@@ -15,6 +15,13 @@ import (
 // Name sets the name of this tracer.
 const Name = "elastic"
 
+func init() {
+	// The APM lib uses the init() function to create a default tracer.
+	// So this default tracer must be disabled.
+	// https://github.com/elastic/apm-agent-go/blob/8dd383d0d21776faad8841fe110f35633d199a03/tracer.go#L61-L65
+	apm.DefaultTracer.Close()
+}
+
 // Config provides configuration settings for a elastic.co tracer.
 type Config struct {
 	ServerURL          string `description:"Set the URL of the Elastic APM server." json:"serverURL,omitempty" toml:"serverURL,omitempty" yaml:"serverURL,omitempty"`
