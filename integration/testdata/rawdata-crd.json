@@ -194,15 +194,41 @@
 		}
 	},
 	"tcpServices": {
-		"default-test3.route-673acf455cb2dab0b43a@kubernetescrd": {
+		"default-test3.route-673acf455cb2dab0b43a-externalname-svc-9090@kubernetescrd": {
 			"loadBalancer": {
 				"terminationDelay": 100,
 				"servers": [
 					{
-						"address": "10.42.0.4:8080"
+						"address": "domain.com:9090"
+					}
+				]
+			},
+			"status": "enabled"
+		},
+		"default-test3.route-673acf455cb2dab0b43a-whoamitcp-8080@kubernetescrd": {
+			"loadBalancer": {
+				"terminationDelay": 100,
+				"servers": [
+					{
+						"address": "10.42.0.3:8080"
 					},
 					{
 						"address": "10.42.0.8:8080"
+					}
+				]
+			},
+			"status": "enabled"
+		},
+		"default-test3.route-673acf455cb2dab0b43a@kubernetescrd": {
+			"weighted": {
+				"services": [
+					{
+						"name": "default-test3.route-673acf455cb2dab0b43a-whoamitcp-8080",
+						"weight": 1
+					},
+					{
+						"name": "default-test3.route-673acf455cb2dab0b43a-externalname-svc-9090",
+						"weight": 1
 					}
 				]
 			},

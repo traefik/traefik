@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -246,6 +247,43 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	return conf
+}
+
+func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error) {
+	var servicePort *corev1.ServicePort
+
+	if svc == nil {
+		return nil, errors.New("svc is not defined")
+	}
+
+	var servicePortValid *corev1.ServicePort
+	for _, p := range svc.Spec.Ports {
+		if port == p.Port && port != 0 {
+			servicePort = &p
+			break
+		}
+		if p.Port != 0 && servicePortValid == nil {
+			servicePortValid = &p
+		}
+	}
+
+	if servicePort == nil {
+		if svc.Spec.Type != corev1.ServiceTypeExternalName || (servicePortValid != nil && port != 0) {
+			return nil, errors.New("service port not found")
+		}
+
+		if servicePort = servicePortValid; servicePort == nil && port != 0 {
+			servicePort = &corev1.ServicePort{
+				Port: port,
+			}
+		}
+	}
+
+	if servicePort == nil {
+		return nil, errors.New("service port not found")
+	}
+
+	return servicePort, nil
 }
 
 func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {

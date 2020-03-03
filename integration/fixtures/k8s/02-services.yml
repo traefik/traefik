@@ -126,3 +126,13 @@ spec:
   selector:
     app: containous
     task: whoamiudp
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: externalname-svc
+  namespace: default
+spec:
+  externalName: domain.com
+  type: ExternalName

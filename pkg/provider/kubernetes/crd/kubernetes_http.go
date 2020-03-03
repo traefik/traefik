@@ -294,27 +294,20 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 		return nil, fmt.Errorf("kubernetes service not found: %s/%s", namespace, sanitizedName)
 	}
 
-	confPort := svc.Port
-	var portSpec *corev1.ServicePort
-	for _, p := range service.Spec.Ports {
-		if confPort == p.Port {
-			portSpec = &p
-			break
-		}
-	}
-	if portSpec == nil {
-		return nil, errors.New("service port not found")
+	svcPort, err := getServicePort(service, svc.Port)
+	if err != nil {
+		return nil, err
 	}
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		protocol, err := parseServiceProtocol(svc.Scheme, portSpec.Name, portSpec.Port)
+		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
 			return nil, err
 		}
 
 		return append(servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, portSpec.Port),
+			URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, svcPort.Port),
 		}), nil
 	}
 
@@ -332,7 +325,7 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 	var port int32
 	for _, subset := range endpoints.Subsets {
 		for _, p := range subset.Ports {
-			if portSpec.Name == p.Name {
+			if svcPort.Name == p.Name {
 				port = p.Port
 				break
 			}
@@ -342,7 +335,7 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 			return nil, fmt.Errorf("cannot define a port for %s/%s", namespace, sanitizedName)
 		}
 
-		protocol, err := parseServiceProtocol(svc.Scheme, portSpec.Name, portSpec.Port)
+		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
 			return nil, err
 		}
