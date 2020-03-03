@@ -98,10 +98,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.12:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.6:80"
 					}
 				],
 				"passHostHeader": true
@@ -111,18 +111,18 @@
 				"default-test-route-6b204d94623b3df4370c@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.12:80": "UP",
+				"http://10.42.0.6:80": "UP"
 			}
 		},
 		"default-test2-route-23c7f4c450289ee29016@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.12:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.6:80"
 					}
 				],
 				"passHostHeader": true
@@ -132,26 +132,26 @@
 				"default-test2-route-23c7f4c450289ee29016@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.12:80": "UP",
+				"http://10.42.0.6:80": "UP"
 			}
 		},
 		"default-whoami-80@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.3:80"
+						"url": "http://10.42.0.12:80"
 					},
 					{
-						"url": "http://10.42.0.5:80"
+						"url": "http://10.42.0.6:80"
 					}
 				],
 				"passHostHeader": true
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"http://10.42.0.3:80": "UP",
-				"http://10.42.0.5:80": "UP"
+				"http://10.42.0.12:80": "UP",
+				"http://10.42.0.6:80": "UP"
 			}
 		},
 		"default-wrr1@kubernetescrd": {
@@ -171,6 +171,9 @@
 			"usedBy": [
 				"default-test3-route-7d0ac22d3d8db4b82618@kubernetescrd"
 			]
+		},
+		"noop@internal": {
+			"status": "enabled"
 		}
 	},
 	"tcpRouters": {
@@ -196,10 +199,10 @@
 				"terminationDelay": 100,
 				"servers": [
 					{
-						"address": "10.42.0.4:8080"
+						"address": "10.42.0.11:8080"
 					},
 					{
-						"address": "10.42.0.6:8080"
+						"address": "10.42.0.3:8080"
 					}
 				]
 			},
@@ -226,10 +229,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.4:8090"
+						"address": "10.42.0.10:8090"
 					},
 					{
-						"address": "10.42.0.6:8090"
+						"address": "10.42.0.5:8090"
 					}
 				]
 			},
