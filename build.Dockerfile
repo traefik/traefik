@@ -21,8 +21,8 @@ RUN mkdir -p /usr/local/bin \
 # Download golangci-lint binary to bin folder in $GOPATH
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.23.6
 
-# Download golangci-lint and misspell binary to bin folder in $GOPATH
-RUN GO111MODULE=off go get github.com/client9/misspell/cmd/misspell
+# Download misspell binary to bin folder in $GOPATH
+RUN  curl -sfL https://raw.githubusercontent.com/client9/misspell/master/install-misspell.sh | bash -s -- -b $GOPATH/bin v0.3.4
 
 # Download goreleaser binary to bin folder in $GOPATH
 RUN curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
