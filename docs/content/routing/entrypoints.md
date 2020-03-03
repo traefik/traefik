@@ -529,3 +529,211 @@ If the Proxy Protocol header is passed, then the version is determined automatic
 
     When queuing Traefik behind another load-balancer, make sure to configure Proxy Protocol on both sides.
     Not doing so could introduce a security risk in your system (enabling request forgery).
+
+## HTTP Options
+
+This whole section is dedicated to options, keyed by entry point, that will apply only to HTTP routing.
+
+### Redirection
+
+??? example "HTTPS redirection (80 to 443)"
+    
+    ```toml tab="File (TOML)"
+    [entryPoints.web]
+      address = ":80"
+      
+      [entryPoints.web.http]
+        [entryPoints.web.http.redirections]
+          [entryPoints.web.http.redirections.entryPoint]
+            to = "websecure"
+            scheme = "https"
+    
+    [entryPoints.websecure]
+      address = ":443"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    entryPoints:
+      web:
+        address: :80
+        http:
+          redirections:
+            entryPoint:
+              to: websecure
+              https: true
+    
+      websecure:
+        address: :443
+    ```
+    
+    ```bash tab="CLI"
+    --entrypoints.web.address=:80
+    --entrypoints.web.http.redirections.entryPoint.to=websecure
+    --entrypoints.web.http.redirections.entryPoint.https=true
+    --entrypoints.websecure.address=:443
+    ```
+
+#### `entryPoint`
+
+This section is a convenience to enable (permanent) redirecting of all incoming requests on an entry point (e.g. port `80`) to another entry point (e.g. port `443`).
+
+??? info "`entryPoint.to`"
+    
+    _Required_
+    
+    The target entry point.
+
+    ```toml tab="File (TOML)"
+    [entryPoints.foo]
+      # ...
+      [entryPoints.foo.http.redirections]
+        [entryPoints.foo.http.redirections.entryPoint]
+          to = "bar"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    entryPoints:
+      foo:
+        # ...
+        http:
+          redirections:
+            entryPoint:
+              to: bar
+    ```
+    
+    ```bash tab="CLI"
+    --entrypoints.foo.http.redirections.entryPoint.to=websecure
+    ```
+
+??? info "`entryPoint.scheme`"
+    
+    _Optional, Default="http"_
+    
+    The redirection target scheme.
+
+    ```toml tab="File (TOML)"
+    [entryPoints.foo]
+      # ...
+      [entryPoints.foo.http.redirections]
+        [entryPoints.foo.http.redirections.entryPoint]
+          # ...
+          scheme = "https"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    entryPoints:
+      foo:
+        # ...
+        http:
+          redirections:
+            entryPoint:
+              # ...
+              scheme: https
+    ```
+    
+    ```bash tab="CLI"
+    --entrypoints.foo.http.redirections.entryPoint.scheme=https
+    ```
+
+### Middlewares
+
+The list of middlewares that are prepended by default to the list of middlewares of each router associated to the named entry point.
+
+```toml tab="File (TOML)"
+[entryPoints.websecure]
+  address = ":443"
+
+  [entryPoints.websecure.http]
+    middlewares = ["auth@file", "strip@file"]
+```
+
+```yaml tab="File (YAML)"
+entryPoints:
+  websecure:
+    address: ':443'
+    http:
+      middlewares:
+        - auth@file
+        - strip@file
+```
+
+```bash tab="CLI"
+entrypoints.websecure.address=:443
+entrypoints.websecure.http.middlewares=auth@file,strip@file
+```
+
+### TLS
+
+This section is about the default TLS configuration applied to all routers associated with the named entry point.
+
+If a TLS section (i.e. any of its fields) is user-defined, then the default configuration does not apply at all.
+
+The TLS section is the same as the [TLS section on HTTP routers](./routers/index.md#tls).
+
+```toml tab="File (TOML)"
+[entryPoints.websecure]
+  address = ":443"
+
+    [entryPoints.websecure.http.tls]
+      options = "foobar"
+      certResolver = "leresolver"
+      [[entryPoints.websecure.http.tls.domains]]
+        main = "example.com"
+        sans = ["foo.example.com", "bar.example.com"]
+      [[entryPoints.websecure.http.tls.domains]]
+        main = "test.com"
+        sans = ["foo.test.com", "bar.test.com"]
+```
+
+```yaml tab="File (YAML)"
+entryPoints:
+  websecure:
+    address: ':443'
+    http:
+      tls:
+        options: foobar
+        certResolver: leresolver
+        domains:
+          - main: example.com
+            sans:
+              - foo.example.com
+              - bar.example.com
+          - main: test.com
+            sans:
+              - foo.test.com
+              - bar.test.com
+```
+
+```bash tab="CLI"
+entrypoints.websecure.address=:443
+entrypoints.websecure.http.tls.options=foobar
+entrypoints.websecure.http.tls.certResolver=leresolver
+entrypoints.websecure.http.tls.domains[0].main=example.com
+entrypoints.websecure.http.tls.domains[0].sans=foo.example.com,bar.example.com
+entrypoints.websecure.http.tls.domains[1].main=test.com
+entrypoints.websecure.http.tls.domains[1].sans=foo.test.com,bar.test.com
+```
+
+??? example "Let's Encrypt"
+    
+    ```toml tab="File (TOML)"
+    [entryPoints.websecure]
+      address = ":443"
+    
+        [entryPoints.websecure.http.tls]
+          certResolver = "leresolver"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    entryPoints:
+      websecure:
+        address: ':443'
+        http:
+          tls:
+            certResolver: leresolver
+    ```
+    
+    ```bash tab="CLI"
+    entrypoints.websecure.address=:443
+    entrypoints.websecure.http.tls.certResolver=leresolver
+    ```
