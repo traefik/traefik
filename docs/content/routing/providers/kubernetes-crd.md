@@ -300,6 +300,7 @@ You can find an excerpt of the available custom resources in the table below:
 | [IngressRouteTCP](#kind-ingressroutetcp) | TCP Routing                                                   | [TCP router](../routers/index.md#configuring-tcp-routers)      |
 | [IngressRouteUDP](#kind-ingressrouteudp) | UDP Routing                                                   | [UDP router](../routers/index.md#configuring-udp-routers)      |
 | [TLSOptions](#kind-tlsoption)            | Allows to configure some parameters of the TLS connection     | [TLSOptions](../../https/tls.md#tls-options)                   |
+| [TLSStores](#kind-tlsstore)              | Allows to configure the default TLS store                     | [TLSStores](../../https/tls.md#certificates-stores)            |
 
 ### Kind: `IngressRoute`
 
