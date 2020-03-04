@@ -197,8 +197,7 @@ This functionality allows for more advanced security features to quickly be set.
 ```yaml tab="Docker"
 labels:
   - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin=origin-list-or-null"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=origin-list-or-null,https://foo.bar.org,https://example.org"
   - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
   - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
@@ -214,8 +213,8 @@ spec:
       - "GET"
       - "OPTIONS"
       - "PUT"
-    accessControlAllowOrigin: "origin-list-or-null"
     accessControlAllowOriginList:
+      - "origin-list-or-null"
       - "https://foo.bar.org"
       - "https://example.org"
     accessControlMaxAge: 100
@@ -224,8 +223,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-- "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin=origin-list-or-null"
-- "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+- "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=origin-list-or-null,https://foo.bar.org,https://example.org"
 - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
 - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
@@ -233,8 +231,7 @@ spec:
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods": "GET,OPTIONS,PUT",
-  "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin": "origin-list-or-null",
-  "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist": "https://foo.bar.org,https://example.org",
+  "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist": "origin-list-or-null,https://foo.bar.org,https://example.org",
   "traefik.http.middlewares.testheader.headers.accesscontrolmaxage": "100",
   "traefik.http.middlewares.testheader.headers.addvaryheader": "true"
 }
@@ -243,8 +240,7 @@ spec:
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin=origin-list-or-null"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=origin-list-or-null,https://foo.bar.org,https://example.org"
   - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
   - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
@@ -253,8 +249,7 @@ labels:
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
-    accessControlAllowOrigin = "origin-list-or-null"
-    accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
+    accessControlAllowOriginList = ["origin-list-or-null", "https://foo.bar.org","https://example.org"]
     accessControlMaxAge = 100
     addVaryHeader = true
 ```
@@ -268,8 +263,8 @@ http:
           - GET
           - OPTIONS
           - PUT
-        accessControlAllowOrigin: "origin-list-or-null"
         accessControlAllowOriginList:
+          - origin-list-or-null
           - https://foo.bar.org
           - https://example.org
         accessControlMaxAge: 100
@@ -306,11 +301,14 @@ The `accessControlAllowHeaders` indicates which header field names can be used a
 
 The  `accessControlAllowMethods` indicates which methods can be used during requests.
 
-### `accessControlAllowOrigin`
+### `accessControlAllowOriginList`
 
-The `accessControlAllowOrigin` indicates whether a resource can be shared by returning different values.
+The `accessControlAllowOriginList` indicates whether a resource can be shared by returning different values.
+
 A wildcard origin `*` can also be configured, and will match all requests.
 If this value is set by a backend server, it will be overwritten by Traefik
+
+This value can contains a list of allowed origins.
 
 More information including how to use the settings can be found on:
 
@@ -319,12 +317,6 @@ More information including how to use the settings can be found on:
 - [IETF](https://tools.ietf.org/html/rfc6454#section-7.1)
 
 Traefik no longer supports the null value, as it is [no longer recommended as a return value](https://w3c.github.io/webappsec-cors-for-developers/#avoid-returning-access-control-allow-origin-null).
-
-### `accessControlAllowOriginList`
-
-The `accessControlAllowOriginList` configuration is a list of allowed origins.
-A wildcard origin `*` can also be configured, and will match all requests.
-If this value is set by a backend server, it will be overwritten by Traefik
 
 ### `accessControlExposeHeaders`
 
@@ -336,7 +328,7 @@ The `accessControlMaxAge` indicates how long a preflight request can be cached.
 
 ### `addVaryHeader`
 
-The `addVaryHeader` is used in conjunction with `accessControlAllowOrigin` to determine whether the vary header should be added or modified to demonstrate that server responses can differ beased on the value of the origin header.
+The `addVaryHeader` is used in conjunction with `accessControlAllowOriginList` to determine whether the vary header should be added or modified to demonstrate that server responses can differ based on the value of the origin header.
 
 ### `allowedHosts` 
 

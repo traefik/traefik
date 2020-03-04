@@ -158,8 +158,8 @@ type Headers struct {
 	// AccessControlAllowMethods must be used in response to a preflight request with Access-Control-Request-Method set.
 	AccessControlAllowMethods []string `json:"accessControlAllowMethods,omitempty" toml:"accessControlAllowMethods,omitempty" yaml:"accessControlAllowMethods,omitempty"`
 	// AccessControlAllowOrigin Can be "origin-list-or-null" or "*". From (https://www.w3.org/TR/cors/#access-control-allow-origin-response-header)
-	AccessControlAllowOrigin string `json:"accessControlAllowOrigin,omitempty" toml:"accessControlAllowOrigin,omitempty" yaml:"accessControlAllowOrigin,omitempty"`
-	// AccessControlAllowOriginList is a list of allowable orgins. Can also be a wildcard origin "*".
+	AccessControlAllowOrigin string `json:"accessControlAllowOrigin,omitempty" toml:"accessControlAllowOrigin,omitempty" yaml:"accessControlAllowOrigin,omitempty"` // Deprecated
+	// AccessControlAllowOriginList is a list of allowable origins. Can also be a wildcard origin "*".
 	AccessControlAllowOriginList []string `json:"accessControlAllowOriginList,omitempty" toml:"accessControlAllowOriginList,omitempty" yaml:"accessControlAllowOriginList,omitempty"`
 	// AccessControlExposeHeaders sets valid headers for the response.
 	AccessControlExposeHeaders []string `json:"accessControlExposeHeaders,omitempty" toml:"accessControlExposeHeaders,omitempty" yaml:"accessControlExposeHeaders,omitempty"`
@@ -202,7 +202,6 @@ func (h *Headers) HasCorsHeadersDefined() bool {
 	return h != nil && (h.AccessControlAllowCredentials ||
 		len(h.AccessControlAllowHeaders) != 0 ||
 		len(h.AccessControlAllowMethods) != 0 ||
-		len(h.AccessControlAllowOrigin) != 0 ||
 		len(h.AccessControlAllowOriginList) != 0 ||
 		len(h.AccessControlExposeHeaders) != 0 ||
 		h.AccessControlMaxAge != 0 ||
