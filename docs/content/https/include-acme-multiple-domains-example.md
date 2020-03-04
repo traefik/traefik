@@ -37,6 +37,10 @@ spec:
       port: 8080
   tls:
     certResolver: myresolver
+    domains:
+    - main: company.org
+      sans:
+      - *.company.org
 ```
 
 ```json tab="Marathon"
