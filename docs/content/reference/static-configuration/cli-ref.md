@@ -346,7 +346,7 @@ TLS key
 Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
 
 `--providers.docker.watch`:  
-Watch provider. (Default: ```true```)
+Watch Docker Swarm events. (Default: ```true```)
 
 `--providers.file.debugloggeneratedtemplate`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
