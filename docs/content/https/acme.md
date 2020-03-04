@@ -396,6 +396,13 @@ As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/stagi
 
 ### `caServer`
 
+_Required, Default="https://acme-v02.api.letsencrypt.org/directory"_
+
+The CA server to use:
+
+- Let's Encrypt production server: https://acme-v02.api.letsencrypt.org/directory
+- Let's Encrypt staging server: https://acme-staging-v02.api.letsencrypt.org/directory
+
 ??? example "Using the Let's Encrypt staging server"
 
     ```toml tab="File (TOML)"
@@ -422,6 +429,8 @@ As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/stagi
 
 ### `storage`
 
+_Required, Default="acme.json"_
+
 The `storage` option sets the location where your ACME certificates are saved to.
 
 ```toml tab="File (TOML)"
@@ -446,13 +455,7 @@ certificatesResolvers:
 # ...
 ```
 
-The value can refer to some kinds of storage:
-
-- a JSON file
-
-#### In a File
-
-ACME certificates can be stored in a JSON file that needs to have a `600` file mode .
+ACME certificates are stored in a JSON file that needs to have a `600` file mode.
 
 In Docker you can mount either the JSON file, or the folder containing it:
 
