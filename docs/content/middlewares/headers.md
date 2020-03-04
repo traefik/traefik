@@ -197,7 +197,7 @@ This functionality allows for more advanced security features to quickly be set.
 ```yaml tab="Docker"
 labels:
   - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=origin-list-or-null,https://foo.bar.org,https://example.org"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
   - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
   - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
@@ -214,7 +214,6 @@ spec:
       - "OPTIONS"
       - "PUT"
     accessControlAllowOriginList:
-      - "origin-list-or-null"
       - "https://foo.bar.org"
       - "https://example.org"
     accessControlMaxAge: 100
@@ -223,7 +222,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-- "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=origin-list-or-null,https://foo.bar.org,https://example.org"
+- "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
 - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
 - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
@@ -231,7 +230,7 @@ spec:
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods": "GET,OPTIONS,PUT",
-  "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist": "origin-list-or-null,https://foo.bar.org,https://example.org",
+  "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist": "https://foo.bar.org,https://example.org",
   "traefik.http.middlewares.testheader.headers.accesscontrolmaxage": "100",
   "traefik.http.middlewares.testheader.headers.addvaryheader": "true"
 }
@@ -240,7 +239,7 @@ spec:
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=origin-list-or-null,https://foo.bar.org,https://example.org"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
   - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
   - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
@@ -249,7 +248,7 @@ labels:
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
-    accessControlAllowOriginList = ["origin-list-or-null", "https://foo.bar.org","https://example.org"]
+    accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
     accessControlMaxAge = 100
     addVaryHeader = true
 ```
@@ -264,7 +263,6 @@ http:
           - OPTIONS
           - PUT
         accessControlAllowOriginList:
-          - origin-list-or-null
           - https://foo.bar.org
           - https://example.org
         accessControlMaxAge: 100

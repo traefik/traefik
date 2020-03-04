@@ -203,7 +203,7 @@ func TestCORSPreflights(t *testing.T) {
 			desc: "Test Simple Preflight",
 			header: NewHeader(emptyHandler, dynamic.Headers{
 				AccessControlAllowMethods:    []string{"GET", "OPTIONS", "PUT"},
-				AccessControlAllowOriginList: []string{"origin-list-or-null", "https://foo.bar.org"},
+				AccessControlAllowOriginList: []string{"https://foo.bar.org"},
 				AccessControlMaxAge:          600,
 			}),
 			requestHeaders: map[string][]string{
@@ -368,7 +368,7 @@ func TestCORSResponses(t *testing.T) {
 		{
 			desc: "Test Simple Request",
 			header: NewHeader(emptyHandler, dynamic.Headers{
-				AccessControlAllowOriginList: []string{"origin-list-or-null", "https://foo.bar.org"},
+				AccessControlAllowOriginList: []string{"https://foo.bar.org"},
 			}),
 			requestHeaders: map[string][]string{
 				"Origin": {"https://foo.bar.org"},
@@ -392,7 +392,7 @@ func TestCORSResponses(t *testing.T) {
 		{
 			desc: "Empty origin Request",
 			header: NewHeader(emptyHandler, dynamic.Headers{
-				AccessControlAllowOriginList: []string{"origin-list-or-null", "https://foo.bar.org"},
+				AccessControlAllowOriginList: []string{"https://foo.bar.org"},
 			}),
 			requestHeaders: map[string][]string{},
 			expected:       map[string][]string{},
@@ -434,7 +434,7 @@ func TestCORSResponses(t *testing.T) {
 		{
 			desc: "Test Simple Request with Vary Headers",
 			header: NewHeader(emptyHandler, dynamic.Headers{
-				AccessControlAllowOriginList: []string{"origin-list-or-null", "https://foo.bar.org"},
+				AccessControlAllowOriginList: []string{"https://foo.bar.org"},
 				AddVaryHeader:                true,
 			}),
 			requestHeaders: map[string][]string{
@@ -448,7 +448,7 @@ func TestCORSResponses(t *testing.T) {
 		{
 			desc: "Test Simple Request with Vary Headers and non-empty response",
 			header: NewHeader(nonEmptyHandler, dynamic.Headers{
-				AccessControlAllowOriginList: []string{"origin-list-or-null", "https://foo.bar.org"},
+				AccessControlAllowOriginList: []string{"https://foo.bar.org"},
 				AddVaryHeader:                true,
 			}),
 			requestHeaders: map[string][]string{
@@ -462,7 +462,7 @@ func TestCORSResponses(t *testing.T) {
 		{
 			desc: "Test Simple Request with Vary Headers and existing vary:origin response",
 			header: NewHeader(existingOriginHandler, dynamic.Headers{
-				AccessControlAllowOriginList: []string{"origin-list-or-null", "https://foo.bar.org"},
+				AccessControlAllowOriginList: []string{"https://foo.bar.org"},
 				AddVaryHeader:                true,
 			}),
 			requestHeaders: map[string][]string{
