@@ -88,8 +88,8 @@ If you are using windows, you may try
 ```
 go get -u github.com/go-bindata/go-bindata/...
 go generate
-GO111MODULE=on go build ./cmd/traefik
-./traefik
+GO111MODULE=on go build .\cmd\traefik
+.\traefik
 ```
 
 ## Quickstart
