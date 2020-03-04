@@ -134,7 +134,7 @@ func NewHeader(next http.Handler, cfg dynamic.Headers) *Header {
 	hasCustomHeaders := cfg.HasCustomHeadersDefined()
 	hasCorsHeaders := cfg.HasCorsHeadersDefined()
 
-	ctx := context.WithValue(context.Background(), log.MiddlewareType, typeName)
+	ctx := log.With(context.Background(), log.Str(log.MiddlewareType, typeName))
 	handleDeprecation(ctx, &cfg)
 
 	return &Header{
