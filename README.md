@@ -75,6 +75,23 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 - [Rancher](https://docs.traefik.io/providers/rancher/) (Metadata)
 - [File](https://docs.traefik.io/providers/file/)
 
+
+## Local dev
+
+You need installed `golang 1.11+` and `make` on your system, Mac OSX and Linux prefered.
+```
+go get -u github.com/go-bindata/go-bindata/...
+make run-dev
+```
+If you are using windows, you may try 
+
+```
+go get -u github.com/go-bindata/go-bindata/...
+go generate
+GO111MODULE=on go build ./cmd/traefik
+./traefik
+```
+
 ## Quickstart
 
 To get your hands on Traefik, you can use the [5-Minute Quickstart](https://docs.traefik.io/getting-started/quick-start/) in our documentation (you will need Docker).
