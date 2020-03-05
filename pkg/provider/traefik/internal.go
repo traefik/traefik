@@ -1,6 +1,7 @@
 package traefik
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"net"
@@ -89,7 +90,7 @@ func (i *Provider) redirection(cfg *dynamic.Configuration) {
 
 		port, err := i.getEntryPointPort(name, def)
 		if err != nil {
-			log.WithoutContext().Error(err)
+			log.FromContext(context.Background()).WithField(log.EntryPointName, name).Error(err)
 			continue
 		}
 
