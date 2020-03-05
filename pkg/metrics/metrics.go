@@ -187,8 +187,8 @@ func (r *standardRegistry) ServiceServerUpGauge() metrics.Gauge {
 	return r.serviceServerUpGauge
 }
 
-// ScalableHistogram is a Histogram with a predefined time unit, used when
-// producing observations without explicitly setting the observed value.
+// ScalableHistogram is a Histogram with a predefined time unit,
+// used when producing observations without explicitly setting the observed value.
 type ScalableHistogram interface {
 	With(labelValues ...string) ScalableHistogram
 	StartAt(t time.Time)
