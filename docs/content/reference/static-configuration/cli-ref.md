@@ -406,7 +406,7 @@ TLS key
 Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
 
 `--providers.docker.watch`:  
-Watch provider. (Default: ```true```)
+Watch Docker Swarm events. (Default: ```true```)
 
 `--providers.etcd`:  
 Enable Etcd backend with default settings. (Default: ```false```)

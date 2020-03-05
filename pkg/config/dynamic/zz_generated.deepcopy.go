@@ -460,6 +460,11 @@ func (in *Headers) DeepCopyInto(out *Headers) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.AccessControlAllowOriginList != nil {
+		in, out := &in.AccessControlAllowOriginList, &out.AccessControlAllowOriginList
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.AccessControlExposeHeaders != nil {
 		in, out := &in.AccessControlExposeHeaders, &out.AccessControlExposeHeaders
 		*out = make([]string, len(*in))

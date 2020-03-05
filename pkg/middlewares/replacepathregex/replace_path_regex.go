@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -49,10 +50,31 @@ func (rp *replacePathRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if rp.regexp != nil && len(rp.replacement) > 0 && rp.regexp.MatchString(req.URL.Path) {
-		req.Header.Add(replacepath.ReplacedPathHeader, req.URL.Path)
-		req.URL.Path = rp.regexp.ReplaceAllString(req.URL.Path, rp.replacement)
+	var currentPath string
+	if req.URL.RawPath == "" {
+		currentPath = req.URL.Path
+	} else {
+		currentPath = req.URL.RawPath
+	}
+
+	if rp.regexp != nil && len(rp.replacement) > 0 && rp.regexp.MatchString(currentPath) {
+		req.Header.Add(replacepath.ReplacedPathHeader, currentPath)
+
+		req.URL.RawPath = rp.regexp.ReplaceAllString(currentPath, rp.replacement)
+
+		// as replacement can introduce escaped characters
+		// Path must remain an unescaped version of RawPath
+		// Doesn't handle multiple times encoded replacement (`/` => `%2F` => `%252F` => ...)
+		var err error
+		req.URL.Path, err = url.PathUnescape(req.URL.RawPath)
+		if err != nil {
+			log.FromContext(middlewares.GetLoggerCtx(context.Background(), rp.name, typeName)).Error(err)
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		req.RequestURI = req.URL.RequestURI()
 	}
+
 	rp.next.ServeHTTP(rw, req)
 }

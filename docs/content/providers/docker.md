@@ -491,6 +491,30 @@ providers:
 
 Defines the polling interval (in seconds) in Swarm Mode.
 
+### `watch`
+
+_Optional, Default=true_
+
+```toml tab="File (TOML)"
+[providers.docker]
+  watch = false
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    watch: false
+    # ...
+```
+
+```bash tab="CLI"
+--providers.docker.watch=false
+# ...
+```
+
+Watch Docker Swarm events.
+
 ### `constraints`
 
 _Optional, Default=""_
