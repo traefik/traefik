@@ -37,6 +37,7 @@ rules:
       - ingressroutetcps
       - ingressrouteudps
       - tlsoptions
+      - tlsstores
     verbs:
       - get
       - list
