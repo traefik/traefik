@@ -20,20 +20,31 @@ const (
 	typeName = "Headers"
 )
 
+func handleDeprecation(ctx context.Context, cfg *dynamic.Headers) {
+	if cfg.AccessControlAllowOrigin != "" {
+		log.FromContext(ctx).Warn("accessControlAllowOrigin is deprecated, please use accessControlAllowOriginList instead.")
+		cfg.AccessControlAllowOriginList = append(cfg.AccessControlAllowOriginList, cfg.AccessControlAllowOrigin)
+		cfg.AccessControlAllowOrigin = ""
+	}
+}
+
 type headers struct {
 	name    string
 	handler http.Handler
 }
 
 // New creates a Headers middleware.
-func New(ctx context.Context, next http.Handler, config dynamic.Headers, name string) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name string) (http.Handler, error) {
 	// HeaderMiddleware -> SecureMiddleWare -> next
-	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
+	mCtx := middlewares.GetLoggerCtx(ctx, name, typeName)
+	logger := log.FromContext(mCtx)
 	logger.Debug("Creating middleware")
 
-	hasSecureHeaders := config.HasSecureHeadersDefined()
-	hasCustomHeaders := config.HasCustomHeadersDefined()
-	hasCorsHeaders := config.HasCorsHeadersDefined()
+	handleDeprecation(mCtx, &cfg)
+
+	hasSecureHeaders := cfg.HasSecureHeadersDefined()
+	hasCustomHeaders := cfg.HasCustomHeadersDefined()
+	hasCorsHeaders := cfg.HasCorsHeadersDefined()
 
 	if !hasSecureHeaders && !hasCustomHeaders && !hasCorsHeaders {
 		return nil, errors.New("headers configuration not valid")
@@ -43,14 +54,14 @@ func New(ctx context.Context, next http.Handler, config dynamic.Headers, name st
 	nextHandler := next
 
 	if hasSecureHeaders {
-		logger.Debug("Setting up secureHeaders from %v", config)
-		handler = newSecure(next, config)
+		logger.Debug("Setting up secureHeaders from %v", cfg)
+		handler = newSecure(next, cfg)
 		nextHandler = handler
 	}
 
 	if hasCustomHeaders || hasCorsHeaders {
-		logger.Debug("Setting up customHeaders/Cors from %v", config)
-		handler = NewHeader(nextHandler, config)
+		logger.Debug("Setting up customHeaders/Cors from %v", cfg)
+		handler = NewHeader(nextHandler, cfg)
 	}
 
 	return &headers{
@@ -73,29 +84,29 @@ type secureHeader struct {
 }
 
 // newSecure constructs a new secure instance with supplied options.
-func newSecure(next http.Handler, headers dynamic.Headers) *secureHeader {
+func newSecure(next http.Handler, cfg dynamic.Headers) *secureHeader {
 	opt := secure.Options{
-		BrowserXssFilter:        headers.BrowserXSSFilter,
-		ContentTypeNosniff:      headers.ContentTypeNosniff,
-		ForceSTSHeader:          headers.ForceSTSHeader,
-		FrameDeny:               headers.FrameDeny,
-		IsDevelopment:           headers.IsDevelopment,
-		SSLRedirect:             headers.SSLRedirect,
-		SSLForceHost:            headers.SSLForceHost,
-		SSLTemporaryRedirect:    headers.SSLTemporaryRedirect,
-		STSIncludeSubdomains:    headers.STSIncludeSubdomains,
-		STSPreload:              headers.STSPreload,
-		ContentSecurityPolicy:   headers.ContentSecurityPolicy,
-		CustomBrowserXssValue:   headers.CustomBrowserXSSValue,
-		CustomFrameOptionsValue: headers.CustomFrameOptionsValue,
-		PublicKey:               headers.PublicKey,
-		ReferrerPolicy:          headers.ReferrerPolicy,
-		SSLHost:                 headers.SSLHost,
-		AllowedHosts:            headers.AllowedHosts,
-		HostsProxyHeaders:       headers.HostsProxyHeaders,
-		SSLProxyHeaders:         headers.SSLProxyHeaders,
-		STSSeconds:              headers.STSSeconds,
-		FeaturePolicy:           headers.FeaturePolicy,
+		BrowserXssFilter:        cfg.BrowserXSSFilter,
+		ContentTypeNosniff:      cfg.ContentTypeNosniff,
+		ForceSTSHeader:          cfg.ForceSTSHeader,
+		FrameDeny:               cfg.FrameDeny,
+		IsDevelopment:           cfg.IsDevelopment,
+		SSLRedirect:             cfg.SSLRedirect,
+		SSLForceHost:            cfg.SSLForceHost,
+		SSLTemporaryRedirect:    cfg.SSLTemporaryRedirect,
+		STSIncludeSubdomains:    cfg.STSIncludeSubdomains,
+		STSPreload:              cfg.STSPreload,
+		ContentSecurityPolicy:   cfg.ContentSecurityPolicy,
+		CustomBrowserXssValue:   cfg.CustomBrowserXSSValue,
+		CustomFrameOptionsValue: cfg.CustomFrameOptionsValue,
+		PublicKey:               cfg.PublicKey,
+		ReferrerPolicy:          cfg.ReferrerPolicy,
+		SSLHost:                 cfg.SSLHost,
+		AllowedHosts:            cfg.AllowedHosts,
+		HostsProxyHeaders:       cfg.HostsProxyHeaders,
+		SSLProxyHeaders:         cfg.SSLProxyHeaders,
+		STSSeconds:              cfg.STSSeconds,
+		FeaturePolicy:           cfg.FeaturePolicy,
 	}
 
 	return &secureHeader{
@@ -119,13 +130,16 @@ type Header struct {
 }
 
 // NewHeader constructs a new header instance from supplied frontend header struct.
-func NewHeader(next http.Handler, headers dynamic.Headers) *Header {
-	hasCustomHeaders := headers.HasCustomHeadersDefined()
-	hasCorsHeaders := headers.HasCorsHeadersDefined()
+func NewHeader(next http.Handler, cfg dynamic.Headers) *Header {
+	hasCustomHeaders := cfg.HasCustomHeadersDefined()
+	hasCorsHeaders := cfg.HasCorsHeadersDefined()
+
+	ctx := log.With(context.Background(), log.Str(log.MiddlewareType, typeName))
+	handleDeprecation(ctx, &cfg)
 
 	return &Header{
 		next:             next,
-		headers:          &headers,
+		headers:          &cfg,
 		hasCustomHeaders: hasCustomHeaders,
 		hasCorsHeaders:   hasCorsHeaders,
 	}
@@ -159,29 +173,6 @@ func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 	}
 }
 
-// preRequestModifyCorsResponseHeaders sets during request processing time,
-// all the CORS response headers that we already know that are supposed to be set,
-// and which do not depend on a later state of the response.
-// One notable example of a header that can only be modified later on is "Vary",
-// And this is set in the post-response response modifier method
-func (s *Header) preRequestModifyCorsResponseHeaders(rw http.ResponseWriter, req *http.Request) {
-	originHeader := req.Header.Get("Origin")
-	allowOrigin := s.getAllowOrigin(originHeader)
-
-	if allowOrigin != "" {
-		rw.Header().Set("Access-Control-Allow-Origin", allowOrigin)
-	}
-
-	if s.headers.AccessControlAllowCredentials {
-		rw.Header().Set("Access-Control-Allow-Credentials", "true")
-	}
-
-	if len(s.headers.AccessControlExposeHeaders) > 0 {
-		exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
-		rw.Header().Set("Access-Control-Expose-Headers", exposeHeaders)
-	}
-}
-
 // PostRequestModifyResponseHeaders set or delete response headers.
 // This method is called AFTER the response is generated from the backend
 // and can merge/override headers from the backend response.
@@ -194,6 +185,25 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 			res.Header.Set(header, value)
 		}
 	}
+
+	if res != nil && res.Request != nil {
+		originHeader := res.Request.Header.Get("Origin")
+		allowed, match := s.isOriginAllowed(originHeader)
+
+		if allowed {
+			res.Header.Set("Access-Control-Allow-Origin", match)
+		}
+	}
+
+	if s.headers.AccessControlAllowCredentials {
+		res.Header.Set("Access-Control-Allow-Credentials", "true")
+	}
+
+	if len(s.headers.AccessControlExposeHeaders) > 0 {
+		exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
+		res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
+	}
+
 	if !s.headers.AddVaryHeader {
 		return nil
 	}
@@ -241,30 +251,24 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 			rw.Header().Set("Access-Control-Allow-Methods", allowMethods)
 		}
 
-		allowOrigin := s.getAllowOrigin(originHeader)
-
-		if allowOrigin != "" {
-			rw.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+		allowed, match := s.isOriginAllowed(originHeader)
+		if allowed {
+			rw.Header().Set("Access-Control-Allow-Origin", match)
 		}
 
 		rw.Header().Set("Access-Control-Max-Age", strconv.Itoa(int(s.headers.AccessControlMaxAge)))
 		return true
 	}
 
-	s.preRequestModifyCorsResponseHeaders(rw, req)
 	return false
 }
 
-func (s *Header) getAllowOrigin(header string) string {
-	switch s.headers.AccessControlAllowOrigin {
-	case "origin-list-or-null":
-		if len(header) == 0 {
-			return "null"
+func (s *Header) isOriginAllowed(origin string) (bool, string) {
+	for _, item := range s.headers.AccessControlAllowOriginList {
+		if item == "*" || item == origin {
+			return true, item
 		}
-		return header
-	case "*":
-		return "*"
-	default:
-		return ""
 	}
+
+	return false, ""
 }
