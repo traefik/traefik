@@ -165,6 +165,9 @@
       },
       "status": "enabled"
     },
+    "noop@internal": {
+      "status": "enabled"
+    },
     "simplesvc@redis": {
       "loadBalancer": {
         "servers": [

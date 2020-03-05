@@ -7,12 +7,13 @@ import (
 	"github.com/containous/traefik/v2/pkg/tls"
 )
 
-func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configuration {
+func mergeConfiguration(configurations dynamic.Configurations, entryPoints []string) dynamic.Configuration {
 	conf := dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:     make(map[string]*dynamic.Router),
 			Middlewares: make(map[string]*dynamic.Middleware),
 			Services:    make(map[string]*dynamic.Service),
+			Models:      make(map[string]*dynamic.Model),
 		},
 		TCP: &dynamic.TCPConfiguration{
 			Routers:  make(map[string]*dynamic.TCPRouter),
@@ -33,6 +34,13 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 	for pvd, configuration := range configurations {
 		if configuration.HTTP != nil {
 			for routerName, router := range configuration.HTTP.Routers {
+				if len(router.EntryPoints) == 0 {
+					log.WithoutContext().
+						WithField(log.RouterName, routerName).
+						Debugf("No entryPoint defined for this router, using the default one(s) instead: %+v", entryPoints)
+					router.EntryPoints = entryPoints
+				}
+
 				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
 			for middlewareName, middleware := range configuration.HTTP.Middlewares {
@@ -40,6 +48,9 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 			}
 			for serviceName, service := range configuration.HTTP.Services {
 				conf.HTTP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
+			}
+			for modelName, model := range configuration.HTTP.Models {
+				conf.HTTP.Models[provider.MakeQualifiedName(pvd, modelName)] = model
 			}
 		}
 
@@ -100,4 +111,46 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 	}
 
 	return conf
+}
+
+func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
+	if cfg.HTTP == nil || len(cfg.HTTP.Models) == 0 {
+		return cfg
+	}
+
+	rts := make(map[string]*dynamic.Router)
+
+	for name, router := range cfg.HTTP.Routers {
+		eps := router.EntryPoints
+		router.EntryPoints = nil
+
+		for _, epName := range eps {
+			m, ok := cfg.HTTP.Models[epName+"@internal"]
+			if ok {
+				cp := router.DeepCopy()
+
+				cp.EntryPoints = []string{epName}
+
+				if cp.TLS == nil {
+					cp.TLS = m.TLS
+				}
+
+				cp.Middlewares = append(m.Middlewares, cp.Middlewares...)
+
+				rtName := name
+				if len(eps) > 1 {
+					rtName = epName + "-" + name
+				}
+				rts[rtName] = cp
+			} else {
+				router.EntryPoints = append(router.EntryPoints, epName)
+
+				rts[name] = router
+			}
+		}
+	}
+
+	cfg.HTTP.Routers = rts
+
+	return cfg
 }

@@ -32,6 +32,26 @@ entryPoints:
       trustedIPs:
       - foobar
       - foobar
+    http:
+      redirections:
+        entryPoint:
+          to: foobar
+          scheme: foobar
+      middlewares:
+      - foobar
+      - foobar
+      tls:
+        options: foobar
+        certResolver: foobar
+        domains:
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
 providers:
   providersThrottleDuration: 42
   docker:
@@ -142,8 +162,8 @@ providers:
   consul:
     rootKey: traefik
     endpoints:
-      - foobar
-      - foobar
+    - foobar
+    - foobar
     username: foobar
     password: foobar
     tls:
@@ -155,8 +175,8 @@ providers:
   etcd:
     rootKey: traefik
     endpoints:
-      - foobar
-      - foobar
+    - foobar
+    - foobar
     username: foobar
     password: foobar
     tls:

@@ -18,6 +18,8 @@ import (
 type ConfigurationWatcher struct {
 	provider provider.Provider
 
+	entryPoints []string
+
 	providersThrottleDuration time.Duration
 
 	currentConfigurations safe.Safe
@@ -32,7 +34,12 @@ type ConfigurationWatcher struct {
 }
 
 // NewConfigurationWatcher creates a new ConfigurationWatcher.
-func NewConfigurationWatcher(routinesPool *safe.Pool, pvd provider.Provider, providersThrottleDuration time.Duration) *ConfigurationWatcher {
+func NewConfigurationWatcher(
+	routinesPool *safe.Pool,
+	pvd provider.Provider,
+	providersThrottleDuration time.Duration,
+	entryPoints []string,
+) *ConfigurationWatcher {
 	watcher := &ConfigurationWatcher{
 		provider:                   pvd,
 		configurationChan:          make(chan dynamic.Message, 100),
@@ -40,6 +47,7 @@ func NewConfigurationWatcher(routinesPool *safe.Pool, pvd provider.Provider, pro
 		providerConfigUpdateMap:    make(map[string]chan dynamic.Message),
 		providersThrottleDuration:  providersThrottleDuration,
 		routinesPool:               routinesPool,
+		entryPoints:                entryPoints,
 	}
 
 	currentConfigurations := make(dynamic.Configurations)
@@ -135,7 +143,8 @@ func (c *ConfigurationWatcher) loadMessage(configMsg dynamic.Message) {
 
 	c.currentConfigurations.Set(newConfigurations)
 
-	conf := mergeConfiguration(newConfigurations)
+	conf := mergeConfiguration(newConfigurations, c.entryPoints)
+	conf = applyModel(conf)
 
 	for _, listener := range c.configurationListeners {
 		listener(conf)

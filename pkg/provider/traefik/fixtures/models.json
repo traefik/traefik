@@ -1,0 +1,36 @@
+{
+  "http": {
+    "services": {
+      "noop": {}
+    },
+    "models": {
+      "websecure": {
+        "middlewares": [
+          "test"
+        ],
+        "tls": {
+          "options": "opt",
+          "certResolver": "le",
+          "domains": [
+            {
+              "main": "mainA",
+              "sans": [
+                "sanA1",
+                "sanA2"
+              ]
+            },
+            {
+              "main": "mainB",
+              "sans": [
+                "sanB1",
+                "sanB2"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

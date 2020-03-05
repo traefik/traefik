@@ -3,6 +3,7 @@
     "services": {
       "api": {},
       "dashboard": {},
+      "noop": {},
       "ping": {},
       "prometheus": {},
       "rest": {}

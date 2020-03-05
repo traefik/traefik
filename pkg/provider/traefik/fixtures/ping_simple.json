@@ -11,6 +11,7 @@
       }
     },
     "services": {
+      "noop": {},
       "ping": {}
     }
   },

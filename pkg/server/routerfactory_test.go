@@ -23,17 +23,18 @@ func TestReuseService(t *testing.T) {
 
 	staticConfig := static.Configuration{
 		EntryPoints: map[string]*static.EntryPoint{
-			"http": {},
+			"web": {},
 		},
 	}
 
 	dynamicConfigs := th.BuildConfiguration(
 		th.WithRouters(
 			th.WithRouter("foo",
+				th.WithEntryPoints("web"),
 				th.WithServiceName("bar"),
 				th.WithRule("Path(`/ok`)")),
 			th.WithRouter("foo2",
-				th.WithEntryPoints("http"),
+				th.WithEntryPoints("web"),
 				th.WithRule("Path(`/unauthorized`)"),
 				th.WithServiceName("bar"),
 				th.WithRouterMiddlewares("basicauth")),
@@ -56,7 +57,7 @@ func TestReuseService(t *testing.T) {
 	// Test that the /ok path returns a status 200.
 	responseRecorderOk := &httptest.ResponseRecorder{}
 	requestOk := httptest.NewRequest(http.MethodGet, testServer.URL+"/ok", nil)
-	entryPointsHandlers["http"].GetHTTPHandler().ServeHTTP(responseRecorderOk, requestOk)
+	entryPointsHandlers["web"].GetHTTPHandler().ServeHTTP(responseRecorderOk, requestOk)
 
 	assert.Equal(t, http.StatusOK, responseRecorderOk.Result().StatusCode, "status code")
 
@@ -64,7 +65,7 @@ func TestReuseService(t *testing.T) {
 	// the basic authentication defined on the frontend.
 	responseRecorderUnauthorized := &httptest.ResponseRecorder{}
 	requestUnauthorized := httptest.NewRequest(http.MethodGet, testServer.URL+"/unauthorized", nil)
-	entryPointsHandlers["http"].GetHTTPHandler().ServeHTTP(responseRecorderUnauthorized, requestUnauthorized)
+	entryPointsHandlers["web"].GetHTTPHandler().ServeHTTP(responseRecorderUnauthorized, requestUnauthorized)
 
 	assert.Equal(t, http.StatusUnauthorized, responseRecorderUnauthorized.Result().StatusCode, "status code")
 }
@@ -83,7 +84,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			config: func(testServerURL string) *dynamic.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
-						th.WithEntryPoints("http"),
+						th.WithEntryPoints("web"),
 						th.WithServiceName("bar"),
 						th.WithRule(routeRule)),
 					),
@@ -106,7 +107,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			config: func(testServerURL string) *dynamic.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
-						th.WithEntryPoints("http"),
+						th.WithEntryPoints("web"),
 						th.WithServiceName("bar"),
 						th.WithRule(routeRule)),
 					),
@@ -120,7 +121,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			config: func(testServerURL string) *dynamic.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
-						th.WithEntryPoints("http"),
+						th.WithEntryPoints("web"),
 						th.WithServiceName("bar"),
 						th.WithRule(routeRule)),
 					),
@@ -136,7 +137,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			config: func(testServerURL string) *dynamic.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
-						th.WithEntryPoints("http"),
+						th.WithEntryPoints("web"),
 						th.WithServiceName("bar"),
 						th.WithRule(routeRule)),
 					),
@@ -150,7 +151,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			config: func(testServerURL string) *dynamic.HTTPConfiguration {
 				return th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo",
-						th.WithEntryPoints("http"),
+						th.WithEntryPoints("web"),
 						th.WithServiceName("bar"),
 						th.WithRule(routeRule)),
 					),
@@ -176,7 +177,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 
 			staticConfig := static.Configuration{
 				EntryPoints: map[string]*static.EntryPoint{
-					"http": {},
+					"web": {},
 				},
 			}
 
@@ -190,7 +191,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			responseRecorder := &httptest.ResponseRecorder{}
 			request := httptest.NewRequest(http.MethodGet, testServer.URL+requestPath, nil)
 
-			entryPointsHandlers["http"].GetHTTPHandler().ServeHTTP(responseRecorder, request)
+			entryPointsHandlers["web"].GetHTTPHandler().ServeHTTP(responseRecorder, request)
 
 			assert.Equal(t, test.expectedStatusCode, responseRecorder.Result().StatusCode, "status code")
 		})
@@ -206,13 +207,14 @@ func TestInternalServices(t *testing.T) {
 	staticConfig := static.Configuration{
 		API: &static.API{},
 		EntryPoints: map[string]*static.EntryPoint{
-			"http": {},
+			"web": {},
 		},
 	}
 
 	dynamicConfigs := th.BuildConfiguration(
 		th.WithRouters(
 			th.WithRouter("foo",
+				th.WithEntryPoints("web"),
 				th.WithServiceName("api@internal"),
 				th.WithRule("PathPrefix(`/api`)")),
 		),
@@ -228,7 +230,7 @@ func TestInternalServices(t *testing.T) {
 	// Test that the /ok path returns a status 200.
 	responseRecorderOk := &httptest.ResponseRecorder{}
 	requestOk := httptest.NewRequest(http.MethodGet, testServer.URL+"/api/rawdata", nil)
-	entryPointsHandlers["http"].GetHTTPHandler().ServeHTTP(responseRecorderOk, requestOk)
+	entryPointsHandlers["web"].GetHTTPHandler().ServeHTTP(responseRecorderOk, requestOk)
 
 	assert.Equal(t, http.StatusOK, responseRecorderOk.Result().StatusCode, "status code")
 }
