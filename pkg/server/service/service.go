@@ -33,6 +33,8 @@ const (
 	defaultHealthCheckTimeout  = 5 * time.Second
 )
 
+const defaultMaxBodySize int64 = -1
+
 // NewManager creates a new Manager
 func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry, routinePool *safe.Pool) *Manager {
 	return &Manager{
@@ -123,7 +125,11 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		return nil, err
 	}
 
-	handler := mirror.New(serviceHandler, m.routinePool)
+	maxBodySize := defaultMaxBodySize
+	if config.MaxBodySize != nil {
+		maxBodySize = *config.MaxBodySize
+	}
+	handler := mirror.New(serviceHandler, m.routinePool, maxBodySize)
 	for _, mirrorConfig := range config.Mirrors {
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name, responseModifier)
 		if err != nil {

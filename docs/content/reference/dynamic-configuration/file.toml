@@ -65,6 +65,7 @@
     [http.services.Service02]
       [http.services.Service02.mirroring]
         service = "foobar"
+        maxBodySize = 42
 
         [[http.services.Service02.mirroring.mirrors]]
           name = "foobar"

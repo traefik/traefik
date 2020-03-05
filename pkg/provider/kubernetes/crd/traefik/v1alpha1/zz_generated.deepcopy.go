@@ -749,6 +749,11 @@ func (in *MirrorService) DeepCopy() *MirrorService {
 func (in *Mirroring) DeepCopyInto(out *Mirroring) {
 	*out = *in
 	in.LoadBalancerSpec.DeepCopyInto(&out.LoadBalancerSpec)
+	if in.MaxBodySize != nil {
+		in, out := &in.MaxBodySize, &out.MaxBodySize
+		*out = new(int64)
+		**out = **in
+	}
 	if in.Mirrors != nil {
 		in, out := &in.Mirrors, &out.Mirrors
 		*out = make([]MirrorService, len(*in))

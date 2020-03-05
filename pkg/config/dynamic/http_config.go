@@ -58,8 +58,15 @@ type RouterTLSConfig struct {
 
 // Mirroring holds the Mirroring configuration.
 type Mirroring struct {
-	Service string          `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
-	Mirrors []MirrorService `json:"mirrors,omitempty" toml:"mirrors,omitempty" yaml:"mirrors,omitempty"`
+	Service     string          `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
+	MaxBodySize *int64          `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty"`
+	Mirrors     []MirrorService `json:"mirrors,omitempty" toml:"mirrors,omitempty" yaml:"mirrors,omitempty"`
+}
+
+// SetDefaults Default values for a WRRService.
+func (m *Mirroring) SetDefaults() {
+	var defaultMaxBodySize int64 = -1
+	m.MaxBodySize = &defaultMaxBodySize
 }
 
 // +k8s:deepcopy-gen=true
