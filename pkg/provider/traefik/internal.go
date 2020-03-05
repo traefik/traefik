@@ -234,7 +234,7 @@ func (i *Provider) prometheusConfiguration(cfg *dynamic.Configuration) {
 func (i *Provider) getEntryPointPort(name string, def *static.Redirections) (string, error) {
 	dst, ok := i.staticCfg.EntryPoints[def.EntryPoint.To]
 	if !ok {
-		return "", fmt.Errorf("'to' entry point field reference a non existing entry point: %s", name)
+		return "", fmt.Errorf("'to' entry point field references a non-existing entry point: %s", name)
 	}
 
 	_, port, err := net.SplitHostPort(dst.Address)

@@ -53,15 +53,15 @@ type HTTPConfig struct {
 	TLS          *TLSConfig    `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
 }
 
-// Redirections is a set of an entry point redirection.
+// Redirections is a set of redirection for an entry point.
 type Redirections struct {
-	EntryPoint *RedirectEntryPoint `description:"Set of an entry point redirection." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
+	EntryPoint *RedirectEntryPoint `description:"Set of redirection for an entry point." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
 }
 
 // RedirectEntryPoint is the definition of an entry point redirection.
 type RedirectEntryPoint struct {
 	To     string `description:"Targeted entry point of the redirection." json:"to,omitempty" toml:"to,omitempty" yaml:"to,omitempty"`
-	Scheme string `description:"Use scheme for the redirection." json:"https,omitempty" toml:"https,omitempty" yaml:"https,omitempty"`
+	Scheme string `description:"Scheme used for the redirection. Defaults to https." json:"https,omitempty" toml:"https,omitempty" yaml:"https,omitempty"`
 }
 
 // SetDefaults sets the default values.
@@ -69,7 +69,7 @@ func (r *RedirectEntryPoint) SetDefaults() {
 	r.Scheme = "https"
 }
 
-// TLSConfig is a the default router configuration for an entry point.
+// TLSConfig is the default TLS configuration for all the routers associated to the concerned entry point.
 type TLSConfig struct {
 	Options      string         `description:"Default TLS options for the routers linked to the entry point." json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
 	CertResolver string         `description:"Default certificate resolver for the routers linked to the entry point." json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty"`

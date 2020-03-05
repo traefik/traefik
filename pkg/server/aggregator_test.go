@@ -427,7 +427,7 @@ func Test_applyModel(t *testing.T) {
 			},
 		},
 		{
-			desc: "with model, no used",
+			desc: "with model, not used",
 			input: dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:     make(map[string]*dynamic.Router),
@@ -535,7 +535,7 @@ func Test_applyModel(t *testing.T) {
 			},
 		},
 		{
-			desc: "with model, two entry point",
+			desc: "with model, two entry points",
 			input: dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
