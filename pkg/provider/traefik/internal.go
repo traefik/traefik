@@ -1,10 +1,14 @@
 package traefik
 
 import (
+	"context"
+	"fmt"
 	"math"
+	"net"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
@@ -43,6 +47,7 @@ func (i *Provider) createConfiguration() *dynamic.Configuration {
 			Routers:     make(map[string]*dynamic.Router),
 			Middlewares: make(map[string]*dynamic.Middleware),
 			Services:    make(map[string]*dynamic.Service),
+			Models:      make(map[string]*dynamic.Model),
 		},
 		TCP: &dynamic.TCPConfiguration{
 			Routers:  make(map[string]*dynamic.TCPRouter),
@@ -58,8 +63,71 @@ func (i *Provider) createConfiguration() *dynamic.Configuration {
 	i.pingConfiguration(cfg)
 	i.restConfiguration(cfg)
 	i.prometheusConfiguration(cfg)
+	i.entryPointModels(cfg)
+	i.redirection(cfg)
+
+	cfg.HTTP.Services["noop"] = &dynamic.Service{}
 
 	return cfg
+}
+
+func (i *Provider) redirection(cfg *dynamic.Configuration) {
+	for name, ep := range i.staticCfg.EntryPoints {
+		if ep.HTTP.Redirections == nil || ep.HTTP.Redirections.EntryPoint == nil {
+			continue
+		}
+
+		def := ep.HTTP.Redirections
+		rtName := provider.Normalize(name + "-to-" + def.EntryPoint.To)
+		mdName := "redirect-" + rtName
+
+		rt := &dynamic.Router{
+			Rule:        "HostRegexp(`{host:.+}`)",
+			EntryPoints: []string{name},
+			Middlewares: []string{mdName},
+			Service:     "noop@internal",
+		}
+
+		port, err := i.getEntryPointPort(name, def)
+		if err != nil {
+			log.FromContext(context.Background()).WithField(log.EntryPointName, name).Error(err)
+			continue
+		}
+
+		cfg.HTTP.Routers[rtName] = rt
+
+		rs := &dynamic.Middleware{
+			RedirectScheme: &dynamic.RedirectScheme{
+				Scheme:    def.EntryPoint.Scheme,
+				Port:      port,
+				Permanent: true,
+			},
+		}
+
+		cfg.HTTP.Middlewares[mdName] = rs
+	}
+}
+
+func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
+	for name, ep := range i.staticCfg.EntryPoints {
+		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil {
+			continue
+		}
+
+		m := &dynamic.Model{
+			Middlewares: ep.HTTP.Middlewares,
+		}
+
+		if ep.HTTP.TLS != nil {
+			m.TLS = &dynamic.RouterTLSConfig{
+				Options:      ep.HTTP.TLS.Options,
+				CertResolver: ep.HTTP.TLS.CertResolver,
+				Domains:      ep.HTTP.TLS.Domains,
+			}
+		}
+
+		cfg.HTTP.Models[name] = m
+	}
 }
 
 func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
@@ -162,4 +230,19 @@ func (i *Provider) prometheusConfiguration(cfg *dynamic.Configuration) {
 	}
 
 	cfg.HTTP.Services["prometheus"] = &dynamic.Service{}
+}
+
+func (i *Provider) getEntryPointPort(name string, def *static.Redirections) (string, error) {
+	dst, ok := i.staticCfg.EntryPoints[def.EntryPoint.To]
+	if !ok {
+		return "", fmt.Errorf("'to' entry point field references a non-existing entry point: %s", name)
+	}
+
+	_, port, err := net.SplitHostPort(dst.Address)
+	if err != nil {
+		return "", fmt.Errorf("invalid entry point %q address %q: %v",
+			name, i.staticCfg.EntryPoints[def.EntryPoint.To].Address, err)
+	}
+
+	return port, nil
 }

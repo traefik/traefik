@@ -28,6 +28,23 @@
     [entryPoints.EntryPoint0.forwardedHeaders]
       insecure = true
       trustedIPs = ["foobar", "foobar"]
+    [entryPoints.EntryPoint0.http]
+      middlewares = ["foobar", "foobar"]
+      [entryPoints.EntryPoint0.http.redirections]
+        [entryPoints.EntryPoint0.http.redirections.entryPoint]
+          to = "foobar"
+          scheme = "foobar"
+      [entryPoints.EntryPoint0.http.tls]
+        options = "foobar"
+        certResolver = "foobar"
+
+        [[entryPoints.EntryPoint0.http.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+
+        [[entryPoints.EntryPoint0.http.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
 
 [providers]
   providersThrottleDuration = 42
@@ -133,10 +150,10 @@
         username = "foobar"
         password = "foobar"
   [providers.consul]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
-	username = "foobar"
-	password = "foobar"
+    username = "foobar"
+    password = "foobar"
     [providers.consul.tls]
       ca = "foobar"
       caOptional = true
@@ -144,10 +161,10 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.etcd]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
-	username = "foobar"
-	password = "foobar"
+    username = "foobar"
+    password = "foobar"
     [providers.etcd.tls]
       ca = "foobar"
       caOptional = true
@@ -155,10 +172,10 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.zooKeeper]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
-	username = "foobar"
-	password = "foobar"
+    username = "foobar"
+    password = "foobar"
     [providers.zooKeeper.tls]
       ca = "foobar"
       caOptional = true
@@ -166,10 +183,10 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.redis]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
-	username = "foobar"
-	password = "foobar"
+    username = "foobar"
+    password = "foobar"
     [providers.redis.tls]
       ca = "foobar"
       caOptional = true

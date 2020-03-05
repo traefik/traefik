@@ -367,6 +367,7 @@
         accessControlAllowHeaders = ["foobar", "foobar"]
         accessControlAllowMethods = ["foobar", "foobar"]
         accessControlAllowOrigin = "foobar"
+        accessControlAllowOriginList = ["foobar", "foobar"]
         accessControlExposeHeaders = ["foobar", "foobar"]
         accessControlMaxAge = 42
         addVaryHeader = true

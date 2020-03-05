@@ -191,7 +191,25 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry)
 	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder)
 
-	watcher := server.NewConfigurationWatcher(routinesPool, providerAggregator, time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration))
+	var eps []string
+	for name, cfg := range staticConfiguration.EntryPoints {
+		protocol, err := cfg.GetProtocol()
+		if err != nil {
+			// Should never happen because Traefik should not start if protocol is invalid.
+			log.WithoutContext().Errorf("Invalid protocol: %v", err)
+		}
+
+		if protocol != "udp" {
+			eps = append(eps, name)
+		}
+	}
+
+	watcher := server.NewConfigurationWatcher(
+		routinesPool,
+		providerAggregator,
+		time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration),
+		eps,
+	)
 
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		ctx := context.Background()

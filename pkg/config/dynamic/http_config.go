@@ -11,8 +11,17 @@ import (
 // HTTPConfiguration contains all the HTTP configuration parameters.
 type HTTPConfiguration struct {
 	Routers     map[string]*Router     `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty"`
-	Middlewares map[string]*Middleware `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty"`
 	Services    map[string]*Service    `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty"`
+	Middlewares map[string]*Middleware `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty"`
+	Models      map[string]*Model      `json:"models,omitempty" toml:"models,omitempty" yaml:"models,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Model is a set of default router's values.
+type Model struct {
+	Middlewares []string         `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty"`
+	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
 }
 
 // +k8s:deepcopy-gen=true

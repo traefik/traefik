@@ -387,10 +387,8 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         - match: HostRegexp(`{any:.+}`)
           kind: Rule
           services:
-            # any service in the namespace
-            # the service will be never called
-            - name: noop
-              port: 80
+            # the noop service will be never called
+            - name: noop@internal
           middlewares:
             - name: https_redirect
               # if the Middleware has distinct namespace
@@ -431,13 +429,8 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         entryPoints = ["web"]
         middlewares = ["https_redirect"]
         rule = "HostRegexp(`{any:.+}`)"
-        service = "noop"
-    
-    [http.services]
-      # noop service, the URL will be never called
-      [http.services.noop.loadBalancer]
-        [[http.services.noop.loadBalancer.servers]]
-          url = "http://192.168.0.1:1337"
+        # the noop service will be never called
+        service = "noop@internal"
     
     [http.middlewares]
       [http.middlewares.https_redirect.redirectScheme]
@@ -472,14 +465,8 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
           middlewares:
             - https_redirect
           rule: "HostRegexp(`{any:.+}`)"
-          service: noop
-    
-      services:
-        # noop service, the URL will be never called
-        noop:
-          loadBalancer:
-            servers:
-              - url: http://192.168.0.1:1337
+          # the noop service will be never called
+          service: noop@internal
     
       middlewares:
         https_redirect:

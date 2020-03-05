@@ -1,4 +1,5 @@
 {
 	"address": ":81",
+	"http": {},
 	"name": "bar"
 }
