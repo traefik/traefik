@@ -104,7 +104,7 @@ Then any router can refer to an instance of the wanted middleware.
 
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the Middleware and IngressRoute kinds.
-    # https://docs.traefik.io/v2.1/reference/dynamic-configuration/kubernetes-crd/#definitions
+    # https://docs.traefik.io/v2.2/reference/dynamic-configuration/kubernetes-crd/#definitions
     apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
     metadata:
@@ -275,7 +275,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
 
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the TLSOption and IngressRoute kinds.
-    # https://docs.traefik.io/v2.1/reference/dynamic-configuration/kubernetes-crd/#definitions
+    # https://docs.traefik.io/v2.2/reference/dynamic-configuration/kubernetes-crd/#definitions
     apiVersion: traefik.containo.us/v1alpha1
     kind: TLSOption
     metadata:
@@ -355,7 +355,7 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     ```yaml tab="Docker"
     # ...
       traefik:
-        image: traefik:v2.1
+        image: traefik:v2.2
         command:
           - --entrypoints.web.address=:80
           - --entrypoints.websecure.address=:443
