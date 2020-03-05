@@ -146,22 +146,18 @@ func getMethod(r *http.Request) string {
 }
 
 func getRequestTLSVersion(req *http.Request) string {
-	var tlsVersion string
-
 	switch req.TLS.Version {
 	case tls.VersionTLS10:
-		tlsVersion = "1.0"
+		return "1.0"
 	case tls.VersionTLS11:
-		tlsVersion = "1.1"
+		return "1.1"
 	case tls.VersionTLS12:
-		tlsVersion = "1.2"
+		return "1.2"
 	case tls.VersionTLS13:
-		tlsVersion = "1.3"
+		return "1.3"
 	default:
-		tlsVersion = "unknown"
+		return "unknown"
 	}
-
-	return tlsVersion
 }
 
 func getRequestTLSCipher(req *http.Request) string {
