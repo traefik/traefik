@@ -20,11 +20,13 @@ type Registry interface {
 
 	// entry point metrics
 	EntryPointReqsCounter() metrics.Counter
+	EntryPointReqsTLSCounter() metrics.Counter
 	EntryPointReqDurationHistogram() metrics.Histogram
 	EntryPointOpenConnsGauge() metrics.Gauge
 
 	// service metrics
 	ServiceReqsCounter() metrics.Counter
+	ServiceReqsTLSCounter() metrics.Counter
 	ServiceReqDurationHistogram() metrics.Histogram
 	ServiceOpenConnsGauge() metrics.Gauge
 	ServiceRetriesCounter() metrics.Counter
@@ -46,9 +48,11 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var lastConfigReloadSuccessGauge []metrics.Gauge
 	var lastConfigReloadFailureGauge []metrics.Gauge
 	var entryPointReqsCounter []metrics.Counter
+	var entryPointReqsTLSCounter []metrics.Counter
 	var entryPointReqDurationHistogram []metrics.Histogram
 	var entryPointOpenConnsGauge []metrics.Gauge
 	var serviceReqsCounter []metrics.Counter
+	var serviceReqsTLSCounter []metrics.Counter
 	var serviceReqDurationHistogram []metrics.Histogram
 	var serviceOpenConnsGauge []metrics.Gauge
 	var serviceRetriesCounter []metrics.Counter
@@ -70,6 +74,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.EntryPointReqsCounter() != nil {
 			entryPointReqsCounter = append(entryPointReqsCounter, r.EntryPointReqsCounter())
 		}
+		if r.EntryPointReqsTLSCounter() != nil {
+			entryPointReqsTLSCounter = append(entryPointReqsTLSCounter, r.EntryPointReqsTLSCounter())
+		}
 		if r.EntryPointReqDurationHistogram() != nil {
 			entryPointReqDurationHistogram = append(entryPointReqDurationHistogram, r.EntryPointReqDurationHistogram())
 		}
@@ -78,6 +85,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 		}
 		if r.ServiceReqsCounter() != nil {
 			serviceReqsCounter = append(serviceReqsCounter, r.ServiceReqsCounter())
+		}
+		if r.ServiceReqsTLSCounter() != nil {
+			serviceReqsTLSCounter = append(serviceReqsTLSCounter, r.ServiceReqsTLSCounter())
 		}
 		if r.ServiceReqDurationHistogram() != nil {
 			serviceReqDurationHistogram = append(serviceReqDurationHistogram, r.ServiceReqDurationHistogram())
@@ -101,9 +111,11 @@ func NewMultiRegistry(registries []Registry) Registry {
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		lastConfigReloadFailureGauge:   multi.NewGauge(lastConfigReloadFailureGauge...),
 		entryPointReqsCounter:          multi.NewCounter(entryPointReqsCounter...),
+		entryPointReqsTLSCounter:       multi.NewCounter(entryPointReqsTLSCounter...),
 		entryPointReqDurationHistogram: multi.NewHistogram(entryPointReqDurationHistogram...),
 		entryPointOpenConnsGauge:       multi.NewGauge(entryPointOpenConnsGauge...),
 		serviceReqsCounter:             multi.NewCounter(serviceReqsCounter...),
+		serviceReqsTLSCounter:          multi.NewCounter(serviceReqsTLSCounter...),
 		serviceReqDurationHistogram:    multi.NewHistogram(serviceReqDurationHistogram...),
 		serviceOpenConnsGauge:          multi.NewGauge(serviceOpenConnsGauge...),
 		serviceRetriesCounter:          multi.NewCounter(serviceRetriesCounter...),
@@ -119,9 +131,11 @@ type standardRegistry struct {
 	lastConfigReloadSuccessGauge   metrics.Gauge
 	lastConfigReloadFailureGauge   metrics.Gauge
 	entryPointReqsCounter          metrics.Counter
+	entryPointReqsTLSCounter       metrics.Counter
 	entryPointReqDurationHistogram metrics.Histogram
 	entryPointOpenConnsGauge       metrics.Gauge
 	serviceReqsCounter             metrics.Counter
+	serviceReqsTLSCounter          metrics.Counter
 	serviceReqDurationHistogram    metrics.Histogram
 	serviceOpenConnsGauge          metrics.Gauge
 	serviceRetriesCounter          metrics.Counter
@@ -156,6 +170,10 @@ func (r *standardRegistry) EntryPointReqsCounter() metrics.Counter {
 	return r.entryPointReqsCounter
 }
 
+func (r *standardRegistry) EntryPointReqsTLSCounter() metrics.Counter {
+	return r.entryPointReqsTLSCounter
+}
+
 func (r *standardRegistry) EntryPointReqDurationHistogram() metrics.Histogram {
 	return r.entryPointReqDurationHistogram
 }
@@ -166,6 +184,10 @@ func (r *standardRegistry) EntryPointOpenConnsGauge() metrics.Gauge {
 
 func (r *standardRegistry) ServiceReqsCounter() metrics.Counter {
 	return r.serviceReqsCounter
+}
+
+func (r *standardRegistry) ServiceReqsTLSCounter() metrics.Counter {
+	return r.serviceReqsTLSCounter
 }
 
 func (r *standardRegistry) ServiceReqDurationHistogram() metrics.Histogram {

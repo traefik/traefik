@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/metrics"
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/middlewares/retry"
+	traefiktls "github.com/containous/traefik/v2/pkg/tls"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 )
 
@@ -28,6 +30,7 @@ const (
 type metricsMiddleware struct {
 	next                 http.Handler
 	reqsCounter          gokitmetrics.Counter
+	reqsTLSCounter       gokitmetrics.Counter
 	reqDurationHistogram gokitmetrics.Histogram
 	openConnsGauge       gokitmetrics.Gauge
 	baseLabels           []string
@@ -40,6 +43,7 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 	return &metricsMiddleware{
 		next:                 next,
 		reqsCounter:          registry.EntryPointReqsCounter(),
+		reqsTLSCounter:       registry.EntryPointReqsTLSCounter(),
 		reqDurationHistogram: registry.EntryPointReqDurationHistogram(),
 		openConnsGauge:       registry.EntryPointOpenConnsGauge(),
 		baseLabels:           []string{"entrypoint", entryPointName},
@@ -53,6 +57,7 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 	return &metricsMiddleware{
 		next:                 next,
 		reqsCounter:          registry.ServiceReqsCounter(),
+		reqsTLSCounter:       registry.ServiceReqsTLSCounter(),
 		reqDurationHistogram: registry.ServiceReqDurationHistogram(),
 		openConnsGauge:       registry.ServiceOpenConnsGauge(),
 		baseLabels:           []string{"service", serviceName},
@@ -80,6 +85,15 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	m.openConnsGauge.With(labels...).Add(1)
 	defer m.openConnsGauge.With(labels...).Add(-1)
+
+	// TLS metrics
+	if req.TLS != nil {
+		var tlsLabels []string
+		tlsLabels = append(tlsLabels, m.baseLabels...)
+		tlsLabels = append(tlsLabels, "tls_version", getRequestTLSVersion(req), "tls_cipher", getRequestTLSCipher(req))
+
+		m.reqsTLSCounter.With(tlsLabels...).Add(1)
+	}
 
 	recorder := newResponseRecorder(rw)
 	start := time.Now()
@@ -129,6 +143,29 @@ func getMethod(r *http.Request) string {
 		return "NON_UTF8_HTTP_METHOD"
 	}
 	return r.Method
+}
+
+func getRequestTLSVersion(req *http.Request) string {
+	switch req.TLS.Version {
+	case tls.VersionTLS10:
+		return "1.0"
+	case tls.VersionTLS11:
+		return "1.1"
+	case tls.VersionTLS12:
+		return "1.2"
+	case tls.VersionTLS13:
+		return "1.3"
+	default:
+		return "unknown"
+	}
+}
+
+func getRequestTLSCipher(req *http.Request) string {
+	if version, ok := traefiktls.CipherSuitesReversed[req.TLS.CipherSuite]; ok {
+		return version
+	}
+
+	return "unknown"
 }
 
 type retryMetrics interface {
