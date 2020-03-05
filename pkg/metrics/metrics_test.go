@@ -1,18 +1,44 @@
 package metrics
 
 import (
+	"bytes"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-kit/kit/metrics"
+	"github.com/go-kit/kit/metrics/generic"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestScalableHistogram(t *testing.T) {
+	h := generic.NewHistogram("test", 1)
+	sh, err := NewHistogramWithScale(h, time.Millisecond)
+	require.NoError(t, err)
+
+	ticker := time.NewTicker(500 * time.Millisecond)
+	<-ticker.C
+	sh.StartAt(time.Now())
+	<-ticker.C
+	sh.ObserveDuration()
+
+	var b bytes.Buffer
+	h.Print(&b)
+
+	extractedDurationString := strings.Split(strings.Split(b.String(), "\n")[1], " ")
+	measuredDuration, err := time.ParseDuration(extractedDurationString[0] + "ms")
+	assert.NoError(t, err)
+
+	assert.InDelta(t, 500*time.Millisecond, measuredDuration, float64(1*time.Millisecond))
+}
 
 func TestNewMultiRegistry(t *testing.T) {
 	registries := []Registry{newCollectingRetryMetrics(), newCollectingRetryMetrics()}
 	registry := NewMultiRegistry(registries)
 
 	registry.ServiceReqsCounter().With("key", "requests").Add(1)
-	registry.ServiceReqDurationHistogram().With("key", "durations").Observe(2)
+	registry.ServiceReqDurationHistogram().With("key", "durations").Observe(float64(2))
 	registry.ServiceRetriesCounter().With("key", "retries").Add(3)
 
 	for _, collectingRegistry := range registries {
@@ -66,11 +92,17 @@ type histogramMock struct {
 	lastLabelValues    []string
 }
 
-func (c *histogramMock) With(labelValues ...string) metrics.Histogram {
+func (c *histogramMock) With(labelValues ...string) ScalableHistogram {
 	c.lastLabelValues = labelValues
 	return c
 }
 
-func (c *histogramMock) Observe(value float64) {
-	c.lastHistogramValue = value
+func (c *histogramMock) Start() {}
+
+func (c *histogramMock) StartAt(t time.Time) {}
+
+func (c *histogramMock) ObserveDuration() {}
+
+func (c *histogramMock) Observe(v float64) {
+	c.lastHistogramValue = v
 }

@@ -32,7 +32,7 @@ type metricsMiddleware struct {
 	openConns            int64
 	next                 http.Handler
 	reqsCounter          gokitmetrics.Counter
-	reqDurationHistogram gokitmetrics.Histogram
+	reqDurationHistogram metrics.ScalableHistogram
 	openConnsGauge       gokitmetrics.Gauge
 	baseLabels           []string
 }
@@ -88,13 +88,19 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		m.openConnsGauge.With(labelValues...).Set(float64(openConns))
 	}(labels)
 
-	start := time.Now()
 	recorder := newResponseRecorder(rw)
+	start := time.Now()
+
 	m.next.ServeHTTP(recorder, req)
 
 	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
+
+	histograms := m.reqDurationHistogram.With(labels...)
+	histograms.StartAt(start)
+
 	m.reqsCounter.With(labels...).Add(1)
-	m.reqDurationHistogram.With(labels...).Observe(time.Since(start).Seconds())
+
+	histograms.ObserveDuration()
 }
 
 func getRequestProtocol(req *http.Request) string {

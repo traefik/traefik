@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -152,7 +153,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			entryPointOpenConns.gv.Describe,
 		}...)
 		reg.entryPointReqsCounter = entryPointReqs
-		reg.entryPointReqDurationHistogram = entryPointReqDurations
+		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(entryPointReqDurations, time.Second)
 		reg.entryPointOpenConnsGauge = entryPointOpenConns
 	}
 	if config.AddServicesLabels {
@@ -187,7 +188,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		}...)
 
 		reg.serviceReqsCounter = serviceReqs
-		reg.serviceReqDurationHistogram = serviceReqDurations
+		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(serviceReqDurations, time.Second)
 		reg.serviceOpenConnsGauge = serviceOpenConns
 		reg.serviceRetriesCounter = serviceRetries
 		reg.serviceServerUpGauge = serviceServerUp
