@@ -31,6 +31,7 @@ type Middleware struct {
 	BasicAuth         *BasicAuth         `json:"basicAuth,omitempty" toml:"basicAuth,omitempty" yaml:"basicAuth,omitempty"`
 	DigestAuth        *DigestAuth        `json:"digestAuth,omitempty" toml:"digestAuth,omitempty" yaml:"digestAuth,omitempty"`
 	ForwardAuth       *ForwardAuth       `json:"forwardAuth,omitempty" toml:"forwardAuth,omitempty" yaml:"forwardAuth,omitempty"`
+	AnonAuth          *AnonAuth          `json:"anonAuth,omitempty" toml:"anonAuth,omitempty" yaml:"anonAuth,omitempty"`
 	InFlightReq       *InFlightReq       `json:"inFlightReq,omitempty" toml:"inFlightReq,omitempty" yaml:"inFlightReq,omitempty"`
 	Buffering         *Buffering         `json:"buffering,omitempty" toml:"buffering,omitempty" yaml:"buffering,omitempty"`
 	CircuitBreaker    *CircuitBreaker    `json:"circuitBreaker,omitempty" toml:"circuitBreaker,omitempty" yaml:"circuitBreaker,omitempty"`
@@ -69,6 +70,7 @@ type Auth struct {
 	Basic   *BasicAuth   `json:"basic,omitempty" toml:"basic,omitempty" yaml:"basic,omitempty" export:"true"`
 	Digest  *DigestAuth  `json:"digest,omitempty" toml:"digest,omitempty" yaml:"digest,omitempty" export:"true"`
 	Forward *ForwardAuth `json:"forward,omitempty" toml:"forward,omitempty" yaml:"forward,omitempty" export:"true"`
+	Anon    *AnonAuth    `json:"anon,omitempty" toml:"anon,omitempty" yaml:"anon,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -142,6 +144,17 @@ type ForwardAuth struct {
 	TLS                 *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
 	TrustForwardHeader  bool       `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
 	AuthResponseHeaders []string   `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// AnonAuth holds the HTTP anon authentication configuration.
+type AnonAuth struct {
+	Users        Users  `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty"`
+	UsersFile    string `json:"usersFile,omitempty" toml:"usersFile,omitempty" yaml:"usersFile,omitempty"`
+	Realm        string `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`
+	RemoveHeader bool   `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty"`
+	HeaderField  string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

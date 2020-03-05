@@ -217,6 +217,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// AnonAuth
+	if config.AnonAuth != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return auth.NewAnon(ctx, next, *config.AnonAuth, middlewareName)
+		}
+	}
+
 	// Headers
 	if config.Headers != nil {
 		if middleware != nil {
