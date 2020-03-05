@@ -44,7 +44,8 @@ type ServiceSpec struct {
 // load-balancer, and a list of mirrors.
 type Mirroring struct {
 	LoadBalancerSpec
-	Mirrors []MirrorService `json:"mirrors,omitempty"`
+	MaxBodySize *int64
+	Mirrors     []MirrorService `json:"mirrors,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

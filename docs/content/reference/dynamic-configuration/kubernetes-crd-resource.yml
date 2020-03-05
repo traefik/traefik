@@ -65,6 +65,8 @@ spec:
     kind: TraefikService
     mirrors:
       - name: s2
+        # Optional
+        maxBodySize: 2000000000
         # Optional, as it is the default value
         kind: Service
         percent: 20

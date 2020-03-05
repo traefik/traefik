@@ -240,8 +240,9 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *v1alpha1.Tr
 
 	conf[id] = &dynamic.Service{
 		Mirroring: &dynamic.Mirroring{
-			Service: fullNameMain,
-			Mirrors: mirrorServices,
+			Service:     fullNameMain,
+			Mirrors:     mirrorServices,
+			MaxBodySize: tService.Spec.Mirroring.MaxBodySize,
 		},
 	}
 

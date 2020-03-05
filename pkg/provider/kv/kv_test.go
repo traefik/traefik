@@ -56,6 +56,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service01/loadBalancer/servers/0/url":                                 "foobar",
 		"traefik/http/services/Service01/loadBalancer/servers/1/url":                                 "foobar",
 		"traefik/http/services/Service02/mirroring/service":                                          "foobar",
+		"traefik/http/services/Service02/mirroring/maxBodySize":                                      "42",
 		"traefik/http/services/Service02/mirroring/mirrors/0/name":                                   "foobar",
 		"traefik/http/services/Service02/mirroring/mirrors/0/percent":                                "42",
 		"traefik/http/services/Service02/mirroring/mirrors/1/name":                                   "foobar",
@@ -635,7 +636,8 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				"Service02": {
 					Mirroring: &dynamic.Mirroring{
-						Service: "foobar",
+						Service:     "foobar",
+						MaxBodySize: func(v int64) *int64 { return &v }(42),
 						Mirrors: []dynamic.MirrorService{
 							{
 								Name:    "foobar",

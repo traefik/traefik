@@ -152,6 +152,7 @@
     "mirror@etcd": {
       "mirroring": {
         "service": "simplesvc",
+        "maxBodySize": -1,
         "mirrors": [
           {
             "name": "srvcA",

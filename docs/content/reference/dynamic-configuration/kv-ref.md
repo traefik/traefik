@@ -174,6 +174,7 @@
 | `traefik/http/services/Service01/loadBalancer/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service01/loadBalancer/sticky/cookie/name` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/sticky/cookie/secure` | `true` |
+| `traefik/http/services/Service02/mirroring/maxBodySize` | `42` |
 | `traefik/http/services/Service02/mirroring/mirrors/0/name` | `foobar` |
 | `traefik/http/services/Service02/mirroring/mirrors/0/percent` | `42` |
 | `traefik/http/services/Service02/mirroring/mirrors/1/name` | `foobar` |
