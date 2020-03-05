@@ -79,7 +79,7 @@ func WrapServiceHandler(ctx context.Context, registry metrics.Registry, serviceN
 }
 
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	labels := make([]string, 0, len(m.baseLabels)+6)
+	var labels []string
 	labels = append(labels, m.baseLabels...)
 	labels = append(labels, "method", getMethod(req), "protocol", getRequestProtocol(req))
 
@@ -88,7 +88,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	// TLS metrics
 	if req.TLS != nil {
-		tlsLabels := make([]string, 0, len(m.baseLabels)+4)
+		var tlsLabels []string
 		tlsLabels = append(tlsLabels, m.baseLabels...)
 		tlsLabels = append(tlsLabels, "tls_version", getRequestTLSVersion(req), "tls_cipher", getRequestTLSCipher(req))
 
