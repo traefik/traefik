@@ -6,8 +6,8 @@ import (
 
 func TestCiphersMapsSync(t *testing.T) {
 	for k, v := range CipherSuites {
-		// Following names are legacy aliases. We do not test for their presence
-		// in CipherSuitesReversed
+		// Following names are legacy aliases.
+		// We do not test for their presence in CipherSuitesReversed
 		switch k {
 		case "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305", "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305":
 			continue
