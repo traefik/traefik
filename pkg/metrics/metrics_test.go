@@ -9,11 +9,13 @@ import (
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/generic"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestScalableHistogram(t *testing.T) {
 	h := generic.NewHistogram("test", 1)
-	sh := NewHistogramWithScale(h, time.Millisecond)
+	sh, err := NewHistogramWithScale(h, time.Millisecond)
+	require.NoError(t, err)
 
 	ticker := time.NewTicker(500 * time.Millisecond)
 	<-ticker.C

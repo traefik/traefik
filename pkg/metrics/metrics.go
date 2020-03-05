@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"errors"
 	"time"
 
 	"github.com/go-kit/kit/metrics"
@@ -231,12 +232,15 @@ func (s *HistogramWithScale) Observe(v float64) {
 	s.histogram.Observe(v)
 }
 
-// NewHistogramWithScale returns a ScalableHistogram
-func NewHistogramWithScale(histogram metrics.Histogram, unit time.Duration) ScalableHistogram {
+// NewHistogramWithScale returns a ScalableHistogram. It returns an error if the given unit is <= 0.
+func NewHistogramWithScale(histogram metrics.Histogram, unit time.Duration) (ScalableHistogram, error) {
+	if unit <= 0 {
+		return nil, errors.New("invalid time unit")
+	}
 	return &HistogramWithScale{
 		histogram: histogram,
 		unit:      unit,
-	}
+	}, nil
 }
 
 // MultiHistogram collects multiple individual histograms and treats them as a unit.

@@ -153,7 +153,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			entryPointOpenConns.gv.Describe,
 		}...)
 		reg.entryPointReqsCounter = entryPointReqs
-		reg.entryPointReqDurationHistogram = NewHistogramWithScale(entryPointReqDurations, time.Second)
+		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(entryPointReqDurations, time.Second)
 		reg.entryPointOpenConnsGauge = entryPointOpenConns
 	}
 	if config.AddServicesLabels {
@@ -188,7 +188,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		}...)
 
 		reg.serviceReqsCounter = serviceReqs
-		reg.serviceReqDurationHistogram = NewHistogramWithScale(serviceReqDurations, time.Second)
+		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(serviceReqDurations, time.Second)
 		reg.serviceOpenConnsGauge = serviceOpenConns
 		reg.serviceRetriesCounter = serviceRetries
 		reg.serviceServerUpGauge = serviceServerUp
