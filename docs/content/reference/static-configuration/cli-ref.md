@@ -106,7 +106,7 @@ HTTP configuration.
 Default middlewares for the routers linked to the entry point.
 
 `--entrypoints.<name>.http.redirections.entrypoint.scheme`:  
-Use scheme for the redirection. (Default: ```https```)
+Scheme used for the redirection. Defaults to https. (Default: ```https```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.to`:  
 Targeted entry point of the redirection.
@@ -118,7 +118,7 @@ Default TLS configuration for the routers linked to the entry point. (Default: `
 Default certificate resolver for the routers linked to the entry point.
 
 `--entrypoints.<name>.http.tls.domains`:  
-Default TLS domains for an the routers linked to the entry point.
+Default TLS domains for the routers linked to the entry point.
 
 `--entrypoints.<name>.http.tls.domains[n].main`:  
 Default subject name.

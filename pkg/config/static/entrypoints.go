@@ -73,7 +73,7 @@ func (r *RedirectEntryPoint) SetDefaults() {
 type TLSConfig struct {
 	Options      string         `description:"Default TLS options for the routers linked to the entry point." json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
 	CertResolver string         `description:"Default certificate resolver for the routers linked to the entry point." json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty"`
-	Domains      []types.Domain `description:"Default TLS domains for an the routers linked to the entry point." json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty"`
+	Domains      []types.Domain `description:"Default TLS domains for the routers linked to the entry point." json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty"`
 }
 
 // ForwardedHeaders Trust client forwarding headers.
