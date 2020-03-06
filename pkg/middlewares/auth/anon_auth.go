@@ -86,21 +86,17 @@ func (a *anonAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			req.Header.Del(authorizationHeader)
 		}
 		a.next.ServeHTTP(rw, req)
-
 	} else {
 		logger.Debug("Authentication required")
 		tracing.SetErrorWithEvent(req, "Authentication required")
 		a.auth.RequireAuth(rw, req)
-
 	}
 }
 
 func anonUsersParser(users []string) ([]*regexp.Regexp, error) {
-
 	var usersRegexp []*regexp.Regexp
 
 	for _, user := range users {
-
 		userRegexp, err := regexp.Compile(fmt.Sprintf(`^%v$`, user))
 
 		if err != nil {
@@ -114,16 +110,13 @@ func anonUsersParser(users []string) ([]*regexp.Regexp, error) {
 }
 
 func (a *anonAuth) anonUserCheck(user string) bool {
-
 	if len(a.users) > 0 {
 		for _, userRegexp := range a.users {
-
 			if userRegexp.MatchString(user) {
 				return true
 			}
 		}
 		return false
-	} else {
-		return true
 	}
+	return true
 }
