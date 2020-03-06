@@ -449,10 +449,17 @@ func TestGetRedirect(t *testing.T) {
 		labels   map[string]string
 		expected *types.Redirect
 	}{
-
 		{
 			desc:     "should return nil when no redirect labels",
 			labels:   map[string]string{},
+			expected: nil,
+		},
+		{
+			desc: "should return nil when regex syntax is invalid",
+			labels: map[string]string{
+				TraefikFrontendRedirectRegex:       `^https?://(test\.beta\.redacted\.org|redacted\.com)/(.*)`,
+				TraefikFrontendRedirectReplacement: "$1",
+			},
 			expected: nil,
 		},
 		{
@@ -805,6 +812,7 @@ func TestGetAuth(t *testing.T) {
 		})
 	}
 }
+
 func TestGetPassTLSClientCert(t *testing.T) {
 	testCases := []struct {
 		desc     string
