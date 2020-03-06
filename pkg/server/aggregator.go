@@ -120,7 +120,9 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 	rts := make(map[string]*dynamic.Router)
 
-	for name, router := range cfg.HTTP.Routers {
+	for name, rt := range cfg.HTTP.Routers {
+		router := rt.DeepCopy()
+
 		eps := router.EntryPoints
 		router.EntryPoints = nil
 
