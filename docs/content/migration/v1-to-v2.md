@@ -691,8 +691,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       storage = "acme.json"
       entryPoint = "websecure"
       onHostRule = true
-      [acme.httpChallenge]
-        entryPoint = "web"
+      [acme.tlsChallenge]
     ```
 
     ```bash tab="CLI"
@@ -703,7 +702,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     --acme.storage=acme.json
     --acme.entryPoint=websecure
     --acme.onHostRule=true
-    --acme.httpchallenge.entrypoint=http
+    --acme.tlschallenge=true
     ```
 
     !!! info "v2"
@@ -716,13 +715,13 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     
       [entryPoints.websecure]
         address = ":443"
+      [entryPoints.websecure.http.tls]
+        certResolver = "myresolver"
     
     [certificatesResolvers.myresolver.acme]
       email = "your-email@your-domain.org"
       storage = "acme.json"
-      [certificatesResolvers.myresolver.acme.httpChallenge]
-        # used during the challenge
-        entryPoint = "web"
+      [certificatesResolvers.myresolver.acme.tlsChallenge]
     ```
 
     ```yaml tab="File (YAML)"
@@ -732,23 +731,24 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     
       websecure:
         address: ":443"
+        http:
+          tls:
+            certResolver: myresolver
     
     certificatesResolvers:
       myresolver:
         acme:
           email: your-email@your-domain.org
           storage: acme.json
-          httpChallenge:
-            # used during the challenge
-            entryPoint: web
+          tlsChallenge: {}
     ```
 
     ```bash tab="CLI"
-    --entryPoints.web.address=:80
-    --entryPoints.websecure.address=:443
-    --certificatesResolvers.myresolver.acme.email=your-email@your-domain.org
-    --certificatesResolvers.myresolver.acme.storage=acme.json
-    --certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web
+    --entrypoints.web.address=:80
+    --entrypoints.websecure.address=:443
+    --certificatesresolvers.myresolver.acme.email=your-email@your-domain.org
+    --certificatesresolvers.myresolver.acme.storage=acme.json
+    --certificatesresolvers.myresolver.acme.tlschallenge=true
     ```
 
 ## Traefik Logs
@@ -997,14 +997,11 @@ Each root item has been moved to a related section or removed.
 ## Dashboard
 
 You need to activate the API to access the [dashboard](../operations/dashboard.md).
-As the dashboard access is now secured by default you can either:
 
-* define a  [specific router](../operations/api.md#configuration) with the `api@internal` service and one authentication middleware like the following example
-* or use the [insecure](../operations/api.md#insecure) option of the API
+To activate the dashboard, you can either:
 
-!!! info "Dashboard with k8s and dedicated router"
-
-    As `api@internal` is not a Kubernetes service, you have to use the file provider or the `insecure` API option.
+* use the [secure mode](../operations/dashboard.md#secure-mode) with the `api@internal` service like the following examples
+* or use the [insecure mode](../operations/api.md#insecure)
 
 !!! example "Activate and access the dashboard"
 
@@ -1038,7 +1035,7 @@ As the dashboard access is now secured by default you can either:
     # dynamic configuration
     labels:
       - "traefik.http.routers.api.rule=Host(`traefik.docker.localhost`)"
-      - "traefik.http.routers.api.entrypoints=websecured"
+      - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.service=api@internal"
       - "traefik.http.routers.api.middlewares=myAuth"
       - "traefik.http.routers.api.tls"
