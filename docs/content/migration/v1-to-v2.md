@@ -544,8 +544,8 @@ after the routing step with [router rule `PathPrefix`](../routing/routers/index.
 Use Case: Incoming requests to `http://company.org/admin` are forwarded to the webapplication "admin",
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
 
-* First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
-* Then, define a middleware of type [`stripprefix`](../middlewares/stripprefix.md), which removes the prefix `/admin`, associated to the router `admin`.
+- First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
+- Then, define a middleware of type [`stripprefix`](../middlewares/stripprefix.md), which removes the prefix `/admin`, associated to the router `admin`.
 
 !!! example "Strip Path Prefix When Forwarding to Backend"
 
@@ -661,10 +661,10 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
 
     Instead of removing the path prefix with the [`stripprefix` middleware](../../middlewares/stripprefix/), you can also:
 
-    * Add a path prefix with the [`addprefix` middleware](../../middlewares/addprefix/)
-    * Replace the complete path of the request with the [`replacepath` middleware](../../middlewares/replacepath/)
-    * ReplaceRewrite path using Regexp with the [`replacepathregex` middleware](../../middlewares/replacepathregex/)
-    * And a lot more on the [`middlewares` page](../../middlewares/overview/)
+    - Add a path prefix with the [`addprefix` middleware](../../middlewares/addprefix/)
+    - Replace the complete path of the request with the [`replacepath` middleware](../../middlewares/replacepath/)
+    - ReplaceRewrite path using Regexp with the [`replacepathregex` middleware](../../middlewares/replacepathregex/)
+    - And a lot more on the [`middlewares` page](../../middlewares/overview/)
 
 ## ACME (LetsEncrypt)
 
@@ -1000,8 +1000,8 @@ You need to activate the API to access the [dashboard](../operations/dashboard.m
 
 To activate the dashboard, you can either:
 
-* use the [secure mode](../operations/dashboard.md#secure-mode) with the `api@internal` service like the following examples
-* or use the [insecure mode](../operations/api.md#insecure)
+- use the [secure mode](../operations/dashboard.md#secure-mode) with the `api@internal` service like the following examples
+- or use the [insecure mode](../operations/api.md#insecure)
 
 !!! example "Activate and access the dashboard"
 
@@ -1113,28 +1113,28 @@ To activate the dashboard, you can either:
 
 Supported [providers](../providers/overview.md), for now:
 
-* [ ] Azure Service Fabric
-* [x] Consul
-* [x] Consul Catalog
-* [x] Docker
-* [ ] DynamoDB
-* [ ] ECS
-* [x] Etcd
-* [ ] Eureka
-* [x] File
-* [x] Kubernetes Ingress (without annotations)
-* [x] Kubernetes IngressRoute
-* [x] Marathon
-* [ ] Mesos
-* [x] Rancher
-* [x] Redis
-* [x] Rest
-* [x] Zookeeper
+- [ ] Azure Service Fabric
+- [x] Consul
+- [x] Consul Catalog
+- [x] Docker
+- [ ] DynamoDB
+- [ ] ECS
+- [x] Etcd
+- [ ] Eureka
+- [x] File
+- [x] Kubernetes Ingress (without annotations)
+- [x] Kubernetes IngressRoute
+- [x] Marathon
+- [ ] Mesos
+- [x] Rancher
+- [x] Redis
+- [x] Rest
+- [x] Zookeeper
 
 ## Some Tips You Should Know
 
-* Different sources of static configuration (file, CLI flags, ...) cannot be [mixed](../getting-started/configuration-overview.md#the-static-configuration).
-* Now, configuration elements can be referenced between different providers by using the provider namespace notation: `@<provider>`.
+- Different sources of static configuration (file, CLI flags, ...) cannot be [mixed](../getting-started/configuration-overview.md#the-static-configuration).
+- Now, configuration elements can be referenced between different providers by using the provider namespace notation: `@<provider>`.
   For instance, a router named `myrouter` in a File Provider can refer to a service named `myservice` defined in Docker Provider with the following notation: `myservice@docker`.
-* Middlewares are applied in the same order as their declaration in router.
-* If you have any questions feel free to join our [community forum](https://community.containo.us).
+- Middlewares are applied in the same order as their declaration in router.
+- If you have any questions feel free to join our [community forum](https://community.containo.us).
