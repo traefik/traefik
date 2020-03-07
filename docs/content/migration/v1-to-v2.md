@@ -322,9 +322,12 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
 ## HTTP to HTTPS Redirection is Now Configured on Routers
 
 Previously on Traefik v1, the redirection was applied on an entry point or on a frontend.
-With Traefik v2 it is applied on a [Router](../routing/routers/index.md). 
+With Traefik v2 it is applied on an entry point or a [Router](../routing/routers/index.md). 
 
-To apply a redirection, one of the redirect middlewares, [RedirectRegex](../middlewares/redirectregex.md) or [RedirectScheme](../middlewares/redirectscheme.md), has to be configured and added to the router middlewares list.
+To apply a redirection:
+
+- on entry point, the [HTTP redirection](../routing/entrypoints.md#redirection) has to be configured.
+- on router, one of the redirect middlewares, [RedirectRegex](../middlewares/redirectregex.md) or [RedirectScheme](../middlewares/redirectscheme.md), has to be configured and added to the router middlewares list.
 
 !!! example "Global HTTP to HTTPS redirection"
 
@@ -352,90 +355,28 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
 
     !!! info "v2"
     
-    ```yaml tab="Docker"
-    # ...
-      traefik:
-        image: traefik:v2.2
-        command:
-          - --entrypoints.web.address=:80
-          - --entrypoints.websecure.address=:443
-          - --providers.docker=true
-        ports:
-          - 80:80
-          - 443:443
-        labels:
-          traefik.http.routers.http_catchall.rule: HostRegexp(`{any:.+}`)
-          traefik.http.routers.http_catchall.entrypoints: web
-          traefik.http.routers.http_catchall.middlewares: https_redirect
-          traefik.http.middlewares.https_redirect.redirectscheme.scheme: https
-          traefik.http.middlewares.https_redirect.redirectscheme.permanent: true
-        volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
-    ```
+    ```bash tab="CLI"
+    ## static configuration
     
-    ```yaml tab="K8s IngressRoute"
-    # The entry points web (port 80) and websecure (port 443) must be defined the static configuration.
-    apiVersion: traefik.containo.us/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: http_catchall
-      namespace: traefik
-    spec:
-      entryPoints:
-        - web
-      routes:
-        - match: HostRegexp(`{any:.+}`)
-          kind: Rule
-          services:
-            # the noop service will be never called
-            - name: noop@internal
-          middlewares:
-            - name: https_redirect
-              # if the Middleware has distinct namespace
-              namespace: traefik
-    
-    ---
-    apiVersion: traefik.containo.us/v1alpha1
-    kind: Middleware 
-    metadata:
-      name: https_redirect
-      namespace: traefik
-    spec:
-      redirectScheme:
-        scheme: https
-        permanent: true
+    --entrypoints.web.address=:80
+    --entrypoints.web.http.redirections.entrypoint.to=websecure
+    --entrypoints.web.http.redirections.entrypoint.scheme=https
+    --entrypoints.websecure.address=:443
+    --providers.docker=true
     ```
     
     ```toml tab="File (TOML)"
     # traefik.toml
     ## static configuration
     
-    [entryPoints]
-      [entryPoints.web]
-        address = 80
-      [entryPoints.websecure]
-        address = 443
-    
-    [providers.file]
-      directory = "/dynamic/"
-    
-    ##--------------------##
-    
-    # /dynamic/redirect.toml
-    ## dynamic configuration
-    
-    [http.routers]
-      [http.routers.http_catchall]
-        entryPoints = ["web"]
-        middlewares = ["https_redirect"]
-        rule = "HostRegexp(`{any:.+}`)"
-        # the noop service will be never called
-        service = "noop@internal"
-    
-    [http.middlewares]
-      [http.middlewares.https_redirect.redirectScheme]
+    [entryPoints.web]
+      address = 80
+      [entryPoints.web.http.redirections.entryPoint]
+        to = "websecure"
         scheme = "https"
-        permanent = true
+   
+    [entryPoints.websecure]
+      address = 443
     ```
     
     ```yaml tab="File (YAML)"
@@ -445,34 +386,14 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     entryPoints:
       web:
         address: 80
+        http:
+          redirections:
+            entrypoint:
+              to: websecure
+              scheme: https
+    
       websecure:
         address: 443
-    
-    providers:
-      file:
-        directory: /dynamic/
-    
-    ##--------------------##
-    
-    # /dynamic/redirect.yml
-    ## dynamic configuration
-    
-    http:
-      routers:
-        http_catchall:
-          entryPoints:
-            - web
-          middlewares:
-            - https_redirect
-          rule: "HostRegexp(`{any:.+}`)"
-          # the noop service will be never called
-          service: noop@internal
-    
-      middlewares:
-        https_redirect:
-          redirectScheme:
-            scheme: https
-            permanent: true
     ```
 
 !!! example "HTTP to HTTPS redirection per domain"
@@ -480,26 +401,24 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     !!! info "v1"
     
     ```toml tab="File (TOML)"
-    # static configuration
-    defaultEntryPoints = ["web", "websecure"]
-    
     [entryPoints]
       [entryPoints.web]
         address = ":80"
-        [entryPoints.web.redirect]
-          entryPoint = "websecure"
 
       [entryPoints.websecure]
         address = ":443"
         [entryPoints.websecure.tls]
-          [[entryPoints.websecure.tls.certificates]]
-            certFile = "examples/traefik.crt"
-            keyFile = "examples/traefik.key"
-    ```
-
-    ```bash tab="CLI"
-    --entrypoints=Name:web Address::80 Redirect.EntryPoint:websecure
-    --entryPoints='Name:websecure Address::443 TLS:path/to/my.cert,path/to/my.key'
+    
+    [file]
+    
+    [frontends]
+      [frontends.frontend1]
+        entryPoints = ["web", "websecure"]
+        [frontends.frontend1.routes]
+          [frontends.frontend1.routes.route0]
+            rule = "Host:foo.com"
+        [frontends.frontend1.redirect]
+          entryPoint = "websecure"
     ```
 
     !!! info "v2"
@@ -565,17 +484,6 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
     ```
 
     ```toml tab="File (TOML)"
-    ## static configuration
-    # traefik.toml
-    
-    [entryPoints.web]
-      address = ":80"
-    
-    [entryPoints.websecure]
-      address = ":443"
-    
-    ##---------------------##
-    
     ## dynamic configuration
     # dynamic-conf.toml
     
@@ -591,36 +499,14 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
         service = "my-service"
         entrypoints = ["websecure"]
         [http.routers.router1.tls]
-        
-    [http.services]
-      [[http.services.my-service.loadBalancer.servers]]
-        url = "http://10.10.10.1:80"
-      [[http.services.my-service.loadBalancer.servers]]
-        url = "http://10.10.10.2:80"
     
     [http.middlewares]
       [http.middlewares.https_redirect.redirectScheme]
         scheme = "https"
         permanent = true
-    
-    [[tls.certificates]]
-      certFile = "/path/to/domain.cert"
-      keyFile = "/path/to/domain.key"
     ```
 
     ```yaml tab="File (YAML)"
-    ## static configuration
-    # traefik.yml
-    
-    entryPoints:
-      web:
-        address: ":80"
-    
-      websecure:
-        address: ":443"
-    
-    ##---------------------##
-    
     ## dynamic configuration
     # dynamic-conf.yml
     
@@ -641,23 +527,11 @@ To apply a redirection, one of the redirect middlewares, [RedirectRegex](../midd
           service: my-service
           tls: {}
     
-      services:
-        my-service:
-          loadBalancer:
-            servers:
-              - url: http://10.10.10.1:80
-              - url: http://10.10.10.2:80
-    
       middlewares:
         https_redirect:
           redirectScheme:
             scheme: https
             permanent: true
-    
-    tls:
-      certificates:
-        - certFile: /app/certs/server/server.pem
-          keyFile: /app/certs/server/server.pem
     ```
 
 ## Strip and Rewrite Path Prefixes
