@@ -402,7 +402,7 @@ ports:
   containerPort: 443
 ```
 
-or to the daemon set :
+or to the daemon set:
 
 ```
 ports:
