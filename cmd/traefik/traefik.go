@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -191,7 +192,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry)
 	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder)
 
-	var eps []string
+	var defaultEntryPoints []string
 	for name, cfg := range staticConfiguration.EntryPoints {
 		protocol, err := cfg.GetProtocol()
 		if err != nil {
@@ -200,15 +201,17 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 
 		if protocol != "udp" {
-			eps = append(eps, name)
+			defaultEntryPoints = append(defaultEntryPoints, name)
 		}
 	}
+
+	sort.Strings(defaultEntryPoints)
 
 	watcher := server.NewConfigurationWatcher(
 		routinesPool,
 		providerAggregator,
 		time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration),
-		eps,
+		defaultEntryPoints,
 	)
 
 	watcher.AddListener(func(conf dynamic.Configuration) {
