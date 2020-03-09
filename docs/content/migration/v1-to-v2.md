@@ -1122,7 +1122,7 @@ Supported [providers](../providers/overview.md), for now:
 - [x] Etcd
 - [ ] Eureka
 - [x] File
-- [x] Kubernetes Ingress (without annotations)
+- [x] Kubernetes Ingress
 - [x] Kubernetes IngressRoute
 - [x] Marathon
 - [ ] Mesos
