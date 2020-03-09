@@ -60,6 +60,5 @@ func getLinesFromFile(filename string) ([]string, error) {
 			filteredLines = append(filteredLines, line)
 		}
 	}
-
 	return filteredLines, nil
 }

@@ -34,6 +34,10 @@ func NewAnon(ctx context.Context, next http.Handler, authConfig dynamic.AnonAuth
 	log.FromContext(middlewares.GetLoggerCtx(ctx, name, anonTypeName)).Debug("Creating middleware")
 	users, err := loadUsers(authConfig.UsersFile, authConfig.Users)
 
+	if err != nil {
+		return nil, err
+	}
+
 	var usersRegexp []*regexp.Regexp
 
 	usersRegexp, err = anonUsersParser(users)
