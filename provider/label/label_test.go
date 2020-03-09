@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSplitAndTrimString(t *testing.T) {
@@ -101,6 +102,78 @@ func TestGetStringValue(t *testing.T) {
 			t.Parallel()
 
 			got := GetStringValue(test.labels, test.labelName, test.defaultValue)
+			assert.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func TestGetStringSafeValue(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		labels        map[string]string
+		labelName     string
+		defaultValue  string
+		expected      string
+		expectedError bool
+	}{
+		{
+			desc:         "empty labels map",
+			labelName:    "foo",
+			defaultValue: "default",
+			expected:     "default",
+		},
+		{
+			desc: "unescaped value",
+			labels: map[string]string{
+				"foo": `^https?://(test\.beta\.redacted\.org|redacted\.com)/(.*)`,
+			},
+			labelName:     "foo",
+			defaultValue:  "default",
+			expected:      `^https?://(test\.beta\.redacted\.org|redacted\.com)/(.*)`,
+			expectedError: true,
+		},
+		{
+			desc: "escaped value",
+			labels: map[string]string{
+				"foo": `^https?://(test\\.beta\\.redacted\\.org|redacted\\.com)/(.*)`,
+			},
+			labelName:    "foo",
+			defaultValue: "default",
+			expected:     `^https?://(test\\.beta\\.redacted\\.org|redacted\\.com)/(.*)`,
+		},
+		{
+			desc: "empty value",
+			labels: map[string]string{
+				"foo": "",
+			},
+			labelName:    "foo",
+			defaultValue: "default",
+			expected:     "default",
+		},
+		{
+			desc: "non existing label",
+			labels: map[string]string{
+				"foo": "bar",
+			},
+			labelName:    "fii",
+			defaultValue: "default",
+			expected:     "default",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := GetStringSafeValue(test.labels, test.labelName, test.defaultValue)
+
+			if test.expectedError {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
 			assert.Equal(t, test.expected, got)
 		})
 	}

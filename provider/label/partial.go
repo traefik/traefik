@@ -50,8 +50,13 @@ func GetRedirect(labels map[string]string) *types.Redirect {
 
 	if Has(labels, TraefikFrontendRedirectRegex) &&
 		Has(labels, TraefikFrontendRedirectReplacement) {
+		value, err := GetStringSafeValue(labels, TraefikFrontendRedirectRegex, "")
+		if err != nil {
+			log.Errorf("Invalid regex syntax: %s", value)
+			return nil
+		}
 		return &types.Redirect{
-			Regex:       GetStringValue(labels, TraefikFrontendRedirectRegex, ""),
+			Regex:       value,
 			Replacement: GetStringValue(labels, TraefikFrontendRedirectReplacement, ""),
 			Permanent:   permanent,
 		}
