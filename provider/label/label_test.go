@@ -146,7 +146,7 @@ func TestGetStringSafeValue(t *testing.T) {
 			labels: map[string]string{
 				"foo": "",
 			},
-			labelName:    "fii",
+			labelName:    "foo",
 			defaultValue: "default",
 			expected:     "default",
 		},
