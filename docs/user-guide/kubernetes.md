@@ -369,7 +369,7 @@ spec:
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/v1.7/examples/k8s/ui.yaml
 ```
 
-Now lets setup an entry in our `/etc/hosts` file to route `traefik-ui.minikube` to our cluster.
+Now let's setup an entry in our `/etc/hosts` file to route `traefik-ui.minikube` to our cluster.
 
 In production you would want to set up real DNS entries.
 You can get the IP address of your minikube instance by running `minikube ip`:
@@ -392,6 +392,23 @@ You can add a TLS entrypoint by adding the following `args` to the container spe
  --defaultentrypoints=http,https
  --entrypoints=Name:https Address::443 TLS
  --entrypoints=Name:http Address::80
+```
+
+Now let's add the TLS port either to the deployment: 
+
+```
+ports:
+- name: https
+  containerPort: 443
+```
+
+or to the daemon set:
+
+```
+ports:
+- name: https
+  containerPort: 443
+  hostPort: 443
 ```
     
 To setup an HTTPS-protected ingress, you can leverage the TLS feature of the ingress resource.
