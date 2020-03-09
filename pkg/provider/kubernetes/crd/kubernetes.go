@@ -255,7 +255,7 @@ func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error
 	}
 
 	if port == 0 {
-		return nil, errors.New("IngressRoute service port not defined")
+		return nil, errors.New("ingressRoute service port not defined")
 	}
 
 	hasValidPort := false
