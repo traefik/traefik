@@ -393,6 +393,23 @@ You can add a TLS entrypoint by adding the following `args` to the container spe
  --entrypoints=Name:https Address::443 TLS
  --entrypoints=Name:http Address::80
 ```
+
+You also need to add the port to the service in your deployment: 
+
+```
+ports:
+- name: https
+  containerPort: 443
+```
+
+or to the daemon set :
+
+```
+ports:
+- name: https
+  containerPort: 443
+  hostPort: 443
+```
     
 To setup an HTTPS-protected ingress, you can leverage the TLS feature of the ingress resource.
 
