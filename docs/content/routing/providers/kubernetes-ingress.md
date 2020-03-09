@@ -9,73 +9,183 @@ The provider then watches for incoming ingresses events, such as the example bel
 and derives the corresponding dynamic configuration from it,
 which in turn will create the resulting routers, services, handlers, etc.
 
-```yaml
-kind: Ingress
-apiVersion: networking.k8s.io/v1beta1
-metadata:
-  name: foo
-  namespace: production
+## Configuration Example
 
-spec:
-  rules:
-  - host: foo.com
-    http:
-      paths:
-      - path: /bar
-        backend:
-          serviceName: service1
-          servicePort: 80
-      - path: /foo
-        backend:
-          serviceName: service1
-          servicePort: 80
-
-  tls:
-  - secretName: mySecret
-```
-
-### Annotations
-
-??? example
+??? example "Configuring Kubernetes Ingress Controller"
+    
+    ```yaml tab="RBAC"
+    ---
+    kind: ClusterRole
+    apiVersion: rbac.authorization.k8s.io/v1beta1
+    metadata:
+      name: traefik-ingress-controller
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - services
+          - endpoints
+          - secrets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - extensions
+        resources:
+          - ingresses
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - extensions
+        resources:
+          - ingresses/status
+        verbs:
+          - update
+    
+    ---
+    kind: ClusterRoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1beta1
+    metadata:
+      name: traefik-ingress-controller
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: traefik-ingress-controller
+    subjects:
+      - kind: ServiceAccount
+        name: traefik-ingress-controller
+        namespace: default
+    ```
     
     ```yaml tab="Ingress"
     kind: Ingress
     apiVersion: networking.k8s.io/v1beta1
     metadata:
-      name: foo
-      namespace: production
+      name: myingress
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: web
     
     spec:
       rules:
-      - host: foo.com
-        http:
-          paths:
-          - path: /bar
-            backend:
-              serviceName: service1
-              servicePort: 80
-          - path: /foo
-            backend:
-              serviceName: service1
-              servicePort: 80
+        - host: mydomain.com
+          http:
+            paths:
+              - path: /bar
+                backend:
+                  serviceName: whoami
+                  servicePort: 80
+              - path: /foo
+                backend:
+                  serviceName: whoami
+                  servicePort: 80
     ```
     
-    ```yaml tab="Service"
-    kind: Service
+    ```yaml tab="Traefik"
     apiVersion: v1
+    kind: ServiceAccount
     metadata:
-      name: service1
-      namespace: testing
-      annotations:
-        traefik.ingress.kubernetes.io/service.passhostheader: "false"
+      name: traefik-ingress-controller
+    
+    ---
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: traefik
+      labels:
+        app: traefik
+    
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: traefik
+      template:
+        metadata:
+          labels:
+            app: traefik
+        spec:
+          serviceAccountName: traefik-ingress-controller
+          containers:
+            - name: traefik
+              image: traefik:v2.2
+              args:
+                - --log.level=DEBUG
+                - --api
+                - --api.insecure
+                - --entrypoints.web.address=:80
+                - --providers.kubernetesingress
+              ports:
+                - name: web
+                  containerPort: 80
+                - name: admin
+                  containerPort: 8080
+    
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: traefik
+    spec:
+      type: LoadBalancer
+      selector:
+        app: traefik
+      ports:
+        - protocol: TCP
+          port: 80
+          name: web
+          targetPort: 80
+        - protocol: TCP
+          port: 8080
+          name: admin
+          targetPort: 8080
+    ```
+    
+    ```yaml tab="Whoami"
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: whoami
+      labels:
+        app: containous
+        name: whoami
+    
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: containous
+          task: whoami
+      template:
+        metadata:
+          labels:
+            app: containous
+            task: whoami
+        spec:
+          containers:
+            - name: containouswhoami
+              image: containous/whoami
+              ports:
+                - containerPort: 80
+    
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: whoami
     
     spec:
       ports:
-      - port: 80
-      clusterIp: 10.0.0.1
+        - name: http
+          port: 80
+      selector:
+        app: containous
+        task: whoami
     ```
+
+## Annotations
 
 #### On Ingress
 
