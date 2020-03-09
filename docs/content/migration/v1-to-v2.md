@@ -326,8 +326,8 @@ With Traefik v2 it is applied on an entry point or a [Router](../routing/routers
 
 To apply a redirection:
 
-- on entry point, the [HTTP redirection](../routing/entrypoints.md#redirection) has to be configured.
-- on router, one of the redirect middlewares, [RedirectRegex](../middlewares/redirectregex.md) or [RedirectScheme](../middlewares/redirectscheme.md), has to be configured and added to the router middlewares list.
+- on an entry point, the [HTTP redirection](../routing/entrypoints.md#redirection) has to be configured.
+- on a router, one of the redirect middlewares, [RedirectRegex](../middlewares/redirectregex.md) or [RedirectScheme](../middlewares/redirectscheme.md), has to be configured and added to the router middlewares list.
 
 !!! example "Global HTTP to HTTPS redirection"
 
@@ -1000,7 +1000,7 @@ You need to activate the API to access the [dashboard](../operations/dashboard.m
 
 To activate the dashboard, you can either:
 
-- use the [secure mode](../operations/dashboard.md#secure-mode) with the `api@internal` service like the following examples
+- use the [secure mode](../operations/dashboard.md#secure-mode) with the `api@internal` service like in the following examples
 - or use the [insecure mode](../operations/api.md#insecure)
 
 !!! example "Activate and access the dashboard"
