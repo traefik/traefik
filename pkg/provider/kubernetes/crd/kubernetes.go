@@ -250,40 +250,35 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 }
 
 func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error) {
-	var servicePort *corev1.ServicePort
-
 	if svc == nil {
 		return nil, errors.New("svc is not defined")
 	}
 
-	var servicePortValid *corev1.ServicePort
+	if port == 0 {
+		return nil, errors.New("IngressRoute service port not defined")
+	}
+
+	hasValidPort := false
 	for _, p := range svc.Spec.Ports {
-		if port == p.Port && port != 0 {
-			servicePort = &p
-			break
+		if p.Port == port {
+			return &p, nil
 		}
-		if p.Port != 0 && servicePortValid == nil {
-			servicePortValid = &p
-		}
-	}
-
-	if servicePort == nil {
-		if svc.Spec.Type != corev1.ServiceTypeExternalName || (servicePortValid != nil && port != 0) {
-			return nil, errors.New("service port not found")
-		}
-
-		if servicePort = servicePortValid; servicePort == nil && port != 0 {
-			servicePort = &corev1.ServicePort{
-				Port: port,
-			}
+		if p.Port != 0 {
+			hasValidPort = true
 		}
 	}
 
-	if servicePort == nil {
+	if svc.Spec.Type != corev1.ServiceTypeExternalName {
 		return nil, errors.New("service port not found")
 	}
 
-	return servicePort, nil
+	if hasValidPort {
+		log.WithoutContext().Warning("%s/%s ExternalName service has no ports matching IngressRoute", svc.Namespace, svc.Name)
+	}
+
+	return &corev1.ServicePort{
+		Port: port,
+	}, nil
 }
 
 func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {

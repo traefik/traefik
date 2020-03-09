@@ -474,9 +474,8 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
     Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/fr/docs/concepts/services-networking/service/#externalname) could be defined without any port.
     Accordingly, Traefik supports defining a port in three ways:
     
-    - only on `IngresRoute` CRD
-    - only on Kubernetes `ExternalName Service` CRD 
-    - on both sides
+    - only on `IngresRoute` service
+    - on both sides, you'll be warned if the ports don't match, and the `IngresRoute` service port is used
     
     Thus, in case of two sides port definition, Traefik expects a match between ports.
     
@@ -1040,9 +1039,8 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
     Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/fr/docs/concepts/services-networking/service/#externalname) could be defined without any port.
     Accordingly, Traefik supports defining a port in three ways:
     
-    - only on `IngresRouteTCP` CRD
-    - only on Kubernetes `ExternalName Service` CRD 
-    - on both sides
+    - only on `IngresRouteTCP` service
+    - on both sides, you'll be warned if the ports don't match, and the `IngresRouteTCP` service port is used
     
     Thus, in case of two sides port definition, Traefik expects a match between ports.
     

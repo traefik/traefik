@@ -3582,9 +3582,7 @@ func TestGetServicePort(t *testing.T) {
 					},
 				},
 			},
-			expected: &corev1.ServicePort{
-				Port: 80,
-			},
+			expectError: true,
 		},
 		{
 			desc: "Two different ports defined",
@@ -3612,8 +3610,10 @@ func TestGetServicePort(t *testing.T) {
 					},
 				},
 			},
-			port:        443,
-			expectError: true,
+			port: 443,
+			expected: &corev1.ServicePort{
+				Port: 443,
+			},
 		},
 	}
 	for _, test := range testCases {
