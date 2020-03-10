@@ -795,6 +795,7 @@ Services are the target for the router.
 
 When a TLS section is specified,
 it instructs Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-TLS requests).
+
 By default, a router with a TLS section will terminate the TLS connections, meaning that it will send decrypted data to the services.
 
 ??? example "Router for TLS requests"
@@ -824,7 +825,8 @@ By default, a router with a TLS section will terminate the TLS connections, mean
 
 As seen above, a TLS router will terminate the TLS connection by default.
 However, the `passthrough` option can be specified to set whether the requests should be forwarded "as is", keeping all data encrypted.
-It defaults to false.
+
+It defaults to `false`.
 
 ??? example "Configuring passthrough"
 
