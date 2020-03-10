@@ -251,7 +251,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error) {
 	if svc == nil {
-		return nil, errors.New("svc is not defined")
+		return nil, errors.New("service is not defined")
 	}
 
 	if port == 0 {
@@ -263,22 +263,22 @@ func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error
 		if p.Port == port {
 			return &p, nil
 		}
+
 		if p.Port != 0 {
 			hasValidPort = true
 		}
 	}
 
 	if svc.Spec.Type != corev1.ServiceTypeExternalName {
-		return nil, errors.New("service port not found")
+		return nil, fmt.Errorf("service port not found: %d", port)
 	}
 
 	if hasValidPort {
-		log.WithoutContext().Warning("%s/%s ExternalName service has no ports matching IngressRoute", svc.Namespace, svc.Name)
+		log.WithoutContext().
+			Warning("The port %d from IngressRoute doesn't match with ports defined in the ExternalName service %s/%s.", port, svc.Namespace, svc.Name)
 	}
 
-	return &corev1.ServicePort{
-		Port: port,
-	}, nil
+	return &corev1.ServicePort{Port: port}, nil
 }
 
 func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
