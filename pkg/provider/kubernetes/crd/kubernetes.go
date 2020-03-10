@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -246,6 +247,38 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	return conf
+}
+
+func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error) {
+	if svc == nil {
+		return nil, errors.New("service is not defined")
+	}
+
+	if port == 0 {
+		return nil, errors.New("ingressRoute service port not defined")
+	}
+
+	hasValidPort := false
+	for _, p := range svc.Spec.Ports {
+		if p.Port == port {
+			return &p, nil
+		}
+
+		if p.Port != 0 {
+			hasValidPort = true
+		}
+	}
+
+	if svc.Spec.Type != corev1.ServiceTypeExternalName {
+		return nil, fmt.Errorf("service port not found: %d", port)
+	}
+
+	if hasValidPort {
+		log.WithoutContext().
+			Warning("The port %d from IngressRoute doesn't match with ports defined in the ExternalName service %s/%s.", port, svc.Namespace, svc.Name)
+	}
+
+	return &corev1.ServicePort{Port: port}, nil
 }
 
 func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {

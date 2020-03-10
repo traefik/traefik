@@ -162,22 +162,15 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 		return nil, errors.New("service not found")
 	}
 
-	var portSpec *corev1.ServicePort
-	for _, p := range service.Spec.Ports {
-		if svc.Port == p.Port {
-			portSpec = &p
-			break
-		}
-	}
-
-	if portSpec == nil {
-		return nil, errors.New("service port not found")
+	svcPort, err := getServicePort(service, svc.Port)
+	if err != nil {
+		return nil, err
 	}
 
 	var servers []dynamic.TCPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.TCPServer{
-			Address: fmt.Sprintf("%s:%d", service.Spec.ExternalName, portSpec.Port),
+			Address: fmt.Sprintf("%s:%d", service.Spec.ExternalName, svcPort.Port),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
@@ -196,7 +189,7 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 		var port int32
 		for _, subset := range endpoints.Subsets {
 			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
+				if svcPort.Name == p.Name {
 					port = p.Port
 					break
 				}

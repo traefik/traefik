@@ -131,3 +131,40 @@ subsets:
     ports:
       - name: myapp4
         port: 8084
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-svc
+  namespace: default
+spec:
+  externalName: external.domain
+  type: ExternalName
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external.service.with.port
+  namespace: default
+spec:
+  externalName: external.domain
+  type: ExternalName
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external.service.without.port
+  namespace: default
+spec:
+  externalName: external.domain
+  type: ExternalName
+  ports:
+    - name: http
+      protocol: TCP
