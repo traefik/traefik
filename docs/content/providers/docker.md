@@ -473,19 +473,19 @@ _Optional, Default=15_
 
 ```toml tab="File (TOML)"
 [providers.docker]
-  swarmModeRefreshSeconds = "30s"
+  swarmModeRefreshSeconds = "30"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   docker:
-    swarmModeRefreshSeconds: "30s"
+    swarmModeRefreshSeconds: "30"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.swarmModeRefreshSeconds=30s
+--providers.docker.swarmModeRefreshSeconds=30
 # ...
 ```
 
