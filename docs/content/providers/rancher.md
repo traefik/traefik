@@ -35,7 +35,7 @@ Attach labels to your services and let Traefik do the rest!
 
     ```yaml
     labels:
-      - traefik.http.services.my-service.rule=Host(`mydomain.com`)
+      - traefik.http.services.my-service.rule=Host(`example.com`)
     ```
 
 ## Routing Configuration

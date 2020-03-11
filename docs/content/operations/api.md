@@ -50,21 +50,21 @@ And then define a routing configuration on Traefik itself with the
     However, you can also use "path prefix" rule or any combination or rules.
 
     ```bash tab="Host Rule"
-    # Matches http://traefik.domain.com, http://traefik.domain.com/api
-    # or http://traefik.domain.com/hello
-    rule = "Host(`traefik.domain.com`)"
+    # Matches http://traefik.example.com, http://traefik.example.com/api
+    # or http://traefik.example.com/hello
+    rule = "Host(`traefik.example.com`)"
     ```
 
     ```bash tab="Path Prefix Rule"
-    # Matches http://api.traefik.domain.com/api or http://domain.com/api
-    # but does not match http://api.traefik.domain.com/hello
+    # Matches http://api.traefik.example.com/api or http://example.com/api
+    # but does not match http://api.traefik.example.com/hello
     rule = "PathPrefix(`/api`)"
     ```
 
     ```bash tab="Combination of Rules"
-    # Matches http://traefik.domain.com/api or http://traefik.domain.com/dashboard
-    # but does not match http://traefik.domain.com/hello
-    rule = "Host(`traefik.domain.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+    # Matches http://traefik.example.com/api or http://traefik.example.com/dashboard
+    # but does not match http://traefik.example.com/hello
+    rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
     ```
 
 ### `insecure`

@@ -18,8 +18,8 @@ For the HTTP challenge you will need:
 --8<-- "content/user-guides/docker-compose/acme-http/docker-compose.yml"
 ```
 
-- Replace `postmaster@mydomain.com` by your **own email** within the `certificatesresolvers.myresolver.acme.email` command line argument of the `traefik` service.
-- Replace `whoami.mydomain.com` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
+- Replace `postmaster@example.com` by your **own email** within the `certificatesresolvers.myresolver.acme.email` command line argument of the `traefik` service.
+- Replace `whoami.example.com` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
 - Optionally uncomment the following lines if you want to test/debug:
 
 	```yaml
@@ -59,7 +59,7 @@ command:
   # Tell it to use our predefined entrypoint named "web"
   - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
   # The email to provide to let's encrypt
-  - "--certificatesresolvers.myresolver.acme.email=postmaster@mydomain.com"
+  - "--certificatesresolvers.myresolver.acme.email=postmaster@example.com"
 ```
 
 - We add a volume to store our certificates:

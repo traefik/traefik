@@ -34,12 +34,12 @@ Attach labels to your containers and let Traefik do the rest!
       my-container:
         # ...
         labels:
-          - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
+          - traefik.http.routers.my-container.rule=Host(`example.com`)
     ```
 
 ??? example "Specify a Custom Port for the Container"
 
-    Forward requests for `http://mydomain.com` to `http://<private IP of container>:12345`:
+    Forward requests for `http://example.com` to `http://<private IP of container>:12345`:
 
     ```yaml
     version: "3"
@@ -47,7 +47,7 @@ Attach labels to your containers and let Traefik do the rest!
       my-container:
         # ...
         labels:
-          - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
+          - traefik.http.routers.my-container.rule=Host(`example.com`)
           # Tell Traefik to use the port 12345 to connect to `my-container`
           - traefik.http.services.my-service.loadbalancer.server.port=12345
     ```
@@ -94,7 +94,7 @@ Attach labels to your containers and let Traefik do the rest!
       my-container:
         deploy:
           labels:
-            - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
+            - traefik.http.routers.my-container.rule=Host(`example.com`)
             - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
@@ -127,7 +127,7 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
 
     ```yaml
     labels:
-      - "traefik.http.routers.myproxy.rule=Host(`foo.com`)"
+      - "traefik.http.routers.myproxy.rule=Host(`example.net`)"
       # service myservice gets automatically assigned to router myproxy
       - "traefik.http.services.myservice.loadbalancer.server.port=80"
     ```
@@ -140,7 +140,7 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
     labels:
       # no service specified or defined and yet one gets automatically created
       # and assigned to router myproxy.
-      - "traefik.http.routers.myproxy.rule=Host(`foo.com`)"
+      - "traefik.http.routers.myproxy.rule=Host(`example.net`)"
     ```
 
 ### Routers
@@ -148,7 +148,7 @@ and the router automatically gets a rule defined by `defaultRule` (if no rule fo
 To update the configuration of the Router automatically attached to the container,
 add labels starting with `traefik.http.routers.<name-of-your-choice>.` and followed by the option you want to change.
 
-For example, to change the rule, you could add the label ```traefik.http.routers.my-container.rule=Host(`mydomain.com`)```.
+For example, to change the rule, you could add the label ```traefik.http.routers.my-container.rule=Host(`example.com`)```.
 
 !!! warning "The character `@` is not authorized in the router name `<router_name>`."
 
@@ -157,7 +157,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [rule](../routers/index.md#rule) for more information.
 
     ```yaml
-    - "traefik.http.routers.myrouter.rule=Host(`mydomain.com`)"
+    - "traefik.http.routers.myrouter.rule=Host(`example.com`)"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.entrypoints`"
@@ -205,7 +205,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [domains](../routers/index.md#domains) for more information.
 
     ```yaml
-    - "traefik.http.routers.myrouter.tls.domains[0].main=foobar.com"
+    - "traefik.http.routers.myrouter.tls.domains[0].main=example.org"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.domains[n].sans`"
@@ -213,7 +213,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     See [domains](../routers/index.md#domains) for more information.
 
     ```yaml
-    - "traefik.http.routers.myrouter.tls.domains[0].sans=test.foobar.com,dev.foobar.com"
+    - "traefik.http.routers.myrouter.tls.domains[0].sans=test.example.org,dev.example.org"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.options`"
@@ -283,7 +283,7 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     See [health check](../services/index.md#health-check) for more information.
 
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.healthcheck.hostname=foobar.com"
+    - "traefik.http.services.myservice.loadbalancer.healthcheck.hostname=example.org"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.interval`"
@@ -414,7 +414,7 @@ You can declare TCP Routers and/or Services using labels.
          my-container:
            # ...
            labels:
-             - "traefik.tcp.routers.my-router.rule=HostSNI(`my-host.com`)"
+             - "traefik.tcp.routers.my-router.rule=HostSNI(`example.com`)"
              - "traefik.tcp.routers.my-router.tls=true"
              - "traefik.tcp.services.my-service.loadbalancer.server.port=4123"
     ```
@@ -439,7 +439,7 @@ You can declare TCP Routers and/or Services using labels.
     See [rule](../routers/index.md#rule_1) for more information.
 
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.rule=HostSNI(`myhost.com`)"
+    - "traefik.tcp.routers.mytcprouter.rule=HostSNI(`example.com`)"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.service`"
@@ -471,7 +471,7 @@ You can declare TCP Routers and/or Services using labels.
     See [domains](../routers/index.md#domains_1) for more information.
 
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.tls.domains[0].main=foobar.com"
+    - "traefik.tcp.routers.mytcprouter.tls.domains[0].main=example.org"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.domains[n].sans`"
@@ -479,7 +479,7 @@ You can declare TCP Routers and/or Services using labels.
     See [domains](../routers/index.md#domains_1) for more information.
 
     ```yaml
-    - "traefik.tcp.routers.mytcprouter.tls.domains[0].sans=test.foobar.com,dev.foobar.com"
+    - "traefik.tcp.routers.mytcprouter.tls.domains[0].sans=test.example.org,dev.example.org"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.options`"

@@ -2,23 +2,23 @@
 ```yaml tab="Docker"
 ## Dynamic configuration
 labels:
-  - traefik.http.routers.blog.rule=Host(`company.com`) && Path(`/blog`)
+  - traefik.http.routers.blog.rule=Host(`example.com`) && Path(`/blog`)
   - traefik.http.routers.blog.tls=true
   - traefik.http.routers.blog.tls.certresolver=myresolver
-  - traefik.http.routers.blog.tls.domains[0].main=company.org
-  - traefik.http.routers.blog.tls.domains[0].sans=*.company.org
+  - traefik.http.routers.blog.tls.domains[0].main=example.org
+  - traefik.http.routers.blog.tls.domains[0].sans=*.example.org
 ```
 
 ```yaml tab="Docker (Swarm)"
 ## Dynamic configuration
 deploy:
   labels:
-    - traefik.http.routers.blog.rule=Host(`company.com`) && Path(`/blog`)
+    - traefik.http.routers.blog.rule=Host(`example.com`) && Path(`/blog`)
     - traefik.http.services.blog-svc.loadbalancer.server.port=8080"
     - traefik.http.routers.blog.tls=true
     - traefik.http.routers.blog.tls.certresolver=myresolver
-    - traefik.http.routers.blog.tls.domains[0].main=company.org
-    - traefik.http.routers.blog.tls.domains[0].sans=*.company.org
+    - traefik.http.routers.blog.tls.domains[0].main=example.org
+    - traefik.http.routers.blog.tls.domains[0].sans=*.example.org
 ```
 
 ```yaml tab="Kubernetes"
@@ -30,7 +30,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-  - match: Host(`company.com`) && Path(`/blog`)
+  - match: Host(`example.com`) && Path(`/blog`)
     kind: Rule
     services:
     - name: blog
@@ -38,18 +38,18 @@ spec:
   tls:
     certResolver: myresolver
     domains:
-    - main: company.org
+    - main: example.org
       sans:
-      - *.company.org
+      - *.example.org
 ```
 
 ```json tab="Marathon"
 labels: {
-  "traefik.http.routers.blog.rule": "Host(`company.com`) && Path(`/blog`)",
+  "traefik.http.routers.blog.rule": "Host(`example.com`) && Path(`/blog`)",
   "traefik.http.routers.blog.tls": "true",
   "traefik.http.routers.blog.tls.certresolver": "myresolver",
-  "traefik.http.routers.blog.tls.domains[0].main": "company.com",
-  "traefik.http.routers.blog.tls.domains[0].sans": "*.company.com",
+  "traefik.http.routers.blog.tls.domains[0].main": "example.com",
+  "traefik.http.routers.blog.tls.domains[0].sans": "*.example.com",
   "traefik.http.services.blog-svc.loadbalancer.server.port": "8080"
 }
 ```
@@ -57,23 +57,23 @@ labels: {
 ```yaml tab="Rancher"
 ## Dynamic configuration
 labels:
-  - traefik.http.routers.blog.rule=Host(`company.com`) && Path(`/blog`)
+  - traefik.http.routers.blog.rule=Host(`example.com`) && Path(`/blog`)
   - traefik.http.routers.blog.tls=true
   - traefik.http.routers.blog.tls.certresolver=myresolver
-  - traefik.http.routers.blog.tls.domains[0].main=company.org
-  - traefik.http.routers.blog.tls.domains[0].sans=*.company.org
+  - traefik.http.routers.blog.tls.domains[0].main=example.org
+  - traefik.http.routers.blog.tls.domains[0].sans=*.example.org
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
 [http.routers]
   [http.routers.blog]
-    rule = "Host(`company.com`) && Path(`/blog`)"
+    rule = "Host(`example.com`) && Path(`/blog`)"
     [http.routers.blog.tls]
       certResolver = "myresolver" # From static configuration
       [[http.routers.blog.tls.domains]]
-        main = "company.org"
-        sans = ["*.company.org"]
+        main = "example.org"
+        sans = ["*.example.org"]
 ```
 
 ```yaml tab="File (YAML)"
@@ -81,11 +81,11 @@ labels:
 http:
   routers:
     blog:
-      rule: "Host(`company.com`) && Path(`/blog`)"
+      rule: "Host(`example.com`) && Path(`/blog`)"
       tls:
         certResolver: myresolver
         domains:
-          - main: "company.org"
+          - main: "example.org"
             sans:
-              - "*.company.org"
+              - "*.example.org"
 ```

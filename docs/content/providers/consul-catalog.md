@@ -29,7 +29,7 @@ Attach tags to your services and let Traefik do the rest!
     Attaching tags to services
 
     ```yaml
-    - traefik.http.services.my-service.rule=Host(`mydomain.com`)
+    - traefik.http.services.my-service.rule=Host(`example.com`)
     ```
 
 ## Routing Configuration

@@ -81,22 +81,22 @@ As underlined in the [documentation for the `api.dashboard` option](./api.md#das
 the [router rule](../routing/routers/index.md#rule) defined for Traefik must match
 the path prefixes `/api` and `/dashboard`.
 
-We recommend to use a "Host Based rule" as ```Host(`traefik.domain.com`)``` to match everything on the host domain,
+We recommend to use a "Host Based rule" as ```Host(`traefik.example.com`)``` to match everything on the host domain,
 or to make sure that the defined rule captures both prefixes:
 
 ```bash tab="Host Rule"
-# The dashboard can be accessed on http://traefik.domain.com/dashboard/
-rule = "Host(`traefik.domain.com`)"
+# The dashboard can be accessed on http://traefik.example.com/dashboard/
+rule = "Host(`traefik.example.com`)"
 ```
 
 ```bash tab="Path Prefix Rule"
-# The dashboard can be accessed on http://domain.com/dashboard/ or http://traefik.domain.com/dashboard/
+# The dashboard can be accessed on http://example.com/dashboard/ or http://traefik.example.com/dashboard/
 rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
 ```
 
 ```bash tab="Combination of Rules"
-# The dashboard can be accessed on http://traefik.domain.com/dashboard/
-rule = "Host(`traefik.domain.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+# The dashboard can be accessed on http://traefik.example.com/dashboard/
+rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
 ```
 
 ## Insecure Mode

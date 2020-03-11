@@ -79,7 +79,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
         address = ":443"
     
     [certificatesResolvers.myresolver.acme]
-      email = "your-email@your-domain.org"
+      email = "your-email@example.com"
       storage = "acme.json"
       [certificatesResolvers.myresolver.acme.httpChallenge]
         # used during the challenge
@@ -97,7 +97,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
     certificatesResolvers:
       myresolver:
         acme:
-          email: your-email@your-domain.org
+          email: your-email@example.com
           storage: acme.json
           httpChallenge:
             # used during the challenge
@@ -108,7 +108,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
     --entryPoints.web.address=:80
     --entryPoints.websecure.address=:443
     # ...
-    --certificatesResolvers.myresolver.acme.email=your-email@your-domain.org
+    --certificatesResolvers.myresolver.acme.email=your-email@example.com
     --certificatesResolvers.myresolver.acme.storage=acme.json
     # used during the challenge
     --certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web
@@ -118,20 +118,20 @@ Please check the [configuration examples below](#configuration-examples) for mor
 
 ??? example "Single Domain from Router's Rule Example"
     
-    * A certificate for the domain `company.com` is requested:
+    * A certificate for the domain `example.com` is requested:
 
     --8<-- "content/https/include-acme-single-domain-example.md"
 
 ??? example "Multiple Domains from Router's Rule Example"
  
-    * A certificate for the domains `company.com` (main) and `blog.company.org`
+    * A certificate for the domains `example.com` (main) and `blog.example.org`
       is requested:
     
     --8<-- "content/https/include-acme-multiple-domains-from-rule-example.md"
     
 ??? example "Multiple Domains from Router's `tls.domain` Example"
 
-    * A certificate for the domains `company.com` (main) and `*.company.org` (SAN)
+    * A certificate for the domains `example.com` (main) and `*.example.org` (SAN)
       is requested:
       
     --8<-- "content/https/include-acme-multiple-domains-example.md"

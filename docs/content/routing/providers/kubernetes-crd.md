@@ -321,7 +321,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         - foo
       routes:                           # [2]
       - kind: Rule
-        match: Host(`test.domain.com`)  # [3]
+        match: Host(`test.example.com`) # [3]
         priority: 10                    # [4]
         middlewares:                    # [5]
         - name: middleware1             # [6]
@@ -349,10 +349,10 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
           namespace: default            # [13]
         certResolver: foo               # [14]
         domains:                        # [15]
-        - main: foo.com                 # [16]
+        - main: example.net             # [16]
           sans:                         # [17]
-          - a.foo.com
-          - b.foo.com
+          - a.example.net
+          - b.example.net
     ```
 
 | Ref  | Attribute                  | Purpose                                                                                                                                                                                                                  |
@@ -389,7 +389,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         - web
       routes:
       - kind: Rule
-        match: Host(`test.domain.com`)
+        match: Host(`test.example.com`)
         middlewares:
         - name: middleware1
           namespace: default
@@ -413,10 +413,10 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
       tls:
         certResolver: foo
         domains:
-        - main: foo.com
+        - main: example.net
           sans:
-          - a.foo.com
-          - b.foo.com
+          - a.example.net
+          - b.example.net
         options:
           name: opt
           namespace: default
@@ -494,7 +494,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
             - foo
         
           routes:
-          - match: Host(`foo.com`)
+          - match: Host(`example.net`)
             kind: Rule
             services:
             - name: external-svc
@@ -524,7 +524,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
             - foo
         
           routes:
-          - match: Host(`foo.com`)
+          - match: Host(`example.net`)
             kind: Rule
             services:
             - name: external-svc
@@ -555,7 +555,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
             - foo
         
           routes:
-          - match: Host(`foo.com`)
+          - match: Host(`example.net`)
             kind: Rule
             services:
             - name: external-svc
@@ -605,7 +605,7 @@ Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernete
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/stripit`)
+      - match: Host(`example.com`) && PathPrefix(`/stripit`)
         kind: Rule
         services:
         - name: whoami
@@ -664,7 +664,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/foo`)
+      - match: Host(`example.com`) && PathPrefix(`/foo`)
         kind: Rule
         services:
         - name: svc1
@@ -720,7 +720,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/foo`)
+      - match: Host(`example.com`) && PathPrefix(`/foo`)
         kind: Rule
         services:
         - name: wrr1
@@ -827,7 +827,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/foo`)
+      - match: Host(`example.com`) && PathPrefix(`/foo`)
         kind: Rule
         services:
         - name: mirror1
@@ -947,10 +947,10 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
           namespace: default        # [13]
         certResolver: foo           # [14]
         domains:                    # [15]
-        - main: foo.com             # [16]
+        - main: example.net         # [16]
           sans:                     # [17]
-          - a.foo.com
-          - b.foo.com
+          - a.example.net
+          - b.example.net
         passthrough: false          # [18]
     ```
 
@@ -1001,10 +1001,10 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
       tls:
         certResolver: foo
         domains:
-        - main: foo.com
+        - main: example.net
           sans:
-          - a.foo.com
-          - b.foo.com
+          - a.example.net
+          - b.example.net
         options:
           name: opt
           namespace: default
@@ -1269,7 +1269,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/stripit`)
+      - match: Host(`example.com`) && PathPrefix(`/stripit`)
         kind: Rule
         services:
         - name: whoami
@@ -1366,7 +1366,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
       entryPoints:
         - web
       routes:
-      - match: Host(`bar.com`) && PathPrefix(`/stripit`)
+      - match: Host(`example.com`) && PathPrefix(`/stripit`)
         kind: Rule
         services:
         - name: whoami

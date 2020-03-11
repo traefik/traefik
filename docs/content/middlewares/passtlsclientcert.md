@@ -265,7 +265,7 @@ In the following example, you can see a complete certificate. We will use each p
             Validity
                 Not Before: Dec  6 11:10:16 2018 GMT
                 Not After : Dec  5 11:10:16 2020 GMT
-            Subject: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=*.cheese.org, CN=*.cheese.com, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Cheese org state, ST=Cheese com state/emailAddress=cert@cheese.org/emailAddress=cert@scheese.com
+            Subject: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=*.example.org, CN=*.example.com, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Cheese org state, ST=Cheese com state/emailAddress=cert@example.org/emailAddress=cert@sexample.com
             Subject Public Key Info:
                 Public Key Algorithm: rsaEncryption
                     RSA Public-Key: (2048 bit)
@@ -302,7 +302,7 @@ In the following example, you can see a complete certificate. We will use each p
                     keyid:1E:52:A2:E8:54:D5:37:EB:D5:A8:1D:E4:C2:04:1D:37:E2:F7:70:03
     
                 X509v3 Subject Alternative Name: 
-                    DNS:*.cheese.org, DNS:*.cheese.net, DNS:*.cheese.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@cheese.org, email:test@cheese.net
+                    DNS:*.example.org, DNS:*.example.net, DNS:*.example.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@example.org, email:test@example.net
         Signature Algorithm: sha1WithRSAEncryption
              76:6b:05:b0:0e:34:11:b1:83:99:91:dc:ae:1b:e2:08:15:8b:
              16:b2:9b:27:1c:02:ac:b5:df:1b:d0:d0:75:a4:2b:2c:5c:65:
@@ -422,7 +422,7 @@ The value of the header will be an escaped concatenation of all the selected cer
 The following example shows an unescaped result that uses all the available fields: 
 
 ```text
-Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.cheese.com";Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2";NB="1544094616";NA="1607166616";SAN="*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2"
+Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.example.com";Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2";NB="1544094616";NA="1607166616";SAN="*.example.org,*.example.net,*.example.com,test@example.org,test@example.net,10.0.1.0,10.0.1.2"
 ```
 
 !!! info "Multiple certificates"
@@ -471,13 +471,13 @@ The data are taken from the following certificate part:
 
 ```text
  X509v3 Subject Alternative Name: 
-    DNS:*.cheese.org, DNS:*.cheese.net, DNS:*.cheese.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@cheese.org, email:test@cheese.net
+    DNS:*.example.org, DNS:*.example.net, DNS:*.example.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@example.org, email:test@example.net
 ```
 
 The escape SANs info part will be like:
 
 ```text
-SAN="*.cheese.org,*.cheese.net,*.cheese.com,test@cheese.org,test@cheese.net,10.0.1.0,10.0.1.2"
+SAN="*.example.org,*.example.net,*.example.com,test@example.org,test@example.net,10.0.1.0,10.0.1.2"
 ```
 
 !!! info "multiple values"
@@ -491,7 +491,7 @@ The `info.subject` select the specific client certificate subject details you wa
 The data are taken from the following certificate part :
 
 ```text
-Subject: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=*.cheese.org, CN=*.cheese.com, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Cheese org state, ST=Cheese com state/emailAddress=cert@cheese.org/emailAddress=cert@scheese.com
+Subject: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=*.example.org, CN=*.example.com, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Cheese org state, ST=Cheese com state/emailAddress=cert@example.org/emailAddress=cert@sexample.com
 ```
 
 ##### `info.subject.country`
@@ -549,7 +549,7 @@ The data are taken from the subject part with the `CN` key.
 The escape common name info in the subject part will be like :
 
 ```text
-CN=*.cheese.com
+CN=*.example.com
 ```
 
 ##### `info.subject.serialNumber`
