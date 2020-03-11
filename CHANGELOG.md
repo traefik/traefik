@@ -1,3 +1,19 @@
+## [v2.2.0-rc2](https://github.com/containous/traefik/tree/v2.2.0-rc2) (2020-03-11)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.0-rc1...v2.2.0-rc2)
+
+**Bug fixes:**
+- **[internal]** Router entry points on reload. ([#6444](https://github.com/containous/traefik/pull/6444) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/crd]** Improve kubernetes external name service support ([#6428](https://github.com/containous/traefik/pull/6428) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[docker]** Fix example values for swarmModeRefreshSeconds ([#6460](https://github.com/containous/traefik/pull/6460) by [skjnldsv](https://github.com/skjnldsv))
+- **[k8s,k8s/ingress]** Improve documentation for kubernetes ingress configuration ([#6440](https://github.com/containous/traefik/pull/6440) by [rtribotte](https://github.com/rtribotte))
+- **[tcp,tls]** Specify passthrough for TCP/TLS in its own section ([#6459](https://github.com/containous/traefik/pull/6459) by [mpl](https://github.com/mpl))
+- Remove  @dduportal from the maintainers team ([#6464](https://github.com/containous/traefik/pull/6464) by [emilevauge](https://github.com/emilevauge))
+- Update migration documentation ([#6447](https://github.com/containous/traefik/pull/6447) by [ldez](https://github.com/ldez))
+- Update version references. ([#6434](https://github.com/containous/traefik/pull/6434) by [ldez](https://github.com/ldez))
+- Fix broken documentation link ([#6430](https://github.com/containous/traefik/pull/6430) by [pbek](https://github.com/pbek))
+
 ## [v2.2.0-rc1](https://github.com/containous/traefik/tree/v2.2.0-rc1) (2020-03-05)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.0-rc1...v2.2.0-rc1)
 
