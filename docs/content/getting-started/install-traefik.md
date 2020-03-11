@@ -32,7 +32,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
     The Traefik Chart from 
     [Helm's default charts repository](https://github.com/helm/charts/tree/master/stable/traefik) is still using [Traefik v1.7](https://docs.traefik.io/v1.7).
 
-Traefik can be installed in Kubernetes using the v2.0 Helm chart from <https://github.com/containous/traefik-helm-chart>.
+Traefik can be installed in Kubernetes using the Helm chart from <https://github.com/containous/traefik-helm-chart>.
 
 Ensure that the following requirements are met:
 
