@@ -3,7 +3,7 @@
 You can install Traefik with the following flavors:
 
 * [Use the official Docker image](./#use-the-official-docker-image)
-* [(Experimental) Use the Helm Chart](./#use-the-helm-chart)
+* [Use the Helm Chart](./#use-the-helm-chart)
 * [Use the binary distribution](./#use-the-binary-distribution)
 * [Compile your binary from the sources](./#compile-your-binary-from-the-sources)
 
@@ -27,48 +27,52 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 
 ## Use the Helm Chart
 
-!!! warning "Experimental Helm Chart"
+!!! warning
     
-    Please note that the Helm Chart for Traefik v2 is still experimental.
-    
-    The Traefik Stable Chart from 
+    The Traefik Chart from 
     [Helm's default charts repository](https://github.com/helm/charts/tree/master/stable/traefik) is still using [Traefik v1.7](https://docs.traefik.io/v1.7).
 
-Traefik can be installed in Kubernetes using the v2.0 Helm chart from <https://github.com/containous/traefik-helm-chart>.
+Traefik can be installed in Kubernetes using the Helm chart from <https://github.com/containous/traefik-helm-chart>.
 
 Ensure that the following requirements are met:
 
 * Kubernetes 1.14+
-* Helm version 2.x is [installed](https://v2.helm.sh/docs/using_helm/) and initialized with Tiller
+* Helm version 3.x is [installed](https://helm.sh/docs/intro/install/)
 
-Retrieve the latest chart version from the repository:
+Add Traefik's chart repository to Helm:
 
 ```bash
-# Retrieve Chart from the repository
-git clone https://github.com/containous/traefik-helm-chart
+helm repo add traefik https://containous.github.io/traefik-helm-chart
+```
+
+You can update the chart repository by running:
+
+```bash
+helm repo update
 ```
 
 And install it with the `helm` command line:
 
 ```bash
-helm install ./traefik-helm-chart
+helm install traefik traefik/traefik
 ```
 
 !!! tip "Helm Features"
     
-    All [Helm features](https://v2.helm.sh/docs/using_helm/#using-helm) are supported.
+    All [Helm features](https://helm.sh/docs/intro/using_helm/) are supported.
     For instance, installing the chart in a dedicated namespace:
 
     ```bash tab="Install in a Dedicated Namespace"
+    kubectl create ns traefik-v2
     # Install in the namespace "traefik-v2"
     helm install --namespace=traefik-v2 \
-        ./traefik-helm-chart
+        traefik traefik/traefik
     ```
 
 ??? example "Installing with Custom Values"
     
     You can customize the installation by specifying custom values,
-    as with [any helm chart](https://v2.helm.sh/docs/using_helm/#customizing-the-chart-before-installing).
+    as with [any helm chart](https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing).
     {: #helm-custom-values }
     
     The values are not (yet) documented, but are self-explanatory:
@@ -79,12 +83,12 @@ helm install ./traefik-helm-chart
     ```bash tab="Using Helm CLI"
     helm install --namespace=traefik-v2 \
         --set="logs.loglevel=DEBUG" \
-        ./traefik-helm-chart
+        traefik traefik/traefik
     ```
     
     ```yml tab="With a custom values file"
     # File custom-values.yml
-    ## Install with "helm install --values=./custom-values.yml ./traefik-helm-chart
+    ## Install with "helm install --values=./custom-values.yml traefik traefik/traefik
     logs:
         loglevel: DEBUG
     ```
