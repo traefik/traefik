@@ -149,8 +149,6 @@ github.com/containous/check v0.0.0-20170915194414-ca0bf163426a h1:8esAQaPKjfntQR
 github.com/containous/check v0.0.0-20170915194414-ca0bf163426a/go.mod h1:eQOqZ7GoFsLxI7jFKLs7+Nv2Rm1x4FyK8d2NV+yGjwQ=
 github.com/containous/go-http-auth v0.4.1-0.20180112153951-65b0cdae8d7f h1:AgXgJSqQmsiNFW268OGe/y7Mn4jiCWaMUk05qser3Bo=
 github.com/containous/go-http-auth v0.4.1-0.20180112153951-65b0cdae8d7f/go.mod h1:dCmRGidPSLagL8D/2u7yIO6Y/8D/yuYX9EdKrnrhpCA=
-github.com/containous/go-rancher-metadata v0.0.0-20190402144056-c6a65f8b7a28 h1:YBo7nuGRif2QvUvqJuAEp8trX+5jnFj/8iAPJDe5U4k=
-github.com/containous/go-rancher-metadata v0.0.0-20190402144056-c6a65f8b7a28/go.mod h1:YTAhdMF+tmHPGF7v0uZJ22+XNY/jz1ZYdBCeTZnsrYU=
 github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595 h1:aPspFRO6b94To3gl4yTDOEtpjFwXI7V2W+z0JcNljQ4=
 github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595/go.mod h1:+lHFbEasIiQVGzhVDVw/cn0ZaOzde2OwNncp1NhXV4c=
 github.com/containous/multibuf v0.0.0-20190809014333-8b6c9a7e6bba h1:PhR03pep+5eO/9BSvCY9RyG8rjogB3uYS4X/WBYNTT8=
@@ -628,6 +626,7 @@ github.com/prometheus/procfs v0.0.3/go.mod h1:4A/X28fw3Fc593LaREMrKMqOKvUAntwMDa
 github.com/prometheus/procfs v0.0.5 h1:3+auTFlqw+ZaQYJARz6ArODtkaIwtvBTx3N2NehQlL8=
 github.com/prometheus/procfs v0.0.5/go.mod h1:4A/X28fw3Fc593LaREMrKMqOKvUAntwMDaekg4FpcdQ=
 github.com/rainycape/memcache v0.0.0-20150622160815-1031fa0ce2f2/go.mod h1:7tZKcyumwBO6qip7RNQ5r77yrssm9bfCowcLEBcU5IA=
+github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac h1:wBGhHdXKICZmvAPWS8gQoMyOWDH7QAi9bU4Z1nDWnFU=
 github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac/go.mod h1:67sLWL17mVlO1HFROaTBmU71NB4R8UNCesFHhg0f6LQ=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a h1:9ZKAASQSHhDYGoxY8uLVpewe1GDZ2vu2Tr/vTdVAkFQ=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
