@@ -3,7 +3,7 @@
 You can install Traefik with the following flavors:
 
 * [Use the official Docker image](./#use-the-official-docker-image)
-* [(Experimental) Use the Helm Chart](./#use-the-helm-chart)
+* [Use the Helm Chart](./#use-the-helm-chart)
 * [Use the binary distribution](./#use-the-binary-distribution)
 * [Compile your binary from the sources](./#compile-your-binary-from-the-sources)
 
