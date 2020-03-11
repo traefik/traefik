@@ -560,7 +560,7 @@ This whole section is dedicated to options, keyed by entry point, that will appl
           redirections:
             entryPoint:
               to: websecure
-              https: true
+              scheme: https
     
       websecure:
         address: :443
