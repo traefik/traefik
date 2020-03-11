@@ -27,7 +27,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 
 ## Use the Helm Chart
 
-!!! warning "Experimental Helm Chart"
+!!! warning
     
     The Traefik Chart from 
     [Helm's default charts repository](https://github.com/helm/charts/tree/master/stable/traefik) is still using [Traefik v1.7](https://docs.traefik.io/v1.7).
