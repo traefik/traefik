@@ -15,7 +15,6 @@
 * Michaël Matur [@mmatur](https://github.com/mmatur)
 * Gérald Croës [@geraldcroes](https://github.com/geraldcroes)
 * Jean-Baptiste Doumenjou [@jbdoumenjou](https://github.com/jbdoumenjou)
-* Damien Duportal [@dduportal](https://github.com/dduportal)
 * Mathieu Lonjaret [@mpl](https://github.com/mpl)
 
 ## Contributions Daily Meeting
