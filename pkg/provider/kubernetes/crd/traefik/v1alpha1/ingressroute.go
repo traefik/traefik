@@ -1,9 +1,6 @@
 package v1alpha1
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -80,30 +77,6 @@ type LoadBalancerSpec struct {
 	// Weight should only be specified when Name references a TraefikService object
 	// (and to be precise, one that embeds a Weighted Round Robin).
 	Weight *int `json:"weight,omitempty"`
-}
-
-// IsServersLB reports whether lb is a load-balancer of servers
-// (as opposed to a traefik load-balancer of services).
-func (lb LoadBalancerSpec) IsServersLB() (bool, error) {
-	if lb.Name == "" {
-		return false, errors.New("missing Name field in service")
-	}
-	if lb.Kind == "" || lb.Kind == "Service" {
-		return true, nil
-	}
-	if lb.Kind != "TraefikService" {
-		return false, fmt.Errorf("invalid kind value: %v", lb.Kind)
-	}
-	if lb.Port != 0 ||
-		lb.Scheme != "" ||
-		lb.HealthCheck != nil ||
-		lb.Strategy != "" ||
-		lb.PassHostHeader != nil ||
-		lb.ResponseForwarding != nil ||
-		lb.Sticky != nil {
-		return false, fmt.Errorf("service of kind %v is incompatible with Kubernetes Service related fields", lb.Kind)
-	}
-	return false, nil
 }
 
 // Service defines an upstream to proxy traffic.
