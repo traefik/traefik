@@ -67,7 +67,8 @@
         <div class="col-12">
           <div class="block-empty"></div>
           <div class="q-pb-lg block-empty-logo">
-            <img alt="empty" src="~assets/middlewares-empty.svg">
+            <img v-if="$q.dark.isActive" alt="empty" src="~assets/middlewares-empty-dark.svg">
+            <img v-else alt="empty" src="~assets/middlewares-empty.svg">
           </div>
           <div class="block-empty-label">There are no<br>TLS configured</div>
         </div>

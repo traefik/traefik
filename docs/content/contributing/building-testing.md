@@ -16,6 +16,8 @@ For changes to its dependencies, the `dep` dependency management tool is require
 Run make with the `binary` target.
 This will create binaries for the Linux platform in the `dist` folder.
 
+In case when you run build on CI, you may probably want to run docker in non-interactive mode. To achieve that define `DOCKER_NON_INTERACTIVE=true` environment variable.
+
 ```bash
 $ make binary
 docker build -t traefik-webui -f webui/Dockerfile webui
@@ -28,7 +30,7 @@ Successfully tagged traefik-webui:latest
 [...]
 docker build  -t "traefik-dev:4475--feature-documentation" -f build.Dockerfile .
 Sending build context to Docker daemon    279MB
-Step 1/10 : FROM golang:1.13-alpine
+Step 1/10 : FROM golang:1.14-alpine
  ---> f4bfb3d22bda
 [...]
 Successfully built 5c3c1a911277
@@ -60,9 +62,9 @@ PRE_TARGET= make test-unit
 
 Requirements:
 
-- `go` v1.13+
+- `go` v1.14+
 - environment variable `GO111MODULE=on`
-- go-bindata `GO111MODULE=off go get -u github.com/containous/go-bindata/...`
+- [go-bindata](https://github.com/containous/go-bindata) `GO111MODULE=off go get -u github.com/containous/go-bindata/...`
 
 !!! tip "Source Directory"
 
@@ -98,29 +100,31 @@ Requirements:
 #### Build Traefik
 
 Once you've set up your go environment and cloned the source repository, you can build Traefik.
-Beforehand, you need to get `go-bindata` (the first time) in order to be able to use the `go generate` command (which is part of the build process).
+
+Beforehand, you need to get [go-bindata](https://github.com/containous/go-bindata) (the first time) in order to be able to use the `go generate` command (which is part of the build process).
 
 ```bash
 cd ~/go/src/github.com/containous/traefik
 
 # Get go-bindata. (Important: the ellipses are required.)
 GO111MODULE=off go get github.com/containous/go-bindata/...
+```
 
-# Let's build
+```bash
+# Generate UI static files
+rm -rf static/ autogen/; make generate-webui
 
-# generate
-# (required to merge non-code components into the final binary, such as the web dashboard and the provider's templates)
+# required to merge non-code components into the final binary,
+# such as the web dashboard/UI
 go generate
+```
 
+```bash
 # Standard go build
 go build ./cmd/traefik
 ```
 
 You will find the Traefik executable (`traefik`) in the `~/go/src/github.com/containous/traefik` directory.
-
-### Updating the templates
-
-If you happen to update the provider's templates (located in `/templates`), you must run `go generate` to update the `autogen` package.
 
 ## Testing
 

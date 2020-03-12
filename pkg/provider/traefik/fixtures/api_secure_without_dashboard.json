@@ -1,7 +1,8 @@
 {
   "http": {
     "services": {
-      "api": {}
+      "api": {},
+      "noop": {}
     }
   },
   "tcp": {},

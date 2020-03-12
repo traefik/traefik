@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAggregator(t *testing.T) {
+func Test_mergeConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		given    dynamic.Configurations
@@ -21,6 +21,7 @@ func TestAggregator(t *testing.T) {
 				Routers:     make(map[string]*dynamic.Router),
 				Middlewares: make(map[string]*dynamic.Middleware),
 				Services:    make(map[string]*dynamic.Service),
+				Models:      make(map[string]*dynamic.Model),
 			},
 		},
 		{
@@ -42,7 +43,9 @@ func TestAggregator(t *testing.T) {
 			},
 			expected: &dynamic.HTTPConfiguration{
 				Routers: map[string]*dynamic.Router{
-					"router-1@provider-1": {},
+					"router-1@provider-1": {
+						EntryPoints: []string{"defaultEP"},
+					},
 				},
 				Middlewares: map[string]*dynamic.Middleware{
 					"middleware-1@provider-1": {},
@@ -50,6 +53,7 @@ func TestAggregator(t *testing.T) {
 				Services: map[string]*dynamic.Service{
 					"service-1@provider-1": {},
 				},
+				Models: make(map[string]*dynamic.Model),
 			},
 		},
 		{
@@ -84,8 +88,12 @@ func TestAggregator(t *testing.T) {
 			},
 			expected: &dynamic.HTTPConfiguration{
 				Routers: map[string]*dynamic.Router{
-					"router-1@provider-1": {},
-					"router-1@provider-2": {},
+					"router-1@provider-1": {
+						EntryPoints: []string{"defaultEP"},
+					},
+					"router-1@provider-2": {
+						EntryPoints: []string{"defaultEP"},
+					},
 				},
 				Middlewares: map[string]*dynamic.Middleware{
 					"middleware-1@provider-1": {},
@@ -95,6 +103,7 @@ func TestAggregator(t *testing.T) {
 					"service-1@provider-1": {},
 					"service-1@provider-2": {},
 				},
+				Models: make(map[string]*dynamic.Model),
 			},
 		},
 	}
@@ -104,13 +113,13 @@ func TestAggregator(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := mergeConfiguration(test.given)
+			actual := mergeConfiguration(test.given, []string{"defaultEP"})
 			assert.Equal(t, test.expected, actual.HTTP)
 		})
 	}
 }
 
-func TestAggregator_tlsoptions(t *testing.T) {
+func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		given    dynamic.Configurations
@@ -289,8 +298,294 @@ func TestAggregator_tlsoptions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := mergeConfiguration(test.given)
+			actual := mergeConfiguration(test.given, []string{"defaultEP"})
 			assert.Equal(t, test.expected, actual.TLS.Options)
+		})
+	}
+}
+
+func Test_mergeConfiguration_tlsStore(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		given    dynamic.Configurations
+		expected map[string]tls.Store
+	}{
+		{
+			desc: "Create a valid default tls store when appears only in one provider",
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
+						Stores: map[string]tls.Store{
+							"default": {
+								DefaultCertificate: &tls.Certificate{
+									CertFile: "foo",
+									KeyFile:  "bar",
+								},
+							},
+						},
+					},
+				},
+				"provider-2": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
+						Stores: map[string]tls.Store{
+							"foo": {
+								DefaultCertificate: &tls.Certificate{
+									CertFile: "foo",
+									KeyFile:  "bar",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]tls.Store{
+				"default": {
+					DefaultCertificate: &tls.Certificate{
+						CertFile: "foo",
+						KeyFile:  "bar",
+					},
+				},
+				"foo@provider-2": {
+					DefaultCertificate: &tls.Certificate{
+						CertFile: "foo",
+						KeyFile:  "bar",
+					},
+				},
+			},
+		},
+		{
+			desc: "Don't default tls store when appears two times",
+			given: dynamic.Configurations{
+				"provider-1": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
+						Stores: map[string]tls.Store{
+							"default": {
+								DefaultCertificate: &tls.Certificate{
+									CertFile: "foo",
+									KeyFile:  "bar",
+								},
+							},
+						},
+					},
+				},
+				"provider-2": &dynamic.Configuration{
+					TLS: &dynamic.TLSConfiguration{
+						Stores: map[string]tls.Store{
+							"default": {
+								DefaultCertificate: &tls.Certificate{
+									CertFile: "foo",
+									KeyFile:  "bar",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]tls.Store{},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := mergeConfiguration(test.given, []string{"defaultEP"})
+			assert.Equal(t, test.expected, actual.TLS.Stores)
+		})
+	}
+}
+
+func Test_applyModel(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		input    dynamic.Configuration
+		expected dynamic.Configuration
+	}{
+		{
+			desc:     "empty configuration",
+			input:    dynamic.Configuration{},
+			expected: dynamic.Configuration{},
+		},
+		{
+			desc: "without model",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     make(map[string]*dynamic.Router),
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models:      make(map[string]*dynamic.Model),
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     make(map[string]*dynamic.Router),
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models:      make(map[string]*dynamic.Model),
+				},
+			},
+		},
+		{
+			desc: "with model, not used",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     make(map[string]*dynamic.Router),
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"ep@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     make(map[string]*dynamic.Router),
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"ep@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "with model, one entry point",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"test": {
+							EntryPoints: []string{"websecure"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"test": {
+							EntryPoints: []string{"websecure"},
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "with model, one entry point, and router with tls",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"test": {
+							EntryPoints: []string{"websecure"},
+							TLS:         &dynamic.RouterTLSConfig{CertResolver: "router"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{CertResolver: "ep"},
+						},
+					},
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"test": {
+							EntryPoints: []string{"websecure"},
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{CertResolver: "router"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{CertResolver: "ep"},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "with model, two entry points",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"test": {
+							EntryPoints: []string{"websecure", "web"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"test": {
+							EntryPoints: []string{"web"},
+						},
+						"websecure-test": {
+							EntryPoints: []string{"websecure"},
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := applyModel(test.input)
+
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }

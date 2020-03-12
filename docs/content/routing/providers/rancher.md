@@ -230,6 +230,14 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     - "traefik.http.services.myservice.loadbalancer.healthcheck.timeout=10"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.followredirects`"
+    
+    See [health check](../services/index.md#health-check) for more information.
+    
+    ```yaml
+    - "traefik.http.services.myservice.loadbalancer.healthcheck.followredirects=true"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky`"
     
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
@@ -406,6 +414,54 @@ You can declare TCP Routers and/or Services using labels.
     
     ```yaml
     - "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100"
+    ```
+
+### UDP
+
+You can declare UDP Routers and/or Services using labels.
+
+??? example "Declaring UDP Routers and Services"
+
+    ```yaml
+       services:
+         my-container:
+           # ...
+           labels:
+             - "traefik.udp.routers.my-router.entrypoints=udp"
+             - "traefik.udp.services.my-service.loadbalancer.server.port=4123"
+    ```
+
+!!! warning "UDP and HTTP"
+
+    If you declare a UDP Router/Service, it will prevent Traefik from automatically creating an HTTP Router/Service (like it does by default if no UDP Router/Service is defined).
+    You can declare both a UDP Router/Service and an HTTP Router/Service for the same container (but you have to do so manually).
+
+#### UDP Routers
+
+??? info "`traefik.udp.routers.<router_name>.entrypoints`"
+    
+    See [entry points](../routers/index.md#entrypoints_2) for more information.
+    
+    ```yaml
+    - "traefik.udp.routers.myudprouter.entrypoints=ep1,ep2"
+    ```
+
+??? info "`traefik.udp.routers.<router_name>.service`"
+    
+    See [service](../routers/index.md#services_1) for more information.
+    
+    ```yaml
+    - "traefik.udp.routers.myudprouter.service=myservice"
+    ```
+
+#### UDP Services
+
+??? info "`traefik.udp.services.<service_name>.loadbalancer.server.port`"
+    
+    Registers a port of the application.
+    
+    ```yaml
+    - "traefik.udp.services.myudpservice.loadbalancer.server.port=423"
     ```
 
 ### Specific Provider Options

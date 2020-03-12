@@ -10,8 +10,22 @@ import (
 )
 
 var (
-	_ middlewares.Stateful = &captureResponseWriter{}
+	_ middlewares.Stateful = &captureResponseWriterWithCloseNotify{}
 )
+
+type capturer interface {
+	http.ResponseWriter
+	Size() int64
+	Status() int
+}
+
+func newCaptureResponseWriter(rw http.ResponseWriter) capturer {
+	capt := &captureResponseWriter{rw: rw}
+	if _, ok := rw.(http.CloseNotifier); !ok {
+		return capt
+	}
+	return &captureResponseWriterWithCloseNotify{capt}
+}
 
 // captureResponseWriter is a wrapper of type http.ResponseWriter
 // that tracks request status and size
@@ -19,6 +33,16 @@ type captureResponseWriter struct {
 	rw     http.ResponseWriter
 	status int
 	size   int64
+}
+
+type captureResponseWriterWithCloseNotify struct {
+	*captureResponseWriter
+}
+
+// CloseNotify returns a channel that receives at most a
+// single value (true) when the client connection has gone away.
+func (r *captureResponseWriterWithCloseNotify) CloseNotify() <-chan bool {
+	return r.rw.(http.CloseNotifier).CloseNotify()
 }
 
 func (crw *captureResponseWriter) Header() http.Header {
@@ -50,13 +74,6 @@ func (crw *captureResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 		return h.Hijack()
 	}
 	return nil, nil, fmt.Errorf("not a hijacker: %T", crw.rw)
-}
-
-func (crw *captureResponseWriter) CloseNotify() <-chan bool {
-	if c, ok := crw.rw.(http.CloseNotifier); ok {
-		return c.CloseNotify()
-	}
-	return nil
 }
 
 func (crw *captureResponseWriter) Status() int {

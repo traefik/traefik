@@ -47,6 +47,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service01/loadBalancer/healthCheck/headers/name0":                     "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/headers/name1":                     "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/scheme":                            "foobar",
+		"traefik/http/services/Service01/loadBalancer/healthCheck/followredirects":                   "true",
 		"traefik/http/services/Service01/loadBalancer/responseForwarding/flushInterval":              "foobar",
 		"traefik/http/services/Service01/loadBalancer/passHostHeader":                                "true",
 		"traefik/http/services/Service01/loadBalancer/sticky/cookie/name":                            "foobar",
@@ -55,6 +56,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service01/loadBalancer/servers/0/url":                                 "foobar",
 		"traefik/http/services/Service01/loadBalancer/servers/1/url":                                 "foobar",
 		"traefik/http/services/Service02/mirroring/service":                                          "foobar",
+		"traefik/http/services/Service02/mirroring/maxBodySize":                                      "42",
 		"traefik/http/services/Service02/mirroring/mirrors/0/name":                                   "foobar",
 		"traefik/http/services/Service02/mirroring/mirrors/0/percent":                                "42",
 		"traefik/http/services/Service02/mirroring/mirrors/1/name":                                   "foobar",
@@ -93,6 +95,8 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware09/headers/accessControlAllowHeaders/0":                  "foobar",
 		"traefik/http/middlewares/Middleware09/headers/accessControlAllowHeaders/1":                  "foobar",
 		"traefik/http/middlewares/Middleware09/headers/accessControlAllowOrigin":                     "foobar",
+		"traefik/http/middlewares/Middleware09/headers/accessControlAllowOriginList/0":               "foobar",
+		"traefik/http/middlewares/Middleware09/headers/accessControlAllowOriginList/1":               "foobar",
 		"traefik/http/middlewares/Middleware09/headers/contentTypeNosniff":                           "true",
 		"traefik/http/middlewares/Middleware09/headers/accessControlAllowCredentials":                "true",
 		"traefik/http/middlewares/Middleware09/headers/featurePolicy":                                "foobar",
@@ -166,6 +170,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware07/errors/service":                                       "foobar",
 		"traefik/http/middlewares/Middleware07/errors/query":                                         "foobar",
 		"traefik/http/middlewares/Middleware13/rateLimit/average":                                    "42",
+		"traefik/http/middlewares/Middleware13/rateLimit/period":                                     "1s",
 		"traefik/http/middlewares/Middleware13/rateLimit/burst":                                      "42",
 		"traefik/http/middlewares/Middleware13/rateLimit/sourceCriterion/requestHeaderName":          "foobar",
 		"traefik/http/middlewares/Middleware13/rateLimit/sourceCriterion/requestHost":                "true",
@@ -223,6 +228,16 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/tcp/services/TCPService02/weighted/services/0/weight":                               "42",
 		"traefik/tcp/services/TCPService02/weighted/services/1/name":                                 "foobar",
 		"traefik/tcp/services/TCPService02/weighted/services/1/weight":                               "43",
+		"traefik/udp/routers/UDPRouter0/entrypoints/0":                                               "foobar",
+		"traefik/udp/routers/UDPRouter0/entrypoints/1":                                               "foobar",
+		"traefik/udp/routers/UDPRouter0/service":                                                     "foobar",
+		"traefik/udp/routers/UDPRouter1/entrypoints/0":                                               "foobar",
+		"traefik/udp/routers/UDPRouter1/entrypoints/1":                                               "foobar",
+		"traefik/udp/routers/UDPRouter1/service":                                                     "foobar",
+		"traefik/udp/services/UDPService01/loadBalancer/servers/0/address":                           "foobar",
+		"traefik/udp/services/UDPService01/loadBalancer/servers/1/address":                           "foobar",
+		"traefik/udp/services/UDPService02/loadBalancer/servers/0/address":                           "foobar",
+		"traefik/udp/services/UDPService02/loadBalancer/servers/1/address":                           "foobar",
 		"traefik/tls/options/Options0/minVersion":                                                    "foobar",
 		"traefik/tls/options/Options0/maxVersion":                                                    "foobar",
 		"traefik/tls/options/Options0/cipherSuites/0":                                                "foobar",
@@ -331,6 +346,7 @@ func Test_buildConfiguration(t *testing.T) {
 					RateLimit: &dynamic.RateLimit{
 						Average: 42,
 						Burst:   42,
+						Period:  types.Duration(time.Second),
 						SourceCriterion: &dynamic.SourceCriterion{
 							IPStrategy: &dynamic.IPStrategy{
 								Depth: 42,
@@ -530,6 +546,10 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 						},
 						AccessControlAllowOrigin: "foobar",
+						AccessControlAllowOriginList: []string{
+							"foobar",
+							"foobar",
+						},
 						AccessControlExposeHeaders: []string{
 							"foobar",
 							"foobar",
@@ -596,12 +616,13 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 						HealthCheck: &dynamic.HealthCheck{
-							Scheme:   "foobar",
-							Path:     "foobar",
-							Port:     42,
-							Interval: "foobar",
-							Timeout:  "foobar",
-							Hostname: "foobar",
+							Scheme:          "foobar",
+							Path:            "foobar",
+							Port:            42,
+							Interval:        "foobar",
+							Timeout:         "foobar",
+							Hostname:        "foobar",
+							FollowRedirects: func(v bool) *bool { return &v }(true),
 							Headers: map[string]string{
 								"name0": "foobar",
 								"name1": "foobar",
@@ -615,7 +636,8 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				"Service02": {
 					Mirroring: &dynamic.Mirroring{
-						Service: "foobar",
+						Service:     "foobar",
+						MaxBodySize: func(v int64) *int64 { return &v }(42),
 						Mirrors: []dynamic.MirrorService{
 							{
 								Name:    "foobar",
@@ -738,6 +760,36 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 			},
 		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers: map[string]*dynamic.UDPRouter{
+				"UDPRouter0": {
+					EntryPoints: []string{"foobar", "foobar"},
+					Service:     "foobar",
+				},
+				"UDPRouter1": {
+					EntryPoints: []string{"foobar", "foobar"},
+					Service:     "foobar",
+				},
+			},
+			Services: map[string]*dynamic.UDPService{
+				"UDPService01": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
+							{Address: "foobar"},
+							{Address: "foobar"},
+						},
+					},
+				},
+				"UDPService02": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
+							{Address: "foobar"},
+							{Address: "foobar"},
+						},
+					},
+				},
+			},
+		},
 		TLS: &dynamic.TLSConfiguration{
 			Certificates: []*tls.CertAndStores{
 				{
@@ -855,7 +907,7 @@ func TestKvWatchTree(t *testing.T) {
 
 	configChan := make(chan dynamic.Message)
 	go func() {
-		err := provider.watchKv(context.Background(), configChan, "prefix", make(chan bool, 1))
+		err := provider.watchKv(context.Background(), configChan)
 		require.NoError(t, err)
 	}()
 

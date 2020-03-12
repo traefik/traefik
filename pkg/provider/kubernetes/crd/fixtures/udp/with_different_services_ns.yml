@@ -1,0 +1,30 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - services:
+    # without namespace
+    - name: whoamiudp
+      port: 8000
+      weight: 2
+    # with default namespace
+    - name: whoamiudp2
+      namespace: default
+      port: 8080
+      weight: 3
+    # with custom namespace
+    - name: whoamiudp3
+      namespace: ns3
+      port: 8083
+      weight: 4
+    # with unknown namespace
+    - name: whoamiudp
+      namespace: unknwonns
+      port: 8080

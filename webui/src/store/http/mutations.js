@@ -1,37 +1,33 @@
+import { withPagination } from '../../_helpers/Mutations'
+
 // ----------------------------
 // Get All Routers
 // ----------------------------
 export function getAllRoutersRequest (state) {
-  state.allRouters.loading = true
+  withPagination('request', { statePath: 'allRouters' })(state)
 }
 
 export function getAllRoutersSuccess (state, data) {
-  const { body, query = '', status = '', page } = data
+  const { query = '', status = '' } = data
   const currentState = state.allRouters
+  const { currentQuery = '', currentStatus = '' } = currentState
 
-  const isSameContext = currentState.currentQuery === query && currentState.currentStatus === status
+  const isSameContext = currentQuery === query && currentStatus === status
 
   state.allRouters = {
     ...state.allRouters,
-    items: [
-      ...(isSameContext && currentState.items && page !== 1 ? currentState.items : []),
-      ...(body.data || [])
-    ],
-    currentPage: page,
-    total: body.total,
-    loading: false,
     currentQuery: query,
     currentStatus: status
   }
+
+  withPagination('success', {
+    isSameContext,
+    statePath: 'allRouters'
+  })(state, data)
 }
 
 export function getAllRoutersFailure (state, error) {
-  state.allRouters = {
-    ...state.allRouters,
-    loading: false,
-    error,
-    endReached: error.message.includes('invalid request: page:')
-  }
+  withPagination('failure', { statePath: 'allRouters' })(state, error)
 }
 
 export function getAllRoutersClear (state) {
@@ -61,36 +57,29 @@ export function getRouterByNameClear (state) {
 // Get All Services
 // ----------------------------
 export function getAllServicesRequest (state) {
-  state.allServices.loading = true
+  withPagination('request', { statePath: 'allServices' })(state)
 }
 
 export function getAllServicesSuccess (state, data) {
-  const { body, query = '', status = '', page } = data
+  const { query = '', status = '' } = data
   const currentState = state.allServices
 
   const isSameContext = currentState.currentQuery === query && currentState.currentStatus === status
 
   state.allServices = {
     ...state.allServices,
-    items: [
-      ...(isSameContext && currentState.items && page !== 1 ? currentState.items : []),
-      ...(body.data || [])
-    ],
-    currentPage: page,
-    total: body.total,
-    loading: false,
     currentQuery: query,
     currentStatus: status
   }
+
+  withPagination('success', {
+    isSameContext,
+    statePath: 'allServices'
+  })(state, data)
 }
 
 export function getAllServicesFailure (state, error) {
-  state.allServices = {
-    ...state.allServices,
-    loading: false,
-    error,
-    endReached: error.message.includes('invalid request: page:')
-  }
+  withPagination('failure', { statePath: 'allServices' })(state, error)
 }
 
 export function getAllServicesClear (state) {
@@ -120,36 +109,29 @@ export function getServiceByNameClear (state) {
 // Get All Middlewares
 // ----------------------------
 export function getAllMiddlewaresRequest (state) {
-  state.allMiddlewares.loading = true
+  withPagination('request', { statePath: 'allMiddlewares' })(state)
 }
 
 export function getAllMiddlewaresSuccess (state, data) {
-  const { body, query = '', status = '', page } = data
+  const { query = '', status = '' } = data
   const currentState = state.allMiddlewares
 
   const isSameContext = currentState.currentQuery === query && currentState.currentStatus === status
 
   state.allMiddlewares = {
     ...state.allMiddlewares,
-    items: [
-      ...(isSameContext && currentState.items && page !== 1 ? currentState.items : []),
-      ...(body.data || [])
-    ],
-    currentPage: page,
-    total: body.total,
-    loading: false,
     currentQuery: query,
     currentStatus: status
   }
+
+  withPagination('success', {
+    isSameContext,
+    statePath: 'allMiddlewares'
+  })(state, data)
 }
 
 export function getAllMiddlewaresFailure (state, error) {
-  state.allMiddlewares = {
-    ...state.allMiddlewares,
-    loading: false,
-    error,
-    endReached: error.message.includes('invalid request: page:')
-  }
+  withPagination('failure', { statePath: 'allMiddlewares' })(state, error)
 }
 
 export function getAllMiddlewaresClear (state) {

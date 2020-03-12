@@ -158,6 +158,65 @@ const routes = [
         }
       }
     ]
+  },
+  {
+    path: '/udp',
+    redirect: '/udp/routers',
+    component: LayoutDefault,
+    children: [
+      {
+        path: 'routers',
+        name: 'udpRouters',
+        components: {
+          default: () => import('pages/udp/Routers.vue'),
+          NavBar: () => import('components/_commons/ToolBar.vue')
+        },
+        props: { default: true, NavBar: true },
+        meta: {
+          protocol: 'udp',
+          title: 'TCP Routers'
+        }
+      },
+      {
+        path: 'routers/:name',
+        name: 'udpRouterDetail',
+        components: {
+          default: () => import('pages/_commons/RouterDetail.vue'),
+          NavBar: () => import('components/_commons/ToolBar.vue')
+        },
+        props: { default: true, NavBar: true },
+        meta: {
+          protocol: 'udp',
+          title: 'TCP Router Detail'
+        }
+      },
+      {
+        path: 'services',
+        name: 'udpServices',
+        components: {
+          default: () => import('pages/udp/Services.vue'),
+          NavBar: () => import('components/_commons/ToolBar.vue')
+        },
+        props: { default: true, NavBar: true },
+        meta: {
+          protocol: 'udp',
+          title: 'TCP Services'
+        }
+      },
+      {
+        path: 'services/:name',
+        name: 'udpServiceDetail',
+        components: {
+          default: () => import('pages/_commons/ServiceDetail.vue'),
+          NavBar: () => import('components/_commons/ToolBar.vue')
+        },
+        props: { default: true, NavBar: true },
+        meta: {
+          protocol: 'udp',
+          title: 'TCP Service Detail'
+        }
+      }
+    ]
   }
 ]
 

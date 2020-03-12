@@ -56,6 +56,7 @@
           interval = "foobar"
           timeout = "foobar"
           hostname = "foobar"
+          followRedirects = true
           [http.services.Service01.loadBalancer.healthCheck.headers]
             name0 = "foobar"
             name1 = "foobar"
@@ -64,6 +65,7 @@
     [http.services.Service02]
       [http.services.Service02.mirroring]
         service = "foobar"
+        maxBodySize = 42
 
         [[http.services.Service02.mirroring.mirrors]]
           name = "foobar"
@@ -113,35 +115,40 @@
         expression = "foobar"
     [http.middlewares.Middleware05]
       [http.middlewares.Middleware05.compress]
+        excludedContentTypes = ["foobar", "foobar"]
     [http.middlewares.Middleware06]
-      [http.middlewares.Middleware06.digestAuth]
+      [http.middlewares.Middleware06.contentType]
+        autoDetect = true
+    [http.middlewares.Middleware07]
+      [http.middlewares.Middleware07.digestAuth]
         users = ["foobar", "foobar"]
         usersFile = "foobar"
         removeHeader = true
         realm = "foobar"
         headerField = "foobar"
-    [http.middlewares.Middleware07]
-      [http.middlewares.Middleware07.errors]
+    [http.middlewares.Middleware08]
+      [http.middlewares.Middleware08.errors]
         status = ["foobar", "foobar"]
         service = "foobar"
         query = "foobar"
-    [http.middlewares.Middleware08]
-      [http.middlewares.Middleware08.forwardAuth]
+    [http.middlewares.Middleware09]
+      [http.middlewares.Middleware09.forwardAuth]
         address = "foobar"
         trustForwardHeader = true
         authResponseHeaders = ["foobar", "foobar"]
-        [http.middlewares.Middleware08.forwardAuth.tls]
+        [http.middlewares.Middleware09.forwardAuth.tls]
           ca = "foobar"
           caOptional = true
           cert = "foobar"
           key = "foobar"
           insecureSkipVerify = true
-    [http.middlewares.Middleware09]
-      [http.middlewares.Middleware09.headers]
+    [http.middlewares.Middleware10]
+      [http.middlewares.Middleware10.headers]
         accessControlAllowCredentials = true
         accessControlAllowHeaders = ["foobar", "foobar"]
         accessControlAllowMethods = ["foobar", "foobar"]
         accessControlAllowOrigin = "foobar"
+        accessControlAllowOriginList = ["foobar", "foobar"]
         accessControlExposeHeaders = ["foobar", "foobar"]
         accessControlMaxAge = 42
         addVaryHeader = true
@@ -165,38 +172,39 @@
         referrerPolicy = "foobar"
         featurePolicy = "foobar"
         isDevelopment = true
-        [http.middlewares.Middleware09.headers.customRequestHeaders]
+        [http.middlewares.Middleware10.headers.customRequestHeaders]
           name0 = "foobar"
           name1 = "foobar"
-        [http.middlewares.Middleware09.headers.customResponseHeaders]
+        [http.middlewares.Middleware10.headers.customResponseHeaders]
           name0 = "foobar"
           name1 = "foobar"
-        [http.middlewares.Middleware09.headers.sslProxyHeaders]
+        [http.middlewares.Middleware10.headers.sslProxyHeaders]
           name0 = "foobar"
           name1 = "foobar"
-    [http.middlewares.Middleware10]
-      [http.middlewares.Middleware10.ipWhiteList]
+    [http.middlewares.Middleware11]
+      [http.middlewares.Middleware11.ipWhiteList]
         sourceRange = ["foobar", "foobar"]
-        [http.middlewares.Middleware10.ipWhiteList.ipStrategy]
+        [http.middlewares.Middleware11.ipWhiteList.ipStrategy]
           depth = 42
           excludedIPs = ["foobar", "foobar"]
-    [http.middlewares.Middleware11]
-      [http.middlewares.Middleware11.inFlightReq]
+    [http.middlewares.Middleware12]
+      [http.middlewares.Middleware12.inFlightReq]
         amount = 42
-        [http.middlewares.Middleware11.inFlightReq.sourceCriterion]
+        [http.middlewares.Middleware12.inFlightReq.sourceCriterion]
           requestHeaderName = "foobar"
           requestHost = true
-          [http.middlewares.Middleware11.inFlightReq.sourceCriterion.ipStrategy]
+          [http.middlewares.Middleware12.inFlightReq.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
-    [http.middlewares.Middleware12]
-      [http.middlewares.Middleware12.passTLSClientCert]
+    [http.middlewares.Middleware13]
+      [http.middlewares.Middleware13.passTLSClientCert]
         pem = true
-        [http.middlewares.Middleware12.passTLSClientCert.info]
+        [http.middlewares.Middleware13.passTLSClientCert.info]
           notAfter = true
           notBefore = true
           sans = true
-          [http.middlewares.Middleware12.passTLSClientCert.info.subject]
+          serialNumber = true
+          [http.middlewares.Middleware13.passTLSClientCert.info.subject]
             country = true
             province = true
             locality = true
@@ -204,7 +212,7 @@
             commonName = true
             serialNumber = true
             domainComponent = true
-          [http.middlewares.Middleware12.passTLSClientCert.info.issuer]
+          [http.middlewares.Middleware13.passTLSClientCert.info.issuer]
             country = true
             province = true
             locality = true
@@ -212,42 +220,43 @@
             commonName = true
             serialNumber = true
             domainComponent = true
-    [http.middlewares.Middleware13]
-      [http.middlewares.Middleware13.rateLimit]
+    [http.middlewares.Middleware14]
+      [http.middlewares.Middleware14.rateLimit]
         average = 42
+        period = 42
         burst = 42
-        [http.middlewares.Middleware13.rateLimit.sourceCriterion]
+        [http.middlewares.Middleware14.rateLimit.sourceCriterion]
           requestHeaderName = "foobar"
           requestHost = true
-          [http.middlewares.Middleware13.rateLimit.sourceCriterion.ipStrategy]
+          [http.middlewares.Middleware14.rateLimit.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
-    [http.middlewares.Middleware14]
-      [http.middlewares.Middleware14.redirectRegex]
+    [http.middlewares.Middleware15]
+      [http.middlewares.Middleware15.redirectRegex]
         regex = "foobar"
         replacement = "foobar"
         permanent = true
-    [http.middlewares.Middleware15]
-      [http.middlewares.Middleware15.redirectScheme]
+    [http.middlewares.Middleware16]
+      [http.middlewares.Middleware16.redirectScheme]
         scheme = "foobar"
         port = "foobar"
         permanent = true
-    [http.middlewares.Middleware16]
-      [http.middlewares.Middleware16.replacePath]
-        path = "foobar"
     [http.middlewares.Middleware17]
-      [http.middlewares.Middleware17.replacePathRegex]
+      [http.middlewares.Middleware17.replacePath]
+        path = "foobar"
+    [http.middlewares.Middleware18]
+      [http.middlewares.Middleware18.replacePathRegex]
         regex = "foobar"
         replacement = "foobar"
-    [http.middlewares.Middleware18]
-      [http.middlewares.Middleware18.retry]
-        attempts = 42
     [http.middlewares.Middleware19]
-      [http.middlewares.Middleware19.stripPrefix]
+      [http.middlewares.Middleware19.retry]
+        attempts = 42
+    [http.middlewares.Middleware20]
+      [http.middlewares.Middleware20.stripPrefix]
         prefixes = ["foobar", "foobar"]
         forceSlash = true
-    [http.middlewares.Middleware20]
-      [http.middlewares.Middleware20.stripPrefixRegex]
+    [http.middlewares.Middleware21]
+      [http.middlewares.Middleware21.stripPrefixRegex]
         regex = ["foobar", "foobar"]
 
 [tcp]
@@ -305,6 +314,34 @@
           name = "foobar"
           weight = 42
 
+[udp]
+  [udp.routers]
+    [udp.routers.UDPRouter0]
+      entryPoints = ["foobar", "foobar"]
+      service = "foobar"
+    [udp.routers.UDPRouter1]
+      entryPoints = ["foobar", "foobar"]
+      service = "foobar"
+  [udp.services]
+    [udp.services.UDPService01]
+      [udp.services.UDPService01.loadBalancer]
+
+        [[udp.services.UDPService01.loadBalancer.servers]]
+          address = "foobar"
+
+        [[udp.services.UDPService01.loadBalancer.servers]]
+          address = "foobar"
+    [udp.services.UDPService02]
+      [udp.services.UDPService02.weighted]
+
+        [[udp.services.UDPService02.weighted.services]]
+          name = "foobar"
+          weight = 42
+
+        [[udp.services.UDPService02.weighted.services]]
+          name = "foobar"
+          weight = 42
+
 [tls]
 
   [[tls.certificates]]
@@ -321,8 +358,9 @@
       minVersion = "foobar"
       maxVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
-      sniStrict = true
       curvePreferences = ["foobar", "foobar"]
+      sniStrict = true
+      preferServerCipherSuites = true
       [tls.options.Options0.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"
@@ -330,8 +368,9 @@
       minVersion = "foobar"
       maxVersion = "foobar"
       cipherSuites = ["foobar", "foobar"]
-      sniStrict = true
       curvePreferences = ["foobar", "foobar"]
+      sniStrict = true
+      preferServerCipherSuites = true
       [tls.options.Options1.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"

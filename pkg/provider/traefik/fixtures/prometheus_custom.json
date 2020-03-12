@@ -1,6 +1,7 @@
 {
   "http": {
     "services": {
+      "noop": {},
       "prometheus": {}
     }
   },

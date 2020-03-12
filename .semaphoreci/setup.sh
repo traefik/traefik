@@ -18,9 +18,9 @@ echo ${SHOULD_TEST}
 #if [ -n "$SHOULD_TEST" ]; then sudo -E apt-get -yq update; fi
 #if [ -n "$SHOULD_TEST" ]; then sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-ce=${DOCKER_VERSION}*; fi
 if [ -n "$SHOULD_TEST" ]; then docker version; fi
-export GO_VERSION=1.12
+export GO_VERSION=1.13
 if [ -f "./go.mod" ]; then GO_VERSION="$(grep '^go .*' go.mod | awk '{print $2}')"; export GO_VERSION; fi
-#if [ "${GO_VERSION}" == '1.13' ]; then export GO_VERSION=1.13rc2; fi
+#if [ "${GO_VERSION}" == '1.14' ]; then export GO_VERSION=1.14rc2; fi
 echo "Selected Go version: ${GO_VERSION}"
 
 if [ -f "./.semaphoreci/golang.sh" ]; then ./.semaphoreci/golang.sh; fi

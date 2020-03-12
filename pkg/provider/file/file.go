@@ -103,11 +103,11 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 	}
 
 	// Process events
-	pool.Go(func(stop chan bool) {
+	pool.GoCtx(func(ctx context.Context) {
 		defer watcher.Close()
 		for {
 			select {
-			case <-stop:
+			case <-ctx.Done():
 				return
 			case evt := <-watcher.Events:
 				if p.Directory == "" {
@@ -219,6 +219,10 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				Stores:  make(map[string]tls.Store),
 				Options: make(map[string]tls.Options),
 			},
+			UDP: &dynamic.UDPConfiguration{
+				Routers:  make(map[string]*dynamic.UDPRouter),
+				Services: make(map[string]*dynamic.UDPService),
+			},
 		}
 	}
 
@@ -285,6 +289,22 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				logger.WithField(log.ServiceName, name).Warn("TCP service already configured, skipping")
 			} else {
 				configuration.TCP.Services[name] = conf
+			}
+		}
+
+		for name, conf := range c.UDP.Routers {
+			if _, exists := configuration.UDP.Routers[name]; exists {
+				logger.WithField(log.RouterName, name).Warn("UDP router already configured, skipping")
+			} else {
+				configuration.UDP.Routers[name] = conf
+			}
+		}
+
+		for name, conf := range c.UDP.Services {
+			if _, exists := configuration.UDP.Services[name]; exists {
+				logger.WithField(log.ServiceName, name).Warn("UDP service already configured, skipping")
+			} else {
+				configuration.UDP.Services[name] = conf
 			}
 		}
 
@@ -391,6 +411,10 @@ func (p *Provider) decodeConfiguration(filePath string, content string) (*dynami
 		TLS: &dynamic.TLSConfiguration{
 			Stores:  make(map[string]tls.Store),
 			Options: make(map[string]tls.Options),
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  make(map[string]*dynamic.UDPRouter),
+			Services: make(map[string]*dynamic.UDPService),
 		},
 	}
 

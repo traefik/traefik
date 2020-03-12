@@ -32,6 +32,26 @@ entryPoints:
       trustedIPs:
       - foobar
       - foobar
+    http:
+      redirections:
+        entryPoint:
+          to: foobar
+          scheme: foobar
+      middlewares:
+      - foobar
+      - foobar
+      tls:
+        options: foobar
+        certResolver: foobar
+        domains:
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
+        - main: foobar
+          sans:
+          - foobar
+          - foobar
 providers:
   providersThrottleDuration: 42
   docker:
@@ -88,7 +108,7 @@ providers:
     - foobar
     labelSelector: foobar
     ingressClass: foobar
-    throttleDuration: 10s
+    throttleDuration: 42s
     ingressEndpoint:
       ip: foobar
       hostname: foobar
@@ -117,30 +137,33 @@ providers:
     prefix: foobar
   consulCatalog:
     constraints: foobar
-    prefix: traefik
-    defaultRule: foobar
-    exposedByDefault: true
-    refreshInterval: 15
+    prefix: foobar
+    refreshInterval: 42s
     requireConsistent: true
     stale: true
     cache: true
+    exposedByDefault: true
+    defaultRule: foobar
     endpoint:
       address: foobar
       scheme: foobar
       datacenter: foobar
       token: foobar
-      endpointWaitTime: 15s
+      endpointWaitTime: 42s
       tls:
         ca: foobar
         caOptional: true
         cert: foobar
         key: foobar
         insecureSkipVerify: true
+      httpAuth:
+        username: foobar
+        password: foobar
   consul:
     rootKey: traefik
     endpoints:
-      - foobar
-      - foobar
+    - foobar
+    - foobar
     username: foobar
     password: foobar
     tls:
@@ -152,8 +175,8 @@ providers:
   etcd:
     rootKey: traefik
     endpoints:
-      - foobar
-      - foobar
+    - foobar
+    - foobar
     username: foobar
     password: foobar
     tls:
@@ -211,7 +234,7 @@ metrics:
     pushInterval: 42
     addEntryPointsLabels: true
     addServicesLabels: true
-    prefix: traefik
+    prefix: foobar
   influxDB:
     address: foobar
     protocol: foobar

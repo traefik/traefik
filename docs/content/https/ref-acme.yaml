@@ -1,5 +1,5 @@
 certificatesResolvers:
-  sample:
+  myresolver:
     # Enable ACME (Let's Encrypt): automatic SSL.
     acme:
 

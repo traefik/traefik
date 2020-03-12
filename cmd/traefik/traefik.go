@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -69,10 +70,10 @@ Complete documentation is available at https://traefik.io`,
 	err = cli.Execute(cmdTraefik)
 	if err != nil {
 		stdlog.Println(err)
-		os.Exit(1)
+		logrus.Exit(1)
 	}
 
-	os.Exit(0)
+	logrus.Exit(0)
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
@@ -156,7 +157,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	svr.Wait()
 	log.WithoutContext().Info("Shutting down")
-	logrus.Exit(0)
 	return nil
 }
 
@@ -173,7 +173,12 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager)
 
-	serverEntryPointsTCP, err := server.NewTCPEntryPoints(*staticConfiguration)
+	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints)
+	if err != nil {
+		return nil, err
+	}
+
+	serverEntryPointsUDP, err := server.NewUDPEntryPoints(staticConfiguration.EntryPoints)
 	if err != nil {
 		return nil, err
 	}
@@ -185,9 +190,29 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry)
-	tcpRouterFactory := server.NewTCPRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder)
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder)
 
-	watcher := server.NewConfigurationWatcher(routinesPool, providerAggregator, time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration))
+	var defaultEntryPoints []string
+	for name, cfg := range staticConfiguration.EntryPoints {
+		protocol, err := cfg.GetProtocol()
+		if err != nil {
+			// Should never happen because Traefik should not start if protocol is invalid.
+			log.WithoutContext().Errorf("Invalid protocol: %v", err)
+		}
+
+		if protocol != "udp" {
+			defaultEntryPoints = append(defaultEntryPoints, name)
+		}
+	}
+
+	sort.Strings(defaultEntryPoints)
+
+	watcher := server.NewConfigurationWatcher(
+		routinesPool,
+		providerAggregator,
+		time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration),
+		defaultEntryPoints,
+	)
 
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		ctx := context.Background()
@@ -199,7 +224,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 	})
 
-	watcher.AddListener(switchRouter(tcpRouterFactory, acmeProviders, serverEntryPointsTCP))
+	watcher.AddListener(switchRouter(routerFactory, acmeProviders, serverEntryPointsTCP, serverEntryPointsUDP))
 
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		if metricsRegistry.IsEpEnabled() || metricsRegistry.IsSvcEnabled() {
@@ -230,12 +255,12 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	})
 
-	return server.NewServer(routinesPool, serverEntryPointsTCP, watcher, chainBuilder, accessLog), nil
+	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, chainBuilder, accessLog), nil
 }
 
-func switchRouter(tcpRouterFactory *server.TCPRouterFactory, acmeProviders []*acme.Provider, serverEntryPointsTCP server.TCPEntryPoints) func(conf dynamic.Configuration) {
+func switchRouter(routerFactory *server.RouterFactory, acmeProviders []*acme.Provider, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints) func(conf dynamic.Configuration) {
 	return func(conf dynamic.Configuration) {
-		routers := tcpRouterFactory.CreateTCPRouters(conf)
+		routers, udpRouters := routerFactory.CreateRouters(conf)
 		for entryPointName, rt := range routers {
 			for _, p := range acmeProviders {
 				if p != nil && p.HTTPChallenge != nil && p.HTTPChallenge.EntryPoint == entryPointName {
@@ -245,6 +270,7 @@ func switchRouter(tcpRouterFactory *server.TCPRouterFactory, acmeProviders []*ac
 			}
 		}
 		serverEntryPointsTCP.Switch(routers)
+		serverEntryPointsUDP.Switch(udpRouters)
 	}
 }
 
@@ -268,14 +294,18 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 			}
 
 			if err := providerAggregator.AddProvider(p); err != nil {
-				log.WithoutContext().Errorf("Unable to add ACME provider to the providers list: %v", err)
+				log.WithoutContext().Errorf("The ACME resolver %q is skipped from the resolvers list because: %v", name, err)
 				continue
 			}
+
 			p.SetTLSManager(tlsManager)
+
 			if p.TLSChallenge != nil {
 				tlsManager.TLSAlpnGetter = p.GetTLSALPNCertificate
 			}
+
 			p.SetConfigListenerChan(make(chan dynamic.Configuration))
+
 			resolvers = append(resolvers, p)
 		}
 	}
@@ -405,13 +435,13 @@ func stats(staticConfiguration *static.Configuration) {
 		logger.Info(`Stats collection is enabled.`)
 		logger.Info(`Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.`)
 		logger.Info(`Help us improve Traefik by leaving this feature on :)`)
-		logger.Info(`More details on: https://docs.traefik.io/v2.0/contributing/data-collection/`)
+		logger.Info(`More details on: https://docs.traefik.io/contributing/data-collection/`)
 		collect(staticConfiguration)
 	} else {
 		logger.Info(`
 Stats collection is disabled.
 Help us improve Traefik by turning this feature on :)
-More details on: https://docs.traefik.io/v2.0/contributing/data-collection/
+More details on: https://docs.traefik.io/contributing/data-collection/
 `)
 	}
 }

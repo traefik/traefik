@@ -1,18 +1,79 @@
 package static
 
+import (
+	"fmt"
+	"strings"
+
+	"github.com/containous/traefik/v2/pkg/types"
+)
+
 // EntryPoint holds the entry point configuration.
 type EntryPoint struct {
 	Address          string                `description:"Entry point address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
 	Transport        *EntryPointsTransport `description:"Configures communication between clients and Traefik." json:"transport,omitempty" toml:"transport,omitempty" yaml:"transport,omitempty"`
 	ProxyProtocol    *ProxyProtocol        `description:"Proxy-Protocol configuration." json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty"`
 	ForwardedHeaders *ForwardedHeaders     `description:"Trust client forwarding headers." json:"forwardedHeaders,omitempty" toml:"forwardedHeaders,omitempty" yaml:"forwardedHeaders,omitempty"`
+	HTTP             HTTPConfig            `description:"HTTP configuration." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty"`
+}
+
+// GetAddress strips any potential protocol part of the address field of the
+// entry point, in order to return the actual address.
+func (ep EntryPoint) GetAddress() string {
+	splitN := strings.SplitN(ep.Address, "/", 2)
+	return splitN[0]
+}
+
+// GetProtocol returns the protocol part of the address field of the entry point.
+// If none is specified, it defaults to "tcp".
+func (ep EntryPoint) GetProtocol() (string, error) {
+	splitN := strings.SplitN(ep.Address, "/", 2)
+	if len(splitN) < 2 {
+		return "tcp", nil
+	}
+
+	protocol := strings.ToLower(splitN[1])
+	if protocol == "tcp" || protocol == "udp" {
+		return protocol, nil
+	}
+
+	return "", fmt.Errorf("invalid protocol: %s", splitN[1])
 }
 
 // SetDefaults sets the default values.
-func (e *EntryPoint) SetDefaults() {
-	e.Transport = &EntryPointsTransport{}
-	e.Transport.SetDefaults()
-	e.ForwardedHeaders = &ForwardedHeaders{}
+func (ep *EntryPoint) SetDefaults() {
+	ep.Transport = &EntryPointsTransport{}
+	ep.Transport.SetDefaults()
+	ep.ForwardedHeaders = &ForwardedHeaders{}
+}
+
+// HTTPConfig is the HTTP configuration of an entry point.
+type HTTPConfig struct {
+	Redirections *Redirections `description:"Set of redirection" json:"redirections,omitempty" toml:"redirections,omitempty" yaml:"redirections,omitempty"`
+	Middlewares  []string      `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty"`
+	TLS          *TLSConfig    `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
+}
+
+// Redirections is a set of redirection for an entry point.
+type Redirections struct {
+	EntryPoint *RedirectEntryPoint `description:"Set of redirection for an entry point." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
+}
+
+// RedirectEntryPoint is the definition of an entry point redirection.
+type RedirectEntryPoint struct {
+	To     string `description:"Targeted entry point of the redirection." json:"to,omitempty" toml:"to,omitempty" yaml:"to,omitempty"`
+	Scheme string `description:"Scheme used for the redirection. Defaults to https." json:"https,omitempty" toml:"https,omitempty" yaml:"https,omitempty"`
+}
+
+// SetDefaults sets the default values.
+func (r *RedirectEntryPoint) SetDefaults() {
+	r.Scheme = "https"
+}
+
+// TLSConfig is the default TLS configuration for all the routers associated to the concerned entry point.
+type TLSConfig struct {
+	Options      string         `description:"Default TLS options for the routers linked to the entry point." json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
+	CertResolver string         `description:"Default certificate resolver for the routers linked to the entry point." json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty"`
+	Domains      []types.Domain `description:"Default TLS domains for the routers linked to the entry point." json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty"`
 }
 
 // ForwardedHeaders Trust client forwarding headers.

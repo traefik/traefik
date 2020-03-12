@@ -28,7 +28,7 @@
 [http.middlewares]
   [http.middlewares.cors.headers]
     accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
-    accessControlAllowOrigin = "origin-list-or-null"
+    accessControlAllowOriginList = ["https://foo.bar.org"]
     accessControlMaxAge = 100
     addVaryHeader = true
 

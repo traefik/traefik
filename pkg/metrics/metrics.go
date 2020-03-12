@@ -1,6 +1,9 @@
 package metrics
 
 import (
+	"errors"
+	"time"
+
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/multi"
 )
@@ -20,12 +23,14 @@ type Registry interface {
 
 	// entry point metrics
 	EntryPointReqsCounter() metrics.Counter
-	EntryPointReqDurationHistogram() metrics.Histogram
+	EntryPointReqsTLSCounter() metrics.Counter
+	EntryPointReqDurationHistogram() ScalableHistogram
 	EntryPointOpenConnsGauge() metrics.Gauge
 
 	// service metrics
 	ServiceReqsCounter() metrics.Counter
-	ServiceReqDurationHistogram() metrics.Histogram
+	ServiceReqsTLSCounter() metrics.Counter
+	ServiceReqDurationHistogram() ScalableHistogram
 	ServiceOpenConnsGauge() metrics.Gauge
 	ServiceRetriesCounter() metrics.Counter
 	ServiceServerUpGauge() metrics.Gauge
@@ -46,10 +51,12 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var lastConfigReloadSuccessGauge []metrics.Gauge
 	var lastConfigReloadFailureGauge []metrics.Gauge
 	var entryPointReqsCounter []metrics.Counter
-	var entryPointReqDurationHistogram []metrics.Histogram
+	var entryPointReqsTLSCounter []metrics.Counter
+	var entryPointReqDurationHistogram []ScalableHistogram
 	var entryPointOpenConnsGauge []metrics.Gauge
 	var serviceReqsCounter []metrics.Counter
-	var serviceReqDurationHistogram []metrics.Histogram
+	var serviceReqsTLSCounter []metrics.Counter
+	var serviceReqDurationHistogram []ScalableHistogram
 	var serviceOpenConnsGauge []metrics.Gauge
 	var serviceRetriesCounter []metrics.Counter
 	var serviceServerUpGauge []metrics.Gauge
@@ -70,6 +77,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.EntryPointReqsCounter() != nil {
 			entryPointReqsCounter = append(entryPointReqsCounter, r.EntryPointReqsCounter())
 		}
+		if r.EntryPointReqsTLSCounter() != nil {
+			entryPointReqsTLSCounter = append(entryPointReqsTLSCounter, r.EntryPointReqsTLSCounter())
+		}
 		if r.EntryPointReqDurationHistogram() != nil {
 			entryPointReqDurationHistogram = append(entryPointReqDurationHistogram, r.EntryPointReqDurationHistogram())
 		}
@@ -78,6 +88,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 		}
 		if r.ServiceReqsCounter() != nil {
 			serviceReqsCounter = append(serviceReqsCounter, r.ServiceReqsCounter())
+		}
+		if r.ServiceReqsTLSCounter() != nil {
+			serviceReqsTLSCounter = append(serviceReqsTLSCounter, r.ServiceReqsTLSCounter())
 		}
 		if r.ServiceReqDurationHistogram() != nil {
 			serviceReqDurationHistogram = append(serviceReqDurationHistogram, r.ServiceReqDurationHistogram())
@@ -101,10 +114,12 @@ func NewMultiRegistry(registries []Registry) Registry {
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		lastConfigReloadFailureGauge:   multi.NewGauge(lastConfigReloadFailureGauge...),
 		entryPointReqsCounter:          multi.NewCounter(entryPointReqsCounter...),
-		entryPointReqDurationHistogram: multi.NewHistogram(entryPointReqDurationHistogram...),
+		entryPointReqsTLSCounter:       multi.NewCounter(entryPointReqsTLSCounter...),
+		entryPointReqDurationHistogram: NewMultiHistogram(entryPointReqDurationHistogram...),
 		entryPointOpenConnsGauge:       multi.NewGauge(entryPointOpenConnsGauge...),
 		serviceReqsCounter:             multi.NewCounter(serviceReqsCounter...),
-		serviceReqDurationHistogram:    multi.NewHistogram(serviceReqDurationHistogram...),
+		serviceReqsTLSCounter:          multi.NewCounter(serviceReqsTLSCounter...),
+		serviceReqDurationHistogram:    NewMultiHistogram(serviceReqDurationHistogram...),
 		serviceOpenConnsGauge:          multi.NewGauge(serviceOpenConnsGauge...),
 		serviceRetriesCounter:          multi.NewCounter(serviceRetriesCounter...),
 		serviceServerUpGauge:           multi.NewGauge(serviceServerUpGauge...),
@@ -119,10 +134,12 @@ type standardRegistry struct {
 	lastConfigReloadSuccessGauge   metrics.Gauge
 	lastConfigReloadFailureGauge   metrics.Gauge
 	entryPointReqsCounter          metrics.Counter
-	entryPointReqDurationHistogram metrics.Histogram
+	entryPointReqsTLSCounter       metrics.Counter
+	entryPointReqDurationHistogram ScalableHistogram
 	entryPointOpenConnsGauge       metrics.Gauge
 	serviceReqsCounter             metrics.Counter
-	serviceReqDurationHistogram    metrics.Histogram
+	serviceReqsTLSCounter          metrics.Counter
+	serviceReqDurationHistogram    ScalableHistogram
 	serviceOpenConnsGauge          metrics.Gauge
 	serviceRetriesCounter          metrics.Counter
 	serviceServerUpGauge           metrics.Gauge
@@ -156,7 +173,11 @@ func (r *standardRegistry) EntryPointReqsCounter() metrics.Counter {
 	return r.entryPointReqsCounter
 }
 
-func (r *standardRegistry) EntryPointReqDurationHistogram() metrics.Histogram {
+func (r *standardRegistry) EntryPointReqsTLSCounter() metrics.Counter {
+	return r.entryPointReqsTLSCounter
+}
+
+func (r *standardRegistry) EntryPointReqDurationHistogram() ScalableHistogram {
 	return r.entryPointReqDurationHistogram
 }
 
@@ -168,7 +189,11 @@ func (r *standardRegistry) ServiceReqsCounter() metrics.Counter {
 	return r.serviceReqsCounter
 }
 
-func (r *standardRegistry) ServiceReqDurationHistogram() metrics.Histogram {
+func (r *standardRegistry) ServiceReqsTLSCounter() metrics.Counter {
+	return r.serviceReqsTLSCounter
+}
+
+func (r *standardRegistry) ServiceReqDurationHistogram() ScalableHistogram {
 	return r.serviceReqDurationHistogram
 }
 
@@ -182,4 +207,98 @@ func (r *standardRegistry) ServiceRetriesCounter() metrics.Counter {
 
 func (r *standardRegistry) ServiceServerUpGauge() metrics.Gauge {
 	return r.serviceServerUpGauge
+}
+
+// ScalableHistogram is a Histogram with a predefined time unit,
+// used when producing observations without explicitly setting the observed value.
+type ScalableHistogram interface {
+	With(labelValues ...string) ScalableHistogram
+	StartAt(t time.Time)
+	Observe(v float64)
+	ObserveDuration()
+}
+
+// HistogramWithScale is a histogram that will convert its observed value to the specified unit.
+type HistogramWithScale struct {
+	histogram metrics.Histogram
+	unit      time.Duration
+	start     time.Time
+}
+
+// With implements ScalableHistogram.
+func (s *HistogramWithScale) With(labelValues ...string) ScalableHistogram {
+	s.histogram = s.histogram.With(labelValues...)
+	return s
+}
+
+// StartAt implements ScalableHistogram.
+func (s *HistogramWithScale) StartAt(t time.Time) {
+	s.start = t
+}
+
+// ObserveDuration implements ScalableHistogram.
+func (s *HistogramWithScale) ObserveDuration() {
+	if s.unit <= 0 {
+		return
+	}
+
+	d := float64(time.Since(s.start).Nanoseconds()) / float64(s.unit)
+	if d < 0 {
+		d = 0
+	}
+	s.histogram.Observe(d)
+}
+
+// Observe implements ScalableHistogram.
+func (s *HistogramWithScale) Observe(v float64) {
+	s.histogram.Observe(v)
+}
+
+// NewHistogramWithScale returns a ScalableHistogram. It returns an error if the given unit is <= 0.
+func NewHistogramWithScale(histogram metrics.Histogram, unit time.Duration) (ScalableHistogram, error) {
+	if unit <= 0 {
+		return nil, errors.New("invalid time unit")
+	}
+	return &HistogramWithScale{
+		histogram: histogram,
+		unit:      unit,
+	}, nil
+}
+
+// MultiHistogram collects multiple individual histograms and treats them as a unit.
+type MultiHistogram []ScalableHistogram
+
+// NewMultiHistogram returns a multi-histogram, wrapping the passed histograms.
+func NewMultiHistogram(h ...ScalableHistogram) MultiHistogram {
+	return MultiHistogram(h)
+}
+
+// StartAt implements ScalableHistogram.
+func (h MultiHistogram) StartAt(t time.Time) {
+	for _, histogram := range h {
+		histogram.StartAt(t)
+	}
+}
+
+// ObserveDuration implements ScalableHistogram.
+func (h MultiHistogram) ObserveDuration() {
+	for _, histogram := range h {
+		histogram.ObserveDuration()
+	}
+}
+
+// Observe implements ScalableHistogram.
+func (h MultiHistogram) Observe(v float64) {
+	for _, histogram := range h {
+		histogram.Observe(v)
+	}
+}
+
+// With implements ScalableHistogram.
+func (h MultiHistogram) With(labelValues ...string) ScalableHistogram {
+	next := make(MultiHistogram, len(h))
+	for i := range h {
+		next[i] = h[i].With(labelValues...)
+	}
+	return next
 }

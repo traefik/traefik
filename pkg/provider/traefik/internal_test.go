@@ -28,6 +28,7 @@ func Test_createConfiguration(t *testing.T) {
 				API: &static.API{
 					Insecure:  true,
 					Dashboard: true,
+					Debug:     true,
 				},
 				Ping: &ping.Handler{
 					EntryPoint:    "test",
@@ -162,6 +163,47 @@ func Test_createConfiguration(t *testing.T) {
 					Prometheus: &types.Prometheus{
 						EntryPoint:    "test",
 						ManualRouting: true,
+					},
+				},
+			},
+		},
+		{
+			desc: "models.json",
+			staticCfg: static.Configuration{
+				EntryPoints: map[string]*static.EntryPoint{
+					"websecure": {
+						HTTP: static.HTTPConfig{
+							Middlewares: []string{"test"},
+							TLS: &static.TLSConfig{
+								Options:      "opt",
+								CertResolver: "le",
+								Domains: []types.Domain{
+									{Main: "mainA", SANs: []string{"sanA1", "sanA2"}},
+									{Main: "mainB", SANs: []string{"sanB1", "sanB2"}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "redirection.json",
+			staticCfg: static.Configuration{
+				EntryPoints: map[string]*static.EntryPoint{
+					"web": {
+						Address: ":80",
+						HTTP: static.HTTPConfig{
+							Redirections: &static.Redirections{
+								EntryPoint: &static.RedirectEntryPoint{
+									To:     "websecure",
+									Scheme: "https",
+								},
+							},
+						},
+					},
+					"websecure": {
+						Address: ":443",
 					},
 				},
 			},

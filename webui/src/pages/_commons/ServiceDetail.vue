@@ -54,7 +54,7 @@
               <div class="col-12">
                 <div class="row items-start q-col-gutter-md">
                   <div class="col-12">
-                    <panel-servers dense :data="serviceByName.item"/>
+                    <panel-servers dense :data="serviceByName.item" :hasStatus="serviceByName.item.serverStatus"/>
                   </div>
                 </div>
               </div>
@@ -111,7 +111,14 @@
         </div>
         <div class="row items-center q-col-gutter-lg">
           <div class="col-12">
-            <main-table :data="allRouters" :request="()=>{}" :loading="routersLoading" :pagination.sync="routersPagination" :filter="routersFilter" :type="`${protocol}-routers`"/>
+            <main-table
+              :data="allRouters"
+              v-bind="getTableProps({ type: `${protocol}-routers` })"
+              :request="()=>{}"
+              :loading="routersLoading"
+              :pagination.sync="routersPagination"
+              :filter="routersFilter"
+            />
           </div>
         </div>
       </div>
@@ -122,6 +129,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import GetTablePropsMixin from '../../_mixins/GetTableProps'
 import PageDefault from '../../components/_commons/PageDefault'
 import SkeletonBox from '../../components/_commons/SkeletonBox'
 import PanelServiceDetails from '../../components/_commons/PanelServiceDetails'
@@ -134,6 +142,7 @@ import PanelMirroringServices from '../../components/_commons/PanelMirroringServ
 export default {
   name: 'PageServiceDetail',
   props: ['name', 'type'],
+  mixins: [GetTablePropsMixin],
   components: {
     PanelMirroringServices,
     PanelWeightedServices,
@@ -164,6 +173,7 @@ export default {
   computed: {
     ...mapGetters('http', { http_serviceByName: 'serviceByName' }),
     ...mapGetters('tcp', { tcp_serviceByName: 'serviceByName' }),
+    ...mapGetters('udp', { udp_serviceByName: 'serviceByName' }),
     protocol () {
       return this.$route.meta.protocol
     },
@@ -180,6 +190,7 @@ export default {
   methods: {
     ...mapActions('http', { http_getServiceByName: 'getServiceByName', http_getRouterByName: 'getRouterByName' }),
     ...mapActions('tcp', { tcp_getServiceByName: 'getServiceByName', tcp_getRouterByName: 'getRouterByName' }),
+    ...mapActions('udp', { udp_getServiceByName: 'getServiceByName', udp_getRouterByName: 'getRouterByName' }),
     refreshAll () {
       if (this.serviceByName.loading) {
         return
@@ -229,6 +240,8 @@ export default {
   beforeDestroy () {
     clearInterval(this.timeOutGetAll)
     this.$store.commit('http/getServiceByNameClear')
+    this.$store.commit('tcp/getServiceByNameClear')
+    this.$store.commit('udp/getServiceByNameClear')
   }
 }
 </script>

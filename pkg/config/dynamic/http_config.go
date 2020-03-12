@@ -11,8 +11,17 @@ import (
 // HTTPConfiguration contains all the HTTP configuration parameters.
 type HTTPConfiguration struct {
 	Routers     map[string]*Router     `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty"`
-	Middlewares map[string]*Middleware `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty"`
 	Services    map[string]*Service    `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty"`
+	Middlewares map[string]*Middleware `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty"`
+	Models      map[string]*Model      `json:"models,omitempty" toml:"models,omitempty" yaml:"models,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Model is a set of default router's values.
+type Model struct {
+	Middlewares []string         `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty"`
+	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -49,8 +58,15 @@ type RouterTLSConfig struct {
 
 // Mirroring holds the Mirroring configuration.
 type Mirroring struct {
-	Service string          `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
-	Mirrors []MirrorService `json:"mirrors,omitempty" toml:"mirrors,omitempty" yaml:"mirrors,omitempty"`
+	Service     string          `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
+	MaxBodySize *int64          `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty"`
+	Mirrors     []MirrorService `json:"mirrors,omitempty" toml:"mirrors,omitempty" yaml:"mirrors,omitempty"`
+}
+
+// SetDefaults Default values for a WRRService.
+func (m *Mirroring) SetDefaults() {
+	var defaultMaxBodySize int64 = -1
+	m.MaxBodySize = &defaultMaxBodySize
 }
 
 // +k8s:deepcopy-gen=true
@@ -164,7 +180,14 @@ type HealthCheck struct {
 	// FIXME change string to types.Duration
 	Interval string `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty"`
 	// FIXME change string to types.Duration
-	Timeout  string            `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
-	Hostname string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
-	Headers  map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty"`
+	Timeout         string            `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
+	Hostname        string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
+	FollowRedirects *bool             `json:"followRedirects" toml:"followRedirects" yaml:"followRedirects"`
+	Headers         map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty"`
+}
+
+// SetDefaults Default values for a HealthCheck.
+func (h *HealthCheck) SetDefaults() {
+	fr := true
+	h.FollowRedirects = &fr
 }

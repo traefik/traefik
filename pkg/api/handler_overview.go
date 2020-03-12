@@ -32,6 +32,7 @@ type features struct {
 type overview struct {
 	HTTP      schemeOverview `json:"http"`
 	TCP       schemeOverview `json:"tcp"`
+	UDP       schemeOverview `json:"udp"`
 	Features  features       `json:"features,omitempty"`
 	Providers []string       `json:"providers,omitempty"`
 }
@@ -46,6 +47,10 @@ func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
 		TCP: schemeOverview{
 			Routers:  getTCPRouterSection(h.runtimeConfiguration.TCPRouters),
 			Services: getTCPServiceSection(h.runtimeConfiguration.TCPServices),
+		},
+		UDP: schemeOverview{
+			Routers:  getUDPRouterSection(h.runtimeConfiguration.UDPRouters),
+			Services: getUDPServiceSection(h.runtimeConfiguration.UDPServices),
 		},
 		Features:  getFeatures(h.staticConfig),
 		Providers: getProviders(h.staticConfig),
@@ -137,6 +142,44 @@ func getTCPRouterSection(routers map[string]*runtime.TCPRouterInfo) *section {
 }
 
 func getTCPServiceSection(services map[string]*runtime.TCPServiceInfo) *section {
+	var countErrors int
+	var countWarnings int
+	for _, svc := range services {
+		switch svc.Status {
+		case runtime.StatusDisabled:
+			countErrors++
+		case runtime.StatusWarning:
+			countWarnings++
+		}
+	}
+
+	return &section{
+		Total:    len(services),
+		Warnings: countWarnings,
+		Errors:   countErrors,
+	}
+}
+
+func getUDPRouterSection(routers map[string]*runtime.UDPRouterInfo) *section {
+	var countErrors int
+	var countWarnings int
+	for _, rt := range routers {
+		switch rt.Status {
+		case runtime.StatusDisabled:
+			countErrors++
+		case runtime.StatusWarning:
+			countWarnings++
+		}
+	}
+
+	return &section{
+		Total:    len(routers),
+		Warnings: countWarnings,
+		Errors:   countErrors,
+	}
+}
+
+func getUDPServiceSection(services map[string]*runtime.UDPServiceInfo) *section {
 	var countErrors int
 	var countWarnings int
 	for _, svc := range services {

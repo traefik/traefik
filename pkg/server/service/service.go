@@ -22,7 +22,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/pipelining"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/server/cookie"
-	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/mirror"
 	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/wrr"
 	"github.com/vulcand/oxy/roundrobin"
@@ -32,6 +32,8 @@ const (
 	defaultHealthCheckInterval = 30 * time.Second
 	defaultHealthCheckTimeout  = 5 * time.Second
 )
+
+const defaultMaxBodySize int64 = -1
 
 // NewManager creates a new Manager
 func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry, routinePool *safe.Pool) *Manager {
@@ -63,8 +65,8 @@ type Manager struct {
 func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
 	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
 
-	serviceName = internal.GetQualifiedName(ctx, serviceName)
-	ctx = internal.AddProviderInContext(ctx, serviceName)
+	serviceName = provider.GetQualifiedName(ctx, serviceName)
+	ctx = provider.AddInContext(ctx, serviceName)
 
 	conf, ok := m.configs[serviceName]
 	if !ok {
@@ -123,7 +125,11 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		return nil, err
 	}
 
-	handler := mirror.New(serviceHandler, m.routinePool)
+	maxBodySize := defaultMaxBodySize
+	if config.MaxBodySize != nil {
+		maxBodySize = *config.MaxBodySize
+	}
+	handler := mirror.New(serviceHandler, m.routinePool, maxBodySize)
 	for _, mirrorConfig := range config.Mirrors {
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name, responseModifier)
 		if err != nil {
@@ -262,15 +268,21 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backe
 		logger.Warnf("Health check timeout for backend '%s' should be lower than the health check interval. Interval set to timeout + 1 second (%s).", backend, interval)
 	}
 
+	followRedirects := true
+	if hc.FollowRedirects != nil {
+		followRedirects = *hc.FollowRedirects
+	}
+
 	return &healthcheck.Options{
-		Scheme:   hc.Scheme,
-		Path:     hc.Path,
-		Port:     hc.Port,
-		Interval: interval,
-		Timeout:  timeout,
-		LB:       lb,
-		Hostname: hc.Hostname,
-		Headers:  hc.Headers,
+		Scheme:          hc.Scheme,
+		Path:            hc.Path,
+		Port:            hc.Port,
+		Interval:        interval,
+		Timeout:         timeout,
+		LB:              lb,
+		Hostname:        hc.Hostname,
+		Headers:         hc.Headers,
+		FollowRedirects: followRedirects,
 	}
 }
 

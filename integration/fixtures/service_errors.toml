@@ -6,8 +6,10 @@
   level = "DEBUG"
 
 [entryPoints]
-  [entryPoints.web-secure]
+  [entryPoints.websecure]
     address = ":4443"
+  [entryPoints.udp]
+    address = ":4443/udp"
 
 [api]
   insecure = true
@@ -18,11 +20,11 @@
 ## dynamic configuration ##
 
 [http.routers]
-  [http.routers.router4]
+  [http.routers.router1]
     service = "service1"
     rule = "Host(`snitest.net`)"
 
-  [http.routers.router5]
+  [http.routers.router2]
     service = "service2"
     rule = "Host(`snitest.com`)"
 

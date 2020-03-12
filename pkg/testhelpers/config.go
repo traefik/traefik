@@ -6,7 +6,10 @@ import (
 
 // BuildConfiguration is a helper to create a configuration.
 func BuildConfiguration(dynamicConfigBuilders ...func(*dynamic.HTTPConfiguration)) *dynamic.HTTPConfiguration {
-	conf := &dynamic.HTTPConfiguration{}
+	conf := &dynamic.HTTPConfiguration{
+		Models: map[string]*dynamic.Model{},
+	}
+
 	for _, build := range dynamicConfigBuilders {
 		build(conf)
 	}

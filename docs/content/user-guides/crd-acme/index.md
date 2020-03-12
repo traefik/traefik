@@ -43,7 +43,10 @@ First, the definition of the `IngressRoute` and the `Middleware` kinds.
 Also note the RBAC authorization resources; they'll be referenced through the `serviceAccountName` of the deployment, later on.
 
 ```yaml
---8<-- "content/user-guides/crd-acme/01-crd.yml"
+--8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition.yml"
+
+---
+--8<-- "content/reference/dynamic-configuration/kubernetes-crd-rbac.yml"
 ```
 
 ### Services

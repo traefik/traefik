@@ -1,0 +1,14 @@
+whoami-a:
+  image: containous/whoamiudp:dev
+  command: -name whoami-a
+
+whoami-b:
+  image: containous/whoamiudp:dev
+  command: -name whoami-b
+
+whoami-c:
+  image: containous/whoamiudp:dev
+  command: -name whoami-c
+
+whoami-d:
+  image: containous/whoami

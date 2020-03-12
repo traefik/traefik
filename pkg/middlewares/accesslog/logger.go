@@ -193,6 +193,11 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	core[RequestPath] = urlCopyString
 	core[RequestProtocol] = req.Proto
 
+	core[RequestScheme] = "http"
+	if req.TLS != nil {
+		core[RequestScheme] = "https"
+	}
+
 	core[ClientAddr] = req.RemoteAddr
 	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
 
@@ -200,7 +205,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[ClientHost] = forwardedFor
 	}
 
-	crw := &captureResponseWriter{rw: rw}
+	crw := newCaptureResponseWriter(rw)
 
 	next.ServeHTTP(crw, reqWithDataTable)
 
@@ -214,7 +219,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		size:    crw.Size(),
 	}
 	if crr != nil {
-		logDataTable.Request.count = crr.count
+		logDataTable.Request.size = crr.count
 	}
 
 	if h.config.BufferingSize > 0 {
@@ -280,7 +285,7 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData) {
 		retryAttempts = 0
 	}
 	core[RetryAttempts] = retryAttempts
-	core[RequestContentSize] = logDataTable.Request.count
+	core[RequestContentSize] = logDataTable.Request.size
 
 	status := logDataTable.DownstreamResponse.status
 	core[DownstreamStatus] = status

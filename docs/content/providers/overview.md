@@ -26,14 +26,18 @@ Even if each provider is different, we can categorize them in four groups:
 
 Below is the list of the currently supported providers in Traefik. 
 
-| Provider                              | Type         | Configuration Type |
-|---------------------------------------|--------------|--------------------|
-| [Docker](./docker.md)                 | Orchestrator | Label              |
-| [Kubernetes](./kubernetes-crd.md)     | Orchestrator | Custom Resource    |
-| [Consul Catalog](./consul-catalog.md) | Orchestrator | Label              |
-| [Marathon](./marathon.md)             | Orchestrator | Label              |
-| [Rancher](./rancher.md)               | Orchestrator | Label              |
-| [File](./file.md)                     | Manual       | TOML/YAML format   |
+| Provider                              | Type         | Configuration Type         |
+|---------------------------------------|--------------|----------------------------|
+| [Docker](./docker.md)                 | Orchestrator | Label                      |
+| [Kubernetes](./kubernetes-crd.md)     | Orchestrator | Custom Resource or Ingress |
+| [Consul Catalog](./consul-catalog.md) | Orchestrator | Label                      |
+| [Marathon](./marathon.md)             | Orchestrator | Label                      |
+| [Rancher](./rancher.md)               | Orchestrator | Label                      |
+| [File](./file.md)                     | Manual       | TOML/YAML format           |
+| [Consul](./consul.md)                 | KV           | KV                         |
+| [etcd](./etcd.md)                     | KV           | KV                         |
+| [Redis](./redis.md)                   | KV           | KV                         |
+| [ZooKeeper](./zookeeper.md)           | KV           | KV                         |
 
 !!! info "More Providers"
 

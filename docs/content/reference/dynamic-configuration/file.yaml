@@ -62,6 +62,7 @@ http:
           interval: foobar
           timeout: foobar
           hostname: foobar
+          followRedirects: true
           headers:
             name0: foobar
             name1: foobar
@@ -71,6 +72,7 @@ http:
     Service02:
       mirroring:
         service: foobar
+        maxBodySize: 42
         mirrors:
         - name: foobar
           percent: 42
@@ -117,8 +119,14 @@ http:
       circuitBreaker:
         expression: foobar
     Middleware05:
-      compress: {}
+      compress:
+        excludedContentTypes:
+        - foobar
+        - foobar
     Middleware06:
+      contentType:
+        autoDetect: true
+    Middleware07:
       digestAuth:
         users:
         - foobar
@@ -127,14 +135,14 @@ http:
         removeHeader: true
         realm: foobar
         headerField: foobar
-    Middleware07:
+    Middleware08:
       errors:
         status:
         - foobar
         - foobar
         service: foobar
         query: foobar
-    Middleware08:
+    Middleware09:
       forwardAuth:
         address: foobar
         tls:
@@ -147,7 +155,7 @@ http:
         authResponseHeaders:
         - foobar
         - foobar
-    Middleware09:
+    Middleware10:
       headers:
         customRequestHeaders:
           name0: foobar
@@ -163,6 +171,9 @@ http:
         - foobar
         - foobar
         accessControlAllowOrigin: foobar
+        accessControlAllowOriginList:
+        - foobar
+        - foobar
         accessControlExposeHeaders:
         - foobar
         - foobar
@@ -195,7 +206,7 @@ http:
         referrerPolicy: foobar
         featurePolicy: foobar
         isDevelopment: true
-    Middleware10:
+    Middleware11:
       ipWhiteList:
         sourceRange:
         - foobar
@@ -205,7 +216,7 @@ http:
           excludedIPs:
           - foobar
           - foobar
-    Middleware11:
+    Middleware12:
       inFlightReq:
         amount: 42
         sourceCriterion:
@@ -216,7 +227,7 @@ http:
             - foobar
           requestHeaderName: foobar
           requestHost: true
-    Middleware12:
+    Middleware13:
       passTLSClientCert:
         pem: true
         info:
@@ -239,9 +250,11 @@ http:
             commonName: true
             serialNumber: true
             domainComponent: true
-    Middleware13:
+          serialNumber: true
+    Middleware14:
       rateLimit:
         average: 42
+        period: 42
         burst: 42
         sourceCriterion:
           ipstrategy:
@@ -251,33 +264,33 @@ http:
             - foobar
           requestHeaderName: foobar
           requestHost: true
-    Middleware14:
+    Middleware15:
       redirectRegex:
         regex: foobar
         replacement: foobar
         permanent: true
-    Middleware15:
+    Middleware16:
       redirectScheme:
         scheme: foobar
         port: foobar
         permanent: true
-    Middleware16:
+    Middleware17:
       replacePath:
         path: foobar
-    Middleware17:
+    Middleware18:
       replacePathRegex:
         regex: foobar
         replacement: foobar
-    Middleware18:
+    Middleware19:
       retry:
         attempts: 42
-    Middleware19:
+    Middleware20:
       stripPrefix:
         prefixes:
         - foobar
         - foobar
         forceSlash: true
-    Middleware20:
+    Middleware21:
       stripPrefixRegex:
         regex:
         - foobar
@@ -336,6 +349,31 @@ tcp:
           weight: 42
         - name: foobar
           weight: 42
+udp:
+  routers:
+    UDPRouter0:
+      entryPoints:
+      - foobar
+      - foobar
+      service: foobar
+    UDPRouter1:
+      entryPoints:
+      - foobar
+      - foobar
+      service: foobar
+  services:
+    UDPService01:
+      loadBalancer:
+        servers:
+        - address: foobar
+        - address: foobar
+    UDPService02:
+      weighted:
+        services:
+        - name: foobar
+          weight: 42
+        - name: foobar
+          weight: 42
 tls:
   certificates:
   - certFile: foobar
@@ -353,8 +391,8 @@ tls:
       minVersion: foobar
       maxVersion: foobar
       cipherSuites:
-        - foobar
-        - foobar
+      - foobar
+      - foobar
       curvePreferences:
       - foobar
       - foobar
@@ -364,12 +402,13 @@ tls:
         - foobar
         clientAuthType: foobar
       sniStrict: true
+      preferServerCipherSuites: true
     Options1:
       minVersion: foobar
       maxVersion: foobar
       cipherSuites:
-        - foobar
-        - foobar
+      - foobar
+      - foobar
       curvePreferences:
       - foobar
       - foobar
@@ -379,6 +418,7 @@ tls:
         - foobar
         clientAuthType: foobar
       sniStrict: true
+      preferServerCipherSuites: true
   stores:
     Store0:
       defaultCertificate:

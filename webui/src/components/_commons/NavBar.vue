@@ -10,15 +10,17 @@
             <q-route-tab to="/" icon="eva-home-outline" no-caps label="Dashboard" />
             <q-route-tab to="/http" icon="eva-globe-outline" no-caps label="HTTP" />
             <q-route-tab to="/tcp" icon="eva-globe-2-outline" no-caps label="TCP" />
+            <q-route-tab to="/udp" icon="eva-globe-2-outline" no-caps label="UDP" />
           </q-tabs>
           <q-space />
+          <q-btn @click="$q.dark.toggle()" stretch flat no-caps icon="invert_colors" :label="`${$q.dark.isActive ? 'Light' : 'Dark'} theme`" class="btn-menu" />
           <q-btn type="a" :href="`https://docs.traefik.io/${parsedVersion}`" target="_blank" stretch flat no-caps label="Documentation" class="btn-menu" />
           <q-btn v-if="version" type="a" href="https://github.com/containous/traefik/" target="_blank" stretch flat no-caps :label="`${name} ${version}`" class="btn-menu" />
         </q-toolbar>
       </div>
     </section>
 
-    <section class="app-section bg-white text-black">
+    <section class="app-section text-black sub-nav" :class="{ 'bg-white': !$q.dark.isActive }">
       <div class="app-section-wrap app-boxed app-boxed-xl">
         <slot />
       </div>
@@ -69,6 +71,10 @@ export default {
 
   .q-toolbar {
     min-height: 64px;
+  }
+
+  .body--dark .sub-nav {
+    background-color: #0e204c;
   }
 
   .logo {

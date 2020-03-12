@@ -8,7 +8,7 @@
 [entryPoints]
   [entryPoints.web]
     address = "{{ .PortHTTP }}"
-  [entryPoints.web-secure]
+  [entryPoints.websecure]
     address = "{{ .PortHTTPS }}"
 
 {{range $name, $resolvers := .Acme }}
@@ -45,7 +45,7 @@
 
 [tcp.routers]
   [tcp.routers.test]
-    entryPoints = ["web-secure"]
+    entryPoints = ["websecure"]
     rule = "HostSNI(`traefik.acme.wtf`)"
     service = "test"
     [tcp.routers.test.tls]

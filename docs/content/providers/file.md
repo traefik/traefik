@@ -23,17 +23,17 @@ You can write one of these mutually exclusive configuration elements:
     
     ```toml tab="File (TOML)"
     [providers.file]
-      filename = "/my/path/to/dynamic-conf.toml"
+      directory = "/path/to/dynamic/conf"
     ```
     
     ```yaml tab="File (YAML)"
     providers:
       file:
-        filename: "/my/path/to/dynamic-conf.yml"
+        directory: "/path/to/dynamic/conf"
     ```
     
     ```bash tab="CLI"
-    --providers.file.filename=/my/path/to/dynamic_conf.toml
+    --providers.file.directory=/path/to/dynamic/conf
     ```
     
     Declaring Routers, Middlewares & Services:
@@ -100,29 +100,53 @@ You can write one of these mutually exclusive configuration elements:
 
 If you're in a hurry, maybe you'd rather go through the [dynamic configuration](../reference/dynamic-configuration/file.md) references and the [static configuration](../reference/static-configuration/overview.md).
 
+!!! warning "Limitations"
+
+    With the file provider, Traefik listens for file system notifications to update the dynamic configuration.
+    
+    If you use a mounted/bound file system in your orchestrator (like docker or kubernetes), the way the files are linked may be a source of errors.
+    If the link between the file systems is broken, when a source file/directory is changed/renamed, nothing will be reported to the linked file/directory, so the file system notifications will be neither triggered nor caught. 
+    
+    For example, in docker, if the host file is renamed, the link to the mounted file will be broken and the container's file will not be updated.
+    To avoid this kind of issue, a good practice is to:
+        
+    * set the Traefik [**directory**](#directory) configuration with the parent directory
+    * mount/bind the parent directory
+
+    As it is very difficult to listen to all file system notifications, Traefik use [fsnotify](https://github.com/fsnotify/fsnotify).
+    If using a directory with a mounted directory does not fix your issue, please check your file system compatibility with fsnotify.
+    
 ### `filename`
 
-Defines the path of the configuration file.
+Defines the path to the configuration file.
+
+!!! warning ""
+    `filename` and `directory` are mutually exclusive.
+    The recommendation is to use `directory`.
 
 ```toml tab="File (TOML)"
 [providers]
   [providers.file]
-    filename = "dynamic_conf.toml"
+    filename = "/path/to/config/dynamic_conf.toml"
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   file:
-    filename: dynamic_conf.yml
+    filename: /path/to/config/dynamic_conf.yml
 ```
 
 ```bash tab="CLI"
---providers.file.filename=dynamic_conf.toml
+--providers.file.filename=/path/to/config/dynamic_conf.toml
 ```
 
 ### `directory`
 
-Defines the directory that contains the configuration files.
+Defines the path to the directory that contains the configuration files.
+
+!!! warning ""
+    `filename` and `directory` are mutually exclusive.
+    The recommendation is to use `directory`.
 
 ```toml tab="File (TOML)"
 [providers]
@@ -148,19 +172,19 @@ It works with both the `filename` and the `directory` options.
 ```toml tab="File (TOML)"
 [providers]
   [providers.file]
-    filename = "dynamic_conf.toml"
+    directory = "/path/to/dynamic/conf"
     watch = true
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   file:
-    filename: dynamic_conf.yml
+    directory: /path/to/dynamic/conf
     watch: true
 ```
 
 ```bash tab="CLI"
---providers.file.filename=dynamic_conf.toml
+--providers.file.directory=/my/path/to/dynamic/conf
 --providers.file.watch=true
 ```
 
@@ -170,8 +194,11 @@ providers:
     Go Templating only works along with dedicated dynamic configuration files.
     Templating does not work in the Traefik main static configuration file.
 
-Traefik allows using Go templating.  
-Thus, it's possible to define easily lot of routers, services and TLS certificates as described in the file `template-rules.toml` :
+Traefik allows using Go templating,
+it must be a valid [Go template](https://golang.org/pkg/text/template/),
+augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
+
+Thus, it's possible to define easily lot of routers, services and TLS certificates as described in the following examples:
 
 ??? example "Configuring Using Templating"
     
@@ -181,7 +208,7 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
     
       [http.routers]
       {{ range $i, $e := until 100 }}
-        [http.routers.router{{ $e }}]
+        [http.routers.router{{ $e }}-{{ env "MY_ENV_VAR" }}]
         # ...
       {{ end }}  
       
@@ -223,40 +250,38 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
     
     ```yaml tab="YAML"
     http:
-    
-    {{range $i, $e := until 100 }}
       routers:
-        router{{ $e }:
+        {{range $i, $e := until 100 }}
+        router{{ $e }}-{{ env "MY_ENV_VAR" }}:
           # ...
-    {{end}}
+        {{end}}
     
-    {{range $i, $e := until 100 }}
       services:
+        {{range $i, $e := until 100 }}
         application{{ $e }}:
           # ...
-    {{end}}
+        {{end}}
     
     tcp:
-    
-    {{range $i, $e := until 100 }}
       routers:
-        router{{ $e }:
+        {{range $i, $e := until 100 }}
+        router{{ $e }}:
           # ...
-    {{end}}
+        {{end}}
     
-    {{range $i, $e := until 100 }}
       services:
+        {{range $i, $e := until 100 }}
         service{{ $e }}:
           # ...
-    {{end}}
+        {{end}}
     
-    {{ range $i, $e := until 10 }}
     tls:
       certificates:
+      {{ range $i, $e := until 10 }}
       - certFile: "/etc/traefik/cert-{{ $e }}.pem"
         keyFile: "/etc/traefik/cert-{{ $e }}.key"
         store:
         - "my-store-foo-{{ $e }}"
         - "my-store-bar-{{ $e }}"
-    {{end}}
+      {{end}}
     ```

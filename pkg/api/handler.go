@@ -40,6 +40,8 @@ type RunTimeRepresentation struct {
 	Services    map[string]*serviceInfoRepresentation `json:"services,omitempty"`
 	TCPRouters  map[string]*runtime.TCPRouterInfo     `json:"tcpRouters,omitempty"`
 	TCPServices map[string]*runtime.TCPServiceInfo    `json:"tcpServices,omitempty"`
+	UDPRouters  map[string]*runtime.UDPRouterInfo     `json:"udpRouters,omitempty"`
+	UDPServices map[string]*runtime.UDPServiceInfo    `json:"udpServices,omitempty"`
 }
 
 // Handler serves the configuration and status of Traefik on API endpoints.
@@ -105,6 +107,11 @@ func (h Handler) createRouter() *mux.Router {
 	router.Methods(http.MethodGet).Path("/api/tcp/services").HandlerFunc(h.getTCPServices)
 	router.Methods(http.MethodGet).Path("/api/tcp/services/{serviceID}").HandlerFunc(h.getTCPService)
 
+	router.Methods(http.MethodGet).Path("/api/udp/routers").HandlerFunc(h.getUDPRouters)
+	router.Methods(http.MethodGet).Path("/api/udp/routers/{routerID}").HandlerFunc(h.getUDPRouter)
+	router.Methods(http.MethodGet).Path("/api/udp/services").HandlerFunc(h.getUDPServices)
+	router.Methods(http.MethodGet).Path("/api/udp/services/{serviceID}").HandlerFunc(h.getUDPService)
+
 	version.Handler{}.Append(router)
 
 	if h.dashboard {
@@ -129,6 +136,8 @@ func (h Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.R
 		Services:    siRepr,
 		TCPRouters:  h.runtimeConfiguration.TCPRouters,
 		TCPServices: h.runtimeConfiguration.TCPServices,
+		UDPRouters:  h.runtimeConfiguration.UDPRouters,
+		UDPServices: h.runtimeConfiguration.UDPServices,
 	}
 
 	rw.Header().Set("Content-Type", "application/json")

@@ -6,7 +6,6 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/opentracing/opentracing-go"
-	jaeger "github.com/uber/jaeger-client-go"
 	jaegercli "github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/zipkin"
@@ -73,7 +72,7 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 			Param:             c.SamplingParam,
 		},
 		Reporter: reporter,
-		Headers: &jaeger.HeadersConfig{
+		Headers: &jaegercli.HeadersConfig{
 			TraceContextHeaderName: c.TraceContextHeaderName,
 		},
 	}

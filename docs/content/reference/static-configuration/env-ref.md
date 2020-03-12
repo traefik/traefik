@@ -99,6 +99,36 @@ Trust all forwarded headers. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_TRUSTEDIPS`:  
 Trust only forwarded headers from selected IPs.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP`:  
+HTTP configuration.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
+Default middlewares for the routers linked to the entry point.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME`:  
+Scheme used for the redirection. Defaults to https. (Default: ```https```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_REDIRECTIONS_ENTRYPOINT_TO`:  
+Targeted entry point of the redirection.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS`:  
+Default TLS configuration for the routers linked to the entry point. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_CERTRESOLVER`:  
+Default certificate resolver for the routers linked to the entry point.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_DOMAINS`:  
+Default TLS domains for the routers linked to the entry point.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_DOMAINS[n]_MAIN`:  
+Default subject name.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_DOMAINS[n]_SANS`:  
+Subject alternative names.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_OPTIONS`:  
+Default TLS options for the routers linked to the entry point.
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_PROXYPROTOCOL`:  
 Proxy-Protocol configuration. (Default: ```false```)
 
@@ -376,7 +406,7 @@ TLS key
 Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_DOCKER_WATCH`:  
-Watch provider. (Default: ```true```)
+Watch Docker Swarm events. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_ETCD`:  
 Enable Etcd backend with default settings. (Default: ```false```)
@@ -712,7 +742,7 @@ Specifies the header name prefix that will be used to store baggage items in a m
 Key:Value tag to be set on all the spans.
 
 `TRAEFIK_TRACING_HAYSTACK_LOCALAGENTHOST`:  
-Set haystack-agent's host that the reporter will used. (Default: ```LocalAgentHost```)
+Set haystack-agent's host that the reporter will used. (Default: ```127.0.0.1```)
 
 `TRAEFIK_TRACING_HAYSTACK_LOCALAGENTPORT`:  
 Set haystack-agent's port that the reporter will used. (Default: ```35000```)

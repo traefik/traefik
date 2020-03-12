@@ -9,7 +9,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/cenkalti/backoff/v3"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -159,11 +159,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				logger.Errorf("Failed to register for events, %s", err)
 				return err
 			}
-			pool.Go(func(stop chan bool) {
+			pool.GoCtx(func(ctxPool context.Context) {
 				defer close(update)
 				for {
 					select {
-					case <-stop:
+					case <-ctxPool.Done():
 						return
 					case event := <-update:
 						logger.Debugf("Received provider event %s", event)

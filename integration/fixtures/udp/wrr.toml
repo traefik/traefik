@@ -1,0 +1,53 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.udp]
+    address = ":8093/udp"
+  [entryPoints.web]
+    address = ":8093"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+[udp]
+  [udp.routers]
+    [udp.routers.to-whoami-a]
+      service = "whoami"
+      entryPoints = [ "udp" ]
+
+    [[udp.services.whoami.weighted.services]]
+        name="whoami-a"
+        weight=3
+    [[udp.services.whoami.weighted.services]]
+        name="whoami-b"
+        weight=1
+
+    [udp.services.whoami-a.loadBalancer]
+      [[udp.services.whoami-a.loadBalancer.servers]]
+        address = "{{ .WhoamiAIP}}:8080"
+      [[udp.services.whoami-a.loadBalancer.servers]]
+        address = "{{ .WhoamiCIP}}:8080"
+
+    [udp.services.whoami-b.loadBalancer]
+      [[udp.services.whoami-b.loadBalancer.servers]]
+        address = "{{ .WhoamiBIP}}:8080"
+
+[http]
+  [http.routers]
+    [http.routers.to-whoami-d]
+      service = "whoami"
+      entryPoints = [ "web" ]
+      rule = "PathPrefix(`/who`)"
+
+    [http.services.whoami.loadBalancer]
+      [[http.services.whoami.loadBalancer.servers]]
+        url = "http://{{ .WhoamiDIP}}"
