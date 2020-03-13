@@ -1056,9 +1056,11 @@ and there is a second level because each whoami service is a `replicaset` and is
     ```
 
 	To keep a session open with the same server, the client would then need to specify the two levels within the cookie for each request, e.g. with curl:
+
 	```
     curl -H Host:bar.com -b "lvl1=default-whoami1-80; lvl2=http://10.42.0.6:80" http://localhost:8000/foo
 	```
+
 	assuming `10.42.0.6` is the IP address of one of the replicas (a pod then) of the `whoami1` service.
 
 ### Kind `IngressRouteTCP`
