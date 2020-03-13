@@ -299,10 +299,10 @@ On subsequent requests, to keep the session alive with the same server, the clie
     ```
 
     To keep a session open with the same server, the client would then need to specify the two levels within the cookie for each request, e.g. with curl:
-
-	```
+    
+    ```
     curl -b "lvl1=whoami1; lvl2=http://127.0.0.1:8081" http://localhost:8000
-	```
+    ```
 
 #### Health Check
 
