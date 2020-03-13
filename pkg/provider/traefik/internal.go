@@ -88,6 +88,7 @@ func (i *Provider) redirection(cfg *dynamic.Configuration) {
 			EntryPoints: []string{name},
 			Middlewares: []string{mdName},
 			Service:     "noop@internal",
+			Priority:    def.EntryPoint.Priority,
 		}
 
 		port, err := i.getEntryPointPort(name, def)
@@ -102,7 +103,7 @@ func (i *Provider) redirection(cfg *dynamic.Configuration) {
 			RedirectScheme: &dynamic.RedirectScheme{
 				Scheme:    def.EntryPoint.Scheme,
 				Port:      port,
-				Permanent: true,
+				Permanent: def.EntryPoint.Permanent,
 			},
 		}
 

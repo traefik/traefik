@@ -607,7 +607,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
 
 ??? info "`entryPoint.scheme`"
     
-    _Optional, Default="http"_
+    _Optional, Default="https"_
     
     The redirection target scheme.
 
@@ -633,6 +633,66 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
     
     ```bash tab="CLI"
     --entrypoints.foo.http.redirections.entryPoint.scheme=https
+    ```
+
+??? info "`entryPoint.permanent`"
+   
+    _Optional, Default=true_
+    
+    Applied a permanent redirection.
+
+    ```toml tab="File (TOML)"
+    [entryPoints.foo]
+      # ...
+      [entryPoints.foo.http.redirections]
+        [entryPoints.foo.http.redirections.entryPoint]
+          # ...
+          permanent = true
+    ```
+    
+    ```yaml tab="File (YAML)"
+    entryPoints:
+      foo:
+        # ...
+        http:
+          redirections:
+            entryPoint:
+              # ...
+              permanent: true
+    ```
+    
+    ```bash tab="CLI"
+    --entrypoints.foo.http.redirections.entrypoint.permanent=true
+    ```
+
+??? info "`entryPoint.priority`"
+  
+    _Optional, Default=1_
+    
+    Priority of the generated router.
+
+    ```toml tab="File (TOML)"
+    [entryPoints.foo]
+      # ...
+      [entryPoints.foo.http.redirections]
+        [entryPoints.foo.http.redirections.entryPoint]
+          # ...
+          priority = 10
+    ```
+    
+    ```yaml tab="File (YAML)"
+    entryPoints:
+      foo:
+        # ...
+        http:
+          redirections:
+            entryPoint:
+              # ...
+              priority: 10
+    ```
+    
+    ```bash tab="CLI"
+    --entrypoints.foo.http.redirections.entrypoint.priority=10
     ```
 
 ### Middlewares
