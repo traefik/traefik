@@ -646,7 +646,6 @@ referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or rec
 * services [Weighted Round Robin](#weighted-round-robin) load balancing.
 * services [mirroring](#mirroring).
 
-
 #### Server Load Balancing
 
 More information in the dedicated server [load balancing](../services/index.md#load-balancing) section.
@@ -920,6 +919,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
 
 As explained in the section about [Sticky sessions](../../services/#sticky-sessions), for stickiness to work all the way,
 it must be specified at each load-balancing level.
+
 For instance, in the example below, there is a first level of load-balancing because there is a (Weighted Round Robin) load-balancing of the two `whoami` services,
 and there is a second level because each whoami service is a `replicaset` and is thus handled as a load-balancer of servers.
 
@@ -1055,13 +1055,13 @@ and there is a second level because each whoami service is a `replicaset` and is
                   containerPort: 80
     ```
 
-	To keep a session open with the same server, the client would then need to specify the two levels within the cookie for each request, e.g. with curl:
+    To keep a session open with the same server, the client would then need to specify the two levels within the cookie for each request, e.g. with curl:
 
-	```
+    ```bash
     curl -H Host:bar.com -b "lvl1=default-whoami1-80; lvl2=http://10.42.0.6:80" http://localhost:8000/foo
-	```
+    ```
 
-	assuming `10.42.0.6` is the IP address of one of the replicas (a pod then) of the `whoami1` service.
+    assuming `10.42.0.6` is the IP address of one of the replicas (a pod then) of the `whoami1` service.
 
 ### Kind `IngressRouteTCP`
 
@@ -1339,7 +1339,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
           port: 8081
           weight: 10
     ```
-    
+
 ### Kind: `TLSOption`
 
 `TLSOption` is the CRD implementation of a [Traefik "TLS Option"](../../https/tls.md#tls-options).
@@ -1533,6 +1533,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
       tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
     ```
+
 ## Further
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.
