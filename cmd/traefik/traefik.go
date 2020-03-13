@@ -200,7 +200,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 			log.WithoutContext().Errorf("Invalid protocol: %v", err)
 		}
 
-		if protocol != "udp" {
+		if protocol != "udp" && name != static.DefaultInternalEntryPointName {
 			defaultEntryPoints = append(defaultEntryPoints, name)
 		}
 	}

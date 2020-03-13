@@ -30,20 +30,17 @@
 		},
 		"test-ingress-default-whoami-test-whoami@kubernetes": {
 			"entryPoints": [
-				"traefik",
 				"web"
 			],
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"status": "enabled",
 			"using": [
-				"traefik",
 				"web"
 			]
 		},
 		"test-ingress-https-default-whoami-test-https-whoami@kubernetes": {
 			"entryPoints": [
-				"traefik",
 				"web"
 			],
 			"service": "default-whoami-http",
@@ -51,7 +48,6 @@
 			"tls": {},
 			"status": "enabled",
 			"using": [
-				"traefik",
 				"web"
 			]
 		}

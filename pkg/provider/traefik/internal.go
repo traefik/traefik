@@ -14,6 +14,8 @@ import (
 	"github.com/containous/traefik/v2/pkg/tls"
 )
 
+const defaultInternalEntryPointName = "traefik"
+
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that provides the internal routers.
@@ -137,7 +139,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 
 	if i.staticCfg.API.Insecure {
 		cfg.HTTP.Routers["api"] = &dynamic.Router{
-			EntryPoints: []string{"traefik"},
+			EntryPoints: []string{defaultInternalEntryPointName},
 			Service:     "api@internal",
 			Priority:    math.MaxInt32 - 1,
 			Rule:        "PathPrefix(`/api`)",
@@ -145,7 +147,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 
 		if i.staticCfg.API.Dashboard {
 			cfg.HTTP.Routers["dashboard"] = &dynamic.Router{
-				EntryPoints: []string{"traefik"},
+				EntryPoints: []string{defaultInternalEntryPointName},
 				Service:     "dashboard@internal",
 				Priority:    math.MaxInt32 - 2,
 				Rule:        "PathPrefix(`/`)",
@@ -166,7 +168,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 
 		if i.staticCfg.API.Debug {
 			cfg.HTTP.Routers["debug"] = &dynamic.Router{
-				EntryPoints: []string{"traefik"},
+				EntryPoints: []string{defaultInternalEntryPointName},
 				Service:     "api@internal",
 				Priority:    math.MaxInt32 - 1,
 				Rule:        "PathPrefix(`/debug`)",
@@ -205,7 +207,7 @@ func (i *Provider) restConfiguration(cfg *dynamic.Configuration) {
 
 	if i.staticCfg.Providers.Rest.Insecure {
 		cfg.HTTP.Routers["rest"] = &dynamic.Router{
-			EntryPoints: []string{"traefik"},
+			EntryPoints: []string{defaultInternalEntryPointName},
 			Service:     "rest@internal",
 			Priority:    math.MaxInt32,
 			Rule:        "PathPrefix(`/api/providers`)",

@@ -180,14 +180,14 @@ type Providers struct {
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
 // It also takes care of maintaining backwards compatibility.
 func (c *Configuration) SetEffectiveConfiguration() {
+	// Creates the default entry point if needed
 	if len(c.EntryPoints) == 0 {
 		ep := &EntryPoint{Address: ":80"}
 		ep.SetDefaults()
-		c.EntryPoints = EntryPoints{
-			"http": ep,
-		}
+		c.EntryPoints = EntryPoints{"http": ep}
 	}
 
+	// Creates the internal traefik entry point if needed
 	if (c.API != nil && c.API.Insecure) ||
 		(c.Ping != nil && !c.Ping.ManualRouting && c.Ping.EntryPoint == DefaultInternalEntryPointName) ||
 		(c.Metrics != nil && c.Metrics.Prometheus != nil && !c.Metrics.Prometheus.ManualRouting && c.Metrics.Prometheus.EntryPoint == DefaultInternalEntryPointName) ||
