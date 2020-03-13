@@ -45,8 +45,8 @@ func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		toLog(entry.Data, "request_Referer", `"-"`, true),
 		toLog(entry.Data, "request_User-Agent", `"-"`, true),
 		toLog(entry.Data, RequestCount, defaultValue, true),
-		toLog(entry.Data, RouterName, defaultValue, true),
-		toLog(entry.Data, ServiceURL, defaultValue, true),
+		toLog(entry.Data, RouterName, `"-"`, true),
+		toLog(entry.Data, ServiceURL, `"-"`, true),
 		elapsedMillis)
 
 	return b.Bytes(), err
