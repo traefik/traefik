@@ -18,8 +18,8 @@ For the TLS challenge you will need:
 --8<-- "content/user-guides/docker-compose/acme-tls/docker-compose.yml"
 ```
 
-- Replace `postmaster@mydomain.com` by your **own email** within the `certificatesresolvers.myresolver.acme.email` command line argument of the `traefik` service.
-- Replace `whoami.mydomain.com` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
+- Replace `postmaster@example.com` by your **own email** within the `certificatesresolvers.myresolver.acme.email` command line argument of the `traefik` service.
+- Replace `whoami.example.com` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
 - Optionally uncomment the following lines if you want to test/debug:
 
 	```yaml

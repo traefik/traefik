@@ -20,7 +20,7 @@ A Story of key & values
     
     | Key (Path)                           | Value                      |
     |--------------------------------------|----------------------------|
-    | `traefik/http/routers/myrouter/rule` | ```Host(`mydomain.com`)``` |
+    | `traefik/http/routers/myrouter/rule` | ```Host(`example.com`)```  |
 
 ??? info "`traefik/http/routers/<router_name>/entrypoints`"
 
@@ -69,18 +69,18 @@ A Story of key & values
 
     See [domains](../routers/index.md#domains) for more information.
 
-    | Key (Path)                                         | Value        |
-    |----------------------------------------------------|--------------|
-    | `traefik/http/routers/myrouter/tls/domains/0/main` | `foobar.com` |
+    | Key (Path)                                         | Value         |
+    |----------------------------------------------------|---------------|
+    | `traefik/http/routers/myrouter/tls/domains/0/main` | `example.org` |
     
 ??? info "`traefik/http/routers/<router_name>/tls/domains/<n>/sans/<n>`"
 
     See [domains](../routers/index.md#domains) for more information.
 
-    | Key (Path)                                           | Value             |
-    |------------------------------------------------------|-------------------|
-    | `traefik/http/routers/myrouter/tls/domains/0/sans/0` | `test.foobar.com` |
-    | `traefik/http/routers/myrouter/tls/domains/0/sans/1` | `dev.foobar.com`  |
+    | Key (Path)                                           | Value              |
+    |------------------------------------------------------|--------------------|
+    | `traefik/http/routers/myrouter/tls/domains/0/sans/0` | `test.example.org` |
+    | `traefik/http/routers/myrouter/tls/domains/0/sans/1` | `dev.example.org`  |
     
 ??? info "`traefik/http/routers/<router_name>/tls/options`"
 
@@ -138,9 +138,9 @@ A Story of key & values
 
     See [health check](../services/index.md#health-check) for more information.
 
-    | Key (Path)                                                          | Value        |
-    |---------------------------------------------------------------------|--------------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/hostname` | `foobar.com` |
+    | Key (Path)                                                          | Value         |
+    |---------------------------------------------------------------------|---------------|
+    | `traefik/http/services/myservice/loadbalancer/healthcheck/hostname` | `example.org` |
 
 ??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/interval`"
 
@@ -301,7 +301,7 @@ You can declare TCP Routers and/or Services using KV.
 
     | Key (Path)                           | Value                        |
     |--------------------------------------|------------------------------|
-    | `traefik/tcp/routers/my-router/rule` | ```HostSNI(`my-host.com`)``` |  
+    | `traefik/tcp/routers/my-router/rule` | ```HostSNI(`example.com`)``` |  
 
 ??? info "`traefik/tcp/routers/<router_name>/service`"
 
@@ -331,18 +331,18 @@ You can declare TCP Routers and/or Services using KV.
 
     See [domains](../routers/index.md#domains_1) for more information.
 
-    | Key (Path)                                           | Value        |
-    |------------------------------------------------------|--------------|
-    | `traefik/tcp/routers/mytcprouter/tls/domains/0/main` | `foobar.com` |
+    | Key (Path)                                           | Value         |
+    |------------------------------------------------------|---------------|
+    | `traefik/tcp/routers/mytcprouter/tls/domains/0/main` | `example.org` |
         
 ??? info "`traefik/tcp/routers/<router_name>/tls/domains/<n>/sans`"
 
     See [domains](../routers/index.md#domains_1) for more information.
 
-    | Key (Path)                                             | Value             |
-    |--------------------------------------------------------|-------------------|
-    | `traefik/tcp/routers/mytcprouter/tls/domains/0/sans/0` | `test.foobar.com` |
-    | `traefik/tcp/routers/mytcprouter/tls/domains/0/sans/1` | `dev.foobar.com`  |
+    | Key (Path)                                             | Value              |
+    |--------------------------------------------------------|--------------------|
+    | `traefik/tcp/routers/mytcprouter/tls/domains/0/sans/0` | `test.example.org` |
+    | `traefik/tcp/routers/mytcprouter/tls/domains/0/sans/1` | `dev.example.org`  |
     
 ??? info "`traefik/tcp/routers/<router_name>/tls/options`"
 

@@ -188,7 +188,7 @@ then you'll have to append to the middleware name, the `@` separator, followed b
       entryPoints:
         - web
       routes:
-        - match: Host(`bar.com`)
+        - match: Host(`example.com`)
           kind: Rule
           services:
             - name: whoami

@@ -70,7 +70,7 @@ which in turn will create the resulting routers, services, handlers, etc.
     
     spec:
       rules:
-        - host: mydomain.com
+        - host: example.com
           http:
             paths:
               - path: /bar
@@ -245,7 +245,7 @@ which in turn will create the resulting routers, services, handlers, etc.
     See [domains](../routers/index.md#domains) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.tls.domains.0.main: foobar.com
+    traefik.ingress.kubernetes.io/router.tls.domains.0.main: example.org
     ```
 
 ??? info "`traefik.ingress.kubernetes.io/router.tls.domains.n.sans`"
@@ -253,7 +253,7 @@ which in turn will create the resulting routers, services, handlers, etc.
     See [domains](../routers/index.md#domains) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: test.foobar.com,dev.foobar.com
+    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: test.example.org,dev.example.org
     ```
 
 ??? info "`traefik.ingress.kubernetes.io/router.tls.options`"
@@ -351,7 +351,7 @@ and will connect via TLS automatically.
     
     spec:
       rules:
-      - host: foo.com
+      - host: example.net
         http:
           paths:
           - path: /bar

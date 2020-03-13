@@ -32,8 +32,8 @@ For the DNS challenge, you'll need:
       - "OVH_CONSUMER_KEY=[YOUR_OWN_VALUE]"
     ```
 
-- Replace `postmaster@mydomain.com` by your **own email** within the `certificatesresolvers.myresolver.acme.email` command line argument of the `traefik` service.
-- Replace `whoami.mydomain.com` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
+- Replace `postmaster@example.com` by your **own email** within the `certificatesresolvers.myresolver.acme.email` command line argument of the `traefik` service.
+- Replace `whoami.example.com` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
 - Optionally uncomment the following lines if you want to test/debug: 
 
 	```yaml
@@ -73,7 +73,7 @@ command:
   # Tell which provider to use
   - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=ovh"
   # The email to provide to let's encrypt
-  - "--certificatesresolvers.myresolver.acme.email=postmaster@mydomain.com"
+  - "--certificatesresolvers.myresolver.acme.email=postmaster@example.com"
 ```
 
 - We provide the required configuration to our provider via environment variables: 
@@ -141,7 +141,7 @@ The point is to manage those secret files by another mean, and read them from th
 
 !!! Note
 
-    Still think about changing `postmaster@mydomain.com` & `whoami.mydomain.com` by your own values.
+    Still think about changing `postmaster@example.com` & `whoami.example.com` by your own values.
 
 Let's explain a bit what we just did:
 

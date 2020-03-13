@@ -5,7 +5,7 @@
   #
   # Required
   #
-  email = "test@traefik.io"
+  email = "test@example.com"
 
   # File or key used for certificates storage.
   #

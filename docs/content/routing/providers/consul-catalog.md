@@ -24,14 +24,14 @@ The Service automatically gets a server per instance in this consul Catalog serv
 
 To update the configuration of the Router automatically attached to the service, add tags starting with `traefik.routers.{name-of-your-choice}.` and followed by the option you want to change.
 
-For example, to change the rule, you could add the tag ```traefik.http.routers.my-service.rule=Host(`mydomain.com`)```.
+For example, to change the rule, you could add the tag ```traefik.http.routers.my-service.rule=Host(`example.com`)```.
 
 ??? info "`traefik.http.routers.<router_name>.rule`"
     
     See [rule](../routers/index.md#rule) for more information.
     
     ```yaml
-    traefik.http.routers.myrouter.rule=Host(`mydomain.com`)
+    traefik.http.routers.myrouter.rule=Host(`example.com`)
     ```
 
 ??? info "`traefik.http.routers.<router_name>.entrypoints`"
@@ -79,7 +79,7 @@ For example, to change the rule, you could add the tag ```traefik.http.routers.m
     See [domains](../routers/index.md#domains) for more information.
     
     ```yaml
-    traefik.http.routers.myrouter.tls.domains[0].main=foobar.com
+    traefik.http.routers.myrouter.tls.domains[0].main=example.org
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.domains[n].sans`"
@@ -87,7 +87,7 @@ For example, to change the rule, you could add the tag ```traefik.http.routers.m
     See [domains](../routers/index.md#domains) for more information.
     
     ```yaml
-    traefik.http.routers.myrouter.tls.domains[0].sans=test.foobar.com,dev.foobar.com
+    traefik.http.routers.myrouter.tls.domains[0].sans=test.example.org,dev.example.org
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.options`"
@@ -150,7 +150,7 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     See [health check](../services/index.md#health-check) for more information.
     
     ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.hostname=foobar.com
+    traefik.http.services.myservice.loadbalancer.healthcheck.hostname=example.org
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.interval`"
@@ -271,7 +271,7 @@ You can declare TCP Routers and/or Services using tags.
 ??? example "Declaring TCP Routers and Services"
 
     ```yaml
-    traefik.tcp.routers.my-router.rule=HostSNI(`my-host.com`)
+    traefik.tcp.routers.my-router.rule=HostSNI(`example.com`)
     traefik.tcp.routers.my-router.tls=true
     traefik.tcp.services.my-service.loadbalancer.server.port=4123
     ```
@@ -296,7 +296,7 @@ You can declare TCP Routers and/or Services using tags.
     See [rule](../routers/index.md#rule_1) for more information.
     
     ```yaml
-    traefik.tcp.routers.mytcprouter.rule=HostSNI(`myhost.com`)
+    traefik.tcp.routers.mytcprouter.rule=HostSNI(`example.com`)
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.service`"
@@ -328,7 +328,7 @@ You can declare TCP Routers and/or Services using tags.
     See [domains](../routers/index.md#domains_1) for more information.
     
     ```yaml
-    traefik.tcp.routers.mytcprouter.tls.domains[0].main=foobar.com
+    traefik.tcp.routers.mytcprouter.tls.domains[0].main=example.org
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.domains[n].sans`"
@@ -336,7 +336,7 @@ You can declare TCP Routers and/or Services using tags.
     See [domains](../routers/index.md#domains_1) for more information.
     
     ```yaml
-    traefik.tcp.routers.mytcprouter.tls.domains[0].sans=test.foobar.com,dev.foobar.com
+    traefik.tcp.routers.mytcprouter.tls.domains[0].sans=test.example.org,dev.example.org
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.options`"

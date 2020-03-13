@@ -4,7 +4,7 @@
 #
 # Required
 #
---certificatesResolvers.myresolver.acme.email=test@traefik.io
+--certificatesResolvers.myresolver.acme.email=test@example.com
 
 # File or key used for certificates storage.
 #

@@ -2,7 +2,7 @@
 ```yaml tab="Docker"
 ## Dynamic configuration
 labels:
-  - traefik.http.routers.blog.rule=(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)
+  - traefik.http.routers.blog.rule=(Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)
   - traefik.http.routers.blog.tls=true
   - traefik.http.routers.blog.tls.certresolver=myresolver
 ```
@@ -11,7 +11,7 @@ labels:
 ## Dynamic configuration
 deploy:
   labels:
-    - traefik.http.routers.blog.rule=(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)
+    - traefik.http.routers.blog.rule=(Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)
     - traefik.http.routers.blog.tls=true
     - traefik.http.routers.blog.tls.certresolver=myresolver
     - traefik.http.services.blog-svc.loadbalancer.server.port=8080"
@@ -26,7 +26,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-  - match: (Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)
+  - match: (Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)
     kind: Rule
     services:
     - name: blog
@@ -37,7 +37,7 @@ spec:
 
 ```json tab="Marathon"
 labels: {
-  "traefik.http.routers.blog.rule": "(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)",
+  "traefik.http.routers.blog.rule": "(Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)",
   "traefik.http.routers.blog.tls": "true",
   "traefik.http.routers.blog.tls.certresolver": "myresolver",
   "traefik.http.services.blog-svc.loadbalancer.server.port": "8080"
@@ -47,7 +47,7 @@ labels: {
 ```yaml tab="Rancher"
 ## Dynamic configuration
 labels:
-  - traefik.http.routers.blog.rule=(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)
+  - traefik.http.routers.blog.rule=(Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)
   - traefik.http.routers.blog.tls=true
   - traefik.http.routers.blog.tls.certresolver=myresolver
 ```
@@ -56,7 +56,7 @@ labels:
 ## Dynamic configuration
 [http.routers]
   [http.routers.blog]
-    rule = "(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)"
+    rule = "(Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)"
     [http.routers.blog.tls]
       certResolver = "myresolver"
 ```
@@ -66,7 +66,7 @@ labels:
 http:
   routers:
     blog:
-      rule: "(Host(`company.com`) && Path(`/blog`)) || Host(`blog.company.org`)"
+      rule: "(Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)"
       tls:
         certResolver: myresolver
 ```

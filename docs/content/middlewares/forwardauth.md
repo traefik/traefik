@@ -12,53 +12,53 @@ Otherwise, the response from the authentication server is returned.
 ## Configuration Examples
 
 ```yaml tab="Docker"
-# Forward authentication to authserver.com
+# Forward authentication to example.com
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+  - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
 ```yaml tab="Kubernetes"
-# Forward authentication to authserver.com
+# Forward authentication to example.com
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
 spec:
   forwardAuth:
-    address: https://authserver.com/auth
+    address: https://example.com/auth
 ```
 
 ```yaml tab="Consul Catalog"
-# Forward authentication to authserver.com
-- "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+# Forward authentication to example.com
+- "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.address": "https://authserver.com/auth"
+  "traefik.http.middlewares.test-auth.forwardauth.address": "https://example.com/auth"
 }
 ```
 
 ```yaml tab="Rancher"
-# Forward authentication to authserver.com
+# Forward authentication to example.com
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+  - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
 ```toml tab="File (TOML)"
-# Forward authentication to authserver.com
+# Forward authentication to example.com
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
-    address = "https://authserver.com/auth"
+    address = "https://example.com/auth"
 ```
 
 ```yaml tab="File (YAML)"
-# Forward authentication to authserver.com
+# Forward authentication to example.com
 http:
   middlewares:
     test-auth:
       forwardAuth:
-        address: "https://authserver.com/auth"
+        address: "https://example.com/auth"
 ```
 
 ## Configuration Options
@@ -69,7 +69,7 @@ The `address` option defines the authentication server address.
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+  - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
 ```yaml tab="Kubernetes"
@@ -79,28 +79,28 @@ metadata:
   name: test-auth
 spec:
   forwardAuth:
-    address: https://authserver.com/auth 
+    address: https://example.com/auth 
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+- "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.address": "https://authserver.com/auth"
+  "traefik.http.middlewares.test-auth.forwardauth.address": "https://example.com/auth"
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.address=https://authserver.com/auth"
+  - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
-    address = "https://authserver.com/auth"
+    address = "https://example.com/auth"
 ```
 
 ```yaml tab="File (YAML)"
@@ -108,7 +108,7 @@ http:
   middlewares:
     test-auth:
       forwardAuth:
-        address: "https://authserver.com/auth"
+        address: "https://example.com/auth"
 ```
 
 ### `trustForwardHeader`
@@ -127,7 +127,7 @@ metadata:
   name: test-auth
 spec:
   forwardAuth:
-    address: https://authserver.com/auth
+    address: https://example.com/auth
     trustForwardHeader: true
 ```
 
@@ -149,7 +149,7 @@ labels:
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
-    address = "https://authserver.com/auth"
+    address = "https://example.com/auth"
     trustForwardHeader = true
 ```
 
@@ -158,7 +158,7 @@ http:
   middlewares:
     test-auth:
       forwardAuth:
-        address: "https://authserver.com/auth"
+        address: "https://example.com/auth"
         trustForwardHeader: true
 ```
 
@@ -178,7 +178,7 @@ metadata:
   name: test-auth
 spec:
   forwardAuth:
-    address: https://authserver.com/auth
+    address: https://example.com/auth
     authResponseHeaders:
       - X-Auth-User
       - X-Secret
@@ -202,7 +202,7 @@ labels:
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
-    address = "https://authserver.com/auth"
+    address = "https://example.com/auth"
     authResponseHeaders = ["X-Auth-User", "X-Secret"]
 ```
 
@@ -211,7 +211,7 @@ http:
   middlewares:
     test-auth:
       forwardAuth:
-        address: "https://authserver.com/auth"
+        address: "https://example.com/auth"
         authResponseHeaders:
           - "X-Auth-User"
           - "X-Secret"
@@ -237,7 +237,7 @@ metadata:
   name: test-auth
 spec:
   forwardAuth:
-    address: https://authserver.com/auth
+    address: https://example.com/auth
     tls:
       caSecret: mycasercret
 
@@ -270,7 +270,7 @@ labels:
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
-    address = "https://authserver.com/auth"
+    address = "https://example.com/auth"
     [http.middlewares.test-auth.forwardAuth.tls]
       ca = "path/to/local.crt"
 ```
@@ -280,7 +280,7 @@ http:
   middlewares:
     test-auth:
       forwardAuth:
-        address: "https://authserver.com/auth"
+        address: "https://example.com/auth"
         tls:
           ca: "path/to/local.crt"
 ```
@@ -306,7 +306,7 @@ metadata:
   name: test-auth
 spec:
   forwardAuth:
-    address: https://authserver.com/auth
+    address: https://example.com/auth
     tls:
       caOptional: true
 ```
@@ -329,7 +329,7 @@ labels:
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
-    address = "https://authserver.com/auth"
+    address = "https://example.com/auth"
     [http.middlewares.test-auth.forwardAuth.tls]
       caOptional = true
 ```
@@ -339,7 +339,7 @@ http:
   middlewares:
     test-auth:
       forwardAuth:
-        address: "https://authserver.com/auth"
+        address: "https://example.com/auth"
         tls:
           caOptional: true
 ```
@@ -361,7 +361,7 @@ metadata:
   name: test-auth
 spec:
   forwardAuth:
-    address: https://authserver.com/auth
+    address: https://example.com/auth
     tls:
       certSecret: mytlscert
 
@@ -398,7 +398,7 @@ labels:
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
-    address = "https://authserver.com/auth"
+    address = "https://example.com/auth"
     [http.middlewares.test-auth.forwardAuth.tls]
       cert = "path/to/foo.cert"
       key = "path/to/foo.key"
@@ -409,7 +409,7 @@ http:
   middlewares:
     test-auth:
       forwardAuth:
-        address: "https://authserver.com/auth"
+        address: "https://example.com/auth"
         tls:
           cert: "path/to/foo.cert"
           key: "path/to/foo.key"
@@ -435,7 +435,7 @@ metadata:
   name: test-auth
 spec:
   forwardAuth:
-    address: https://authserver.com/auth
+    address: https://example.com/auth
     tls:
       certSecret: mytlscert
 
@@ -472,7 +472,7 @@ labels:
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
-    address = "https://authserver.com/auth"
+    address = "https://example.com/auth"
     [http.middlewares.test-auth.forwardAuth.tls]
       cert = "path/to/foo.cert"
       key = "path/to/foo.key"
@@ -483,7 +483,7 @@ http:
   middlewares:
     test-auth:
       forwardAuth:
-        address: "https://authserver.com/auth"
+        address: "https://example.com/auth"
         tls:
           cert: "path/to/foo.cert"
           key: "path/to/foo.key"
@@ -508,7 +508,7 @@ metadata:
   name: test-auth
 spec:
   forwardAuth:
-    address: https://authserver.com/auth
+    address: https://example.com/auth
     tls:
       insecureSkipVerify: true
 ```
@@ -531,7 +531,7 @@ labels:
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
-    address = "https://authserver.com/auth"
+    address = "https://example.com/auth"
     [http.middlewares.test-auth.forwardAuth.tls]
       insecureSkipVerify: true
 ```
@@ -541,7 +541,7 @@ http:
   middlewares:
     test-auth:
       forwardAuth:
-        address: "https://authserver.com/auth"
+        address: "https://example.com/auth"
         tls:
           insecureSkipVerify: true
 ```

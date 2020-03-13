@@ -97,7 +97,7 @@ Then any router can refer to an instance of the wanted middleware.
 
     ```yaml tab="Docker"
     labels:
-      - "traefik.http.routers.router0.rule=Host(`bar.com`) && PathPrefix(`/test`)"
+      - "traefik.http.routers.router0.rule=Host(`example.com`) && PathPrefix(`/test`)"
       - "traefik.http.routers.router0.middlewares=auth"
       - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     ```
@@ -225,7 +225,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     # dynamic configuration
     [http.routers]
       [http.routers.Router-1]
-        rule = "Host(`bar.com`)"
+        rule = "Host(`example.com`)"
         service = "service-id"
         # will terminate the TLS request
         [http.routers.Router-1.tls]
@@ -252,7 +252,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     http:
       routers:
         Router-1:
-          rule: "Host(`bar.com`)"
+          rule: "Host(`example.com`)"
           service: service-id
           # will terminate the TLS request
           tls:
@@ -301,7 +301,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
       entryPoints:
         - web
       routes:
-        - match: Host(`bar.com`)
+        - match: Host(`example.com`)
           kind: Rule
           services:
             - name: whoami
@@ -416,7 +416,7 @@ To apply a redirection:
         entryPoints = ["web", "websecure"]
         [frontends.frontend1.routes]
           [frontends.frontend1.routes.route0]
-            rule = "Host:foo.com"
+            rule = "Host:example.net"
         [frontends.frontend1.redirect]
           entryPoint = "websecure"
     ```
@@ -425,11 +425,11 @@ To apply a redirection:
 
     ```yaml tab="Docker"
     labels:
-      traefik.http.routers.app.rule: Host(`foo.com`)
+      traefik.http.routers.app.rule: Host(`example.net`)
       traefik.http.routers.app.entrypoints: web
       traefik.http.routers.app.middlewares: https_redirect
     
-      traefik.http.routers.appsecured.rule: Host(`foo.com`)
+      traefik.http.routers.appsecured.rule: Host(`example.net`)
       traefik.http.routers.appsecured.entrypoints: websecure
       traefik.http.routers.appsecured.tls: true
     
@@ -447,7 +447,7 @@ To apply a redirection:
       entryPoints:
         - web
       routes:
-        - match: Host(`foo.com`)
+        - match: Host(`example.net`)
           kind: Rule
           services:
             - name: whoami
@@ -489,13 +489,13 @@ To apply a redirection:
     
     [http.routers]
       [http.routers.router0]
-        rule = "Host(`foo.com`)"
+        rule = "Host(`example.net`)"
         service = "my-service"
         entrypoints = ["web"]
         middlewares = ["https_redirect"]
     
     [http.routers.router1]
-        rule = "Host(`foo.com`)"
+        rule = "Host(`example.net`)"
         service = "my-service"
         entrypoints = ["websecure"]
         [http.routers.router1.tls]
@@ -513,7 +513,7 @@ To apply a redirection:
     http:
       routers:
         router0:
-          rule: "Host(`foo.com`)"
+          rule: "Host(`example.net`)"
           entryPoints:
             - web
           middlewares:
@@ -521,7 +521,7 @@ To apply a redirection:
           service: my-service
     
         router1:
-          rule: "Host(`foo.com`)"
+          rule: "Host(`example.net`)"
           entryPoints:
             - websecure
           service: my-service
@@ -541,7 +541,7 @@ With the new core notions of v2 (introduced earlier in the section
 transforming the URL path prefix of incoming requests is configured with [middlewares](../middlewares/overview.md),
 after the routing step with [router rule `PathPrefix`](../routing/routers/index.md#rule).
 
-Use Case: Incoming requests to `http://company.org/admin` are forwarded to the webapplication "admin",
+Use Case: Incoming requests to `http://example.org/admin` are forwarded to the webapplication "admin",
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
 
 - First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
@@ -553,7 +553,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
 
     ```yaml tab="Docker"
     labels:
-      - "traefik.frontend.rule=Host:company.org;PathPrefixStrip:/admin"
+      - "traefik.frontend.rule=Host:example.org;PathPrefixStrip:/admin"
     ```
 
     ```yaml tab="Kubernetes Ingress"
@@ -566,7 +566,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
         traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip
     spec:
       rules:
-      - host: company.org
+      - host: example.org
         http:
           paths:
           - path: /admin
@@ -578,14 +578,14 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```toml tab="File (TOML)"
     [frontends.admin]
       [frontends.admin.routes.admin_1]
-      rule = "Host:company.org;PathPrefixStrip:/admin"
+      rule = "Host:example.org;PathPrefixStrip:/admin"
     ```
 
     !!! info "v2"
 
     ```yaml tab="Docker"
     labels:
-      - "traefik.http.routers.admin.rule=Host(`company.org`) && PathPrefix(`/admin`)"
+      - "traefik.http.routers.admin.rule=Host(`example.org`) && PathPrefix(`/admin`)"
       - "traefik.http.routers.admin.middlewares=admin-stripprefix"
       - "traefik.http.middlewares.admin-stripprefix.stripprefix.prefixes=/admin"
     ```
@@ -601,7 +601,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       entryPoints:
         - web
       routes:
-        - match: Host(`company.org`) && PathPrefix(`/admin`)
+        - match: Host(`example.org`) && PathPrefix(`/admin`)
           kind: Rule
           services:
             - name: admin-svc
@@ -623,7 +623,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     # dynamic-conf.toml
 
     [http.routers.router1]
-        rule = "Host(`company.org`) && PathPrefix(`/admin`)"
+        rule = "Host(`example.org`) && PathPrefix(`/admin`)"
         service = "admin-svc"
         entrypoints = ["web"]
         middlewares = ["admin-stripprefix"]
@@ -646,7 +646,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
           service: admin-svc
           middlewares:
             - "admin-stripprefix"
-          rule: "Host(`company.org`) && PathPrefix(`/admin`)"
+          rule: "Host(`example.org`) && PathPrefix(`/admin`)"
 
       middlewares:
         admin-stripprefix:
@@ -687,7 +687,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       [entryPoints.websecure.tls]
     
     [acme]
-      email = "your-email-here@my-awesome-app.org"
+      email = "your-email-here@example.com"
       storage = "acme.json"
       entryPoint = "websecure"
       onHostRule = true
@@ -698,7 +698,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     --defaultentrypoints=websecure,web
     --entryPoints=Name:web Address::80 Redirect.EntryPoint:websecure
     --entryPoints=Name:websecure Address::443 TLS
-    --acme.email=your-email-here@my-awesome-app.org
+    --acme.email=your-email-here@example.com
     --acme.storage=acme.json
     --acme.entryPoint=websecure
     --acme.onHostRule=true
@@ -719,7 +719,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
         certResolver = "myresolver"
     
     [certificatesResolvers.myresolver.acme]
-      email = "your-email@your-domain.org"
+      email = "your-email@example.com"
       storage = "acme.json"
       [certificatesResolvers.myresolver.acme.tlsChallenge]
     ```
@@ -738,7 +738,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     certificatesResolvers:
       myresolver:
         acme:
-          email: your-email@your-domain.org
+          email: your-email@example.com
           storage: acme.json
           tlsChallenge: {}
     ```
@@ -746,7 +746,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```bash tab="CLI"
     --entrypoints.web.address=:80
     --entrypoints.websecure.address=:443
-    --certificatesresolvers.myresolver.acme.email=your-email@your-domain.org
+    --certificatesresolvers.myresolver.acme.email=your-email@example.com
     --certificatesresolvers.myresolver.acme.storage=acme.json
     --certificatesresolvers.myresolver.acme.tlschallenge=true
     ```

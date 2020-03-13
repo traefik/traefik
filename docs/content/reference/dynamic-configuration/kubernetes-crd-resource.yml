@@ -82,7 +82,7 @@ spec:
     - web
     - websecure
   routes:
-    - match: Host(`foo.com`) && PathPrefix(`/bar`)
+    - match: Host(`example.net`) && PathPrefix(`/bar`)
       kind: Rule
       priority: 12
       # defining several services is possible and allowed, but for now the servers of
@@ -147,7 +147,7 @@ spec:
   entryPoints:
     - footcp
   routes:
-    - match: HostSNI(`bar.com`)
+    - match: HostSNI(`example.com`)
       services:
         - name: whoamitcp
           port: 8080

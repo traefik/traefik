@@ -97,11 +97,11 @@ Give it a few seconds for the ACME TLS challenge to complete, and you should the
 Both with or (just for fun, do not do that in production) without TLS:
 
 ```bash
-curl [-k] https://your.domain.com/tls
+curl [-k] https://your.example.com/tls
 ```
 
 ```bash
-curl [-k] http://your.domain.com:8000/notls
+curl [-k] http://your.example.com:8000/notls
 ```
 
 Note that you'll have to use `-k` as long as you're using the staging server of Let's Encrypt, since it is not an authorized certificate authority on systems where it hasn't been manually added.
