@@ -71,7 +71,7 @@ http:
 
 ### General
 
-Passwords must be encoded using MD5, SHA1, or BCrypt.
+Passwords must be hashed using MD5, SHA1, or BCrypt.
 
 !!! tip 
 
@@ -79,7 +79,7 @@ Passwords must be encoded using MD5, SHA1, or BCrypt.
 
 ### `users`
 
-The `users` option is an array of authorized users. Each user will be declared using the `name:encoded-password` format.
+The `users` option is an array of authorized users. Each user will be declared using the `name:hashed-password` format.
 
 !!! note ""
     
@@ -165,7 +165,7 @@ http:
 
 The `usersFile` option is the path to an external file that contains the authorized users for the middleware.
 
-The file content is a list of `name:encoded-password`.
+The file content is a list of `name:hashed-password`.
 
 !!! note ""
     
