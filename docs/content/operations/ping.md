@@ -23,7 +23,8 @@ ping: {}
 
 The `/ping` health-check URL is enabled with the command-line `--ping` or config file option `[ping]`.
 
-You can customize the `entryPoint` where the `/ping` is active with the `entryPoint` option (default value: `traefik`)
+The `entryPoint` where the `/ping` is active can be customized with the `entryPoint` option,
+whose default value is `traefik` (port `8080`).
 
 | Path    | Method        | Description                                                                                         |
 |---------|---------------|-----------------------------------------------------------------------------------------------------|
@@ -33,6 +34,8 @@ You can customize the `entryPoint` where the `/ping` is active with the `entryPo
     The `cli` comes with a [`healthcheck`](./cli.md#healthcheck) command which can be used for calling this endpoint.
 
 ### `entryPoint`
+
+_Optional, Default="traefik"_
 
 Enabling /ping on a dedicated EntryPoint.
 
