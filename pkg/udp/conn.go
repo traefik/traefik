@@ -189,6 +189,9 @@ type Conn struct {
 	sizeCh    chan int    // to synchronize with the end of a Read
 	msgs      [][]byte    // to store data from listener, to be consumed by Reads
 
+	muActivity   sync.RWMutex
+	lastActivity time.Time // the last time the session saw either read or write activity
+
 	timer    *time.Timer // for timeouts
 	doneOnce sync.Once
 	doneCh   chan struct{}
@@ -205,8 +208,15 @@ func (c *Conn) readLoop() {
 			case msg := <-c.receiveCh:
 				c.msgs = append(c.msgs, msg)
 			case <-c.timer.C:
-				c.Close()
-				return
+				c.muActivity.RLock()
+				deadline := c.lastActivity.Add(connTimeout)
+				c.muActivity.RUnlock()
+				if time.Now().After(deadline) {
+					c.Close()
+					return
+				}
+				c.timer.Reset(connTimeout)
+				continue
 			}
 		}
 
@@ -219,8 +229,14 @@ func (c *Conn) readLoop() {
 		case msg := <-c.receiveCh:
 			c.msgs = append(c.msgs, msg)
 		case <-c.timer.C:
-			c.Close()
-			return
+			c.muActivity.RLock()
+			deadline := c.lastActivity.Add(connTimeout)
+			c.muActivity.RUnlock()
+			if time.Now().After(deadline) {
+				c.Close()
+				return
+			}
+			c.timer.Reset(connTimeout)
 		}
 	}
 }
@@ -230,7 +246,9 @@ func (c *Conn) Read(p []byte) (int, error) {
 	select {
 	case c.readCh <- p:
 		n := <-c.sizeCh
-		c.timer.Reset(connTimeout)
+		c.muActivity.Lock()
+		c.lastActivity = time.Now()
+		c.muActivity.Unlock()
 		return n, nil
 	case <-c.doneCh:
 		return 0, io.EOF
@@ -244,7 +262,9 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 		return 0, io.EOF
 	}
 
-	c.timer.Reset(connTimeout)
+	c.muActivity.Lock()
+	c.lastActivity = time.Now()
+	c.muActivity.Unlock()
 	return l.pConn.WriteTo(p, c.rAddr)
 }
 
