@@ -148,7 +148,7 @@ func testTimeout(t *testing.T, withRead bool) {
 
 	assert.Equal(t, 10, len(ln.conns))
 
-	time.Sleep(3500 * time.Millisecond)
+	time.Sleep(6 * time.Second)
 	assert.Equal(t, 0, len(ln.conns))
 }
 
