@@ -16,6 +16,8 @@ const closeRetryInterval = 500 * time.Millisecond
 // before releasing all resources related to that session.
 const connTimeout = time.Second * 3
 
+var timeoutTicker = connTimeout / 10
+
 var errClosedListener = errors.New("udp: listener closed")
 
 // Listener augments a session-oriented Listener over a UDP PacketConn.
@@ -175,7 +177,7 @@ func (l *Listener) newConn(rAddr net.Addr) *Conn {
 		readCh:    make(chan []byte),
 		sizeCh:    make(chan int),
 		doneCh:    make(chan struct{}),
-		timer:     time.NewTimer(connTimeout),
+		ticker:    time.NewTicker(timeoutTicker),
 	}
 }
 
@@ -192,7 +194,7 @@ type Conn struct {
 	muActivity   sync.RWMutex
 	lastActivity time.Time // the last time the session saw either read or write activity
 
-	timer    *time.Timer // for timeouts
+	ticker   *time.Ticker // for timeouts
 	doneOnce sync.Once
 	doneCh   chan struct{}
 }
@@ -207,7 +209,7 @@ func (c *Conn) readLoop() {
 			select {
 			case msg := <-c.receiveCh:
 				c.msgs = append(c.msgs, msg)
-			case <-c.timer.C:
+			case <-c.ticker.C:
 				c.muActivity.RLock()
 				deadline := c.lastActivity.Add(connTimeout)
 				c.muActivity.RUnlock()
@@ -215,7 +217,6 @@ func (c *Conn) readLoop() {
 					c.Close()
 					return
 				}
-				c.timer.Reset(connTimeout)
 				continue
 			}
 		}
@@ -228,7 +229,7 @@ func (c *Conn) readLoop() {
 			c.sizeCh <- n
 		case msg := <-c.receiveCh:
 			c.msgs = append(c.msgs, msg)
-		case <-c.timer.C:
+		case <-c.ticker.C:
 			c.muActivity.RLock()
 			deadline := c.lastActivity.Add(connTimeout)
 			c.muActivity.RUnlock()
@@ -236,7 +237,6 @@ func (c *Conn) readLoop() {
 				c.Close()
 				return
 			}
-			c.timer.Reset(connTimeout)
 		}
 	}
 }
@@ -281,5 +281,6 @@ func (c *Conn) Close() error {
 	c.listener.mu.Lock()
 	defer c.listener.mu.Unlock()
 	delete(c.listener.conns, c.rAddr.String())
+	c.ticker.Stop()
 	return nil
 }
