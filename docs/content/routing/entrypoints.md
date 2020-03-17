@@ -828,3 +828,31 @@ Full details for how to specify `address` can be found in [net.Listen](https://g
 !!! warning
 
     For published ports, the ip address from host network may not be visible depending on the orchestrator.
+
+??? info "docker container"
+
+    Publish the ports only on the desired addresses. The network ip address of the host is not visible.
+
+    ```yaml
+    service:
+      oneService:
+        ports:
+          - 127:0.0.1:8888:8888 # ip address on host
+          - [2001:db8::1]:8888:8888 # ip address on host
+          - ...
+        labels:
+          ...
+    ```
+
+??? info "docker swarm"
+
+    All traffic comes from overlay network, and there is no possibility to limit the binding.
+
+    More details: https://github.com/moby/moby/issues/26696
+
+    Possible workarounds:
+      * add firewall rules on all nodes (https://github.com/moby/moby/issues/32299#issuecomment-360421915)
+
+??? info "other orchestrators - undocumented"
+
+    please find out how to do it and write above <!-- TODO write for more orchestrators -->
