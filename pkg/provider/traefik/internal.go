@@ -30,9 +30,11 @@ func New(staticCfg static.Configuration) *Provider {
 
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
 func (i *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, "internal"))
+
 	configurationChan <- dynamic.Message{
 		ProviderName:  "internal",
-		Configuration: i.createConfiguration(),
+		Configuration: i.createConfiguration(ctx),
 	}
 
 	return nil
@@ -43,7 +45,7 @@ func (i *Provider) Init() error {
 	return nil
 }
 
-func (i *Provider) createConfiguration() *dynamic.Configuration {
+func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configuration {
 	cfg := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:     make(map[string]*dynamic.Router),
@@ -66,20 +68,33 @@ func (i *Provider) createConfiguration() *dynamic.Configuration {
 	i.restConfiguration(cfg)
 	i.prometheusConfiguration(cfg)
 	i.entryPointModels(cfg)
-	i.redirection(cfg)
+	i.redirection(ctx, cfg)
 
 	cfg.HTTP.Services["noop"] = &dynamic.Service{}
 
 	return cfg
 }
 
-func (i *Provider) redirection(cfg *dynamic.Configuration) {
+func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) {
 	for name, ep := range i.staticCfg.EntryPoints {
-		if ep.HTTP.Redirections == nil || ep.HTTP.Redirections.EntryPoint == nil {
+		if ep.HTTP.Redirections == nil {
 			continue
 		}
 
+		logger := log.FromContext(log.With(ctx, log.Str(log.EntryPointName, name)))
+
 		def := ep.HTTP.Redirections
+		if def.EntryPoint == nil || def.EntryPoint.To == "" {
+			logger.Error("unable to create redirection: entry point is missing")
+			continue
+		}
+
+		port, err := i.getEntryPointPort(name, def)
+		if err != nil {
+			logger.Error(err)
+			continue
+		}
+
 		rtName := provider.Normalize(name + "-to-" + def.EntryPoint.To)
 		mdName := "redirect-" + rtName
 
@@ -89,12 +104,6 @@ func (i *Provider) redirection(cfg *dynamic.Configuration) {
 			Middlewares: []string{mdName},
 			Service:     "noop@internal",
 			Priority:    def.EntryPoint.Priority,
-		}
-
-		port, err := i.getEntryPointPort(name, def)
-		if err != nil {
-			log.FromContext(context.Background()).WithField(log.EntryPointName, name).Error(err)
-			continue
 		}
 
 		cfg.HTTP.Routers[rtName] = rt
