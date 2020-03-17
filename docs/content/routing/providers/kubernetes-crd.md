@@ -646,7 +646,6 @@ referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or rec
 * services [Weighted Round Robin](#weighted-round-robin) load balancing.
 * services [mirroring](#mirroring).
 
-
 #### Server Load Balancing
 
 More information in the dedicated server [load balancing](../services/index.md#load-balancing) section.
@@ -915,6 +914,154 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     the cross-provider syntax (`service@provider`) should be used to refer to the `TraefikService`, just as in the middleware case.
     
     Specifying a namespace attribute in this case would not make any sense, and will be ignored (except if the provider is `kubernetescrd`).
+
+#### Stickiness and load-balancing
+
+As explained in the section about [Sticky sessions](../../services/#sticky-sessions), for stickiness to work all the way,
+it must be specified at each load-balancing level.
+
+For instance, in the example below, there is a first level of load-balancing because there is a (Weighted Round Robin) load-balancing of the two `whoami` services,
+and there is a second level because each whoami service is a `replicaset` and is thus handled as a load-balancer of servers.
+
+??? "Stickiness on two load-balancing levels"
+
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: ingressroutebar
+      namespace: default
+
+    spec:
+      entryPoints:
+        - web
+      routes:
+      - match: Host(`example.com`) && PathPrefix(`/foo`)
+        kind: Rule
+        services:
+        - name: wrr1
+          namespace: default
+          kind: TraefikService
+    ```
+
+    ```yaml tab="Weighted Round Robin"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: TraefikService
+    metadata:
+      name: wrr1
+      namespace: default
+
+    spec:
+      weighted:
+        services:
+          - name: whoami1
+            kind: Service
+            port: 80
+            weight: 1
+            sticky:
+              cookie:
+                name: lvl2
+          - name: whoami2
+            kind: Service
+            weight: 1
+            port: 80
+            sticky:
+              cookie:
+                name: lvl2
+        sticky:
+          cookie:
+            name: lvl1
+    ```
+
+    ```yaml tab="K8s Service"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: whoami1
+
+    spec:
+      ports:
+        - protocol: TCP
+          name: web
+          port: 80
+      selector:
+        app: whoami1
+
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: whoami2
+
+    spec:
+      ports:
+        - protocol: TCP
+          name: web
+          port: 80
+      selector:
+        app: whoami2
+    ```
+
+    ```yaml tab="Deployment (to illustrate replicas)"
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      namespace: default
+      name: whoami1
+      labels:
+        app: whoami1
+
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: whoami1
+      template:
+        metadata:
+          labels:
+            app: whoami1
+        spec:
+          containers:
+            - name: whoami1
+              image: containous/whoami
+              ports:
+                - name: web
+                  containerPort: 80
+
+    ---
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      namespace: default
+      name: whoami2
+      labels:
+        app: whoami2
+
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: whoami2
+      template:
+        metadata:
+          labels:
+            app: whoami2
+        spec:
+          containers:
+            - name: whoami2
+              image: containous/whoami
+              ports:
+                - name: web
+                  containerPort: 80
+    ```
+
+    To keep a session open with the same server, the client would then need to specify the two levels within the cookie for each request, e.g. with curl:
+
+    ```bash
+    curl -H Host:example.com -b "lvl1=default-whoami1-80; lvl2=http://10.42.0.6:80" http://localhost:8000/foo
+    ```
+
+    assuming `10.42.0.6` is the IP address of one of the replicas (a pod then) of the `whoami1` service.
 
 ### Kind `IngressRouteTCP`
 
@@ -1192,7 +1339,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
           port: 8081
           weight: 10
     ```
-    
+
 ### Kind: `TLSOption`
 
 `TLSOption` is the CRD implementation of a [Traefik "TLS Option"](../../https/tls.md#tls-options).
@@ -1386,6 +1533,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
       tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
     ```
+
 ## Further
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.

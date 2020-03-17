@@ -167,8 +167,12 @@ For now, only round robin load balancing is supported:
 
 #### Sticky sessions
 
-When sticky sessions are enabled, a cookie is set on the initial request to track which server handles the first response.
-On subsequent requests, the client is forwarded to the same server.
+When sticky sessions are enabled, a cookie is set on the initial request and response to let the client know which server handles the first response.
+On subsequent requests, to keep the session alive with the same server, the client should resend the same cookie.
+
+!!! info "Stickiness on multiple levels"
+
+    When chaining or mixing load-balancers (e.g. a load-balancer of servers is one of the "children" of a load-balancer of services), for stickiness to work all the way, the option needs to be specified at all required levels. Which means the client needs to send a cookie with as many key/value pairs as there are sticky levels.
 
 !!! info "Stickiness & Unhealthy Servers"
 
@@ -224,6 +228,80 @@ On subsequent requests, the client is forwarded to the same server.
                 name: my_sticky_cookie_name
                 secure: true
                 httpOnly: true
+    ```
+
+??? example "Setting Stickiness on all the required levels -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.wrr1]
+        [http.services.wrr1.weighted.sticky.cookie]
+          name = "lvl1"
+        [[http.services.wrr1.weighted.services]]
+          name = "whoami1"
+          weight = 1
+        [[http.services.wrr1.weighted.services]]
+          name = "whoami2"
+          weight = 1
+
+      [http.services.whoami1]
+        [http.services.whoami1.loadBalancer]
+          [http.services.whoami1.loadBalancer.sticky.cookie]
+            name = "lvl2"
+          [[http.services.whoami1.loadBalancer.servers]]
+            url = "http://127.0.0.1:8081"
+          [[http.services.whoami1.loadBalancer.servers]]
+            url = "http://127.0.0.1:8082"
+
+      [http.services.whoami2]
+        [http.services.whoami2.loadBalancer]
+          [http.services.whoami2.loadBalancer.sticky.cookie]
+            name = "lvl2"
+          [[http.services.whoami2.loadBalancer.servers]]
+            url = "http://127.0.0.1:8083"
+          [[http.services.whoami2.loadBalancer.servers]]
+            url = "http://127.0.0.1:8084"
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        wrr1:
+          weighted:
+            sticky:
+              cookie:
+                name: lvl1
+            services:
+              - name: whoami1
+                weight: 1
+              - name: whoami2
+                weight: 1
+
+        whoami1:
+          loadBalancer:
+            sticky:
+              cookie:
+                name: lvl2
+            servers:
+              - url: http://127.0.0.1:8081
+              - url: http://127.0.0.1:8082
+
+        whoami2:
+          loadBalancer:
+            sticky:
+              cookie:
+                name: lvl2
+            servers:
+              - url: http://127.0.0.1:8083
+              - url: http://127.0.0.1:8084
+    ```
+
+    To keep a session open with the same server, the client would then need to specify the two levels within the cookie for each request, e.g. with curl:
+    
+    ```
+    curl -b "lvl1=whoami1; lvl2=http://127.0.0.1:8081" http://localhost:8000
     ```
 
 #### Health Check
