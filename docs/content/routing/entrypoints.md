@@ -800,3 +800,31 @@ entrypoints.websecure.http.tls.domains[1].sans=foo.test.com,bar.test.com
     entrypoints.websecure.address=:443
     entrypoints.websecure.http.tls.certResolver=leresolver
     ```
+
+### listen on some ip addresses only
+
+```toml tab="File (TOML)"
+[entryPoints.oneIPv4Address]
+  address = "192.168.2.7:8888" # network ip address INSIDE container
+[entryPoints.oneIPv6Address]
+  address = "[2001:db8::1]:8888" # network ip address INSIDE container
+```
+
+```yaml tab="File (yaml)"
+entryPoints:
+  oneIPv4Address:
+    address: "192.168.2.7:8888" # network ip address INSIDE container
+  oneIPv6address:
+    address: "[2001:db8::1]:8888" # network ip address INSIDE container
+```
+
+```bash tab="CLI"
+entrypoints.oneIPv4Address.address=192.168.2.7:8888 # network ip address INSIDE container
+entrypoints.oneIPv6Address.address=[2001:db8::1]:8888  # network ip address INSIDE container
+```
+
+Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
+
+!!! warning
+
+    For published ports, the ip address from host network may not be visible depending on the orchestrator.
