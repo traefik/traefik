@@ -14,7 +14,7 @@ const closeRetryInterval = 500 * time.Millisecond
 
 // connTimeout determines how long to wait on an idle session,
 // before releasing all resources related to that session.
-const connTimeout = time.Second * 3
+const connTimeout = 3 * time.Second
 
 var timeoutTicker = connTimeout / 10
 
