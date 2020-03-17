@@ -165,9 +165,14 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 	// Loop through Custom request headers
 	for header, value := range s.headers.CustomRequestHeaders {
-		if value == "" {
+		switch {
+		case value == "":
 			req.Header.Del(header)
-		} else {
+
+		case strings.EqualFold(header, "Host"):
+			req.Host = value
+
+		default:
 			req.Header.Set(header, value)
 		}
 	}

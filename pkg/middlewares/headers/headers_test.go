@@ -33,6 +33,50 @@ func TestCustomRequestHeader(t *testing.T) {
 	assert.Equal(t, "test_request", req.Header.Get("X-Custom-Request-Header"))
 }
 
+func TestCustomRequestHeader_Host(t *testing.T) {
+	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	testCases := []struct {
+		desc            string
+		customHeaders   map[string]string
+		expectedHost    string
+		expectedURLHost string
+	}{
+		{
+			desc:            "standard Host header",
+			customHeaders:   map[string]string{},
+			expectedHost:    "example.org",
+			expectedURLHost: "example.org",
+		},
+		{
+			desc: "custom Host header",
+			customHeaders: map[string]string{
+				"Host": "example.com",
+			},
+			expectedHost:    "example.com",
+			expectedURLHost: "example.org",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			header := NewHeader(emptyHandler, dynamic.Headers{
+				CustomRequestHeaders: test.customHeaders,
+			})
+
+			res := httptest.NewRecorder()
+			req, err := http.NewRequest(http.MethodGet, "http://example.org/foo", nil)
+			require.NoError(t, err)
+
+			header.ServeHTTP(res, req)
+
+			assert.Equal(t, http.StatusOK, res.Code)
+			assert.Equal(t, test.expectedHost, req.Host)
+			assert.Equal(t, test.expectedURLHost, req.URL.Host)
+		})
+	}
+}
+
 func TestCustomRequestHeaderEmptyValue(t *testing.T) {
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
