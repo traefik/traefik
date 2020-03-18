@@ -105,6 +105,12 @@ HTTP configuration.
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
 Default middlewares for the routers linked to the entry point.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_REDIRECTIONS_ENTRYPOINT_PERMANENT`:  
+Applied a permanent redirection. Defaults to true. (Default: ```true```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_REDIRECTIONS_ENTRYPOINT_PRIORITY`:  
+Priority of the generated router. Defaults to 1. (Default: ```1```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME`:  
 Scheme used for the redirection. Defaults to https. (Default: ```https```)
 

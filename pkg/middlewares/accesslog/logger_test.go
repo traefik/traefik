@@ -497,7 +497,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					DefaultMode: "drop",
 				},
 			},
-			expectedLog: `- - - [-] "- - -" - - "testReferer" "testUserAgent" - - - 0ms`,
+			expectedLog: `- - - [-] "- - -" - - "testReferer" "testUserAgent" - "-" "-" 0ms`,
 		},
 		{
 			desc: "Default mode drop with override",
@@ -512,7 +512,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					},
 				},
 			},
-			expectedLog: `- - TestUser [-] "- - -" - - "testReferer" "testUserAgent" - - - 0ms`,
+			expectedLog: `- - TestUser [-] "- - -" - - "testReferer" "testUserAgent" - "-" "-" 0ms`,
 		},
 		{
 			desc: "Default mode drop with header dropped",
@@ -530,7 +530,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					},
 				},
 			},
-			expectedLog: `- - TestUser [-] "- - -" - - "-" "-" - - - 0ms`,
+			expectedLog: `- - TestUser [-] "- - -" - - "-" "-" - "-" "-" 0ms`,
 		},
 		{
 			desc: "Default mode drop with header redacted",
@@ -548,7 +548,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					},
 				},
 			},
-			expectedLog: `- - TestUser [-] "- - -" - - "REDACTED" "REDACTED" - - - 0ms`,
+			expectedLog: `- - TestUser [-] "- - -" - - "REDACTED" "REDACTED" - "-" "-" 0ms`,
 		},
 		{
 			desc: "Default mode drop with header redacted",
@@ -569,7 +569,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 					},
 				},
 			},
-			expectedLog: `- - TestUser [-] "- - -" - - "REDACTED" "testUserAgent" - - - 0ms`,
+			expectedLog: `- - TestUser [-] "- - -" - - "REDACTED" "testUserAgent" - "-" "-" 0ms`,
 		},
 	}
 

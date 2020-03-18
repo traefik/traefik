@@ -37,6 +37,8 @@ entryPoints:
         entryPoint:
           to: foobar
           scheme: foobar
+          permanent: true
+          priority: 42
       middlewares:
       - foobar
       - foobar

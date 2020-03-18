@@ -34,6 +34,8 @@
         [entryPoints.EntryPoint0.http.redirections.entryPoint]
           to = "foobar"
           scheme = "foobar"
+          permanent = true
+          priority = 42
       [entryPoints.EntryPoint0.http.tls]
         options = "foobar"
         certResolver = "foobar"
