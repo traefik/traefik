@@ -1,3 +1,28 @@
+## [v2.2.0-rc3](https://github.com/containous/traefik/tree/v2.2.0-rc3) (2020-03-18)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.0-rc2...v2.2.0-rc3)
+
+**Enhancements:**
+- **[authentication,middleware]** docs: terminology, replace &#39;encoded&#39; by &#39;hashed&#39; ([#6478](https://github.com/containous/traefik/pull/6478) by [debovema](https://github.com/debovema))
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v3.5.0 ([#6491](https://github.com/containous/traefik/pull/6491) by [ldez](https://github.com/ldez))
+- **[internal]** Fix entry point redirect behavior ([#6512](https://github.com/containous/traefik/pull/6512) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/ingress]** fix: Ingress TLS support ([#6504](https://github.com/containous/traefik/pull/6504) by [ldez](https://github.com/ldez))
+- **[middleware]** fix: custom Host header. ([#6502](https://github.com/containous/traefik/pull/6502) by [ldez](https://github.com/ldez))
+- **[server,udp]** udp: replace concurrently reset timer with ticker ([#6498](https://github.com/containous/traefik/pull/6498) by [mpl](https://github.com/mpl))
+- **[server]** Drop traefik from default entry points. ([#6477](https://github.com/containous/traefik/pull/6477) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[k8s,k8s/crd,sticky-session]** docs: clarify multi-levels stickiness ([#6475](https://github.com/containous/traefik/pull/6475) by [mpl](https://github.com/mpl))
+- **[k8s/helm]** Update traefik install documentation ([#6466](https://github.com/containous/traefik/pull/6466) by [mmatur](https://github.com/mmatur))
+- Fix wrong copy/pasted with service name warning ([#6510](https://github.com/containous/traefik/pull/6510) by [Nek-](https://github.com/Nek-))
+- Improve ping documentation. ([#6476](https://github.com/containous/traefik/pull/6476) by [ldez](https://github.com/ldez))
+- doc: fix typo. ([#6472](https://github.com/containous/traefik/pull/6472) by [ldez](https://github.com/ldez))
+- doc: Use neutral domains. ([#6471](https://github.com/containous/traefik/pull/6471) by [ldez](https://github.com/ldez))
+
+**Misc:**
+- **[rancher]** Stop using fork of go-rancher-metadata ([#6469](https://github.com/containous/traefik/pull/6469) by [ibuildthecloud](https://github.com/ibuildthecloud))
+
 ## [v2.1.7](https://github.com/containous/traefik/tree/v2.1.7) (2020-03-18)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.6...v2.1.7)
 
