@@ -575,20 +575,23 @@ This whole section is dedicated to options, keyed by entry point, that will appl
 
 #### `entryPoint`
 
-This section is a convenience to enable (permanent) redirecting of all incoming requests on an entry point (e.g. port `80`) to another entry point (e.g. port `443`).
+This section is a convenience to enable (permanent) redirecting of all incoming requests on an entry point (e.g. port `80`) to another entry point (e.g. port `443`) or an explicit port (`:443`).
 
 ??? info "`entryPoint.to`"
     
     _Required_
     
-    The target entry point.
-
+    The target element, it can be:
+    
+      - an entry point name (ex: `websecure`)
+      - a port (`:443`)
+      
     ```toml tab="File (TOML)"
     [entryPoints.foo]
       # ...
       [entryPoints.foo.http.redirections]
         [entryPoints.foo.http.redirections.entryPoint]
-          to = "bar"
+          to = "websecure"
     ```
     
     ```yaml tab="File (YAML)"
@@ -598,7 +601,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
         http:
           redirections:
             entryPoint:
-              to: bar
+              to: websecure
     ```
     
     ```bash tab="CLI"
@@ -607,7 +610,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
 
 ??? info "`entryPoint.scheme`"
     
-    _Optional, Default="http"_
+    _Optional, Default="https"_
     
     The redirection target scheme.
 
@@ -633,6 +636,66 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
     
     ```bash tab="CLI"
     --entrypoints.foo.http.redirections.entryPoint.scheme=https
+    ```
+
+??? info "`entryPoint.permanent`"
+   
+    _Optional, Default=true_
+    
+    To apply a permanent redirection.
+
+    ```toml tab="File (TOML)"
+    [entryPoints.foo]
+      # ...
+      [entryPoints.foo.http.redirections]
+        [entryPoints.foo.http.redirections.entryPoint]
+          # ...
+          permanent = true
+    ```
+    
+    ```yaml tab="File (YAML)"
+    entryPoints:
+      foo:
+        # ...
+        http:
+          redirections:
+            entryPoint:
+              # ...
+              permanent: true
+    ```
+    
+    ```bash tab="CLI"
+    --entrypoints.foo.http.redirections.entrypoint.permanent=true
+    ```
+
+??? info "`entryPoint.priority`"
+  
+    _Optional, Default=1_
+    
+    Priority of the generated router.
+
+    ```toml tab="File (TOML)"
+    [entryPoints.foo]
+      # ...
+      [entryPoints.foo.http.redirections]
+        [entryPoints.foo.http.redirections.entryPoint]
+          # ...
+          priority = 10
+    ```
+    
+    ```yaml tab="File (YAML)"
+    entryPoints:
+      foo:
+        # ...
+        http:
+          redirections:
+            entryPoint:
+              # ...
+              priority: 10
+    ```
+    
+    ```bash tab="CLI"
+    --entrypoints.foo.http.redirections.entrypoint.priority=10
     ```
 
 ### Middlewares

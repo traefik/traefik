@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"regexp"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/static"
@@ -30,9 +31,11 @@ func New(staticCfg static.Configuration) *Provider {
 
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
 func (i *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, "internal"))
+
 	configurationChan <- dynamic.Message{
 		ProviderName:  "internal",
-		Configuration: i.createConfiguration(),
+		Configuration: i.createConfiguration(ctx),
 	}
 
 	return nil
@@ -43,7 +46,7 @@ func (i *Provider) Init() error {
 	return nil
 }
 
-func (i *Provider) createConfiguration() *dynamic.Configuration {
+func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configuration {
 	cfg := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:     make(map[string]*dynamic.Router),
@@ -66,20 +69,33 @@ func (i *Provider) createConfiguration() *dynamic.Configuration {
 	i.restConfiguration(cfg)
 	i.prometheusConfiguration(cfg)
 	i.entryPointModels(cfg)
-	i.redirection(cfg)
+	i.redirection(ctx, cfg)
 
 	cfg.HTTP.Services["noop"] = &dynamic.Service{}
 
 	return cfg
 }
 
-func (i *Provider) redirection(cfg *dynamic.Configuration) {
+func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) {
 	for name, ep := range i.staticCfg.EntryPoints {
-		if ep.HTTP.Redirections == nil || ep.HTTP.Redirections.EntryPoint == nil {
+		if ep.HTTP.Redirections == nil {
 			continue
 		}
 
+		logger := log.FromContext(log.With(ctx, log.Str(log.EntryPointName, name)))
+
 		def := ep.HTTP.Redirections
+		if def.EntryPoint == nil || def.EntryPoint.To == "" {
+			logger.Error("Unable to create redirection: the entry point or the port is missing")
+			continue
+		}
+
+		port, err := i.getRedirectPort(name, def)
+		if err != nil {
+			logger.Error(err)
+			continue
+		}
+
 		rtName := provider.Normalize(name + "-to-" + def.EntryPoint.To)
 		mdName := "redirect-" + rtName
 
@@ -88,12 +104,7 @@ func (i *Provider) redirection(cfg *dynamic.Configuration) {
 			EntryPoints: []string{name},
 			Middlewares: []string{mdName},
 			Service:     "noop@internal",
-		}
-
-		port, err := i.getEntryPointPort(name, def)
-		if err != nil {
-			log.FromContext(context.Background()).WithField(log.EntryPointName, name).Error(err)
-			continue
+			Priority:    def.EntryPoint.Priority,
 		}
 
 		cfg.HTTP.Routers[rtName] = rt
@@ -102,12 +113,42 @@ func (i *Provider) redirection(cfg *dynamic.Configuration) {
 			RedirectScheme: &dynamic.RedirectScheme{
 				Scheme:    def.EntryPoint.Scheme,
 				Port:      port,
-				Permanent: true,
+				Permanent: def.EntryPoint.Permanent,
 			},
 		}
 
 		cfg.HTTP.Middlewares[mdName] = rs
 	}
+}
+
+func (i *Provider) getRedirectPort(name string, def *static.Redirections) (string, error) {
+	exp := regexp.MustCompile(`^:(\d+)$`)
+
+	if exp.MatchString(def.EntryPoint.To) {
+		_, port, err := net.SplitHostPort(def.EntryPoint.To)
+		if err != nil {
+			return "", fmt.Errorf("invalid port value: %w", err)
+		}
+
+		return port, nil
+	}
+
+	return i.getEntryPointPort(name, def)
+}
+
+func (i *Provider) getEntryPointPort(name string, def *static.Redirections) (string, error) {
+	dst, ok := i.staticCfg.EntryPoints[def.EntryPoint.To]
+	if !ok {
+		return "", fmt.Errorf("'to' entry point field references a non-existing entry point: %s", def.EntryPoint.To)
+	}
+
+	_, port, err := net.SplitHostPort(dst.Address)
+	if err != nil {
+		return "", fmt.Errorf("invalid entry point %q address %q: %v",
+			name, i.staticCfg.EntryPoints[def.EntryPoint.To].Address, err)
+	}
+
+	return port, nil
 }
 
 func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
@@ -232,19 +273,4 @@ func (i *Provider) prometheusConfiguration(cfg *dynamic.Configuration) {
 	}
 
 	cfg.HTTP.Services["prometheus"] = &dynamic.Service{}
-}
-
-func (i *Provider) getEntryPointPort(name string, def *static.Redirections) (string, error) {
-	dst, ok := i.staticCfg.EntryPoints[def.EntryPoint.To]
-	if !ok {
-		return "", fmt.Errorf("'to' entry point field references a non-existing entry point: %s", name)
-	}
-
-	_, port, err := net.SplitHostPort(dst.Address)
-	if err != nil {
-		return "", fmt.Errorf("invalid entry point %q address %q: %v",
-			name, i.staticCfg.EntryPoints[def.EntryPoint.To].Address, err)
-	}
-
-	return port, nil
 }

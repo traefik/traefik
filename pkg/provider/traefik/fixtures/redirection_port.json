@@ -1,0 +1,30 @@
+{
+  "http": {
+    "routers": {
+      "web-to-443": {
+        "entryPoints": [
+          "web"
+        ],
+        "middlewares": [
+          "redirect-web-to-443"
+        ],
+        "service": "noop@internal",
+        "rule": "HostRegexp(`{host:.+}`)"
+      }
+    },
+    "middlewares": {
+      "redirect-web-to-443": {
+        "redirectScheme": {
+          "scheme": "https",
+          "port": "443",
+          "permanent": true
+        }
+      }
+    },
+    "services": {
+      "noop": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}
