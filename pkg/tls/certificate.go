@@ -3,6 +3,7 @@ package tls
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -48,8 +49,9 @@ var (
 // Certificate holds a SSL cert/key pair
 // Certs and Key could be either a file path, or the file content itself
 type Certificate struct {
-	CertFile FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
-	KeyFile  FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty"`
+	CertFile   FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
+	KeyFile    FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty"`
+	Passphrase string        `json:"passphrase,omitempty" toml:"passphrase,omitempty" yaml:"passphrase,omitempty"`
 }
 
 // Certificates defines traefik certificates type
@@ -141,7 +143,13 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 	if err != nil {
 		return fmt.Errorf("unable to read KeyFile : %v", err)
 	}
-	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+
+	keyDecoded, err := DecodePrivateKey(keyContent, c.Passphrase)
+	if err != nil {
+		return fmt.Errorf("unable to decode KeyFile : %v", err)
+	}
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyDecoded)
 	if err != nil {
 		return fmt.Errorf("unable to generate TLS certificate : %v", err)
 	}
@@ -236,4 +244,31 @@ func (c *Certificates) Set(value string) error {
 // Type is type of the struct
 func (c *Certificates) Type() string {
 	return "certificates"
+}
+
+// DecodePrivateKey decodes the key if encrypted.
+func DecodePrivateKey(keyContent []byte, passphrase string) ([]byte, error) {
+	var keyDecoded []byte
+	var err error
+	if len(passphrase) == 0 {
+		// No passphrase provided, return provided key.
+		return keyContent, nil
+	}
+
+	keyPemBlock, _ := pem.Decode(keyContent)
+	if x509.IsEncryptedPEMBlock(keyPemBlock) {
+		keyDecoded, err = x509.DecryptPEMBlock(keyPemBlock, []byte(passphrase))
+		if err != nil {
+			return keyDecoded, fmt.Errorf("unable to decrypt TLS certificate key : %v", err)
+		}
+
+		keyDecoded = pem.EncodeToMemory(&pem.Block{
+			Type:  keyPemBlock.Type,
+			Bytes: keyDecoded,
+		})
+	} else {
+		keyDecoded = pem.EncodeToMemory(keyPemBlock)
+	}
+
+	return keyDecoded, nil
 }

@@ -276,7 +276,12 @@ func buildDefaultCertificate(defaultCertificate *Certificate) (*tls.Certificate,
 		return nil, fmt.Errorf("failed to get key file content: %v", err)
 	}
 
-	cert, err := tls.X509KeyPair(certFile, keyFile)
+	keyDecoded, err := DecodePrivateKey(keyFile, defaultCertificate.Passphrase)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode KeyFile : %v", err)
+	}
+
+	cert, err := tls.X509KeyPair(certFile, keyDecoded)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load X509 key pair: %v", err)
 	}
