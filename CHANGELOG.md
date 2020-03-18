@@ -1,5 +1,18 @@
 # Change Log
 
+## [v1.7.22](https://github.com/containous/traefik/tree/v1.7.22) (2020-03-09)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.21...v1.7.22)
+
+**Bug fixes:**
+- **[provider]** Skip redirection with invalid regex syntax. ([#6446](https://github.com/containous/traefik/pull/6446) by [ldez](https://github.com/ldez))
+- **[server]** Clear closed hijacked h2c connections ([#6357](https://github.com/containous/traefik/pull/6357) by [omerkay](https://github.com/omerkay))
+
+**Documentation:**
+- **[acme]** fix: manual provider code name. ([#6456](https://github.com/containous/traefik/pull/6456) by [ldez](https://github.com/ldez))
+- **[docker]** Fix typo in user guide. ([#6386](https://github.com/containous/traefik/pull/6386) by [ldez](https://github.com/ldez))
+- **[k8s]** Complete TLS example for Kubernetes Ingress in user guide ([#6457](https://github.com/containous/traefik/pull/6457) by [rtribotte](https://github.com/rtribotte))
+- **[k8s]** Updated rbac and Daemonset example bloc ([#6375](https://github.com/containous/traefik/pull/6375) by [bjthomas1](https://github.com/bjthomas1))
+
 ## [v1.7.21](https://github.com/containous/traefik/tree/v1.7.21) (2020-02-20)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.20...v1.7.21)
 
