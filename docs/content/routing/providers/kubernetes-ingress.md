@@ -202,7 +202,7 @@ which in turn will create the resulting routers, services, handlers, etc.
     See [middlewares](../routers/index.md#middlewares) and [middlewares overview](../../middlewares/overview.md) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.middlewares: auth@file,prefix@kuberntes-crd,cb@file
+    traefik.ingress.kubernetes.io/router.middlewares: auth@file,prefix@kuberntescrd,cb@file
     ```
 
 ??? info "`traefik.ingress.kubernetes.io/router.priority`"

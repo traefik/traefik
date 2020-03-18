@@ -265,10 +265,10 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.ServiceName + "-" + pa.Backend.ServicePort.String())
 				conf.HTTP.Services[serviceName] = service
-				conf.HTTP.Services[serviceName] = service
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Name+"-"+ingress.Namespace+"-"+rule.Host+pa.Path), "-")
-				conf.HTTP.Routers[routerKey] = loadRouter(ingress, rule, pa, rtConfig, serviceName)
+
+				conf.HTTP.Routers[routerKey] = loadRouter(rule, pa, rtConfig, serviceName)
 			}
 		}
 	}
@@ -526,7 +526,7 @@ func getProtocol(portSpec corev1.ServicePort, portName string, svcConfig *Servic
 	return protocol
 }
 
-func loadRouter(ingress *v1beta1.Ingress, rule v1beta1.IngressRule, pa v1beta1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
+func loadRouter(rule v1beta1.IngressRule, pa v1beta1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
 	var rules []string
 	if len(rule.Host) > 0 {
 		rules = []string{buildHostRule(rule.Host)}
@@ -544,11 +544,6 @@ func loadRouter(ingress *v1beta1.Ingress, rule v1beta1.IngressRule, pa v1beta1.H
 	rt := &dynamic.Router{
 		Rule:    strings.Join(rules, " && "),
 		Service: serviceName,
-	}
-
-	if len(ingress.Spec.TLS) > 0 {
-		// TLS enabled for this ingress, add TLS router
-		rt.TLS = &dynamic.RouterTLSConfig{}
 	}
 
 	if rtConfig != nil && rtConfig.Router != nil {

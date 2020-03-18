@@ -45,7 +45,6 @@
 			],
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
-			"tls": {},
 			"status": "enabled",
 			"using": [
 				"web"
