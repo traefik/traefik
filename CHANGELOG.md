@@ -1,3 +1,16 @@
+## [v2.1.7](https://github.com/containous/traefik/tree/v2.1.7) (2020-03-18)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.6...v2.1.7)
+
+**Bug fixes:**
+- **[logs,middleware]** Access log field quotes. ([#6484](https://github.com/containous/traefik/pull/6484) by [ldez](https://github.com/ldez))
+- **[metrics]** fix statsd scale for duration based metrics ([#6054](https://github.com/containous/traefik/pull/6054) by [ddtmachado](https://github.com/ddtmachado))
+- **[middleware]** Added support for replacement containing escaped characters ([#6413](https://github.com/containous/traefik/pull/6413) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[acme,docker]** Add some missing doc. ([#6422](https://github.com/containous/traefik/pull/6422) by [ldez](https://github.com/ldez))
+- **[acme]** Added wildcard ACME example ([#6423](https://github.com/containous/traefik/pull/6423) by [Basster](https://github.com/Basster))
+- **[acme]** fix typo ([#6408](https://github.com/containous/traefik/pull/6408) by [hamiltont](https://github.com/hamiltont))
+
 ## [v2.1.6](https://github.com/containous/traefik/tree/v2.1.6) (2020-02-28)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.4...v2.1.6)
 
