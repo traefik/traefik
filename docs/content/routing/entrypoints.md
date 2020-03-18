@@ -575,20 +575,23 @@ This whole section is dedicated to options, keyed by entry point, that will appl
 
 #### `entryPoint`
 
-This section is a convenience to enable (permanent) redirecting of all incoming requests on an entry point (e.g. port `80`) to another entry point (e.g. port `443`).
+This section is a convenience to enable (permanent) redirecting of all incoming requests on an entry point (e.g. port `80`) to another entry point (e.g. port `443`) or an explicit port (`:443`).
 
 ??? info "`entryPoint.to`"
     
     _Required_
     
-    The target entry point.
-
+    The target element, it can be:
+    
+      - an entry point name (ex: `websecure`)
+      - a port (`:443`)
+      
     ```toml tab="File (TOML)"
     [entryPoints.foo]
       # ...
       [entryPoints.foo.http.redirections]
         [entryPoints.foo.http.redirections.entryPoint]
-          to = "bar"
+          to = "websecure"
     ```
     
     ```yaml tab="File (YAML)"
@@ -598,7 +601,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
         http:
           redirections:
             entryPoint:
-              to: bar
+              to: websecure
     ```
     
     ```bash tab="CLI"

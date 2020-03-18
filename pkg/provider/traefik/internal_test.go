@@ -1,6 +1,7 @@
 package traefik
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"io/ioutil"
@@ -196,8 +197,30 @@ func Test_createConfiguration(t *testing.T) {
 						HTTP: static.HTTPConfig{
 							Redirections: &static.Redirections{
 								EntryPoint: &static.RedirectEntryPoint{
-									To:     "websecure",
-									Scheme: "https",
+									To:        "websecure",
+									Scheme:    "https",
+									Permanent: true,
+								},
+							},
+						},
+					},
+					"websecure": {
+						Address: ":443",
+					},
+				},
+			},
+		}, {
+			desc: "redirection_port.json",
+			staticCfg: static.Configuration{
+				EntryPoints: map[string]*static.EntryPoint{
+					"web": {
+						Address: ":80",
+						HTTP: static.HTTPConfig{
+							Redirections: &static.Redirections{
+								EntryPoint: &static.RedirectEntryPoint{
+									To:        ":443",
+									Scheme:    "https",
+									Permanent: true,
 								},
 							},
 						},
@@ -217,7 +240,7 @@ func Test_createConfiguration(t *testing.T) {
 
 			provider := Provider{staticCfg: test.staticCfg}
 
-			cfg := provider.createConfiguration()
+			cfg := provider.createConfiguration(context.Background())
 
 			filename := filepath.Join("fixtures", test.desc)
 
