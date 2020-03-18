@@ -827,9 +827,9 @@ Full details for how to specify `address` can be found in [net.Listen](https://g
 
 !!! warning
 
-    For published ports, the ip address from host network may not be visible depending on the orchestrator.
+    If using an orchestrator, the IP addresses available to bind to may not be externally accessible.
 
-??? info "docker container"
+??? info "Docker"
 
     Publish the ports only on the desired addresses. The network ip address of the host is not visible.
 
@@ -844,7 +844,7 @@ Full details for how to specify `address` can be found in [net.Listen](https://g
           ...
     ```
 
-??? info "docker swarm"
+??? info "Docker Swarm"
 
     All traffic comes from overlay network, and there is no possibility to limit the binding.
 
