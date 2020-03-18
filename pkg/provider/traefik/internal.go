@@ -86,7 +86,7 @@ func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) 
 
 		def := ep.HTTP.Redirections
 		if def.EntryPoint == nil || def.EntryPoint.To == "" {
-			logger.Error("unable to create redirection: entry point or the port is missing")
+			logger.Error("Unable to create redirection: the entry point or the port is missing")
 			continue
 		}
 

@@ -642,7 +642,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
    
     _Optional, Default=true_
     
-    Applied a permanent redirection.
+    To apply a permanent redirection.
 
     ```toml tab="File (TOML)"
     [entryPoints.foo]
