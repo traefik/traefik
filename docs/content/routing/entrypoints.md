@@ -194,26 +194,26 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
     --entryPoints.udpep.address=:3179/udp
     ```
 
-### listen on some ip addresses only
+#### listen on some ip addresses only
 
 ```toml tab="File (TOML)"
-[entryPoints.oneIPv4Address]
-  address = "192.168.2.7:8888" # network ip address INSIDE container
-[entryPoints.oneIPv6Address]
-  address = "[2001:db8::1]:8888" # network ip address INSIDE container
+[entryPoints.oneIPv4AddressEp]
+  address = "192.168.2.7:8888"
+[entryPoints.oneIPv6AddressEp]
+  address = "[2001:db8::1]:8888"
 ```
 
 ```yaml tab="File (yaml)"
 entryPoints:
-  oneIPv4Address:
-    address: "192.168.2.7:8888" # network ip address INSIDE container
-  oneIPv6address:
-    address: "[2001:db8::1]:8888" # network ip address INSIDE container
+  oneIPv4AddressEp:
+    address: "192.168.2.7:8888"
+  oneIPv6addressEp:
+    address: "[2001:db8::1]:8888"
 ```
 
 ```bash tab="CLI"
-entrypoints.oneIPv4Address.address=192.168.2.7:8888 # network ip address INSIDE container
-entrypoints.oneIPv6Address.address=[2001:db8::1]:8888  # network ip address INSIDE container
+entrypoints.oneIPv4AddressEp.address=192.168.2.7:8888
+entrypoints.oneIPv6AddressEp.address=[2001:db8::1]:8888
 ```
 
 Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
@@ -224,7 +224,7 @@ Full details for how to specify `address` can be found in [net.Listen](https://g
 
 ??? info "Docker"
 
-    Publish the ports only on the desired addresses. The network ip address of the host is not visible.
+    Publish the ports only on the desired addresses. The ip address of the host is not visible.
 
     ```yaml
     service:
