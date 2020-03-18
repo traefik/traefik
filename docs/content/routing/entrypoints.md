@@ -194,6 +194,62 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
     --entryPoints.udpep.address=:3179/udp
     ```
 
+### listen on some ip addresses only
+
+```toml tab="File (TOML)"
+[entryPoints.oneIPv4Address]
+  address = "192.168.2.7:8888" # network ip address INSIDE container
+[entryPoints.oneIPv6Address]
+  address = "[2001:db8::1]:8888" # network ip address INSIDE container
+```
+
+```yaml tab="File (yaml)"
+entryPoints:
+  oneIPv4Address:
+    address: "192.168.2.7:8888" # network ip address INSIDE container
+  oneIPv6address:
+    address: "[2001:db8::1]:8888" # network ip address INSIDE container
+```
+
+```bash tab="CLI"
+entrypoints.oneIPv4Address.address=192.168.2.7:8888 # network ip address INSIDE container
+entrypoints.oneIPv6Address.address=[2001:db8::1]:8888  # network ip address INSIDE container
+```
+
+Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
+
+!!! warning
+
+    If using an orchestrator, the IP addresses available to bind to may not be externally accessible.
+
+??? info "Docker"
+
+    Publish the ports only on the desired addresses. The network ip address of the host is not visible.
+
+    ```yaml
+    service:
+      oneService:
+        ports:
+          - 127:0.0.1:8888:8888 # ip address on host
+          - [2001:db8::1]:8888:8888 # ip address on host
+          - ...
+        labels:
+          ...
+    ```
+
+??? info "Docker Swarm"
+
+    All traffic comes from overlay network, and there is no possibility to limit the binding.
+
+    More details: https://github.com/moby/moby/issues/26696
+
+    Possible workarounds:
+      * add firewall rules on all nodes (https://github.com/moby/moby/issues/32299#issuecomment-360421915)
+
+??? info "other orchestrators - undocumented"
+
+    please find out how to do it and write above <!-- TODO write for more orchestrators -->
+
 ### Forwarded Headers
 
 You can configure Traefik to trust the forwarded headers information (`X-Forwarded-*`).
@@ -800,59 +856,3 @@ entrypoints.websecure.http.tls.domains[1].sans=foo.test.com,bar.test.com
     entrypoints.websecure.address=:443
     entrypoints.websecure.http.tls.certResolver=leresolver
     ```
-
-### listen on some ip addresses only
-
-```toml tab="File (TOML)"
-[entryPoints.oneIPv4Address]
-  address = "192.168.2.7:8888" # network ip address INSIDE container
-[entryPoints.oneIPv6Address]
-  address = "[2001:db8::1]:8888" # network ip address INSIDE container
-```
-
-```yaml tab="File (yaml)"
-entryPoints:
-  oneIPv4Address:
-    address: "192.168.2.7:8888" # network ip address INSIDE container
-  oneIPv6address:
-    address: "[2001:db8::1]:8888" # network ip address INSIDE container
-```
-
-```bash tab="CLI"
-entrypoints.oneIPv4Address.address=192.168.2.7:8888 # network ip address INSIDE container
-entrypoints.oneIPv6Address.address=[2001:db8::1]:8888  # network ip address INSIDE container
-```
-
-Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
-
-!!! warning
-
-    If using an orchestrator, the IP addresses available to bind to may not be externally accessible.
-
-??? info "Docker"
-
-    Publish the ports only on the desired addresses. The network ip address of the host is not visible.
-
-    ```yaml
-    service:
-      oneService:
-        ports:
-          - 127:0.0.1:8888:8888 # ip address on host
-          - [2001:db8::1]:8888:8888 # ip address on host
-          - ...
-        labels:
-          ...
-    ```
-
-??? info "Docker Swarm"
-
-    All traffic comes from overlay network, and there is no possibility to limit the binding.
-
-    More details: https://github.com/moby/moby/issues/26696
-
-    Possible workarounds:
-      * add firewall rules on all nodes (https://github.com/moby/moby/issues/32299#issuecomment-360421915)
-
-??? info "other orchestrators - undocumented"
-
-    please find out how to do it and write above <!-- TODO write for more orchestrators -->
