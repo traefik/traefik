@@ -43,7 +43,7 @@ func TestListenNotBlocking(t *testing.T) {
 				require.NoError(t, err)
 
 				// This should not block second call
-				time.Sleep(time.Second * 10)
+				time.Sleep(10 * time.Second)
 			}()
 		}
 	}()
@@ -148,7 +148,7 @@ func testTimeout(t *testing.T, withRead bool) {
 
 	assert.Equal(t, 10, len(ln.conns))
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(4 * time.Second)
 	assert.Equal(t, 0, len(ln.conns))
 }
 
@@ -239,7 +239,7 @@ func TestShutdown(t *testing.T) {
 
 	select {
 	case <-doneChan:
-	case <-time.Tick(time.Second * 5):
+	case <-time.Tick(5 * time.Second):
 		// In case we introduce a regression that would make the test wait forever.
 		t.Fatal("Timeout during shutdown")
 	}

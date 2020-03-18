@@ -92,7 +92,7 @@ func TestShutdownUDPConn(t *testing.T) {
 
 	select {
 	case <-doneChan:
-	case <-time.Tick(time.Second * 5):
+	case <-time.Tick(10 * time.Second):
 		// In case we introduce a regression that would make the test wait forever.
 		t.Fatal("Timeout during shutdown")
 	}

@@ -84,7 +84,7 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 	request, err := http.NewRequest(http.MethodHead, "http://127.0.0.1:8082", nil)
 	require.NoError(t, err)
 
-	time.Sleep(time.Millisecond * 100)
+	time.Sleep(100 * time.Millisecond)
 
 	// We need to do a write on the conn before the shutdown to make it "exist".
 	// Because the connection indeed exists as far as TCP is concerned,
@@ -104,7 +104,7 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 		loopConn, err := net.Dial("tcp", epAddr)
 		if err == nil {
 			loopConn.Close()
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 		if !strings.HasSuffix(err.Error(), "connection refused") && !strings.HasSuffix(err.Error(), "reset by peer") {
@@ -135,7 +135,7 @@ func startEntrypoint(entryPoint *TCPEntryPoint, router *tcp.Router) (net.Conn, e
 	for i := 0; i < 10; i++ {
 		conn, err = net.Dial("tcp", entryPoint.listener.Addr().String())
 		if err != nil {
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 		epStarted = true
@@ -150,7 +150,7 @@ func startEntrypoint(entryPoint *TCPEntryPoint, router *tcp.Router) (net.Conn, e
 func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
-	epConfig.RespondingTimeouts.ReadTimeout = types.Duration(time.Second * 2)
+	epConfig.RespondingTimeouts.ReadTimeout = types.Duration(2 * time.Second)
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
 		Address:          ":0",
@@ -178,7 +178,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	select {
 	case err := <-errChan:
 		require.Equal(t, io.EOF, err)
-	case <-time.Tick(time.Second * 5):
+	case <-time.Tick(5 * time.Second):
 		t.Error("Timeout while read")
 	}
 }
@@ -186,7 +186,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 func TestReadTimeoutWithFirstByte(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
-	epConfig.RespondingTimeouts.ReadTimeout = types.Duration(time.Second * 2)
+	epConfig.RespondingTimeouts.ReadTimeout = types.Duration(2 * time.Second)
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
 		Address:          ":0",
@@ -217,7 +217,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	select {
 	case err := <-errChan:
 		require.Equal(t, io.EOF, err)
-	case <-time.Tick(time.Second * 5):
+	case <-time.Tick(5 * time.Second):
 		t.Error("Timeout while read")
 	}
 }

@@ -101,7 +101,7 @@ func (s *UDPSuite) TestWRR(c *check.C) {
 
 	select {
 	case <-stop:
-	case <-time.Tick(time.Second * 5):
+	case <-time.Tick(5 * time.Second):
 		c.Error("Timeout")
 	}
 }

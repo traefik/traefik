@@ -14,7 +14,9 @@ const closeRetryInterval = 500 * time.Millisecond
 
 // connTimeout determines how long to wait on an idle session,
 // before releasing all resources related to that session.
-const connTimeout = time.Second * 3
+const connTimeout = 3 * time.Second
+
+var timeoutTicker = connTimeout / 10
 
 var errClosedListener = errors.New("udp: listener closed")
 
@@ -175,7 +177,7 @@ func (l *Listener) newConn(rAddr net.Addr) *Conn {
 		readCh:    make(chan []byte),
 		sizeCh:    make(chan int),
 		doneCh:    make(chan struct{}),
-		timer:     time.NewTimer(connTimeout),
+		ticker:    time.NewTicker(timeoutTicker),
 	}
 }
 
@@ -189,7 +191,10 @@ type Conn struct {
 	sizeCh    chan int    // to synchronize with the end of a Read
 	msgs      [][]byte    // to store data from listener, to be consumed by Reads
 
-	timer    *time.Timer // for timeouts
+	muActivity   sync.RWMutex
+	lastActivity time.Time // the last time the session saw either read or write activity
+
+	ticker   *time.Ticker // for timeouts
 	doneOnce sync.Once
 	doneCh   chan struct{}
 }
@@ -204,9 +209,15 @@ func (c *Conn) readLoop() {
 			select {
 			case msg := <-c.receiveCh:
 				c.msgs = append(c.msgs, msg)
-			case <-c.timer.C:
-				c.Close()
-				return
+			case <-c.ticker.C:
+				c.muActivity.RLock()
+				deadline := c.lastActivity.Add(connTimeout)
+				c.muActivity.RUnlock()
+				if time.Now().After(deadline) {
+					c.Close()
+					return
+				}
+				continue
 			}
 		}
 
@@ -218,9 +229,14 @@ func (c *Conn) readLoop() {
 			c.sizeCh <- n
 		case msg := <-c.receiveCh:
 			c.msgs = append(c.msgs, msg)
-		case <-c.timer.C:
-			c.Close()
-			return
+		case <-c.ticker.C:
+			c.muActivity.RLock()
+			deadline := c.lastActivity.Add(connTimeout)
+			c.muActivity.RUnlock()
+			if time.Now().After(deadline) {
+				c.Close()
+				return
+			}
 		}
 	}
 }
@@ -230,7 +246,9 @@ func (c *Conn) Read(p []byte) (int, error) {
 	select {
 	case c.readCh <- p:
 		n := <-c.sizeCh
-		c.timer.Reset(connTimeout)
+		c.muActivity.Lock()
+		c.lastActivity = time.Now()
+		c.muActivity.Unlock()
 		return n, nil
 	case <-c.doneCh:
 		return 0, io.EOF
@@ -244,7 +262,9 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 		return 0, io.EOF
 	}
 
-	c.timer.Reset(connTimeout)
+	c.muActivity.Lock()
+	c.lastActivity = time.Now()
+	c.muActivity.Unlock()
 	return l.pConn.WriteTo(p, c.rAddr)
 }
 
@@ -261,5 +281,6 @@ func (c *Conn) Close() error {
 	c.listener.mu.Lock()
 	defer c.listener.mu.Unlock()
 	delete(c.listener.conns, c.rAddr.String())
+	c.ticker.Stop()
 	return nil
 }
