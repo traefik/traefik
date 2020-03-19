@@ -191,16 +191,14 @@ func (r *standardRegistry) ServiceServerUpGauge() metrics.Gauge {
 // used when producing observations without explicitly setting the observed value.
 type ScalableHistogram interface {
 	With(labelValues ...string) ScalableHistogram
-	StartAt(t time.Time)
 	Observe(v float64)
-	ObserveDuration()
+	ObserveFromStart(start time.Time)
 }
 
 // HistogramWithScale is a histogram that will convert its observed value to the specified unit.
 type HistogramWithScale struct {
 	histogram metrics.Histogram
 	unit      time.Duration
-	start     time.Time
 }
 
 // With implements ScalableHistogram.
@@ -209,18 +207,13 @@ func (s *HistogramWithScale) With(labelValues ...string) ScalableHistogram {
 	return s
 }
 
-// StartAt implements ScalableHistogram.
-func (s *HistogramWithScale) StartAt(t time.Time) {
-	s.start = t
-}
-
-// ObserveDuration implements ScalableHistogram.
-func (s *HistogramWithScale) ObserveDuration() {
+// ObserveFromStart implements ScalableHistogram.
+func (s *HistogramWithScale) ObserveFromStart(start time.Time) {
 	if s.unit <= 0 {
 		return
 	}
 
-	d := float64(time.Since(s.start).Nanoseconds()) / float64(s.unit)
+	d := float64(time.Since(start).Nanoseconds()) / float64(s.unit)
 	if d < 0 {
 		d = 0
 	}
@@ -251,17 +244,10 @@ func NewMultiHistogram(h ...ScalableHistogram) MultiHistogram {
 	return MultiHistogram(h)
 }
 
-// StartAt implements ScalableHistogram.
-func (h MultiHistogram) StartAt(t time.Time) {
+// ObserveFromStart implements ScalableHistogram.
+func (h MultiHistogram) ObserveFromStart(start time.Time) {
 	for _, histogram := range h {
-		histogram.StartAt(t)
-	}
-}
-
-// ObserveDuration implements ScalableHistogram.
-func (h MultiHistogram) ObserveDuration() {
-	for _, histogram := range h {
-		histogram.ObserveDuration()
+		histogram.ObserveFromStart(start)
 	}
 }
 
