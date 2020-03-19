@@ -1,3 +1,12 @@
+## [v2.2.0-rc4](https://github.com/containous/traefik/tree/v2.2.0-rc4) (2020-03-19)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.0-rc3...v2.2.0-rc4)
+
+**Documentation:**
+- **[acme]** Doc: fix wrong name of config format ([#6519](https://github.com/containous/traefik/pull/6519) by [Nek-](https://github.com/Nek-))
+
+**Misc:**
+- **[middleware]** Merge current v2.1 branch into v2.2 ([#6525](https://github.com/containous/traefik/pull/6525) by [ldez](https://github.com/ldez))
+
 ## [v2.1.8](https://github.com/containous/traefik/tree/v2.1.8) (2020-03-19)
 [All Commits](https://github.com/containous/traefik/compare/v2.1.7...v2.1.8)
 
