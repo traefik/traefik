@@ -1,3 +1,9 @@
+## [v2.1.8](https://github.com/containous/traefik/tree/v2.1.8) (2020-03-19)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.7...v2.1.8)
+
+**Bug fixes:**
+- **[middleware,metrics]** Fix memory leak in metrics ([#6522](https://github.com/containous/traefik/pull/6522) by [juliens](https://github.com/juliens))
+
 ## [v2.2.0-rc3](https://github.com/containous/traefik/tree/v2.2.0-rc3) (2020-03-18)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.0-rc2...v2.2.0-rc3)
 

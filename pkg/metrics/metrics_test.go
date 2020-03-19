@@ -19,9 +19,9 @@ func TestScalableHistogram(t *testing.T) {
 
 	ticker := time.NewTicker(500 * time.Millisecond)
 	<-ticker.C
-	sh.StartAt(time.Now())
+	start := time.Now()
 	<-ticker.C
-	sh.ObserveDuration()
+	sh.ObserveFromStart(start)
 
 	var b bytes.Buffer
 	h.Print(&b)
@@ -99,9 +99,7 @@ func (c *histogramMock) With(labelValues ...string) ScalableHistogram {
 
 func (c *histogramMock) Start() {}
 
-func (c *histogramMock) StartAt(t time.Time) {}
-
-func (c *histogramMock) ObserveDuration() {}
+func (c *histogramMock) ObserveFromStart(t time.Time) {}
 
 func (c *histogramMock) Observe(v float64) {
 	c.lastHistogramValue = v
