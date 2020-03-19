@@ -203,8 +203,8 @@ type HistogramWithScale struct {
 
 // With implements ScalableHistogram.
 func (s *HistogramWithScale) With(labelValues ...string) ScalableHistogram {
-	s.histogram = s.histogram.With(labelValues...)
-	return s
+	h, _ := NewHistogramWithScale(s.histogram.With(labelValues...), s.unit)
+	return h
 }
 
 // ObserveFromStart implements ScalableHistogram.
