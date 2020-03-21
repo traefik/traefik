@@ -25,6 +25,9 @@
       {{if $loadBalancer.Stickiness }}
       [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+        secure = {{ $loadBalancer.Stickiness.Secure }}
+        httpOnly = {{ $loadBalancer.Stickiness.HTTPOnly }}
+        sameSite = "{{ $loadBalancer.Stickiness.SameSite }}"
       {{end}}
   {{end}}
 

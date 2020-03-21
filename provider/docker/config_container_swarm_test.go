@@ -412,6 +412,9 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						label.TraefikBackendLoadBalancerSticky:               "true",
 						label.TraefikBackendLoadBalancerStickiness:           "true",
 						label.TraefikBackendLoadBalancerStickinessCookieName: "chocolate",
+						label.TraefikBackendLoadBalancerStickinessSecure:     "true",
+						label.TraefikBackendLoadBalancerStickinessHTTPOnly:   "true",
+						label.TraefikBackendLoadBalancerStickinessSameSite:   "none",
 						label.TraefikBackendMaxConnAmount:                    "666",
 						label.TraefikBackendMaxConnExtractorFunc:             "client.ip",
 						label.TraefikBackendBufferingMaxResponseBodyBytes:    "10485760",
@@ -611,6 +614,9 @@ func TestSwarmBuildConfiguration(t *testing.T) {
 						Sticky: true,
 						Stickiness: &types.Stickiness{
 							CookieName: "chocolate",
+							Secure:     true,
+							HTTPOnly:   true,
+							SameSite:   "none",
 						},
 					},
 					MaxConn: &types.MaxConn{

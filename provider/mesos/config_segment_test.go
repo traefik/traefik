@@ -119,6 +119,9 @@ func TestBuildConfigurationSegments(t *testing.T) {
 					withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
 					withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
+					withLabel(label.TraefikBackendLoadBalancerStickinessSecure, "true"),
+					withLabel(label.TraefikBackendLoadBalancerStickinessHTTPOnly, "true"),
+					withLabel(label.TraefikBackendLoadBalancerStickinessSameSite, "none"),
 					withLabel(label.TraefikBackendMaxConnAmount, "666"),
 					withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
 					withLabel(label.TraefikBackendBufferingMaxResponseBodyBytes, "10485760"),
@@ -368,6 +371,9 @@ func TestBuildConfigurationSegments(t *testing.T) {
 						Sticky: true,
 						Stickiness: &types.Stickiness{
 							CookieName: "chocolate",
+							Secure:     true,
+							HTTPOnly:   true,
+							SameSite:   "none",
 						},
 					},
 					MaxConn: &types.MaxConn{

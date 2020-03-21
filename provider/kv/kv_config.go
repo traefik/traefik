@@ -276,6 +276,9 @@ func (p *Provider) getLoadBalancer(rootPath string) *types.LoadBalancer {
 	if p.getBool(false, rootPath, pathBackendLoadBalancerStickiness) {
 		lb.Stickiness = &types.Stickiness{
 			CookieName: p.get("", rootPath, pathBackendLoadBalancerStickinessCookieName),
+			Secure:     p.getBool(false, rootPath, pathBackendLoadBalancerStickinessSecure),
+			HTTPOnly:   p.getBool(false, rootPath, pathBackendLoadBalancerStickinessHTTPOnly),
+			SameSite:   p.get("", rootPath, pathBackendLoadBalancerStickinessSameSite),
 		}
 	}
 

@@ -26,6 +26,9 @@ const (
 	DefaultBackendLoadBalancerMethod               = "wrr"
 	DefaultBackendMaxconnExtractorFunc             = "request.host"
 	DefaultBackendLoadbalancerStickinessCookieName = ""
+	DefaultBackendLoadbalancerStickinessSecure     = false
+	DefaultBackendLoadbalancerStickinessHTTPOnly   = false
+	DefaultBackendLoadbalancerStickinessSameSite   = ""
 	DefaultBackendHealthCheckPort                  = 0
 )
 
