@@ -52,7 +52,7 @@ labels:
   - traefik.http.routers.blog.tls.certresolver=myresolver
 ```
 
-```toml tab="Single Domain"
+```toml tab="File (TOML)"
 ## Dynamic configuration
 [http.routers]
   [http.routers.blog]
