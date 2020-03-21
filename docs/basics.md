@@ -452,6 +452,28 @@ If not, a new backend will be assigned.
     # Default: a sha1 (6 chars)
     #
     #  cookieName = "my_cookie"
+
+    # Customize secure option
+    #
+    # Optional
+    # Default: false
+    #
+    #  secure = true
+
+    # Customize http only option
+    #
+    # Optional
+    # Default: false
+    #
+    #  httpOnly = true
+
+    # Customize same site option.
+    # Can be: none, lax, strict
+    #
+    # Optional
+    # Default: 
+    #
+    #  httpOnly = true
 ```
 
 The deprecated way:
