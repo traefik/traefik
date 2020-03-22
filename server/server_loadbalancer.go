@@ -240,6 +240,11 @@ func (s *Server) getRoundTripper(entryPointName string, passTLSCert bool, tls *t
 			return nil, fmt.Errorf("failed to create HTTP transport: %v", err)
 		}
 
+		err = http2.ConfigureTransport(transport)
+		if err != nil {
+			return nil, err
+		}
+
 		transport.TLSClientConfig = tlsConfig
 		return transport, nil
 	}
@@ -293,11 +298,6 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 		transport.TLSClientConfig = &tls.Config{
 			RootCAs: createRootCACertPool(globalConfiguration.RootCAs),
 		}
-	}
-
-	err := http2.ConfigureTransport(transport)
-	if err != nil {
-		return nil, err
 	}
 
 	return transport, nil
