@@ -498,10 +498,10 @@ func (s *Server) createTLSConfig(entryPointName string, tlsOption *traefiktls.TL
 	}
 
 	// workaround for users who used GODEBUG to activate TLS1.3
+	config.MaxVersion = tls.VersionTLS12
 	if strings.Contains(os.Getenv("GODEBUG"), "tls13=1") {
 		config.MaxVersion = tls.VersionTLS13
 	}
-	config.MaxVersion = tls.VersionTLS12
 
 	// Set the minimum TLS version if set in the config TOML
 	if minConst, exists := traefiktls.MinVersion[s.entryPoints[entryPointName].Configuration.TLS.MinVersion]; exists {
