@@ -46,7 +46,7 @@ require (
 	github.com/google/go-github/v28 v28.0.0
 	github.com/googleapis/gnostic v0.1.0 // indirect
 	github.com/gorilla/mux v1.7.3
-	github.com/gorilla/websocket v1.4.0
+	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/consul/api v1.2.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/huandu/xstrings v1.2.0 // indirect
@@ -76,7 +76,7 @@ require (
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 	github.com/rancher/go-rancher-metadata v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.4.2
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/stvp/go-udp-testing v0.0.0-20171104055251-c4434f09ec13
 	github.com/tinylib/msgp v1.0.2 // indirect
 	github.com/transip/gotransip v5.8.2+incompatible // indirect
@@ -85,7 +85,7 @@ require (
 	github.com/unrolled/render v1.0.1
 	github.com/unrolled/secure v1.0.5
 	github.com/vdemeester/shakers v0.1.0
-	github.com/vulcand/oxy v1.0.0
+	github.com/vulcand/oxy v1.1.0
 	github.com/vulcand/predicate v1.1.0
 	golang.org/x/net v0.0.0-20191027093000-83d349e8ac1a
 	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a // indirect
