@@ -195,6 +195,7 @@ Register the `IngressRoute` kind in the Kubernetes cluster before creating `Ingr
               httpOnly: true
               name: cookie
               secure: true
+              sameSite: none
           strategy: RoundRobin
           weight: 10
       tls:                              # [9]
