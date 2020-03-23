@@ -37,6 +37,9 @@ type TLS struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
 	SecretName string `json:"secretName"`
+	// PassphraseSecretName is the name of the referenced Kubernetes Secret to specify the
+	// certificate passphrase.
+	PassphraseSecretName string `json:"passphraseSecretName,omitempty"`
 	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
 	Options *TLSOptionRef `json:"options,omitempty"`
 	// Store is a reference to a TLSStore, that specifies the parameters of the TLS store.

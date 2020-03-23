@@ -259,7 +259,7 @@ func DecodePrivateKey(keyContent []byte, passphrase string) ([]byte, error) {
 	if x509.IsEncryptedPEMBlock(keyPemBlock) {
 		keyDecoded, err = x509.DecryptPEMBlock(keyPemBlock, []byte(passphrase))
 		if err != nil {
-			return keyDecoded, fmt.Errorf("unable to decrypt TLS certificate key : %v", err)
+			return nil, fmt.Errorf("unable to decrypt TLS certificate key : %w", err)
 		}
 
 		keyDecoded = pem.EncodeToMemory(&pem.Block{

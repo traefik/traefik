@@ -229,5 +229,18 @@ func getTLSTCP(ctx context.Context, ingressRoute *v1alpha1.IngressRouteTCP, k8sC
 		tlsConfigs[configKey] = tlsConf
 	}
 
+	// If there is a passphrase configured, load it into the certificate config.
+	if ingressRoute.Spec.TLS.PassphraseSecretName != "" {
+		secret, exists, err := k8sClient.GetSecret(ingressRoute.Namespace, ingressRoute.Spec.TLS.PassphraseSecretName)
+		if err != nil {
+			return fmt.Errorf("failed to fetch secret %s/%s: %w", ingressRoute.Namespace, ingressRoute.Spec.TLS.PassphraseSecretName, err)
+		}
+		if !exists {
+			return fmt.Errorf("secret %s/%s does not exist", ingressRoute.Namespace, ingressRoute.Spec.TLS.PassphraseSecretName)
+		}
+
+		tlsConfigs[configKey].Passphrase = string(secret.Data["passphrase"])
+	}
+
 	return nil
 }

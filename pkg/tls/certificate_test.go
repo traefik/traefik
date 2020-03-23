@@ -68,9 +68,9 @@ func TestDecryptCertificatePrivateKey(t *testing.T) {
 			config, err := certs.CreateTLSConfig("test")
 			assert.NoError(t, err)
 			if test.expectedCertLoad {
-				assert.Equal(t, 1, len(config.Certificates))
+				assert.Len(t, config.Certificates, 1)
 			} else {
-				assert.Equal(t, 0, len(config.Certificates))
+				assert.Len(t, config.Certificates, 0)
 			}
 		})
 	}

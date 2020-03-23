@@ -353,6 +353,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
           sans:                         # [17]
           - a.foo.com
           - b.foo.com
+        passphraseSecretName: superpassphrasesecret # [18]
     ```
 
 | Ref  | Attribute                  | Purpose                                                                                                                                                                                                                  |
@@ -374,6 +375,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 | [15] | `tls.domains`              | List of [domains](../routers/index.md#domains)                                                                                                                                                                           |
 | [16] | `domains[n].main`          | Defines the main domain name                                                                                                                                                                                             |
 | [17] | `domains[n].sans`          | List of SANs (alternative domains)                                                                                                                                                                                       |
+| [18] | `tls.passphraseSecretName`           | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate passphrase (in the `IngressRoute` namespace)                                                                     |
 
 ??? example "Declaring an IngressRoute"
 
@@ -421,6 +423,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
           name: opt
           namespace: default
         secretName: supersecret
+        passphraseSecretName: superpassphrasesecret
     ```
 
     ```yaml tab="Middlewares"
@@ -456,6 +459,16 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
     data:
       tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+    ```
+
+    ```yaml tab="Passphrase Secret"
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: superpassphrasesecret
+    
+    data:
+      passphrase: Zm9v
     ```
 
 !!! important "Configuring Backend Protocol"
@@ -952,6 +965,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
           - a.foo.com
           - b.foo.com
         passthrough: false          # [18]
+        passphraseSecretName: superpassphrasesecret # [19]
     ```
 
 | Ref  | Attribute                      | Purpose                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -974,6 +988,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 | [16] | `domains[n].main`              | Defines the main domain name                                                                                                                                                                                                                                                                                                                                                             |
 | [17] | `domains[n].sans`              | List of SANs (alternative domains)                                                                                                                                                                                                                                                                                                                                                       |
 | [18] | `tls.passthrough`              | If `true`, delegates the TLS termination to the backend                                                                                                                                                                                                                                                                                                                                  |
+| [19] | `tls.passphraseSecretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate passphrase (in the `IngressRoute` namespace)                                                                                                                                                                                                                                     |
 
 ??? example "Declaring an IngressRouteTCP"
 
@@ -1010,6 +1025,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
           namespace: default
         secretName: supersecret
         passthrough: false
+        passphraseSecretName: superpassphrasesecret
     ```
     
     ```yaml tab="TLSOption"
@@ -1032,6 +1048,16 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
     data:
       tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+    ```
+
+    ```yaml tab="Passphrase Secret"
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: superpassphrasesecret
+    
+    data:
+      passphrase: Zm9v
     ```
 
 !!! important "Using Kubernetes ExternalName Service"

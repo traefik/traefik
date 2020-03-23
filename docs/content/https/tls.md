@@ -42,6 +42,40 @@ tls:
     It is the only available method to configure the certificates (as well as the options and the stores).
     However, in [Kubernetes](../providers/kubernetes-crd.md), the certificates can and must be provided by [secrets](https://kubernetes.io/docs/concepts/configuration/secret/). 
 
+### Encrypted private keys
+
+To use TLS certificates with encrypted private keys, the passphrase must be provided with which to decrypt the key.
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[[tls.certificates]]
+  certFile = "/path/to/domain-encrypted.cert"
+  keyFile = "/path/to/domain-encrypted.key"
+  passphrase = "mysuperpassphrase"
+```
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  certificates:
+    - certFile: /path/to/domain-encrypted.cert
+      keyFile: /path/to/domain-encrypted.key
+      passphrase: mysuperpassphrase
+```
+
+!!! important "Incorrect passphrase"
+
+    An incorrect/missing passphrase when using an encrypted private key will result in the certificate being unusable.
+    There will also be corresponding decryption failures in the logs.
+    These errors may generate a lot of log volume, so exercise care to ensure the passphrase is correct.
+
+!!! important "Restriction"
+
+    In the above example, we've used the [file provider](../providers/file.md) to handle these definitions.
+    However, in [Kubernetes](../providers/kubernetes-crd.md), the certificates can and must be provided by [secrets](https://kubernetes.io/docs/concepts/configuration/secret/), and the passphrase must also be provided in a secret.
+
 ## Certificates Stores
 
 In Traefik, certificates are grouped together in certificates stores, which are defined as such:

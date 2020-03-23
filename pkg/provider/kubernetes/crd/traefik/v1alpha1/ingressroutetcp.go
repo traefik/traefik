@@ -29,8 +29,11 @@ type RouteTCP struct {
 type TLSTCP struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
-	SecretName  string `json:"secretName"`
-	Passthrough bool   `json:"passthrough"`
+	SecretName string `json:"secretName"`
+	// PassphraseSecretName is the name of the referenced Kubernetes Secret to specify the
+	// certificate passphrase.
+	PassphraseSecretName string `json:"passphraseSecretName,omitempty"`
+	Passthrough          bool   `json:"passthrough"`
 	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
 	Options *TLSOptionTCPRef `json:"options"`
 	// Store is a reference to a TLSStore, that specifies the parameters of the TLS store.
