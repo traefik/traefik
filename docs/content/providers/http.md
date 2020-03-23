@@ -4,7 +4,7 @@ Provide your configuration via an http endpoint and let Traefik do the rest!
 
 ## Routing Configuration
 
-The HTTP provider uses the same configuration as the [File Provider](../file.md).
+The HTTP provider uses the same configuration as the [File Provider](./file.md).
 
 ## Provider Configuration
 
