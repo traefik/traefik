@@ -29,7 +29,7 @@ type smartRoundTripper struct {
 // smartRoundTripper implements RoundTrip while making sure that HTTP/2 is not used
 // with protocols that start with a Connection Upgrade, such as SPDY or Websocket.
 func (m *smartRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	// If we have a connection upgrade, we don't use HTTP2
+	// If we have a connection upgrade, we don't use HTTP/2
 	if httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
 		return m.http.RoundTrip(req)
 	}
