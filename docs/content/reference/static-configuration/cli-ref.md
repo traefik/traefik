@@ -456,6 +456,18 @@ Load dynamic configuration from a file.
 `--providers.file.watch`:  
 Watch provider. (Default: ```true```)
 
+`--providers.http`:  
+Enable Http backend with default settings. (Default: ```false```)
+
+`--providers.http.endpoint`:  
+Load configuration from this endpoint.
+
+`--providers.http.pollinterval`:  
+Polling interval for endpoint. (Default: ```0```)
+
+`--providers.http.polltimeout`:  
+Polling timeout for endpoint. (Default: ```0```)
+
 `--providers.kubernetescrd`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 

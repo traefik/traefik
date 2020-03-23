@@ -15,24 +15,32 @@ import (
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/types"
 )
 
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that queries an endpoint for a configuration.
 type Provider struct {
-	endpoint     string
-	pollInterval time.Duration
-	pollTimeout  time.Duration
+	Endpoint     string         `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint" export:"true"`
+	PollInterval types.Duration `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty"`
+	PollTimeout  types.Duration `description:"Polling timeout for endpoint." json:"pollTimeout,omitempty" toml:"pollTimeout,omitempty" yaml:"pollTimeout,omitempty"`
 }
 
 // Init the provider.
 func (p *Provider) Init() error {
-	if len(p.endpoint) > 0 {
-		return nil
+	if len(p.Endpoint) == 0 {
+		return fmt.Errorf("a non-empty endpoint is required")
 	}
 
-	return fmt.Errorf("a non-empty endpoint is required")
+	if p.PollInterval == 0 {
+		p.PollInterval = types.Duration(15 * time.Second)
+	}
+
+	if p.PollTimeout == 0 {
+		p.PollTimeout = types.Duration(15 * time.Second)
+	}
+	return nil
 }
 
 // Provide allows the provider to provide configurations to traefik
@@ -48,7 +56,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 			ctx = log.With(ctx, log.Str(log.ProviderName, "http"))
 			errChan := make(chan error)
-			ticker := time.NewTicker(time.Duration(p.pollInterval))
+			ticker := time.NewTicker(time.Duration(p.PollInterval))
 
 			pool.GoCtx(func(ctx context.Context) {
 				ctx = log.With(ctx, log.Str(log.ProviderName, "http"))
@@ -101,12 +109,12 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 // getDataFromEndpoint gets data from the configured provider endpoint, and returns the data.
 func (p *Provider) getDataFromEndpoint(ctx context.Context) ([]byte, error) {
 	b := []byte{}
-	req, err := http.NewRequest(http.MethodGet, p.endpoint, bytes.NewBuffer(b))
+	req, err := http.NewRequest(http.MethodGet, p.Endpoint, bytes.NewBuffer(b))
 	if err != nil {
 		return nil, fmt.Errorf("unable to create request: %w", err)
 	}
 
-	client := &http.Client{Timeout: p.pollTimeout}
+	client := &http.Client{Timeout: time.Duration(p.PollTimeout)}
 	resp, err := client.Do(req)
 
 	if resp != nil {
@@ -122,7 +130,7 @@ func (p *Provider) getDataFromEndpoint(ctx context.Context) ([]byte, error) {
 			return nil, fmt.Errorf("received non-ok response code: %d", resp.StatusCode)
 		}
 
-		log.FromContext(ctx).Debugf("Successfully received data from endpoint: %q", p.endpoint)
+		log.FromContext(ctx).Debugf("Successfully received data from endpoint: %q", p.Endpoint)
 		return bodyData, nil
 	}
 

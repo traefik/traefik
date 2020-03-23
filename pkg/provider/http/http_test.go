@@ -9,6 +9,7 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +18,7 @@ func TestProviderInit(t *testing.T) {
 	assert.Error(t, provider.Init())
 
 	provider = &Provider{
-		endpoint: "localhost",
+		Endpoint: "localhost",
 	}
 	assert.NoError(t, provider.Init())
 }
@@ -31,7 +32,7 @@ func TestGetDataFromEndpoint(t *testing.T) {
 	})
 
 	provider := Provider{
-		endpoint: server.URL + "/endpoint",
+		Endpoint: server.URL + "/endpoint",
 	}
 
 	assert.NoError(t, provider.Init())
@@ -43,7 +44,7 @@ func TestGetDataFromEndpoint(t *testing.T) {
 
 func TestBuildConfiguration(t *testing.T) {
 	provider := Provider{
-		endpoint: "http://127.0.0.1:9000/endpoint",
+		Endpoint: "http://127.0.0.1:9000/endpoint",
 	}
 
 	assert.NoError(t, provider.Init())
@@ -62,9 +63,9 @@ func TestProvide(t *testing.T) {
 	})
 
 	provider := Provider{
-		endpoint:     server.URL + "/endpoint",
-		pollTimeout:  1 * time.Second,
-		pollInterval: 100 * time.Millisecond,
+		Endpoint:     server.URL + "/endpoint",
+		PollTimeout:  types.Duration(1 * time.Second),
+		PollInterval: types.Duration(100 * time.Millisecond),
 	}
 
 	assert.NoError(t, provider.Init())
