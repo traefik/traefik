@@ -51,7 +51,6 @@ func TestBuildConfiguration(t *testing.T) {
 
 	config := provider.buildConfiguration(context.Background(), []byte("{}"))
 	assert.NotEqual(t, nil, config)
-
 }
 
 func TestProvide(t *testing.T) {
@@ -84,5 +83,4 @@ func TestProvide(t *testing.T) {
 	case <-timeout:
 		t.Errorf("timeout while waiting for config")
 	}
-
 }
