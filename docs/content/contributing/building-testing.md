@@ -60,7 +60,7 @@ PRE_TARGET= make test-unit
 
 Requirements:
 
-- `go` v1.13+
+- `go` v1.14+
 - environment variable `GO111MODULE=on`
 - [go-bindata](https://github.com/containous/go-bindata) `GO111MODULE=off go get -u github.com/containous/go-bindata/...`
 
