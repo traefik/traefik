@@ -43,6 +43,7 @@
             name = "foobar"
             secure = true
             httpOnly = true
+            sameSite = "foobar"
 
         [[http.services.Service01.loadBalancer.servers]]
           url = "foobar"
@@ -87,6 +88,7 @@
             name = "foobar"
             secure = true
             httpOnly = true
+            sameSite = "foobar"
   [http.middlewares]
     [http.middlewares.Middleware00]
       [http.middlewares.Middleware00.addPrefix]
