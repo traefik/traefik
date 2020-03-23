@@ -10,10 +10,14 @@ The config files used in this guide can be found in the [examples directory](htt
 
 1. A working Kubernetes cluster. If you want to follow along with this guide, you should setup [minikube](https://kubernetes.io/docs/getting-started-guides/minikube/) on your machine, as it is the quickest way to get a local Kubernetes cluster setup for experimentation and development.
 
+2. Setup ingress as an add-on. It can be enabled by the following command:
+
+    `minikube addons enable ingress`
+
 !!! note
     The guide is likely not fully adequate for a production-ready setup.
 
-2. The `kubectl` binary should be [installed on your workstation](https://kubernetes.io/docs/getting-started-guides/minikube/#download-kubectl).
+3. The `kubectl` binary should be [installed on your workstation](https://kubernetes.io/docs/getting-started-guides/minikube/#download-kubectl).
 
 ### Role Based Access Control configuration (Kubernetes 1.6+ only)
 
