@@ -23,12 +23,12 @@ func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, erro
 	return t.Transport.RoundTrip(req)
 }
 
-// createHTTPTransport creates an http.Transport configured with the Transport configuration settings.
+// createRoundtripper creates a http.Roundtripper configured with the Transport configuration settings.
 // For the settings that can't be configured in Traefik it uses the default http.Transport settings.
 // An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost
 // in Traefik at this point in time. Setting this value to the default of 100 could lead to confusing
 // behavior and backwards compatibility issues.
-func createHTTPTransport(transportConfiguration *static.ServersTransport) (*http.Transport, error) {
+func createRoundtripper(transportConfiguration *static.ServersTransport) (http.RoundTripper, error) {
 	if transportConfiguration == nil {
 		return nil, errors.New("no transport configuration given")
 	}
@@ -76,12 +76,12 @@ func createHTTPTransport(transportConfiguration *static.ServersTransport) (*http
 		}
 	}
 
-	err := http2.ConfigureTransport(transport)
+	smartTransport, err := newSmartRoundTripper(transport)
 	if err != nil {
 		return nil, err
 	}
 
-	return transport, nil
+	return smartTransport, nil
 }
 
 func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
@@ -100,7 +100,7 @@ func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
 }
 
 func setupDefaultRoundTripper(conf *static.ServersTransport) http.RoundTripper {
-	transport, err := createHTTPTransport(conf)
+	transport, err := createRoundtripper(conf)
 	if err != nil {
 		log.WithoutContext().Errorf("Could not configure HTTP Transport, fallbacking on default transport: %v", err)
 		return http.DefaultTransport
