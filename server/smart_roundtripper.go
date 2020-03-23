@@ -10,10 +10,12 @@ import (
 
 func newSmartRoundTripper(transport *http.Transport) (http.RoundTripper, error) {
 	transportHTTP1 := transport.Clone()
+
 	err := http2.ConfigureTransport(transport)
 	if err != nil {
 		return nil, err
 	}
+
 	return &smartRoundTripper{
 		http2: transport,
 		http:  transportHTTP1,
@@ -21,7 +23,7 @@ func newSmartRoundTripper(transport *http.Transport) (http.RoundTripper, error) 
 }
 
 // smartRoundTripper implements RoundTrip while making sure that HTTP/2 is not used
-// with protocols that start with a Connection Upgrade,  such as SPDY or Websocket.
+// with protocols that start with a Connection Upgrade, such as SPDY or Websocket.
 type smartRoundTripper struct {
 	http2 *http.Transport
 	http  *http.Transport
@@ -32,6 +34,7 @@ func (m *smartRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	if httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
 		return m.http.RoundTrip(req)
 	}
+
 	return m.http2.RoundTrip(req)
 }
 
