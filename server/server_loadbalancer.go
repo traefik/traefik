@@ -291,13 +291,10 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 		transport.ResponseHeaderTimeout = time.Duration(globalConfiguration.ForwardingTimeouts.ResponseHeaderTimeout)
 	}
 
-	if globalConfiguration.InsecureSkipVerify {
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-
-	if len(globalConfiguration.RootCAs) > 0 {
+	if globalConfiguration.InsecureSkipVerify || len(globalConfiguration.RootCAs) > 0 {
 		transport.TLSClientConfig = &tls.Config{
-			RootCAs: createRootCACertPool(globalConfiguration.RootCAs),
+			InsecureSkipVerify: globalConfiguration.InsecureSkipVerify,
+			RootCAs:            createRootCACertPool(globalConfiguration.RootCAs),
 		}
 	}
 
@@ -305,6 +302,10 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 }
 
 func createRootCACertPool(rootCAs traefiktls.FilesOrContents) *x509.CertPool {
+	if len(rootCAs) == 0 {
+		return nil
+	}
+
 	roots := x509.NewCertPool()
 
 	for _, cert := range rootCAs {
