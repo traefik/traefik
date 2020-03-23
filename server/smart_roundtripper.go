@@ -20,6 +20,8 @@ func newSmartRoundTripper(transport *http.Transport) (http.RoundTripper, error) 
 	}, nil
 }
 
+// smartRoundTripper implements RoundTrip while making sure that HTTP/2 is not used
+// with protocols that start with a Connection Upgrade,  such as SPDY or Websocket.
 type smartRoundTripper struct {
 	http2 *http.Transport
 	http  *http.Transport
