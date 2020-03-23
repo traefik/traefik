@@ -123,13 +123,6 @@ func (s *Server) buildLoadBalancer(frontendName string, backendName string, back
 		rr, _ = roundrobin.New(fwd)
 	}
 
-	var stickySession *roundrobin.StickySession
-	var cookieName string
-	if stickiness := backend.LoadBalancer.Stickiness; stickiness != nil {
-		cookieName = cookie.GetName(stickiness.CookieName, backendName)
-		stickySession = roundrobin.NewStickySession(cookieName)
-	}
-
 	lbMethod, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
 	if err != nil {
 		return nil, fmt.Errorf("error loading load balancer method '%+v' for frontend %s: %v", backend.LoadBalancer, frontendName, err)
@@ -141,8 +134,10 @@ func (s *Server) buildLoadBalancer(frontendName string, backendName string, back
 	case types.Drr:
 		log.Debug("Creating load-balancer drr")
 
-		if stickySession != nil {
-			log.Debugf("Sticky session with cookie %v", cookieName)
+		if backend.LoadBalancer.Stickiness != nil {
+			cookieName := cookie.GetName(backend.LoadBalancer.Stickiness.CookieName, backendName)
+
+			stickySession := newStickySession(cookieName, backend.LoadBalancer.Stickiness)
 
 			lb, err = roundrobin.NewRebalancer(rr, roundrobin.RebalancerStickySession(stickySession))
 			if err != nil {
@@ -157,16 +152,19 @@ func (s *Server) buildLoadBalancer(frontendName string, backendName string, back
 	case types.Wrr:
 		log.Debug("Creating load-balancer wrr")
 
-		if stickySession != nil {
-			log.Debugf("Sticky session with cookie %v", cookieName)
+		if backend.LoadBalancer.Stickiness != nil {
+			cookieName := cookie.GetName(backend.LoadBalancer.Stickiness.CookieName, backendName)
 
+			stickySession := newStickySession(cookieName, backend.LoadBalancer.Stickiness)
+
+			option := roundrobin.EnableStickySession(stickySession)
 			if s.accessLoggerMiddleware != nil {
-				lb, err = roundrobin.New(saveFrontend, roundrobin.EnableStickySession(stickySession))
+				lb, err = roundrobin.New(saveFrontend, option)
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				lb, err = roundrobin.New(fwd, roundrobin.EnableStickySession(stickySession))
+				lb, err = roundrobin.New(fwd, option)
 				if err != nil {
 					return nil, err
 				}
@@ -185,6 +183,30 @@ func (s *Server) buildLoadBalancer(frontendName string, backendName string, back
 	return lb, nil
 }
 
+func newStickySession(cookieName string, stickiness *types.Stickiness) *roundrobin.StickySession {
+	log.Debugf("Sticky session with cookie %v", cookieName)
+
+	opts := roundrobin.CookieOptions{
+		HTTPOnly: stickiness.HTTPOnly,
+		Secure:   stickiness.Secure,
+		SameSite: convertSameSite(stickiness.SameSite),
+	}
+
+	return roundrobin.NewStickySessionWithOptions(cookieName, opts)
+}
+
+func convertSameSite(sameSite string) http.SameSite {
+	switch sameSite {
+	case "none":
+		return http.SameSiteNoneMode
+	case "lax":
+		return http.SameSiteLaxMode
+	case "strict":
+		return http.SameSiteStrictMode
+	default:
+		return 0
+	}
+}
 func (s *Server) configureLBServers(lb healthcheck.BalancerHandler, backend *types.Backend, backendName string) error {
 	for name, srv := range backend.Servers {
 		u, err := url.Parse(srv.URL)

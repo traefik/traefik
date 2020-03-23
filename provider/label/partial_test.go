@@ -257,12 +257,18 @@ func TestGetLoadBalancer(t *testing.T) {
 				TraefikBackendLoadBalancerSticky:               "true",
 				TraefikBackendLoadBalancerStickiness:           "true",
 				TraefikBackendLoadBalancerStickinessCookieName: "foo",
+				TraefikBackendLoadBalancerStickinessSecure:     "true",
+				TraefikBackendLoadBalancerStickinessHTTPOnly:   "true",
+				TraefikBackendLoadBalancerStickinessSameSite:   "none",
 			},
 			expected: &types.LoadBalancer{
 				Method: "drr",
 				Sticky: true,
 				Stickiness: &types.Stickiness{
 					CookieName: "foo",
+					Secure:     true,
+					HTTPOnly:   true,
+					SameSite:   "none",
 				},
 			},
 		},

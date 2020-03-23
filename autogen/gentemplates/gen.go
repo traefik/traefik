@@ -159,6 +159,9 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     {{if $loadBalancer.Stickiness }}
     [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
       cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+      secure = {{ $loadBalancer.Stickiness.Secure }}
+      httpOnly = {{ $loadBalancer.Stickiness.HTTPOnly }}
+      sameSite = "{{ $loadBalancer.Stickiness.SameSite }}"
     {{end}}
   {{end}}
 
@@ -654,6 +657,9 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       {{if $loadBalancer.Stickiness }}
       [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+        secure = {{ $loadBalancer.Stickiness.Secure }}
+        httpOnly = {{ $loadBalancer.Stickiness.HTTPOnly }}
+        sameSite = "{{ $loadBalancer.Stickiness.SameSite }}"
       {{end}}
   {{end}}
 
@@ -1000,6 +1006,9 @@ var _templatesEcsTmpl = []byte(`[backends]
     {{if $loadBalancer.Stickiness }}
     [backends."backend-{{ $serviceName }}".loadBalancer.stickiness]
       cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+      secure = {{ $loadBalancer.Stickiness.Secure }}
+      httpOnly = {{ $loadBalancer.Stickiness.HTTPOnly }}
+      sameSite = "{{ $loadBalancer.Stickiness.SameSite }}"
     {{end}}
   {{end}}
 
@@ -1325,6 +1334,9 @@ var _templatesKubernetesTmpl = []byte(`[backends]
       {{if $backend.LoadBalancer.Stickiness }}
       [backends."{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $backend.LoadBalancer.Stickiness.CookieName }}"
+        secure = {{ $backend.Stickiness.Secure }}
+        httpOnly = {{ $backend.Stickiness.HTTPOnly }}
+        sameSite = "{{ $backend.Stickiness.SameSite }}"
       {{end}}
 
     {{if $backend.MaxConn }}
@@ -1582,6 +1594,9 @@ var _templatesKvTmpl = []byte(`[backends]
       {{if $loadBalancer.Stickiness }}
       [backends."{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+        secure = {{ $loadBalancer.Stickiness.Secure }}
+        httpOnly = {{ $loadBalancer.Stickiness.HTTPOnly }}
+        sameSite = "{{ $loadBalancer.Stickiness.SameSite }}"
       {{end}}
   {{end}}
 
@@ -1970,6 +1985,9 @@ var _templatesMarathonTmpl = []byte(`{{ $apps := .Applications }}
       {{if $loadBalancer.Stickiness }}
       [backends."{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+        secure = {{ $loadBalancer.Stickiness.Secure }}
+        httpOnly = {{ $loadBalancer.Stickiness.HTTPOnly }}
+        sameSite = "{{ $loadBalancer.Stickiness.SameSite }}"
       {{end}}
     {{end}}
 
@@ -2302,6 +2320,9 @@ var _templatesMesosTmpl = []byte(`[backends]
       {{if $loadBalancer.Stickiness }}
       [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+        secure = {{ $loadBalancer.Stickiness.Secure }}
+        httpOnly = {{ $loadBalancer.Stickiness.HTTPOnly }}
+        sameSite = "{{ $loadBalancer.Stickiness.SameSite }}"
       {{end}}
   {{end}}
 
@@ -2688,6 +2709,9 @@ var _templatesRancherTmpl = []byte(`{{ $backendServers := .Backends }}
       {{if $loadBalancer.Stickiness }}
       [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
         cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+        secure = {{ $loadBalancer.Stickiness.Secure }}
+        httpOnly = {{ $loadBalancer.Stickiness.HTTPOnly }}
+        sameSite = "{{ $loadBalancer.Stickiness.SameSite }}"
       {{end}}
   {{end}}
 

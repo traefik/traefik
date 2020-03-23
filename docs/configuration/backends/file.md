@@ -31,6 +31,9 @@ Traefik can be configured with a file.
       method = "drr"
       [backends.backend1.loadBalancer.stickiness]
         cookieName = "foobar"
+        secure = true
+        httpOnly = true
+        sameSite = "foobar"
 
     [backends.backend1.maxConn]
       amount = 10

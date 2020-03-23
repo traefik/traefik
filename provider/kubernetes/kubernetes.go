@@ -1151,14 +1151,16 @@ func getLoadBalancer(service *corev1.Service) *types.LoadBalancer {
 }
 
 func getStickiness(service *corev1.Service) *types.Stickiness {
-	if getBoolValue(service.Annotations, annotationKubernetesAffinity, false) {
-		stickiness := &types.Stickiness{}
-		if cookieName := getStringValue(service.Annotations, annotationKubernetesSessionCookieName, ""); len(cookieName) > 0 {
-			stickiness.CookieName = cookieName
-		}
-		return stickiness
+	if !getBoolValue(service.Annotations, annotationKubernetesAffinity, false) {
+		return nil
 	}
-	return nil
+
+	return &types.Stickiness{
+		CookieName: getStringValue(service.Annotations, annotationKubernetesSessionCookieName, ""),
+		Secure:     getBoolValue(service.Annotations, annotationKubernetesSessionSecure, false),
+		HTTPOnly:   getBoolValue(service.Annotations, annotationKubernetesSessionHTTPOnly, false),
+		SameSite:   getStringValue(service.Annotations, annotationKubernetesSessionSameSite, ""),
+	}
 }
 
 func getHeader(i *extensionsv1beta1.Ingress) *types.Headers {

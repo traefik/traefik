@@ -426,8 +426,12 @@ func GetLoadBalancer(labels map[string]string) *types.LoadBalancer {
 	}
 
 	if GetBoolValue(labels, TraefikBackendLoadBalancerStickiness, false) {
-		cookieName := GetStringValue(labels, TraefikBackendLoadBalancerStickinessCookieName, DefaultBackendLoadbalancerStickinessCookieName)
-		lb.Stickiness = &types.Stickiness{CookieName: cookieName}
+		lb.Stickiness = &types.Stickiness{
+			CookieName: GetStringValue(labels, TraefikBackendLoadBalancerStickinessCookieName, DefaultBackendLoadbalancerStickinessCookieName),
+			Secure:     GetBoolValue(labels, TraefikBackendLoadBalancerStickinessSecure, DefaultBackendLoadbalancerStickinessSecure),
+			HTTPOnly:   GetBoolValue(labels, TraefikBackendLoadBalancerStickinessHTTPOnly, DefaultBackendLoadbalancerStickinessHTTPOnly),
+			SameSite:   GetStringValue(labels, TraefikBackendLoadBalancerStickinessSameSite, DefaultBackendLoadbalancerStickinessSameSite),
+		}
 	}
 
 	return lb
