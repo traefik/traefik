@@ -456,6 +456,18 @@ Load dynamic configuration from a file.
 `TRAEFIK_PROVIDERS_FILE_WATCH`:  
 Watch provider. (Default: ```true```)
 
+`TRAEFIK_PROVIDERS_HTTP`:  
+Enable Http backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_HTTP_ENDPOINT`:  
+Load configuration from this endpoint.
+
+`TRAEFIK_PROVIDERS_HTTP_POLLINTERVAL`:  
+Polling interval for endpoint. (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_HTTP_POLLTIMEOUT`:  
+Polling timeout for endpoint. (Default: ```0```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
