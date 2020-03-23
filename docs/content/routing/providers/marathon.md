@@ -260,8 +260,8 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
     
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite=none
+    ```json
+    "traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite": "none"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
