@@ -675,6 +675,22 @@ func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores
 	return configs
 }
 
+func getTLSPassphrase(k8sClient Client, secretName, namespace string) (string, error) {
+	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch passphrase secret %s/%s: %w", namespace, secretName, err)
+	}
+	if !exists {
+		return "", fmt.Errorf("passphrase secret %s/%s does not exist", namespace, secretName)
+	}
+
+	if _, ok := secret.Data["passphrase"]; ok {
+		return string(secret.Data["passphrase"]), nil
+	}
+
+	return "", fmt.Errorf("passphrase secret %s/%s does not contain the correct data key \"passphrase\"", namespace, secretName)
+}
+
 func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (string, string, error) {
 	var missingEntries []string
 

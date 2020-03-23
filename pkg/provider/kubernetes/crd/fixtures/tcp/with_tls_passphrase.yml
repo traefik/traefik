@@ -38,4 +38,3 @@ spec:
   tls:
     secretName: supersecret
     passphraseSecretName: supersecretpassphrase
-    
