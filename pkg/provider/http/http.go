@@ -51,10 +51,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		logger := log.FromContext(ctxLog)
 
 		operation := func() error {
-			ctx, cancel := context.WithCancel(ctxLog)
-			defer cancel()
-
-			ctx = log.With(ctx, log.Str(log.ProviderName, "http"))
 			errChan := make(chan error)
 			ticker := time.NewTicker(time.Duration(p.PollInterval))
 
@@ -138,7 +134,7 @@ func (p *Provider) getDataFromEndpoint(ctx context.Context) ([]byte, error) {
 		return nil, fmt.Errorf("unable to get data from endpoint: %w", err)
 	}
 
-	return nil, fmt.Errorf("recieved no data from endpoint")
+	return nil, fmt.Errorf("received no data from endpoint")
 }
 
 // buildConfiguration builds a configuration from the provided data.
