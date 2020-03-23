@@ -47,6 +47,7 @@ func Test(t *testing.T) {
 		check.Suite(&HealthCheckSuite{})
 		check.Suite(&HeadersSuite{})
 		check.Suite(&HostResolverSuite{})
+		check.Suite(&HTTPSuite{})
 		check.Suite(&HTTPSSuite{})
 		check.Suite(&KeepAliveSuite{})
 		check.Suite(&LogRotationSuite{})
