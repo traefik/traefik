@@ -23,13 +23,15 @@ func TestProviderInit(t *testing.T) {
 }
 
 func TestGetDataFromEndpoint(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("{OK}"))
-	}))
-	defer ts.Close()
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	defer server.Close()
+	mux.HandleFunc("/endpoint", func(rw http.ResponseWriter, req *http.Request) {
+		_, _ = rw.Write([]byte("{OK}"))
+	})
 
 	provider := Provider{
-		endpoint: ts.URL,
+		endpoint: server.URL + "/endpoint",
 	}
 
 	assert.NoError(t, provider.Init())
@@ -52,13 +54,15 @@ func TestBuildConfiguration(t *testing.T) {
 }
 
 func TestProvide(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("{}"))
-	}))
-	defer ts.Close()
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	defer server.Close()
+	mux.HandleFunc("/endpoint", func(rw http.ResponseWriter, req *http.Request) {
+		_, _ = rw.Write([]byte("{}"))
+	})
 
 	provider := Provider{
-		endpoint:     ts.URL,
+		endpoint:     server.URL + "/endpoint",
 		pollTimeout:  1 * time.Second,
 		pollInterval: 100 * time.Millisecond,
 	}
