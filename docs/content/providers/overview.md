@@ -35,9 +35,10 @@ Below is the list of the currently supported providers in Traefik.
 | [Rancher](./rancher.md)               | Orchestrator | Label                      |
 | [File](./file.md)                     | Manual       | TOML/YAML format           |
 | [Consul](./consul.md)                 | KV           | KV                         |
-| [etcd](./etcd.md)                     | KV           | KV                         |
+| [Etcd](./etcd.md)                     | KV           | KV                         |
 | [Redis](./redis.md)                   | KV           | KV                         |
 | [ZooKeeper](./zookeeper.md)           | KV           | KV                         |
+| [HTTP](./http.md)                     | Manual       | JSON format                |
 
 !!! info "More Providers"
 
