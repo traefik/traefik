@@ -21,10 +21,9 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that queries an endpoint for a configuration.
 type Provider struct {
-	endpoint         string
-	endpointInsecure bool
-	pollInterval     time.Duration
-	pollTimeout      time.Duration
+	endpoint     string
+	pollInterval time.Duration
+	pollTimeout  time.Duration
 }
 
 // Init the provider.
