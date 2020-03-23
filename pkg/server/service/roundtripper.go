@@ -50,6 +50,10 @@ func createRoundtripper(transportConfiguration *static.ServersTransport) (http.R
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: transportConfiguration.InsecureSkipVerify,
+			RootCAs:            createRootCACertPool(transportConfiguration.RootCAs),
+		},
 	}
 
 	transport.RegisterProtocol("h2c", &h2cTransportWrapper{
@@ -66,16 +70,6 @@ func createRoundtripper(transportConfiguration *static.ServersTransport) (http.R
 		transport.IdleConnTimeout = time.Duration(transportConfiguration.ForwardingTimeouts.IdleConnTimeout)
 	}
 
-	if transportConfiguration.InsecureSkipVerify {
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-
-	if len(transportConfiguration.RootCAs) > 0 {
-		transport.TLSClientConfig = &tls.Config{
-			RootCAs: createRootCACertPool(transportConfiguration.RootCAs),
-		}
-	}
-
 	smartTransport, err := newSmartRoundTripper(transport)
 	if err != nil {
 		return nil, err
@@ -85,6 +79,10 @@ func createRoundtripper(transportConfiguration *static.ServersTransport) (http.R
 }
 
 func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
+	if len(rootCAs) == 0 {
+		return nil
+	}
+
 	roots := x509.NewCertPool()
 
 	for _, cert := range rootCAs {
