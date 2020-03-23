@@ -23,7 +23,7 @@ func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, erro
 	return t.Transport.RoundTrip(req)
 }
 
-// createRoundtripper creates a http.Roundtripper configured with the Transport configuration settings.
+// createRoundtripper creates an http.Roundtripper configured with the Transport configuration settings.
 // For the settings that can't be configured in Traefik it uses the default http.Transport settings.
 // An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost
 // in Traefik at this point in time. Setting this value to the default of 100 could lead to confusing
