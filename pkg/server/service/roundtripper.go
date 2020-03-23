@@ -50,10 +50,6 @@ func createRoundtripper(transportConfiguration *static.ServersTransport) (http.R
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: transportConfiguration.InsecureSkipVerify,
-			RootCAs:            createRootCACertPool(transportConfiguration.RootCAs),
-		},
 	}
 
 	transport.RegisterProtocol("h2c", &h2cTransportWrapper{
@@ -68,6 +64,13 @@ func createRoundtripper(transportConfiguration *static.ServersTransport) (http.R
 	if transportConfiguration.ForwardingTimeouts != nil {
 		transport.ResponseHeaderTimeout = time.Duration(transportConfiguration.ForwardingTimeouts.ResponseHeaderTimeout)
 		transport.IdleConnTimeout = time.Duration(transportConfiguration.ForwardingTimeouts.IdleConnTimeout)
+	}
+
+	if transportConfiguration.InsecureSkipVerify || len(transportConfiguration.RootCAs) > 0 {
+		transport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: transportConfiguration.InsecureSkipVerify,
+			RootCAs:            createRootCACertPool(transportConfiguration.RootCAs),
+		}
 	}
 
 	smartTransport, err := newSmartRoundTripper(transport)
