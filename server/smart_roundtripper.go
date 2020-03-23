@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"net/http"
 
 	"golang.org/x/net/http/httpguts"
@@ -30,4 +31,8 @@ func (m *smartRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 		return m.http.RoundTrip(req)
 	}
 	return m.http2.RoundTrip(req)
+}
+
+func (m *smartRoundTripper) GetTLSClientConfig() *tls.Config {
+	return m.http2.TLSClientConfig
 }

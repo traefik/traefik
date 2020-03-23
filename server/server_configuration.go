@@ -237,11 +237,17 @@ func (s *Server) buildForwarder(entryPointName string, entryPoint *configuration
 		}
 	}
 
+	var tlsConfig *tls.Config
+	if smartRt, ok := roundTripper.(*smartRoundTripper); ok {
+		tlsConfig = smartRt.GetTLSClientConfig()
+	}
+
 	var fwd http.Handler
 	fwd, err = forward.New(
 		forward.Stream(true),
 		forward.PassHostHeader(frontend.PassHostHeader),
 		forward.RoundTripper(roundTripper),
+		forward.WebsocketTLSClientConfig(tlsConfig),
 		forward.Rewriter(rewriter),
 		forward.ResponseModifier(responseModifier),
 		forward.BufferPool(s.bufferPool),
