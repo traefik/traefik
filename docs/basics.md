@@ -468,12 +468,11 @@ If not, a new backend will be assigned.
     #  httpOnly = true
 
     # Customize same site option.
-    # Can be: none, lax, strict
+    # Can be: "none", "lax", "strict"
     #
     # Optional
-    # Default: 
     #
-    #  httpOnly = true
+    #  sameSite = "none"
 ```
 
 The deprecated way:
