@@ -264,6 +264,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/tls/stores/Store1/defaultCertificate/keyFile":                                       "foobar",
 		"traefik/tls/certificates/0/certFile":                                                        "foobar",
 		"traefik/tls/certificates/0/keyFile":                                                         "foobar",
+		"traefik/tls/certificates/0/passphrase":                                                      "foobar",
 		"traefik/tls/certificates/0/stores/0":                                                        "foobar",
 		"traefik/tls/certificates/0/stores/1":                                                        "foobar",
 		"traefik/tls/certificates/1/certFile":                                                        "foobar",
@@ -794,8 +795,9 @@ func Test_buildConfiguration(t *testing.T) {
 			Certificates: []*tls.CertAndStores{
 				{
 					Certificate: tls.Certificate{
-						CertFile: tls.FileOrContent("foobar"),
-						KeyFile:  tls.FileOrContent("foobar"),
+						CertFile:   tls.FileOrContent("foobar"),
+						KeyFile:    tls.FileOrContent("foobar"),
+						Passphrase: "foobar",
 					},
 					Stores: []string{
 						"foobar",
