@@ -9,10 +9,12 @@ import (
 
 func newSmartRoundTripper(transport *http.Transport) (http.RoundTripper, error) {
 	transportHTTP1 := transport.Clone()
+
 	err := http2.ConfigureTransport(transport)
 	if err != nil {
 		return nil, err
 	}
+
 	return &smartRoundTripper{
 		http2: transport,
 		http:  transportHTTP1,
@@ -29,5 +31,6 @@ func (m *smartRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	if httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
 		return m.http.RoundTrip(req)
 	}
+
 	return m.http2.RoundTrip(req)
 }
