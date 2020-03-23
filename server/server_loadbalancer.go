@@ -228,28 +228,29 @@ func (s *Server) configureLBServers(lb healthcheck.BalancerHandler, backend *typ
 // getRoundTripper will either use server.defaultForwardingRoundTripper or create a new one
 // given a custom TLS configuration is passed and the passTLSCert option is set to true.
 func (s *Server) getRoundTripper(entryPointName string, passTLSCert bool, tls *traefiktls.TLS) (http.RoundTripper, error) {
-	if passTLSCert {
-		tlsConfig, err := createClientTLSConfig(entryPointName, tls)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create TLSClientConfig: %v", err)
-		}
-		tlsConfig.InsecureSkipVerify = s.globalConfiguration.InsecureSkipVerify
-
-		transport, err := createHTTPTransport(s.globalConfiguration)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create HTTP transport: %v", err)
-		}
-
-		err = http2.ConfigureTransport(transport)
-		if err != nil {
-			return nil, err
-		}
-
-		transport.TLSClientConfig = tlsConfig
-		return transport, nil
+	if !passTLSCert {
+		return s.defaultForwardingRoundTripper, nil
 	}
 
-	return s.defaultForwardingRoundTripper, nil
+	tlsConfig, err := createClientTLSConfig(entryPointName, tls)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TLSClientConfig: %v", err)
+	}
+	tlsConfig.InsecureSkipVerify = s.globalConfiguration.InsecureSkipVerify
+
+	transport, err := createHTTPTransport(s.globalConfiguration)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP transport: %v", err)
+	}
+
+	transport.TLSClientConfig = tlsConfig
+
+	smartTransport, err := newSmartRoundTripper(transport)
+	if err != nil {
+		return nil, err
+	}
+
+	return smartTransport, nil
 }
 
 // createHTTPTransport creates an http.Transport configured with the GlobalConfiguration settings.

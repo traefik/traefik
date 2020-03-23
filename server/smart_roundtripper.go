@@ -9,6 +9,9 @@ import (
 )
 
 func newSmartRoundTripper(transport *http.Transport) (http.RoundTripper, error) {
+	if transport == nil {
+		return nil, nil
+	}
 	transportHTTP1 := transport.Clone()
 	err := http2.ConfigureTransport(transport)
 	if err != nil {
