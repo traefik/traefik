@@ -3,9 +3,12 @@ package http
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,17 +23,13 @@ func TestProviderInit(t *testing.T) {
 }
 
 func TestGetDataFromEndpoint(t *testing.T) {
-	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		_, _ = rw.Write([]byte("{OK}"))
-	})
-	router := mux.NewRouter()
-
-	router.HandleFunc("/endpoint", handler)
-
-	go http.ListenAndServe("127.0.0.1:9000", router)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("{OK}"))
+	}))
+	defer ts.Close()
 
 	provider := Provider{
-		endpoint: "http://127.0.0.1:9000/endpoint",
+		endpoint: ts.URL,
 	}
 
 	assert.NoError(t, provider.Init())
@@ -38,7 +37,6 @@ func TestGetDataFromEndpoint(t *testing.T) {
 	data, err := provider.getDataFromEndpoint(context.Background())
 	assert.NoError(t, err)
 	assert.Equal(t, "{OK}", string(data))
-
 }
 
 func TestBuildConfiguration(t *testing.T) {
@@ -50,5 +48,36 @@ func TestBuildConfiguration(t *testing.T) {
 
 	config := provider.buildConfiguration(context.Background(), []byte("{}"))
 	assert.NotEqual(t, nil, config)
+
+}
+
+func TestProvide(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("{}"))
+	}))
+	defer ts.Close()
+
+	provider := Provider{
+		endpoint:     ts.URL,
+		pollTimeout:  1 * time.Second,
+		pollInterval: 100 * time.Millisecond,
+	}
+
+	assert.NoError(t, provider.Init())
+
+	configChan := make(chan dynamic.Message)
+
+	go func() {
+		err := provider.Provide(configChan, safe.NewPool(context.Background()))
+		assert.NoError(t, err)
+	}()
+
+	timeout := time.After(time.Second)
+	select {
+	case conf := <-configChan:
+		assert.NotNil(t, conf.Configuration)
+	case <-timeout:
+		t.Errorf("timeout while waiting for config")
+	}
 
 }
