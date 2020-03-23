@@ -1,5 +1,13 @@
 # Change Log
 
+## [v1.7.23](https://github.com/containous/traefik/tree/v1.7.23) (2020-03-23)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.22...v1.7.23)
+
+**Bug fixes:**
+- **[consul,consulcatalog,docker,ecs,k8s,marathon,mesos,rancher,sticky-session]** Fix sameSite ([#6537](https://github.com/containous/traefik/pull/6537) by [ldez](https://github.com/ldez))
+- **[server]** Force http/1.1 for upgrade ([#6553](https://github.com/containous/traefik/pull/6553) by [juliens](https://github.com/juliens))
+- **[tls]** fix: max TLS version. ([#6531](https://github.com/containous/traefik/pull/6531) by [ldez](https://github.com/ldez))
+
 ## [v1.7.22](https://github.com/containous/traefik/tree/v1.7.22) (2020-03-09)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.21...v1.7.22)
 
