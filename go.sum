@@ -164,6 +164,8 @@ github.com/containous/check v0.0.0-20170915194414-ca0bf163426a h1:8esAQaPKjfntQR
 github.com/containous/check v0.0.0-20170915194414-ca0bf163426a/go.mod h1:eQOqZ7GoFsLxI7jFKLs7+Nv2Rm1x4FyK8d2NV+yGjwQ=
 github.com/containous/go-http-auth v0.4.1-0.20180112153951-65b0cdae8d7f h1:AgXgJSqQmsiNFW268OGe/y7Mn4jiCWaMUk05qser3Bo=
 github.com/containous/go-http-auth v0.4.1-0.20180112153951-65b0cdae8d7f/go.mod h1:dCmRGidPSLagL8D/2u7yIO6Y/8D/yuYX9EdKrnrhpCA=
+github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e h1:D+uTEzDZc1Fhmd0Pq06c+O9+KkAyExw0eVmu/NOqaHU=
+github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e/go.mod h1:s8kLgBQolDbsJOPVIGCEEv9zGAKUUf/685Gi0Qqg8z8=
 github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595 h1:aPspFRO6b94To3gl4yTDOEtpjFwXI7V2W+z0JcNljQ4=
 github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595/go.mod h1:+lHFbEasIiQVGzhVDVw/cn0ZaOzde2OwNncp1NhXV4c=
 github.com/containous/multibuf v0.0.0-20190809014333-8b6c9a7e6bba h1:PhR03pep+5eO/9BSvCY9RyG8rjogB3uYS4X/WBYNTT8=
@@ -796,6 +798,8 @@ golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586/go.mod h1:yigFU9vqHzYiE8U
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073 h1:xMPOj6Pz6UipU1wXLkrtqpHbR0AVFnyPEQq/wRWz9lM=
 golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
+golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6 h1:TjszyFsQsyZNHwdVdZ5m7bjmreu0znc2kRYsEml9/Ww=
+golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190125153040-c74c464bbbf2/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190306152737-a1d7652674e8/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
