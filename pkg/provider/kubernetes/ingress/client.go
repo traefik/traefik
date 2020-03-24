@@ -188,8 +188,6 @@ func (c *clientWrapper) GetIngresses() []*networkingv1beta1.Ingress {
 }
 
 func extensionsToNetworking(ing *extensionsv1beta1.Ingress) (*networkingv1beta1.Ingress, error) {
-	log.Warnf("Ingress %s/%s: the apiVersion 'extensions/v1beta1' is deprecated, use 'networking.k8s.io/v1beta1' instead.", ing.Namespace, ing.Name)
-
 	data, err := ing.Marshal()
 	if err != nil {
 		return nil, err
