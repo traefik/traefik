@@ -52,6 +52,7 @@ http:
             name: foobar
             secure: true
             httpOnly: true
+            sameSite: foobar
         servers:
         - url: foobar
         - url: foobar
@@ -90,6 +91,7 @@ http:
             name: foobar
             secure: true
             httpOnly: true
+            sameSite: foobar
   middlewares:
     Middleware00:
       addPrefix:

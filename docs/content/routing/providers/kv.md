@@ -214,6 +214,14 @@ A Story of key & values
     |---------------------------------------------------------------------|--------|
     | `traefik/http/services/myservice/loadbalancer/sticky/cookie/secure` | `true` |
 
+??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/samesite`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    | Key (Path)                                                            | Value  |
+    |-----------------------------------------------------------------------|--------|
+    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/samesite` | `none` |
+
 ??? info "`traefik/http/services/<service_name>/loadbalancer/responseforwarding/flushinterval`"
 
     See [response forwarding](../services/index.md#response-forwarding) for more information.
@@ -263,6 +271,12 @@ A Story of key & values
     | Key (Path)                                                           | Value  |
     |----------------------------------------------------------------------|--------|
     | `traefik/http/services/<service_name>/weighted/sticky/cookie/secure` | `true` |
+
+??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/samesite`"
+
+    | Key (Path)                                                             | Value  |
+    |------------------------------------------------------------------------|--------|
+    | `traefik/http/services/<service_name>/weighted/sticky/cookie/samesite` | `none` |
 
 ??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/httpOnly`"
 

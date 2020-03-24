@@ -340,6 +340,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
               httpOnly: true
               name: cookie
               secure: true
+              sameSite: none
           strategy: RoundRobin
           weight: 10
       tls:                              # [9]

@@ -148,6 +148,7 @@
 "traefik.http.services.service01.loadbalancer.sticky.cookie.httponly": "true",
 "traefik.http.services.service01.loadbalancer.sticky.cookie.name": "foobar",
 "traefik.http.services.service01.loadbalancer.sticky.cookie.secure": "true",
+"traefik.http.services.service01.loadbalancer.sticky.cookie.samesite": "foobar",
 "traefik.http.services.service01.loadbalancer.server.port": "foobar",
 "traefik.http.services.service01.loadbalancer.server.scheme": "foobar",
 "traefik.tcp.routers.tcprouter0.entrypoints": "foobar, foobar",

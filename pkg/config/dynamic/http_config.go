@@ -113,6 +113,7 @@ type Cookie struct {
 	Name     string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
 	Secure   bool   `json:"secure,omitempty" toml:"secure,omitempty" yaml:"secure,omitempty"`
 	HTTPOnly bool   `json:"httpOnly,omitempty" toml:"httpOnly,omitempty" yaml:"httpOnly,omitempty"`
+	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

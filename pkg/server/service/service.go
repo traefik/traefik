@@ -295,8 +295,15 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 	var cookieName string
 	if service.Sticky != nil && service.Sticky.Cookie != nil {
 		cookieName = cookie.GetName(service.Sticky.Cookie.Name, serviceName)
-		opts := roundrobin.CookieOptions{HTTPOnly: service.Sticky.Cookie.HTTPOnly, Secure: service.Sticky.Cookie.Secure}
+
+		opts := roundrobin.CookieOptions{
+			HTTPOnly: service.Sticky.Cookie.HTTPOnly,
+			Secure:   service.Sticky.Cookie.Secure,
+			SameSite: convertSameSite(service.Sticky.Cookie.SameSite),
+		}
+
 		options = append(options, roundrobin.EnableStickySession(roundrobin.NewStickySessionWithOptions(cookieName, opts)))
+
 		logger.Debugf("Sticky session cookie name: %v", cookieName)
 	}
 
@@ -331,4 +338,17 @@ func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHand
 		// FIXME Handle Metrics
 	}
 	return nil
+}
+
+func convertSameSite(sameSite string) http.SameSite {
+	switch sameSite {
+	case "none":
+		return http.SameSiteNoneMode
+	case "lax":
+		return http.SameSiteLaxMode
+	case "strict":
+		return http.SameSiteStrictMode
+	default:
+		return 0
+	}
 }

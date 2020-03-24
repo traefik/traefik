@@ -1,3 +1,13 @@
+## [v2.1.9](https://github.com/containous/traefik/tree/v2.1.9) (2020-03-23)
+[All Commits](https://github.com/containous/traefik/compare/v2.1.8...v2.1.9)
+
+**Bug fixes:**
+- **[provider,sticky-session]** Fix sameSite ([#6538](https://github.com/containous/traefik/pull/6538) by [ldez](https://github.com/ldez))
+- **[server]** Force http/1.1 for upgrade ([#6554](https://github.com/containous/traefik/pull/6554) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- Fix tab name ([#6543](https://github.com/containous/traefik/pull/6543) by [mavimo](https://github.com/mavimo))
+
 ## [v2.2.0-rc4](https://github.com/containous/traefik/tree/v2.2.0-rc4) (2020-03-19)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.0-rc3...v2.2.0-rc4)
 
