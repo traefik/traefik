@@ -69,7 +69,7 @@ func (s *HTTPSuite) TestSimpleConfiguration(c *check.C) {
 		ts := startTestServerWithResponse(string(data))
 		defer ts.Close()
 
-		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 3*time.Second, try.BodyContains("bacon"))
+		err = try.GetRequest("http://127.0.0.1:9090/api/rawdata", 3*time.Second, try.BodyContains("bacon"))
 		c.Assert(err, checker.IsNil)
 
 		err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
