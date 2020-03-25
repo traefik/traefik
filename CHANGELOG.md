@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.24](https://github.com/containous/traefik/tree/v1.7.24) (2020-03-25)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.23...v1.7.24)
+
+**Bug fixes:**
+- **[k8s/ingress]** fix: stickiness annotations support. ([#6576](https://github.com/containous/traefik/pull/6576) by [ldez](https://github.com/ldez))
+
 ## [v1.7.23](https://github.com/containous/traefik/tree/v1.7.23) (2020-03-23)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.22...v1.7.23)
 
