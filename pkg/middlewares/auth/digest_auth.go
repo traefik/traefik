@@ -61,29 +61,38 @@ func (d *digestAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), d.name, digestTypeName))
 
-	if username, _ := d.auth.CheckAuth(req); username == "" {
+	username, authinfo := d.auth.CheckAuth(req)
+	if username == "" {
+		if authinfo != nil && *authinfo == "stale" {
+			logger.Debug("Digest authentication failed, possibly because out of order requests")
+			tracing.SetErrorWithEvent(req, "Digest authentication failed, possibly because out of order requests")
+			d.auth.RequireAuthStale(rw, req)
+			return
+		}
+
 		logger.Debug("Digest authentication failed")
 		tracing.SetErrorWithEvent(req, "Digest authentication failed")
 		d.auth.RequireAuth(rw, req)
-	} else {
-		logger.Debug("Digest authentication succeeded")
-		req.URL.User = url.User(username)
-
-		logData := accesslog.GetLogData(req)
-		if logData != nil {
-			logData.Core[accesslog.ClientUsername] = username
-		}
-
-		if d.headerField != "" {
-			req.Header[d.headerField] = []string{username}
-		}
-
-		if d.removeHeader {
-			logger.Debug("Removing the Authorization header")
-			req.Header.Del(authorizationHeader)
-		}
-		d.next.ServeHTTP(rw, req)
+		return
 	}
+
+	logger.Debug("Digest authentication succeeded")
+	req.URL.User = url.User(username)
+
+	logData := accesslog.GetLogData(req)
+	if logData != nil {
+		logData.Core[accesslog.ClientUsername] = username
+	}
+
+	if d.headerField != "" {
+		req.Header[d.headerField] = []string{username}
+	}
+
+	if d.removeHeader {
+		logger.Debug("Removing the Authorization header")
+		req.Header.Del(authorizationHeader)
+	}
+	d.next.ServeHTTP(rw, req)
 }
 
 func (d *digestAuth) secretDigest(user, realm string) string {
