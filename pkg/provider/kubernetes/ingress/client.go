@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/golang/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
@@ -187,7 +188,7 @@ func (c *clientWrapper) GetIngresses() []*networkingv1beta1.Ingress {
 	return results
 }
 
-func extensionsToNetworking(ing *extensionsv1beta1.Ingress) (*networkingv1beta1.Ingress, error) {
+func extensionsToNetworking(ing proto.Marshaler) (*networkingv1beta1.Ingress, error) {
 	data, err := ing.Marshal()
 	if err != nil {
 		return nil, err
