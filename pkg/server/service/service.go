@@ -20,6 +20,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/emptybackendhandler"
 	metricsMiddle "github.com/containous/traefik/v2/pkg/middlewares/metrics"
 	"github.com/containous/traefik/v2/pkg/middlewares/pipelining"
+        "github.com/containous/traefik/v2/pkg/middlewares/spnegoclient"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/server/cookie"
 	"github.com/containous/traefik/v2/pkg/server/provider"
@@ -184,6 +185,9 @@ func (m *Manager) getLoadBalancerServiceHandler(
 	chain := alice.New()
 	if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
 		chain = chain.Append(metricsMiddle.WrapServiceHandler(ctx, m.metricsRegistry, serviceName))
+	}
+        if service.SpnegoClient != nil {
+	        chain = chain.Append(spnegoclient.WrapHandler(ctx, service.SpnegoClient))
 	}
 
 	handler, err := chain.Append(alHandler).Then(pipelining.New(ctx, fwd, "pipelining"))

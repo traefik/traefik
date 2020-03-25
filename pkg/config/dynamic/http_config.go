@@ -117,6 +117,13 @@ type Cookie struct {
 
 // +k8s:deepcopy-gen=true
 
+// SpnegoClient holds the configuration for the spnego client
+type SpnegoClient struct {
+	KrbConfPath	string	`json:"krbConfPath" toml:"krbConfPath" yaml:"krbConfPath"`
+        CCachePath	string	`json:"cCachePath,omitempty" toml:"cCachePath,omitempty" yaml:"cCachePath,omitempty"`
+        Spn		string  `json:"spn,omitempty" toml:"spn,omitempty" yaml:"spn,omitempty"`
+}
+
 // ServersLoadBalancer holds the ServersLoadBalancer configuration.
 type ServersLoadBalancer struct {
 	Sticky             *Sticky             `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" label:"allowEmpty"`
@@ -124,6 +131,7 @@ type ServersLoadBalancer struct {
 	HealthCheck        *HealthCheck        `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty"`
 	PassHostHeader     *bool               `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader"`
 	ResponseForwarding *ResponseForwarding `json:"responseForwarding,omitempty" toml:"responseForwarding,omitempty" yaml:"responseForwarding,omitempty"`
+        SpnegoClient       *SpnegoClient       `json:"spnegoClient,omitempty" toml:"spnegoClient,omitempty" yaml:"spnegoClient,omitempty"`
 }
 
 // Mergeable tells if the given service is mergeable.
