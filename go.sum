@@ -162,8 +162,6 @@ github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd h1:0n+lFLh5zU0l6K
 github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd/go.mod h1:BbQgeDS5i0tNvypwEoF1oNjOJw8knRAE1DnVvjDstcQ=
 github.com/containous/check v0.0.0-20170915194414-ca0bf163426a h1:8esAQaPKjfntQR1bag/mAOvWJd5HqSX5nsa+0KT63zo=
 github.com/containous/check v0.0.0-20170915194414-ca0bf163426a/go.mod h1:eQOqZ7GoFsLxI7jFKLs7+Nv2Rm1x4FyK8d2NV+yGjwQ=
-github.com/containous/go-http-auth v0.4.1-0.20180112153951-65b0cdae8d7f h1:AgXgJSqQmsiNFW268OGe/y7Mn4jiCWaMUk05qser3Bo=
-github.com/containous/go-http-auth v0.4.1-0.20180112153951-65b0cdae8d7f/go.mod h1:dCmRGidPSLagL8D/2u7yIO6Y/8D/yuYX9EdKrnrhpCA=
 github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e h1:D+uTEzDZc1Fhmd0Pq06c+O9+KkAyExw0eVmu/NOqaHU=
 github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e/go.mod h1:s8kLgBQolDbsJOPVIGCEEv9zGAKUUf/685Gi0Qqg8z8=
 github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595 h1:aPspFRO6b94To3gl4yTDOEtpjFwXI7V2W+z0JcNljQ4=
