@@ -90,7 +90,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
     apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
     metadata:
-      name: testIPwhitelist
+      name: test-ipwhitelist
     spec:
       ipWhiteList:
         sourceRange:
