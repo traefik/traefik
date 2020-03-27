@@ -284,7 +284,7 @@ func Test_buildConfiguration(t *testing.T) {
 				{
 					ID:      "Test",
 					Node:    "Node1",
-					Name:    "Test",
+					Name:    "dev/Test",
 					Labels:  map[string]string{},
 					Address: "127.0.0.1",
 					Port:    "80",
@@ -302,14 +302,14 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+						"dev-Test": {
+							Service: "dev-Test",
+							Rule:    "Host(`dev-Test.traefik.wtf`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"Test": {
+						"dev-Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
