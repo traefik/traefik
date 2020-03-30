@@ -1,0 +1,33 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    rule = "Host(`test.localhost`)"
+    middlewares = ["foo", "bar"]
+    service = "service1"
+
+
+[http.middlewares]
+  [http.middlewares.foo.headers]
+    frameDeny = true
+  [http.middlewares.bar.headers]
+    contentTypeNosniff = true
+
+[http.services]
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "http://127.0.0.1:9000"
