@@ -69,6 +69,10 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 		p.quietAddProvider(conf.Redis)
 	}
 
+	if conf.HTTP != nil {
+		p.quietAddProvider(conf.HTTP)
+	}
+
 	return p
 }
 
