@@ -13,6 +13,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/unrolled/secure"
 )
 
 func TestCustomRequestHeader(t *testing.T) {
@@ -167,7 +168,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusMovedPermanently,
 		},
 		{
@@ -177,7 +180,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusMovedPermanently,
 		},
 		{
@@ -187,7 +192,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusOK,
 		},
 		{
@@ -197,7 +204,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusMovedPermanently,
 		},
 		{
@@ -207,7 +216,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusMovedPermanently,
 		},
 		{
@@ -217,7 +228,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusOK,
 		},
 	}
@@ -614,4 +627,33 @@ func TestCustomResponseHeaders(t *testing.T) {
 			assert.Equal(t, test.expected, rw.Result().Header)
 		})
 	}
+}
+
+func TestMultipleSecureInstances(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	header1, _ := New(context.Background(), next, dynamic.Headers{
+		FrameDeny: true,
+	}, "header1")
+
+	header2, _ := New(context.Background(), next, dynamic.Headers{
+		ContentTypeNosniff: true,
+	}, "header2")
+
+	rr := httptest.NewRecorder()
+	req := testhelpers.MustNewRequest(http.MethodGet, "/foo", nil)
+
+	header1.ServeHTTP(rr, req)
+	header2.ServeHTTP(rr, req)
+
+	response := rr.Result()
+
+	// Modify response headers for header1 middleware.
+	secure.New(secure.Options{
+		FrameDeny:        true,
+		SecureContextKey: "header1",
+	}).ModifyResponseHeaders(response)
+
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	assert.Equal(t, "DENY", response.Header.Get("X-Frame-Options"))
 }
