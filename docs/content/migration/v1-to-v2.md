@@ -370,13 +370,13 @@ To apply a redirection:
     ## static configuration
     
     [entryPoints.web]
-      address = 80
+      address = ":80"
       [entryPoints.web.http.redirections.entryPoint]
         to = "websecure"
         scheme = "https"
    
     [entryPoints.websecure]
-      address = 443
+      address = ":443"
     ```
     
     ```yaml tab="File (YAML)"
