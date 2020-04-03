@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/golang/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
@@ -187,9 +188,7 @@ func (c *clientWrapper) GetIngresses() []*networkingv1beta1.Ingress {
 	return results
 }
 
-func extensionsToNetworking(ing *extensionsv1beta1.Ingress) (*networkingv1beta1.Ingress, error) {
-	log.Warnf("Ingress %s/%s: the apiVersion 'extensions/v1beta1' is deprecated, use 'networking.k8s.io/v1beta1' instead.", ing.Namespace, ing.Name)
-
+func extensionsToNetworking(ing proto.Marshaler) (*networkingv1beta1.Ingress, error) {
 	data, err := ing.Marshal()
 	if err != nil {
 		return nil, err
