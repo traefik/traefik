@@ -309,7 +309,6 @@ func buildServerRoute(serverEntryPoint *serverEntryPoint, frontendName string, f
 func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 	providersThrottleDuration := time.Duration(s.globalConfiguration.ProvidersThrottleDuration)
 	s.defaultConfigurationValues(configMsg.Configuration)
-	currentConfigurations := s.currentConfigurations.Get().(types.Configurations)
 
 	if log.GetLevel() == logrus.DebugLevel {
 		jsonConf, _ := json.Marshal(configMsg.Configuration)
@@ -318,11 +317,6 @@ func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 
 	if configMsg.Configuration == nil || configMsg.Configuration.Backends == nil && configMsg.Configuration.Frontends == nil && configMsg.Configuration.TLS == nil {
 		log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
-		return
-	}
-
-	if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-		log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
 		return
 	}
 
@@ -461,11 +455,17 @@ func (s *Server) throttleProviderConfigReload(throttle time.Duration, publish ch
 		}
 	})
 
+	var previousConfig types.ConfigMessage
 	for {
 		select {
 		case <-stop:
 			return
 		case nextConfig := <-in:
+			if reflect.DeepEqual(previousConfig, nextConfig) {
+				log.Infof("Skipping same configuration for provider %s", nextConfig.ProviderName)
+				continue
+			}
+			previousConfig = nextConfig
 			ring.In() <- nextConfig
 		}
 	}
