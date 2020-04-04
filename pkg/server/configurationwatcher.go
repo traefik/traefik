@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -46,7 +45,7 @@ func NewConfigurationWatcher(
 	watcher := &ConfigurationWatcher{
 		provider:                   pvd,
 		configurationChan:          make(chan dynamic.Message, 100),
-		configurationValidatedChan: make(chan dynamic.Message, 100),
+		configurationValidatedChan: make(chan dynamic.Message),
 		providerConfigUpdateMap:    make(map[string]chan dynamic.Message),
 		providersThrottleDuration:  providersThrottleDuration,
 		routinesPool:               routinesPool,
@@ -219,37 +218,73 @@ func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
 // It will immediately publish a new configuration and then only publish the next configuration after the throttle duration.
 // Note that in the case it receives N new configs in the timeframe of the throttle duration after publishing,
 // it will publish the last of the newly received configurations.
+// Handles if publish channel is blocking, during that it still processes incoming configurations.
 func (c *ConfigurationWatcher) throttleProviderConfigReload(ctx context.Context, throttle time.Duration, publish chan<- dynamic.Message, in <-chan dynamic.Message) {
-	ring := channels.NewRingChannel(1)
-	defer ring.Close()
+	nextSend := time.NewTimer(0)
+	defer func() {
+		if !nextSend.Stop() {
+			<-nextSend.C
+		}
+	}()
 
-	c.routinesPool.GoCtx(func(ctxPool context.Context) {
+	var previousConfig dynamic.Message
+
+	// throttling loop
+	for {
+		var nextConfig dynamic.Message
+		var ok bool
+
+		// Read all configs during throttle duration
+	Read:
 		for {
 			select {
-			case <-ctxPool.Done():
+			case <-ctx.Done():
 				return
-			case nextConfig := <-ring.Out():
-				if config, ok := nextConfig.(dynamic.Message); ok {
-					publish <- config
-					time.Sleep(throttle)
+			case nextConfig, ok = <-in:
+				if !ok {
+					return
+				}
+			case <-nextSend.C:
+				break Read
+			}
+		}
+
+		// If still no data, wait for one
+		if !ok {
+			select {
+			case <-ctx.Done():
+				return
+			case nextConfig, ok = <-in:
+				if !ok {
+					return
 				}
 			}
 		}
-	})
 
-	var previousConfig dynamic.Message
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case nextConfig := <-in:
+		// Try to send only if the to-be-sent configuration
+		// is different than last one.
+		// Meanwhile if another arrives, then try to send that
+	Send:
+		for {
 			if reflect.DeepEqual(previousConfig, nextConfig) {
 				logger := log.WithoutContext().WithField(log.ProviderName, nextConfig.ProviderName)
 				logger.Info("Skipping same configuration")
-				continue
+				nextSend.Reset(0)
+				break Send
 			}
-			previousConfig = *nextConfig.DeepCopy()
-			ring.In() <- *nextConfig.DeepCopy()
+
+			select {
+			case <-ctx.Done():
+				return
+			case nextConfig, ok = <-in:
+				if !ok {
+					return
+				}
+			case publish <- *nextConfig.DeepCopy():
+				nextSend.Reset(throttle)
+				previousConfig = *nextConfig.DeepCopy()
+				break Send
+			}
 		}
 	}
 }
