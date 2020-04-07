@@ -106,7 +106,7 @@ HTTP configuration.
 Default middlewares for the routers linked to the entry point.
 
 `--entrypoints.<name>.http.redirections.entrypoint.permanent`:  
-Applied a permanent redirection. (Default: ```true```)
+Applies a permanent redirection. (Default: ```true```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.priority`:  
 Priority of the generated router. (Default: ```2147483647```)

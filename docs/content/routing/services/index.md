@@ -337,7 +337,7 @@ Below are the available options for the health check mechanism:
 !!! warning "Health check in Kubernetes"
 
     The Traefik health check is not available for `kubernetesCRD` and `kubernetesIngress` providers because Kubernetes
-    has already an health check mecanism. 
+    already has a health check mechanism.
     Unhealthy pods will be removed by kubernetes. (cf [liveness documentation](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-http-request))
 
 ??? example "Custom Interval & Timeout -- Using the [File Provider](../../providers/file.md)"
