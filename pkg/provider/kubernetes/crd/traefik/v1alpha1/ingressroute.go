@@ -69,7 +69,6 @@ type LoadBalancerSpec struct {
 	// and therefore should only be specified when Name references a Kubernetes Service.
 	Port               int32                       `json:"port"`
 	Scheme             string                      `json:"scheme,omitempty"`
-	HealthCheck        *HealthCheck                `json:"healthCheck,omitempty"`
 	Strategy           string                      `json:"strategy,omitempty"`
 	PassHostHeader     *bool                       `json:"passHostHeader,omitempty"`
 	ResponseForwarding *dynamic.ResponseForwarding `json:"responseForwarding,omitempty"`
@@ -88,16 +87,6 @@ type Service struct {
 type MiddlewareRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
-}
-
-// HealthCheck is the HealthCheck definition.
-type HealthCheck struct {
-	Path            string            `json:"path"`
-	Host            string            `json:"host,omitempty"`
-	Scheme          string            `json:"scheme"`
-	IntervalSeconds int64             `json:"intervalSeconds"`
-	TimeoutSeconds  int64             `json:"timeoutSeconds"`
-	Headers         map[string]string `json:"headers"`
 }
 
 // +genclient
