@@ -50,7 +50,7 @@ Then any router can refer to an instance of the wanted middleware.
         traefik.ingress.kubernetes.io/rule-type: PathPrefix
     spec:
       rules:
-      - host: test.locahost
+      - host: test.localhost
         http:
           paths:
           - path: /test
