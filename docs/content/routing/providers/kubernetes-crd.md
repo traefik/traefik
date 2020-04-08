@@ -340,6 +340,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
               httpOnly: true
               name: cookie
               secure: true
+              sameSite: none
           strategy: RoundRobin
           weight: 10
       tls:                              # [9]
@@ -1086,7 +1087,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         - name: foo                 # [5]
           port: 8080                # [6]
           weight: 10                # [7]
-          TerminationDelay: 400     # [8]
+          terminationDelay: 400     # [8]
       tls:                          # [9]
         secretName: supersecret     # [10]
         options:                    # [11]
@@ -1110,7 +1111,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 | [5]  | `services[n].name`             | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                             |
 | [6]  | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                             |
 | [7]  | `services[n].weight`           | Defines the weight to apply to the server load balancing                                                                                                                                                                                                                                                                                                                                 |
-| [8]  | `services[n].TerminationDelay` | corresponds to the deadline that the proxy sets, after one of its connected peers indicates it has closed the writing capability of its connection, to close the reading capability as well, hence fully terminating the connection.<br/>It is a duration in milliseconds, defaulting to 100. A negative value means an infinite deadline (i.e. the reading capability is never closed). |
+| [8]  | `services[n].terminationDelay` | corresponds to the deadline that the proxy sets, after one of its connected peers indicates it has closed the writing capability of its connection, to close the reading capability as well, hence fully terminating the connection.<br/>It is a duration in milliseconds, defaulting to 100. A negative value means an infinite deadline (i.e. the reading capability is never closed). |
 | [9]  | `tls`                          | Defines [TLS](../routers/index.md#tls_1) certificate configuration                                                                                                                                                                                                                                                                                                                       |
 | [10] | `tls.secretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                                                                                                                     |
 | [11] | `tls.options`                  | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                                                                                                                  |
@@ -1139,11 +1140,11 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         services:
         - name: foo
           port: 8080
-          TerminationDelay: 400
+          terminationDelay: 400
           weight: 10
         - name: bar
           port: 8081
-          TerminationDelay: 500
+          terminationDelay: 500
           weight: 10
       tls:
         certResolver: foo

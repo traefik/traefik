@@ -109,6 +109,7 @@ func Test_parseServiceConfig(t *testing.T) {
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.httponly": "true",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.name":     "foobar",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.secure":   "true",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie.samesite": "none",
 			},
 			expected: &ServiceConfig{
 				Service: &ServiceIng{
@@ -117,6 +118,7 @@ func Test_parseServiceConfig(t *testing.T) {
 							Name:     "foobar",
 							Secure:   true,
 							HTTPOnly: true,
+							SameSite: "none",
 						},
 					},
 					ServersScheme:  "protocol",
