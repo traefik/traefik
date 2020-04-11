@@ -91,7 +91,7 @@ and whether to listen for TCP or UDP.
 ### General
 
 EntryPoints are part of the [static configuration](../getting-started/configuration-overview.md#the-static-configuration).
-You can define them using a toml file, CLI arguments, or a key-value store.
+You can define them using a toml file, a yaml file, CLI arguments, or a key-value store.
 
 ??? info "See the complete reference for the list of available options"
     
