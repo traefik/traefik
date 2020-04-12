@@ -9,21 +9,21 @@ import (
 
 func TestDecode(t *testing.T) {
 	pairs := mapToPairs(map[string]string{
-		"traefik/fielda":        "bar",
-		"traefik/fieldb":        "1",
-		"traefik/fieldc":        "true",
-		"traefik/fieldd/0":      "one",
-		"traefik/fieldd/1":      "two",
-		"traefik/fielde":        "",
-		"traefik/fieldf/Test1":  "A",
-		"traefik/fieldf/Test2":  "B",
-		"traefik/fieldg/0/name": "A",
-		"traefik/fieldg/1/name": "B",
+		"test/traefik/fielda":        "bar",
+		"test/traefik/fieldb":        "1",
+		"test/traefik/fieldc":        "true",
+		"test/traefik/fieldd/0":      "one",
+		"test/traefik/fieldd/1":      "two",
+		"test/traefik/fielde":        "",
+		"test/traefik/fieldf/Test1":  "A",
+		"test/traefik/fieldf/Test2":  "B",
+		"test/traefik/fieldg/0/name": "A",
+		"test/traefik/fieldg/1/name": "B",
 	})
 
 	element := &sample{}
 
-	err := Decode(pairs, element, "traefik")
+	err := Decode(pairs, element, "test/traefik")
 	require.NoError(t, err)
 
 	expected := &sample{
