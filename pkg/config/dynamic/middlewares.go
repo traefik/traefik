@@ -142,6 +142,7 @@ type ForwardAuth struct {
 	TLS                 *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
 	TrustForwardHeader  bool       `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
 	AuthResponseHeaders []string   `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty"`
+	ForwardBody         bool       `json:"forwardBody,omitempty" toml:"forwardBody,omitempty" yaml:"forwardBody,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
