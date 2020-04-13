@@ -14,6 +14,7 @@ Traefik supports five tracing backends:
 - [Datadog](./datadog.md)
 - [Instana](./instana.md)
 - [Haystack](./haystack.md)
+- [Elastic](./elastic.md)
 
 ## Configuration
 
