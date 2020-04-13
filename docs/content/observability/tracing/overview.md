@@ -7,7 +7,7 @@ The tracing system allows developers to visualize call flows in their infrastruc
 
 Traefik uses OpenTracing, an open standard designed for distributed tracing.
 
-Traefik supports five tracing backends:
+Traefik supports six tracing backends:
 
 - [Jaeger](./jaeger.md)
 - [Zipkin](./zipkin.md)
