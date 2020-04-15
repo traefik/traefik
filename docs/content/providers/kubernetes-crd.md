@@ -173,7 +173,7 @@ Array of namespaces to watch.
 
 ### `labelselector`
 
-_Optional,Default: empty (process all Ingresses)_
+_Optional,Default: empty (process all resources)_
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
@@ -192,8 +192,8 @@ providers:
 --providers.kubernetescrd.labelselector="A and not B"
 ```
 
-By default, Traefik processes all Ingress objects in the configured namespaces.
-A label selector can be defined to filter on specific Ingress objects only.
+By default, Traefik processes all resource objects in the configured namespaces.
+A label selector can be defined to filter on specific resource objects only.
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
 
@@ -218,10 +218,10 @@ providers:
 --providers.kubernetescrd.ingressclass=traefik-internal
 ```
 
-Value of `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
+Value of `kubernetes.io/ingress.class` annotation that identifies resource objects to be processed.
 
-If the parameter is non-empty, only Ingresses containing an annotation with the same value are processed.
-Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
+If the parameter is non-empty, only resources containing an annotation with the same value are processed.
+Otherwise, resources missing the annotation, having an empty value, or the value `traefik` are processed.
 
 ### `throttleDuration`
 

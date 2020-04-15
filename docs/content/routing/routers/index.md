@@ -235,8 +235,8 @@ The table below lists all the available matchers:
 | ```Host(`example.com`, ...)```                                         | Check if the request domain targets one of the given `domains`.                                                |
 | ```HostRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
 | ```Method(`GET`, ...)```                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
-| ```Path(`/path`, `/articles/{category}/{id:[0-9]+}`, ...)```           | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
-| ```PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)```     | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
+| ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
+| ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
 | ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                       |
 
 !!! important "Regexp Syntax"
