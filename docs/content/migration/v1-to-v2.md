@@ -798,6 +798,9 @@ There is no more log configuration at the root level.
     --log.filePath=/path/to/traefik.log
     --log.format=json
     ```
+## Access Logs
+
+Access Logs are configured in the same way as before. But v2 filters request headers by default. So during migration, you might want to consider enabling some needed fields (see [access log configuration](../observability/access-logs.md)).
 
 ## Tracing
 
