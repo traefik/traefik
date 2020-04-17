@@ -185,6 +185,10 @@ func TestBuilderBuild(t *testing.T) {
 
 			rm := builder.Build(context.Background(), test.middlewares)
 
+			if rm == nil {
+				return
+			}
+
 			resp := test.buildResponse(test.conf)
 
 			err := rm(resp)

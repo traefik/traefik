@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 type serviceManager interface {
@@ -42,13 +44,50 @@ func NewInternalHandlers(api func(configuration *runtime.Configuration) http.Han
 	}
 }
 
-// BuildHTTP builds an HTTP handler.
-func (m *InternalHandlers) BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
-	if strings.HasSuffix(serviceName, "@internal") {
-		return m.get(serviceName)
+// internalWithModifier wraps an internal handler together with a response modifier.
+// Its goal is to apply the modifier on the response that would be served by the internal handler,
+// but before the response is actually written to the original response writer.
+// It is safe to call ServeHTTP on an internalWithModifier with a nil modifier.
+type internalWithModifier struct {
+	internal http.Handler
+	modifier func(*http.Response) error
+}
+
+func (imh internalWithModifier) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if imh.modifier == nil {
+		imh.internal.ServeHTTP(rw, req)
+		return
 	}
 
-	return m.serviceManager.BuildHTTP(rootCtx, serviceName, responseModifier)
+	rec := httptest.NewRecorder()
+	imh.internal.ServeHTTP(rec, req)
+	resp := rec.Result()
+	resp.Request = req
+	if err := imh.modifier(resp); err != nil {
+		log.FromContext(req.Context()).Error(err)
+		http.Error(rw, "error while applying response modifier", http.StatusInternalServerError)
+		return
+	}
+	if err := resp.Write(rw); err != nil {
+		log.FromContext(req.Context()).Error(err)
+		return
+	}
+}
+
+// BuildHTTP builds an HTTP handler.
+func (m *InternalHandlers) BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
+	if !strings.HasSuffix(serviceName, "@internal") {
+		return m.serviceManager.BuildHTTP(rootCtx, serviceName, responseModifier)
+	}
+
+	internalHandler, err := m.get(serviceName)
+	if err != nil {
+		return nil, err
+	}
+	return internalWithModifier{
+		internal: internalHandler,
+		modifier: responseModifier,
+	}, nil
 }
 
 func (m *InternalHandlers) get(serviceName string) (http.Handler, error) {
