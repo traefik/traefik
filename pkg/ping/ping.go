@@ -8,9 +8,10 @@ import (
 
 // Handler expose ping routes.
 type Handler struct {
-	EntryPoint    string `description:"EntryPoint" export:"true" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
-	ManualRouting bool   `description:"Manual routing" json:"manualRouting,omitempty" toml:"manualRouting,omitempty" yaml:"manualRouting,omitempty"`
-	terminating   bool
+	EntryPoint            string `description:"EntryPoint" export:"true" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
+	ManualRouting         bool   `description:"Manual routing" json:"manualRouting,omitempty" toml:"manualRouting,omitempty" yaml:"manualRouting,omitempty"`
+	TerminatingStatusCode int    `description:"Terminating status code" json:"terminatingStatusCode,omitempty" toml:"terminatingStatusCode,omitempty" yaml:"terminatingStatusCode,omitempty"`
+	terminating           bool
 }
 
 // SetDefaults sets the default values.
@@ -30,6 +31,10 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 	statusCode := http.StatusOK
 	if h.terminating {
 		statusCode = http.StatusServiceUnavailable
+
+		if h.TerminatingStatusCode > 0 {
+			statusCode = h.TerminatingStatusCode
+		}
 	}
 	response.WriteHeader(statusCode)
 	fmt.Fprint(response, http.StatusText(statusCode))

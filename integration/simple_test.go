@@ -161,6 +161,37 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	}
 }
 
+func (s *SimpleSuite) TestCustomPingTerminationStatusCode(c *check.C) {
+	file := s.adaptFile(c, "fixtures/custom_ping_termination_status_code.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// Wait for Traefik to turn ready.
+	err = try.GetRequest("http://127.0.0.1:8001/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	// Check that /ping endpoint is responding with 200.
+	err = try.GetRequest("http://127.0.0.1:8001/ping", 3*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	// Send SIGTERM to Traefik.
+	proc, err := os.FindProcess(cmd.Process.Pid)
+	c.Assert(err, checker.IsNil)
+	err = proc.Signal(syscall.SIGTERM)
+	c.Assert(err, checker.IsNil)
+
+	// ping endpoint should now return a Service Unavailable.
+	resp, err := http.Get("http://127.0.0.1:8001/ping")
+	c.Assert(err, checker.IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, checker.Equals, http.StatusNoContent)
+}
+
 func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 	c.Skip("Stats is missing")
 	s.createComposeProject(c, "stats")

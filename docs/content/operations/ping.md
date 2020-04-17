@@ -81,3 +81,25 @@ ping:
 ```bash tab="CLI"
 --ping.manualrouting=true
 ```
+
+### `terminatingStatusCode`
+
+_Optional, Default=503_
+
+If you are running traefik behind a external Load-balancer, and want to configure rotation health check on the Load-balancer to take a traefik instance out of rotation gracefully, you can configure lifecycle.requestAcceptGraceTimeout and the ping endpoint will return 503 response on traefik server termination, so that the Load-balancer can take the terminating traefik instance out of rotation, before it stops responding.
+
+You can change this by setting your own http status code
+
+```toml tab="File (TOML)"
+[ping]
+  terminatingStatusCode = 200
+```
+
+```yaml tab="File (YAML)"
+ping:
+  terminatingStatusCode: 200
+```
+
+```bash tab="CLI"
+--ping.terminatingStatusCode=200
+```
