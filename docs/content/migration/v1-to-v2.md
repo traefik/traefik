@@ -801,7 +801,7 @@ There is no more log configuration at the root level.
 
 ## Access Logs
 
-Access Logs are configured in the same way as before. But v2 filters request headers by default. So during migration, you might want to consider enabling some needed fields (see [access log configuration](../observability/access-logs.md)).
+Access Logs are configured in the same way as before. But all request headers are now filtered out by default in Traefik v2. So during migration, you might want to consider enabling some needed fields (see [access log configuration](../observability/access-logs.md)).
 
 ## Tracing
 
