@@ -159,6 +159,24 @@ ReadTimeout is the maximum duration for reading the entire request, including th
 `--entrypoints.<name>.transport.respondingtimeouts.writetimeout`:  
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
 
+`--experimental.devplugin.gopath`:  
+plugin's GOPATH.
+
+`--experimental.devplugin.modulename`:  
+plugin's module name.
+
+`--experimental.pilot.token`:  
+Traefik Pilot token.
+
+`--experimental.plugins.<name>`:  
+Plugins configuration. (Default: ```false```)
+
+`--experimental.plugins.<name>.modulename`:  
+plugin's module name.
+
+`--experimental.plugins.<name>.version`:  
+plugin's version.
+
 `--global.checknewversion`:  
 Periodically check if a new version has been released. (Default: ```false```)
 

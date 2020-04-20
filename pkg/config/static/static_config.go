@@ -74,16 +74,6 @@ type Configuration struct {
 	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty"`
 }
 
-// Experimental the experimental feature configuration.
-type Experimental struct {
-	Pilot *PilotConfiguration `description:"Pilot configuration." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" export:"true"`
-}
-
-// PilotConfiguration holds pilot configuration.
-type PilotConfiguration struct {
-	Token string `description:"Pilot token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" export:"true"`
-}
-
 // CertificateResolver contains the configuration for the different types of certificates resolver.
 type CertificateResolver struct {
 	ACME *acmeprovider.Configuration `description:"Enable ACME (Let's Encrypt): automatic SSL." json:"acme,omitempty" toml:"acme,omitempty" yaml:"acme,omitempty" export:"true"`

@@ -24,6 +24,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/metrics"
 	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/pilot"
+	"github.com/containous/traefik/v2/pkg/plugins"
 	"github.com/containous/traefik/v2/pkg/provider/acme"
 	"github.com/containous/traefik/v2/pkg/provider/aggregator"
 	"github.com/containous/traefik/v2/pkg/provider/traefik"
@@ -119,6 +120,12 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	ctx := cmd.ContextWithSignal(context.Background())
 
+	if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.DevPlugin != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, 30*time.Minute)
+		defer cancel()
+	}
+
 	if staticConfiguration.Ping != nil {
 		staticConfiguration.Ping.WithContext(ctx)
 	}
@@ -192,7 +199,18 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry)
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder)
+
+	client, plgs, devPlugin, err := initPlugins(staticConfiguration)
+	if err != nil {
+		return nil, err
+	}
+
+	pluginBuilder, err := plugins.NewBuilder(client, plgs, devPlugin)
+	if err != nil {
+		return nil, err
+	}
+
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder)
 
 	var defaultEntryPoints []string
 	for name, cfg := range staticConfiguration.EntryPoints {
