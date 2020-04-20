@@ -11,6 +11,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/containous/traefik/v2/pkg/tracing"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,6 +32,25 @@ func TestCustomRequestHeader(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.Equal(t, "test_request", req.Header.Get("X-Custom-Request-Header"))
+}
+
+func TestCustomRequestHeader_uuid(t *testing.T) {
+	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	header := NewHeader(emptyHandler, dynamic.Headers{
+		CustomRequestHeaders: map[string]string{
+			"X-Request-UUID": "{{uuid}}",
+		},
+	})
+
+	res := httptest.NewRecorder()
+	req := testhelpers.MustNewRequest(http.MethodGet, "/foo", nil)
+
+	header.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+	_, err := uuid.Parse(req.Header.Get("X-Request-UUID"))
+	assert.NoError(t, err)
 }
 
 func TestCustomRequestHeader_Host(t *testing.T) {

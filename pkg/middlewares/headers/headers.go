@@ -12,6 +12,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/tracing"
+	"github.com/google/uuid"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/unrolled/secure"
 )
@@ -171,6 +172,11 @@ func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 
 		case strings.EqualFold(header, "Host"):
 			req.Host = value
+
+		case strings.EqualFold(value, "{{uuid}}"):
+			if v4, err := uuid.NewRandom(); err == nil {
+				req.Header.Set(header, v4.String())
+			}
 
 		default:
 			req.Header.Set(header, value)
