@@ -289,7 +289,7 @@ func TestRouterManager_Get(t *testing.T) {
 			})
 
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
-			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
@@ -394,7 +394,7 @@ func TestAccessLog(t *testing.T) {
 			})
 
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
-			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
@@ -682,7 +682,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			})
 
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
-			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
@@ -764,7 +764,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	})
 
 	serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
-	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
 	chainBuilder := middleware.NewChainBuilder(staticCfg, nil, nil)
 
@@ -825,7 +825,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	})
 
 	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil)
-	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 	chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
