@@ -115,6 +115,37 @@ func TestSticky(t *testing.T) {
 	assert.Equal(t, 3, recorder.save["second"])
 }
 
+func TestStickySecure(t *testing.T) {
+	balancer := New(&dynamic.Sticky{
+		Cookie: &dynamic.Cookie{Name: "test", Secure: true},
+	})
+
+	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(1))
+
+	balancer.AddService("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "second")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(2))
+
+	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	for i := 0; i < 3; i++ {
+		for _, cookie := range recorder.Result().Cookies() {
+			req.AddCookie(cookie)
+		}
+		recorder.ResponseRecorder = httptest.NewRecorder()
+
+		balancer.ServeHTTP(recorder, req)
+	}
+
+	assert.Equal(t, 0, recorder.save["first"])
+	assert.Equal(t, 3, recorder.save["second"])
+}
+
 // TestBalancerBias makes sure that the WRR algorithm spreads elements evenly right from the start,
 // and that it does not "over-favor" the high-weighted ones with a biased start-up regime.
 func TestBalancerBias(t *testing.T) {

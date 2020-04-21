@@ -3,6 +3,7 @@ package wrr
 import (
 	"container/heap"
 	"fmt"
+	"hash/crc32"
 	"net/http"
 	"sync"
 
@@ -12,6 +13,7 @@ import (
 
 type namedHandler struct {
 	http.Handler
+	hash     string
 	name     string
 	weight   float64
 	deadline float64
@@ -111,9 +113,18 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 		if err == nil && cookie != nil {
 			for _, handler := range b.handlers {
-				if handler.name == cookie.Value {
-					handler.ServeHTTP(w, req)
-					return
+				if b.stickyCookie.secure {
+					// If in secure mode we compare hashes
+					if handler.hash == cookie.Value {
+						handler.ServeHTTP(w, req)
+						return
+					}
+				} else {
+					// If not in secure mode we compare names
+					if handler.name == cookie.Value {
+						handler.ServeHTTP(w, req)
+						return
+					}
 				}
 			}
 		}
@@ -126,7 +137,21 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if b.stickyCookie != nil {
-		cookie := &http.Cookie{Name: b.stickyCookie.name, Value: server.name, Path: "/", HttpOnly: b.stickyCookie.httpOnly, Secure: b.stickyCookie.secure}
+		var value string
+
+		if b.stickyCookie.secure {
+			value = hash(server.name)
+		} else {
+			value = server.name
+		}
+
+		cookie := &http.Cookie{
+			Name:     b.stickyCookie.name,
+			Value:    value,
+			Path:     "/",
+			HttpOnly: b.stickyCookie.httpOnly,
+			Secure:   b.stickyCookie.secure,
+		}
 		http.SetCookie(w, cookie)
 	}
 
@@ -145,7 +170,12 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 		return
 	}
 
-	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
+	h := &namedHandler{
+		Handler: handler,
+		hash:    hash(name),
+		name:    name,
+		weight:  float64(w),
+	}
 
 	// use RWLock to protect b.curDeadline
 	b.mutex.RLock()
@@ -153,4 +183,14 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	b.mutex.RUnlock()
 
 	heap.Push(b, h)
+}
+
+// hash returns CRC-32 string representation of str.
+func hash(str string) string {
+	crc := crc32.NewIEEE()
+	//nolint:errcheck
+	crc.Write([]byte(str))
+	sum := crc.Sum32()
+
+	return fmt.Sprintf("%x", sum)
 }
