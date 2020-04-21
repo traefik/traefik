@@ -23,6 +23,7 @@ func TestNewRateLimiter(t *testing.T) {
 		expectedMaxDelay time.Duration
 		expectedSourceIP string
 		requestHeader    string
+		expectedError    string
 	}{
 		{
 			desc: "maxDelay computation",
@@ -60,6 +61,18 @@ func TestNewRateLimiter(t *testing.T) {
 			},
 			requestHeader: "bar",
 		},
+		{
+			desc: "SourceCriteria are mutually exclusive",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy:        &dynamic.IPStrategy{},
+					RequestHeaderName: "Foo",
+				},
+			},
+			expectedError: "IPStrategy and RequestHeaderName are mutually exclusive",
+		},
 	}
 
 	for _, test := range testCases {
@@ -70,7 +83,11 @@ func TestNewRateLimiter(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 			h, err := New(context.Background(), next, test.config, "rate-limiter")
-			require.NoError(t, err)
+			if test.expectedError != "" {
+				assert.EqualError(t, err, test.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
 
 			rtl, _ := h.(*rateLimiter)
 			if test.expectedMaxDelay != 0 {
@@ -95,7 +112,7 @@ func TestNewRateLimiter(t *testing.T) {
 
 				req := http.Request{
 					Header: map[string][]string{
-						test.config.SourceCriterion.RequestHeaderName: []string{test.requestHeader},
+						test.config.SourceCriterion.RequestHeaderName: {test.requestHeader},
 					},
 				}
 				hd, _, err := extractor(&req)
