@@ -39,7 +39,7 @@ func TestCustomRequestHeader_uuid(t *testing.T) {
 
 	header := NewHeader(emptyHandler, dynamic.Headers{
 		CustomRequestHeaders: map[string]string{
-			"X-Request-UUID": "{{uuid}}",
+			"X-Request-UUID": "{uuid}",
 		},
 	})
 

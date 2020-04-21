@@ -173,7 +173,7 @@ func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 		case strings.EqualFold(header, "Host"):
 			req.Host = value
 
-		case strings.EqualFold(value, "{{uuid}}"):
+		case strings.EqualFold(value, "{uuid}"):
 			if v4, err := uuid.NewRandom(); err == nil {
 				req.Header.Set(header, v4.String())
 			}
