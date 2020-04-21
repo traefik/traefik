@@ -22,6 +22,7 @@ func TestNewRateLimiter(t *testing.T) {
 		config           dynamic.RateLimit
 		expectedMaxDelay time.Duration
 		expectedSourceIP string
+		requestHeader    string
 	}{
 		{
 			desc: "maxDelay computation",
@@ -47,6 +48,17 @@ func TestNewRateLimiter(t *testing.T) {
 				Burst:   10,
 			},
 			expectedSourceIP: "127.0.0.1",
+		},
+		{
+			desc: "SourceCriterion in config is respected",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+				SourceCriterion: &dynamic.SourceCriterion{
+					RequestHeaderName: "Foo",
+				},
+			},
+			requestHeader: "bar",
 		},
 	}
 
@@ -76,6 +88,19 @@ func TestNewRateLimiter(t *testing.T) {
 				ip, _, err := extractor(&req)
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedSourceIP, ip)
+			}
+			if test.requestHeader != "" {
+				extractor, ok := rtl.sourceMatcher.(utils.ExtractorFunc)
+				require.True(t, ok, "Not an ExtractorFunc")
+
+				req := http.Request{
+					Header: map[string][]string{
+						test.config.SourceCriterion.RequestHeaderName: []string{test.requestHeader},
+					},
+				}
+				hd, _, err := extractor(&req)
+				assert.NoError(t, err)
+				assert.Equal(t, test.requestHeader, hd)
 			}
 		})
 	}

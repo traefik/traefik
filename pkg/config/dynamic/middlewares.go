@@ -337,9 +337,6 @@ type RateLimit struct {
 func (r *RateLimit) SetDefaults() {
 	r.Burst = 1
 	r.Period = types.Duration(time.Second)
-	r.SourceCriterion = &SourceCriterion{
-		IPStrategy: &IPStrategy{},
-	}
 }
 
 // +k8s:deepcopy-gen=true
