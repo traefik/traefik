@@ -71,7 +71,7 @@ func TestNewRateLimiter(t *testing.T) {
 					RequestHeaderName: "Foo",
 				},
 			},
-			expectedError: "IPStrategy and RequestHeaderName are mutually exclusive",
+			expectedError: "iPStrategy and RequestHeaderName are mutually exclusive",
 		},
 	}
 

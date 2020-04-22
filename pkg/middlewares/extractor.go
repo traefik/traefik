@@ -17,13 +17,13 @@ import (
 func GetSourceExtractor(ctx context.Context, sourceMatcher *dynamic.SourceCriterion) (utils.SourceExtractor, error) {
 	if sourceMatcher != nil {
 		if sourceMatcher.IPStrategy != nil && sourceMatcher.RequestHeaderName != "" {
-			return nil, errors.New("IPStrategy and RequestHeaderName are mutually exclusive")
+			return nil, errors.New("iPStrategy and RequestHeaderName are mutually exclusive")
 		}
 		if sourceMatcher.IPStrategy != nil && sourceMatcher.RequestHost {
-			return nil, errors.New("IPStrategy and RequestHost are mutually exclusive")
+			return nil, errors.New("iPStrategy and RequestHost are mutually exclusive")
 		}
 		if sourceMatcher.RequestHeaderName != "" && sourceMatcher.RequestHost {
-			return nil, errors.New("RequestHost and RequestHeaderName are mutually exclusive")
+			return nil, errors.New("requestHost and RequestHeaderName are mutually exclusive")
 		}
 	}
 
