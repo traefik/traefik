@@ -106,9 +106,9 @@ A Story of key & values
 
     See [servers](../services/index.md#servers) for more information.
 
-    | Key (Path)                                                      | Value  |
-    |-----------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/servers/0/scheme` | `http` |
+    | Key (Path)                                                      | Value                         |
+    |-----------------------------------------------------------------|-------------------------------|
+    | `traefik/http/services/myservice/loadbalancer/servers/0/url`    | `http://private-ip-server-1/` |
 
 ??? info "`traefik/http/services/<service_name>/loadbalancer/servers/<n>/scheme`"
 
@@ -381,9 +381,9 @@ You can declare TCP Routers and/or Services using KV.
 
     See [servers](../services/index.md#servers) for more information.
 
-    | Key (Path)                                                        | Value  |
-    |-------------------------------------------------------------------|--------|
-    | `traefik/tcp/services/mytcpservice/loadbalancer/servers/0/scheme` | `http` |
+    | Key (Path)                                                         | Value            |
+    |--------------------------------------------------------------------|------------------|
+    | `traefik/tcp/services/mytcpservice/loadbalancer/servers/0/address` | `xx.xx.xx.xx:xx` |
 
 ??? info "`traefik/tcp/services/<service_name>/loadbalancer/terminationdelay`"
 
