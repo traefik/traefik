@@ -799,6 +799,13 @@ There is no more log configuration at the root level.
     --log.format=json
     ```
 
+## Access Logs
+
+Access Logs are configured in the same way as before.
+
+But all request headers are now filtered out by default in Traefik v2.
+So during migration, you might want to consider enabling some needed fields (see [access log configuration](../observability/access-logs.md)).
+
 ## Tracing
 
 Traefik v2 retains OpenTracing support. The `backend` root option from the v1 is gone, you just have to set your [tracing configuration](../observability/tracing/overview.md).
