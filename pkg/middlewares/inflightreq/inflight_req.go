@@ -23,6 +23,7 @@ type inFlightReq struct {
 }
 
 // New creates a max request middleware.
+// If no source criterion is provided in the config, it defaults to RequestHost.
 func New(ctx context.Context, next http.Handler, config dynamic.InFlightReq, name string) (http.Handler, error) {
 	ctxLog := log.With(ctx, log.Str(log.MiddlewareName, name), log.Str(log.MiddlewareType, typeName))
 	log.FromContext(ctxLog).Debug("Creating middleware")

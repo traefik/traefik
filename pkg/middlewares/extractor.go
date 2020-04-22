@@ -13,6 +13,7 @@ import (
 
 // GetSourceExtractor returns the SourceExtractor function corresponding to the given sourceMatcher.
 // It defaults to a RemoteAddrStrategy IPStrategy if need be.
+// It returns an error if more than one source criterion is provided.
 func GetSourceExtractor(ctx context.Context, sourceMatcher *dynamic.SourceCriterion) (utils.SourceExtractor, error) {
 	if sourceMatcher != nil {
 		if sourceMatcher.IPStrategy != nil && sourceMatcher.RequestHeaderName != "" {
