@@ -623,7 +623,7 @@ Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernete
 	when the definition of the middleware comes from another provider.
 	In this context, specifying a namespace when referring to the resource does not make any sense, and will be ignored.
 	Additionally, when you want to reference a Middleware from the CRD Provider, you have to append the namespace of the
-    Ressource in the ressource-name as Traefik appends the namespace internally automatically.
+    resource in the ressource-name as Traefik appends the namespace internally automatically.
 
 More information about available middlewares in the dedicated [middlewares section](../../middlewares/overview.md).
 
