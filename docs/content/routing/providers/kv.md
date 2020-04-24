@@ -106,17 +106,9 @@ A Story of key & values
 
     See [servers](../services/index.md#servers) for more information.
 
-    | Key (Path)                                                      | Value                         |
-    |-----------------------------------------------------------------|-------------------------------|
-    | `traefik/http/services/myservice/loadbalancer/servers/0/url`    | `http://private-ip-server-1/` |
-
-??? info "`traefik/http/services/<service_name>/loadbalancer/servers/<n>/scheme`"
-
-    Overrides the default scheme.
-
-    | Key (Path)                                                      | Value  |
-    |-----------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/servers/0/scheme` | `http` |
+    | Key (Path)                                                      | Value                --------------------------         |
+    |-----------------------------------------------------------------|---------------------------------------------------------|
+    | `traefik/http/services/myservice/loadbalancer/servers/0/url`    | `http://<ip-server-1>:<port-server-1>/` |
 
 ??? info "`traefik/http/services/<service_name>/loadbalancer/passhostheader`"
 
