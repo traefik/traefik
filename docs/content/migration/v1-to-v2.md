@@ -609,6 +609,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
           middlewares:
             - name: admin-stripprefix
     ---
+    apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
     metadata:
       name: admin-stripprefix
