@@ -1,8 +1,11 @@
 package rules
 
 import (
+	"errors"
 	"fmt"
+	"hash/fnv"
 	"net/http"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -14,16 +17,17 @@ import (
 )
 
 var funcs = map[string]func(*mux.Route, ...string) error{
-	"Host":          host,
-	"HostHeader":    host,
-	"HostRegexp":    hostRegexp,
-	"ClientIP":      clientIP,
-	"Path":          path,
-	"PathPrefix":    pathPrefix,
-	"Method":        methods,
-	"Headers":       headers,
-	"HeadersRegexp": headersRegexp,
-	"Query":         query,
+	"Host":           host,
+	"HostHeader":     host,
+	"HostRegexp":     hostRegexp,
+	"ClientIP":       clientIP,
+	"Path":           path,
+	"PathPrefix":     pathPrefix,
+	"Method":         methods,
+	"Headers":        headers,
+	"HeadersRegexp":  headersRegexp,
+	"HeadersDistrib": headersDistrib,
+	"Query":          query,
 }
 
 // Router handle routing with rules.
@@ -207,6 +211,31 @@ func headers(route *mux.Route, headers ...string) error {
 
 func headersRegexp(route *mux.Route, headers ...string) error {
 	return route.HeadersRegexp(headers...).GetError()
+}
+
+func headersDistrib(route *mux.Route, scores ...string) error {
+	if len(scores) == 3 {
+		if _, err := strconv.ParseFloat(scores[1], 64); err != nil {
+			return err
+		}
+		if _, err := strconv.ParseFloat(scores[2], 64); err != nil {
+			return err
+		}
+		return route.MatcherFunc(func(req *http.Request, rm *mux.RouteMatch) bool {
+			header := req.Header.Get(scores[0])
+			headerHash := fnv.New64a()
+			if _, err := headerHash.Write([]byte(header)); err != nil {
+				log.FromContext(req.Context()).Warnf("could not hash header %s: %w", header, err)
+				return false
+			}
+			lower, _ := strconv.ParseFloat(scores[1], 64)
+			upper, _ := strconv.ParseFloat(scores[2], 64)
+			score := float64(headerHash.Sum64()%1e10) / 1e10
+			return lower <= score && score < upper
+		}).GetError()
+	} else {
+		return errors.New("HeadersDistrib requires 3 args")
+	}
 }
 
 func query(route *mux.Route, query ...string) error {
