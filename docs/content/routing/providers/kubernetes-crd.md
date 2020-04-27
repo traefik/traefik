@@ -618,10 +618,12 @@ Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernete
 
 !!! important "Cross-provider namespace"
 
-	As Kubernetes also has its own notion of namespace, one should not confuse the kubernetes namespace of a resource
-	(in the reference to the middleware) with the [provider namespace](../../middlewares/overview.md#provider-namespace),
-	when the definition of the middleware comes from another provider.
-	In this context, specifying a namespace when referring to the resource does not make any sense, and will be ignored.
+    As Kubernetes also has its own notion of namespace, one should not confuse the kubernetes namespace of a resource
+    (in the reference to the middleware) with the [provider namespace](../../middlewares/overview.md#provider-namespace),
+    when the definition of the middleware comes from another provider.
+    In this context, specifying a namespace when referring to the resource does not make any sense, and will be ignored.
+    Additionally, when you want to reference a Middleware from the CRD Provider,
+    you have to append the namespace of the resource in the resource-name as Traefik appends the namespace internally automatically.
 
 More information about available middlewares in the dedicated [middlewares section](../../middlewares/overview.md).
 
