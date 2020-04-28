@@ -22,8 +22,8 @@ This middleware exists to enable the correct behavior until at least the default
     Therefore, given the default value of the `autoDetect` option (false),
     simply enabling this middleware for a router switches the router's behavior.
     
-    Enabling the Content-Type middleware will only remove any MIME type detected by the core of Traefik (the server part).
-    Therefore, it has no effect against further modifications (e.g.: in another middleware).
+    The scope of the Content-Type middleware is the MIME type detection done by the core of Traefik (the server part).
+    Therefore, it has no effect against any other `Content-Type` header modifications (e.g.: in another middleware).
 
 ## Configuration Examples
 
