@@ -64,6 +64,9 @@ http:
     * The `Accept-Encoding` request header contains `gzip`.
     * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
 
+    If Content-Type header is not defined, nor empty, the compress middleware will proceed to a content type [detection](https://mimesniff.spec.whatwg.org/). 
+    This will set the Content-Type header with the detected MIME type.
+    
 ## Configuration Options
 
 ### `excludedContentTypes`
