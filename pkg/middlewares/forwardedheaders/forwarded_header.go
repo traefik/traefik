@@ -141,7 +141,7 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 	}
 
 	if isWebsocketRequest(outreq) {
-		if outreq.Header.Get(xForwardedProto) == "https" {
+		if outreq.Header.Get(xForwardedProto) == "https" || outreq.Header.Get(xForwardedProto) == "wss" {
 			outreq.Header.Set(xForwardedProto, "wss")
 		} else {
 			outreq.Header.Set(xForwardedProto, "ws")
