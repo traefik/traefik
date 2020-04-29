@@ -78,7 +78,8 @@ helm install traefik traefik/traefik
     The values are not (yet) documented, but are self-explanatory:
     you can look at the [default `values.yaml`](https://github.com/containous/traefik-helm-chart/blob/master/traefik/values.yaml) file to explore possibilities.
     
-    You can also set Traefik command line flags using `additionalArguments`. Example of installation with logging set to `DEBUG`:
+    You can also set Traefik command line flags using `additionalArguments`.
+    Example of installation with logging set to `DEBUG`:
     
     ```bash tab="Using Helm CLI"
     helm install --namespace=traefik-v2 \
