@@ -78,7 +78,7 @@ helm install traefik traefik/traefik
     The values are not (yet) documented, but are self-explanatory:
     you can look at the [default `values.yaml`](https://github.com/containous/traefik-helm-chart/blob/master/traefik/values.yaml) file to explore possibilities.
     
-    Example of installation with logging set to `DEBUG`:
+    You can also set Traefik command line flags using `additionalArguments`. Example of installation with logging set to `DEBUG`:
     
     ```bash tab="Using Helm CLI"
     helm install --namespace=traefik-v2 \
@@ -99,7 +99,7 @@ This HelmChart does not expose the Traefik dashboard by default, for security co
 Thus, there are multiple ways to expose the dashboard.
 For instance, the dashboard access could be achieved through a port-forward :
 
-```bash
+```
 kubectl port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" --output=name) 9000:9000
 ```
 
