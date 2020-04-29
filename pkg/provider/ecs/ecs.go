@@ -28,7 +28,6 @@ import (
 // Provider holds configurations of the provider.
 type Provider struct {
 	Constraints      string `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
-	Domain           string `description:"Default domain used"`
 	ExposedByDefault bool   `description:"Expose services by default" export:"true"`
 	RefreshSeconds   int    `description:"Polling interval (in seconds)" export:"true"`
 	DefaultRule      string `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
@@ -77,6 +76,7 @@ var existingTaskDefCache = cache.New(30*time.Minute, 5*time.Minute)
 
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
+	p.Clusters = []string{"default"}
 	p.AutoDiscoverClusters = true
 	p.ExposedByDefault = true
 	p.RefreshSeconds = 15

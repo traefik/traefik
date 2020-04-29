@@ -84,6 +84,7 @@ nav:
       - 'Etcd': 'providers/etcd.md'
       - 'ZooKeeper': 'providers/zookeeper.md'
       - 'Redis': 'providers/redis.md'
+      - 'ECS': 'providers/ecs.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'EntryPoints': 'routing/entrypoints.md'
