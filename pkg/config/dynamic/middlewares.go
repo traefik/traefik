@@ -286,13 +286,6 @@ type InFlightReq struct {
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty"`
 }
 
-// SetDefaults Default values for a InFlightReq.
-func (i *InFlightReq) SetDefaults() {
-	i.SourceCriterion = &SourceCriterion{
-		RequestHost: true,
-	}
-}
-
 // +k8s:deepcopy-gen=true
 
 // PassTLSClientCert holds the TLS client cert headers configuration.
@@ -304,8 +297,8 @@ type PassTLSClientCert struct {
 // +k8s:deepcopy-gen=true
 
 // SourceCriterion defines what criterion is used to group requests as originating from a common source.
-// The precedence order is IPStrategy, then RequestHeaderName.
 // If none are set, the default is to use the request's remote address field.
+// All fields are mutually exclusive.
 type SourceCriterion struct {
 	IPStrategy        *IPStrategy `json:"ipStrategy" toml:"ipStrategy, omitempty"`
 	RequestHeaderName string      `json:"requestHeaderName,omitempty" toml:"requestHeaderName,omitempty" yaml:"requestHeaderName,omitempty"`
@@ -337,9 +330,6 @@ type RateLimit struct {
 func (r *RateLimit) SetDefaults() {
 	r.Burst = 1
 	r.Period = types.Duration(time.Second)
-	r.SourceCriterion = &SourceCriterion{
-		IPStrategy: &IPStrategy{},
-	}
 }
 
 // +k8s:deepcopy-gen=true
