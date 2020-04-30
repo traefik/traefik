@@ -136,3 +136,17 @@ metadata:
 spec:
   externalName: domain.com
   type: ExternalName
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: noservers
+  namespace: default
+spec:
+  ports:
+    - name: http
+      port: 80
+  selector:
+    app: containous
+    task: doesntexist

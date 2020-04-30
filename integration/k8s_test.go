@@ -85,6 +85,29 @@ func (s *K8sSuite) TestCRDConfiguration(c *check.C) {
 	testConfiguration(c, "testdata/rawdata-crd.json", "8000")
 }
 
+func (s *K8sSuite) TestMisconfiguredBackendBehaviour(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_crd.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8000/api/entrypoints", 20*time.Second, try.BodyContains(`"name":"web"`))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/noservers", 500*time.Millisecond, try.StatusCodeIs(http.StatusServiceUnavailable))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/servicedoesntexist", 500*time.Millisecond, try.StatusCodeIs(http.StatusServiceUnavailable))
+	c.Assert(err, checker.IsNil)
+
+	// i.e. route is ignored without fallback
+	err = try.GetRequest("http://127.0.0.1:8000/noservices/a", 500*time.Millisecond, try.StatusCodeIs(http.StatusFound))
+	err = try.GetRequest("http://127.0.0.1:8000/noservices/a/b", 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+}
+
 func testConfiguration(c *check.C, path, apiPort string) {
 	err := try.GetRequest("http://127.0.0.1:"+apiPort+"/api/entrypoints", 20*time.Second, try.BodyContains(`"name":"web"`))
 	c.Assert(err, checker.IsNil)

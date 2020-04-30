@@ -1,0 +1,45 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test6.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+  - match: PathPrefix(`/noservers`)
+    kind: Rule
+    priority: 12
+    services:
+    - name: noservers
+      port: 80
+
+  - match: PathPrefix(`/servicedoesntexist`)
+    kind: Rule
+    priority: 12
+    services:
+    - name: servicedoesntexist
+      port: 80
+
+  - match: PathPrefix(`/noservices/a/b`)
+    kind: Rule
+    priority: 12
+    services: []
+
+  - match: PathPrefix(`/noservices/a`)
+    kind: Rule
+    priority: 11
+    middlewares:
+    - name: redirect-everything
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-everything
+spec:
+  redirectRegex:
+    regex: .*
+    replacement: http://example.com

@@ -115,6 +115,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				} else {
 					serviceName = fullName
 				}
+			} else {
+				logger.Info("Empty service list")
 			}
 
 			conf.Routers[normalized] = &dynamic.Router{
@@ -250,14 +252,18 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *v1alpha1.Tr
 }
 
 // buildServersLB creates the configuration for the load-balancer of servers defined by svc.
-func (c configBuilder) buildServersLB(namespace string, svc v1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
-	servers, err := c.loadServers(namespace, svc)
-	if err != nil {
+func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc v1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
+	lb := &dynamic.ServersLoadBalancer{}
+	lb.SetDefaults()
+
+	servers, isRouteCfgError, err := c.loadServers(namespace, svc)
+	if err != nil && !isRouteCfgError {
+		log.FromContext(ctx).Warnf("invalid service configuration: %s", err)
+		return &dynamic.Service{LoadBalancer: lb}, nil
+	} else if err != nil {
 		return nil, err
 	}
 
-	lb := &dynamic.ServersLoadBalancer{}
-	lb.SetDefaults()
 	lb.Servers = servers
 
 	conf := svc
@@ -273,13 +279,13 @@ func (c configBuilder) buildServersLB(namespace string, svc v1alpha1.LoadBalance
 	return &dynamic.Service{LoadBalancer: lb}, nil
 }
 
-func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
+func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBalancerSpec) ([]dynamic.Server, bool, error) {
 	strategy := svc.Strategy
 	if strategy == "" {
 		strategy = roundRobinStrategy
 	}
 	if strategy != roundRobinStrategy {
-		return nil, fmt.Errorf("load balancing strategy %s is not supported", strategy)
+		return nil, true, fmt.Errorf("load balancing strategy %s is not supported", strategy)
 	}
 
 	namespace := namespaceOrFallback(svc, fallbackNamespace)
@@ -288,38 +294,38 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 	sanitizedName := strings.TrimSuffix(svc.Name, providerNamespaceSeparator+providerName)
 	service, exists, err := c.client.GetService(namespace, sanitizedName)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	if !exists {
-		return nil, fmt.Errorf("kubernetes service not found: %s/%s", namespace, sanitizedName)
+		return nil, false, fmt.Errorf("kubernetes service not found: %s/%s", namespace, sanitizedName)
 	}
 
 	svcPort, err := getServicePort(service, svc.Port)
 	if err != nil {
-		return nil, err
+		return nil, true, err
 	}
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
-			return nil, err
+			return nil, true, err
 		}
 
 		return append(servers, dynamic.Server{
 			URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, svcPort.Port),
-		}), nil
+		}), false, nil
 	}
 
 	endpoints, endpointsExists, endpointsErr := c.client.GetEndpoints(namespace, sanitizedName)
 	if endpointsErr != nil {
-		return nil, endpointsErr
+		return nil, false, endpointsErr
 	}
 	if !endpointsExists {
-		return nil, fmt.Errorf("endpoints not found for %s/%s", namespace, sanitizedName)
+		return nil, false, fmt.Errorf("endpoints not found for %s/%s", namespace, sanitizedName)
 	}
 	if len(endpoints.Subsets) == 0 {
-		return nil, fmt.Errorf("subset not found for %s/%s", namespace, sanitizedName)
+		return nil, false, fmt.Errorf("subset not found for %s/%s", namespace, sanitizedName)
 	}
 
 	var port int32
@@ -332,12 +338,12 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 		}
 
 		if port == 0 {
-			return nil, fmt.Errorf("cannot define a port for %s/%s", namespace, sanitizedName)
+			return nil, false, fmt.Errorf("cannot define a port for %s/%s", namespace, sanitizedName)
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
-			return nil, err
+			return nil, true, err
 		}
 
 		for _, addr := range subset.Addresses {
@@ -347,7 +353,7 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 		}
 	}
 
-	return servers, nil
+	return servers, false, nil
 }
 
 // nameAndService returns the name that should be used for the svc service in the generated config.
@@ -361,7 +367,7 @@ func (c configBuilder) nameAndService(ctx context.Context, namespaceService stri
 
 	switch {
 	case service.Kind == "" || service.Kind == "Service":
-		serversLB, err := c.buildServersLB(namespace, service)
+		serversLB, err := c.buildServersLB(ctx, namespace, service)
 		if err != nil {
 			return "", nil, err
 		}
