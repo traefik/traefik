@@ -47,22 +47,22 @@ You can write one of these mutually exclusive configuration elements:
           middlewares = ["my-basic-auth"]
           service = "service-foo"
           rule = "Path(`/foo`)"
-    
-        # Add the middleware
-        [http.middlewares]    
-          [http.middlewares.my-basic-auth.basicAuth]
-            users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
-                      "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-            usersFile = "etc/traefik/.htpasswd"
-        
-        # Add the service
-        [http.services]
-          [http.services.service-foo]
-            [http.services.service-foo.loadBalancer]
-              [[http.services.service-foo.loadBalancer.servers]]
-                url = "http://foo/"
-              [[http.services.service-foo.loadBalancer.servers]]
-                url = "http://bar/"
+      
+      # Add the middleware
+      [http.middlewares]    
+        [http.middlewares.my-basic-auth.basicAuth]
+          users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", 
+                    "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+          usersFile = "etc/traefik/.htpasswd"
+      
+      # Add the service
+      [http.services]
+        [http.services.service-foo]
+          [http.services.service-foo.loadBalancer]
+            [[http.services.service-foo.loadBalancer.servers]]
+              url = "http://foo/"
+            [[http.services.service-foo.loadBalancer.servers]]
+              url = "http://bar/"
     ```
     
     ```yaml tab="YAML"

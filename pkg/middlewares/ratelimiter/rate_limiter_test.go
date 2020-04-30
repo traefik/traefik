@@ -22,6 +22,8 @@ func TestNewRateLimiter(t *testing.T) {
 		config           dynamic.RateLimit
 		expectedMaxDelay time.Duration
 		expectedSourceIP string
+		requestHeader    string
+		expectedError    string
 	}{
 		{
 			desc: "maxDelay computation",
@@ -48,6 +50,29 @@ func TestNewRateLimiter(t *testing.T) {
 			},
 			expectedSourceIP: "127.0.0.1",
 		},
+		{
+			desc: "SourceCriterion in config is respected",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+				SourceCriterion: &dynamic.SourceCriterion{
+					RequestHeaderName: "Foo",
+				},
+			},
+			requestHeader: "bar",
+		},
+		{
+			desc: "SourceCriteria are mutually exclusive",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy:        &dynamic.IPStrategy{},
+					RequestHeaderName: "Foo",
+				},
+			},
+			expectedError: "iPStrategy and RequestHeaderName are mutually exclusive",
+		},
 	}
 
 	for _, test := range testCases {
@@ -58,7 +83,11 @@ func TestNewRateLimiter(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 			h, err := New(context.Background(), next, test.config, "rate-limiter")
-			require.NoError(t, err)
+			if test.expectedError != "" {
+				assert.EqualError(t, err, test.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
 
 			rtl, _ := h.(*rateLimiter)
 			if test.expectedMaxDelay != 0 {
@@ -76,6 +105,19 @@ func TestNewRateLimiter(t *testing.T) {
 				ip, _, err := extractor(&req)
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedSourceIP, ip)
+			}
+			if test.requestHeader != "" {
+				extractor, ok := rtl.sourceMatcher.(utils.ExtractorFunc)
+				require.True(t, ok, "Not an ExtractorFunc")
+
+				req := http.Request{
+					Header: map[string][]string{
+						test.config.SourceCriterion.RequestHeaderName: {test.requestHeader},
+					},
+				}
+				hd, _, err := extractor(&req)
+				assert.NoError(t, err)
+				assert.Equal(t, test.requestHeader, hd)
 			}
 		})
 	}

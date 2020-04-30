@@ -286,13 +286,6 @@ type InFlightReq struct {
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty"`
 }
 
-// SetDefaults Default values for a InFlightReq.
-func (i *InFlightReq) SetDefaults() {
-	i.SourceCriterion = &SourceCriterion{
-		RequestHost: true,
-	}
-}
-
 // +k8s:deepcopy-gen=true
 
 // PassTLSClientCert holds the TLS client cert headers configuration.
@@ -304,8 +297,8 @@ type PassTLSClientCert struct {
 // +k8s:deepcopy-gen=true
 
 // SourceCriterion defines what criterion is used to group requests as originating from a common source.
-// The precedence order is IPStrategy, then RequestHeaderName.
 // If none are set, the default is to use the request's remote address field.
+// All fields are mutually exclusive.
 type SourceCriterion struct {
 	IPStrategy        *IPStrategy `json:"ipStrategy" toml:"ipStrategy, omitempty"`
 	RequestHeaderName string      `json:"requestHeaderName,omitempty" toml:"requestHeaderName,omitempty" yaml:"requestHeaderName,omitempty"`
@@ -321,12 +314,15 @@ type RateLimit struct {
 	// The rate is actually defined by dividing Average by Period. So for a rate below 1req/s,
 	// one needs to define a Period larger than a second.
 	Average int64 `json:"average,omitempty" toml:"average,omitempty" yaml:"average,omitempty"`
+
 	// Period, in combination with Average, defines the actual maximum rate, such as:
 	// r = Average / Period. It defaults to a second.
-	Period types.Duration
+	Period types.Duration `json:"period,omitempty" toml:"period,omitempty" yaml:"period,omitempty"`
+
 	// Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
 	// It defaults to 1.
-	Burst           int64            `json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty"`
+	Burst int64 `json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty"`
+
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty"`
 }
 
@@ -334,9 +330,6 @@ type RateLimit struct {
 func (r *RateLimit) SetDefaults() {
 	r.Burst = 1
 	r.Period = types.Duration(time.Second)
-	r.SourceCriterion = &SourceCriterion{
-		IPStrategy: &IPStrategy{},
-	}
 }
 
 // +k8s:deepcopy-gen=true

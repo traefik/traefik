@@ -36,7 +36,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
-	github.com/go-acme/lego/v3 v3.5.0
+	github.com/go-acme/lego/v3 v3.6.0
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.9.0
 	github.com/gogo/protobuf v1.3.0 // indirect
@@ -44,7 +44,7 @@ require (
 	github.com/google/go-github/v28 v28.1.1
 	github.com/googleapis/gnostic v0.1.0 // indirect
 	github.com/gorilla/mux v1.7.3
-	github.com/gorilla/websocket v1.4.1
+	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/consul/api v1.3.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/huandu/xstrings v1.2.0 // indirect
@@ -75,13 +75,12 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tinylib/msgp v1.0.2 // indirect
-	github.com/transip/gotransip v5.8.2+incompatible // indirect
 	github.com/uber/jaeger-client-go v2.22.1+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.7
 	github.com/vdemeester/shakers v0.1.0
-	github.com/vulcand/oxy v1.0.0
+	github.com/vulcand/oxy v1.1.0
 	github.com/vulcand/predicate v1.1.0
 	go.elastic.co/apm v1.7.0
 	go.elastic.co/apm/module/apmot v1.7.0
@@ -104,7 +103,7 @@ replace github.com/docker/docker => github.com/docker/engine v1.4.2-0.2020020422
 
 // Containous forks
 replace (
-	github.com/abbot/go-http-auth => github.com/containous/go-http-auth v0.4.1-0.20180112153951-65b0cdae8d7f
+	github.com/abbot/go-http-auth => github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e
 	github.com/go-check/check => github.com/containous/check v0.0.0-20170915194414-ca0bf163426a
 	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20181024131434-c33f32e26898
 	github.com/mailgun/minheap => github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
