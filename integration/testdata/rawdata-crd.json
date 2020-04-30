@@ -61,10 +61,7 @@
 			"service": "default-test6-route-3ae671224d13504474fc",
 			"rule": "PathPrefix(`/noservices/a`)",
 			"priority": 11,
-			"error": [
-				"the service \"default-test6-route-3ae671224d13504474fc@kubernetescrd\" does not exist"
-			],
-			"status": "disabled",
+			"status": "enabled",
 			"using": [
 				"web"
 			]
@@ -77,21 +74,6 @@
 			"rule": "PathPrefix(`/noservers`)",
 			"priority": 12,
 			"status": "enabled",
-			"using": [
-				"web"
-			]
-		},
-		"default-test6-route-6d064f0603db427d5f72@kubernetescrd": {
-			"entryPoints": [
-				"web"
-			],
-			"service": "default-test6-route-6d064f0603db427d5f72",
-			"rule": "PathPrefix(`/noservices/a/b`)",
-			"priority": 12,
-			"error": [
-				"the service \"default-test6-route-6d064f0603db427d5f72@kubernetescrd\" does not exist"
-			],
-			"status": "disabled",
 			"using": [
 				"web"
 			]
@@ -124,7 +106,7 @@
 		"default-redirect-everything@kubernetescrd": {
 			"redirectRegex": {
 				"regex": ".*",
-				"replacement": "http://example.com"
+				"replacement": "http://127.0.0.1:8000/api/entrypoints"
 			},
 			"status": "enabled",
 			"usedBy": [
@@ -200,7 +182,28 @@
 			],
 			"serverStatus": {
 				"http://10.42.0.2:80": "UP",
-				"http://10.42.0.3:80": "UP"
+				"http://10.42.0.8:80": "UP"
+			}
+		},
+		"default-test6-route-3ae671224d13504474fc@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.2:80"
+					},
+					{
+						"url": "http://10.42.0.8:80"
+					}
+				],
+				"passHostHeader": true
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-test6-route-3ae671224d13504474fc@kubernetescrd"
+			],
+			"serverStatus": {
+				"http://10.42.0.2:80": "UP",
+				"http://10.42.0.8:80": "UP"
 			}
 		},
 		"default-test6-route-6922df1eb1cbecd2fe7b@kubernetescrd": {

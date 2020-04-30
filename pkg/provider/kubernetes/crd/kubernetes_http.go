@@ -91,19 +91,11 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			normalized := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
 			serviceName := normalized
 
-			if len(route.Services) > 1 {
-				spec := v1alpha1.ServiceSpec{
-					Weighted: &v1alpha1.WeightedRoundRobin{
-						Services: route.Services,
-					},
-				}
-
-				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, conf.Services)
-				if errBuild != nil {
-					logger.Error(errBuild)
-					continue
-				}
-			} else if len(route.Services) == 1 {
+			switch len(route.Services) {
+			case 0:
+				logger.Error("Empty service list")
+				continue
+			case 1:
 				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec)
 				if err != nil {
 					logger.Error(err)
@@ -115,8 +107,18 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				} else {
 					serviceName = fullName
 				}
-			} else {
-				logger.Info("Empty service list")
+			default:
+				spec := v1alpha1.ServiceSpec{
+					Weighted: &v1alpha1.WeightedRoundRobin{
+						Services: route.Services,
+					},
+				}
+
+				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, conf.Services)
+				if errBuild != nil {
+					logger.Error(errBuild)
+					continue
+				}
 			}
 
 			conf.Routers[normalized] = &dynamic.Router{

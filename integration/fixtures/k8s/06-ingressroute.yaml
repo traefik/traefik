@@ -33,6 +33,9 @@ spec:
     priority: 11
     middlewares:
     - name: redirect-everything
+    services:
+    - name: whoami
+      port: 80
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -42,4 +45,4 @@ metadata:
 spec:
   redirectRegex:
     regex: .*
-    replacement: http://example.com
+    replacement: http://127.0.0.1:8000/api/entrypoints

@@ -102,9 +102,10 @@ func (s *K8sSuite) TestMisconfiguredBackendBehaviour(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/servicedoesntexist", 500*time.Millisecond, try.StatusCodeIs(http.StatusServiceUnavailable))
 	c.Assert(err, checker.IsNil)
 
-	// i.e. route is ignored without fallback
-	err = try.GetRequest("http://127.0.0.1:8000/noservices/a", 500*time.Millisecond, try.StatusCodeIs(http.StatusFound))
-	err = try.GetRequest("http://127.0.0.1:8000/noservices/a/b", 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	// i.e. route is ignored with fallback
+	err = try.GetRequest("http://127.0.0.1:8000/noservices/a", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+	err = try.GetRequest("http://127.0.0.1:8000/noservices/a/b", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 
