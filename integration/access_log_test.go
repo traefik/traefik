@@ -111,6 +111,20 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 			routerName: "rt-authFrontend",
 			serviceURL: "-",
 		},
+		{
+			formatOnly: false,
+			code:       "401",
+			user:       "test",
+			routerName: "rt-authFrontend",
+			serviceURL: "-",
+		},
+		{
+			formatOnly: false,
+			code:       "200",
+			user:       "test",
+			routerName: "rt-authFrontend",
+			serviceURL: "http://172.17.0",
+		},
 	}
 
 	// Start Traefik
@@ -130,12 +144,22 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 	// Verify Traefik started OK
 	checkTraefikStarted(c)
 
-	// Test auth frontend
+	// Test auth entrypoint
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8006/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "frontend.auth.docker.local"
 
 	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	req.SetBasicAuth("test", "")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	req.SetBasicAuth("test", "test")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
@@ -155,6 +179,13 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware(c *check.C) {
 			formatOnly: false,
 			code:       "401",
 			user:       "-",
+			routerName: "rt-digestAuthMiddleware",
+			serviceURL: "-",
+		},
+		{
+			formatOnly: false,
+			code:       "401",
+			user:       "test",
 			routerName: "rt-digestAuthMiddleware",
 			serviceURL: "-",
 		},
@@ -192,14 +223,21 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware(c *check.C) {
 	resp, err := try.ResponseUntilStatusCode(req, 500*time.Millisecond, http.StatusUnauthorized)
 	c.Assert(err, checker.IsNil)
 
-	digestParts := digestParts(resp)
-	digestParts["uri"] = "/"
-	digestParts["method"] = http.MethodGet
-	digestParts["username"] = "test"
-	digestParts["password"] = "test"
+	digest := digestParts(resp)
+	digest["uri"] = "/"
+	digest["method"] = http.MethodGet
+	digest["username"] = "test"
+	digest["password"] = "wrong"
 
-	req.Header.Set("Authorization", getDigestAuthorization(digestParts))
+	req.Header.Set("Authorization", getDigestAuthorization(digest))
 	req.Header.Set("Content-Type", "application/json")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	digest["password"] = "test"
+
+	req.Header.Set("Authorization", getDigestAuthorization(digest))
 
 	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
@@ -447,54 +485,6 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 	req.Host = "frontend.whitelist.docker.local"
 
 	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusForbidden), try.HasBody())
-	c.Assert(err, checker.IsNil)
-
-	// Verify access.log output as expected
-	count := checkAccessLogExactValuesOutput(c, expected)
-
-	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
-
-	// Verify no other Traefik problems
-	checkNoOtherTraefikProblems(c)
-}
-
-func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess(c *check.C) {
-	ensureWorkingDirectoryIsClean()
-
-	expected := []accessLogValue{
-		{
-			formatOnly: false,
-			code:       "200",
-			user:       "test",
-			routerName: "rt-authFrontend",
-			serviceURL: "http://172.17.0",
-		},
-	}
-
-	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
-
-	checkStatsForLogFile(c)
-
-	s.composeProject.Container(c, "authFrontend")
-
-	waitForTraefik(c, "authFrontend")
-
-	// Verify Traefik started OK
-	checkTraefikStarted(c)
-
-	// Test auth entrypoint
-	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8006/", nil)
-	c.Assert(err, checker.IsNil)
-	req.Host = "frontend.auth.docker.local"
-	req.SetBasicAuth("test", "test")
-
-	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected

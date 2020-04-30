@@ -65,6 +65,14 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if username := b.auth.CheckAuth(req); username == "" {
 		logger.Debug("Authentication failed")
 		tracing.SetErrorWithEvent(req, "Authentication failed")
+
+		if username, _, ok := req.BasicAuth(); ok {
+			logData := accesslog.GetLogData(req)
+			if logData != nil {
+				logData.Core[accesslog.ClientUsername] = username
+			}
+		}
+
 		b.auth.RequireAuth(rw, req)
 	} else {
 		logger.Debug("Authentication succeeded")
