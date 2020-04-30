@@ -184,7 +184,6 @@ func TestBuilderBuild(t *testing.T) {
 			builder := NewBuilder(rtConf.Middlewares)
 
 			rm := builder.Build(context.Background(), test.middlewares)
-
 			if rm == nil {
 				return
 			}

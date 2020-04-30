@@ -61,13 +61,16 @@ func (imh internalWithModifier) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 
 	rec := httptest.NewRecorder()
 	imh.internal.ServeHTTP(rec, req)
+
 	resp := rec.Result()
 	resp.Request = req
+
 	if err := imh.modifier(resp); err != nil {
 		log.FromContext(req.Context()).Error(err)
 		http.Error(rw, "error while applying response modifier", http.StatusInternalServerError)
 		return
 	}
+
 	if err := resp.Write(rw); err != nil {
 		log.FromContext(req.Context()).Error(err)
 		return
@@ -84,6 +87,7 @@ func (m *InternalHandlers) BuildHTTP(rootCtx context.Context, serviceName string
 	if err != nil {
 		return nil, err
 	}
+
 	return internalWithModifier{
 		internal: internalHandler,
 		modifier: responseModifier,
