@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	stdlog "log"
@@ -11,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/pires/go-proxyproto"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v2/pkg/config/static"
@@ -125,6 +127,9 @@ type TCPEntryPoint struct {
 	tracker                *connectionTracker
 	httpServer             *httpServer
 	httpsServer            *httpServer
+	tlsConfigGetter        *tlsConfigGetter
+	http3server            *http3.Server
+	http3conn              net.PacketConn
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
@@ -150,6 +155,45 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 		return nil, fmt.Errorf("error preparing httpsServer: %w", err)
 	}
 
+	tlsGetter := &tlsConfigGetter{}
+	tlsGetter.Set(func(info *tls.ClientHelloInfo) (*tls.Config, error) {
+		return nil, errors.New("no tls config")
+	})
+
+	var http3server *http3.Server
+	var http3conn net.PacketConn
+	if configuration.HTTP3 {
+		var err error
+		http3conn, err = net.ListenPacket("udp", configuration.GetAddress())
+		if err != nil {
+			return nil, fmt.Errorf("error while starting http3 listener: %w", err)
+		}
+
+		serverHTTP3 := &http.Server{
+			Addr:         configuration.GetAddress(),
+			Handler:      httpsServer.Server.(*http.Server).Handler,
+			ErrorLog:     httpServerLogger,
+			ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
+			WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
+			IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+			TLSConfig: &tls.Config{
+				GetConfigForClient: func(info *tls.ClientHelloInfo) (*tls.Config, error) {
+					return tlsGetter.Get()(info)
+				},
+			},
+		}
+
+		http3server = &http3.Server{
+			Server: serverHTTP3,
+		}
+
+		previousHandler := httpsServer.Server.(*http.Server).Handler
+		httpsServer.Server.(*http.Server).Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			http3server.SetQuicHeaders(rw.Header())
+			previousHandler.ServeHTTP(rw, req)
+		})
+	}
+
 	router.HTTPSForwarder(httpsServer.Forwarder)
 
 	tcpSwitcher := &tcp.HandlerSwitcher{}
@@ -162,14 +206,38 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 		tracker:                tracker,
 		httpServer:             httpServer,
 		httpsServer:            httpsServer,
+		tlsConfigGetter:        tlsGetter,
+		http3server:            http3server,
+		http3conn:              http3conn,
 	}, nil
+}
+
+type tlsConfigGetter struct {
+	lock   sync.RWMutex
+	getter func(info *tls.ClientHelloInfo) (*tls.Config, error)
+}
+
+func (t *tlsConfigGetter) Get() func(info *tls.ClientHelloInfo) (*tls.Config, error) {
+	t.lock.RLock()
+	defer t.lock.RUnlock()
+	return t.getter
+}
+
+func (t *tlsConfigGetter) Set(fn func(info *tls.ClientHelloInfo) (*tls.Config, error)) {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	t.getter = fn
 }
 
 // Start starts the TCP server.
 func (e *TCPEntryPoint) Start(ctx context.Context) {
 	logger := log.FromContext(ctx)
 	logger.Debugf("Start TCP Server")
-
+	if e.http3server != nil {
+		go func() {
+			e.http3server.Serve(e.http3conn)
+		}()
+	}
 	for {
 		conn, err := e.listener.Accept()
 		if err != nil {
@@ -230,7 +298,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 
 	var wg sync.WaitGroup
 
-	shutdownServer := func(server stoppableServer) {
+	shutdownServer := func(server stoppable) {
 		defer wg.Done()
 		err := server.Shutdown(ctx)
 		if err == nil {
@@ -252,6 +320,11 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	if e.httpServer.Server != nil {
 		wg.Add(1)
 		go shutdownServer(e.httpServer.Server)
+		if e.http3server != nil {
+			wg.Add(1)
+			go shutdownServer(e.http3server)
+
+		}
 	}
 
 	if e.httpsServer.Server != nil {
@@ -299,6 +372,8 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcp.Router) {
 	e.httpsServer.Switcher.UpdateHandler(httpsHandler)
 
 	e.switcher.Switch(rt)
+
+	e.tlsConfigGetter.Set(rt.GetTLSGetClientInfo())
 }
 
 // writeCloserWrapper wraps together a connection, and the concrete underlying
@@ -463,9 +538,13 @@ func (c *connectionTracker) Close() {
 	}
 }
 
-type stoppableServer interface {
+type stoppable interface {
 	Shutdown(context.Context) error
 	Close() error
+}
+
+type stoppableServer interface {
+	stoppable
 	Serve(listener net.Listener) error
 }
 
@@ -504,7 +583,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	listener := newHTTPForwarder(ln)
 	go func() {
 		err := serverHTTP.Serve(listener)
-		if err != nil {
+		if err != nil && err != http.ErrServerClosed {
 			log.FromContext(ctx).Errorf("Error while starting server: %v", err)
 		}
 	}()

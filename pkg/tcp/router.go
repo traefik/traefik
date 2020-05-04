@@ -27,6 +27,15 @@ type Router struct {
 	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
 }
 
+func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Config, error) {
+	return func(info *tls.ClientHelloInfo) (*tls.Config, error) {
+		if tlsConfig, ok := r.hostHTTPTLSConfig[info.ServerName]; ok {
+			return tlsConfig, nil
+		}
+		return r.httpsTLSConfig, nil
+	}
+}
+
 // ServeTCP forwards the connection to the right TCP/HTTP handler.
 func (r *Router) ServeTCP(conn WriteCloser) {
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
