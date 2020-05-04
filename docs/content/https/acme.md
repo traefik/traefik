@@ -105,13 +105,13 @@ Please check the [configuration examples below](#configuration-examples) for mor
     ```
     
     ```bash tab="CLI"
-    --entryPoints.web.address=:80
-    --entryPoints.websecure.address=:443
+    --entrypoints.web.address=:80
+    --entrypoints.websecure.address=:443
     # ...
-    --certificatesResolvers.myresolver.acme.email=your-email@example.com
-    --certificatesResolvers.myresolver.acme.storage=acme.json
+    --certificatesresolvers.myresolver.acme.email=your-email@example.com
+    --certificatesresolvers.myresolver.acme.storage=acme.json
     # used during the challenge
-    --certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web
+    --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web
     ```
 
 !!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
@@ -181,7 +181,7 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
     
     ```bash tab="CLI"
     # ...
-    --certificatesResolvers.myresolver.acme.tlsChallenge=true
+    --certificatesresolvers.myresolver.acme.tlschallenge=true
     ```
 
 ### `httpChallenge`
@@ -189,7 +189,7 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
 Use the `HTTP-01` challenge to generate and renew ACME certificates by provisioning an HTTP resource under a well-known URI.
 
 As described on the Let's Encrypt [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72),
-when using the `HTTP-01` challenge, `certificatesResolvers.myresolver.acme.httpChallenge.entryPoint` must be reachable by Let's Encrypt through port 80.
+when using the `HTTP-01` challenge, `certificatesresolvers.myresolver.acme.httpchallenge.entrypoint` must be reachable by Let's Encrypt through port 80.
 
 ??? example "Using an EntryPoint Called web for the `httpChallenge`"
 
@@ -224,10 +224,10 @@ when using the `HTTP-01` challenge, `certificatesResolvers.myresolver.acme.httpC
     ```
     
     ```bash tab="CLI"
-    --entryPoints.web.address=:80
-    --entryPoints.websecure.address=:443
+    --entrypoints.web.address=:80
+    --entrypoints.websecure.address=:443
     # ...
-    --certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web
+    --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web
     ```
 
 !!! info ""
@@ -261,8 +261,8 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
     
     ```bash tab="CLI"
     # ...
-    --certificatesResolvers.myresolver.acme.dnsChallenge.provider=digitalocean
-    --certificatesResolvers.myresolver.acme.dnsChallenge.delayBeforeCheck=0
+    --certificatesresolvers.myresolver.acme.dnschallenge.provider=digitalocean
+    --certificatesresolvers.myresolver.acme.dnschallenge.delaybeforecheck=0
     # ...
     ```
 
@@ -389,7 +389,7 @@ certificatesResolvers:
 
 ```bash tab="CLI"
 # ...
---certificatesResolvers.myresolver.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53
+--certificatesresolvers.myresolver.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
 ```
 
 #### Wildcard Domains
@@ -428,7 +428,7 @@ The CA server to use:
 
     ```bash tab="CLI"
     # ...
-    --certificatesResolvers.myresolver.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+    --certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
     # ...
     ```
 
@@ -456,7 +456,7 @@ certificatesResolvers:
 
 ```bash tab="CLI"
 # ...
---certificatesResolvers.myresolver.acme.storage=acme.json
+--certificatesresolvers.myresolver.acme.storage=acme.json
 # ...
 ```
 
