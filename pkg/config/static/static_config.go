@@ -70,6 +70,18 @@ type Configuration struct {
 	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening." json:"hostResolver,omitempty" toml:"hostResolver,omitempty" yaml:"hostResolver,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	CertificatesResolvers map[string]CertificateResolver `description:"Certificates resolvers configuration." json:"certificatesResolvers,omitempty" toml:"certificatesResolvers,omitempty" yaml:"certificatesResolvers,omitempty" export:"true"`
+
+	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty"`
+}
+
+// Experimental the experimental feature configuration.
+type Experimental struct {
+	Pilot *PilotConfiguration `description:"Pilot configuration." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" export:"true"`
+}
+
+// PilotConfiguration holds pilot configuration.
+type PilotConfiguration struct {
+	Token string `description:"Pilot token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" export:"true"`
 }
 
 // CertificateResolver contains the configuration for the different types of certificates resolver.

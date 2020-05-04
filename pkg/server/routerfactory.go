@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -58,10 +57,8 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 }
 
 // CreateRouters creates new TCPRouters and UDPRouters.
-func (f *RouterFactory) CreateRouters(conf dynamic.Configuration) (map[string]*tcpCore.Router, map[string]udpCore.Handler) {
+func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string]*tcpCore.Router, map[string]udpCore.Handler) {
 	ctx := context.Background()
-
-	rtConf := runtime.NewConfig(conf)
 
 	// HTTP
 	serviceManager := f.managerFactory.Build(rtConf)
