@@ -325,7 +325,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 	if len(auth.TLS.CASecret) > 0 {
 		caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, k8sClient)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load auth ca secret: %v", err)
+			return nil, fmt.Errorf("failed to load auth ca secret: %w", err)
 		}
 		forwardAuth.TLS.CA = caSecret
 	}
@@ -333,7 +333,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 	if len(auth.TLS.CertSecret) > 0 {
 		authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, k8sClient)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load auth secret: %v", err)
+			return nil, fmt.Errorf("failed to load auth secret: %w", err)
 		}
 		forwardAuth.TLS.Cert = authSecretCert
 		forwardAuth.TLS.Key = authSecretKey
@@ -345,7 +345,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 func loadCASecret(namespace, secretName string, k8sClient Client) (string, error) {
 	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch secret '%s/%s': %v", namespace, secretName, err)
+		return "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
 	}
 	if !ok {
 		return "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
@@ -366,7 +366,7 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
 	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %s", namespace, secretName, err)
+		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
 	}
 	if !exists {
 		return "", "", fmt.Errorf("secret '%s/%s' does not exist", namespace, secretName)
@@ -424,7 +424,7 @@ func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]strin
 
 	auth, err := loadAuthCredentials(namespace, authSecret, k8sClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load auth credentials: %v", err)
+		return nil, fmt.Errorf("failed to load auth credentials: %w", err)
 	}
 
 	return auth, nil
@@ -433,7 +433,7 @@ func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]strin
 func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
 	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch secret '%s/%s': %v", namespace, secretName, err)
+		return nil, fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
 	}
 	if !ok {
 		return nil, fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
@@ -459,7 +459,7 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading secret for %s/%s: %v", namespace, secretName, err)
+		return nil, fmt.Errorf("error reading secret for %s/%s: %w", namespace, secretName, err)
 	}
 	if len(credentials) == 0 {
 		return nil, fmt.Errorf("secret '%s/%s' does not contain any credentials", namespace, secretName)
@@ -641,7 +641,7 @@ func shouldProcessIngress(ingressClass string, ingressClassAnnotation string) bo
 func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {
 	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch secret %s/%s: %v", namespace, secretName, err)
+		return nil, fmt.Errorf("failed to fetch secret %s/%s: %w", namespace, secretName, err)
 	}
 	if !exists {
 		return nil, fmt.Errorf("secret %s/%s does not exist", namespace, secretName)

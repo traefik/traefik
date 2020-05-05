@@ -17,7 +17,7 @@ Go version:   {{.GoVersion}}
 Built:        {{.BuildTime}}
 OS/Arch:      {{.Os}}/{{.Arch}}`
 
-// NewCmd builds a new Version command
+// NewCmd builds a new Version command.
 func NewCmd() *cli.Command {
 	return &cli.Command{
 		Name:          "version",
@@ -33,7 +33,7 @@ func NewCmd() *cli.Command {
 	}
 }
 
-// GetPrint write Printable version
+// GetPrint write Printable version.
 func GetPrint(wr io.Writer) error {
 	tmpl, err := template.New("").Parse(versionTemplate)
 	if err != nil {

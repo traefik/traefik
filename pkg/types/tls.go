@@ -12,7 +12,7 @@ import (
 )
 
 // ClientTLS holds TLS specific configurations as client
-// CA, Cert and Key can be either path or file contents
+// CA, Cert and Key can be either path or file contents.
 type ClientTLS struct {
 	CA                 string `description:"TLS CA" json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty"`
 	CAOptional         bool   `description:"TLS CA.Optional" json:"caOptional,omitempty" toml:"caOptional,omitempty" yaml:"caOptional,omitempty"`
@@ -21,7 +21,7 @@ type ClientTLS struct {
 	InsecureSkipVerify bool   `description:"TLS insecure skip verify" json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty"`
 }
 
-// CreateTLSConfig creates a TLS config from ClientTLS structures
+// CreateTLSConfig creates a TLS config from ClientTLS structures.
 func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, error) {
 	if clientTLS == nil {
 		log.FromContext(ctx).Warnf("clientTLS is nil")
@@ -36,7 +36,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 			var err error
 			ca, err = ioutil.ReadFile(clientTLS.CA)
 			if err != nil {
-				return nil, fmt.Errorf("failed to read CA. %s", err)
+				return nil, fmt.Errorf("failed to read CA. %w", err)
 			}
 		} else {
 			ca = []byte(clientTLS.CA)
@@ -66,7 +66,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 			if errKeyIsFile == nil {
 				cert, err = tls.LoadX509KeyPair(clientTLS.Cert, clientTLS.Key)
 				if err != nil {
-					return nil, fmt.Errorf("failed to load TLS keypair: %v", err)
+					return nil, fmt.Errorf("failed to load TLS keypair: %w", err)
 				}
 			} else {
 				return nil, fmt.Errorf("TLS cert is a file, but tls key is not")
@@ -75,7 +75,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 			if errKeyIsFile != nil {
 				cert, err = tls.X509KeyPair([]byte(clientTLS.Cert), []byte(clientTLS.Key))
 				if err != nil {
-					return nil, fmt.Errorf("failed to load TLS keypair: %v", err)
+					return nil, fmt.Errorf("failed to load TLS keypair: %w", err)
 				}
 			} else {
 				return nil, fmt.Errorf("TLS key is a file, but tls cert is not")

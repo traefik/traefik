@@ -14,7 +14,7 @@ type ClientAuth struct {
 
 // +k8s:deepcopy-gen=true
 
-// Options configures TLS for an entry point
+// Options configures TLS for an entry point.
 type Options struct {
 	MinVersion               string     `json:"minVersion,omitempty" toml:"minVersion,omitempty" yaml:"minVersion,omitempty" export:"true"`
 	MaxVersion               string     `json:"maxVersion,omitempty" toml:"maxVersion,omitempty" yaml:"maxVersion,omitempty" export:"true"`
@@ -27,7 +27,7 @@ type Options struct {
 
 // +k8s:deepcopy-gen=true
 
-// Store holds the options for a given Store
+// Store holds the options for a given Store.
 type Store struct {
 	DefaultCertificate *Certificate `json:"defaultCertificate,omitempty" toml:"defaultCertificate,omitempty" yaml:"defaultCertificate,omitempty"`
 }

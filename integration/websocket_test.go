@@ -18,7 +18,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-// WebsocketSuite
+// WebsocketSuite tests suite.
 type WebsocketSuite struct{ BaseSuite }
 
 func (s *WebsocketSuite) TestBase(c *check.C) {

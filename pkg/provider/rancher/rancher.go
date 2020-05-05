@@ -20,13 +20,13 @@ const (
 	DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 )
 
-// Health
+// Health.
 const (
 	healthy         = "healthy"
 	updatingHealthy = "updating-healthy"
 )
 
-// State
+// States.
 const (
 	active          = "active"
 	running         = "running"
@@ -75,7 +75,7 @@ type rancherData struct {
 func (p *Provider) Init() error {
 	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
 	if err != nil {
-		return fmt.Errorf("error while parsing default rule: %v", err)
+		return fmt.Errorf("error while parsing default rule: %w", err)
 	}
 
 	p.defaultRuleTpl = defaultRuleTpl

@@ -75,7 +75,7 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
 		if err != nil {
-			return nil, fmt.Errorf("error opening access log file: %s", err)
+			return nil, fmt.Errorf("error opening access log file: %w", err)
 		}
 		file = f
 	}
@@ -132,12 +132,12 @@ func openAccessLogFile(filePath string) (*os.File, error) {
 	dir := filepath.Dir(filePath)
 
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create log path %s: %s", dir, err)
+		return nil, fmt.Errorf("failed to create log path %s: %w", dir, err)
 	}
 
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
-		return nil, fmt.Errorf("error opening file %s: %s", filePath, err)
+		return nil, fmt.Errorf("error opening file %s: %w", filePath, err)
 	}
 
 	return file, nil

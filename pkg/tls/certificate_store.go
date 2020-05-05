@@ -13,14 +13,14 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
-// CertificateStore store for dynamic and static certificates
+// CertificateStore store for dynamic and static certificates.
 type CertificateStore struct {
 	DynamicCerts       *safe.Safe
 	DefaultCertificate *tls.Certificate
 	CertCache          *cache.Cache
 }
 
-// NewCertificateStore create a store for dynamic and static certificates
+// NewCertificateStore create a store for dynamic and static certificates.
 func NewCertificateStore() *CertificateStore {
 	return &CertificateStore{
 		DynamicCerts: &safe.Safe{},
@@ -54,7 +54,7 @@ func (c CertificateStore) getDefaultCertificateDomains() []string {
 	return allCerts
 }
 
-// GetAllDomains return a slice with all the certificate domain
+// GetAllDomains return a slice with all the certificate domain.
 func (c CertificateStore) GetAllDomains() []string {
 	allCerts := c.getDefaultCertificateDomains()
 
@@ -67,7 +67,7 @@ func (c CertificateStore) GetAllDomains() []string {
 	return allCerts
 }
 
-// GetBestCertificate returns the best match certificate, and caches the response
+// GetBestCertificate returns the best match certificate, and caches the response.
 func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *tls.Certificate {
 	domainToCheck := strings.ToLower(strings.TrimSpace(clientHello.ServerName))
 	if len(domainToCheck) == 0 {
@@ -110,14 +110,14 @@ func (c CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) *
 	return nil
 }
 
-// ResetCache clears the cache in the store
+// ResetCache clears the cache in the store.
 func (c CertificateStore) ResetCache() {
 	if c.CertCache != nil {
 		c.CertCache.Flush()
 	}
 }
 
-// MatchDomain return true if a domain match the cert domain
+// MatchDomain return true if a domain match the cert domain.
 func MatchDomain(domain string, certDomain string) bool {
 	if domain == certDomain {
 		return true

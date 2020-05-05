@@ -46,7 +46,7 @@ type Provider struct {
 	lastConfiguration      safe.Safe
 }
 
-// EndpointIngress holds the endpoint information for the Kubernetes provider
+// EndpointIngress holds the endpoint information for the Kubernetes provider.
 type EndpointIngress struct {
 	IP               string `description:"IP used for Kubernetes Ingress endpoints." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
 	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
@@ -306,7 +306,7 @@ func (p *Provider) updateIngressStatus(ing *v1beta1.Ingress, k8sClient Client) e
 
 	service, exists, err := k8sClient.GetService(serviceNamespace, serviceName)
 	if err != nil {
-		return fmt.Errorf("cannot get service %s, received error: %s", p.IngressEndpoint.PublishedService, err)
+		return fmt.Errorf("cannot get service %s, received error: %w", p.IngressEndpoint.PublishedService, err)
 	}
 
 	if exists && service.Status.LoadBalancer.Ingress == nil {
@@ -346,7 +346,7 @@ func getCertificates(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Cl
 		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
 			secret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
 			if err != nil {
-				return fmt.Errorf("failed to fetch secret %s/%s: %v", ingress.Namespace, t.SecretName, err)
+				return fmt.Errorf("failed to fetch secret %s/%s: %w", ingress.Namespace, t.SecretName, err)
 			}
 			if !exists {
 				return fmt.Errorf("secret %s/%s does not exist", ingress.Namespace, t.SecretName)

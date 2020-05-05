@@ -18,7 +18,7 @@ const (
 	composeProject = "minimal"
 )
 
-// Docker test suites
+// Docker tests suite.
 type DockerComposeSuite struct {
 	BaseSuite
 }

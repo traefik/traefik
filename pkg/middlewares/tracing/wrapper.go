@@ -35,7 +35,7 @@ func Wrap(ctx context.Context, constructor alice.Constructor) alice.Constructor 
 	}
 }
 
-// NewWrapper returns a http.Handler struct
+// NewWrapper returns a http.Handler struct.
 func NewWrapper(next http.Handler, name string, spanKind ext.SpanKindEnum) http.Handler {
 	return &Wrapper{
 		next:     next,

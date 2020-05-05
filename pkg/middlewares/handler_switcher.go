@@ -6,12 +6,12 @@ import (
 	"github.com/containous/traefik/v2/pkg/safe"
 )
 
-// HTTPHandlerSwitcher allows hot switching of http.ServeMux
+// HTTPHandlerSwitcher allows hot switching of http.ServeMux.
 type HTTPHandlerSwitcher struct {
 	handler *safe.Safe
 }
 
-// NewHandlerSwitcher builds a new instance of HTTPHandlerSwitcher
+// NewHandlerSwitcher builds a new instance of HTTPHandlerSwitcher.
 func NewHandlerSwitcher(newHandler http.Handler) (hs *HTTPHandlerSwitcher) {
 	return &HTTPHandlerSwitcher{
 		handler: safe.New(newHandler),
@@ -23,13 +23,13 @@ func (h *HTTPHandlerSwitcher) ServeHTTP(rw http.ResponseWriter, req *http.Reques
 	handlerBackup.ServeHTTP(rw, req)
 }
 
-// GetHandler returns the current http.ServeMux
+// GetHandler returns the current http.ServeMux.
 func (h *HTTPHandlerSwitcher) GetHandler() (newHandler http.Handler) {
 	handler := h.handler.Get().(http.Handler)
 	return handler
 }
 
-// UpdateHandler safely updates the current http.ServeMux with a new one
+// UpdateHandler safely updates the current http.ServeMux with a new one.
 func (h *HTTPHandlerSwitcher) UpdateHandler(newHandler http.Handler) {
 	h.handler.Set(newHandler)
 }

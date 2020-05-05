@@ -101,7 +101,7 @@ func newClientImpl(csKube *kubernetes.Clientset, csCrd *versioned.Clientset) *cl
 func newInClusterClient(endpoint string) (*clientWrapper, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create in-cluster configuration: %v", err)
+		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
 	}
 
 	if endpoint != "" {
@@ -135,7 +135,7 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrappe
 	if caFilePath != "" {
 		caData, err := ioutil.ReadFile(caFilePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read CA file %s: %v", caFilePath, err)
+			return nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
 		}
 
 		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}

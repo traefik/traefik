@@ -94,12 +94,12 @@ func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
 	return nil
 }
 
-// Init the provider
+// Init the provider.
 func (p ProviderAggregator) Init() error {
 	return nil
 }
 
-// Provide calls the provide method of every providers
+// Provide calls the provide method of every providers.
 func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	if p.fileProvider != nil {
 		launchProvider(configurationChan, pool, p.fileProvider)

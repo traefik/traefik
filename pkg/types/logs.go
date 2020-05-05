@@ -1,11 +1,11 @@
 package types
 
 const (
-	// AccessLogKeep is the keep string value
+	// AccessLogKeep is the keep string value.
 	AccessLogKeep = "keep"
-	// AccessLogDrop is the drop string value
+	// AccessLogDrop is the drop string value.
 	AccessLogDrop = "drop"
-	// AccessLogRedact is the redact string value
+	// AccessLogRedact is the redact string value.
 	AccessLogRedact = "redact"
 )
 
@@ -48,20 +48,20 @@ func (l *AccessLog) SetDefaults() {
 	l.Fields.SetDefaults()
 }
 
-// AccessLogFilters holds filters configuration
+// AccessLogFilters holds filters configuration.
 type AccessLogFilters struct {
 	StatusCodes   []string `description:"Keep access logs with status codes in the specified range." json:"statusCodes,omitempty" toml:"statusCodes,omitempty" yaml:"statusCodes,omitempty" export:"true"`
 	RetryAttempts bool     `description:"Keep access logs when at least one retry happened." json:"retryAttempts,omitempty" toml:"retryAttempts,omitempty" yaml:"retryAttempts,omitempty" export:"true"`
 	MinDuration   Duration `description:"Keep access logs when request took longer than the specified duration." json:"minDuration,omitempty" toml:"minDuration,omitempty" yaml:"minDuration,omitempty" export:"true"`
 }
 
-// FieldHeaders holds configuration for access log headers
+// FieldHeaders holds configuration for access log headers.
 type FieldHeaders struct {
 	DefaultMode string            `description:"Default mode for fields: keep | drop | redact" json:"defaultMode,omitempty" toml:"defaultMode,omitempty" yaml:"defaultMode,omitempty" export:"true"`
 	Names       map[string]string `description:"Override mode for headers" json:"names,omitempty" toml:"names,omitempty" yaml:"names,omitempty" export:"true"`
 }
 
-// AccessLogFields holds configuration for access log fields
+// AccessLogFields holds configuration for access log fields.
 type AccessLogFields struct {
 	DefaultMode string            `description:"Default mode for fields: keep | drop" json:"defaultMode,omitempty" toml:"defaultMode,omitempty" yaml:"defaultMode,omitempty"  export:"true"`
 	Names       map[string]string `description:"Override mode for fields" json:"names,omitempty" toml:"names,omitempty" yaml:"names,omitempty" export:"true"`
@@ -76,7 +76,7 @@ func (f *AccessLogFields) SetDefaults() {
 	}
 }
 
-// Keep check if the field need to be kept or dropped
+// Keep check if the field need to be kept or dropped.
 func (f *AccessLogFields) Keep(field string) bool {
 	defaultKeep := true
 	if f != nil {
@@ -89,7 +89,7 @@ func (f *AccessLogFields) Keep(field string) bool {
 	return defaultKeep
 }
 
-// KeepHeader checks if the headers need to be kept, dropped or redacted and returns the status
+// KeepHeader checks if the headers need to be kept, dropped or redacted and returns the status.
 func (f *AccessLogFields) KeepHeader(header string) string {
 	defaultValue := AccessLogKeep
 	if f != nil && f.Headers != nil {

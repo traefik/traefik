@@ -280,7 +280,7 @@ func createProvider(t *testing.T, test ProvideTestCase, watch bool) (*Provider, 
 	}
 }
 
-// createTempDir Helper
+// createTempDir Helper.
 func createTempDir(t *testing.T, dir string) string {
 	t.Helper()
 

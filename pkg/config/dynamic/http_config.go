@@ -47,7 +47,7 @@ type Router struct {
 
 // +k8s:deepcopy-gen=true
 
-// RouterTLSConfig holds the TLS configuration for a router
+// RouterTLSConfig holds the TLS configuration for a router.
 type RouterTLSConfig struct {
 	Options      string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
 	CertResolver string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty"`

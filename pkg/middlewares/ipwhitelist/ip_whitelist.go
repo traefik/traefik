@@ -18,7 +18,7 @@ const (
 	typeName = "IPWhiteLister"
 )
 
-// ipWhiteLister is a middleware that provides Checks of the Requesting IP against a set of Whitelists
+// ipWhiteLister is a middleware that provides Checks of the Requesting IP against a set of Whitelists.
 type ipWhiteLister struct {
 	next        http.Handler
 	whiteLister *ip.Checker
@@ -26,7 +26,7 @@ type ipWhiteLister struct {
 	name        string
 }
 
-// New builds a new IPWhiteLister given a list of CIDR-Strings to whitelist
+// New builds a new IPWhiteLister given a list of CIDR-Strings to whitelist.
 func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, name string) (http.Handler, error) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
@@ -37,7 +37,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, nam
 
 	checker, err := ip.NewChecker(config.SourceRange)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse CIDR whitelist %s: %v", config.SourceRange, err)
+		return nil, fmt.Errorf("cannot parse CIDR whitelist %s: %w", config.SourceRange, err)
 	}
 
 	strategy, err := config.IPStrategy.Get()

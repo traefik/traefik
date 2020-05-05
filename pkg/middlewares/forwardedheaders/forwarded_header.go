@@ -37,9 +37,10 @@ var xHeaders = []string{
 	xRealIP,
 }
 
-// XForwarded is an HTTP handler wrapper that sets the X-Forwarded headers, and other relevant headers for a
-// reverse-proxy. Unless insecure is set, it first removes all the existing values for those headers if the remote
-// address is not one of the trusted ones.
+// XForwarded is an HTTP handler wrapper that sets the X-Forwarded headers,
+// and other relevant headers for a reverse-proxy.
+// Unless insecure is set,
+// it first removes all the existing values for those headers if the remote address is not one of the trusted ones.
 type XForwarded struct {
 	insecure   bool
 	trustedIps []string
@@ -80,15 +81,13 @@ func (x *XForwarded) isTrustedIP(ip string) bool {
 	return x.ipChecker.IsAuthorized(ip) == nil
 }
 
-// removeIPv6Zone removes the zone if the given IP is an ipv6 address and it has
-// {zone} information in it, like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3
-// Ethernet Adapter - Virtual Switch)]:64692"
+// removeIPv6Zone removes the zone if the given IP is an ipv6 address and it has {zone} information in it,
+// like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:64692".
 func removeIPv6Zone(clientIP string) string {
 	return strings.Split(clientIP, "%")[0]
 }
 
-// isWebsocketRequest returns whether the specified HTTP request is a
-// websocket handshake request
+// isWebsocketRequest returns whether the specified HTTP request is a websocket handshake request.
 func isWebsocketRequest(req *http.Request) bool {
 	containsHeader := func(name, value string) bool {
 		items := strings.Split(req.Header.Get(name), ",")
@@ -161,7 +160,7 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 	}
 }
 
-// ServeHTTP implements http.Handler
+// ServeHTTP implements http.Handler.
 func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
 		for _, h := range xHeaders {

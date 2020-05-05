@@ -115,7 +115,7 @@ func Do(timeout time.Duration, operation DoCondition) error {
 		select {
 		case <-stopTimer.C:
 			fmt.Println("-")
-			return fmt.Errorf("try operation failed: %s", err)
+			return fmt.Errorf("try operation failed: %w", err)
 		case <-retryTick.C:
 			fmt.Print("*")
 			if err = operation(); err == nil {

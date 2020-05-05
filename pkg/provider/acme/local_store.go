@@ -13,7 +13,7 @@ import (
 
 var _ Store = (*LocalStore)(nil)
 
-// LocalStore Stores implementation for local file
+// LocalStore Stores implementation for local file.
 type LocalStore struct {
 	saveDataChan chan map[string]*StoredData
 	filename     string
@@ -22,7 +22,7 @@ type LocalStore struct {
 	storedData map[string]*StoredData
 }
 
-// NewLocalStore initializes a new LocalStore with a file name
+// NewLocalStore initializes a new LocalStore with a file name.
 func NewLocalStore(filename string) *LocalStore {
 	store := &LocalStore{filename: filename, saveDataChan: make(chan map[string]*StoredData)}
 	store.listenSaveAction()
@@ -93,7 +93,7 @@ func (s *LocalStore) get(resolverName string) (*StoredData, error) {
 	return s.storedData[resolverName], nil
 }
 
-// listenSaveAction listens to a chan to store ACME data in json format into LocalStore.filename
+// listenSaveAction listens to a chan to store ACME data in json format into `LocalStore.filename`.
 func (s *LocalStore) listenSaveAction() {
 	safe.Go(func() {
 		logger := log.WithoutContext().WithField(log.ProviderName, "acme")
@@ -111,7 +111,7 @@ func (s *LocalStore) listenSaveAction() {
 	})
 }
 
-// GetAccount returns ACME Account
+// GetAccount returns ACME Account.
 func (s *LocalStore) GetAccount(resolverName string) (*Account, error) {
 	storedData, err := s.get(resolverName)
 	if err != nil {
@@ -121,7 +121,7 @@ func (s *LocalStore) GetAccount(resolverName string) (*Account, error) {
 	return storedData.Account, nil
 }
 
-// SaveAccount stores ACME Account
+// SaveAccount stores ACME Account.
 func (s *LocalStore) SaveAccount(resolverName string, account *Account) error {
 	storedData, err := s.get(resolverName)
 	if err != nil {
@@ -134,7 +134,7 @@ func (s *LocalStore) SaveAccount(resolverName string, account *Account) error {
 	return nil
 }
 
-// GetCertificates returns ACME Certificates list
+// GetCertificates returns ACME Certificates list.
 func (s *LocalStore) GetCertificates(resolverName string) ([]*CertAndStore, error) {
 	storedData, err := s.get(resolverName)
 	if err != nil {
@@ -144,7 +144,7 @@ func (s *LocalStore) GetCertificates(resolverName string) ([]*CertAndStore, erro
 	return storedData.Certificates, nil
 }
 
-// SaveCertificates stores ACME Certificates list
+// SaveCertificates stores ACME Certificates list.
 func (s *LocalStore) SaveCertificates(resolverName string, certificates []*CertAndStore) error {
 	storedData, err := s.get(resolverName)
 	if err != nil {
@@ -173,7 +173,7 @@ func NewLocalChallengeStore() *LocalChallengeStore {
 	}
 }
 
-// GetHTTPChallengeToken Get the http challenge token from the store
+// GetHTTPChallengeToken Get the http challenge token from the store.
 func (s *LocalChallengeStore) GetHTTPChallengeToken(token, domain string) ([]byte, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -193,7 +193,7 @@ func (s *LocalChallengeStore) GetHTTPChallengeToken(token, domain string) ([]byt
 	return result, nil
 }
 
-// SetHTTPChallengeToken Set the http challenge token in the store
+// SetHTTPChallengeToken Set the http challenge token in the store.
 func (s *LocalChallengeStore) SetHTTPChallengeToken(token, domain string, keyAuth []byte) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -210,7 +210,7 @@ func (s *LocalChallengeStore) SetHTTPChallengeToken(token, domain string, keyAut
 	return nil
 }
 
-// RemoveHTTPChallengeToken Remove the http challenge token in the store
+// RemoveHTTPChallengeToken Remove the http challenge token in the store.
 func (s *LocalChallengeStore) RemoveHTTPChallengeToken(token, domain string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -228,7 +228,7 @@ func (s *LocalChallengeStore) RemoveHTTPChallengeToken(token, domain string) err
 	return nil
 }
 
-// AddTLSChallenge Add a certificate to the ACME TLS-ALPN-01 certificates storage
+// AddTLSChallenge Add a certificate to the ACME TLS-ALPN-01 certificates storage.
 func (s *LocalChallengeStore) AddTLSChallenge(domain string, cert *Certificate) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -241,7 +241,7 @@ func (s *LocalChallengeStore) AddTLSChallenge(domain string, cert *Certificate) 
 	return nil
 }
 
-// GetTLSChallenge Get a certificate from the ACME TLS-ALPN-01 certificates storage
+// GetTLSChallenge Get a certificate from the ACME TLS-ALPN-01 certificates storage.
 func (s *LocalChallengeStore) GetTLSChallenge(domain string) (*Certificate, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -253,7 +253,7 @@ func (s *LocalChallengeStore) GetTLSChallenge(domain string) (*Certificate, erro
 	return s.storedData.TLSChallenges[domain], nil
 }
 
-// RemoveTLSChallenge Remove a certificate from the ACME TLS-ALPN-01 certificates storage
+// RemoveTLSChallenge Remove a certificate from the ACME TLS-ALPN-01 certificates storage.
 func (s *LocalChallengeStore) RemoveTLSChallenge(domain string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
