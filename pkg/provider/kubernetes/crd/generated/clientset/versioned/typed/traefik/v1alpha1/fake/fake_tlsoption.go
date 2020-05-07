@@ -27,6 +27,8 @@ THE SOFTWARE.
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -47,7 +49,7 @@ var tlsoptionsResource = schema.GroupVersionResource{Group: "traefik.containo.us
 var tlsoptionsKind = schema.GroupVersionKind{Group: "traefik.containo.us", Version: "v1alpha1", Kind: "TLSOption"}
 
 // Get takes name of the tLSOption, and returns the corresponding tLSOption object, and an error if there is any.
-func (c *FakeTLSOptions) Get(name string, options v1.GetOptions) (result *v1alpha1.TLSOption, err error) {
+func (c *FakeTLSOptions) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.TLSOption, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(tlsoptionsResource, c.ns, name), &v1alpha1.TLSOption{})
 
@@ -58,7 +60,7 @@ func (c *FakeTLSOptions) Get(name string, options v1.GetOptions) (result *v1alph
 }
 
 // List takes label and field selectors, and returns the list of TLSOptions that match those selectors.
-func (c *FakeTLSOptions) List(opts v1.ListOptions) (result *v1alpha1.TLSOptionList, err error) {
+func (c *FakeTLSOptions) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.TLSOptionList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(tlsoptionsResource, tlsoptionsKind, c.ns, opts), &v1alpha1.TLSOptionList{})
 
@@ -80,14 +82,14 @@ func (c *FakeTLSOptions) List(opts v1.ListOptions) (result *v1alpha1.TLSOptionLi
 }
 
 // Watch returns a watch.Interface that watches the requested tLSOptions.
-func (c *FakeTLSOptions) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeTLSOptions) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(tlsoptionsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a tLSOption and creates it.  Returns the server's representation of the tLSOption, and an error, if there is any.
-func (c *FakeTLSOptions) Create(tLSOption *v1alpha1.TLSOption) (result *v1alpha1.TLSOption, err error) {
+func (c *FakeTLSOptions) Create(ctx context.Context, tLSOption *v1alpha1.TLSOption, opts v1.CreateOptions) (result *v1alpha1.TLSOption, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(tlsoptionsResource, c.ns, tLSOption), &v1alpha1.TLSOption{})
 
@@ -98,7 +100,7 @@ func (c *FakeTLSOptions) Create(tLSOption *v1alpha1.TLSOption) (result *v1alpha1
 }
 
 // Update takes the representation of a tLSOption and updates it. Returns the server's representation of the tLSOption, and an error, if there is any.
-func (c *FakeTLSOptions) Update(tLSOption *v1alpha1.TLSOption) (result *v1alpha1.TLSOption, err error) {
+func (c *FakeTLSOptions) Update(ctx context.Context, tLSOption *v1alpha1.TLSOption, opts v1.UpdateOptions) (result *v1alpha1.TLSOption, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(tlsoptionsResource, c.ns, tLSOption), &v1alpha1.TLSOption{})
 
@@ -109,7 +111,7 @@ func (c *FakeTLSOptions) Update(tLSOption *v1alpha1.TLSOption) (result *v1alpha1
 }
 
 // Delete takes name of the tLSOption and deletes it. Returns an error if one occurs.
-func (c *FakeTLSOptions) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeTLSOptions) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(tlsoptionsResource, c.ns, name), &v1alpha1.TLSOption{})
 
@@ -117,15 +119,15 @@ func (c *FakeTLSOptions) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeTLSOptions) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(tlsoptionsResource, c.ns, listOptions)
+func (c *FakeTLSOptions) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(tlsoptionsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.TLSOptionList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched tLSOption.
-func (c *FakeTLSOptions) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.TLSOption, err error) {
+func (c *FakeTLSOptions) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.TLSOption, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(tlsoptionsResource, c.ns, name, pt, data, subresources...), &v1alpha1.TLSOption{})
 

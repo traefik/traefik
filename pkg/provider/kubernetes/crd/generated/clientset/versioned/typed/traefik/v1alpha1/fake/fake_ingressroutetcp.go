@@ -27,6 +27,8 @@ THE SOFTWARE.
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -47,7 +49,7 @@ var ingressroutetcpsResource = schema.GroupVersionResource{Group: "traefik.conta
 var ingressroutetcpsKind = schema.GroupVersionKind{Group: "traefik.containo.us", Version: "v1alpha1", Kind: "IngressRouteTCP"}
 
 // Get takes name of the ingressRouteTCP, and returns the corresponding ingressRouteTCP object, and an error if there is any.
-func (c *FakeIngressRouteTCPs) Get(name string, options v1.GetOptions) (result *v1alpha1.IngressRouteTCP, err error) {
+func (c *FakeIngressRouteTCPs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.IngressRouteTCP, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(ingressroutetcpsResource, c.ns, name), &v1alpha1.IngressRouteTCP{})
 
@@ -58,7 +60,7 @@ func (c *FakeIngressRouteTCPs) Get(name string, options v1.GetOptions) (result *
 }
 
 // List takes label and field selectors, and returns the list of IngressRouteTCPs that match those selectors.
-func (c *FakeIngressRouteTCPs) List(opts v1.ListOptions) (result *v1alpha1.IngressRouteTCPList, err error) {
+func (c *FakeIngressRouteTCPs) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.IngressRouteTCPList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(ingressroutetcpsResource, ingressroutetcpsKind, c.ns, opts), &v1alpha1.IngressRouteTCPList{})
 
@@ -80,14 +82,14 @@ func (c *FakeIngressRouteTCPs) List(opts v1.ListOptions) (result *v1alpha1.Ingre
 }
 
 // Watch returns a watch.Interface that watches the requested ingressRouteTCPs.
-func (c *FakeIngressRouteTCPs) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeIngressRouteTCPs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(ingressroutetcpsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a ingressRouteTCP and creates it.  Returns the server's representation of the ingressRouteTCP, and an error, if there is any.
-func (c *FakeIngressRouteTCPs) Create(ingressRouteTCP *v1alpha1.IngressRouteTCP) (result *v1alpha1.IngressRouteTCP, err error) {
+func (c *FakeIngressRouteTCPs) Create(ctx context.Context, ingressRouteTCP *v1alpha1.IngressRouteTCP, opts v1.CreateOptions) (result *v1alpha1.IngressRouteTCP, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(ingressroutetcpsResource, c.ns, ingressRouteTCP), &v1alpha1.IngressRouteTCP{})
 
@@ -98,7 +100,7 @@ func (c *FakeIngressRouteTCPs) Create(ingressRouteTCP *v1alpha1.IngressRouteTCP)
 }
 
 // Update takes the representation of a ingressRouteTCP and updates it. Returns the server's representation of the ingressRouteTCP, and an error, if there is any.
-func (c *FakeIngressRouteTCPs) Update(ingressRouteTCP *v1alpha1.IngressRouteTCP) (result *v1alpha1.IngressRouteTCP, err error) {
+func (c *FakeIngressRouteTCPs) Update(ctx context.Context, ingressRouteTCP *v1alpha1.IngressRouteTCP, opts v1.UpdateOptions) (result *v1alpha1.IngressRouteTCP, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(ingressroutetcpsResource, c.ns, ingressRouteTCP), &v1alpha1.IngressRouteTCP{})
 
@@ -109,7 +111,7 @@ func (c *FakeIngressRouteTCPs) Update(ingressRouteTCP *v1alpha1.IngressRouteTCP)
 }
 
 // Delete takes name of the ingressRouteTCP and deletes it. Returns an error if one occurs.
-func (c *FakeIngressRouteTCPs) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeIngressRouteTCPs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(ingressroutetcpsResource, c.ns, name), &v1alpha1.IngressRouteTCP{})
 
@@ -117,15 +119,15 @@ func (c *FakeIngressRouteTCPs) Delete(name string, options *v1.DeleteOptions) er
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeIngressRouteTCPs) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(ingressroutetcpsResource, c.ns, listOptions)
+func (c *FakeIngressRouteTCPs) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(ingressroutetcpsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.IngressRouteTCPList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched ingressRouteTCP.
-func (c *FakeIngressRouteTCPs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.IngressRouteTCP, err error) {
+func (c *FakeIngressRouteTCPs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.IngressRouteTCP, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(ingressroutetcpsResource, c.ns, name, pt, data, subresources...), &v1alpha1.IngressRouteTCP{})
 

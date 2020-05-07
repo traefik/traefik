@@ -27,6 +27,7 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
+	"context"
 	"time"
 
 	scheme "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
@@ -45,14 +46,14 @@ type MiddlewaresGetter interface {
 
 // MiddlewareInterface has methods to work with Middleware resources.
 type MiddlewareInterface interface {
-	Create(*v1alpha1.Middleware) (*v1alpha1.Middleware, error)
-	Update(*v1alpha1.Middleware) (*v1alpha1.Middleware, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1alpha1.Middleware, error)
-	List(opts v1.ListOptions) (*v1alpha1.MiddlewareList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Middleware, err error)
+	Create(ctx context.Context, middleware *v1alpha1.Middleware, opts v1.CreateOptions) (*v1alpha1.Middleware, error)
+	Update(ctx context.Context, middleware *v1alpha1.Middleware, opts v1.UpdateOptions) (*v1alpha1.Middleware, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.Middleware, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.MiddlewareList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.Middleware, err error)
 	MiddlewareExpansion
 }
 
@@ -71,20 +72,20 @@ func newMiddlewares(c *TraefikV1alpha1Client, namespace string) *middlewares {
 }
 
 // Get takes name of the middleware, and returns the corresponding middleware object, and an error if there is any.
-func (c *middlewares) Get(name string, options v1.GetOptions) (result *v1alpha1.Middleware, err error) {
+func (c *middlewares) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.Middleware, err error) {
 	result = &v1alpha1.Middleware{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("middlewares").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Middlewares that match those selectors.
-func (c *middlewares) List(opts v1.ListOptions) (result *v1alpha1.MiddlewareList, err error) {
+func (c *middlewares) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.MiddlewareList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -95,13 +96,13 @@ func (c *middlewares) List(opts v1.ListOptions) (result *v1alpha1.MiddlewareList
 		Resource("middlewares").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested middlewares.
-func (c *middlewares) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *middlewares) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -112,71 +113,74 @@ func (c *middlewares) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("middlewares").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a middleware and creates it.  Returns the server's representation of the middleware, and an error, if there is any.
-func (c *middlewares) Create(middleware *v1alpha1.Middleware) (result *v1alpha1.Middleware, err error) {
+func (c *middlewares) Create(ctx context.Context, middleware *v1alpha1.Middleware, opts v1.CreateOptions) (result *v1alpha1.Middleware, err error) {
 	result = &v1alpha1.Middleware{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("middlewares").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(middleware).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a middleware and updates it. Returns the server's representation of the middleware, and an error, if there is any.
-func (c *middlewares) Update(middleware *v1alpha1.Middleware) (result *v1alpha1.Middleware, err error) {
+func (c *middlewares) Update(ctx context.Context, middleware *v1alpha1.Middleware, opts v1.UpdateOptions) (result *v1alpha1.Middleware, err error) {
 	result = &v1alpha1.Middleware{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("middlewares").
 		Name(middleware.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(middleware).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the middleware and deletes it. Returns an error if one occurs.
-func (c *middlewares) Delete(name string, options *v1.DeleteOptions) error {
+func (c *middlewares) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("middlewares").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *middlewares) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *middlewares) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("middlewares").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched middleware.
-func (c *middlewares) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Middleware, err error) {
+func (c *middlewares) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.Middleware, err error) {
 	result = &v1alpha1.Middleware{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("middlewares").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
