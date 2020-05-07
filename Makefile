@@ -150,3 +150,7 @@ run-dev:
 	go generate
 	GO111MODULE=on go build ./cmd/traefik
 	./traefik
+
+## Runs a tidy to ensure that the go.sum is clean
+tidy:
+	GO111MODULE=on go mod tidy
