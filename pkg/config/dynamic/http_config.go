@@ -103,7 +103,7 @@ func (w *WRRService) SetDefaults() {
 
 // Sticky holds the sticky configuration.
 type Sticky struct {
-	Cookie *Cookie `json:"cookie,omitempty" toml:"cookie,omitempty" yaml:"cookie,omitempty"`
+	Cookie *Cookie `json:"cookie,omitempty" toml:"cookie,omitempty" yaml:"cookie,omitempty" label:"allowEmpty"`
 }
 
 // +k8s:deepcopy-gen=true

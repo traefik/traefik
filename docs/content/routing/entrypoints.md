@@ -91,7 +91,7 @@ and whether to listen for TCP or UDP.
 ### General
 
 EntryPoints are part of the [static configuration](../getting-started/configuration-overview.md#the-static-configuration).
-You can define them using a toml file, CLI arguments, or a key-value store.
+They can be defined by using a file (TOML or YAML) or CLI arguments.
 
 ??? info "See the complete reference for the list of available options"
     
@@ -569,7 +569,7 @@ This whole section is dedicated to options, keyed by entry point, that will appl
     ```bash tab="CLI"
     --entrypoints.web.address=:80
     --entrypoints.web.http.redirections.entryPoint.to=websecure
-    --entrypoints.web.http.redirections.entryPoint.https=true
+    --entrypoints.web.http.redirections.entryPoint.scheme=https
     --entrypoints.websecure.address=:443
     ```
 

@@ -50,7 +50,7 @@ Then any router can refer to an instance of the wanted middleware.
         traefik.ingress.kubernetes.io/rule-type: PathPrefix
     spec:
       rules:
-      - host: test.locahost
+      - host: test.localhost
         http:
           paths:
           - path: /test
@@ -370,13 +370,13 @@ To apply a redirection:
     ## static configuration
     
     [entryPoints.web]
-      address = 80
+      address = ":80"
       [entryPoints.web.http.redirections.entryPoint]
         to = "websecure"
         scheme = "https"
    
     [entryPoints.websecure]
-      address = 443
+      address = ":443"
     ```
     
     ```yaml tab="File (YAML)"
@@ -609,6 +609,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
           middlewares:
             - name: admin-stripprefix
     ---
+    apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
     metadata:
       name: admin-stripprefix
@@ -798,6 +799,13 @@ There is no more log configuration at the root level.
     --log.filePath=/path/to/traefik.log
     --log.format=json
     ```
+
+## Access Logs
+
+Access Logs are configured in the same way as before.
+
+But all request headers are now filtered out by default in Traefik v2.
+So during migration, you might want to consider enabling some needed fields (see [access log configuration](../observability/access-logs.md)).
 
 ## Tracing
 

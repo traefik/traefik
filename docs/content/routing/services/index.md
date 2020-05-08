@@ -334,6 +334,12 @@ Below are the available options for the health check mechanism:
     Traefik keeps monitoring the health of unhealthy servers.
     If a server has recovered (returning `2xx` -> `3xx` responses again), it will be added back to the load balacer rotation pool.
 
+!!! warning "Health check in Kubernetes"
+
+    The Traefik health check is not available for `kubernetesCRD` and `kubernetesIngress` providers because Kubernetes
+    already has a health check mechanism.
+    Unhealthy pods will be removed by kubernetes. (cf [liveness documentation](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-http-request))
+
 ??? example "Custom Interval & Timeout -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"

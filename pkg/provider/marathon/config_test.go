@@ -686,9 +686,6 @@ func TestBuildConfiguration(t *testing.T) {
 						"Middleware1": {
 							InFlightReq: &dynamic.InFlightReq{
 								Amount: 42,
-								SourceCriterion: &dynamic.SourceCriterion{
-									RequestHost: true,
-								},
 							},
 						},
 					},
