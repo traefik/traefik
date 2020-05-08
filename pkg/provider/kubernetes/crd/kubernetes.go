@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -607,11 +606,6 @@ func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
 	}
 
 	return tlsStores
-}
-
-func checkStringQuoteValidity(value string) error {
-	_, err := strconv.Unquote(`"` + value + `"`)
-	return err
 }
 
 func makeServiceKey(rule, ingressName string) (string, error) {
