@@ -43,6 +43,18 @@ func (s *DepthStrategy) GetIP(req *http.Request) string {
 	return strings.TrimSpace(xffs[len(xffs)-s.Depth])
 }
 
+// CustomHeaderStrategy is a strategy which allows
+// to check the trusted IP list against a header
+// other than X-Forwarded-For
+type CustomHeaderStrategy struct {
+	Header string
+}
+
+// GetIP returns the IP from the custom header
+func (s *CustomHeaderStrategy) GetIP(req *http.Request) string {
+	return strings.TrimSpace(req.Header.Get(s.Header))
+}
+
 // CheckerStrategy a strategy based on an IP Checker
 // allows to check that addresses are in a trusted IPs
 type CheckerStrategy struct {

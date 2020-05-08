@@ -33,6 +33,35 @@ func TestRemoteAddrStrategy_GetIP(t *testing.T) {
 	}
 }
 
+func TestCustomHeaderStrategy_GetIP(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		expected       string
+		cfConnectingIP string
+	}{
+		{
+			desc:           "Use CustomHeader",
+			expected:       "192.0.2.1",
+			cfConnectingIP: "192.0.2.1",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			strategy := CustomHeaderStrategy{
+				Header: "CF-Connecting-IP",
+			}
+			req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil)
+			req.Header.Set("CF-Connecting-IP", test.cfConnectingIP)
+			actual := strategy.GetIP(req)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
 func TestDepthStrategy_GetIP(t *testing.T) {
 	testCases := []struct {
 		desc          string

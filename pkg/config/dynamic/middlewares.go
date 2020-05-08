@@ -237,14 +237,17 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 
 // IPStrategy holds the ip strategy configuration.
 type IPStrategy struct {
-	Depth       int      `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
-	ExcludedIPs []string `json:"excludedIPs,omitempty" toml:"excludedIPs,omitempty" yaml:"excludedIPs,omitempty"`
+	Depth              int      `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
+	ExcludedIPs        []string `json:"excludedIPs,omitempty" toml:"excludedIPs,omitempty" yaml:"excludedIPs,omitempty"`
+	TrueClientIPHeader string   `json:"trueClientIPHeader" toml:"trueClientIPHeader" yaml:"trueClientIPHeader"`
 	// TODO(mpl): I think we should make RemoteAddr an explicit field. For one thing, it would yield better documentation.
 }
 
 // Get an IP selection strategy.
 // If nil return the RemoteAddr strategy
-// else return a strategy base on the configuration using the X-Forwarded-For Header.
+// else return a strategy based on the configuration
+// using either the X-Forwarded-For Header, or custom
+// header when using CustomHeaderStrategy.
 // Depth override the ExcludedIPs
 func (s *IPStrategy) Get() (ip.Strategy, error) {
 	if s == nil {
@@ -254,6 +257,12 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 	if s.Depth > 0 {
 		return &ip.DepthStrategy{
 			Depth: s.Depth,
+		}, nil
+	}
+
+	if s.TrueClientIPHeader != "" {
+		return &ip.CustomHeaderStrategy{
+			Header: s.TrueClientIPHeader,
 		}, nil
 	}
 
