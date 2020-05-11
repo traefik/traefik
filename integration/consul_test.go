@@ -19,7 +19,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// Consul test suites (using libcompose)
+// Consul test suites (using libcompose).
 type ConsulSuite struct {
 	BaseSuite
 	kvClient store.Store

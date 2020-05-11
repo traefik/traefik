@@ -45,7 +45,7 @@ func runCmd(traefikConfiguration *static.Configuration) func(_ []string) error {
 	}
 }
 
-// Do try to do a healthcheck
+// Do try to do a healthcheck.
 func Do(staticConfiguration static.Configuration) (*http.Response, error) {
 	if staticConfiguration.Ping == nil {
 		return nil, errors.New("please enable `ping` to use health check")

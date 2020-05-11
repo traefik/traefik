@@ -20,7 +20,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// ACME test suites (using libcompose)
+// ACME test suites (using libcompose).
 type AcmeSuite struct {
 	BaseSuite
 	pebbleIP      string
@@ -74,7 +74,7 @@ func setupPebbleRootCA() (*http.Transport, error) {
 
 	certPool := x509.NewCertPool()
 	if ok := certPool.AppendCertsFromPEM(customCAs); !ok {
-		return nil, fmt.Errorf("error creating x509 cert pool from %q: %v", path, err)
+		return nil, fmt.Errorf("error creating x509 cert pool from %q: %w", path, err)
 	}
 
 	return &http.Transport{
@@ -394,7 +394,7 @@ func (s *AcmeSuite) TestTLSALPN01DomainsInSAN(c *check.C) {
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
-// Test Let's encrypt down
+// Test Let's encrypt down.
 func (s *AcmeSuite) TestNoValidLetsEncryptServer(c *check.C) {
 	file := s.adaptFile(c, "fixtures/acme/acme_base.toml", templateModel{
 		Acme: map[string]static.CertificateResolver{
@@ -417,7 +417,7 @@ func (s *AcmeSuite) TestNoValidLetsEncryptServer(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-// Doing an HTTPS request and test the response certificate
+// Doing an HTTPS request and test the response certificate.
 func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase acmeTestCase) {
 	if len(testCase.template.PortHTTP) == 0 {
 		testCase.template.PortHTTP = ":5002"

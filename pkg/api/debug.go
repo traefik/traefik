@@ -19,10 +19,10 @@ func goroutines() interface{} {
 	return runtime.NumGoroutine()
 }
 
-// DebugHandler expose debug routes
+// DebugHandler expose debug routes.
 type DebugHandler struct{}
 
-// Append add debug routes on a router
+// Append add debug routes on a router.
 func (g DebugHandler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/debug/vars").
 		HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

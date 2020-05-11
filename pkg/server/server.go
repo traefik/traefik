@@ -13,7 +13,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/server/middleware"
 )
 
-// Server is the reverse-proxy/load-balancer engine
+// Server is the reverse-proxy/load-balancer engine.
 type Server struct {
 	watcher        *ConfigurationWatcher
 	tcpEntryPoints TCPEntryPoints
@@ -47,7 +47,7 @@ func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsU
 	return srv
 }
 
-// Start starts the server and Stop/Close it when context is Done
+// Start starts the server and Stop/Close it when context is Done.
 func (s *Server) Start(ctx context.Context) {
 	go func() {
 		<-ctx.Done()
@@ -69,7 +69,7 @@ func (s *Server) Wait() {
 	<-s.stopChan
 }
 
-// Stop stops the server
+// Stop stops the server.
 func (s *Server) Stop() {
 	defer log.WithoutContext().Info("Server stopped")
 
@@ -79,7 +79,7 @@ func (s *Server) Stop() {
 	s.stopChan <- true
 }
 
-// Close destroys the server
+// Close destroys the server.
 func (s *Server) Close() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 

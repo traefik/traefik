@@ -105,7 +105,7 @@ func cnameResolve(ctx context.Context, host string, resolvPath string) (*cnameRe
 func getRecord(client *dns.Client, msg *dns.Msg, server string, port string) (*cnameResolv, error) {
 	resp, _, err := client.Exchange(msg, net.JoinHostPort(server, port))
 	if err != nil {
-		return nil, fmt.Errorf("exchange error for server %s: %v", server, err)
+		return nil, fmt.Errorf("exchange error for server %s: %w", server, err)
 	}
 
 	if resp == nil || len(resp.Answer) == 0 {

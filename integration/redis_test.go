@@ -19,7 +19,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// Redis test suites (using libcompose)
+// Redis test suites (using libcompose).
 type RedisSuite struct {
 	BaseSuite
 	kvClient store.Store

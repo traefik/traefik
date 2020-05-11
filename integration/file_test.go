@@ -10,7 +10,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// File test suites
+// File tests suite.
 type FileSuite struct{ BaseSuite }
 
 func (s *FileSuite) SetUpSuite(c *check.C) {
@@ -32,7 +32,7 @@ func (s *FileSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-// #56 regression test, make sure it does not fail
+// #56 regression test, make sure it does not fail?
 func (s *FileSuite) TestSimpleConfigurationNoPanic(c *check.C) {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/file/56-simple-panic.toml"))
 	defer display(c)

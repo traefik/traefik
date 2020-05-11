@@ -17,7 +17,7 @@ const (
 	containerNameMarathon   = "marathon"
 )
 
-// Marathon test suites (using libcompose)
+// Marathon test suites (using libcompose).
 type MarathonSuite struct {
 	BaseSuite
 	marathonURL string

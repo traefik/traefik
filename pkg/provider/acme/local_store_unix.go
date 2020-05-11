@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// CheckFile checks file permissions and content size
+// CheckFile checks file permissions and content size.
 func CheckFile(name string) (bool, error) {
 	f, err := os.Open(name)
 	if err != nil {

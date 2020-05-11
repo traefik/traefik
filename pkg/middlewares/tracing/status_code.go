@@ -22,12 +22,12 @@ func (s *statusCodeWithoutCloseNotify) WriteHeader(status int) {
 	s.ResponseWriter.WriteHeader(status)
 }
 
-// Status get response status
+// Status get response status.
 func (s *statusCodeWithoutCloseNotify) Status() int {
 	return s.status
 }
 
-// Hijack hijacks the connection
+// Hijack hijacks the connection.
 func (s *statusCodeWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return s.ResponseWriter.(http.Hijacker).Hijack()
 }

@@ -9,7 +9,7 @@ import (
 
 type treeBuilder func() *tree
 
-// ParseDomains extract domains from rule
+// ParseDomains extract domains from rule.
 func ParseDomains(rule string) ([]string, error) {
 	parser, err := newParser()
 	if err != nil {
@@ -29,8 +29,8 @@ func ParseDomains(rule string) ([]string, error) {
 	return lower(parseDomain(buildTree())), nil
 }
 
-// ParseHostSNI extracts the HostSNIs declared in a rule
-// This is a first naive implementation used in TCP routing
+// ParseHostSNI extracts the HostSNIs declared in a rule.
+// This is a first naive implementation used in TCP routing.
 func ParseHostSNI(rule string) ([]string, error) {
 	parser, err := newTCPParser()
 	if err != nil {

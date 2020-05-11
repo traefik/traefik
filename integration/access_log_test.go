@@ -24,7 +24,7 @@ const (
 	traefikTestAccessLogFile = "access.log"
 )
 
-// AccessLogSuite
+// AccessLogSuite tests suite.
 type AccessLogSuite struct{ BaseSuite }
 
 type accessLogValue struct {
@@ -562,7 +562,7 @@ func extractLines(c *check.C) []string {
 func checkStatsForLogFile(c *check.C) {
 	err := try.Do(1*time.Second, func() error {
 		if _, errStat := os.Stat(traefikTestLogFile); errStat != nil {
-			return fmt.Errorf("could not get stats for log file: %s", errStat)
+			return fmt.Errorf("could not get stats for log file: %w", errStat)
 		}
 		return nil
 	})

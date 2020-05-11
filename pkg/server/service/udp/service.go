@@ -17,7 +17,7 @@ type Manager struct {
 	configs map[string]*runtime.UDPServiceInfo
 }
 
-// NewManager creates a new manager
+// NewManager creates a new manager.
 func NewManager(conf *runtime.Configuration) *Manager {
 	return &Manager{
 		configs: conf.UDPServices,

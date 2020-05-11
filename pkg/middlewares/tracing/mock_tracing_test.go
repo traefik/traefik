@@ -27,12 +27,12 @@ func (n MockTracer) Extract(format interface{}, carrier interface{}) (opentracin
 	return nil, opentracing.ErrSpanContextNotFound
 }
 
-// MockSpanContext
+// MockSpanContext.
 type MockSpanContext struct{}
 
 func (n MockSpanContext) ForeachBaggageItem(handler func(k, v string) bool) {}
 
-// MockSpan
+// MockSpan.
 type MockSpan struct {
 	OpName string
 	Tags   map[string]interface{}

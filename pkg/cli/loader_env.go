@@ -21,7 +21,7 @@ func (e *EnvLoader) Load(_ []string, cmd *Command) (bool, error) {
 
 	if err := env.Decode(vars, env.DefaultNamePrefix, cmd.Configuration); err != nil {
 		log.WithoutContext().Debug("environment variables", strings.Join(vars, ", "))
-		return false, fmt.Errorf("failed to decode configuration from environment variables: %v ", err)
+		return false, fmt.Errorf("failed to decode configuration from environment variables: %w ", err)
 	}
 
 	log.WithoutContext().Println("Configuration loaded from environment variables.")
