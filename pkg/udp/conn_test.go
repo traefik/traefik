@@ -10,6 +10,67 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestConsecutiveWrites(t *testing.T) {
+	addr, err := net.ResolveUDPAddr("udp", ":0")
+	require.NoError(t, err)
+
+	ln, err := Listen("udp", addr)
+	require.NoError(t, err)
+	defer func() {
+		err := ln.Close()
+		require.NoError(t, err)
+	}()
+
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err == errClosedListener {
+				return
+			}
+			require.NoError(t, err)
+
+			go func() {
+				b := make([]byte, 2048)
+				b2 := make([]byte, 2048)
+				var n int
+				var n2 int
+
+				n, err = conn.Read(b)
+				require.NoError(t, err)
+				// Wait to make sure that the second packet is received
+				time.Sleep(10 * time.Millisecond)
+				n2, err = conn.Read(b2)
+				require.NoError(t, err)
+
+				_, err = conn.Write(b[:n])
+				require.NoError(t, err)
+				_, err = conn.Write(b2[:n2])
+				require.NoError(t, err)
+			}()
+		}
+	}()
+
+	udpConn, err := net.Dial("udp", ln.Addr().String())
+	require.NoError(t, err)
+
+	// Send multiple packets of different content and length consecutively
+	// Read back packets afterwards and make sure that content matches
+	// This checks if any buffers are overwritten while the receiver is enqueuing multiple packets
+	b := make([]byte, 2048)
+	var n int
+	_, err = udpConn.Write([]byte("TESTLONG0"))
+	require.NoError(t, err)
+	_, err = udpConn.Write([]byte("1TEST"))
+	require.NoError(t, err)
+
+	n, err = udpConn.Read(b)
+	require.NoError(t, err)
+	require.Equal(t, "TESTLONG0", string(b[:n]))
+	n, err = udpConn.Read(b)
+	require.NoError(t, err)
+	require.Equal(t, "1TEST", string(b[:n]))
+}
+
 func TestListenNotBlocking(t *testing.T) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 

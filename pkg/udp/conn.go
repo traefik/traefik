@@ -128,9 +128,11 @@ func (l *Listener) Shutdown(graceTimeout time.Duration) error {
 // we find that session, and otherwise we create a new one.
 // We then send the data the session's readLoop.
 func (l *Listener) readLoop() {
-	buf := make([]byte, receiveMTU)
-
 	for {
+		// Allocating a new buffer for every read avoids
+		// overwriting data in c.msgs in case the next packet is received
+		// before c.msgs is emptied via Read()
+		buf := make([]byte, receiveMTU)
 		n, raddr, err := l.pConn.ReadFrom(buf)
 		if err != nil {
 			return
