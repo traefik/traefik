@@ -244,6 +244,7 @@ func Test_writeHeader(t *testing.T) {
 		name                      string
 		headers                   map[string]string
 		trustForwardHeader        bool
+		authRequestRedirectHeader bool
 		emptyHost                 bool
 		expectedHeaders           map[string]string
 		checkForUnexpectedHeaders bool
@@ -368,6 +369,22 @@ func Test_writeHeader(t *testing.T) {
 			},
 			checkForUnexpectedHeaders: true,
 		},
+		{
+			name: "not trust Forward Header with forward requested URI and auth redirect",
+			headers: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "fii.bir",
+				"X-Forwarded-Uri":  "/forward?q=1",
+			},
+			trustForwardHeader:        false,
+			authRequestRedirectHeader: true,
+			expectedHeaders: map[string]string{
+				"Accept":                  "application/json",
+				"X-Forwarded-Host":        "foo.bar",
+				"X-Forwarded-Uri":         "/path?q=1",
+				"X-Auth-Request-Redirect": "http://foo.bar/path?q=1",
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -383,7 +400,7 @@ func Test_writeHeader(t *testing.T) {
 
 			forwardReq := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/path?q=1", nil)
 
-			writeHeader(req, forwardReq, test.trustForwardHeader)
+			writeHeader(req, forwardReq, test.trustForwardHeader, test.authRequestRedirectHeader)
 
 			actualHeaders := forwardReq.Header
 			expectedHeaders := test.expectedHeaders

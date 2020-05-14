@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -22,15 +23,17 @@ const (
 	xForwardedURI     = "X-Forwarded-Uri"
 	xForwardedMethod  = "X-Forwarded-Method"
 	forwardedTypeName = "ForwardedAuthType"
+	xAuthRedirect     = "X-Auth-Request-Redirect"
 )
 
 type forwardAuth struct {
-	address             string
-	authResponseHeaders []string
-	next                http.Handler
-	name                string
-	client              http.Client
-	trustForwardHeader  bool
+	address                   string
+	authResponseHeaders       []string
+	next                      http.Handler
+	name                      string
+	client                    http.Client
+	trustForwardHeader        bool
+	authRequestRedirectHeader bool
 }
 
 // NewForward creates a forward auth middleware.
@@ -38,11 +41,12 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	log.FromContext(middlewares.GetLoggerCtx(ctx, name, forwardedTypeName)).Debug("Creating middleware")
 
 	fa := &forwardAuth{
-		address:             config.Address,
-		authResponseHeaders: config.AuthResponseHeaders,
-		next:                next,
-		name:                name,
-		trustForwardHeader:  config.TrustForwardHeader,
+		address:                   config.Address,
+		authResponseHeaders:       config.AuthResponseHeaders,
+		next:                      next,
+		name:                      name,
+		trustForwardHeader:        config.TrustForwardHeader,
+		authRequestRedirectHeader: config.AuthRequestRedirectHeader,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -89,7 +93,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// forwardReq.
 	tracing.InjectRequestHeaders(req)
 
-	writeHeader(req, forwardReq, fa.trustForwardHeader)
+	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestRedirectHeader)
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
@@ -158,7 +162,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	fa.next.ServeHTTP(rw, req)
 }
 
-func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader bool) {
+func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader, authRequestRedirectHeader bool) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
 	utils.RemoveHeaders(forwardReq.Header, forward.HopHeaders...)
 
@@ -181,37 +185,58 @@ func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader
 		forwardReq.Header.Del(xForwardedMethod)
 	}
 
+	authURL := url.URL{}
+
 	xfp := req.Header.Get(forward.XForwardedProto)
 	switch {
 	case xfp != "" && trustForwardHeader:
 		forwardReq.Header.Set(forward.XForwardedProto, xfp)
+		authURL.Scheme = xfp
 	case req.TLS != nil:
 		forwardReq.Header.Set(forward.XForwardedProto, "https")
+		authURL.Scheme = "https"
 	default:
 		forwardReq.Header.Set(forward.XForwardedProto, "http")
-	}
-
-	if xfp := req.Header.Get(forward.XForwardedPort); xfp != "" && trustForwardHeader {
-		forwardReq.Header.Set(forward.XForwardedPort, xfp)
+		authURL.Scheme = "http"
 	}
 
 	xfh := req.Header.Get(forward.XForwardedHost)
 	switch {
 	case xfh != "" && trustForwardHeader:
 		forwardReq.Header.Set(forward.XForwardedHost, xfh)
+		authURL.Host = xfh
 	case req.Host != "":
 		forwardReq.Header.Set(forward.XForwardedHost, req.Host)
+		authURL.Host = req.Host
 	default:
 		forwardReq.Header.Del(forward.XForwardedHost)
+	}
+
+	if xfp := req.Header.Get(forward.XForwardedPort); xfp != "" && trustForwardHeader {
+		forwardReq.Header.Set(forward.XForwardedPort, xfp)
+		authURL.Host = fmt.Sprintf("%s:%s", authURL.Host, xfp)
 	}
 
 	xfURI := req.Header.Get(xForwardedURI)
 	switch {
 	case xfURI != "" && trustForwardHeader:
 		forwardReq.Header.Set(xForwardedURI, xfURI)
+		if u, err := url.ParseRequestURI(xfURI); err == nil {
+			authURL.Path = u.Path
+			authURL.RawQuery = u.RawQuery
+			authURL.Fragment = u.Fragment
+		}
 	case req.URL.RequestURI() != "":
 		forwardReq.Header.Set(xForwardedURI, req.URL.RequestURI())
+		authURL.Path = req.URL.Path
+		authURL.RawQuery = req.URL.RawQuery
+		authURL.Fragment = req.URL.Fragment
 	default:
 		forwardReq.Header.Del(xForwardedURI)
 	}
+
+	if authRequestRedirectHeader {
+		forwardReq.Header.Set(xAuthRedirect, authURL.String())
+	}
+
 }
