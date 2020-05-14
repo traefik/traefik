@@ -214,7 +214,10 @@ func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader
 
 	if xfp := req.Header.Get(forward.XForwardedPort); xfp != "" && trustForwardHeader {
 		forwardReq.Header.Set(forward.XForwardedPort, xfp)
-		authURL.Host = fmt.Sprintf("%s:%s", authURL.Host, xfp)
+		if (xfp == "80" && authURL.Scheme != "http") || (xfp == "443" && authURL.Scheme != "https") || !(xfp == "80" || xfp == "443") {
+			authURL.Host = fmt.Sprintf("%s:%s", authURL.Host, xfp)
+		}
+
 	}
 
 	xfURI := req.Header.Get(xForwardedURI)

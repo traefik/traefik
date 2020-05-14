@@ -385,6 +385,59 @@ func Test_writeHeader(t *testing.T) {
 				"X-Auth-Request-Redirect": "http://foo.bar/path?q=1",
 			},
 		},
+		{
+			name: "trust Forward Header with standard forward port and auth redirect",
+			headers: map[string]string{
+				"Accept":           "application/json",
+				"X-Forwarded-Host": "fii.bir",
+				"X-Forwarded-Port": "80",
+				"X-Forwarded-Uri":  "/forward?q=1",
+			},
+			trustForwardHeader:        true,
+			authRequestRedirectHeader: true,
+			expectedHeaders: map[string]string{
+				"Accept":                  "application/json",
+				"X-Forwarded-Host":        "fii.bir",
+				"X-Forwarded-Uri":         "/forward?q=1",
+				"X-Auth-Request-Redirect": "http://fii.bir/forward?q=1",
+			},
+		},
+		{
+			name: "trust Forward Header with standard https forward port and auth redirect",
+			headers: map[string]string{
+				"Accept":            "application/json",
+				"X-Forwarded-Proto": "https",
+				"X-Forwarded-Host":  "fii.bir",
+				"X-Forwarded-Port":  "443",
+				"X-Forwarded-Uri":   "/forward?q=1",
+			},
+			trustForwardHeader:        true,
+			authRequestRedirectHeader: true,
+			expectedHeaders: map[string]string{
+				"Accept":                  "application/json",
+				"X-Forwarded-Host":        "fii.bir",
+				"X-Forwarded-Uri":         "/forward?q=1",
+				"X-Auth-Request-Redirect": "https://fii.bir/forward?q=1",
+			},
+		},
+		{
+			name: "trust Forward Header with non standard forward port and auth redirect",
+			headers: map[string]string{
+				"Accept":            "application/json",
+				"X-Forwarded-Proto": "http",
+				"X-Forwarded-Host":  "fii.bir",
+				"X-Forwarded-Port":  "8080",
+				"X-Forwarded-Uri":   "/forward?q=1",
+			},
+			trustForwardHeader:        true,
+			authRequestRedirectHeader: true,
+			expectedHeaders: map[string]string{
+				"Accept":                  "application/json",
+				"X-Forwarded-Host":        "fii.bir",
+				"X-Forwarded-Uri":         "/forward?q=1",
+				"X-Auth-Request-Redirect": "http://fii.bir:8080/forward?q=1",
+			},
+		},
 	}
 
 	for _, test := range testCases {
