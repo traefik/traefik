@@ -2,6 +2,7 @@ package static
 
 import (
 	"fmt"
+	"github.com/containous/traefik/v2/pkg/securitytxt"
 	stdlog "log"
 	"strings"
 	"time"
@@ -60,6 +61,8 @@ type Configuration struct {
 	API     *API           `description:"Enable api/dashboard." json:"api,omitempty" toml:"api,omitempty" yaml:"api,omitempty" label:"allowEmpty" export:"true"`
 	Metrics *types.Metrics `description:"Enable a metrics exporter." json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
 	Ping    *ping.Handler  `description:"Enable ping." json:"ping,omitempty" toml:"ping,omitempty" yaml:"ping,omitempty" label:"allowEmpty" export:"true"`
+
+	SecurityTxt *securitytxt.Configuration `description:"Enable Security.Txt backend with default settings" json:"securitytxt,omitempty" toml:"securitytxt,omitempty" yaml:"securitytxt,omitempty" export:"true" label:"allowEmpty"`
 
 	Log       *types.TraefikLog `description:"Traefik log settings." json:"log,omitempty" toml:"log,omitempty" yaml:"log,omitempty" label:"allowEmpty" export:"true"`
 	AccessLog *types.AccessLog  `description:"Access log settings." json:"accessLog,omitempty" toml:"accessLog,omitempty" yaml:"accessLog,omitempty" label:"allowEmpty" export:"true"`

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"github.com/containous/traefik/v2/pkg/securitytxt"
 	stdlog "log"
 	"net/http"
 	"os"
@@ -186,6 +187,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	ctx := context.Background()
 	routinesPool := safe.NewPool(ctx)
 
+	securityTxt := &securitytxt.SecurityTxt{
+		Configuration: staticConfiguration.SecurityTxt,
+	}
+
 	metricsRegistry := registerMetricClients(staticConfiguration.Metrics)
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
@@ -224,7 +229,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 	})
 
-	watcher.AddListener(switchRouter(routerFactory, acmeProviders, serverEntryPointsTCP, serverEntryPointsUDP))
+	watcher.AddListener(switchRouter(routerFactory, acmeProviders, securityTxt, serverEntryPointsTCP, serverEntryPointsUDP))
 
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		if metricsRegistry.IsEpEnabled() || metricsRegistry.IsSvcEnabled() {
@@ -258,10 +263,12 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, chainBuilder, accessLog), nil
 }
 
-func switchRouter(routerFactory *server.RouterFactory, acmeProviders []*acme.Provider, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints) func(conf dynamic.Configuration) {
+func switchRouter(routerFactory *server.RouterFactory, acmeProviders []*acme.Provider, securityTxt *securitytxt.SecurityTxt,serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints) func(conf dynamic.Configuration) {
 	return func(conf dynamic.Configuration) {
 		routers, udpRouters := routerFactory.CreateRouters(conf)
 		for entryPointName, rt := range routers {
+			rt.HTTPHandler(securityTxt.CreateHandler(rt.GetHTTPHandler()))
+
 			for _, p := range acmeProviders {
 				if p != nil && p.HTTPChallenge != nil && p.HTTPChallenge.EntryPoint == entryPointName {
 					rt.HTTPHandler(p.CreateHandler(rt.GetHTTPHandler()))
