@@ -1,6 +1,7 @@
 package ingress
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -21,7 +22,10 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const resyncPeriod = 10 * time.Minute
+const (
+	resyncPeriod   = 10 * time.Minute
+	defaultTimeout = 5 * time.Second
+)
 
 type resourceEventHandler struct {
 	ev chan<- interface{}
@@ -229,7 +233,10 @@ func (c *clientWrapper) UpdateIngressStatus(src *networkingv1beta1.Ingress, ip, 
 	ingCopy := ing.DeepCopy()
 	ingCopy.Status = networkingv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: []corev1.LoadBalancerIngress{{IP: ip, Hostname: hostname}}}}
 
-	_, err = c.clientset.NetworkingV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
+	_, err = c.clientset.NetworkingV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ctx, ingCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update ingress status %s/%s: %v", src.Namespace, src.Name, err)
 	}
@@ -255,7 +262,10 @@ func (c *clientWrapper) updateIngressStatusOld(src *networkingv1beta1.Ingress, i
 	ingCopy := ing.DeepCopy()
 	ingCopy.Status = extensionsv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: []corev1.LoadBalancerIngress{{IP: ip, Hostname: hostname}}}}
 
-	_, err = c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
+	_, err = c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ctx, ingCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update ingress status %s/%s: %v", src.Namespace, src.Name, err)
 	}

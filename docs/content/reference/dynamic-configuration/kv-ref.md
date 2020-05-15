@@ -173,6 +173,7 @@
 | `traefik/http/services/Service01/loadBalancer/servers/1/url` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service01/loadBalancer/sticky/cookie/name` | `foobar` |
+| `traefik/http/services/Service01/loadBalancer/sticky/cookie/sameSite` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/sticky/cookie/secure` | `true` |
 | `traefik/http/services/Service02/mirroring/maxBodySize` | `42` |
 | `traefik/http/services/Service02/mirroring/mirrors/0/name` | `foobar` |
@@ -186,6 +187,7 @@
 | `traefik/http/services/Service03/weighted/services/1/weight` | `42` |
 | `traefik/http/services/Service03/weighted/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service03/weighted/sticky/cookie/name` | `foobar` |
+| `traefik/http/services/Service03/weighted/sticky/cookie/sameSite` | `foobar` |
 | `traefik/http/services/Service03/weighted/sticky/cookie/secure` | `true` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/0` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/1` | `foobar` |

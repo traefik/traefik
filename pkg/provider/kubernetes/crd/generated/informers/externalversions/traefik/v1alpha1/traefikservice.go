@@ -27,6 +27,7 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
+	"context"
 	time "time"
 
 	versioned "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
@@ -69,13 +70,13 @@ func NewFilteredTraefikServiceInformer(client versioned.Interface, namespace str
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().TraefikServices(namespace).List(options)
+				return client.TraefikV1alpha1().TraefikServices(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().TraefikServices(namespace).Watch(options)
+				return client.TraefikV1alpha1().TraefikServices(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&traefikv1alpha1.TraefikService{},

@@ -18,8 +18,8 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, item := range items {
-		svcName := item.Node + "-" + item.Name + "-" + item.ID
-		ctxSvc := log.With(ctx, log.Str("serviceName", svcName))
+		svcName := provider.Normalize(item.Node + "-" + item.Name + "-" + item.ID)
+		ctxSvc := log.With(ctx, log.Str(log.ServiceName, svcName))
 
 		if !p.keepContainer(ctxSvc, item) {
 			continue
@@ -77,7 +77,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 			Labels: item.Labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, item.Name, p.defaultRuleTpl, model)
+		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, provider.Normalize(item.Name), p.defaultRuleTpl, model)
 
 		configurations[svcName] = confFromLabel
 	}
@@ -118,7 +118,7 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, item itemDa
 		lb := &dynamic.TCPServersLoadBalancer{}
 		lb.SetDefaults()
 
-		configuration.Services[item.Name] = &dynamic.TCPService{
+		configuration.Services[provider.Normalize(item.Name)] = &dynamic.TCPService{
 			LoadBalancer: lb,
 		}
 	}
@@ -140,7 +140,7 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, item itemDa
 
 		lb := &dynamic.UDPServersLoadBalancer{}
 
-		configuration.Services[item.Name] = &dynamic.UDPService{
+		configuration.Services[provider.Normalize(item.Name)] = &dynamic.UDPService{
 			LoadBalancer: lb,
 		}
 	}
@@ -163,7 +163,7 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, item itemData,
 		lb := &dynamic.ServersLoadBalancer{}
 		lb.SetDefaults()
 
-		configuration.Services[item.Name] = &dynamic.Service{
+		configuration.Services[provider.Normalize(item.Name)] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
 	}

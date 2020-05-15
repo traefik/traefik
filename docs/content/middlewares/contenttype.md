@@ -21,6 +21,9 @@ This middleware exists to enable the correct behavior until at least the default
     is still to automatically set the `Content-Type` header.
     Therefore, given the default value of the `autoDetect` option (false),
     simply enabling this middleware for a router switches the router's behavior.
+    
+    The scope of the Content-Type middleware is the MIME type detection done by the core of Traefik (the server part).
+    Therefore, it has no effect against any other `Content-Type` header modifications (e.g.: in another middleware such as compress).
 
 ## Configuration Examples
 

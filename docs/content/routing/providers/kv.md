@@ -106,17 +106,9 @@ A Story of key & values
 
     See [servers](../services/index.md#servers) for more information.
 
-    | Key (Path)                                                      | Value  |
-    |-----------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/servers/0/scheme` | `http` |
-
-??? info "`traefik/http/services/<service_name>/loadbalancer/servers/<n>/scheme`"
-
-    Overrides the default scheme.
-
-    | Key (Path)                                                      | Value  |
-    |-----------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/servers/0/scheme` | `http` |
+    | Key (Path)                                                      | Value                                   |
+    |-----------------------------------------------------------------|-----------------------------------------|
+    | `traefik/http/services/myservice/loadbalancer/servers/0/url`    | `http://<ip-server-1>:<port-server-1>/` |
 
 ??? info "`traefik/http/services/<service_name>/loadbalancer/passhostheader`"
 
@@ -214,6 +206,14 @@ A Story of key & values
     |---------------------------------------------------------------------|--------|
     | `traefik/http/services/myservice/loadbalancer/sticky/cookie/secure` | `true` |
 
+??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/samesite`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    | Key (Path)                                                            | Value  |
+    |-----------------------------------------------------------------------|--------|
+    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/samesite` | `none` |
+
 ??? info "`traefik/http/services/<service_name>/loadbalancer/responseforwarding/flushinterval`"
 
     See [response forwarding](../services/index.md#response-forwarding) for more information.
@@ -263,6 +263,12 @@ A Story of key & values
     | Key (Path)                                                           | Value  |
     |----------------------------------------------------------------------|--------|
     | `traefik/http/services/<service_name>/weighted/sticky/cookie/secure` | `true` |
+
+??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/samesite`"
+
+    | Key (Path)                                                             | Value  |
+    |------------------------------------------------------------------------|--------|
+    | `traefik/http/services/<service_name>/weighted/sticky/cookie/samesite` | `none` |
 
 ??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/httpOnly`"
 
@@ -367,9 +373,9 @@ You can declare TCP Routers and/or Services using KV.
 
     See [servers](../services/index.md#servers) for more information.
 
-    | Key (Path)                                                        | Value  |
-    |-------------------------------------------------------------------|--------|
-    | `traefik/tcp/services/mytcpservice/loadbalancer/servers/0/scheme` | `http` |
+    | Key (Path)                                                         | Value            |
+    |--------------------------------------------------------------------|------------------|
+    | `traefik/tcp/services/mytcpservice/loadbalancer/servers/0/address` | `xx.xx.xx.xx:xx` |
 
 ??? info "`traefik/tcp/services/<service_name>/loadbalancer/terminationdelay`"
 

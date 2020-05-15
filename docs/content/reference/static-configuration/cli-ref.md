@@ -106,13 +106,13 @@ HTTP configuration.
 Default middlewares for the routers linked to the entry point.
 
 `--entrypoints.<name>.http.redirections.entrypoint.permanent`:  
-Applied a permanent redirection. Defaults to true. (Default: ```true```)
+Applies a permanent redirection. (Default: ```true```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.priority`:  
-Priority of the generated router. Defaults to 1. (Default: ```1```)
+Priority of the generated router. (Default: ```2147483647```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.scheme`:  
-Scheme used for the redirection. Defaults to https. (Default: ```https```)
+Scheme used for the redirection. (Default: ```https```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.to`:  
 Targeted entry point of the redirection.
