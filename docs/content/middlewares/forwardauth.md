@@ -161,6 +161,56 @@ http:
         address: "https://example.com/auth"
         trustForwardHeader: true
 ```
+### `authRequestRedirectHeader`
+
+Set the `authRequestRedirectHeader` option to `true` to include the 'X-Auth-Request-Redirect' header to support oauth2_proxy.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.authRequestRedirectHeader=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: https://example.com/auth
+    authRequestRedirectHeader: true
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.authRequestRedirectHeader=true"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-auth.forwardauth.authRequestRedirectHeader": "true"
+}
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.authRequestRedirectHeader=true"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "https://example.com/auth"
+    authRequestRedirectHeader = true
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
+        authRequestRedirectHeader: true
+```
 
 ### `authResponseHeaders`
 
