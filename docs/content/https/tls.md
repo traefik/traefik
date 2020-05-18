@@ -130,6 +130,15 @@ tls:
 
 If no default certificate is provided, Traefik generates and uses a self-signed certificate.
 
+### Intermediate Certificate
+
+If you need to chain certificates to establish the chain of trust, you
+can concatenate your intermediate certificate after the certificate:
+
+```bash tab="CLI"
+cat foo.crt intermediate.crt > cert.crt
+```
+
 ## TLS Options
 
 The TLS options allow one to configure some parameters of the TLS connection.
