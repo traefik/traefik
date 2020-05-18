@@ -83,7 +83,7 @@ helm install traefik traefik/traefik
     
     ```bash tab="Using Helm CLI"
     helm install --namespace=traefik-v2 \
-        --set="additionalArguments={--logs.level=DEBUG}" \
+        --set="additionalArguments={--log.level=DEBUG}" \
         traefik traefik/traefik
     ```
     
