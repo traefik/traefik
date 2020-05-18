@@ -12,7 +12,7 @@ import (
 // The operation goes through three stages roughly summarized as:
 // KV pairs -> tree of untyped nodes
 // untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
-// "typed" nodes -> typed element
+// "typed" nodes -> typed element.
 func Decode(pairs []*store.KVPair, element interface{}, rootName string) error {
 	if element == nil {
 		return nil

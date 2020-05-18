@@ -7,7 +7,7 @@ import (
 	"github.com/vulcand/oxy/utils"
 )
 
-// FieldApply function hook to add data in accesslog
+// FieldApply function hook to add data in accesslog.
 type FieldApply func(rw http.ResponseWriter, r *http.Request, next http.Handler, data *LogData)
 
 // FieldHandler sends a new field to the logger.
@@ -39,7 +39,7 @@ func (f *FieldHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// AddServiceFields add service fields
+// AddServiceFields add service fields.
 func AddServiceFields(rw http.ResponseWriter, req *http.Request, next http.Handler, data *LogData) {
 	data.Core[ServiceURL] = req.URL // note that this is *not* the original incoming URL
 	data.Core[ServiceAddr] = req.URL.Host
@@ -47,7 +47,7 @@ func AddServiceFields(rw http.ResponseWriter, req *http.Request, next http.Handl
 	next.ServeHTTP(rw, req)
 }
 
-// AddOriginFields add origin fields
+// AddOriginFields add origin fields.
 func AddOriginFields(rw http.ResponseWriter, req *http.Request, next http.Handler, data *LogData) {
 	crw := newCaptureResponseWriter(rw)
 	start := time.Now().UTC()

@@ -12,7 +12,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// Marathon test suites (using libcompose)
+// Marathon test suites (using libcompose).
 type MarathonSuite15 struct {
 	BaseSuite
 	marathonURL string

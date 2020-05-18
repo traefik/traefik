@@ -12,7 +12,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/udp"
 )
 
-// NewManager Creates a new Manager
+// NewManager Creates a new Manager.
 func NewManager(conf *runtime.Configuration,
 	serviceManager *udpservice.Manager,
 ) *Manager {
@@ -22,7 +22,7 @@ func NewManager(conf *runtime.Configuration,
 	}
 }
 
-// Manager is a route/router manager
+// Manager is a route/router manager.
 type Manager struct {
 	serviceManager *udpservice.Manager
 	conf           *runtime.Configuration
@@ -36,7 +36,7 @@ func (m *Manager) getUDPRouters(ctx context.Context, entryPoints []string) map[s
 	return make(map[string]map[string]*runtime.UDPRouterInfo)
 }
 
-// BuildHandlers builds the handlers for the given entrypoints
+// BuildHandlers builds the handlers for the given entrypoints.
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) map[string]udp.Handler {
 	entryPointsRouters := m.getUDPRouters(rootCtx, entryPoints)
 

@@ -49,7 +49,7 @@ const (
 	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
 )
 
-// Configuration is the static configuration
+// Configuration is the static configuration.
 type Configuration struct {
 	Global *Global `description:"Global configuration options" json:"global,omitempty" toml:"global,omitempty" yaml:"global,omitempty" export:"true"`
 
@@ -81,7 +81,7 @@ type Global struct {
 	SendAnonymousUsage bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" export:"true"`
 }
 
-// ServersTransport options to configure communication between Traefik and the servers
+// ServersTransport options to configure communication between Traefik and the servers.
 type ServersTransport struct {
 	InsecureSkipVerify  bool                `description:"Disable SSL certificate verification." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
 	RootCAs             []tls.FileOrContent `description:"Add cert file for self-signed certificate." json:"rootCAs,omitempty" toml:"rootCAs,omitempty" yaml:"rootCAs,omitempty"`
@@ -89,7 +89,7 @@ type ServersTransport struct {
 	ForwardingTimeouts  *ForwardingTimeouts `description:"Timeouts for requests forwarded to the backend servers." json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
 }
 
-// API holds the API configuration
+// API holds the API configuration.
 type API struct {
 	Insecure  bool `description:"Activate API directly on the entryPoint named traefik." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	Dashboard bool `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
@@ -158,7 +158,7 @@ func (t *Tracing) SetDefaults() {
 	t.SpanNameLimit = 0
 }
 
-// Providers contains providers configuration
+// Providers contains providers configuration.
 type Providers struct {
 	ProvidersThrottleDuration types.Duration `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." json:"providersThrottleDuration,omitempty" toml:"providersThrottleDuration,omitempty" yaml:"providersThrottleDuration,omitempty" export:"true"`
 
@@ -224,7 +224,7 @@ func (c *Configuration) initACMEProvider() {
 	legolog.Logger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "legolog: ", 0)
 }
 
-// ValidateConfiguration validate that configuration is coherent
+// ValidateConfiguration validate that configuration is coherent.
 func (c *Configuration) ValidateConfiguration() error {
 	var acmeEmail string
 	for name, resolver := range c.CertificatesResolvers {

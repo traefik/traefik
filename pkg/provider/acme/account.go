@@ -12,7 +12,7 @@ import (
 	"github.com/go-acme/lego/v3/registration"
 )
 
-// Account is used to store lets encrypt registration info
+// Account is used to store lets encrypt registration info.
 type Account struct {
 	Email        string
 	Registration *registration.Resource
@@ -21,11 +21,11 @@ type Account struct {
 }
 
 const (
-	// RegistrationURLPathV1Regexp is a regexp which match ACME registration URL in the V1 format
+	// RegistrationURLPathV1Regexp is a regexp which match ACME registration URL in the V1 format.
 	RegistrationURLPathV1Regexp = `^.*/acme/reg/\d+$`
 )
 
-// NewAccount creates an account
+// NewAccount creates an account.
 func NewAccount(ctx context.Context, email string, keyTypeValue string) (*Account, error) {
 	keyType := GetKeyType(ctx, keyTypeValue)
 
@@ -42,17 +42,17 @@ func NewAccount(ctx context.Context, email string, keyTypeValue string) (*Accoun
 	}, nil
 }
 
-// GetEmail returns email
+// GetEmail returns email.
 func (a *Account) GetEmail() string {
 	return a.Email
 }
 
-// GetRegistration returns lets encrypt registration resource
+// GetRegistration returns lets encrypt registration resource.
 func (a *Account) GetRegistration() *registration.Resource {
 	return a.Registration
 }
 
-// GetPrivateKey returns private key
+// GetPrivateKey returns private key.
 func (a *Account) GetPrivateKey() crypto.PrivateKey {
 	privateKey, err := x509.ParsePKCS1PrivateKey(a.PrivateKey)
 	if err != nil {
@@ -64,7 +64,7 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 	return privateKey
 }
 
-// GetKeyType used to determine which algo to used
+// GetKeyType used to determine which algo to used.
 func GetKeyType(ctx context.Context, value string) certcrypto.KeyType {
 	logger := log.FromContext(ctx)
 

@@ -21,7 +21,7 @@ var (
 	BuildDate = "I don't remember exactly"
 )
 
-// Handler expose version routes
+// Handler expose version routes.
 type Handler struct{}
 
 var (
@@ -48,7 +48,7 @@ func (v Handler) Append(router *mux.Router) {
 		})
 }
 
-// CheckNewVersion checks if a new version is available
+// CheckNewVersion checks if a new version is available.
 func CheckNewVersion() {
 	if Version == "dev" {
 		return

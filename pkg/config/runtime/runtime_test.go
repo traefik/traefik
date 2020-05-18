@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// all the Routers/Middlewares/Services are considered fully qualified
+// all the Routers/Middlewares/Services are considered fully qualified.
 func TestPopulateUsedBy(t *testing.T) {
 	testCases := []struct {
 		desc     string

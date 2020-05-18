@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-// Checker allows to check that addresses are in a trusted IPs
+// Checker allows to check that addresses are in a trusted IPs.
 type Checker struct {
 	authorizedIPs    []*net.IP
 	authorizedIPsNet []*net.IPNet
 }
 
-// NewChecker builds a new Checker given a list of CIDR-Strings to trusted IPs
+// NewChecker builds a new Checker given a list of CIDR-Strings to trusted IPs.
 func NewChecker(trustedIPs []string) (*Checker, error) {
 	if len(trustedIPs) == 0 {
 		return nil, errors.New("no trusted IPs provided")
@@ -27,7 +27,7 @@ func NewChecker(trustedIPs []string) (*Checker, error) {
 		} else {
 			_, ipAddr, err := net.ParseCIDR(ipMask)
 			if err != nil {
-				return nil, fmt.Errorf("parsing CIDR trusted IPs %s: %v", ipAddr, err)
+				return nil, fmt.Errorf("parsing CIDR trusted IPs %s: %w", ipAddr, err)
 			}
 			checker.authorizedIPsNet = append(checker.authorizedIPsNet, ipAddr)
 		}
@@ -36,7 +36,7 @@ func NewChecker(trustedIPs []string) (*Checker, error) {
 	return checker, nil
 }
 
-// IsAuthorized checks if provided request is authorized by the trusted IPs
+// IsAuthorized checks if provided request is authorized by the trusted IPs.
 func (ip *Checker) IsAuthorized(addr string) error {
 	var invalidMatches []string
 
@@ -58,7 +58,7 @@ func (ip *Checker) IsAuthorized(addr string) error {
 	return nil
 }
 
-// Contains checks if provided address is in the trusted IPs
+// Contains checks if provided address is in the trusted IPs.
 func (ip *Checker) Contains(addr string) (bool, error) {
 	if len(addr) == 0 {
 		return false, errors.New("empty IP address")
@@ -66,13 +66,13 @@ func (ip *Checker) Contains(addr string) (bool, error) {
 
 	ipAddr, err := parseIP(addr)
 	if err != nil {
-		return false, fmt.Errorf("unable to parse address: %s: %s", addr, err)
+		return false, fmt.Errorf("unable to parse address: %s: %w", addr, err)
 	}
 
 	return ip.ContainsIP(ipAddr), nil
 }
 
-// ContainsIP checks if provided address is in the trusted IPs
+// ContainsIP checks if provided address is in the trusted IPs.
 func (ip *Checker) ContainsIP(addr net.IP) bool {
 	for _, authorizedIP := range ip.authorizedIPs {
 		if authorizedIP.Equal(addr) {

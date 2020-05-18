@@ -41,7 +41,7 @@ func (p *Provider) SetDefaults() {
 	p.RootKey = "traefik"
 }
 
-// Init the provider
+// Init the provider.
 func (p *Provider) Init(storeType store.Backend, name string) error {
 	ctx := log.With(context.Background(), log.Str(log.ProviderName, name))
 

@@ -16,7 +16,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// Log rotation integration test suite
+// Log rotation integration test suite.
 type LogRotationSuite struct{ BaseSuite }
 
 func (s *LogRotationSuite) SetUpSuite(c *check.C) {

@@ -14,13 +14,13 @@ func newProviderMock(kvPairs []*store.KVPair) *Provider {
 	}
 }
 
-// Override Get/List to return a error
+// Override Get/List to return a error.
 type KvError struct {
 	Get  error
 	List error
 }
 
-// Extremely limited mock store so we can test initialization
+// Extremely limited mock store so we can test initialization.
 type Mock struct {
 	Error           KvError
 	KVPairs         []*store.KVPair
@@ -61,7 +61,7 @@ func (s *Mock) Delete(key string) error {
 	return errors.New("method Delete not supported")
 }
 
-// Exists mock
+// Exists mock.
 func (s *Mock) Exists(key string, options *store.ReadOptions) (bool, error) {
 	if err := s.Error.Get; err != nil {
 		return false, err
@@ -74,22 +74,22 @@ func (s *Mock) Exists(key string, options *store.ReadOptions) (bool, error) {
 	return false, store.ErrKeyNotFound
 }
 
-// Watch mock
+// Watch mock.
 func (s *Mock) Watch(key string, stopCh <-chan struct{}, options *store.ReadOptions) (<-chan *store.KVPair, error) {
 	return nil, errors.New("method Watch not supported")
 }
 
-// WatchTree mock
+// WatchTree mock.
 func (s *Mock) WatchTree(prefix string, stopCh <-chan struct{}, options *store.ReadOptions) (<-chan []*store.KVPair, error) {
 	return s.WatchTreeMethod(), nil
 }
 
-// NewLock mock
+// NewLock mock.
 func (s *Mock) NewLock(key string, options *store.LockOptions) (store.Locker, error) {
 	return nil, errors.New("method NewLock not supported")
 }
 
-// List mock
+// List mock.
 func (s *Mock) List(prefix string, options *store.ReadOptions) ([]*store.KVPair, error) {
 	if err := s.Error.List; err != nil {
 		return nil, err
@@ -103,20 +103,20 @@ func (s *Mock) List(prefix string, options *store.ReadOptions) ([]*store.KVPair,
 	return kv, nil
 }
 
-// DeleteTree mock
+// DeleteTree mock.
 func (s *Mock) DeleteTree(prefix string) error {
 	return errors.New("method DeleteTree not supported")
 }
 
-// AtomicPut mock
+// AtomicPut mock.
 func (s *Mock) AtomicPut(key string, value []byte, previous *store.KVPair, opts *store.WriteOptions) (bool, *store.KVPair, error) {
 	return false, nil, errors.New("method AtomicPut not supported")
 }
 
-// AtomicDelete mock
+// AtomicDelete mock.
 func (s *Mock) AtomicDelete(key string, previous *store.KVPair) (bool, error) {
 	return false, errors.New("method AtomicDelete not supported")
 }
 
-// Close mock
+// Close mock.
 func (s *Mock) Close() {}

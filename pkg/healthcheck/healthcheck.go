@@ -25,8 +25,7 @@ const (
 var singleton *HealthCheck
 var once sync.Once
 
-// Balancer is the set of operations required to manage the list of servers in a
-// load-balancer.
+// Balancer is the set of operations required to manage the list of servers in a load-balancer.
 type Balancer interface {
 	Servers() []*url.URL
 	RemoveServer(u *url.URL) error
@@ -39,8 +38,9 @@ type BalancerHandler interface {
 	Balancer
 }
 
-// metricsRegistry is a local interface in the health check package, exposing only the required metrics
-// necessary for the health check package. This makes it easier for the tests.
+// metricsRegistry is a local interface in the health check package,
+// exposing only the required metrics necessary for the health check package.
+// This makes it easier for the tests.
 type metricsRegistry interface {
 	BackendServerUpGauge() metrics.Gauge
 }
@@ -68,7 +68,7 @@ type backendURL struct {
 	weight int
 }
 
-// BackendConfig HealthCheck configuration for a backend
+// BackendConfig HealthCheck configuration for a backend.
 type BackendConfig struct {
 	Options
 	name         string
@@ -92,7 +92,7 @@ func (b *BackendConfig) newRequest(serverURL *url.URL) (*http.Request, error) {
 	return http.NewRequest(http.MethodGet, u.String(), http.NoBody)
 }
 
-// this function adds additional http headers and hostname to http.request
+// this function adds additional http headers and hostname to http.request.
 func (b *BackendConfig) addHeadersAndHost(req *http.Request) *http.Request {
 	if b.Options.Hostname != "" {
 		req.Host = b.Options.Hostname
@@ -104,14 +104,14 @@ func (b *BackendConfig) addHeadersAndHost(req *http.Request) *http.Request {
 	return req
 }
 
-// HealthCheck struct
+// HealthCheck struct.
 type HealthCheck struct {
 	Backends map[string]*BackendConfig
 	metrics  metricsRegistry
 	cancel   context.CancelFunc
 }
 
-// SetBackendsConfiguration set backends configuration
+// SetBackendsConfiguration set backends configuration.
 func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backends map[string]*BackendConfig) {
 	hc.Backends = backends
 	if hc.cancel != nil {
@@ -152,28 +152,21 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 
 	enabledURLs := backend.LB.Servers()
 	var newDisabledURLs []backendURL
-	// FIXME re enable metrics
 	for _, disabledURL := range backend.disabledURLs {
-		// FIXME serverUpMetricValue := float64(0)
 		if err := checkHealth(disabledURL.url, backend); err == nil {
 			logger.Warnf("Health check up: Returning to server list. Backend: %q URL: %q Weight: %d",
 				backend.name, disabledURL.url.String(), disabledURL.weight)
 			if err = backend.LB.UpsertServer(disabledURL.url, roundrobin.Weight(disabledURL.weight)); err != nil {
 				logger.Error(err)
 			}
-			// FIXME serverUpMetricValue = 1
 		} else {
 			logger.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disabledURL.url.String(), err)
 			newDisabledURLs = append(newDisabledURLs, disabledURL)
 		}
-		// FIXME labelValues := []string{"backend", backend.name, "url", backendurl.url.String()}
-		// FIXME hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 	backend.disabledURLs = newDisabledURLs
 
-	// FIXME re enable metrics
 	for _, enableURL := range enabledURLs {
-		// FIXME serverUpMetricValue := float64(1)
 		if err := checkHealth(enableURL, backend); err != nil {
 			weight := 1
 			rr, ok := backend.LB.(*roundrobin.RoundRobin)
@@ -189,35 +182,25 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 				logger.Error(err)
 			}
 			backend.disabledURLs = append(backend.disabledURLs, backendURL{enableURL, weight})
-			// FIXME serverUpMetricValue = 0
 		}
-		// FIXME labelValues := []string{"backend", backend.name, "url", enableURL.String()}
-		// FIXME hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 }
-
-// FIXME re add metrics
-//func GetHealthCheck(metrics metricsRegistry) *HealthCheck {
 
 // GetHealthCheck returns the health check which is guaranteed to be a singleton.
 func GetHealthCheck() *HealthCheck {
 	once.Do(func() {
 		singleton = newHealthCheck()
-		//singleton = newHealthCheck(metrics)
 	})
 	return singleton
 }
 
-// FIXME re add metrics
-//func newHealthCheck(metrics metricsRegistry) *HealthCheck {
 func newHealthCheck() *HealthCheck {
 	return &HealthCheck{
 		Backends: make(map[string]*BackendConfig),
-		//metrics:  metrics,
 	}
 }
 
-// NewBackendConfig Instantiate a new BackendConfig
+// NewBackendConfig Instantiate a new BackendConfig.
 func NewBackendConfig(options Options, backendName string) *BackendConfig {
 	return &BackendConfig{
 		Options: options,
@@ -230,7 +213,7 @@ func NewBackendConfig(options Options, backendName string) *BackendConfig {
 func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 	req, err := backend.newRequest(serverURL)
 	if err != nil {
-		return fmt.Errorf("failed to create HTTP request: %s", err)
+		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
 	req = backend.addHeadersAndHost(req)
@@ -248,7 +231,7 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("HTTP request failed: %s", err)
+		return fmt.Errorf("HTTP request failed: %w", err)
 	}
 
 	defer resp.Body.Close()
@@ -260,7 +243,7 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 	return nil
 }
 
-// NewLBStatusUpdater returns a new LbStatusUpdater
+// NewLBStatusUpdater returns a new LbStatusUpdater.
 func NewLBStatusUpdater(bh BalancerHandler, info *runtime.ServiceInfo) *LbStatusUpdater {
 	return &LbStatusUpdater{
 		BalancerHandler: bh,
@@ -298,7 +281,7 @@ func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.Server
 // Balancers is a list of Balancers(s) that implements the Balancer interface.
 type Balancers []Balancer
 
-// Servers returns the servers url from all the BalancerHandler
+// Servers returns the servers url from all the BalancerHandler.
 func (b Balancers) Servers() []*url.URL {
 	var servers []*url.URL
 	for _, lb := range b {

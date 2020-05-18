@@ -49,6 +49,9 @@
     "wsl", # Too strict
     "gomnd", # Too strict
     "stylecheck", # skip because report issues related to some generated files.
+    "testpackage", # Too strict
+    "goerr113", # Too strict
+    "nestif", # Too many false-positive.
   ]
 
 [issues]
@@ -62,7 +65,7 @@
   ]
  [[issues.exclude-rules]]
     path = "(.+)_test.go"
-    linters = ["goconst", "funlen"]
+    linters = ["goconst", "funlen", "godot"]
  [[issues.exclude-rules]]
     path = "integration/.+_test.go"
     text = "Error return value of `cmd\\.Process\\.Kill` is not checked"
@@ -105,3 +108,6 @@
  [[issues.exclude-rules]]
     path = "pkg/tracing/tracing.go"
     text = "printf-like formatting function 'SetErrorWithEvent' should be named 'SetErrorWithEventf'"
+ [[issues.exclude-rules]]
+    path = "pkg/log/deprecated.go"
+    linters = ["godot"]

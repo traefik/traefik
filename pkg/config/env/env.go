@@ -17,7 +17,7 @@ const DefaultNamePrefix = "TRAEFIK_"
 // env vars -> map
 // map -> tree of untyped nodes
 // untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
-// "typed" nodes -> typed element
+// "typed" nodes -> typed element.
 func Decode(environ []string, prefix string, element interface{}) error {
 	if err := checkPrefix(prefix); err != nil {
 		return err
@@ -40,7 +40,7 @@ func Decode(environ []string, prefix string, element interface{}) error {
 // The operation goes through three stages roughly summarized as:
 // typed configuration in element -> tree of untyped nodes
 // untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
-// "typed" nodes -> environment variables with default values (determined by type/kind)
+// "typed" nodes -> environment variables with default values (determined by type/kind).
 func Encode(element interface{}) ([]parser.Flat, error) {
 	if element == nil {
 		return nil, nil

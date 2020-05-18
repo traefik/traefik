@@ -38,12 +38,12 @@ func New(ctx context.Context, next http.Handler, config dynamic.InFlightReq, nam
 
 	sourceMatcher, err := middlewares.GetSourceExtractor(ctxLog, config.SourceCriterion)
 	if err != nil {
-		return nil, fmt.Errorf("error creating requests limiter: %v", err)
+		return nil, fmt.Errorf("error creating requests limiter: %w", err)
 	}
 
 	handler, err := connlimit.New(next, sourceMatcher, config.Amount)
 	if err != nil {
-		return nil, fmt.Errorf("error creating connection limit: %v", err)
+		return nil, fmt.Errorf("error creating connection limit: %w", err)
 	}
 
 	return &inFlightReq{handler: handler, name: name}, nil

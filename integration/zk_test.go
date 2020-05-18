@@ -19,7 +19,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// Zk test suites (using libcompose)
+// Zk test suites (using libcompose).
 type ZookeeperSuite struct {
 	BaseSuite
 	kvClient store.Store

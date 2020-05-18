@@ -50,7 +50,7 @@ func (r *responseRecorder) WriteHeader(status int) {
 	r.statusCode = status
 }
 
-// Hijack hijacks the connection
+// Hijack hijacks the connection.
 func (r *responseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return r.ResponseWriter.(http.Hijacker).Hijack()
 }

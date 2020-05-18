@@ -144,7 +144,7 @@ func (i *Provider) getEntryPointPort(name string, def *static.Redirections) (str
 
 	_, port, err := net.SplitHostPort(dst.Address)
 	if err != nil {
-		return "", fmt.Errorf("invalid entry point %q address %q: %v",
+		return "", fmt.Errorf("invalid entry point %q address %q: %w",
 			name, i.staticCfg.EntryPoints[def.EntryPoint.To].Address, err)
 	}
 

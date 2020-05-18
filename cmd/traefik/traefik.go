@@ -274,7 +274,7 @@ func switchRouter(routerFactory *server.RouterFactory, acmeProviders []*acme.Pro
 	}
 }
 
-// initACMEProvider creates an acme provider from the ACME part of globalConfiguration
+// initACMEProvider creates an acme provider from the ACME part of globalConfiguration.
 func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager) []*acme.Provider {
 	challengeStore := acme.NewLocalChallengeStore()
 	localStores := map[string]*acme.LocalStore{}

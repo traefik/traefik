@@ -9,7 +9,7 @@ import (
 // The operation goes through three stages roughly summarized as:
 // file contents -> tree of untyped nodes
 // untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
-// "typed" nodes -> typed element
+// "typed" nodes -> typed element.
 func Decode(filePath string, element interface{}) error {
 	if element == nil {
 		return nil

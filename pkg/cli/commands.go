@@ -55,7 +55,7 @@ func execute(cmd *Command, args []string, root bool) error {
 	// Calls command without args.
 	if len(args) == 1 {
 		if err := run(cmd, args[1:]); err != nil {
-			return fmt.Errorf("command %s error: %v", args[0], err)
+			return fmt.Errorf("command %s error: %w", args[0], err)
 		}
 		return nil
 	}
@@ -65,7 +65,7 @@ func execute(cmd *Command, args []string, root bool) error {
 	// then we run the top level command itself.
 	if root && cmd.Name != args[1] && !contains(cmd.subCommands, args[1]) {
 		if err := run(cmd, args[1:]); err != nil {
-			return fmt.Errorf("command %s error: %v", filepath.Base(args[0]), err)
+			return fmt.Errorf("command %s error: %w", filepath.Base(args[0]), err)
 		}
 		return nil
 	}
@@ -74,7 +74,7 @@ func execute(cmd *Command, args []string, root bool) error {
 	if len(args) >= 2 && cmd.Name == args[1] {
 		if len(args) < 3 || !contains(cmd.subCommands, args[2]) {
 			if err := run(cmd, args[2:]); err != nil {
-				return fmt.Errorf("command %s error: %v", cmd.Name, err)
+				return fmt.Errorf("command %s error: %w", cmd.Name, err)
 			}
 			return nil
 		}
@@ -83,7 +83,7 @@ func execute(cmd *Command, args []string, root bool) error {
 	// No sub-command, calls the current command.
 	if len(cmd.subCommands) == 0 {
 		if err := run(cmd, args[1:]); err != nil {
-			return fmt.Errorf("command %s error: %v", cmd.Name, err)
+			return fmt.Errorf("command %s error: %w", cmd.Name, err)
 		}
 		return nil
 	}

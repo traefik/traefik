@@ -34,7 +34,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ReplacePathRegex
 
 	exp, err := regexp.Compile(strings.TrimSpace(config.Regex))
 	if err != nil {
-		return nil, fmt.Errorf("error compiling regular expression %s: %s", config.Regex, err)
+		return nil, fmt.Errorf("error compiling regular expression %s: %w", config.Regex, err)
 	}
 
 	return &replacePathRegex{

@@ -179,7 +179,7 @@ func (s *ServiceInfo) UpdateServerStatus(server string, status string) {
 }
 
 // GetAllStatus returns all the statuses of all the servers in ServiceInfo.
-// It is the responsibility of the caller to check that s is not nil
+// It is the responsibility of the caller to check that s is not nil.
 func (s *ServiceInfo) GetAllStatus() map[string]string {
 	s.serverStatusMu.RLock()
 	defer s.serverStatusMu.RUnlock()
