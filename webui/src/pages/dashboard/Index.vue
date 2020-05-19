@@ -1,5 +1,6 @@
 <template>
   <page-default>
+    <platform-notification />
 
     <section class="app-section">
       <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-xl q-pb-lg">
@@ -150,6 +151,7 @@ import PanelEntry from '../../components/dashboard/PanelEntry'
 import PanelChart from '../../components/dashboard/PanelChart'
 import PanelFeature from '../../components/dashboard/PanelFeature'
 import PanelProvider from '../../components/dashboard/PanelProvider'
+import PlatformNotification from '../../components/platform/PlatformNotification'
 
 export default {
   name: 'PageDashboardIndex',
@@ -159,7 +161,8 @@ export default {
     PanelEntry,
     PanelChart,
     PanelFeature,
-    PanelProvider
+    PanelProvider,
+    PlatformNotification
   },
   data () {
     return {
