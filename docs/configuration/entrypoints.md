@@ -488,7 +488,7 @@ To enable IP white listing at the entry point level.
 By setting the `useXForwardedFor` option, the `sourceRange` addresses will be matched against the request header `X-Forwarded-For` address list, from left to right.
 
 !!! danger
-    When using Traefik behind another load-balancer, it's own internal address will be appended in the `X-Forwarded-For` header.
+    When using Traefik behind another load-balancer, its own internal address will be appended in the `X-Forwarded-For` header.
     Be sure to carefully configure the `sourceRange` as adding the internal network CIDR,
     or the load-balancer address directly, will cause all requests coming from it to pass through.
 
