@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -146,11 +147,34 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Map of headers that already set by wildcard pattern to prevent double check
+	setHeaders := make(map[string]bool)
+
 	for _, headerName := range fa.authResponseHeaders {
-		headerKey := http.CanonicalHeaderKey(headerName)
-		req.Header.Del(headerKey)
-		if len(forwardResponse.Header[headerKey]) > 0 {
-			req.Header[headerKey] = append([]string(nil), forwardResponse.Header[headerKey]...)
+		configHeader := http.CanonicalHeaderKey(headerName)
+
+		// Check if config header is a wildcard pattern
+		if strings.ContainsAny(configHeader, "*?[]") {
+			// Remove original request's headers that match pattern even if it's not set in forward response
+			for originalHeader := range req.Header {
+				if match, _ := filepath.Match(configHeader, originalHeader); match {
+					req.Header.Del(originalHeader)
+				}
+			}
+
+			for forwardResponseHeader, forwardResponseHeaderValue := range forwardResponse.Header {
+				if setHeaders[forwardResponseHeader] || len(forwardResponseHeaderValue) == 0 {
+					continue
+				}
+				if match, _ := filepath.Match(configHeader, forwardResponseHeader); match {
+					setHeaders[forwardResponseHeader] = true
+					req.Header[forwardResponseHeader] = append([]string(nil), forwardResponseHeaderValue...)
+				}
+			}
+		} else if len(forwardResponse.Header[configHeader]) > 0 {
+			setHeaders[configHeader] = true
+			req.Header.Del(configHeader)
+			req.Header[configHeader] = append([]string(nil), forwardResponse.Header[configHeader]...)
 		}
 	}
 

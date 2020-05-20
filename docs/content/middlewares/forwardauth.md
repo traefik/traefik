@@ -165,10 +165,11 @@ http:
 ### `authResponseHeaders`
 
 The `authResponseHeaders` option is the list of the headers to copy from the authentication server to the request.
+It could contain wildcard patterns as well.
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
+  - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret-*"
 ```
 
 ```yaml tab="Kubernetes"
@@ -181,29 +182,29 @@ spec:
     address: https://example.com/auth
     authResponseHeaders:
       - X-Auth-User
-      - X-Secret
+      - X-Secret-*
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
+- "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret-*"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders": "X-Auth-User,X-Secret"
+  "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders": "X-Auth-User,X-Secret-*"
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
+  - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret-*"
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-auth.forwardAuth]
     address = "https://example.com/auth"
-    authResponseHeaders = ["X-Auth-User", "X-Secret"]
+    authResponseHeaders = ["X-Auth-User", "X-Secret-*"]
 ```
 
 ```yaml tab="File (YAML)"
@@ -214,7 +215,7 @@ http:
         address: "https://example.com/auth"
         authResponseHeaders:
           - "X-Auth-User"
-          - "X-Secret"
+          - "X-Secret-*"
 ```
 
 ### `tls`
