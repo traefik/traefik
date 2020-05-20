@@ -69,6 +69,33 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 	assert.EqualValues(t, rw.Body.Bytes(), fakeCompressedBody)
 }
 
+func TestShouldNotCompressWhenNoContentTypeHeaderOnReq(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, gzipValue)
+
+	fakeBody := generateBytes(gziphandler.DefaultMinSize)
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Add(contentTypeHeader, "text/plain")
+		rw.Header().Add(varyHeader, acceptEncodingHeader)
+		_, err := rw.Write(fakeBody)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	handler := &compress{
+		next:     next,
+		excludes: []string{"text/plain"},
+	}
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
+
+	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+}
+
 func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 

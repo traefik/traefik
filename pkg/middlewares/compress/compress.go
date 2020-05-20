@@ -5,6 +5,8 @@ import (
 	"context"
 	"mime"
 	"net/http"
+	"strings"
+	"sync"
 
 	"github.com/NYTimes/gziphandler"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
@@ -42,6 +44,51 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 	return &compress{next: next, name: name, excludes: excludes}, nil
 }
 
+type compressResponseWriter struct {
+	getResponseWriter func() http.ResponseWriter
+}
+
+func (w *compressResponseWriter) Flush() {
+	if fw, ok := w.getResponseWriter().(http.Flusher); ok {
+		fw.Flush()
+	}
+}
+
+func (w *compressResponseWriter) WriteHeader(code int) {
+	w.getResponseWriter().WriteHeader(code)
+}
+
+func (w *compressResponseWriter) Header() http.Header {
+	return w.getResponseWriter().Header()
+}
+
+func (w *compressResponseWriter) Write(b []byte) (int, error) {
+	return w.getResponseWriter().Write(b)
+}
+
+func (c *compress) handleExclusions(h http.Handler, ow http.ResponseWriter) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cw := &compressResponseWriter{
+			getResponseWriter: func() http.ResponseWriter {
+				var once sync.Once
+				var rw http.ResponseWriter
+				once.Do(func() {
+					//Compute exclusion once
+					contentType := w.Header().Get("Content-Type")
+
+					if contains(c.excludes, contentType) {
+						rw = ow
+					} else {
+						rw = w
+					}
+				})
+				return rw
+			},
+		}
+		h.ServeHTTP(cw, r)
+	})
+}
+
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	mediaType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
 	if err != nil {
@@ -52,7 +99,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		c.next.ServeHTTP(rw, req)
 	} else {
 		ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
-		gzipHandler(ctx, c.next).ServeHTTP(rw, req)
+		gzipHandler(ctx, c.handleExclusions(c.next, rw)).ServeHTTP(rw, req)
 	}
 }
 
@@ -73,7 +120,7 @@ func gzipHandler(ctx context.Context, h http.Handler) http.Handler {
 
 func contains(values []string, val string) bool {
 	for _, v := range values {
-		if v == val {
+		if strings.Contains(val, v) {
 			return true
 		}
 	}
