@@ -21,6 +21,7 @@ import (
 	"github.com/mitchellh/hashstructure"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -181,13 +182,36 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		TCP: &dynamic.TCPConfiguration{},
 	}
 
+	major, minor, err := client.GetServerVersion()
+	if err != nil {
+		log.FromContext(ctx).Errorf("Failed to get server version: %w", err)
+		return conf
+	}
+
+	var ingressClass *networkingv1beta1.IngressClass
+
+	if major >= 1 && minor >= 18 {
+		ic, exists, err := client.GetIngressClass(p.IngressClass)
+		if err != nil {
+			log.FromContext(ctx).Errorf("Failed to get ingress class: %w", err)
+			return conf
+		}
+
+		if !exists {
+			log.FromContext(ctx).Errorf("Ingress class does not exist: %w", err)
+			return conf
+		}
+
+		ingressClass = ic
+	}
+
 	ingresses := client.GetIngresses()
 
 	certConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
 		ctx = log.With(ctx, log.Str("ingress", ingress.Name), log.Str("namespace", ingress.Namespace))
 
-		if !shouldProcessIngress(p.IngressClass, ingress.Annotations[annotationKubernetesIngressClass]) {
+		if !p.shouldProcessIngress(p.IngressClass, ingress, ingressClass) {
 			continue
 		}
 
@@ -311,17 +335,25 @@ func (p *Provider) updateIngressStatus(ing *v1beta1.Ingress, k8sClient Client) e
 	return k8sClient.UpdateIngressStatus(ing, service.Status.LoadBalancer.Ingress[0].IP, service.Status.LoadBalancer.Ingress[0].Hostname)
 }
 
+func (p *Provider) shouldProcessIngress(providerIngressClass string, ingress *networkingv1beta1.Ingress, ingressClass *networkingv1beta1.IngressClass) bool {
+	switch {
+	case providerIngressClass == ingress.Annotations[annotationKubernetesIngressClass]:
+		return true
+	case len(providerIngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == traefikDefaultIngressClass:
+		return true
+	case ingressClass != nil && ingress.Spec.IngressClassName != nil && ingressClass.Name == *ingress.Spec.IngressClassName && ingressClass.Name == providerIngressClass:
+		return true
+	default:
+		return false
+	}
+}
+
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		return "HostRegexp(`" + strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1) + "`)"
 	}
 
 	return "Host(`" + host + "`)"
-}
-
-func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
-	return ingressClass == ingressClassAnnotation ||
-		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
 }
 
 func getCertificates(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
