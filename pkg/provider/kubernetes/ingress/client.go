@@ -181,7 +181,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
 			}
 		}
-
 	}
 	return eventCh, nil
 }
