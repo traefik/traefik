@@ -161,6 +161,7 @@ http:
         address: "https://example.com/auth"
         trustForwardHeader: true
 ```
+
 ### `authRequestRedirectHeader`
 
 Set the `authRequestRedirectHeader` option to `true` to include the 'X-Auth-Request-Redirect' header to support oauth2_proxy.

@@ -217,7 +217,6 @@ func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader
 		if (xfp == "80" && authURL.Scheme != "http") || (xfp == "443" && authURL.Scheme != "https") || !(xfp == "80" || xfp == "443") {
 			authURL.Host = fmt.Sprintf("%s:%s", authURL.Host, xfp)
 		}
-
 	}
 
 	xfURI := req.Header.Get(xForwardedURI)
@@ -241,5 +240,4 @@ func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader
 	if authRequestRedirectHeader {
 		forwardReq.Header.Set(xAuthRedirect, authURL.String())
 	}
-
 }
