@@ -349,7 +349,13 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 		// Check connected container for traefik.docker.network, falling back to
 		// the network specified on the current container.
 		containerParsed := parseContainer(containerInspected)
-		extraConf, _ := p.getConfiguration(containerParsed)
+		extraConf, err := p.getConfiguration(containerParsed)
+
+		if err != nil {
+			logger.Warnf("Unable to get IP address for container %s : failed to get extra configuration for container %s: %s", container.Name, containerInspected.Name, err)
+			return ""
+		}
+
 		if extraConf.Docker.Network == "" {
 			extraConf.Docker.Network = container.ExtraConf.Docker.Network
 		}
