@@ -34,40 +34,40 @@ providers:
 
 Defines the interval with which to poll the endpoint.
 
-_Optional, Default="15s"_
+_Optional, Default="5s"_
 
 ```toml tab="File (TOML)"
 [providers.http]
-  pollInterval = "15s"
+  pollInterval = "5s"
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   http:
-    pollInterval: "15s"
+    pollInterval: "5s"
 ```
 
 ```bash tab="CLI"
---providers.http.pollinterval=15s
+--providers.http.pollinterval=5s
 ```
 
 ### `pollTimeout`
 
 Defines a timeout when connecting to the endpoint.
 
-_Optional, Default="15s"_
+_Optional, Default="5s"_
 
 ```toml tab="File (TOML)"
 [providers.http]
-  pollTimeout = "15s"
+  pollTimeout = "1s"
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   http:
-    pollTimeout: "15s"
+    pollTimeout: "5s"
 ```
 
 ```bash tab="CLI"
---providers.http.polltimeout=15s
+--providers.http.polltimeout=5s
 ```

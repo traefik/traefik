@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestProviderInit(t *testing.T) {
+func TestProvider_Init(t *testing.T) {
 	provider := &Provider{}
 	assert.Error(t, provider.Init())
 
@@ -23,42 +24,38 @@ func TestProviderInit(t *testing.T) {
 	assert.NoError(t, provider.Init())
 }
 
-func TestGetDataFromEndpoint(t *testing.T) {
+func TestProvider_GetDataFromEndpoint(t *testing.T) {
+	configString := "{OK}"
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
+
 	defer server.Close()
 	mux.HandleFunc("/endpoint", func(rw http.ResponseWriter, req *http.Request) {
-		_, _ = rw.Write([]byte("{OK}"))
+		_, _ = rw.Write([]byte(configString))
 	})
 
 	provider := Provider{
-		Endpoint: server.URL + "/endpoint",
+		Endpoint:     server.URL + "/endpoint",
+		PollInterval: types.Duration(1 * time.Second),
+		PollTimeout:  types.Duration(1 * time.Second),
 	}
 
 	assert.NoError(t, provider.Init())
 
 	data, err := provider.getDataFromEndpoint(context.Background())
 	assert.NoError(t, err)
-	assert.Equal(t, "{OK}", string(data))
+	assert.Equal(t, configString, string(data))
 }
 
-func TestBuildConfiguration(t *testing.T) {
-	provider := Provider{
-		Endpoint: "http://127.0.0.1:9000/endpoint",
-	}
-
-	assert.NoError(t, provider.Init())
-
-	config := provider.buildConfiguration(context.Background(), []byte("{}"))
-	assert.NotEqual(t, nil, config)
-}
-
-func TestProvide(t *testing.T) {
+func TestProvider_Provide(t *testing.T) {
+	c, _ := json.Marshal(dynamic.Configuration{})
+	configString := string(c)
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
+
 	defer server.Close()
 	mux.HandleFunc("/endpoint", func(rw http.ResponseWriter, req *http.Request) {
-		_, _ = rw.Write([]byte("{}"))
+		_, _ = rw.Write([]byte(configString))
 	})
 
 	provider := Provider{
@@ -80,6 +77,7 @@ func TestProvide(t *testing.T) {
 	select {
 	case conf := <-configChan:
 		assert.NotNil(t, conf.Configuration)
+		assert.Equal(t, &dynamic.Configuration{}, conf.Configuration)
 	case <-timeout:
 		t.Errorf("timeout while waiting for config")
 	}

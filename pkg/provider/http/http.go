@@ -1,7 +1,6 @@
 package http
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -25,6 +24,7 @@ type Provider struct {
 	Endpoint     string         `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint" export:"true"`
 	PollInterval types.Duration `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty"`
 	PollTimeout  types.Duration `description:"Polling timeout for endpoint." json:"pollTimeout,omitempty" toml:"pollTimeout,omitempty" yaml:"pollTimeout,omitempty"`
+	httpClient   *http.Client
 }
 
 // Init the provider.
@@ -34,12 +34,15 @@ func (p *Provider) Init() error {
 	}
 
 	if p.PollInterval == 0 {
-		p.PollInterval = types.Duration(15 * time.Second)
+		p.PollInterval = types.Duration(5 * time.Second)
 	}
 
 	if p.PollTimeout == 0 {
-		p.PollTimeout = types.Duration(15 * time.Second)
+		p.PollTimeout = types.Duration(5 * time.Second)
 	}
+
+	p.httpClient = &http.Client{Timeout: time.Duration(p.PollTimeout)}
+
 	return nil
 }
 
@@ -64,12 +67,18 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					case <-ticker.C:
 						data, err := p.getDataFromEndpoint(ctxLog)
 						if err != nil {
-							logger.Errorf("Failed to get config from endpoint: %w", err)
+							logger.Errorf("Failed to get config from endpoint: %v", err)
 							errChan <- err
 							return
 						}
 
-						configuration := p.buildConfiguration(ctx, data)
+						configuration := &dynamic.Configuration{}
+
+						if err := json.Unmarshal(data, configuration); err != nil {
+							log.FromContext(ctx).Errorf("Error parsing configuration: %v", err)
+							return
+						}
+
 						if configuration != nil {
 							configurationChan <- dynamic.Message{
 								ProviderName:  "http",
@@ -102,49 +111,30 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
-// getDataFromEndpoint gets data from the configured provider endpoint, and returns the data.
-func (p *Provider) getDataFromEndpoint(ctx context.Context) ([]byte, error) {
-	b := []byte{}
-	req, err := http.NewRequest(http.MethodGet, p.Endpoint, bytes.NewBuffer(b))
+// getDataFromEndpoint returns data from the configured provider endpoint.
+func (p Provider) getDataFromEndpoint(ctx context.Context) ([]byte, error) {
+	resp, err := p.httpClient.Get(p.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create request: %w", err)
+		return nil, fmt.Errorf("unable to get data from endpoint %q: %w", p.Endpoint, err)
 	}
 
-	client := &http.Client{Timeout: time.Duration(p.PollTimeout)}
-	resp, err := client.Do(req)
-
-	if resp != nil {
-		defer resp.Body.Close()
-
-		var bodyData []byte
-		var bodyErr error
-		if bodyData, bodyErr = ioutil.ReadAll(resp.Body); bodyErr != nil {
-			return nil, fmt.Errorf("unable to read response body: %w", bodyErr)
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("received non-ok response code: %d", resp.StatusCode)
-		}
-
-		log.FromContext(ctx).Debugf("Successfully received data from endpoint: %q", p.Endpoint)
-		return bodyData, nil
+	if resp == nil {
+		return nil, fmt.Errorf("received no data from endpoint")
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("unable to get data from endpoint: %w", err)
+	defer resp.Body.Close()
+
+	var data []byte
+
+	if data, err = ioutil.ReadAll(resp.Body); err != nil {
+		return nil, fmt.Errorf("unable to read response body: %w", err)
 	}
 
-	return nil, fmt.Errorf("received no data from endpoint")
-}
-
-// buildConfiguration builds a configuration from the provided data.
-func (p *Provider) buildConfiguration(ctx context.Context, data []byte) *dynamic.Configuration {
-	configuration := &dynamic.Configuration{}
-
-	if err := json.Unmarshal(data, configuration); err != nil {
-		log.FromContext(ctx).Errorf("Error parsing configuration %w", err)
-		return nil
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-ok response code: %d", resp.StatusCode)
 	}
 
-	return configuration
+	log.FromContext(ctx).Debugf("Successfully received data from endpoint: %q", p.Endpoint)
+
+	return data, nil
 }
