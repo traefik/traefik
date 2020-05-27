@@ -159,6 +159,11 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     ```yaml
     - "traefik.http.routers.myrouter.rule=Host(`example.com`)"
     ```
+    
+    Separate multiple rules with a semicolon:
+    ```yaml
+    - "traefik.http.routers.myrouter.rule=Host:example.com; Path:/app2"
+    ```
 
 ??? info "`traefik.http.routers.<router_name>.entrypoints`"
 
