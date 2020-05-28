@@ -1,8 +1,10 @@
 package retry
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httptrace"
@@ -110,6 +112,97 @@ func TestRetry(t *testing.T) {
 
 			assert.Equal(t, test.wantResponseStatus, recorder.Code)
 			assert.Equal(t, test.wantRetryAttempts, retryListener.timesCalled)
+		})
+	}
+}
+
+func TestRetryWithRequestBody(t *testing.T) {
+	const requestBody = `request body`
+	testCases := []struct {
+		desc                  string
+		config                dynamic.Retry
+		wantRetryAttempts     int
+		wantResponseStatus    int
+		amountFaultyEndpoints int
+		body                  string
+		method                string
+	}{
+		{
+			desc:                  "one retry when one server is faulty with body",
+			config:                dynamic.Retry{Attempts: 2},
+			wantRetryAttempts:     1,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 1,
+			body:                  requestBody,
+			method:                http.MethodPost,
+		},
+		{
+			desc:                  "two retries when two servers are faulty with body",
+			config:                dynamic.Retry{Attempts: 3},
+			wantRetryAttempts:     2,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 2,
+			body:                  requestBody,
+			method:                http.MethodPost,
+		},
+	}
+
+	backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+		buffer := new(bytes.Buffer)
+		// here we echo request body to response
+		_, err := buffer.ReadFrom(req.Body)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		_, err = rw.Write(buffer.Bytes())
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	}))
+
+	forwarder, err := forward.New()
+	require.NoError(t, err)
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			loadBalancer, err := roundrobin.New(forwarder)
+			require.NoError(t, err)
+
+			// out of range port
+			basePort := 1133444
+			for i := 0; i < test.amountFaultyEndpoints; i++ {
+				// 192.0.2.0 is a non-routable IP for testing purposes.
+				// See: https://stackoverflow.com/questions/528538/non-routable-ip-address/18436928#18436928
+				// We only use the port specification here because the URL is used as identifier
+				// in the load balancer and using the exact same URL would not add a new server.
+				err = loadBalancer.UpsertServer(testhelpers.MustParseURL("http://192.0.2.0:" + strconv.Itoa(basePort+i)))
+				require.NoError(t, err)
+			}
+
+			// add the functioning server to the end of the load balancer list
+			err = loadBalancer.UpsertServer(testhelpers.MustParseURL(backendServer.URL))
+			require.NoError(t, err)
+
+			retryListener := &countingRetryListener{}
+			retry, err := New(context.Background(), loadBalancer, test.config, retryListener, "traefikTest")
+			require.NoError(t, err)
+
+			recorder := httptest.NewRecorder()
+			var reader io.Reader = nil
+			reader = strings.NewReader(test.body)
+			req := httptest.NewRequest(test.method, "http://localhost:3000/ok", reader)
+
+			retry.ServeHTTP(recorder, req)
+
+			assert.Equal(t, test.wantResponseStatus, recorder.Code)
+			assert.Equal(t, test.wantRetryAttempts, retryListener.timesCalled)
+			actualBodyString := recorder.Body.String()
+			assert.Equal(t, test.body, actualBodyString)
 		})
 	}
 }
