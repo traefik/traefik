@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -21,10 +22,11 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that queries an endpoint for a configuration.
 type Provider struct {
-	Endpoint     string         `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint" export:"true"`
-	PollInterval types.Duration `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty"`
-	PollTimeout  types.Duration `description:"Polling timeout for endpoint." json:"pollTimeout,omitempty" toml:"pollTimeout,omitempty" yaml:"pollTimeout,omitempty"`
-	httpClient   *http.Client
+	Endpoint           string         `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint" export:"true"`
+	PollInterval       types.Duration `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty"`
+	PollTimeout        types.Duration `description:"Polling timeout for endpoint." json:"pollTimeout,omitempty" toml:"pollTimeout,omitempty" yaml:"pollTimeout,omitempty"`
+	InsecureSkipVerify bool           `description:"Skip TLS verification for an https endpoint." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty"`
+	httpClient         *http.Client
 }
 
 // Init the provider.
@@ -41,7 +43,14 @@ func (p *Provider) Init() error {
 		p.PollTimeout = types.Duration(5 * time.Second)
 	}
 
-	p.httpClient = &http.Client{Timeout: time.Duration(p.PollTimeout)}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: p.InsecureSkipVerify},
+	}
+
+	p.httpClient = &http.Client{
+		Timeout:   time.Duration(p.PollTimeout),
+		Transport: tr,
+	}
 
 	return nil
 }

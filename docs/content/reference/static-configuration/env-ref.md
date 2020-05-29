@@ -457,10 +457,13 @@ Load dynamic configuration from a file.
 Watch provider. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_HTTP`:  
-Enable Http backend with default settings. (Default: ```false```)
+Enable HTTP backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_HTTP_ENDPOINT`:  
 Load configuration from this endpoint.
+
+`TRAEFIK_PROVIDERS_HTTP_INSECURESKIPVERIFY`:  
+Skip TLS verification for an https endpoint. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_HTTP_POLLINTERVAL`:  
 Polling interval for endpoint. (Default: ```0```)

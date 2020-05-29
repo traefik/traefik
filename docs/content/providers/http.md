@@ -30,6 +30,27 @@ providers:
 --providers.http.endpoint=http://127.0.0.1:9000/api
 ```
 
+### `insecureSkipVerify`
+
+_Optional, Default=false_
+
+If `insecureSkipVerify` is true, TLS for the connection to the endpoint server accepts any certificate presented by the server and any host name in that certificate.
+
+```toml tab="File (TOML)"
+[providers.http]
+  insecureskipverify = false
+```
+
+```yaml tab="File (YAML)"
+providers:
+  http:
+      insecureskipverify: false
+```
+
+```bash tab="CLI"
+--providers.http.insecureskipverify=false
+```
+
 ### `pollInterval`
 
 Defines the interval with which to poll the endpoint.

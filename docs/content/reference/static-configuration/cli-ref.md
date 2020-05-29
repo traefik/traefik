@@ -457,10 +457,13 @@ Load dynamic configuration from a file.
 Watch provider. (Default: ```true```)
 
 `--providers.http`:  
-Enable Http backend with default settings. (Default: ```false```)
+Enable HTTP backend with default settings. (Default: ```false```)
 
 `--providers.http.endpoint`:  
 Load configuration from this endpoint.
+
+`--providers.http.insecureskipverify`:  
+Skip TLS verification for an https endpoint. (Default: ```false```)
 
 `--providers.http.pollinterval`:  
 Polling interval for endpoint. (Default: ```0```)

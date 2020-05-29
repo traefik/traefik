@@ -38,7 +38,7 @@ Below is the list of the currently supported providers in Traefik.
 | [Etcd](./etcd.md)                     | KV           | KV                         |
 | [Redis](./redis.md)                   | KV           | KV                         |
 | [ZooKeeper](./zookeeper.md)           | KV           | KV                         |
-| [Http](./http.md)                     | Manual       | JSON format                |
+| [HTTP](./http.md)                     | Manual       | JSON format                |
 
 !!! info "More Providers"
 
