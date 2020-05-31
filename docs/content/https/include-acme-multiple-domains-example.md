@@ -38,9 +38,9 @@ spec:
   tls:
     certResolver: myresolver
     domains:
-    - main: example.org
+    - main: "example.org"
       sans:
-      - *.example.org
+      - "*.example.org"
 ```
 
 ```json tab="Marathon"
