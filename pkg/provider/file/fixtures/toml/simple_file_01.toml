@@ -1,5 +1,5 @@
 [http.routers]
- 
+
   [http.routers."router1"]
     service = "application-1"
 

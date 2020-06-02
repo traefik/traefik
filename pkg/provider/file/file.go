@@ -11,15 +11,14 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/sprig"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/file"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
 	"gopkg.in/fsnotify.v1"
-	"gopkg.in/yaml.v2"
 )
 
 const providerName = "file"
@@ -418,22 +417,9 @@ func (p *Provider) decodeConfiguration(filePath string, content string) (*dynami
 		},
 	}
 
-	switch strings.ToLower(filepath.Ext(filePath)) {
-	case ".toml":
-		_, err := toml.Decode(content, configuration)
-		if err != nil {
-			return nil, err
-		}
-
-	case ".yml", ".yaml":
-		var err error
-		err = yaml.Unmarshal([]byte(content), configuration)
-		if err != nil {
-			return nil, err
-		}
-
-	default:
-		return nil, fmt.Errorf("unsupported file extension: %s", filePath)
+	err := file.DecodeContent(content, strings.ToLower(filepath.Ext(filePath)), configuration)
+	if err != nil {
+		return nil, err
 	}
 
 	return configuration, nil

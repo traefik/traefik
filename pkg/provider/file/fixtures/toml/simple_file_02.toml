@@ -66,7 +66,7 @@
 
   [tcp.services.applicationtcp-1.loadBalancer]
     [[tcp.services.applicationtcp-1.loadBalancer.servers]]
-      url = "http://172.17.0.9:80"
+      address = "http://172.17.0.9:80"
 
 [udp.routers]
 
@@ -77,4 +77,4 @@
 
   [udp.services.applicationudp-1.loadBalancer]
     [[udp.services.applicationudp-1.loadBalancer.servers]]
-      url = "http://172.17.0.10:80"
+      address = "http://172.17.0.10:80"
