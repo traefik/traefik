@@ -45,8 +45,9 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 	hasSecureHeaders := cfg.HasSecureHeadersDefined()
 	hasCustomHeaders := cfg.HasCustomHeadersDefined()
 	hasCorsHeaders := cfg.HasCorsHeadersDefined()
+	hasCookiePrefix := cfg.HasCookiePrefix()
 
-	if !hasSecureHeaders && !hasCustomHeaders && !hasCorsHeaders {
+	if !hasSecureHeaders && !hasCustomHeaders && !hasCorsHeaders && !hasCookiePrefix {
 		return nil, errors.New("headers configuration not valid")
 	}
 
@@ -59,7 +60,7 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 		nextHandler = handler
 	}
 
-	if hasCustomHeaders || hasCorsHeaders {
+	if hasCustomHeaders || hasCorsHeaders || hasCookiePrefix {
 		logger.Debug("Setting up customHeaders/Cors from %v", cfg)
 		handler = NewHeader(nextHandler, cfg)
 	}
@@ -126,6 +127,7 @@ type Header struct {
 	next             http.Handler
 	hasCustomHeaders bool
 	hasCorsHeaders   bool
+	hasCookiePrefix  bool
 	headers          *dynamic.Headers
 }
 
@@ -133,6 +135,7 @@ type Header struct {
 func NewHeader(next http.Handler, cfg dynamic.Headers) *Header {
 	hasCustomHeaders := cfg.HasCustomHeadersDefined()
 	hasCorsHeaders := cfg.HasCorsHeadersDefined()
+	hasCookiePrefix := cfg.HasCookiePrefix()
 
 	ctx := log.With(context.Background(), log.Str(log.MiddlewareType, typeName))
 	handleDeprecation(ctx, &cfg)
@@ -142,6 +145,7 @@ func NewHeader(next http.Handler, cfg dynamic.Headers) *Header {
 		headers:          &cfg,
 		hasCustomHeaders: hasCustomHeaders,
 		hasCorsHeaders:   hasCorsHeaders,
+		hasCookiePrefix:  hasCookiePrefix,
 	}
 }
 
@@ -188,6 +192,15 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 			res.Header.Del(header)
 		} else {
 			res.Header.Set(header, value)
+		}
+	}
+
+	if s.headers.PrefixCookiePath != "" && len(res.Cookies()) > 0 {
+		cookies := res.Cookies()
+		res.Header.Del("Set-Cookie")
+		for _, c := range cookies {
+			c.Path = s.headers.PrefixCookiePath + c.Path
+			res.Header.Add("Set-Cookie", c.String())
 		}
 	}
 

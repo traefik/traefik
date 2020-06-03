@@ -150,6 +150,7 @@ type ForwardAuth struct {
 type Headers struct {
 	CustomRequestHeaders  map[string]string `json:"customRequestHeaders,omitempty" toml:"customRequestHeaders,omitempty" yaml:"customRequestHeaders,omitempty"`
 	CustomResponseHeaders map[string]string `json:"customResponseHeaders,omitempty" toml:"customResponseHeaders,omitempty" yaml:"customResponseHeaders,omitempty"`
+	PrefixCookiePath      string            `json:"prefixCookiePath,omitempty" toml:"prefixCookiePath,omitempty" yaml:"prefixCookiePath,omitempty"`
 
 	// AccessControlAllowCredentials is only valid if true. false is ignored.
 	AccessControlAllowCredentials bool `json:"accessControlAllowCredentials,omitempty" toml:"accessControlAllowCredentials,omitempty" yaml:"accessControlAllowCredentials,omitempty"`
@@ -195,6 +196,10 @@ type Headers struct {
 func (h *Headers) HasCustomHeadersDefined() bool {
 	return h != nil && (len(h.CustomResponseHeaders) != 0 ||
 		len(h.CustomRequestHeaders) != 0)
+}
+
+func (h *Headers) HasCookiePrefix() bool {
+	return h.PrefixCookiePath != ""
 }
 
 // HasCorsHeadersDefined checks to see if any of the cors header elements have been set.

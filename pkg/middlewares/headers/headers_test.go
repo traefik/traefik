@@ -573,6 +573,44 @@ func TestCustomResponseHeaders(t *testing.T) {
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	testCases := []struct {
+		desc            string
+		header          *Header
+		responseCookies []http.Cookie
+		expectedCookies []http.Cookie
+	}{
+		{
+			desc: "Test Simple Response",
+			header: NewHeader(emptyHandler, dynamic.Headers{
+				PrefixCookiePath: "/hovno",
+			}),
+			responseCookies: []http.Cookie{{Name: "test1", Value: "test1", Path: "/foo"}, {Name: "test2", Value: "test2"}},
+			expectedCookies: []http.Cookie{{Name: "test1", Value: "test1", Path: "/hovno/foo"}, {Name: "test2", Value: "test2", Path: "/hovno"}},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			rw := httptest.NewRecorder()
+			test.header.ServeHTTP(rw, testhelpers.MustNewRequest(http.MethodGet, "/foo", nil))
+			for _, c := range test.responseCookies {
+				rw.Result().Header.Add("Set-Cookie", c.String())
+			}
+
+			err := test.header.PostRequestModifyResponseHeaders(rw.Result())
+
+			require.NoError(t, err)
+			assert.Equal(t, len(test.expectedCookies), len(rw.Result().Cookies()))
+			for i, c := range test.expectedCookies {
+				assert.Equal(t, c.String(), rw.Result().Cookies()[i].String())
+			}
+		})
+	}
+}
+
+func TestCookiePathPrefix(t *testing.T) {
+	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	testCases := []struct {
 		desc     string
 		header   *Header
 		expected http.Header
