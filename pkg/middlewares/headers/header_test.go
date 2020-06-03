@@ -283,6 +283,30 @@ func TestNewHeader_CORSResponses(t *testing.T) {
 			expected:       map[string][]string{},
 		},
 		{
+			desc: "Regexp Origin Request",
+			next: emptyHandler,
+			cfg: dynamic.Headers{
+				AccessControlAllowOriginList: []string{"([a-z]+).bar.org"},
+			},
+			requestHeaders: map[string][]string{
+				"Origin": {"https://foo.bar.org"},
+			},
+			expected: map[string][]string{
+				"Access-Control-Allow-Origin": {"https://foo.bar.org"},
+			},
+		},
+		{
+			desc: "Regexp Malformed Origin Request",
+			next: emptyHandler,
+			cfg: dynamic.Headers{
+				AccessControlAllowOriginList: []string{"a(b"},
+			},
+			requestHeaders: map[string][]string{
+				"Origin": {"https://foo.bar.org"},
+			},
+			expected: map[string][]string{},
+		},
+		{
 			desc: "Allow Credentials Request",
 			next: emptyHandler,
 			cfg: dynamic.Headers{

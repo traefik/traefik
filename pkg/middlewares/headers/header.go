@@ -3,6 +3,7 @@ package headers
 import (
 	"context"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -163,6 +164,10 @@ func (s *Header) isOriginAllowed(origin string) (bool, string) {
 	for _, item := range s.headers.AccessControlAllowOriginList {
 		if item == "*" || item == origin {
 			return true, item
+		}
+
+		if match, _ := regexp.MatchString(item, origin); match {
+			return true, origin
 		}
 	}
 
