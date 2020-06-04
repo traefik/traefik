@@ -37,7 +37,7 @@ const (
 	middlewareStackKey middlewareStackType = iota
 )
 
-// Builder the middleware builder
+// Builder the middleware builder.
 type Builder struct {
 	configs        map[string]*runtime.MiddlewareInfo
 	serviceBuilder serviceBuilder
@@ -47,12 +47,12 @@ type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error)
 }
 
-// NewBuilder creates a new Builder
+// NewBuilder creates a new Builder.
 func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder serviceBuilder) *Builder {
 	return &Builder{configs: configs, serviceBuilder: serviceBuilder}
 }
 
-// BuildChain creates a middleware chain
+// BuildChain creates a middleware chain.
 func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.Chain {
 	chain := alice.New()
 	for _, name := range middlewares {
@@ -99,7 +99,7 @@ func checkRecursion(ctx context.Context, middlewareName string) (context.Context
 	return context.WithValue(ctx, middlewareStackKey, append(currentStack, middlewareName)), nil
 }
 
-// it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists
+// it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists.
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (alice.Constructor, error) {
 	config := b.configs[middlewareName]
 	if config == nil || config.Middleware == nil {

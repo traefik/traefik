@@ -27,6 +27,8 @@ THE SOFTWARE.
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -47,7 +49,7 @@ var tlsstoresResource = schema.GroupVersionResource{Group: "traefik.containo.us"
 var tlsstoresKind = schema.GroupVersionKind{Group: "traefik.containo.us", Version: "v1alpha1", Kind: "TLSStore"}
 
 // Get takes name of the tLSStore, and returns the corresponding tLSStore object, and an error if there is any.
-func (c *FakeTLSStores) Get(name string, options v1.GetOptions) (result *v1alpha1.TLSStore, err error) {
+func (c *FakeTLSStores) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.TLSStore, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(tlsstoresResource, c.ns, name), &v1alpha1.TLSStore{})
 
@@ -58,7 +60,7 @@ func (c *FakeTLSStores) Get(name string, options v1.GetOptions) (result *v1alpha
 }
 
 // List takes label and field selectors, and returns the list of TLSStores that match those selectors.
-func (c *FakeTLSStores) List(opts v1.ListOptions) (result *v1alpha1.TLSStoreList, err error) {
+func (c *FakeTLSStores) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.TLSStoreList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(tlsstoresResource, tlsstoresKind, c.ns, opts), &v1alpha1.TLSStoreList{})
 
@@ -80,14 +82,14 @@ func (c *FakeTLSStores) List(opts v1.ListOptions) (result *v1alpha1.TLSStoreList
 }
 
 // Watch returns a watch.Interface that watches the requested tLSStores.
-func (c *FakeTLSStores) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeTLSStores) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(tlsstoresResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a tLSStore and creates it.  Returns the server's representation of the tLSStore, and an error, if there is any.
-func (c *FakeTLSStores) Create(tLSStore *v1alpha1.TLSStore) (result *v1alpha1.TLSStore, err error) {
+func (c *FakeTLSStores) Create(ctx context.Context, tLSStore *v1alpha1.TLSStore, opts v1.CreateOptions) (result *v1alpha1.TLSStore, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(tlsstoresResource, c.ns, tLSStore), &v1alpha1.TLSStore{})
 
@@ -98,7 +100,7 @@ func (c *FakeTLSStores) Create(tLSStore *v1alpha1.TLSStore) (result *v1alpha1.TL
 }
 
 // Update takes the representation of a tLSStore and updates it. Returns the server's representation of the tLSStore, and an error, if there is any.
-func (c *FakeTLSStores) Update(tLSStore *v1alpha1.TLSStore) (result *v1alpha1.TLSStore, err error) {
+func (c *FakeTLSStores) Update(ctx context.Context, tLSStore *v1alpha1.TLSStore, opts v1.UpdateOptions) (result *v1alpha1.TLSStore, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(tlsstoresResource, c.ns, tLSStore), &v1alpha1.TLSStore{})
 
@@ -109,7 +111,7 @@ func (c *FakeTLSStores) Update(tLSStore *v1alpha1.TLSStore) (result *v1alpha1.TL
 }
 
 // Delete takes name of the tLSStore and deletes it. Returns an error if one occurs.
-func (c *FakeTLSStores) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeTLSStores) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(tlsstoresResource, c.ns, name), &v1alpha1.TLSStore{})
 
@@ -117,15 +119,15 @@ func (c *FakeTLSStores) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeTLSStores) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(tlsstoresResource, c.ns, listOptions)
+func (c *FakeTLSStores) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(tlsstoresResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.TLSStoreList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched tLSStore.
-func (c *FakeTLSStores) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.TLSStore, err error) {
+func (c *FakeTLSStores) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.TLSStore, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(tlsstoresResource, c.ns, name, pt, data, subresources...), &v1alpha1.TLSStore{})
 

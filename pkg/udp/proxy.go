@@ -13,7 +13,7 @@ type Proxy struct {
 	target string
 }
 
-// NewProxy creates a new Proxy
+// NewProxy creates a new Proxy.
 func NewProxy(address string) (*Proxy, error) {
 	return &Proxy{target: address}, nil
 }

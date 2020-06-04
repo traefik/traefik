@@ -35,7 +35,7 @@ const (
 
 const defaultMaxBodySize int64 = -1
 
-// NewManager creates a new Manager
+// NewManager creates a new Manager.
 func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry, routinePool *safe.Pool) *Manager {
 	return &Manager{
 		routinePool:         routinePool,
@@ -47,7 +47,7 @@ func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper htt
 	}
 }
 
-// Manager The service manager
+// Manager The service manager.
 type Manager struct {
 	routinePool         *safe.Pool
 	metricsRegistry     metrics.Registry
@@ -295,8 +295,15 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 	var cookieName string
 	if service.Sticky != nil && service.Sticky.Cookie != nil {
 		cookieName = cookie.GetName(service.Sticky.Cookie.Name, serviceName)
-		opts := roundrobin.CookieOptions{HTTPOnly: service.Sticky.Cookie.HTTPOnly, Secure: service.Sticky.Cookie.Secure}
+
+		opts := roundrobin.CookieOptions{
+			HTTPOnly: service.Sticky.Cookie.HTTPOnly,
+			Secure:   service.Sticky.Cookie.Secure,
+			SameSite: convertSameSite(service.Sticky.Cookie.SameSite),
+		}
+
 		options = append(options, roundrobin.EnableStickySession(roundrobin.NewStickySessionWithOptions(cookieName, opts)))
+
 		logger.Debugf("Sticky session cookie name: %v", cookieName)
 	}
 
@@ -307,7 +314,7 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 
 	lbsu := healthcheck.NewLBStatusUpdater(lb, m.configs[serviceName])
 	if err := m.upsertServers(ctx, lbsu, service.Servers); err != nil {
-		return nil, fmt.Errorf("error configuring load balancer for service %s: %v", serviceName, err)
+		return nil, fmt.Errorf("error configuring load balancer for service %s: %w", serviceName, err)
 	}
 
 	return lbsu, nil
@@ -319,16 +326,29 @@ func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHand
 	for name, srv := range servers {
 		u, err := url.Parse(srv.URL)
 		if err != nil {
-			return fmt.Errorf("error parsing server URL %s: %v", srv.URL, err)
+			return fmt.Errorf("error parsing server URL %s: %w", srv.URL, err)
 		}
 
 		logger.WithField(log.ServerName, name).Debugf("Creating server %d %s", name, u)
 
 		if err := lb.UpsertServer(u, roundrobin.Weight(1)); err != nil {
-			return fmt.Errorf("error adding server %s to load balancer: %v", srv.URL, err)
+			return fmt.Errorf("error adding server %s to load balancer: %w", srv.URL, err)
 		}
 
 		// FIXME Handle Metrics
 	}
 	return nil
+}
+
+func convertSameSite(sameSite string) http.SameSite {
+	switch sameSite {
+	case "none":
+		return http.SameSiteNoneMode
+	case "lax":
+		return http.SameSiteLaxMode
+	case "strict":
+		return http.SameSiteStrictMode
+	default:
+		return 0
+	}
 }

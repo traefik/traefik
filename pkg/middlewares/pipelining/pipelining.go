@@ -14,12 +14,12 @@ const (
 	typeName = "Pipelining"
 )
 
-// pipelining returns a middleware
+// pipelining returns a middleware.
 type pipelining struct {
 	next http.Handler
 }
 
-// New returns a new pipelining instance
+// New returns a new pipelining instance.
 func New(ctx context.Context, next http.Handler, name string) http.Handler {
 	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
 
@@ -37,7 +37,7 @@ func (p *pipelining) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// writerWithoutCloseNotify helps to disable closeNotify
+// writerWithoutCloseNotify helps to disable closeNotify.
 type writerWithoutCloseNotify struct {
 	W http.ResponseWriter
 }
@@ -52,8 +52,7 @@ func (w *writerWithoutCloseNotify) Write(buf []byte) (int, error) {
 	return w.W.Write(buf)
 }
 
-// WriteHeader sends an HTTP response header with the provided
-// status code.
+// WriteHeader sends an HTTP response header with the provided status code.
 func (w *writerWithoutCloseNotify) WriteHeader(code int) {
 	w.W.WriteHeader(code)
 }

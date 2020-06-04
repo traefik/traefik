@@ -20,7 +20,7 @@ const (
 	wwwAuthenticate = "Www-Authenticate"
 )
 
-// DigestRequest is a client for digest authentication requests
+// DigestRequest is a client for digest authentication requests.
 type digestRequest struct {
 	client             *http.Client
 	username, password string
@@ -35,7 +35,7 @@ func (nc nonceCount) String() string {
 
 var wanted = []string{algorithm, nonce, opaque, qop, realm}
 
-// New makes a DigestRequest instance
+// New makes a DigestRequest instance.
 func newDigestRequest(username, password string, client *http.Client) *digestRequest {
 	return &digestRequest{
 		client:   client,
@@ -44,7 +44,7 @@ func newDigestRequest(username, password string, client *http.Client) *digestReq
 	}
 }
 
-// Do does requests as http.Do does
+// Do does requests as http.Do does.
 func (r *digestRequest) Do(req *http.Request) (*http.Response, error) {
 	parts, err := r.makeParts(req)
 	if err != nil {
@@ -133,7 +133,7 @@ func (r *digestRequest) makeAuthorization(req *http.Request, parts map[string]st
 	)
 }
 
-// GenerateRandom generates random string
+// GenerateRandom generates random string.
 func generateRandom(n int) string {
 	b := make([]byte, 8)
 	_, _ = io.ReadFull(rand.Reader, b)

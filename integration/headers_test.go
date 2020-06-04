@@ -10,7 +10,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// Headers test suites
+// Headers tests suite.
 type HeadersSuite struct{ BaseSuite }
 
 func (s *HeadersSuite) TestSimpleConfiguration(c *check.C) {

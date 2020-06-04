@@ -15,7 +15,7 @@ const (
 	maskLarge = maskShort + maskShort + maskShort + maskShort + maskShort + maskShort + maskShort + maskShort
 )
 
-// Do configuration.
+// Do sends configuration.
 func Do(baseConfig interface{}, indent bool) (string, error) {
 	anomConfig, err := copystructure.Copy(baseConfig)
 	if err != nil {
@@ -120,7 +120,7 @@ func reset(field reflect.Value, name string) error {
 	return nil
 }
 
-// isExported return true is a struct field is exported, else false
+// isExported return true is a struct field is exported, else false.
 func isExported(f reflect.StructField) bool {
 	if f.PkgPath != "" && !f.Anonymous {
 		return false

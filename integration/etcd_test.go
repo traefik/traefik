@@ -19,7 +19,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// etcd test suites (using libcompose)
+// etcd test suites (using libcompose).
 type EtcdSuite struct {
 	BaseSuite
 	kvClient store.Store

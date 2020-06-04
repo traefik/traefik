@@ -15,10 +15,10 @@ import (
 	"github.com/containous/traefik/v2/pkg/types"
 )
 
-// StatusClientClosedRequest non-standard HTTP status code for client disconnection
+// StatusClientClosedRequest non-standard HTTP status code for client disconnection.
 const StatusClientClosedRequest = 499
 
-// StatusClientClosedRequestText non-standard HTTP status for client disconnection
+// StatusClientClosedRequestText non-standard HTTP status for client disconnection.
 const StatusClientClosedRequestText = "Client Closed Request"
 
 func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwarding, defaultRoundTripper http.RoundTripper, bufferPool httputil.BufferPool, responseModifier func(*http.Response) error) (http.Handler, error) {
@@ -26,7 +26,7 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 	if responseForwarding != nil {
 		err := flushInterval.Set(responseForwarding.FlushInterval)
 		if err != nil {
-			return nil, fmt.Errorf("error creating flush interval: %v", err)
+			return nil, fmt.Errorf("error creating flush interval: %w", err)
 		}
 	}
 	if flushInterval == 0 {
@@ -62,10 +62,19 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 			}
 
 			// Even if the websocket RFC says that headers should be case-insensitive,
-			// some servers need Sec-WebSocket-Key to be case-sensitive.
+			// some servers need Sec-WebSocket-Key, Sec-WebSocket-Extensions, Sec-WebSocket-Accept,
+			// Sec-WebSocket-Protocol and Sec-WebSocket-Version to be case-sensitive.
 			// https://tools.ietf.org/html/rfc6455#page-20
 			outReq.Header["Sec-WebSocket-Key"] = outReq.Header["Sec-Websocket-Key"]
+			outReq.Header["Sec-WebSocket-Extensions"] = outReq.Header["Sec-Websocket-Extensions"]
+			outReq.Header["Sec-WebSocket-Accept"] = outReq.Header["Sec-Websocket-Accept"]
+			outReq.Header["Sec-WebSocket-Protocol"] = outReq.Header["Sec-Websocket-Protocol"]
+			outReq.Header["Sec-WebSocket-Version"] = outReq.Header["Sec-Websocket-Version"]
 			delete(outReq.Header, "Sec-Websocket-Key")
+			delete(outReq.Header, "Sec-Websocket-Extensions")
+			delete(outReq.Header, "Sec-Websocket-Accept")
+			delete(outReq.Header, "Sec-Websocket-Protocol")
+			delete(outReq.Header, "Sec-Websocket-Version")
 		},
 		Transport:      defaultRoundTripper,
 		FlushInterval:  time.Duration(flushInterval),

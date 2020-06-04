@@ -11,7 +11,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// HealthCheck test suites (using libcompose)
+// HealthCheck test suites (using libcompose).
 type HealthCheckSuite struct {
 	BaseSuite
 	whoami1IP string
@@ -206,7 +206,7 @@ func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-// Checks if all the loadbalancers created will correctly update the server status
+// Checks if all the loadbalancers created will correctly update the server status.
 func (s *HealthCheckSuite) TestMultipleRoutersOnSameService(c *check.C) {
 	file := s.adaptFile(c, "fixtures/healthcheck/multiple-routers-one-same-service.toml", struct {
 		Server1 string

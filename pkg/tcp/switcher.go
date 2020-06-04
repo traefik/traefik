@@ -4,12 +4,12 @@ import (
 	"github.com/containous/traefik/v2/pkg/safe"
 )
 
-// HandlerSwitcher is a TCP handler switcher
+// HandlerSwitcher is a TCP handler switcher.
 type HandlerSwitcher struct {
 	router safe.Safe
 }
 
-// ServeTCP forwards the TCP connection to the current active handler
+// ServeTCP forwards the TCP connection to the current active handler.
 func (s *HandlerSwitcher) ServeTCP(conn WriteCloser) {
 	handler := s.router.Get()
 	h, ok := handler.(Handler)
@@ -20,7 +20,7 @@ func (s *HandlerSwitcher) ServeTCP(conn WriteCloser) {
 	}
 }
 
-// Switch sets the new TCP handler to use for new connections
+// Switch sets the new TCP handler to use for new connections.
 func (s *HandlerSwitcher) Switch(handler Handler) {
 	s.router.Set(handler)
 }

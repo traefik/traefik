@@ -18,7 +18,7 @@ import (
 // DefaultTLSOptions the default TLS options.
 var DefaultTLSOptions = Options{}
 
-// Manager is the TLS option/store/configuration factory
+// Manager is the TLS option/store/configuration factory.
 type Manager struct {
 	storesConfig  map[string]Store
 	stores        map[string]*CertificateStore
@@ -28,7 +28,7 @@ type Manager struct {
 	lock          sync.RWMutex
 }
 
-// NewManager creates a new Manager
+// NewManager creates a new Manager.
 func NewManager() *Manager {
 	return &Manager{
 		stores: map[string]*CertificateStore{},
@@ -38,7 +38,7 @@ func NewManager() *Manager {
 	}
 }
 
-// UpdateConfigs updates the TLS* configuration options
+// UpdateConfigs updates the TLS* configuration options.
 func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, configs map[string]Options, certs []*CertAndStores) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
@@ -80,7 +80,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	}
 }
 
-// Get gets the TLS configuration to use for a given store / configuration
+// Get gets the TLS configuration to use for a given store / configuration.
 func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
@@ -141,7 +141,7 @@ func (m *Manager) getStore(storeName string) *CertificateStore {
 	return m.stores[storeName]
 }
 
-// GetStore gets the certificate store of a given name
+// GetStore gets the certificate store of a given name.
 func (m *Manager) GetStore(storeName string) *CertificateStore {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
@@ -170,7 +170,7 @@ func buildCertificateStore(ctx context.Context, tlsStore Store) (*CertificateSto
 	return certificateStore, nil
 }
 
-// creates a TLS config that allows terminating HTTPS for multiple domains using SNI
+// creates a TLS config that allows terminating HTTPS for multiple domains using SNI.
 func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 	conf := &tls.Config{}
 
@@ -268,17 +268,17 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 func buildDefaultCertificate(defaultCertificate *Certificate) (*tls.Certificate, error) {
 	certFile, err := defaultCertificate.CertFile.Read()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get cert file content: %v", err)
+		return nil, fmt.Errorf("failed to get cert file content: %w", err)
 	}
 
 	keyFile, err := defaultCertificate.KeyFile.Read()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get key file content: %v", err)
+		return nil, fmt.Errorf("failed to get key file content: %w", err)
 	}
 
 	cert, err := tls.X509KeyPair(certFile, keyFile)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load X509 key pair: %v", err)
+		return nil, fmt.Errorf("failed to load X509 key pair: %w", err)
 	}
 	return &cert, nil
 }

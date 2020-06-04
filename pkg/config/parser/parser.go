@@ -6,7 +6,7 @@ package parser
 // The operation goes through three stages roughly summarized as:
 // labels -> tree of untyped nodes
 // untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
-// "typed" nodes -> typed element
+// "typed" nodes -> typed element.
 func Decode(labels map[string]string, element interface{}, rootName string, filters ...string) error {
 	node, err := DecodeToNode(labels, rootName, filters...)
 	if err != nil {
@@ -28,7 +28,7 @@ func Decode(labels map[string]string, element interface{}, rootName string, filt
 }
 
 // Encode converts an element to labels.
-// element -> node (value) -> label (node)
+// element -> node (value) -> label (node).
 func Encode(element interface{}, rootName string) (map[string]string, error) {
 	etnOpts := EncoderToNodeOpts{OmitEmpty: true, TagName: TagLabel, AllowSliceAsStruct: true}
 	node, err := EncodeToNode(element, rootName, etnOpts)

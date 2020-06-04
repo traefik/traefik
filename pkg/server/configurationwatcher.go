@@ -69,7 +69,7 @@ func (c *ConfigurationWatcher) Stop() {
 	close(c.configurationValidatedChan)
 }
 
-// AddListener adds a new listener function used when new configuration is provided
+// AddListener adds a new listener function used when new configuration is provided.
 func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration)) {
 	if c.configurationListeners == nil {
 		c.configurationListeners = make([]func(dynamic.Configuration), 0)
@@ -241,10 +241,14 @@ func isEmptyConfiguration(conf *dynamic.Configuration) bool {
 	if conf.HTTP == nil {
 		conf.HTTP = &dynamic.HTTPConfiguration{}
 	}
+	if conf.UDP == nil {
+		conf.UDP = &dynamic.UDPConfiguration{}
+	}
 
 	httpEmpty := conf.HTTP.Routers == nil && conf.HTTP.Services == nil && conf.HTTP.Middlewares == nil
 	tlsEmpty := conf.TLS == nil || conf.TLS.Certificates == nil && conf.TLS.Stores == nil && conf.TLS.Options == nil
 	tcpEmpty := conf.TCP.Routers == nil && conf.TCP.Services == nil
+	udpEmpty := conf.UDP.Routers == nil && conf.UDP.Services == nil
 
-	return httpEmpty && tlsEmpty && tcpEmpty
+	return httpEmpty && tlsEmpty && tcpEmpty && udpEmpty
 }

@@ -16,10 +16,10 @@ import (
 	"github.com/mitchellh/hashstructure"
 )
 
-// collectorURL URL where the stats are send
+// collectorURL URL where the stats are send.
 const collectorURL = "https://collect.traefik.io/9vxmmkcdmalbdi635d4jgc5p5rx0h7h8"
 
-// Collected data
+// Collected data.
 type data struct {
 	Version       string
 	Codename      string

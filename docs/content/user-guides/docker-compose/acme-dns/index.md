@@ -131,7 +131,7 @@ The point is to manage those secret files by another mean, and read them from th
 !!! Note
 
     You could store those secrets anywhere on the server,
-    just make sure to use the proper path for the `file` directive fo the secrets definition in the `docker-compose.yml` file.
+    just make sure to use the proper path for the `file` directive for the secrets definition in the `docker-compose.yml` file.
 
 - Use this `docker-compose.yml` file:
 

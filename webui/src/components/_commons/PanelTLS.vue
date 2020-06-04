@@ -70,7 +70,7 @@
             <img v-if="$q.dark.isActive" alt="empty" src="~assets/middlewares-empty-dark.svg">
             <img v-else alt="empty" src="~assets/middlewares-empty.svg">
           </div>
-          <div class="block-empty-label">There are no<br>TLS configured</div>
+          <div class="block-empty-label">There is no<br>TLS configured</div>
         </div>
       </div>
     </q-card-section>

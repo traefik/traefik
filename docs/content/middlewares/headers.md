@@ -322,7 +322,7 @@ The `accessControlExposeHeaders` indicates which headers are safe to expose to t
 
 ### `accessControlMaxAge`
 
-The `accessControlMaxAge` indicates how long a preflight request can be cached.
+The `accessControlMaxAge` indicates how long (in seconds) a preflight request can be cached.
 
 ### `addVaryHeader`
 

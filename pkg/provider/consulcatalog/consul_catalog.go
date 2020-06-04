@@ -89,7 +89,7 @@ func (p *Provider) SetDefaults() {
 func (p *Provider) Init() error {
 	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
 	if err != nil {
-		return fmt.Errorf("error while parsing default rule: %v", err)
+		return fmt.Errorf("error while parsing default rule: %w", err)
 	}
 
 	p.defaultRuleTpl = defaultRuleTpl
@@ -107,7 +107,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 			p.client, err = createClient(p.Endpoint)
 			if err != nil {
-				return fmt.Errorf("error create consul client, %v", err)
+				return fmt.Errorf("error create consul client, %w", err)
 			}
 
 			ticker := time.NewTicker(time.Duration(p.RefreshInterval))

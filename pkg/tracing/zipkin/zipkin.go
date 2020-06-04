@@ -30,7 +30,7 @@ func (c *Config) SetDefaults() {
 	c.SampleRate = 1.0
 }
 
-// Setup sets up the tracer
+// Setup sets up the tracer.
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
 	// create our local endpoint
 	endpoint, err := zipkin.NewEndpoint(serviceName, "0.0.0.0:0")

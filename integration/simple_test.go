@@ -20,7 +20,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// SimpleSuite
+// SimpleSuite tests suite.
 type SimpleSuite struct{ BaseSuite }
 
 func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {

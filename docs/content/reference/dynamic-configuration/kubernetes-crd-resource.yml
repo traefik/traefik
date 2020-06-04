@@ -91,21 +91,11 @@ spec:
       services:
         - name: s1
           port: 80
-          healthCheck:
-            path: /health
-            host: baz.com
-            intervalSeconds: 7
-            timeoutSeconds: 60
           # strategy defines the load balancing strategy between the servers. It defaults
           # to Round Robin, and for now only Round Robin is supported anyway.
           strategy: RoundRobin
         - name: s2
           port: 433
-          healthCheck:
-            path: /health
-            host: baz.com
-            intervalSeconds: 7
-            timeoutSeconds: 60
     - match: PathPrefix(`/misc`)
       services:
         - name: s3
@@ -133,7 +123,7 @@ spec:
   tls:
     secretName: supersecret
     options:
-      name: myTLSOption
+      name: my-tls-option
       namespace: default
 
 ---
@@ -155,7 +145,7 @@ spec:
     secretName: foosecret
     passthrough: false
     options:
-      name: myTLSOption
+      name: my-tls-option
       namespace: default
 
 ---
