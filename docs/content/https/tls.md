@@ -132,8 +132,8 @@ If no default certificate is provided, Traefik generates and uses a self-signed 
 
 ### Intermediate Certificate
 
-If you need to chain certificates to establish the chain of trust, you
-can concatenate your intermediate certificate after the certificate:
+If you need to chain certificates to establish the chain of trust,
+you can concatenate your intermediate certificate after the certificate:
 
 ```bash tab="CLI"
 cat foo.crt intermediate.crt > cert.crt
