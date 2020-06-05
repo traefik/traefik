@@ -43,6 +43,7 @@ func Test(t *testing.T) {
 		check.Suite(&DockerSuite{})
 		check.Suite(&ErrorPagesSuite{})
 		check.Suite(&FileSuite{})
+		check.Suite(&ForwardAuthSuite{})
 		check.Suite(&GRPCSuite{})
 		check.Suite(&HealthCheckSuite{})
 		check.Suite(&HeadersSuite{})

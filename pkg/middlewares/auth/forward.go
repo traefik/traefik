@@ -25,12 +25,13 @@ const (
 )
 
 type forwardAuth struct {
-	address             string
-	authResponseHeaders []string
-	next                http.Handler
-	name                string
-	client              http.Client
-	trustForwardHeader  bool
+	address              string
+	authResponseHeaders  []string
+	next                 http.Handler
+	name                 string
+	client               http.Client
+	trustForwardHeader   bool
+	addHeadersToResponse []string
 }
 
 // NewForward creates a forward auth middleware.
@@ -38,11 +39,12 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	log.FromContext(middlewares.GetLoggerCtx(ctx, name, forwardedTypeName)).Debug("Creating middleware")
 
 	fa := &forwardAuth{
-		address:             config.Address,
-		authResponseHeaders: config.AuthResponseHeaders,
-		next:                next,
-		name:                name,
-		trustForwardHeader:  config.TrustForwardHeader,
+		address:              config.Address,
+		authResponseHeaders:  config.AuthResponseHeaders,
+		next:                 next,
+		name:                 name,
+		trustForwardHeader:   config.TrustForwardHeader,
+		addHeadersToResponse: config.AddHeadersToResponse,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -152,6 +154,10 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if len(forwardResponse.Header[headerKey]) > 0 {
 			req.Header[headerKey] = append([]string(nil), forwardResponse.Header[headerKey]...)
 		}
+	}
+
+	for _, headerName := range fa.addHeadersToResponse {
+		rw.Header().Add(headerName, forwardResponse.Header.Get(headerName))
 	}
 
 	req.RequestURI = req.URL.RequestURI()

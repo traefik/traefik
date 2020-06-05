@@ -84,10 +84,11 @@ type DigestAuth struct {
 
 // ForwardAuth holds the http forward authentication configuration.
 type ForwardAuth struct {
-	Address             string     `json:"address,omitempty"`
-	TrustForwardHeader  bool       `json:"trustForwardHeader,omitempty"`
-	AuthResponseHeaders []string   `json:"authResponseHeaders,omitempty"`
-	TLS                 *ClientTLS `json:"tls,omitempty"`
+	Address              string     `json:"address,omitempty"`
+	TrustForwardHeader   bool       `json:"trustForwardHeader,omitempty"`
+	AuthResponseHeaders  []string   `json:"authResponseHeaders,omitempty"`
+	TLS                  *ClientTLS `json:"tls,omitempty"`
+	AddHeadersToResponse []string   `json:"addHeadersToResponse,omitempty"`
 }
 
 // ClientTLS holds TLS specific configurations as client.

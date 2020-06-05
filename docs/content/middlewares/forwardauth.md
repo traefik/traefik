@@ -217,6 +217,61 @@ http:
           - "X-Secret"
 ```
 
+### `addHeadersToResponse`
+
+The `addHeadersToResponse` option is the list of the headers to copy from the authentication server to the response.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.addHeadersToResponse=Set-Cookie, X-Token"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: https://example.com/auth
+    addHeadersToResponse:
+      - Set-Cookie
+      - X-Token
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.addHeadersToResponse=Set-Cookie, X-Token"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-auth.forwardauth.addHeadersToResponse": "Set-Cookie,X-Token"
+}
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.addHeadersToResponse=Set-Cookie, X-Token"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "https://example.com/auth"
+    addHeadersToResponse = ["Set-Cookie", "X-Token"]
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
+        addHeadersToResponse:
+          - "Set-Cookie"
+          - "X-Token"
+```
+
 ### `tls`
 
 The `tls` option is the TLS configuration from Traefik to the authentication server.

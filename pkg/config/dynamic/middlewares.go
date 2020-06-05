@@ -138,10 +138,11 @@ type ErrorPage struct {
 
 // ForwardAuth holds the http forward authentication configuration.
 type ForwardAuth struct {
-	Address             string     `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	TLS                 *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
-	TrustForwardHeader  bool       `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
-	AuthResponseHeaders []string   `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty"`
+	Address              string     `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	TLS                  *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	TrustForwardHeader   bool       `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
+	AuthResponseHeaders  []string   `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty"`
+	AddHeadersToResponse []string   `json:"addHeadersToResponse,omitempty" toml:"addHeadersToResponse,omitempty" yaml:"addHeadersToResponse,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

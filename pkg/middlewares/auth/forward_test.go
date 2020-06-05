@@ -57,6 +57,9 @@ func TestForwardAuthSuccess(t *testing.T) {
 		w.Header().Set("X-Auth-Secret", "secret")
 		w.Header().Add("X-Auth-Group", "group1")
 		w.Header().Add("X-Auth-Group", "group2")
+		w.Header().Set("X-Token", "auth")
+		http.SetCookie(w, &http.Cookie{Name: "foo", Value: "auth"})
+		http.SetCookie(w, &http.Cookie{Name: "bar", Value: "auth"})
 		fmt.Fprintln(w, "Success")
 	}))
 	defer server.Close()
@@ -65,12 +68,15 @@ func TestForwardAuthSuccess(t *testing.T) {
 		assert.Equal(t, "user@example.com", r.Header.Get("X-Auth-User"))
 		assert.Empty(t, r.Header.Get("X-Auth-Secret"))
 		assert.Equal(t, []string{"group1", "group2"}, r.Header["X-Auth-Group"])
+		http.SetCookie(w, &http.Cookie{Name: "bar", Value: "next"})
+		w.Header().Set("X-Token", "next")
 		fmt.Fprintln(w, "traefik")
 	})
 
 	auth := dynamic.ForwardAuth{
-		Address:             server.URL,
-		AuthResponseHeaders: []string{"X-Auth-User", "X-Auth-Group"},
+		Address:              server.URL,
+		AuthResponseHeaders:  []string{"X-Auth-User", "X-Auth-Group"},
+		AddHeadersToResponse: []string{"X-Token", "Set-Cookie"},
 	}
 	middleware, err := NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
@@ -89,6 +95,8 @@ func TestForwardAuthSuccess(t *testing.T) {
 	err = res.Body.Close()
 	require.NoError(t, err)
 	assert.Equal(t, "traefik\n", string(body))
+	assert.Equal(t, []string{"next"}, res.Header["X-Token"])
+	assert.Equal(t, []string{"foo=auth", "bar=next"}, res.Header["Set-Cookie"])
 }
 
 func TestForwardAuthRedirect(t *testing.T) {
