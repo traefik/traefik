@@ -1,0 +1,16 @@
+[http]
+  [http.routers]
+    [http.routers.router0]
+      entryPoints = ["web"]
+      middlewares = ["my-compression"]
+      service = "service-foo"
+      rule = "Path(`/`)"
+
+[http.middlewares]
+  [http.middlewares.my-compression.compress]
+
+[http.services]
+  [http.services.service-foo]
+    [http.services.service-foo.loadBalancer]
+      [[http.services.service-foo.loadBalancer.servers]]
+        url = "http://127.0.0.1:4000/"

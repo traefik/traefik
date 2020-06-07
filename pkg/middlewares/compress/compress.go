@@ -10,7 +10,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares"
 	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/sh7dm/brotlihandler"
+	"github.com/containous/traefik/v2/pkg/brotlihandler"
 )
 
 const (
