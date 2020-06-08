@@ -4,7 +4,7 @@ type Yo struct {
 	Foo string `description:"Foo description"`
 	Fii string `description:"Fii description"`
 	Fuu string `description:"Fuu description"`
-	Yi  *Yi    `label:"allowEmpty"`
+	Yi  *Yi    `label:"allowEmpty" file:"allowEmpty"`
 	Yu  *Yi
 }
 

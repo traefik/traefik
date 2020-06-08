@@ -26,7 +26,7 @@ func Decode(filePath string, element interface{}) error {
 		return err
 	}
 
-	metaOpts := parser.MetadataOpts{TagName: parser.TagLabel, AllowSliceAsStruct: true}
+	metaOpts := parser.MetadataOpts{TagName: parser.TagFile, AllowSliceAsStruct: true}
 	err = parser.AddMetadata(element, root, metaOpts)
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func DecodeContent(content string, extension string, element interface{}) error 
 		return nil
 	}
 
-	metaOpts := parser.MetadataOpts{TagName: "noop", AllowSliceAsStruct: false}
+	metaOpts := parser.MetadataOpts{TagName: parser.TagFile, AllowSliceAsStruct: false}
 	err = parser.AddMetadata(element, node, metaOpts)
 	if err != nil {
 		return err

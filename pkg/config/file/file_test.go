@@ -42,6 +42,32 @@ fii = "bir"
 	assert.Equal(t, expected, element)
 }
 
+func TestDecodeContent_TOML(t *testing.T) {
+	content := `
+foo = "bar"
+fii = "bir"
+[yi]
+`
+
+	element := &Yo{
+		Fuu: "test",
+	}
+
+	err := DecodeContent(content, ".toml", element)
+	require.NoError(t, err)
+
+	expected := &Yo{
+		Foo: "bar",
+		Fii: "bir",
+		Fuu: "test",
+		Yi: &Yi{
+			Foo: "foo",
+			Fii: "fii",
+		},
+	}
+	assert.Equal(t, expected, element)
+}
+
 func TestDecode_YAML(t *testing.T) {
 	f, err := ioutil.TempFile("", "traefik-config-*.yaml")
 	require.NoError(t, err)
@@ -61,6 +87,32 @@ yi: {}
 	}
 
 	err = Decode(f.Name(), element)
+	require.NoError(t, err)
+
+	expected := &Yo{
+		Foo: "bar",
+		Fii: "bir",
+		Fuu: "test",
+		Yi: &Yi{
+			Foo: "foo",
+			Fii: "fii",
+		},
+	}
+	assert.Equal(t, expected, element)
+}
+
+func TestDecodeContent_YAML(t *testing.T) {
+	content := `
+foo: bar
+fii: bir
+yi: {}
+`
+
+	element := &Yo{
+		Fuu: "test",
+	}
+
+	err := DecodeContent(content, ".yaml", element)
 	require.NoError(t, err)
 
 	expected := &Yo{
