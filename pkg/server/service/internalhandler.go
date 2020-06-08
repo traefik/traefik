@@ -42,36 +42,71 @@ func NewInternalHandlers(api func(configuration *runtime.Configuration) http.Han
 	}
 }
 
-// It can be safely used with a nil modifier.
 type responseModifier struct {
-	req      *http.Request
-	rw       http.ResponseWriter
-	modifier func(*http.Response) error
+	r *http.Request
+	w http.ResponseWriter
+
+	headersSent bool // whether headers have already been sent
+	code        int  // status code, must default to 200
+
+	modifier    func(*http.Response) error // can be nil
+	modified    bool                       // whether modifier has already been called for the current request
+	modifierErr error                      // returned by modifier call
+}
+
+// modifier can be nil.
+func newResponseModifier(w http.ResponseWriter, r *http.Request, modifier func(*http.Response) error) *responseModifier {
+	return &responseModifier{
+		r:        r,
+		w:        w,
+		modifier: modifier,
+		code:     http.StatusOK,
+	}
 }
 
 func (w *responseModifier) WriteHeader(code int) {
-	w.rw.WriteHeader(code)
-}
+	if w.headersSent {
+		return
+	}
+	defer func() {
+		w.code = code
+		w.headersSent = true
+	}()
 
-func (w *responseModifier) Header() http.Header {
-	return w.rw.Header()
-}
-
-func (w *responseModifier) Write(b []byte) (int, error) {
-	if w.modifier == nil {
-		return w.rw.Write(b)
+	if w.modifier == nil || w.modified {
+		w.w.WriteHeader(code)
+		return
 	}
 
 	resp := http.Response{
-		Header:  w.rw.Header(),
-		Request: w.req,
+		Header:  w.w.Header(),
+		Request: w.r,
 	}
 
 	if err := w.modifier(&resp); err != nil {
-		return 0, fmt.Errorf("error while applying response modifier: %v", err)
+		w.modifierErr = err
+		w.w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	return w.rw.Write(b)
+	w.modified = true
+	w.w.WriteHeader(code)
+}
+
+func (w *responseModifier) Header() http.Header {
+	return w.w.Header()
+}
+
+func (w *responseModifier) Write(b []byte) (int, error) {
+	w.WriteHeader(w.code)
+	if w.modifierErr != nil {
+		err := w.modifierErr
+		// reset the modifierErr, because we want to propagate it up only once.
+		w.modifierErr = nil
+		return 0, err
+	}
+
+	return w.w.Write(b)
 }
 
 // BuildHTTP builds an HTTP handler.
@@ -84,13 +119,8 @@ func (m *InternalHandlers) BuildHTTP(rootCtx context.Context, serviceName string
 	if err != nil {
 		return nil, err
 	}
-	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		irw := responseModifier{
-			rw:       rw,
-			req:      r,
-			modifier: respModifier,
-		}
-		internalHandler.ServeHTTP(&irw, r)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		internalHandler.ServeHTTP(newResponseModifier(w, r, respModifier), r)
 	}), nil
 }
 
