@@ -21,7 +21,7 @@ func NewUDPEntryPoints(cfg static.EntryPoints) (UDPEntryPoints, error) {
 	for entryPointName, entryPoint := range cfg {
 		protocol, err := entryPoint.GetProtocol()
 		if err != nil {
-			return nil, fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
+			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
 
 		if protocol != "udp" {
@@ -30,7 +30,7 @@ func NewUDPEntryPoints(cfg static.EntryPoints) (UDPEntryPoints, error) {
 
 		ep, err := NewUDPEntryPoint(entryPoint)
 		if err != nil {
-			return nil, fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
+			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
 		entryPoints[entryPointName] = ep
 	}

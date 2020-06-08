@@ -21,7 +21,7 @@ const (
 	defaultTLSStoreName  = "default"
 )
 
-// NewManager Creates a new Manager
+// NewManager Creates a new Manager.
 func NewManager(conf *runtime.Configuration,
 	serviceManager *tcpservice.Manager,
 	httpHandlers map[string]http.Handler,
@@ -37,7 +37,7 @@ func NewManager(conf *runtime.Configuration,
 	}
 }
 
-// Manager is a route/router manager
+// Manager is a route/router manager.
 type Manager struct {
 	serviceManager *tcpservice.Manager
 	httpHandlers   map[string]http.Handler
@@ -62,7 +62,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
-// BuildHandlers builds the handlers for the given entrypoints
+// BuildHandlers builds the handlers for the given entrypoints.
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) map[string]*tcp.Router {
 	entryPointsRouters := m.getTCPRouters(rootCtx, entryPoints)
 	entryPointsRoutersHTTP := m.getHTTPRouters(rootCtx, entryPoints, true)
@@ -117,7 +117,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		domains, err := rules.ParseDomains(routerHTTPConfig.Rule)
 		if err != nil {
-			routerErr := fmt.Errorf("invalid rule %s, error: %v", routerHTTPConfig.Rule, err)
+			routerErr := fmt.Errorf("invalid rule %s, error: %w", routerHTTPConfig.Rule, err)
 			routerHTTPConfig.AddError(routerErr, true)
 			logger.Debug(routerErr)
 			continue

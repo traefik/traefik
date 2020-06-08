@@ -14,10 +14,10 @@ import (
 	"time"
 )
 
-// DefaultDomain Traefik domain for the default certificate
+// DefaultDomain Traefik domain for the default certificate.
 const DefaultDomain = "TRAEFIK DEFAULT CERT"
 
-// DefaultCertificate generates random TLS certificates
+// DefaultCertificate generates random TLS certificates.
 func DefaultCertificate() (*tls.Certificate, error) {
 	randomBytes := make([]byte, 100)
 	_, err := rand.Read(randomBytes)
@@ -41,7 +41,7 @@ func DefaultCertificate() (*tls.Certificate, error) {
 	return &certificate, nil
 }
 
-// KeyPair generates cert and key files
+// KeyPair generates cert and key files.
 func KeyPair(domain string, expiration time.Time) ([]byte, []byte, error) {
 	rsaPrivKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -56,7 +56,7 @@ func KeyPair(domain string, expiration time.Time) ([]byte, []byte, error) {
 	return certPEM, keyPEM, nil
 }
 
-// PemCert generates PEM cert file
+// PemCert generates PEM cert file.
 func PemCert(privKey *rsa.PrivateKey, domain string, expiration time.Time) ([]byte, error) {
 	derBytes, err := derCert(privKey, expiration, domain)
 	if err != nil {

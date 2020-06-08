@@ -13,12 +13,12 @@ import (
 	"github.com/containous/traefik/v2/pkg/tcp"
 )
 
-// Manager is the TCPHandlers factory
+// Manager is the TCPHandlers factory.
 type Manager struct {
 	configs map[string]*runtime.TCPServiceInfo
 }
 
-// NewManager creates a new manager
+// NewManager creates a new manager.
 func NewManager(conf *runtime.Configuration) *Manager {
 	return &Manager{
 		configs: conf.TCPServices,

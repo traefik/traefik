@@ -55,7 +55,7 @@ type ErrorPage struct {
 
 // +k8s:deepcopy-gen=true
 
-// Chain holds a chain of middlewares
+// Chain holds a chain of middlewares.
 type Chain struct {
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
 }

@@ -31,7 +31,7 @@ type RouterFactory struct {
 	tlsManager   *tls.Manager
 }
 
-// NewRouterFactory creates a new RouterFactory
+// NewRouterFactory creates a new RouterFactory.
 func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager, chainBuilder *middleware.ChainBuilder) *RouterFactory {
 	var entryPointsTCP, entryPointsUDP []string
 	for name, cfg := range staticConfiguration.EntryPoints {
@@ -57,7 +57,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	}
 }
 
-// CreateRouters creates new TCPRouters and UDPRouters
+// CreateRouters creates new TCPRouters and UDPRouters.
 func (f *RouterFactory) CreateRouters(conf dynamic.Configuration) (map[string]*tcpCore.Router, map[string]udpCore.Handler) {
 	ctx := context.Background()
 

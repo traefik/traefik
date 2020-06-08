@@ -39,7 +39,7 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 	}, nil
 }
 
-// NewCircuitBreakerOptions returns a new CircuitBreakerOption
+// NewCircuitBreakerOptions returns a new CircuitBreakerOption.
 func createCircuitBreakerOptions(expression string) cbreaker.CircuitBreakerOption {
 	return cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		tracing.SetErrorWithEvent(req, "blocked by circuit-breaker (%q)", expression)

@@ -17,7 +17,7 @@ func (*FlagLoader) Load(args []string, cmd *Command) (bool, error) {
 	}
 
 	if err := flag.Decode(args, cmd.Configuration); err != nil {
-		return false, fmt.Errorf("failed to decode configuration from flags: %v", err)
+		return false, fmt.Errorf("failed to decode configuration from flags: %w", err)
 	}
 
 	log.WithoutContext().Println("Configuration loaded from flags.")

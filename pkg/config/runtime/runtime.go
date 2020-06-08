@@ -8,7 +8,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/log"
 )
 
-// Status of the router/service
+// Status of the router/service.
 const (
 	StatusEnabled  = "enabled"
 	StatusDisabled = "disabled"

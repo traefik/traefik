@@ -37,18 +37,18 @@ func newHTTPForwarder(ln net.Listener) *httpForwarder {
 	}
 }
 
-// ServeTCP uses the connection to serve it later in "Accept"
+// ServeTCP uses the connection to serve it later in "Accept".
 func (h *httpForwarder) ServeTCP(conn tcp.WriteCloser) {
 	h.connChan <- conn
 }
 
-// Accept retrieves a served connection in ServeTCP
+// Accept retrieves a served connection in ServeTCP.
 func (h *httpForwarder) Accept() (net.Conn, error) {
 	conn := <-h.connChan
 	return conn, nil
 }
 
-// TCPEntryPoints holds a map of TCPEntryPoint (the entrypoint names being the keys)
+// TCPEntryPoints holds a map of TCPEntryPoint (the entrypoint names being the keys).
 type TCPEntryPoints map[string]*TCPEntryPoint
 
 // NewTCPEntryPoints creates a new TCPEntryPoints.
@@ -57,7 +57,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints) (TCPEntryPoints, er
 	for entryPointName, config := range entryPointsConfig {
 		protocol, err := config.GetProtocol()
 		if err != nil {
-			return nil, fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
+			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
 
 		if protocol != "tcp" {
@@ -68,7 +68,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints) (TCPEntryPoints, er
 
 		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config)
 		if err != nil {
-			return nil, fmt.Errorf("error while building entryPoint %s: %v", entryPointName, err)
+			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
 	}
 	return serverEntryPointsTCP, nil
@@ -109,7 +109,7 @@ func (eps TCPEntryPoints) Switch(routersTCP map[string]*tcp.Router) {
 	}
 }
 
-// TCPEntryPoint is the TCP server
+// TCPEntryPoint is the TCP server.
 type TCPEntryPoint struct {
 	listener               net.Listener
 	switcher               *tcp.HandlerSwitcher
@@ -119,27 +119,27 @@ type TCPEntryPoint struct {
 	httpsServer            *httpServer
 }
 
-// NewTCPEntryPoint creates a new TCPEntryPoint
+// NewTCPEntryPoint creates a new TCPEntryPoint.
 func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*TCPEntryPoint, error) {
 	tracker := newConnectionTracker()
 
 	listener, err := buildListener(ctx, configuration)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing server: %v", err)
+		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
 
 	router := &tcp.Router{}
 
 	httpServer, err := createHTTPServer(ctx, listener, configuration, true)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing httpServer: %v", err)
+		return nil, fmt.Errorf("error preparing httpServer: %w", err)
 	}
 
 	router.HTTPForwarder(httpServer.Forwarder)
 
 	httpsServer, err := createHTTPServer(ctx, listener, configuration, false)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing httpsServer: %v", err)
+		return nil, fmt.Errorf("error preparing httpsServer: %w", err)
 	}
 
 	router.HTTPSForwarder(httpsServer.Forwarder)
@@ -201,7 +201,7 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 	}
 }
 
-// Shutdown stops the TCP connections
+// Shutdown stops the TCP connections.
 func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	logger := log.FromContext(ctx)
 
@@ -381,7 +381,7 @@ func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.List
 	listener, err := net.Listen("tcp", entryPoint.GetAddress())
 
 	if err != nil {
-		return nil, fmt.Errorf("error opening listener: %v", err)
+		return nil, fmt.Errorf("error opening listener: %w", err)
 	}
 
 	listener = tcpKeepAliveListener{listener.(*net.TCPListener)}
@@ -389,7 +389,7 @@ func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.List
 	if entryPoint.ProxyProtocol != nil {
 		listener, err = buildProxyProtocolListener(ctx, entryPoint, listener)
 		if err != nil {
-			return nil, fmt.Errorf("error creating proxy protocol listener: %v", err)
+			return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
 		}
 	}
 	return listener, nil
@@ -406,14 +406,14 @@ type connectionTracker struct {
 	lock  sync.RWMutex
 }
 
-// AddConnection add a connection in the tracked connections list
+// AddConnection add a connection in the tracked connections list.
 func (c *connectionTracker) AddConnection(conn net.Conn) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	c.conns[conn] = struct{}{}
 }
 
-// RemoveConnection remove a connection from the tracked connections list
+// RemoveConnection remove a connection from the tracked connections list.
 func (c *connectionTracker) RemoveConnection(conn net.Conn) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -426,7 +426,7 @@ func (c *connectionTracker) isEmpty() bool {
 	return len(c.conns) == 0
 }
 
-// Shutdown wait for the connection closing
+// Shutdown wait for the connection closing.
 func (c *connectionTracker) Shutdown(ctx context.Context) error {
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
@@ -442,7 +442,7 @@ func (c *connectionTracker) Shutdown(ctx context.Context) error {
 	}
 }
 
-// Close close all the connections in the tracked connections list
+// Close close all the connections in the tracked connections list.
 func (c *connectionTracker) Close() {
 	c.lock.Lock()
 	defer c.lock.Unlock()

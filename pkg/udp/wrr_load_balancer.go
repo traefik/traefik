@@ -12,7 +12,7 @@ type server struct {
 	weight int
 }
 
-// WRRLoadBalancer is a naive RoundRobin load balancer for UDP services
+// WRRLoadBalancer is a naive RoundRobin load balancer for UDP services.
 type WRRLoadBalancer struct {
 	servers       []server
 	lock          sync.RWMutex
@@ -20,14 +20,14 @@ type WRRLoadBalancer struct {
 	index         int
 }
 
-// NewWRRLoadBalancer creates a new WRRLoadBalancer
+// NewWRRLoadBalancer creates a new WRRLoadBalancer.
 func NewWRRLoadBalancer() *WRRLoadBalancer {
 	return &WRRLoadBalancer{
 		index: -1,
 	}
 }
 
-// ServeUDP forwards the connection to the right service
+// ServeUDP forwards the connection to the right service.
 func (b *WRRLoadBalancer) ServeUDP(conn *Conn) {
 	if len(b.servers) == 0 {
 		log.WithoutContext().Error("no available server")
@@ -42,13 +42,13 @@ func (b *WRRLoadBalancer) ServeUDP(conn *Conn) {
 	next.ServeUDP(conn)
 }
 
-// AddServer appends a handler to the existing list
+// AddServer appends a handler to the existing list.
 func (b *WRRLoadBalancer) AddServer(serverHandler Handler) {
 	w := 1
 	b.AddWeightedServer(serverHandler, &w)
 }
 
-// AddWeightedServer appends a handler to the existing list with a weight
+// AddWeightedServer appends a handler to the existing list with a weight.
 func (b *WRRLoadBalancer) AddWeightedServer(serverHandler Handler, weight *int) {
 	w := 1
 	if weight != nil {

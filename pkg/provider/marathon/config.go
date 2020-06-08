@@ -362,7 +362,7 @@ func (p *Provider) getServerHost(task marathon.Task, app marathon.Application, e
 func getPort(task marathon.Task, app marathon.Application, serverPort string) (string, error) {
 	port, err := processPorts(app, task, serverPort)
 	if err != nil {
-		return "", fmt.Errorf("unable to process ports for %s %s: %v", app.ID, task.ID, err)
+		return "", fmt.Errorf("unable to process ports for %s %s: %w", app.ID, task.ID, err)
 	}
 
 	return strconv.Itoa(port), nil

@@ -232,12 +232,12 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     "traefik.http.services.myservice.loadbalancer.healthcheck.followredirects": "true"
     ```
 
-??? info "`traefik.http.services.<service_name>.loadbalancer.sticky`"
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie`"
     
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
     
     ```json
-    "traefik.http.services.myservice.loadbalancer.sticky": "true"
+    "traefik.http.services.myservice.loadbalancer.sticky.cookie": "true"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.httponly`"

@@ -24,7 +24,7 @@ var LocalhostKey []byte
 
 const randCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
-// GRPCSuite
+// GRPCSuite tests suite.
 type GRPCSuite struct{ BaseSuite }
 
 type myserver struct {

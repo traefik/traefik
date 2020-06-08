@@ -1,7 +1,7 @@
 package parser
 
 // EncodeNode Converts a node to labels.
-// nodes -> labels
+// nodes -> labels.
 func EncodeNode(node *Node) map[string]string {
 	labels := make(map[string]string)
 	encodeNode(labels, node.Name, node)

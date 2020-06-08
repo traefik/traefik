@@ -1003,9 +1003,6 @@ func Test_buildConfiguration(t *testing.T) {
 						"Middleware1": {
 							InFlightReq: &dynamic.InFlightReq{
 								Amount: 42,
-								SourceCriterion: &dynamic.SourceCriterion{
-									RequestHost: true,
-								},
 							},
 						},
 					},
@@ -1055,9 +1052,6 @@ func Test_buildConfiguration(t *testing.T) {
 						"Middleware1": {
 							InFlightReq: &dynamic.InFlightReq{
 								Amount: 42,
-								SourceCriterion: &dynamic.SourceCriterion{
-									RequestHost: true,
-								},
 							},
 						},
 					},

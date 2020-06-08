@@ -18,7 +18,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// HTTPSSuite
+// HTTPSSuite tests suite.
 type HTTPSSuite struct{ BaseSuite }
 
 // TestWithSNIConfigHandshake involves a client sending a SNI hostname of
@@ -441,7 +441,7 @@ func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate(c *check.C) {
 }
 
 // TestWithClientCertificateAuthentication
-// The client can send a certificate signed by a CA trusted by the server but it's optional
+// The client can send a certificate signed by a CA trusted by the server but it's optional.
 func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 	file := s.adaptFile(c, "fixtures/https/clientca/https_1ca1config.toml", struct{}{})
 	defer os.Remove(file)
@@ -499,7 +499,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 }
 
 // TestWithClientCertificateAuthentication
-// Use two CA:s and test that clients with client signed by either of them can connect
+// Use two CA:s and test that clients with client signed by either of them can connect.
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check.C) {
 	server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server1")) }))
 	server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server2")) }))
@@ -596,7 +596,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check
 }
 
 // TestWithClientCertificateAuthentication
-// Use two CA:s in two different files and test that clients with client signed by either of them can connect
+// Use two CA:s in two different files and test that clients with client signed by either of them can connect.
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleFiles(c *check.C) {
 	server1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server1")) }))
 	server2 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) { _, _ = rw.Write([]byte("server2")) }))

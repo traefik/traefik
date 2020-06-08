@@ -94,7 +94,7 @@ func (t *Tracing) IsEnabled() bool {
 	return t != nil && t.tracer != nil
 }
 
-// Close tracer
+// Close tracer.
 func (t *Tracing) Close() {
 	if t.closer != nil {
 		err := t.closer.Close()
@@ -148,7 +148,7 @@ func LogEventf(r *http.Request, format string, args ...interface{}) {
 	}
 }
 
-// StartSpan starts a new span from the one in the request context
+// StartSpan starts a new span from the one in the request context.
 func StartSpan(r *http.Request, operationName string, spanKind ext.SpanKindEnum, opts ...opentracing.StartSpanOption) (opentracing.Span, *http.Request, func()) {
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), operationName, opts...)
 

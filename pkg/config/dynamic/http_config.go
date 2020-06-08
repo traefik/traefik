@@ -47,7 +47,7 @@ type Router struct {
 
 // +k8s:deepcopy-gen=true
 
-// RouterTLSConfig holds the TLS configuration for a router
+// RouterTLSConfig holds the TLS configuration for a router.
 type RouterTLSConfig struct {
 	Options      string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
 	CertResolver string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty"`
@@ -103,7 +103,7 @@ func (w *WRRService) SetDefaults() {
 
 // Sticky holds the sticky configuration.
 type Sticky struct {
-	Cookie *Cookie `json:"cookie,omitempty" toml:"cookie,omitempty" yaml:"cookie,omitempty"`
+	Cookie *Cookie `json:"cookie,omitempty" toml:"cookie,omitempty" yaml:"cookie,omitempty" label:"allowEmpty"`
 }
 
 // +k8s:deepcopy-gen=true

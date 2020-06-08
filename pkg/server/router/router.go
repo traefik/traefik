@@ -33,7 +33,7 @@ type serviceManager interface {
 	LaunchHealthCheck()
 }
 
-// Manager A route/router manager
+// Manager A route/router manager.
 type Manager struct {
 	routerHandlers     map[string]http.Handler
 	serviceManager     serviceManager
@@ -43,7 +43,7 @@ type Manager struct {
 	conf               *runtime.Configuration
 }
 
-// NewManager Creates a new Manager
+// NewManager Creates a new Manager.
 func NewManager(conf *runtime.Configuration,
 	serviceManager serviceManager,
 	middlewaresBuilder middlewareBuilder,
@@ -68,7 +68,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
-// BuildHandlers Builds handler for all entry points
+// BuildHandlers Builds handler for all entry points.
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
 	entryPointHandlers := make(map[string]http.Handler)
 

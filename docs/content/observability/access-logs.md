@@ -111,9 +111,9 @@ accessLog:
 --accesslog.filters.minduration=10ms
 ```
 
-### Limiting the Fields
+### Limiting the Fields/Including Headers
 
-You can decide to limit the logged fields/headers to a given list with the `fields.names` and `fields.header` options
+You can decide to limit the logged fields/headers to a given list with the `fields.names` and `fields.headers` options.
 
 Each field can be set to:
 
@@ -121,7 +121,7 @@ Each field can be set to:
 - `drop` to drop the value
 - `redact` to replace the value with "redacted"
 
-The `defaultMode` for `fields.header` is `drop`.
+The `defaultMode` for `fields.headers` is `drop`.
 
 ```toml tab="File (TOML)"
 # Limiting the Logs to Specific Fields

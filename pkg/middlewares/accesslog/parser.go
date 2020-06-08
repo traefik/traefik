@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-// ParseAccessLog parse line of access log and return a map with each fields
+// ParseAccessLog parse line of access log and return a map with each fields.
 func ParseAccessLog(data string) (map[string]string, error) {
 	var buffer bytes.Buffer
 	buffer.WriteString(`(\S+)`)                  // 1 - ClientHost

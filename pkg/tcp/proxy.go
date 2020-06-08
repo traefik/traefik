@@ -8,13 +8,13 @@ import (
 	"github.com/containous/traefik/v2/pkg/log"
 )
 
-// Proxy forwards a TCP request to a TCP service
+// Proxy forwards a TCP request to a TCP service.
 type Proxy struct {
 	target           *net.TCPAddr
 	terminationDelay time.Duration
 }
 
-// NewProxy creates a new Proxy
+// NewProxy creates a new Proxy.
 func NewProxy(address string, terminationDelay time.Duration) (*Proxy, error) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
@@ -24,7 +24,7 @@ func NewProxy(address string, terminationDelay time.Duration) (*Proxy, error) {
 	return &Proxy{target: tcpAddr, terminationDelay: terminationDelay}, nil
 }
 
-// ServeTCP forwards the connection to a service
+// ServeTCP forwards the connection to a service.
 func (p *Proxy) ServeTCP(conn WriteCloser) {
 	log.Debugf("Handling connection from %s", conn.RemoteAddr())
 

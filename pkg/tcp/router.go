@@ -13,7 +13,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/log"
 )
 
-// Router is a TCP router
+// Router is a TCP router.
 type Router struct {
 	routingTable      map[string]Handler
 	httpForwarder     Handler
@@ -25,7 +25,7 @@ type Router struct {
 	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
 }
 
-// ServeTCP forwards the connection to the right TCP/HTTP handler
+// ServeTCP forwards the connection to the right TCP/HTTP handler.
 func (r *Router) ServeTCP(conn WriteCloser) {
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
 
@@ -86,7 +86,7 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	}
 }
 
-// AddRoute defines a handler for a given sniHost (* is the only valid option)
+// AddRoute defines a handler for a given sniHost (* is the only valid option).
 func (r *Router) AddRoute(sniHost string, target Handler) {
 	if r.routingTable == nil {
 		r.routingTable = map[string]Handler{}
@@ -94,7 +94,7 @@ func (r *Router) AddRoute(sniHost string, target Handler) {
 	r.routingTable[strings.ToLower(sniHost)] = target
 }
 
-// AddRouteTLS defines a handler for a given sniHost and sets the matching tlsConfig
+// AddRouteTLS defines a handler for a given sniHost and sets the matching tlsConfig.
 func (r *Router) AddRouteTLS(sniHost string, target Handler, config *tls.Config) {
 	r.AddRoute(sniHost, &TLSHandler{
 		Next:   target,
@@ -102,7 +102,7 @@ func (r *Router) AddRouteTLS(sniHost string, target Handler, config *tls.Config)
 	})
 }
 
-// AddRouteHTTPTLS defines a handler for a given sniHost and sets the matching tlsConfig
+// AddRouteHTTPTLS defines a handler for a given sniHost and sets the matching tlsConfig.
 func (r *Router) AddRouteHTTPTLS(sniHost string, config *tls.Config) {
 	if r.hostHTTPTLSConfig == nil {
 		r.hostHTTPTLSConfig = map[string]*tls.Config{}
@@ -110,12 +110,12 @@ func (r *Router) AddRouteHTTPTLS(sniHost string, config *tls.Config) {
 	r.hostHTTPTLSConfig[sniHost] = config
 }
 
-// AddCatchAllNoTLS defines the fallback tcp handler
+// AddCatchAllNoTLS defines the fallback tcp handler.
 func (r *Router) AddCatchAllNoTLS(handler Handler) {
 	r.catchAllNoTLS = handler
 }
 
-// GetConn creates a connection proxy with a peeked string
+// GetConn creates a connection proxy with a peeked string.
 func (r *Router) GetConn(conn WriteCloser, peeked string) WriteCloser {
 	// FIXME should it really be on Router ?
 	conn = &Conn{
@@ -125,22 +125,22 @@ func (r *Router) GetConn(conn WriteCloser, peeked string) WriteCloser {
 	return conn
 }
 
-// GetHTTPHandler gets the attached http handler
+// GetHTTPHandler gets the attached http handler.
 func (r *Router) GetHTTPHandler() http.Handler {
 	return r.httpHandler
 }
 
-// GetHTTPSHandler gets the attached https handler
+// GetHTTPSHandler gets the attached https handler.
 func (r *Router) GetHTTPSHandler() http.Handler {
 	return r.httpsHandler
 }
 
-// HTTPForwarder sets the tcp handler that will forward the connections to an http handler
+// HTTPForwarder sets the tcp handler that will forward the connections to an http handler.
 func (r *Router) HTTPForwarder(handler Handler) {
 	r.httpForwarder = handler
 }
 
-// HTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler
+// HTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
 func (r *Router) HTTPSForwarder(handler Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
 		r.AddRouteTLS(sniHost, handler, tlsConf)
@@ -152,18 +152,18 @@ func (r *Router) HTTPSForwarder(handler Handler) {
 	}
 }
 
-// HTTPHandler attaches http handlers on the router
+// HTTPHandler attaches http handlers on the router.
 func (r *Router) HTTPHandler(handler http.Handler) {
 	r.httpHandler = handler
 }
 
-// HTTPSHandler attaches https handlers on the router
+// HTTPSHandler attaches https handlers on the router.
 func (r *Router) HTTPSHandler(handler http.Handler, config *tls.Config) {
 	r.httpsHandler = handler
 	r.httpsTLSConfig = config
 }
 
-// Conn is a connection proxy that handles Peeked bytes
+// Conn is a connection proxy that handles Peeked bytes.
 type Conn struct {
 	// Peeked are the bytes that have been read from Conn for the
 	// purposes of route matching, but have not yet been consumed
@@ -177,7 +177,7 @@ type Conn struct {
 	WriteCloser
 }
 
-// Read reads bytes from the connection (using the buffer prior to actually reading)
+// Read reads bytes from the connection (using the buffer prior to actually reading).
 func (c *Conn) Read(p []byte) (n int, err error) {
 	if len(c.Peeked) > 0 {
 		n = copy(p, c.Peeked)
@@ -259,8 +259,8 @@ type sniSniffConn struct {
 	net.Conn // nil; crash on any unexpected use
 }
 
-// Read reads from the underlying reader
+// Read reads from the underlying reader.
 func (c sniSniffConn) Read(p []byte) (int, error) { return c.r.Read(p) }
 
-// Write crashes all the time
+// Write crashes all the time.
 func (sniSniffConn) Write(p []byte) (int, error) { return 0, io.EOF }
