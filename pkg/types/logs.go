@@ -1,5 +1,9 @@
 package types
 
+import (
+	"strings"
+)
+
 const (
 	// AccessLogKeep is the keep string value.
 	AccessLogKeep = "keep"
@@ -95,10 +99,21 @@ func (f *AccessLogFields) KeepHeader(header string) string {
 	if f != nil && f.Headers != nil {
 		defaultValue = checkFieldHeaderValue(f.Headers.DefaultMode, defaultValue)
 
+		// Keep fast path in case of exact match.
 		if v, ok := f.Headers.Names[header]; ok {
 			return checkFieldHeaderValue(v, defaultValue)
 		}
+
+		// Check for case insensitive header name.
+		caseInsensitiveHeader := strings.ToLower(header)
+
+		for h, v := range f.Headers.Names {
+			if caseInsensitiveHeader == strings.ToLower(h) {
+				return checkFieldHeaderValue(v, defaultValue)
+			}
+		}
 	}
+
 	return defaultValue
 }
 
