@@ -97,7 +97,7 @@ Then any router can refer to an instance of the wanted middleware.
 
     ```yaml tab="Docker"
     labels:
-      - "traefik.http.routers.router0.rule=Host(`example.com`) && PathPrefix(`/test`)"
+      - "traefik.http.routers.router0.rule=Host(`test.localhost`) && PathPrefix(`/test`)"
       - "traefik.http.routers.router0.middlewares=auth"
       - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     ```
