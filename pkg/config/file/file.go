@@ -26,13 +26,13 @@ func Decode(filePath string, element interface{}) error {
 		return err
 	}
 
-	metaOpts := parser.MetadataOpts{TagName: parser.TagFile, AllowSliceAsStruct: true}
+	metaOpts := parser.MetadataOpts{TagName: parser.TagFile, AllowSliceAsStruct: false}
 	err = parser.AddMetadata(element, root, metaOpts)
 	if err != nil {
 		return err
 	}
 
-	return parser.Fill(element, root, parser.FillerOpts{AllowSliceAsStruct: true})
+	return parser.Fill(element, root, parser.FillerOpts{AllowSliceAsStruct: false})
 }
 
 // DecodeContent decodes the given configuration file content into the given element.
