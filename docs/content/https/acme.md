@@ -371,7 +371,7 @@ For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used
 
 #### `resolvers`
 
-Use custom DNS servers to resolve the FQDN authority.
+Use custom DNS servers to resolve the FQDN authority. Only IP addresses are supported as resolvers, not domain names.
 
 ```toml tab="File (TOML)"
 [certificatesResolvers.myresolver.acme]
