@@ -13,7 +13,7 @@ spec:
       port: 8080
     - protocol: TCP
       name: websecure
-      port: 4443
+      port: 443
   selector:
     app: traefik
 
