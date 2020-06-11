@@ -100,10 +100,7 @@ func (w *responseModifier) Header() http.Header {
 func (w *responseModifier) Write(b []byte) (int, error) {
 	w.WriteHeader(w.code)
 	if w.modifierErr != nil {
-		err := w.modifierErr
-		// reset the modifierErr, because we want to propagate it up only once.
-		w.modifierErr = nil
-		return 0, err
+		return 0, w.modifierErr
 	}
 
 	return w.w.Write(b)
