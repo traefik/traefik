@@ -496,6 +496,54 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 	checkNoOtherTraefikProblems(c)
 }
 
+func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess(c *check.C) {
+	ensureWorkingDirectoryIsClean()
+
+	expected := []accessLogValue{
+		{
+			formatOnly: false,
+			code:       "200",
+			user:       "test",
+			routerName: "rt-authFrontend",
+			serviceURL: "http://172.17.0",
+		},
+	}
+
+	// Start Traefik
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	checkStatsForLogFile(c)
+
+	s.composeProject.Container(c, "authFrontend")
+
+	waitForTraefik(c, "authFrontend")
+
+	// Verify Traefik started OK
+	checkTraefikStarted(c)
+
+	// Test auth entrypoint
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8006/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "frontend.auth.docker.local"
+	req.SetBasicAuth("test", "test")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Verify access.log output as expected
+	count := checkAccessLogExactValuesOutput(c, expected)
+
+	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
+
+	// Verify no other Traefik problems
+	checkNoOtherTraefikProblems(c)
+}
+
 func checkNoOtherTraefikProblems(c *check.C) {
 	traefikLog, err := ioutil.ReadFile(traefikTestLogFile)
 	c.Assert(err, checker.IsNil)
