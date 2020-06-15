@@ -6,7 +6,6 @@ import (
 	"mime"
 	"net/http"
 	"strings"
-	"sync"
 
 	"github.com/NYTimes/gziphandler"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
@@ -45,45 +44,82 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 }
 
 type compressResponseWriter struct {
-	getResponseWriter func() http.ResponseWriter
+	excluded          func() []string
+	exclusionComputed bool
+	compressWriter    http.ResponseWriter
+	originalWriter    http.ResponseWriter
 }
 
 func (w *compressResponseWriter) Flush() {
-	if fw, ok := w.getResponseWriter().(http.Flusher); ok {
+	if w.exclusionComputed && w.originalWriter != nil {
+		if fw, ok := w.originalWriter.(http.Flusher); ok {
+			fw.Flush()
+		}
+		return
+	}
+
+	if fw, ok := w.compressWriter.(http.Flusher); ok {
 		fw.Flush()
 	}
 }
 
 func (w *compressResponseWriter) WriteHeader(code int) {
-	w.getResponseWriter().WriteHeader(code)
+	if !w.exclusionComputed {
+		w.exclusionComputed = true
+		contentType := w.Header().Get("Content-Type")
+
+		if !contains(w.excluded(), contentType) {
+			w.originalWriter = nil
+		} else {
+			// Copy headers to original response writer fallback
+			for key, values := range w.compressWriter.Header() {
+				for _, value := range values {
+					w.originalWriter.Header().Add(key, value)
+				}
+			}
+		}
+	}
+
+	if w.originalWriter != nil {
+		w.originalWriter.WriteHeader(code)
+		return
+	}
+
+	w.compressWriter.WriteHeader(code)
 }
 
 func (w *compressResponseWriter) Header() http.Header {
-	return w.getResponseWriter().Header()
+	// Fallback for trailer headers
+	if w.exclusionComputed && w.originalWriter != nil {
+		return w.originalWriter.Header()
+	}
+
+	return w.compressWriter.Header()
 }
 
 func (w *compressResponseWriter) Write(b []byte) (int, error) {
-	return w.getResponseWriter().Write(b)
+	// Reproduce standard write behavior
+	// If has not yet been called, Write calls
+	// WriteHeader(http.StatusOK) before writing the data
+	if !w.exclusionComputed {
+		w.WriteHeader(http.StatusOK)
+	}
+
+	if w.originalWriter != nil {
+		return w.originalWriter.Write(b)
+	}
+
+	return w.compressWriter.Write(b)
 }
 
 func (c *compress) handleExclusions(h http.Handler, ow http.ResponseWriter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cw := &compressResponseWriter{
-			getResponseWriter: func() http.ResponseWriter {
-				var once sync.Once
-				var rw http.ResponseWriter
-				once.Do(func() {
-					//Compute exclusion once
-					contentType := w.Header().Get("Content-Type")
-
-					if contains(c.excludes, contentType) {
-						rw = ow
-					} else {
-						rw = w
-					}
-				})
-				return rw
+			excluded: func() []string {
+				return c.excludes
 			},
+			originalWriter: ow,
+			compressWriter: w,
 		}
 		h.ServeHTTP(cw, r)
 	})
