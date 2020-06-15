@@ -77,6 +77,7 @@ nav:
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
       - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
       - 'Consul Catalog': 'providers/consul-catalog.md'
+      - 'ECS': 'providers/ecs.md'
       - 'Marathon': 'providers/marathon.md'
       - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
@@ -84,7 +85,6 @@ nav:
       - 'Etcd': 'providers/etcd.md'
       - 'ZooKeeper': 'providers/zookeeper.md'
       - 'Redis': 'providers/redis.md'
-      - 'ECS': 'providers/ecs.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'EntryPoints': 'routing/entrypoints.md'

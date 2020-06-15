@@ -417,6 +417,33 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 `--providers.docker.watch`:  
 Watch Docker Swarm events. (Default: ```true```)
 
+`--providers.ecs.accesskeyid`:  
+The AWS credentials access key to use for making requests
+
+`--providers.ecs.autodiscoverclusters`:  
+Auto discover cluster (Default: ```true```)
+
+`--providers.ecs.clusters`:  
+ECS Clusters name (Default: ```default```)
+
+`--providers.ecs.constraints`:  
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`--providers.ecs.defaultrule`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`--providers.ecs.exposedbydefault`:  
+Expose services by default (Default: ```true```)
+
+`--providers.ecs.refreshseconds`:  
+Polling interval (in seconds) (Default: ```15```)
+
+`--providers.ecs.region`:  
+The AWS region to use for requests
+
+`--providers.ecs.secretaccesskey`:  
+The AWS credentials access key to use for making requests
+
 `--providers.etcd`:  
 Enable Etcd backend with default settings. (Default: ```false```)
 

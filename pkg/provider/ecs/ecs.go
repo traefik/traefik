@@ -28,16 +28,16 @@ import (
 // Provider holds configurations of the provider.
 type Provider struct {
 	Constraints      string `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
-	ExposedByDefault bool   `description:"Expose services by default" export:"true"`
-	RefreshSeconds   int    `description:"Polling interval (in seconds)" export:"true"`
+	ExposedByDefault bool   `description:"Expose services by default" json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
+	RefreshSeconds   int    `description:"Polling interval (in seconds)" json:"refreshSeconds,omitempty" toml:"refreshSeconds,omitempty" yaml:"refreshSeconds,omitempty" export:"true"`
 	DefaultRule      string `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 
-	// Provider lookup parameters
-	Clusters             Clusters `description:"ECS Clusters name"`
-	AutoDiscoverClusters bool     `description:"Auto discover cluster" export:"true"`
-	Region               string   `description:"The AWS region to use for requests" export:"true"`
-	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests"`
-	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests"`
+	// Provider lookup parameters.
+	Clusters             []string `description:"ECS Clusters name" json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
+	AutoDiscoverClusters bool     `description:"Auto discover cluster" json:"autoDiscoverClusters,omitempty" toml:"autoDiscoverClusters,omitempty" yaml:"autoDiscoverClusters,omitempty" export:"true"`
+	Region               string   `description:"The AWS region to use for requests"  json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty" export:"true"`
+	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests" json:"accessKeyID,omitempty" toml:"accessKeyID,omitempty" yaml:"accessKeyID,omitempty"`
+	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests" json:"secretAccessKey,omitempty" toml:"secretAccessKey,omitempty" yaml:"secretAccessKey,omitempty"`
 	defaultRuleTpl       *template.Template
 }
 
@@ -136,7 +136,7 @@ func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 	}, nil
 }
 
-// Provide configuration to traefik from ECS
+// Provide configuration to traefik from ECS.
 func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "ecs"))
@@ -195,12 +195,12 @@ func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.P
 }
 
 // Find all running Provider tasks in a cluster, also collect the task definitions (for docker labels)
-// and the EC2 instance data
+// and the EC2 instance data.
 func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsInstance, error) {
 	logger := log.FromContext(ctx)
 
 	var clustersArn []*string
-	var clusters Clusters
+	var clusters []string
 
 	if p.AutoDiscoverClusters {
 		input := &ecs.ListClustersInput{}
@@ -422,7 +422,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 			})
 
 			if err != nil {
-				logger.Errorf("Unable to describe instances: %v", err)
+				logger.Errorf("Unable to describe instances: %w", err)
 				return nil, err
 			}
 		}
@@ -445,7 +445,7 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 			})
 
 			if err != nil {
-				logger.Errorf("Unable to describe task definition: %s", err)
+				logger.Errorf("Unable to describe task definition: %w", err)
 				return nil, err
 			}
 
@@ -457,7 +457,7 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 }
 
 // chunkIDs ECS expects no more than 100 parameters be passed to a API call;
-// thus, pack each string into an array capped at 100 elements
+// thus, pack each string into an array capped at 100 elements.
 func (p *Provider) chunkIDs(ids []*string) [][]*string {
 	var chuncked [][]*string
 	for i := 0; i < len(ids); i += 100 {
