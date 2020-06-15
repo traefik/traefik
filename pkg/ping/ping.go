@@ -31,12 +31,7 @@ func (h *Handler) WithContext(ctx context.Context) {
 func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	statusCode := http.StatusOK
 	if h.terminating {
-		statusCode = http.StatusServiceUnavailable
-
-		// TODO(mpl): check whether this is still needed even with SetDefaults.
-		if h.TerminatingStatusCode > 0 {
-			statusCode = h.TerminatingStatusCode
-		}
+		statusCode = h.TerminatingStatusCode
 	}
 	response.WriteHeader(statusCode)
 	fmt.Fprint(response, http.StatusText(statusCode))
