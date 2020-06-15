@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 type serviceManager interface {
@@ -85,6 +86,10 @@ func (w *responseModifier) WriteHeader(code int) {
 
 	if err := w.modifier(&resp); err != nil {
 		w.modifierErr = err
+		// we are propagating when we are called in Write, but we're logging anyway,
+		// because we could be called from another place which does not take care of
+		// checking w.modifierErr.
+		log.Errorf("Error when applying response modifier: %v", err)
 		w.w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
