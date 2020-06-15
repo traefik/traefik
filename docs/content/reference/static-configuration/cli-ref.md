@@ -280,7 +280,7 @@ EntryPoint (Default: ```traefik```)
 Manual routing (Default: ```false```)
 
 `--ping.terminatingstatuscode`:  
-Terminating status code (Default: ```0```)
+Terminating status code (Default: ```503```)
 
 `--providers.consul`:  
 Enable Consul backend with default settings. (Default: ```false```)

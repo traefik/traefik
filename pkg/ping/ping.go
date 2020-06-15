@@ -17,6 +17,7 @@ type Handler struct {
 // SetDefaults sets the default values.
 func (h *Handler) SetDefaults() {
 	h.EntryPoint = "traefik"
+	h.TerminatingStatusCode = http.StatusServiceUnavailable
 }
 
 // WithContext causes the ping endpoint to serve non 200 responses.
@@ -32,6 +33,7 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 	if h.terminating {
 		statusCode = http.StatusServiceUnavailable
 
+		// TODO(mpl): check whether this is still needed even with SetDefaults.
 		if h.TerminatingStatusCode > 0 {
 			statusCode = h.TerminatingStatusCode
 		}
