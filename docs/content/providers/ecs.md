@@ -19,7 +19,8 @@ Attach labels to your ECS containers and let Traefik do the rest!
     ```yaml tab="File (YAML)"
     providers:
       ecs:
-        clusters = ["default"]
+        clusters:
+          - default
     ```
     
     ```bash tab="CLI"

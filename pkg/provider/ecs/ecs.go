@@ -349,7 +349,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 				extraConf, err := p.getConfiguration(instance)
 				if err != nil {
-					log.FromContext(ctx).Errorf("Skip container %s: %v", getServiceName(instance), err)
+					log.FromContext(ctx).Errorf("Skip container %s: %w", getServiceName(instance), err)
 					continue
 				}
 				instance.ExtraConf = extraConf
@@ -422,7 +422,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 			})
 
 			if err != nil {
-				logger.Errorf("Unable to describe instances: %w", err)
+				logger.Errorf("Unable to describe instances: %v", err)
 				return nil, err
 			}
 		}
@@ -445,7 +445,7 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 			})
 
 			if err != nil {
-				logger.Errorf("Unable to describe task definition: %w", err)
+				logger.Errorf("Unable to describe task definition: %v", err)
 				return nil, err
 			}
 

@@ -134,7 +134,7 @@ func (p *Provider) buildUDPServiceConfiguration(instance ecsInstance, configurat
 	return nil
 }
 
-func (p *Provider) buildServiceConfiguration(ctx context.Context, instance ecsInstance, configuration *dynamic.HTTPConfiguration) error {
+func (p *Provider) buildServiceConfiguration(_ context.Context, instance ecsInstance, configuration *dynamic.HTTPConfiguration) error {
 	serviceName := getServiceName(instance)
 
 	if len(configuration.Services) == 0 {
