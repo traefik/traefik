@@ -105,6 +105,7 @@ type Chain struct {
 // CircuitBreaker holds the circuit breaker configuration.
 type CircuitBreaker struct {
 	Expression string `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty"`
+	Service    string `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

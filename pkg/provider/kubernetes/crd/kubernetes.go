@@ -199,6 +199,18 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
+		cirtcuitBreaker, cirtcuitBreakerService, err := createCircuitBreakerMiddleware(client, middleware.Namespace, middleware.Spec.CircuitBreaker)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading circuit breaker middleware: %v", err)
+			continue
+		}
+
+		if cirtcuitBreaker != nil && cirtcuitBreakerService != nil {
+			serviceName := id + "-circuitbreaker-service"
+			cirtcuitBreaker.Service = serviceName
+			conf.HTTP.Services[serviceName] = cirtcuitBreakerService
+		}
+
 		errorPage, errorPageService, err := createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
 		if err != nil {
 			log.FromContext(ctxMid).Errorf("Error while reading error page middleware: %v", err)
@@ -229,7 +241,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			ForwardAuth:       forwardAuth,
 			InFlightReq:       middleware.Spec.InFlightReq,
 			Buffering:         middleware.Spec.Buffering,
-			CircuitBreaker:    middleware.Spec.CircuitBreaker,
+			CircuitBreaker:    cirtcuitBreaker,
 			Compress:          middleware.Spec.Compress,
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
 			Retry:             middleware.Spec.Retry,
@@ -340,6 +352,23 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 	}
 
 	return forwardAuth, nil
+}
+
+func createCircuitBreakerMiddleware(client Client, namespace string, circuitBreaker *v1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, *dynamic.Service, error) {
+	if circuitBreaker == nil {
+		return nil, nil, nil
+	}
+
+	circuitBreakerMiddleware := &dynamic.CircuitBreaker{
+		Expression: circuitBreaker.Expression,
+	}
+
+	balancerServerHTTP, err := configBuilder{client}.buildServersLB(namespace, circuitBreaker.Service.LoadBalancerSpec)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return circuitBreakerMiddleware, balancerServerHTTP, nil
 }
 
 func loadCASecret(namespace, secretName string, k8sClient Client) (string, error) {

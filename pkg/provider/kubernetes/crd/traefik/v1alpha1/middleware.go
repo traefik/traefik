@@ -37,7 +37,7 @@ type MiddlewareSpec struct {
 	ForwardAuth       *ForwardAuth               `json:"forwardAuth,omitempty"`
 	InFlightReq       *dynamic.InFlightReq       `json:"inFlightReq,omitempty"`
 	Buffering         *dynamic.Buffering         `json:"buffering,omitempty"`
-	CircuitBreaker    *dynamic.CircuitBreaker    `json:"circuitBreaker,omitempty"`
+	CircuitBreaker    *CircuitBreaker            `json:"circuitBreaker,omitempty"`
 	Compress          *dynamic.Compress          `json:"compress,omitempty"`
 	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
 	Retry             *dynamic.Retry             `json:"retry,omitempty"`
@@ -88,6 +88,14 @@ type ForwardAuth struct {
 	TrustForwardHeader  bool       `json:"trustForwardHeader,omitempty"`
 	AuthResponseHeaders []string   `json:"authResponseHeaders,omitempty"`
 	TLS                 *ClientTLS `json:"tls,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// CircuitBreaker holds the circuit breaker configuration.
+type CircuitBreaker struct {
+	Expression string  `json:"expression,omitempty"`
+	Service    Service `json:"service,omitempty"`
 }
 
 // ClientTLS holds TLS specific configurations as client.
