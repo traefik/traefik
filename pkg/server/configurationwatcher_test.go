@@ -257,6 +257,161 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 	assert.Equal(t, expected, lastConfig)
 }
 
+func TestListenProvidersFoldSameConfiguration(t *testing.T) {
+	routinesPool := safe.NewPool(context.Background())
+
+	configuration := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo")),
+			th.WithLoadBalancerServices(th.WithService("bar")),
+		),
+	}
+
+	transientConfiguration := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("bad")),
+			th.WithLoadBalancerServices(th.WithService("bad")),
+		),
+	}
+
+	pvd := &mockProvider{
+		wait: 1 * time.Microsecond, // Enqueue them fast
+		messages: []dynamic.Message{
+			{ProviderName: "mock", Configuration: configuration},
+			{ProviderName: "mock", Configuration: transientConfiguration},
+			{ProviderName: "mock", Configuration: configuration},
+			{ProviderName: "mock", Configuration: transientConfiguration},
+			{ProviderName: "mock", Configuration: configuration},
+		},
+	}
+
+	watcher := NewConfigurationWatcher(routinesPool, pvd, 1*time.Millisecond, []string{"defaultEP"})
+
+	var configurationReloads int
+	var lastConfig dynamic.Configuration
+	watcher.AddListener(func(conf dynamic.Configuration) {
+		configurationReloads++
+		lastConfig = conf
+		time.Sleep(10 * time.Millisecond) // Simulate slow processing
+	})
+
+	watcher.Start()
+	defer watcher.Stop()
+
+	// Wait long enough
+	time.Sleep(50 * time.Millisecond)
+
+	expected := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("defaultEP"))),
+			th.WithLoadBalancerServices(th.WithService("bar@mock")),
+			th.WithMiddlewares(),
+		),
+		TCP: &dynamic.TCPConfiguration{
+			Routers:  map[string]*dynamic.TCPRouter{},
+			Services: map[string]*dynamic.TCPService{},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  map[string]*dynamic.UDPRouter{},
+			Services: map[string]*dynamic.UDPService{},
+		},
+		TLS: &dynamic.TLSConfiguration{
+			Options: map[string]tls.Options{
+				"default": {},
+			},
+			Stores: map[string]tls.Store{},
+		},
+	}
+
+	assert.Equal(t, expected, lastConfig)
+
+	assert.Equal(t, 1, configurationReloads)
+}
+
+func TestListenProvidersOnlyLastDifferentConfigurationPublished(t *testing.T) {
+	routinesPool := safe.NewPool(context.Background())
+
+	configuration := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo")),
+			th.WithLoadBalancerServices(th.WithService("bar")),
+		),
+	}
+
+	transientConfiguration := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("bad")),
+			th.WithLoadBalancerServices(th.WithService("bad")),
+		),
+	}
+
+	transientConfiguration2 := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("bad2")),
+			th.WithLoadBalancerServices(th.WithService("bad2")),
+		),
+	}
+
+	finalConfiguration := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("final")),
+			th.WithLoadBalancerServices(th.WithService("final")),
+		),
+	}
+
+	pvd := &mockProvider{
+		wait: 1 * time.Microsecond, // Enqueue them fast
+		messages: []dynamic.Message{
+			{ProviderName: "mock", Configuration: configuration},
+			{ProviderName: "mock", Configuration: transientConfiguration},
+			{ProviderName: "mock", Configuration: transientConfiguration2},
+			{ProviderName: "mock", Configuration: finalConfiguration},
+		},
+	}
+
+	watcher := NewConfigurationWatcher(routinesPool, pvd, 1*time.Millisecond, []string{"defaultEP"})
+
+	var configurationReloads int
+	var lastConfig dynamic.Configuration
+	watcher.AddListener(func(conf dynamic.Configuration) {
+		configurationReloads++
+		lastConfig = conf
+		time.Sleep(10 * time.Millisecond) // Simulate slow processing
+	})
+
+	watcher.Start()
+	defer watcher.Stop()
+
+	// Wait long enough
+	time.Sleep(50 * time.Millisecond)
+
+	expected := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("final@mock", th.WithEntryPoints("defaultEP"))),
+			th.WithLoadBalancerServices(th.WithService("final@mock")),
+			th.WithMiddlewares(),
+		),
+		TCP: &dynamic.TCPConfiguration{
+			Routers:  map[string]*dynamic.TCPRouter{},
+			Services: map[string]*dynamic.TCPService{},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  map[string]*dynamic.UDPRouter{},
+			Services: map[string]*dynamic.UDPService{},
+		},
+		TLS: &dynamic.TLSConfiguration{
+			Options: map[string]tls.Options{
+				"default": {},
+			},
+			Stores: map[string]tls.Store{},
+		},
+	}
+
+	assert.Equal(t, expected, lastConfig)
+
+	assert.Equal(t, 2, configurationReloads)
+}
+
 func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
 
