@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	typeName = "CircuitBreaker"
+	typeName      = "CircuitBreaker"
+	xForwardedWhy = "X-Forwarded-Why"
 )
 
 type circuitBreaker struct {
@@ -33,40 +34,49 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 	logger.Debug("Creating middleware")
 	logger.Debug("Setting up with expression: %s", expression)
 
-	oxyCircuitBreaker, err := cbreaker.New(next, expression, createCircuitBreakerOptions(ctx, logger, confCircuitBreaker, serviceBuilder, expression))
+	oxyCircuitBreaker, err := cbreaker.New(next, expression)
+
 	if err != nil {
 		return nil, err
 	}
+
+	fallback := createCircuitBreakerFallback(ctx, logger, oxyCircuitBreaker, confCircuitBreaker, serviceBuilder, expression)
+	oxyCircuitBreaker.Fallback(fallback)
+
 	return &circuitBreaker{
 		circuitBreaker: oxyCircuitBreaker,
 		name:           name,
 	}, nil
 }
 
-// NewCircuitBreakerOptions returns a new CircuitBreakerOption.
-func createCircuitBreakerOptions(ctx context.Context, logger log.Logger, confCircuitBreaker dynamic.CircuitBreaker, serviceBuilder serviceBuilder, expression string) cbreaker.CircuitBreakerOption {
+// createCircuitBreakerFallback returns a new http.Handler.
+func createCircuitBreakerFallback(ctx context.Context, logger log.Logger, circuitBreaker *cbreaker.CircuitBreaker, confCircuitBreaker dynamic.CircuitBreaker, serviceBuilder serviceBuilder, expression string) http.Handler {
 	if len(confCircuitBreaker.Service) > 0 {
 		h, err := serviceBuilder.BuildHTTP(ctx, confCircuitBreaker.Service, nil)
 
 		if err != nil {
 			logger.Error(err)
 		} else {
-			return cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				tracing.SetErrorWithEvent(req, "forwarded by circuit-breaker (%q) to %s", expression, confCircuitBreaker.Service)
 
+				// Add a Header to the request so that the fallback service
+				// knows why he receives this request.
+				req.Header.Add(xForwardedWhy, circuitBreaker.String())
+
 				h.ServeHTTP(rw, req)
-			}))
+			})
 		}
 	}
 
-	return cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		tracing.SetErrorWithEvent(req, "blocked by circuit-breaker (%q)", expression)
 		rw.WriteHeader(http.StatusServiceUnavailable)
 
 		if _, err := rw.Write([]byte(http.StatusText(http.StatusServiceUnavailable))); err != nil {
 			log.FromContext(req.Context()).Error(err)
 		}
-	}))
+	})
 }
 
 func (c *circuitBreaker) GetTracingInformation() (string, ext.SpanKindEnum) {

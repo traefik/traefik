@@ -666,6 +666,8 @@ github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154 h1:XGopsea1Dw7ecQ8JscCNQXDGYAKDiWjDeXnpN/+BY9g=
 github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154/go.mod h1:7jxmlfBCDBXRzr0eAQJ48XC1hBu1np4CS5+cHEYfwpc=
+github.com/sylr/oxy v1.1.1-0.20200616103808-a0437a24ad17 h1:tpwsBMtUdzX4sUJ39FbKHER74gSNsLNr2+Uq2byZe3Y=
+github.com/sylr/oxy v1.1.1-0.20200616103808-a0437a24ad17/go.mod h1:ADiMYHi8gkGl2987yQIzDRoXZilANF4WtKaQ92OppKY=
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/timewasted/linode v0.0.0-20160829202747-37e84520dcf7 h1:CpHxIaZzVy26GqJn8ptRyto8fuoYOd1v0fXm9bG3wQ8=
 github.com/timewasted/linode v0.0.0-20160829202747-37e84520dcf7/go.mod h1:imsgLplxEC/etjIhdr3dNzV3JeT27LbVu5pYWm0JCBY=
@@ -690,8 +692,6 @@ github.com/urfave/cli v0.0.0-20171014202726-7bc6a0acffa5/go.mod h1:70zkFmudgCuE/
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/vdemeester/shakers v0.1.0 h1:K+n9sSyUCg2ywmZkv+3c7vsYZfivcfKhMh8kRxCrONM=
 github.com/vdemeester/shakers v0.1.0/go.mod h1:IZ1HHynUOQt32iQ3rvAeVddXLd19h/6LWiKsh9RZtAQ=
-github.com/vulcand/oxy v1.1.0 h1:DbBijGo1+6cFqR9jarkMxasdj0lgWwrrFtue6ijek4Q=
-github.com/vulcand/oxy v1.1.0/go.mod h1:ADiMYHi8gkGl2987yQIzDRoXZilANF4WtKaQ92OppKY=
 github.com/vulcand/predicate v1.1.0 h1:Gq/uWopa4rx/tnZu2opOSBqHK63Yqlou/SzrbwdJiNg=
 github.com/vulcand/predicate v1.1.0/go.mod h1:mlccC5IRBoc2cIFmCB8ZM62I3VDb6p2GXESMHa3CnZg=
 github.com/vultr/govultr v0.1.4 h1:UnNMixYFVO0p80itc8PcweoVENyo1PasfvwKhoasR9U=

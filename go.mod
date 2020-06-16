@@ -107,3 +107,5 @@ replace (
 	github.com/mailgun/minheap => github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
 	github.com/mailgun/multibuf => github.com/containous/multibuf v0.0.0-20190809014333-8b6c9a7e6bba
 )
+
+replace github.com/vulcand/oxy => github.com/sylr/oxy v1.1.1-0.20200616103808-a0437a24ad17
