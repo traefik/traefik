@@ -234,6 +234,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		metricRegistries = append(metricRegistries, pilotRegistry)
 	}
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
+	tlsManager.SetTLSCertsNotAfterTimestampGauge(metricsRegistry.TLSCertsNotAfterTimestampGauge())
 
 	// Service manager factory
 

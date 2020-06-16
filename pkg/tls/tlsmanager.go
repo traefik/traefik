@@ -6,9 +6,12 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-kit/kit/metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/tls/generate"
@@ -25,6 +28,8 @@ type Manager struct {
 	configs      map[string]Options
 	certs        []*CertAndStores
 	lock         sync.RWMutex
+
+	tlsCertsNotAfterTimestampGauge metrics.Gauge
 }
 
 // NewManager creates a new Manager.
@@ -79,6 +84,12 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	}
 }
 
+// SetTLSCertsNotAfterTimestampGauge is used to provide a Gauge that will holds
+// certs NotAfter timestamps.
+func (m *Manager) SetTLSCertsNotAfterTimestampGauge(gauge metrics.Gauge) {
+	m.tlsCertsNotAfterTimestampGauge = gauge
+}
+
 // Get gets the TLS configuration to use for a given store / configuration.
 func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	m.lock.RLock()
@@ -112,11 +123,16 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 				return nil, fmt.Errorf("no certificate for TLSALPN challenge: %s", domainToCheck)
 			}
 
+			m.updateMetrics(certificate)
+
 			return certificate, nil
 		}
 
 		bestCertificate := store.GetBestCertificate(clientHello)
+
 		if bestCertificate != nil {
+			m.updateMetrics(bestCertificate)
+
 			return bestCertificate, nil
 		}
 
@@ -129,6 +145,33 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	}
 
 	return tlsConfig, err
+}
+
+// updateMetrics produce metrics for a given *tls.Certificate which must not be nil.
+func (m *Manager) updateMetrics(cert *tls.Certificate) {
+	if m.tlsCertsNotAfterTimestampGauge != nil {
+		// We iterate over all the certificates, even the ones for the CA chain
+		for i := range cert.Certificate {
+			x509Cert, err := x509.ParseCertificate(cert.Certificate[i])
+
+			if err != nil {
+				continue
+			}
+
+			DNSNames := make([]string, 0, len(x509Cert.DNSNames))
+			DNSNames = append(DNSNames, x509Cert.DNSNames...)
+			sort.Strings(DNSNames)
+			SANs := strings.Join(DNSNames, ",")
+
+			labels := []string{
+				"cn", x509Cert.Subject.CommonName,
+				"serial", x509Cert.SerialNumber.String(),
+				"sans", SANs,
+			}
+
+			m.tlsCertsNotAfterTimestampGauge.With(labels...).Set(float64(x509Cert.NotAfter.Unix()))
+		}
+	}
 }
 
 func (m *Manager) getStore(storeName string) *CertificateStore {
