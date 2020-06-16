@@ -115,7 +115,7 @@ func rawURL(req *http.Request) string {
 	port := ""
 	uri := req.RequestURI
 
-	schemeRegex := `^(https?):\/\/([\w\._-]+)(:\d+)?(.*)$`
+	schemeRegex := `^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
 	re, _ := regexp.Compile(schemeRegex)
 	if re.Match([]byte(req.RequestURI)) {
 		match := re.FindStringSubmatch(req.RequestURI)
