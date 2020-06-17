@@ -106,7 +106,11 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			} else if len(route.Services) == 1 {
 				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec)
 				if err != nil {
-					logger.Error(err)
+					if crdErr, ok := err.(Error); ok {
+						if crdErr.Log {
+							logger.Error(err)
+						}
+					}
 					continue
 				}
 
@@ -316,10 +320,16 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 		return nil, endpointsErr
 	}
 	if !endpointsExists {
-		return nil, fmt.Errorf("endpoints not found for %s/%s", namespace, sanitizedName)
+		return nil, Error{
+			fmt.Errorf("%w: endpoints %s/%s", ErrResourceNotFound, namespace, sanitizedName),
+			true,
+		}
 	}
 	if len(endpoints.Subsets) == 0 {
-		return nil, fmt.Errorf("subset not found for %s/%s", namespace, sanitizedName)
+		return nil, Error{
+			fmt.Errorf("%w: subset %s/%s", ErrResourceNotFound, namespace, sanitizedName),
+			false,
+		}
 	}
 
 	var port int32
