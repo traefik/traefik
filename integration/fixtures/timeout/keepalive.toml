@@ -31,4 +31,3 @@
       passHostHeader = true
       [[http.services.keepalive.loadBalancer.servers]]
         url = "{{ .KeepAliveServer }}"
-        weight = 1

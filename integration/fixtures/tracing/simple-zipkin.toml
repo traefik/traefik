@@ -53,13 +53,13 @@
         url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
 
   [http.services.service2]
-    passHostHeader = true
     [http.services.service2.loadBalancer]
+      passHostHeader = true
       [[http.services.service2.loadBalancer.servers]]
         url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
 
   [http.services.service3]
-    passHostHeader = true
     [http.services.service3.loadBalancer]
+      passHostHeader = true
       [[http.services.service3.loadBalancer.servers]]
         url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"

@@ -238,7 +238,7 @@ Thus, it's possible to define easily lot of routers, services and TLS certificat
     [[tls.certificates]]
       certFile = "/etc/traefik/cert-{{ $e }}.pem"
       keyFile = "/etc/traefik/cert-{{ $e }}.key"
-      store = ["my-store-foo-{{ $e }}", "my-store-bar-{{ $e }}"]
+      stores = ["my-store-foo-{{ $e }}", "my-store-bar-{{ $e }}"]
     {{ end }}
     
     [tls.config]

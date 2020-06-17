@@ -6,7 +6,7 @@ type Yo struct {
 	Foo string
 	Fii string
 	Fuu string
-	Yi  *Yi `label:"allowEmpty"`
+	Yi  *Yi `file:"allowEmpty"`
 }
 
 func (y *Yo) SetDefaults() {

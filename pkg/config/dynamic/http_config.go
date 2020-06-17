@@ -21,7 +21,7 @@ type HTTPConfiguration struct {
 // Model is a set of default router's values.
 type Model struct {
 	Middlewares []string         `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty"`
-	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
+	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -42,7 +42,7 @@ type Router struct {
 	Service     string           `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
 	Rule        string           `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
 	Priority    int              `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty"`
-	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
+	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -103,7 +103,7 @@ func (w *WRRService) SetDefaults() {
 
 // Sticky holds the sticky configuration.
 type Sticky struct {
-	Cookie *Cookie `json:"cookie,omitempty" toml:"cookie,omitempty" yaml:"cookie,omitempty" label:"allowEmpty"`
+	Cookie *Cookie `json:"cookie,omitempty" toml:"cookie,omitempty" yaml:"cookie,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -120,7 +120,7 @@ type Cookie struct {
 
 // ServersLoadBalancer holds the ServersLoadBalancer configuration.
 type ServersLoadBalancer struct {
-	Sticky             *Sticky             `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" label:"allowEmpty"`
+	Sticky             *Sticky             `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Servers            []Server            `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
 	HealthCheck        *HealthCheck        `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty"`
 	PassHostHeader     *bool               `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader"`
@@ -162,8 +162,8 @@ type ResponseForwarding struct {
 // Server holds the server configuration.
 type Server struct {
 	URL    string `json:"url,omitempty" toml:"url,omitempty" yaml:"url,omitempty" label:"-"`
-	Scheme string `toml:"-" json:"-" yaml:"-"`
-	Port   string `toml:"-" json:"-" yaml:"-"`
+	Scheme string `toml:"-" json:"-" yaml:"-" file:"-"`
+	Port   string `toml:"-" json:"-" yaml:"-" file:"-"`
 }
 
 // SetDefaults Default values for a Server.

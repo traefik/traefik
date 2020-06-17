@@ -22,7 +22,7 @@
     [http.routers.my-router]
      rule = "Path(`/test`)"
      service = "whoami"
-     entrypoint=["tcp"]
+     entrypoints = ["tcp"]
      
     [http.routers.my-https-router]
       entryPoints=["tcp"]
@@ -41,14 +41,14 @@
       service = "whoami-a"
       entryPoints = [ "tcp" ]
       [tcp.routers.to-whoami-a.tls]
-        passthrough=true
+        passthrough = true
 
     [tcp.routers.to-whoami-b]
       rule = "HostSNI(`whoami-b.test`)"
       service = "whoami-b"
       entryPoints = [ "tcp" ]
       [tcp.routers.to-whoami-b.tls]
-        passthrough=true
+        passthrough = true
 
     [tcp.routers.to-whoami-no-cert]
       rule = "HostSNI(`whoami-c.test`)"
