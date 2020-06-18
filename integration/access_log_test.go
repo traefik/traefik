@@ -111,6 +111,20 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 			routerName: "rt-authFrontend",
 			serviceURL: "-",
 		},
+		{
+			formatOnly: false,
+			code:       "401",
+			user:       "test",
+			routerName: "rt-authFrontend",
+			serviceURL: "-",
+		},
+		{
+			formatOnly: false,
+			code:       "200",
+			user:       "test",
+			routerName: "rt-authFrontend",
+			serviceURL: "http://172.17.0",
+		},
 	}
 
 	// Start Traefik
@@ -130,12 +144,22 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 	// Verify Traefik started OK
 	checkTraefikStarted(c)
 
-	// Test auth frontend
+	// Test auth entrypoint
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8006/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "frontend.auth.docker.local"
 
 	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	req.SetBasicAuth("test", "")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	req.SetBasicAuth("test", "test")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
@@ -155,6 +179,13 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware(c *check.C) {
 			formatOnly: false,
 			code:       "401",
 			user:       "-",
+			routerName: "rt-digestAuthMiddleware",
+			serviceURL: "-",
+		},
+		{
+			formatOnly: false,
+			code:       "401",
+			user:       "test",
 			routerName: "rt-digestAuthMiddleware",
 			serviceURL: "-",
 		},
@@ -192,14 +223,21 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware(c *check.C) {
 	resp, err := try.ResponseUntilStatusCode(req, 500*time.Millisecond, http.StatusUnauthorized)
 	c.Assert(err, checker.IsNil)
 
-	digestParts := digestParts(resp)
-	digestParts["uri"] = "/"
-	digestParts["method"] = http.MethodGet
-	digestParts["username"] = "test"
-	digestParts["password"] = "test"
+	digest := digestParts(resp)
+	digest["uri"] = "/"
+	digest["method"] = http.MethodGet
+	digest["username"] = "test"
+	digest["password"] = "wrong"
 
-	req.Header.Set("Authorization", getDigestAuthorization(digestParts))
+	req.Header.Set("Authorization", getDigestAuthorization(digest))
 	req.Header.Set("Content-Type", "application/json")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	digest["password"] = "test"
+
+	req.Header.Set("Authorization", getDigestAuthorization(digest))
 
 	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
