@@ -426,13 +426,11 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 		return nil, err
 	}
 
-	// Check provided certificates
+	// Check if provided certificates are not already in progress and lock them if needed
 	uncheckedDomains := p.getUncheckedDomains(ctx, domains, tlsStore)
 	if len(uncheckedDomains) == 0 {
 		return nil, nil
 	}
-
-	p.addResolvingDomains(uncheckedDomains)
 	defer p.removeResolvingDomains(uncheckedDomains)
 
 	logger := log.FromContext(ctx)
@@ -478,15 +476,6 @@ func (p *Provider) removeResolvingDomains(resolvingDomains []string) {
 
 	for _, domain := range resolvingDomains {
 		delete(p.resolvingDomains, domain)
-	}
-}
-
-func (p *Provider) addResolvingDomains(resolvingDomains []string) {
-	p.resolvingDomainsMutex.Lock()
-	defer p.resolvingDomainsMutex.Unlock()
-
-	for _, domain := range resolvingDomains {
-		p.resolvingDomains[domain] = struct{}{}
 	}
 }
 
@@ -656,8 +645,8 @@ func (p *Provider) renewCertificates(ctx context.Context) {
 // Get provided certificate which check a domains list (Main and SANs)
 // from static and dynamic provided certificates.
 func (p *Provider) getUncheckedDomains(ctx context.Context, domainsToCheck []string, tlsStore string) []string {
-	p.resolvingDomainsMutex.RLock()
-	defer p.resolvingDomainsMutex.RUnlock()
+	p.resolvingDomainsMutex.Lock()
+	defer p.resolvingDomainsMutex.Unlock()
 
 	log.FromContext(ctx).Debugf("Looking for provided certificate(s) to validate %q...", domainsToCheck)
 
@@ -673,7 +662,14 @@ func (p *Provider) getUncheckedDomains(ctx context.Context, domainsToCheck []str
 		allDomains = append(allDomains, domain)
 	}
 
-	return searchUncheckedDomains(ctx, domainsToCheck, allDomains)
+	uncheckedDomains := searchUncheckedDomains(ctx, domainsToCheck, allDomains)
+
+	// Lock domains that will be resolved by this routine
+	for _, domain := range uncheckedDomains {
+		p.resolvingDomains[domain] = struct{}{}
+	}
+
+	return uncheckedDomains
 }
 
 func searchUncheckedDomains(ctx context.Context, domainsToCheck, existentDomains []string) []string {
