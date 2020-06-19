@@ -84,6 +84,34 @@ func TestNewEntryPointHandler(t *testing.T) {
 			url:           "http://foo:80",
 			errorExpected: true,
 		},
+		{
+			desc:           "IPV6 HTTP to HTTP",
+			entryPoint:     &configuration.EntryPoint{Address: ":8080"},
+			url:            "http://[::1]",
+			expectedURL:    "http://[::1]:8080",
+			expectedStatus: http.StatusFound,
+		},
+		{
+			desc:           "IPV6 HTTP to HTTPS",
+			entryPoint:     &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
+			url:            "http://[::1]",
+			expectedURL:    "https://[::1]:443",
+			expectedStatus: http.StatusFound,
+		},
+		{
+			desc:           "IPV6 HTTP with port 80 to HTTP",
+			entryPoint:     &configuration.EntryPoint{Address: ":8080"},
+			url:            "http://[::1]:80",
+			expectedURL:    "http://[::1]:8080",
+			expectedStatus: http.StatusFound,
+		},
+		{
+			desc:           "IPV6 HTTP with port 80 to HTTPS",
+			entryPoint:     &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
+			url:            "http://[::1]:80",
+			expectedURL:    "https://[::1]:443",
+			expectedStatus: http.StatusFound,
+		},
 	}
 
 	for _, test := range testCases {

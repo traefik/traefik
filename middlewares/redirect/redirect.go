@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	defaultRedirectRegex = `^(?:https?:\/\/)?([\w\._-]+)(?::\d+)?(.*)$`
+	defaultRedirectRegex = `^(?:https?:\/\/)?(\[[\w:.]+\]|[\w\._-]+)(?::\d+)?(.*)$`
 )
 
 // NewEntryPointHandler create a new redirection handler base on entry point
