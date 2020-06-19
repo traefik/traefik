@@ -75,6 +75,13 @@ func (in *Chain) DeepCopy() *Chain {
 func (in *CircuitBreaker) DeepCopyInto(out *CircuitBreaker) {
 	*out = *in
 	in.Service.DeepCopyInto(&out.Service)
+	if in.CustomRequestHeaders != nil {
+		in, out := &in.CustomRequestHeaders, &out.CustomRequestHeaders
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 

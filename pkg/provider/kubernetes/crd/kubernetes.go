@@ -360,7 +360,8 @@ func createCircuitBreakerMiddleware(client Client, namespace string, circuitBrea
 	}
 
 	circuitBreakerMiddleware := &dynamic.CircuitBreaker{
-		Expression: circuitBreaker.Expression,
+		Expression:           circuitBreaker.Expression,
+		CustomRequestHeaders: circuitBreaker.CustomRequestHeaders,
 	}
 
 	balancerServerHTTP, err := configBuilder{client}.buildServersLB(namespace, circuitBreaker.Service.LoadBalancerSpec)

@@ -94,8 +94,9 @@ type ForwardAuth struct {
 
 // CircuitBreaker holds the circuit breaker configuration.
 type CircuitBreaker struct {
-	Expression string  `json:"expression,omitempty"`
-	Service    Service `json:"service,omitempty"`
+	Expression           string            `json:"expression,omitempty"`
+	Service              Service           `json:"service,omitempty"`
+	CustomRequestHeaders map[string]string `json:"customRequestHeaders,omitempty"`
 }
 
 // ClientTLS holds TLS specific configurations as client.

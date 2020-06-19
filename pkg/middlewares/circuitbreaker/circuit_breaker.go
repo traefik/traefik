@@ -64,6 +64,11 @@ func createCircuitBreakerFallback(ctx context.Context, logger log.Logger, circui
 				// knows why he receives this request.
 				req.Header.Add(xForwardedWhy, circuitBreaker.String())
 
+				// Add custom headers defined in the middleware
+				for hname, hval := range confCircuitBreaker.CustomRequestHeaders {
+					req.Header.Add(hname, hval)
+				}
+
 				h.ServeHTTP(rw, req)
 			})
 		}
