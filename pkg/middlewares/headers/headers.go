@@ -272,6 +272,8 @@ func (s *Header) isOriginAllowed(origin string) (bool, string) {
 	for _, item := range s.headers.AccessControlAllowOriginList {
 		if item == "*" || item == origin {
 			return true, item
+		} else if item == "origin-list-or-null" {
+			return true, origin
 		}
 	}
 
