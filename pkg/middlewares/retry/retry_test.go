@@ -65,6 +65,13 @@ func TestRetry(t *testing.T) {
 			wantResponseStatus:    http.StatusBadGateway,
 			amountFaultyEndpoints: 3,
 		},
+		{
+			desc:                  "zero retries when two servers are faulty because only POST method configured",
+			config:                dynamic.Retry{Attempts: 3, Methods: []string{"POST"}},
+			wantRetryAttempts:     0,
+			wantResponseStatus:    http.StatusBadGateway,
+			amountFaultyEndpoints: 3,
+		},
 	}
 
 	backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -125,8 +132,19 @@ func TestRetryWithRequestBody(t *testing.T) {
 		wantResponseStatus    int
 		amountFaultyEndpoints int
 		body                  string
+		expectedBody		  string
 		method                string
 	}{
+		{
+			desc:                  "no retry on success",
+			config:                dynamic.Retry{Attempts: 1},
+			wantRetryAttempts:     0,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 0,
+			body:                  requestBody,
+			expectedBody:          requestBody,
+			method:                http.MethodPost,
+		},
 		{
 			desc:                  "one retry when one server is faulty with body",
 			config:                dynamic.Retry{Attempts: 2},
@@ -134,6 +152,7 @@ func TestRetryWithRequestBody(t *testing.T) {
 			wantResponseStatus:    http.StatusOK,
 			amountFaultyEndpoints: 1,
 			body:                  requestBody,
+			expectedBody:          requestBody,
 			method:                http.MethodPost,
 		},
 		{
@@ -143,6 +162,17 @@ func TestRetryWithRequestBody(t *testing.T) {
 			wantResponseStatus:    http.StatusOK,
 			amountFaultyEndpoints: 2,
 			body:                  requestBody,
+			expectedBody:          requestBody,
+			method:                http.MethodPost,
+		},
+		{
+			desc:                  "zero retries when two servers are faulty because only GET method configured",
+			config:                dynamic.Retry{Attempts: 3, Methods: []string{"GET"}},
+			wantRetryAttempts:     0,
+			wantResponseStatus:    http.StatusBadGateway,
+			amountFaultyEndpoints: 2,
+			body:                  requestBody,
+			expectedBody:          "Bad Gateway",
 			method:                http.MethodPost,
 		},
 	}
@@ -202,7 +232,7 @@ func TestRetryWithRequestBody(t *testing.T) {
 			assert.Equal(t, test.wantResponseStatus, recorder.Code)
 			assert.Equal(t, test.wantRetryAttempts, retryListener.timesCalled)
 			actualBodyString := recorder.Body.String()
-			assert.Equal(t, test.body, actualBodyString)
+			assert.Equal(t, test.expectedBody, actualBodyString)
 		})
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -40,6 +41,7 @@ type retry struct {
 	next     http.Handler
 	listener Listener
 	name     string
+	methods  []string
 }
 
 // New returns a new retry middleware.
@@ -55,6 +57,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		next:     next,
 		listener: listener,
 		name:     name,
+		methods:  config.Methods,
 	}, nil
 }
 
@@ -73,7 +76,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	attempts := 1
 	for {
-		shouldRetry := attempts < r.attempts
+		shouldRetry := attempts < r.attempts && methodIsAppropriate(req.Method, r.methods)
 		retryResponseWriter := newResponseWriter(rw, shouldRetry)
 
 		// Disable retries when the backend already received request data
@@ -99,6 +102,19 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			Debugf("New attempt %d for request: %v", attempts, req.URL)
 
 		r.listener.Retried(req, attempts)
+	}
+}
+
+func methodIsAppropriate(requestMethod string, configMethods []string) bool {
+	if len(configMethods) == 0 {
+		return true
+	} else {
+		for _, m := range configMethods {
+			if strings.ToUpper(m) == strings.ToUpper(requestMethod) {
+				return true
+			}
+		}
+		return false
 	}
 }
 

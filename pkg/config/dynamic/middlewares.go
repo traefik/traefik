@@ -370,6 +370,7 @@ type ReplacePathRegex struct {
 // Retry holds the retry configuration.
 type Retry struct {
 	Attempts int `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty" export:"true"`
+	Methods []string `json:"methods,omitempty" toml:"methods,omitempty" yaml:"methods,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
