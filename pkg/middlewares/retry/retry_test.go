@@ -131,7 +131,7 @@ func TestRetryWithRequestBody(t *testing.T) {
 		wantResponseStatus    int
 		amountFaultyEndpoints int
 		body                  string
-		expectedBody		  string
+		expectedBody          string
 		method                string
 	}{
 		{
