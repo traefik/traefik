@@ -108,14 +108,13 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func methodIsAppropriate(requestMethod string, configMethods []string) bool {
 	if len(configMethods) == 0 {
 		return true
-	} else {
-		for _, m := range configMethods {
-			if strings.ToUpper(m) == strings.ToUpper(requestMethod) {
-				return true
-			}
-		}
-		return false
 	}
+	for _, m := range configMethods {
+		if strings.EqualFold(m, requestMethod) {
+			return true
+		}
+	}
+	return false
 }
 
 // Retried exists to implement the Listener interface. It calls Retried on each of its slice entries.
