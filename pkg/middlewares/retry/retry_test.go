@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httptrace"
@@ -223,8 +222,7 @@ func TestRetryWithRequestBody(t *testing.T) {
 			require.NoError(t, err)
 
 			recorder := httptest.NewRecorder()
-			var reader io.Reader = nil
-			reader = strings.NewReader(test.body)
+			reader := strings.NewReader(test.body)
 			req := httptest.NewRequest(test.method, "http://localhost:3000/ok", reader)
 
 			retry.ServeHTTP(recorder, req)
