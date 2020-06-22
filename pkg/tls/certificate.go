@@ -8,6 +8,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/tls/generate"
@@ -175,13 +176,30 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 	} else {
 		for domains := range certs[ep] {
 			if domains == certKey {
-				certExists = true
+				existingCertX509, err := x509.ParseCertificate(certs[ep][domains].Certificate[0])
+
+				if err != nil {
+					// If we can't parse the existing certificate then things have gone
+					// really wrong at some point. In this case we continue so that the
+					// existing certificate gets replaced by the one we want to append
+					log.Errorf("Unable to parse existing certificate for domain(s) %s", certKey)
+					break
+				}
+
+				if !CompareX509TimeBoundaries(existingCertX509, parsedCert) {
+					certExists = true
+				}
+
 				break
 			}
 		}
 	}
+
 	if certExists {
 		log.Debugf("Skipping addition of certificate for domain(s) %q, to EntryPoint %s, as it already exists for this Entrypoint.", certKey, ep)
+	} else if _, found := certs[ep][certKey]; found {
+		log.Debugf("Replacing certificate for domain(s) %s", certKey)
+		certs[ep][certKey] = &tlsCert
 	} else {
 		log.Debugf("Adding certificate for domain(s) %s", certKey)
 		certs[ep][certKey] = &tlsCert
@@ -236,4 +254,86 @@ func (c *Certificates) Set(value string) error {
 // Type is type of the struct.
 func (c *Certificates) Type() string {
 	return "certificates"
+}
+
+// CompareX509TimeBoundaries returns true if target certificate time boundaries are
+// "better" than the origin certificate.
+//
+// origin & target have the same boundaries -> target
+// origin & target are both valid -> the one with the greatest NotAfter boundary
+// origin & target are both invalid ->
+//     both have future boundaries -> the one with the smallest NotBefore boundary
+//     both have past boundaries -> the one with the greatest NotAfter boundary
+//     only origin has future boundaries -> origin
+//     only target has future boundaries -> target
+// origin only is valid -> origin
+// target only is valid -> target
+//
+//nolint:gocritic,golint
+func CompareX509TimeBoundaries(origin *x509.Certificate, target *x509.Certificate) bool {
+	// If boundaries are the same we keep origin
+	if origin.NotBefore.Equal(target.NotBefore) && origin.NotAfter.Equal(target.NotAfter) {
+		return false
+	}
+
+	originIsValid := false
+	targetIsValid := false
+	now := time.Now()
+
+	if now.After(origin.NotBefore) && now.Before(origin.NotAfter) {
+		originIsValid = true
+	}
+
+	if now.After(target.NotBefore) && now.Before(target.NotAfter) {
+		targetIsValid = true
+	}
+
+	if originIsValid && targetIsValid {
+		// Both certs are valid, in this case we choose the one with the greatest
+		// future time limit boundary (greatest NotAfter)
+		if origin.NotAfter.After(target.NotAfter) {
+			return false
+		} else {
+			return true
+		}
+	} else if !originIsValid && !targetIsValid {
+		// Both certs are invalid
+		if now.Before(origin.NotBefore) && now.Before(target.NotBefore) {
+			// Both certificates have future boundaries, in this case we take the
+			// one that is going to be valid the soonest
+			if origin.NotBefore.Before(target.NotBefore) {
+				return false
+			} else {
+				return true
+			}
+		} else if now.After(origin.NotAfter) && now.After(target.NotAfter) {
+			// Both certificates have past boundaries, in this case we take the one
+			// with the NotAfter boundary the closest to now
+			if origin.NotAfter.After(target.NotAfter) {
+				return false
+			} else {
+				return true
+			}
+		} else {
+			// One certificate has past boundaries, one has future boundaries, then
+			// in this case we choose the one in the future
+			if origin.NotBefore.After(now) {
+				return false
+			} else {
+				return true
+			}
+		}
+	} else if originIsValid && !targetIsValid {
+		// Only the origin certificate is valid
+		return false
+	} else if !originIsValid && targetIsValid {
+		// Only the target certificate is valid
+		return true
+	}
+
+	log.Warnf("CompareX509TimeBoundaries was not able to choose between 2 certificates")
+	log.Debugf("origin CN=%s NotBefore=%s NotAfter=%s", origin.Subject.CommonName, origin.NotBefore, origin.NotAfter)
+	log.Debugf("target CN=%s NotBefore=%s NotAfter=%s", target.Subject.CommonName, target.NotBefore, target.NotAfter)
+
+	return false
 }
