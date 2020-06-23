@@ -492,14 +492,26 @@ Enable HTTP backend with default settings. (Default: ```false```)
 `--providers.http.endpoint`:  
 Load configuration from this endpoint.
 
-`--providers.http.insecureskipverify`:  
-Skip TLS verification for an https endpoint. (Default: ```false```)
-
 `--providers.http.pollinterval`:  
-Polling interval for endpoint. (Default: ```0```)
+Polling interval for endpoint. (Default: ```5```)
 
 `--providers.http.polltimeout`:  
-Polling timeout for endpoint. (Default: ```0```)
+Polling timeout for endpoint. (Default: ```5```)
+
+`--providers.http.tls.ca`:  
+TLS CA
+
+`--providers.http.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.http.tls.cert`:  
+TLS cert
+
+`--providers.http.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.http.tls.key`:  
+TLS key
 
 `--providers.kubernetescrd`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
