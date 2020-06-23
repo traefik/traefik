@@ -181,10 +181,10 @@ accessLog:
     | `StartUTC`              | The time at which request processing started.                                                                                                                       |
     | `StartLocal`            | The local time at which request processing started.                                                                                                                 |
     | `Duration`              | The total time taken (in nanoseconds) by processing the response, including the origin server's time but not the log writing time.                                  |
-    | `FrontendName`          | The name of the Traefik frontend.                                                                                                                                   |
-    | `BackendName`           | The name of the Traefik backend.                                                                                                                                    |
-    | `BackendURL`            | The URL of the Traefik backend.                                                                                                                                     |
-    | `BackendAddr`           | The IP:port of the Traefik backend (extracted from `BackendURL`)                                                                                                    |
+    | `RouterName`            | The name of the Traefik  router.                                                                                                                                    |
+    | `ServiceName`           | The name of the Traefik backend.                                                                                                                                    |
+    | `ServiceURL`            | The URL of the Traefik backend.                                                                                                                                     |
+    | `ServiceAddr`           | The IP:port of the Traefik backend (extracted from `ServiceURL`)                                                                                                    |
     | `ClientAddr`            | The remote address in its original form (usually IP:port).                                                                                                          |
     | `ClientHost`            | The remote IP address from which the client request was received.                                                                                                   |
     | `ClientPort`            | The remote TCP port from which the client request was received.                                                                                                     |
