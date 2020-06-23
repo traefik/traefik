@@ -25,31 +25,29 @@ type Provider struct {
 	Endpoint           string         `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint" export:"true"`
 	PollInterval       types.Duration `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty"`
 	PollTimeout        types.Duration `description:"Polling timeout for endpoint." json:"pollTimeout,omitempty" toml:"pollTimeout,omitempty" yaml:"pollTimeout,omitempty"`
-	InsecureSkipVerify bool           `description:"Skip TLS verification for an https endpoint." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty"`
+	InsecureSkipVerify bool           `description:"Skip TLS certificate verification for an HTTPS endpoint." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty"`
 	httpClient         *http.Client
+}
+
+// SetDefaults sets the default values.
+func (p *Provider) SetDefaults() {
+	p.PollInterval = types.Duration(5 * time.Second)
+	p.PollTimeout = types.Duration(5 * time.Second)
 }
 
 // Init the provider.
 func (p *Provider) Init() error {
-	if len(p.Endpoint) == 0 {
-		return fmt.Errorf("a non-empty endpoint is required")
-	}
-
-	if p.PollInterval == 0 {
-		p.PollInterval = types.Duration(5 * time.Second)
-	}
-
-	if p.PollTimeout == 0 {
-		p.PollTimeout = types.Duration(5 * time.Second)
-	}
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: p.InsecureSkipVerify},
+	if p.Endpoint == "" {
+		return fmt.Errorf("non-empty endpoint is required")
 	}
 
 	p.httpClient = &http.Client{
-		Timeout:   time.Duration(p.PollTimeout),
-		Transport: tr,
+		Timeout: time.Duration(p.PollTimeout),
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: p.InsecureSkipVerify,
+			},
+		},
 	}
 
 	return nil
