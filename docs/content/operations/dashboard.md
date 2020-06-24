@@ -36,7 +36,7 @@ on the [static configuration](../getting-started/configuration-overview.md#the-s
   # Dashboard
   #
   # Optional
-  # Default: true
+  # Default: false
   #
   dashboard = true
 ```
@@ -46,7 +46,7 @@ api:
   # Dashboard
   #
   # Optional
-  # Default: true
+  # Default: false
   #
   dashboard: true
 ```
@@ -55,7 +55,7 @@ api:
 # Dashboard
 #
 # Optional
-# Default: true
+# Default: false
 #
 --api.dashboard=true
 ```
