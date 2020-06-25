@@ -275,7 +275,7 @@ Here is a list of supported `providers`, that can automate the DNS verification,
 along with the required environment variables and their [wildcard & root domain support](#wildcard-domains).
 Do not hesitate to complete it.
 
-Every lego environment variable can be overridden by their respective `_FILE` counterpart, which should have a filepath to a file that contains the secret as its value.
+Many lego environment variables can be overridden by their respective `_FILE` counterpart, which should have a filepath to a file that contains the secret as its value. For more details, refer to the _Additional configuration_ documentation linked for your provider.
 For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used to provide a Cloudflare API email address as a Docker secret named `traefik_cf-api-email`.
 
 | Provider Name                                               | Provider Code  | Environment Variables                                                                                                                       |                                                                             |
