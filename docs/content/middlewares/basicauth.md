@@ -12,9 +12,11 @@ The BasicAuth middleware is a quick way to restrict access to your services to k
 ```yaml tab="Docker"
 # Declaring the user list
 #
-# Note: all dollar signs in the hash need to be doubled for escaping.
+# Note: when used in docker-compose.yml all dollar signs in the hash need to be doubled for escaping.
 # To create user:password pair, it's possible to use this command:
 # echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g
+#
+# Also note that dollar signs should NOT be doubled when they not evaluated (e.g. Ansible docker_container module).
 labels:
   - "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
