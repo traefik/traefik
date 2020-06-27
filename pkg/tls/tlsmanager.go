@@ -91,7 +91,7 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 	config, ok := m.configs[configName]
 	if !ok {
 		err = fmt.Errorf("unknown TLS options: %s", configName)
-		tlsConfig = &tls.Config{}
+		return nil, err
 	}
 
 	store := m.getStore(storeName)
@@ -99,7 +99,7 @@ func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) 
 	if err == nil {
 		tlsConfig, err = buildTLSConfig(config)
 		if err != nil {
-			tlsConfig = &tls.Config{}
+			return nil, err
 		}
 	}
 
