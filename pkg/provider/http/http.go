@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -22,11 +23,12 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that queries an HTTP(s) endpoint for a configuration.
 type Provider struct {
-	Endpoint     string           `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint" export:"true"`
-	PollInterval types.Duration   `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty"`
-	PollTimeout  types.Duration   `description:"Polling timeout for endpoint." json:"pollTimeout,omitempty" toml:"pollTimeout,omitempty" yaml:"pollTimeout,omitempty"`
-	TLS          *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	httpClient   *http.Client
+	Endpoint              string           `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint" export:"true"`
+	PollInterval          types.Duration   `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty"`
+	PollTimeout           types.Duration   `description:"Polling timeout for endpoint." json:"pollTimeout,omitempty" toml:"pollTimeout,omitempty" yaml:"pollTimeout,omitempty"`
+	TLS                   *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	httpClient            *http.Client
+	lastConfigurationHash uint64
 }
 
 // SetDefaults sets the default values.
@@ -80,6 +82,20 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					if err != nil {
 						return fmt.Errorf("cannot fetch configuration data: %w", err)
 					}
+
+					fnvHasher := fnv.New64()
+
+					_, err = fnvHasher.Write(configData)
+					if err != nil {
+						return fmt.Errorf("cannot hash configuration data: %w", err)
+					}
+
+					hash := fnvHasher.Sum64()
+					if hash == p.lastConfigurationHash {
+						continue
+					}
+
+					p.lastConfigurationHash = hash
 
 					configuration, err := decodeConfiguration(configData)
 					if err != nil {

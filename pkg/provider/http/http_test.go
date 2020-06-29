@@ -180,7 +180,7 @@ func TestProvider_Provide(t *testing.T) {
 	defer server.Close()
 
 	provider := Provider{
-		Endpoint:     server.URL + "/endpoint",
+		Endpoint:     server.URL,
 		PollTimeout:  types.Duration(1 * time.Second),
 		PollInterval: types.Duration(100 * time.Millisecond),
 	}
@@ -189,11 +189,6 @@ func TestProvider_Provide(t *testing.T) {
 	require.NoError(t, err)
 
 	configurationChan := make(chan dynamic.Message)
-
-	go func() {
-		err := provider.Provide(configurationChan, safe.NewPool(context.Background()))
-		assert.NoError(t, err)
-	}()
 
 	expConfiguration := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
@@ -215,6 +210,9 @@ func TestProvider_Provide(t *testing.T) {
 		},
 	}
 
+	err = provider.Provide(configurationChan, safe.NewPool(context.Background()))
+	require.NoError(t, err)
+
 	timeout := time.After(time.Second)
 
 	select {
@@ -223,5 +221,38 @@ func TestProvider_Provide(t *testing.T) {
 		assert.Equal(t, expConfiguration, configuration.Configuration)
 	case <-timeout:
 		t.Errorf("timeout while waiting for config")
+	}
+}
+
+func TestProvider_ProvideConfigurationOnlyOnceIfUnchanged(t *testing.T) {
+	handler := func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprintf(rw, "{}")
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	defer server.Close()
+
+	provider := Provider{
+		Endpoint:     server.URL + "/endpoint",
+		PollTimeout:  types.Duration(1 * time.Second),
+		PollInterval: types.Duration(100 * time.Millisecond),
+	}
+
+	err := provider.Init()
+	require.NoError(t, err)
+
+	configurationChan := make(chan dynamic.Message, 10)
+
+	err = provider.Provide(configurationChan, safe.NewPool(context.Background()))
+	require.NoError(t, err)
+
+	timeout := time.After(time.Second)
+
+	select {
+	case <-timeout:
+		if len(configurationChan) > 1 {
+			t.Errorf("only one configuration should be provided")
+		}
 	}
 }
