@@ -4,7 +4,7 @@ Provide your [dynamic configuration](./overview.md) via an HTTP(s) endpoint and 
 
 ## Routing Configuration
 
-The HTTP provider uses the same configuration as the [File Provider](./file.md) in JSON format.
+The HTTP provider uses the same configuration as the [File Provider](./file.md) in YAML or JSON format.
 
 ## Provider Configuration
 

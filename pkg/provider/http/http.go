@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,16 +9,18 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/file"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/safe"
+	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/containous/traefik/v2/pkg/types"
 )
 
 var _ provider.Provider = (*Provider)(nil)
 
-// Provider is a provider.Provider implementation that queries an endpoint for a configuration.
+// Provider is a provider.Provider implementation that queries an HTTP(s) endpoint for a configuration.
 type Provider struct {
 	Endpoint     string           `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint" export:"true"`
 	PollInterval types.Duration   `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty"`
@@ -40,6 +41,10 @@ func (p *Provider) Init() error {
 		return fmt.Errorf("non-empty endpoint is required")
 	}
 
+	if p.PollInterval <= 0 {
+		return fmt.Errorf("poll interval must be greater than 0")
+	}
+
 	p.httpClient = &http.Client{
 		Timeout: time.Duration(p.PollTimeout),
 	}
@@ -47,7 +52,7 @@ func (p *Provider) Init() error {
 	if p.TLS != nil {
 		tlsConfig, err := p.TLS.CreateTLSConfig(context.Background())
 		if err != nil {
-			return fmt.Errorf("unable to create TLS configuration")
+			return fmt.Errorf("unable to create TLS configuration: %w", err)
 		}
 
 		p.httpClient.Transport = &http.Transport{
@@ -65,87 +70,87 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		logger := log.FromContext(ctxLog)
 
 		operation := func() error {
-			errChan := make(chan error)
 			ticker := time.NewTicker(time.Duration(p.PollInterval))
+			defer ticker.Stop()
 
-			pool.GoCtx(func(ctx context.Context) {
-				ctx = log.With(ctx, log.Str(log.ProviderName, "http"))
-				logger := log.FromContext(ctx)
-
-				defer close(errChan)
-				for {
-					select {
-					case <-ticker.C:
-						data, err := p.getDataFromEndpoint(ctxLog)
-						if err != nil {
-							logger.Errorf("Failed to get config from endpoint: %v", err)
-							errChan <- err
-							return
-						}
-
-						configuration := &dynamic.Configuration{}
-
-						if err := json.Unmarshal(data, configuration); err != nil {
-							log.FromContext(ctx).Errorf("Error parsing configuration: %v", err)
-							return
-						}
-
-						if configuration != nil {
-							configurationChan <- dynamic.Message{
-								ProviderName:  "http",
-								Configuration: configuration,
-							}
-						}
-
-					case <-ctx.Done():
-						ticker.Stop()
-						return
+			for {
+				select {
+				case <-ticker.C:
+					configData, err := p.fetchConfigurationData()
+					if err != nil {
+						return fmt.Errorf("cannot fetch configuration data: %w", err)
 					}
+
+					configuration, err := decodeConfiguration(configData)
+					if err != nil {
+						return fmt.Errorf("cannot decode configuration data: %w", err)
+					}
+
+					configurationChan <- dynamic.Message{
+						ProviderName:  "http",
+						Configuration: configuration,
+					}
+
+				case <-routineCtx.Done():
+					return nil
 				}
-			})
-			if err, ok := <-errChan; ok {
-				return err
 			}
-			// channel closed
-			return nil
 		}
 
 		notify := func(err error, time time.Duration) {
-			logger.Errorf("Provider connection error %w, retrying in %s", err, time)
+			logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
 		if err != nil {
-			logger.Errorf("Cannot connect to http server %w", err)
+			logger.Errorf("Cannot connect to server endpoint %+v", err)
 		}
 	})
 
 	return nil
 }
 
-// getDataFromEndpoint returns data from the configured provider endpoint.
-func (p Provider) getDataFromEndpoint(ctx context.Context) ([]byte, error) {
-	resp, err := p.httpClient.Get(p.Endpoint)
+// fetchConfigurationData fetches the configuration data from the configured endpoint.
+func (p *Provider) fetchConfigurationData() ([]byte, error) {
+	res, err := p.httpClient.Get(p.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get data from endpoint %q: %w", p.Endpoint, err)
+		return nil, err
 	}
 
-	if resp == nil {
-		return nil, fmt.Errorf("received no data from endpoint")
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-ok response code: %d", res.StatusCode)
 	}
 
-	defer resp.Body.Close()
+	return ioutil.ReadAll(res.Body)
+}
 
-	var data []byte
-
-	if data, err = ioutil.ReadAll(resp.Body); err != nil {
-		return nil, fmt.Errorf("unable to read response body: %w", err)
+// decodeConfiguration decodes and returns the dynamic configuration from the given data.
+func decodeConfiguration(data []byte) (*dynamic.Configuration, error) {
+	configuration := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:     make(map[string]*dynamic.Router),
+			Middlewares: make(map[string]*dynamic.Middleware),
+			Services:    make(map[string]*dynamic.Service),
+		},
+		TCP: &dynamic.TCPConfiguration{
+			Routers:  make(map[string]*dynamic.TCPRouter),
+			Services: make(map[string]*dynamic.TCPService),
+		},
+		TLS: &dynamic.TLSConfiguration{
+			Stores:  make(map[string]tls.Store),
+			Options: make(map[string]tls.Options),
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  make(map[string]*dynamic.UDPRouter),
+			Services: make(map[string]*dynamic.UDPService),
+		},
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received non-ok response code: %d", resp.StatusCode)
+	err := file.DecodeContent(string(data), ".yaml", configuration)
+	if err != nil {
+		return nil, err
 	}
 
-	log.FromContext(ctx).Debugf("Successfully received data from endpoint: %q", p.Endpoint)
-
-	return data, nil
+	return configuration, nil
 }
