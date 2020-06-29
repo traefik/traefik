@@ -19,6 +19,7 @@ type Builder struct {
 }
 
 // Build Builds the response modifier.
+// It returns nil if there is no modifier to apply.
 func (f *Builder) Build(ctx context.Context, names []string) func(*http.Response) error {
 	var modifiers []func(*http.Response) error
 
@@ -60,5 +61,5 @@ func (f *Builder) Build(ctx context.Context, names []string) func(*http.Response
 		}
 	}
 
-	return func(response *http.Response) error { return nil }
+	return nil
 }

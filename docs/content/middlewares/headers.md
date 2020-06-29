@@ -151,8 +151,8 @@ metadata:
   name: testHeader
 spec:
   headers:
-    frameDeny: "true"
-    sslRedirect: "true"
+    frameDeny: true
+    sslRedirect: true
 ```
 
 ```yaml tab="Consul Catalog"
@@ -217,7 +217,7 @@ spec:
       - "https://foo.bar.org"
       - "https://example.org"
     accessControlMaxAge: 100
-    addVaryHeader: "true"
+    addVaryHeader: true
 ```
 
 ```yaml tab="Consul Catalog"
