@@ -247,12 +247,7 @@ func TestProvider_ProvideConfigurationOnlyOnceIfUnchanged(t *testing.T) {
 	err = provider.Provide(configurationChan, safe.NewPool(context.Background()))
 	require.NoError(t, err)
 
-	timeout := time.After(time.Second)
+	time.Sleep(time.Second)
 
-	select {
-	case <-timeout:
-		if len(configurationChan) > 1 {
-			t.Errorf("only one configuration should be provided")
-		}
-	}
+	assert.Equal(t, 1, len(configurationChan))
 }
