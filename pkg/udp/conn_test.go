@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ func TestConsecutiveWrites(t *testing.T) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
-	ln, err := Listen("udp", addr)
+	ln, err := Listen("udp", addr, types.Duration(3*time.Second))
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -77,7 +78,7 @@ func TestListenNotBlocking(t *testing.T) {
 
 	require.NoError(t, err)
 
-	ln, err := Listen("udp", addr)
+	ln, err := Listen("udp", addr, types.Duration(3*time.Second))
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -176,7 +177,7 @@ func testTimeout(t *testing.T, withRead bool) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
-	ln, err := Listen("udp", addr)
+	ln, err := Listen("udp", addr, types.Duration(3*time.Second))
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -220,7 +221,7 @@ func TestShutdown(t *testing.T) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
-	l, err := Listen("udp", addr)
+	l, err := Listen("udp", addr, types.Duration(3*time.Second))
 	require.NoError(t, err)
 
 	go func() {

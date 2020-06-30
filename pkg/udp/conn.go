@@ -6,17 +6,13 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	"github.com/containous/traefik/v2/pkg/types"
 )
 
 const receiveMTU = 8192
 
 const closeRetryInterval = 500 * time.Millisecond
-
-// connTimeout determines how long to wait on an idle session,
-// before releasing all resources related to that session.
-const connTimeout = 3 * time.Second
-
-var timeoutTicker = connTimeout / 10
 
 var errClosedListener = errors.New("udp: listener closed")
 
@@ -31,10 +27,15 @@ type Listener struct {
 	accepting bool
 
 	acceptCh chan *Conn // no need for a Once, already indirectly guarded by accepting.
+
+	// connTimeout determines how long to wait on an idle session,
+	// before releasing all resources related to that session. A
+	// duration of 0 means no timeout
+	timeout types.Duration
 }
 
 // Listen creates a new listener.
-func Listen(network string, laddr *net.UDPAddr) (*Listener, error) {
+func Listen(network string, laddr *net.UDPAddr, timeout types.Duration) (*Listener, error) {
 	conn, err := net.ListenUDP(network, laddr)
 	if err != nil {
 		return nil, err
@@ -45,6 +46,7 @@ func Listen(network string, laddr *net.UDPAddr) (*Listener, error) {
 		acceptCh:  make(chan *Conn),
 		conns:     make(map[string]*Conn),
 		accepting: true,
+		timeout:   timeout,
 	}
 
 	go l.readLoop()
@@ -179,7 +181,7 @@ func (l *Listener) newConn(rAddr net.Addr) *Conn {
 		readCh:    make(chan []byte),
 		sizeCh:    make(chan int),
 		doneCh:    make(chan struct{}),
-		timeout:   timeoutTicker,
+		timeout:   time.Duration(l.timeout),
 	}
 }
 
@@ -206,8 +208,15 @@ type Conn struct {
 // that is to say it waits on readCh to receive the slice of bytes that the Read operation wants to read onto.
 // The Read operation receives the signal that the data has been written to the slice of bytes through the sizeCh.
 func (c *Conn) readLoop() {
-	ticker := time.NewTicker(c.timeout)
-	defer ticker.Stop()
+	// Don't run the timer if the configured timeout is 0
+	var ticker time.Ticker
+	if c.timeout <= 0 {
+		ticker := time.NewTicker(time.Hour)
+		ticker.Stop()
+	} else {
+		ticker := time.NewTicker(c.timeout / 10)
+		defer ticker.Stop()
+	}
 
 	for {
 		if len(c.msgs) == 0 {
@@ -216,7 +225,7 @@ func (c *Conn) readLoop() {
 				c.msgs = append(c.msgs, msg)
 			case <-ticker.C:
 				c.muActivity.RLock()
-				deadline := c.lastActivity.Add(connTimeout)
+				deadline := c.lastActivity.Add(c.timeout)
 				c.muActivity.RUnlock()
 				if time.Now().After(deadline) {
 					c.Close()
@@ -236,7 +245,7 @@ func (c *Conn) readLoop() {
 			c.msgs = append(c.msgs, msg)
 		case <-ticker.C:
 			c.muActivity.RLock()
-			deadline := c.lastActivity.Add(connTimeout)
+			deadline := c.lastActivity.Add(c.timeout)
 			c.muActivity.RUnlock()
 			if time.Now().After(deadline) {
 				c.Close()
