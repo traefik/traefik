@@ -15,45 +15,37 @@ import (
 
 type HTTPSuite struct{ BaseSuite }
 
-func (s *HTTPSuite) SetUpSuite(c *check.C) {
-}
-
 func (s *HTTPSuite) TestSimpleConfiguration(c *check.C) {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/http/simple.toml"))
-
 	defer display(c)
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
+
 	defer cmd.Process.Kill()
 
-	// Expected a 404 as we did not configure anything.
-	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	// Expect a 404 as we configured nothing.
+	err = try.GetRequest("http://127.0.0.1:8000/", time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
-	testCase := []struct {
-		desc   string
-		config *dynamic.Configuration
-	}{
-		{
-			desc: "http configuration",
-			config: &dynamic.Configuration{
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"routerHTTP": {
-							EntryPoints: []string{"web"},
-							Middlewares: []string{},
-							Service:     "serviceHTTP",
-							Rule:        "PathPrefix(`/`)",
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"serviceHTTP": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://bacon:80",
-									},
-								},
+	// Provide a configuration, fetched by Traefik provider.
+	configuration := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers: map[string]*dynamic.Router{
+				"routerHTTP": {
+					EntryPoints: []string{"web"},
+					Middlewares: []string{},
+					Service:     "serviceHTTP",
+					Rule:        "PathPrefix(`/`)",
+				},
+			},
+			Services: map[string]*dynamic.Service{
+				"serviceHTTP": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						PassHostHeader: boolRef(true),
+						Servers: []dynamic.Server{
+							{
+								URL: "http://bacon:80",
 							},
 						},
 					},
@@ -62,21 +54,20 @@ func (s *HTTPSuite) TestSimpleConfiguration(c *check.C) {
 		},
 	}
 
-	for _, test := range testCase {
-		data, err := json.Marshal(test.config)
-		c.Assert(err, checker.IsNil)
+	configData, err := json.Marshal(configuration)
+	c.Assert(err, checker.IsNil)
 
-		ts := startTestServerWithResponse(string(data))
-		defer ts.Close()
+	server := startTestServerWithResponse(configData)
+	defer server.Close()
 
-		err = try.GetRequest("http://127.0.0.1:9090/api/rawdata", 3*time.Second, try.BodyContains("bacon"))
-		c.Assert(err, checker.IsNil)
-	}
+	// Expect configuration to be applied.
+	err = try.GetRequest("http://127.0.0.1:9090/api/rawdata", 3*time.Second, try.BodyContains("routerHTTP@http", "serviceHTTP@http", "http://bacon:80"))
+	c.Assert(err, checker.IsNil)
 }
 
-func startTestServerWithResponse(response string) (ts *httptest.Server) {
+func startTestServerWithResponse(response []byte) (ts *httptest.Server) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(response))
+		_, _ = w.Write(response)
 	})
 	listener, err := net.Listen("tcp", "127.0.0.1:9000")
 	if err != nil {
@@ -89,4 +80,8 @@ func startTestServerWithResponse(response string) (ts *httptest.Server) {
 	}
 	ts.Start()
 	return ts
+}
+
+func boolRef(b bool) *bool {
+	return &b
 }
