@@ -9,6 +9,7 @@ import (
 
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/traefik/traefik/v2/pkg/udp"
 )
 
@@ -89,7 +90,15 @@ func NewUDPEntryPoint(cfg *static.EntryPoint) (*UDPEntryPoint, error) {
 	if err != nil {
 		return nil, err
 	}
-	listener, err := udp.Listen("udp", addr, cfg.Transport.RespondingTimeouts.IdleTimeout)
+
+	var timeout types.Duration
+	if cfg.Transport.RespondingTimeouts == nil {
+		timeout = types.Duration(3 * time.Second)
+	} else {
+		timeout = cfg.Transport.RespondingTimeouts.IdleTimeout
+	}
+
+	listener, err := udp.Listen("udp", addr, timeout)
 	if err != nil {
 		return nil, err
 	}
