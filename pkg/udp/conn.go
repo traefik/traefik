@@ -209,12 +209,12 @@ type Conn struct {
 // The Read operation receives the signal that the data has been written to the slice of bytes through the sizeCh.
 func (c *Conn) readLoop() {
 	// Don't run the timer if the configured timeout is 0
-	var ticker time.Ticker
+	var ticker *time.Ticker
 	if c.timeout <= 0 {
-		ticker := time.NewTicker(time.Hour)
+		ticker = time.NewTicker(time.Hour)
 		ticker.Stop()
 	} else {
-		ticker := time.NewTicker(c.timeout / 10)
+		ticker = time.NewTicker(c.timeout / 10)
 		defer ticker.Stop()
 	}
 
