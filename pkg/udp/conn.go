@@ -28,9 +28,9 @@ type Listener struct {
 
 	acceptCh chan *Conn // no need for a Once, already indirectly guarded by accepting.
 
-	// connTimeout determines how long to wait on an idle session,
-	// before releasing all resources related to that session. A
-	// duration of 0 means no timeout
+	// determines how long to wait on an idle session,
+	// before releasing all resources related to that session.
+	// A duration of 0 means no timeout
 	timeout types.Duration
 }
 
