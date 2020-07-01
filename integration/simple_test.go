@@ -186,10 +186,8 @@ func (s *SimpleSuite) TestCustomPingTerminationStatusCode(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// ping endpoint should now return a Service Unavailable.
-	resp, err := http.Get("http://127.0.0.1:8001/ping")
+	err = try.GetRequest("http://127.0.0.1:8001/ping", 2*time.Second, try.StatusCodeIs(http.StatusNoContent))
 	c.Assert(err, checker.IsNil)
-	defer resp.Body.Close()
-	c.Assert(resp.StatusCode, checker.Equals, http.StatusNoContent)
 }
 
 func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
