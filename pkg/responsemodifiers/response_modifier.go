@@ -36,7 +36,7 @@ func (f *Builder) Build(ctx context.Context, names []string) func(*http.Response
 		if conf.Headers != nil {
 			getLogger(ctx, middleName, "Headers").Debug("Creating Middleware (ResponseModifier)")
 
-			modifiers = append(modifiers, buildHeaders(conf.Headers))
+			modifiers = append(modifiers, buildHeaders(conf.Headers, middleName))
 		} else if conf.Chain != nil {
 			chainCtx := provider.AddInContext(ctx, middleName)
 			getLogger(chainCtx, middleName, "Chain").Debug("Creating Middleware (ResponseModifier)")

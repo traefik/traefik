@@ -81,3 +81,28 @@ ping:
 ```bash tab="CLI"
 --ping.manualrouting=true
 ```
+
+### `terminatingStatusCode`
+
+_Optional, Default=503_
+
+During the period in which Traefik is gracefully shutting down, the ping handler
+returns a 503 status code by default. If Traefik is behind e.g. a load-balancer
+doing health checks (such as the Kubernetes LivenessProbe), another code might
+be expected as the signal for graceful termination. In which case, the
+terminatingStatusCode can be used to set the code returned by the ping
+handler during termination.
+
+```toml tab="File (TOML)"
+[ping]
+  terminatingStatusCode = 204
+```
+
+```yaml tab="File (YAML)"
+ping:
+  terminatingStatusCode: 204
+```
+
+```bash tab="CLI"
+--ping.terminatingStatusCode=204
+```
