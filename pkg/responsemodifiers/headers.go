@@ -8,7 +8,7 @@ import (
 	"github.com/unrolled/secure"
 )
 
-func buildHeaders(hdrs *dynamic.Headers) func(*http.Response) error {
+func buildHeaders(hdrs *dynamic.Headers, contextKey string) func(*http.Response) error {
 	opt := secure.Options{
 		BrowserXssFilter:        hdrs.BrowserXSSFilter,
 		ContentTypeNosniff:      hdrs.ContentTypeNosniff,
@@ -31,6 +31,7 @@ func buildHeaders(hdrs *dynamic.Headers) func(*http.Response) error {
 		SSLProxyHeaders:         hdrs.SSLProxyHeaders,
 		STSSeconds:              hdrs.STSSeconds,
 		FeaturePolicy:           hdrs.FeaturePolicy,
+		SecureContextKey:        contextKey,
 	}
 
 	return func(resp *http.Response) error {
