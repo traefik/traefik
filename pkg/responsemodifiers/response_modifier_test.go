@@ -62,7 +62,7 @@ func TestBuilderBuild(t *testing.T) {
 				})
 
 				headerM := *middlewares["foo"].Headers
-				handler, err := headers.New(ctx, next, headerM, "secure")
+				handler, err := headers.New(ctx, next, headerM, "foo")
 				require.NoError(t, err)
 
 				handler.ServeHTTP(httptest.NewRecorder(),
