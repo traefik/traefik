@@ -304,9 +304,11 @@ func TestThrottleProviderConfigReload(t *testing.T) {
 		}
 	}()
 
-	// publish 5 new configs, one new config each 10 milliseconds
+	// publish 5 new and different configs, one new config each 10 milliseconds
 	for i := 0; i < 5; i++ {
-		providerConfig <- types.ConfigMessage{}
+		providerConfig <- types.ConfigMessage{
+			ProviderName: fmt.Sprintf("test-%d", i),
+		}
 		time.Sleep(10 * time.Millisecond)
 	}
 
