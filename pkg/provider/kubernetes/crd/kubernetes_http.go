@@ -58,11 +58,6 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				continue
 			}
 
-			if err := checkStringQuoteValidity(route.Match); err != nil {
-				logger.Errorf("Invalid syntax for match rule: %s", route.Match)
-				continue
-			}
-
 			serviceKey, err := makeServiceKey(route.Match, ingressName)
 			if err != nil {
 				logger.Error(err)

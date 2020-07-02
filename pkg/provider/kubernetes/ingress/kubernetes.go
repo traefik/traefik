@@ -7,7 +7,6 @@ import (
 	"math"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -235,11 +234,6 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		}
 
 		for _, rule := range ingress.Spec.Rules {
-			if err := checkStringQuoteValidity(rule.Host); err != nil {
-				log.FromContext(ctx).Errorf("Invalid syntax for host: %s", rule.Host)
-				continue
-			}
-
 			if err := p.updateIngressStatus(ingress, client); err != nil {
 				log.FromContext(ctx).Errorf("Error while updating ingress status: %v", err)
 			}
@@ -249,11 +243,6 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			for _, pa := range rule.HTTP.Paths {
-				if err = checkStringQuoteValidity(pa.Path); err != nil {
-					log.FromContext(ctx).Errorf("Invalid syntax for path: %s", pa.Path)
-					continue
-				}
-
 				service, err := loadService(client, ingress.Namespace, pa.Backend)
 				if err != nil {
 					log.FromContext(ctx).
@@ -557,11 +546,6 @@ func loadRouter(rule v1beta1.IngressRule, pa v1beta1.HTTPIngressPath, rtConfig *
 	}
 
 	return rt
-}
-
-func checkStringQuoteValidity(value string) error {
-	_, err := strconv.Unquote(`"` + value + `"`)
-	return err
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {

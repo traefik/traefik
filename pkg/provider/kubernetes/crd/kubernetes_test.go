@@ -373,26 +373,6 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			},
 		},
 		{
-			desc:  "check rule quoting validity",
-			paths: []string{"tcp/services.yml", "tcp/with_bad_host_rule.yml"},
-			expected: &dynamic.Configuration{
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers:  map[string]*dynamic.TCPRouter{},
-					Services: map[string]*dynamic.TCPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-			},
-		},
-		{
 			desc:  "TLS",
 			paths: []string{"tcp/services.yml", "tcp/with_tls.yml"},
 			expected: &dynamic.Configuration{
@@ -2132,26 +2112,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:  "Route with kind not of a rule type (empty kind) is ignored",
 			paths: []string{"services.yml", "with_wrong_rule_kind.yml"},
-			expected: &dynamic.Configuration{
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-				TCP: &dynamic.TCPConfiguration{
-					Routers:  map[string]*dynamic.TCPRouter{},
-					Services: map[string]*dynamic.TCPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
-				},
-			},
-		},
-		{
-			desc:  "check rule quoting validity",
-			paths: []string{"services.yml", "with_bad_host_rule.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
