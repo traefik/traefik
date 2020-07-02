@@ -128,9 +128,11 @@ func (l *Listener) Shutdown(graceTimeout time.Duration) error {
 // we find that session, and otherwise we create a new one.
 // We then send the data the session's readLoop.
 func (l *Listener) readLoop() {
-	buf := make([]byte, receiveMTU)
-
 	for {
+		// Allocating a new buffer for every read avoids
+		// overwriting data in c.msgs in case the next packet is received
+		// before c.msgs is emptied via Read()
+		buf := make([]byte, receiveMTU)
 		n, raddr, err := l.pConn.ReadFrom(buf)
 		if err != nil {
 			return
@@ -177,7 +179,7 @@ func (l *Listener) newConn(rAddr net.Addr) *Conn {
 		readCh:    make(chan []byte),
 		sizeCh:    make(chan int),
 		doneCh:    make(chan struct{}),
-		ticker:    time.NewTicker(timeoutTicker),
+		timeout:   timeoutTicker,
 	}
 }
 
@@ -194,7 +196,7 @@ type Conn struct {
 	muActivity   sync.RWMutex
 	lastActivity time.Time // the last time the session saw either read or write activity
 
-	ticker   *time.Ticker // for timeouts
+	timeout  time.Duration // for timeouts
 	doneOnce sync.Once
 	doneCh   chan struct{}
 }
@@ -204,12 +206,15 @@ type Conn struct {
 // that is to say it waits on readCh to receive the slice of bytes that the Read operation wants to read onto.
 // The Read operation receives the signal that the data has been written to the slice of bytes through the sizeCh.
 func (c *Conn) readLoop() {
+	ticker := time.NewTicker(c.timeout)
+	defer ticker.Stop()
+
 	for {
 		if len(c.msgs) == 0 {
 			select {
 			case msg := <-c.receiveCh:
 				c.msgs = append(c.msgs, msg)
-			case <-c.ticker.C:
+			case <-ticker.C:
 				c.muActivity.RLock()
 				deadline := c.lastActivity.Add(connTimeout)
 				c.muActivity.RUnlock()
@@ -229,7 +234,7 @@ func (c *Conn) readLoop() {
 			c.sizeCh <- n
 		case msg := <-c.receiveCh:
 			c.msgs = append(c.msgs, msg)
-		case <-c.ticker.C:
+		case <-ticker.C:
 			c.muActivity.RLock()
 			deadline := c.lastActivity.Add(connTimeout)
 			c.muActivity.RUnlock()
@@ -281,6 +286,5 @@ func (c *Conn) Close() error {
 	c.listener.mu.Lock()
 	defer c.listener.mu.Unlock()
 	delete(c.listener.conns, c.rAddr.String())
-	c.ticker.Stop()
 	return nil
 }

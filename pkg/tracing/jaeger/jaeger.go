@@ -52,7 +52,7 @@ func (c *Collector) SetDefaults() {
 	c.Password = ""
 }
 
-// Setup sets up the tracer
+// Setup sets up the tracer.
 func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
 	reporter := &jaegercfg.ReporterConfig{
 		LogSpans:           true,

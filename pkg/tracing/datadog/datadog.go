@@ -10,10 +10,10 @@ import (
 	datadog "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
-// Name sets the name of this tracer
+// Name sets the name of this tracer.
 const Name = "datadog"
 
-// Config provides configuration settings for a datadog tracer
+// Config provides configuration settings for a datadog tracer.
 type Config struct {
 	LocalAgentHostPort         string `description:"Set datadog-agent's host:port that the reporter will used." json:"localAgentHostPort,omitempty" toml:"localAgentHostPort,omitempty" yaml:"localAgentHostPort,omitempty"`
 	GlobalTag                  string `description:"Key:Value tag to be set on all the spans." json:"globalTag,omitempty" toml:"globalTag,omitempty" yaml:"globalTag,omitempty" export:"true"`
@@ -33,7 +33,7 @@ func (c *Config) SetDefaults() {
 	c.PrioritySampling = false
 }
 
-// Setup sets up the tracer
+// Setup sets up the tracer.
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
 	tag := strings.SplitN(c.GlobalTag, ":", 2)
 

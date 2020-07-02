@@ -17,7 +17,7 @@ type TLSOption struct {
 
 // +k8s:deepcopy-gen=true
 
-// TLSOptionSpec configures TLS for an entry point
+// TLSOptionSpec configures TLS for an entry point.
 type TLSOptionSpec struct {
 	MinVersion               string     `json:"minVersion,omitempty"`
 	MaxVersion               string     `json:"maxVersion,omitempty"`

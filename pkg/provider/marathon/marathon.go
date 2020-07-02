@@ -77,13 +77,13 @@ func (p *Provider) SetDefaults() {
 	p.DefaultRule = DefaultTemplateRule
 }
 
-// Basic holds basic authentication specific configurations
+// Basic holds basic authentication specific configurations.
 type Basic struct {
 	HTTPBasicAuthUser string `description:"Basic authentication User." json:"httpBasicAuthUser,omitempty" toml:"httpBasicAuthUser,omitempty" yaml:"httpBasicAuthUser,omitempty"`
 	HTTPBasicPassword string `description:"Basic authentication Password." json:"httpBasicPassword,omitempty" toml:"httpBasicPassword,omitempty" yaml:"httpBasicPassword,omitempty"`
 }
 
-// Init the provider
+// Init the provider.
 func (p *Provider) Init() error {
 	fm := template.FuncMap{
 		"strsToItfs": func(values []string) []interface{} {
@@ -97,7 +97,7 @@ func (p *Provider) Init() error {
 
 	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, fm)
 	if err != nil {
-		return fmt.Errorf("error while parsing default rule: %v", err)
+		return fmt.Errorf("error while parsing default rule: %w", err)
 	}
 
 	p.defaultRuleTpl = defaultRuleTpl

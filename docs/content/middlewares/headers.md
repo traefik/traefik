@@ -151,8 +151,8 @@ metadata:
   name: testHeader
 spec:
   headers:
-    frameDeny: "true"
-    sslRedirect: "true"
+    frameDeny: true
+    sslRedirect: true
 ```
 
 ```yaml tab="Consul Catalog"
@@ -217,7 +217,7 @@ spec:
       - "https://foo.bar.org"
       - "https://example.org"
     accessControlMaxAge: 100
-    addVaryHeader: "true"
+    addVaryHeader: true
 ```
 
 ```yaml tab="Consul Catalog"
@@ -311,7 +311,7 @@ This value can contains a list of allowed origins.
 More information including how to use the settings can be found on:
 
 - [Mozilla.org](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin)
-- [w3](https://www.w3.org/TR/cors/#access-control-allow-origin-response-header)
+- [w3](https://fetch.spec.whatwg.org/#http-access-control-allow-origin)
 - [IETF](https://tools.ietf.org/html/rfc6454#section-7.1)
 
 Traefik no longer supports the null value, as it is [no longer recommended as a return value](https://w3c.github.io/webappsec-cors-for-developers/#avoid-returning-access-control-allow-origin-null).

@@ -19,7 +19,7 @@ func (p *Provider) SetDefaults() {
 	p.Endpoints = []string{"127.0.0.1:2181"}
 }
 
-// Init the provider
+// Init the provider.
 func (p *Provider) Init() error {
 	return p.Provider.Init(store.ZK, "zookeeper")
 }

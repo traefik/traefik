@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	// MinVersion Map of allowed TLS minimum versions
+	// MinVersion Map of allowed TLS minimum versions.
 	MinVersion = map[string]uint16{
 		`VersionTLS10`: tls.VersionTLS10,
 		`VersionTLS11`: tls.VersionTLS11,
@@ -22,7 +22,7 @@ var (
 		`VersionTLS13`: tls.VersionTLS13,
 	}
 
-	// MaxVersion Map of allowed TLS maximum versions
+	// MaxVersion Map of allowed TLS maximum versions.
 	MaxVersion = map[string]uint16{
 		`VersionTLS10`: tls.VersionTLS10,
 		`VersionTLS11`: tls.VersionTLS11,
@@ -46,24 +46,24 @@ var (
 )
 
 // Certificate holds a SSL cert/key pair
-// Certs and Key could be either a file path, or the file content itself
+// Certs and Key could be either a file path, or the file content itself.
 type Certificate struct {
 	CertFile FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
 	KeyFile  FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty"`
 }
 
 // Certificates defines traefik certificates type
-// Certs and Keys could be either a file path, or the file content itself
+// Certs and Keys could be either a file path, or the file content itself.
 type Certificates []Certificate
 
-// FileOrContent hold a file path or content
+// FileOrContent hold a file path or content.
 type FileOrContent string
 
 func (f FileOrContent) String() string {
 	return string(f)
 }
 
-// IsPath returns true if the FileOrContent is a file path, otherwise returns false
+// IsPath returns true if the FileOrContent is a file path, otherwise returns false.
 func (f FileOrContent) IsPath() bool {
 	_, err := os.Stat(f.String())
 	return err == nil
@@ -83,7 +83,7 @@ func (f FileOrContent) Read() ([]byte, error) {
 	return content, nil
 }
 
-// CreateTLSConfig creates a TLS config from Certificate structures
+// CreateTLSConfig creates a TLS config from Certificate structures.
 func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, error) {
 	config := &tls.Config{}
 	domainsCertificates := make(map[string]map[string]*tls.Certificate)
@@ -115,7 +115,7 @@ func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, erro
 	return config, nil
 }
 
-// isEmpty checks if the certificates list is empty
+// isEmpty checks if the certificates list is empty.
 func (c *Certificates) isEmpty() bool {
 	if len(*c) == 0 {
 		return true
@@ -134,16 +134,16 @@ func (c *Certificates) isEmpty() bool {
 func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certificate, ep string) error {
 	certContent, err := c.CertFile.Read()
 	if err != nil {
-		return fmt.Errorf("unable to read CertFile : %v", err)
+		return fmt.Errorf("unable to read CertFile : %w", err)
 	}
 
 	keyContent, err := c.KeyFile.Read()
 	if err != nil {
-		return fmt.Errorf("unable to read KeyFile : %v", err)
+		return fmt.Errorf("unable to read KeyFile : %w", err)
 	}
 	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
 	if err != nil {
-		return fmt.Errorf("unable to generate TLS certificate : %v", err)
+		return fmt.Errorf("unable to generate TLS certificate : %w", err)
 	}
 
 	parsedCert, _ := x509.ParseCertificate(tlsCert.Certificate[0])
@@ -190,7 +190,7 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 	return err
 }
 
-// GetTruncatedCertificateName truncates the certificate name
+// GetTruncatedCertificateName truncates the certificate name.
 func (c *Certificate) GetTruncatedCertificateName() string {
 	certName := c.CertFile.String()
 
@@ -233,7 +233,7 @@ func (c *Certificates) Set(value string) error {
 	return nil
 }
 
-// Type is type of the struct
+// Type is type of the struct.
 func (c *Certificates) Type() string {
 	return "certificates"
 }

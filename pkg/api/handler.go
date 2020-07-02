@@ -55,7 +55,7 @@ type Handler struct {
 	runtimeConfiguration *runtime.Configuration
 }
 
-// NewBuilder returns a http.Handler builder based on runtime.Configuration
+// NewBuilder returns a http.Handler builder based on runtime.Configuration.
 func NewBuilder(staticConfig static.Configuration) func(*runtime.Configuration) http.Handler {
 	return func(configuration *runtime.Configuration) http.Handler {
 		return New(staticConfig, configuration).createRouter()

@@ -11,7 +11,8 @@ const (
 	labelDockerComposeService = "com.docker.compose.service"
 )
 
-// configuration Contains information from the labels that are globals (not related to the dynamic configuration) or specific to the provider.
+// configuration Contains information from the labels that are globals (not related to the dynamic configuration)
+// or specific to the provider.
 type configuration struct {
 	Enable bool
 	Docker specificConfiguration
@@ -38,8 +39,8 @@ func (p *Provider) getConfiguration(container dockerData) (configuration, error)
 	return conf, nil
 }
 
-// getStringMultipleStrict get multiple string values associated to several labels
-// Fail if one label is missing
+// getStringMultipleStrict get multiple string values associated to several labels.
+// Fail if one label is missing.
 func getStringMultipleStrict(labels map[string]string, labelNames ...string) (map[string]string, error) {
 	foundLabels := map[string]string{}
 	for _, name := range labelNames {
@@ -53,7 +54,7 @@ func getStringMultipleStrict(labels map[string]string, labelNames ...string) (ma
 	return foundLabels, nil
 }
 
-// getStringValue get string value associated to a label
+// getStringValue get string value associated to a label.
 func getStringValue(labels map[string]string, labelName string, defaultValue string) string {
 	if value, ok := labels[labelName]; ok && len(value) > 0 {
 		return value

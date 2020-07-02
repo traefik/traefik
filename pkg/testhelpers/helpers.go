@@ -7,7 +7,7 @@ import (
 	"net/url"
 )
 
-// MustNewRequest creates a new http get request or panics if it can't
+// MustNewRequest creates a new http get request or panics if it can't.
 func MustNewRequest(method, urlStr string, body io.Reader) *http.Request {
 	request, err := http.NewRequest(method, urlStr, body)
 	if err != nil {
@@ -16,7 +16,7 @@ func MustNewRequest(method, urlStr string, body io.Reader) *http.Request {
 	return request
 }
 
-// MustParseURL parses a URL or panics if it can't
+// MustParseURL parses a URL or panics if it can't.
 func MustParseURL(rawURL string) *url.URL {
 	u, err := url.Parse(rawURL)
 	if err != nil {

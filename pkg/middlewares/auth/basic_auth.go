@@ -62,29 +62,39 @@ func (b *basicAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), b.name, basicTypeName))
 
-	if username := b.auth.CheckAuth(req); username == "" {
+	user, password, ok := req.BasicAuth()
+	if ok {
+		secret := b.auth.Secrets(user, b.auth.Realm)
+		if secret == "" || !goauth.CheckSecret(password, secret) {
+			ok = false
+		}
+	}
+
+	logData := accesslog.GetLogData(req)
+	if logData != nil {
+		logData.Core[accesslog.ClientUsername] = user
+	}
+
+	if !ok {
 		logger.Debug("Authentication failed")
 		tracing.SetErrorWithEvent(req, "Authentication failed")
+
 		b.auth.RequireAuth(rw, req)
-	} else {
-		logger.Debug("Authentication succeeded")
-		req.URL.User = url.User(username)
-
-		logData := accesslog.GetLogData(req)
-		if logData != nil {
-			logData.Core[accesslog.ClientUsername] = username
-		}
-
-		if b.headerField != "" {
-			req.Header[b.headerField] = []string{username}
-		}
-
-		if b.removeHeader {
-			logger.Debug("Removing authorization header")
-			req.Header.Del(authorizationHeader)
-		}
-		b.next.ServeHTTP(rw, req)
+		return
 	}
+
+	logger.Debug("Authentication succeeded")
+	req.URL.User = url.User(user)
+
+	if b.headerField != "" {
+		req.Header[b.headerField] = []string{user}
+	}
+
+	if b.removeHeader {
+		logger.Debug("Removing authorization header")
+		req.Header.Del(authorizationHeader)
+	}
+	b.next.ServeHTTP(rw, req)
 }
 
 func (b *basicAuth) secretBasic(user, realm string) string {

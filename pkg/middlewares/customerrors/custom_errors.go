@@ -131,12 +131,12 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func newRequest(baseURL string) (*http.Request, error) {
 	u, err := url.Parse(baseURL)
 	if err != nil {
-		return nil, fmt.Errorf("error pages: error when parse URL: %v", err)
+		return nil, fmt.Errorf("error pages: error when parse URL: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("error pages: error when create query: %v", err)
+		return nil, fmt.Errorf("error pages: error when create query: %w", err)
 	}
 
 	req.RequestURI = u.RequestURI()
@@ -250,7 +250,7 @@ func (cc *codeCatcher) WriteHeader(code int) {
 	cc.headersSent = true
 }
 
-// Hijack hijacks the connection
+// Hijack hijacks the connection.
 func (cc *codeCatcher) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if hj, ok := cc.responseWriter.(http.Hijacker); ok {
 		return hj.Hijack()
@@ -349,7 +349,7 @@ func (r *responseRecorderWithoutCloseNotify) WriteHeader(code int) {
 	r.Code = code
 }
 
-// Hijack hijacks the connection
+// Hijack hijacks the connection.
 func (r *responseRecorderWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return r.responseWriter.(http.Hijacker).Hijack()
 }

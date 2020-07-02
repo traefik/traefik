@@ -13,7 +13,7 @@ const (
 	key contextKey = iota
 )
 
-// AddInContext Adds the provider name in the context
+// AddInContext Adds the provider name in the context.
 func AddInContext(ctx context.Context, elementName string) context.Context {
 	parts := strings.Split(elementName, "@")
 	if len(parts) == 1 {
@@ -39,7 +39,7 @@ func GetQualifiedName(ctx context.Context, elementName string) string {
 	return elementName
 }
 
-// MakeQualifiedName Creates a qualified name for an element
+// MakeQualifiedName Creates a qualified name for an element.
 func MakeQualifiedName(providerName string, elementName string) string {
 	return elementName + "@" + providerName
 }

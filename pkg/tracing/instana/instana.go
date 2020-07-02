@@ -8,10 +8,10 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-// Name sets the name of this tracer
+// Name sets the name of this tracer.
 const Name = "instana"
 
-// Config provides configuration settings for a instana tracer
+// Config provides configuration settings for a instana tracer.
 type Config struct {
 	LocalAgentHost string `description:"Set instana-agent's host that the reporter will used." json:"localAgentHost,omitempty" toml:"localAgentHost,omitempty" yaml:"localAgentHost,omitempty"`
 	LocalAgentPort int    `description:"Set instana-agent's port that the reporter will used." json:"localAgentPort,omitempty" toml:"localAgentPort,omitempty" yaml:"localAgentPort,omitempty"`
@@ -24,7 +24,7 @@ func (c *Config) SetDefaults() {
 	c.LogLevel = "info"
 }
 
-// Setup sets up the tracer
+// Setup sets up the tracer.
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
 	// set default logLevel
 	logLevel := instana.Info

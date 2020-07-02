@@ -10,7 +10,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// ErrorPagesSuite test suites (using libcompose)
+// ErrorPagesSuite test suites (using libcompose).
 type ErrorPagesSuite struct {
 	BaseSuite
 	ErrorPageIP string

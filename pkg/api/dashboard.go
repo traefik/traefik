@@ -8,12 +8,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// DashboardHandler expose dashboard routes
+// DashboardHandler expose dashboard routes.
 type DashboardHandler struct {
 	Assets *assetfs.AssetFS
 }
 
-// Append add dashboard routes on a router
+// Append add dashboard routes on a router.
 func (g DashboardHandler) Append(router *mux.Router) {
 	if g.Assets == nil {
 		log.WithoutContext().Error("No assets for dashboard")
