@@ -34,19 +34,34 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 			continue
 		}
 
+		var tcpOrUDP bool
 		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
+			tcpOrUDP = true
+
 			err := p.buildTCPServiceConfiguration(ctxContainer, container, confFromLabel.TCP)
 			if err != nil {
 				logger.Error(err)
 				continue
 			}
 			provider.BuildTCPRouterConfiguration(ctxContainer, confFromLabel.TCP)
-			if len(confFromLabel.HTTP.Routers) == 0 &&
-				len(confFromLabel.HTTP.Middlewares) == 0 &&
-				len(confFromLabel.HTTP.Services) == 0 {
-				configurations[containerName] = confFromLabel
+		}
+
+		if len(confFromLabel.UDP.Routers) > 0 || len(confFromLabel.UDP.Services) > 0 {
+			tcpOrUDP = true
+
+			err := p.buildUDPServiceConfiguration(ctxContainer, container, confFromLabel.UDP)
+			if err != nil {
+				logger.Error(err)
 				continue
 			}
+			provider.BuildUDPRouterConfiguration(ctxContainer, confFromLabel.UDP)
+		}
+
+		if tcpOrUDP && len(confFromLabel.HTTP.Routers) == 0 &&
+			len(confFromLabel.HTTP.Middlewares) == 0 &&
+			len(confFromLabel.HTTP.Services) == 0 {
+			configurations[containerName] = confFromLabel
+			continue
 		}
 
 		err = p.buildServiceConfiguration(ctxContainer, container, confFromLabel.HTTP)
@@ -89,7 +104,29 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
 		err := p.addServerTCP(ctxSvc, container, service.LoadBalancer)
 		if err != nil {
-			return err
+			return fmt.Errorf("service %q error: %w", name, err)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.UDPConfiguration) error {
+	serviceName := getServiceName(container)
+
+	if len(configuration.Services) == 0 {
+		configuration.Services = make(map[string]*dynamic.UDPService)
+		lb := &dynamic.UDPServersLoadBalancer{}
+		configuration.Services[serviceName] = &dynamic.UDPService{
+			LoadBalancer: lb,
+		}
+	}
+
+	for name, service := range configuration.Services {
+		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
+		err := p.addServerUDP(ctxSvc, container, service.LoadBalancer)
+		if err != nil {
+			return fmt.Errorf("service %q error: %w", name, err)
 		}
 	}
 
@@ -112,7 +149,7 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
 		err := p.addServer(ctxSvc, container, service.LoadBalancer)
 		if err != nil {
-			return err
+			return fmt.Errorf("service %q error: %w", name, err)
 		}
 	}
 
@@ -146,10 +183,16 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 }
 
 func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadBalancer *dynamic.TCPServersLoadBalancer) error {
-	serverPort := ""
-	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
-		serverPort = loadBalancer.Servers[0].Port
+	if loadBalancer == nil {
+		return errors.New("load-balancer is not defined")
 	}
+
+	var serverPort string
+	if len(loadBalancer.Servers) > 0 {
+		serverPort = loadBalancer.Servers[0].Port
+		loadBalancer.Servers[0].Port = ""
+	}
+
 	ip, port, err := p.getIPPort(ctx, container, serverPort)
 	if err != nil {
 		return err
@@ -161,9 +204,34 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 		loadBalancer.Servers = []dynamic.TCPServer{server}
 	}
 
-	if serverPort != "" {
-		port = serverPort
+	if port == "" {
+		return errors.New("port is missing")
+	}
+
+	loadBalancer.Servers[0].Address = net.JoinHostPort(ip, port)
+	return nil
+}
+
+func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadBalancer *dynamic.UDPServersLoadBalancer) error {
+	if loadBalancer == nil {
+		return errors.New("load-balancer is not defined")
+	}
+
+	var serverPort string
+	if len(loadBalancer.Servers) > 0 {
+		serverPort = loadBalancer.Servers[0].Port
 		loadBalancer.Servers[0].Port = ""
+	}
+
+	ip, port, err := p.getIPPort(ctx, container, serverPort)
+	if err != nil {
+		return err
+	}
+
+	if len(loadBalancer.Servers) == 0 {
+		server := dynamic.UDPServer{}
+
+		loadBalancer.Servers = []dynamic.UDPServer{server}
 	}
 
 	if port == "" {
@@ -175,7 +243,16 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 }
 
 func (p *Provider) addServer(ctx context.Context, container dockerData, loadBalancer *dynamic.ServersLoadBalancer) error {
-	serverPort := getLBServerPort(loadBalancer)
+	if loadBalancer == nil {
+		return errors.New("load-balancer is not defined")
+	}
+
+	var serverPort string
+	if len(loadBalancer.Servers) > 0 {
+		serverPort = loadBalancer.Servers[0].Port
+		loadBalancer.Servers[0].Port = ""
+	}
+
 	ip, port, err := p.getIPPort(ctx, container, serverPort)
 	if err != nil {
 		return err
@@ -186,11 +263,6 @@ func (p *Provider) addServer(ctx context.Context, container dockerData, loadBala
 		server.SetDefaults()
 
 		loadBalancer.Servers = []dynamic.Server{server}
-	}
-
-	if serverPort != "" {
-		port = serverPort
-		loadBalancer.Servers[0].Port = ""
 	}
 
 	if port == "" {
@@ -254,6 +326,9 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 		if container.Node != nil && container.Node.IPAddress != "" {
 			return container.Node.IPAddress
 		}
+		if host, err := net.LookupHost("host.docker.internal"); err == nil {
+			return host[0]
+		}
 		return "127.0.0.1"
 	}
 
@@ -270,7 +345,23 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 			logger.Warnf("Unable to get IP address for container %s : Failed to inspect container ID %s, error: %s", container.Name, connectedContainer, err)
 			return ""
 		}
-		return p.getIPAddress(ctx, parseContainer(containerInspected))
+
+		// Check connected container for traefik.docker.network, falling back to
+		// the network specified on the current container.
+		containerParsed := parseContainer(containerInspected)
+		extraConf, err := p.getConfiguration(containerParsed)
+
+		if err != nil {
+			logger.Warnf("Unable to get IP address for container %s : failed to get extra configuration for container %s: %s", container.Name, containerInspected.Name, err)
+			return ""
+		}
+
+		if extraConf.Docker.Network == "" {
+			extraConf.Docker.Network = container.ExtraConf.Docker.Network
+		}
+
+		containerParsed.ExtraConf = extraConf
+		return p.getIPAddress(ctx, containerParsed)
 	}
 
 	for _, network := range container.NetworkSettings.Networks {
@@ -292,13 +383,6 @@ func (p *Provider) getPortBinding(container dockerData, serverPort string) (*nat
 	}
 
 	return nil, fmt.Errorf("unable to find the external IP:Port for the container %q", container.Name)
-}
-
-func getLBServerPort(loadBalancer *dynamic.ServersLoadBalancer) string {
-	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
-		return loadBalancer.Servers[0].Port
-	}
-	return ""
 }
 
 func getPort(container dockerData, serverPort string) string {

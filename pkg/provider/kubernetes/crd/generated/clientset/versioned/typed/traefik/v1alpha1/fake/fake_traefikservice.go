@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2019 Containous SAS
+Copyright (c) 2016-2020 Containous SAS
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,8 @@ THE SOFTWARE.
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -47,7 +49,7 @@ var traefikservicesResource = schema.GroupVersionResource{Group: "traefik.contai
 var traefikservicesKind = schema.GroupVersionKind{Group: "traefik.containo.us", Version: "v1alpha1", Kind: "TraefikService"}
 
 // Get takes name of the traefikService, and returns the corresponding traefikService object, and an error if there is any.
-func (c *FakeTraefikServices) Get(name string, options v1.GetOptions) (result *v1alpha1.TraefikService, err error) {
+func (c *FakeTraefikServices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.TraefikService, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(traefikservicesResource, c.ns, name), &v1alpha1.TraefikService{})
 
@@ -58,7 +60,7 @@ func (c *FakeTraefikServices) Get(name string, options v1.GetOptions) (result *v
 }
 
 // List takes label and field selectors, and returns the list of TraefikServices that match those selectors.
-func (c *FakeTraefikServices) List(opts v1.ListOptions) (result *v1alpha1.TraefikServiceList, err error) {
+func (c *FakeTraefikServices) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.TraefikServiceList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(traefikservicesResource, traefikservicesKind, c.ns, opts), &v1alpha1.TraefikServiceList{})
 
@@ -80,14 +82,14 @@ func (c *FakeTraefikServices) List(opts v1.ListOptions) (result *v1alpha1.Traefi
 }
 
 // Watch returns a watch.Interface that watches the requested traefikServices.
-func (c *FakeTraefikServices) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeTraefikServices) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(traefikservicesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a traefikService and creates it.  Returns the server's representation of the traefikService, and an error, if there is any.
-func (c *FakeTraefikServices) Create(traefikService *v1alpha1.TraefikService) (result *v1alpha1.TraefikService, err error) {
+func (c *FakeTraefikServices) Create(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.CreateOptions) (result *v1alpha1.TraefikService, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(traefikservicesResource, c.ns, traefikService), &v1alpha1.TraefikService{})
 
@@ -98,7 +100,7 @@ func (c *FakeTraefikServices) Create(traefikService *v1alpha1.TraefikService) (r
 }
 
 // Update takes the representation of a traefikService and updates it. Returns the server's representation of the traefikService, and an error, if there is any.
-func (c *FakeTraefikServices) Update(traefikService *v1alpha1.TraefikService) (result *v1alpha1.TraefikService, err error) {
+func (c *FakeTraefikServices) Update(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.UpdateOptions) (result *v1alpha1.TraefikService, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(traefikservicesResource, c.ns, traefikService), &v1alpha1.TraefikService{})
 
@@ -109,7 +111,7 @@ func (c *FakeTraefikServices) Update(traefikService *v1alpha1.TraefikService) (r
 }
 
 // Delete takes name of the traefikService and deletes it. Returns an error if one occurs.
-func (c *FakeTraefikServices) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeTraefikServices) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(traefikservicesResource, c.ns, name), &v1alpha1.TraefikService{})
 
@@ -117,15 +119,15 @@ func (c *FakeTraefikServices) Delete(name string, options *v1.DeleteOptions) err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeTraefikServices) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(traefikservicesResource, c.ns, listOptions)
+func (c *FakeTraefikServices) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(traefikservicesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.TraefikServiceList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched traefikService.
-func (c *FakeTraefikServices) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.TraefikService, err error) {
+func (c *FakeTraefikServices) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.TraefikService, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(traefikservicesResource, c.ns, name, pt, data, subresources...), &v1alpha1.TraefikService{})
 

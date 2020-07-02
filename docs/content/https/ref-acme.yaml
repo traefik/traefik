@@ -1,5 +1,5 @@
 certificatesResolvers:
-  sample:
+  myresolver:
     # Enable ACME (Let's Encrypt): automatic SSL.
     acme:
 
@@ -7,7 +7,7 @@ certificatesResolvers:
       #
       # Required
       #
-      email: "test@traefik.io"
+      email: "test@example.com"
 
       # File or key used for certificates storage.
       #

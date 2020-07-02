@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2019 Containous SAS
+Copyright (c) 2016-2020 Containous SAS
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -44,12 +44,20 @@ func (c *FakeTraefikV1alpha1) IngressRouteTCPs(namespace string) v1alpha1.Ingres
 	return &FakeIngressRouteTCPs{c, namespace}
 }
 
+func (c *FakeTraefikV1alpha1) IngressRouteUDPs(namespace string) v1alpha1.IngressRouteUDPInterface {
+	return &FakeIngressRouteUDPs{c, namespace}
+}
+
 func (c *FakeTraefikV1alpha1) Middlewares(namespace string) v1alpha1.MiddlewareInterface {
 	return &FakeMiddlewares{c, namespace}
 }
 
 func (c *FakeTraefikV1alpha1) TLSOptions(namespace string) v1alpha1.TLSOptionInterface {
 	return &FakeTLSOptions{c, namespace}
+}
+
+func (c *FakeTraefikV1alpha1) TLSStores(namespace string) v1alpha1.TLSStoreInterface {
+	return &FakeTLSStores{c, namespace}
 }
 
 func (c *FakeTraefikV1alpha1) TraefikServices(namespace string) v1alpha1.TraefikServiceInterface {

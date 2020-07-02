@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2019 Containous SAS
+Copyright (c) 2016-2020 Containous SAS
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,8 @@ THE SOFTWARE.
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -47,7 +49,7 @@ var middlewaresResource = schema.GroupVersionResource{Group: "traefik.containo.u
 var middlewaresKind = schema.GroupVersionKind{Group: "traefik.containo.us", Version: "v1alpha1", Kind: "Middleware"}
 
 // Get takes name of the middleware, and returns the corresponding middleware object, and an error if there is any.
-func (c *FakeMiddlewares) Get(name string, options v1.GetOptions) (result *v1alpha1.Middleware, err error) {
+func (c *FakeMiddlewares) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.Middleware, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(middlewaresResource, c.ns, name), &v1alpha1.Middleware{})
 
@@ -58,7 +60,7 @@ func (c *FakeMiddlewares) Get(name string, options v1.GetOptions) (result *v1alp
 }
 
 // List takes label and field selectors, and returns the list of Middlewares that match those selectors.
-func (c *FakeMiddlewares) List(opts v1.ListOptions) (result *v1alpha1.MiddlewareList, err error) {
+func (c *FakeMiddlewares) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.MiddlewareList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(middlewaresResource, middlewaresKind, c.ns, opts), &v1alpha1.MiddlewareList{})
 
@@ -80,14 +82,14 @@ func (c *FakeMiddlewares) List(opts v1.ListOptions) (result *v1alpha1.Middleware
 }
 
 // Watch returns a watch.Interface that watches the requested middlewares.
-func (c *FakeMiddlewares) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeMiddlewares) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(middlewaresResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a middleware and creates it.  Returns the server's representation of the middleware, and an error, if there is any.
-func (c *FakeMiddlewares) Create(middleware *v1alpha1.Middleware) (result *v1alpha1.Middleware, err error) {
+func (c *FakeMiddlewares) Create(ctx context.Context, middleware *v1alpha1.Middleware, opts v1.CreateOptions) (result *v1alpha1.Middleware, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(middlewaresResource, c.ns, middleware), &v1alpha1.Middleware{})
 
@@ -98,7 +100,7 @@ func (c *FakeMiddlewares) Create(middleware *v1alpha1.Middleware) (result *v1alp
 }
 
 // Update takes the representation of a middleware and updates it. Returns the server's representation of the middleware, and an error, if there is any.
-func (c *FakeMiddlewares) Update(middleware *v1alpha1.Middleware) (result *v1alpha1.Middleware, err error) {
+func (c *FakeMiddlewares) Update(ctx context.Context, middleware *v1alpha1.Middleware, opts v1.UpdateOptions) (result *v1alpha1.Middleware, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(middlewaresResource, c.ns, middleware), &v1alpha1.Middleware{})
 
@@ -109,7 +111,7 @@ func (c *FakeMiddlewares) Update(middleware *v1alpha1.Middleware) (result *v1alp
 }
 
 // Delete takes name of the middleware and deletes it. Returns an error if one occurs.
-func (c *FakeMiddlewares) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeMiddlewares) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(middlewaresResource, c.ns, name), &v1alpha1.Middleware{})
 
@@ -117,15 +119,15 @@ func (c *FakeMiddlewares) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeMiddlewares) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(middlewaresResource, c.ns, listOptions)
+func (c *FakeMiddlewares) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(middlewaresResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.MiddlewareList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched middleware.
-func (c *FakeMiddlewares) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.Middleware, err error) {
+func (c *FakeMiddlewares) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.Middleware, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(middlewaresResource, c.ns, name, pt, data, subresources...), &v1alpha1.Middleware{})
 

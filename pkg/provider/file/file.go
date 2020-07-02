@@ -11,15 +11,14 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/sprig"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/file"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
 	"gopkg.in/fsnotify.v1"
-	"gopkg.in/yaml.v2"
 )
 
 const providerName = "file"
@@ -40,7 +39,7 @@ func (p *Provider) SetDefaults() {
 	p.Filename = ""
 }
 
-// Init the provider
+// Init the provider.
 func (p *Provider) Init() error {
 	return nil
 }
@@ -75,8 +74,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
-// BuildConfiguration loads configuration either from file or a directory specified by 'Filename'/'Directory'
-// and returns a 'Configuration' object
+// BuildConfiguration loads configuration either from file or a directory
+// specified by 'Filename'/'Directory' and returns a 'Configuration' object.
 func (p *Provider) BuildConfiguration() (*dynamic.Configuration, error) {
 	ctx := log.With(context.Background(), log.Str(log.ProviderName, providerName))
 
@@ -94,20 +93,20 @@ func (p *Provider) BuildConfiguration() (*dynamic.Configuration, error) {
 func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- dynamic.Message, callback func(chan<- dynamic.Message, fsnotify.Event)) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return fmt.Errorf("error creating file watcher: %s", err)
+		return fmt.Errorf("error creating file watcher: %w", err)
 	}
 
 	err = watcher.Add(directory)
 	if err != nil {
-		return fmt.Errorf("error adding file watcher: %s", err)
+		return fmt.Errorf("error adding file watcher: %w", err)
 	}
 
 	// Process events
-	pool.Go(func(stop chan bool) {
+	pool.GoCtx(func(ctx context.Context) {
 		defer watcher.Close()
 		for {
 			select {
-			case <-stop:
+			case <-ctx.Done():
 				return
 			case evt := <-watcher.Events:
 				if p.Directory == "" {
@@ -201,7 +200,7 @@ func flattenCertificates(ctx context.Context, tlsConfig *dynamic.TLSConfiguratio
 func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory string, configuration *dynamic.Configuration) (*dynamic.Configuration, error) {
 	fileList, err := ioutil.ReadDir(directory)
 	if err != nil {
-		return configuration, fmt.Errorf("unable to read directory %s: %v", directory, err)
+		return configuration, fmt.Errorf("unable to read directory %s: %w", directory, err)
 	}
 
 	if configuration == nil {
@@ -219,6 +218,10 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				Stores:  make(map[string]tls.Store),
 				Options: make(map[string]tls.Options),
 			},
+			UDP: &dynamic.UDPConfiguration{
+				Routers:  make(map[string]*dynamic.UDPRouter),
+				Services: make(map[string]*dynamic.UDPService),
+			},
 		}
 	}
 
@@ -230,7 +233,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 		if item.IsDir() {
 			configuration, err = p.loadFileConfigFromDirectory(ctx, filepath.Join(directory, item.Name()), configuration)
 			if err != nil {
-				return configuration, fmt.Errorf("unable to load content configuration from subdirectory %s: %v", item, err)
+				return configuration, fmt.Errorf("unable to load content configuration from subdirectory %s: %w", item, err)
 			}
 			continue
 		}
@@ -245,7 +248,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 		var c *dynamic.Configuration
 		c, err = p.loadFileConfig(ctx, filepath.Join(directory, item.Name()), true)
 		if err != nil {
-			return configuration, fmt.Errorf("%s: %v", filepath.Join(directory, item.Name()), err)
+			return configuration, fmt.Errorf("%s: %w", filepath.Join(directory, item.Name()), err)
 		}
 
 		for name, conf := range c.HTTP.Routers {
@@ -285,6 +288,22 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				logger.WithField(log.ServiceName, name).Warn("TCP service already configured, skipping")
 			} else {
 				configuration.TCP.Services[name] = conf
+			}
+		}
+
+		for name, conf := range c.UDP.Routers {
+			if _, exists := configuration.UDP.Routers[name]; exists {
+				logger.WithField(log.RouterName, name).Warn("UDP router already configured, skipping")
+			} else {
+				configuration.UDP.Routers[name] = conf
+			}
+		}
+
+		for name, conf := range c.UDP.Services {
+			if _, exists := configuration.UDP.Services[name]; exists {
+				logger.WithField(log.ServiceName, name).Warn("UDP service already configured, skipping")
+			} else {
+				configuration.UDP.Services[name] = conf
 			}
 		}
 
@@ -334,7 +353,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 func (p *Provider) CreateConfiguration(ctx context.Context, filename string, funcMap template.FuncMap, templateObjects interface{}) (*dynamic.Configuration, error) {
 	tmplContent, err := readFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("error reading configuration file: %s - %s", filename, err)
+		return nil, fmt.Errorf("error reading configuration file: %s - %w", filename, err)
 	}
 
 	var defaultFuncMap = sprig.TxtFuncMap()
@@ -371,7 +390,7 @@ func (p *Provider) CreateConfiguration(ctx context.Context, filename string, fun
 func (p *Provider) DecodeConfiguration(filename string) (*dynamic.Configuration, error) {
 	content, err := readFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("error reading configuration file: %s - %s", filename, err)
+		return nil, fmt.Errorf("error reading configuration file: %s - %w", filename, err)
 	}
 
 	return p.decodeConfiguration(filename, content)
@@ -392,24 +411,15 @@ func (p *Provider) decodeConfiguration(filePath string, content string) (*dynami
 			Stores:  make(map[string]tls.Store),
 			Options: make(map[string]tls.Options),
 		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  make(map[string]*dynamic.UDPRouter),
+			Services: make(map[string]*dynamic.UDPService),
+		},
 	}
 
-	switch strings.ToLower(filepath.Ext(filePath)) {
-	case ".toml":
-		_, err := toml.Decode(content, configuration)
-		if err != nil {
-			return nil, err
-		}
-
-	case ".yml", ".yaml":
-		var err error
-		err = yaml.Unmarshal([]byte(content), configuration)
-		if err != nil {
-			return nil, err
-		}
-
-	default:
-		return nil, fmt.Errorf("unsupported file extension: %s", filePath)
+	err := file.DecodeContent(content, strings.ToLower(filepath.Ext(filePath)), configuration)
+	if err != nil {
+		return nil, err
 	}
 
 	return configuration, nil

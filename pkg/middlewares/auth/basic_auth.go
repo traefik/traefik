@@ -49,7 +49,8 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 	if len(authConfig.Realm) > 0 {
 		realm = authConfig.Realm
 	}
-	ba.auth = goauth.NewBasicAuthenticator(realm, ba.secretBasic)
+
+	ba.auth = &goauth.BasicAuth{Realm: realm, Secrets: ba.secretBasic}
 
 	return ba, nil
 }

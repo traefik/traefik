@@ -40,7 +40,7 @@ tls:
 
     In the above example, we've used the [file provider](../providers/file.md) to handle these definitions.
     It is the only available method to configure the certificates (as well as the options and the stores).
-    However, in [Kubernetes](../providers/kubernetes-crd.md), the certificates can and must be provided by [secrets](../routing/providers/kubernetes-crd.md#tls). 
+    However, in [Kubernetes](../providers/kubernetes-crd.md), the certificates can and must be provided by [secrets](https://kubernetes.io/docs/concepts/configuration/secret/). 
 
 ## Certificates Stores
 
@@ -345,6 +345,39 @@ metadata:
 
 spec:
   sniStrict: true
+```
+
+### Prefer Server Cipher Suites
+
+This option allows the server to choose its most preferred cipher suite instead of the client's.
+Please note that this is enabled automatically when `minVersion` or `maxVersion` are set.
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+  [tls.options.default]
+    preferServerCipherSuites = true
+```
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      preferServerCipherSuites: true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  preferServerCipherSuites: true
 ```
 
 ### Client Authentication (mTLS)

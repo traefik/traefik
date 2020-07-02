@@ -98,9 +98,9 @@
   # Enable the API in insecure mode
   #
   # Optional
-  # Default: true
+  # Default: false
   #
-  # insecure = false
+  # insecure = true
 
   # Enabled Dashboard
   #

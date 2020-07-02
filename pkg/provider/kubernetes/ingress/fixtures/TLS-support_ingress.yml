@@ -1,8 +1,10 @@
 kind: Ingress
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 metadata:
   name: ""
   namespace: testing
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
 
 spec:
   tls:
@@ -18,7 +20,7 @@ spec:
 
 ---
 kind: Ingress
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 metadata:
   name: ""
   namespace: testing

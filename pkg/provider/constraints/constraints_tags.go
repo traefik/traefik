@@ -12,7 +12,7 @@ type constraintTagFunc func([]string) bool
 // MatchTags reports whether the expression matches with the given tags.
 // The expression must match any logical boolean combination of:
 // - `Tag(tagValue)`
-// - `TagRegex(regexValue)`
+// - `TagRegex(regexValue)`.
 func MatchTags(tags []string, expr string) (bool, error) {
 	if expr == "" {
 		return true, nil

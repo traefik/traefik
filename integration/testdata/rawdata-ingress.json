@@ -28,31 +28,25 @@
 				"traefik"
 			]
 		},
-		"whoami-test-https-whoami-tls@kubernetes": {
-			"service": "default-whoami-http",
-			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
-			"tls": {},
-			"status": "enabled",
-			"using": [
-				"traefik",
+		"test-ingress-default-whoami-test-whoami@kubernetes": {
+			"entryPoints": [
 				"web"
-			]
-		},
-		"whoami-test-https-whoami@kubernetes": {
-			"service": "default-whoami-http",
-			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
-			"status": "enabled",
-			"using": [
-				"traefik",
-				"web"
-			]
-		},
-		"whoami-test-whoami@kubernetes": {
+			],
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"status": "enabled",
 			"using": [
-				"traefik",
+				"web"
+			]
+		},
+		"test-ingress-https-default-whoami-test-https-whoami@kubernetes": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "default-whoami-http",
+			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
+			"status": "enabled",
+			"using": [
 				"web"
 			]
 		}
@@ -60,7 +54,7 @@
 	"middlewares": {
 		"dashboard_redirect@internal": {
 			"redirectRegex": {
-				"regex": "^(http:\\/\\/[^:]+(:\\d+)?)/$",
+				"regex": "^(http:\\/\\/[^:\\/]+(:\\d+)?)\\/$",
 				"replacement": "${1}/dashboard/",
 				"permanent": true
 			},
@@ -99,24 +93,26 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.4:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.6:80"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true
 			},
 			"status": "enabled",
 			"usedBy": [
-				"whoami-test-https-whoami-tls@kubernetes",
-				"whoami-test-https-whoami@kubernetes",
-				"whoami-test-whoami@kubernetes"
+				"test-ingress-default-whoami-test-whoami@kubernetes",
+				"test-ingress-https-default-whoami-test-https-whoami@kubernetes"
 			],
 			"serverStatus": {
-				"http://10.42.0.4:80": "UP",
-				"http://10.42.0.6:80": "UP"
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.5:80": "UP"
 			}
+		},
+		"noop@internal": {
+			"status": "enabled"
 		}
 	}
 }

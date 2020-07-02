@@ -204,6 +204,17 @@ func TestServeHTTP(t *testing.T) {
 			},
 		},
 		{
+			desc:      "xForwardedProto with websocket and tls and already x-forwarded-proto with wss",
+			tls:       true,
+			websocket: true,
+			incomingHeaders: map[string]string{
+				xForwardedProto: "wss",
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto: "wss",
+			},
+		},
+		{
 			desc: "xForwardedPort with explicit port",
 			host: "foo.com:8080",
 			expectedHeaders: map[string]string{

@@ -3,11 +3,11 @@
 A Quick Guide for Efficient Contributions
 {: .subtitle }
 
-So you've decide to improve Traefik? 
+So you've decided to improve Traefik? 
 Thank You! 
 Now the last step is to submit your Pull Request in a way that makes sure it gets the attention it deserves.
 
-Let's go though the classic pitfalls to make sure everything is right. 
+Let's go through the classic pitfalls to make sure everything is right. 
 
 ## Title
 
@@ -36,7 +36,7 @@ Help the readers focus on what matters, and help them understand the structure o
 - Add tests.
 - Address review comments in terms of additional commits (and don't amend/squash existing ones unless the PR is trivial).
 
-!!! note "third-party dependencies"
+!!! note "Third-Party Dependencies"
 
     If a PR involves changes to third-party dependencies, the commits pertaining to the vendor folder and the manifest/lock file(s) should be committed separated.
 

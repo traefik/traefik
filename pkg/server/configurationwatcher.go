@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"reflect"
 	"time"
@@ -17,6 +18,8 @@ import (
 type ConfigurationWatcher struct {
 	provider provider.Provider
 
+	defaultEntryPoints []string
+
 	providersThrottleDuration time.Duration
 
 	currentConfigurations safe.Safe
@@ -31,7 +34,12 @@ type ConfigurationWatcher struct {
 }
 
 // NewConfigurationWatcher creates a new ConfigurationWatcher.
-func NewConfigurationWatcher(routinesPool *safe.Pool, pvd provider.Provider, providersThrottleDuration time.Duration) *ConfigurationWatcher {
+func NewConfigurationWatcher(
+	routinesPool *safe.Pool,
+	pvd provider.Provider,
+	providersThrottleDuration time.Duration,
+	defaultEntryPoints []string,
+) *ConfigurationWatcher {
 	watcher := &ConfigurationWatcher{
 		provider:                   pvd,
 		configurationChan:          make(chan dynamic.Message, 100),
@@ -39,6 +47,7 @@ func NewConfigurationWatcher(routinesPool *safe.Pool, pvd provider.Provider, pro
 		providerConfigUpdateMap:    make(map[string]chan dynamic.Message),
 		providersThrottleDuration:  providersThrottleDuration,
 		routinesPool:               routinesPool,
+		defaultEntryPoints:         defaultEntryPoints,
 	}
 
 	currentConfigurations := make(dynamic.Configurations)
@@ -49,8 +58,8 @@ func NewConfigurationWatcher(routinesPool *safe.Pool, pvd provider.Provider, pro
 
 // Start the configuration watcher.
 func (c *ConfigurationWatcher) Start() {
-	c.routinesPool.Go(c.listenProviders)
-	c.routinesPool.Go(c.listenConfigurations)
+	c.routinesPool.GoCtx(c.listenProviders)
+	c.routinesPool.GoCtx(c.listenConfigurations)
 	c.startProvider()
 }
 
@@ -60,7 +69,7 @@ func (c *ConfigurationWatcher) Stop() {
 	close(c.configurationValidatedChan)
 }
 
-// AddListener adds a new listener function used when new configuration is provided
+// AddListener adds a new listener function used when new configuration is provided.
 func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration)) {
 	if c.configurationListeners == nil {
 		c.configurationListeners = make([]func(dynamic.Configuration), 0)
@@ -90,10 +99,10 @@ func (c *ConfigurationWatcher) startProvider() {
 // listenProviders receives configuration changes from the providers.
 // The configuration message then gets passed along a series of check
 // to finally end up in a throttler that sends it to listenConfigurations (through c. configurationValidatedChan).
-func (c *ConfigurationWatcher) listenProviders(stop chan bool) {
+func (c *ConfigurationWatcher) listenProviders(ctx context.Context) {
 	for {
 		select {
-		case <-stop:
+		case <-ctx.Done():
 			return
 		case configMsg, ok := <-c.configurationChan:
 			if !ok {
@@ -111,10 +120,10 @@ func (c *ConfigurationWatcher) listenProviders(stop chan bool) {
 	}
 }
 
-func (c *ConfigurationWatcher) listenConfigurations(stop chan bool) {
+func (c *ConfigurationWatcher) listenConfigurations(ctx context.Context) {
 	for {
 		select {
-		case <-stop:
+		case <-ctx.Done():
 			return
 		case configMsg, ok := <-c.configurationValidatedChan:
 			if !ok || configMsg.Configuration == nil {
@@ -134,7 +143,8 @@ func (c *ConfigurationWatcher) loadMessage(configMsg dynamic.Message) {
 
 	c.currentConfigurations.Set(newConfigurations)
 
-	conf := mergeConfiguration(newConfigurations)
+	conf := mergeConfiguration(newConfigurations, c.defaultEntryPoints)
+	conf = applyModel(conf)
 
 	for _, listener := range c.configurationListeners {
 		listener(conf)
@@ -142,16 +152,16 @@ func (c *ConfigurationWatcher) loadMessage(configMsg dynamic.Message) {
 }
 
 func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
-	currentConfigurations := c.currentConfigurations.Get().(dynamic.Configurations)
-
 	logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
 	if log.GetLevel() == logrus.DebugLevel {
 		copyConf := configMsg.Configuration.DeepCopy()
 		if copyConf.TLS != nil {
 			copyConf.TLS.Certificates = nil
 
-			for _, v := range copyConf.TLS.Stores {
-				v.DefaultCertificate = nil
+			for k := range copyConf.TLS.Stores {
+				st := copyConf.TLS.Stores[k]
+				st.DefaultCertificate = nil
+				copyConf.TLS.Stores[k] = st
 			}
 		}
 
@@ -169,17 +179,12 @@ func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
 		return
 	}
 
-	if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-		logger.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
-		return
-	}
-
 	providerConfigUpdateCh, ok := c.providerConfigUpdateMap[configMsg.ProviderName]
 	if !ok {
 		providerConfigUpdateCh = make(chan dynamic.Message)
 		c.providerConfigUpdateMap[configMsg.ProviderName] = providerConfigUpdateCh
-		c.routinesPool.Go(func(stop chan bool) {
-			c.throttleProviderConfigReload(c.providersThrottleDuration, c.configurationValidatedChan, providerConfigUpdateCh, stop)
+		c.routinesPool.GoCtx(func(ctxPool context.Context) {
+			c.throttleProviderConfigReload(ctxPool, c.providersThrottleDuration, c.configurationValidatedChan, providerConfigUpdateCh)
 		})
 	}
 
@@ -190,14 +195,14 @@ func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
 // It will immediately publish a new configuration and then only publish the next configuration after the throttle duration.
 // Note that in the case it receives N new configs in the timeframe of the throttle duration after publishing,
 // it will publish the last of the newly received configurations.
-func (c *ConfigurationWatcher) throttleProviderConfigReload(throttle time.Duration, publish chan<- dynamic.Message, in <-chan dynamic.Message, stop chan bool) {
+func (c *ConfigurationWatcher) throttleProviderConfigReload(ctx context.Context, throttle time.Duration, publish chan<- dynamic.Message, in <-chan dynamic.Message) {
 	ring := channels.NewRingChannel(1)
 	defer ring.Close()
 
-	c.routinesPool.Go(func(stop chan bool) {
+	c.routinesPool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
-			case <-stop:
+			case <-ctxPool.Done():
 				return
 			case nextConfig := <-ring.Out():
 				if config, ok := nextConfig.(dynamic.Message); ok {
@@ -208,11 +213,18 @@ func (c *ConfigurationWatcher) throttleProviderConfigReload(throttle time.Durati
 		}
 	})
 
+	var previousConfig dynamic.Message
 	for {
 		select {
-		case <-stop:
+		case <-ctx.Done():
 			return
 		case nextConfig := <-in:
+			if reflect.DeepEqual(previousConfig, nextConfig) {
+				logger := log.WithoutContext().WithField(log.ProviderName, nextConfig.ProviderName)
+				logger.Info("Skipping same configuration")
+				continue
+			}
+			previousConfig = nextConfig
 			ring.In() <- nextConfig
 		}
 	}
@@ -229,10 +241,14 @@ func isEmptyConfiguration(conf *dynamic.Configuration) bool {
 	if conf.HTTP == nil {
 		conf.HTTP = &dynamic.HTTPConfiguration{}
 	}
+	if conf.UDP == nil {
+		conf.UDP = &dynamic.UDPConfiguration{}
+	}
 
 	httpEmpty := conf.HTTP.Routers == nil && conf.HTTP.Services == nil && conf.HTTP.Middlewares == nil
 	tlsEmpty := conf.TLS == nil || conf.TLS.Certificates == nil && conf.TLS.Stores == nil && conf.TLS.Options == nil
 	tcpEmpty := conf.TCP.Routers == nil && conf.TCP.Services == nil
+	udpEmpty := conf.UDP.Routers == nil && conf.UDP.Services == nil
 
-	return httpEmpty && tlsEmpty && tcpEmpty
+	return httpEmpty && tlsEmpty && tcpEmpty && udpEmpty
 }

@@ -50,12 +50,12 @@ type TCPRouter struct {
 	EntryPoints []string            `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty"`
 	Service     string              `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
 	Rule        string              `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
-	TLS         *RouterTCPTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
+	TLS         *RouterTCPTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// RouterTCPTLSConfig holds the TLS configuration for a router
+// RouterTCPTLSConfig holds the TLS configuration for a router.
 type RouterTCPTLSConfig struct {
 	Passthrough  bool           `json:"passthrough" toml:"passthrough" yaml:"passthrough"`
 	Options      string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
@@ -76,7 +76,7 @@ type TCPServersLoadBalancer struct {
 	Servers          []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
 }
 
-// SetDefaults Default values for a TCPServersLoadBalancer
+// SetDefaults Default values for a TCPServersLoadBalancer.
 func (l *TCPServersLoadBalancer) SetDefaults() {
 	defaultTerminationDelay := 100 // in milliseconds
 	l.TerminationDelay = &defaultTerminationDelay
@@ -101,7 +101,7 @@ func (l *TCPServersLoadBalancer) Mergeable(loadBalancer *TCPServersLoadBalancer)
 
 // +k8s:deepcopy-gen=true
 
-// TCPServer holds a TCP Server configuration
+// TCPServer holds a TCP Server configuration.
 type TCPServer struct {
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
 	Port    string `toml:"-" json:"-" yaml:"-"`

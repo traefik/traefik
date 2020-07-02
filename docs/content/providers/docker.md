@@ -40,7 +40,7 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
       my-container:
         # ...
         labels:
-          - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
+          - traefik.http.routers.my-container.rule=Host(`example.com`)
     ```
 
 ??? example "Configuring Docker Swarm & Deploying / Exposing Services"
@@ -79,14 +79,14 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
       my-container:
         deploy:
           labels:
-            - traefik.http.routers.my-container.rule=Host(`mydomain.com`)
+            - traefik.http.routers.my-container.rule=Host(`example.com`)
             - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
 ## Routing Configuration
 
-When using Docker as a [provider](https://docs.traefik.io/providers/overview/),
-Trafik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#set-metadata-on-container--l---label---label-file) to retrieve its routing configuration.
+When using Docker as a [provider](./overview.md),
+Traefik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#set-metadata-on-container--l---label---label-file) to retrieve its routing configuration.
 
 See the list of labels in the dedicated [routing](../routing/providers/docker.md) section.
 
@@ -116,6 +116,20 @@ Ports detection works as follows:
   by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
   (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#port)).
 
+### Host networking
+
+When exposing containers that are configured with [host networking](https://docs.docker.com/network/host/),
+the IP address of the host is resolved as follows:
+
+<!-- TODO: verify and document the swarm mode case with container.Node.IPAddress coming from the API -->
+- try a lookup of `host.docker.internal`
+- otherwise fall back to `127.0.0.1`
+
+On Linux, (and until [github.com/moby/moby/pull/40007](https://github.com/moby/moby/pull/40007) is included in a release),
+for `host.docker.internal` to be defined, it should be provided as an `extra_host` to the Traefik container,
+using the `--add-host` flag. For example, to set it to the IP address of the bridge interface (docker0 by default):
+`--add-host=host.docker.internal:172.17.0.1`
+
 ### Docker API Access
 
 Traefik requires access to the docker socket to get its dynamic configuration.
@@ -140,7 +154,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
 
         - Authentication with Client Certificates as described in ["Protect the Docker daemon socket."](https://docs.docker.com/engine/security/https/)
         - Authorize and filter requests to restrict possible actions with [the TecnativaDocker Socket Proxy](https://github.com/Tecnativa/docker-socket-proxy).
-        - Authorization with the [Docker Authorization Plugin Mechanism](https://docs.docker.com/engine/extend/plugins_authorization/)
+        - Authorization with the [Docker Authorization Plugin Mechanism](https://web.archive.org/web/20190920092526/https://docs.docker.com/engine/extend/plugins_authorization/)
         - Accounting at networking level, by exposing the socket only inside a Docker private network, only available for Traefik.
         - Accounting at container level, by exposing the socket on a another container than Traefik's.
           With Swarm mode, it allows scheduling of Traefik on worker nodes, with only the "socket exposer" container on the manager nodes.
@@ -247,7 +261,7 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
 
     services:
       traefik:
-         image: traefik:v2.0 # The official v2.0 Traefik docker image
+         image: traefik:v2.2 # The official v2 Traefik docker image
          ports:
            - "80:80"
          volumes:
@@ -459,23 +473,47 @@ _Optional, Default=15_
 
 ```toml tab="File (TOML)"
 [providers.docker]
-  swarmModeRefreshSeconds = "30s"
+  swarmModeRefreshSeconds = 30
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   docker:
-    swarmModeRefreshSeconds: "30s"
+    swarmModeRefreshSeconds: 30
     # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.swarmModeRefreshSeconds=30s
+--providers.docker.swarmModeRefreshSeconds=30
 # ...
 ```
 
 Defines the polling interval (in seconds) in Swarm Mode.
+
+### `watch`
+
+_Optional, Default=true_
+
+```toml tab="File (TOML)"
+[providers.docker]
+  watch = false
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    watch: false
+    # ...
+```
+
+```bash tab="CLI"
+--providers.docker.watch=false
+# ...
+```
+
+Watch Docker Swarm events.
 
 ### `constraints`
 

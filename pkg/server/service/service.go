@@ -22,7 +22,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/pipelining"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/server/cookie"
-	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/mirror"
 	"github.com/containous/traefik/v2/pkg/server/service/loadbalancer/wrr"
 	"github.com/vulcand/oxy/roundrobin"
@@ -33,7 +33,9 @@ const (
 	defaultHealthCheckTimeout  = 5 * time.Second
 )
 
-// NewManager creates a new Manager
+const defaultMaxBodySize int64 = -1
+
+// NewManager creates a new Manager.
 func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry, routinePool *safe.Pool) *Manager {
 	return &Manager{
 		routinePool:         routinePool,
@@ -45,7 +47,7 @@ func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper htt
 	}
 }
 
-// Manager The service manager
+// Manager The service manager.
 type Manager struct {
 	routinePool         *safe.Pool
 	metricsRegistry     metrics.Registry
@@ -63,8 +65,8 @@ type Manager struct {
 func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
 	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
 
-	serviceName = internal.GetQualifiedName(ctx, serviceName)
-	ctx = internal.AddProviderInContext(ctx, serviceName)
+	serviceName = provider.GetQualifiedName(ctx, serviceName)
+	ctx = provider.AddInContext(ctx, serviceName)
 
 	conf, ok := m.configs[serviceName]
 	if !ok {
@@ -123,7 +125,11 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 		return nil, err
 	}
 
-	handler := mirror.New(serviceHandler, m.routinePool)
+	maxBodySize := defaultMaxBodySize
+	if config.MaxBodySize != nil {
+		maxBodySize = *config.MaxBodySize
+	}
+	handler := mirror.New(serviceHandler, m.routinePool, maxBodySize)
 	for _, mirrorConfig := range config.Mirrors {
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name, responseModifier)
 		if err != nil {
@@ -262,15 +268,21 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backe
 		logger.Warnf("Health check timeout for backend '%s' should be lower than the health check interval. Interval set to timeout + 1 second (%s).", backend, interval)
 	}
 
+	followRedirects := true
+	if hc.FollowRedirects != nil {
+		followRedirects = *hc.FollowRedirects
+	}
+
 	return &healthcheck.Options{
-		Scheme:   hc.Scheme,
-		Path:     hc.Path,
-		Port:     hc.Port,
-		Interval: interval,
-		Timeout:  timeout,
-		LB:       lb,
-		Hostname: hc.Hostname,
-		Headers:  hc.Headers,
+		Scheme:          hc.Scheme,
+		Path:            hc.Path,
+		Port:            hc.Port,
+		Interval:        interval,
+		Timeout:         timeout,
+		LB:              lb,
+		Hostname:        hc.Hostname,
+		Headers:         hc.Headers,
+		FollowRedirects: followRedirects,
 	}
 }
 
@@ -283,8 +295,15 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 	var cookieName string
 	if service.Sticky != nil && service.Sticky.Cookie != nil {
 		cookieName = cookie.GetName(service.Sticky.Cookie.Name, serviceName)
-		opts := roundrobin.CookieOptions{HTTPOnly: service.Sticky.Cookie.HTTPOnly, Secure: service.Sticky.Cookie.Secure}
+
+		opts := roundrobin.CookieOptions{
+			HTTPOnly: service.Sticky.Cookie.HTTPOnly,
+			Secure:   service.Sticky.Cookie.Secure,
+			SameSite: convertSameSite(service.Sticky.Cookie.SameSite),
+		}
+
 		options = append(options, roundrobin.EnableStickySession(roundrobin.NewStickySessionWithOptions(cookieName, opts)))
+
 		logger.Debugf("Sticky session cookie name: %v", cookieName)
 	}
 
@@ -295,7 +314,7 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 
 	lbsu := healthcheck.NewLBStatusUpdater(lb, m.configs[serviceName])
 	if err := m.upsertServers(ctx, lbsu, service.Servers); err != nil {
-		return nil, fmt.Errorf("error configuring load balancer for service %s: %v", serviceName, err)
+		return nil, fmt.Errorf("error configuring load balancer for service %s: %w", serviceName, err)
 	}
 
 	return lbsu, nil
@@ -307,16 +326,29 @@ func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHand
 	for name, srv := range servers {
 		u, err := url.Parse(srv.URL)
 		if err != nil {
-			return fmt.Errorf("error parsing server URL %s: %v", srv.URL, err)
+			return fmt.Errorf("error parsing server URL %s: %w", srv.URL, err)
 		}
 
 		logger.WithField(log.ServerName, name).Debugf("Creating server %d %s", name, u)
 
 		if err := lb.UpsertServer(u, roundrobin.Weight(1)); err != nil {
-			return fmt.Errorf("error adding server %s to load balancer: %v", srv.URL, err)
+			return fmt.Errorf("error adding server %s to load balancer: %w", srv.URL, err)
 		}
 
 		// FIXME Handle Metrics
 	}
 	return nil
+}
+
+func convertSameSite(sameSite string) http.SameSite {
+	switch sameSite {
+	case "none":
+		return http.SameSiteNoneMode
+	case "lax":
+		return http.SameSiteLaxMode
+	case "strict":
+		return http.SameSiteStrictMode
+	default:
+		return 0
+	}
 }

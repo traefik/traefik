@@ -98,7 +98,7 @@ _Optional, Default=true_
 ```yaml tab="Docker"
 labels:
   - "traefik.http.middlewares.example.stripprefix.prefixes=/foobar"
-  - "traefik.http.middlewares.example.stripprefix.forceslash=false"
+  - "traefik.http.middlewares.example.stripprefix.forceSlash=false"
 ```
 
 ```yaml tab="Kubernetes"
@@ -116,7 +116,7 @@ spec:
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.example.stripprefix.prefixes": "/foobar",
-  "traefik.http.middlewares.example.stripprefix.forceslash": "false"
+  "traefik.http.middlewares.example.stripprefix.forceSlash": "false"
 }
 ```
 

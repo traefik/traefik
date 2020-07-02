@@ -4,13 +4,13 @@
 #
 # Required
 #
---certificatesResolvers.sample.acme.email=test@traefik.io
+--certificatesresolvers.myresolver.acme.email=test@example.com
 
 # File or key used for certificates storage.
 #
 # Required
 #
---certificatesResolvers.sample.acme.storage=acme.json
+--certificatesresolvers.myresolver.acme.storage=acme.json
 
 # CA server to use.
 # Uncomment the line to use Let's Encrypt's staging server,
@@ -19,7 +19,7 @@
 # Optional
 # Default: "https://acme-v02.api.letsencrypt.org/directory"
 #
---certificatesResolvers.sample.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
 
 # KeyType to use.
 #
@@ -28,38 +28,38 @@
 #
 # Available values : "EC256", "EC384", "RSA2048", "RSA4096", "RSA8192"
 #
---certificatesResolvers.sample.acme.keyType=RSA4096
+--certificatesresolvers.myresolver.acme.keytype=RSA4096
 
 # Use a TLS-ALPN-01 ACME challenge.
 #
 # Optional (but recommended)
 #
---certificatesResolvers.sample.acme.tlsChallenge=true
+--certificatesresolvers.myresolver.acme.tlschallenge=true
 
 # Use a HTTP-01 ACME challenge.
 #
 # Optional
 #
---certificatesResolvers.sample.acme.httpChallenge=true
+--certificatesresolvers.myresolver.acme.httpchallenge=true
 
 # EntryPoint to use for the HTTP-01 challenges.
 #
 # Required
 #
---certificatesResolvers.sample.acme.httpChallenge.entryPoint=web
+--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web
 
 # Use a DNS-01 ACME challenge rather than HTTP-01 challenge.
 # Note: mandatory for wildcard certificate generation.
 #
 # Optional
 #
---certificatesResolvers.sample.acme.dnsChallenge=true
+--certificatesresolvers.myresolver.acme.dnschallenge=true
 
 # DNS provider used.
 #
 # Required
 #
---certificatesResolvers.sample.acme.dnsChallenge.provider=digitalocean
+--certificatesresolvers.myresolver.acme.dnschallenge.provider=digitalocean
 
 # By default, the provider will verify the TXT DNS challenge record before letting ACME verify.
 # If delayBeforeCheck is greater than zero, this check is delayed for the configured duration in seconds.
@@ -68,14 +68,14 @@
 # Optional
 # Default: 0
 #
---certificatesResolvers.sample.acme.dnsChallenge.delayBeforeCheck=0
+--certificatesresolvers.myresolver.acme.dnschallenge.delaybeforecheck=0
 
 # Use following DNS servers to resolve the FQDN authority.
 #
 # Optional
 # Default: empty
 #
---certificatesResolvers.sample.acme.dnsChallenge.resolvers=1.1.1.1:53,8.8.8.8:53
+--certificatesresolvers.myresolver.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
 
 # Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready.
 #
@@ -85,4 +85,4 @@
 # Optional
 # Default: false
 #
---certificatesResolvers.sample.acme.dnsChallenge.disablePropagationCheck=true
+--certificatesresolvers.myresolver.acme.dnschallenge.disablepropagationcheck=true

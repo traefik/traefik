@@ -26,7 +26,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: "Copyright &copy; 2016-2019 Containous"
+copyright: "Copyright &copy; 2016-2020 Containous"
 
 google_analytics:
   - 'UA-51880359-3'
@@ -96,6 +96,7 @@ nav:
       - 'Providers':
           - 'Docker': 'routing/providers/docker.md'
           - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
+          - 'Kubernetes Ingress': 'routing/providers/kubernetes-ingress.md'
           - 'Consul Catalog': 'routing/providers/consul-catalog.md'
           - 'Marathon': 'routing/providers/marathon.md'
           - 'Rancher': 'routing/providers/rancher.md'
@@ -112,6 +113,7 @@ nav:
       - 'Chain': 'middlewares/chain.md'
       - 'CircuitBreaker': 'middlewares/circuitbreaker.md'
       - 'Compress': 'middlewares/compress.md'
+      - 'ContentType': 'middlewares/contenttype.md'
       - 'DigestAuth': 'middlewares/digestauth.md'
       - 'Errors': 'middlewares/errorpages.md'
       - 'ForwardAuth': 'middlewares/forwardauth.md'
@@ -160,6 +162,7 @@ nav:
           - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
           - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
   - 'Migration':
+      - 'Traefik v2 minor migrations': 'migration/v2.md'
       - 'Traefik v1 to v2': 'migration/v1-to-v2.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'

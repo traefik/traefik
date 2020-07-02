@@ -5,12 +5,12 @@
 
 [http.routers]
   [http.routers.test]
-    entryPoints = ["web-secure"]
+    entryPoints = ["websecure"]
     rule = "Host(`traefik.acme.wtf`)"
     service = "test"
     [http.routers.test.tls]
 
 [[tls.certificates]]
-  store = ["default"]
+  stores = ["default"]
   certFile = "fixtures/acme/ssl/wildcard.crt"
   keyFile = "fixtures/acme/ssl/wildcard.key"

@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2019 Containous SAS
+Copyright (c) 2016-2020 Containous SAS
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
+	"context"
 	"time"
 
 	scheme "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
@@ -45,14 +46,14 @@ type TraefikServicesGetter interface {
 
 // TraefikServiceInterface has methods to work with TraefikService resources.
 type TraefikServiceInterface interface {
-	Create(*v1alpha1.TraefikService) (*v1alpha1.TraefikService, error)
-	Update(*v1alpha1.TraefikService) (*v1alpha1.TraefikService, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1alpha1.TraefikService, error)
-	List(opts v1.ListOptions) (*v1alpha1.TraefikServiceList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.TraefikService, err error)
+	Create(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.CreateOptions) (*v1alpha1.TraefikService, error)
+	Update(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.UpdateOptions) (*v1alpha1.TraefikService, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.TraefikService, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.TraefikServiceList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.TraefikService, err error)
 	TraefikServiceExpansion
 }
 
@@ -71,20 +72,20 @@ func newTraefikServices(c *TraefikV1alpha1Client, namespace string) *traefikServ
 }
 
 // Get takes name of the traefikService, and returns the corresponding traefikService object, and an error if there is any.
-func (c *traefikServices) Get(name string, options v1.GetOptions) (result *v1alpha1.TraefikService, err error) {
+func (c *traefikServices) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.TraefikService, err error) {
 	result = &v1alpha1.TraefikService{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("traefikservices").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of TraefikServices that match those selectors.
-func (c *traefikServices) List(opts v1.ListOptions) (result *v1alpha1.TraefikServiceList, err error) {
+func (c *traefikServices) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.TraefikServiceList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -95,13 +96,13 @@ func (c *traefikServices) List(opts v1.ListOptions) (result *v1alpha1.TraefikSer
 		Resource("traefikservices").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested traefikServices.
-func (c *traefikServices) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *traefikServices) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -112,71 +113,74 @@ func (c *traefikServices) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("traefikservices").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a traefikService and creates it.  Returns the server's representation of the traefikService, and an error, if there is any.
-func (c *traefikServices) Create(traefikService *v1alpha1.TraefikService) (result *v1alpha1.TraefikService, err error) {
+func (c *traefikServices) Create(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.CreateOptions) (result *v1alpha1.TraefikService, err error) {
 	result = &v1alpha1.TraefikService{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("traefikservices").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(traefikService).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a traefikService and updates it. Returns the server's representation of the traefikService, and an error, if there is any.
-func (c *traefikServices) Update(traefikService *v1alpha1.TraefikService) (result *v1alpha1.TraefikService, err error) {
+func (c *traefikServices) Update(ctx context.Context, traefikService *v1alpha1.TraefikService, opts v1.UpdateOptions) (result *v1alpha1.TraefikService, err error) {
 	result = &v1alpha1.TraefikService{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("traefikservices").
 		Name(traefikService.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(traefikService).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the traefikService and deletes it. Returns an error if one occurs.
-func (c *traefikServices) Delete(name string, options *v1.DeleteOptions) error {
+func (c *traefikServices) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("traefikservices").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *traefikServices) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *traefikServices) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("traefikservices").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched traefikService.
-func (c *traefikServices) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.TraefikService, err error) {
+func (c *traefikServices) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.TraefikService, err error) {
 	result = &v1alpha1.TraefikService{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("traefikservices").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

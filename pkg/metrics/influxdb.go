@@ -64,14 +64,14 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 	if config.AddEntryPointsLabels {
 		registry.epEnabled = config.AddEntryPointsLabels
 		registry.entryPointReqsCounter = influxDBClient.NewCounter(influxDBEntryPointReqsName)
-		registry.entryPointReqDurationHistogram = influxDBClient.NewHistogram(influxDBEntryPointReqDurationName)
+		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(influxDBClient.NewHistogram(influxDBEntryPointReqDurationName), time.Second)
 		registry.entryPointOpenConnsGauge = influxDBClient.NewGauge(influxDBEntryPointOpenConnsName)
 	}
 
 	if config.AddServicesLabels {
 		registry.svcEnabled = config.AddServicesLabels
 		registry.serviceReqsCounter = influxDBClient.NewCounter(influxDBMetricsServiceReqsName)
-		registry.serviceReqDurationHistogram = influxDBClient.NewHistogram(influxDBMetricsServiceLatencyName)
+		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(influxDBClient.NewHistogram(influxDBMetricsServiceLatencyName), time.Second)
 		registry.serviceRetriesCounter = influxDBClient.NewCounter(influxDBRetriesTotalName)
 		registry.serviceOpenConnsGauge = influxDBClient.NewGauge(influxDBOpenConnsName)
 		registry.serviceServerUpGauge = influxDBClient.NewGauge(influxDBServerUpName)
@@ -80,7 +80,7 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 	return registry
 }
 
-// initInfluxDBTicker creates a influxDBClient
+// initInfluxDBTicker creates a influxDBClient.
 func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Influx {
 	logger := log.FromContext(ctx)
 
@@ -123,7 +123,7 @@ func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Inf
 		}))
 }
 
-// initInfluxDBTicker initializes metrics pusher
+// initInfluxDBTicker initializes metrics pusher.
 func initInfluxDBTicker(ctx context.Context, config *types.InfluxDB) *time.Ticker {
 	report := time.NewTicker(time.Duration(config.PushInterval))
 
@@ -135,7 +135,7 @@ func initInfluxDBTicker(ctx context.Context, config *types.InfluxDB) *time.Ticke
 	return report
 }
 
-// StopInfluxDB stops internal influxDBTicker which controls the pushing of metrics to InfluxDB Agent and resets it to `nil`
+// StopInfluxDB stops internal influxDBTicker which controls the pushing of metrics to InfluxDB Agent and resets it to `nil`.
 func StopInfluxDB() {
 	if influxDBTicker != nil {
 		influxDBTicker.Stop()

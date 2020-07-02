@@ -41,6 +41,7 @@ type MiddlewareSpec struct {
 	Compress          *dynamic.Compress          `json:"compress,omitempty"`
 	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
 	Retry             *dynamic.Retry             `json:"retry,omitempty"`
+	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -54,7 +55,7 @@ type ErrorPage struct {
 
 // +k8s:deepcopy-gen=true
 
-// Chain holds a chain of middlewares
+// Chain holds a chain of middlewares.
 type Chain struct {
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
 }

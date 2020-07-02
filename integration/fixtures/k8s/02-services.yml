@@ -1,5 +1,5 @@
 kind: Deployment
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: whoami
   namespace: default
@@ -42,7 +42,7 @@ spec:
 
 ---
 kind: Deployment
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: whoamitcp
   namespace: default
@@ -82,3 +82,57 @@ spec:
   selector:
     app: containous
     task: whoamitcp
+
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: whoamiudp
+  namespace: default
+  labels:
+    app: containous
+    name: whoamiudp
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: containous
+      task: whoamiudp
+  template:
+    metadata:
+      labels:
+        app: containous
+        task: whoamiudp
+    spec:
+      containers:
+        - name: containouswhoamiudp
+          image: containous/whoamiudp:dev
+          ports:
+            - containerPort: 8090
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamiudp
+  namespace: default
+
+spec:
+  ports:
+    - protocol: UDP
+      name: fooudp
+      port: 8090
+  selector:
+    app: containous
+    task: whoamiudp
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: externalname-svc
+  namespace: default
+spec:
+  externalName: domain.com
+  type: ExternalName

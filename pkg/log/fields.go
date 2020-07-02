@@ -1,6 +1,6 @@
 package log
 
-// Log entry name
+// Log entry names.
 const (
 	EntryPointName      = "entryPointName"
 	RouterName          = "routerName"

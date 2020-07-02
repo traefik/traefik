@@ -1,0 +1,20 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+  annotations:
+    ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/service.serversscheme: protocol
+    traefik.ingress.kubernetes.io/service.passhostheader: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie.name: foobar
+    traefik.ingress.kubernetes.io/service.sticky.cookie.secure: "true"
+
+spec:
+  ports:
+  - port: 80
+  clusterIp: 10.0.0.1

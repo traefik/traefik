@@ -69,4 +69,22 @@ export default {
       to { transform: translateX(100%) translateZ(0); }
     }
   }
+
+  .body--dark .SkeletonBox {
+    background-color: #525252;
+
+    &.dark {
+      background-color: #333;
+    }
+
+    &::after {
+      background-image: linear-gradient(
+          90deg,
+          rgba(#5e5e5e, 0) 0,
+          rgba(#5e5e5e, 0.2) 20%,
+          rgba(#5e5e5e, 0.5) 60%,
+          rgba(#5e5e5e, 0)
+      );
+    }
+  }
 </style>

@@ -1,0 +1,61 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    service = "service1"
+    rule = "PathPrefix(`/css/ct/nomiddleware`) || PathPrefix(`/pdf/ct/nomiddleware`)"
+
+  [http.routers.router2]
+    service = "service1"
+    middlewares = ["autodetect"]
+    rule = "PathPrefix(`/css/ct/middlewareauto`) || PathPrefix(`/pdf/ct/middlewareauto`)"
+
+  [http.routers.router3]
+    service = "service1"
+    middlewares = ["noautodetect"]
+    rule = "PathPrefix(`/css/ct/middlewarenoauto`) || PathPrefix(`/pdf/ct/middlewarenoauto`)"
+
+  [http.routers.router4]
+    service = "service1"
+    rule = "PathPrefix(`/css/noct/nomiddleware`) || PathPrefix(`/pdf/noct/nomiddleware`)"
+
+  [http.routers.router5]
+    service = "service1"
+    middlewares = ["autodetect"]
+    rule = "PathPrefix(`/css/noct/middlewareauto`) || PathPrefix(`/pdf/noct/middlewareauto`)"
+
+  [http.routers.router6]
+    service = "service1"
+    middlewares = ["noautodetect"]
+    rule = "PathPrefix(`/css/noct/middlewarenoauto`) || PathPrefix(`/pdf/noct/middlewarenoauto`)"
+
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+      passHostHeader = true
+      [[http.services.service1.loadBalancer.servers]]
+        url = "{{ .Server }}"
+
+[http.middlewares.autodetect.contentType]
+autoDetect=true
+
+[http.middlewares.noautodetect.contentType]
+autoDetect=false

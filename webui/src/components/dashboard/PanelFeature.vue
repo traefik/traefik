@@ -27,7 +27,7 @@ export default {
       return typeof this.featureVal === 'string'
     },
     isBoolean () {
-      return typeof variable === 'boolean' || this.featureVal === ''
+      return typeof this.featureVal === 'boolean' || this.featureVal === ''
     },
     isTrue () {
       return this.isBoolean && this.featureVal === true
@@ -80,6 +80,18 @@ export default {
         border-color: $positive;
         color: $positive;
         background-color: rgba( $positive, .1 );
+      }
+    }
+  }
+
+  .body--dark {
+    .feature-chip-string {
+      background-color: rgba( $app-text-grey, .3 );
+    }
+    .feature-chip-boolean {
+      background-color: rgba( $negative, .3 );
+      &-true {
+        background-color: rgba( $positive, .3 );
       }
     }
   }

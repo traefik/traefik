@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2019 Containous SAS
+Copyright (c) 2016-2020 Containous SAS
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -42,6 +42,14 @@ type IngressRouteTCPListerExpansion interface{}
 // IngressRouteTCPNamespaceLister.
 type IngressRouteTCPNamespaceListerExpansion interface{}
 
+// IngressRouteUDPListerExpansion allows custom methods to be added to
+// IngressRouteUDPLister.
+type IngressRouteUDPListerExpansion interface{}
+
+// IngressRouteUDPNamespaceListerExpansion allows custom methods to be added to
+// IngressRouteUDPNamespaceLister.
+type IngressRouteUDPNamespaceListerExpansion interface{}
+
 // MiddlewareListerExpansion allows custom methods to be added to
 // MiddlewareLister.
 type MiddlewareListerExpansion interface{}
@@ -57,6 +65,14 @@ type TLSOptionListerExpansion interface{}
 // TLSOptionNamespaceListerExpansion allows custom methods to be added to
 // TLSOptionNamespaceLister.
 type TLSOptionNamespaceListerExpansion interface{}
+
+// TLSStoreListerExpansion allows custom methods to be added to
+// TLSStoreLister.
+type TLSStoreListerExpansion interface{}
+
+// TLSStoreNamespaceListerExpansion allows custom methods to be added to
+// TLSStoreNamespaceLister.
+type TLSStoreNamespaceListerExpansion interface{}
 
 // TraefikServiceListerExpansion allows custom methods to be added to
 // TraefikServiceLister.

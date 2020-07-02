@@ -11,7 +11,12 @@ spec:
   - match: HostSNI(`*`)
     services:
     - name: whoamitcp
+      namespace: default
       port: 8080
+    - name: externalname-svc
+      port: 9090
   tls:
     options:
       name: mytlsoption
+    store:
+      name: mytlsstore

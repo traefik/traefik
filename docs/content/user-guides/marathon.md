@@ -77,7 +77,7 @@ A failing application always happens unexpectedly, and hence, it is very difficu
 
 Failure reasons vary broadly and could stretch from unacceptable slowness, a task crash, or a network split.
 
-There are two mitigaton efforts:
+There are two mitigation efforts:
 
 1. Configure [Marathon health checks](https://mesosphere.github.io/marathon/docs/health-checks.html) on each application.
 2. Configure Traefik health checks (possibly via the `traefik.http.services.yourServiceName.loadbalancer.healthcheck.*` labels) and make sure they probe with proper frequency.

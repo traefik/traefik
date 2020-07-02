@@ -67,7 +67,7 @@ func TestHandler_EntryPoints(t *testing.T) {
 							TrustedIPs: []string{"192.168.1.3", "192.168.1.4"},
 						},
 					},
-					"web-secure": {
+					"websecure": {
 						Address: ":443",
 						Transport: &static.EntryPointsTransport{
 							LifeCycle: &static.LifeCycle{

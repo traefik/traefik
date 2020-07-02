@@ -4,7 +4,7 @@ import (
 	"net"
 )
 
-// Handler is the TCP Handlers interface
+// Handler is the TCP Handlers interface.
 type Handler interface {
 	ServeTCP(conn WriteCloser)
 }
@@ -13,7 +13,7 @@ type Handler interface {
 // ordinary functions as handlers.
 type HandlerFunc func(conn WriteCloser)
 
-// ServeTCP serves tcp
+// ServeTCP serves tcp.
 func (f HandlerFunc) ServeTCP(conn WriteCloser) {
 	f(conn)
 }

@@ -75,7 +75,7 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
 		if err != nil {
-			return nil, fmt.Errorf("error opening access log file: %s", err)
+			return nil, fmt.Errorf("error opening access log file: %w", err)
 		}
 		file = f
 	}
@@ -132,12 +132,12 @@ func openAccessLogFile(filePath string) (*os.File, error) {
 	dir := filepath.Dir(filePath)
 
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create log path %s: %s", dir, err)
+		return nil, fmt.Errorf("failed to create log path %s: %w", dir, err)
 	}
 
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
-		return nil, fmt.Errorf("error opening file %s: %s", filePath, err)
+		return nil, fmt.Errorf("error opening file %s: %w", filePath, err)
 	}
 
 	return file, nil
@@ -193,6 +193,11 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	core[RequestPath] = urlCopyString
 	core[RequestProtocol] = req.Proto
 
+	core[RequestScheme] = "http"
+	if req.TLS != nil {
+		core[RequestScheme] = "https"
+	}
+
 	core[ClientAddr] = req.RemoteAddr
 	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
 
@@ -214,7 +219,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		size:    crw.Size(),
 	}
 	if crr != nil {
-		logDataTable.Request.count = crr.count
+		logDataTable.Request.size = crr.count
 	}
 
 	if h.config.BufferingSize > 0 {
@@ -280,7 +285,7 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData) {
 		retryAttempts = 0
 	}
 	core[RetryAttempts] = retryAttempts
-	core[RequestContentSize] = logDataTable.Request.count
+	core[RequestContentSize] = logDataTable.Request.size
 
 	status := logDataTable.DownstreamResponse.status
 	core[DownstreamStatus] = status

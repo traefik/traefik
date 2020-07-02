@@ -36,7 +36,7 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 				RouterName:             "",
 				ServiceURL:             "",
 			},
-			expectedLog: `10.0.0.1 - Client [10/Nov/2009:23:00:00 +0000] "GET /foo http" - - "-" "-" 0 - - 123000ms
+			expectedLog: `10.0.0.1 - Client [10/Nov/2009:23:00:00 +0000] "GET /foo http" - - "-" "-" 0 "-" "-" 123000ms
 `,
 		},
 		{

@@ -11,7 +11,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/cenkalti/backoff/v3"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -47,7 +47,7 @@ var _ provider.Provider = (*Provider)(nil)
 // Provider holds configurations of the provider.
 type Provider struct {
 	Constraints             string           `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
-	Watch                   bool             `description:"Watch provider." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
+	Watch                   bool             `description:"Watch Docker Swarm events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
 	Endpoint                string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
 	DefaultRule             string           `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	TLS                     *types.ClientTLS `description:"Enable Docker TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
@@ -73,7 +73,7 @@ func (p *Provider) SetDefaults() {
 func (p *Provider) Init() error {
 	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
 	if err != nil {
-		return fmt.Errorf("error while parsing default rule: %v", err)
+		return fmt.Errorf("error while parsing default rule: %w", err)
 	}
 
 	p.defaultRuleTpl = defaultRuleTpl

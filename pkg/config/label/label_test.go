@@ -3,8 +3,10 @@ package label
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,6 +47,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowheaders":                   "X-foobar, X-fiibar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowmethods":                   "GET, PUT",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolalloworigin":                    "foobar",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolalloworiginList":                "foobar, fiibar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolexposeheaders":                  "X-foobar, X-fiibar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolmaxage":                         "200",
 		"traefik.http.middlewares.Middleware8.headers.addvaryheader":                               "true",
@@ -101,6 +104,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.serialnumber":         "true",
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.pem":                              "true",
 		"traefik.http.middlewares.Middleware12.ratelimit.average":                                  "42",
+		"traefik.http.middlewares.Middleware12.ratelimit.period":                                   "1s",
 		"traefik.http.middlewares.Middleware12.ratelimit.burst":                                    "42",
 		"traefik.http.middlewares.Middleware12.ratelimit.sourcecriterion.requestheadername":        "foobar",
 		"traefik.http.middlewares.Middleware12.ratelimit.sourcecriterion.requesthost":              "true",
@@ -140,6 +144,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.healthcheck.port":                 "42",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.scheme":               "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.timeout":              "foobar",
+		"traefik.http.services.Service0.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service0.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service0.loadbalancer.responseforwarding.flushinterval": "foobar",
 		"traefik.http.services.Service0.loadbalancer.server.scheme":                    "foobar",
@@ -154,6 +159,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.healthcheck.port":                 "42",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.scheme":               "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.timeout":              "foobar",
+		"traefik.http.services.Service1.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service1.loadbalancer.passhostheader":                   "true",
 		"traefik.http.services.Service1.loadbalancer.responseforwarding.flushinterval": "foobar",
 		"traefik.http.services.Service1.loadbalancer.server.scheme":                    "foobar",
@@ -174,6 +180,13 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.tcp.services.Service0.loadbalancer.TerminationDelay":                  "42",
 		"traefik.tcp.services.Service1.loadbalancer.server.Port":                       "42",
 		"traefik.tcp.services.Service1.loadbalancer.TerminationDelay":                  "42",
+
+		"traefik.udp.routers.Router0.entrypoints":                "foobar, fiibar",
+		"traefik.udp.routers.Router0.service":                    "foobar",
+		"traefik.udp.routers.Router1.entrypoints":                "foobar, fiibar",
+		"traefik.udp.routers.Router1.service":                    "foobar",
+		"traefik.udp.services.Service0.loadbalancer.server.Port": "42",
+		"traefik.udp.services.Service1.loadbalancer.server.Port": "42",
 	}
 
 	configuration, err := DecodeConfiguration(labels)
@@ -226,6 +239,44 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
+					},
+				},
+			},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers: map[string]*dynamic.UDPRouter{
+				"Router0": {
+					EntryPoints: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service: "foobar",
+				},
+				"Router1": {
+					EntryPoints: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service: "foobar",
+				},
+			},
+			Services: map[string]*dynamic.UDPService{
+				"Service0": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
+							{
+								Port: "42",
+							},
+						},
+					},
+				},
+				"Service1": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
+							{
+								Port: "42",
+							},
+						},
 					},
 				},
 			},
@@ -324,6 +375,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					RateLimit: &dynamic.RateLimit{
 						Average: 42,
 						Burst:   42,
+						Period:  types.Duration(time.Second),
 						SourceCriterion: &dynamic.SourceCriterion{
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,
@@ -465,6 +517,10 @@ func TestDecodeConfiguration(t *testing.T) {
 							"PUT",
 						},
 						AccessControlAllowOrigin: "foobar",
+						AccessControlAllowOriginList: []string{
+							"foobar",
+							"fiibar",
+						},
 						AccessControlExposeHeaders: []string{
 							"X-foobar",
 							"X-fiibar",
@@ -546,6 +602,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								"name0": "foobar",
 								"name1": "foobar",
 							},
+							FollowRedirects: func(v bool) *bool { return &v }(true),
 						},
 						PassHostHeader: func(v bool) *bool { return &v }(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
@@ -572,6 +629,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								"name0": "foobar",
 								"name1": "foobar",
 							},
+							FollowRedirects: func(v bool) *bool { return &v }(true),
 						},
 						PassHostHeader: func(v bool) *bool { return &v }(true),
 						ResponseForwarding: &dynamic.ResponseForwarding{
@@ -623,11 +681,51 @@ func TestEncodeConfiguration(t *testing.T) {
 								Port: "42",
 							},
 						},
+						TerminationDelay: func(i int) *int { return &i }(42),
 					},
 				},
 				"Service1": {
 					LoadBalancer: &dynamic.TCPServersLoadBalancer{
 						Servers: []dynamic.TCPServer{
+							{
+								Port: "42",
+							},
+						},
+						TerminationDelay: func(i int) *int { return &i }(42),
+					},
+				},
+			},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers: map[string]*dynamic.UDPRouter{
+				"Router0": {
+					EntryPoints: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service: "foobar",
+				},
+				"Router1": {
+					EntryPoints: []string{
+						"foobar",
+						"fiibar",
+					},
+					Service: "foobar",
+				},
+			},
+			Services: map[string]*dynamic.UDPService{
+				"Service0": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
+							{
+								Port: "42",
+							},
+						},
+					},
+				},
+				"Service1": {
+					LoadBalancer: &dynamic.UDPServersLoadBalancer{
+						Servers: []dynamic.UDPServer{
 							{
 								Port: "42",
 							},
@@ -729,6 +827,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					RateLimit: &dynamic.RateLimit{
 						Average: 42,
 						Burst:   42,
+						Period:  types.Duration(time.Second),
 						SourceCriterion: &dynamic.SourceCriterion{
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,
@@ -870,6 +969,10 @@ func TestEncodeConfiguration(t *testing.T) {
 							"PUT",
 						},
 						AccessControlAllowOrigin: "foobar",
+						AccessControlAllowOriginList: []string{
+							"foobar",
+							"fiibar",
+						},
 						AccessControlExposeHeaders: []string{
 							"X-foobar",
 							"X-fiibar",
@@ -1024,6 +1127,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowHeaders":                   "X-foobar, X-fiibar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowMethods":                   "GET, PUT",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowOrigin":                    "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowOriginList":                "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlExposeHeaders":                  "X-foobar, X-fiibar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlMaxAge":                         "200",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AddVaryHeader":                               "true",
@@ -1081,6 +1185,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.DomainComponent":      "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.PEM":                              "true",
 		"traefik.HTTP.Middlewares.Middleware12.RateLimit.Average":                                  "42",
+		"traefik.HTTP.Middlewares.Middleware12.RateLimit.Period":                                   "1000000000",
 		"traefik.HTTP.Middlewares.Middleware12.RateLimit.Burst":                                    "42",
 		"traefik.HTTP.Middlewares.Middleware12.RateLimit.SourceCriterion.RequestHeaderName":        "foobar",
 		"traefik.HTTP.Middlewares.Middleware12.RateLimit.SourceCriterion.RequestHost":              "true",
@@ -1141,18 +1246,27 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 
-		"traefik.TCP.Routers.Router0.Rule":                       "foobar",
-		"traefik.TCP.Routers.Router0.EntryPoints":                "foobar, fiibar",
-		"traefik.TCP.Routers.Router0.Service":                    "foobar",
-		"traefik.TCP.Routers.Router0.TLS.Passthrough":            "false",
-		"traefik.TCP.Routers.Router0.TLS.Options":                "foo",
-		"traefik.TCP.Routers.Router1.Rule":                       "foobar",
-		"traefik.TCP.Routers.Router1.EntryPoints":                "foobar, fiibar",
-		"traefik.TCP.Routers.Router1.Service":                    "foobar",
-		"traefik.TCP.Routers.Router1.TLS.Passthrough":            "false",
-		"traefik.TCP.Routers.Router1.TLS.Options":                "foo",
-		"traefik.TCP.Services.Service0.LoadBalancer.server.Port": "42",
-		"traefik.TCP.Services.Service1.LoadBalancer.server.Port": "42",
+		"traefik.TCP.Routers.Router0.Rule":                            "foobar",
+		"traefik.TCP.Routers.Router0.EntryPoints":                     "foobar, fiibar",
+		"traefik.TCP.Routers.Router0.Service":                         "foobar",
+		"traefik.TCP.Routers.Router0.TLS.Passthrough":                 "false",
+		"traefik.TCP.Routers.Router0.TLS.Options":                     "foo",
+		"traefik.TCP.Routers.Router1.Rule":                            "foobar",
+		"traefik.TCP.Routers.Router1.EntryPoints":                     "foobar, fiibar",
+		"traefik.TCP.Routers.Router1.Service":                         "foobar",
+		"traefik.TCP.Routers.Router1.TLS.Passthrough":                 "false",
+		"traefik.TCP.Routers.Router1.TLS.Options":                     "foo",
+		"traefik.TCP.Services.Service0.LoadBalancer.server.Port":      "42",
+		"traefik.TCP.Services.Service0.LoadBalancer.TerminationDelay": "42",
+		"traefik.TCP.Services.Service1.LoadBalancer.server.Port":      "42",
+		"traefik.TCP.Services.Service1.LoadBalancer.TerminationDelay": "42",
+
+		"traefik.UDP.Routers.Router0.EntryPoints":                "foobar, fiibar",
+		"traefik.UDP.Routers.Router0.Service":                    "foobar",
+		"traefik.UDP.Routers.Router1.EntryPoints":                "foobar, fiibar",
+		"traefik.UDP.Routers.Router1.Service":                    "foobar",
+		"traefik.UDP.Services.Service0.LoadBalancer.server.Port": "42",
+		"traefik.UDP.Services.Service1.LoadBalancer.server.Port": "42",
 	}
 
 	for key, val := range expected {

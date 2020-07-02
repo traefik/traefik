@@ -1,0 +1,188 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: wrr2
+  namespace: default
+
+spec:
+  weighted:
+    services:
+      - name: s1
+        weight: 1
+        port: 80
+        # Optional, as it is the default value
+        kind: Service
+      - name: s3
+        weight: 1
+        port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: wrr1
+  namespace: default
+
+spec:
+  weighted:
+    services:
+      - name: wrr2
+        kind: TraefikService
+        weight: 1
+      - name: s3
+        weight: 1
+        port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: mirror1
+  namespace: default
+
+spec:
+  mirroring:
+    name: s1
+    port: 80
+    mirrors:
+      - name: s3
+        percent: 20
+        port: 80
+      - name: mirror2
+        kind: TraefikService
+        percent: 20
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: mirror2
+  namespace: default
+
+spec:
+  mirroring:
+    name: wrr2
+    kind: TraefikService
+    mirrors:
+      - name: s2
+        # Optional
+        maxBodySize: 2000000000
+        # Optional, as it is the default value
+        kind: Service
+        percent: 20
+        port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingressroute
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`example.net`) && PathPrefix(`/bar`)
+      kind: Rule
+      priority: 12
+      # defining several services is possible and allowed, but for now the servers of
+      # all the services (for a given route) get merged altogether under the same
+      # load-balancing strategy.
+      services:
+        - name: s1
+          port: 80
+          # strategy defines the load balancing strategy between the servers. It defaults
+          # to Round Robin, and for now only Round Robin is supported anyway.
+          strategy: RoundRobin
+        - name: s2
+          port: 433
+    - match: PathPrefix(`/misc`)
+      services:
+        - name: s3
+          port: 80
+      middlewares:
+        - name: stripprefix
+        - name: addprefix
+    - match: PathPrefix(`/misc`)
+      services:
+        - name: s3
+          # Optional, as it is the default value
+          kind: Service
+          port: 8443
+          # scheme allow to override the scheme for the service. (ex: https or h2c)
+          scheme: https
+    - match: PathPrefix(`/lb`)
+      services:
+        - name: wrr1
+          kind: TraefikService
+    - match: PathPrefix(`/mirrored`)
+      services:
+        - name: mirror1
+          kind: TraefikService
+  # use an empty tls object for TLS with Let's Encrypt
+  tls:
+    secretName: supersecret
+    options:
+      name: my-tls-option
+      namespace: default
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: ingressroutetcp.crd
+  namespace: default
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+    - match: HostSNI(`example.com`)
+      services:
+        - name: whoamitcp
+          port: 8080
+  tls:
+    secretName: foosecret
+    passthrough: false
+    options:
+      name: my-tls-option
+      namespace: default
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: ingressrouteudp.crd
+  namespace: default
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+    - services:
+        - name: whoamiudp
+          port: 8080
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: tlsoption
+  namespace: default
+
+spec:
+  minVersion: foobar
+  maxVersion: foobar
+  cipherSuites:
+    - foobar
+    - foobar
+  curvePreferences:
+    - foobar
+    - foobar
+  clientAuth:
+    caFiles:
+      - foobar
+      - foobar
+    clientAuthType: foobar
+  sniStrict: true
+  preferServerCipherSuites: true

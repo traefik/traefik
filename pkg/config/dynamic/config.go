@@ -19,10 +19,11 @@ type Configurations map[string]*Configuration
 
 // +k8s:deepcopy-gen=true
 
-// Configuration is the root of the dynamic configuration
+// Configuration is the root of the dynamic configuration.
 type Configuration struct {
 	HTTP *HTTPConfiguration `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty"`
 	TCP  *TCPConfiguration  `json:"tcp,omitempty" toml:"tcp,omitempty" yaml:"tcp,omitempty"`
+	UDP  *UDPConfiguration  `json:"udp,omitempty" toml:"udp,omitempty" yaml:"udp,omitempty"`
 	TLS  *TLSConfiguration  `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
 }
 

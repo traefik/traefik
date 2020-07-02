@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2019 Containous SAS
+Copyright (c) 2016-2020 Containous SAS
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +30,12 @@ type IngressRouteExpansion interface{}
 
 type IngressRouteTCPExpansion interface{}
 
+type IngressRouteUDPExpansion interface{}
+
 type MiddlewareExpansion interface{}
 
 type TLSOptionExpansion interface{}
+
+type TLSStoreExpansion interface{}
 
 type TraefikServiceExpansion interface{}

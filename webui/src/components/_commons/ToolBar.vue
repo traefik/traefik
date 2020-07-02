@@ -21,7 +21,9 @@ export default {
   name: 'ToolBar',
   data () {
     return {
-      loadingOverview: true
+      loadingOverview: true,
+      intervalRefresh: null,
+      intervalRefreshTime: 5000
     }
   },
   computed: {
@@ -65,8 +67,10 @@ export default {
   },
   created () {
     this.refreshAll()
+    this.intervalRefresh = setInterval(this.onGetAll, this.intervalRefreshTime)
   },
   beforeDestroy () {
+    clearInterval(this.intervalRefresh)
     this.$store.commit('core/getOverviewClear')
   }
 }
@@ -78,6 +82,10 @@ export default {
   .q-toolbar {
     min-height: 48px;
     padding: 0;
+  }
+
+  .body--dark .q-toolbar {
+    background-color: #0e204c;
   }
 
   .q-tabs {

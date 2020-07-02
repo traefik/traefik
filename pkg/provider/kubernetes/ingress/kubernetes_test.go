@@ -11,9 +11,10 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/tls"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -39,13 +40,24 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Ingress one rule host only",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
 			desc: "Ingress with a basic rule on one path",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"bar": {
+						"testing-bar": {
 							Rule:    "PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
@@ -69,17 +81,71 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Ingress with annotations",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:        "Path(`/bar`)",
+							EntryPoints: []string{"ep1", "ep2"},
+							Service:     "testing-service1-80",
+							Middlewares: []string{"md1", "md2"},
+							Priority:    42,
+							TLS: &dynamic.RouterTLSConfig{
+								CertResolver: "foobar",
+								Domains: []types.Domain{
+									{
+										Main: "domain.com",
+										SANs: []string{"one.domain.com", "two.domain.com"},
+									},
+									{
+										Main: "example.com",
+										SANs: []string{"one.example.com", "two.example.com"},
+									},
+								},
+								Options: "foobar",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "foobar",
+										Secure:   true,
+										HTTPOnly: true,
+									},
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "protocol://10.10.0.1:8080",
+									},
+									{
+										URL: "protocol://10.21.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "Ingress with two different rules with one path",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"bar": {
+						"testing-bar": {
 							Rule:    "PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
-						"foo": {
+						"testing-foo": {
 							Rule:    "PathPrefix(`/foo`)",
 							Service: "testing-service1-80",
 						},
@@ -109,11 +175,11 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"bar": {
+						"testing-bar": {
 							Rule:    "PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
-						"foo": {
+						"testing-foo": {
 							Rule:    "PathPrefix(`/foo`)",
 							Service: "testing-service1-80",
 						},
@@ -143,7 +209,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"traefik-tchouk-bar": {
+						"testing-traefik-tchouk-bar": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
@@ -165,14 +231,15 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					},
 				},
 			},
-		}, {
+		},
+		{
 			desc: "Ingress with one host without path",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"example-com": {
+						"testing-example-com": {
 							Rule:    "Host(`example.com`)",
 							Service: "testing-example-com-80",
 						},
@@ -199,11 +266,11 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"traefik-tchouk-bar": {
+						"testing-traefik-tchouk-bar": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
-						"traefik-tchouk-foo": {
+						"testing-traefik-tchouk-foo": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/foo`)",
 							Service: "testing-service1-80",
 						},
@@ -233,11 +300,11 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"traefik-tchouk-bar": {
+						"testing-traefik-tchouk-bar": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
-						"traefik-courgette-carotte": {
+						"testing-traefik-courgette-carotte": {
 							Rule:    "Host(`traefik.courgette`) && PathPrefix(`/carotte`)",
 							Service: "testing-service1-80",
 						},
@@ -267,11 +334,11 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"bar": {
+						"testing-bar": {
 							Rule:    "PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
-						"foo": {
+						"testing-foo": {
 							Rule:    "PathPrefix(`/foo`)",
 							Service: "testing-service1-80",
 						},
@@ -312,7 +379,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"traefik-courgette-carotte": {
+						"testing-traefik-courgette-carotte": {
 							Rule:    "Host(`traefik.courgette`) && PathPrefix(`/carotte`)",
 							Service: "testing-service1-80",
 						},
@@ -353,11 +420,11 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"traefik-tchouk-bar": {
+						"testing-traefik-tchouk-bar": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
-						"traefik-courgette-carotte": {
+						"testing-traefik-courgette-carotte": {
 							Rule:    "Host(`traefik.courgette`) && PathPrefix(`/carotte`)",
 							Service: "testing-service2-8082",
 						},
@@ -453,7 +520,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"traefik-tchouk-bar": {
+						"testing-traefik-tchouk-bar": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
@@ -483,7 +550,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"traefik-tchouk-bar": {
+						"testing-traefik-tchouk-bar": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-tchouk",
 						},
@@ -513,7 +580,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"traefik-tchouk-bar": {
+						"testing-traefik-tchouk-bar": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-tchouk",
 						},
@@ -543,11 +610,11 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"traefik-tchouk-bar": {
+						"testing-traefik-tchouk-bar": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-tchouk",
 						},
-						"traefik-tchouk-foo": {
+						"testing-traefik-tchouk-foo": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/foo`)",
 							Service: "testing-service1-carotte",
 						},
@@ -590,11 +657,11 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"traefik-tchouk-bar": {
+						"testing-traefik-tchouk-bar": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-tchouk",
 						},
-						"toto-traefik-tchouk-bar": {
+						"toto-toto-traefik-tchouk-bar": {
 							Rule:    "Host(`toto.traefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "toto-service1-tchouk",
 						},
@@ -659,7 +726,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"traefik-tchouk-bar": {
+						"testing-traefik-tchouk-bar": {
 							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-8080",
 						},
@@ -686,11 +753,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"example-com": {
-							Rule:    "Host(`example.com`)",
-							Service: "testing-example-com-80",
-						},
-						"example-com-tls": {
+						"testing-example-com": {
 							Rule:    "Host(`example.com`)",
 							Service: "testing-example-com-80",
 							TLS:     &dynamic.RouterTLSConfig{},
@@ -728,7 +791,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"bar": {
+						"testing-bar": {
 							Rule:    "PathPrefix(`/bar`)",
 							Service: "testing-service1-443",
 						},
@@ -758,7 +821,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"bar": {
+						"testing-bar": {
 							Rule:    "PathPrefix(`/bar`)",
 							Service: "testing-service1-8443",
 						},
@@ -789,7 +852,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 
 					Routers: map[string]*dynamic.Router{
-						"bar": {
+						"testing-bar": {
 							Rule:    "PathPrefix(`/bar`)",
 							Service: "testing-service1-8443",
 						},
@@ -850,7 +913,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"bar": {
+						"testing-bar": {
 							Rule:    "PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
@@ -917,6 +980,35 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Ingress with wildcard host",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-foobar-com-bar": {
+							Rule:    "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.foobar.com`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Scheme: "",
+										Port:   "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -956,7 +1048,7 @@ func generateTestFilename(suffix, desc string) string {
 	return "./fixtures/" + strings.ReplaceAll(desc, " ", "-") + suffix + ".yml"
 }
 
-func TestGetTLS(t *testing.T) {
+func TestGetCertificates(t *testing.T) {
 	testIngressWithoutHostname := buildIngress(
 		iNamespace("testing"),
 		iRules(
@@ -1118,7 +1210,7 @@ func TestGetTLS(t *testing.T) {
 			t.Parallel()
 
 			tlsConfigs := map[string]*tls.CertAndStores{}
-			err := getTLS(context.Background(), test.ingress, test.client, tlsConfigs)
+			err := getCertificates(context.Background(), test.ingress, test.client, tlsConfigs)
 
 			if test.errResult != "" {
 				assert.EqualError(t, err, test.errResult)

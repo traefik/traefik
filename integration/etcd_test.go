@@ -19,7 +19,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// etcd test suites (using libcompose)
+// etcd test suites (using libcompose).
 type EtcdSuite struct {
 	BaseSuite
 	kvClient store.Store
@@ -62,12 +62,6 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 	address := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress + ":2379"
 	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdAddress string }{address})
 	defer os.Remove(file)
-
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
 
 	data := map[string]string{
 		"traefik/http/routers/Router0/entryPoints/0": "web",
@@ -120,8 +114,16 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 		c.Assert(err, checker.IsNil)
 	}
 
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("@etcd"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
+		try.BodyContains(`"striper@etcd":`, `"compressor@etcd":`, `"srvcA@etcd":`, `"srvcB@etcd":`),
+	)
 	c.Assert(err, checker.IsNil)
 
 	resp, err := http.Get("http://127.0.0.1:8080/api/rawdata")

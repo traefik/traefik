@@ -55,14 +55,14 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 	if config.AddEntryPointsLabels {
 		registry.epEnabled = config.AddEntryPointsLabels
 		registry.entryPointReqsCounter = statsdClient.NewCounter(statsdEntryPointReqsName, 1.0)
-		registry.entryPointReqDurationHistogram = statsdClient.NewTiming(statsdEntryPointReqDurationName, 1.0)
+		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdEntryPointReqDurationName, 1.0), time.Millisecond)
 		registry.entryPointOpenConnsGauge = statsdClient.NewGauge(statsdEntryPointOpenConnsName)
 	}
 
 	if config.AddServicesLabels {
 		registry.svcEnabled = config.AddServicesLabels
 		registry.serviceReqsCounter = statsdClient.NewCounter(statsdMetricsServiceReqsName, 1.0)
-		registry.serviceReqDurationHistogram = statsdClient.NewTiming(statsdMetricsServiceLatencyName, 1.0)
+		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdMetricsServiceLatencyName, 1.0), time.Millisecond)
 		registry.serviceRetriesCounter = statsdClient.NewCounter(statsdRetriesTotalName, 1.0)
 		registry.serviceOpenConnsGauge = statsdClient.NewGauge(statsdOpenConnsName)
 		registry.serviceServerUpGauge = statsdClient.NewGauge(statsdServerUpName)
@@ -71,7 +71,7 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 	return registry
 }
 
-// initStatsdTicker initializes metrics pusher and creates a statsdClient if not created already
+// initStatsdTicker initializes metrics pusher and creates a statsdClient if not created already.
 func initStatsdTicker(ctx context.Context, config *types.Statsd) *time.Ticker {
 	address := config.Address
 	if len(address) == 0 {
@@ -87,7 +87,7 @@ func initStatsdTicker(ctx context.Context, config *types.Statsd) *time.Ticker {
 	return report
 }
 
-// StopStatsd stops internal statsdTicker which controls the pushing of metrics to StatsD Agent and resets it to `nil`
+// StopStatsd stops internal statsdTicker which controls the pushing of metrics to StatsD Agent and resets it to `nil`.
 func StopStatsd() {
 	if statsdTicker != nil {
 		statsdTicker.Stop()

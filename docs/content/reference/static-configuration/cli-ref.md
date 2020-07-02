@@ -99,6 +99,42 @@ Trust all forwarded headers. (Default: ```false```)
 `--entrypoints.<name>.forwardedheaders.trustedips`:  
 Trust only forwarded headers from selected IPs.
 
+`--entrypoints.<name>.http`:  
+HTTP configuration.
+
+`--entrypoints.<name>.http.middlewares`:  
+Default middlewares for the routers linked to the entry point.
+
+`--entrypoints.<name>.http.redirections.entrypoint.permanent`:  
+Applies a permanent redirection. (Default: ```true```)
+
+`--entrypoints.<name>.http.redirections.entrypoint.priority`:  
+Priority of the generated router. (Default: ```2147483647```)
+
+`--entrypoints.<name>.http.redirections.entrypoint.scheme`:  
+Scheme used for the redirection. (Default: ```https```)
+
+`--entrypoints.<name>.http.redirections.entrypoint.to`:  
+Targeted entry point of the redirection.
+
+`--entrypoints.<name>.http.tls`:  
+Default TLS configuration for the routers linked to the entry point. (Default: ```false```)
+
+`--entrypoints.<name>.http.tls.certresolver`:  
+Default certificate resolver for the routers linked to the entry point.
+
+`--entrypoints.<name>.http.tls.domains`:  
+Default TLS domains for the routers linked to the entry point.
+
+`--entrypoints.<name>.http.tls.domains[n].main`:  
+Default subject name.
+
+`--entrypoints.<name>.http.tls.domains[n].sans`:  
+Subject alternative names.
+
+`--entrypoints.<name>.http.tls.options`:  
+Default TLS options for the routers linked to the entry point.
+
 `--entrypoints.<name>.proxyprotocol`:  
 Proxy-Protocol configuration. (Default: ```false```)
 
@@ -243,6 +279,9 @@ EntryPoint (Default: ```traefik```)
 `--ping.manualrouting`:  
 Manual routing (Default: ```false```)
 
+`--ping.terminatingstatuscode`:  
+Terminating status code (Default: ```503```)
+
 `--providers.consul`:  
 Enable Consul backend with default settings. (Default: ```false```)
 
@@ -376,7 +415,7 @@ TLS key
 Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
 
 `--providers.docker.watch`:  
-Watch provider. (Default: ```true```)
+Watch Docker Swarm events. (Default: ```true```)
 
 `--providers.etcd`:  
 Enable Etcd backend with default settings. (Default: ```false```)
@@ -712,7 +751,7 @@ Specifies the header name prefix that will be used to store baggage items in a m
 Key:Value tag to be set on all the spans.
 
 `--tracing.haystack.localagenthost`:  
-Set haystack-agent's host that the reporter will used. (Default: ```LocalAgentHost```)
+Set haystack-agent's host that the reporter will used. (Default: ```127.0.0.1```)
 
 `--tracing.haystack.localagentport`:  
 Set haystack-agent's port that the reporter will used. (Default: ```35000```)

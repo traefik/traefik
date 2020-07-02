@@ -6,7 +6,8 @@ Connecting Requests to Services
 ![routers](../../assets/img/routers.png)
 
 A router is in charge of connecting incoming requests to the services that can handle them.
-In the process, routers may use pieces of [middleware](../../middlewares/overview.md) to update the request, or act before forwarding the request to the service.
+In the process, routers may use pieces of [middleware](../../middlewares/overview.md) to update the request,
+or act before forwarding the request to the service.
 
 ## Configuration Example
 
@@ -100,7 +101,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
     [http.routers]
       [http.routers.Router-1]
         # By default, routers listen to every entry points
-        rule = "Host(`traefik.io`)"
+        rule = "Host(`example.com`)"
         service = "service-1"
     ```
     
@@ -110,7 +111,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
       routers:
         Router-1:
           # By default, routers listen to every entry points
-          rule: "Host(`traefik.io`)"
+          rule: "Host(`example.com`)"
           service: "service-1"
     ```
     
@@ -155,7 +156,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
       [http.routers.Router-1]
         # won't listen to entry point web
         entryPoints = ["websecure", "other"]
-        rule = "Host(`traefik.io`)"
+        rule = "Host(`example.com`)"
         service = "service-1"
     ```
     
@@ -168,7 +169,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
           entryPoints:
             - "websecure"
             - "other"
-          rule: "Host(`traefik.io`)"
+          rule: "Host(`example.com`)"
           service: "service-1"
     ```
 
@@ -213,30 +214,30 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
     
     Single quotes `'` are not accepted as values are [Golang's String Literals](https://golang.org/ref/spec#String_literals).
 
-!!! example "Host is traefik.io"
+!!! example "Host is example.com"
 
     ```toml
-    rule = "Host(`traefik.io`)"
+    rule = "Host(`example.com`)"
     ```
 
-!!! example "Host is traefik.io OR Host is containo.us AND path is /traefik"
+!!! example "Host is example.com OR Host is example.org AND path is /traefik"
 
     ```toml
-    rule = "Host(`traefik.io`) || (Host(`containo.us`) && Path(`/traefik`))"
+    rule = "Host(`example.com`) || (Host(`example.org`) && Path(`/traefik`))"
     ```
 
 The table below lists all the available matchers:
 
-| Rule                                                                 | Description                                                                                                    |
-|----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| ```Headers(`key`, `value`)```                                        | Check if there is a key `key`defined in the headers, with the value `value`                                    |
-| ```HeadersRegexp(`key`, `regexp`)```                                 | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
-| ```Host(`domain-1`, ...)```                                          | Check if the request domain targets one of the given `domains`.                                                |
-| ```HostRegexp(`traefik.io`, `{subdomain:[a-z]+}.traefik.io`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
-| ```Method(`GET`, ...)```                                             | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
-| ```Path(`/path`, `/articles/{category}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
-| ```PathPrefix(`/products/`, `/articles/{category}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
-| ```Query(`foo=bar`, `bar=baz`)```                                    | Match Query String parameters. It accepts a sequence of key=value pairs.                                      |
+| Rule                                                                   | Description                                                                                                    |
+|------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| ```Headers(`key`, `value`)```                                          | Check if there is a key `key`defined in the headers, with the value `value`                                    |
+| ```HeadersRegexp(`key`, `regexp`)```                                   | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
+| ```Host(`example.com`, ...)```                                         | Check if the request domain targets one of the given `domains`.                                                |
+| ```HostRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
+| ```Method(`GET`, ...)```                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
+| ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
+| ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
+| ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                       |
 
 !!! important "Regexp Syntax"
 
@@ -385,7 +386,7 @@ but there are exceptions for label-based providers.
 See the specific [docker](../providers/docker.md#service-definition), [rancher](../providers/rancher.md#service-definition),
 or [marathon](../providers/marathon.md#service-definition) documentation.
 
-!!! warning "The character `@` is not authorized in the middleware name."
+!!! warning "The character `@` is not authorized in the service name."
 
 !!! important "HTTP routers can only target HTTP services (not TCP services)."
 
@@ -487,8 +488,8 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
         minVersion = "VersionTLS12"
         cipherSuites = [
           "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
           "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
         ]
@@ -511,8 +512,8 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
           minVersion: VersionTLS12
           cipherSuites:
             - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-            - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-            - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+            - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+            - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
             - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
             - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     ```
@@ -579,7 +580,7 @@ http:
 ```
 
 !!! info "Multiple Hosts in a Rule"
-    The rule ```Host(`test1.traefik.io`,`test2.traefik.io`)``` will request a certificate with the main domain `test1.traefik.io` and SAN `test2.traefik.io`.
+    The rule ```Host(`test1.example.com`,`test2.example.com`)``` will request a certificate with the main domain `test1.example.com` and SAN `test2.example.com`.
 
 #### `domains`
 
@@ -653,7 +654,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
     [tcp.routers]
       [tcp.routers.Router-1]
         # By default, routers listen to every entrypoints
-        rule = "HostSNI(`traefik.io`)"
+        rule = "HostSNI(`example.com`)"
         service = "service-1"
         # will route TLS requests (and ignore non tls requests)
         [tcp.routers.Router-1.tls]
@@ -666,7 +667,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
       routers:
         Router-1:
           # By default, routers listen to every entrypoints
-          rule: "HostSNI(`traefik.io`)"
+          rule: "HostSNI(`example.com`)"
           service: "service-1"
           # will route TLS requests (and ignore non tls requests)
           tls: {}
@@ -715,7 +716,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
       [tcp.routers.Router-1]
         # won't listen to entry point web
         entryPoints = ["websecure", "other"]
-        rule = "HostSNI(`traefik.io`)"
+        rule = "HostSNI(`example.com`)"
         service = "service-1"
         # will route TLS requests (and ignore non tls requests)
         [tcp.routers.Router-1.tls]
@@ -730,7 +731,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
           entryPoints:
             - "websecure"
             - "other"
-          rule: "HostSNI(`traefik.io`)"
+          rule: "HostSNI(`example.com`)"
           service: "service-1"
           # will route TLS requests (and ignore non tls requests)
           tls: {}
@@ -792,11 +793,12 @@ Services are the target for the router.
 
 #### General
 
- When a TLS section is specified, it instructs Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-TLS requests).
- 
- By default, Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services), but Traefik can be configured in order to let the requests pass through (keeping the data encrypted), and be forwarded to the service "as is". 
+When a TLS section is specified,
+it instructs Traefik that the current router is dedicated to TLS requests only (and that the router should ignore non-TLS requests).
 
-??? example "Configuring TLS Termination"
+By default, a router with a TLS section will terminate the TLS connections, meaning that it will send decrypted data to the services.
+
+??? example "Router for TLS requests"
 
     ```toml tab="File (TOML)"
     ## Dynamic configuration
@@ -818,6 +820,13 @@ Services are the target for the router.
           # will terminate the TLS request by default
           tls: {}
     ```
+
+#### `passthrough`
+
+As seen above, a TLS router will terminate the TLS connection by default.
+However, the `passthrough` option can be specified to set whether the requests should be forwarded "as is", keeping all data encrypted.
+
+It defaults to `false`.
 
 ??? example "Configuring passthrough"
 
@@ -864,8 +873,8 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
         minVersion = "VersionTLS12"
         cipherSuites = [
           "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+          "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+          "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
           "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
         ]
@@ -888,8 +897,8 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
           minVersion: VersionTLS12
           cipherSuites:
             - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-            - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-            - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+            - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+            - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
             - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
             - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     ```
@@ -946,3 +955,157 @@ tcp:
             sans: 
               - "*.snitest.com"
 ```
+
+## Configuring UDP Routers
+
+!!! warning "The character `@` is not allowed in the router name"
+
+### General
+
+Similarly to TCP, as UDP is the transport layer, there is no concept of a request,
+so there is no notion of an URL path prefix to match an incoming UDP packet with.
+Furthermore, as there is no good TLS support at the moment for multiple hosts,
+there is no Host SNI notion to match against either.
+Therefore, there is no criterion that could be used as a rule to match incoming packets in order to route them.
+So UDP "routers" at this time are pretty much only load-balancers in one form or another.
+
+!!! important "Sessions and timeout"
+
+	Even though UDP is connectionless (and because of that),
+	the implementation of an UDP router in Traefik relies on what we (and a couple of other implementations) call a `session`.
+	It basically means that some state is kept about an ongoing communication between a client and a backend,
+	notably so that the proxy knows where to forward a response packet from a backend.
+	As expected, a `timeout` is associated to each of these sessions,
+	so that they get cleaned out if they go through a period of inactivity longer than a given duration (that is hardcoded to 3 seconds for now).
+	Making this timeout configurable will be considered later if we get more usage feedback on this matter.
+
+### EntryPoints
+
+If not specified, UDP routers will accept packets from all defined (UDP) entry points.
+If one wants to limit the router scope to a set of entry points, one should set the entry points option.
+
+??? example "Listens to Every Entry Point"
+
+    **Dynamic Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+
+    [udp.routers]
+      [udp.routers.Router-1]
+        # By default, routers listen to all UDP entrypoints,
+        # i.e. "other", and "streaming".
+        service = "service-1"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+
+    udp:
+      routers:
+        Router-1:
+          # By default, routers listen to all UDP entrypoints
+          # i.e. "other", and "streaming".
+          service: "service-1"
+    ```
+
+    **Static Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+
+    [entryPoints]
+      # not used by UDP routers
+      [entryPoints.web]
+        address = ":80"
+      # used by UDP routers
+      [entryPoints.other]
+        address = ":9090/udp"
+      [entryPoints.streaming]
+        address = ":9191/udp"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+
+    entryPoints:
+      # not used by UDP routers
+      web:
+        address: ":80"
+      # used by UDP routers
+      other:
+        address: ":9090/udp"
+      streaming:
+        address: ":9191/udp"
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entrypoints.web.address=":80"
+    --entrypoints.other.address=":9090/udp"
+    --entrypoints.streaming.address=":9191/udp"
+    ```
+
+??? example "Listens to Specific Entry Points"
+
+    **Dynamic Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    [udp.routers]
+      [udp.routers.Router-1]
+        # does not listen on "other" entry point
+        entryPoints = ["streaming"]
+        service = "service-1"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    udp:
+      routers:
+        Router-1:
+          # does not listen on "other" entry point
+          entryPoints:
+            - "streaming"
+          service: "service-1"
+    ```
+
+    **Static Configuration**
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+      [entryPoints.other]
+        address = ":9090/udp"
+      [entryPoints.streaming]
+        address = ":9191/udp"
+    ```
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+
+    entryPoints:
+      web:
+        address: ":80"
+      other:
+        address: ":9090/udp"
+      streaming:
+        address: ":9191/udp"
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entrypoints.web.address=":80"
+    --entrypoints.other.address=":9090/udp"
+    --entrypoints.streaming.address=":9191/udp"
+    ```
+
+### Services
+
+There must be one (and only one) UDP [service](../services/index.md) referenced per UDP router.
+Services are the target for the router.
+
+!!! important "UDP routers can only target UDP services (and not HTTP or TCP services)."

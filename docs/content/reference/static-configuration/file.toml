@@ -28,6 +28,25 @@
     [entryPoints.EntryPoint0.forwardedHeaders]
       insecure = true
       trustedIPs = ["foobar", "foobar"]
+    [entryPoints.EntryPoint0.http]
+      middlewares = ["foobar", "foobar"]
+      [entryPoints.EntryPoint0.http.redirections]
+        [entryPoints.EntryPoint0.http.redirections.entryPoint]
+          to = "foobar"
+          scheme = "foobar"
+          permanent = true
+          priority = 42
+      [entryPoints.EntryPoint0.http.tls]
+        options = "foobar"
+        certResolver = "foobar"
+
+        [[entryPoints.EntryPoint0.http.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+
+        [[entryPoints.EntryPoint0.http.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
 
 [providers]
   providersThrottleDuration = 42
@@ -96,7 +115,7 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
-    throttleDuration = "10s"
+    throttleDuration = 42
   [providers.rest]
     insecure = true
   [providers.rancher]
@@ -110,30 +129,33 @@
     prefix = "foobar"
   [providers.consulCatalog]
     constraints = "foobar"
-    prefix = "traefik"
-    defaultRule = "foobar"
-    exposedByDefault = true
-    refreshInterval = 15
+    prefix = "foobar"
+    refreshInterval = 42
     requireConsistent = true
     stale = true
     cache = true
+    exposedByDefault = true
+    defaultRule = "foobar"
     [providers.consulCatalog.endpoint]
-     address = "foobar"
-     scheme = "foobar"
-     datacenter = "foobar"
-     token = "foobar"
-     endpointWaitTime = "15s"
-     [providers.consulCatalog.endpoint.tls]
-      ca = "foobar"
-      caOptional = true
-      cert = "foobar"
-      key = "foobar"
-      insecureSkipVerify = true
+      address = "foobar"
+      scheme = "foobar"
+      datacenter = "foobar"
+      token = "foobar"
+      endpointWaitTime = 42
+      [providers.consulCatalog.endpoint.tls]
+        ca = "foobar"
+        caOptional = true
+        cert = "foobar"
+        key = "foobar"
+        insecureSkipVerify = true
+      [providers.consulCatalog.endpoint.httpAuth]
+        username = "foobar"
+        password = "foobar"
   [providers.consul]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
-	username = "foobar"
-	password = "foobar"
+    username = "foobar"
+    password = "foobar"
     [providers.consul.tls]
       ca = "foobar"
       caOptional = true
@@ -141,10 +163,10 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.etcd]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
-	username = "foobar"
-	password = "foobar"
+    username = "foobar"
+    password = "foobar"
     [providers.etcd.tls]
       ca = "foobar"
       caOptional = true
@@ -152,10 +174,10 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.zooKeeper]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
-	username = "foobar"
-	password = "foobar"
+    username = "foobar"
+    password = "foobar"
     [providers.zooKeeper.tls]
       ca = "foobar"
       caOptional = true
@@ -163,10 +185,10 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.redis]
-	rootKey = "traefik"
+    rootKey = "traefik"
     endpoints = ["foobar", "foobar"]
-	username = "foobar"
-	password = "foobar"
+    username = "foobar"
+    password = "foobar"
     [providers.redis.tls]
       ca = "foobar"
       caOptional = true
@@ -188,19 +210,19 @@
     manualRouting = true
   [metrics.datadog]
     address = "foobar"
-    pushInterval = "10s"
+    pushInterval = "42s"
     addEntryPointsLabels = true
     addServicesLabels = true
   [metrics.statsD]
     address = "foobar"
-    pushInterval = "10s"
+    pushInterval = "42s"
     addEntryPointsLabels = true
     addServicesLabels = true
-    prefix = "traefik"
+    prefix = "foobar"
   [metrics.influxDB]
     address = "foobar"
     protocol = "foobar"
-    pushInterval = "10s"
+    pushInterval = "42s"
     database = "foobar"
     retentionPolicy = "foobar"
     username = "foobar"

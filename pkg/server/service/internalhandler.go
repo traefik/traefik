@@ -53,6 +53,11 @@ func (m *InternalHandlers) BuildHTTP(rootCtx context.Context, serviceName string
 
 func (m *InternalHandlers) get(serviceName string) (http.Handler, error) {
 	switch serviceName {
+	case "noop@internal":
+		return http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+			rw.WriteHeader(http.StatusTeapot)
+		}), nil
+
 	case "api@internal":
 		if m.api == nil {
 			return nil, errors.New("api is not enabled")

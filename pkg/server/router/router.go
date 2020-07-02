@@ -12,8 +12,8 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares/recovery"
 	"github.com/containous/traefik/v2/pkg/middlewares/tracing"
 	"github.com/containous/traefik/v2/pkg/rules"
-	"github.com/containous/traefik/v2/pkg/server/internal"
 	"github.com/containous/traefik/v2/pkg/server/middleware"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 )
 
 const (
@@ -33,7 +33,7 @@ type serviceManager interface {
 	LaunchHealthCheck()
 }
 
-// Manager A route/router manager
+// Manager A route/router manager.
 type Manager struct {
 	routerHandlers     map[string]http.Handler
 	serviceManager     serviceManager
@@ -43,7 +43,7 @@ type Manager struct {
 	conf               *runtime.Configuration
 }
 
-// NewManager Creates a new Manager
+// NewManager Creates a new Manager.
 func NewManager(conf *runtime.Configuration,
 	serviceManager serviceManager,
 	middlewaresBuilder middlewareBuilder,
@@ -68,7 +68,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
-// BuildHandlers Builds handler for all entry points
+// BuildHandlers Builds handler for all entry points.
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
 	entryPointHandlers := make(map[string]http.Handler)
 
@@ -109,8 +109,6 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 		entryPointHandlers[entryPointName] = handlerWithMiddlewares
 	}
 
-	m.serviceManager.LaunchHealthCheck()
-
 	return entryPointHandlers
 }
 
@@ -121,7 +119,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	}
 
 	for routerName, routerConfig := range configs {
-		ctxRouter := log.With(internal.AddProviderInContext(ctx, routerName), log.Str(log.RouterName, routerName))
+		ctxRouter := log.With(provider.AddInContext(ctx, routerName), log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctxRouter)
 
 		handler, err := m.buildRouterHandler(ctxRouter, routerName, routerConfig)
@@ -175,7 +173,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterInfo, routerName string) (http.Handler, error) {
 	var qualifiedNames []string
 	for _, name := range router.Middlewares {
-		qualifiedNames = append(qualifiedNames, internal.GetQualifiedName(ctx, name))
+		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
 	}
 	router.Middlewares = qualifiedNames
 	rm := m.modifierBuilder.Build(ctx, qualifiedNames)

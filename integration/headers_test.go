@@ -10,7 +10,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// Headers test suites
+// Headers tests suite.
 type HeadersSuite struct{ BaseSuite }
 
 func (s *HeadersSuite) TestSimpleConfiguration(c *check.C) {
@@ -139,6 +139,47 @@ func (s *HeadersSuite) TestSecureHeadersResponses(c *check.C) {
 			desc: "Feature-Policy Set",
 			expected: http.Header{
 				"Feature-Policy": {"vibrate 'none';"},
+			},
+			reqHost: "test.localhost",
+		},
+	}
+
+	for _, test := range testCase {
+		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+		c.Assert(err, checker.IsNil)
+		req.Host = test.reqHost
+
+		err = try.Request(req, 500*time.Millisecond, try.HasHeaderStruct(test.expected))
+		c.Assert(err, checker.IsNil)
+	}
+}
+
+func (s *HeadersSuite) TestMultipleSecureHeadersResponses(c *check.C) {
+	file := s.adaptFile(c, "fixtures/headers/secure_multiple.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	backend := startTestServer("9000", http.StatusOK)
+	defer backend.Close()
+
+	err = try.GetRequest(backend.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	testCase := []struct {
+		desc     string
+		expected http.Header
+		reqHost  string
+	}{
+		{
+			desc: "Feature-Policy Set",
+			expected: http.Header{
+				"X-Frame-Options":        {"DENY"},
+				"X-Content-Type-Options": {"nosniff"},
 			},
 			reqHost: "test.localhost",
 		},

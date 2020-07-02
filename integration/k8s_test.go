@@ -24,7 +24,7 @@ import (
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in testdata")
 
-// K8sSuite
+// K8sSuite tests suite.
 type K8sSuite struct{ BaseSuite }
 
 func (s *K8sSuite) SetUpSuite(c *check.C) {
@@ -34,10 +34,10 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
 	c.Assert(err, checker.IsNil)
 
-	err = try.Do(60*time.Second, try.DoCondition(func() error {
+	err = try.Do(60*time.Second, func() error {
 		_, err := os.Stat(abs)
 		return err
-	}))
+	})
 	c.Assert(err, checker.IsNil)
 
 	err = os.Setenv("KUBECONFIG", abs)
@@ -99,7 +99,7 @@ func testConfiguration(c *check.C, path, apiPort string) {
 	}
 
 	var buf bytes.Buffer
-	err = try.GetRequest("http://127.0.0.1:"+apiPort+"/api/rawdata", 40*time.Second, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
+	err = try.GetRequest("http://127.0.0.1:"+apiPort+"/api/rawdata", 1*time.Minute, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
 
 	if !*updateExpected {
 		if err != nil {
@@ -128,7 +128,7 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 	return func(res *http.Response) error {
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			return fmt.Errorf("failed to read response body: %s", err)
+			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
 		if err := res.Body.Close(); err != nil {

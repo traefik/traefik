@@ -90,9 +90,12 @@ func TestProvideWithoutWatch(t *testing.T) {
 			timeout := time.After(time.Second)
 			select {
 			case conf := <-configChan:
+
 				require.NotNil(t, conf.Configuration.HTTP)
-				assert.Len(t, conf.Configuration.HTTP.Services, test.expectedNumService)
-				assert.Len(t, conf.Configuration.HTTP.Routers, test.expectedNumRouter)
+				numServices := len(conf.Configuration.HTTP.Services) + len(conf.Configuration.TCP.Services) + len(conf.Configuration.UDP.Services)
+				numRouters := len(conf.Configuration.HTTP.Routers) + len(conf.Configuration.TCP.Routers) + len(conf.Configuration.UDP.Routers)
+				assert.Equal(t, test.expectedNumService, numServices)
+				assert.Equal(t, test.expectedNumRouter, numRouters)
 				require.NotNil(t, conf.Configuration.TLS)
 				assert.Len(t, conf.Configuration.TLS.Certificates, test.expectedNumTLSConf)
 				assert.Len(t, conf.Configuration.TLS.Options, test.expectedNumTLSOptions)
@@ -119,8 +122,10 @@ func TestProvideWithWatch(t *testing.T) {
 			select {
 			case conf := <-configChan:
 				require.NotNil(t, conf.Configuration.HTTP)
-				assert.Len(t, conf.Configuration.HTTP.Services, 0)
-				assert.Len(t, conf.Configuration.HTTP.Routers, 0)
+				numServices := len(conf.Configuration.HTTP.Services) + len(conf.Configuration.TCP.Services) + len(conf.Configuration.UDP.Services)
+				numRouters := len(conf.Configuration.HTTP.Routers) + len(conf.Configuration.TCP.Routers) + len(conf.Configuration.UDP.Routers)
+				assert.Equal(t, numServices, 0)
+				assert.Equal(t, numRouters, 0)
 				require.NotNil(t, conf.Configuration.TLS)
 				assert.Len(t, conf.Configuration.TLS.Certificates, 0)
 			case <-timeout:
@@ -145,8 +150,8 @@ func TestProvideWithWatch(t *testing.T) {
 				select {
 				case conf := <-configChan:
 					numUpdates++
-					numServices = len(conf.Configuration.HTTP.Services)
-					numRouters = len(conf.Configuration.HTTP.Routers)
+					numServices = len(conf.Configuration.HTTP.Services) + len(conf.Configuration.TCP.Services) + len(conf.Configuration.UDP.Services)
+					numRouters = len(conf.Configuration.HTTP.Routers) + len(conf.Configuration.TCP.Routers) + len(conf.Configuration.UDP.Routers)
 					numTLSConfs = len(conf.Configuration.TLS.Certificates)
 					t.Logf("received update #%d: services %d/%d, routers %d/%d, TLS configs %d/%d", numUpdates, numServices, test.expectedNumService, numRouters, test.expectedNumRouter, numTLSConfs, test.expectedNumTLSConf)
 
@@ -168,6 +173,13 @@ func getTestCases() []ProvideTestCase {
 			filePath:           "./fixtures/toml/simple_file_01.toml",
 			expectedNumRouter:  3,
 			expectedNumService: 6,
+			expectedNumTLSConf: 5,
+		},
+		{
+			desc:               "simple file with tcp and udp",
+			filePath:           "./fixtures/toml/simple_file_02.toml",
+			expectedNumRouter:  5,
+			expectedNumService: 8,
 			expectedNumTLSConf: 5,
 		},
 		{
@@ -269,7 +281,7 @@ func createProvider(t *testing.T, test ProvideTestCase, watch bool) (*Provider, 
 	}
 }
 
-// createTempDir Helper
+// createTempDir Helper.
 func createTempDir(t *testing.T, dir string) string {
 	t.Helper()
 

@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2019 Containous SAS
+Copyright (c) 2016-2020 Containous SAS
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
+	"context"
 	"time"
 
 	scheme "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
@@ -45,14 +46,14 @@ type IngressRoutesGetter interface {
 
 // IngressRouteInterface has methods to work with IngressRoute resources.
 type IngressRouteInterface interface {
-	Create(*v1alpha1.IngressRoute) (*v1alpha1.IngressRoute, error)
-	Update(*v1alpha1.IngressRoute) (*v1alpha1.IngressRoute, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1alpha1.IngressRoute, error)
-	List(opts v1.ListOptions) (*v1alpha1.IngressRouteList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.IngressRoute, err error)
+	Create(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, opts v1.CreateOptions) (*v1alpha1.IngressRoute, error)
+	Update(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, opts v1.UpdateOptions) (*v1alpha1.IngressRoute, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.IngressRoute, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.IngressRouteList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.IngressRoute, err error)
 	IngressRouteExpansion
 }
 
@@ -71,20 +72,20 @@ func newIngressRoutes(c *TraefikV1alpha1Client, namespace string) *ingressRoutes
 }
 
 // Get takes name of the ingressRoute, and returns the corresponding ingressRoute object, and an error if there is any.
-func (c *ingressRoutes) Get(name string, options v1.GetOptions) (result *v1alpha1.IngressRoute, err error) {
+func (c *ingressRoutes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.IngressRoute, err error) {
 	result = &v1alpha1.IngressRoute{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("ingressroutes").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of IngressRoutes that match those selectors.
-func (c *ingressRoutes) List(opts v1.ListOptions) (result *v1alpha1.IngressRouteList, err error) {
+func (c *ingressRoutes) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.IngressRouteList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -95,13 +96,13 @@ func (c *ingressRoutes) List(opts v1.ListOptions) (result *v1alpha1.IngressRoute
 		Resource("ingressroutes").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested ingressRoutes.
-func (c *ingressRoutes) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *ingressRoutes) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -112,71 +113,74 @@ func (c *ingressRoutes) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("ingressroutes").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a ingressRoute and creates it.  Returns the server's representation of the ingressRoute, and an error, if there is any.
-func (c *ingressRoutes) Create(ingressRoute *v1alpha1.IngressRoute) (result *v1alpha1.IngressRoute, err error) {
+func (c *ingressRoutes) Create(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, opts v1.CreateOptions) (result *v1alpha1.IngressRoute, err error) {
 	result = &v1alpha1.IngressRoute{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("ingressroutes").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(ingressRoute).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a ingressRoute and updates it. Returns the server's representation of the ingressRoute, and an error, if there is any.
-func (c *ingressRoutes) Update(ingressRoute *v1alpha1.IngressRoute) (result *v1alpha1.IngressRoute, err error) {
+func (c *ingressRoutes) Update(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, opts v1.UpdateOptions) (result *v1alpha1.IngressRoute, err error) {
 	result = &v1alpha1.IngressRoute{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("ingressroutes").
 		Name(ingressRoute.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(ingressRoute).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the ingressRoute and deletes it. Returns an error if one occurs.
-func (c *ingressRoutes) Delete(name string, options *v1.DeleteOptions) error {
+func (c *ingressRoutes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("ingressroutes").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *ingressRoutes) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *ingressRoutes) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("ingressroutes").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched ingressRoute.
-func (c *ingressRoutes) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.IngressRoute, err error) {
+func (c *ingressRoutes) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.IngressRoute, err error) {
 	result = &v1alpha1.IngressRoute{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("ingressroutes").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

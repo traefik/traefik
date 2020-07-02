@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secretCAdefault1
+  namespace: foo
+
+data:
+  tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secretCAdefault2
+  namespace: foo
+
+data:
+  tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: foo
+
+spec:
+  minVersion: VersionTLS12
+  sniStrict: true
+  cipherSuites:
+    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    - TLS_RSA_WITH_AES_256_GCM_SHA384
+  clientAuth:
+    secretNames:
+      - secretCAdefault1
+      - secretCAdefault2
+    clientAuthType: VerifyClientCertIfGiven
+  preferServerCipherSuites: true
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+  - match: Host(`foo.com`) && PathPrefix(`/bar`)
+    kind: Rule
+    priority: 12
+    services:
+    - name: whoami
+      port: 80
+
+  tls:
+    options:
+      name: foo

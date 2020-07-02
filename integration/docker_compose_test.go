@@ -18,7 +18,7 @@ const (
 	composeProject = "minimal"
 )
 
-// Docker test suites
+// Docker tests suite.
 type DockerComposeSuite struct {
 	BaseSuite
 }
@@ -76,7 +76,7 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 
 	// check that we have only one service (not counting the internal ones) with n servers
 	services := rtconf.Services
-	c.Assert(services, checker.HasLen, 3)
+	c.Assert(services, checker.HasLen, 4)
 	for name, service := range services {
 		if strings.HasSuffix(name, "@internal") {
 			continue

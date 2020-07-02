@@ -35,7 +35,7 @@ If the given format is unsupported, the default (CLF) is used instead.
 !!! info "Common Log Format"
     
     ```html
-    <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_frontend_name>" "<Traefik_backend_URL>" <request_duration_in_ms>ms 
+    <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_router_name>" "<Traefik_server_URL>" <request_duration_in_ms>ms
     ```
 
 ### `bufferingSize`
@@ -111,9 +111,9 @@ accessLog:
 --accesslog.filters.minduration=10ms
 ```
 
-### Limiting the Fields
+### Limiting the Fields/Including Headers
 
-You can decide to limit the logged fields/headers to a given list with the `fields.names` and `fields.header` options
+You can decide to limit the logged fields/headers to a given list with the `fields.names` and `fields.headers` options.
 
 Each field can be set to:
 
@@ -121,7 +121,7 @@ Each field can be set to:
 - `drop` to drop the value
 - `redact` to replace the value with "redacted"
 
-The `defaultMode` for `fields.header` is `drop`.
+The `defaultMode` for `fields.headers` is `drop`.
 
 ```toml tab="File (TOML)"
 # Limiting the Logs to Specific Fields
@@ -195,6 +195,7 @@ accessLog:
     | `RequestMethod`         | The HTTP method.                                                                                                                                                    |
     | `RequestPath`           | The HTTP request URI, not including the scheme, host or port.                                                                                                       |
     | `RequestProtocol`       | The version of HTTP requested.                                                                                                                                      |
+    | `RequestScheme`         | The HTTP scheme requested `http` or `https`.                                                                                                                        |
     | `RequestLine`           | `RequestMethod` + `RequestPath` + `RequestProtocol`                                                                                                                 |
     | `RequestContentSize`    | The number of bytes in the request entity (a.k.a. body) sent by the client.                                                                                         |
     | `OriginDuration`        | The time taken by the origin server ('upstream') to return its response.                                                                                            |

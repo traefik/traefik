@@ -18,7 +18,7 @@ type constraintLabelFunc func(map[string]string) bool
 // The expression must match any logical boolean combination of:
 // - `Label(labelName, labelValue)`
 // - `LabelRegex(labelName, regexValue)`
-// - `MarathonConstraint(field:operator:value)`
+// - `MarathonConstraint(field:operator:value)`.
 func MatchLabels(labels map[string]string, expr string) (bool, error) {
 	if expr == "" {
 		return true, nil

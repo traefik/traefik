@@ -21,14 +21,8 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 
 		logger := log.FromContext(log.With(ctx, log.Str(log.RouterName, rtName)))
 
-		eps := rt.EntryPoints
-		if len(eps) == 0 {
-			logger.Debugf("No entryPoint defined for this router, using the default one(s) instead: %+v", entryPoints)
-			eps = entryPoints
-		}
-
 		entryPointsCount := 0
-		for _, entryPointName := range eps {
+		for _, entryPointName := range rt.EntryPoints {
 			if !contains(entryPoints, entryPointName) {
 				rt.AddError(fmt.Errorf("entryPoint %q doesn't exist", entryPointName), false)
 				logger.WithField(log.EntryPointName, entryPointName).
@@ -185,7 +179,7 @@ func (s *ServiceInfo) UpdateServerStatus(server string, status string) {
 }
 
 // GetAllStatus returns all the statuses of all the servers in ServiceInfo.
-// It is the responsibility of the caller to check that s is not nil
+// It is the responsibility of the caller to check that s is not nil.
 func (s *ServiceInfo) GetAllStatus() map[string]string {
 	s.serverStatusMu.RLock()
 	defer s.serverStatusMu.RUnlock()

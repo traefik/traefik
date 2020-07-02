@@ -10,10 +10,10 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-// Name sets the name of this tracer
+// Name sets the name of this tracer.
 const Name = "haystack"
 
-// Config provides configuration settings for a haystack tracer
+// Config provides configuration settings for a haystack tracer.
 type Config struct {
 	LocalAgentHost          string `description:"Set haystack-agent's host that the reporter will used." json:"localAgentHost,omitempty" toml:"localAgentHost,omitempty" yaml:"localAgentHost,omitempty"`
 	LocalAgentPort          int    `description:"Set haystack-agent's port that the reporter will used." json:"localAgentPort,omitempty" toml:"localAgentPort,omitempty" yaml:"localAgentPort,omitempty"`
@@ -26,11 +26,11 @@ type Config struct {
 
 // SetDefaults sets the default values.
 func (c *Config) SetDefaults() {
-	c.LocalAgentHost = "LocalAgentHost"
+	c.LocalAgentHost = "127.0.0.1"
 	c.LocalAgentPort = 35000
 }
 
-// Setup sets up the tracer
+// Setup sets up the tracer.
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
 	tag := strings.SplitN(c.GlobalTag, ":", 2)
 

@@ -54,7 +54,7 @@
               <div class="col-12">
                 <div class="row items-start q-col-gutter-md">
                   <div class="col-12">
-                    <panel-servers dense :data="serviceByName.item"/>
+                    <panel-servers dense :data="serviceByName.item" :hasStatus="serviceByName.item.serverStatus"/>
                   </div>
                 </div>
               </div>
@@ -173,6 +173,7 @@ export default {
   computed: {
     ...mapGetters('http', { http_serviceByName: 'serviceByName' }),
     ...mapGetters('tcp', { tcp_serviceByName: 'serviceByName' }),
+    ...mapGetters('udp', { udp_serviceByName: 'serviceByName' }),
     protocol () {
       return this.$route.meta.protocol
     },
@@ -189,6 +190,7 @@ export default {
   methods: {
     ...mapActions('http', { http_getServiceByName: 'getServiceByName', http_getRouterByName: 'getRouterByName' }),
     ...mapActions('tcp', { tcp_getServiceByName: 'getServiceByName', tcp_getRouterByName: 'getRouterByName' }),
+    ...mapActions('udp', { udp_getServiceByName: 'getServiceByName', udp_getRouterByName: 'getRouterByName' }),
     refreshAll () {
       if (this.serviceByName.loading) {
         return
@@ -238,6 +240,8 @@ export default {
   beforeDestroy () {
     clearInterval(this.timeOutGetAll)
     this.$store.commit('http/getServiceByNameClear')
+    this.$store.commit('tcp/getServiceByNameClear')
+    this.$store.commit('udp/getServiceByNameClear')
   }
 }
 </script>

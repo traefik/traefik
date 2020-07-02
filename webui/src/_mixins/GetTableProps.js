@@ -100,6 +100,7 @@ const columnsByResource = {
     'tls',
     'provider'
   ],
+  udpRouters: ['status', 'entryPoints', 'name', 'service', 'provider'],
   services: ['status', 'name', 'type', 'servers', 'provider'],
   middlewares: ['status', 'name', 'type', 'provider']
 }
@@ -111,10 +112,16 @@ const propsByType = {
   'tcp-routers': {
     columns: columnsByResource.routers
   },
+  'udp-routers': {
+    columns: columnsByResource.udpRouters
+  },
   'http-services': {
     columns: columnsByResource.services
   },
   'tcp-services': {
+    columns: columnsByResource.services
+  },
+  'udp-services': {
     columns: columnsByResource.services
   },
   'http-middlewares': {

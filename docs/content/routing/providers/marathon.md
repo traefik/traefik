@@ -29,7 +29,7 @@ and the router automatically gets a rule defined by defaultRule (if no rule for 
 
     ```json
     labels: {
-      "traefik.http.routers.myproxy.rule": "Host(`foo.com`)",
+      "traefik.http.routers.myproxy.rule": "Host(`example.net`)",
       "traefik.http.services.myservice.loadbalancer.server.port": "80"
     }
     ```
@@ -41,7 +41,7 @@ and the router automatically gets a rule defined by defaultRule (if no rule for 
 
     ```json
     labels: {
-      "traefik.http.routers.myproxy.rule": "Host(`foo.com`)"
+      "traefik.http.routers.myproxy.rule": "Host(`example.net`)"
 	}
     ```
 
@@ -50,7 +50,7 @@ and the router automatically gets a rule defined by defaultRule (if no rule for 
 To update the configuration of the Router automatically attached to the application,
 add labels starting with `traefik.http.routers.{router-name-of-your-choice}.` and followed by the option you want to change.
 
-For example, to change the routing rule, you could add the label ```"traefik.http.routers.routername.rule": "Host(`mydomain.com`)"```.
+For example, to change the routing rule, you could add the label ```"traefik.http.routers.routername.rule": "Host(`example.com`)"```.
 
 !!! warning "The character `@` is not authorized in the router name `<router_name>`."
 
@@ -59,7 +59,7 @@ For example, to change the routing rule, you could add the label ```"traefik.htt
     See [rule](../routers/index.md#rule) for more information. 
     
     ```json
-    "traefik.http.routers.myrouter.rule": "Host(`mydomain.com`)"
+    "traefik.http.routers.myrouter.rule": "Host(`example.com`)"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.entrypoints`"
@@ -107,7 +107,7 @@ For example, to change the routing rule, you could add the label ```"traefik.htt
     See [domains](../routers/index.md#domains) for more information.
     
     ```json
-    "traefik.http.routers.myrouter.tls.domains[0].main": "foobar.com"
+    "traefik.http.routers.myrouter.tls.domains[0].main": "example.org"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.domains[n].sans`"
@@ -115,7 +115,7 @@ For example, to change the routing rule, you could add the label ```"traefik.htt
     See [domains](../routers/index.md#domains) for more information.
     
     ```json
-    "traefik.http.routers.myrouter.tls.domains[0].sans": "test.foobar.com,dev.foobar.com"
+    "traefik.http.routers.myrouter.tls.domains[0].sans": "test.example.org,dev.example.org"
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.options`"
@@ -181,7 +181,7 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     See [health check](../services/index.md#health-check) for more information.
     
     ```json
-    "traefik.http.services.myservice.loadbalancer.healthcheck.hostname": "foobar.com"
+    "traefik.http.services.myservice.loadbalancer.healthcheck.hostname": "example.org"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.interval`"
@@ -224,12 +224,20 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     "traefik.http.services.myservice.loadbalancer.healthcheck.timeout": "10"
     ```
 
-??? info "`traefik.http.services.<service_name>.loadbalancer.sticky`"
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.followredirects`"
+    
+    See [health check](../services/index.md#health-check) for more information.
+    
+    ```json
+    "traefik.http.services.myservice.loadbalancer.healthcheck.followredirects": "true"
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie`"
     
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
     
     ```json
-    "traefik.http.services.myservice.loadbalancer.sticky": "true"
+    "traefik.http.services.myservice.loadbalancer.sticky.cookie": "true"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.httponly`"
@@ -254,6 +262,14 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     
     ```json
     "traefik.http.services.myservice.loadbalancer.sticky.cookie.secure": "true"
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.samesite`"
+    
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+    
+    ```json
+    "traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite": "none"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
@@ -300,7 +316,7 @@ You can declare TCP Routers and/or Services using labels.
 	{
 		...
 		"labels": {
-			"traefik.tcp.routers.my-router.rule": "HostSNI(`my-host.com`)",
+			"traefik.tcp.routers.my-router.rule": "HostSNI(`example.com`)",
 			"traefik.tcp.routers.my-router.tls": "true",
 			"traefik.tcp.services.my-service.loadbalancer.server.port": "4123"
 		}
@@ -328,7 +344,7 @@ You can declare TCP Routers and/or Services using labels.
     See [rule](../routers/index.md#rule_1) for more information.
     
     ```json
-    "traefik.tcp.routers.mytcprouter.rule": "HostSNI(`myhost.com`)"
+    "traefik.tcp.routers.mytcprouter.rule": "HostSNI(`example.com`)"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.service`"
@@ -360,7 +376,7 @@ You can declare TCP Routers and/or Services using labels.
     See [domains](../routers/index.md#domains_1) for more information.
     
     ```json
-    "traefik.tcp.routers.mytcprouter.tls.domains[0].main": "foobar.com"
+    "traefik.tcp.routers.mytcprouter.tls.domains[0].main": "example.org"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.domains[n].sans`"
@@ -368,7 +384,7 @@ You can declare TCP Routers and/or Services using labels.
     See [domains](../routers/index.md#domains_1) for more information.
     
     ```json
-    "traefik.tcp.routers.mytcprouter.tls.domains[0].sans": "test.foobar.com,dev.foobar.com"
+    "traefik.tcp.routers.mytcprouter.tls.domains[0].sans": "test.example.org,dev.example.org"
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.options`"
@@ -403,6 +419,55 @@ You can declare TCP Routers and/or Services using labels.
     
     ```json
     "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay": "100"
+    ```
+
+### UDP
+
+You can declare UDP Routers and/or Services using labels.
+
+??? example "Declaring UDP Routers and Services"
+
+    ```json
+	{
+		...
+		"labels": {
+			"traefik.udp.routers.my-router.entrypoints": "udp",
+			"traefik.udp.services.my-service.loadbalancer.server.port": "4123"
+		}
+	}
+    ```
+
+!!! warning "UDP and HTTP"
+
+    If you declare a UDP Router/Service, it will prevent Traefik from automatically creating an HTTP Router/Service (like it does by default if no UDP Router/Service is defined).
+    You can declare both a UDP Router/Service and an HTTP Router/Service for the same container (but you have to do so manually).
+
+#### UDP Routers
+
+??? info "`traefik.udp.routers.<router_name>.entrypoints`"
+    
+    See [entry points](../routers/index.md#entrypoints_2) for more information.
+    
+     ```json
+     "traefik.udp.routers.myudprouter.entrypoints": "ep1,ep2"
+     ```
+
+??? info "`traefik.udp.routers.<router_name>.service`"
+    
+    See [service](../routers/index.md#services_1) for more information.
+    
+    ```json
+    "traefik.udp.routers.myudprouter.service": "myservice"
+    ```
+
+#### UDP Services
+
+??? info "`traefik.udp.services.<service_name>.loadbalancer.server.port`"
+    
+    Registers a port of the application.
+    
+    ```json
+    "traefik.udp.services.myudpservice.loadbalancer.server.port": "423"
     ```
 
 ### Specific Provider Options

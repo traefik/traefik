@@ -11,9 +11,10 @@ func DecodeConfiguration(labels map[string]string) (*dynamic.Configuration, erro
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{},
 		TCP:  &dynamic.TCPConfiguration{},
+		UDP:  &dynamic.UDPConfiguration{},
 	}
 
-	err := parser.Decode(labels, conf, parser.DefaultRootName, "traefik.http", "traefik.tcp")
+	err := parser.Decode(labels, conf, parser.DefaultRootName, "traefik.http", "traefik.tcp", "traefik.udp")
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +28,7 @@ func EncodeConfiguration(conf *dynamic.Configuration) (map[string]string, error)
 }
 
 // Decode converts the labels to an element.
-// labels -> [ node -> node + metadata (type) ] -> element (node)
+// labels -> [ node -> node + metadata (type) ] -> element (node).
 func Decode(labels map[string]string, element interface{}, filters ...string) error {
 	return parser.Decode(labels, element, parser.DefaultRootName, filters...)
 }

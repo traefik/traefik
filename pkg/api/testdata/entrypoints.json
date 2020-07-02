@@ -8,6 +8,7 @@
 				"192.168.1.4"
 			]
 		},
+		"http": {},
 		"name": "web",
 		"proxyProtocol": {
 			"insecure": true,
@@ -37,7 +38,8 @@
 				"192.168.1.40"
 			]
 		},
-		"name": "web-secure",
+		"http": {},
+		"name": "websecure",
 		"proxyProtocol": {
 			"insecure": true,
 			"trustedIPs": [

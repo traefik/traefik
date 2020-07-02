@@ -43,7 +43,10 @@ First, the definition of the `IngressRoute` and the `Middleware` kinds.
 Also note the RBAC authorization resources; they'll be referenced through the `serviceAccountName` of the deployment, later on.
 
 ```yaml
---8<-- "content/user-guides/crd-acme/01-crd.yml"
+--8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition.yml"
+
+---
+--8<-- "content/reference/dynamic-configuration/kubernetes-crd-rbac.yml"
 ```
 
 ### Services
@@ -94,11 +97,11 @@ Give it a few seconds for the ACME TLS challenge to complete, and you should the
 Both with or (just for fun, do not do that in production) without TLS:
 
 ```bash
-curl [-k] https://your.domain.com/tls
+curl [-k] https://your.example.com/tls
 ```
 
 ```bash
-curl [-k] http://your.domain.com:8000/notls
+curl http://your.example.com:8000/notls
 ```
 
 Note that you'll have to use `-k` as long as you're using the staging server of Let's Encrypt, since it is not an authorized certificate authority on systems where it hasn't been manually added.

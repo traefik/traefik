@@ -9,16 +9,16 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/server/internal"
+	"github.com/containous/traefik/v2/pkg/server/provider"
 	"github.com/containous/traefik/v2/pkg/tcp"
 )
 
-// Manager is the TCPHandlers factory
+// Manager is the TCPHandlers factory.
 type Manager struct {
 	configs map[string]*runtime.TCPServiceInfo
 }
 
-// NewManager creates a new manager
+// NewManager creates a new manager.
 func NewManager(conf *runtime.Configuration) *Manager {
 	return &Manager{
 		configs: conf.TCPServices,
@@ -27,8 +27,8 @@ func NewManager(conf *runtime.Configuration) *Manager {
 
 // BuildTCP Creates a tcp.Handler for a service configuration.
 func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Handler, error) {
-	serviceQualifiedName := internal.GetQualifiedName(rootCtx, serviceName)
-	ctx := internal.AddProviderInContext(rootCtx, serviceQualifiedName)
+	serviceQualifiedName := provider.GetQualifiedName(rootCtx, serviceName)
+	ctx := provider.AddInContext(rootCtx, serviceQualifiedName)
 	ctx = log.With(ctx, log.Str(log.ServiceName, serviceName))
 
 	conf, ok := m.configs[serviceQualifiedName]
@@ -81,7 +81,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		}
 		return loadBalancer, nil
 	default:
-		err := fmt.Errorf("the service %q doesn't have any TCP load balancer", serviceQualifiedName)
+		err := fmt.Errorf("the service %q does not have any type defined", serviceQualifiedName)
 		conf.AddError(err, true)
 		return nil, err
 	}

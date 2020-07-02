@@ -23,7 +23,8 @@ ping: {}
 
 The `/ping` health-check URL is enabled with the command-line `--ping` or config file option `[ping]`.
 
-You can customize the `entryPoint` where the `/ping` is active with the `entryPoint` option (default value: `traefik`)
+The `entryPoint` where the `/ping` is active can be customized with the `entryPoint` option,
+whose default value is `traefik` (port `8080`).
 
 | Path    | Method        | Description                                                                                         |
 |---------|---------------|-----------------------------------------------------------------------------------------------------|
@@ -33,6 +34,8 @@ You can customize the `entryPoint` where the `/ping` is active with the `entryPo
     The `cli` comes with a [`healthcheck`](./cli.md#healthcheck) command which can be used for calling this endpoint.
 
 ### `entryPoint`
+
+_Optional, Default="traefik"_
 
 Enabling /ping on a dedicated EntryPoint.
 
@@ -77,4 +80,29 @@ ping:
 
 ```bash tab="CLI"
 --ping.manualrouting=true
+```
+
+### `terminatingStatusCode`
+
+_Optional, Default=503_
+
+During the period in which Traefik is gracefully shutting down, the ping handler
+returns a 503 status code by default. If Traefik is behind e.g. a load-balancer
+doing health checks (such as the Kubernetes LivenessProbe), another code might
+be expected as the signal for graceful termination. In which case, the
+terminatingStatusCode can be used to set the code returned by the ping
+handler during termination.
+
+```toml tab="File (TOML)"
+[ping]
+  terminatingStatusCode = 204
+```
+
+```yaml tab="File (YAML)"
+ping:
+  terminatingStatusCode: 204
+```
+
+```bash tab="CLI"
+--ping.terminatingStatusCode=204
 ```

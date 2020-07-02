@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff/v3"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/job"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -21,7 +21,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/mitchellh/hashstructure"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -29,6 +29,7 @@ import (
 const (
 	annotationKubernetesIngressClass = "kubernetes.io/ingress.class"
 	traefikDefaultIngressClass       = "traefik"
+	defaultPathMatcher               = "PathPrefix"
 )
 
 // Provider holds configurations of the provider.
@@ -45,7 +46,7 @@ type Provider struct {
 	lastConfiguration      safe.Safe
 }
 
-// EndpointIngress holds the endpoint information for the Kubernetes provider
+// EndpointIngress holds the endpoint information for the Kubernetes provider.
 type EndpointIngress struct {
 	IP               string `description:"IP used for Kubernetes Ingress endpoints." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
 	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
@@ -104,32 +105,29 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		return err
 	}
 
-	pool.Go(func(stop chan bool) {
+	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			stopWatch := make(chan struct{}, 1)
-			defer close(stopWatch)
-
-			eventsChan, err := k8sClient.WatchAll(p.Namespaces, stopWatch)
+			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
 			if err != nil {
 				logger.Errorf("Error watching kubernetes events: %v", err)
 				timer := time.NewTimer(1 * time.Second)
 				select {
 				case <-timer.C:
 					return err
-				case <-stop:
+				case <-ctxPool.Done():
 					return nil
 				}
 			}
 
 			throttleDuration := time.Duration(p.ThrottleDuration)
-			throttledChan := throttleEvents(ctxLog, throttleDuration, stop, eventsChan)
+			throttledChan := throttleEvents(ctxLog, throttleDuration, pool, eventsChan)
 			if throttledChan != nil {
 				eventsChan = throttledChan
 			}
 
 			for {
 				select {
-				case <-stop:
+				case <-ctxPool.Done():
 					return nil
 				case event := <-eventsChan:
 					// Note that event is the *first* event that came in during this
@@ -164,103 +162,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		notify := func(err error, time time.Duration) {
 			logger.Errorf("Provider connection error: %s; retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxPool), notify)
 		if err != nil {
 			logger.Errorf("Cannot connect to Provider: %s", err)
 		}
 	})
 
 	return nil
-}
-
-func checkStringQuoteValidity(value string) error {
-	_, err := strconv.Unquote(`"` + value + `"`)
-	return err
-}
-
-func loadService(client Client, namespace string, backend v1beta1.IngressBackend) (*dynamic.Service, error) {
-	service, exists, err := client.GetService(namespace, backend.ServiceName)
-	if err != nil {
-		return nil, err
-	}
-
-	if !exists {
-		return nil, errors.New("service not found")
-	}
-
-	var servers []dynamic.Server
-	var portName string
-	var portSpec corev1.ServicePort
-	var match bool
-	for _, p := range service.Spec.Ports {
-		if (backend.ServicePort.Type == intstr.Int && backend.ServicePort.IntVal == p.Port) ||
-			(backend.ServicePort.Type == intstr.String && backend.ServicePort.StrVal == p.Name) {
-			portName = p.Name
-			portSpec = p
-			match = true
-			break
-		}
-	}
-
-	if !match {
-		return nil, errors.New("service port not found")
-	}
-
-	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		protocol := "http"
-		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
-			protocol = "https"
-		}
-
-		servers = append(servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, portSpec.Port),
-		})
-	} else {
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, backend.ServiceName)
-		if endpointsErr != nil {
-			return nil, endpointsErr
-		}
-
-		if !endpointsExists {
-			return nil, errors.New("endpoints not found")
-		}
-
-		if len(endpoints.Subsets) == 0 {
-			return nil, errors.New("subset not found")
-		}
-
-		var port int32
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if portName == p.Name {
-					port = p.Port
-					break
-				}
-			}
-
-			if port == 0 {
-				return nil, errors.New("cannot define a port")
-			}
-
-			protocol := "http"
-			if portSpec.Port == 443 || strings.HasPrefix(portName, "https") {
-				protocol = "https"
-			}
-
-			for _, addr := range subset.Addresses {
-				servers = append(servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
-				})
-			}
-		}
-	}
-
-	return &dynamic.Service{
-		LoadBalancer: &dynamic.ServersLoadBalancer{
-			Servers:        servers,
-			PassHostHeader: func(v bool) *bool { return &v }(true),
-		},
-	}, nil
 }
 
 func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Client) *dynamic.Configuration {
@@ -275,7 +184,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	ingresses := client.GetIngresses()
 
-	tlsConfigs := make(map[string]*tls.CertAndStores)
+	certConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
 		ctx = log.With(ctx, log.Str("ingress", ingress.Name), log.Str("namespace", ingress.Namespace))
 
@@ -283,91 +192,88 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			continue
 		}
 
-		err := getTLS(ctx, ingress, client, tlsConfigs)
+		rtConfig, err := parseRouterConfig(ingress.Annotations)
+		if err != nil {
+			log.FromContext(ctx).Errorf("Failed to parse annotations: %v", err)
+			continue
+		}
+
+		err = getCertificates(ctx, ingress, client, certConfigs)
 		if err != nil {
 			log.FromContext(ctx).Errorf("Error configuring TLS: %v", err)
 		}
 
-		if len(ingress.Spec.Rules) == 0 {
-			if ingress.Spec.Backend != nil {
-				if _, ok := conf.HTTP.Services["default-backend"]; ok {
-					log.FromContext(ctx).Error("The default backend already exists.")
-					continue
-				}
-
-				service, err := loadService(client, ingress.Namespace, *ingress.Spec.Backend)
-				if err != nil {
-					log.FromContext(ctx).
-						WithField("serviceName", ingress.Spec.Backend.ServiceName).
-						WithField("servicePort", ingress.Spec.Backend.ServicePort.String()).
-						Errorf("Cannot create service: %v", err)
-					continue
-				}
-
-				conf.HTTP.Routers["default-router"] = &dynamic.Router{
-					Rule:     "PathPrefix(`/`)",
-					Priority: math.MinInt32,
-					Service:  "default-backend",
-				}
-
-				conf.HTTP.Services["default-backend"] = service
+		if len(ingress.Spec.Rules) == 0 && ingress.Spec.Backend != nil {
+			if _, ok := conf.HTTP.Services["default-backend"]; ok {
+				log.FromContext(ctx).Error("The default backend already exists.")
+				continue
 			}
+
+			service, err := loadService(client, ingress.Namespace, *ingress.Spec.Backend)
+			if err != nil {
+				log.FromContext(ctx).
+					WithField("serviceName", ingress.Spec.Backend.ServiceName).
+					WithField("servicePort", ingress.Spec.Backend.ServicePort.String()).
+					Errorf("Cannot create service: %v", err)
+				continue
+			}
+
+			rt := &dynamic.Router{
+				Rule:     "PathPrefix(`/`)",
+				Priority: math.MinInt32,
+				Service:  "default-backend",
+			}
+
+			if rtConfig != nil && rtConfig.Router != nil {
+				rt.EntryPoints = rtConfig.Router.EntryPoints
+				rt.Middlewares = rtConfig.Router.Middlewares
+				rt.TLS = rtConfig.Router.TLS
+			}
+
+			conf.HTTP.Routers["default-router"] = rt
+			conf.HTTP.Services["default-backend"] = service
 		}
+
 		for _, rule := range ingress.Spec.Rules {
 			if err := checkStringQuoteValidity(rule.Host); err != nil {
 				log.FromContext(ctx).Errorf("Invalid syntax for host: %s", rule.Host)
 				continue
 			}
 
-			for _, p := range rule.HTTP.Paths {
-				service, err := loadService(client, ingress.Namespace, p.Backend)
+			if err := p.updateIngressStatus(ingress, client); err != nil {
+				log.FromContext(ctx).Errorf("Error while updating ingress status: %v", err)
+			}
+
+			if rule.HTTP == nil {
+				continue
+			}
+
+			for _, pa := range rule.HTTP.Paths {
+				if err = checkStringQuoteValidity(pa.Path); err != nil {
+					log.FromContext(ctx).Errorf("Invalid syntax for path: %s", pa.Path)
+					continue
+				}
+
+				service, err := loadService(client, ingress.Namespace, pa.Backend)
 				if err != nil {
 					log.FromContext(ctx).
-						WithField("serviceName", p.Backend.ServiceName).
-						WithField("servicePort", p.Backend.ServicePort.String()).
+						WithField("serviceName", pa.Backend.ServiceName).
+						WithField("servicePort", pa.Backend.ServicePort.String()).
 						Errorf("Cannot create service: %v", err)
 					continue
 				}
 
-				if err = checkStringQuoteValidity(p.Path); err != nil {
-					log.FromContext(ctx).Errorf("Invalid syntax for path: %s", p.Path)
-					continue
-				}
-
-				serviceName := provider.Normalize(ingress.Namespace + "-" + p.Backend.ServiceName + "-" + p.Backend.ServicePort.String())
-				var rules []string
-				if len(rule.Host) > 0 {
-					rules = []string{"Host(`" + rule.Host + "`)"}
-				}
-
-				if len(p.Path) > 0 {
-					rules = append(rules, "PathPrefix(`"+p.Path+"`)")
-				}
-
-				routerKey := strings.TrimPrefix(provider.Normalize(rule.Host+p.Path), "-")
-				conf.HTTP.Routers[routerKey] = &dynamic.Router{
-					Rule:    strings.Join(rules, " && "),
-					Service: serviceName,
-				}
-
-				if len(ingress.Spec.TLS) > 0 {
-					// TLS enabled for this ingress, add TLS router
-					conf.HTTP.Routers[routerKey+"-tls"] = &dynamic.Router{
-						Rule:    strings.Join(rules, " && "),
-						Service: serviceName,
-						TLS:     &dynamic.RouterTLSConfig{},
-					}
-				}
+				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.ServiceName + "-" + pa.Backend.ServicePort.String())
 				conf.HTTP.Services[serviceName] = service
-			}
-			err := p.updateIngressStatus(ingress, client)
-			if err != nil {
-				log.FromContext(ctx).Errorf("Error while updating ingress status: %v", err)
+
+				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Name+"-"+ingress.Namespace+"-"+rule.Host+pa.Path), "-")
+
+				conf.HTTP.Routers[routerKey] = loadRouter(rule, pa, rtConfig, serviceName)
 			}
 		}
 	}
 
-	certs := getTLSConfig(tlsConfigs)
+	certs := getTLSConfig(certConfigs)
 	if len(certs) > 0 {
 		conf.TLS = &dynamic.TLSConfiguration{
 			Certificates: certs,
@@ -377,12 +283,59 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	return conf
 }
 
+func (p *Provider) updateIngressStatus(ing *v1beta1.Ingress, k8sClient Client) error {
+	// Only process if an EndpointIngress has been configured
+	if p.IngressEndpoint == nil {
+		return nil
+	}
+
+	if len(p.IngressEndpoint.PublishedService) == 0 {
+		if len(p.IngressEndpoint.IP) == 0 && len(p.IngressEndpoint.Hostname) == 0 {
+			return errors.New("publishedService or ip or hostname must be defined")
+		}
+
+		return k8sClient.UpdateIngressStatus(ing, p.IngressEndpoint.IP, p.IngressEndpoint.Hostname)
+	}
+
+	serviceInfo := strings.Split(p.IngressEndpoint.PublishedService, "/")
+	if len(serviceInfo) != 2 {
+		return fmt.Errorf("invalid publishedService format (expected 'namespace/service' format): %s", p.IngressEndpoint.PublishedService)
+	}
+
+	serviceNamespace, serviceName := serviceInfo[0], serviceInfo[1]
+
+	service, exists, err := k8sClient.GetService(serviceNamespace, serviceName)
+	if err != nil {
+		return fmt.Errorf("cannot get service %s, received error: %w", p.IngressEndpoint.PublishedService, err)
+	}
+
+	if exists && service.Status.LoadBalancer.Ingress == nil {
+		// service exists, but has no Load Balancer status
+		log.Debugf("Skipping updating Ingress %s/%s due to service %s having no status set", ing.Namespace, ing.Name, p.IngressEndpoint.PublishedService)
+		return nil
+	}
+
+	if !exists {
+		return fmt.Errorf("missing service: %s", p.IngressEndpoint.PublishedService)
+	}
+
+	return k8sClient.UpdateIngressStatus(ing, service.Status.LoadBalancer.Ingress[0].IP, service.Status.LoadBalancer.Ingress[0].Hostname)
+}
+
+func buildHostRule(host string) string {
+	if strings.HasPrefix(host, "*.") {
+		return "HostRegexp(`" + strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1) + "`)"
+	}
+
+	return "Host(`" + host + "`)"
+}
+
 func shouldProcessIngress(ingressClass string, ingressClassAnnotation string) bool {
 	return ingressClass == ingressClassAnnotation ||
 		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
 }
 
-func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
+func getCertificates(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
 	for _, t := range ingress.Spec.TLS {
 		if t.SecretName == "" {
 			log.FromContext(ctx).Debugf("Skipping TLS sub-section: No secret name provided")
@@ -393,7 +346,7 @@ func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tls
 		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
 			secret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
 			if err != nil {
-				return fmt.Errorf("failed to fetch secret %s/%s: %v", ingress.Namespace, t.SecretName, err)
+				return fmt.Errorf("failed to fetch secret %s/%s: %w", ingress.Namespace, t.SecretName, err)
 			}
 			if !exists {
 				return fmt.Errorf("secret %s/%s does not exist", ingress.Namespace, t.SecretName)
@@ -414,21 +367,6 @@ func getTLS(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tls
 	}
 
 	return nil
-}
-
-func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores {
-	var secretNames []string
-	for secretName := range tlsConfigs {
-		secretNames = append(secretNames, secretName)
-	}
-	sort.Strings(secretNames)
-
-	var configs []*tls.CertAndStores
-	for _, secretName := range secretNames {
-		configs = append(configs, tlsConfigs[secretName])
-	}
-
-	return configs
 }
 
 func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (string, string, error) {
@@ -467,45 +405,166 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 	return cert, key, nil
 }
 
-func (p *Provider) updateIngressStatus(i *v1beta1.Ingress, k8sClient Client) error {
-	// Only process if an EndpointIngress has been configured
-	if p.IngressEndpoint == nil {
-		return nil
+func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores {
+	var secretNames []string
+	for secretName := range tlsConfigs {
+		secretNames = append(secretNames, secretName)
+	}
+	sort.Strings(secretNames)
+
+	var configs []*tls.CertAndStores
+	for _, secretName := range secretNames {
+		configs = append(configs, tlsConfigs[secretName])
 	}
 
-	if len(p.IngressEndpoint.PublishedService) == 0 {
-		if len(p.IngressEndpoint.IP) == 0 && len(p.IngressEndpoint.Hostname) == 0 {
-			return errors.New("publishedService or ip or hostname must be defined")
-		}
+	return configs
+}
 
-		return k8sClient.UpdateIngressStatus(i.Namespace, i.Name, p.IngressEndpoint.IP, p.IngressEndpoint.Hostname)
-	}
-
-	serviceInfo := strings.Split(p.IngressEndpoint.PublishedService, "/")
-	if len(serviceInfo) != 2 {
-		return fmt.Errorf("invalid publishedService format (expected 'namespace/service' format): %s", p.IngressEndpoint.PublishedService)
-	}
-	serviceNamespace, serviceName := serviceInfo[0], serviceInfo[1]
-
-	service, exists, err := k8sClient.GetService(serviceNamespace, serviceName)
+func loadService(client Client, namespace string, backend v1beta1.IngressBackend) (*dynamic.Service, error) {
+	service, exists, err := client.GetService(namespace, backend.ServiceName)
 	if err != nil {
-		return fmt.Errorf("cannot get service %s, received error: %s", p.IngressEndpoint.PublishedService, err)
-	}
-
-	if exists && service.Status.LoadBalancer.Ingress == nil {
-		// service exists, but has no Load Balancer status
-		log.Debugf("Skipping updating Ingress %s/%s due to service %s having no status set", i.Namespace, i.Name, p.IngressEndpoint.PublishedService)
-		return nil
+		return nil, err
 	}
 
 	if !exists {
-		return fmt.Errorf("missing service: %s", p.IngressEndpoint.PublishedService)
+		return nil, errors.New("service not found")
 	}
 
-	return k8sClient.UpdateIngressStatus(i.Namespace, i.Name, service.Status.LoadBalancer.Ingress[0].IP, service.Status.LoadBalancer.Ingress[0].Hostname)
+	var portName string
+	var portSpec corev1.ServicePort
+	var match bool
+	for _, p := range service.Spec.Ports {
+		if (backend.ServicePort.Type == intstr.Int && backend.ServicePort.IntVal == p.Port) ||
+			(backend.ServicePort.Type == intstr.String && backend.ServicePort.StrVal == p.Name) {
+			portName = p.Name
+			portSpec = p
+			match = true
+			break
+		}
+	}
+
+	if !match {
+		return nil, errors.New("service port not found")
+	}
+
+	svc := &dynamic.Service{
+		LoadBalancer: &dynamic.ServersLoadBalancer{
+			PassHostHeader: func(v bool) *bool { return &v }(true),
+		},
+	}
+
+	svcConfig, err := parseServiceConfig(service.Annotations)
+	if err != nil {
+		return nil, err
+	}
+
+	if svcConfig != nil && svcConfig.Service != nil {
+		svc.LoadBalancer.Sticky = svcConfig.Service.Sticky
+		if svcConfig.Service.PassHostHeader != nil {
+			svc.LoadBalancer.PassHostHeader = svcConfig.Service.PassHostHeader
+		}
+	}
+
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
+
+		svc.LoadBalancer.Servers = []dynamic.Server{
+			{URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, portSpec.Port)},
+		}
+
+		return svc, nil
+	}
+
+	endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, backend.ServiceName)
+	if endpointsErr != nil {
+		return nil, endpointsErr
+	}
+
+	if !endpointsExists {
+		return nil, errors.New("endpoints not found")
+	}
+
+	if len(endpoints.Subsets) == 0 {
+		return nil, errors.New("subset not found")
+	}
+
+	var port int32
+	for _, subset := range endpoints.Subsets {
+		for _, p := range subset.Ports {
+			if portName == p.Name {
+				port = p.Port
+				break
+			}
+		}
+
+		if port == 0 {
+			return nil, errors.New("cannot define a port")
+		}
+
+		protocol := getProtocol(portSpec, portName, svcConfig)
+
+		for _, addr := range subset.Addresses {
+			svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
+				URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
+			})
+		}
+	}
+
+	return svc, nil
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop chan bool, eventsChan <-chan interface{}) chan interface{} {
+func getProtocol(portSpec corev1.ServicePort, portName string, svcConfig *ServiceConfig) string {
+	if svcConfig != nil && svcConfig.Service != nil && svcConfig.Service.ServersScheme != "" {
+		return svcConfig.Service.ServersScheme
+	}
+
+	protocol := "http"
+	if portSpec.Port == 443 || strings.HasPrefix(portName, "https") {
+		protocol = "https"
+	}
+
+	return protocol
+}
+
+func loadRouter(rule v1beta1.IngressRule, pa v1beta1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
+	var rules []string
+	if len(rule.Host) > 0 {
+		rules = []string{buildHostRule(rule.Host)}
+	}
+
+	if len(pa.Path) > 0 {
+		matcher := defaultPathMatcher
+		if rtConfig != nil && rtConfig.Router != nil && rtConfig.Router.PathMatcher != "" {
+			matcher = rtConfig.Router.PathMatcher
+		}
+
+		rules = append(rules, fmt.Sprintf("%s(`%s`)", matcher, pa.Path))
+	}
+
+	rt := &dynamic.Router{
+		Rule:    strings.Join(rules, " && "),
+		Service: serviceName,
+	}
+
+	if rtConfig != nil && rtConfig.Router != nil {
+		rt.Priority = rtConfig.Router.Priority
+		rt.EntryPoints = rtConfig.Router.EntryPoints
+		rt.Middlewares = rtConfig.Router.Middlewares
+
+		if rtConfig.Router.TLS != nil {
+			rt.TLS = rtConfig.Router.TLS
+		}
+	}
+
+	return rt
+}
+
+func checkStringQuoteValidity(value string) error {
+	_, err := strconv.Unquote(`"` + value + `"`)
+	return err
+}
+
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
 	if throttleDuration == 0 {
 		return nil
 	}
@@ -516,10 +575,10 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop ch
 	// non-blocking write to pendingEvent. This guarantees that writing to
 	// eventChan will never block, and that pendingEvent will have
 	// something in it if there's been an event since we read from that channel.
-	go func() {
+	pool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
-			case <-stop:
+			case <-ctxPool.Done():
 				return
 			case nextEvent := <-eventsChan:
 				select {
@@ -533,7 +592,7 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, stop ch
 				}
 			}
 		}
-	}()
+	})
 
 	return eventsChanBuffered
 }

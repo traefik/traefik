@@ -10,6 +10,7 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vulcand/oxy/utils"
@@ -21,6 +22,8 @@ func TestNewRateLimiter(t *testing.T) {
 		config           dynamic.RateLimit
 		expectedMaxDelay time.Duration
 		expectedSourceIP string
+		requestHeader    string
+		expectedError    string
 	}{
 		{
 			desc: "maxDelay computation",
@@ -31,12 +34,44 @@ func TestNewRateLimiter(t *testing.T) {
 			expectedMaxDelay: 2500 * time.Microsecond,
 		},
 		{
+			desc: "maxDelay computation, low rate regime",
+			config: dynamic.RateLimit{
+				Average: 2,
+				Period:  types.Duration(10 * time.Second),
+				Burst:   10,
+			},
+			expectedMaxDelay: 500 * time.Millisecond,
+		},
+		{
 			desc: "default SourceMatcher is remote address ip strategy",
 			config: dynamic.RateLimit{
 				Average: 200,
 				Burst:   10,
 			},
 			expectedSourceIP: "127.0.0.1",
+		},
+		{
+			desc: "SourceCriterion in config is respected",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+				SourceCriterion: &dynamic.SourceCriterion{
+					RequestHeaderName: "Foo",
+				},
+			},
+			requestHeader: "bar",
+		},
+		{
+			desc: "SourceCriteria are mutually exclusive",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy:        &dynamic.IPStrategy{},
+					RequestHeaderName: "Foo",
+				},
+			},
+			expectedError: "iPStrategy and RequestHeaderName are mutually exclusive",
 		},
 	}
 
@@ -48,7 +83,11 @@ func TestNewRateLimiter(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 			h, err := New(context.Background(), next, test.config, "rate-limiter")
-			require.NoError(t, err)
+			if test.expectedError != "" {
+				assert.EqualError(t, err, test.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
 
 			rtl, _ := h.(*rateLimiter)
 			if test.expectedMaxDelay != 0 {
@@ -66,6 +105,19 @@ func TestNewRateLimiter(t *testing.T) {
 				ip, _, err := extractor(&req)
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedSourceIP, ip)
+			}
+			if test.requestHeader != "" {
+				extractor, ok := rtl.sourceMatcher.(utils.ExtractorFunc)
+				require.True(t, ok, "Not an ExtractorFunc")
+
+				req := http.Request{
+					Header: map[string][]string{
+						test.config.SourceCriterion.RequestHeaderName: {test.requestHeader},
+					},
+				}
+				hd, _, err := extractor(&req)
+				assert.NoError(t, err)
+				assert.Equal(t, test.requestHeader, hd)
 			}
 		})
 	}
@@ -127,6 +179,46 @@ func TestRateLimit(t *testing.T) {
 			incomingLoad: 200,
 			burst:        300,
 		},
+		{
+			desc: "lower than 1/s",
+			config: dynamic.RateLimit{
+				Average: 5,
+				Period:  types.Duration(10 * time.Second),
+			},
+			loadDuration: 2 * time.Second,
+			incomingLoad: 100,
+			burst:        0,
+		},
+		{
+			desc: "lower than 1/s, longer",
+			config: dynamic.RateLimit{
+				Average: 5,
+				Period:  types.Duration(10 * time.Second),
+			},
+			loadDuration: time.Minute,
+			incomingLoad: 100,
+			burst:        0,
+		},
+		{
+			desc: "lower than 1/s, longer, harsher",
+			config: dynamic.RateLimit{
+				Average: 1,
+				Period:  types.Duration(time.Minute),
+			},
+			loadDuration: time.Minute,
+			incomingLoad: 100,
+			burst:        0,
+		},
+		{
+			desc: "period below 1 second",
+			config: dynamic.RateLimit{
+				Average: 50,
+				Period:  types.Duration(500 * time.Millisecond),
+			},
+			loadDuration: 2 * time.Second,
+			incomingLoad: 300,
+			burst:        0,
+		},
 		// TODO Try to disambiguate when it fails if it is because of too high a load.
 		// {
 		// 	desc: "Zero average ==> no rate limiting",
@@ -142,6 +234,9 @@ func TestRateLimit(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
+			if test.loadDuration >= time.Minute && testing.Short() {
+				t.Skip("skipping test in short mode.")
+			}
 			t.Parallel()
 
 			reqCount := 0
@@ -152,10 +247,10 @@ func TestRateLimit(t *testing.T) {
 			h, err := New(context.Background(), next, test.config, "rate-limiter")
 			require.NoError(t, err)
 
-			period := time.Duration(1e9 / test.incomingLoad)
+			loadPeriod := time.Duration(1e9 / test.incomingLoad)
 			start := time.Now()
 			end := start.Add(test.loadDuration)
-			ticker := time.NewTicker(period)
+			ticker := time.NewTicker(loadPeriod)
 			defer ticker.Stop()
 			for {
 				if time.Now().After(end) {
@@ -179,6 +274,15 @@ func TestRateLimit(t *testing.T) {
 			stop := time.Now()
 			elapsed := stop.Sub(start)
 
+			burst := test.config.Burst
+			if burst < 1 {
+				// actual default value
+				burst = 1
+			}
+			period := time.Duration(test.config.Period)
+			if period == 0 {
+				period = time.Second
+			}
 			if test.config.Average == 0 {
 				if reqCount < 75*test.incomingLoad/100 {
 					t.Fatalf("we (arbitrarily) expect at least 75%% of the requests to go through with no rate limiting, and yet only %d/%d went through", reqCount, test.incomingLoad)
@@ -192,7 +296,8 @@ func TestRateLimit(t *testing.T) {
 			// Note that even when there is no bursty traffic,
 			// we take into account the configured burst,
 			// because it also helps absorbing non-bursty traffic.
-			wantCount := int(test.config.Average*int64(test.loadDuration/time.Second) + test.config.Burst)
+			rate := float64(test.config.Average) / float64(period)
+			wantCount := int(int64(rate*float64(test.loadDuration)) + burst)
 			// Allow for a 2% leeway
 			maxCount := wantCount * 102 / 100
 			// With very high CPU loads,
@@ -201,10 +306,10 @@ func TestRateLimit(t *testing.T) {
 			// Feel free to adjust wrt to the load on e.g. the CI.
 			minCount := wantCount * 95 / 100
 			if reqCount < minCount {
-				t.Fatalf("rate was slower than expected: %d requests in %v", reqCount, elapsed)
+				t.Fatalf("rate was slower than expected: %d requests (wanted > %d) in %v", reqCount, minCount, elapsed)
 			}
 			if reqCount > maxCount {
-				t.Fatalf("rate was faster than expected: %d requests in %v", reqCount, elapsed)
+				t.Fatalf("rate was faster than expected: %d requests (wanted < %d) in %v", reqCount, maxCount, elapsed)
 			}
 		})
 	}

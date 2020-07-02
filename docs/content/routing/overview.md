@@ -66,7 +66,7 @@ Dynamic configuration:
   [http.routers]
      # Define a connection between requests and services
      [http.routers.to-whoami]
-      rule = "Host(`domain`) && PathPrefix(`/whoami/`)"
+      rule = "Host(`example.com`) && PathPrefix(`/whoami/`)"
       # If the rule matches, applies the middleware
       middlewares = ["test-user"]
       # If the rule matches, forward to the whoami service (declared below)
@@ -90,7 +90,7 @@ http:
   routers:
     # Define a connection between requests and services
     to-whoami:
-      rule: "Host(`domain`) && PathPrefix(`/whoami/`)"
+      rule: "Host(`example.com`) && PathPrefix(`/whoami/`)"
        # If the rule matches, applies the middleware
       middlewares:
       - test-user
@@ -122,7 +122,7 @@ http:
     In this example, we've defined routing rules for http requests only.
     Traefik also supports TCP requests. To add [TCP routers](./routers/index.md) and [TCP services](./services/index.md), declare them in a TCP section like in the following.
 
-    ??? example "Adding a TCP route for TLS requests on whoami.traefik.io"
+    ??? example "Adding a TCP route for TLS requests on whoami.example.com"
 
         **Static Configuration**
         
@@ -165,7 +165,7 @@ http:
           [http.routers]
             # Define a connection between requests and services
             [http.routers.to-whoami]
-              rule = "Host(`domain`) && PathPrefix(`/whoami/`)"
+              rule = "Host(`example.com`) && PathPrefix(`/whoami/`)"
               # If the rule matches, applies the middleware
               middlewares = ["test-user"]
               # If the rule matches, forward to the whoami service (declared below)
@@ -185,7 +185,7 @@ http:
         [tcp]
           [tcp.routers]
             [tcp.routers.to-whoami-tcp]
-              rule = "HostSNI(`whoami-tcp.traefik.io`)"
+              rule = "HostSNI(`whoami-tcp.example.com`)"
               service = "whoami-tcp"
               [tcp.routers.to-whoami-tcp.tls]
 
@@ -202,7 +202,7 @@ http:
           routers:
             # Define a connection between requests and services
             to-whoami:
-              rule: Host(`domain`) && PathPrefix(`/whoami/`)
+              rule: Host(`example.com`) && PathPrefix(`/whoami/`)
               # If the rule matches, applies the middleware
               middlewares:
               - test-user
@@ -227,7 +227,7 @@ http:
           routers:
             to-whoami-tcp:
               service: whoami-tcp
-              rule: HostSNI(`whoami-tcp.traefik.io`)
+              rule: HostSNI(`whoami-tcp.example.com`)
 
           services:
             whoami-tcp:

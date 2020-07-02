@@ -100,7 +100,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 
 				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, conf.Services)
 				if errBuild != nil {
-					logger.Error(err)
+					logger.Error(errBuild)
 					continue
 				}
 			} else if len(route.Services) == 1 {
@@ -240,8 +240,9 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *v1alpha1.Tr
 
 	conf[id] = &dynamic.Service{
 		Mirroring: &dynamic.Mirroring{
-			Service: fullNameMain,
-			Mirrors: mirrorServices,
+			Service:     fullNameMain,
+			Mirrors:     mirrorServices,
+			MaxBodySize: tService.Spec.Mirroring.MaxBodySize,
 		},
 	}
 
@@ -293,22 +294,20 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 		return nil, fmt.Errorf("kubernetes service not found: %s/%s", namespace, sanitizedName)
 	}
 
-	confPort := svc.Port
-	var portSpec *corev1.ServicePort
-	for _, p := range service.Spec.Ports {
-		if confPort == p.Port {
-			portSpec = &p
-			break
-		}
-	}
-	if portSpec == nil {
-		return nil, errors.New("service port not found")
+	svcPort, err := getServicePort(service, svc.Port)
+	if err != nil {
+		return nil, err
 	}
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
+		if err != nil {
+			return nil, err
+		}
+
 		return append(servers, dynamic.Server{
-			URL: fmt.Sprintf("http://%s:%d", service.Spec.ExternalName, portSpec.Port),
+			URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, svcPort.Port),
 		}), nil
 	}
 
@@ -326,7 +325,7 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 	var port int32
 	for _, subset := range endpoints.Subsets {
 		for _, p := range subset.Ports {
-			if portSpec.Name == p.Name {
+			if svcPort.Name == p.Name {
 				port = p.Port
 				break
 			}
@@ -336,17 +335,9 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 			return nil, fmt.Errorf("cannot define a port for %s/%s", namespace, sanitizedName)
 		}
 
-		protocol := httpProtocol
-		scheme := svc.Scheme
-		switch scheme {
-		case httpProtocol, httpsProtocol, "h2c":
-			protocol = scheme
-		case "":
-			if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, httpsProtocol) {
-				protocol = httpsProtocol
-			}
-		default:
-			return nil, fmt.Errorf("invalid scheme %q specified", scheme)
+		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
+		if err != nil {
+			return nil, err
 		}
 
 		for _, addr := range subset.Addresses {
@@ -375,11 +366,11 @@ func (c configBuilder) nameAndService(ctx context.Context, namespaceService stri
 			return "", nil, err
 		}
 
-		fullName := fullServiceName(svcCtx, namespace, service.Name, service.Port)
+		fullName := fullServiceName(svcCtx, namespace, service, service.Port)
 
 		return fullName, serversLB, nil
 	case service.Kind == "TraefikService":
-		return fullServiceName(svcCtx, namespace, service.Name, 0), nil, nil
+		return fullServiceName(svcCtx, namespace, service, 0), nil, nil
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
 	}
@@ -394,27 +385,22 @@ func splitSvcNameProvider(name string) (string, string) {
 	return svc, pvd
 }
 
-func fullServiceName(ctx context.Context, namespace, serviceName string, port int32) string {
+func fullServiceName(ctx context.Context, namespace string, service v1alpha1.LoadBalancerSpec, port int32) string {
 	if port != 0 {
-		return provider.Normalize(fmt.Sprintf("%s-%s-%d", namespace, serviceName, port))
+		return provider.Normalize(fmt.Sprintf("%s-%s-%d", namespace, service.Name, port))
 	}
 
-	if !strings.Contains(serviceName, providerNamespaceSeparator) {
-		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, serviceName))
+	if !strings.Contains(service.Name, providerNamespaceSeparator) {
+		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, service.Name))
 	}
 
-	name, pName := splitSvcNameProvider(serviceName)
+	name, pName := splitSvcNameProvider(service.Name)
 	if pName == providerName {
 		return provider.Normalize(fmt.Sprintf("%s-%s", namespace, name))
 	}
 
-	// At this point, if namespace == "default", we do not know whether it had been intentionally set as such,
-	// or if we're simply hitting the value set by default.
-	// But as it is most likely very much the latter,
-	// and we do not want to systematically log spam users in that case,
-	// we skip logging whenever the namespace is "default".
-	if namespace != "default" {
-		log.FromContext(ctx).Warnf("namespace %q is ignored in cross-provider context", namespace)
+	if service.Namespace != "" {
+		log.FromContext(ctx).Warnf("namespace %q is ignored in cross-provider context", service.Namespace)
 	}
 
 	return provider.Normalize(name) + providerNamespaceSeparator + pName
@@ -447,4 +433,20 @@ func getTLSHTTP(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, k8sCli
 	}
 
 	return nil
+}
+
+// parseServiceProtocol parses the scheme, port name, and number to determine the correct protocol.
+// an error is returned if the scheme provided is invalid.
+func parseServiceProtocol(providedScheme string, portName string, portNumber int32) (string, error) {
+	switch providedScheme {
+	case httpProtocol, httpsProtocol, "h2c":
+		return providedScheme, nil
+	case "":
+		if portNumber == 443 || strings.HasPrefix(portName, httpsProtocol) {
+			return httpsProtocol, nil
+		}
+		return httpProtocol, nil
+	}
+
+	return "", fmt.Errorf("invalid scheme %q specified", providedScheme)
 }

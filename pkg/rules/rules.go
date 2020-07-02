@@ -22,7 +22,7 @@ var funcs = map[string]func(*mux.Route, ...string) error{
 	"Query":         query,
 }
 
-// Router handle routing with rules
+// Router handle routing with rules.
 type Router struct {
 	*mux.Router
 	parser predicate.Parser
@@ -45,7 +45,7 @@ func NewRouter() (*Router, error) {
 func (r *Router) AddRoute(rule string, priority int, handler http.Handler) error {
 	parse, err := r.parser.Parse(rule)
 	if err != nil {
-		return fmt.Errorf("error while parsing rule %s: %v", rule, err)
+		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
 	buildTree, ok := parse.(treeBuilder)

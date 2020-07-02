@@ -1,11 +1,11 @@
 package ingress
 
 import (
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	"k8s.io/api/networking/v1beta1"
 )
 
-func buildIngress(opts ...func(*extensionsv1beta1.Ingress)) *extensionsv1beta1.Ingress {
-	i := &extensionsv1beta1.Ingress{}
+func buildIngress(opts ...func(*v1beta1.Ingress)) *v1beta1.Ingress {
+	i := &v1beta1.Ingress{}
 	i.Kind = "Ingress"
 	for _, opt := range opts {
 		opt(i)
@@ -13,15 +13,15 @@ func buildIngress(opts ...func(*extensionsv1beta1.Ingress)) *extensionsv1beta1.I
 	return i
 }
 
-func iNamespace(value string) func(*extensionsv1beta1.Ingress) {
-	return func(i *extensionsv1beta1.Ingress) {
+func iNamespace(value string) func(*v1beta1.Ingress) {
+	return func(i *v1beta1.Ingress) {
 		i.Namespace = value
 	}
 }
 
-func iRules(opts ...func(*extensionsv1beta1.IngressSpec)) func(*extensionsv1beta1.Ingress) {
-	return func(i *extensionsv1beta1.Ingress) {
-		s := &extensionsv1beta1.IngressSpec{}
+func iRules(opts ...func(*v1beta1.IngressSpec)) func(*v1beta1.Ingress) {
+	return func(i *v1beta1.Ingress) {
+		s := &v1beta1.IngressSpec{}
 		for _, opt := range opts {
 			opt(s)
 		}
@@ -29,9 +29,9 @@ func iRules(opts ...func(*extensionsv1beta1.IngressSpec)) func(*extensionsv1beta
 	}
 }
 
-func iRule(opts ...func(*extensionsv1beta1.IngressRule)) func(*extensionsv1beta1.IngressSpec) {
-	return func(spec *extensionsv1beta1.IngressSpec) {
-		r := &extensionsv1beta1.IngressRule{}
+func iRule(opts ...func(*v1beta1.IngressRule)) func(*v1beta1.IngressSpec) {
+	return func(spec *v1beta1.IngressSpec) {
+		r := &v1beta1.IngressRule{}
 		for _, opt := range opts {
 			opt(r)
 		}
@@ -39,24 +39,24 @@ func iRule(opts ...func(*extensionsv1beta1.IngressRule)) func(*extensionsv1beta1
 	}
 }
 
-func iHost(name string) func(*extensionsv1beta1.IngressRule) {
-	return func(rule *extensionsv1beta1.IngressRule) {
+func iHost(name string) func(*v1beta1.IngressRule) {
+	return func(rule *v1beta1.IngressRule) {
 		rule.Host = name
 	}
 }
 
-func iTLSes(opts ...func(*extensionsv1beta1.IngressTLS)) func(*extensionsv1beta1.Ingress) {
-	return func(i *extensionsv1beta1.Ingress) {
+func iTLSes(opts ...func(*v1beta1.IngressTLS)) func(*v1beta1.Ingress) {
+	return func(i *v1beta1.Ingress) {
 		for _, opt := range opts {
-			iTLS := extensionsv1beta1.IngressTLS{}
+			iTLS := v1beta1.IngressTLS{}
 			opt(&iTLS)
 			i.Spec.TLS = append(i.Spec.TLS, iTLS)
 		}
 	}
 }
 
-func iTLS(secret string, hosts ...string) func(*extensionsv1beta1.IngressTLS) {
-	return func(i *extensionsv1beta1.IngressTLS) {
+func iTLS(secret string, hosts ...string) func(*v1beta1.IngressTLS) {
+	return func(i *v1beta1.IngressTLS) {
 		i.SecretName = secret
 		i.Hosts = hosts
 	}
