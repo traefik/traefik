@@ -28,10 +28,6 @@ theme:
 
 copyright: "Copyright &copy; 2016-2020 Containous"
 
-google_analytics:
-  - 'UA-51880359-3'
-  - 'docs.traefik.io'
-
 extra_css:
   - assets/styles/extra.css # Our custom styles
   - assets/styles/atom-one-light.css # HightlightJS's CSS theme
