@@ -26,11 +26,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: "Copyright &copy; 2016-2019 Containous"
-
-google_analytics:
-  - 'UA-51880359-3'
-  - 'docs.traefik.io'
+copyright: "Copyright &copy; 2016-2020 Containous"
 
 extra_css:
   - assets/styles/extra.css # Our custom styles
