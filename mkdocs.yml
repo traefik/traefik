@@ -28,6 +28,7 @@ theme:
 
 copyright: "Copyright &copy; 2016-2019 Containous"
 
+# only to force the use of the analytics partials
 google_analytics:
   - 'UA-51880359-3'
   - 'docs.traefik.io'
