@@ -18,12 +18,12 @@ func (n MockTracer) StartSpan(operationName string, opts ...opentracing.StartSpa
 }
 
 // Inject belongs to the Tracer interface.
-func (n MockTracer) Inject(sp opentracing.SpanContext, format interface{}, carrier interface{}) error {
+func (n MockTracer) Inject(sp opentracing.SpanContext, format, carrier interface{}) error {
 	return nil
 }
 
 // Extract belongs to the Tracer interface.
-func (n MockTracer) Extract(format interface{}, carrier interface{}) (opentracing.SpanContext, error) {
+func (n MockTracer) Extract(format, carrier interface{}) (opentracing.SpanContext, error) {
 	return nil, opentracing.ErrSpanContextNotFound
 }
 

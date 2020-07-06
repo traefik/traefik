@@ -22,7 +22,7 @@ import (
 type WebsocketSuite struct{ BaseSuite }
 
 func (s *WebsocketSuite) TestBase(c *check.C) {
-	var upgrader = gorillawebsocket.Upgrader{} // use default options
+	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
@@ -72,7 +72,7 @@ func (s *WebsocketSuite) TestBase(c *check.C) {
 }
 
 func (s *WebsocketSuite) TestWrongOrigin(c *check.C) {
-	var upgrader = gorillawebsocket.Upgrader{} // use default options
+	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
@@ -122,7 +122,7 @@ func (s *WebsocketSuite) TestWrongOrigin(c *check.C) {
 
 func (s *WebsocketSuite) TestOrigin(c *check.C) {
 	// use default options
-	var upgrader = gorillawebsocket.Upgrader{}
+	upgrader := gorillawebsocket.Upgrader{}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
@@ -180,7 +180,7 @@ func (s *WebsocketSuite) TestOrigin(c *check.C) {
 }
 
 func (s *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
-	var upgrader = gorillawebsocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
+	upgrader := gorillawebsocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
 		return true
 	}}
 
@@ -240,7 +240,7 @@ func (s *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 }
 
 func (s *WebsocketSuite) TestSSLTermination(c *check.C) {
-	var upgrader = gorillawebsocket.Upgrader{} // use default options
+	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
@@ -297,11 +297,10 @@ func (s *WebsocketSuite) TestSSLTermination(c *check.C) {
 }
 
 func (s *WebsocketSuite) TestBasicAuth(c *check.C) {
-	var upgrader = gorillawebsocket.Upgrader{} // use default options
+	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
-
 		if err != nil {
 			return
 		}
@@ -390,7 +389,7 @@ func (s *WebsocketSuite) TestSpecificResponseFromBackend(c *check.C) {
 }
 
 func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {
-	var upgrader = gorillawebsocket.Upgrader{} // use default options
+	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c.Assert(r.URL.EscapedPath(), check.Equals, "/ws/http%3A%2F%2Ftest")
@@ -441,7 +440,7 @@ func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {
 }
 
 func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
-	var upgrader = gorillawebsocket.Upgrader{} // use default options
+	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
@@ -504,7 +503,7 @@ func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
 }
 
 func (s *WebsocketSuite) TestHeaderAreForwared(c *check.C) {
-	var upgrader = gorillawebsocket.Upgrader{} // use default options
+	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c.Assert(r.Header.Get("X-Token"), check.Equals, "my-token")

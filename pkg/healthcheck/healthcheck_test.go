@@ -16,8 +16,10 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 )
 
-const healthCheckInterval = 200 * time.Millisecond
-const healthCheckTimeout = 100 * time.Millisecond
+const (
+	healthCheckInterval = 200 * time.Millisecond
+	healthCheckTimeout  = 100 * time.Millisecond
+)
 
 type testHandler struct {
 	done           func()
@@ -148,7 +150,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			assert.Equal(t, test.expectedNumRemovedServers, lb.numRemovedServers, "removed servers")
 			assert.Equal(t, test.expectedNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
 			// FIXME re add metrics
-			//assert.Equal(t, test.expectedGaugeValue, collectingMetrics.Gauge.GaugeValue, "ServerUp Gauge")
+			// assert.Equal(t, test.expectedGaugeValue, collectingMetrics.Gauge.GaugeValue, "ServerUp Gauge")
 		})
 	}
 }

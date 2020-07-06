@@ -30,7 +30,7 @@ func (d *Domain) Set(domains []string) {
 }
 
 // MatchDomain returns true if a domain match the cert domain.
-func MatchDomain(domain string, certDomain string) bool {
+func MatchDomain(domain, certDomain string) bool {
 	if domain == certDomain {
 		return true
 	}

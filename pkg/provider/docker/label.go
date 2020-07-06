@@ -55,7 +55,7 @@ func getStringMultipleStrict(labels map[string]string, labelNames ...string) (ma
 }
 
 // getStringValue get string value associated to a label.
-func getStringValue(labels map[string]string, labelName string, defaultValue string) string {
+func getStringValue(labels map[string]string, labelName, defaultValue string) string {
 	if value, ok := labels[labelName]; ok && len(value) > 0 {
 		return value
 	}

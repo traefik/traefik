@@ -101,7 +101,7 @@ func (f *flagSet) parseOne() (bool, error) {
 	return true, nil
 }
 
-func (f *flagSet) setValue(name string, value string) {
+func (f *flagSet) setValue(name, value string) {
 	srcKey := parser.DefaultRootName + "." + name
 	neutralKey := strings.ToLower(srcKey)
 

@@ -83,7 +83,6 @@ func (c *FakeTraefikServices) List(opts v1.ListOptions) (result *v1alpha1.Traefi
 func (c *FakeTraefikServices) Watch(opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(traefikservicesResource, c.ns, opts))
-
 }
 
 // Create takes the representation of a traefikService and creates it.  Returns the server's representation of the traefikService, and an error, if there is any.

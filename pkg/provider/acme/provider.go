@@ -27,10 +27,8 @@ import (
 	"github.com/go-acme/lego/v3/registration"
 )
 
-var (
-	// oscpMustStaple enables OSCP stapling as from https://github.com/go-acme/lego/issues/270.
-	oscpMustStaple = false
-)
+// oscpMustStaple enables OSCP stapling as from https://github.com/go-acme/lego/issues/270.
+var oscpMustStaple = false
 
 // Configuration holds ACME configuration provided by users.
 type Configuration struct {
@@ -145,7 +143,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-func isAccountMatchingCaServer(ctx context.Context, accountURI string, serverURI string) bool {
+func isAccountMatchingCaServer(ctx context.Context, accountURI, serverURI string) bool {
 	logger := log.FromContext(ctx)
 
 	aru, err := url.Parse(accountURI)
@@ -492,7 +490,7 @@ func (p *Provider) addResolvingDomains(resolvingDomains []string) {
 	}
 }
 
-func (p *Provider) addCertificateForDomain(domain types.Domain, certificate []byte, key []byte, tlsStore string) {
+func (p *Provider) addCertificateForDomain(domain types.Domain, certificate, key []byte, tlsStore string) {
 	p.certsChan <- &CertAndStore{Certificate: Certificate{Certificate: certificate, Key: key, Domain: domain}, Store: tlsStore}
 }
 
@@ -640,7 +638,6 @@ func (p *Provider) renewCertificates(ctx context.Context) {
 				PrivateKey:  cert.Key,
 				Certificate: cert.Certificate.Certificate,
 			}, true, oscpMustStaple)
-
 			if err != nil {
 				logger.Errorf("Error renewing certificate from LE: %v, %v", cert.Domain, err)
 				continue
@@ -679,7 +676,7 @@ func (p *Provider) getUncheckedDomains(ctx context.Context, domainsToCheck []str
 	return searchUncheckedDomains(ctx, domainsToCheck, allDomains)
 }
 
-func searchUncheckedDomains(ctx context.Context, domainsToCheck []string, existentDomains []string) []string {
+func searchUncheckedDomains(ctx context.Context, domainsToCheck, existentDomains []string) []string {
 	var uncheckedDomains []string
 	for _, domainToCheck := range domainsToCheck {
 		if !isDomainAlreadyChecked(domainToCheck, existentDomains) {

@@ -43,7 +43,7 @@ func (s *DockerSuite) startContainerWithLabels(c *check.C, image string, labels 
 	})
 }
 
-func (s *DockerSuite) startContainerWithNameAndLabels(c *check.C, name string, image string, labels map[string]string, args ...string) string {
+func (s *DockerSuite) startContainerWithNameAndLabels(c *check.C, name, image string, labels map[string]string, args ...string) string {
 	return s.startContainerWithConfig(c, image, d.ContainerConfig{
 		Name:   name,
 		Cmd:    args,
