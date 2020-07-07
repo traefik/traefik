@@ -139,9 +139,7 @@ func matchHost(req *http.Request, insecureSNI bool, hosts ...string) bool {
 
 	for _, host := range hosts {
 		if reqHost == host {
-			if insecureSNI && req.TLS != nil && reqHost != req.TLS.ServerName {
-				logger.Debugf("Router reached with Host(%q) different from SNI(%q)", reqHost, req.TLS.ServerName)
-			}
+			logHostSNI(insecureSNI, req, reqHost)
 			return true
 		}
 
@@ -149,9 +147,7 @@ func matchHost(req *http.Request, insecureSNI bool, hosts ...string) bool {
 		if last := len(host) - 1; last >= 0 && host[last] == '.' {
 			h := host[:last]
 			if reqHost == h {
-				if insecureSNI && req.TLS != nil && reqHost != req.TLS.ServerName {
-					logger.Debugf("Router reached with Host(%q) different from SNI(%q)", reqHost, req.TLS.ServerName)
-				}
+				logHostSNI(insecureSNI, req, reqHost)
 				return true
 			}
 		}
@@ -160,14 +156,18 @@ func matchHost(req *http.Request, insecureSNI bool, hosts ...string) bool {
 		if last := len(reqHost) - 1; last >= 0 && reqHost[last] == '.' {
 			h := reqHost[:last]
 			if h == host {
-				if insecureSNI && req.TLS != nil && reqHost != req.TLS.ServerName {
-					logger.Debugf("Router reached with Host(%q) different from SNI(%q)", reqHost, req.TLS.ServerName)
-				}
+				logHostSNI(insecureSNI, req, reqHost)
 				return true
 			}
 		}
 	}
 	return false
+}
+
+func logHostSNI(insecureSNI bool, req *http.Request, reqHost string) {
+	if insecureSNI && req.TLS != nil && !strings.EqualFold(reqHost, req.TLS.ServerName) {
+		log.FromContext(req.Context()).Debugf("Router reached with Host(%q) different from SNI(%q)", reqHost, req.TLS.ServerName)
+	}
 }
 
 func hostSNI(route *mux.Route, hosts ...string) error {
@@ -183,34 +183,31 @@ func hostSNI(route *mux.Route, hosts ...string) error {
 }
 
 func matchSNI(req *http.Request, hosts ...string) bool {
-	// HostSNI shouldn't apply with HTTP
 	if req.TLS == nil {
 		return true
 	}
 
-	sni := strings.ToLower(req.TLS.ServerName)
-
-	if sni == "" {
+	if req.TLS.ServerName == "" {
 		return false
 	}
 
 	for _, host := range hosts {
-		if sni == host {
+		if strings.EqualFold(req.TLS.ServerName, host) {
 			return true
 		}
 
 		// Check for match on trailing period on host
 		if last := len(host) - 1; last >= 0 && host[last] == '.' {
 			h := host[:last]
-			if sni == h {
+			if strings.EqualFold(req.TLS.ServerName, h) {
 				return true
 			}
 		}
 
 		// Check for match on trailing period on request
-		if last := len(sni) - 1; last >= 0 && sni[last] == '.' {
-			h := sni[:last]
-			if h == host {
+		if last := len(req.TLS.ServerName) - 1; last >= 0 && req.TLS.ServerName[last] == '.' {
+			h := req.TLS.ServerName[:last]
+			if strings.EqualFold(h, host) {
 				return true
 			}
 		}
@@ -220,14 +217,17 @@ func matchSNI(req *http.Request, hosts ...string) bool {
 }
 
 func hostSecure(route *mux.Route, hosts ...string) error {
+	for i, host := range hosts {
+		hosts[i] = strings.ToLower(host)
+	}
+
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
 		for _, host := range hosts {
-			host = strings.ToLower(host)
-
 			if matchSNI(req, host) && matchHost(req, false, host) {
 				return true
 			}
 		}
+
 		return false
 	})
 
