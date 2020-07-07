@@ -2,11 +2,14 @@ package router
 
 import (
 	"context"
+	"crypto/tls"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/containous/traefik/v2/pkg/rules"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
@@ -300,6 +303,223 @@ func TestRouterManager_Get(t *testing.T) {
 
 			reqHost := requestdecorator.New(nil)
 			reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)
+
+			assert.Equal(t, test.expected.StatusCode, w.Code)
+
+			for key, value := range test.expected.RequestHeaders {
+				assert.Equal(t, value, req.Header.Get(key))
+			}
+		})
+	}
+}
+
+func TestRouterManager_SNI(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	type expectedResult struct {
+		StatusCode     int
+		RequestHeaders map[string]string
+	}
+
+	testCases := []struct {
+		desc              string
+		routersConfig     map[string]*dynamic.Router
+		serviceConfig     map[string]*dynamic.Service
+		middlewaresConfig map[string]*dynamic.Middleware
+		entryPoint        string
+		sni               string
+		insecureSNI       bool
+		expected          expectedResult
+	}{
+		{
+			desc: "Insecure SNI without TLS",
+			routersConfig: map[string]*dynamic.Router{
+				"foo@provider-1": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					Priority:    0,
+				},
+			},
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service@provider-1": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: server.URL,
+							},
+						},
+					},
+				},
+			},
+			insecureSNI: true,
+			entryPoint:  "web",
+			expected:    expectedResult{StatusCode: http.StatusOK},
+		},
+		{
+			desc: "Secure SNI without TLS",
+			routersConfig: map[string]*dynamic.Router{
+				"foo@provider-1": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					Priority:    0,
+				},
+			},
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service@provider-1": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: server.URL,
+							},
+						},
+					},
+				},
+			},
+			entryPoint: "web",
+			expected:   expectedResult{StatusCode: http.StatusOK},
+		},
+		{
+			desc: "Secure SNI with TLS without sni",
+			routersConfig: map[string]*dynamic.Router{
+				"foo@provider-1": {
+					EntryPoints: []string{"websecure"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					Priority:    0,
+					TLS:         &dynamic.RouterTLSConfig{},
+				},
+			},
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service@provider-1": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: server.URL,
+							},
+						},
+					},
+				},
+			},
+			entryPoint: "websecure",
+			expected:   expectedResult{StatusCode: http.StatusNotFound},
+		},
+		{
+			desc: "Secure SNI with TLS with sni request",
+			routersConfig: map[string]*dynamic.Router{
+				"foo@provider-1": {
+					EntryPoints: []string{"websecure"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					Priority:    0,
+					TLS:         &dynamic.RouterTLSConfig{},
+				},
+			},
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service@provider-1": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: server.URL,
+							},
+						},
+					},
+				},
+			},
+			entryPoint: "websecure",
+			sni:        "foo.bar",
+			expected:   expectedResult{StatusCode: http.StatusOK},
+		},
+		{
+			desc: "Insecure SNI with TLS without sni",
+			routersConfig: map[string]*dynamic.Router{
+				"foo@provider-1": {
+					EntryPoints: []string{"websecure"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					Priority:    0,
+					TLS:         &dynamic.RouterTLSConfig{},
+				},
+			},
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service@provider-1": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: server.URL,
+							},
+						},
+					},
+				},
+			},
+			entryPoint:  "websecure",
+			insecureSNI: true,
+			expected:    expectedResult{StatusCode: http.StatusOK},
+		},
+		{
+			desc: "Secure SNI with TLS with sni uppercase",
+			routersConfig: map[string]*dynamic.Router{
+				"foo@provider-1": {
+					EntryPoints: []string{"websecure"},
+					Service:     "foo-service",
+					Rule:        "Host(`Foo.bar`)",
+					Priority:    0,
+					TLS:         &dynamic.RouterTLSConfig{},
+				},
+			},
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service@provider-1": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: server.URL,
+							},
+						},
+					},
+				},
+			},
+			entryPoint: "websecure",
+			sni:        "Foo.bar",
+			expected:   expectedResult{StatusCode: http.StatusOK},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			rtConf := runtime.NewConfig(dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Services:    test.serviceConfig,
+					Routers:     test.routersConfig,
+					Middlewares: test.middlewaresConfig,
+				},
+			})
+
+			rules.EnableDomainFronting(test.insecureSNI)
+			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
+			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
+
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
+
+			handlers := routerManager.BuildHandlers(context.Background(), []string{test.entryPoint}, test.entryPoint == "websecure")
+
+			w := httptest.NewRecorder()
+			req := testhelpers.MustNewRequest(http.MethodGet, "https://foo.bar/", nil)
+
+			if test.entryPoint == "websecure" {
+				req.TLS = &tls.ConnectionState{}
+
+				if test.sni != "" {
+					req.TLS.ServerName = test.sni
+				}
+			}
+
+			reqHost := requestdecorator.New(nil)
+			reqHost.ServeHTTP(w, req, handlers[test.entryPoint].ServeHTTP)
 
 			assert.Equal(t, test.expected.StatusCode, w.Code)
 
@@ -683,7 +903,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
-
+			// TODO
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
 			// even though rtConf was passed by argument to the manager builders above,

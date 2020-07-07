@@ -682,6 +682,18 @@ func TestParseDomains(t *testing.T) {
 			errorExpected: false,
 		},
 		{
+			description:   "Many host rules upper",
+			expression:    "HOST(`foo.bar`,`test.bar`)",
+			domain:        []string{"foo.bar", "test.bar"},
+			errorExpected: false,
+		},
+		{
+			description:   "Many host rules lower",
+			expression:    "host(`foo.bar`,`test.bar`)",
+			domain:        []string{"foo.bar", "test.bar"},
+			errorExpected: false,
+		},
+		{
 			description:   "No host rule",
 			expression:    "Path(`/test`)",
 			errorExpected: false,
