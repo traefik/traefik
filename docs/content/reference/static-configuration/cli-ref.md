@@ -162,6 +162,9 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `--global.checknewversion`:  
 Periodically check if a new version has been released. (Default: ```false```)
 
+`--global.insecuresni`:  
+Allow domain fronting. If the option is not specified, it will be disabled by default. (Default: ```false```)
+
 `--global.sendanonymoususage`:  
 Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default. (Default: ```false```)
 
