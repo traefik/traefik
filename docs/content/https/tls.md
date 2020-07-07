@@ -132,15 +132,17 @@ If no default certificate is provided, Traefik generates and uses a self-signed 
 
 ## Domain fronting
 
-Basically, the [domain fronting](https://en.wikipedia.org/wiki/Domain_fronting) allows to open a connection with a
-specific domain name thanks to the [Server Name Indication](https://en.wikipedia.org/wiki/Server_Name_Indication) then
-access a service with another domain set in the `Host` header.
+Basically, [domain fronting](https://en.wikipedia.org/wiki/Domain_fronting) is a technique that allows to open a 
+connection with a specific domain name, thanks to the 
+[Server Name Indication](https://en.wikipedia.org/wiki/Server_Name_Indication), then access a service with another 
+domain set in the HTTP `Host` header.
 
-Since the `v2.2.2`, Traefik avoids (by default) using this capability.
-As it is a valid but advanced use case, the `HostHeader` and `HostSNI` [rules](../routing/routers/index.md#rule) allow to fine tune the routing with the `Server Name Indication` and `Host header` value.
- 
-If you encounter routing issues (404 Not found response) with a previously working configuration, 
-please refer to the [migration guide](../migration/v2.md) to update your configuration.
+Since the `v2.2.2`, Traefik avoids (by default) using domain fronting.
+As it is valid for advanced use cases, the `HostHeader` and `HostSNI` [rules](../routing/routers/index.md#rule) allow 
+to fine tune the routing with the `Server Name Indication` and `Host header` value.
+
+If you encounter routing issues with a previously working configuration, please refer to the 
+[migration guide](../migration/v2.md) to update your configuration.
 
 ## TLS Options
 

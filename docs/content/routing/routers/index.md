@@ -228,18 +228,18 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 
 The table below lists all the available matchers:
 
-| Rule                                                                   | Description                                                                                                                       |
-|------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| ```Headers(`key`, `value`)```                                          | Check if there is a key `key`defined in the headers, with the value `value`                                                       |
-| ```HeadersRegexp(`key`, `regexp`)```                                   | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp`                    |
-| ```Host(`example.com`, ...)```                                         | By default, is equivalent to `HostHeader` **AND** `HostSNI` rules. If `insecureSNI` is true, equivalent to the `HostHeader` rule  |
-| ```HostHeader(`example.com`, ...)```                                   | Check if the request domain (host header value) targets one of the given `domains`.                                               |
-| ```HostSNI(`example.com`, ...)```                                      | Check if the [Server Name Indication](https://en.wikipedia.org/wiki/Server_Name_Indication) corresponds to the given `domains`.   |
-| ```HostRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Check if the request domain matches the given `regexp`.                                                                           |
-| ```Method(`GET`, ...)```                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)                               |
-| ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                                          |
-| ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.                                  |
-| ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                                          |
+| Rule                                                                   | Description                                                                                                                                                                                                     |
+|------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ```Headers(`key`, `value`)```                                          | Check if there is a key `key`defined in the headers, with the value `value`                                                                                                                                     |
+| ```HeadersRegexp(`key`, `regexp`)```                                   | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp`                                                                                                  |
+| ```Host(`example.com`, ...)```                                         | By default, is equivalent to `HostHeader` **AND** `HostSNI` rules. See [Domain Fronting](../../https/tls.md#domain-fronting) and the [migration guide](../../migration/v2.md#domain-fronting) for more details. |
+| ```HostHeader(`example.com`, ...)```                                   | Check if the request domain (host header value) targets one of the given `domains`.                                                                                                                             |
+| ```HostSNI(`example.com`, ...)```                                      | Check if the [Server Name Indication](https://en.wikipedia.org/wiki/Server_Name_Indication) corresponds to the given `domains`.                                                                                 |
+| ```HostRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Check if the request domain matches the given `regexp`.                                                                                                                                                         |
+| ```Method(`GET`, ...)```                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)                                                                                                             |
+| ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                                                                                                                        |
+| ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.                                                                                                                |
+| ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                                                                                                                        | 
 
 !!! important "Regexp Syntax"
 
