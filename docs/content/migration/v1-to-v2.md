@@ -39,8 +39,8 @@ Then any router can refer to an instance of the wanted middleware.
       - "traefik.frontend.auth.basic.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     ```
 
-```yaml tab="K8s Ingress"
-apiVersion: networking.k8s.io/v1beta1
+    ```yaml tab="K8s Ingress"
+    apiVersion: networking.k8s.io/v1beta1
     kind: Ingress
     metadata:
       name: traefik

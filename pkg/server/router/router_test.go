@@ -9,14 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/v2/pkg/rules"
-
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/containous/traefik/v2/pkg/responsemodifiers"
+	"github.com/containous/traefik/v2/pkg/rules"
 	"github.com/containous/traefik/v2/pkg/server/middleware"
 	"github.com/containous/traefik/v2/pkg/server/service"
 	"github.com/containous/traefik/v2/pkg/testhelpers"
@@ -903,7 +902,6 @@ func TestRuntimeConfiguration(t *testing.T) {
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
-			// TODO
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
 			// even though rtConf was passed by argument to the manager builders above,
@@ -998,7 +996,7 @@ type staticTransport struct {
 	res *http.Response
 }
 
-func (t *staticTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+func (t *staticTransport) RoundTrip(_ *http.Request) (*http.Response, error) {
 	return t.res, nil
 }
 

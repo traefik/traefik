@@ -118,9 +118,11 @@ func host(route *mux.Route, hosts ...string) error {
 }
 
 func matchHost(req *http.Request, insecureSNI bool, hosts ...string) bool {
+	logger := log.FromContext(req.Context())
+
 	reqHost := requestdecorator.GetCanonizedHost(req.Context())
 	if len(reqHost) == 0 {
-		log.FromContext(req.Context()).Warnf("Could not retrieve CanonizedHost, rejecting %s", req.Host)
+		logger.Warnf("Could not retrieve CanonizedHost, rejecting %s", req.Host)
 		return false
 	}
 
@@ -130,7 +132,7 @@ func matchHost(req *http.Request, insecureSNI bool, hosts ...string) bool {
 			if strings.EqualFold(reqHost, host) || strings.EqualFold(flatH, host) {
 				return true
 			}
-			log.FromContext(req.Context()).Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqHost, flatH, host)
+			logger.Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqHost, flatH, host)
 		}
 		return false
 	}
@@ -138,7 +140,7 @@ func matchHost(req *http.Request, insecureSNI bool, hosts ...string) bool {
 	for _, host := range hosts {
 		if reqHost == host {
 			if insecureSNI && req.TLS != nil && reqHost != req.TLS.ServerName {
-				log.FromContext(req.Context()).Debugf("Router reached with Host(%q) different from SNI(%q)", reqHost, req.TLS.ServerName)
+				logger.Debugf("Router reached with Host(%q) different from SNI(%q)", reqHost, req.TLS.ServerName)
 			}
 			return true
 		}
@@ -148,7 +150,7 @@ func matchHost(req *http.Request, insecureSNI bool, hosts ...string) bool {
 			h := host[:last]
 			if reqHost == h {
 				if insecureSNI && req.TLS != nil && reqHost != req.TLS.ServerName {
-					log.FromContext(req.Context()).Debugf("Router reached with Host(%q) different from SNI(%q)", reqHost, req.TLS.ServerName)
+					logger.Debugf("Router reached with Host(%q) different from SNI(%q)", reqHost, req.TLS.ServerName)
 				}
 				return true
 			}
@@ -159,7 +161,7 @@ func matchHost(req *http.Request, insecureSNI bool, hosts ...string) bool {
 			h := reqHost[:last]
 			if h == host {
 				if insecureSNI && req.TLS != nil && reqHost != req.TLS.ServerName {
-					log.FromContext(req.Context()).Debugf("Router reached with Host(%q) different from SNI(%q)", reqHost, req.TLS.ServerName)
+					logger.Debugf("Router reached with Host(%q) different from SNI(%q)", reqHost, req.TLS.ServerName)
 				}
 				return true
 			}
@@ -176,6 +178,7 @@ func hostSNI(route *mux.Route, hosts ...string) error {
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
 		return matchSNI(req, hosts...)
 	})
+
 	return nil
 }
 
@@ -212,6 +215,7 @@ func matchSNI(req *http.Request, hosts ...string) bool {
 			}
 		}
 	}
+
 	return false
 }
 
@@ -226,6 +230,7 @@ func hostSecure(route *mux.Route, hosts ...string) error {
 		}
 		return false
 	})
+
 	return nil
 }
 
