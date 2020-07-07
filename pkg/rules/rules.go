@@ -216,12 +216,15 @@ func matchSNI(req *http.Request, hosts ...string) bool {
 }
 
 func hostSecure(route *mux.Route, hosts ...string) error {
-	for i, host := range hosts {
-		hosts[i] = strings.ToLower(host)
-	}
-
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		return matchSNI(req, hosts...) && matchHost(req, false, hosts...)
+		for _, host := range hosts {
+			host = strings.ToLower(host)
+
+			if matchSNI(req, host) && matchHost(req, false, host) {
+				return true
+			}
+		}
+		return false
 	})
 	return nil
 }
