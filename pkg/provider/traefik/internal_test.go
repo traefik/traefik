@@ -209,7 +209,8 @@ func Test_createConfiguration(t *testing.T) {
 					},
 				},
 			},
-		}, {
+		},
+		{
 			desc: "redirection_port.json",
 			staticCfg: static.Configuration{
 				EntryPoints: map[string]*static.EntryPoint{
@@ -248,7 +249,7 @@ func Test_createConfiguration(t *testing.T) {
 				newJSON, err := json.MarshalIndent(cfg, "", "  ")
 				require.NoError(t, err)
 
-				err = ioutil.WriteFile(filename, newJSON, 0644)
+				err = ioutil.WriteFile(filename, newJSON, 0o644)
 				require.NoError(t, err)
 			}
 

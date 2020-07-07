@@ -101,7 +101,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
 			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
-
 			if err != nil {
 				logger.Errorf("Error watching kubernetes events: %v", err)
 				timer := time.NewTimer(1 * time.Second)
@@ -627,7 +626,7 @@ func makeID(namespace, name string) string {
 	return namespace + "-" + name
 }
 
-func shouldProcessIngress(ingressClass string, ingressClassAnnotation string) bool {
+func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
 	return ingressClass == ingressClassAnnotation ||
 		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
 }

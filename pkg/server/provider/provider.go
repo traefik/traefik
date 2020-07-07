@@ -40,6 +40,6 @@ func GetQualifiedName(ctx context.Context, elementName string) string {
 }
 
 // MakeQualifiedName Creates a qualified name for an element.
-func MakeQualifiedName(providerName string, elementName string) string {
+func MakeQualifiedName(providerName, elementName string) string {
 	return elementName + "@" + providerName
 }

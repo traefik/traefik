@@ -83,7 +83,6 @@ func (c *FakeIngressRouteTCPs) List(opts v1.ListOptions) (result *v1alpha1.Ingre
 func (c *FakeIngressRouteTCPs) Watch(opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(ingressroutetcpsResource, c.ns, opts))
-
 }
 
 // Create takes the representation of a ingressRouteTCP and creates it.  Returns the server's representation of the ingressRouteTCP, and an error, if there is any.

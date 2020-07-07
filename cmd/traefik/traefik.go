@@ -403,7 +403,7 @@ func configureLogging(staticConfiguration *static.Configuration) {
 	if len(logFile) > 0 {
 		dir := filepath.Dir(logFile)
 
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
 			log.WithoutContext().Errorf("Failed to create log path %s: %s", dir, err)
 		}
 

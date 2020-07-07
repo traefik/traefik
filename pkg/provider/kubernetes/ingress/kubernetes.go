@@ -319,7 +319,7 @@ func buildHostRule(host string) string {
 	return "Host(`" + host + "`)"
 }
 
-func shouldProcessIngress(ingressClass string, ingressClassAnnotation string) bool {
+func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
 	return ingressClass == ingressClassAnnotation ||
 		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
 }

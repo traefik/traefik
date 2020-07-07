@@ -47,7 +47,7 @@ func (hr *Resolver) CNAMEFlatten(ctx context.Context, host string) string {
 	}
 
 	logger := log.FromContext(ctx)
-	var cacheDuration = 0 * time.Second
+	cacheDuration := 0 * time.Second
 	for depth := 0; depth < hr.ResolvDepth; depth++ {
 		resolv, err := cnameResolve(ctx, request, hr.ResolvConfig)
 		if err != nil {
@@ -73,7 +73,7 @@ func (hr *Resolver) CNAMEFlatten(ctx context.Context, host string) string {
 }
 
 // cnameResolve resolves CNAME if exists, and return with the highest TTL.
-func cnameResolve(ctx context.Context, host string, resolvPath string) (*cnameResolv, error) {
+func cnameResolve(ctx context.Context, host, resolvPath string) (*cnameResolv, error) {
 	config, err := dns.ClientConfigFromFile(resolvPath)
 	if err != nil {
 		return nil, fmt.Errorf("invalid resolver configuration file: %s", resolvPath)
@@ -102,7 +102,7 @@ func cnameResolve(ctx context.Context, host string, resolvPath string) (*cnameRe
 	return result[0], nil
 }
 
-func getRecord(client *dns.Client, msg *dns.Msg, server string, port string) (*cnameResolv, error) {
+func getRecord(client *dns.Client, msg *dns.Msg, server, port string) (*cnameResolv, error) {
 	resp, _, err := client.Exchange(msg, net.JoinHostPort(server, port))
 	if err != nil {
 		return nil, fmt.Errorf("exchange error for server %s: %w", server, err)

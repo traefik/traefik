@@ -682,7 +682,8 @@ func TestAddMetadata(t *testing.T) {
 							Children: []*Node{
 								{Name: "Bar", FieldName: "Bar", Value: "bir", Kind: reflect.String},
 								{Name: "Bur", FieldName: "Bur", Value: "fuu", Kind: reflect.String},
-							}},
+							},
+						},
 					},
 				},
 			},
@@ -728,8 +729,10 @@ func TestAddMetadata(t *testing.T) {
 									Kind:      reflect.Struct,
 									Children: []*Node{
 										{Name: "Bur", FieldName: "Bur", Value: "fuu", Kind: reflect.String},
-									}},
-							}},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -797,22 +800,26 @@ func TestAddMetadata(t *testing.T) {
 									Children: []*Node{
 										{Name: "Fii", FieldName: "Fii", Kind: reflect.String, Value: "fii"},
 										{Name: "Fee", FieldName: "Fee", Kind: reflect.Int, Value: "1"},
-									}},
+									},
+								},
 								{
 									Name:      "Bur",
 									FieldName: "Bur",
 									Kind:      reflect.Struct,
 									Children: []*Node{
 										{Name: "Faa", FieldName: "Faa", Kind: reflect.String, Value: "faa"},
-									}},
-							}},
+									},
+								},
+							},
+						},
 						{
 							Name:      "Fii",
 							FieldName: "Fii",
 							Kind:      reflect.Struct,
 							Children: []*Node{
 								{Name: "FiiBar", FieldName: "FiiBar", Kind: reflect.String, Value: "fiiBar"},
-							}},
+							},
+						},
 					},
 				},
 			},

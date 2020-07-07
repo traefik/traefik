@@ -19,8 +19,10 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-var LocalhostCert []byte
-var LocalhostKey []byte
+var (
+	LocalhostCert []byte
+	LocalhostKey  []byte
+)
 
 const randCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 

@@ -432,7 +432,7 @@ func getTLSHTTP(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, k8sCli
 
 // parseServiceProtocol parses the scheme, port name, and number to determine the correct protocol.
 // an error is returned if the scheme provided is invalid.
-func parseServiceProtocol(providedScheme string, portName string, portNumber int32) (string, error) {
+func parseServiceProtocol(providedScheme, portName string, portNumber int32) (string, error) {
 	switch providedScheme {
 	case httpProtocol, httpsProtocol, "h2c":
 		return providedScheme, nil

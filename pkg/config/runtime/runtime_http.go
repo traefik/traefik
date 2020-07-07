@@ -168,7 +168,7 @@ func (s *ServiceInfo) AddError(err error, critical bool) {
 
 // UpdateServerStatus sets the status of the server in the ServiceInfo.
 // It is the responsibility of the caller to check that s is not nil.
-func (s *ServiceInfo) UpdateServerStatus(server string, status string) {
+func (s *ServiceInfo) UpdateServerStatus(server, status string) {
 	s.serverStatusMu.Lock()
 	defer s.serverStatusMu.Unlock()
 

@@ -22,8 +22,10 @@ const (
 	serverDown = "DOWN"
 )
 
-var singleton *HealthCheck
-var once sync.Once
+var (
+	singleton *HealthCheck
+	once      sync.Once
+)
 
 // Balancer is the set of operations required to manage the list of servers in a load-balancer.
 type Balancer interface {

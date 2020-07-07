@@ -27,7 +27,7 @@ type InternalHandlers struct {
 }
 
 // NewInternalHandlers creates a new InternalHandlers.
-func NewInternalHandlers(api func(configuration *runtime.Configuration) http.Handler, configuration *runtime.Configuration, rest http.Handler, metricsHandler http.Handler, pingHandler http.Handler, dashboard http.Handler, next serviceManager) *InternalHandlers {
+func NewInternalHandlers(api func(configuration *runtime.Configuration) http.Handler, configuration *runtime.Configuration, rest, metricsHandler, pingHandler, dashboard http.Handler, next serviceManager) *InternalHandlers {
 	var apiHandler http.Handler
 	if api != nil {
 		apiHandler = api(configuration)

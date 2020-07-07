@@ -956,11 +956,13 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName str
 	if len(certFileName) > 0 {
 		tlsConf := dynamic.Configuration{
 			TLS: &dynamic.TLSConfiguration{
-				Certificates: []*traefiktls.CertAndStores{{
-					Certificate: traefiktls.Certificate{
-						CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
-						KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
-					}},
+				Certificates: []*traefiktls.CertAndStores{
+					{
+						Certificate: traefiktls.Certificate{
+							CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
+							KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
+						},
+					},
 				},
 			},
 		}
