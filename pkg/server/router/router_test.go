@@ -27,6 +27,8 @@ import (
 func TestRouterManager_Get(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
+	t.Cleanup(func() { server.Close() })
+
 	type expectedResult struct {
 		StatusCode     int
 		RequestHeaders map[string]string
@@ -315,6 +317,8 @@ func TestRouterManager_Get(t *testing.T) {
 func TestRouterManager_SNI(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
+	t.Cleanup(func() { server.Close() })
+
 	type expectedResult struct {
 		StatusCode     int
 		RequestHeaders map[string]string
@@ -531,6 +535,8 @@ func TestRouterManager_SNI(t *testing.T) {
 
 func TestAccessLog(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	t.Cleanup(func() { server.Close() })
 
 	testCases := []struct {
 		desc              string
@@ -1002,6 +1008,8 @@ func (t *staticTransport) RoundTrip(_ *http.Request) (*http.Response, error) {
 
 func BenchmarkRouterServe(b *testing.B) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	b.Cleanup(func() { server.Close() })
 
 	res := &http.Response{
 		StatusCode: 200,
