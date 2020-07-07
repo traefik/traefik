@@ -28,7 +28,7 @@ var funcs = map[string]func(*mux.Route, ...string) error{
 // InsecureSNI defines if the domain fronting is allowed.
 func EnableDomainFronting(ok bool) {
 	if ok {
-		log.WithoutContext().Warn("With insecureSNI enabled, router rules do not prevent domain fronting technique, please prefer using `HostHeader` and `HostSNI` rules.")
+		log.WithoutContext().Warn("With insecureSNI enabled, router rules do not prevent domain fronting techniques. Please use `HostHeader` and `HostSNI` rules if domain fronting is not desired.")
 		funcs["Host"] = host
 		return
 	}
