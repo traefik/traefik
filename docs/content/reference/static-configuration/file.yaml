@@ -1,6 +1,8 @@
 global:
   checkNewVersion: true
   sendAnonymousUsage: true
+  insecureSNI: false
+
 serversTransport:
   insecureSkipVerify: true
   rootCAs:

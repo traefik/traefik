@@ -22,7 +22,7 @@
 
 [http.routers]
   [http.routers.router1]
-    rule = "Host(`127.0.0.1`)"
+    rule = "Host(`localhost`)"
     service = "service1"
     [http.routers.router1.tls]
 
