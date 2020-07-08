@@ -72,9 +72,6 @@ to allow defining:
 - A [router rule](#dashboard-router-rule) for accessing the dashboard,
   through Traefik itself (sometimes referred as "Traefik-ception").
 
-??? example "Dashboard Dynamic Configuration Examples"
-    --8<-- "content/operations/include-api-examples.md"
-
 ### Dashboard Router Rule
 
 As underlined in the [documentation for the `api.dashboard` option](./api.md#dashboard),
@@ -98,6 +95,9 @@ rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
 # The dashboard can be accessed on http://traefik.example.com/dashboard/
 rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
 ```
+
+??? example "Dashboard Dynamic Configuration Examples"
+    --8<-- "content/operations/include-dashboard-examples.md"
 
 ## Insecure Mode
 
