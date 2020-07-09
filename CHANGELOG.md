@@ -1,3 +1,9 @@
+## [v2.2.3](https://github.com/containous/traefik/tree/v2.2.3) (2020-07-09)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.2...v2.2.3)
+
+**Bug fixes:**
+- **[middleware]** Fix panic when using chain middleware. ([#7016](https://github.com/containous/traefik/pull/7016) by [juliens](https://github.com/juliens))
+
 ## [v2.2.2](https://github.com/containous/traefik/tree/v2.2.2) (2020-07-08)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.1...v2.2.2)
 
