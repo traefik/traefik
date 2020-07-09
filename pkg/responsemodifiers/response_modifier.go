@@ -45,7 +45,10 @@ func (f *Builder) Build(ctx context.Context, names []string) func(*http.Response
 			for _, name := range conf.Chain.Middlewares {
 				qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(chainCtx, name))
 			}
-			modifiers = append(modifiers, f.Build(ctx, qualifiedNames))
+
+			if rm := f.Build(ctx, qualifiedNames); rm != nil {
+				modifiers = append(modifiers, rm)
+			}
 		}
 	}
 
