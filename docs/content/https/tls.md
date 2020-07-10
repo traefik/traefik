@@ -137,7 +137,7 @@ connection with a specific domain name, thanks to the
 [Server Name Indication](https://en.wikipedia.org/wiki/Server_Name_Indication), then access a service with another 
 domain set in the HTTP `Host` header.
 
-Since the `v2.2.2`, Traefik allows to avoid domain fronting thanks to the `insecureSNI` global flag.
+Since the `v2.2.4`, Traefik has the option to avoid domain fronting thanks to the `insecureSNI` global flag.
 As it is valid for advanced use cases, the `HostHeader` and `HostSNI` [rules](../routing/routers/index.md#rule) allow 
 to fine tune the routing with the `Server Name Indication` and `Host header` value.
 
