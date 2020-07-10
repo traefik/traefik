@@ -1,3 +1,9 @@
+## [v2.2.4](https://github.com/containous/traefik/tree/v2.2.4) (2020-07-10)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.3...v2.2.4)
+
+**Bug fixes:**
+- **[tls]** Change the default value of insecureSNI ([#7027](https://github.com/containous/traefik/pull/7027) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.2.3](https://github.com/containous/traefik/tree/v2.2.3) (2020-07-09)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.2...v2.2.3)
 
