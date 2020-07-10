@@ -163,7 +163,7 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 Periodically check if a new version has been released. (Default: ```false```)
 
 `TRAEFIK_GLOBAL_INSECURESNI`:  
-Allow domain fronting. If the option is not specified, it will be disabled by default. (Default: ```false```)
+Allow domain fronting. If the option is not specified, it will be enabled by default. (Default: ```true```)
 
 `TRAEFIK_GLOBAL_SENDANONYMOUSUSAGE`:  
 Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default. (Default: ```false```)
