@@ -16,7 +16,7 @@ func CheckFile(name string) (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			return false, f.Chmod(0600)
+			return false, f.Chmod(0o600)
 		}
 		return false, err
 	}
@@ -27,7 +27,7 @@ func CheckFile(name string) (bool, error) {
 		return false, err
 	}
 
-	if fi.Mode().Perm()&0077 != 0 {
+	if fi.Mode().Perm()&0o077 != 0 {
 		return false, fmt.Errorf("permissions %o for %s are too open, please use 600", fi.Mode().Perm(), name)
 	}
 

@@ -293,7 +293,7 @@ func createTempDir(t *testing.T, dir string) string {
 }
 
 func copyFile(srcPath, dstPath string) error {
-	dst, err := os.OpenFile(dstPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	dst, err := os.OpenFile(dstPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,9 @@
   checkNewVersion = false
   sendAnonymousUsage = false
 
+[api]
+  insecure = true
+
 [log]
   level = "DEBUG"
 
@@ -23,6 +26,11 @@
   [http.routers.router2]
     rule = "Host(`test2.localhost`)"
     service = "service1"
+
+  [http.routers.router3]
+    rule = "Host(`internal.localhost`)"
+    middlewares = ["secure"]
+    service = "api@internal"
 
 [http.middlewares]
   [http.middlewares.secure.headers]

@@ -11,8 +11,10 @@ import (
 	"github.com/go-kit/kit/metrics/statsd"
 )
 
-var statsdClient *statsd.Statsd
-var statsdTicker *time.Ticker
+var (
+	statsdClient *statsd.Statsd
+	statsdTicker *time.Ticker
+)
 
 const (
 	statsdMetricsServiceReqsName      = "service.request.total"

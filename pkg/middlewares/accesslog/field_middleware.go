@@ -19,7 +19,7 @@ type FieldHandler struct {
 }
 
 // NewFieldHandler creates a Field handler.
-func NewFieldHandler(next http.Handler, name string, value string, applyFn FieldApply) http.Handler {
+func NewFieldHandler(next http.Handler, name, value string, applyFn FieldApply) http.Handler {
 	return &FieldHandler{next: next, name: name, value: value, applyFn: applyFn}
 }
 

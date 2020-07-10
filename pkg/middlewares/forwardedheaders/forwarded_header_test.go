@@ -246,7 +246,8 @@ func TestServeHTTP(t *testing.T) {
 			expectedHeaders: map[string]string{
 				xForwardedHost: "foo.com:8080",
 			},
-		}, {
+		},
+		{
 			desc: "xForwardedServer from req XForwarded",
 			host: "foo.com:8080",
 			expectedHeaders: map[string]string{

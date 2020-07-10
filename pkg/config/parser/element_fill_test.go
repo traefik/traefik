@@ -498,27 +498,31 @@ func TestFill(t *testing.T) {
 						Children: []*Node{
 							{Name: "Fii", FieldName: "Fii", Value: "huu", Kind: reflect.String},
 							{Name: "Fuu", FieldName: "Fuu", Value: "6", Kind: reflect.Int},
-						}},
-				}},
+						},
+					},
+				},
+			},
 			element: &struct {
 				Foo struct {
 					Fii string
 					Fuu int
 				}
 			}{},
-			expected: expected{element: &struct {
-				Foo struct {
-					Fii string
-					Fuu int
-				}
-			}{
-				Foo: struct {
-					Fii string
-					Fuu int
+			expected: expected{
+				element: &struct {
+					Foo struct {
+						Fii string
+						Fuu int
+					}
 				}{
-					Fii: "huu",
-					Fuu: 6,
-				}},
+					Foo: struct {
+						Fii string
+						Fuu int
+					}{
+						Fii: "huu",
+						Fuu: 6,
+					},
+				},
 			},
 		},
 		{
@@ -534,27 +538,31 @@ func TestFill(t *testing.T) {
 						Children: []*Node{
 							{Name: "Fii", FieldName: "Fii", Value: "huu", Kind: reflect.String},
 							{Name: "Fuu", FieldName: "Fuu", Value: "6", Kind: reflect.Int},
-						}},
-				}},
+						},
+					},
+				},
+			},
 			element: &struct {
 				Foo *struct {
 					Fii string
 					Fuu int
 				}
 			}{},
-			expected: expected{element: &struct {
-				Foo *struct {
-					Fii string
-					Fuu int
-				}
-			}{
-				Foo: &struct {
-					Fii string
-					Fuu int
+			expected: expected{
+				element: &struct {
+					Foo *struct {
+						Fii string
+						Fuu int
+					}
 				}{
-					Fii: "huu",
-					Fuu: 6,
-				}},
+					Foo: &struct {
+						Fii string
+						Fuu int
+					}{
+						Fii: "huu",
+						Fuu: 6,
+					},
+				},
 			},
 		},
 		{
@@ -568,23 +576,26 @@ func TestFill(t *testing.T) {
 						FieldName: "Foo",
 						Kind:      reflect.Ptr,
 					},
-				}},
+				},
+			},
 			element: &struct {
 				Foo *struct {
 					Fii string
 					Fuu int
 				} `label:"allowEmpty"`
 			}{},
-			expected: expected{element: &struct {
-				Foo *struct {
-					Fii string
-					Fuu int
-				} `label:"allowEmpty"`
-			}{
-				Foo: &struct {
-					Fii string
-					Fuu int
-				}{}},
+			expected: expected{
+				element: &struct {
+					Foo *struct {
+						Fii string
+						Fuu int
+					} `label:"allowEmpty"`
+				}{
+					Foo: &struct {
+						Fii string
+						Fuu int
+					}{},
+				},
 			},
 		},
 		{
@@ -599,19 +610,21 @@ func TestFill(t *testing.T) {
 						Kind:      reflect.Ptr,
 						Disabled:  true,
 					},
-				}},
+				},
+			},
 			element: &struct {
 				Foo *struct {
 					Fii string
 					Fuu int
 				} `label:"allowEmpty"`
 			}{},
-			expected: expected{element: &struct {
-				Foo *struct {
-					Fii string
-					Fuu int
-				} `label:"allowEmpty"`
-			}{},
+			expected: expected{
+				element: &struct {
+					Foo *struct {
+						Fii string
+						Fuu int
+					} `label:"allowEmpty"`
+				}{},
 			},
 		},
 		{
@@ -628,20 +641,23 @@ func TestFill(t *testing.T) {
 						Children: []*Node{
 							{Name: "Fii", FieldName: "Fii", Value: "huu", Kind: reflect.String},
 							{Name: "Fuu", FieldName: "Fuu", Value: "6", Kind: reflect.Int},
-						}},
-				}},
+						},
+					},
+				},
+			},
 			element: &struct {
 				Foo *struct {
 					Fii string
 					Fuu int
 				} `label:"allowEmpty"`
 			}{},
-			expected: expected{element: &struct {
-				Foo *struct {
-					Fii string
-					Fuu int
-				} `label:"allowEmpty"`
-			}{},
+			expected: expected{
+				element: &struct {
+					Foo *struct {
+						Fii string
+						Fuu int
+					} `label:"allowEmpty"`
+				}{},
 			},
 		},
 		{
@@ -657,18 +673,22 @@ func TestFill(t *testing.T) {
 						Children: []*Node{
 							{Name: "name1", Value: "hii", Kind: reflect.String},
 							{Name: "name2", Value: "huu", Kind: reflect.String},
-						}},
-				}},
+						},
+					},
+				},
+			},
 			element: &struct {
 				Foo map[string]string
 			}{},
-			expected: expected{element: &struct {
-				Foo map[string]string
-			}{
-				Foo: map[string]string{
-					"name1": "hii",
-					"name2": "huu",
-				}},
+			expected: expected{
+				element: &struct {
+					Foo map[string]string
+				}{
+					Foo: map[string]string{
+						"name1": "hii",
+						"name2": "huu",
+					},
+				},
 			},
 		},
 		{
@@ -696,18 +716,22 @@ func TestFill(t *testing.T) {
 									{Name: "Fii", FieldName: "Fii", Kind: reflect.String, Value: "huu"},
 								},
 							},
-						}},
-				}},
+						},
+					},
+				},
+			},
 			element: &struct {
 				Foo map[string]struct{ Fii string }
 			}{},
-			expected: expected{element: &struct {
-				Foo map[string]struct{ Fii string }
-			}{
-				Foo: map[string]struct{ Fii string }{
-					"name1": {Fii: "hii"},
-					"name2": {Fii: "huu"},
-				}},
+			expected: expected{
+				element: &struct {
+					Foo map[string]struct{ Fii string }
+				}{
+					Foo: map[string]struct{ Fii string }{
+						"name1": {Fii: "hii"},
+						"name2": {Fii: "huu"},
+					},
+				},
 			},
 		},
 		{
@@ -1186,8 +1210,10 @@ func TestFill(t *testing.T) {
 						Kind:      reflect.Struct,
 						Children: []*Node{
 							{Name: "Fuu", FieldName: "Fuu", Value: "huu", Kind: reflect.String},
-						}},
-				}},
+						},
+					},
+				},
+			},
 			element: &struct {
 				Foo *InitializedFoo
 			}{},
@@ -1212,8 +1238,10 @@ func TestFill(t *testing.T) {
 						Kind:      reflect.Struct,
 						Children: []*Node{
 							{Name: "Fuu", FieldName: "Fuu", Value: "huu", Kind: reflect.String},
-						}},
-				}},
+						},
+					},
+				},
+			},
 			element: &struct {
 				Foo *wrongInitialledFoo
 			}{},
@@ -1273,8 +1301,10 @@ func TestFill(t *testing.T) {
 						Kind:      reflect.Struct,
 						Children: []*Node{
 							{Name: "Fuu", FieldName: "Fuu", Value: "huu", Kind: reflect.String},
-						}},
-				}},
+						},
+					},
+				},
+			},
 			element: &struct {
 				Foo struct {
 					FiiFoo
@@ -1401,8 +1431,10 @@ func TestFill(t *testing.T) {
 	}
 }
 
-type NamedType string
-type NamedTypeInt int
+type (
+	NamedType    string
+	NamedTypeInt int
+)
 
 type InitializedFoo struct {
 	Fii string

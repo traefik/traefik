@@ -21,7 +21,7 @@ type CommonLogFormatter struct{}
 func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	b := &bytes.Buffer{}
 
-	var timestamp = defaultValue
+	timestamp := defaultValue
 	if v, ok := entry.Data[StartUTC]; ok {
 		timestamp = v.(time.Time).Format(commonLogTimeFormat)
 	} else if v, ok := entry.Data[StartLocal]; ok {
@@ -52,7 +52,7 @@ func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), err
 }
 
-func toLog(fields logrus.Fields, key string, defaultValue string, quoted bool) interface{} {
+func toLog(fields logrus.Fields, key, defaultValue string, quoted bool) interface{} {
 	if v, ok := fields[key]; ok {
 		if v == nil {
 			return defaultValue
@@ -73,7 +73,7 @@ func toLog(fields logrus.Fields, key string, defaultValue string, quoted bool) i
 	return defaultValue
 }
 
-func toLogEntry(s string, defaultValue string, quote bool) string {
+func toLogEntry(s, defaultValue string, quote bool) string {
 	if len(s) == 0 {
 		return defaultValue
 	}

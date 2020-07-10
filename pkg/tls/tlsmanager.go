@@ -81,7 +81,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 }
 
 // Get gets the TLS configuration to use for a given store / configuration.
-func (m *Manager) Get(storeName string, configName string) (*tls.Config, error) {
+func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 

@@ -197,7 +197,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 
 			cfg.HTTP.Middlewares["dashboard_redirect"] = &dynamic.Middleware{
 				RedirectRegex: &dynamic.RedirectRegex{
-					Regex:       `^(http:\/\/[^:\/]+(:\d+)?)\/$`,
+					Regex:       `^(http:\/\/(\[[\w:.]+\]|[\w\._-]+)(:\d+)?)\/$`,
 					Replacement: "${1}/dashboard/",
 					Permanent:   true,
 				},

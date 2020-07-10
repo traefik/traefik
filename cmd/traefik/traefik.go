@@ -25,6 +25,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/provider/acme"
 	"github.com/containous/traefik/v2/pkg/provider/aggregator"
 	"github.com/containous/traefik/v2/pkg/provider/traefik"
+	"github.com/containous/traefik/v2/pkg/rules"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/server"
 	"github.com/containous/traefik/v2/pkg/server/middleware"
@@ -161,6 +162,8 @@ func runCmd(staticConfiguration *static.Configuration) error {
 }
 
 func setupServer(staticConfiguration *static.Configuration) (*server.Server, error) {
+	rules.EnableDomainFronting(staticConfiguration.Global.InsecureSNI)
+
 	providerAggregator := aggregator.NewProviderAggregator(*staticConfiguration.Providers)
 
 	// adds internal provider
@@ -403,7 +406,7 @@ func configureLogging(staticConfiguration *static.Configuration) {
 	if len(logFile) > 0 {
 		dir := filepath.Dir(logFile)
 
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
 			log.WithoutContext().Errorf("Failed to create log path %s: %s", dir, err)
 		}
 

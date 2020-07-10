@@ -32,7 +32,7 @@ spec:
     - name: blog
       port: 8080
   tls:
-    certresolver: myresolver
+    certResolver: myresolver
 ```
 
 ```json tab="Marathon"

@@ -40,7 +40,7 @@ spec:
     domains:
     - main: example.org
       sans:
-      - *.example.org
+      - '*.example.org'
 ```
 
 ```json tab="Marathon"

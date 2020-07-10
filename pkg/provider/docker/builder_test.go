@@ -95,7 +95,7 @@ func taskSlot(slot int) func(*swarm.Task) {
 	}
 }
 
-func taskNetworkAttachment(id string, name string, driver string, addresses []string) func(*swarm.Task) {
+func taskNetworkAttachment(id, name, driver string, addresses []string) func(*swarm.Task) {
 	return func(task *swarm.Task) {
 		task.NetworksAttachments = append(task.NetworksAttachments, swarm.NetworkAttachment{
 			Network: swarm.Network{

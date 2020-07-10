@@ -24,7 +24,7 @@ type redirect struct {
 }
 
 // New creates a Redirect middleware.
-func newRedirect(next http.Handler, regex string, replacement string, permanent bool, name string) (http.Handler, error) {
+func newRedirect(next http.Handler, regex, replacement string, permanent bool, name string) (http.Handler, error) {
 	re, err := regexp.Compile(regex)
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func rawURL(req *http.Request) string {
 	port := ""
 	uri := req.RequestURI
 
-	schemeRegex := `^(https?):\/\/([\w\._-]+)(:\d+)?(.*)$`
+	schemeRegex := `^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
 	re, _ := regexp.Compile(schemeRegex)
 	if re.Match([]byte(req.RequestURI)) {
 		match := re.FindStringSubmatch(req.RequestURI)

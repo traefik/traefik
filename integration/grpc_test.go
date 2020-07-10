@@ -19,8 +19,10 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-var LocalhostCert []byte
-var LocalhostKey []byte
+var (
+	LocalhostCert []byte
+	LocalhostKey  []byte
+)
 
 const randCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
@@ -84,7 +86,7 @@ func starth2cGRPCServer(lis net.Listener, server *myserver) error {
 func getHelloClientGRPC() (helloworld.GreeterClient, func() error, error) {
 	roots := x509.NewCertPool()
 	roots.AppendCertsFromPEM(LocalhostCert)
-	credsClient := credentials.NewClientTLSFromCert(roots, "")
+	credsClient := credentials.NewClientTLSFromCert(roots, "localhost")
 	conn, err := grpc.Dial("127.0.0.1:4443", grpc.WithTransportCredentials(credsClient))
 	if err != nil {
 		return nil, func() error { return nil }, err
@@ -165,7 +167,7 @@ func (s *GRPCSuite) TestGRPC(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`localhost`)"))
 	c.Assert(err, check.IsNil)
 
 	var response string
@@ -245,7 +247,7 @@ func (s *GRPCSuite) TestGRPCh2cTermination(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`localhost`)"))
 	c.Assert(err, check.IsNil)
 
 	var response string
@@ -287,7 +289,7 @@ func (s *GRPCSuite) TestGRPCInsecure(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`localhost`)"))
 	c.Assert(err, check.IsNil)
 
 	var response string
@@ -334,7 +336,7 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`localhost`)"))
 	c.Assert(err, check.IsNil)
 	var client helloworld.Greeter_StreamExampleClient
 	client, closer, err := callStreamExampleClientGRPC()
@@ -393,7 +395,7 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`localhost`)"))
 	c.Assert(err, check.IsNil)
 
 	var client helloworld.Greeter_StreamExampleClient
@@ -451,7 +453,7 @@ func (s *GRPCSuite) TestGRPCWithRetry(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`localhost`)"))
 	c.Assert(err, check.IsNil)
 
 	var response string

@@ -85,7 +85,6 @@ func (c *FakeIngressRoutes) List(ctx context.Context, opts v1.ListOptions) (resu
 func (c *FakeIngressRoutes) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(ingressroutesResource, c.ns, opts))
-
 }
 
 // Create takes the representation of a ingressRoute and creates it.  Returns the server's representation of the ingressRoute, and an error, if there is any.

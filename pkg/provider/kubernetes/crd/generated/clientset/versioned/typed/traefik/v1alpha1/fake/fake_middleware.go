@@ -85,7 +85,6 @@ func (c *FakeMiddlewares) List(ctx context.Context, opts v1.ListOptions) (result
 func (c *FakeMiddlewares) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(middlewaresResource, c.ns, opts))
-
 }
 
 // Create takes the representation of a middleware and creates it.  Returns the server's representation of the middleware, and an error, if there is any.

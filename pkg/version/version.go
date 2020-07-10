@@ -24,11 +24,9 @@ var (
 // Handler expose version routes.
 type Handler struct{}
 
-var (
-	templatesRenderer = render.New(render.Options{
-		Directory: "nowhere",
-	})
-)
+var templatesRenderer = render.New(render.Options{
+	Directory: "nowhere",
+})
 
 // Append adds version routes on a router.
 func (v Handler) Append(router *mux.Router) {

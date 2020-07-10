@@ -16,6 +16,7 @@
 * Gérald Croës [@geraldcroes](https://github.com/geraldcroes)
 * Jean-Baptiste Doumenjou [@jbdoumenjou](https://github.com/jbdoumenjou)
 * Mathieu Lonjaret [@mpl](https://github.com/mpl)
+* Romain Tribotté [@rtribotte](https://github.com/rtribotte)
 
 ## Contributions Daily Meeting
 

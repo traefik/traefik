@@ -186,6 +186,44 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			expectedURL:    "https://foo",
 			expectedStatus: http.StatusFound,
 		},
+		{
+			desc: "IPV6 HTTP to HTTPS redirection without port",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+			},
+			url:            "http://[::1]",
+			expectedURL:    "https://[::1]",
+			expectedStatus: http.StatusFound,
+		},
+		{
+			desc: "IPV6 HTTP to HTTPS redirection with port",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+				Port:   "8443",
+			},
+			url:            "http://[::1]",
+			expectedURL:    "https://[::1]:8443",
+			expectedStatus: http.StatusFound,
+		},
+		{
+			desc: "IPV6 HTTP with port 80 to HTTPS redirection without port",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+			},
+			url:            "http://[::1]:80",
+			expectedURL:    "https://[::1]",
+			expectedStatus: http.StatusFound,
+		},
+		{
+			desc: "IPV6 HTTP with port 80 to HTTPS redirection with port",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+				Port:   "8443",
+			},
+			url:            "http://[::1]:80",
+			expectedURL:    "https://[::1]:8443",
+			expectedStatus: http.StatusFound,
+		},
 	}
 
 	for _, test := range testCases {
@@ -235,7 +273,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 					require.Errorf(t, err, "Location %v", location)
 				}
 
-				schemeRegex := `^(https?):\/\/([\w\._-]+)(:\d+)?(.*)$`
+				schemeRegex := `^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
 				re, _ := regexp.Compile(schemeRegex)
 
 				if re.Match([]byte(test.url)) {

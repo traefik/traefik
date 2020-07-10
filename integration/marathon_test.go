@@ -60,7 +60,7 @@ func (s *MarathonSuite) extendDockerHostsFile(host, ipAddr string) error {
 	// (See also https://groups.google.com/d/topic/docker-user/JOGE7AnJ3Gw/discussion.)
 	if os.Getenv("CONTAINER") == "DOCKER" {
 		// We are running inside a container -- extend the hosts file.
-		file, err := os.OpenFile(hostsFile, os.O_APPEND|os.O_WRONLY, 0600)
+		file, err := os.OpenFile(hostsFile, os.O_APPEND|os.O_WRONLY, 0o600)
 		if err != nil {
 			return err
 		}
