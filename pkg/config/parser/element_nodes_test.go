@@ -755,6 +755,42 @@ func TestEncodeToNode(t *testing.T) {
 				}},
 			},
 		},
+		{
+			desc: "raw value",
+			element: struct {
+				Foo *struct {
+					Bar map[string]interface{}
+				}
+			}{
+				Foo: &struct {
+					Bar map[string]interface{}
+				}{
+					Bar: map[string]interface{}{
+						"AAA": "valueA",
+						"BBB": map[string]interface{}{
+							"CCC": map[string]interface{}{
+								"DDD": "valueD",
+							},
+						},
+					},
+				},
+			},
+			expected: expected{node: &Node{
+				Name: "traefik",
+				Children: []*Node{
+					{Name: "Foo", FieldName: "Foo", Children: []*Node{
+						{Name: "Bar", FieldName: "Bar", RawValue: map[string]interface{}{
+							"AAA": "valueA",
+							"BBB": map[string]interface{}{
+								"CCC": map[string]interface{}{
+									"DDD": "valueD",
+								},
+							},
+						}},
+					}},
+				},
+			}},
+		},
 	}
 
 	for _, test := range testCases {
