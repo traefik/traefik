@@ -271,6 +271,16 @@ func (f filler) setMap(field reflect.Value, node *Node) error {
 		field.Set(reflect.MakeMap(field.Type()))
 	}
 
+	if field.Type().Elem().Kind() == reflect.Interface {
+		fillRawValue(field, node, false)
+
+		for _, child := range node.Children {
+			fillRawValue(field, child, true)
+		}
+
+		return nil
+	}
+
 	for _, child := range node.Children {
 		ptrValue := reflect.New(reflect.PtrTo(field.Type().Elem()))
 
@@ -284,6 +294,7 @@ func (f filler) setMap(field reflect.Value, node *Node) error {
 		key := reflect.ValueOf(child.Name)
 		field.SetMapIndex(key, value)
 	}
+
 	return nil
 }
 
@@ -338,4 +349,24 @@ func setFloat(field reflect.Value, value string, bitSize int) error {
 
 	field.Set(reflect.ValueOf(val).Convert(field.Type()))
 	return nil
+}
+
+func fillRawValue(field reflect.Value, node *Node, subMap bool) {
+	m, ok := node.RawValue.(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	if _, self := m[node.Name]; self || !subMap {
+		for k, v := range m {
+			field.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v))
+		}
+
+		return
+	}
+
+	p := map[string]interface{}{node.Name: m}
+	node.RawValue = p
+
+	field.SetMapIndex(reflect.ValueOf(node.Name), reflect.ValueOf(p[node.Name]))
 }

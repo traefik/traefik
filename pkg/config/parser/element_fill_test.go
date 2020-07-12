@@ -1413,6 +1413,84 @@ func TestFill(t *testing.T) {
 				},
 			}},
 		},
+		{
+			desc: "raw value",
+			node: &Node{
+				Name: "traefik",
+				Kind: reflect.Ptr,
+				Children: []*Node{
+					{Name: "meta", FieldName: "Meta", Kind: reflect.Map, RawValue: map[string]interface{}{
+						"aaa": "test",
+						"bbb": map[string]interface{}{
+							"ccc": "test",
+							"ddd": map[string]interface{}{
+								"eee": "test",
+							},
+						},
+					}},
+					{Name: "name", FieldName: "Name", Value: "test", Kind: reflect.String},
+				},
+			},
+			element: &struct {
+				Name string
+				Meta map[string]interface{}
+			}{},
+			expected: expected{element: &struct {
+				Name string
+				Meta map[string]interface{}
+			}{
+				Name: "test",
+				Meta: map[string]interface{}{
+					"aaa": "test",
+					"bbb": map[string]interface{}{
+						"ccc": "test",
+						"ddd": map[string]interface{}{
+							"eee": "test",
+						},
+					},
+				},
+			}},
+		},
+		{
+			desc: "explicit map of map, raw value",
+			node: &Node{
+				Name: "traefik",
+				Kind: reflect.Ptr,
+				Children: []*Node{
+					{Name: "meta", FieldName: "Meta", Kind: reflect.Map, Children: []*Node{
+						{Name: "aaa", Kind: reflect.Map, Children: []*Node{
+							{Name: "bbb", RawValue: map[string]interface{}{
+								"ccc": "test1",
+								"ddd": "test2",
+							}},
+							{Name: "eee", Value: "test3", RawValue: map[string]interface{}{
+								"eee": "test3",
+							}},
+						}},
+					}},
+					{Name: "name", FieldName: "Name", Value: "test", Kind: reflect.String},
+				},
+			},
+			element: &struct {
+				Name string
+				Meta map[string]map[string]interface{}
+			}{},
+			expected: expected{element: &struct {
+				Name string
+				Meta map[string]map[string]interface{}
+			}{
+				Name: "test",
+				Meta: map[string]map[string]interface{}{
+					"aaa": {
+						"bbb": map[string]interface{}{
+							"ccc": "test1",
+							"ddd": "test2",
+						},
+						"eee": "test3",
+					},
+				},
+			}},
+		},
 	}
 
 	for _, test := range testCases {

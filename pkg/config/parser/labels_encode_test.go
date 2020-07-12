@@ -165,6 +165,60 @@ func TestEncodeNode(t *testing.T) {
 				"traefik.foo[1].bbb": "bur1",
 			},
 		},
+		{
+			desc: "raw value, level 1",
+			node: &Node{
+				Name: "traefik",
+				Children: []*Node{
+					{Name: "aaa", RawValue: map[string]interface{}{
+						"bbb": "test1",
+						"ccc": "test2",
+					}},
+				},
+			},
+			expected: map[string]string{
+				"traefik.aaa.bbb": "test1",
+				"traefik.aaa.ccc": "test2",
+			},
+		},
+		{
+			desc: "raw value, level 2",
+			node: &Node{
+				Name: "traefik",
+				Children: []*Node{
+					{Name: "aaa", RawValue: map[string]interface{}{
+						"bbb": "test1",
+						"ccc": map[string]interface{}{
+							"ddd": "test2",
+						},
+					}},
+				},
+			},
+			expected: map[string]string{
+				"traefik.aaa.bbb":     "test1",
+				"traefik.aaa.ccc.ddd": "test2",
+			},
+		},
+		{
+			desc: "raw value, slice of struct",
+			node: &Node{
+				Name: "traefik",
+				Children: []*Node{
+					{Name: "aaa", RawValue: map[string]interface{}{
+						"bbb": []interface{}{
+							map[string]interface{}{
+								"ccc": "test1",
+								"ddd": "test2",
+							},
+						},
+					}},
+				},
+			},
+			expected: map[string]string{
+				"traefik.aaa.bbb[0].ccc": "test1",
+				"traefik.aaa.bbb[0].ddd": "test2",
+			},
+		},
 	}
 
 	for _, test := range testCases {

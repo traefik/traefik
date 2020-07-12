@@ -19,12 +19,7 @@ func Decode(labels map[string]string, element interface{}, rootName string, filt
 		return err
 	}
 
-	err = Fill(element, node, FillerOpts{AllowSliceAsStruct: true})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return Fill(element, node, FillerOpts{AllowSliceAsStruct: true})
 }
 
 // Encode converts an element to labels.
