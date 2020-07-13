@@ -231,6 +231,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Compress:          middleware.Spec.Compress,
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
 			Retry:             middleware.Spec.Retry,
+			ContentType:       middleware.Spec.ContentType,
 		}
 	}
 
