@@ -223,42 +223,46 @@
             serialNumber = true
             domainComponent = true
     [http.middlewares.Middleware14]
-      [http.middlewares.Middleware14.rateLimit]
+      [http.middlewares.Middleware14.plugin]
+        [http.middlewares.Middleware14.plugin.PluginConf]
+          foo = "bar"
+    [http.middlewares.Middleware15]
+      [http.middlewares.Middleware15.rateLimit]
         average = 42
         period = 42
         burst = 42
-        [http.middlewares.Middleware14.rateLimit.sourceCriterion]
+        [http.middlewares.Middleware15.rateLimit.sourceCriterion]
           requestHeaderName = "foobar"
           requestHost = true
-          [http.middlewares.Middleware14.rateLimit.sourceCriterion.ipStrategy]
+          [http.middlewares.Middleware15.rateLimit.sourceCriterion.ipStrategy]
             depth = 42
             excludedIPs = ["foobar", "foobar"]
-    [http.middlewares.Middleware15]
-      [http.middlewares.Middleware15.redirectRegex]
+    [http.middlewares.Middleware16]
+      [http.middlewares.Middleware16.redirectRegex]
         regex = "foobar"
         replacement = "foobar"
         permanent = true
-    [http.middlewares.Middleware16]
-      [http.middlewares.Middleware16.redirectScheme]
+    [http.middlewares.Middleware17]
+      [http.middlewares.Middleware17.redirectScheme]
         scheme = "foobar"
         port = "foobar"
         permanent = true
-    [http.middlewares.Middleware17]
-      [http.middlewares.Middleware17.replacePath]
-        path = "foobar"
     [http.middlewares.Middleware18]
-      [http.middlewares.Middleware18.replacePathRegex]
+      [http.middlewares.Middleware18.replacePath]
+        path = "foobar"
+    [http.middlewares.Middleware19]
+      [http.middlewares.Middleware19.replacePathRegex]
         regex = "foobar"
         replacement = "foobar"
-    [http.middlewares.Middleware19]
-      [http.middlewares.Middleware19.retry]
-        attempts = 42
     [http.middlewares.Middleware20]
-      [http.middlewares.Middleware20.stripPrefix]
+      [http.middlewares.Middleware20.retry]
+        attempts = 42
+    [http.middlewares.Middleware21]
+      [http.middlewares.Middleware21.stripPrefix]
         prefixes = ["foobar", "foobar"]
         forceSlash = true
-    [http.middlewares.Middleware21]
-      [http.middlewares.Middleware21.stripPrefixRegex]
+    [http.middlewares.Middleware22]
+      [http.middlewares.Middleware22.stripPrefixRegex]
         regex = ["foobar", "foobar"]
 
 [tcp]

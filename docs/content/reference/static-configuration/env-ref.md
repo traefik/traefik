@@ -168,9 +168,6 @@ plugin's module name.
 `TRAEFIK_EXPERIMENTAL_PILOT_TOKEN`:  
 Traefik Pilot token.
 
-`TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>`:  
-Plugins configuration. (Default: ```false```)
-
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_MODULENAME`:  
 plugin's module name.
 
