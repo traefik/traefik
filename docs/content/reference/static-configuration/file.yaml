@@ -379,3 +379,16 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}
+experimental:
+  pilot:
+    token: foobar
+  plugins:
+    Descriptor0:
+      moduleName: foobar
+      version: foobar
+    Descriptor1:
+      moduleName: foobar
+      version: foobar
+  devPlugin:
+    goPath: foobar
+    moduleName: foobar

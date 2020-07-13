@@ -128,6 +128,9 @@ nav:
       - 'Retry': 'middlewares/retry.md'
       - 'StripPrefix': 'middlewares/stripprefix.md'
       - 'StripPrefixRegex': 'middlewares/stripprefixregex.md'
+  - 'Plugins & Traefik Pilot':
+      - 'Overview': 'plugins/overview.md'
+      - 'Using Plugins': 'plugins/using-plugins.md'
   - 'Operations':
       - 'CLI': 'operations/cli.md'
       - 'Dashboard' : 'operations/dashboard.md'

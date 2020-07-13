@@ -168,9 +168,6 @@ plugin's module name.
 `--experimental.pilot.token`:  
 Traefik Pilot token.
 
-`--experimental.plugins.<name>`:  
-Plugins configuration. (Default: ```false```)
-
 `--experimental.plugins.<name>.modulename`:  
 plugin's module name.
 
