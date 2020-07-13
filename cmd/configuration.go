@@ -20,7 +20,6 @@ func NewTraefikConfiguration() *TraefikCmdConfiguration {
 		Configuration: static.Configuration{
 			Global: &static.Global{
 				CheckNewVersion: true,
-				InsecureSNI:     true,
 			},
 			EntryPoints: make(static.EntryPoints),
 			Providers: &static.Providers{

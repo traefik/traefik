@@ -51,6 +51,14 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
+			desc: "HostHeader equivalent to Host",
+			rule: "HostHeader(`localhost`)",
+			expected: map[string]int{
+				"http://localhost/foo": http.StatusOK,
+				"http://bar/foo":       http.StatusNotFound,
+			},
+		},
+		{
 			desc: "Host with trailing period in rule",
 			rule: "Host(`localhost.`)",
 			expected: map[string]int{
@@ -678,6 +686,18 @@ func TestParseDomains(t *testing.T) {
 		{
 			description:   "Many host rules",
 			expression:    "Host(`foo.bar`,`test.bar`)",
+			domain:        []string{"foo.bar", "test.bar"},
+			errorExpected: false,
+		},
+		{
+			description:   "Many host rules upper",
+			expression:    "HOST(`foo.bar`,`test.bar`)",
+			domain:        []string{"foo.bar", "test.bar"},
+			errorExpected: false,
+		},
+		{
+			description:   "Many host rules lower",
+			expression:    "host(`foo.bar`,`test.bar`)",
 			domain:        []string{"foo.bar", "test.bar"},
 			errorExpected: false,
 		},
