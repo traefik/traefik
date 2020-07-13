@@ -12,9 +12,7 @@ import (
 )
 
 var funcs = map[string]func(*mux.Route, ...string) error{
-	"Host":          hostSecure,
-	"HostHeader":    host,
-	"HostSNI":       hostSNI,
+	"Host":          host,
 	"HostRegexp":    hostRegexp,
 	"Path":          path,
 	"PathPrefix":    pathPrefix,
@@ -22,18 +20,6 @@ var funcs = map[string]func(*mux.Route, ...string) error{
 	"Headers":       headers,
 	"HeadersRegexp": headersRegexp,
 	"Query":         query,
-}
-
-// EnableDomainFronting initialize the matcher functions to used on routers.
-// InsecureSNI defines if the domain fronting is allowed.
-func EnableDomainFronting(ok bool) {
-	if ok {
-		log.WithoutContext().Warn("With insecureSNI enabled, router rules do not prevent domain fronting techniques. Please use `HostHeader` and `HostSNI` rules if domain fronting is not desired.")
-		funcs["Host"] = host
-		return
-	}
-
-	funcs["Host"] = hostSecure
 }
 
 // Router handle routing with rules.
@@ -112,125 +98,46 @@ func host(route *mux.Route, hosts ...string) error {
 	}
 
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		return matchHost(req, true, hosts...)
-	})
-	return nil
-}
+		reqHost := requestdecorator.GetCanonizedHost(req.Context())
+		if len(reqHost) == 0 {
+			log.FromContext(req.Context()).Warnf("Could not retrieve CanonizedHost, rejecting %s", req.Host)
+			return false
+		}
 
-func matchHost(req *http.Request, insecureSNI bool, hosts ...string) bool {
-	logger := log.FromContext(req.Context())
+		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
+		if len(flatH) > 0 {
+			for _, host := range hosts {
+				if strings.EqualFold(reqHost, host) || strings.EqualFold(flatH, host) {
+					return true
+				}
+				log.FromContext(req.Context()).Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqHost, flatH, host)
+			}
+			return false
+		}
 
-	reqHost := requestdecorator.GetCanonizedHost(req.Context())
-	if len(reqHost) == 0 {
-		logger.Warnf("Could not retrieve CanonizedHost, rejecting %s", req.Host)
-		return false
-	}
-
-	flatH := requestdecorator.GetCNAMEFlatten(req.Context())
-	if len(flatH) > 0 {
 		for _, host := range hosts {
-			if strings.EqualFold(reqHost, host) || strings.EqualFold(flatH, host) {
+			if reqHost == host {
 				return true
 			}
-			logger.Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqHost, flatH, host)
-		}
-		return false
-	}
 
-	for _, host := range hosts {
-		if reqHost == host {
-			logHostSNI(insecureSNI, req, reqHost)
-			return true
-		}
+			// Check for match on trailing period on host
+			if last := len(host) - 1; last >= 0 && host[last] == '.' {
+				h := host[:last]
+				if reqHost == h {
+					return true
+				}
+			}
 
-		// Check for match on trailing period on host
-		if last := len(host) - 1; last >= 0 && host[last] == '.' {
-			h := host[:last]
-			if reqHost == h {
-				logHostSNI(insecureSNI, req, reqHost)
-				return true
+			// Check for match on trailing period on request
+			if last := len(reqHost) - 1; last >= 0 && reqHost[last] == '.' {
+				h := reqHost[:last]
+				if h == host {
+					return true
+				}
 			}
 		}
-
-		// Check for match on trailing period on request
-		if last := len(reqHost) - 1; last >= 0 && reqHost[last] == '.' {
-			h := reqHost[:last]
-			if h == host {
-				logHostSNI(insecureSNI, req, reqHost)
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func logHostSNI(insecureSNI bool, req *http.Request, reqHost string) {
-	if insecureSNI && req.TLS != nil && !strings.EqualFold(reqHost, req.TLS.ServerName) {
-		log.FromContext(req.Context()).Debugf("Router reached with Host(%q) different from SNI(%q)", reqHost, req.TLS.ServerName)
-	}
-}
-
-func hostSNI(route *mux.Route, hosts ...string) error {
-	for i, host := range hosts {
-		hosts[i] = strings.ToLower(host)
-	}
-
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		return matchSNI(req, hosts...)
-	})
-
-	return nil
-}
-
-func matchSNI(req *http.Request, hosts ...string) bool {
-	if req.TLS == nil {
-		return true
-	}
-
-	if req.TLS.ServerName == "" {
-		return false
-	}
-
-	for _, host := range hosts {
-		if strings.EqualFold(req.TLS.ServerName, host) {
-			return true
-		}
-
-		// Check for match on trailing period on host
-		if last := len(host) - 1; last >= 0 && host[last] == '.' {
-			h := host[:last]
-			if strings.EqualFold(req.TLS.ServerName, h) {
-				return true
-			}
-		}
-
-		// Check for match on trailing period on request
-		if last := len(req.TLS.ServerName) - 1; last >= 0 && req.TLS.ServerName[last] == '.' {
-			h := req.TLS.ServerName[:last]
-			if strings.EqualFold(h, host) {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-func hostSecure(route *mux.Route, hosts ...string) error {
-	for i, host := range hosts {
-		hosts[i] = strings.ToLower(host)
-	}
-
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		for _, host := range hosts {
-			if matchSNI(req, host) && matchHost(req, false, host) {
-				return true
-			}
-		}
-
 		return false
 	})
-
 	return nil
 }
 
