@@ -12,8 +12,6 @@
 [global]
   checkNewVersion = true
   sendAnonymousUsage = true
-  # Enabling domain fronting
-  # insecureSNI = true
 
 ################################################################
 # Entrypoints configuration

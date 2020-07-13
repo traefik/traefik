@@ -79,12 +79,6 @@ type CertificateResolver struct {
 type Global struct {
 	CheckNewVersion    bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" export:"true"`
 	SendAnonymousUsage bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" export:"true"`
-	InsecureSNI        bool `description:"Allow domain fronting. If the option is not specified, it will be enabled by default." json:"insecureSNI" toml:"insecureSNI" yaml:"insecureSNI" label:"allowEmpty" export:"true"`
-}
-
-// SetDefaults sets the default values.
-func (a *Global) SetDefaults() {
-	a.InsecureSNI = true
 }
 
 // ServersTransport options to configure communication between Traefik and the servers.
