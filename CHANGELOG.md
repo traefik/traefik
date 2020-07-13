@@ -1,3 +1,11 @@
+## [v2.2.5](https://github.com/containous/traefik/tree/v2.2.5) (2020-07-13)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.4...v2.2.5)
+
+**Bug fixes:**
+- **[k8s,k8s/crd]** fix k8s crd to read contentType middleware into dynamic config ([#7034](https://github.com/containous/traefik/pull/7034) by [johnpekcan](https://github.com/johnpekcan))
+- **[rules,server,tls]** Revert domain fronting fix ([#7039](https://github.com/containous/traefik/pull/7039) by [rtribotte](https://github.com/rtribotte))
+- **[tls]** Fix default value for InsecureSNI when global is not set ([#7037](https://github.com/containous/traefik/pull/7037) by [juliens](https://github.com/juliens))
+
 ## [v2.2.4](https://github.com/containous/traefik/tree/v2.2.4) (2020-07-10)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.3...v2.2.4)
 
