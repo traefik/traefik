@@ -119,11 +119,11 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 	return nil, false, nil
 }
 
-func (c clientMock) GetIngressClass(name string) (*networkingv1beta1.IngressClass, bool, error) {
-	if c.ingressClass != nil && c.ingressClass.Name == name {
-		return c.ingressClass, true, nil
+func (c clientMock) GetIngressClass() (*networkingv1beta1.IngressClass, error) {
+	if c.ingressClass != nil {
+		return c.ingressClass, nil
 	}
-	return nil, false, nil
+	return nil, nil
 }
 
 func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {

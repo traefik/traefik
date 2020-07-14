@@ -27,9 +27,10 @@ import (
 )
 
 const (
-	annotationKubernetesIngressClass = "kubernetes.io/ingress.class"
-	traefikDefaultIngressClass       = "traefik"
-	defaultPathMatcher               = "PathPrefix"
+	annotationKubernetesIngressClass     = "kubernetes.io/ingress.class"
+	traefikDefaultIngressClass           = "traefik"
+	traefikDefaultIngressClassController = "traefik.io/ingress-controller"
+	defaultPathMatcher                   = "PathPrefix"
 )
 
 // Provider holds configurations of the provider.
@@ -191,14 +192,15 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	var ingressClass *networkingv1beta1.IngressClass
 
 	if major >= 1 && minor >= 18 {
-		ic, exists, err := client.GetIngressClass(p.IngressClass)
+		ic, err := client.GetIngressClass()
+
 		if err != nil {
-			log.FromContext(ctx).Errorf("Failed to get ingress class: %w", err)
+			log.FromContext(ctx).Errorf("Failed to find an ingress class: %w", err)
 			return conf
 		}
 
-		if !exists {
-			log.FromContext(ctx).Errorf("Ingress class does not exist: %w", err)
+		if ic == nil {
+			log.FromContext(ctx).Errorf("No ingress class for the traefik-controller in the cluster")
 			return conf
 		}
 
