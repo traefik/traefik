@@ -205,7 +205,7 @@ func Test_createConfiguration(t *testing.T) {
 						},
 					},
 					"websecure": {
-						Address: ":443",
+						Address: ":443/tcp",
 					},
 				},
 			},
