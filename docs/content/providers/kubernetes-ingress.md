@@ -258,11 +258,11 @@ Value of `kubernetes.io/ingress.class` annotation that identifies Ingress object
 If the parameter is non-empty, only Ingresses containing an annotation with the same value are processed.
 Otherwise, Ingresses missing the annotation, having an empty value, or with the value `traefik` are processed.
 
-!!! warning
-    
-    If your cluster is running kubernetes 1.18+, this configuration will instead use the new `IngressClass` object, and the new `ingressClassName` field in ingress objects.
-    In this case, you are required to create a matching `IngressClass` object in your cluster before you can use it with Traefik.
-    Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information.
+#### ingressClass on Kubernetes 1.18+
+
+If you cluster is running kubernetes 1.18+, you can also leverage the newly Introduced `IngressClass` resource to
+define which Ingress Objects to handle. In that case, Traefik will look for an `IngressClass` in your cluster with the
+controller of *traefik.io/ingress-controller* inside the spec. Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information.
 
 ### `ingressEndpoint`
 
