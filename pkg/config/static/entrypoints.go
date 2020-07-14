@@ -62,7 +62,7 @@ type Redirections struct {
 // RedirectEntryPoint is the definition of an entry point redirection.
 type RedirectEntryPoint struct {
 	To        string `description:"Targeted entry point of the redirection." json:"to,omitempty" toml:"to,omitempty" yaml:"to,omitempty"`
-	Scheme    string `description:"Scheme used for the redirection." json:"https,omitempty" toml:"https,omitempty" yaml:"https,omitempty"`
+	Scheme    string `description:"Scheme used for the redirection." json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty"`
 	Permanent bool   `description:"Applies a permanent redirection." json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty"`
 	Priority  int    `description:"Priority of the generated router." json:"priority,omitempty" toml:"priority,omitempty" yaml:"priority,omitempty"`
 }
