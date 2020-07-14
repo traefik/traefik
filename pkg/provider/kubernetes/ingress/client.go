@@ -347,7 +347,7 @@ func (c *clientWrapper) GetIngressClass() (*networkingv1beta1.IngressClass, erro
 		}
 	}
 
-	return &networkingv1beta1.IngressClass{}, err
+	return nil, err
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.
