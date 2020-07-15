@@ -338,7 +338,7 @@ func (c *clientWrapper) GetIngressClass() (*networkingv1beta1.IngressClass, erro
 	ingressClasses, err := c.clusterFactory.Networking().V1beta1().IngressClasses().Lister().List(labels.Everything())
 
 	if err != nil {
-		return &networkingv1beta1.IngressClass{}, err
+		return nil, err
 	}
 
 	for _, ic := range ingressClasses {
@@ -386,17 +386,17 @@ func (c *clientWrapper) newResourceEventHandler(events chan<- interface{}) cache
 func (c *clientWrapper) GetServerVersion() (major, minor int, err error) {
 	version, err := c.clientset.Discovery().ServerVersion()
 	if err != nil {
-		return 0, 0, fmt.Errorf("could not determine cluster API version: %q", err)
+		return 0, 0, fmt.Errorf("could not determine cluster API version: %w", err)
 	}
 
 	major, err = strconv.Atoi(version.Major)
 	if err != nil {
-		return 0, 0, fmt.Errorf("could not determine cluster major API version: %q", err)
+		return 0, 0, fmt.Errorf("could not determine cluster major API version: %w", err)
 	}
 
 	minor, err = strconv.Atoi(version.Minor)
 	if err != nil {
-		return 0, 0, fmt.Errorf("could not determine cluster minor API version: %q", err)
+		return 0, 0, fmt.Errorf("could not determine cluster minor API version: %w", err)
 	}
 
 	return major, minor, nil

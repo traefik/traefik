@@ -185,7 +185,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	major, minor, err := client.GetServerVersion()
 	if err != nil {
-		log.FromContext(ctx).Errorf("Failed to get server version: %w", err)
+		log.FromContext(ctx).Errorf("Failed to get server version: %v", err)
 		return conf
 	}
 
@@ -195,7 +195,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		ic, err := client.GetIngressClass()
 
 		if err != nil {
-			log.FromContext(ctx).Errorf("Failed to find an ingress class: %w", err)
+			log.FromContext(ctx).Errorf("Failed to find an ingress class: %v", err)
 			return conf
 		}
 

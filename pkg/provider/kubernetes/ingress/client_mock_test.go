@@ -123,7 +123,7 @@ func (c clientMock) GetIngressClass() (*networkingv1beta1.IngressClass, error) {
 	if c.ingressClass != nil {
 		return c.ingressClass, nil
 	}
-	return nil, nil
+	return c.ingressClass, nil
 }
 
 func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
