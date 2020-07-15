@@ -120,9 +120,6 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 }
 
 func (c clientMock) GetIngressClass() (*networkingv1beta1.IngressClass, error) {
-	if c.ingressClass != nil {
-		return c.ingressClass, nil
-	}
 	return c.ingressClass, nil
 }
 

@@ -156,9 +156,9 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	for _, ns := range namespaces {
-		for t, ok := range c.factories[ns].WaitForCacheSync(stopCh) {
+		for typ, ok := range c.factories[ns].WaitForCacheSync(stopCh) {
 			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", typ, ns)
 			}
 		}
 	}
@@ -171,17 +171,16 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	if major >= 1 && minor >= 18 {
 		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
-
 		c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
-
 		c.clusterFactory.Start(stopCh)
 
-		for t, ok := range c.clusterFactory.WaitForCacheSync(stopCh) {
+		for typ, ok := range c.clusterFactory.WaitForCacheSync(stopCh) {
 			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", typ)
 			}
 		}
 	}
+
 	return eventCh, nil
 }
 
@@ -332,11 +331,10 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 
 func (c *clientWrapper) GetIngressClass() (*networkingv1beta1.IngressClass, error) {
 	if c.clusterFactory == nil {
-		return nil, fmt.Errorf("failed to find ingressClass : factory not loaded")
+		return nil, errors.New("failed to find ingressClass: factory not loaded")
 	}
 
 	ingressClasses, err := c.clusterFactory.Networking().V1beta1().IngressClasses().Lister().List(labels.Everything())
-
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +345,7 @@ func (c *clientWrapper) GetIngressClass() (*networkingv1beta1.IngressClass, erro
 		}
 	}
 
-	return nil, err
+	return nil, nil
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.
