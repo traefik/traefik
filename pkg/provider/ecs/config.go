@@ -313,7 +313,7 @@ func getPort(instance ecsInstance, serverPort string) string {
 
 	var ports []nat.Port
 	for _, port := range instance.machine.ports {
-		var natPort, err = nat.NewPort(port.protocol, strconv.FormatInt(port.hostPort, 10))
+		natPort, err := nat.NewPort(port.protocol, strconv.FormatInt(port.hostPort, 10))
 		if err != nil {
 			continue
 		}

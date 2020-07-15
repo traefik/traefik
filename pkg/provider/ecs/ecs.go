@@ -71,8 +71,10 @@ type awsClient struct {
 // DefaultTemplateRule The default template for the default rule.
 const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
-var _ provider.Provider = (*Provider)(nil)
-var existingTaskDefCache = cache.New(30*time.Minute, 5*time.Minute)
+var (
+	_                    provider.Provider = (*Provider)(nil)
+	existingTaskDefCache                   = cache.New(30*time.Minute, 5*time.Minute)
+)
 
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
@@ -252,7 +254,6 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			}
 			return !lastPage
 		})
-
 		if err != nil {
 			logger.Error("Unable to list tasks")
 			return nil, err
@@ -297,7 +298,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					var ports []portMapping
 					for _, mapping := range containerDefinition.PortMappings {
 						if mapping != nil {
-							var protocol = "TCP"
+							protocol := "TCP"
 							if aws.StringValue(mapping.Protocol) == "udp" {
 								protocol = "UDP"
 							}
@@ -388,7 +389,6 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 			ContainerInstances: arns,
 			Cluster:            clusterName,
 		})
-
 		if err != nil {
 			logger.Errorf("Unable to describe container instances: %v", err)
 			return nil, err
@@ -418,7 +418,6 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 				}
 				return !lastPage
 			})
-
 			if err != nil {
 				logger.Errorf("Unable to describe instances: %v", err)
 				return nil, err
@@ -441,7 +440,6 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 			resp, err := client.ecs.DescribeTaskDefinitionWithContext(ctx, &ecs.DescribeTaskDefinitionInput{
 				TaskDefinition: task.TaskDefinitionArn,
 			})
-
 			if err != nil {
 				logger.Errorf("Unable to describe task definition: %v", err)
 				return nil, err

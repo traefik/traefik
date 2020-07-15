@@ -64,7 +64,7 @@ func mPorts(opts ...func(*portMapping)) func(*machine) {
 	}
 }
 
-func mPort(containerPort int32, hostPort int32, protocol string) func(*portMapping) {
+func mPort(containerPort, hostPort int32, protocol string) func(*portMapping) {
 	return func(pm *portMapping) {
 		pm.containerPort = int64(containerPort)
 		pm.hostPort = int64(hostPort)

@@ -1945,7 +1945,8 @@ func Test_buildConfiguration(t *testing.T) {
 					Services:    map[string]*dynamic.Service{},
 				},
 			},
-		}, {
+		},
+		{
 			desc: "one container not running",
 			containers: []ecsInstance{
 				instance(
