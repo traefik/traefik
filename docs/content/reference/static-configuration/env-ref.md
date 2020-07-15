@@ -486,6 +486,33 @@ Load dynamic configuration from a file.
 `TRAEFIK_PROVIDERS_FILE_WATCH`:  
 Watch provider. (Default: ```true```)
 
+`TRAEFIK_PROVIDERS_HTTP`:  
+Enable HTTP backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_HTTP_ENDPOINT`:  
+Load configuration from this endpoint.
+
+`TRAEFIK_PROVIDERS_HTTP_POLLINTERVAL`:  
+Polling interval for endpoint. (Default: ```5```)
+
+`TRAEFIK_PROVIDERS_HTTP_POLLTIMEOUT`:  
+Polling timeout for endpoint. (Default: ```5```)
+
+`TRAEFIK_PROVIDERS_HTTP_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_HTTP_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_HTTP_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_HTTP_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_HTTP_TLS_KEY`:  
+TLS key
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
