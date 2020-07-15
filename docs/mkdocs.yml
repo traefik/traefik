@@ -95,6 +95,7 @@ nav:
           - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
           - 'Kubernetes Ingress': 'routing/providers/kubernetes-ingress.md'
           - 'Consul Catalog': 'routing/providers/consul-catalog.md'
+          - 'ECS': 'routing/providers/ecs.md'
           - 'Marathon': 'routing/providers/marathon.md'
           - 'Rancher': 'routing/providers/rancher.md'
           - 'KV': 'routing/providers/kv.md'
