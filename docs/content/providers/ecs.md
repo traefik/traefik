@@ -80,6 +80,7 @@ providers:
 ```
 
 Search for services in all clusters.
+If set to true the configured clusters will be ignored and the clusters will be discovered.
 If set to false the services will be discovered only in configured clusters.
 
 ### `exposedByDefault`

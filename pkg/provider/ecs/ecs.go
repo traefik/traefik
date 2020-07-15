@@ -77,7 +77,7 @@ var existingTaskDefCache = cache.New(30*time.Minute, 5*time.Minute)
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
 	p.Clusters = []string{"default"}
-	p.AutoDiscoverClusters = true
+	p.AutoDiscoverClusters = false
 	p.ExposedByDefault = true
 	p.RefreshSeconds = 15
 	p.DefaultRule = DefaultTemplateRule
