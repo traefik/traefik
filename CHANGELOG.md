@@ -1,5 +1,16 @@
 # Change Log
 
+## [v1.7.25](https://github.com/containous/traefik/tree/v1.7.25) (2020-07-15)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.24...v1.7.25)
+
+**Bug fixes:**
+- **[middleware]** Fix ipv6 handling in redirect middleware ([#6901](https://github.com/containous/traefik/pull/6901) by [rtribotte](https://github.com/rtribotte))
+- **[provider]** Backport &#34;Same Configuration Check&#34; from master ([#6631](https://github.com/containous/traefik/pull/6631) by [rkojedzinszky](https://github.com/rkojedzinszky))
+
+**Documentation:**
+- **[k8s]** Add ingress setup for minikube in docs ([#6552](https://github.com/containous/traefik/pull/6552) by [kobayashi](https://github.com/kobayashi))
+- Doc improvement on entrypoints whitelist for v1.7 ([#6571](https://github.com/containous/traefik/pull/6571) by [ddtmachado](https://github.com/ddtmachado))
+
 ## [v1.7.24](https://github.com/containous/traefik/tree/v1.7.24) (2020-03-25)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.23...v1.7.24)
 
