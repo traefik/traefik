@@ -193,7 +193,6 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	if major >= 1 && minor >= 18 {
 		ic, err := client.GetIngressClass()
-
 		if err != nil {
 			log.FromContext(ctx).Errorf("Failed to find an ingress class: %v", err)
 			return conf
@@ -299,7 +298,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 }
 
 func (p *Provider) updateIngressStatus(ing *v1beta1.Ingress, k8sClient Client) error {
-	// Only process if an EndpointIngress has been configured
+	// Only process if an EndpointIngress has been configured.
 	if p.IngressEndpoint == nil {
 		return nil
 	}
@@ -579,7 +578,8 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	if throttleDuration == 0 {
 		return nil
 	}
-	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling)
+
+	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling).
 	eventsChanBuffered := make(chan interface{}, 1)
 
 	// Run a goroutine that reads events from eventChan and does a
@@ -598,7 +598,7 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 					// We already have an event in eventsChanBuffered, so we'll
 					// do a refresh as soon as our throttle allows us to. It's fine
 					// to drop the event and keep whatever's in the buffer -- we
-					// don't do different things for different events
+					// don't do different things for different events.
 					log.FromContext(ctx).Debugf("Dropping event kind %T due to throttling", nextEvent)
 				}
 			}

@@ -925,8 +925,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:         "v18 Ingress with ingressClass",
-			serverMinor:  18,
+			desc:        "v18 Ingress with ingressClass",
+			serverMinor: 18,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -953,8 +953,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:         "v18 Ingress with missing ingressClass",
-			serverMinor:  18,
+			desc:        "v18 Ingress with missing ingressClass",
+			serverMinor: 18,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
