@@ -338,16 +338,9 @@ func (p *Provider) updateIngressStatus(ing *v1beta1.Ingress, k8sClient Client) e
 }
 
 func (p *Provider) shouldProcessIngress(providerIngressClass string, ingress *networkingv1beta1.Ingress, ingressClass *networkingv1beta1.IngressClass) bool {
-	switch {
-	case ingressClass != nil && ingress.Spec.IngressClassName != nil && ingressClass.ObjectMeta.Name == *ingress.Spec.IngressClassName:
-		return true
-	case providerIngressClass == ingress.Annotations[annotationKubernetesIngressClass]:
-		return true
-	case len(providerIngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == traefikDefaultIngressClass:
-		return true
-	default:
-		return false
-	}
+	return ingressClass != nil && ingress.Spec.IngressClassName != nil && ingressClass.ObjectMeta.Name == *ingress.Spec.IngressClassName ||
+		providerIngressClass == ingress.Annotations[annotationKubernetesIngressClass] ||
+		len(providerIngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == traefikDefaultIngressClass
 }
 
 func buildHostRule(host string) string {
