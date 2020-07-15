@@ -166,6 +166,7 @@ func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.P
 				case <-reload.C:
 					configuration, err := p.loadECSConfig(ctxLog, awsClient)
 					if err != nil {
+						logger.Errorf("Failed to load ECS configuration, error %s", err)
 						return err
 					}
 
