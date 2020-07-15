@@ -262,7 +262,12 @@ Otherwise, Ingresses missing the annotation, having an empty value, or with the 
 
 If you cluster is running kubernetes 1.18+, you can also leverage the newly Introduced `IngressClass` resource to
 define which Ingress Objects to handle. In that case, Traefik will look for an `IngressClass` in your cluster with the
-controller of *traefik.io/ingress-controller* inside the spec. Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information.
+controller of *traefik.io/ingress-controller* inside the spec. 
+
+!!! note ""
+    Please note, the ingressClass configuration on the provider is not used then anymore.
+
+Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information.
 
 ### `ingressEndpoint`
 

@@ -964,19 +964,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				},
 			},
 		},
-		{
-			desc:         "v18 Ingress with wrong ingressClass",
-			ingressClass: "foo",
-			serverMinor:  18,
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers:     map[string]*dynamic.Router{},
-					Services:    map[string]*dynamic.Service{},
-				},
-			},
-		},
 	}
 
 	for _, test := range testCases {
