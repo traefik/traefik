@@ -49,6 +49,10 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 		p.quietAddProvider(conf.Rancher)
 	}
 
+	if conf.Ecs != nil {
+		p.quietAddProvider(conf.Ecs)
+	}
+
 	if conf.ConsulCatalog != nil {
 		p.quietAddProvider(conf.ConsulCatalog)
 	}

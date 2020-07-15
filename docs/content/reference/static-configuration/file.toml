@@ -151,6 +151,16 @@
       [providers.consulCatalog.endpoint.httpAuth]
         username = "foobar"
         password = "foobar"
+  [providers.ecs]
+    constraints = "foobar"
+    exposedByDefault = true
+    refreshSeconds = 42
+    defaultRule = "foobar"
+    clusters = ["foobar", "foobar"]
+    autoDiscoverClusters = true
+    region = "foobar"
+    accessKeyID = "foobar"
+    secretAccessKey = "foobar"
   [providers.consul]
     rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
@@ -233,6 +243,7 @@
 [ping]
   entryPoint = "foobar"
   manualRouting = true
+  terminatingStatusCode = 42
 
 [log]
   level = "foobar"

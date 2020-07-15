@@ -11,6 +11,7 @@ import (
 	acmeprovider "github.com/containous/traefik/v2/pkg/provider/acme"
 	"github.com/containous/traefik/v2/pkg/provider/consulcatalog"
 	"github.com/containous/traefik/v2/pkg/provider/docker"
+	"github.com/containous/traefik/v2/pkg/provider/ecs"
 	"github.com/containous/traefik/v2/pkg/provider/file"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/ingress"
@@ -170,6 +171,7 @@ type Providers struct {
 	Rest              *rest.Provider          `description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Rancher           *rancher.Provider       `description:"Enable Rancher backend with default settings." json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	ConsulCatalog     *consulcatalog.Provider `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty"`
+	Ecs               *ecs.Provider           `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty"`
 
 	Consul    *consul.Provider `description:"Enable Consul backend with default settings." json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Etcd      *etcd.Provider   `description:"Enable Etcd backend with default settings." json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
