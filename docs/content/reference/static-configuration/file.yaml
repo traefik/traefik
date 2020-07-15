@@ -77,16 +77,6 @@ providers:
     watch: true
     filename: foobar
     debugLogGeneratedTemplate: true
-  http:
-    endpoint: foobar
-    pollInterval: 42
-    pollTimeout: 42
-    tls:
-      ca: foobar
-      caOptional: true
-      cert: foobar
-      key: foobar
-      insecureSkipVerify: true
   marathon:
     constraints: foobar
     trace: true
@@ -229,6 +219,16 @@ providers:
     - foobar
     username: foobar
     password: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+  http:
+    endpoint: foobar
+    pollInterval: 42
+    pollTimeout: 42
     tls:
       ca: foobar
       caOptional: true

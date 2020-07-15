@@ -71,16 +71,6 @@
     watch = true
     filename = "foobar"
     debugLogGeneratedTemplate = true
-  [providers.http]
-    endpoint = "foobar"
-    pollInterval = 42
-    pollTimeout = 42
-    [providers.http.tls]
-      ca = "foobar"
-      caOptional = true
-      cert = "foobar"
-      key = "foobar"
-      insecureSkipVerify = true
   [providers.marathon]
     constraints = "foobar"
     trace = true
@@ -210,6 +200,16 @@
     username = "foobar"
     password = "foobar"
     [providers.redis.tls]
+      ca = "foobar"
+      caOptional = true
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
+  [providers.http]
+    endpoint = "foobar"
+    pollInterval = 42
+    pollTimeout = 42
+    [providers.http.tls]
       ca = "foobar"
       caOptional = true
       cert = "foobar"
