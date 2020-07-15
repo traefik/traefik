@@ -142,9 +142,6 @@ func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.P
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "ecs"))
 		logger := log.FromContext(ctxLog)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
 		operation := func() error {
 			awsClient, err := p.createClient(logger)
 			if err != nil {
@@ -167,7 +164,7 @@ func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.P
 			for {
 				select {
 				case <-reload.C:
-					configuration, err := p.loadECSConfig(ctx, awsClient)
+					configuration, err := p.loadECSConfig(ctxLog, awsClient)
 					if err != nil {
 						return err
 					}
@@ -176,8 +173,8 @@ func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.P
 						ProviderName:  "ecs",
 						Configuration: configuration,
 					}
-				case <-ctx.Done():
-					return ctx.Err()
+				case <-routineCtx.Done():
+					return nil
 				}
 			}
 		}
