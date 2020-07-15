@@ -51,6 +51,14 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
+			desc: "HostHeader equivalent to Host",
+			rule: "HostHeader(`localhost`)",
+			expected: map[string]int{
+				"http://localhost/foo": http.StatusOK,
+				"http://bar/foo":       http.StatusNotFound,
+			},
+		},
+		{
 			desc: "Host with trailing period in rule",
 			rule: "Host(`localhost.`)",
 			expected: map[string]int{

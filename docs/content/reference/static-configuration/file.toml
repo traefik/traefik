@@ -1,7 +1,6 @@
 [global]
   checkNewVersion = true
   sendAnonymousUsage = true
-  insecureSNI = false
 
 [serversTransport]
   insecureSkipVerify = true
@@ -153,7 +152,7 @@
         username = "foobar"
         password = "foobar"
   [providers.consul]
-    rootKey = "traefik"
+    rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
@@ -164,7 +163,7 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.etcd]
-    rootKey = "traefik"
+    rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
@@ -175,7 +174,7 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.zooKeeper]
-    rootKey = "traefik"
+    rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
@@ -186,7 +185,7 @@
       key = "foobar"
       insecureSkipVerify = true
   [providers.redis]
-    rootKey = "traefik"
+    rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"

@@ -102,7 +102,7 @@ func (r *Router) AddRouteTLS(sniHost string, target Handler, config *tls.Config)
 	})
 }
 
-// AddRouteHTTPTLS defines the matching tlsConfig for a given sniHost.
+// AddRouteHTTPTLS defines a handler for a given sniHost and sets the matching tlsConfig.
 func (r *Router) AddRouteHTTPTLS(sniHost string, config *tls.Config) {
 	if r.hostHTTPTLSConfig == nil {
 		r.hostHTTPTLSConfig = map[string]*tls.Config{}

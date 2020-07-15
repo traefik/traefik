@@ -22,7 +22,7 @@
 
 [http.routers]
   [http.routers.router1]
-    rule = "Host(`localhost`)"
+    rule = "Host(`127.0.0.1`)"
     service = "service1"
     middlewares = ["retryer"]
     [http.routers.router1.tls]
