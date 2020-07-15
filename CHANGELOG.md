@@ -1,3 +1,32 @@
+## [v2.3.0-rc1](https://github.com/containous/traefik/tree/v2.3.0-rc1) (2020-07-15)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.0-rc1...v2.3.0-rc1)
+
+**Enhancements:**
+- **[api]** Add custom ping http code when Traefik is terminating ([#6696](https://github.com/containous/traefik/pull/6696) by [L3o-pold](https://github.com/L3o-pold))
+- **[ecs]** Add AWS ECS provider ([#6749](https://github.com/containous/traefik/pull/6749) by [alekitto](https://github.com/alekitto))
+- **[file]** feat: use parser to load dynamic config from file. ([#6875](https://github.com/containous/traefik/pull/6875) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/crd,k8s/ingress]** Upgrade Client-go to 0.18.2 ([#6779](https://github.com/containous/traefik/pull/6779) by [dtomcej](https://github.com/dtomcej))
+- **[k8s,k8s/ingress]** Add new ingressClass support to ingress provider ([#6831](https://github.com/containous/traefik/pull/6831) by [dtomcej](https://github.com/dtomcej))
+- **[plugins]** Traefik Pilot: plugins support and alert system (EXPERIMENTAL FEATURES) ([#7041](https://github.com/containous/traefik/pull/7041) by [ldez](https://github.com/ldez))
+- **[provider]** Add HTTP Provider ([#6976](https://github.com/containous/traefik/pull/6976) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Add iOS specific icons ([#6946](https://github.com/containous/traefik/pull/6946) by [Heisenberg74](https://github.com/Heisenberg74))
+
+**Bug fixes:**
+- **[k8s,k8s/ingress]** Delete an unnecessary warning log ([#6568](https://github.com/containous/traefik/pull/6568) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[middleware]** Allow multiple secure middlewares to operate independently  ([#6604](https://github.com/containous/traefik/pull/6604) by [dtomcej](https://github.com/dtomcej))
+
+**Documentation:**
+- **[middleware]** Fixes config samples regarding forceSlash option ([#6811](https://github.com/containous/traefik/pull/6811) by [volkerw00](https://github.com/volkerw00))
+
+**Misc:**
+- Merge current v2.2 branch into master ([#7052](https://github.com/containous/traefik/pull/7052) by [ldez](https://github.com/ldez))
+- Merge current v2.2 branch into master ([#7022](https://github.com/containous/traefik/pull/7022) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Merge current v2.2 branch into master ([#6921](https://github.com/containous/traefik/pull/6921) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Merge current v2.2 branch into master ([#6822](https://github.com/containous/traefik/pull/6822) by [mmatur](https://github.com/mmatur))
+- Merge current v2.2 branch into master ([#6754](https://github.com/containous/traefik/pull/6754) by [ldez](https://github.com/ldez))
+- Merge current v2.2 branch into master ([#6533](https://github.com/containous/traefik/pull/6533) by [ldez](https://github.com/ldez))
+- Merge current v2.2 branch into master ([#6468](https://github.com/containous/traefik/pull/6468) by [ldez](https://github.com/ldez))
+
 ## [v2.2.5](https://github.com/containous/traefik/tree/v2.2.5) (2020-07-13)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.4...v2.2.5)
 
