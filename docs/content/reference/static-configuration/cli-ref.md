@@ -421,7 +421,7 @@ Watch Docker Swarm events. (Default: ```true```)
 The AWS credentials access key to use for making requests
 
 `--providers.ecs.autodiscoverclusters`:  
-Auto discover cluster (Default: ```true```)
+Auto discover cluster (Default: ```false```)
 
 `--providers.ecs.clusters`:  
 ECS Clusters name (Default: ```default```)

@@ -161,6 +161,18 @@ providers:
       httpAuth:
         username: foobar
         password: foobar
+  ecs:
+    constraints: foobar
+    exposedByDefault: true
+    refreshSeconds: 42
+    defaultRule: foobar
+    clusters:
+    - foobar
+    - foobar
+    autoDiscoverClusters: true
+    region: foobar
+    accessKeyID: foobar
+    secretAccessKey: foobar
   consul:
     rootKey: foobar
     endpoints:
@@ -174,18 +186,6 @@ providers:
       cert: foobar
       key: foobar
       insecureSkipVerify: true
-  ecs:
-    constraints: "foobar"
-    exposedByDefault: true
-    refreshSeconds: 42
-    defaultRule: "foobar"
-    cluster:
-      - "foobar"
-      - "foobar"
-    autoDiscoverClusters: true
-    region: "foobar"
-    accessKeyID: "foobar"
-    secretAccessKey: "foobar"
   etcd:
     rootKey: foobar
     endpoints:
@@ -262,6 +262,7 @@ metrics:
 ping:
   entryPoint: foobar
   manualRouting: true
+  terminatingStatusCode: 42
 log:
   level: foobar
   filePath: foobar

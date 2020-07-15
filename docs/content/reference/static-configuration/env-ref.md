@@ -421,7 +421,7 @@ Watch Docker Swarm events. (Default: ```true```)
 The AWS credentials access key to use for making requests
 
 `TRAEFIK_PROVIDERS_ECS_AUTODISCOVERCLUSTERS`:  
-Auto discover cluster (Default: ```true```)
+Auto discover cluster (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_CLUSTERS`:  
 ECS Clusters name (Default: ```default```)
