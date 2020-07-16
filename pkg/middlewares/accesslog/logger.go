@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -98,6 +99,17 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 		Formatter: formatter,
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
+	}
+
+	// Transform headers names in config to a canonical form, to be used as is without further transformations.
+	if config.Fields != nil && config.Fields.Headers != nil && len(config.Fields.Headers.Names) > 0 {
+		var fields = map[string]string{}
+
+		for h, v := range config.Fields.Headers.Names {
+			fields[textproto.CanonicalMIMEHeaderKey(h)] = v
+		}
+
+		config.Fields.Headers.Names = fields
 	}
 
 	logHandler := &Handler{
