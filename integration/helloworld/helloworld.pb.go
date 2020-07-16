@@ -16,9 +16,10 @@ It has these top-level messages:
 package helloworld
 
 import (
-	proto "github.com/golang/protobuf/proto"
 	fmt "fmt"
 	math "math"
+
+	proto "github.com/golang/protobuf/proto"
 )
 
 import (

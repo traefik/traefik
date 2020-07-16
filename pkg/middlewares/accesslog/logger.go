@@ -103,7 +103,7 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 
 	// Transform headers names in config to a canonical form, to be used as is without further transformations.
 	if config.Fields != nil && config.Fields.Headers != nil && len(config.Fields.Headers.Names) > 0 {
-		var fields = map[string]string{}
+		fields := map[string]string{}
 
 		for h, v := range config.Fields.Headers.Names {
 			fields[textproto.CanonicalMIMEHeaderKey(h)] = v
