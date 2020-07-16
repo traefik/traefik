@@ -28,10 +28,6 @@ theme:
 
 copyright: "Copyright &copy; 2016-2020 Containous"
 
-google_analytics:
-  - 'UA-51880359-3'
-  - 'docs.traefik.io'
-
 extra_css:
   - assets/styles/extra.css # Our custom styles
   - assets/styles/atom-one-light.css # HightlightJS's CSS theme
@@ -81,6 +77,7 @@ nav:
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
       - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
       - 'Consul Catalog': 'providers/consul-catalog.md'
+      - 'ECS': 'providers/ecs.md'
       - 'Marathon': 'providers/marathon.md'
       - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
@@ -88,6 +85,7 @@ nav:
       - 'Etcd': 'providers/etcd.md'
       - 'ZooKeeper': 'providers/zookeeper.md'
       - 'Redis': 'providers/redis.md'
+      - 'HTTP': 'providers/http.md'
   - 'Routing & Load Balancing':
       - 'Overview': 'routing/overview.md'
       - 'EntryPoints': 'routing/entrypoints.md'
@@ -98,6 +96,7 @@ nav:
           - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
           - 'Kubernetes Ingress': 'routing/providers/kubernetes-ingress.md'
           - 'Consul Catalog': 'routing/providers/consul-catalog.md'
+          - 'ECS': 'routing/providers/ecs.md'
           - 'Marathon': 'routing/providers/marathon.md'
           - 'Rancher': 'routing/providers/rancher.md'
           - 'KV': 'routing/providers/kv.md'
@@ -129,6 +128,9 @@ nav:
       - 'Retry': 'middlewares/retry.md'
       - 'StripPrefix': 'middlewares/stripprefix.md'
       - 'StripPrefixRegex': 'middlewares/stripprefixregex.md'
+  - 'Plugins & Traefik Pilot':
+      - 'Overview': 'plugins/overview.md'
+      - 'Using Plugins': 'plugins/using-plugins.md'
   - 'Operations':
       - 'CLI': 'operations/cli.md'
       - 'Dashboard' : 'operations/dashboard.md'

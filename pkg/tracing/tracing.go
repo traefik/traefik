@@ -80,12 +80,12 @@ func (t *Tracing) StartSpanf(r *http.Request, spanKind ext.SpanKindEnum, opPrefi
 }
 
 // Inject delegates to opentracing.Tracer.
-func (t *Tracing) Inject(sm opentracing.SpanContext, format interface{}, carrier interface{}) error {
+func (t *Tracing) Inject(sm opentracing.SpanContext, format, carrier interface{}) error {
 	return t.tracer.Inject(sm, format, carrier)
 }
 
 // Extract delegates to opentracing.Tracer.
-func (t *Tracing) Extract(format interface{}, carrier interface{}) (opentracing.SpanContext, error) {
+func (t *Tracing) Extract(format, carrier interface{}) (opentracing.SpanContext, error) {
 	return t.tracer.Extract(format, carrier)
 }
 

@@ -45,7 +45,8 @@ func TestNewForwarder(t *testing.T) {
 				},
 				OperationName: "forward some-service.domain.tld/some-service.domain.tld",
 			},
-		}, {
+		},
+		{
 			desc:          "Simple Forward Tracer with truncation and hashing",
 			spanNameLimit: 101,
 			tracing: &trackingBackenMock{

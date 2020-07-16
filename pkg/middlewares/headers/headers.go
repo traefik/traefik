@@ -54,13 +54,13 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 	nextHandler := next
 
 	if hasSecureHeaders {
-		logger.Debug("Setting up secureHeaders from %v", cfg)
-		handler = newSecure(next, cfg)
+		logger.Debugf("Setting up secureHeaders from %v", cfg)
+		handler = newSecure(next, cfg, name)
 		nextHandler = handler
 	}
 
 	if hasCustomHeaders || hasCorsHeaders {
-		logger.Debug("Setting up customHeaders/Cors from %v", cfg)
+		logger.Debugf("Setting up customHeaders/Cors from %v", cfg)
 		handler = NewHeader(nextHandler, cfg)
 	}
 
@@ -84,7 +84,7 @@ type secureHeader struct {
 }
 
 // newSecure constructs a new secure instance with supplied options.
-func newSecure(next http.Handler, cfg dynamic.Headers) *secureHeader {
+func newSecure(next http.Handler, cfg dynamic.Headers, contextKey string) *secureHeader {
 	opt := secure.Options{
 		BrowserXssFilter:        cfg.BrowserXSSFilter,
 		ContentTypeNosniff:      cfg.ContentTypeNosniff,
@@ -107,6 +107,7 @@ func newSecure(next http.Handler, cfg dynamic.Headers) *secureHeader {
 		SSLProxyHeaders:         cfg.SSLProxyHeaders,
 		STSSeconds:              cfg.STSSeconds,
 		FeaturePolicy:           cfg.FeaturePolicy,
+		SecureContextKey:        contextKey,
 	}
 
 	return &secureHeader{

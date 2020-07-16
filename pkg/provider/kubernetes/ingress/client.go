@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"time"
 
 	"github.com/containous/traefik/v2/pkg/log"
@@ -49,15 +50,18 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 	GetIngresses() []*networkingv1beta1.Ingress
+	GetIngressClass() (*networkingv1beta1.IngressClass, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
 	UpdateIngressStatus(ing *networkingv1beta1.Ingress, ip, hostname string) error
+	GetServerVersion() (major, minor int, err error)
 }
 
 type clientWrapper struct {
 	clientset            *kubernetes.Clientset
 	factories            map[string]informers.SharedInformerFactory
+	clusterFactory       informers.SharedInformerFactory
 	ingressLabelSelector labels.Selector
 	isNamespaceAll       bool
 	watchedNamespaces    []string
@@ -152,9 +156,27 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	for _, ns := range namespaces {
-		for t, ok := range c.factories[ns].WaitForCacheSync(stopCh) {
+		for typ, ok := range c.factories[ns].WaitForCacheSync(stopCh) {
 			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", typ, ns)
+			}
+		}
+	}
+
+	// If the kubernetes cluster is v1.18+, we can use the new IngressClass objects
+	major, minor, err := c.GetServerVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	if major >= 1 && minor >= 18 {
+		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
+		c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
+		c.clusterFactory.Start(stopCh)
+
+		for typ, ok := range c.clusterFactory.WaitForCacheSync(stopCh) {
+			if !ok {
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", typ)
 			}
 		}
 	}
@@ -307,6 +329,25 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 	return secret, exist, err
 }
 
+func (c *clientWrapper) GetIngressClass() (*networkingv1beta1.IngressClass, error) {
+	if c.clusterFactory == nil {
+		return nil, errors.New("failed to find ingressClass: factory not loaded")
+	}
+
+	ingressClasses, err := c.clusterFactory.Networking().V1beta1().IngressClasses().Lister().List(labels.Everything())
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ic := range ingressClasses {
+		if ic.Spec.Controller == traefikDefaultIngressClassController {
+			return ic, err
+		}
+	}
+
+	return nil, nil
+}
+
 // lookupNamespace returns the lookup namespace key for the given namespace.
 // When listening on all namespaces, it returns the client-go identifier ("")
 // for all-namespaces. Otherwise, it returns the given namespace.
@@ -337,6 +378,26 @@ func (c *clientWrapper) newResourceEventHandler(events chan<- interface{}) cache
 		},
 		Handler: &resourceEventHandler{ev: events},
 	}
+}
+
+// GetServerVersion returns the cluster server version, or an error.
+func (c *clientWrapper) GetServerVersion() (major, minor int, err error) {
+	version, err := c.clientset.Discovery().ServerVersion()
+	if err != nil {
+		return 0, 0, fmt.Errorf("could not determine cluster API version: %w", err)
+	}
+
+	major, err = strconv.Atoi(version.Major)
+	if err != nil {
+		return 0, 0, fmt.Errorf("could not determine cluster major API version: %w", err)
+	}
+
+	minor, err = strconv.Atoi(version.Minor)
+	if err != nil {
+		return 0, 0, fmt.Errorf("could not determine cluster minor API version: %w", err)
+	}
+
+	return major, minor, nil
 }
 
 // eventHandlerFunc will pass the obj on to the events channel or drop it.

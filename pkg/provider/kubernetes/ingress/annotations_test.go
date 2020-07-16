@@ -105,7 +105,7 @@ func Test_parseServiceConfig(t *testing.T) {
 				"traefik.ingress.kubernetes.io/foo":                            "bar",
 				"traefik.ingress.kubernetes.io/service.serversscheme":          "protocol",
 				"traefik.ingress.kubernetes.io/service.passhostheader":         "true",
-				"traefik.ingress.kubernetes.io/service.sticky":                 "true",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie":          "true",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.httponly": "true",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.name":     "foobar",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.secure":   "true",
@@ -129,11 +129,11 @@ func Test_parseServiceConfig(t *testing.T) {
 		{
 			desc: "simple sticky annotation",
 			annotations: map[string]string{
-				"traefik.ingress.kubernetes.io/service.sticky": "true",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie": "true",
 			},
 			expected: &ServiceConfig{
 				Service: &ServiceIng{
-					Sticky:         &dynamic.Sticky{},
+					Sticky:         &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
 					PassHostHeader: Bool(true),
 				},
 			},
@@ -206,7 +206,7 @@ func Test_convertAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"traefik.ingress.kubernetes.io/service.serversscheme":          "protocol",
 				"traefik.ingress.kubernetes.io/service.passhostheader":         "true",
-				"traefik.ingress.kubernetes.io/service.sticky":                 "true",
+				"traefik.ingress.kubernetes.io/service.sticky.cookie":          "true",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.httponly": "true",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.name":     "foobar",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.secure":   "true",
@@ -214,7 +214,7 @@ func Test_convertAnnotations(t *testing.T) {
 			expected: map[string]string{
 				"traefik.service.passhostheader":         "true",
 				"traefik.service.serversscheme":          "protocol",
-				"traefik.service.sticky":                 "true",
+				"traefik.service.sticky.cookie":          "true",
 				"traefik.service.sticky.cookie.httponly": "true",
 				"traefik.service.sticky.cookie.name":     "foobar",
 				"traefik.service.sticky.cookie.secure":   "true",

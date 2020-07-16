@@ -11,7 +11,9 @@ import (
 	acmeprovider "github.com/containous/traefik/v2/pkg/provider/acme"
 	"github.com/containous/traefik/v2/pkg/provider/consulcatalog"
 	"github.com/containous/traefik/v2/pkg/provider/docker"
+	"github.com/containous/traefik/v2/pkg/provider/ecs"
 	"github.com/containous/traefik/v2/pkg/provider/file"
+	"github.com/containous/traefik/v2/pkg/provider/http"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/ingress"
 	"github.com/containous/traefik/v2/pkg/provider/kv/consul"
@@ -68,6 +70,8 @@ type Configuration struct {
 	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening." json:"hostResolver,omitempty" toml:"hostResolver,omitempty" yaml:"hostResolver,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	CertificatesResolvers map[string]CertificateResolver `description:"Certificates resolvers configuration." json:"certificatesResolvers,omitempty" toml:"certificatesResolvers,omitempty" yaml:"certificatesResolvers,omitempty" export:"true"`
+
+	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty"`
 }
 
 // CertificateResolver contains the configuration for the different types of certificates resolver.
@@ -170,11 +174,13 @@ type Providers struct {
 	Rest              *rest.Provider          `description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Rancher           *rancher.Provider       `description:"Enable Rancher backend with default settings." json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	ConsulCatalog     *consulcatalog.Provider `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty"`
+	Ecs               *ecs.Provider           `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty"`
 
 	Consul    *consul.Provider `description:"Enable Consul backend with default settings." json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Etcd      *etcd.Provider   `description:"Enable Etcd backend with default settings." json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	ZooKeeper *zk.Provider     `description:"Enable ZooKeeper backend with default settings." json:"zooKeeper,omitempty" toml:"zooKeeper,omitempty" yaml:"zooKeeper,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Redis     *redis.Provider  `description:"Enable Redis backend with default settings." json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
+	HTTP      *http.Provider   `description:"Enable HTTP backend with default settings." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.

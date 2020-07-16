@@ -275,13 +275,16 @@ Here is a list of supported `providers`, that can automate the DNS verification,
 along with the required environment variables and their [wildcard & root domain support](#wildcard-domains).
 Do not hesitate to complete it.
 
-Every lego environment variable can be overridden by their respective `_FILE` counterpart, which should have a filepath to a file that contains the secret as its value.
+Many lego environment variables can be overridden by their respective `_FILE` counterpart, which should have a filepath to a file that contains the secret as its value.
 For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used to provide a Cloudflare API email address as a Docker secret named `traefik_cf-api-email`.
+
+For complete details, refer to your provider's _Additional configuration_ link.
 
 | Provider Name                                               | Provider Code  | Environment Variables                                                                                                                       |                                                                             |
 |-------------------------------------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
 | [ACME DNS](https://github.com/joohoi/acme-dns)              | `acme-dns`     | `ACME_DNS_API_BASE`, `ACME_DNS_STORAGE_PATH`                                                                                                | [Additional configuration](https://go-acme.github.io/lego/dns/acme-dns)     |
 | [Alibaba Cloud](https://www.alibabacloud.com)               | `alidns`       | `ALICLOUD_ACCESS_KEY`, `ALICLOUD_SECRET_KEY`, `ALICLOUD_REGION_ID`                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/alidns)       |
+| [ArvanCloud](https://www.arvancloud.com/en)                 | `arvancloud`   | `ARVANCLOUD_API_KEY`                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/arvancloud)   |
 | [Auroradns](https://www.pcextreme.com/dns-health-checks)    | `auroradns`    | `AURORA_USER_ID`, `AURORA_KEY`, `AURORA_ENDPOINT`                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/auroradns)    |
 | [Autodns](https://www.internetx.com/domains/autodns/)       | `autodns`      | `AUTODNS_API_USER`, `AUTODNS_API_PASSWORD`                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/autodns)      |
 | [Azure](https://azure.microsoft.com/services/dns/)          | `azure`        | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`, `[AZURE_METADATA_ENDPOINT]`   | [Additional configuration](https://go-acme.github.io/lego/dns/azure)        |

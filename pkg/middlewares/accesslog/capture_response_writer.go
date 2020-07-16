@@ -9,9 +9,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/middlewares"
 )
 
-var (
-	_ middlewares.Stateful = &captureResponseWriterWithCloseNotify{}
-)
+var _ middlewares.Stateful = &captureResponseWriterWithCloseNotify{}
 
 type capturer interface {
 	http.ResponseWriter

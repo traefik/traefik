@@ -1,0 +1,16 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+
+  [entryPoints.traefik]
+    address = ":8001"
+    [entryPoints.traefik.transport.lifeCycle]
+      requestAcceptGraceTimeout = "10s"
+
+[ping]
+    terminatingStatusCode = 204

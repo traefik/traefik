@@ -350,7 +350,6 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 		// the network specified on the current container.
 		containerParsed := parseContainer(containerInspected)
 		extraConf, err := p.getConfiguration(containerParsed)
-
 		if err != nil {
 			logger.Warnf("Unable to get IP address for container %s : failed to get extra configuration for container %s: %s", container.Name, containerInspected.Name, err)
 			return ""

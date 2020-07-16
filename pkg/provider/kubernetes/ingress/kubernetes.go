@@ -7,7 +7,6 @@ import (
 	"math"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -22,14 +21,16 @@ import (
 	"github.com/mitchellh/hashstructure"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
-	annotationKubernetesIngressClass = "kubernetes.io/ingress.class"
-	traefikDefaultIngressClass       = "traefik"
-	defaultPathMatcher               = "PathPrefix"
+	annotationKubernetesIngressClass     = "kubernetes.io/ingress.class"
+	traefikDefaultIngressClass           = "traefik"
+	traefikDefaultIngressClassController = "traefik.io/ingress-controller"
+	defaultPathMatcher                   = "PathPrefix"
 )
 
 // Provider holds configurations of the provider.
@@ -182,13 +183,36 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		TCP: &dynamic.TCPConfiguration{},
 	}
 
+	major, minor, err := client.GetServerVersion()
+	if err != nil {
+		log.FromContext(ctx).Errorf("Failed to get server version: %v", err)
+		return conf
+	}
+
+	var ingressClass *networkingv1beta1.IngressClass
+
+	if major >= 1 && minor >= 18 {
+		ic, err := client.GetIngressClass()
+		if err != nil {
+			log.FromContext(ctx).Errorf("Failed to find an ingress class: %v", err)
+			return conf
+		}
+
+		if ic == nil {
+			log.FromContext(ctx).Errorf("No ingress class for the traefik-controller in the cluster")
+			return conf
+		}
+
+		ingressClass = ic
+	}
+
 	ingresses := client.GetIngresses()
 
 	certConfigs := make(map[string]*tls.CertAndStores)
 	for _, ingress := range ingresses {
 		ctx = log.With(ctx, log.Str("ingress", ingress.Name), log.Str("namespace", ingress.Namespace))
 
-		if !shouldProcessIngress(p.IngressClass, ingress.Annotations[annotationKubernetesIngressClass]) {
+		if !p.shouldProcessIngress(p.IngressClass, ingress, ingressClass) {
 			continue
 		}
 
@@ -235,11 +259,6 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		}
 
 		for _, rule := range ingress.Spec.Rules {
-			if err := checkStringQuoteValidity(rule.Host); err != nil {
-				log.FromContext(ctx).Errorf("Invalid syntax for host: %s", rule.Host)
-				continue
-			}
-
 			if err := p.updateIngressStatus(ingress, client); err != nil {
 				log.FromContext(ctx).Errorf("Error while updating ingress status: %v", err)
 			}
@@ -249,11 +268,6 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			for _, pa := range rule.HTTP.Paths {
-				if err = checkStringQuoteValidity(pa.Path); err != nil {
-					log.FromContext(ctx).Errorf("Invalid syntax for path: %s", pa.Path)
-					continue
-				}
-
 				service, err := loadService(client, ingress.Namespace, pa.Backend)
 				if err != nil {
 					log.FromContext(ctx).
@@ -284,7 +298,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 }
 
 func (p *Provider) updateIngressStatus(ing *v1beta1.Ingress, k8sClient Client) error {
-	// Only process if an EndpointIngress has been configured
+	// Only process if an EndpointIngress has been configured.
 	if p.IngressEndpoint == nil {
 		return nil
 	}
@@ -322,17 +336,18 @@ func (p *Provider) updateIngressStatus(ing *v1beta1.Ingress, k8sClient Client) e
 	return k8sClient.UpdateIngressStatus(ing, service.Status.LoadBalancer.Ingress[0].IP, service.Status.LoadBalancer.Ingress[0].Hostname)
 }
 
+func (p *Provider) shouldProcessIngress(providerIngressClass string, ingress *networkingv1beta1.Ingress, ingressClass *networkingv1beta1.IngressClass) bool {
+	return ingressClass != nil && ingress.Spec.IngressClassName != nil && ingressClass.ObjectMeta.Name == *ingress.Spec.IngressClassName ||
+		providerIngressClass == ingress.Annotations[annotationKubernetesIngressClass] ||
+		len(providerIngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == traefikDefaultIngressClass
+}
+
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		return "HostRegexp(`" + strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1) + "`)"
 	}
 
 	return "Host(`" + host + "`)"
-}
-
-func shouldProcessIngress(ingressClass string, ingressClassAnnotation string) bool {
-	return ingressClass == ingressClassAnnotation ||
-		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
 }
 
 func getCertificates(ctx context.Context, ingress *v1beta1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
@@ -559,16 +574,12 @@ func loadRouter(rule v1beta1.IngressRule, pa v1beta1.HTTPIngressPath, rtConfig *
 	return rt
 }
 
-func checkStringQuoteValidity(value string) error {
-	_, err := strconv.Unquote(`"` + value + `"`)
-	return err
-}
-
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
 	if throttleDuration == 0 {
 		return nil
 	}
-	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling)
+
+	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling).
 	eventsChanBuffered := make(chan interface{}, 1)
 
 	// Run a goroutine that reads events from eventChan and does a
@@ -587,7 +598,7 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 					// We already have an event in eventsChanBuffered, so we'll
 					// do a refresh as soon as our throttle allows us to. It's fine
 					// to drop the event and keep whatever's in the buffer -- we
-					// don't do different things for different events
+					// don't do different things for different events.
 					log.FromContext(ctx).Debugf("Dropping event kind %T due to throttling", nextEvent)
 				}
 			}

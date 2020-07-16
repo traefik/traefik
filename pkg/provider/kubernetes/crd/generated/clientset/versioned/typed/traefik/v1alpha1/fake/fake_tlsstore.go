@@ -85,7 +85,6 @@ func (c *FakeTLSStores) List(ctx context.Context, opts v1.ListOptions) (result *
 func (c *FakeTLSStores) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(tlsstoresResource, c.ns, opts))
-
 }
 
 // Create takes the representation of a tLSStore and creates it.  Returns the server's representation of the tLSStore, and an error, if there is any.

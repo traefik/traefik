@@ -373,26 +373,6 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			},
 		},
 		{
-			desc:  "check rule quoting validity",
-			paths: []string{"tcp/services.yml", "tcp/with_bad_host_rule.yml"},
-			expected: &dynamic.Configuration{
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers:  map[string]*dynamic.TCPRouter{},
-					Services: map[string]*dynamic.TCPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-			},
-		},
-		{
 			desc:  "TLS",
 			paths: []string{"tcp/services.yml", "tcp/with_tls.yml"},
 			expected: &dynamic.Configuration{
@@ -2150,26 +2130,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "check rule quoting validity",
-			paths: []string{"services.yml", "with_bad_host_rule.yml"},
-			expected: &dynamic.Configuration{
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-				TCP: &dynamic.TCPConfiguration{
-					Routers:  map[string]*dynamic.TCPRouter{},
-					Services: map[string]*dynamic.TCPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
-				},
-			},
-		},
-		{
 			desc:  "TLS",
 			paths: []string{"services.yml", "with_tls.yml"},
 			expected: &dynamic.Configuration{
@@ -2980,7 +2940,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test-route-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
-						}},
+						},
+					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-test-route-6f97418635c7e18853da": {
@@ -3016,7 +2977,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test-route-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
-						}},
+						},
+					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-test-route-6f97418635c7e18853da": {
@@ -3052,7 +3014,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test-route-6f97418635c7e18853da",
 							Rule:        "Host(`foo.com`)",
-						}},
+						},
+					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-test-route-6f97418635c7e18853da": {

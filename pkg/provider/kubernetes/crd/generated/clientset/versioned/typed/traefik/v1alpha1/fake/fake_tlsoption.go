@@ -85,7 +85,6 @@ func (c *FakeTLSOptions) List(ctx context.Context, opts v1.ListOptions) (result 
 func (c *FakeTLSOptions) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(tlsoptionsResource, c.ns, opts))
-
 }
 
 // Create takes the representation of a tLSOption and creates it.  Returns the server's representation of the tLSOption, and an error, if there is any.

@@ -6,9 +6,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 )
 
-var (
-	_ backoff.BackOff = (*BackOff)(nil)
-)
+var _ backoff.BackOff = (*BackOff)(nil)
 
 const (
 	defaultMinJobInterval = 30 * time.Second

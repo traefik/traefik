@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -102,7 +101,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
 			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
-
 			if err != nil {
 				logger.Errorf("Error watching kubernetes events: %v", err)
 				timer := time.NewTimer(1 * time.Second)
@@ -233,6 +231,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Compress:          middleware.Spec.Compress,
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
 			Retry:             middleware.Spec.Retry,
+			ContentType:       middleware.Spec.ContentType,
+			Plugin:            middleware.Spec.Plugin,
 		}
 	}
 
@@ -609,11 +609,6 @@ func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
 	return tlsStores
 }
 
-func checkStringQuoteValidity(value string) error {
-	_, err := strconv.Unquote(`"` + value + `"`)
-	return err
-}
-
 func makeServiceKey(rule, ingressName string) (string, error) {
 	h := sha256.New()
 	if _, err := h.Write([]byte(rule)); err != nil {
@@ -633,7 +628,7 @@ func makeID(namespace, name string) string {
 	return namespace + "-" + name
 }
 
-func shouldProcessIngress(ingressClass string, ingressClassAnnotation string) bool {
+func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
 	return ingressClass == ingressClassAnnotation ||
 		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
 }

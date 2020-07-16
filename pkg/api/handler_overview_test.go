@@ -277,7 +277,7 @@ func TestHandler_Overview(t *testing.T) {
 				newJSON, err := json.MarshalIndent(results, "", "\t")
 				require.NoError(t, err)
 
-				err = ioutil.WriteFile(test.expected.jsonFile, newJSON, 0644)
+				err = ioutil.WriteFile(test.expected.jsonFile, newJSON, 0o644)
 				require.NoError(t, err)
 			}
 

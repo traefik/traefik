@@ -103,7 +103,7 @@ func (s *LocalStore) listenSaveAction() {
 				logger.Error(err)
 			}
 
-			err = ioutil.WriteFile(s.filename, data, 0600)
+			err = ioutil.WriteFile(s.filename, data, 0o600)
 			if err != nil {
 				logger.Error(err)
 			}

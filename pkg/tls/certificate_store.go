@@ -118,7 +118,7 @@ func (c CertificateStore) ResetCache() {
 }
 
 // MatchDomain return true if a domain match the cert domain.
-func MatchDomain(domain string, certDomain string) bool {
+func MatchDomain(domain, certDomain string) bool {
 	if domain == certDomain {
 		return true
 	}

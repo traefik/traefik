@@ -167,7 +167,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusMovedPermanently,
 		},
 		{
@@ -177,7 +179,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusMovedPermanently,
 		},
 		{
@@ -187,7 +191,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusOK,
 		},
 		{
@@ -197,7 +203,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: true,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusMovedPermanently,
 		},
 		{
@@ -207,7 +215,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusMovedPermanently,
 		},
 		{
@@ -217,7 +227,9 @@ func TestSSLForceHost(t *testing.T) {
 				SSLRedirect:  true,
 				SSLForceHost: false,
 				SSLHost:      "powpow.example.com",
-			}),
+			},
+				"mymiddleware",
+			),
 			expected: http.StatusOK,
 		},
 	}
@@ -540,7 +552,8 @@ func TestCORSResponses(t *testing.T) {
 			expected: map[string][]string{
 				"Access-Control-Allow-Origin": {"*"},
 			},
-		}, {
+		},
+		{
 			desc: "Test Simple CustomRequestHeaders Not Hijacked by CORS",
 			header: NewHeader(emptyHandler, dynamic.Headers{
 				CustomRequestHeaders: map[string]string{"foo": "bar"},

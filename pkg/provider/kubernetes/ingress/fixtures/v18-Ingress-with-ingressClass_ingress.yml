@@ -3,13 +3,12 @@ apiVersion: networking.k8s.io/v1beta1
 metadata:
   name: ""
   namespace: testing
-
 spec:
+  ingressClassName: traefik-lb
   rules:
-  - host: traefik.tchouk"0"
-    http:
+  - http:
       paths:
-      - path: /foo
+      - path: /bar
         backend:
           serviceName: service1
           servicePort: 80

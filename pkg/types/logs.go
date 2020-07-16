@@ -113,7 +113,7 @@ func checkFieldValue(value string, defaultKeep bool) bool {
 	}
 }
 
-func checkFieldHeaderValue(value string, defaultValue string) string {
+func checkFieldHeaderValue(value, defaultValue string) string {
 	if value == AccessLogKeep || value == AccessLogDrop || value == AccessLogRedact {
 		return value
 	}

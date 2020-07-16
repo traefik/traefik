@@ -63,6 +63,19 @@ func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	username, authinfo := d.auth.CheckAuth(req)
 	if username == "" {
+		headerField := d.headerField
+		if d.headerField == "" {
+			headerField = "Authorization"
+		}
+
+		auth := goauth.DigestAuthParams(req.Header.Get(headerField))
+		if auth["username"] != "" {
+			logData := accesslog.GetLogData(req)
+			if logData != nil {
+				logData.Core[accesslog.ClientUsername] = auth["username"]
+			}
+		}
+
 		if authinfo != nil && *authinfo == "stale" {
 			logger.Debug("Digest authentication failed, possibly because out of order requests")
 			tracing.SetErrorWithEvent(req, "Digest authentication failed, possibly because out of order requests")

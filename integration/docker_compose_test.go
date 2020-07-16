@@ -36,8 +36,8 @@ func (s *DockerComposeSuite) TearDownSuite(c *check.C) {
 }
 
 func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
-	var serviceCount = 2
-	var composeService = "whoami1"
+	serviceCount := 2
+	composeService := "whoami1"
 
 	s.composeProject.Scale(c, composeService, serviceCount)
 

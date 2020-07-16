@@ -224,8 +224,8 @@ func (c *ConfigurationWatcher) throttleProviderConfigReload(ctx context.Context,
 				logger.Info("Skipping same configuration")
 				continue
 			}
-			previousConfig = nextConfig
-			ring.In() <- nextConfig
+			previousConfig = *nextConfig.DeepCopy()
+			ring.In() <- *nextConfig.DeepCopy()
 		}
 	}
 }

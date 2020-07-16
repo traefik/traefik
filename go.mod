@@ -15,10 +15,12 @@ require (
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
 	github.com/abronan/valkeyrie v0.0.0-20200127174252-ef4277a138cd
+	github.com/aws/aws-sdk-go v1.30.20
 	github.com/c0va23/go-proxyprotocol v0.9.1
 	github.com/cenkalti/backoff/v4 v4.0.0
 	github.com/containerd/containerd v1.3.2 // indirect
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
+	github.com/containous/yaegi v0.8.13
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/cli v0.0.0-20200221155518-740919cc7fc0
@@ -36,7 +38,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
-	github.com/go-acme/lego/v3 v3.7.0
+	github.com/go-acme/lego/v3 v3.8.0
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.9.0
 	github.com/golang/protobuf v1.3.4
@@ -56,6 +58,7 @@ require (
 	github.com/miekg/dns v1.1.27
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/hashstructure v1.0.0
+	github.com/mitchellh/mapstructure v1.3.2
 	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
@@ -82,6 +85,7 @@ require (
 	github.com/vulcand/predicate v1.1.0
 	go.elastic.co/apm v1.7.0
 	go.elastic.co/apm/module/apmot v1.7.0
+	golang.org/x/mod v0.2.0
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	google.golang.org/grpc v1.27.1
@@ -89,6 +93,7 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	k8s.io/api v0.18.2
 	k8s.io/apimachinery v0.18.2
 	k8s.io/client-go v0.18.2

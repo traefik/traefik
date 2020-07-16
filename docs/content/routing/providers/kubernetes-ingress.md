@@ -110,7 +110,7 @@ which in turn will create the resulting routers, services, handlers, etc.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v2.2
+              image: traefik:v2.3
               args:
                 - --log.level=DEBUG
                 - --api
@@ -282,12 +282,12 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/service.passhostheader: "true"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.sticky`"
+??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.sticky: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
     ```
 
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.name`"

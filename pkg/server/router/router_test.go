@@ -25,6 +25,8 @@ import (
 func TestRouterManager_Get(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
+	t.Cleanup(func() { server.Close() })
+
 	type expectedResult struct {
 		StatusCode     int
 		RequestHeaders map[string]string
@@ -287,7 +289,7 @@ func TestRouterManager_Get(t *testing.T) {
 			})
 
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
-			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
@@ -312,6 +314,8 @@ func TestRouterManager_Get(t *testing.T) {
 
 func TestAccessLog(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	t.Cleanup(func() { server.Close() })
 
 	testCases := []struct {
 		desc              string
@@ -390,7 +394,7 @@ func TestAccessLog(t *testing.T) {
 			})
 
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
-			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
@@ -678,7 +682,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			})
 
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
-			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
@@ -760,7 +764,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	})
 
 	serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
-	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
 	chainBuilder := middleware.NewChainBuilder(staticCfg, nil, nil)
 
@@ -778,12 +782,14 @@ type staticTransport struct {
 	res *http.Response
 }
 
-func (t *staticTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+func (t *staticTransport) RoundTrip(_ *http.Request) (*http.Response, error) {
 	return t.res, nil
 }
 
 func BenchmarkRouterServe(b *testing.B) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+
+	b.Cleanup(func() { server.Close() })
 
 	res := &http.Response{
 		StatusCode: 200,
@@ -819,7 +825,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	})
 
 	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil)
-	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 	chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 

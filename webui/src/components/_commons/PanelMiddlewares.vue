@@ -371,15 +371,16 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - accessControlAllowOrigin -->
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - accessControlAllowOriginList -->
         <q-card-section v-if="middleware.headers">
           <div class="row items-start no-wrap">
             <div class="col">
               <div class="text-subtitle2">Access Control Allow Origin</div>
               <q-chip
+                v-for="(val, key) in exData(middleware).accessControlAllowOriginList" :key="key"
                 dense
                 class="app-chip app-chip-green">
-                {{ exData(middleware).accessControlAllowOrigin }}
+                {{ val }}
               </q-chip>
             </div>
           </div>

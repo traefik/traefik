@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/containous/traefik/v2/pkg/log"
 )
 
 type serviceManager interface {
@@ -26,7 +27,7 @@ type InternalHandlers struct {
 }
 
 // NewInternalHandlers creates a new InternalHandlers.
-func NewInternalHandlers(api func(configuration *runtime.Configuration) http.Handler, configuration *runtime.Configuration, rest http.Handler, metricsHandler http.Handler, pingHandler http.Handler, dashboard http.Handler, next serviceManager) *InternalHandlers {
+func NewInternalHandlers(api func(configuration *runtime.Configuration) http.Handler, configuration *runtime.Configuration, rest, metricsHandler, pingHandler, dashboard http.Handler, next serviceManager) *InternalHandlers {
 	var apiHandler http.Handler
 	if api != nil {
 		apiHandler = api(configuration)
@@ -42,13 +43,87 @@ func NewInternalHandlers(api func(configuration *runtime.Configuration) http.Han
 	}
 }
 
-// BuildHTTP builds an HTTP handler.
-func (m *InternalHandlers) BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
-	if strings.HasSuffix(serviceName, "@internal") {
-		return m.get(serviceName)
+type responseModifier struct {
+	r *http.Request
+	w http.ResponseWriter
+
+	headersSent bool // whether headers have already been sent
+	code        int  // status code, must default to 200
+
+	modifier    func(*http.Response) error // can be nil
+	modified    bool                       // whether modifier has already been called for the current request
+	modifierErr error                      // returned by modifier call
+}
+
+// modifier can be nil.
+func newResponseModifier(w http.ResponseWriter, r *http.Request, modifier func(*http.Response) error) *responseModifier {
+	return &responseModifier{
+		r:        r,
+		w:        w,
+		modifier: modifier,
+		code:     http.StatusOK,
+	}
+}
+
+func (w *responseModifier) WriteHeader(code int) {
+	if w.headersSent {
+		return
+	}
+	defer func() {
+		w.code = code
+		w.headersSent = true
+	}()
+
+	if w.modifier == nil || w.modified {
+		w.w.WriteHeader(code)
+		return
 	}
 
-	return m.serviceManager.BuildHTTP(rootCtx, serviceName, responseModifier)
+	resp := http.Response{
+		Header:  w.w.Header(),
+		Request: w.r,
+	}
+
+	if err := w.modifier(&resp); err != nil {
+		w.modifierErr = err
+		// we are propagating when we are called in Write, but we're logging anyway,
+		// because we could be called from another place which does not take care of
+		// checking w.modifierErr.
+		log.Errorf("Error when applying response modifier: %v", err)
+		w.w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.modified = true
+	w.w.WriteHeader(code)
+}
+
+func (w *responseModifier) Header() http.Header {
+	return w.w.Header()
+}
+
+func (w *responseModifier) Write(b []byte) (int, error) {
+	w.WriteHeader(w.code)
+	if w.modifierErr != nil {
+		return 0, w.modifierErr
+	}
+
+	return w.w.Write(b)
+}
+
+// BuildHTTP builds an HTTP handler.
+func (m *InternalHandlers) BuildHTTP(rootCtx context.Context, serviceName string, respModifier func(*http.Response) error) (http.Handler, error) {
+	if !strings.HasSuffix(serviceName, "@internal") {
+		return m.serviceManager.BuildHTTP(rootCtx, serviceName, respModifier)
+	}
+
+	internalHandler, err := m.get(serviceName)
+	if err != nil {
+		return nil, err
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		internalHandler.ServeHTTP(newResponseModifier(w, r, respModifier), r)
+	}), nil
 }
 
 func (m *InternalHandlers) get(serviceName string) (http.Handler, error) {
