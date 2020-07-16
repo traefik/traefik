@@ -7,7 +7,7 @@ before:
 builds:
   - binary: traefik
 
-    main: ./cmd/traefik/
+    main: ./cmd/traefik/traefik.go
     env:
       - CGO_ENABLED=0
     ldflags:

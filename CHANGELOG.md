@@ -1,9 +1,3 @@
-## [v2.3.0-rc2](https://github.com/containous/traefik/tree/v2.3.0-rc2) (2020-07-15)
-[All Commits](https://github.com/containous/traefik/compare/v2.3.0-rc1...v2.3.0-rc2)
-
-**Misc:**
-- fix: goreleaser build commands.
-
 ## [v2.3.0-rc1](https://github.com/containous/traefik/tree/v2.3.0-rc1) (2020-07-15)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.0-rc1...v2.3.0-rc1)
 
