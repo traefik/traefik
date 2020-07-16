@@ -238,7 +238,7 @@ To illustrate, it's possible to easily define multiple routers, services, and TL
     [[tls.certificates]]
       certFile = "/etc/traefik/cert-{{ $e }}.pem"
       keyFile = "/etc/traefik/cert-{{ $e }}.key"
-      store = ["my-store-foo-{{ $e }}", "my-store-bar-{{ $e }}"]
+      stores = ["my-store-foo-{{ $e }}", "my-store-bar-{{ $e }}"]
     {{ end }}
     
     [tls.config]
