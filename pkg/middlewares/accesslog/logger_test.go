@@ -41,11 +41,7 @@ var (
 )
 
 func TestLogRotation(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "traefik_")
-	if err != nil {
-		t.Fatalf("Error setting up temporary directory: %s", err)
-	}
-	defer os.RemoveAll(tempDir)
+	tempDir := createTempDir(t, "traefik_")
 
 	fileName := filepath.Join(tempDir, "traefik.log")
 	rotatedFileName := fileName + ".rotated"
@@ -121,7 +117,6 @@ func lineCount(t *testing.T, fileName string) int {
 
 func TestLoggerHeaderFields(t *testing.T) {
 	tmpDir := createTempDir(t, CommonFormat)
-	defer os.RemoveAll(tmpDir)
 
 	expectedValue := "expectedValue"
 
@@ -220,7 +215,6 @@ func TestLoggerHeaderFields(t *testing.T) {
 
 func TestLoggerCLF(t *testing.T) {
 	tmpDir := createTempDir(t, CommonFormat)
-	defer os.RemoveAll(tmpDir)
 
 	logFilePath := filepath.Join(tmpDir, logFileNameSuffix)
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat}
@@ -235,7 +229,6 @@ func TestLoggerCLF(t *testing.T) {
 
 func TestAsyncLoggerCLF(t *testing.T) {
 	tmpDir := createTempDir(t, CommonFormat)
-	defer os.RemoveAll(tmpDir)
 
 	logFilePath := filepath.Join(tmpDir, logFileNameSuffix)
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
@@ -457,7 +450,6 @@ func TestLoggerJSON(t *testing.T) {
 			t.Parallel()
 
 			tmpDir := createTempDir(t, JSONFormat)
-			defer os.RemoveAll(tmpDir)
 
 			logFilePath := filepath.Join(tmpDir, logFileNameSuffix)
 
@@ -740,6 +732,8 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 func createTempDir(t *testing.T, prefix string) string {
 	tmpDir, err := ioutil.TempDir("", prefix)
 	require.NoError(t, err, "failed to create temp dir")
+
+	t.Cleanup(func() { _ = os.RemoveAll(tmpDir) })
 
 	return tmpDir
 }
