@@ -168,7 +168,7 @@ The format is:
 
 If both TCP and UDP are wanted for the same port, two entryPoints definitions are needed, such as in the example below.
 
-??? example "Both TCP and UDP on port 3179"
+??? example "Both TCP and UDP on Port 3179"
 
     ```toml tab="File (TOML)"
     ## Static configuration
@@ -193,6 +193,30 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
     --entryPoints.tcpep.address=:3179
     --entryPoints.udpep.address=:3179/udp
     ```
+
+??? example "Listen on Specific IP Addresses Only"
+
+    ```toml tab="File (TOML)"
+    [entryPoints.specificIPv4]
+      address = "192.168.2.7:8888"
+    [entryPoints.specificIPv6]
+      address = "[2001:db8::1]:8888"
+    ```
+    
+    ```yaml tab="File (yaml)"
+    entryPoints:
+      specificIPv4:
+        address: "192.168.2.7:8888"
+      specificIPv6:
+        address: "[2001:db8::1]:8888"
+    ```
+    
+    ```bash tab="CLI"
+    entrypoints.specificIPv4.address=192.168.2.7:8888
+    entrypoints.specificIPv6.address=[2001:db8::1]:8888
+    ```
+    
+    Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
 
 ### Forwarded Headers
 
