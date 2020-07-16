@@ -168,7 +168,7 @@ The format is:
 
 If both TCP and UDP are wanted for the same port, two entryPoints definitions are needed, such as in the example below.
 
-??? example "Both TCP and UDP on port 3179"
+??? example "Both TCP and UDP on Port 3179"
 
     ```toml tab="File (TOML)"
     ## Static configuration
@@ -194,61 +194,29 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
     --entryPoints.udpep.address=:3179/udp
     ```
 
-#### listen on some ip addresses only
+??? example "Listen on Specific IP Addresses Only"
 
-```toml tab="File (TOML)"
-[entryPoints.oneIPv4AddressEp]
-  address = "192.168.2.7:8888"
-[entryPoints.oneIPv6AddressEp]
-  address = "[2001:db8::1]:8888"
-```
-
-```yaml tab="File (yaml)"
-entryPoints:
-  oneIPv4AddressEp:
-    address: "192.168.2.7:8888"
-  oneIPv6addressEp:
-    address: "[2001:db8::1]:8888"
-```
-
-```bash tab="CLI"
-entrypoints.oneIPv4AddressEp.address=192.168.2.7:8888
-entrypoints.oneIPv6AddressEp.address=[2001:db8::1]:8888
-```
-
-Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
-
-!!! warning
-
-    If using an orchestrator, the IP addresses available to bind to may not be externally accessible.
-
-??? info "Docker"
-
-    Publish the ports only on the desired addresses. The ip address of the host is not visible.
-
-    ```yaml
-    service:
-      oneService:
-        ports:
-          - 127:0.0.1:8888:8888 # ip address on host
-          - [2001:db8::1]:8888:8888 # ip address on host
-          - ...
-        labels:
-          ...
+    ```toml tab="File (TOML)"
+    [entryPoints.specificIPv4]
+      address = "192.168.2.7:8888"
+    [entryPoints.specificIPv6]
+      address = "[2001:db8::1]:8888"
     ```
-
-??? info "Docker Swarm"
-
-    All traffic comes from overlay network, and there is no possibility to limit the binding.
-
-    More details: https://github.com/moby/moby/issues/26696
-
-    Possible workarounds:
-      * add firewall rules on all nodes (https://github.com/moby/moby/issues/32299#issuecomment-360421915)
-
-??? info "other orchestrators - undocumented"
-
-    please find out how to do it and write above <!-- TODO write for more orchestrators -->
+    
+    ```yaml tab="File (yaml)"
+    entryPoints:
+      specificIPv4:
+        address: "192.168.2.7:8888"
+      specificIPv6:
+        address: "[2001:db8::1]:8888"
+    ```
+    
+    ```bash tab="CLI"
+    entrypoints.specificIPv4.address=192.168.2.7:8888
+    entrypoints.specificIPv6.address=[2001:db8::1]:8888
+    ```
+    
+    Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
 
 ### Forwarded Headers
 
