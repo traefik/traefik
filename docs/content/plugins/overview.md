@@ -10,6 +10,9 @@ For example, Traefik plugins can add features to modify requests or headers, iss
 
 Traefik Pilot can also monitor connected Traefik instances and issue alerts when one is not responding, or when it is subject to security vulnerabilities.
 
+!!! note "Availability"
+    Plugins are available for Traefik 2.30-RC1 and later.
+    
 !!! danger "Experimental Features"
     Plugins can potentially modify the behavior of Traefik in unforeseen ways.
     Exercise caution when adding new plugins to production Traefik instances.
