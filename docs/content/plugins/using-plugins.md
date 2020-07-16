@@ -1,6 +1,6 @@
 # Using Plugins
 
-In Traefik 2.3 or later, plugins are available to any Traefik instance that is [registered](overview.md#connecting-to-traefik-pilot) with Traefik Pilot.
+Plugins are available to any instance of Traefik 2.3 or later that is [registered](overview.md#connecting-to-traefik-pilot) with Traefik Pilot.
 Plugins are hosted on GitHub, but you can browse plugins to add to your registered Traefik instances from the Traefik Pilot UI.
 
 !!! danger "Experimental Features"
