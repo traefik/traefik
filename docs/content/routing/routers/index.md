@@ -472,6 +472,11 @@ It refers to a [TLS Options](../../https/tls.md#tls-options) and will be applied
     the TLS option is picked from the mapping mentioned above and based on the server name provided during the TLS handshake,
     and it all happens before routing actually occurs.
 
+!!! info "Domain Fronting"
+
+    In the case of domain fronting,
+    if the TLS options associated with the Host Header and the SNI are different then Traefik will respond with a status code `421`.
+
 ??? example "Configuring the TLS options"
 
     ```toml tab="File (TOML)"
