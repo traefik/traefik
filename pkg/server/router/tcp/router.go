@@ -160,10 +160,10 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 	}
 
-	sniVerif := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	sniCheck := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if req.TLS != nil && !strings.EqualFold(req.Host, req.TLS.ServerName) {
-			tlsOptionSNI := findTlsOptionName(tlsOptionsForHost, req.TLS.ServerName)
-			tlsOptionHeader := findTlsOptionName(tlsOptionsForHost, req.Host)
+			tlsOptionSNI := findTLSOptionName(tlsOptionsForHost, req.TLS.ServerName)
+			tlsOptionHeader := findTLSOptionName(tlsOptionsForHost, req.Host)
 
 			if tlsOptionHeader != tlsOptionSNI {
 				http.Error(rw, http.StatusText(http.StatusMisdirectedRequest), http.StatusMisdirectedRequest)
@@ -173,7 +173,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		handlerHTTPS.ServeHTTP(rw, req)
 	})
 
-	router.HTTPSHandler(sniVerif, defaultTLSConf)
+	router.HTTPSHandler(sniCheck, defaultTLSConf)
 
 	logger := log.FromContext(ctx)
 	for hostSNI, tlsConfigs := range tlsOptionsForHostSNI {
@@ -272,7 +272,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	return router, nil
 }
 
-func findTlsOptionName(tlsOptionsForHost map[string]string, host string) string {
+func findTLSOptionName(tlsOptionsForHost map[string]string, host string) string {
 	tlsOptions, ok := tlsOptionsForHost[host]
 	if ok {
 		return tlsOptions

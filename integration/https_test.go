@@ -737,7 +737,7 @@ func startTestServer(port string, statusCode int, textContent string) (ts *httpt
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(statusCode)
 		if textContent != "" {
-			w.Write([]byte(textContent))
+			_, _ = w.Write([]byte(textContent))
 		}
 	})
 	listener, err := net.Listen("tcp", "127.0.0.1:"+port)
@@ -1195,5 +1195,4 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
 		c.Assert(err, checker.IsNil)
 	}
-
 }
