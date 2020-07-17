@@ -428,6 +428,7 @@ metadata:
 
 spec:
   clientAuth:
+    # the CA certificate is extracted from key `tls.ca` of the given secrets.
     secretNames:
       - secretCA
     clientAuthType: RequireAndVerifyClientCert
