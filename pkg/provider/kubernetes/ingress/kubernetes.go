@@ -183,7 +183,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		TCP: &dynamic.TCPConfiguration{},
 	}
 
-	major, minor, err := client.GetServerVersion()
+	serverVersion, err := client.GetServerVersion()
 	if err != nil {
 		log.FromContext(ctx).Errorf("Failed to get server version: %v", err)
 		return conf
@@ -191,7 +191,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	var ingressClass *networkingv1beta1.IngressClass
 
-	if major >= 1 && minor >= 18 {
+	if supportsIngressClass(serverVersion) {
 		ic, err := client.GetIngressClass()
 		if err != nil {
 			log.FromContext(ctx).Errorf("Failed to find an ingress class: %v", err)

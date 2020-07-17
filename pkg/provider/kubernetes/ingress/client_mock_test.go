@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/k8s"
+	"github.com/hashicorp/go-version"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/api/networking/v1beta1"
@@ -20,8 +21,7 @@ type clientMock struct {
 	endpoints    []*corev1.Endpoints
 	ingressClass *networkingv1beta1.IngressClass
 
-	serverMajor int
-	serverMinor int
+	serverVersion *version.Version
 
 	apiServiceError       error
 	apiSecretError        error
@@ -31,11 +31,10 @@ type clientMock struct {
 	watchChan chan interface{}
 }
 
-func newClientMock(major, minor int, paths ...string) clientMock {
-	c := clientMock{
-		serverMajor: major,
-		serverMinor: minor,
-	}
+func newClientMock(serverVersion string, paths ...string) clientMock {
+	c := clientMock{}
+
+	c.serverVersion = version.Must(version.NewVersion(serverVersion))
 
 	for _, path := range paths {
 		yamlContent, err := ioutil.ReadFile(path)
@@ -75,8 +74,8 @@ func (c clientMock) GetIngresses() []*v1beta1.Ingress {
 	return c.ingresses
 }
 
-func (c clientMock) GetServerVersion() (major, minor int, err error) {
-	return c.serverMajor, c.serverMinor, nil
+func (c clientMock) GetServerVersion() (*version.Version, error) {
+	return c.serverVersion, nil
 }
 
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
