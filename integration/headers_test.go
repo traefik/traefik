@@ -35,7 +35,7 @@ func (s *HeadersSuite) TestCorsResponses(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	backend := startTestServer("9000", http.StatusOK)
+	backend := startTestServer("9000", http.StatusOK, "")
 	defer backend.Close()
 
 	err = try.GetRequest(backend.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
@@ -124,7 +124,7 @@ func (s *HeadersSuite) TestSecureHeadersResponses(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	backend := startTestServer("9000", http.StatusOK)
+	backend := startTestServer("9000", http.StatusOK, "")
 	defer backend.Close()
 
 	err = try.GetRequest(backend.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
