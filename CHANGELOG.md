@@ -1,3 +1,15 @@
+## [v2.2.6](https://github.com/containous/traefik/tree/v2.2.6) (2020-07-17)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.5...v2.2.6)
+
+**Bug fixes:**
+- **[logs]** fix: access logs header names filtering is case insensitive ([#6900](https://github.com/containous/traefik/pull/6900) by [mjeanroy](https://github.com/mjeanroy))
+- **[provider]** Get Entrypoints Port Address without protocol for redirect ([#7047](https://github.com/containous/traefik/pull/7047) by [SantoDE](https://github.com/SantoDE))
+- **[tls]** Fix domain fronting ([#7064](https://github.com/containous/traefik/pull/7064) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- fix: documentation references. ([#7049](https://github.com/containous/traefik/pull/7049) by [ldez](https://github.com/ldez))
+- Add example for entrypoint on one ip address ([#6483](https://github.com/containous/traefik/pull/6483) by [SimonHeimberg](https://github.com/SimonHeimberg))
+
 ## [v2.2.5](https://github.com/containous/traefik/tree/v2.2.5) (2020-07-13)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.4...v2.2.5)
 
