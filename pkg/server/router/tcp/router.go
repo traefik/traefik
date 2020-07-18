@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 
@@ -161,15 +162,26 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	}
 
 	sniCheck := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if req.TLS != nil && !strings.EqualFold(req.Host, req.TLS.ServerName) {
+		host, _, err := net.SplitHostPort(req.Host)
+		if err != nil {
+			host = req.Host
+		}
+
+		if req.TLS != nil && !strings.EqualFold(host, req.TLS.ServerName) {
 			tlsOptionSNI := findTLSOptionName(tlsOptionsForHost, req.TLS.ServerName)
-			tlsOptionHeader := findTLSOptionName(tlsOptionsForHost, req.Host)
+			tlsOptionHeader := findTLSOptionName(tlsOptionsForHost, host)
 
 			if tlsOptionHeader != tlsOptionSNI {
+				log.WithoutContext().
+					WithField("host", host).
+					WithField("req.Host", req.Host).
+					WithField("req.TLS.ServerName", req.TLS.ServerName).
+					Errorf("TLS options difference: SNI=%s, Header:%s", tlsOptionSNI, tlsOptionHeader)
 				http.Error(rw, http.StatusText(http.StatusMisdirectedRequest), http.StatusMisdirectedRequest)
 				return
 			}
 		}
+
 		handlerHTTPS.ServeHTTP(rw, req)
 	})
 
