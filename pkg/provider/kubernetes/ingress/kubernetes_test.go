@@ -1179,7 +1179,7 @@ func TestGetCertificates(t *testing.T) {
 			if test.errResult != "" {
 				assert.EqualError(t, err, test.errResult)
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, test.result, tlsConfigs)
 			}
 		})
