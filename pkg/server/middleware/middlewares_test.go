@@ -276,7 +276,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 
 			handlers, err := result.Then(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
 			if test.expectedError != nil {
-				require.NotNil(t, err)
+				require.Error(t, err)
 				require.Equal(t, test.expectedError.Error(), err.Error())
 			} else {
 				require.NoError(t, err)
