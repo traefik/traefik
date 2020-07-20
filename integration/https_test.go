@@ -1151,6 +1151,34 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 			expectedStatusCode: http.StatusOK,
 		},
 		{
+			desc:               "Simple case with port in the Host Header",
+			hostHeader:         "site3.www.snitest.com:4443",
+			serverName:         "site3.www.snitest.com",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Spaces after the host header",
+			hostHeader:         "site3.www.snitest.com ",
+			serverName:         "site3.www.snitest.com",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Spaces after the servername",
+			hostHeader:         "site3.www.snitest.com",
+			serverName:         "site3.www.snitest.com ",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Spaces after the servername and host header",
+			hostHeader:         "site3.www.snitest.com ",
+			serverName:         "site3.www.snitest.com ",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
 			desc:               "Domain Fronting with same tlsOptions should follow header",
 			hostHeader:         "site1.www.snitest.com",
 			serverName:         "site2.www.snitest.com",
@@ -1189,9 +1217,11 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 
 	for _, test := range testCases {
 		test := test
+
 		req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443", nil)
 		c.Assert(err, checker.IsNil)
 		req.Host = test.hostHeader
+
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
 		c.Assert(err, checker.IsNil)
 	}

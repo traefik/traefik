@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 
@@ -141,6 +142,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 					continue
 				}
 
+				// domain is already in lower case thanks to the domain parsing
 				if tlsOptionsForHostSNI[domain] == nil {
 					tlsOptionsForHostSNI[domain] = make(map[string]nameAndConfig)
 				}
@@ -149,27 +151,46 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 					TLSConfig:  tlsConf,
 				}
 
-				lowerDomain := strings.ToLower(domain)
-				if _, ok := tlsOptionsForHost[lowerDomain]; ok {
+				if _, ok := tlsOptionsForHost[domain]; ok {
 					// Multiple tlsOptions fallback to default
-					tlsOptionsForHost[lowerDomain] = "default"
+					tlsOptionsForHost[domain] = "default"
 				} else {
-					tlsOptionsForHost[lowerDomain] = routerHTTPConfig.TLS.Options
+					tlsOptionsForHost[domain] = routerHTTPConfig.TLS.Options
 				}
 			}
 		}
 	}
 
 	sniCheck := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if req.TLS != nil && !strings.EqualFold(req.Host, req.TLS.ServerName) {
-			tlsOptionSNI := findTLSOptionName(tlsOptionsForHost, req.TLS.ServerName)
-			tlsOptionHeader := findTLSOptionName(tlsOptionsForHost, req.Host)
+		if req.TLS == nil {
+			handlerHTTPS.ServeHTTP(rw, req)
+			return
+		}
+
+		host, _, err := net.SplitHostPort(req.Host)
+		if err != nil {
+			host = req.Host
+		}
+
+		host = strings.TrimSpace(host)
+		serverName := strings.TrimSpace(req.TLS.ServerName)
+
+		// Domain Fronting
+		if !strings.EqualFold(host, serverName) {
+			tlsOptionSNI := findTLSOptionName(tlsOptionsForHost, serverName)
+			tlsOptionHeader := findTLSOptionName(tlsOptionsForHost, host)
 
 			if tlsOptionHeader != tlsOptionSNI {
+				log.WithoutContext().
+					WithField("host", host).
+					WithField("req.Host", req.Host).
+					WithField("req.TLS.ServerName", req.TLS.ServerName).
+					Debugf("TLS options difference: SNI=%s, Header:%s", tlsOptionSNI, tlsOptionHeader)
 				http.Error(rw, http.StatusText(http.StatusMisdirectedRequest), http.StatusMisdirectedRequest)
 				return
 			}
 		}
+
 		handlerHTTPS.ServeHTTP(rw, req)
 	})
 
