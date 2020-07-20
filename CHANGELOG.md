@@ -1,3 +1,9 @@
+## [v2.2.7](https://github.com/containous/traefik/tree/v2.2.7) (2020-07-20)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.6...v2.2.7)
+
+**Bug fixes:**
+- **[server,tls]** fix: drop host port to compare with SNI. ([#7071](https://github.com/containous/traefik/pull/7071) by [ldez](https://github.com/ldez))
+
 ## [v2.2.6](https://github.com/containous/traefik/tree/v2.2.6) (2020-07-17)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.5...v2.2.6)
 
