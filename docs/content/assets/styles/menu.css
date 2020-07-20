@@ -68,3 +68,25 @@
 .md-sidebar--secondary li {
   list-style-type: disc;
 }
+
+.md-search__inner {
+  width: inherit;
+  float: inherit;
+}
+
+.md-search__input {
+  margin-bottom: 10px;
+  border-radius: 4px; 
+  background-color: inherit;
+  border: 1px solid rgba(0,0,0,.07);
+}
+
+.md-search__input::placeholder {
+  color: rgba(0,0,0,.07);
+}
+
+@media only screen and (min-width: 60em) {
+  [data-md-toggle=search]:checked~.md-header .md-search__inner {
+    margin-top: 100px;
+  }
+}

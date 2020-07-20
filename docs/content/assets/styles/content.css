@@ -1,3 +1,7 @@
+.md-container {
+  padding-top: 0;
+}
+
 .md-content h1 {
   color: var(--dark) !important;
   font-weight: bold !important;

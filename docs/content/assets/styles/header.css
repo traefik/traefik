@@ -1,13 +1,5 @@
 @import url('https://fonts.googleapis.com/css?family=Rubik:300i,400,400i,500,500i,700&amp;display=swap');
 
-.site-header {
-  font-size: 10px;
-  font-family: 'Rubik', -apple-system, 'BlinkMacSystemFont', 'Segoe UI',
-    'Helvetica Neue', sans-serif;
-  color: #06102a;
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-}
-
 .wrapper-1200 {
   width: 100%;
   max-width: 61rem;
@@ -68,18 +60,23 @@
 }
 
 .site-header {
+  position: fixed;
   width: 100%;
   top: 0;
   left: 0;
   transition: height 0.1s;
   z-index: 100;
   background: white;
-  position: relative;
   box-shadow: 0 0 7px 0 #00000021;
   border-bottom: 1px solid #e2e2e2;
   height: 64px;
   display: flex;
   align-items: center;
+  font-size: 10px;
+  font-family: 'Rubik', -apple-system, 'BlinkMacSystemFont', 'Segoe UI',
+    'Helvetica Neue', sans-serif;
+  color: #06102a;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
 .site-header.scrolled {
