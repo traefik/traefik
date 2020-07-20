@@ -1137,12 +1137,11 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	testCases := []struct {
-		desc                string
-		hostHeader          string
-		serverName          string
-		hasPortInHostHeader bool
-		expectedContent     string
-		expectedStatusCode  int
+		desc               string
+		hostHeader         string
+		serverName         string
+		expectedContent    string
+		expectedStatusCode int
 	}{
 		{
 			desc:               "SimpleCase",
@@ -1152,12 +1151,32 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			desc:                "Simple case with port in the Host Header",
-			hostHeader:          "site3.www.snitest.com",
-			serverName:          "site3.www.snitest.com",
-			expectedContent:     "",
-			hasPortInHostHeader: true,
-			expectedStatusCode:  http.StatusOK,
+			desc:               "Simple case with port in the Host Header",
+			hostHeader:         "site3.www.snitest.com:4443",
+			serverName:         "site3.www.snitest.com",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Spaces after the host header",
+			hostHeader:         "site3.www.snitest.com ",
+			serverName:         "site3.www.snitest.com",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Spaces after the servername",
+			hostHeader:         "site3.www.snitest.com",
+			serverName:         "site3.www.snitest.com ",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Spaces after the servername and host header",
+			hostHeader:         "site3.www.snitest.com ",
+			serverName:         "site3.www.snitest.com ",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc:               "Domain Fronting with same tlsOptions should follow header",
@@ -1181,6 +1200,13 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 			expectedStatusCode: http.StatusMisdirectedRequest,
 		},
 		{
+			desc:               "Domain Fronting with different tlsOptions should produce a 421 (2)",
+			hostHeader:         "site3.www.snitest.com",
+			serverName:         "site1.www.snitest.com",
+			expectedContent:    "",
+			expectedStatusCode: http.StatusMisdirectedRequest,
+		},
+		{
 			desc:               "Case insensitive",
 			hostHeader:         "sIte1.www.snitest.com",
 			serverName:         "sitE1.www.snitest.com",
@@ -1191,12 +1217,10 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 
 	for _, test := range testCases {
 		test := test
+
 		req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443", nil)
 		c.Assert(err, checker.IsNil)
 		req.Host = test.hostHeader
-		if test.hasPortInHostHeader {
-			req.Host += ":4443"
-		}
 
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
 		c.Assert(err, checker.IsNil)
