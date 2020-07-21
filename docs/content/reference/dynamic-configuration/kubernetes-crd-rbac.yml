@@ -18,6 +18,7 @@ rules:
       - extensions
     resources:
       - ingresses
+      - ingressclasses
     verbs:
       - get
       - list
