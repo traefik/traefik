@@ -34,6 +34,7 @@ extra_css:
   - assets/styles/footer.css
   - assets/styles/menu.css
   - assets/styles/content.css
+  - assets/styles/product-switcher.css
   - assets/styles/atom-one-light.css # HightlightJS's CSS theme
 
 extra_javascript:

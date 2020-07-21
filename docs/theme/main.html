@@ -18,6 +18,7 @@
 
 {% block site_nav %}
     {% if nav %}
+        {% include "partials/product_switcher.html" %}
         <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
             {% include "partials/search.html" %}
             {% if "search" in config["plugins"] %}
