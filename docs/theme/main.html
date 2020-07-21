@@ -11,14 +11,14 @@
 {% endblock %}
 
 {% block header %}
-    {% include "partials/containous_header.html" %}
+    {% include "partials/containous-header.html" %}
     {% include "partials/header.html" %}
 {% endblock %}
 
 
 {% block site_nav %}
     {% if nav %}
-        {% include "partials/product_switcher.html" %}
+        {% include "partials/product-switcher.html" %}
         <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
             {% include "partials/search.html" %}
             {% if "search" in config["plugins"] %}
@@ -33,6 +33,13 @@
     {% endif %}
     {% if page.toc %}
         <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+            {% if config.repo_url %}
+                <div class="md-flex__cell md-flex__cell--shrink repo_url">
+                    <div class="md-header-nav__source">
+                        {% include "partials/source.html" %}
+                    </div>
+                </div>
+            {% endif %}
             <div class="md-sidebar__scrollwrap">
                 <div class="md-sidebar__inner">
                 {% include "partials/toc.html" %}

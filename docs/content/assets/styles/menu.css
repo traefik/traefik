@@ -69,6 +69,11 @@
   list-style-type: disc;
 }
 
+.md-sidebar--secondary .repo_url {
+  padding: 10px 0 14px 0;
+}
+
+
 .md-search__inner {
   width: inherit;
   float: inherit;
