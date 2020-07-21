@@ -24,10 +24,10 @@ func Bool(v bool) *bool { return &v }
 
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		ingressClass string
-		serverMinor  int
-		expected     *dynamic.Configuration
+		desc          string
+		ingressClass  string
+		serverVersion string
+		expected      *dynamic.Configuration
 	}{
 		{
 			desc: "Empty ingresses",
@@ -925,8 +925,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:        "v18 Ingress with ingressClass",
-			serverMinor: 18,
+			desc:          "v18 Ingress with ingressClass",
+			serverVersion: "v1.18",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -953,8 +953,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:        "v18 Ingress with missing ingressClass",
-			serverMinor: 18,
+			desc:          "v18 Ingress with missing ingressClass",
+			serverVersion: "v1.18",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -993,12 +993,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				paths = append(paths, generateTestFilename("_ingressclass", test.desc))
 			}
 
-			serverMinor := 17
-			if test.serverMinor != 0 {
-				serverMinor = test.serverMinor
+			serverVersion := test.serverVersion
+			if serverVersion == "" {
+				serverVersion = "v1.17"
 			}
 
-			clientMock := newClientMock(1, serverMinor, paths...)
+			clientMock := newClientMock(serverVersion, paths...)
 
 			p := Provider{IngressClass: test.ingressClass}
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
