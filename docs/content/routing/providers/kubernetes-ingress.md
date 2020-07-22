@@ -322,9 +322,23 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
     ```
 
-### TLS
+## Path Types on Kubernetes 1.18+
+              
+If the Kubernetes cluster version is 1.18+,
+the new `pathType` property can be leveraged to define the rules matchers:
 
-#### Communication Between Traefik and Pods
+- `Exact`: This path type forces the rule matcher to `Path`
+- `Prefix`: This path type forces the rule matcher to `PathPrefix`
+
+Please see [this documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types) for more information.
+
+!!! warning "Multiple Matches"
+    In the case of multiple matches, Traefik will not ensure the priority of a Path matcher over a PathPrefix matcher,
+    as stated in [this documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#multiple-matches).
+
+## TLS
+
+### Communication Between Traefik and Pods
 
 Traefik automatically requests endpoint information based on the service provided in the ingress spec.
 Although Traefik will connect directly to the endpoints (pods),

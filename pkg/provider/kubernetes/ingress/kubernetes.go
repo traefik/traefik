@@ -549,11 +549,9 @@ func loadRouter(rule v1beta1.IngressRule, pa v1beta1.HTTPIngressPath, rtConfig *
 		matcher := defaultPathMatcher
 
 		if pa.PathType == nil || *pa.PathType == "" || *pa.PathType == v1beta1.PathTypeImplementationSpecific {
-
 			if rtConfig != nil && rtConfig.Router != nil && rtConfig.Router.PathMatcher != "" {
 				matcher = rtConfig.Router.PathMatcher
 			}
-
 		} else if *pa.PathType == v1beta1.PathTypeExact {
 			matcher = "Path"
 		}
