@@ -194,13 +194,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	if supportsIngressClass(serverVersion) {
 		ic, err := client.GetIngressClass()
 		if err != nil {
-			log.FromContext(ctx).Errorf("Failed to find an ingress class: %v", err)
-			return conf
-		}
-
-		if ic == nil {
-			log.FromContext(ctx).Errorf("No ingress class for the traefik-controller in the cluster")
-			return conf
+			log.FromContext(ctx).Warnf("Failed to find an ingress class: %v", err)
 		}
 
 		ingressClass = ic
@@ -337,8 +331,12 @@ func (p *Provider) updateIngressStatus(ing *v1beta1.Ingress, k8sClient Client) e
 }
 
 func (p *Provider) shouldProcessIngress(providerIngressClass string, ingress *networkingv1beta1.Ingress, ingressClass *networkingv1beta1.IngressClass) bool {
-	return ingressClass != nil && ingress.Spec.IngressClassName != nil && ingressClass.ObjectMeta.Name == *ingress.Spec.IngressClassName ||
-		providerIngressClass == ingress.Annotations[annotationKubernetesIngressClass] ||
+	// configuration through the new kubernetes ingressClass
+	if ingress.Spec.IngressClassName != nil {
+		return ingressClass != nil && ingressClass.ObjectMeta.Name == *ingress.Spec.IngressClassName
+	}
+
+	return providerIngressClass == ingress.Annotations[annotationKubernetesIngressClass] ||
 		len(providerIngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == traefikDefaultIngressClass
 }
 
@@ -549,8 +547,15 @@ func loadRouter(rule v1beta1.IngressRule, pa v1beta1.HTTPIngressPath, rtConfig *
 
 	if len(pa.Path) > 0 {
 		matcher := defaultPathMatcher
-		if rtConfig != nil && rtConfig.Router != nil && rtConfig.Router.PathMatcher != "" {
-			matcher = rtConfig.Router.PathMatcher
+
+		if pa.PathType == nil || *pa.PathType == "" || *pa.PathType == v1beta1.PathTypeImplementationSpecific {
+
+			if rtConfig != nil && rtConfig.Router != nil && rtConfig.Router.PathMatcher != "" {
+				matcher = rtConfig.Router.PathMatcher
+			}
+
+		} else if *pa.PathType == v1beta1.PathTypeExact {
+			matcher = "Path"
 		}
 
 		rules = append(rules, fmt.Sprintf("%s(`%s`)", matcher, pa.Path))
