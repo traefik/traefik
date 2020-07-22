@@ -5,7 +5,9 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/log"
@@ -99,14 +101,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		log.FromContext(ctx).Errorf("Error during the build of the default TLS configuration: %v", err)
 	}
 
-	router.HTTPSHandler(handlerHTTPS, defaultTLSConf)
-
 	if len(configsHTTP) > 0 {
 		router.AddRouteHTTPTLS("*", defaultTLSConf)
 	}
 
 	// Keyed by domain, then by options reference.
 	tlsOptionsForHostSNI := map[string]map[string]nameAndConfig{}
+	tlsOptionsForHost := map[string]string{}
 	for routerHTTPName, routerHTTPConfig := range configsHTTP {
 		if len(routerHTTPConfig.TLS.Options) == 0 || routerHTTPConfig.TLS.Options == defaultTLSConfigName {
 			continue
@@ -141,6 +142,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 					continue
 				}
 
+				// domain is already in lower case thanks to the domain parsing
 				if tlsOptionsForHostSNI[domain] == nil {
 					tlsOptionsForHostSNI[domain] = make(map[string]nameAndConfig)
 				}
@@ -148,9 +150,51 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 					routerName: routerHTTPName,
 					TLSConfig:  tlsConf,
 				}
+
+				if _, ok := tlsOptionsForHost[domain]; ok {
+					// Multiple tlsOptions fallback to default
+					tlsOptionsForHost[domain] = "default"
+				} else {
+					tlsOptionsForHost[domain] = routerHTTPConfig.TLS.Options
+				}
 			}
 		}
 	}
+
+	sniCheck := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.TLS == nil {
+			handlerHTTPS.ServeHTTP(rw, req)
+			return
+		}
+
+		host, _, err := net.SplitHostPort(req.Host)
+		if err != nil {
+			host = req.Host
+		}
+
+		host = strings.TrimSpace(host)
+		serverName := strings.TrimSpace(req.TLS.ServerName)
+
+		// Domain Fronting
+		if !strings.EqualFold(host, serverName) {
+			tlsOptionSNI := findTLSOptionName(tlsOptionsForHost, serverName)
+			tlsOptionHeader := findTLSOptionName(tlsOptionsForHost, host)
+
+			if tlsOptionHeader != tlsOptionSNI {
+				log.WithoutContext().
+					WithField("host", host).
+					WithField("req.Host", req.Host).
+					WithField("req.TLS.ServerName", req.TLS.ServerName).
+					Debugf("TLS options difference: SNI=%s, Header:%s", tlsOptionSNI, tlsOptionHeader)
+				http.Error(rw, http.StatusText(http.StatusMisdirectedRequest), http.StatusMisdirectedRequest)
+				return
+			}
+		}
+
+		handlerHTTPS.ServeHTTP(rw, req)
+	})
+
+	router.HTTPSHandler(sniCheck, defaultTLSConf)
 
 	logger := log.FromContext(ctx)
 	for hostSNI, tlsConfigs := range tlsOptionsForHostSNI {
@@ -247,4 +291,18 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	}
 
 	return router, nil
+}
+
+func findTLSOptionName(tlsOptionsForHost map[string]string, host string) string {
+	tlsOptions, ok := tlsOptionsForHost[host]
+	if ok {
+		return tlsOptions
+	}
+
+	tlsOptions, ok = tlsOptionsForHost[strings.ToLower(host)]
+	if ok {
+		return tlsOptions
+	}
+
+	return "default"
 }

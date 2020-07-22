@@ -362,7 +362,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Zonomi](https://zonomi.com)                                | `zonomi`       | `ZONOMI_API_KEY`                                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/zonomi)       |
 
 [^1]: more information about the HTTP message format can be found [here](https://go-acme.github.io/lego/dns/httpreq/)
-[^2]: [providing_credentials_to_your_application](https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application)
+[^2]: [providing_credentials_to_your_application](https://cloud.google.com/docs/authentication/production)
 [^3]: [google/default.go](https://github.com/golang/oauth2/blob/36a7019397c4c86cf59eeab3bc0d188bac444277/google/default.go#L61-L76)
 [^4]: `docker stack` remark: there is no way to support terminal attached to container when deploying with `docker stack`, so you might need to run container with `docker run -it` to generate certificates using `manual` provider.
 [^5]: The `Global API Key` needs to be used, not the `Origin CA Key`.
