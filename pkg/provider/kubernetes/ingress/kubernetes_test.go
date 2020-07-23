@@ -1140,8 +1140,6 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			t.Log(generateTestFilename("_ingress", test.desc))
-
 			var paths []string
 			_, err := os.Stat(generateTestFilename("_ingress", test.desc))
 			if err == nil {

@@ -360,7 +360,7 @@ and will connect via TLS automatically.
     If this is not an option, you may need to skip TLS certificate verification.
     See the [insecureSkipVerify](../../routing/overview.md#insecureskipverify) setting for more details.
 
-#### Certificates Management
+### Certificates Management
 
 ??? example "Using a secret"
     
