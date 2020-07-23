@@ -402,6 +402,9 @@ Docker server endpoint. Can be a tcp or a unix socket endpoint. (Default: ```uni
 `TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT`:  
 Expose containers by default. (Default: ```true```)
 
+`TRAEFIK_PROVIDERS_DOCKER_HTTPCLIENTTIMEOUT`:  
+Client timeout for HTTP connections. (Default: ```32```)
+
 `TRAEFIK_PROVIDERS_DOCKER_NETWORK`:  
 Default Docker network used.
 

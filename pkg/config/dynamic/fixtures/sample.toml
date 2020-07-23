@@ -41,6 +41,7 @@
     swarmMode = true
     network = "foobar"
     swarmModeRefreshSeconds = 42
+    httpClientTimeout = 42
     [providers.docker.tls]
       ca = "foobar"
       caOptional = true

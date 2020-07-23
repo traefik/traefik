@@ -157,6 +157,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		SwarmMode:               true,
 		Network:                 "MyNetwork",
 		SwarmModeRefreshSeconds: 42,
+		HTTPClientTimeout:       42,
 	}
 
 	config.Providers.KubernetesIngress = &ingress.Provider{
