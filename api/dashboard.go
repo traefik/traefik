@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
@@ -23,17 +24,35 @@ func (g DashboardHandler) AddRoutes(router *mux.Router) {
 	// Expose dashboard
 	router.Methods(http.MethodGet).
 		Path("/").
-		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			http.Redirect(response, request, request.Header.Get("X-Forwarded-Prefix")+"/dashboard/", 302)
+		HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			http.Redirect(resp, req, safePrefix(req)+"/dashboard/", 302)
 		})
 
 	router.Methods(http.MethodGet).
 		Path("/dashboard/status").
-		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			http.Redirect(response, request, "/dashboard/", 302)
+		HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			http.Redirect(resp, req, "/dashboard/", 302)
 		})
 
 	router.Methods(http.MethodGet).
 		PathPrefix("/dashboard/").
 		Handler(http.StripPrefix("/dashboard/", http.FileServer(g.Assets)))
+}
+
+func safePrefix(req *http.Request) string {
+	prefix := req.Header.Get("X-Forwarded-Prefix")
+	if prefix == "" {
+		return ""
+	}
+
+	parse, err := url.Parse(prefix)
+	if err != nil {
+		return ""
+	}
+
+	if parse.Host != "" {
+		return ""
+	}
+
+	return parse.Path
 }
