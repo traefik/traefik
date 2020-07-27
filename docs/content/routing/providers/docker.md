@@ -535,7 +535,7 @@ You can declare UDP Routers and/or Services using labels.
          my-container:
            # ...
            labels:
-             - "traefik.udp.routers.my-router.entrypoint=udp"
+             - "traefik.udp.routers.my-router.entrypoints=udp"
              - "traefik.udp.services.my-service.loadbalancer.server.port=4123"
     ```
 
