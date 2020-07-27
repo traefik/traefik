@@ -44,5 +44,9 @@ func safePrefix(req *http.Request) string {
 		return ""
 	}
 
+	if parse.Host != "" {
+		return ""
+	}
+
 	return parse.Path
 }

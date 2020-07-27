@@ -22,7 +22,7 @@ func Test_safePrefix(t *testing.T) {
 		{
 			desc:     "host with path",
 			value:    "https://example.com/foo/bar?test",
-			expected: "/foo/bar",
+			expected: "",
 		},
 		{
 			desc:     "path",
