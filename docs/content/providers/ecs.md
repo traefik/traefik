@@ -79,9 +79,34 @@ providers:
 # ...
 ```
 
-Search for services in all clusters.
-If set to true the configured clusters will be ignored and the clusters will be discovered.
+Search for services in clusters list.
+If set to true the configured clusters will be ignored and the clusters will be discovered.	
 If set to false the services will be discovered only in configured clusters.
+
+### `clusters`
+
+_Optional, Default=["default"]_
+
+```toml tab="File (TOML)"
+[providers.ecs]
+  cluster = ["default"]]
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  ecs:
+    clusters:
+      - default
+    # ...
+```
+
+```bash tab="CLI"
+--providers.ecs.clusters=default
+# ...
+```
+
+Search for services in clusters list.
 
 ### `exposedByDefault`
 
