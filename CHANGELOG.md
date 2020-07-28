@@ -1,3 +1,20 @@
+## [v2.3.0-rc3](https://github.com/containous/traefik/tree/v2.3.0-rc3) (2020-07-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.3.0-rc2...v2.3.0-rc3)
+
+**Bug fixes:**
+- **[k8s,k8s/ingress]** Support Kubernetes Ingress pathType ([#7087](https://github.com/containous/traefik/pull/7087) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/ingress]** Use semantic versioning to enable ingress class support ([#7065](https://github.com/containous/traefik/pull/7065) by [kevinpollet](https://github.com/kevinpollet))
+- **[provider]** file parser: skip nil value. ([#7058](https://github.com/containous/traefik/pull/7058) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[ecs]** Fix documentation for ECS ([#7107](https://github.com/containous/traefik/pull/7107) by [mmatur](https://github.com/mmatur))
+- **[k8s]** Add migration documentation for IngressClass ([#7083](https://github.com/containous/traefik/pull/7083) by [kevinpollet](https://github.com/kevinpollet))
+- **[plugins]** Update availability info ([#7060](https://github.com/containous/traefik/pull/7060) by [PCM2](https://github.com/PCM2))
+
+**Misc:**
+- Merge current v2.2 branch into v2.3 ([#7116](https://github.com/containous/traefik/pull/7116) by [ldez](https://github.com/ldez))
+- Merge current v2.2 branch into v2.3 ([#7086](https://github.com/containous/traefik/pull/7086) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.2.8](https://github.com/containous/traefik/tree/v2.2.8) (2020-07-28)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.7...v2.2.8)
 
