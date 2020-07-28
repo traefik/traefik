@@ -341,7 +341,7 @@ func (c *clientWrapper) GetIngressClass() (*networkingv1beta1.IngressClass, erro
 
 	for _, ic := range ingressClasses {
 		if ic.Spec.Controller == traefikDefaultIngressClassController {
-			return ic, err
+			return ic, nil
 		}
 	}
 
