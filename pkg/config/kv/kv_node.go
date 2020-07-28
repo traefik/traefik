@@ -25,7 +25,8 @@ func DecodeToNode(pairs []*store.KVPair, rootName string, filters ...string) (*p
 		}
 
 		split := strings.Split(pair.Key[len(rootName)+1:], "/")
-		var parts = []string{rootName}
+
+		parts := []string{rootName}
 		for _, fragment := range split {
 			if exp.MatchString(fragment) {
 				parts = append(parts, "["+fragment+"]")
