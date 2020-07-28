@@ -20,9 +20,7 @@ import (
 	math "math"
 
 	proto "github.com/golang/protobuf/proto"
-)
 
-import (
 	context "context"
 
 	grpc "google.golang.org/grpc"
