@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/containous/traefik/v2/pkg/log"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
@@ -23,11 +24,29 @@ func (g DashboardHandler) Append(router *mux.Router) {
 	// Expose dashboard
 	router.Methods(http.MethodGet).
 		Path("/").
-		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-			http.Redirect(response, request, request.Header.Get("X-Forwarded-Prefix")+"/dashboard/", http.StatusFound)
+		HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			http.Redirect(resp, req, safePrefix(req)+"/dashboard/", http.StatusFound)
 		})
 
 	router.Methods(http.MethodGet).
 		PathPrefix("/dashboard/").
 		Handler(http.StripPrefix("/dashboard/", http.FileServer(g.Assets)))
+}
+
+func safePrefix(req *http.Request) string {
+	prefix := req.Header.Get("X-Forwarded-Prefix")
+	if prefix == "" {
+		return ""
+	}
+
+	parse, err := url.Parse(prefix)
+	if err != nil {
+		return ""
+	}
+
+	if parse.Host != "" {
+		return ""
+	}
+
+	return parse.Path
 }

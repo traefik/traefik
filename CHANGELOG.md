@@ -1,3 +1,13 @@
+## [v2.2.8](https://github.com/containous/traefik/tree/v2.2.8) (2020-07-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.7...v2.2.8)
+
+**Bug fixes:**
+- **[webui]** fix: clean X-Forwarded-Prefix header for the dashboard. ([#7109](https://github.com/containous/traefik/pull/7109) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[docker]** spelling(docs/content/routing/providers/docker.md) ([#7101](https://github.com/containous/traefik/pull/7101) by [szczot3k](https://github.com/szczot3k))
+- **[k8s]** doc: add name of used key for kubernetes client auth ([#7068](https://github.com/containous/traefik/pull/7068) by [smueller18](https://github.com/smueller18))
+
 ## [v2.2.7](https://github.com/containous/traefik/tree/v2.2.7) (2020-07-20)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.6...v2.2.7)
 
