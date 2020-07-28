@@ -1,5 +1,14 @@
 # Change Log
 
+## [v1.7.26](https://github.com/containous/traefik/tree/v1.7.26) (2020-07-28)
+[All Commits](https://github.com/containous/traefik/compare/v1.7.25...v1.7.26)
+
+**Bug fixes:**
+- **[webui]** fix: clean X-Forwarded-Prefix header for the dashboard. ([#7108](https://github.com/containous/traefik/pull/7108) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[k8s,k8s/ingress]** Change apiVersion to apps/v1 in examples/k8s/cheese-deployments.yaml ([#7090](https://github.com/containous/traefik/pull/7090) by [claflico](https://github.com/claflico))
+
 ## [v1.7.25](https://github.com/containous/traefik/tree/v1.7.25) (2020-07-15)
 [All Commits](https://github.com/containous/traefik/compare/v1.7.24...v1.7.25)
 
