@@ -444,7 +444,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase acmeTestCase) {
 	// A real file is needed to have the right mode on acme.json file
 	defer os.Remove("/tmp/acme.json")
 
-	backend := startTestServer("9010", http.StatusOK)
+	backend := startTestServer("9010", http.StatusOK, "")
 	defer backend.Close()
 
 	for _, sub := range testCase.subCases {

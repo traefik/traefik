@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/types"
 )
 
 // Router is a TCP router.
@@ -65,7 +66,7 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	}
 
 	// FIXME Optimize and test the routing table before helloServerName
-	serverName = strings.ToLower(serverName)
+	serverName = types.CanonicalDomain(serverName)
 	if r.routingTable != nil && serverName != "" {
 		if target, ok := r.routingTable[serverName]; ok {
 			target.ServeTCP(r.GetConn(conn, peeked))

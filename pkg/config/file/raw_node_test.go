@@ -524,6 +524,20 @@ func Test_decodeRawToNode(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "nil value",
+			data: map[string]interface{}{
+				"fii": map[interface{}]interface{}{
+					"fuu": nil,
+				},
+			},
+			expected: &parser.Node{
+				Name: "traefik",
+				Children: []*parser.Node{
+					{Name: "fii"},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {

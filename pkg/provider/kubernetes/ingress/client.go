@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"strconv"
 	"time"
 
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/golang/protobuf/proto"
+	"github.com/hashicorp/go-version"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
@@ -55,7 +55,7 @@ type Client interface {
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
 	UpdateIngressStatus(ing *networkingv1beta1.Ingress, ip, hostname string) error
-	GetServerVersion() (major, minor int, err error)
+	GetServerVersion() (*version.Version, error)
 }
 
 type clientWrapper struct {
@@ -163,13 +163,13 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 	}
 
-	// If the kubernetes cluster is v1.18+, we can use the new IngressClass objects
-	major, minor, err := c.GetServerVersion()
+	serverVersion, err := c.GetServerVersion()
 	if err != nil {
-		return nil, err
+		log.WithoutContext().Errorf("Failed to get server version: %v", err)
+		return eventCh, nil
 	}
 
-	if major >= 1 && minor >= 18 {
+	if supportsIngressClass(serverVersion) {
 		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
 		c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
 		c.clusterFactory.Start(stopCh)
@@ -341,7 +341,7 @@ func (c *clientWrapper) GetIngressClass() (*networkingv1beta1.IngressClass, erro
 
 	for _, ic := range ingressClasses {
 		if ic.Spec.Controller == traefikDefaultIngressClassController {
-			return ic, err
+			return ic, nil
 		}
 	}
 
@@ -381,23 +381,13 @@ func (c *clientWrapper) newResourceEventHandler(events chan<- interface{}) cache
 }
 
 // GetServerVersion returns the cluster server version, or an error.
-func (c *clientWrapper) GetServerVersion() (major, minor int, err error) {
-	version, err := c.clientset.Discovery().ServerVersion()
+func (c *clientWrapper) GetServerVersion() (*version.Version, error) {
+	serverVersion, err := c.clientset.Discovery().ServerVersion()
 	if err != nil {
-		return 0, 0, fmt.Errorf("could not determine cluster API version: %w", err)
+		return nil, fmt.Errorf("could not retrieve server version: %w", err)
 	}
 
-	major, err = strconv.Atoi(version.Major)
-	if err != nil {
-		return 0, 0, fmt.Errorf("could not determine cluster major API version: %w", err)
-	}
-
-	minor, err = strconv.Atoi(version.Minor)
-	if err != nil {
-		return 0, 0, fmt.Errorf("could not determine cluster minor API version: %w", err)
-	}
-
-	return major, minor, nil
+	return version.NewVersion(serverVersion.GitVersion)
 }
 
 // eventHandlerFunc will pass the obj on to the events channel or drop it.
@@ -431,4 +421,12 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 		}
 	}
 	return false
+}
+
+// IngressClass objects are supported since Kubernetes v1.18.
+// See https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class
+func supportsIngressClass(serverVersion *version.Version) bool {
+	ingressClassVersion := version.Must(version.NewVersion("1.18"))
+
+	return ingressClassVersion.LessThanOrEqual(serverVersion)
 }

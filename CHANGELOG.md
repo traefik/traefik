@@ -1,3 +1,54 @@
+## [v2.3.0-rc3](https://github.com/containous/traefik/tree/v2.3.0-rc3) (2020-07-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.3.0-rc2...v2.3.0-rc3)
+
+**Bug fixes:**
+- **[k8s,k8s/ingress]** Support Kubernetes Ingress pathType ([#7087](https://github.com/containous/traefik/pull/7087) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/ingress]** Use semantic versioning to enable ingress class support ([#7065](https://github.com/containous/traefik/pull/7065) by [kevinpollet](https://github.com/kevinpollet))
+- **[provider]** file parser: skip nil value. ([#7058](https://github.com/containous/traefik/pull/7058) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[ecs]** Fix documentation for ECS ([#7107](https://github.com/containous/traefik/pull/7107) by [mmatur](https://github.com/mmatur))
+- **[k8s]** Add migration documentation for IngressClass ([#7083](https://github.com/containous/traefik/pull/7083) by [kevinpollet](https://github.com/kevinpollet))
+- **[plugins]** Update availability info ([#7060](https://github.com/containous/traefik/pull/7060) by [PCM2](https://github.com/PCM2))
+
+**Misc:**
+- Merge current v2.2 branch into v2.3 ([#7116](https://github.com/containous/traefik/pull/7116) by [ldez](https://github.com/ldez))
+- Merge current v2.2 branch into v2.3 ([#7086](https://github.com/containous/traefik/pull/7086) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
+## [v2.2.8](https://github.com/containous/traefik/tree/v2.2.8) (2020-07-28)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.7...v2.2.8)
+
+**Bug fixes:**
+- **[webui]** fix: clean X-Forwarded-Prefix header for the dashboard. ([#7109](https://github.com/containous/traefik/pull/7109) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[docker]** spelling(docs/content/routing/providers/docker.md) ([#7101](https://github.com/containous/traefik/pull/7101) by [szczot3k](https://github.com/szczot3k))
+- **[k8s]** doc: add name of used key for kubernetes client auth ([#7068](https://github.com/containous/traefik/pull/7068) by [smueller18](https://github.com/smueller18))
+
+## [v2.2.7](https://github.com/containous/traefik/tree/v2.2.7) (2020-07-20)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.6...v2.2.7)
+
+**Bug fixes:**
+- **[server,tls]** fix: drop host port to compare with SNI. ([#7071](https://github.com/containous/traefik/pull/7071) by [ldez](https://github.com/ldez))
+
+## [v2.2.6](https://github.com/containous/traefik/tree/v2.2.6) (2020-07-17)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.5...v2.2.6)
+
+**Bug fixes:**
+- **[logs]** fix: access logs header names filtering is case insensitive ([#6900](https://github.com/containous/traefik/pull/6900) by [mjeanroy](https://github.com/mjeanroy))
+- **[provider]** Get Entrypoints Port Address without protocol for redirect ([#7047](https://github.com/containous/traefik/pull/7047) by [SantoDE](https://github.com/SantoDE))
+- **[tls]** Fix domain fronting ([#7064](https://github.com/containous/traefik/pull/7064) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- fix: documentation references. ([#7049](https://github.com/containous/traefik/pull/7049) by [ldez](https://github.com/ldez))
+- Add example for entrypoint on one ip address ([#6483](https://github.com/containous/traefik/pull/6483) by [SimonHeimberg](https://github.com/SimonHeimberg))
+
+## [v2.3.0-rc2](https://github.com/containous/traefik/tree/v2.3.0-rc2) (2020-07-15)
+[All Commits](https://github.com/containous/traefik/compare/v2.3.0-rc1...v2.3.0-rc2)
+
+**Misc:**
+- fix: goreleaser build commands.
+
 ## [v2.3.0-rc1](https://github.com/containous/traefik/tree/v2.3.0-rc1) (2020-07-15)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.0-rc1...v2.3.0-rc1)
 
