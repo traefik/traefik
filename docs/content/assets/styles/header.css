@@ -442,3 +442,18 @@
 .md-header .md-search {
   margin-left: 12.1rem;
 } 
+
+.site-header__main {
+  display: flex;
+  align-items: center;
+}
+
+@media only screen and (max-width: 76.1875em) {
+  html [data-md-color-primary=indigo] .md-nav--primary .md-nav__title--site {
+    background-color: #06102a;
+  }
+
+  html .md-nav--primary .md-nav__title {
+    padding: 64px .8rem .2rem;
+  }
+} 
