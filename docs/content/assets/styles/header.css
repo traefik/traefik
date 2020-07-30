@@ -438,3 +438,7 @@
     display: none;
   }
 }
+
+.md-header .md-search {
+  margin-left: 12.1rem;
+} 
