@@ -276,11 +276,12 @@
 }
 
 /* Dropdown menu: Learn */
-.nav-dropdown-menu--learn,
+.nav-dropdown-menu--learn {
+  width: 250px;
+}
 .nav-dropdown-menu--company {
   width: 500px;
 }
-.nav-dropdown-menu--learn .nav-dropdown-menu-wrapper,
 .nav-dropdown-menu--company .nav-dropdown-menu-wrapper {
   display: grid;
   grid-template-columns: 50% 50%;
