@@ -12,6 +12,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/metrics"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/version"
 )
@@ -44,10 +45,11 @@ type serviceInfoRepresentation struct {
 type instanceInfo struct {
 	ID            string                `json:"id,omitempty"`
 	Configuration RunTimeRepresentation `json:"configuration,omitempty"`
+	Metrics       []metrics.PilotMetric `json:"metrics,omitempty"`
 }
 
 // New creates a new Pilot.
-func New(token string, pool *safe.Pool) *Pilot {
+func New(token string, metrics *metrics.PilotRegistry, pool *safe.Pool) *Pilot {
 	return &Pilot{
 		rtConfChan: make(chan *runtime.Configuration),
 		client: &client{
@@ -56,6 +58,7 @@ func New(token string, pool *safe.Pool) *Pilot {
 			baseURL:    baseURL,
 		},
 		routinesPool: pool,
+		metrics:      metrics,
 	}
 }
 
@@ -66,6 +69,7 @@ type Pilot struct {
 
 	rtConf     *runtime.Configuration
 	rtConfChan chan *runtime.Configuration
+	metrics    *metrics.PilotRegistry
 }
 
 // SetRuntimeConfiguration stores the runtime configuration.
@@ -99,8 +103,8 @@ func (p *Pilot) getRepresentation() RunTimeRepresentation {
 	return result
 }
 
-func (p *Pilot) sendData(ctx context.Context, conf RunTimeRepresentation) {
-	err := p.client.SendData(ctx, conf)
+func (p *Pilot) sendData(ctx context.Context) {
+	err := p.client.SendData(ctx, p.getRepresentation(), p.metrics.Data())
 	if err != nil {
 		log.WithoutContext().Error(err)
 	}
@@ -116,10 +120,8 @@ func (p *Pilot) Tick(ctx context.Context) {
 		return
 	}
 
-	conf := p.getRepresentation()
-
 	p.routinesPool.GoCtx(func(ctxRt context.Context) {
-		p.sendData(ctxRt, conf)
+		p.sendData(ctxRt)
 	})
 
 	ticker := time.NewTicker(pilotTimer)
@@ -128,10 +130,8 @@ func (p *Pilot) Tick(ctx context.Context) {
 		case tick := <-ticker.C:
 			log.WithoutContext().Debugf("Send to pilot: %s", tick)
 
-			conf := p.getRepresentation()
-
 			p.routinesPool.GoCtx(func(ctxRt context.Context) {
-				p.sendData(ctxRt, conf)
+				p.sendData(ctxRt)
 			})
 		case rtConf := <-p.rtConfChan:
 			p.rtConf = rtConf
@@ -184,13 +184,13 @@ func (c *client) createUUID() (string, error) {
 }
 
 // SendData sends data to Pilot.
-func (c *client) SendData(ctx context.Context, rtConf RunTimeRepresentation) error {
+func (c *client) SendData(ctx context.Context, rtConf RunTimeRepresentation, metrics []metrics.PilotMetric) error {
 	exponentialBackOff := backoff.NewExponentialBackOff()
 	exponentialBackOff.MaxElapsedTime = maxElapsedTime
 
 	return backoff.RetryNotify(
 		func() error {
-			return c.sendData(rtConf)
+			return c.sendData(rtConf, metrics)
 		},
 		backoff.WithContext(exponentialBackOff, ctx),
 		func(err error, duration time.Duration) {
@@ -198,7 +198,7 @@ func (c *client) SendData(ctx context.Context, rtConf RunTimeRepresentation) err
 		})
 }
 
-func (c *client) sendData(_ RunTimeRepresentation) error {
+func (c *client) sendData(_ RunTimeRepresentation, metrics []metrics.PilotMetric) error {
 	if len(c.uuid) == 0 {
 		var err error
 		c.uuid, err = c.createUUID()
@@ -210,7 +210,8 @@ func (c *client) sendData(_ RunTimeRepresentation) error {
 	}
 
 	info := instanceInfo{
-		ID: c.uuid,
+		ID:      c.uuid,
+		Metrics: metrics,
 	}
 
 	b, err := json.Marshal(info)

@@ -195,7 +195,21 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	ctx := context.Background()
 	routinesPool := safe.NewPool(ctx)
 
-	metricsRegistry := registerMetricClients(staticConfiguration.Metrics)
+	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
+
+	var aviator *pilot.Pilot
+	if isPilotEnabled(staticConfiguration) {
+		pilotRegistry := metrics.RegisterPilot()
+
+		aviator = pilot.New(staticConfiguration.Experimental.Pilot.Token, pilotRegistry, routinesPool)
+		routinesPool.GoCtx(func(ctx context.Context) {
+			aviator.Tick(ctx)
+		})
+
+		metricRegistries = append(metricRegistries, pilotRegistry)
+	}
+
+	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry)
@@ -243,15 +257,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		metricsRegistry.ConfigReloadsCounter().Add(1)
 		metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 	})
-
-	var aviator *pilot.Pilot
-	if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.Pilot != nil &&
-		staticConfiguration.Experimental.Pilot.Token != "" {
-		aviator = pilot.New(staticConfiguration.Experimental.Pilot.Token, routinesPool)
-		routinesPool.GoCtx(func(ctx context.Context) {
-			aviator.Tick(ctx)
-		})
-	}
 
 	watcher.AddListener(switchRouter(routerFactory, acmeProviders, serverEntryPointsTCP, serverEntryPointsUDP, aviator))
 
@@ -349,12 +354,12 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 	return resolvers
 }
 
-func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
-	if metricsConfig == nil {
-		return metrics.NewVoidRegistry()
-	}
-
+func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 	var registries []metrics.Registry
+
+	if metricsConfig == nil {
+		return registries
+	}
 
 	if metricsConfig.Prometheus != nil {
 		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "prometheus"))
@@ -386,7 +391,7 @@ func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 			metricsConfig.InfluxDB.Address, metricsConfig.InfluxDB.PushInterval)
 	}
 
-	return metrics.NewMultiRegistry(registries)
+	return registries
 }
 
 func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
