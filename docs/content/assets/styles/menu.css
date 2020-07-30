@@ -24,6 +24,10 @@
   font-weight: bold;
 }
 
+.md-sidebar--primary {
+  background-color: white;
+}
+
 .md-sidebar--secondary .md-nav__title {
   font-size: 12px;
   text-transform: uppercase;
