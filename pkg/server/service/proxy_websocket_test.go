@@ -63,7 +63,7 @@ func TestWebSocketPingPong(t *testing.T) {
 
 	require.NoError(t, err)
 
-	var upgrader = gorillawebsocket.Upgrader{
+	upgrader := gorillawebsocket.Upgrader{
 		HandshakeTimeout: 10 * time.Second,
 		CheckOrigin: func(*http.Request) bool {
 			return true
@@ -670,7 +670,7 @@ func (w *websocketRequest) send() (string, error) {
 	if _, err := conn.Write([]byte(w.Data)); err != nil {
 		return "", err
 	}
-	var msg = make([]byte, 512)
+	msg := make([]byte, 512)
 	var n int
 	n, err = conn.Read(msg)
 	if err != nil {

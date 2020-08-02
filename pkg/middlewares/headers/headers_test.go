@@ -552,7 +552,8 @@ func TestCORSResponses(t *testing.T) {
 			expected: map[string][]string{
 				"Access-Control-Allow-Origin": {"*"},
 			},
-		}, {
+		},
+		{
 			desc: "Test Simple CustomRequestHeaders Not Hijacked by CORS",
 			header: NewHeader(emptyHandler, dynamic.Headers{
 				CustomRequestHeaders: map[string]string{"foo": "bar"},

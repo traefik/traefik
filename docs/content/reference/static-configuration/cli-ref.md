@@ -159,6 +159,21 @@ ReadTimeout is the maximum duration for reading the entire request, including th
 `--entrypoints.<name>.transport.respondingtimeouts.writetimeout`:  
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
 
+`--experimental.devplugin.gopath`:  
+plugin's GOPATH.
+
+`--experimental.devplugin.modulename`:  
+plugin's module name.
+
+`--experimental.pilot.token`:  
+Traefik Pilot token.
+
+`--experimental.plugins.<name>.modulename`:  
+plugin's module name.
+
+`--experimental.plugins.<name>.version`:  
+plugin's version.
+
 `--global.checknewversion`:  
 Periodically check if a new version has been released. (Default: ```false```)
 
@@ -417,6 +432,33 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 `--providers.docker.watch`:  
 Watch Docker Swarm events. (Default: ```true```)
 
+`--providers.ecs.accesskeyid`:  
+The AWS credentials access key to use for making requests
+
+`--providers.ecs.autodiscoverclusters`:  
+Auto discover cluster (Default: ```false```)
+
+`--providers.ecs.clusters`:  
+ECS Clusters name (Default: ```default```)
+
+`--providers.ecs.constraints`:  
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`--providers.ecs.defaultrule`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`--providers.ecs.exposedbydefault`:  
+Expose services by default (Default: ```true```)
+
+`--providers.ecs.refreshseconds`:  
+Polling interval (in seconds) (Default: ```15```)
+
+`--providers.ecs.region`:  
+The AWS region to use for requests
+
+`--providers.ecs.secretaccesskey`:  
+The AWS credentials access key to use for making requests
+
 `--providers.etcd`:  
 Enable Etcd backend with default settings. (Default: ```false```)
 
@@ -458,6 +500,33 @@ Load dynamic configuration from a file.
 
 `--providers.file.watch`:  
 Watch provider. (Default: ```true```)
+
+`--providers.http`:  
+Enable HTTP backend with default settings. (Default: ```false```)
+
+`--providers.http.endpoint`:  
+Load configuration from this endpoint.
+
+`--providers.http.pollinterval`:  
+Polling interval for endpoint. (Default: ```5```)
+
+`--providers.http.polltimeout`:  
+Polling timeout for endpoint. (Default: ```5```)
+
+`--providers.http.tls.ca`:  
+TLS CA
+
+`--providers.http.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.http.tls.cert`:  
+TLS cert
+
+`--providers.http.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.http.tls.key`:  
+TLS key
 
 `--providers.kubernetescrd`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)

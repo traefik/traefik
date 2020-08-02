@@ -21,10 +21,12 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-var integration = flag.Bool("integration", false, "run integration tests")
-var container = flag.Bool("container", false, "run container integration tests")
-var host = flag.Bool("host", false, "run host integration tests")
-var showLog = flag.Bool("tlog", false, "always show Traefik logs")
+var (
+	integration = flag.Bool("integration", false, "run integration tests")
+	container   = flag.Bool("container", false, "run container integration tests")
+	host        = flag.Bool("host", false, "run host integration tests")
+	showLog     = flag.Bool("tlog", false, "always show Traefik logs")
+)
 
 func Test(t *testing.T) {
 	if !*integration {
@@ -47,6 +49,7 @@ func Test(t *testing.T) {
 		check.Suite(&HealthCheckSuite{})
 		check.Suite(&HeadersSuite{})
 		check.Suite(&HostResolverSuite{})
+		check.Suite(&HTTPSuite{})
 		check.Suite(&HTTPSSuite{})
 		check.Suite(&KeepAliveSuite{})
 		check.Suite(&LogRotationSuite{})

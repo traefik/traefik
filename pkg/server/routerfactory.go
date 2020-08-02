@@ -3,10 +3,10 @@ package server
 import (
 	"context"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/containous/traefik/v2/pkg/plugins"
 	"github.com/containous/traefik/v2/pkg/responsemodifiers"
 	"github.com/containous/traefik/v2/pkg/server/middleware"
 	"github.com/containous/traefik/v2/pkg/server/router"
@@ -27,12 +27,14 @@ type RouterFactory struct {
 
 	managerFactory *service.ManagerFactory
 
+	pluginBuilder *plugins.Builder
+
 	chainBuilder *middleware.ChainBuilder
 	tlsManager   *tls.Manager
 }
 
 // NewRouterFactory creates a new RouterFactory.
-func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager, chainBuilder *middleware.ChainBuilder) *RouterFactory {
+func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager, chainBuilder *middleware.ChainBuilder, pluginBuilder *plugins.Builder) *RouterFactory {
 	var entryPointsTCP, entryPointsUDP []string
 	for name, cfg := range staticConfiguration.EntryPoints {
 		protocol, err := cfg.GetProtocol()
@@ -54,19 +56,18 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		managerFactory: managerFactory,
 		tlsManager:     tlsManager,
 		chainBuilder:   chainBuilder,
+		pluginBuilder:  pluginBuilder,
 	}
 }
 
 // CreateRouters creates new TCPRouters and UDPRouters.
-func (f *RouterFactory) CreateRouters(conf dynamic.Configuration) (map[string]*tcpCore.Router, map[string]udpCore.Handler) {
+func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string]*tcpCore.Router, map[string]udpCore.Handler) {
 	ctx := context.Background()
-
-	rtConf := runtime.NewConfig(conf)
 
 	// HTTP
 	serviceManager := f.managerFactory.Build(rtConf)
 
-	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
+	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, f.pluginBuilder)
 	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 
 	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, f.chainBuilder)

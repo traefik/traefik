@@ -107,6 +107,7 @@ func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([
 
 	var portSpec *corev1.ServicePort
 	for _, p := range service.Spec.Ports {
+		p := p
 		if svc.Port == p.Port {
 			portSpec = &p
 			break

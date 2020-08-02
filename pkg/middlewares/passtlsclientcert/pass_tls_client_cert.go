@@ -235,7 +235,7 @@ func writeParts(ctx context.Context, content io.StringWriter, entries []string, 
 	}
 }
 
-func writePart(ctx context.Context, content io.StringWriter, entry string, prefix string) {
+func writePart(ctx context.Context, content io.StringWriter, entry, prefix string) {
 	if len(entry) > 0 {
 		_, err := content.WriteString(fmt.Sprintf("%s=%s%s", prefix, entry, subFieldSeparator))
 		if err != nil {

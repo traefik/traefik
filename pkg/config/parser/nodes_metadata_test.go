@@ -682,7 +682,8 @@ func TestAddMetadata(t *testing.T) {
 							Children: []*Node{
 								{Name: "Bar", FieldName: "Bar", Value: "bir", Kind: reflect.String},
 								{Name: "Bur", FieldName: "Bur", Value: "fuu", Kind: reflect.String},
-							}},
+							},
+						},
 					},
 				},
 			},
@@ -728,8 +729,10 @@ func TestAddMetadata(t *testing.T) {
 									Kind:      reflect.Struct,
 									Children: []*Node{
 										{Name: "Bur", FieldName: "Bur", Value: "fuu", Kind: reflect.String},
-									}},
-							}},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -797,22 +800,26 @@ func TestAddMetadata(t *testing.T) {
 									Children: []*Node{
 										{Name: "Fii", FieldName: "Fii", Kind: reflect.String, Value: "fii"},
 										{Name: "Fee", FieldName: "Fee", Kind: reflect.Int, Value: "1"},
-									}},
+									},
+								},
 								{
 									Name:      "Bur",
 									FieldName: "Bur",
 									Kind:      reflect.Struct,
 									Children: []*Node{
 										{Name: "Faa", FieldName: "Faa", Kind: reflect.String, Value: "faa"},
-									}},
-							}},
+									},
+								},
+							},
+						},
 						{
 							Name:      "Fii",
 							FieldName: "Fii",
 							Kind:      reflect.Struct,
 							Children: []*Node{
 								{Name: "FiiBar", FieldName: "FiiBar", Kind: reflect.String, Value: "fiiBar"},
-							}},
+							},
+						},
 					},
 				},
 			},
@@ -984,6 +991,51 @@ func TestAddMetadata(t *testing.T) {
 				},
 			}},
 		},
+		{
+			desc: "raw value",
+			tree: &Node{
+				Name: "traefik",
+				Children: []*Node{
+					{Name: "Foo", FieldName: "Foo", Children: []*Node{
+						{Name: "Bar", FieldName: "Bar", Children: []*Node{
+							{Name: "AAA", FieldName: "AAA", Value: "valueA"},
+							{Name: "BBB", FieldName: "BBB", Children: []*Node{
+								{Name: "CCC", FieldName: "CCC", Children: []*Node{
+									{Name: "DDD", FieldName: "DDD", Value: "valueD"},
+								}},
+							}},
+						}},
+					}},
+				},
+			},
+			structure: struct {
+				Foo *struct {
+					Bar map[string]interface{}
+				}
+			}{
+				Foo: &struct {
+					Bar map[string]interface{}
+				}{},
+			},
+			expected: expected{
+				node: &Node{
+					Name: "traefik",
+					Kind: reflect.Struct,
+					Children: []*Node{
+						{Name: "Foo", FieldName: "Foo", Kind: reflect.Ptr, Children: []*Node{
+							{Name: "Bar", FieldName: "Bar", Kind: reflect.Map, RawValue: map[string]interface{}{
+								"AAA": "valueA",
+								"BBB": map[string]interface{}{
+									"CCC": map[string]interface{}{
+										"DDD": "valueD",
+									},
+								},
+							}},
+						}},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -1004,6 +1056,111 @@ func TestAddMetadata(t *testing.T) {
 					fmt.Println(string(bytes))
 				}
 			}
+		})
+	}
+}
+
+func Test_nodeToRawMap(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		root     *Node
+		expected map[string]interface{}
+	}{
+		{
+			desc: "simple",
+			root: &Node{
+				Name: "traefik",
+				Children: []*Node{
+					{Name: "meta", Children: []*Node{
+						{Name: "aaa", Value: "test1"},
+						{Name: "bbb", Children: []*Node{
+							{Name: "ccc", Value: "test2"},
+							{Name: "ddd", Children: []*Node{
+								{Name: "eee", Value: "test3"},
+							}},
+						}},
+					}},
+					{Name: "name", Value: "bla"},
+				},
+			},
+			expected: map[string]interface{}{
+				"meta": map[string]interface{}{
+					"aaa": "test1",
+					"bbb": map[string]interface{}{
+						"ccc": "test2",
+						"ddd": map[string]interface{}{
+							"eee": "test3",
+						},
+					},
+				},
+				"name": "bla",
+			},
+		},
+		{
+			desc: "slice of struct, level 1",
+			root: &Node{
+				Name: "aaa",
+				Children: []*Node{
+					{Name: "[0]", Children: []*Node{
+						{Name: "bbb", Value: "test1"},
+						{Name: "ccc", Value: "test2"},
+					}},
+				},
+			},
+			expected: map[string]interface{}{
+				"aaa": []interface{}{
+					map[string]interface{}{
+						"bbb": "test1",
+						"ccc": "test2",
+					},
+				},
+			},
+		},
+		{
+			desc: "slice of struct, level 2",
+			root: &Node{
+				Name: "traefik",
+				Children: []*Node{
+					{Name: "meta", Children: []*Node{{
+						Name: "aaa", Children: []*Node{
+							{Name: "[0]", Children: []*Node{
+								{Name: "bbb", Value: "test2"},
+								{Name: "ccc", Value: "test3"},
+							}},
+							{Name: "[1]", Children: []*Node{
+								{Name: "bbb", Value: "test4"},
+								{Name: "ccc", Value: "test5"},
+							}},
+						},
+					}}},
+					{Name: "name", Value: "test1"},
+				},
+			},
+			expected: map[string]interface{}{
+				"meta": map[string]interface{}{
+					"aaa": []interface{}{
+						map[string]interface{}{
+							"bbb": "test2",
+							"ccc": "test3",
+						},
+						map[string]interface{}{
+							"bbb": "test4",
+							"ccc": "test5",
+						},
+					},
+				},
+				"name": "test1",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := nodeToRawMap(test.root)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }

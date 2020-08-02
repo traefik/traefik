@@ -5,6 +5,7 @@
         <q-toolbar class="row no-wrap items-center">
           <div class="q-pr-md logo">
             <img alt="logo" src="~assets/logo.svg">
+            <q-btn v-if="version" type="a" href="https://github.com/containous/traefik/" target="_blank" stretch flat no-caps :label="version" class="btn-menu version" />
           </div>
           <q-tabs align="left" inline-label indicator-color="transparent" active-color="white" stretch>
             <q-route-tab to="/" icon="eva-home-outline" no-caps label="Dashboard" />
@@ -12,10 +13,23 @@
             <q-route-tab to="/tcp" icon="eva-globe-2-outline" no-caps label="TCP" />
             <q-route-tab to="/udp" icon="eva-globe-2-outline" no-caps label="UDP" />
           </q-tabs>
-          <q-space />
-          <q-btn @click="$q.dark.toggle()" stretch flat no-caps icon="invert_colors" :label="`${$q.dark.isActive ? 'Light' : 'Dark'} theme`" class="btn-menu" />
-          <q-btn type="a" :href="`https://docs.traefik.io/${parsedVersion}`" target="_blank" stretch flat no-caps label="Documentation" class="btn-menu" />
-          <q-btn v-if="version" type="a" href="https://github.com/containous/traefik/" target="_blank" stretch flat no-caps :label="`${name} ${version}`" class="btn-menu" />
+          <div class="right-menu">
+            <q-tabs>
+              <q-btn @click="$q.dark.toggle()" stretch flat no-caps icon="invert_colors" :label="`${$q.dark.isActive ? 'Light' : 'Dark'} theme`" class="btn-menu" />
+              <q-btn stretch flat icon="eva-question-mark-circle-outline">
+                <q-menu anchor="bottom left" auto-close>
+                  <q-item>
+                    <q-btn type="a" :href="`https://docs.traefik.io/${parsedVersion}`" target="_blank" flat color="accent" align="left" icon="eva-book-open-outline" no-caps label="Documentation" class="btn-submenu full-width"/>
+                  </q-item>
+                  <q-separator />
+                  <q-item>
+                    <q-btn type="a" href="https://github.com/containous/traefik/" target="_blank" flat color="accent" align="left" icon="eva-github-outline" no-caps label="Github repository" class="btn-submenu full-width"/>
+                  </q-item>
+                </q-menu>
+              </q-btn>
+            </q-tabs>
+            <platform-auth-state />
+          </div>
         </q-toolbar>
       </div>
     </section>
@@ -30,14 +44,12 @@
 
 <script>
 import config from '../../../package'
+import PlatformAuthState from '../platform/PlatformAuthState'
 import { mapActions, mapGetters } from 'vuex'
 
 export default {
   name: 'NavBar',
-  data () {
-    return {
-    }
-  },
+  components: { PlatformAuthState },
   computed: {
     ...mapGetters('core', { coreVersion: 'version' }),
     version () {
@@ -73,14 +85,29 @@ export default {
     min-height: 64px;
   }
 
-  .body--dark .sub-nav {
-    background-color: #0e204c;
+  .body--dark {
+    .sub-nav {
+      background-color: #0e204c;
+    }
+  }
+
+  .q-item--dark {
+    background: var(--q-color-dark);
   }
 
   .logo {
-    display: inline-block;
+    display: flex;
+    align-items: center;
+
     img {
       height: 24px;
+      margin-right: 10px;
+    }
+
+    .version {
+      min-height: inherit;
+      line-height:  inherit;
+      padding: 0 4px;
     }
   }
 
@@ -97,9 +124,25 @@ export default {
     }
   }
 
-  .btn-menu{
+  .right-menu {
+    flex: 1;
+    height: 64px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .btn-menu {
     color: rgba( $app-text-white, .4 );
     font-size: 16px;
     font-weight: 600;
+  }
+
+  .q-item {
+    padding: 0;
+  }
+
+  .btn-submenu {
+    font-weight: 700;
+    align-items: flex-start;
   }
 </style>

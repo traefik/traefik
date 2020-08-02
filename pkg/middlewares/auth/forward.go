@@ -158,7 +158,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	fa.next.ServeHTTP(rw, req)
 }
 
-func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader bool) {
+func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
 	utils.RemoveHeaders(forwardReq.Header, forward.HopHeaders...)
 

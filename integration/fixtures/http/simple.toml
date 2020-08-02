@@ -1,0 +1,20 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+  [entryPoints.traefik]
+    address = ":9090"
+
+[api]
+  insecure = true
+
+[providers]
+  [providers.http]
+    endpoint = "http://127.0.0.1:9000"
+    pollInterval = "100ms"

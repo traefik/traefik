@@ -48,7 +48,6 @@ func (p *Provider) Init() error {
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	configuration, err := p.BuildConfiguration()
-
 	if err != nil {
 		return err
 	}
@@ -356,7 +355,7 @@ func (p *Provider) CreateConfiguration(ctx context.Context, filename string, fun
 		return nil, fmt.Errorf("error reading configuration file: %s - %w", filename, err)
 	}
 
-	var defaultFuncMap = sprig.TxtFuncMap()
+	defaultFuncMap := sprig.TxtFuncMap()
 	defaultFuncMap["normalize"] = provider.Normalize
 	defaultFuncMap["split"] = strings.Split
 	for funcID, funcElement := range funcMap {
@@ -376,7 +375,7 @@ func (p *Provider) CreateConfiguration(ctx context.Context, filename string, fun
 		return nil, err
 	}
 
-	var renderedTemplate = buffer.String()
+	renderedTemplate := buffer.String()
 	if p.DebugLogGeneratedTemplate {
 		logger := log.FromContext(ctx)
 		logger.Debugf("Template content: %s", tmplContent)
@@ -396,7 +395,7 @@ func (p *Provider) DecodeConfiguration(filename string) (*dynamic.Configuration,
 	return p.decodeConfiguration(filename, content)
 }
 
-func (p *Provider) decodeConfiguration(filePath string, content string) (*dynamic.Configuration, error) {
+func (p *Provider) decodeConfiguration(filePath, content string) (*dynamic.Configuration, error) {
 	configuration := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:     make(map[string]*dynamic.Router),

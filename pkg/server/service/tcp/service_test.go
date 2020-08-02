@@ -193,7 +193,7 @@ func TestManager_BuildTCP(t *testing.T) {
 				assert.EqualError(t, err, test.expectedError)
 				require.Nil(t, handler)
 			} else {
-				assert.Nil(t, err)
+				assert.NoError(t, err)
 				require.NotNil(t, handler)
 			}
 		})

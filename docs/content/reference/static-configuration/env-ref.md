@@ -159,6 +159,21 @@ ReadTimeout is the maximum duration for reading the entire request, including th
 `TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_RESPONDINGTIMEOUTS_WRITETIMEOUT`:  
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
 
+`TRAEFIK_EXPERIMENTAL_DEVPLUGIN_GOPATH`:  
+plugin's GOPATH.
+
+`TRAEFIK_EXPERIMENTAL_DEVPLUGIN_MODULENAME`:  
+plugin's module name.
+
+`TRAEFIK_EXPERIMENTAL_PILOT_TOKEN`:  
+Traefik Pilot token.
+
+`TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_MODULENAME`:  
+plugin's module name.
+
+`TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_VERSION`:  
+plugin's version.
+
 `TRAEFIK_GLOBAL_CHECKNEWVERSION`:  
 Periodically check if a new version has been released. (Default: ```false```)
 
@@ -417,6 +432,33 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 `TRAEFIK_PROVIDERS_DOCKER_WATCH`:  
 Watch Docker Swarm events. (Default: ```true```)
 
+`TRAEFIK_PROVIDERS_ECS_ACCESSKEYID`:  
+The AWS credentials access key to use for making requests
+
+`TRAEFIK_PROVIDERS_ECS_AUTODISCOVERCLUSTERS`:  
+Auto discover cluster (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_ECS_CLUSTERS`:  
+ECS Clusters name (Default: ```default```)
+
+`TRAEFIK_PROVIDERS_ECS_CONSTRAINTS`:  
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`TRAEFIK_PROVIDERS_ECS_DEFAULTRULE`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`TRAEFIK_PROVIDERS_ECS_EXPOSEDBYDEFAULT`:  
+Expose services by default (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_ECS_REFRESHSECONDS`:  
+Polling interval (in seconds) (Default: ```15```)
+
+`TRAEFIK_PROVIDERS_ECS_REGION`:  
+The AWS region to use for requests
+
+`TRAEFIK_PROVIDERS_ECS_SECRETACCESSKEY`:  
+The AWS credentials access key to use for making requests
+
 `TRAEFIK_PROVIDERS_ETCD`:  
 Enable Etcd backend with default settings. (Default: ```false```)
 
@@ -458,6 +500,33 @@ Load dynamic configuration from a file.
 
 `TRAEFIK_PROVIDERS_FILE_WATCH`:  
 Watch provider. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_HTTP`:  
+Enable HTTP backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_HTTP_ENDPOINT`:  
+Load configuration from this endpoint.
+
+`TRAEFIK_PROVIDERS_HTTP_POLLINTERVAL`:  
+Polling interval for endpoint. (Default: ```5```)
+
+`TRAEFIK_PROVIDERS_HTTP_POLLTIMEOUT`:  
+Polling timeout for endpoint. (Default: ```5```)
+
+`TRAEFIK_PROVIDERS_HTTP_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_HTTP_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_HTTP_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_HTTP_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_HTTP_TLS_KEY`:  
+TLS key
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)

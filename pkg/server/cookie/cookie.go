@@ -11,7 +11,7 @@ import (
 const cookieNameLength = 6
 
 // GetName of a cookie.
-func GetName(cookieName string, backendName string) string {
+func GetName(cookieName, backendName string) string {
 	if len(cookieName) != 0 {
 		return sanitizeName(cookieName)
 	}

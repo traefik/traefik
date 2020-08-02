@@ -5,18 +5,23 @@ import (
 	"io/ioutil"
 
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/k8s"
+	"github.com/hashicorp/go-version"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/api/networking/v1beta1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 )
 
 var _ Client = (*clientMock)(nil)
 
 type clientMock struct {
-	ingresses []*v1beta1.Ingress
-	services  []*corev1.Service
-	secrets   []*corev1.Secret
-	endpoints []*corev1.Endpoints
+	ingresses    []*v1beta1.Ingress
+	services     []*corev1.Service
+	secrets      []*corev1.Secret
+	endpoints    []*corev1.Endpoints
+	ingressClass *networkingv1beta1.IngressClass
+
+	serverVersion *version.Version
 
 	apiServiceError       error
 	apiSecretError        error
@@ -26,8 +31,10 @@ type clientMock struct {
 	watchChan chan interface{}
 }
 
-func newClientMock(paths ...string) clientMock {
-	var c clientMock
+func newClientMock(serverVersion string, paths ...string) clientMock {
+	c := clientMock{}
+
+	c.serverVersion = version.Must(version.NewVersion(serverVersion))
 
 	for _, path := range paths {
 		yamlContent, err := ioutil.ReadFile(path)
@@ -52,6 +59,8 @@ func newClientMock(paths ...string) clientMock {
 					panic(err)
 				}
 				c.ingresses = append(c.ingresses, ing)
+			case *networkingv1beta1.IngressClass:
+				c.ingressClass = o
 			default:
 				panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
 			}
@@ -63,6 +72,10 @@ func newClientMock(paths ...string) clientMock {
 
 func (c clientMock) GetIngresses() []*v1beta1.Ingress {
 	return c.ingresses
+}
+
+func (c clientMock) GetServerVersion() (*version.Version, error) {
+	return c.serverVersion, nil
 }
 
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
@@ -103,6 +116,10 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 		}
 	}
 	return nil, false, nil
+}
+
+func (c clientMock) GetIngressClass() (*networkingv1beta1.IngressClass, error) {
+	return c.ingressClass, nil
 }
 
 func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {

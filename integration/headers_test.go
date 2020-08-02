@@ -35,7 +35,7 @@ func (s *HeadersSuite) TestCorsResponses(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	backend := startTestServer("9000", http.StatusOK)
+	backend := startTestServer("9000", http.StatusOK, "")
 	defer backend.Close()
 
 	err = try.GetRequest(backend.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
@@ -124,23 +124,25 @@ func (s *HeadersSuite) TestSecureHeadersResponses(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	backend := startTestServer("9000", http.StatusOK)
+	backend := startTestServer("9000", http.StatusOK, "")
 	defer backend.Close()
 
 	err = try.GetRequest(backend.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
 	testCase := []struct {
-		desc     string
-		expected http.Header
-		reqHost  string
+		desc            string
+		expected        http.Header
+		reqHost         string
+		internalReqHost string
 	}{
 		{
 			desc: "Feature-Policy Set",
 			expected: http.Header{
 				"Feature-Policy": {"vibrate 'none';"},
 			},
-			reqHost: "test.localhost",
+			reqHost:         "test.localhost",
+			internalReqHost: "internal.localhost",
 		},
 	}
 
@@ -149,7 +151,14 @@ func (s *HeadersSuite) TestSecureHeadersResponses(c *check.C) {
 		c.Assert(err, checker.IsNil)
 		req.Host = test.reqHost
 
-		err = try.Request(req, 500*time.Millisecond, try.HasHeaderStruct(test.expected))
+		err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasHeaderStruct(test.expected))
+		c.Assert(err, checker.IsNil)
+
+		req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/api/rawdata", nil)
+		c.Assert(err, checker.IsNil)
+		req.Host = test.internalReqHost
+
+		err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasHeaderStruct(test.expected))
 		c.Assert(err, checker.IsNil)
 	}
 }
@@ -164,7 +173,7 @@ func (s *HeadersSuite) TestMultipleSecureHeadersResponses(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	backend := startTestServer("9000", http.StatusOK)
+	backend := startTestServer("9000", http.StatusOK, "")
 	defer backend.Close()
 
 	err = try.GetRequest(backend.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))

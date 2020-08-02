@@ -125,7 +125,7 @@ providers:
     - foobar
     labelSelector: foobar
     ingressClass: foobar
-    throttleDuration: 10s
+    throttleDuration: 42s
   rest:
     insecure: true
   rancher:
@@ -161,8 +161,20 @@ providers:
       httpAuth:
         username: foobar
         password: foobar
+  ecs:
+    constraints: foobar
+    exposedByDefault: true
+    refreshSeconds: 42
+    defaultRule: foobar
+    clusters:
+    - foobar
+    - foobar
+    autoDiscoverClusters: true
+    region: foobar
+    accessKeyID: foobar
+    secretAccessKey: foobar
   consul:
-    rootKey: traefik
+    rootKey: foobar
     endpoints:
     - foobar
     - foobar
@@ -175,7 +187,7 @@ providers:
       key: foobar
       insecureSkipVerify: true
   etcd:
-    rootKey: traefik
+    rootKey: foobar
     endpoints:
     - foobar
     - foobar
@@ -188,10 +200,10 @@ providers:
       key: foobar
       insecureSkipVerify: true
   zooKeeper:
-    rootKey: traefik
+    rootKey: foobar
     endpoints:
-      - foobar
-      - foobar
+    - foobar
+    - foobar
     username: foobar
     password: foobar
     tls:
@@ -201,12 +213,22 @@ providers:
       key: foobar
       insecureSkipVerify: true
   redis:
-    rootKey: traefik
+    rootKey: foobar
     endpoints:
-      - foobar
-      - foobar
+    - foobar
+    - foobar
     username: foobar
     password: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+  http:
+    endpoint: foobar
+    pollInterval: 42
+    pollTimeout: 42
     tls:
       ca: foobar
       caOptional: true
@@ -250,6 +272,7 @@ metrics:
 ping:
   entryPoint: foobar
   manualRouting: true
+  terminatingStatusCode: 42
 log:
   level: foobar
   filePath: foobar
@@ -356,3 +379,16 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}
+experimental:
+  pilot:
+    token: foobar
+  plugins:
+    Descriptor0:
+      moduleName: foobar
+      version: foobar
+    Descriptor1:
+      moduleName: foobar
+      version: foobar
+  devPlugin:
+    goPath: foobar
+    moduleName: foobar

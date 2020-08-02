@@ -254,6 +254,10 @@ http:
             domainComponent: true
           serialNumber: true
     Middleware14:
+      plugin:
+        PluginConf:
+          foo = "bar"
+    Middleware15:
       rateLimit:
         average: 42
         period: 42
@@ -266,33 +270,33 @@ http:
             - foobar
           requestHeaderName: foobar
           requestHost: true
-    Middleware15:
+    Middleware16:
       redirectRegex:
         regex: foobar
         replacement: foobar
         permanent: true
-    Middleware16:
+    Middleware17:
       redirectScheme:
         scheme: foobar
         port: foobar
         permanent: true
-    Middleware17:
+    Middleware18:
       replacePath:
         path: foobar
-    Middleware18:
+    Middleware19:
       replacePathRegex:
         regex: foobar
         replacement: foobar
-    Middleware19:
+    Middleware20:
       retry:
         attempts: 42
-    Middleware20:
+    Middleware21:
       stripPrefix:
         prefixes:
         - foobar
         - foobar
         forceSlash: true
-    Middleware21:
+    Middleware22:
       stripPrefixRegex:
         regex:
         - foobar

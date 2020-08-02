@@ -119,7 +119,7 @@ func testConfiguration(c *check.C, path, apiPort string) {
 	newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
 	c.Assert(err, checker.IsNil)
 
-	err = ioutil.WriteFile(expectedJSON, newJSON, 0644)
+	err = ioutil.WriteFile(expectedJSON, newJSON, 0o644)
 	c.Assert(err, checker.IsNil)
 	c.Errorf("We do not want a passing test in file update mode")
 }

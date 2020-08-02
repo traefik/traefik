@@ -142,7 +142,7 @@ func (i *Provider) getEntryPointPort(name string, def *static.Redirections) (str
 		return "", fmt.Errorf("'to' entry point field references a non-existing entry point: %s", def.EntryPoint.To)
 	}
 
-	_, port, err := net.SplitHostPort(dst.Address)
+	_, port, err := net.SplitHostPort(dst.GetAddress())
 	if err != nil {
 		return "", fmt.Errorf("invalid entry point %q address %q: %w",
 			name, i.staticCfg.EntryPoints[def.EntryPoint.To].Address, err)
@@ -197,7 +197,7 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 
 			cfg.HTTP.Middlewares["dashboard_redirect"] = &dynamic.Middleware{
 				RedirectRegex: &dynamic.RedirectRegex{
-					Regex:       `^(http:\/\/[^:\/]+(:\d+)?)\/$`,
+					Regex:       `^(http:\/\/(\[[\w:.]+\]|[\w\._-]+)(:\d+)?)\/$`,
 					Replacement: "${1}/dashboard/",
 					Permanent:   true,
 				},

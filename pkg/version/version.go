@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/google/go-github/v28/github"
@@ -19,27 +20,33 @@ var (
 	Codename = "cheddar" // beta cheese
 	// BuildDate holds the build date of traefik.
 	BuildDate = "I don't remember exactly"
+	// StartDate holds the start date of traefik.
+	StartDate = time.Now()
+	// UUID instance uuid.
+	UUID string
 )
 
 // Handler expose version routes.
 type Handler struct{}
 
-var (
-	templatesRenderer = render.New(render.Options{
-		Directory: "nowhere",
-	})
-)
+var templatesRenderer = render.New(render.Options{
+	Directory: "nowhere",
+})
 
 // Append adds version routes on a router.
 func (v Handler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/api/version").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 			v := struct {
-				Version  string
-				Codename string
+				Version   string
+				Codename  string
+				StartDate time.Time `json:"startDate"`
+				UUID      string    `json:"uuid"`
 			}{
-				Version:  Version,
-				Codename: Codename,
+				Version:   Version,
+				Codename:  Codename,
+				StartDate: StartDate,
+				UUID:      UUID,
 			}
 
 			if err := templatesRenderer.JSON(response, http.StatusOK, v); err != nil {

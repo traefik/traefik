@@ -85,7 +85,6 @@ func (c *FakeIngressRouteUDPs) List(ctx context.Context, opts v1.ListOptions) (r
 func (c *FakeIngressRouteUDPs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(ingressrouteudpsResource, c.ns, opts))
-
 }
 
 // Create takes the representation of a ingressRouteUDP and creates it.  Returns the server's representation of the ingressRouteUDP, and an error, if there is any.

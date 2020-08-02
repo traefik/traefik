@@ -16,3 +16,4 @@
 *.exe
 cover.out
 vendor/
+plugins-storage/

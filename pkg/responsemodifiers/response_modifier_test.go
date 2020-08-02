@@ -169,6 +169,21 @@ func TestBuilderBuild(t *testing.T) {
 			},
 			assertResponse: func(t *testing.T, resp *http.Response) {},
 		},
+
+		{
+			desc:          "chain without headers",
+			middlewares:   []string{"chain"},
+			buildResponse: stubResponse,
+			conf: map[string]*dynamic.Middleware{
+				"foo": {IPWhiteList: &dynamic.IPWhiteList{}},
+				"chain": {
+					Chain: &dynamic.Chain{
+						Middlewares: []string{"foo"},
+					},
+				},
+			},
+			assertResponse: func(t *testing.T, resp *http.Response) {},
+		},
 	}
 
 	for _, test := range testCases {
@@ -184,6 +199,9 @@ func TestBuilderBuild(t *testing.T) {
 			builder := NewBuilder(rtConf.Middlewares)
 
 			rm := builder.Build(context.Background(), test.middlewares)
+			if rm == nil {
+				return
+			}
 
 			resp := test.buildResponse(test.conf)
 

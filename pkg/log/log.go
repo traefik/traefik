@@ -101,7 +101,7 @@ func OpenFile(path string) error {
 	logFilePath = path
 
 	var err error
-	logFile, err = os.OpenFile(logFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	logFile, err = os.OpenFile(logFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
 	if err != nil {
 		return err
 	}

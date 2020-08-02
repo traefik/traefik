@@ -129,7 +129,7 @@ func (_m *Marathon) ApplicationBy(name string, opts *marathon.GetAppOpts) (*mara
 }
 
 // ApplicationByVersion provides a mock function with given fields: name, version
-func (_m *Marathon) ApplicationByVersion(name string, version string) (*marathon.Application, error) {
+func (_m *Marathon) ApplicationByVersion(name, version string) (*marathon.Application, error) {
 	ret := _m.Called(name, version)
 
 	var r0 *marathon.Application
@@ -394,7 +394,7 @@ func (_m *Marathon) DeletePod(name string, force bool) (*marathon.DeploymentID, 
 }
 
 // DeletePodInstance provides a mock function with given fields: name, instance
-func (_m *Marathon) DeletePodInstance(name string, instance string) (*marathon.PodInstance, error) {
+func (_m *Marathon) DeletePodInstance(name, instance string) (*marathon.PodInstance, error) {
 	ret := _m.Called(name, instance)
 
 	var r0 *marathon.PodInstance
@@ -583,7 +583,7 @@ func (_m *Marathon) GroupsBy(opts *marathon.GetGroupOpts) (*marathon.Groups, err
 }
 
 // HasApplicationVersion provides a mock function with given fields: name, version
-func (_m *Marathon) HasApplicationVersion(name string, version string) (bool, error) {
+func (_m *Marathon) HasApplicationVersion(name, version string) (bool, error) {
 	ret := _m.Called(name, version)
 
 	var r0 bool
@@ -817,7 +817,7 @@ func (_m *Marathon) Pod(name string) (*marathon.Pod, error) {
 }
 
 // PodByVersion provides a mock function with given fields: name, version
-func (_m *Marathon) PodByVersion(name string, version string) (*marathon.Pod, error) {
+func (_m *Marathon) PodByVersion(name, version string) (*marathon.Pod, error) {
 	ret := _m.Called(name, version)
 
 	var r0 *marathon.Pod

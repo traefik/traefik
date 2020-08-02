@@ -26,7 +26,7 @@ const (
 )
 
 // NewAccount creates an account.
-func NewAccount(ctx context.Context, email string, keyTypeValue string) (*Account, error) {
+func NewAccount(ctx context.Context, email, keyTypeValue string) (*Account, error) {
 	keyType := GetKeyType(ctx, keyTypeValue)
 
 	// Create a user. New accounts need an email and private key to start

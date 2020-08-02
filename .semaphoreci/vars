@@ -10,7 +10,7 @@ else
   export VERSION=''
 fi
 
-export CODENAME=chevrotin
+export CODENAME=picodon
 
 export N_MAKE_JOBS=2
 

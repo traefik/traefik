@@ -49,6 +49,10 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 		p.quietAddProvider(conf.Rancher)
 	}
 
+	if conf.Ecs != nil {
+		p.quietAddProvider(conf.Ecs)
+	}
+
 	if conf.ConsulCatalog != nil {
 		p.quietAddProvider(conf.ConsulCatalog)
 	}
@@ -67,6 +71,10 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 
 	if conf.Redis != nil {
 		p.quietAddProvider(conf.Redis)
+	}
+
+	if conf.HTTP != nil {
+		p.quietAddProvider(conf.HTTP)
 	}
 
 	return p

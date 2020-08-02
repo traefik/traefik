@@ -54,13 +54,13 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 	nextHandler := next
 
 	if hasSecureHeaders {
-		logger.Debug("Setting up secureHeaders from %v", cfg)
+		logger.Debugf("Setting up secureHeaders from %v", cfg)
 		handler = newSecure(next, cfg, name)
 		nextHandler = handler
 	}
 
 	if hasCustomHeaders || hasCorsHeaders {
-		logger.Debug("Setting up customHeaders/Cors from %v", cfg)
+		logger.Debugf("Setting up customHeaders/Cors from %v", cfg)
 		handler = NewHeader(nextHandler, cfg)
 	}
 

@@ -8,6 +8,6 @@ import (
 )
 
 // getLogger creates a logger configured with the middleware fields.
-func getLogger(ctx context.Context, middleware string, middlewareType string) logrus.FieldLogger {
+func getLogger(ctx context.Context, middleware, middlewareType string) logrus.FieldLogger {
 	return log.FromContext(ctx).WithField(log.MiddlewareName, middleware).WithField(log.MiddlewareType, middlewareType)
 }

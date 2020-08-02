@@ -24,7 +24,7 @@ func main() {
 	genKVDynConfDoc("./docs/content/reference/dynamic-configuration/kv-ref.md")
 }
 
-func genStaticConfDoc(outputFile string, prefix string, encodeFn func(interface{}) ([]parser.Flat, error)) {
+func genStaticConfDoc(outputFile, prefix string, encodeFn func(interface{}) ([]parser.Flat, error)) {
 	logger := log.WithoutContext().WithField("file", outputFile)
 
 	element := &static.Configuration{}
@@ -41,7 +41,7 @@ func genStaticConfDoc(outputFile string, prefix string, encodeFn func(interface{
 		logger.Fatal(err)
 	}
 
-	file, err := os.OpenFile(outputFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	file, err := os.OpenFile(outputFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -57,6 +57,11 @@ THIS FILE MUST NOT BE EDITED BY HAND
 	w.writeln()
 
 	for i, flat := range flats {
+		// TODO must be move into the flats creation.
+		if flat.Name == "experimental.plugins.<name>" || flat.Name == "TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>" {
+			continue
+		}
+
 		w.writeln("`" + prefix + strings.ReplaceAll(flat.Name, "[0]", "[n]") + "`:  ")
 		if flat.Default == "" {
 			w.writeln(flat.Description)

@@ -81,8 +81,8 @@ func filterPairs(pairs []*store.KVPair, filters []string) []*store.KVPair {
 		return pairs[i].Key < pairs[j].Key
 	})
 
-	var simplePairs = map[string]*store.KVPair{}
-	var slicePairs = map[string][]string{}
+	simplePairs := map[string]*store.KVPair{}
+	slicePairs := map[string][]string{}
 
 	for _, pair := range pairs {
 		if len(filters) == 0 {

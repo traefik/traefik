@@ -317,7 +317,7 @@ spec:
 ### Strict SNI Checking
 
 With strict SNI checking, Traefik won't allow connections from clients connections
-that do not specify a server_name extension.
+that do not specify a server_name extension or don't match any certificate configured on the tlsOption.
 
 ```toml tab="File (TOML)"
 # Dynamic configuration
@@ -428,6 +428,7 @@ metadata:
 
 spec:
   clientAuth:
+    # the CA certificate is extracted from key `tls.ca` of the given secrets.
     secretNames:
       - secretCA
     clientAuthType: RequireAndVerifyClientCert

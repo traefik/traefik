@@ -13,6 +13,7 @@ import (
 
 var funcs = map[string]func(*mux.Route, ...string) error{
 	"Host":          host,
+	"HostHeader":    host,
 	"HostRegexp":    hostRegexp,
 	"Path":          path,
 	"PathPrefix":    pathPrefix,

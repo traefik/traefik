@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -100,6 +101,17 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 		Level:     logrus.InfoLevel,
 	}
 
+	// Transform headers names in config to a canonical form, to be used as is without further transformations.
+	if config.Fields != nil && config.Fields.Headers != nil && len(config.Fields.Headers.Names) > 0 {
+		fields := map[string]string{}
+
+		for h, v := range config.Fields.Headers.Names {
+			fields[textproto.CanonicalMIMEHeaderKey(h)] = v
+		}
+
+		config.Fields.Headers.Names = fields
+	}
+
 	logHandler := &Handler{
 		config:         config,
 		logger:         logger,
@@ -131,11 +143,11 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 func openAccessLogFile(filePath string) (*os.File, error) {
 	dir := filepath.Dir(filePath)
 
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create log path %s: %w", dir, err)
 	}
 
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o664)
 	if err != nil {
 		return nil, fmt.Errorf("error opening file %s: %w", filePath, err)
 	}
@@ -249,7 +261,7 @@ func (h *Handler) Rotate() error {
 	}
 
 	var err error
-	h.file, err = os.OpenFile(h.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
+	h.file, err = os.OpenFile(h.config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o664)
 	if err != nil {
 		return err
 	}
@@ -259,7 +271,7 @@ func (h *Handler) Rotate() error {
 	return nil
 }
 
-func silentSplitHostPort(value string) (host string, port string) {
+func silentSplitHostPort(value string) (host, port string) {
 	host, port, err := net.SplitHostPort(value)
 	if err != nil {
 		return value, "-"

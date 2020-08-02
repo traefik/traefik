@@ -18,10 +18,13 @@ import (
 	"github.com/containous/traefik/v2/pkg/cli"
 	"github.com/containous/traefik/v2/pkg/collector"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/metrics"
 	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
+	"github.com/containous/traefik/v2/pkg/pilot"
+	"github.com/containous/traefik/v2/pkg/plugins"
 	"github.com/containous/traefik/v2/pkg/provider/acme"
 	"github.com/containous/traefik/v2/pkg/provider/aggregator"
 	"github.com/containous/traefik/v2/pkg/provider/traefik"
@@ -117,6 +120,12 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	ctx := cmd.ContextWithSignal(context.Background())
 
+	if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.DevPlugin != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, 30*time.Minute)
+		defer cancel()
+	}
+
 	if staticConfiguration.Ping != nil {
 		staticConfiguration.Ping.WithContext(ctx)
 	}
@@ -190,7 +199,18 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry)
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder)
+
+	client, plgs, devPlugin, err := initPlugins(staticConfiguration)
+	if err != nil {
+		return nil, err
+	}
+
+	pluginBuilder, err := plugins.NewBuilder(client, plgs, devPlugin)
+	if err != nil {
+		return nil, err
+	}
+
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder)
 
 	var defaultEntryPoints []string
 	for name, cfg := range staticConfiguration.EntryPoints {
@@ -224,7 +244,16 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 	})
 
-	watcher.AddListener(switchRouter(routerFactory, acmeProviders, serverEntryPointsTCP, serverEntryPointsUDP))
+	var aviator *pilot.Pilot
+	if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.Pilot != nil &&
+		staticConfiguration.Experimental.Pilot.Token != "" {
+		aviator = pilot.New(staticConfiguration.Experimental.Pilot.Token, routinesPool)
+		routinesPool.GoCtx(func(ctx context.Context) {
+			aviator.Tick(ctx)
+		})
+	}
+
+	watcher.AddListener(switchRouter(routerFactory, acmeProviders, serverEntryPointsTCP, serverEntryPointsUDP, aviator))
 
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		if metricsRegistry.IsEpEnabled() || metricsRegistry.IsSvcEnabled() {
@@ -258,9 +287,12 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, chainBuilder, accessLog), nil
 }
 
-func switchRouter(routerFactory *server.RouterFactory, acmeProviders []*acme.Provider, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints) func(conf dynamic.Configuration) {
+func switchRouter(routerFactory *server.RouterFactory, acmeProviders []*acme.Provider, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints, aviator *pilot.Pilot) func(conf dynamic.Configuration) {
 	return func(conf dynamic.Configuration) {
-		routers, udpRouters := routerFactory.CreateRouters(conf)
+		rtConf := runtime.NewConfig(conf)
+
+		routers, udpRouters := routerFactory.CreateRouters(rtConf)
+
 		for entryPointName, rt := range routers {
 			for _, p := range acmeProviders {
 				if p != nil && p.HTTPChallenge != nil && p.HTTPChallenge.EntryPoint == entryPointName {
@@ -269,6 +301,11 @@ func switchRouter(routerFactory *server.RouterFactory, acmeProviders []*acme.Pro
 				}
 			}
 		}
+
+		if aviator != nil {
+			aviator.SetRuntimeConfiguration(rtConf)
+		}
+
 		serverEntryPointsTCP.Switch(routers)
 		serverEntryPointsUDP.Switch(udpRouters)
 	}
@@ -403,7 +440,7 @@ func configureLogging(staticConfiguration *static.Configuration) {
 	if len(logFile) > 0 {
 		dir := filepath.Dir(logFile)
 
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
 			log.WithoutContext().Errorf("Failed to create log path %s: %s", dir, err)
 		}
 

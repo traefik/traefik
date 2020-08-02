@@ -16,8 +16,10 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 )
 
-const healthCheckInterval = 200 * time.Millisecond
-const healthCheckTimeout = 100 * time.Millisecond
+const (
+	healthCheckInterval = 200 * time.Millisecond
+	healthCheckTimeout  = 100 * time.Millisecond
+)
 
 type testHandler struct {
 	done           func()
@@ -148,7 +150,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			assert.Equal(t, test.expectedNumRemovedServers, lb.numRemovedServers, "removed servers")
 			assert.Equal(t, test.expectedNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
 			// FIXME re add metrics
-			//assert.Equal(t, test.expectedGaugeValue, collectingMetrics.Gauge.GaugeValue, "ServerUp Gauge")
+			// assert.Equal(t, test.expectedGaugeValue, collectingMetrics.Gauge.GaugeValue, "ServerUp Gauge")
 		})
 	}
 }
@@ -446,9 +448,9 @@ func TestLBStatusUpdater(t *testing.T) {
 	svInfo := &runtime.ServiceInfo{}
 	lbsu := NewLBStatusUpdater(lb, svInfo)
 	newServer, err := url.Parse("http://foo.com")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	err = lbsu.UpsertServer(newServer, roundrobin.Weight(1))
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(lbsu.Servers()), 1)
 	assert.Equal(t, len(lbsu.BalancerHandler.(*testLoadBalancer).Options()), 1)
 	statuses := svInfo.GetAllStatus()
@@ -459,7 +461,7 @@ func TestLBStatusUpdater(t *testing.T) {
 		break
 	}
 	err = lbsu.RemoveServer(newServer)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(lbsu.Servers()), 0)
 	statuses = svInfo.GetAllStatus()
 	assert.Equal(t, len(statuses), 1)

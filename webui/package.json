@@ -21,6 +21,7 @@
     "bowser": "^2.5.2",
     "chart.js": "^2.8.0",
     "dot-prop": "^5.2.0",
+    "iframe-resizer": "^4.2.10",
     "lodash.isequal": "4.5.0",
     "moment": "^2.24.0",
     "quasar": "^1.4.4",

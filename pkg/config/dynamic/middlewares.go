@@ -39,6 +39,8 @@ type Middleware struct {
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty"`
 	H2Push            *H2Push            `json:"h2push,omitempty" toml:"h2push,omitempty" yaml:"h2push,omitempty"`
 	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty"`
+
+	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

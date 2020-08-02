@@ -123,6 +123,11 @@ func (e encoderToNode) setStructValue(node *Node, rValue reflect.Value) error {
 }
 
 func (e encoderToNode) setMapValue(node *Node, rValue reflect.Value) error {
+	if rValue.Type().Elem().Kind() == reflect.Interface {
+		node.RawValue = rValue.Interface()
+		return nil
+	}
+
 	for _, key := range rValue.MapKeys() {
 		child := &Node{Name: key.String(), FieldName: key.String()}
 		node.Children = append(node.Children, child)
