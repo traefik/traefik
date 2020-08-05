@@ -49,7 +49,7 @@ type instanceInfo struct {
 }
 
 // New creates a new Pilot.
-func New(token string, metrics *metrics.PilotRegistry, pool *safe.Pool) *Pilot {
+func New(token string, metricsRegistry *metrics.PilotRegistry, pool *safe.Pool) *Pilot {
 	return &Pilot{
 		rtConfChan: make(chan *runtime.Configuration),
 		client: &client{
@@ -57,8 +57,8 @@ func New(token string, metrics *metrics.PilotRegistry, pool *safe.Pool) *Pilot {
 			httpClient: &http.Client{Timeout: 5 * time.Second},
 			baseURL:    baseURL,
 		},
-		routinesPool: pool,
-		metrics:      metrics,
+		routinesPool:    pool,
+		metricsRegistry: metricsRegistry,
 	}
 }
 
@@ -67,9 +67,9 @@ type Pilot struct {
 	routinesPool *safe.Pool
 	client       *client
 
-	rtConf     *runtime.Configuration
-	rtConfChan chan *runtime.Configuration
-	metrics    *metrics.PilotRegistry
+	rtConf          *runtime.Configuration
+	rtConfChan      chan *runtime.Configuration
+	metricsRegistry *metrics.PilotRegistry
 }
 
 // SetRuntimeConfiguration stores the runtime configuration.
@@ -103,8 +103,8 @@ func (p *Pilot) getRepresentation() RunTimeRepresentation {
 	return result
 }
 
-func (p *Pilot) sendData(ctx context.Context) {
-	err := p.client.SendData(ctx, p.getRepresentation(), p.metrics.Data())
+func (p *Pilot) sendData(ctx context.Context, conf RunTimeRepresentation, pilotMetrics []metrics.PilotMetric) {
+	err := p.client.SendData(ctx, conf, pilotMetrics)
 	if err != nil {
 		log.WithoutContext().Error(err)
 	}
@@ -120,8 +120,11 @@ func (p *Pilot) Tick(ctx context.Context) {
 		return
 	}
 
+	conf := p.getRepresentation()
+	pilotMetrics := p.metricsRegistry.Data()
+
 	p.routinesPool.GoCtx(func(ctxRt context.Context) {
-		p.sendData(ctxRt)
+		p.sendData(ctxRt, conf, pilotMetrics)
 	})
 
 	ticker := time.NewTicker(pilotTimer)
@@ -130,8 +133,11 @@ func (p *Pilot) Tick(ctx context.Context) {
 		case tick := <-ticker.C:
 			log.WithoutContext().Debugf("Send to pilot: %s", tick)
 
+			conf := p.getRepresentation()
+			pilotMetrics := p.metricsRegistry.Data()
+
 			p.routinesPool.GoCtx(func(ctxRt context.Context) {
-				p.sendData(ctxRt)
+				p.sendData(ctxRt, conf, pilotMetrics)
 			})
 		case rtConf := <-p.rtConfChan:
 			p.rtConf = rtConf
@@ -184,13 +190,13 @@ func (c *client) createUUID() (string, error) {
 }
 
 // SendData sends data to Pilot.
-func (c *client) SendData(ctx context.Context, rtConf RunTimeRepresentation, metrics []metrics.PilotMetric) error {
+func (c *client) SendData(ctx context.Context, rtConf RunTimeRepresentation, pilotMetrics []metrics.PilotMetric) error {
 	exponentialBackOff := backoff.NewExponentialBackOff()
 	exponentialBackOff.MaxElapsedTime = maxElapsedTime
 
 	return backoff.RetryNotify(
 		func() error {
-			return c.sendData(rtConf, metrics)
+			return c.sendData(rtConf, pilotMetrics)
 		},
 		backoff.WithContext(exponentialBackOff, ctx),
 		func(err error, duration time.Duration) {
@@ -198,7 +204,7 @@ func (c *client) SendData(ctx context.Context, rtConf RunTimeRepresentation, met
 		})
 }
 
-func (c *client) sendData(_ RunTimeRepresentation, metrics []metrics.PilotMetric) error {
+func (c *client) sendData(_ RunTimeRepresentation, pilotMetrics []metrics.PilotMetric) error {
 	if len(c.uuid) == 0 {
 		var err error
 		c.uuid, err = c.createUUID()
@@ -211,7 +217,7 @@ func (c *client) sendData(_ RunTimeRepresentation, metrics []metrics.PilotMetric
 
 	info := instanceInfo{
 		ID:      c.uuid,
-		Metrics: metrics,
+		Metrics: pilotMetrics,
 	}
 
 	b, err := json.Marshal(info)
