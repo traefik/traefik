@@ -20,14 +20,14 @@ const (
 	// entry point
 	pilotEntryPointPrefix           = "entrypoint"
 	pilotEntryPointReqsTotalName    = pilotEntryPointPrefix + "RequestsTotal"
-	pilotEntryPointReqsTLSTotalName = pilotEntryPointPrefix + "RequestsTlsTotal"
+	pilotEntryPointReqsTLSTotalName = pilotEntryPointPrefix + "RequestsTLSTotal"
 	pilotEntryPointReqDurationName  = pilotEntryPointPrefix + "RequestDurationSeconds"
 	pilotEntryPointOpenConnsName    = pilotEntryPointPrefix + "OpenConnections"
 
 	// service level
 	pilotServicePrefix           = "service"
 	pilotServiceReqsTotalName    = pilotServicePrefix + "RequestsTotal"
-	pilotServiceReqsTLSTotalName = pilotServicePrefix + "RequestsTlsTotal"
+	pilotServiceReqsTLSTotalName = pilotServicePrefix + "RequestsTLSTotal"
 	pilotServiceReqDurationName  = pilotServicePrefix + "RequestDurationSeconds"
 	pilotServiceOpenConnsName    = pilotServicePrefix + "OpenConnections"
 	pilotServiceRetriesTotalName = pilotServicePrefix + "RetriesTotal"

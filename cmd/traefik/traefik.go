@@ -358,7 +358,7 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 	var registries []metrics.Registry
 
 	if metricsConfig == nil {
-		return registries
+		return nil
 	}
 
 	if metricsConfig.Prometheus != nil {

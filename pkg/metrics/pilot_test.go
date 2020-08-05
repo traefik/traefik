@@ -7,107 +7,114 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-kit/kit/metrics"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPilotCounter(t *testing.T) {
-	pc := newPilotCounter("foo")
+	rootCounter := newPilotCounter("rootCounter")
 
-	pc.Add(1)
+	// Checks that a counter without labels can be incremented.
+	rootCounter.Add(1)
+	assertPilotCounterValue(t, 1.0, "", rootCounter)
 
-	counter, ok := pc.counters.Load("")
-	assert.True(t, ok)
-	assert.Equal(t, 1.0, counter.(*pilotCounter).c.Value())
+	// Checks that a counter with labels can be incremented.
+	counterWithLabels := rootCounter.With("foo", "bar", "foo", "buz")
 
-	fooBar := pc.With("foo", "bar", "foo", "buz")
-	fooBar.Add(1)
+	counterWithLabels.Add(1)
+	assertPilotCounterValue(t, 1.0, "foo,bar,foo,buz", counterWithLabels)
 
-	counter, ok = pc.counters.Load("foo,bar,foo,buz")
-	assert.True(t, ok)
-	assert.Equal(t, 1.0, counter.(*pilotCounter).c.Value())
+	// Checks that the derived counter value has not changed.
+	assertPilotCounterValue(t, 1.0, "", rootCounter)
 
-	counter, ok = pc.counters.Load("")
-	assert.True(t, ok)
-	assert.Equal(t, 1.0, counter.(*pilotCounter).c.Value())
+	// Checks that an existing counter (with the same labels) can be incremented.
+	existingCounterWithLabels := rootCounter.With("foo", "bar").With("foo", "buz")
 
-	fooBar2 := pc.With("foo", "bar").With("foo", "buz")
-	fooBar2.Add(1)
+	existingCounterWithLabels.Add(1)
+	assertPilotCounterValue(t, 2.0, "foo,bar,foo,buz", existingCounterWithLabels)
+}
 
-	counter, ok = pc.counters.Load("foo,bar,foo,buz")
-	assert.True(t, ok)
-	assert.Equal(t, 2.0, counter.(*pilotCounter).c.Value())
+func assertPilotCounterValue(t *testing.T, expValue float64, labels string, c metrics.Counter) {
+	t.Helper()
+	counter, ok := c.(*pilotCounter).counters.Load(labels)
+
+	require.True(t, ok)
+	assert.Equal(t, expValue, counter.(*pilotCounter).c.Value())
 }
 
 func TestPilotGauge(t *testing.T) {
-	pg := newPilotGauge("foo")
+	rootGauge := newPilotGauge("rootGauge")
 
-	pg.Add(1)
+	// Checks that a gauge without labels can be incremented.
+	rootGauge.Add(1)
 
-	gauge, ok := pg.gauges.Load("")
-	assert.True(t, ok)
-	assert.Equal(t, 1.0, gauge.(*pilotGauge).g.Value())
+	assertPilotGaugeValue(t, 1.0, "", rootGauge)
 
-	pg.Set(5.0)
+	// Checks that a gauge (without labels) value can be set.
+	rootGauge.Set(5.0)
 
-	gauge, ok = pg.gauges.Load("")
-	assert.True(t, ok)
-	assert.Equal(t, 5.0, gauge.(*pilotGauge).g.Value())
+	assertPilotGaugeValue(t, 5.0, "", rootGauge)
 
-	fooBar := pg.With("foo", "bar", "foo", "buz")
-	fooBar.Add(1)
+	// Checks that a gauge with labels can be incremented.
+	gaugeWithLabels := rootGauge.With("foo", "bar", "foo", "buz")
+	gaugeWithLabels.Add(1)
 
-	gauge, ok = pg.gauges.Load("")
-	assert.True(t, ok)
-	assert.Equal(t, 5.0, gauge.(*pilotGauge).g.Value())
+	assertPilotGaugeValue(t, 1.0, "foo,bar,foo,buz", gaugeWithLabels)
 
-	gauge, ok = pg.gauges.Load("foo,bar,foo,buz")
-	assert.True(t, ok)
-	assert.Equal(t, 1.0, gauge.(*pilotGauge).g.Value())
+	// Checks that the derived gauge value has not changed.
+	assertPilotGaugeValue(t, 5.0, "", rootGauge)
 
-	fooBar2 := pg.With("foo", "bar").With("foo", "buz")
-	fooBar2.Add(1)
+	// Checks that an existing gauge (with the same labels) can be incremented.
+	existingGaugeWithLabels := rootGauge.With("foo", "bar").With("foo", "buz")
+	existingGaugeWithLabels.Add(1)
 
-	gauge, ok = pg.gauges.Load("foo,bar,foo,buz")
-	assert.True(t, ok)
-	assert.Equal(t, 2.0, gauge.(*pilotGauge).g.Value())
+	assertPilotGaugeValue(t, 2.0, "foo,bar,foo,buz", existingGaugeWithLabels)
+}
+
+func assertPilotGaugeValue(t *testing.T, expValue float64, labels string, g metrics.Gauge) {
+	t.Helper()
+	gauge, ok := g.(*pilotGauge).gauges.Load(labels)
+
+	require.True(t, ok)
+	assert.Equal(t, expValue, gauge.(*pilotGauge).g.Value())
 }
 
 func TestPilotHistogram(t *testing.T) {
-	ph := newPilotHistogram("foo")
-	ph.Observe(1)
+	rootHistogram := newPilotHistogram("rootHistogram")
 
-	histogram, ok := ph.histograms.Load("")
-	assert.True(t, ok)
-	assert.Equal(t, 1.0, histogram.(*pilotHistogram).count.Value())
-	assert.Equal(t, 1.0, histogram.(*pilotHistogram).total.Value())
+	// Checks that an histogram without labels can be updated.
+	rootHistogram.Observe(1)
 
-	ph.Observe(2)
+	assertPilotHistogramValues(t, 1.0, 1.0, "", rootHistogram)
 
-	histogram, ok = ph.histograms.Load("")
-	assert.True(t, ok)
-	assert.Equal(t, 2.0, histogram.(*pilotHistogram).count.Value())
-	assert.Equal(t, 3.0, histogram.(*pilotHistogram).total.Value())
+	rootHistogram.Observe(2)
 
-	fooBar := ph.With("foo", "bar", "foo", "buz")
-	fooBar.Observe(1)
+	assertPilotHistogramValues(t, 2.0, 3.0, "", rootHistogram)
 
-	histogram, ok = ph.histograms.Load("")
-	assert.True(t, ok)
-	assert.Equal(t, 2.0, histogram.(*pilotHistogram).count.Value())
-	assert.Equal(t, 3.0, histogram.(*pilotHistogram).total.Value())
+	// Checks that an histogram with labels can be updated.
+	histogramWithLabels := rootHistogram.With("foo", "bar", "foo", "buz")
+	histogramWithLabels.Observe(1)
 
-	histogram, ok = ph.histograms.Load("foo,bar,foo,buz")
-	assert.True(t, ok)
-	assert.Equal(t, 1.0, histogram.(*pilotHistogram).count.Value())
-	assert.Equal(t, 1.0, histogram.(*pilotHistogram).total.Value())
+	assertPilotHistogramValues(t, 1.0, 1.0, "foo,bar,foo,buz", histogramWithLabels)
 
-	fooBar2 := ph.With("foo", "bar").With("foo", "buz")
-	fooBar2.Observe(1)
+	// Checks that the derived histogram has not changed.
+	assertPilotHistogramValues(t, 2.0, 3.0, "", rootHistogram)
 
-	histogram, ok = ph.histograms.Load("foo,bar,foo,buz")
-	assert.True(t, ok)
-	assert.Equal(t, 2.0, histogram.(*pilotHistogram).count.Value())
-	assert.Equal(t, 2.0, histogram.(*pilotHistogram).total.Value())
+	// Checks that an existing histogram (with the same labels) can be updated.
+	existingHistogramWithLabels := rootHistogram.With("foo", "bar").With("foo", "buz")
+	existingHistogramWithLabels.Observe(1)
+
+	assertPilotHistogramValues(t, 2.0, 2.0, "foo,bar,foo,buz", existingHistogramWithLabels)
+}
+
+func assertPilotHistogramValues(t *testing.T, expCount float64, expTotal float64, labels string, h metrics.Histogram) {
+	t.Helper()
+	histogram, ok := h.(*pilotHistogram).histograms.Load(labels)
+
+	require.True(t, ok)
+	assert.Equal(t, expCount, histogram.(*pilotHistogram).count.Value())
+	assert.Equal(t, expTotal, histogram.(*pilotHistogram).total.Value())
 }
 
 func TestPilotMetrics(t *testing.T) {
