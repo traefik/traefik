@@ -355,11 +355,11 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 }
 
 func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
-	var registries []metrics.Registry
-
 	if metricsConfig == nil {
 		return nil
 	}
+
+	var registries []metrics.Registry
 
 	if metricsConfig.Prometheus != nil {
 		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "prometheus"))
