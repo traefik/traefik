@@ -108,7 +108,7 @@ func TestPilotHistogram(t *testing.T) {
 	assertPilotHistogramValues(t, 2.0, 2.0, "foo,bar,foo,buz", existingHistogramWithLabels)
 }
 
-func assertPilotHistogramValues(t *testing.T, expCount float64, expTotal float64, labels string, h metrics.Histogram) {
+func assertPilotHistogramValues(t *testing.T, expCount, expTotal float64, labels string, h metrics.Histogram) {
 	t.Helper()
 	histogram, ok := h.(*pilotHistogram).histograms.Load(labels)
 
