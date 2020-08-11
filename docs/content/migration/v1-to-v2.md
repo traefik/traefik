@@ -453,7 +453,7 @@ To apply a redirection:
             - name: whoami
               port: 80
           middlewares:
-            - name: https_redirect
+            - name: https-redirect
     
     ---
     apiVersion: traefik.containo.us/v1alpha1
@@ -476,7 +476,7 @@ To apply a redirection:
     apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
     metadata:
-      name: https_redirect
+      name: https-redirect
     spec:
       redirectScheme:
         scheme: https
@@ -501,7 +501,7 @@ To apply a redirection:
         [http.routers.router1.tls]
     
     [http.middlewares]
-      [http.middlewares.https_redirect.redirectScheme]
+      [http.middlewares.https-redirect.redirectScheme]
         scheme = "https"
         permanent = true
     ```
@@ -528,7 +528,7 @@ To apply a redirection:
           tls: {}
     
       middlewares:
-        https_redirect:
+        https-redirect:
           redirectScheme:
             scheme: https
             permanent: true
