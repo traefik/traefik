@@ -20,7 +20,7 @@ func DecodeToNode(pairs []*store.KVPair, rootName string, filters ...string) (*p
 	var node *parser.Node
 
 	for i, pair := range sortedPairs {
-		if !strings.HasPrefix(pair.Key, rootName) {
+		if !strings.HasPrefix(pair.Key, rootName+"/") {
 			return nil, fmt.Errorf("invalid label root %s", rootName)
 		}
 
