@@ -1,6 +1,7 @@
 ```yaml tab="Docker"
 # Dynamic Configuration
 labels:
+  - "traefik.enable=true"
   - "traefik.http.routers.dashboard.rule=Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
   - "traefik.http.routers.dashboard.service=api@internal"
   - "traefik.http.routers.dashboard.middlewares=auth"
