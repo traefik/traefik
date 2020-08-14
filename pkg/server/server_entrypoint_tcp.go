@@ -28,12 +28,14 @@ var httpServerLogger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugL
 type httpForwarder struct {
 	net.Listener
 	connChan chan net.Conn
+	errChan  chan error
 }
 
 func newHTTPForwarder(ln net.Listener) *httpForwarder {
 	return &httpForwarder{
 		Listener: ln,
 		connChan: make(chan net.Conn),
+		errChan:  make(chan error),
 	}
 }
 
@@ -44,8 +46,12 @@ func (h *httpForwarder) ServeTCP(conn tcp.WriteCloser) {
 
 // Accept retrieves a served connection in ServeTCP.
 func (h *httpForwarder) Accept() (net.Conn, error) {
-	conn := <-h.connChan
-	return conn, nil
+	select {
+	case conn := <-h.connChan:
+		return conn, nil
+	case err := <-h.errChan:
+		return nil, err
+	}
 }
 
 // TCPEntryPoints holds a map of TCPEntryPoint (the entrypoint names being the keys).
@@ -169,7 +175,8 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 			if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
 				continue
 			}
-
+			e.httpServer.Forwarder.errChan <- err
+			e.httpsServer.Forwarder.errChan <- err
 			return
 		}
 
