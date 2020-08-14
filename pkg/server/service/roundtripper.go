@@ -73,7 +73,7 @@ func createRoundtripper(transportConfiguration *static.ServersTransport) (http.R
 		}
 	}
 
-	smartTransport, err := newSmartRoundTripper(transport)
+	smartTransport, err := newSmartRoundTripper(transport, transportConfiguration.DisableHTTP2)
 	if err != nil {
 		return nil, err
 	}
