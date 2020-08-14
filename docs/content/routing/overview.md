@@ -401,7 +401,6 @@ serversTransport:
 --serversTransport.forwardingTimeouts.idleConnTimeout=1s
 ```
 
-
 ### `disableHTTP2`
 
 _Optional, Default=false_
