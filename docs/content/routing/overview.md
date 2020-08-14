@@ -400,3 +400,26 @@ serversTransport:
 ## Static configuration
 --serversTransport.forwardingTimeouts.idleConnTimeout=1s
 ```
+
+
+### `disableHTTP2`
+
+_Optional, Default=false_
+
+`disableHTTP2` disables the usage of http/2.
+
+```toml tab="File (TOML)"
+## Static configuration
+[serversTransport]
+  disableHTTP2 = true
+```
+
+```yaml tab="File (YAML)"
+## Static configuration
+serversTransport:
+  disableHTTP2: true
+```
+
+```bash tab="CLI"
+## Static configuration
+--serversTransport.disableHTTP2=true
