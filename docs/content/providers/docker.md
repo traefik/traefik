@@ -199,7 +199,7 @@ Therefore you **must** specify the port to use for communication by using the la
 Docker Swarm Mode follows the same rules as Docker [API Access](#docker-api-access).
 
 As the Swarm API is only exposed on the [manager nodes](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes), you should schedule Traefik on the Swarm manager nodes by default,
-by deploying Traefik with a [constraint](https://success.docker.com/article/using-contraints-and-labels-to-control-the-placement-of-containers) on the node's "role":
+by deploying Traefik with a [constraint](https://docs.docker.com/engine/reference/commandline/service_create/#specify-service-constraints---constraint) on the node's "role":
 
 ```shell tab="With Docker CLI"
 docker service create \
