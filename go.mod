@@ -1,6 +1,6 @@
 module github.com/containous/traefik/v2
 
-go 1.14
+go 1.15
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
@@ -20,7 +20,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.0.0
 	github.com/containerd/containerd v1.3.2 // indirect
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
-	github.com/containous/yaegi v0.8.13
+	github.com/containous/yaegi v0.8.14
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/cli v0.0.0-20200221155518-740919cc7fc0
