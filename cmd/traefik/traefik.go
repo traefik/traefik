@@ -15,7 +15,7 @@ import (
 	"github.com/containous/traefik/v2/cmd"
 	"github.com/containous/traefik/v2/cmd/healthcheck"
 	cmdVersion "github.com/containous/traefik/v2/cmd/version"
-	"github.com/containous/traefik/v2/pkg/cli"
+	tcli "github.com/containous/traefik/v2/pkg/cli"
 	"github.com/containous/traefik/v2/pkg/collector"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
@@ -38,6 +38,7 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/sirupsen/logrus"
+	"github.com/traefik/paerser/cli"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -45,7 +46,7 @@ func main() {
 	// traefik config inits
 	tConfig := cmd.NewTraefikConfiguration()
 
-	loaders := []cli.ResourceLoader{&cli.FileLoader{}, &cli.FlagLoader{}, &cli.EnvLoader{}}
+	loaders := []cli.ResourceLoader{&tcli.FileLoader{}, &tcli.FlagLoader{}, &tcli.EnvLoader{}}
 
 	cmdTraefik := &cli.Command{
 		Name: "traefik",

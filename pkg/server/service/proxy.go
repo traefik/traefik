@@ -12,7 +12,7 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/types"
+	ptypes "github.com/traefik/paerser/types"
 )
 
 // StatusClientClosedRequest non-standard HTTP status code for client disconnection.
@@ -22,7 +22,7 @@ const StatusClientClosedRequest = 499
 const StatusClientClosedRequestText = "Client Closed Request"
 
 func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwarding, defaultRoundTripper http.RoundTripper, bufferPool httputil.BufferPool, responseModifier func(*http.Response) error) (http.Handler, error) {
-	var flushInterval types.Duration
+	var flushInterval ptypes.Duration
 	if responseForwarding != nil {
 		err := flushInterval.Set(responseForwarding.FlushInterval)
 		if err != nil {
@@ -30,7 +30,7 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 		}
 	}
 	if flushInterval == 0 {
-		flushInterval = types.Duration(100 * time.Millisecond)
+		flushInterval = ptypes.Duration(100 * time.Millisecond)
 	}
 
 	proxy := &httputil.ReverseProxy{

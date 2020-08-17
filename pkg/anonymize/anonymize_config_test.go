@@ -21,6 +21,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/tracing/zipkin"
 	"github.com/containous/traefik/v2/pkg/types"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
+	ptypes "github.com/traefik/paerser/types"
 )
 
 func TestDo_globalConfiguration(t *testing.T) {
@@ -65,9 +66,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 			Address: "foo Address",
 			Transport: &static.EntryPointsTransport{
 				RespondingTimeouts: &static.RespondingTimeouts{
-					ReadTimeout:  types.Duration(111 * time.Second),
-					WriteTimeout: types.Duration(111 * time.Second),
-					IdleTimeout:  types.Duration(111 * time.Second),
+					ReadTimeout:  ptypes.Duration(111 * time.Second),
+					WriteTimeout: ptypes.Duration(111 * time.Second),
+					IdleTimeout:  ptypes.Duration(111 * time.Second),
 				},
 			},
 			ProxyProtocol: &static.ProxyProtocol{
@@ -78,9 +79,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 			Address: "fii Address",
 			Transport: &static.EntryPointsTransport{
 				RespondingTimeouts: &static.RespondingTimeouts{
-					ReadTimeout:  types.Duration(111 * time.Second),
-					WriteTimeout: types.Duration(111 * time.Second),
-					IdleTimeout:  types.Duration(111 * time.Second),
+					ReadTimeout:  ptypes.Duration(111 * time.Second),
+					WriteTimeout: ptypes.Duration(111 * time.Second),
+					IdleTimeout:  ptypes.Duration(111 * time.Second),
 				},
 			},
 			ProxyProtocol: &static.ProxyProtocol{
@@ -104,7 +105,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 	}
 	config.Providers = &static.Providers{
-		ProvidersThrottleDuration: types.Duration(111 * time.Second),
+		ProvidersThrottleDuration: ptypes.Duration(111 * time.Second),
 	}
 
 	config.ServersTransport = &static.ServersTransport{
@@ -112,8 +113,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 		RootCAs:             []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
 		MaxIdleConnsPerHost: 111,
 		ForwardingTimeouts: &static.ForwardingTimeouts{
-			DialTimeout:           types.Duration(111 * time.Second),
-			ResponseHeaderTimeout: types.Duration(111 * time.Second),
+			DialTimeout:           ptypes.Duration(111 * time.Second),
+			ResponseHeaderTimeout: ptypes.Duration(111 * time.Second),
 		},
 	}
 

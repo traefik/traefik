@@ -18,6 +18,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/sirupsen/logrus"
+	ptypes "github.com/traefik/paerser/types"
 )
 
 type key string
@@ -369,7 +370,7 @@ func (h *Handler) keepAccessLog(statusCode, retryAttempts int, duration time.Dur
 		return true
 	}
 
-	if h.config.Filters.MinDuration > 0 && (types.Duration(duration) > h.config.Filters.MinDuration) {
+	if h.config.Filters.MinDuration > 0 && (ptypes.Duration(duration) > h.config.Filters.MinDuration) {
 		return true
 	}
 

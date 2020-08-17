@@ -17,8 +17,8 @@ import (
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/mitchellh/hashstructure"
+	ptypes "github.com/traefik/paerser/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
@@ -43,7 +43,7 @@ type Provider struct {
 	LabelSelector          string           `description:"Kubernetes Ingress label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	IngressEndpoint        *EndpointIngress `description:"Kubernetes Ingress Endpoint." json:"ingressEndpoint,omitempty" toml:"ingressEndpoint,omitempty" yaml:"ingressEndpoint,omitempty"`
-	ThrottleDuration       types.Duration   `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
+	ThrottleDuration       ptypes.Duration  `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
 	lastConfiguration      safe.Safe
 }
 

@@ -5,15 +5,16 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/config/env"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/paerser/cli"
+	"github.com/traefik/paerser/env"
 )
 
 // EnvLoader loads a configuration from all the environment variables prefixed with "TRAEFIK_".
 type EnvLoader struct{}
 
 // Load loads the command's configuration from the environment variables.
-func (e *EnvLoader) Load(_ []string, cmd *Command) (bool, error) {
+func (e *EnvLoader) Load(_ []string, cmd *cli.Command) (bool, error) {
 	vars := env.FindPrefixedEnvVars(os.Environ(), env.DefaultNamePrefix, cmd.Configuration)
 	if len(vars) == 0 {
 		return false, nil
