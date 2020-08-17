@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/cli"
 	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/traefik/paerser/cli"
 )
 
 // NewCmd builds a new HealthCheck command.

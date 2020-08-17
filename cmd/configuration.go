@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/v2/pkg/config/static"
-	"github.com/containous/traefik/v2/pkg/types"
+	ptypes "github.com/traefik/paerser/types"
 )
 
 // TraefikCmdConfiguration wraps the static configuration and extra parameters.
@@ -23,7 +23,7 @@ func NewTraefikConfiguration() *TraefikCmdConfiguration {
 			},
 			EntryPoints: make(static.EntryPoints),
 			Providers: &static.Providers{
-				ProvidersThrottleDuration: types.Duration(2 * time.Second),
+				ProvidersThrottleDuration: ptypes.Duration(2 * time.Second),
 			},
 			ServersTransport: &static.ServersTransport{
 				MaxIdleConnsPerHost: 200,

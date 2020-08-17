@@ -13,11 +13,11 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/config/file"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/containous/traefik/v2/pkg/tls"
+	"github.com/traefik/paerser/file"
 	"gopkg.in/fsnotify.v1"
 )
 

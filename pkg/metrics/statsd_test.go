@@ -9,6 +9,7 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stvp/go-udp-testing"
+	ptypes "github.com/traefik/paerser/types"
 )
 
 func TestStatsD(t *testing.T) {
@@ -16,7 +17,7 @@ func TestStatsD(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	statsdRegistry := RegisterStatsd(context.Background(), &types.Statsd{Address: ":18125", PushInterval: types.Duration(time.Second), AddEntryPointsLabels: true, AddServicesLabels: true})
+	statsdRegistry := RegisterStatsd(context.Background(), &types.Statsd{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddServicesLabels: true})
 	defer StopStatsd()
 
 	if !statsdRegistry.IsEpEnabled() || !statsdRegistry.IsSvcEnabled() {
@@ -56,7 +57,7 @@ func TestStatsDWithPrefix(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	statsdRegistry := RegisterStatsd(context.Background(), &types.Statsd{Address: ":18125", PushInterval: types.Duration(time.Second), AddEntryPointsLabels: true, AddServicesLabels: true, Prefix: "testPrefix"})
+	statsdRegistry := RegisterStatsd(context.Background(), &types.Statsd{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddServicesLabels: true, Prefix: "testPrefix"})
 	defer StopStatsd()
 
 	if !statsdRegistry.IsEpEnabled() || !statsdRegistry.IsSvcEnabled() {

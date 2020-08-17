@@ -29,6 +29,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
+	ptypes "github.com/traefik/paerser/types"
 )
 
 const (
@@ -55,7 +56,7 @@ type Provider struct {
 	UseBindPortIP           bool             `description:"Use the ip address from the bound port, rather than from the inner network." json:"useBindPortIP,omitempty" toml:"useBindPortIP,omitempty" yaml:"useBindPortIP,omitempty" export:"true"`
 	SwarmMode               bool             `description:"Use Docker on Swarm Mode." json:"swarmMode,omitempty" toml:"swarmMode,omitempty" yaml:"swarmMode,omitempty" export:"true"`
 	Network                 string           `description:"Default Docker network used." json:"network,omitempty" toml:"network,omitempty" yaml:"network,omitempty" export:"true"`
-	SwarmModeRefreshSeconds types.Duration   `description:"Polling interval for swarm mode." json:"swarmModeRefreshSeconds,omitempty" toml:"swarmModeRefreshSeconds,omitempty" yaml:"swarmModeRefreshSeconds,omitempty" export:"true"`
+	SwarmModeRefreshSeconds ptypes.Duration  `description:"Polling interval for swarm mode." json:"swarmModeRefreshSeconds,omitempty" toml:"swarmModeRefreshSeconds,omitempty" yaml:"swarmModeRefreshSeconds,omitempty" export:"true"`
 	defaultRuleTpl          *template.Template
 }
 
@@ -65,7 +66,7 @@ func (p *Provider) SetDefaults() {
 	p.ExposedByDefault = true
 	p.Endpoint = "unix:///var/run/docker.sock"
 	p.SwarmMode = false
-	p.SwarmModeRefreshSeconds = types.Duration(15 * time.Second)
+	p.SwarmModeRefreshSeconds = ptypes.Duration(15 * time.Second)
 	p.DefaultRule = DefaultTemplateRule
 }
 
