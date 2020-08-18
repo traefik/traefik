@@ -16,6 +16,28 @@ metrics:
 --metrics.prometheus=true
 ```
 
+#### `address`
+
+_Required, Default="localhost:9090"_
+
+Address instructs exporter to send metrics to Prometheus at this address.
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.prometheus]
+    address = "localhost:9090"
+```
+
+```yaml tab="File (YAML)"
+metrics:
+  prometheus:
+    address: localhost:9090
+```
+
+```bash tab="CLI"
+--metrics.prometheus.address=localhost:9090
+```
+
 #### `buckets`
 
 _Optional, Default="0.100000, 0.300000, 1.200000, 5.000000"_
