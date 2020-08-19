@@ -492,6 +492,328 @@ Below are the available options for the Response Forwarding mechanism:
               flushInterval: 1s
     ```
 
+#### ServersTransport
+
+`serversTransport` allows to reference a ServersTransport configuration for the communication between Traefik and your servers.
+
+??? example "Specify a transport -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.Service01]
+        [http.services.Service01.loadBalancer]
+          serversTransport = "mytransport"
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        Service01:
+          loadBalancer:
+            serversTransport = "mytransport"
+    ```
+
+!!! info default serversTransport
+    If no serversTransport is specified, the `default@internal` will be used. 
+    The `default@internal` serversTransport is created from the [static configuration](../overview.md#transport-configuration). 
+
+### ServersTransport
+
+ServersTransport allows to configure the transport between Traefik and your servers.
+
+#### `ServerName`
+
+_Optional_
+
+`serverName` configure the server name that will be used for SNI.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  serverName = "myhost"
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      serverName: "myhost"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    serverName: "test"
+```
+
+#### `Certificates`
+
+_Optional_
+
+`certificates` is the list of certificates (as file paths, or data bytes)
+that will be set as client certificates for mTLS.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[[http.serversTransports.mytransport.certificates]]
+  certFile = "foo.crt"
+  keyFile = "bar.crt"
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      certficates:
+        - certFile: foo.crt
+          keyFile: bar.crt
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    certificatesSecrets:
+    - mycert
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mycert
+    
+  data:
+    tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+    tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+```
+
+#### `insecureSkipVerify`
+
+_Optional_
+
+`insecureSkipVerify` disables SSL certificate verification.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  insecureSkipVerify = true
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      insecureSkipVerify: true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    insecureSkipVerify: true
+```
+
+#### `rootCAs`
+
+_Optional_
+
+`rootCAs` is the list of certificates (as file paths, or data bytes)
+that will be set as Root Certificate Authorities when using a self-signed TLS certificate.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  rootCAs = ["foo.crt", "bar.crt"]
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      rootCAs:
+        - foo.crt
+        - bar.crt
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    rootCAsSecrets:
+    - myca
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: myca
+    
+  data:
+    tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+```
+
+#### `maxIdleConnsPerHost`
+
+_Optional, Default=2_
+
+If non-zero, `maxIdleConnsPerHost` controls the maximum idle (keep-alive) connections to keep per-host.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  maxIdleConnsPerHost = 7
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      maxIdleConnsPerHost: 7
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    maxIdleConnsPerHost: 7
+```
+
+#### `forwardingTimeouts`
+
+`forwardingTimeouts` is about a number of timeouts relevant to when forwarding requests to the backend servers.
+
+##### `forwardingTimeouts.dialTimeout`
+
+_Optional, Default=30s_
+
+`dialTimeout` is the maximum duration allowed for a connection to a backend server to be established.
+Zero means no timeout.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.forwardingTimeouts]
+  dialTimeout = "1s"
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      forwardingTimeouts:
+        dialTimeout: "1s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    forwardingTimeouts:
+      dialTimeout: "1s"
+```
+
+##### `forwardingTimeouts.responseHeaderTimeout`
+
+_Optional, Default=0s_
+
+`responseHeaderTimeout`, if non-zero, specifies the amount of time to wait for a server's response headers
+after fully writing the request (including its body, if any).
+This time does not include the time to read the response body.
+Zero means no timeout.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.forwardingTimeouts]
+  responseHeaderTimeout = "1s"
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      forwardingTimeouts:
+        responseHeaderTimeout: "1s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    forwardingTimeouts:
+      responseHeaderTimeout: "1s"
+```
+
+##### `forwardingTimeouts.idleConnTimeout`
+
+_Optional, Default=90s_
+
+`idleConnTimeout`, is the maximum amount of time an idle (keep-alive) connection
+will remain idle before closing itself.
+Zero means no limit.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.forwardingTimeouts]
+  idleConnTimeout = "1s"
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      forwardingTimeouts:
+        idleConnTimeout: "1s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    forwardingTimeouts:
+      idleConnTimeout: "1s"
+```
+
 ### Weighted Round Robin (service)
 
 The WRR is able to load balance the requests between multiple services based on weights.
