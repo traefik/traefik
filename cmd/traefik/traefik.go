@@ -213,7 +213,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
-	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry)
+	roundTripperManager := service.NewRoundTripperManager()
+	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager)
 
 	client, plgs, devPlugin, err := initPlugins(staticConfiguration)
 	if err != nil {
@@ -257,6 +258,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	watcher.AddListener(func(_ dynamic.Configuration) {
 		metricsRegistry.ConfigReloadsCounter().Add(1)
 		metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
+	})
+
+	watcher.AddListener(func(conf dynamic.Configuration) {
+		roundTripperManager.Update(conf.HTTP.ServersTransports)
 	})
 
 	watcher.AddListener(switchRouter(routerFactory, acmeProviders, serverEntryPointsTCP, serverEntryPointsUDP, aviator))
