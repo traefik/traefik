@@ -858,6 +858,9 @@ Password for basic http authentication when sending spans to jaeger-collector.
 `--tracing.jaeger.collector.user`:  
 User for basic http authentication when sending spans to jaeger-collector.
 
+`--tracing.jaeger.disableattemptreconnecting`:  
+Disable the periodic re-resolution of the agent's hostname and reconnection if there was a change. (Default: ```true```)
+
 `--tracing.jaeger.gen128bit`:  
 Generate 128 bit span IDs. (Default: ```false```)
 
