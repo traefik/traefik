@@ -37,6 +37,7 @@ type clientMock struct {
 	tlsOptions       []*v1alpha1.TLSOption
 	tlsStores        []*v1alpha1.TLSStore
 	traefikServices  []*v1alpha1.TraefikService
+	serversTransport []*v1alpha1.ServersTransport
 
 	watchChan chan interface{}
 }
@@ -69,6 +70,8 @@ func newClientMock(paths ...string) clientMock {
 				c.traefikServices = append(c.traefikServices, o)
 			case *v1alpha1.TLSOption:
 				c.tlsOptions = append(c.tlsOptions, o)
+			case *v1alpha1.ServersTransport:
+				c.serversTransport = append(c.serversTransport, o)
 			case *v1alpha1.TLSStore:
 				c.tlsStores = append(c.tlsStores, o)
 			case *corev1.Secret:
@@ -118,6 +121,10 @@ func (c clientMock) GetTLSOptions() []*v1alpha1.TLSOption {
 
 func (c clientMock) GetTLSStores() []*v1alpha1.TLSStore {
 	return c.tlsStores
+}
+
+func (c clientMock) GetServersTransports() []*v1alpha1.ServersTransport {
+	return c.serversTransport
 }
 
 func (c clientMock) GetTLSOption(namespace, name string) (*v1alpha1.TLSOption, bool, error) {

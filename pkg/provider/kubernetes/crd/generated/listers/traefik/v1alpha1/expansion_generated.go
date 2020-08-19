@@ -58,6 +58,14 @@ type MiddlewareListerExpansion interface{}
 // MiddlewareNamespaceLister.
 type MiddlewareNamespaceListerExpansion interface{}
 
+// ServersTransportListerExpansion allows custom methods to be added to
+// ServersTransportLister.
+type ServersTransportListerExpansion interface{}
+
+// ServersTransportNamespaceListerExpansion allows custom methods to be added to
+// ServersTransportNamespaceLister.
+type ServersTransportNamespaceListerExpansion interface{}
+
 // TLSOptionListerExpansion allows custom methods to be added to
 // TLSOptionLister.
 type TLSOptionListerExpansion interface{}

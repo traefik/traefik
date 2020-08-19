@@ -34,6 +34,8 @@ type IngressRouteUDPExpansion interface{}
 
 type MiddlewareExpansion interface{}
 
+type ServersTransportExpansion interface{}
+
 type TLSOptionExpansion interface{}
 
 type TLSStoreExpansion interface{}

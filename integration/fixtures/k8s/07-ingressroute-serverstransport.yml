@@ -1,0 +1,28 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: testst.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`foo.com`) && PathPrefix(`/serverstransport`)
+    kind: Rule
+    services:
+    - name: whoami
+      port: 80
+      serversTransport: mytransport
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  serverName: "test"
+  insecureSkipVerify: true
