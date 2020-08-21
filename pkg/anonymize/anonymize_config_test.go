@@ -8,7 +8,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/ping"
 	"github.com/containous/traefik/v2/pkg/provider/acme"
-	acmeprovider "github.com/containous/traefik/v2/pkg/provider/acme"
 	"github.com/containous/traefik/v2/pkg/provider/docker"
 	"github.com/containous/traefik/v2/pkg/provider/file"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd"
@@ -96,11 +95,11 @@ func TestDo_globalConfiguration(t *testing.T) {
 				CAServer:     "CAServer",
 				Storage:      "Storage",
 				KeyType:      "MyKeyType",
-				DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
-				HTTPChallenge: &acmeprovider.HTTPChallenge{
+				DNSChallenge: &acme.DNSChallenge{Provider: "DNSProvider"},
+				HTTPChallenge: &acme.HTTPChallenge{
 					EntryPoint: "MyEntryPoint",
 				},
-				TLSChallenge: &acmeprovider.TLSChallenge{},
+				TLSChallenge: &acme.TLSChallenge{},
 			},
 		},
 	}

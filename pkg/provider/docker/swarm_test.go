@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	docker "github.com/docker/docker/api/types"
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
 	dockerclient "github.com/docker/docker/client"
@@ -36,7 +35,7 @@ func TestListTasks(t *testing.T) {
 		tasks         []swarm.Task
 		isGlobalSVC   bool
 		expectedTasks []string
-		networks      map[string]*docker.NetworkResource
+		networks      map[string]*dockertypes.NetworkResource
 	}{
 		{
 			service: swarmService(serviceName("container")),
@@ -71,7 +70,7 @@ func TestListTasks(t *testing.T) {
 				"container.1",
 				"container.4",
 			},
-			networks: map[string]*docker.NetworkResource{
+			networks: map[string]*dockertypes.NetworkResource{
 				"1": {
 					Name: "foo",
 				},
@@ -300,7 +299,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 		tasks       []swarm.Task
 		isGlobalSVC bool
 		expected    map[string]dockerData
-		networks    map[string]*docker.NetworkResource
+		networks    map[string]*dockertypes.NetworkResource
 	}{
 		{
 			service: swarmService(serviceName("container")),
@@ -321,7 +320,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 					Name: "container.3",
 				},
 			},
-			networks: map[string]*docker.NetworkResource{
+			networks: map[string]*dockertypes.NetworkResource{
 				"1": {
 					Name: "foo",
 				},
@@ -346,7 +345,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 					Name: "container.id3",
 				},
 			},
-			networks: map[string]*docker.NetworkResource{
+			networks: map[string]*dockertypes.NetworkResource{
 				"1": {
 					Name: "foo",
 				},
@@ -384,7 +383,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 					},
 				},
 			},
-			networks: map[string]*docker.NetworkResource{
+			networks: map[string]*dockertypes.NetworkResource{
 				"1": {
 					Name: "vlan",
 				},

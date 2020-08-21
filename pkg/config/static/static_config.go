@@ -38,7 +38,7 @@ import (
 )
 
 const (
-	// DefaultInternalEntryPointName the name of the default internal entry point
+	// DefaultInternalEntryPointName the name of the default internal entry point.
 	DefaultInternalEntryPointName = "traefik"
 
 	// DefaultGraceTimeout controls how long Traefik serves pending requests
@@ -48,7 +48,7 @@ const (
 	// DefaultIdleTimeout before closing an idle connection.
 	DefaultIdleTimeout = 180 * time.Second
 
-	// DefaultAcmeCAServer is the default ACME API endpoint
+	// DefaultAcmeCAServer is the default ACME API endpoint.
 	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
 )
 

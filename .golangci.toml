@@ -54,6 +54,7 @@
     "nestif", # Too many false-positive.
     "noctx", # Too strict
     "exhaustive", # Too strict
+    "nlreturn", # Too strict
   ]
 
 [issues]

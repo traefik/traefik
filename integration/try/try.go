@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	// CITimeoutMultiplier is the multiplier for all timeout in the CI
+	// CITimeoutMultiplier is the multiplier for all timeout in the CI.
 	CITimeoutMultiplier = 3
 	maxInterval         = 5 * time.Second
 )

@@ -10,21 +10,21 @@ import (
 )
 
 const (
-	// server meta information
+	// server meta information.
 	pilotConfigPrefix                   = "config"
 	pilotConfigReloadsTotalName         = pilotConfigPrefix + "ReloadsTotal"
 	pilotConfigReloadsFailuresTotalName = pilotConfigPrefix + "ReloadsFailureTotal"
 	pilotConfigLastReloadSuccessName    = pilotConfigPrefix + "LastReloadSuccess"
 	pilotConfigLastReloadFailureName    = pilotConfigPrefix + "LastReloadFailure"
 
-	// entry point
+	// entry point.
 	pilotEntryPointPrefix           = "entrypoint"
 	pilotEntryPointReqsTotalName    = pilotEntryPointPrefix + "RequestsTotal"
 	pilotEntryPointReqsTLSTotalName = pilotEntryPointPrefix + "RequestsTLSTotal"
 	pilotEntryPointReqDurationName  = pilotEntryPointPrefix + "RequestDurationSeconds"
 	pilotEntryPointOpenConnsName    = pilotEntryPointPrefix + "OpenConnections"
 
-	// service level
+	// service level.
 	pilotServicePrefix           = "service"
 	pilotServiceReqsTotalName    = pilotServicePrefix + "RequestsTotal"
 	pilotServiceReqsTLSTotalName = pilotServicePrefix + "RequestsTLSTotal"
