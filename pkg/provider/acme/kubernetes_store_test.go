@@ -145,6 +145,18 @@ func TestKubernetesStore_GetAccount(t *testing.T) {
 	})
 }
 
+func TestKubernetesStore_GetAccount_NoSecret(t *testing.T) {
+	store, _ := setup(t)
+
+	account, err := store.GetAccount("resolver01")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if account != nil {
+		t.Errorf("unexpected account: %v", account)
+	}
+}
+
 func TestKubernetesStore_SaveCertificates(t *testing.T) {
 	store, namespace := setup(t)
 

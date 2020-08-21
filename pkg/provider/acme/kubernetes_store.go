@@ -98,7 +98,7 @@ func (s *KubernetesStore) GetAccount(resolverName string) (*Account, error) {
 	defer s.mutex.Unlock()
 
 	secret, err := s.getSecretLocked(resolverName)
-	if err != nil {
+	if secret == nil || err != nil {
 		return nil, err
 	}
 
@@ -174,7 +174,7 @@ func (s *KubernetesStore) GetCertificates(resolverName string) ([]*CertAndStore,
 	defer s.mutex.Unlock()
 
 	secret, err := s.getSecretLocked(resolverName)
-	if err != nil {
+	if secret == nil || err != nil {
 		return nil, err
 	}
 
@@ -300,6 +300,10 @@ func (s *KubernetesStore) watcher() {
 func (s *KubernetesStore) getSecretLocked(resolverName string) (*v1.Secret, error) {
 	if _, found := s.cache[resolverName]; !found {
 		secret, err := s.client.CoreV1().Secrets(s.namespace).Get(s.ctx, secretName(resolverName), metav1.GetOptions{})
+		status := &k8serrors.StatusError{}
+		if err != nil && errors.As(err, &status) && status.Status().Code == 404 {
+			return nil, nil
+		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch secret %q: %w", secretName(resolverName), err)
 		}
