@@ -245,6 +245,5 @@ services:
     ports:
       - 80:80
     volumes:
-      - /etc/localtime:/etc/localtime
       - /var/run/docker.sock:/var/run/docker.sock
 ```
