@@ -224,9 +224,8 @@ Traefik will timestamp each log line in UTC time by default.
 
 It is possible to configure the Traefik to timestamp in a specific timezone by ensuring the following configuration has been made in your environment:
 
-1. Provide time zone data to `/etc/localtime` or `/usr/share/zoneinfo` (based on your distribution)
-2. Set the environment variable TZ to the desired timezone
-3. Specify the field `StartLocal` by dropping the field named `StartUTC` (available on the default Common Log Format (CLF) as well as JSON)
+1. Provide time zone data to `/etc/localtime` or `/usr/share/zoneinfo` (based on your distribution) or set the environment variable TZ to the desired timezone
+2. Specify the field `StartLocal` by dropping the field named `StartUTC` (available on the default Common Log Format (CLF) as well as JSON)
 
 Example utilizing Docker Compose:
 
