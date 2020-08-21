@@ -41,7 +41,7 @@ func (v Handler) Append(router *mux.Router) {
 				Version   string
 				Codename  string
 				StartDate time.Time `json:"startDate"`
-				UUID      string    `json:"uuid"`
+				UUID      string    `json:"uuid,omitempty"`
 			}{
 				Version:   Version,
 				Codename:  Codename,

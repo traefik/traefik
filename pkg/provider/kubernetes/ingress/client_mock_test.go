@@ -8,14 +8,13 @@ import (
 	"github.com/hashicorp/go-version"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
-	"k8s.io/api/networking/v1beta1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 )
 
 var _ Client = (*clientMock)(nil)
 
 type clientMock struct {
-	ingresses    []*v1beta1.Ingress
+	ingresses    []*networkingv1beta1.Ingress
 	services     []*corev1.Service
 	secrets      []*corev1.Secret
 	endpoints    []*corev1.Endpoints
@@ -51,7 +50,7 @@ func newClientMock(serverVersion string, paths ...string) clientMock {
 				c.secrets = append(c.secrets, o)
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
-			case *v1beta1.Ingress:
+			case *networkingv1beta1.Ingress:
 				c.ingresses = append(c.ingresses, o)
 			case *extensionsv1beta1.Ingress:
 				ing, err := extensionsToNetworking(o)
@@ -70,7 +69,7 @@ func newClientMock(serverVersion string, paths ...string) clientMock {
 	return c
 }
 
-func (c clientMock) GetIngresses() []*v1beta1.Ingress {
+func (c clientMock) GetIngresses() []*networkingv1beta1.Ingress {
 	return c.ingresses
 }
 
@@ -126,6 +125,6 @@ func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-cha
 	return c.watchChan, nil
 }
 
-func (c clientMock) UpdateIngressStatus(_ *v1beta1.Ingress, _, _ string) error {
+func (c clientMock) UpdateIngressStatus(_ *networkingv1beta1.Ingress, _, _ string) error {
 	return c.apiIngressStatusError
 }

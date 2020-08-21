@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
-
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/label"
 	"github.com/containous/traefik/v2/pkg/log"

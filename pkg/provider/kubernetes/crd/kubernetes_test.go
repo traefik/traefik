@@ -4,12 +4,11 @@ import (
 	"context"
 	"testing"
 
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/provider"
 	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 )
 
 var _ provider.Provider = (*Provider)(nil)
