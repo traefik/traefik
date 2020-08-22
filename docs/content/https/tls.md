@@ -183,9 +183,9 @@ spec:
 
 ### Maximum TLS Version
 
-We discourages the use of this setting to disable TLS1.3.
+We discourage the use of this setting to disable TLS1.3.
 
-The right approach is to update the clients to support TLS1.3.
+The recommended approach is to update the clients to support TLS1.3.
 
 ```toml tab="File (TOML)"
 # Dynamic configuration
@@ -316,7 +316,7 @@ spec:
 
 ### Strict SNI Checking
 
-With strict SNI checking, Traefik won't allow connections from clients connections
+With strict SNI checking enabled, Traefik won't allow connections from clients connections
 that do not specify a server_name extension or don't match any certificate configured on the tlsOption.
 
 ```toml tab="File (TOML)"
