@@ -316,7 +316,7 @@ spec:
 
 ### Strict SNI Checking
 
-With strict SNI checking enabled, Traefik won't allow connections from clients connections
+With strict SNI checking enabled, Traefik won't allow connections from clients
 that do not specify a server_name extension or don't match any certificate configured on the tlsOption.
 
 ```toml tab="File (TOML)"
