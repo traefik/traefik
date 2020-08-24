@@ -3,11 +3,17 @@ export default {
   getters: {
     isOpen (state) {
       return state.isOpen
+    },
+    notificationIsHidden (state) {
+      return state.notificationIsHidden
     }
   },
   mutations: {
     toggle (state, isOpen) {
       state.isOpen = isOpen || !state.isOpen
+    },
+    toggleNotifVisibility (state, isHidden) {
+      state.notificationIsHidden = isHidden || !state.isHidden
     }
   },
   actions: {
@@ -19,9 +25,13 @@ export default {
     },
     close ({ commit }) {
       commit('toggle', false)
+    },
+    hideNotification ({ commit }) {
+      commit('toggleNotifVisibility', true)
     }
   },
   state: {
-    isOpen: false
+    isOpen: false,
+    notificationIsHidden: false
   }
 }
