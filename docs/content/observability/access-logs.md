@@ -217,3 +217,32 @@ This allows the logs to be rotated and processed by an external program, such as
 
 !!! warning
     This does not work on Windows due to the lack of USR signals.
+
+## Time Zones
+
+Traefik will timestamp each log line in UTC time by default.
+
+It is possible to configure the Traefik to timestamp in a specific timezone by ensuring the following configuration has been made in your environment:
+
+1. Provide time zone data to `/etc/localtime` or `/usr/share/zoneinfo` (based on your distribution) or set the environment variable TZ to the desired timezone
+2. Specify the field `StartLocal` by dropping the field named `StartUTC` (available on the default Common Log Format (CLF) as well as JSON)
+
+Example utilizing Docker Compose:
+
+```yaml
+version: "3.7"
+
+services:
+  traefik:
+    image: traefik:v2.2
+    environment:
+      - TZ=US/Alaska
+    command:
+      - --accesslog
+      - --accesslog.fields.names.StartUTC=drop
+      - --providers.docker
+    ports:
+      - 80:80
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+```
