@@ -10,9 +10,9 @@ import (
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/testhelpers"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -37,7 +37,7 @@ func TestNewRateLimiter(t *testing.T) {
 			desc: "maxDelay computation, low rate regime",
 			config: dynamic.RateLimit{
 				Average: 2,
-				Period:  types.Duration(10 * time.Second),
+				Period:  ptypes.Duration(10 * time.Second),
 				Burst:   10,
 			},
 			expectedMaxDelay: 500 * time.Millisecond,
@@ -183,7 +183,7 @@ func TestRateLimit(t *testing.T) {
 			desc: "lower than 1/s",
 			config: dynamic.RateLimit{
 				Average: 5,
-				Period:  types.Duration(10 * time.Second),
+				Period:  ptypes.Duration(10 * time.Second),
 			},
 			loadDuration: 2 * time.Second,
 			incomingLoad: 100,
@@ -193,7 +193,7 @@ func TestRateLimit(t *testing.T) {
 			desc: "lower than 1/s, longer",
 			config: dynamic.RateLimit{
 				Average: 5,
-				Period:  types.Duration(10 * time.Second),
+				Period:  ptypes.Duration(10 * time.Second),
 			},
 			loadDuration: time.Minute,
 			incomingLoad: 100,
@@ -203,7 +203,7 @@ func TestRateLimit(t *testing.T) {
 			desc: "lower than 1/s, longer, harsher",
 			config: dynamic.RateLimit{
 				Average: 1,
-				Period:  types.Duration(time.Minute),
+				Period:  ptypes.Duration(time.Minute),
 			},
 			loadDuration: time.Minute,
 			incomingLoad: 100,
@@ -213,7 +213,7 @@ func TestRateLimit(t *testing.T) {
 			desc: "period below 1 second",
 			config: dynamic.RateLimit{
 				Average: 50,
-				Period:  types.Duration(500 * time.Millisecond),
+				Period:  ptypes.Duration(500 * time.Millisecond),
 			},
 			loadDuration: 2 * time.Second,
 			incomingLoad: 300,

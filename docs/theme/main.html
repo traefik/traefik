@@ -10,6 +10,46 @@
 <!-- End Google Tag Manager -->
 {% endblock %}
 
+{% block header %}
+    {% include "partials/containous-header.html" %}
+    {% include "partials/header.html" %}
+{% endblock %}
+
+
+{% block site_nav %}
+    {% if nav %}
+        {% include "partials/product-switcher.html" %}
+        <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+            {% include "partials/search.html" %}
+            {% if "search" in config["plugins"] %}
+                <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+            {% endif %}
+            <div class="md-sidebar__scrollwrap">
+                <div class="md-sidebar__inner">
+                {% include "partials/nav.html" %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    {% if page.toc %}
+        <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+            {% if config.repo_url %}
+                <div class="md-flex__cell md-flex__cell--shrink repo_url">
+                    <div class="md-header-nav__source">
+                        {% include "partials/source.html" %}
+                    </div>
+                </div>
+            {% endif %}
+            <div class="md-sidebar__scrollwrap">
+                <div class="md-sidebar__inner">
+                {% include "partials/toc.html" %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+
 {% block footer %}
 
 {% import "partials/language.html" as lang with context %}
@@ -34,6 +74,10 @@
                 <a href="https://squidfunk.github.io/mkdocs-material/"
                    title="Material for MkDocs">
                     Material for MkDocs</a>
+            </div>
+
+            <div class="md-footer-privacy-policy">
+                <a href="https://containo.us/legal/privacy-and-cookie-policy/" title="Privacy Policy">Privacy Policy</a>
             </div>
 
             <!-- Social links -->

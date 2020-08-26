@@ -1,0 +1,10 @@
+:root {
+  --dark: #06102a;
+  --blue: #04B5D1;
+  --light-blue: #E4F7FA;
+
+  --input-bg-color: white;
+  --input-color: black;
+  --input-placeholder-color: #bbb;
+  --input-border-color: #dcdcdc;
+}

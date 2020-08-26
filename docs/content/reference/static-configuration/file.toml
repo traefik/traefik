@@ -290,6 +290,7 @@
     gen128Bit = true
     propagation = "foobar"
     traceContextHeaderName = "foobar"
+    disableAttemptReconnecting = true
     [tracing.jaeger.collector]
       endpoint = "foobar"
       user = "foobar"

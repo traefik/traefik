@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"text/template"
 
-	"github.com/containous/traefik/v2/pkg/cli"
 	"github.com/containous/traefik/v2/pkg/version"
+	"github.com/traefik/paerser/cli"
 )
 
 var versionTemplate = `Version:      {{.Version}}

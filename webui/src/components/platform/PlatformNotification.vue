@@ -1,8 +1,8 @@
 <template>
-  <transition name="slide" v-if="!instanceIsRegistered && isOnline">
+  <transition name="slide" v-if="!instanceIsRegistered && isOnline && !platformNotificationIsHidden">
     <section class="app-section">
-      <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-xl q-pb-lg">
-        <div class="platform-notification">
+      <div class="app-section-wrap app-boxed app-boxed-xl q-pl-md q-pr-md q-pt-md">
+        <div class="platform-notification q-pl-lg q-pr-lg q-pt-md q-pb-md">
           <p>
             <q-avatar color="accent" text-color="white" class="icon">
               <q-icon name="eva-alert-circle" />
@@ -10,6 +10,7 @@
             This Traefik Instance is not registered in your Traefik Pilot account yet.
           </p>
           <platform-action-button label="Register Traefik instance" @click="openPlatform" />
+          <q-btn round size="xs" color="accent" icon="close" class="btn close-btn" @click="hidePlatformNotification"></q-btn>
         </div>
       </div>
     </section>
@@ -25,9 +26,17 @@ export default {
   components: { PlatformActionButton },
   created () {
     this.getInstanceInfos()
+    console.log(`localStorage.getItem('platform_notification-is-hidden')`, localStorage.getItem('platform_notification-is-hidden'))
+    try {
+      if (localStorage.getItem('platform_notification-is-hidden') === 'true') {
+        this.hidePlatformNotification()
+      }
+    } catch (e) {
+      console.error('error reading localStorage', e)
+    }
   },
   computed: {
-    ...mapGetters('platform', { isPlatformOpen: 'isOpen' }),
+    ...mapGetters('platform', { isPlatformOpen: 'isOpen', platformNotificationIsHidden: 'notificationIsHidden' }),
     ...mapGetters('core', { instanceInfos: 'version' }),
     instanceIsRegistered () {
       return !!(this.instanceInfos && this.instanceInfos.uuid && this.instanceInfos.uuid.length > 0)
@@ -37,7 +46,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions('platform', { openPlatform: 'open' }),
+    ...mapActions('platform', { openPlatform: 'open', hidePlatformNotification: 'hideNotification' }),
     ...mapActions('core', { getInstanceInfos: 'getVersion' })
   },
   watch: {
@@ -45,6 +54,15 @@ export default {
       const isClosed = !newValue && oldValue
       if (isClosed) {
         this.getInstanceInfos()
+      }
+    },
+    platformNotificationIsHidden (newValue, oldValue) {
+      if (newValue !== oldValue) {
+        try {
+          localStorage.setItem('platform_notification-is-hidden', newValue ? 'true' : 'false')
+        } catch (e) {
+          console.error('error writing localStorage', e)
+        }
       }
     }
   }
@@ -55,8 +73,7 @@ export default {
   @import "../../css/sass/variables";
 
   .platform-notification {
-    min-height: 100px;
-    padding: 40px 36px;
+    position: relative;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -64,6 +81,12 @@ export default {
     color: $accent;
     background-color: rgba($accent, 0.1);
     font-size: 16px;
+  }
+
+  .close-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
   }
 
   p {

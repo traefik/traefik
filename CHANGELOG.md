@@ -1,3 +1,20 @@
+## [v2.3.0-rc4](https://github.com/containous/traefik/tree/v2.3.0-rc4) (2020-08-19)
+[All Commits](https://github.com/containous/traefik/compare/v2.3.0-rc3...v2.3.0-rc4)
+
+**Enhancements:**
+- **[metrics,pilot]** Pilot metrics provider ([#7139](https://github.com/containous/traefik/pull/7139) by [rtribotte](https://github.com/rtribotte))
+
+**Bug fixes:**
+- **[ecs]** Improve region resolution for ECS provider ([#7145](https://github.com/containous/traefik/pull/7145) by [kevinpollet](https://github.com/kevinpollet))
+- **[tracing]** Update jaeger-client-go dependency to v2.25.0 ([#7198](https://github.com/containous/traefik/pull/7198) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[k8s]** docs: add missing apigroup to Kubernetes RBAC ([#7199](https://github.com/containous/traefik/pull/7199) by [kevinpollet](https://github.com/kevinpollet))
+
+**Misc:**
+- Merge current v2.2 branch into v2.3 ([#7175](https://github.com/containous/traefik/pull/7175) by [ldez](https://github.com/ldez))
+- Merge current v2.2 branch into v2.3 ([#7160](https://github.com/containous/traefik/pull/7160) by [ldez](https://github.com/ldez))
+
 ## [v2.3.0-rc3](https://github.com/containous/traefik/tree/v2.3.0-rc3) (2020-07-28)
 [All Commits](https://github.com/containous/traefik/compare/v2.3.0-rc2...v2.3.0-rc3)
 

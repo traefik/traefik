@@ -8,7 +8,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/ping"
 	"github.com/containous/traefik/v2/pkg/provider/acme"
-	acmeprovider "github.com/containous/traefik/v2/pkg/provider/acme"
 	"github.com/containous/traefik/v2/pkg/provider/docker"
 	"github.com/containous/traefik/v2/pkg/provider/file"
 	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd"
@@ -21,6 +20,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/tracing/zipkin"
 	"github.com/containous/traefik/v2/pkg/types"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
+	ptypes "github.com/traefik/paerser/types"
 )
 
 func TestDo_globalConfiguration(t *testing.T) {
@@ -65,9 +65,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 			Address: "foo Address",
 			Transport: &static.EntryPointsTransport{
 				RespondingTimeouts: &static.RespondingTimeouts{
-					ReadTimeout:  types.Duration(111 * time.Second),
-					WriteTimeout: types.Duration(111 * time.Second),
-					IdleTimeout:  types.Duration(111 * time.Second),
+					ReadTimeout:  ptypes.Duration(111 * time.Second),
+					WriteTimeout: ptypes.Duration(111 * time.Second),
+					IdleTimeout:  ptypes.Duration(111 * time.Second),
 				},
 			},
 			ProxyProtocol: &static.ProxyProtocol{
@@ -78,9 +78,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 			Address: "fii Address",
 			Transport: &static.EntryPointsTransport{
 				RespondingTimeouts: &static.RespondingTimeouts{
-					ReadTimeout:  types.Duration(111 * time.Second),
-					WriteTimeout: types.Duration(111 * time.Second),
-					IdleTimeout:  types.Duration(111 * time.Second),
+					ReadTimeout:  ptypes.Duration(111 * time.Second),
+					WriteTimeout: ptypes.Duration(111 * time.Second),
+					IdleTimeout:  ptypes.Duration(111 * time.Second),
 				},
 			},
 			ProxyProtocol: &static.ProxyProtocol{
@@ -95,16 +95,16 @@ func TestDo_globalConfiguration(t *testing.T) {
 				CAServer:     "CAServer",
 				Storage:      "Storage",
 				KeyType:      "MyKeyType",
-				DNSChallenge: &acmeprovider.DNSChallenge{Provider: "DNSProvider"},
-				HTTPChallenge: &acmeprovider.HTTPChallenge{
+				DNSChallenge: &acme.DNSChallenge{Provider: "DNSProvider"},
+				HTTPChallenge: &acme.HTTPChallenge{
 					EntryPoint: "MyEntryPoint",
 				},
-				TLSChallenge: &acmeprovider.TLSChallenge{},
+				TLSChallenge: &acme.TLSChallenge{},
 			},
 		},
 	}
 	config.Providers = &static.Providers{
-		ProvidersThrottleDuration: types.Duration(111 * time.Second),
+		ProvidersThrottleDuration: ptypes.Duration(111 * time.Second),
 	}
 
 	config.ServersTransport = &static.ServersTransport{
@@ -112,8 +112,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 		RootCAs:             []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
 		MaxIdleConnsPerHost: 111,
 		ForwardingTimeouts: &static.ForwardingTimeouts{
-			DialTimeout:           types.Duration(111 * time.Second),
-			ResponseHeaderTimeout: types.Duration(111 * time.Second),
+			DialTimeout:           ptypes.Duration(111 * time.Second),
+			ResponseHeaderTimeout: ptypes.Duration(111 * time.Second),
 		},
 	}
 

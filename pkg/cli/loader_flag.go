@@ -3,15 +3,16 @@ package cli
 import (
 	"fmt"
 
-	"github.com/containous/traefik/v2/pkg/config/flag"
 	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/paerser/cli"
+	"github.com/traefik/paerser/flag"
 )
 
 // FlagLoader loads configuration from flags.
 type FlagLoader struct{}
 
 // Load loads the command's configuration from flag arguments.
-func (*FlagLoader) Load(args []string, cmd *Command) (bool, error) {
+func (*FlagLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 	if len(args) == 0 {
 		return false, nil
 	}

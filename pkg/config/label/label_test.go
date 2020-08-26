@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 )
 
 func TestDecodeConfiguration(t *testing.T) {
@@ -376,7 +376,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					RateLimit: &dynamic.RateLimit{
 						Average: 42,
 						Burst:   42,
-						Period:  types.Duration(time.Second),
+						Period:  ptypes.Duration(time.Second),
 						SourceCriterion: &dynamic.SourceCriterion{
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,
@@ -836,7 +836,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					RateLimit: &dynamic.RateLimit{
 						Average: 42,
 						Burst:   42,
-						Period:  types.Duration(time.Second),
+						Period:  ptypes.Duration(time.Second),
 						SourceCriterion: &dynamic.SourceCriterion{
 							IPStrategy: &dynamic.IPStrategy{
 								Depth:       42,

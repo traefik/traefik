@@ -4,9 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/containous/traefik/v2/pkg/types"
-
 	"github.com/containous/traefik/v2/pkg/testhelpers"
+	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 

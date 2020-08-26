@@ -15,7 +15,7 @@ import (
 	"github.com/containous/traefik/v2/cmd"
 	"github.com/containous/traefik/v2/cmd/healthcheck"
 	cmdVersion "github.com/containous/traefik/v2/cmd/version"
-	"github.com/containous/traefik/v2/pkg/cli"
+	tcli "github.com/containous/traefik/v2/pkg/cli"
 	"github.com/containous/traefik/v2/pkg/collector"
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/config/runtime"
@@ -38,6 +38,7 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/sirupsen/logrus"
+	"github.com/traefik/paerser/cli"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -45,7 +46,7 @@ func main() {
 	// traefik config inits
 	tConfig := cmd.NewTraefikConfiguration()
 
-	loaders := []cli.ResourceLoader{&cli.FileLoader{}, &cli.FlagLoader{}, &cli.EnvLoader{}}
+	loaders := []cli.ResourceLoader{&tcli.FileLoader{}, &tcli.FlagLoader{}, &tcli.EnvLoader{}}
 
 	cmdTraefik := &cli.Command{
 		Name: "traefik",
@@ -195,7 +196,21 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	ctx := context.Background()
 	routinesPool := safe.NewPool(ctx)
 
-	metricsRegistry := registerMetricClients(staticConfiguration.Metrics)
+	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
+
+	var aviator *pilot.Pilot
+	if isPilotEnabled(staticConfiguration) {
+		pilotRegistry := metrics.RegisterPilot()
+
+		aviator = pilot.New(staticConfiguration.Experimental.Pilot.Token, pilotRegistry, routinesPool)
+		routinesPool.GoCtx(func(ctx context.Context) {
+			aviator.Tick(ctx)
+		})
+
+		metricRegistries = append(metricRegistries, pilotRegistry)
+	}
+
+	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry)
@@ -243,15 +258,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		metricsRegistry.ConfigReloadsCounter().Add(1)
 		metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 	})
-
-	var aviator *pilot.Pilot
-	if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.Pilot != nil &&
-		staticConfiguration.Experimental.Pilot.Token != "" {
-		aviator = pilot.New(staticConfiguration.Experimental.Pilot.Token, routinesPool)
-		routinesPool.GoCtx(func(ctx context.Context) {
-			aviator.Tick(ctx)
-		})
-	}
 
 	watcher.AddListener(switchRouter(routerFactory, acmeProviders, serverEntryPointsTCP, serverEntryPointsUDP, aviator))
 
@@ -349,9 +355,9 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 	return resolvers
 }
 
-func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
+func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 	if metricsConfig == nil {
-		return metrics.NewVoidRegistry()
+		return nil
 	}
 
 	var registries []metrics.Registry
@@ -386,7 +392,7 @@ func registerMetricClients(metricsConfig *types.Metrics) metrics.Registry {
 			metricsConfig.InfluxDB.Address, metricsConfig.InfluxDB.PushInterval)
 	}
 
-	return metrics.NewMultiRegistry(registries)
+	return registries
 }
 
 func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {

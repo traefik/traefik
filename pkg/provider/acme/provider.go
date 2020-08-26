@@ -25,6 +25,7 @@ import (
 	"github.com/go-acme/lego/v3/lego"
 	"github.com/go-acme/lego/v3/providers/dns"
 	"github.com/go-acme/lego/v3/registration"
+	ptypes "github.com/traefik/paerser/types"
 )
 
 // oscpMustStaple enables OSCP stapling as from https://github.com/go-acme/lego/issues/270.
@@ -63,10 +64,10 @@ type Certificate struct {
 
 // DNSChallenge contains DNS challenge Configuration.
 type DNSChallenge struct {
-	Provider                string         `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty"`
-	DelayBeforeCheck        types.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty"`
-	Resolvers               []string       `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
-	DisablePropagationCheck bool           `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty"`
+	Provider                string          `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty"`
+	DelayBeforeCheck        ptypes.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty"`
+	Resolvers               []string        `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
+	DisablePropagationCheck bool            `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty"`
 }
 
 // HTTPChallenge contains HTTP challenge Configuration.

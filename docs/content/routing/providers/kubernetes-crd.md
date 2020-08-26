@@ -108,16 +108,16 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: myingressroute
       namespace: default
     
-      spec:
-        entryPoints:
-          - web
+    spec:
+      entryPoints:
+        - web
     
-        routes:
-          - match: Host(`foo`) && PathPrefix(`/bar`)
-            kind: Rule
-            services:
-            - name: whoami
-              port: 80
+      routes:
+      - match: Host(`foo`) && PathPrefix(`/bar`)
+        kind: Rule
+        services:
+        - name: whoami
+          port: 80
     
     ---
     apiVersion: traefik.containo.us/v1alpha1
@@ -126,15 +126,15 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: ingressroute.tcp
       namespace: default
     
-      spec:
-        entryPoints:
-          - tcpep
-        routes:
-          - match: HostSNI(`bar`)
-            kind: Rule
-            services:
-              - name: whoamitcp
-                port: 8080
+    spec:
+      entryPoints:
+        - tcpep
+      routes:
+      - match: HostSNI(`bar`)
+        kind: Rule
+        services:
+          - name: whoamitcp
+            port: 8080
     
     ---
     apiVersion: traefik.containo.us/v1alpha1
@@ -143,14 +143,14 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: ingressroute.udp
       namespace: default
     
-      spec:
-        entryPoints:
-          - fooudp
-        routes:
-          - kind: Rule
-            services:
-              - name: whoamiudp
-                port: 8080
+    spec:
+      entryPoints:
+        - fooudp
+      routes:
+      - kind: Rule
+        services:
+          - name: whoamiudp
+            port: 8080
     ```
     
     ```yaml tab="Whoami"

@@ -308,6 +308,7 @@ tracing:
     gen128Bit: true
     propagation: foobar
     traceContextHeaderName: foobar
+    disableAttemptReconnecting: true
     collector:
       endpoint: foobar
       user: foobar
