@@ -130,7 +130,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "count(kube_pod_status_ready{namespace=\"$namespace\",condition=\"true\",pod=~\"traefik.*\"})",
+          "expr": "count(kube_pod_status_ready{condition=\"true\",pod=~\"traefik.*\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -186,7 +186,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.$percentiles, sum(rate(traefik_entrypoint_request_duration_seconds_bucket{namespace=\"$namespace\", code=~\"2..\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.$percentiles, sum(rate(traefik_entrypoint_request_duration_seconds_bucket{code=~\"2..\"}[5m])) by (le))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -273,7 +273,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "histogram_quantile(0.$percentiles, sum(rate(traefik_entrypoint_request_duration_seconds_bucket{namespace=\"$namespace\",code=~\"2..\"}[5m])) by (instance, le))",
+          "expr": "histogram_quantile(0.$percentiles, sum(rate(traefik_entrypoint_request_duration_seconds_bucket{code=~\"2..\"}[5m])) by (instance, le))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{ instance }}",
@@ -371,7 +371,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(traefik_entrypoint_open_connections{namespace=\"$namespace\"}) by (method)",
+              "expr": "sum(traefik_entrypoint_open_connections) by (method)",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{ method }}",
@@ -457,7 +457,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "(sum(rate(traefik_entrypoint_request_duration_seconds_bucket{namespace=\"$namespace\",le=\"0.1\",code=\"200\"}[5m])) by (job) + sum(rate(traefik_entrypoint_request_duration_seconds_bucket{namespace=\"$namespace\",le=\"0.3\",code=\"200\"}[5m])) by (job)) / 2 / sum(rate(traefik_entrypoint_request_duration_seconds_count{namespace=\"$namespace\",code=\"200\"}[5m])) by (job)",
+              "expr": "(sum(rate(traefik_entrypoint_request_duration_seconds_bucket{le=\"0.1\",code=\"200\"}[5m])) by (job) + sum(rate(traefik_entrypoint_request_duration_seconds_bucket{le=\"0.3\",code=\"200\"}[5m])) by (job)) / 2 / sum(rate(traefik_entrypoint_request_duration_seconds_count{code=\"200\"}[5m])) by (job)",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "Code 200",
@@ -545,7 +545,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(traefik_entrypoint_requests_total{namespace=\"$namespace\"}[1m])) by (entrypoint)",
+              "expr": "sum(rate(traefik_entrypoint_requests_total[1m])) by (entrypoint)",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{ entrypoint }}",
@@ -647,7 +647,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(traefik_service_open_connections{namespace=\"$namespace\"}) by (method)",
+              "expr": "sum(traefik_service_open_connections) by (method)",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "{{ method }}",
@@ -733,7 +733,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "(sum(rate(traefik_service_request_duration_seconds_bucket{namespace=\"$namespace\",le=\"0.1\",code=\"200\"}[5m])) by (job) + sum(rate(traefik_service_request_duration_seconds_bucket{namespace=\"$namespace\",le=\"0.3\",code=\"200\"}[5m])) by (job)) / 2 / sum(rate(traefik_service_request_duration_seconds_count{namespace=\"$namespace\",code=\"200\"}[5m])) by (job)",
+              "expr": "(sum(rate(traefik_service_request_duration_seconds_bucket{le=\"0.1\",code=\"200\"}[5m])) by (job) + sum(rate(traefik_service_request_duration_seconds_bucket{le=\"0.3\",code=\"200\"}[5m])) by (job)) / 2 / sum(rate(traefik_service_request_duration_seconds_count{code=\"200\"}[5m])) by (job)",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "Code 200",
@@ -821,7 +821,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(traefik_service_requests_total{namespace=\"$namespace\"}[1m])) by (service)",
+              "expr": "sum(rate(traefik_service_requests_total[1m])) by (service)",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{ service }}",
@@ -923,7 +923,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(traefik_service_requests_total{namespace=\"$namespace\",code=~\"2..\"}[5m])) by (method, code)",
+              "expr": "sum(rate(traefik_service_requests_total{code=~\"2..\"}[5m])) by (method, code)",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{method}} : {{code}}",
@@ -1009,7 +1009,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(traefik_service_requests_total{namespace=\"$namespace\",code=~\"5..\"}[5m])) by (method, code)",
+              "expr": "sum(rate(traefik_service_requests_total{code=~\"5..\"}[5m])) by (method, code)",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{method}} : {{code}}",
@@ -1096,7 +1096,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(traefik_service_requests_total{namespace=\"$namespace\",code!~\"2..|5..\"}[5m])) by (method, code)",
+              "expr": "sum(rate(traefik_service_requests_total{code!~\"2..|5..\"}[5m])) by (method, code)",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "{{ method }} : {{code}}",
@@ -1196,21 +1196,21 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(container_memory_usage_bytes{namespace=\"$namespace\", container=\"traefik\"})",
+              "expr": "sum(container_memory_usage_bytes{container=\"traefik\"})",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "Memory used",
               "refId": "A"
             },
             {
-              "expr": "sum(kube_pod_container_resource_requests_memory_bytes{namespace=\"$namespace\", container=\"traefik\"})",
+              "expr": "sum(kube_pod_container_resource_requests_memory_bytes{container=\"traefik\"})",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "Requested memory",
               "refId": "B"
             },
             {
-              "expr": "sum(kube_pod_container_resource_limits_memory_bytes{namespace=\"$namespace\", container=\"traefik\"})",
+              "expr": "sum(kube_pod_container_resource_limits_memory_bytes{container=\"traefik\"})",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "Limit memory usage",
@@ -1295,21 +1295,21 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", container=\"traefik\"}[2m]))",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{container=\"traefik\"}[2m]))",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "Cpu used",
               "refId": "A"
             },
             {
-              "expr": "sum(kube_pod_container_resource_requests_cpu_cores{namespace=\"$namespace\", container=\"traefik\"})",
+              "expr": "sum(kube_pod_container_resource_requests_cpu_cores{container=\"traefik\"})",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "Requested cpu",
               "refId": "B"
             },
             {
-              "expr": "sum(kube_pod_container_resource_limits_cpu_cores{namespace=\"$namespace\", container=\"traefik\"})",
+              "expr": "sum(kube_pod_container_resource_limits_cpu_cores{container=\"traefik\"})",
               "format": "time_series",
               "intervalFactor": 1,
               "legendFormat": "Limit cpu usage",
@@ -1368,26 +1368,6 @@
   ],
   "templating": {
     "list": [
-      {
-        "allValue": null,
-        "current": {},
-        "datasource": "${DS_PROMETHEUS}",
-        "hide": 0,
-        "includeAll": false,
-        "label": null,
-        "multi": false,
-        "name": "namespace",
-        "options": [],
-        "query": "label_values(traefik_config_reloads_total, namespace)",
-        "refresh": 1,
-        "regex": "",
-        "sort": 0,
-        "tagValuesQuery": "",
-        "tags": [],
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
-      },
       {
         "allValue": null,
         "current": {
