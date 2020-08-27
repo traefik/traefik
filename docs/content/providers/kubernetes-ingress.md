@@ -273,6 +273,7 @@ Otherwise, Ingresses missing the annotation, having an empty value, or with the 
     spec: 
       controller: traefik.io/ingress-controller
     ```
+  
     ```yaml tab="Example Ingress (YAML)"
     apiVersion: "networking.k8s.io/v1beta1"
     kind: "Ingress"
