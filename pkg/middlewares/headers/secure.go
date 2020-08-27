@@ -8,8 +8,10 @@ import (
 )
 
 type secureHeader struct {
-	next   http.Handler
-	secure *secure.Secure
+	next       http.Handler
+	secure     *secure.Secure
+	cfg        dynamic.Headers
+	contextKey string
 }
 
 // newSecure constructs a new secure instance with supplied options.
@@ -40,11 +42,15 @@ func newSecure(next http.Handler, cfg dynamic.Headers, contextKey string) *secur
 	}
 
 	return &secureHeader{
-		next:   next,
-		secure: secure.New(opt),
+		next:       next,
+		secure:     secure.New(opt),
+		contextKey: opt.SecureContextKey,
+		cfg:        cfg,
 	}
 }
 
 func (s secureHeader) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	s.secure.HandlerFuncWithNextForRequestOnly(newResponseModifier(rw, req, s.secure.ModifyResponseHeaders), req, s.next.ServeHTTP)
+	s.secure.HandlerFuncWithNextForRequestOnly(rw, req, func(writer http.ResponseWriter, request *http.Request) {
+		s.next.ServeHTTP(newResponseModifier(writer, request, s.secure.ModifyResponseHeaders), request)
+	})
 }
