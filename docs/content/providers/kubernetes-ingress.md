@@ -262,9 +262,35 @@ Otherwise, Ingresses missing the annotation, having an empty value, or with the 
 
     If the Kubernetes cluster version is 1.18+,
     the new `IngressClass` resource can be leveraged to identify Ingress objects that should be processed.
-    In that case, Traefik will look for an `IngressClass` in the cluster with the controller value equal to *traefik.io/ingress-controller*. 
+    In that case, Traefik will look for an `IngressClass` in the cluster with the controller value equal to *traefik.io/ingress-controller*. An example on how to use this can be found below.
     
     Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information.
+
+```yaml tab="IngressClass (YAML)"
+apiVersion: networking.k8s.io/v1beta1
+kind: IngressClass
+metadata: 
+  name: traefik-lb
+spec: 
+  controller: traefik.io/ingress-controller
+```
+
+```yaml tab="Example Ingress (YAML)"
+apiVersion: "networking.k8s.io/v1beta1"
+kind: "Ingress"
+metadata:
+  name: "example-ingress"
+spec:
+  ingressClassName: "traefik-lb"
+  rules:
+  - host: "*.example.com"
+    http:
+      paths:
+      - path: "/example"
+        backend:
+          serviceName: "example-service"
+          servicePort: 80
+```
 
 ### `ingressEndpoint`
 
