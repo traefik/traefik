@@ -21,7 +21,7 @@ const StatusClientClosedRequest = 499
 // StatusClientClosedRequestText non-standard HTTP status for client disconnection.
 const StatusClientClosedRequestText = "Client Closed Request"
 
-func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwarding, defaultRoundTripper http.RoundTripper, bufferPool httputil.BufferPool, responseModifier func(*http.Response) error) (http.Handler, error) {
+func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwarding, defaultRoundTripper http.RoundTripper, bufferPool httputil.BufferPool) (http.Handler, error) {
 	var flushInterval types.Duration
 	if responseForwarding != nil {
 		err := flushInterval.Set(responseForwarding.FlushInterval)
@@ -76,10 +76,9 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 			delete(outReq.Header, "Sec-Websocket-Protocol")
 			delete(outReq.Header, "Sec-Websocket-Version")
 		},
-		Transport:      defaultRoundTripper,
-		FlushInterval:  time.Duration(flushInterval),
-		ModifyResponse: responseModifier,
-		BufferPool:     bufferPool,
+		Transport:     defaultRoundTripper,
+		FlushInterval: time.Duration(flushInterval),
+		BufferPool:    bufferPool,
 		ErrorHandler: func(w http.ResponseWriter, request *http.Request, err error) {
 			statusCode := http.StatusInternalServerError
 

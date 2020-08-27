@@ -13,7 +13,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/containous/traefik/v2/pkg/middlewares/requestdecorator"
-	"github.com/containous/traefik/v2/pkg/responsemodifiers"
 	"github.com/containous/traefik/v2/pkg/server/middleware"
 	"github.com/containous/traefik/v2/pkg/server/service"
 	"github.com/containous/traefik/v2/pkg/testhelpers"
@@ -290,10 +289,9 @@ func TestRouterManager_Get(t *testing.T) {
 
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
-			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -395,10 +393,9 @@ func TestAccessLog(t *testing.T) {
 
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
-			responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -683,10 +680,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
-			responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -765,10 +761,9 @@ func TestProviderOnMiddlewares(t *testing.T) {
 
 	serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
-	responseModifierFactory := responsemodifiers.NewBuilder(map[string]*runtime.MiddlewareInfo{})
 	chainBuilder := middleware.NewChainBuilder(staticCfg, nil, nil)
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder)
 
 	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -826,10 +821,9 @@ func BenchmarkRouterServe(b *testing.B) {
 
 	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
-	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 	chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, chainBuilder)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder)
 
 	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -871,7 +865,7 @@ func BenchmarkService(b *testing.B) {
 	w := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 
-	handler, _ := serviceManager.BuildHTTP(context.Background(), "foo-service", nil)
+	handler, _ := serviceManager.BuildHTTP(context.Background(), "foo-service")
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		handler.ServeHTTP(w, req)

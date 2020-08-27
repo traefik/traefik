@@ -24,12 +24,8 @@ type middlewareBuilder interface {
 	BuildChain(ctx context.Context, names []string) *alice.Chain
 }
 
-type responseModifierBuilder interface {
-	Build(ctx context.Context, names []string) func(*http.Response) error
-}
-
 type serviceManager interface {
-	BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error)
+	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
 	LaunchHealthCheck()
 }
 
@@ -39,22 +35,15 @@ type Manager struct {
 	serviceManager     serviceManager
 	middlewaresBuilder middlewareBuilder
 	chainBuilder       *middleware.ChainBuilder
-	modifierBuilder    responseModifierBuilder
 	conf               *runtime.Configuration
 }
 
 // NewManager Creates a new Manager.
-func NewManager(conf *runtime.Configuration,
-	serviceManager serviceManager,
-	middlewaresBuilder middlewareBuilder,
-	modifierBuilder responseModifierBuilder,
-	chainBuilder *middleware.ChainBuilder,
-) *Manager {
+func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareBuilder, chainBuilder *middleware.ChainBuilder) *Manager {
 	return &Manager{
 		routerHandlers:     make(map[string]http.Handler),
 		serviceManager:     serviceManager,
 		middlewaresBuilder: middlewaresBuilder,
-		modifierBuilder:    modifierBuilder,
 		chainBuilder:       chainBuilder,
 		conf:               conf,
 	}
@@ -176,13 +165,12 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
 	}
 	router.Middlewares = qualifiedNames
-	rm := m.modifierBuilder.Build(ctx, qualifiedNames)
 
 	if router.Service == "" {
 		return nil, errors.New("the service is missing on the router")
 	}
 
-	sHandler, err := m.serviceManager.BuildHTTP(ctx, router.Service, rm)
+	sHandler, err := m.serviceManager.BuildHTTP(ctx, router.Service)
 	if err != nil {
 		return nil, err
 	}

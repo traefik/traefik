@@ -150,7 +150,7 @@ type mockServiceBuilder struct {
 	handler http.Handler
 }
 
-func (m *mockServiceBuilder) BuildHTTP(_ context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
+func (m *mockServiceBuilder) BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error) {
 	return m.handler, nil
 }
 

@@ -44,7 +44,7 @@ type Builder struct {
 }
 
 type serviceBuilder interface {
-	BuildHTTP(ctx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error)
+	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
 }
 
 // NewBuilder creates a new Builder.
