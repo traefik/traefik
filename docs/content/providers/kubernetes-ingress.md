@@ -265,7 +265,7 @@ Otherwise, Ingresses missing the annotation, having an empty value, or with the 
     In that case, Traefik will look for an `IngressClass` in the cluster with the controller value equal to *traefik.io/ingress-controller*. 
     Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information or the example below.
 
-    ```yaml tab="IngressClass (YAML)"
+    ```yaml tab="IngressClass"
     apiVersion: networking.k8s.io/v1beta1
     kind: IngressClass
     metadata: 
@@ -274,7 +274,7 @@ Otherwise, Ingresses missing the annotation, having an empty value, or with the 
       controller: traefik.io/ingress-controller
     ```
   
-    ```yaml tab="Example Ingress (YAML)"
+    ```yaml tab="Ingress"
     apiVersion: "networking.k8s.io/v1beta1"
     kind: "Ingress"
     metadata:
