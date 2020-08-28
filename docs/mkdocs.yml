@@ -136,6 +136,7 @@ nav:
   - 'Plugins & Traefik Pilot':
       - 'Overview': 'plugins/overview.md'
       - 'Using Plugins': 'plugins/using-plugins.md'
+      - 'Metrics': 'plugins/metrics.md'
   - 'Operations':
       - 'CLI': 'operations/cli.md'
       - 'Dashboard' : 'operations/dashboard.md'
