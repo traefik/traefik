@@ -31,6 +31,7 @@ type forwardAuth struct {
 	name                string
 	client              http.Client
 	trustForwardHeader  bool
+	authRequestHeaders  []string
 }
 
 // NewForward creates a forward auth middleware.
@@ -43,6 +44,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		next:                next,
 		name:                name,
 		trustForwardHeader:  config.TrustForwardHeader,
+		authRequestHeaders:  config.AuthRequestHeaders,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -89,7 +91,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// forwardReq.
 	tracing.InjectRequestHeaders(req)
 
-	writeHeader(req, forwardReq, fa.trustForwardHeader)
+	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
@@ -158,9 +160,26 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	fa.next.ServeHTTP(rw, req)
 }
 
-func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool) {
+func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeaders []string) http.Header {
+	if len(allowedHeaders) == 0 {
+		return forwardRequestHeaders
+	}
+
+	filteredHeaders := http.Header{}
+	for _, headerName := range allowedHeaders {
+		headerKey := http.CanonicalHeaderKey(headerName)
+		if len(forwardRequestHeaders[headerKey]) > 0 {
+			filteredHeaders[headerKey] = append([]string(nil), forwardRequestHeaders[headerKey]...)
+		}
+	}
+	return filteredHeaders
+}
+
+func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
 	utils.RemoveHeaders(forwardReq.Header, forward.HopHeaders...)
+
+	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
 
 	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
 		if trustForwardHeader {
