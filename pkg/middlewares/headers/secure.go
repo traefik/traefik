@@ -8,10 +8,9 @@ import (
 )
 
 type secureHeader struct {
-	next       http.Handler
-	secure     *secure.Secure
-	cfg        dynamic.Headers
-	contextKey string
+	next   http.Handler
+	secure *secure.Secure
+	cfg    dynamic.Headers
 }
 
 // newSecure constructs a new secure instance with supplied options.
@@ -42,10 +41,9 @@ func newSecure(next http.Handler, cfg dynamic.Headers, contextKey string) *secur
 	}
 
 	return &secureHeader{
-		next:       next,
-		secure:     secure.New(opt),
-		contextKey: opt.SecureContextKey,
-		cfg:        cfg,
+		next:   next,
+		secure: secure.New(opt),
+		cfg:    cfg,
 	}
 }
 
