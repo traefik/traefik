@@ -7,7 +7,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/responsemodifiers"
 	"github.com/containous/traefik/v2/pkg/server/middleware"
 	"github.com/containous/traefik/v2/pkg/server/router"
 	routertcp "github.com/containous/traefik/v2/pkg/server/router/tcp"
@@ -67,9 +66,8 @@ func (f *RouterFactory) CreateRouters(conf dynamic.Configuration) (map[string]*t
 	serviceManager := f.managerFactory.Build(rtConf)
 
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager)
-	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 
-	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, f.chainBuilder)
+	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.chainBuilder)
 
 	handlersNonTLS := routerManager.BuildHandlers(ctx, f.entryPointsTCP, false)
 	handlersTLS := routerManager.BuildHandlers(ctx, f.entryPointsTCP, true)
