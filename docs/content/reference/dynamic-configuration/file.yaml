@@ -222,7 +222,7 @@ http:
       inFlightReq:
         amount: 42
         sourceCriterion:
-          ipstrategy:
+          ipStrategy:
             depth: 42
             excludedIPs:
             - foobar
@@ -259,7 +259,7 @@ http:
         period: 42
         burst: 42
         sourceCriterion:
-          ipstrategy:
+          ipStrategy:
             depth: 42
             excludedIPs:
             - foobar
