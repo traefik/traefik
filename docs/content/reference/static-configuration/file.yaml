@@ -328,6 +328,7 @@ certificatesResolvers:
     acme:
       email: foobar
       caServer: foobar
+      preferredChain: foobar
       storage: foobar
       keyType: foobar
       dnsChallenge:
@@ -344,6 +345,7 @@ certificatesResolvers:
     acme:
       email: foobar
       caServer: foobar
+      preferredChain: foobar
       storage: foobar
       keyType: foobar
       dnsChallenge:

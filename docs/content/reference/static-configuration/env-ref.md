@@ -81,6 +81,9 @@ HTTP challenge EntryPoint
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_KEYTYPE`:  
 KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. (Default: ```RSA4096```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_PREFERREDCHAIN`:  
+Preferred chain to use.
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_STORAGE`:  
 Storage to use. (Default: ```acme.json```)
 
