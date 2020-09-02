@@ -30,7 +30,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/tracing/zipkin"
 	"github.com/containous/traefik/v2/pkg/types"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
-	legolog "github.com/go-acme/lego/v3/log"
+	legolog "github.com/go-acme/lego/v4/log"
 	"github.com/sirupsen/logrus"
 )
 
