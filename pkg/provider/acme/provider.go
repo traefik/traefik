@@ -263,19 +263,18 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 		err = client.Challenge.SetDNS01Provider(provider,
 			dns01.CondOption(len(p.DNSChallenge.Resolvers) > 0, dns01.AddRecursiveNameservers(p.DNSChallenge.Resolvers)),
-			dns01.CondOption(p.DNSChallenge.DisablePropagationCheck || p.DNSChallenge.DelayBeforeCheck > 0,
-				dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
-					if p.DNSChallenge.DisablePropagationCheck {
-						return true, nil
-					}
+			dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
+				if p.DNSChallenge.DisablePropagationCheck {
+					return true, nil
+				}
 
-					if p.DNSChallenge.DelayBeforeCheck > 0 {
-						logger.Debugf("Delaying %d rather than validating DNS propagation now.", p.DNSChallenge.DelayBeforeCheck)
-						time.Sleep(time.Duration(p.DNSChallenge.DelayBeforeCheck))
-					}
+				if p.DNSChallenge.DelayBeforeCheck > 0 {
+					logger.Debugf("Delaying %d rather than validating DNS propagation now.", p.DNSChallenge.DelayBeforeCheck)
+					time.Sleep(time.Duration(p.DNSChallenge.DelayBeforeCheck))
+				}
 
-					return check(fqdn, value)
-				})),
+				return check(fqdn, value)
+			}),
 		)
 		if err != nil {
 			return nil, err
