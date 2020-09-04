@@ -22,6 +22,16 @@
   #
   # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
+  # Preferred chain to use.
+  #
+  # If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name.
+  # If no match, the default offered chain will be used.
+  #
+  # Optional
+  # Default: ""
+  #
+  # preferredChain = "ISRG Root X1"
+
   # KeyType to use.
   #
   # Optional
