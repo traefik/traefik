@@ -1,5 +1,5 @@
-## [v2.2.9](https://github.com/containous/traefik/tree/v2.2.9) (2020-09-04)
-[All Commits](https://github.com/containous/traefik/compare/v2.2.8...v2.2.9)
+## [v2.2.10](https://github.com/containous/traefik/tree/v2.2.10) (2020-09-04)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.0...v2.2.10)
 
 **Bug fixes:**
 - **[acme]** Update go-acme/lego to v4.0.1 ([#7238](https://github.com/containous/traefik/pull/7238) by [ldez](https://github.com/ldez))
@@ -17,6 +17,11 @@
 - doc: specify HostSNI rule removal only for HTTP routers ([#7237](https://github.com/containous/traefik/pull/7237) by [rtribotte](https://github.com/rtribotte))
 - Reorder migrations for v2 minor upgrades ([#7214](https://github.com/containous/traefik/pull/7214) by [peschmae](https://github.com/peschmae))
 - Harmonize docs ([#7124](https://github.com/containous/traefik/pull/7124) by [matthieuh](https://github.com/matthieuh))
+
+## [v2.2.9](https://github.com/containous/traefik/tree/v2.2.9) (2020-09-04)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.8...v2.2.9)
+
+Release canceled due to a bad tag.
 
 ## [v2.2.8](https://github.com/containous/traefik/tree/v2.2.8) (2020-07-28)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.7...v2.2.8)
