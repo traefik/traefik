@@ -302,7 +302,7 @@ type PassTLSClientCert struct {
 // If none are set, the default is to use the request's remote address field.
 // All fields are mutually exclusive.
 type SourceCriterion struct {
-	IPStrategy        *IPStrategy `json:"ipStrategy" toml:"ipStrategy, omitempty"`
+	IPStrategy        *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty"`
 	RequestHeaderName string      `json:"requestHeaderName,omitempty" toml:"requestHeaderName,omitempty" yaml:"requestHeaderName,omitempty"`
 	RequestHost       bool        `json:"requestHost,omitempty" toml:"requestHost,omitempty" yaml:"requestHost,omitempty"`
 }
