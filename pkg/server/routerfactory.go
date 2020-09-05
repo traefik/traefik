@@ -6,7 +6,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/plugins"
 	"github.com/containous/traefik/v2/pkg/server/middleware"
 	"github.com/containous/traefik/v2/pkg/server/router"
 	routertcp "github.com/containous/traefik/v2/pkg/server/router/tcp"
@@ -26,14 +25,14 @@ type RouterFactory struct {
 
 	managerFactory *service.ManagerFactory
 
-	pluginBuilder *plugins.Builder
+	pluginBuilder middleware.PluginsBuilder
 
 	chainBuilder *middleware.ChainBuilder
 	tlsManager   *tls.Manager
 }
 
 // NewRouterFactory creates a new RouterFactory.
-func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager, chainBuilder *middleware.ChainBuilder, pluginBuilder *plugins.Builder) *RouterFactory {
+func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager, chainBuilder *middleware.ChainBuilder, pluginBuilder middleware.PluginsBuilder) *RouterFactory {
 	var entryPointsTCP, entryPointsUDP []string
 	for name, cfg := range staticConfiguration.EntryPoints {
 		protocol, err := cfg.GetProtocol()
