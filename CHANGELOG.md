@@ -1,3 +1,17 @@
+## [v2.3.0-rc5](https://github.com/containous/traefik/tree/v2.3.0-rc5) (2020-09-07)
+[All Commits](https://github.com/containous/traefik/compare/v2.3.0-rc4...v2.3.0-rc5)
+
+**Enhancements:**
+- **[k8s,k8s/ingress]** Add example for the IngressClass usage ([#7219](https://github.com/containous/traefik/pull/7219) by [SantoDE](https://github.com/SantoDE))
+- **[plugins]** Improve plugins builder. ([#7255](https://github.com/containous/traefik/pull/7255) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[pilot,webui]** Add ability to dismiss pilot notification ([#7200](https://github.com/containous/traefik/pull/7200) by [matthieuh](https://github.com/matthieuh))
+
+**Misc:**
+- Merge current v2.2 branch into v2.3 ([#7249](https://github.com/containous/traefik/pull/7249) by [ldez](https://github.com/ldez))
+- Merge current v2.2 branch into v2.3 ([#7218](https://github.com/containous/traefik/pull/7218) by [ldez](https://github.com/ldez))
+
 ## [v2.2.11](https://github.com/containous/traefik/tree/v2.2.11) (2020-09-07)
 [All Commits](https://github.com/containous/traefik/compare/v2.2.10...v2.2.11)
 
