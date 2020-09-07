@@ -8,7 +8,7 @@
 - **[healthcheck]** Clarified hostname documentation for load balancer healthcheck ([#7254](https://github.com/containous/traefik/pull/7254) by [AndrewSav](https://github.com/AndrewSav))
 
 ## [v2.2.10](https://github.com/containous/traefik/tree/v2.2.10) (2020-09-04)
-[All Commits](https://github.com/containous/traefik/compare/v2.2.0...v2.2.10)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.7...v2.2.10)
 
 **Bug fixes:**
 - **[acme]** Update go-acme/lego to v4.0.1 ([#7238](https://github.com/containous/traefik/pull/7238) by [ldez](https://github.com/ldez))
