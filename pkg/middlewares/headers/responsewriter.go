@@ -1,6 +1,9 @@
 package headers
 
 import (
+	"bufio"
+	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/containous/traefik/v2/pkg/log"
@@ -72,4 +75,20 @@ func (w *responseModifier) Write(b []byte) (int, error) {
 	}
 
 	return w.w.Write(b)
+}
+
+// Hijack hijacks the connection.
+func (w *responseModifier) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := w.w.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+
+	return nil, nil, fmt.Errorf("not a hijacker: %T", w.w)
+}
+
+// Flush sends any buffered data to the client.
+func (w *responseModifier) Flush() {
+	if flusher, ok := w.w.(http.Flusher); ok {
+		flusher.Flush()
+	}
 }
