@@ -16,7 +16,7 @@ require (
 	github.com/abronan/valkeyrie v0.0.0-20200127174252-ef4277a138cd
 	github.com/aws/aws-sdk-go v1.30.20
 	github.com/c0va23/go-proxyprotocol v0.9.1
-	github.com/cenkalti/backoff/v4 v4.0.0
+	github.com/cenkalti/backoff/v4 v4.0.2
 	github.com/containerd/containerd v1.3.2 // indirect
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
 	github.com/containous/yaegi v0.8.14
@@ -37,7 +37,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
-	github.com/go-acme/lego/v3 v3.8.0
+	github.com/go-acme/lego/v4 v4.0.1
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.9.0
 	github.com/golang/protobuf v1.3.4
@@ -53,10 +53,10 @@ require (
 	github.com/libkermit/docker-check v0.0.0-20171122104347-1113af38e591
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
-	github.com/miekg/dns v1.1.27
+	github.com/miekg/dns v1.1.31
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/hashstructure v1.0.0
-	github.com/mitchellh/mapstructure v1.3.2
+	github.com/mitchellh/mapstructure v1.3.3
 	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
@@ -85,8 +85,8 @@ require (
 	go.elastic.co/apm v1.7.0
 	go.elastic.co/apm/module/apmot v1.7.0
 	golang.org/x/mod v0.2.0
-	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
+	golang.org/x/net v0.0.0-20200822124328-c89045814202
+	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	google.golang.org/grpc v1.27.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.19.0
 	gopkg.in/fsnotify.v1 v1.4.7

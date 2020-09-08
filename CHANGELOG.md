@@ -1,3 +1,51 @@
+## [v2.3.0-rc5](https://github.com/containous/traefik/tree/v2.3.0-rc5) (2020-09-07)
+[All Commits](https://github.com/containous/traefik/compare/v2.3.0-rc4...v2.3.0-rc5)
+
+**Enhancements:**
+- **[k8s,k8s/ingress]** Add example for the IngressClass usage ([#7219](https://github.com/containous/traefik/pull/7219) by [SantoDE](https://github.com/SantoDE))
+- **[plugins]** Improve plugins builder. ([#7255](https://github.com/containous/traefik/pull/7255) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[pilot,webui]** Add ability to dismiss pilot notification ([#7200](https://github.com/containous/traefik/pull/7200) by [matthieuh](https://github.com/matthieuh))
+
+**Misc:**
+- Merge current v2.2 branch into v2.3 ([#7249](https://github.com/containous/traefik/pull/7249) by [ldez](https://github.com/ldez))
+- Merge current v2.2 branch into v2.3 ([#7218](https://github.com/containous/traefik/pull/7218) by [ldez](https://github.com/ldez))
+
+## [v2.2.11](https://github.com/containous/traefik/tree/v2.2.11) (2020-09-07)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.10...v2.2.11)
+
+**Bug fixes:**
+- **[middleware]** fix: header middleware response writer. ([#7252](https://github.com/containous/traefik/pull/7252) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[healthcheck]** Clarified hostname documentation for load balancer healthcheck ([#7254](https://github.com/containous/traefik/pull/7254) by [AndrewSav](https://github.com/AndrewSav))
+
+## [v2.2.10](https://github.com/containous/traefik/tree/v2.2.10) (2020-09-04)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.7...v2.2.10)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.0.1 ([#7238](https://github.com/containous/traefik/pull/7238) by [ldez](https://github.com/ldez))
+- **[middleware]** Add missing IPStrategy struct tag for YAML ([#7233](https://github.com/containous/traefik/pull/7233) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** Headers response modifier is directly applied by headers middleware ([#7230](https://github.com/containous/traefik/pull/7230) by [juliens](https://github.com/juliens))
+- **[webui]** chore(webui): upgrade nodejs to Node current LTS ([#7125](https://github.com/containous/traefik/pull/7125) by [Slashgear](https://github.com/Slashgear))
+
+**Documentation:**
+- **[docker]** doc: fix dead link. ([#7172](https://github.com/containous/traefik/pull/7172) by [ldez](https://github.com/ldez))
+- **[k8s]** kubernetes-crd: fix whitespace in configuration examples ([#7134](https://github.com/containous/traefik/pull/7134) by [NT-florianernst](https://github.com/NT-florianernst))
+- **[k8s]** doc: replace underscore by hyphen for k8s metadata names. ([#7131](https://github.com/containous/traefik/pull/7131) by [ldez](https://github.com/ldez))
+- **[logs]** doc: added tz section to access log ([#7178](https://github.com/containous/traefik/pull/7178) by [notsureifkevin](https://github.com/notsureifkevin))
+- **[tls]** doc: Minor language improvement in TLS documentation ([#7206](https://github.com/containous/traefik/pull/7206) by [sharmarajdaksh](https://github.com/sharmarajdaksh))
+- doc: fix typo in migration guide ([#7181](https://github.com/containous/traefik/pull/7181) by [ScuttleSE](https://github.com/ScuttleSE))
+- doc: specify HostSNI rule removal only for HTTP routers ([#7237](https://github.com/containous/traefik/pull/7237) by [rtribotte](https://github.com/rtribotte))
+- Reorder migrations for v2 minor upgrades ([#7214](https://github.com/containous/traefik/pull/7214) by [peschmae](https://github.com/peschmae))
+- Harmonize docs ([#7124](https://github.com/containous/traefik/pull/7124) by [matthieuh](https://github.com/matthieuh))
+
+## [v2.2.9](https://github.com/containous/traefik/tree/v2.2.9) (2020-09-04)
+[All Commits](https://github.com/containous/traefik/compare/v2.2.8...v2.2.9)
+
+Release canceled due to a bad tag.
+
 ## [v2.3.0-rc4](https://github.com/containous/traefik/tree/v2.3.0-rc4) (2020-08-19)
 [All Commits](https://github.com/containous/traefik/compare/v2.3.0-rc3...v2.3.0-rc4)
 

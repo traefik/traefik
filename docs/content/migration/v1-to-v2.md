@@ -501,7 +501,7 @@ To apply a redirection:
         [http.routers.router1.tls]
     
     [http.middlewares]
-      [http.middlewares.https-redirect.redirectScheme]
+      [http.middlewares.https_redirect.redirectScheme]
         scheme = "https"
         permanent = true
     ```

@@ -33,7 +33,7 @@ const (
 )
 
 type serviceBuilder interface {
-	BuildHTTP(ctx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error)
+	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
 }
 
 // customErrors is a middleware that provides the custom error pages..
@@ -54,7 +54,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		return nil, err
 	}
 
-	backend, err := serviceBuilder.BuildHTTP(ctx, config.Service, nil)
+	backend, err := serviceBuilder.BuildHTTP(ctx, config.Service)
 	if err != nil {
 		return nil, err
 	}

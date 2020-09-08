@@ -6,8 +6,6 @@ import (
 	"github.com/containous/traefik/v2/pkg/config/runtime"
 	"github.com/containous/traefik/v2/pkg/config/static"
 	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/plugins"
-	"github.com/containous/traefik/v2/pkg/responsemodifiers"
 	"github.com/containous/traefik/v2/pkg/server/middleware"
 	"github.com/containous/traefik/v2/pkg/server/router"
 	routertcp "github.com/containous/traefik/v2/pkg/server/router/tcp"
@@ -27,14 +25,14 @@ type RouterFactory struct {
 
 	managerFactory *service.ManagerFactory
 
-	pluginBuilder *plugins.Builder
+	pluginBuilder middleware.PluginsBuilder
 
 	chainBuilder *middleware.ChainBuilder
 	tlsManager   *tls.Manager
 }
 
 // NewRouterFactory creates a new RouterFactory.
-func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager, chainBuilder *middleware.ChainBuilder, pluginBuilder *plugins.Builder) *RouterFactory {
+func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager, chainBuilder *middleware.ChainBuilder, pluginBuilder middleware.PluginsBuilder) *RouterFactory {
 	var entryPointsTCP, entryPointsUDP []string
 	for name, cfg := range staticConfiguration.EntryPoints {
 		protocol, err := cfg.GetProtocol()
@@ -68,9 +66,8 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	serviceManager := f.managerFactory.Build(rtConf)
 
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, f.pluginBuilder)
-	responseModifierFactory := responsemodifiers.NewBuilder(rtConf.Middlewares)
 
-	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, responseModifierFactory, f.chainBuilder)
+	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.chainBuilder)
 
 	handlersNonTLS := routerManager.BuildHandlers(ctx, f.entryPointsTCP, false)
 	handlersTLS := routerManager.BuildHandlers(ctx, f.entryPointsTCP, true)

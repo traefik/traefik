@@ -5,7 +5,13 @@ import (
 	"fmt"
 
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
+	"github.com/containous/traefik/v2/pkg/plugins"
 )
+
+// PluginsBuilder the plugin's builder interface.
+type PluginsBuilder interface {
+	Build(pName string, config map[string]interface{}, middlewareName string) (plugins.Constructor, error)
+}
 
 func findPluginConfig(rawConfig map[string]dynamic.PluginConf) (string, map[string]interface{}, error) {
 	if len(rawConfig) != 1 {

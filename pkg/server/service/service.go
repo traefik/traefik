@@ -62,7 +62,7 @@ type Manager struct {
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
-func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error) {
+func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error) {
 	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
 
 	serviceName = provider.GetQualifiedName(ctx, serviceName)
@@ -91,21 +91,21 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 	switch {
 	case conf.LoadBalancer != nil:
 		var err error
-		lb, err = m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer, responseModifier)
+		lb, err = m.getLoadBalancerServiceHandler(ctx, serviceName, conf.LoadBalancer)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
 		}
 	case conf.Weighted != nil:
 		var err error
-		lb, err = m.getWRRServiceHandler(ctx, serviceName, conf.Weighted, responseModifier)
+		lb, err = m.getWRRServiceHandler(ctx, serviceName, conf.Weighted)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
 		}
 	case conf.Mirroring != nil:
 		var err error
-		lb, err = m.getMirrorServiceHandler(ctx, conf.Mirroring, responseModifier)
+		lb, err = m.getMirrorServiceHandler(ctx, conf.Mirroring)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
@@ -119,8 +119,8 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string, respons
 	return lb, nil
 }
 
-func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.Mirroring, responseModifier func(*http.Response) error) (http.Handler, error) {
-	serviceHandler, err := m.BuildHTTP(ctx, config.Service, responseModifier)
+func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.Mirroring) (http.Handler, error) {
+	serviceHandler, err := m.BuildHTTP(ctx, config.Service)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 	}
 	handler := mirror.New(serviceHandler, m.routinePool, maxBodySize)
 	for _, mirrorConfig := range config.Mirrors {
-		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name, responseModifier)
+		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -144,7 +144,7 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 	return handler, nil
 }
 
-func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, config *dynamic.WeightedRoundRobin, responseModifier func(*http.Response) error) (http.Handler, error) {
+func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, config *dynamic.WeightedRoundRobin) (http.Handler, error) {
 	// TODO Handle accesslog and metrics with multiple service name
 	if config.Sticky != nil && config.Sticky.Cookie != nil {
 		config.Sticky.Cookie.Name = cookie.GetName(config.Sticky.Cookie.Name, serviceName)
@@ -152,7 +152,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 
 	balancer := wrr.New(config.Sticky)
 	for _, service := range config.Services {
-		serviceHandler, err := m.BuildHTTP(ctx, service.Name, responseModifier)
+		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -162,18 +162,13 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 	return balancer, nil
 }
 
-func (m *Manager) getLoadBalancerServiceHandler(
-	ctx context.Context,
-	serviceName string,
-	service *dynamic.ServersLoadBalancer,
-	responseModifier func(*http.Response) error,
-) (http.Handler, error) {
+func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName string, service *dynamic.ServersLoadBalancer) (http.Handler, error) {
 	if service.PassHostHeader == nil {
 		defaultPassHostHeader := true
 		service.PassHostHeader = &defaultPassHostHeader
 	}
 
-	fwd, err := buildProxy(service.PassHostHeader, service.ResponseForwarding, m.defaultRoundTripper, m.bufferPool, responseModifier)
+	fwd, err := buildProxy(service.PassHostHeader, service.ResponseForwarding, m.defaultRoundTripper, m.bufferPool)
 	if err != nil {
 		return nil, err
 	}

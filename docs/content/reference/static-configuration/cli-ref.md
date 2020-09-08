@@ -81,6 +81,9 @@ HTTP challenge EntryPoint
 `--certificatesresolvers.<name>.acme.keytype`:  
 KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. (Default: ```RSA4096```)
 
+`--certificatesresolvers.<name>.acme.preferredchain`:  
+Preferred chain to use.
+
 `--certificatesresolvers.<name>.acme.storage`:  
 Storage to use. (Default: ```acme.json```)
 

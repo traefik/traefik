@@ -11,7 +11,7 @@ import (
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/tls/generate"
 	"github.com/containous/traefik/v2/pkg/types"
-	"github.com/go-acme/lego/v3/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/sirupsen/logrus"
 )
 
