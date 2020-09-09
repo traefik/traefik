@@ -25,7 +25,7 @@ whoami:
     - "traefik.http.routers.router1.middlewares=foo-add-prefix@docker"
 ```
 
-```yaml tab="Kubernetes"
+```yaml tab="Kubernetes IngressRoute"
 # As a Kubernetes Traefik IngressRoute
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -61,6 +61,45 @@ spec:
     # more fields...
     middlewares:
       - name: stripprefix
+```
+
+```yaml tab="Kubernetes Ingress
+# As a Kubernetes Ingress
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: middlewares.traefik.containo.us
+spec:
+  group: traefik.containo.us 
+  version: v1alpha1
+  names:
+    kind: Middleware
+    plural: middlewares
+    singular: middleware
+  scope: Namespaced
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: stripprefix
+  namespace: appspace
+spec:
+  stripPrefix:
+    prefixes:
+      - /stripit
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: appspace
+  annotations:
+    # annotation the form <middleware-k8s-namespace>-<middleware-name>@kubernetescrd
+    "traefik.ingress.kubernetes.io/router.middlewares": appspace-stripprefix@kubernetescrd
+spec:
+  # ... regular ingress definition
 ```
 
 ```yaml tab="Consul Catalog"
@@ -148,6 +187,9 @@ then you'll have to append to the middleware name, the `@` separator, followed b
     In this case, since the definition of the middleware is not in kubernetes,
     specifying a "kubernetes namespace" when referring to the resource does not make any sense,
     and therefore this specification would be ignored even if present.
+    On the other hand, if you declare the middleware as a CRD in Kubernetes and use the non-crd Ingress 
+    objects, you'll have to add the kubernetes namespace, the middleware lives in, to the annotation like
+    this "<middleware-namespace>-<middleware-name>@kubernetescrd".
 
 !!! abstract "Referencing a Middleware from Another Provider"
 
