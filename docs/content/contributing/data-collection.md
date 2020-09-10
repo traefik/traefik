@@ -85,7 +85,7 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
     ca = "xxxx"
     cert = "xxxx"
     key = "xxxx"
-    insecureSkipVerify = false
+    insecureSkipVerify = true
 ```
 
 ## The Code for Data Collection
