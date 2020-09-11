@@ -81,7 +81,7 @@ func WrapServiceHandler(ctx context.Context, registry metrics.Registry, serviceN
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	var labels []string
 	labels = append(labels, m.baseLabels...)
-	labels = append(labels, "method", getMethod(req), "protocol", getRequestProtocol(req))
+	labels = append(labels, "method", getMethod(req), "protocol", getRequestProtocol(req), "path", getPath(req))
 
 	m.openConnsGauge.With(labels...).Add(1)
 	defer m.openConnsGauge.With(labels...).Add(-1)
@@ -106,6 +106,10 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	histograms.ObserveFromStart(start)
 
 	m.reqsCounter.With(labels...).Add(1)
+}
+
+func getPath(req *http.Request) string {
+	return req.URL.Path
 }
 
 func getRequestProtocol(req *http.Request) string {
