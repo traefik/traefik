@@ -460,6 +460,33 @@ By default, `passHostHeader` is true.
             passHostHeader: false
     ```
 
+#### ServersTransport
+
+`serversTransport` allows to reference a ServersTransport configuration for the communication between Traefik and your servers.
+
+??? example "Specify a transport -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.Service01]
+        [http.services.Service01.loadBalancer]
+          serversTransport = "mytransport"
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        Service01:
+          loadBalancer:
+            serversTransport = "mytransport"
+    ```
+
+!!! info default serversTransport
+    If no serversTransport is specified, the `default@internal` will be used. 
+    The `default@internal` serversTransport is created from the [static configuration](../overview.md#transport-configuration). 
+
 #### Response Forwarding
 
 This section is about configuring how Traefik forwards the response from the backend server to the client.
@@ -491,33 +518,6 @@ Below are the available options for the Response Forwarding mechanism:
             responseForwarding:
               flushInterval: 1s
     ```
-
-#### ServersTransport
-
-`serversTransport` allows to reference a ServersTransport configuration for the communication between Traefik and your servers.
-
-??? example "Specify a transport -- Using the [File Provider](../../providers/file.md)"
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [http.services]
-      [http.services.Service01]
-        [http.services.Service01.loadBalancer]
-          serversTransport = "mytransport"
-    ```
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    http:
-      services:
-        Service01:
-          loadBalancer:
-            serversTransport = "mytransport"
-    ```
-
-!!! info default serversTransport
-    If no serversTransport is specified, the `default@internal` will be used. 
-    The `default@internal` serversTransport is created from the [static configuration](../overview.md#transport-configuration). 
 
 ### ServersTransport
 
