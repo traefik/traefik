@@ -202,7 +202,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	if isPilotEnabled(staticConfiguration) {
 		pilotRegistry := metrics.RegisterPilot()
 
-		aviator = pilot.New(staticConfiguration.Experimental.Pilot.Token, pilotRegistry, routinesPool)
+		aviator = pilot.New(staticConfiguration.Pilot.Token, pilotRegistry, routinesPool)
 		routinesPool.GoCtx(func(ctx context.Context) {
 			aviator.Tick(ctx)
 		})
