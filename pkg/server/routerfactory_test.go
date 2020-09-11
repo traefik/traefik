@@ -48,7 +48,9 @@ func TestReuseService(t *testing.T) {
 		),
 	)
 
-	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
+	roundTripperManager := service.NewRoundTripperManager()
+	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), roundTripperManager)
 	tlsManager := tls.NewManager()
 
 	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil), nil)
@@ -182,7 +184,9 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 				},
 			}
 
-			managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
+			roundTripperManager := service.NewRoundTripperManager()
+			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+			managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), roundTripperManager)
 			tlsManager := tls.NewManager()
 
 			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil), nil)
@@ -221,7 +225,9 @@ func TestInternalServices(t *testing.T) {
 		),
 	)
 
-	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
+	roundTripperManager := service.NewRoundTripperManager()
+	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), roundTripperManager)
 	tlsManager := tls.NewManager()
 
 	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil), nil)

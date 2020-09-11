@@ -4,11 +4,14 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
+	"reflect"
+	"sync"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/static"
+	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
 	traefiktls "github.com/containous/traefik/v2/pkg/tls"
 	"golang.org/x/net/http2"
@@ -23,30 +26,100 @@ func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, erro
 	return t.Transport.RoundTrip(req)
 }
 
-// createRoundtripper creates an http.Roundtripper configured with the Transport configuration settings.
+// NewRoundTripperManager creates a new RoundTripperManager.
+func NewRoundTripperManager() *RoundTripperManager {
+	return &RoundTripperManager{
+		roundTrippers: make(map[string]http.RoundTripper),
+		configs:       make(map[string]*dynamic.ServersTransport),
+	}
+}
+
+// RoundTripperManager handles roundtripper for the reverse proxy.
+type RoundTripperManager struct {
+	rtLock        sync.RWMutex
+	roundTrippers map[string]http.RoundTripper
+	configs       map[string]*dynamic.ServersTransport
+}
+
+// Update updates the roundtrippers configurations.
+func (r *RoundTripperManager) Update(newConfigs map[string]*dynamic.ServersTransport) {
+	r.rtLock.Lock()
+	defer r.rtLock.Unlock()
+
+	for configName, config := range r.configs {
+		newConfig, ok := newConfigs[configName]
+		if !ok {
+			delete(r.configs, configName)
+			delete(r.roundTrippers, configName)
+			continue
+		}
+
+		if reflect.DeepEqual(newConfig, config) {
+			continue
+		}
+
+		var err error
+		r.roundTrippers[configName], err = createRoundTripper(newConfig)
+		if err != nil {
+			log.WithoutContext().Errorf("Could not configure HTTP Transport %s, fallback on default transport: %v", configName, err)
+			r.roundTrippers[configName] = http.DefaultTransport
+		}
+	}
+
+	for newConfigName, newConfig := range newConfigs {
+		if _, ok := r.configs[newConfigName]; ok {
+			continue
+		}
+
+		var err error
+		r.roundTrippers[newConfigName], err = createRoundTripper(newConfig)
+		if err != nil {
+			log.WithoutContext().Errorf("Could not configure HTTP Transport %s, fallback on default transport: %v", newConfigName, err)
+			r.roundTrippers[newConfigName] = http.DefaultTransport
+		}
+	}
+
+	r.configs = newConfigs
+}
+
+// Get get a roundtripper by name.
+func (r *RoundTripperManager) Get(name string) (http.RoundTripper, error) {
+	if len(name) == 0 {
+		name = "default@internal"
+	}
+
+	r.rtLock.RLock()
+	defer r.rtLock.RUnlock()
+
+	if rt, ok := r.roundTrippers[name]; ok {
+		return rt, nil
+	}
+
+	return nil, fmt.Errorf("servers transport not found %s", name)
+}
+
+// createRoundTripper creates an http.RoundTripper configured with the Transport configuration settings.
 // For the settings that can't be configured in Traefik it uses the default http.Transport settings.
-// An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost
-// in Traefik at this point in time. Setting this value to the default of 100 could lead to confusing
-// behavior and backwards compatibility issues.
-func createRoundtripper(transportConfiguration *static.ServersTransport) (http.RoundTripper, error) {
-	if transportConfiguration == nil {
+// An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHostin Traefik at this point in time.
+// Setting this value to the default of 100 could lead to confusing behavior and backwards compatibility issues.
+func createRoundTripper(cfg *dynamic.ServersTransport) (http.RoundTripper, error) {
+	if cfg == nil {
 		return nil, errors.New("no transport configuration given")
 	}
 
 	dialer := &net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
-		DualStack: true,
 	}
 
-	if transportConfiguration.ForwardingTimeouts != nil {
-		dialer.Timeout = time.Duration(transportConfiguration.ForwardingTimeouts.DialTimeout)
+	if cfg.ForwardingTimeouts != nil {
+		dialer.Timeout = time.Duration(cfg.ForwardingTimeouts.DialTimeout)
 	}
 
 	transport := &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
 		DialContext:           dialer.DialContext,
-		MaxIdleConnsPerHost:   transportConfiguration.MaxIdleConnsPerHost,
+		MaxIdleConnsPerHost:   cfg.MaxIdleConnsPerHost,
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
@@ -61,24 +134,21 @@ func createRoundtripper(transportConfiguration *static.ServersTransport) (http.R
 		},
 	})
 
-	if transportConfiguration.ForwardingTimeouts != nil {
-		transport.ResponseHeaderTimeout = time.Duration(transportConfiguration.ForwardingTimeouts.ResponseHeaderTimeout)
-		transport.IdleConnTimeout = time.Duration(transportConfiguration.ForwardingTimeouts.IdleConnTimeout)
+	if cfg.ForwardingTimeouts != nil {
+		transport.ResponseHeaderTimeout = time.Duration(cfg.ForwardingTimeouts.ResponseHeaderTimeout)
+		transport.IdleConnTimeout = time.Duration(cfg.ForwardingTimeouts.IdleConnTimeout)
 	}
 
-	if transportConfiguration.InsecureSkipVerify || len(transportConfiguration.RootCAs) > 0 {
+	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 {
 		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: transportConfiguration.InsecureSkipVerify,
-			RootCAs:            createRootCACertPool(transportConfiguration.RootCAs),
+			ServerName:         cfg.ServerName,
+			InsecureSkipVerify: cfg.InsecureSkipVerify,
+			RootCAs:            createRootCACertPool(cfg.RootCAs),
+			Certificates:       cfg.Certificates.GetCertificates(),
 		}
 	}
 
-	smartTransport, err := newSmartRoundTripper(transport)
-	if err != nil {
-		return nil, err
-	}
-
-	return smartTransport, nil
+	return newSmartRoundTripper(transport)
 }
 
 func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
@@ -98,14 +168,4 @@ func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
 	}
 
 	return roots
-}
-
-func setupDefaultRoundTripper(conf *static.ServersTransport) http.RoundTripper {
-	transport, err := createRoundtripper(conf)
-	if err != nil {
-		log.WithoutContext().Errorf("Could not configure HTTP Transport, fallbacking on default transport: %v", err)
-		return http.DefaultTransport
-	}
-
-	return transport
 }

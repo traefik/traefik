@@ -72,6 +72,7 @@ type LoadBalancerSpec struct {
 	Strategy           string                      `json:"strategy,omitempty"`
 	PassHostHeader     *bool                       `json:"passHostHeader,omitempty"`
 	ResponseForwarding *dynamic.ResponseForwarding `json:"responseForwarding,omitempty"`
+	ServersTransport   string                      `json:"serversTransport,omitempty"`
 
 	// Weight should only be specified when Name references a TraefikService object
 	// (and to be precise, one that embeds a Weighted Round Robin).

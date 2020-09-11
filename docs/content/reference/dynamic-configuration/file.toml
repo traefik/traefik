@@ -38,6 +38,7 @@
     [http.services.Service01]
       [http.services.Service01.loadBalancer]
         passHostHeader = true
+        serversTransport = "foobar"
         [http.services.Service01.loadBalancer.sticky]
           [http.services.Service01.loadBalancer.sticky.cookie]
             name = "foobar"
@@ -264,6 +265,41 @@
     [http.middlewares.Middleware22]
       [http.middlewares.Middleware22.stripPrefixRegex]
         regex = ["foobar", "foobar"]
+  [http.serversTransports]
+    [http.serversTransports.ServersTransport0]
+      serverName = "foobar"
+      insecureSkipVerify = true
+      rootCAs = ["foobar", "foobar"]
+      maxIdleConnsPerHost = 42
+
+      [[http.serversTransports.ServersTransport0.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+
+      [[http.serversTransports.ServersTransport0.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+      [http.serversTransports.ServersTransport0.forwardingTimeouts]
+        dialTimeout = "42s"
+        responseHeaderTimeout = "42s"
+        idleConnTimeout = "42s"
+    [http.serversTransports.ServersTransport1]
+      serverName = "foobar"
+      insecureSkipVerify = true
+      rootCAs = ["foobar", "foobar"]
+      maxIdleConnsPerHost = 42
+
+      [[http.serversTransports.ServersTransport1.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+
+      [[http.serversTransports.ServersTransport1.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+      [http.serversTransports.ServersTransport1.forwardingTimeouts]
+        dialTimeout = "42s"
+        responseHeaderTimeout = "42s"
+        idleConnTimeout = "42s"
 
 [tcp]
   [tcp.routers]
