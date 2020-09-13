@@ -406,6 +406,12 @@
         status = ["foobar", "foobar"]
         service = "foobar"
         query = "foobar"
+    [http.middlewares.Middleware22]
+      [http.middlewares.Middleware22.forwardAuth]
+        address = "https://foo.bar"
+        trustForwardHeader = true
+        authResponseHeaders = ["foo", "bar"]
+        allowList = ["192.168.0.0/24"]
   [http.services]
     [http.services.Service0]
       [http.services.Service0.loadBalancer]

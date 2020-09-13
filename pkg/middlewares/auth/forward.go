@@ -31,6 +31,7 @@ type forwardAuth struct {
 	name                string
 	client              http.Client
 	trustForwardHeader  bool
+	allowList           []*net.IPNet
 }
 
 // NewForward creates a forward auth middleware.
@@ -43,6 +44,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		next:                next,
 		name:                name,
 		trustForwardHeader:  config.TrustForwardHeader,
+		allowList:           parseIPList(config.AllowList),
 	}
 
 	// Ensure our request client does not follow redirects
@@ -73,6 +75,15 @@ func (fa *forwardAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), fa.name, forwardedTypeName))
+
+	if fa.remoteAddrInAllowList(req.RemoteAddr) {
+		logMessage := fmt.Sprintf("Bypassing forward auth check. Remote address (%s) in allow list (%s)", req.RemoteAddr, fa.allowList)
+		logger.Debug(logMessage)
+
+		req.RequestURI = req.URL.RequestURI()
+		fa.next.ServeHTTP(rw, req)
+		return
+	}
 
 	forwardReq, err := http.NewRequest(http.MethodGet, fa.address, nil)
 	tracing.LogRequest(tracing.GetSpan(req), forwardReq)
@@ -110,7 +121,6 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	defer forwardResponse.Body.Close()
 
 	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
@@ -214,4 +224,20 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool) {
 	default:
 		forwardReq.Header.Del(xForwardedURI)
 	}
+}
+
+func (fa *forwardAuth) remoteAddrInAllowList(remoteAddr string) bool {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		return false
+	}
+
+	ip := net.ParseIP(host)
+	for _, ipnet := range fa.allowList {
+		if ipnet.Contains(ip) {
+			return true
+		}
+	}
+
+	return false
 }

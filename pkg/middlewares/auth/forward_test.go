@@ -20,6 +20,38 @@ import (
 	"github.com/vulcand/oxy/forward"
 )
 
+func TestForwardAuthAllowList(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	}))
+	t.Cleanup(server.Close)
+
+	middleware, err := NewForward(context.Background(), next, dynamic.ForwardAuth{
+		Address:   server.URL,
+		AllowList: []string{"127.0.0.1/24"},
+	}, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	body, err := ioutil.ReadAll(res.Body)
+	require.NoError(t, err)
+	err = res.Body.Close()
+	require.NoError(t, err)
+
+	assert.Equal(t, "traefik\n", string(body))
+}
+
 func TestForwardAuthFail(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "traefik")
