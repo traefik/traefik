@@ -62,21 +62,6 @@ func (b *basicAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 	return b.name, tracing.SpanKindNoneEnum
 }
 
-func (b *basicAuth) remoteAddrInAllowList(remoteAddr string) bool {
-        ip, _, err := net.SplitHostPort(remoteAddr)
-	if err != nil {
-	   return false
-	}
-	
-	for _, ipnet := range b.allowList {
-		if ipnet.Contains(net.ParseIP(ip)) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), b.name, basicTypeName))
 
@@ -121,6 +106,22 @@ func (b *basicAuth) secretBasic(user, realm string) string {
 	}
 
 	return ""
+}
+
+func (b *basicAuth) remoteAddrInAllowList(remoteAddr string) bool {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		return false
+	}
+
+	ip := net.ParseIP(host)
+	for _, ipnet := range b.allowList {
+		if ipnet.Contains(ip) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func basicUserParser(user string) (string, string, error) {
