@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -27,6 +28,7 @@ type basicAuth struct {
 	headerField  string
 	removeHeader bool
 	name         string
+	allowList    []*net.IPNet
 }
 
 // NewBasic creates a basicAuth middleware.
@@ -43,6 +45,7 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 		headerField:  authConfig.HeaderField,
 		removeHeader: authConfig.RemoveHeader,
 		name:         name,
+		allowList:    parseIPList(authConfig.AllowList),
 	}
 
 	realm := defaultRealm
@@ -57,6 +60,21 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 
 func (b *basicAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 	return b.name, tracing.SpanKindNoneEnum
+}
+
+func (b *basicAuth) remoteAddrInAllowList(remoteAddr string) bool {
+        ip, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+	   return false
+	}
+	
+	for _, ipnet := range b.allowList {
+		if ipnet.Contains(net.ParseIP(ip)) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -75,7 +93,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logData.Core[accesslog.ClientUsername] = user
 	}
 
-	if !ok {
+	if !ok && !b.remoteAddrInAllowList(req.RemoteAddr) {
 		logger.Debug("Authentication failed")
 		tracing.SetErrorWithEvent(req, "Authentication failed")
 
@@ -111,4 +129,19 @@ func basicUserParser(user string) (string, string, error) {
 		return "", "", fmt.Errorf("error parsing BasicUser: %v", user)
 	}
 	return split[0], split[1], nil
+}
+
+func parseIPList(ips []string) []*net.IPNet {
+	var ipnets []*net.IPNet
+
+	for _, ip := range ips {
+		_, ipnet, err := net.ParseCIDR(ip)
+		if err != nil {
+			continue
+		}
+
+		ipnets = append(ipnets, ipnet)
+	}
+
+	return ipnets
 }

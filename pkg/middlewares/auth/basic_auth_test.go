@@ -15,6 +15,33 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBasicAuthAllowList(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+
+	auth := dynamic.BasicAuth{
+		Users: []string{"test:test"},
+		AllowList: []string{"127.0.0.1/24", "10.10.10.0/12"},
+	}
+	
+	authMiddleware, err := NewBasic(context.Background(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(authMiddleware)
+	defer ts.Close()
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.SetBasicAuth("test", "test")
+	
+	// Client's remote address is always 127.0.0.1.
+	// Because http.DefaultClient sets the req.RemoteAddr
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
+}
+
 func TestBasicAuthFail(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "traefik")

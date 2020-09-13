@@ -77,11 +77,12 @@ type Auth struct {
 
 // BasicAuth holds the HTTP basic authentication configuration.
 type BasicAuth struct {
-	Users        Users  `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty"`
-	UsersFile    string `json:"usersFile,omitempty" toml:"usersFile,omitempty" yaml:"usersFile,omitempty"`
-	Realm        string `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`
-	RemoveHeader bool   `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty"`
-	HeaderField  string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
+	Users        Users    `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty"`
+	UsersFile    string   `json:"usersFile,omitempty" toml:"usersFile,omitempty" yaml:"usersFile,omitempty"`
+	Realm        string   `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`
+	RemoveHeader bool     `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty"`
+	HeaderField  string   `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
+	AllowList    []string `json:"allowList,omitempty" toml:"allowList,omitempty" yaml:"allowList,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
