@@ -141,7 +141,7 @@ The TLS options allow one to configure some parameters of the TLS connection.
     create a TLSOptions CR with the name `default` in the namespace `default`.
     To explicitly use a different TLSOptions CR (and using the Kubernetes Ingress resources) you'll 
     have to add an annotation to the Ingress in the following form:
-    "traefik.ingress.kubernetes.io/router.tls.options: <namespace-of-CR>-<name-of-CR>@kubernetescrd"
+    `traefik.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
 
 ### Minimum TLS Version
 

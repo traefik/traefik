@@ -63,7 +63,7 @@ spec:
       - name: stripprefix
 ```
 
-```yaml tab="Kubernetes Ingress
+```yaml tab="Kubernetes Ingress"
 # As a Kubernetes Ingress
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -189,7 +189,7 @@ then you'll have to append to the middleware name, the `@` separator, followed b
     and therefore this specification would be ignored even if present.
     On the other hand, if you declare the middleware as a CRD in Kubernetes and use the non-crd Ingress 
     objects, you'll have to add the kubernetes namespace, the middleware lives in, to the annotation like
-    this "<middleware-namespace>-<middleware-name>@kubernetescrd".
+    this `<middleware-namespace>-<middleware-name>@kubernetescrd`.
 
 !!! abstract "Referencing a Middleware from Another Provider"
 
