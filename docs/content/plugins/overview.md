@@ -32,7 +32,7 @@ To complete the connection, Traefik Pilot will issue a token that must be added 
 
 Traefik users can create their own plugins and contribute them to the Traefik Pilot catalog to share them with the community.
 
-Plugins are written in [Go](https://golang.org/) and their code is executed by an [embedded Go interpreter](https://github.com/containous/yaegi).
+Plugins are written in [Go](https://golang.org/) and their code is executed by an [embedded Go interpreter](https://github.com/traefik/yaegi).
 There is no need to compile binaries and all plugins are 100% cross-platform.
 
 To learn more and see code for example Traefik plugins, please see the [developer documentation](https://github.com/containous/plugindemo).
