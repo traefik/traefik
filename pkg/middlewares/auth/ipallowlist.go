@@ -6,12 +6,15 @@ import (
 )
 
 type ipAllowList struct {
-	ipnets []*net.IPNet
-	ips    []net.IP
+	ipnets                []*net.IPNet
+	ips                   []net.IP
+	clientIPSourceHeaders []string
 }
 
-func newIPAllowList(ips []string) ipAllowList {
-	var list ipAllowList
+func newIPAllowList(ips []string, clientIPHeaders []string) ipAllowList {
+	var list = ipAllowList{
+		clientIPSourceHeaders: clientIPHeaders,
+	}
 
 	for _, ip := range ips {
 		_, ipnet, err := net.ParseCIDR(ip)
@@ -29,12 +32,24 @@ func newIPAllowList(ips []string) ipAllowList {
 }
 
 func (l *ipAllowList) Check(r *http.Request) bool {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return false
+	if len(l.clientIPSourceHeaders) == 0 {
+		host, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			return false
+		}
+
+		return l.check(net.ParseIP(host))
 	}
 
-	return l.check(net.ParseIP(host))
+	for _, h := range l.clientIPSourceHeaders {
+		if ip := r.Header.Get(h); ip != "" {
+			if l.check(net.ParseIP(ip)) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (l *ipAllowList) check(ip net.IP) bool {

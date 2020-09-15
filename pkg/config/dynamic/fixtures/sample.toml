@@ -276,7 +276,10 @@
         realm = "foobar"
         removeHeader = true
         headerField = "foobar"
-    [http.middlewares.Middleware14]
+        [http.middlewares.Middleware13.basicAuth.allowList]
+          ipList = ["192.168.0.0/24"]
+          clientIPSourceHeaders = ["X-Real-IP"]
+[http.middlewares.Middleware14]
       [http.middlewares.Middleware14.digestAuth]
         users = ["foobar", "foobar"]
         usersFile = "foobar"
@@ -411,7 +414,9 @@
         address = "https://foo.bar"
         trustForwardHeader = true
         authResponseHeaders = ["foo", "bar"]
-        allowList = ["192.168.0.0/24"]
+        [http.middlewares.Middleware22.forwardAuth.allowList]
+          ipList = ["192.168.0.0/24"]
+          clientIPSourceHeaders = ["X-Real-IP"]
   [http.services]
     [http.services.Service0]
       [http.services.Service0.loadBalancer]

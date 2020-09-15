@@ -44,7 +44,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		next:                next,
 		name:                name,
 		trustForwardHeader:  config.TrustForwardHeader,
-		ipAllowList:         newIPAllowList(config.AllowList),
+		ipAllowList:         newIPAllowList(config.AllowList.IPList, config.AllowList.ClientIPSourceHeaders),
 	}
 
 	// Ensure our request client does not follow redirects

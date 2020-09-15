@@ -31,8 +31,11 @@ func TestForwardAuthAllowList(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	middleware, err := NewForward(context.Background(), next, dynamic.ForwardAuth{
-		Address:   server.URL,
-		AllowList: []string{"127.0.0.1"},
+		Address: server.URL,
+		AllowList: dynamic.AllowList{
+			IPList:                []string{"10.10.10.11"},
+			ClientIPSourceHeaders: []string{"X-Real-IP"},
+		},
 	}, "authTest")
 	require.NoError(t, err)
 
@@ -40,6 +43,7 @@ func TestForwardAuthAllowList(t *testing.T) {
 	t.Cleanup(ts.Close)
 
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.Header.Set("X-Real-IP", "10.10.10.11")
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)

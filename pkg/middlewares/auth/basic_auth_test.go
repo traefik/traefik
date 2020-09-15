@@ -21,8 +21,11 @@ func TestBasicAuthAllowList(t *testing.T) {
 	})
 
 	auth := dynamic.BasicAuth{
-		Users:     []string{"test:test"},
-		AllowList: []string{"127.0.0.1", "127.0.0.1/24", "10.10.10.0/12"},
+		Users: []string{"test:test"},
+		AllowList: dynamic.AllowList{
+			IPList:                []string{"127.0.0.1", "127.0.0.1/24", "10.10.10.0/12"},
+			ClientIPSourceHeaders: []string{"X-Real-IP"},
+		},
 	}
 
 	authMiddleware, err := NewBasic(context.Background(), next, auth, "authTest")
@@ -33,13 +36,22 @@ func TestBasicAuthAllowList(t *testing.T) {
 
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
+	req.Header.Set("X-Real-IP", "10.10.10.10")
 
-	// Client's remote address is always 127.0.0.1.
-	// Because http.DefaultClient sets the req.RemoteAddr
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
+
+	// remove the ip from header
+	req.Header.Del("X-Real-IP")
+
+	// Client's remote address is always 127.0.0.1.
+	// Because http.DefaultClient sets the req.RemoteAddr
+	res, err = http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 }
 
 func TestBasicAuthFail(t *testing.T) {

@@ -44,7 +44,7 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 		headerField:  authConfig.HeaderField,
 		removeHeader: authConfig.RemoveHeader,
 		name:         name,
-		ipAllowList:  newIPAllowList(authConfig.AllowList),
+		ipAllowList:  newIPAllowList(authConfig.AllowList.IPList, authConfig.AllowList.ClientIPSourceHeaders),
 	}
 
 	realm := defaultRealm
