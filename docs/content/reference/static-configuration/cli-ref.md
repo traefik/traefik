@@ -168,9 +168,6 @@ plugin's GOPATH.
 `--experimental.devplugin.modulename`:  
 plugin's module name.
 
-`--experimental.pilot.token`:  
-Traefik Pilot token.
-
 `--experimental.plugins.<name>.modulename`:  
 plugin's module name.
 
@@ -287,6 +284,9 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 
 `--metrics.statsd.pushinterval`:  
 StatsD push interval. (Default: ```10```)
+
+`--pilot.token`:  
+Traefik Pilot token.
 
 `--ping`:  
 Enable ping. (Default: ```false```)
