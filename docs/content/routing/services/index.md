@@ -317,7 +317,7 @@ Below are the available options for the health check mechanism:
 
 - `path` is appended to the server URL to set the health check endpoint.
 - `scheme`, if defined, will replace the server URL `scheme` for the health check endpoint
-- `hostname`, if defined, will apply `Host` header `hostname` to the the health check request.
+- `hostname`, if defined, will apply `Host` header `hostname` to the health check request.
 - `port`, if defined, will replace the server URL `port` for the health check endpoint.
 - `interval` defines the frequency of the health check calls.
 - `timeout` defines the maximum duration Traefik will wait for a health check request before considering the server failed (unhealthy).
