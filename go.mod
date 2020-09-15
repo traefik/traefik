@@ -38,7 +38,7 @@ require (
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
 	github.com/go-acme/lego/v4 v4.0.1
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
-	github.com/go-kit/kit v0.10.0
+	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
 	github.com/golang/protobuf v1.3.4
 	github.com/google/go-github/v28 v28.1.1
 	github.com/gorilla/mux v1.7.3
@@ -105,7 +105,6 @@ replace github.com/docker/docker => github.com/docker/engine v1.4.2-0.2020020422
 replace (
 	github.com/abbot/go-http-auth => github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e
 	github.com/go-check/check => github.com/containous/check v0.0.0-20170915194414-ca0bf163426a
-	github.com/go-kit/kit => github.com/ldez/kit v0.10.1-0.20200908020131-aec49936fb69
 	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20181024131434-c33f32e26898
 	github.com/mailgun/minheap => github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
 	github.com/mailgun/multibuf => github.com/containous/multibuf v0.0.0-20190809014333-8b6c9a7e6bba
