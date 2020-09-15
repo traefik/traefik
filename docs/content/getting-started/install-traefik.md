@@ -128,7 +128,7 @@ spec:
 
 ## Use the Binary Distribution
 
-Grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page.
+Grab the latest binary from the [releases](https://github.com/traefik/traefik/releases) page.
 
 ??? info "Check the integrity of the downloaded file"
 

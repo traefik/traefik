@@ -15,7 +15,7 @@ The title must be short and descriptive. (~60 characters)
 
 ## Description
 
-Follow the [pull request template](https://github.com/containous/traefik/blob/master/.github/PULL_REQUEST_TEMPLATE.md) as much as possible.
+Follow the [pull request template](https://github.com/traefik/traefik/blob/master/.github/PULL_REQUEST_TEMPLATE.md) as much as possible.
 
 Explain the conditions which led you to write this PR: give us context.
 The context should lead to something, an idea or a problem that you’re facing.

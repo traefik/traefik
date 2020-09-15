@@ -7,7 +7,7 @@
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
 [![Go Report Card](https://goreportcard.com/badge/containous/traefik)](https://goreportcard.com/report/containous/traefik)
 [![](https://images.microbadger.com/badges/image/traefik.svg)](https://microbadger.com/images/traefik)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/traefik/traefik/blob/master/LICENSE.md)
 [![Join the community support forum at https://community.containo.us/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.containo.us/)
 [![Twitter](https://img.shields.io/twitter/follow/traefik.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefik)
 
@@ -102,7 +102,7 @@ If you need commercial support, please contact [Containo.us](https://containo.us
 
 ## Download
 
-- Grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
+- Grab the latest binary from the [releases](https://github.com/traefik/traefik/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
 
 ```shell
 ./traefik --configFile=traefik.toml
@@ -117,7 +117,7 @@ docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.to
 - Or get the sources:
 
 ```shell
-git clone https://github.com/containous/traefik
+git clone https://github.com/traefik/traefik
 ```
 
 ## Introductory Videos
