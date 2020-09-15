@@ -104,7 +104,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 }
 
 func getServiceName(app marathon.Application) string {
-	return strings.Replace(strings.TrimPrefix(app.ID, "/"), "/", "_", -1)
+	return strings.ReplaceAll(strings.TrimPrefix(app.ID, "/"), "/", "_")
 }
 
 func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *dynamic.HTTPConfiguration) error {

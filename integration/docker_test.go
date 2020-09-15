@@ -129,7 +129,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
-	req.Host = fmt.Sprintf("%s.docker.localhost", strings.Replace(name, "_", "-", -1))
+	req.Host = fmt.Sprintf("%s.docker.localhost", strings.ReplaceAll(name, "_", "-"))
 
 	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
