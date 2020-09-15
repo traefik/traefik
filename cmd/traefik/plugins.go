@@ -14,7 +14,7 @@ func initPlugins(staticCfg *static.Configuration) (*plugins.Client, map[string]p
 
 	opts := plugins.ClientOptions{
 		Output: outputDir,
-		Token:  staticCfg.Experimental.Pilot.Token,
+		Token:  staticCfg.Pilot.Token,
 	}
 
 	client, err := plugins.NewClient(opts)
@@ -31,9 +31,7 @@ func initPlugins(staticCfg *static.Configuration) (*plugins.Client, map[string]p
 }
 
 func isPilotEnabled(staticCfg *static.Configuration) bool {
-	return staticCfg.Experimental != nil &&
-		staticCfg.Experimental.Pilot != nil &&
-		staticCfg.Experimental.Pilot.Token != ""
+	return staticCfg.Pilot != nil && staticCfg.Pilot.Token != ""
 }
 
 func hasPlugins(staticCfg *static.Configuration) bool {
