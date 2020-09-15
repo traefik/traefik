@@ -125,6 +125,6 @@ func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-cha
 	return c.watchChan, nil
 }
 
-func (c clientMock) UpdateIngressStatus(_ *networkingv1beta1.Ingress, _, _ string) error {
+func (c clientMock) UpdateIngressStatus(_ *networkingv1beta1.Ingress, _ []corev1.LoadBalancerIngress) error {
 	return c.apiIngressStatusError
 }
