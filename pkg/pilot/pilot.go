@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/metrics"
-	"github.com/containous/traefik/v2/pkg/safe"
-	"github.com/containous/traefik/v2/pkg/version"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/metrics"
+	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/version"
 )
 
 const baseURL = "https://instance-info.pilot.traefik.io/public"

@@ -12,13 +12,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/job"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/provider"
-	"github.com/containous/traefik/v2/pkg/safe"
-	"github.com/containous/traefik/v2/pkg/types"
-	"github.com/containous/traefik/v2/pkg/version"
 	"github.com/docker/cli/cli/connhelper"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainertypes "github.com/docker/docker/api/types/container"
@@ -30,6 +23,13 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/job"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v2/pkg/version"
 )
 
 const (

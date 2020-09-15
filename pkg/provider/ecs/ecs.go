@@ -15,12 +15,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/cenkalti/backoff/v4"
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/job"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/provider"
-	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/patrickmn/go-cache"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/job"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
 // Provider holds configurations of the provider.

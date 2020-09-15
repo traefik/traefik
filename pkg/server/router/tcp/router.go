@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/rules"
-	"github.com/containous/traefik/v2/pkg/server/provider"
-	tcpservice "github.com/containous/traefik/v2/pkg/server/service/tcp"
-	"github.com/containous/traefik/v2/pkg/tcp"
-	traefiktls "github.com/containous/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/rules"
+	"github.com/traefik/traefik/v2/pkg/server/provider"
+	tcpservice "github.com/traefik/traefik/v2/pkg/server/service/tcp"
+	"github.com/traefik/traefik/v2/pkg/tcp"
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
 const (

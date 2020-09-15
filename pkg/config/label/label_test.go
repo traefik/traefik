@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
 func TestDecodeConfiguration(t *testing.T) {

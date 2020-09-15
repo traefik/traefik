@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/miekg/dns"
 	"github.com/patrickmn/go-cache"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 type cnameResolv struct {

@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/v2/integration/try"
 	"github.com/go-check/check"
 	"github.com/gorilla/websocket"
+	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
 

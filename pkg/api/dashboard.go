@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/containous/traefik/v2/pkg/log"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // DashboardHandler expose dashboard routes.

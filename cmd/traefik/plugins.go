@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/containous/traefik/v2/pkg/config/static"
-	"github.com/containous/traefik/v2/pkg/plugins"
+	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/pkg/plugins"
 )
 
 const outputDir = "./plugins-storage/"

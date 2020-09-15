@@ -29,8 +29,8 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	dynamic "github.com/containous/traefik/v2/pkg/config/dynamic"
-	types "github.com/containous/traefik/v2/pkg/types"
+	dynamic "github.com/traefik/traefik/v2/pkg/config/dynamic"
+	types "github.com/traefik/traefik/v2/pkg/types"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 

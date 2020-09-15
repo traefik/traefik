@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/provider"
-	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 )
 

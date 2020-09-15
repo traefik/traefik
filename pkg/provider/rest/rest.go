@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/provider"
-	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/gorilla/mux"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/unrolled/render"
 )
 
