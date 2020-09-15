@@ -586,7 +586,7 @@ WqeUSNGYV//RunTeuRDAf5OxehERb1srzBXhRZ3cZdzXbgR/`,
 
 			content := sanitize(test.toSanitize)
 
-			expected := url.QueryEscape(strings.Replace(test.expected, "\n", "", -1))
+			expected := url.QueryEscape(strings.ReplaceAll(test.expected, "\n", ""))
 			assert.Equal(t, expected, content, "The sanitized certificates should be equal")
 		})
 	}

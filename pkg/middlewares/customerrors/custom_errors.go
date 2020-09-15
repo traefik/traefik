@@ -98,7 +98,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			var query string
 			if len(c.backendQuery) > 0 {
 				query = "/" + strings.TrimPrefix(c.backendQuery, "/")
-				query = strings.Replace(query, "{status}", strconv.Itoa(code), -1)
+				query = strings.ReplaceAll(query, "{status}", strconv.Itoa(code))
 			}
 
 			pageReq, err := newRequest(backendURL + query)
