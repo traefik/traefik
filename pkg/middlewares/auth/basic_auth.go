@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -28,7 +27,7 @@ type basicAuth struct {
 	headerField  string
 	removeHeader bool
 	name         string
-	allowList    []*net.IPNet
+	ipAllowList  ipAllowList
 }
 
 // NewBasic creates a basicAuth middleware.
@@ -45,7 +44,7 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 		headerField:  authConfig.HeaderField,
 		removeHeader: authConfig.RemoveHeader,
 		name:         name,
-		allowList:    parseIPList(authConfig.AllowList),
+		ipAllowList:  newIPAllowList(authConfig.AllowList),
 	}
 
 	realm := defaultRealm
@@ -78,7 +77,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logData.Core[accesslog.ClientUsername] = user
 	}
 
-	if !ok && !b.remoteAddrInAllowList(req.RemoteAddr) {
+	if !ok && !b.ipAllowList.Check(req) {
 		logger.Debug("Authentication failed")
 		tracing.SetErrorWithEvent(req, "Authentication failed")
 
@@ -108,41 +107,10 @@ func (b *basicAuth) secretBasic(user, realm string) string {
 	return ""
 }
 
-func (b *basicAuth) remoteAddrInAllowList(remoteAddr string) bool {
-	host, _, err := net.SplitHostPort(remoteAddr)
-	if err != nil {
-		return false
-	}
-
-	ip := net.ParseIP(host)
-	for _, ipnet := range b.allowList {
-		if ipnet.Contains(ip) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func basicUserParser(user string) (string, string, error) {
 	split := strings.Split(user, ":")
 	if len(split) != 2 {
 		return "", "", fmt.Errorf("error parsing BasicUser: %v", user)
 	}
 	return split[0], split[1], nil
-}
-
-func parseIPList(ips []string) []*net.IPNet {
-	var ipnets []*net.IPNet
-
-	for _, ip := range ips {
-		_, ipnet, err := net.ParseCIDR(ip)
-		if err != nil {
-			continue
-		}
-
-		ipnets = append(ipnets, ipnet)
-	}
-
-	return ipnets
 }

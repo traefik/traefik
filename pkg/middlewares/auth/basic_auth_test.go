@@ -21,10 +21,10 @@ func TestBasicAuthAllowList(t *testing.T) {
 	})
 
 	auth := dynamic.BasicAuth{
-		Users: []string{"test:test"},
-		AllowList: []string{"127.0.0.1/24", "10.10.10.0/12"},
+		Users:     []string{"test:test"},
+		AllowList: []string{"127.0.0.1", "127.0.0.1/24", "10.10.10.0/12"},
 	}
-	
+
 	authMiddleware, err := NewBasic(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
 
@@ -33,7 +33,7 @@ func TestBasicAuthAllowList(t *testing.T) {
 
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
-	
+
 	// Client's remote address is always 127.0.0.1.
 	// Because http.DefaultClient sets the req.RemoteAddr
 	res, err := http.DefaultClient.Do(req)

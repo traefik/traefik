@@ -32,7 +32,7 @@ func TestForwardAuthAllowList(t *testing.T) {
 
 	middleware, err := NewForward(context.Background(), next, dynamic.ForwardAuth{
 		Address:   server.URL,
-		AllowList: []string{"127.0.0.1/24"},
+		AllowList: []string{"127.0.0.1"},
 	}, "authTest")
 	require.NoError(t, err)
 
