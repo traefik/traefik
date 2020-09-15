@@ -17,7 +17,7 @@ Pieces of middleware can be combined in chains to fit every scenario.
 # As a Docker Label
 whoami:
   #  A container that exposes an API to show its IP address
-  image: containous/whoami
+  image: traefik/whoami
   labels:
     # Create a middleware named `foo-add-prefix`
     - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"

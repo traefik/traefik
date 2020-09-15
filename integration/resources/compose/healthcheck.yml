@@ -1,5 +1,5 @@
 whoami1:
-  image: containous/whoami
+  image: traefik/whoami
 
 whoami2:
-  image: containous/whoami
+  image: traefik/whoami

@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: containouswhoami
-          image: containous/whoami
+          image: traefik/whoami
           ports:
             - containerPort: 80
 
@@ -64,7 +64,7 @@ spec:
     spec:
       containers:
         - name: containouswhoamitcp
-          image: containous/whoamitcp
+          image: traefik/whoamitcp
           ports:
             - containerPort: 8080
 
@@ -107,7 +107,7 @@ spec:
     spec:
       containers:
         - name: containouswhoamiudp
-          image: containous/whoamiudp:dev
+          image: traefik/whoamiudp:dev
           ports:
             - containerPort: 8090
 

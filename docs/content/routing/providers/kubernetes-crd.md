@@ -177,7 +177,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         spec:
           containers:
             - name: containouswhoami
-              image: containous/whoami
+              image: traefik/whoami
               ports:
                 - containerPort: 80
     
@@ -220,7 +220,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         spec:
           containers:
             - name: containouswhoamitcp
-              image: containous/whoamitcp
+              image: traefik/whoamitcp
               ports:
                 - containerPort: 8080
     
@@ -263,7 +263,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         spec:
           containers:
             - name: containouswhoamiudp
-              image: containous/whoamiudp:dev
+              image: traefik/whoamiudp:dev
               ports:
                 - containerPort: 8080
     
@@ -1026,7 +1026,7 @@ and there is a second level because each whoami service is a `replicaset` and is
         spec:
           containers:
             - name: whoami1
-              image: containous/whoami
+              image: traefik/whoami
               ports:
                 - name: web
                   containerPort: 80
@@ -1052,7 +1052,7 @@ and there is a second level because each whoami service is a `replicaset` and is
         spec:
           containers:
             - name: whoami2
-              image: containous/whoami
+              image: traefik/whoami
               ports:
                 - name: web
                   containerPort: 80

@@ -4,4 +4,4 @@ haproxy:
     - ../haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
 
 whoami:
-  image: containous/whoami
+  image: traefik/whoami

@@ -35,7 +35,7 @@ This will also be used as a starting point for the other docker-compose guides.
 
 ## Details
 
-- As an example we use [whoami](https://github.com/containous/whoami) (a tiny Go server that prints os information and HTTP request to output) which was used to define our `simple-service` container.
+- As an example we use [whoami](https://github.com/traefik/whoami) (a tiny Go server that prints os information and HTTP request to output) which was used to define our `simple-service` container.
 
 - We define an entry point, along with the exposure of the matching port within docker-compose, which basically allow us to "open and accept" HTTP traffic: 
 

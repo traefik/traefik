@@ -1,5 +1,5 @@
 server1:
-  image: containous/whoami
+  image: traefik/whoami
   labels:
     - traefik.enable=true
     - traefik.http.services.service1.loadbalancer.server.port=80

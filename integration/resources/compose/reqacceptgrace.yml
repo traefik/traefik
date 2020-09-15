@@ -1,2 +1,2 @@
 whoami:
-  image: containous/whoami
+  image: traefik/whoami

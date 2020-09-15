@@ -51,7 +51,7 @@ Also note the RBAC authorization resources; they'll be referenced through the `s
 
 ### Services
 
-Then, the services. One for Traefik itself, and one for the app it routes for, i.e. in this case our demo HTTP server: [whoami](https://github.com/containous/whoami).
+Then, the services. One for Traefik itself, and one for the app it routes for, i.e. in this case our demo HTTP server: [whoami](https://github.com/traefik/whoami).
 
 ```yaml
 --8<-- "content/user-guides/crd-acme/02-services.yml"

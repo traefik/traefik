@@ -11,14 +11,14 @@ consul-agent:
   links:
     - consul
 whoami1:
-  image: containous/whoami:v1.3.0
+  image: traefik/whoami
   hostname: whoami1
 whoami2:
-  image: containous/whoami:v1.3.0
+  image: traefik/whoami
   hostname: whoami2
 whoami3:
-  image: containous/whoami:v1.3.0
+  image: traefik/whoami
   hostname: whoami3
 whoamitcp:
-  image: containous/whoamitcp
+  image: traefik/whoamitcp
   hostname: whoamitcp
