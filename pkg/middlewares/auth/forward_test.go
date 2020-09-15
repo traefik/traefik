@@ -400,10 +400,6 @@ func Test_writeHeader(t *testing.T) {
 			},
 			authRequestHeaders: []string{
 				"X-CustomHeader",
-				"X-Forwarded-Proto",
-				"X-Forwarded-Host",
-				"X-Forwarded-Uri",
-				"X-Forwarded-Method",
 				"X-Non-Exists-Header",
 			},
 			trustForwardHeader: false,
