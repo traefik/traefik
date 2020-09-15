@@ -9,7 +9,7 @@ spec:
     - name: myapp
       port: 8000
   selector:
-    app: containous
+    app: traefiklabs
     task: whoamiudp
 
 ---
@@ -39,7 +39,7 @@ spec:
     - name: myapp2
       port: 8080
   selector:
-    app: containous
+    app: traefiklabs
     task: whoamiudp2
 
 ---
@@ -69,7 +69,7 @@ spec:
     - name: myapp3
       port: 8083
   selector:
-    app: containous
+    app: traefiklabs
     task: whoamiudp3
 
 ---

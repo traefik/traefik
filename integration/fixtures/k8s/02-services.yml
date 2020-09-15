@@ -4,19 +4,19 @@ metadata:
   name: whoami
   namespace: default
   labels:
-    app: containous
+    app: traefiklabs
     name: whoami
 
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: containous
+      app: traefiklabs
       task: whoami
   template:
     metadata:
       labels:
-        app: containous
+        app: traefiklabs
         task: whoami
     spec:
       containers:
@@ -37,7 +37,7 @@ spec:
     - name: http
       port: 80
   selector:
-    app: containous
+    app: traefiklabs
     task: whoami
 
 ---
@@ -47,19 +47,19 @@ metadata:
   name: whoamitcp
   namespace: default
   labels:
-    app: containous
+    app: traefiklabs
     name: whoamitcp
 
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: containous
+      app: traefiklabs
       task: whoamitcp
   template:
     metadata:
       labels:
-        app: containous
+        app: traefiklabs
         task: whoamitcp
     spec:
       containers:
@@ -80,7 +80,7 @@ spec:
     - name: footcp
       port: 8080
   selector:
-    app: containous
+    app: traefiklabs
     task: whoamitcp
 
 ---
@@ -90,19 +90,19 @@ metadata:
   name: whoamiudp
   namespace: default
   labels:
-    app: containous
+    app: traefiklabs
     name: whoamiudp
 
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: containous
+      app: traefiklabs
       task: whoamiudp
   template:
     metadata:
       labels:
-        app: containous
+        app: traefiklabs
         task: whoamiudp
     spec:
       containers:
@@ -124,7 +124,7 @@ spec:
       name: fooudp
       port: 8090
   selector:
-    app: containous
+    app: traefiklabs
     task: whoamiudp
 
 ---

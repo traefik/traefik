@@ -151,19 +151,19 @@ which in turn will create the resulting routers, services, handlers, etc.
     metadata:
       name: whoami
       labels:
-        app: containous
+        app: traefiklabs
         name: whoami
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: containous
+          app: traefiklabs
           task: whoami
       template:
         metadata:
           labels:
-            app: containous
+            app: traefiklabs
             task: whoami
         spec:
           containers:
@@ -183,7 +183,7 @@ which in turn will create the resulting routers, services, handlers, etc.
         - name: http
           port: 80
       selector:
-        app: containous
+        app: traefiklabs
         task: whoami
     ```
 
