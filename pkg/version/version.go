@@ -72,7 +72,7 @@ func CheckNewVersion() {
 	}
 	client.BaseURL = updateURL
 
-	releases, resp, err := client.Repositories.ListReleases(context.Background(), "containous", "traefik", nil)
+	releases, resp, err := client.Repositories.ListReleases(context.Background(), "traefik", "traefik", nil)
 	if err != nil {
 		logger.Warnf("Error checking new version: %s", err)
 		return

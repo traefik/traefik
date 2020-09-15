@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-export REPO='containous/traefik'
+export REPO='traefik/traefik'
 
 if VERSION=$(git describe --exact-match --abbrev=0 --tags);
 then
