@@ -12,7 +12,7 @@ type ipAllowList struct {
 }
 
 func newIPAllowList(ips []string, clientIPHeaders []string) ipAllowList {
-	var list = ipAllowList{
+	list := ipAllowList{
 		clientIPSourceHeaders: clientIPHeaders,
 	}
 

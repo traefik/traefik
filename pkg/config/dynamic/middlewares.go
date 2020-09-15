@@ -148,6 +148,9 @@ type ForwardAuth struct {
 	AllowList           AllowList  `json:"allowList,omitempty" toml:"allowList,omitempty" yaml:"allowList,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
+
+// AllowList holds the exception configuration.
 type AllowList struct {
 	IPList                []string `json:"ipList,omitempty" toml:"ipList,omitempty" yaml:"ipList,omitempty"`
 	ClientIPSourceHeaders []string `json:"clientIPSourceHeaders,omitempty" toml:"ipList,omitempty" yaml:"ipList,omitempty"`
