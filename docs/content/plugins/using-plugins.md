@@ -16,20 +16,20 @@ In the example below, we add the [`blockpath`](http://github.com/traefik/plugin-
 
 ```toml tab="File (TOML)"
 [entryPoints]
-    [entryPoints.web]
-        address = ":80"
+  [entryPoints.web]
+    address = ":80"
 
 [pilot]
-    token = "xxxxxxxxx"
+  token = "xxxxxxxxx"
 
 [experimental.plugins]
-    [experimental.plugins.block]
-      modulename = "github.com/traefik/plugin-blockpath"
-      version = "v0.2.0"
+  [experimental.plugins.block]
+    modulename = "github.com/traefik/plugin-blockpath"
+    version = "v0.2.0"
     
-    [experimental.plugins.rewrite]
-      modulename = "github.com/traefik/plugin-rewritebody"
-      version = "v0.3.0"
+  [experimental.plugins.rewrite]
+    modulename = "github.com/traefik/plugin-rewritebody"
+    version = "v0.3.0"
 ```
 
 ```yaml tab="File (YAML)"
@@ -40,13 +40,14 @@ entryPoints:
 pilot:
     token: xxxxxxxxx
 
-plugins:
+experimental:
+  plugins:
     block:
-        modulename: github.com/traefik/plugin-blockpath
-        version: v0.2.0
+      modulename: github.com/traefik/plugin-blockpath
+      version: v0.2.0
     rewrite:
-        modulename: github.com/traefik/plugin-rewritebody
-        version: v0.3.0
+      modulename: github.com/traefik/plugin-rewritebody
+      version: v0.3.0
 ```
 
 ```bash tab="CLI"
