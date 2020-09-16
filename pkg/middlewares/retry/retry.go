@@ -9,11 +9,11 @@ import (
 	"net/http"
 	"net/http/httptrace"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/middlewares"
-	"github.com/containous/traefik/v2/pkg/tracing"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/traefik/traefik/v2/pkg/tracing"
 )
 
 // Compile time validation that the response writer implements http interfaces correctly.
@@ -64,7 +64,7 @@ func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
 
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// if we might make multiple attempts, swap the body for an ioutil.NopCloser
-	// cf https://github.com/containous/traefik/issues/1008
+	// cf https://github.com/traefik/traefik/issues/1008
 	if r.attempts > 1 {
 		body := req.Body
 		defer body.Close()

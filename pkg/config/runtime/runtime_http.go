@@ -6,8 +6,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // GetRoutersByEntryPoints returns all the http routers by entry points name and routers name.

@@ -12,13 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/rules"
-	"github.com/containous/traefik/v2/pkg/safe"
-	traefiktls "github.com/containous/traefik/v2/pkg/tls"
-	"github.com/containous/traefik/v2/pkg/types"
-	"github.com/containous/traefik/v2/pkg/version"
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/dns01"
@@ -26,6 +19,13 @@ import (
 	"github.com/go-acme/lego/v4/providers/dns"
 	"github.com/go-acme/lego/v4/registration"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/rules"
+	"github.com/traefik/traefik/v2/pkg/safe"
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v2/pkg/version"
 )
 
 // oscpMustStaple enables OSCP stapling as from https://github.com/go-acme/lego/issues/270.

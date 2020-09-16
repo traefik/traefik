@@ -5,11 +5,11 @@ import (
 	"errors"
 	"sort"
 
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/server/provider"
-	udpservice "github.com/containous/traefik/v2/pkg/server/service/udp"
-	"github.com/containous/traefik/v2/pkg/udp"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/server/provider"
+	udpservice "github.com/traefik/traefik/v2/pkg/server/service/udp"
+	"github.com/traefik/traefik/v2/pkg/udp"
 )
 
 // NewManager Creates a new Manager.

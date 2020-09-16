@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/safe"
-	"github.com/containous/traefik/v2/pkg/types"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/statsd"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 var (

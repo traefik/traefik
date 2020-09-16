@@ -10,13 +10,13 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/containous/traefik/v2/integration/try"
-	"github.com/containous/traefik/v2/pkg/config/static"
-	"github.com/containous/traefik/v2/pkg/provider/acme"
-	"github.com/containous/traefik/v2/pkg/testhelpers"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/go-check/check"
 	"github.com/miekg/dns"
+	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/pkg/provider/acme"
+	"github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v2/pkg/types"
 	checker "github.com/vdemeester/shakers"
 )
 

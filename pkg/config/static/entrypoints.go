@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 // EntryPoint holds the entry point configuration.

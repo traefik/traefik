@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
 )
 
 type serviceManager interface {

@@ -15,10 +15,10 @@ import (
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 type key string

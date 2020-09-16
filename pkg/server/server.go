@@ -6,11 +6,11 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/metrics"
-	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
-	"github.com/containous/traefik/v2/pkg/safe"
-	"github.com/containous/traefik/v2/pkg/server/middleware"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/metrics"
+	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/server/middleware"
 )
 
 // Server is the reverse-proxy/load-balancer engine.

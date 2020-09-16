@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // Header is a middleware that helps setup a few basic security features.

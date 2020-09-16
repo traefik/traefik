@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/tls/generate"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/sirupsen/logrus"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/tls/generate"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 // DefaultTLSOptions the default TLS options.

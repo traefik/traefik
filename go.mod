@@ -1,4 +1,4 @@
-module github.com/containous/traefik/v2
+module github.com/traefik/traefik/v2
 
 go 1.15
 
@@ -18,7 +18,6 @@ require (
 	github.com/cenkalti/backoff/v4 v4.0.2
 	github.com/containerd/containerd v1.3.2 // indirect
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
-	github.com/containous/yaegi v0.8.14
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/cli v0.0.0-20200221155518-740919cc7fc0
@@ -74,6 +73,7 @@ require (
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tinylib/msgp v1.0.2 // indirect
 	github.com/traefik/paerser v0.1.0
+	github.com/traefik/yaegi v0.9.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/unrolled/render v1.0.2

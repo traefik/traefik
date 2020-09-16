@@ -3,8 +3,8 @@ package cmd
 import (
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/static"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/config/static"
 )
 
 // TraefikCmdConfiguration wraps the static configuration and extra parameters.

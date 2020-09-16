@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 type contextKey int

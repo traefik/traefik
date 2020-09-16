@@ -6,12 +6,12 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/provider"
-	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
 // ConfigurationWatcher watches configuration changes.

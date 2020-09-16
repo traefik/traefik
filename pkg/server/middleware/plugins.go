@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/plugins"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/plugins"
 )
 
 // PluginsBuilder the plugin's builder interface.

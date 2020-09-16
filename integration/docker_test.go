@@ -9,19 +9,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/v2/integration/try"
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/go-check/check"
 	d "github.com/libkermit/docker"
 	"github.com/libkermit/docker-check"
+	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
 
 // Images to have or pull before the build in order to make it work.
 // FIXME handle this offline but loading them before build.
 var RequiredImages = map[string]string{
-	"swarm":             "1.0.0",
-	"containous/whoami": "latest",
+	"swarm":          "1.0.0",
+	"traefik/whoami": "latest",
 }
 
 // Docker tests suite.
@@ -163,7 +163,7 @@ func (s *DockerSuite) TestDockerContainersWithTCPLabels(c *check.C) {
 		"traefik.tcp.Services.Super.Loadbalancer.server.port": "8080",
 	}
 
-	s.startContainerWithLabels(c, "containous/whoamitcp", labels, "-name", "my.super.host")
+	s.startContainerWithLabels(c, "traefik/whoamitcp", labels, "-name", "my.super.host")
 
 	// Start traefik
 	cmd, display := s.traefikCmd(withConfigFile(file))
