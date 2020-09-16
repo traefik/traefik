@@ -16,20 +16,20 @@ In the example below, we add the [`blockpath`](http://github.com/traefik/plugin-
 
 ```toml tab="File (TOML)"
 [entryPoints]
-  [entryPoints.web]
-    address = ":80"
+    [entryPoints.web]
+        address = ":80"
 
-[experimental]
-  [experimental.pilot]
+[pilot]
     token = "xxxxxxxxx"
 
-  [experimental.plugins]
-    [experimental.plugins.block]
-      modulename = "github.com/traefik/plugin-blockpath"
-      version = "v0.1.2"
-    [experimental.plugins.rewrite]
-      modulename = "github.com/traefik/plugin-rewritebody"
-      version = "v0.2.0"
+[experimental.plugins]
+    [experimental.plugins.block]
+      modulename = "github.com/traefik/plugin-blockpath"
+      version = "v0.2.0"
+    
+    [experimental.plugins.rewrite]
+      modulename = "github.com/traefik/plugin-rewritebody"
+      version = "v0.3.0"
 ```
 
 ```yaml tab="File (YAML)"
@@ -37,26 +37,25 @@ entryPoints:
   web:
     address: :80
 
-experimental:
-  pilot:
+pilot:
     token: xxxxxxxxx
 
-  plugins:
+plugins:
     block:
-      modulename: github.com/traefik/plugin-blockpath
-      version: v0.1.2
+        modulename: github.com/traefik/plugin-blockpath
+        version: v0.2.0
     rewrite:
-      modulename: github.com/traefik/plugin-rewritebody
-      version: v0.2.0
+        modulename: github.com/traefik/plugin-rewritebody
+        version: v0.3.0
 ```
 
 ```bash tab="CLI"
 --entryPoints.web.address=:80
---experimental.pilot.token=xxxxxxxxx
+--pilot.token=xxxxxxxxx
 --experimental.plugins.block.modulename=github.com/traefik/plugin-blockpath
---experimental.plugins.block.version=v0.1.2
+--experimental.plugins.block.version=v0.2.0
 --experimental.plugins.rewrite.modulename=github.com/traefik/plugin-rewritebody
---experimental.plugins.rewrite.version=v0.2.0
+--experimental.plugins.rewrite.version=v0.3.0
 ```
 
 ## Configuring Plugins
