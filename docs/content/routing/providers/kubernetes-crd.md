@@ -263,7 +263,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         spec:
           containers:
             - name: whoamiudp
-              image: traefik/whoamiudp:dev
+              image: traefik/whoamiudp:latest
               ports:
                 - containerPort: 8080
     
