@@ -35,4 +35,4 @@ Traefik users can create their own plugins and contribute them to the Traefik Pi
 Plugins are written in [Go](https://golang.org/) and their code is executed by an [embedded Go interpreter](https://github.com/traefik/yaegi).
 There is no need to compile binaries and all plugins are 100% cross-platform.
 
-To learn more and see code for example Traefik plugins, please see the [developer documentation](https://github.com/containous/plugindemo).
+To learn more and see code for example Traefik plugins, please see the [developer documentation](https://github.com/traefik/plugindemo).

@@ -9,7 +9,7 @@ You can install Traefik with the following flavors:
 
 ## Use the Official Docker Image
 
-Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/v2.3/traefik.sample.toml):
+Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and run it with the [sample configuration file](https://raw.githubusercontent.com/traefik/traefik/v2.3/traefik.sample.toml):
 
 ```bash
 docker run -d -p 8080:8080 -p 80:80 \
@@ -42,7 +42,7 @@ Ensure that the following requirements are met:
 Add Traefik's chart repository to Helm:
 
 ```bash
-helm repo add traefik https://containous.github.io/traefik-helm-chart
+helm repo add traefik https://traefik.github.io/traefik-helm-chart
 ```
 
 You can update the chart repository by running:

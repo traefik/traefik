@@ -43,7 +43,7 @@ We use [PRM](https://github.com/ldez/prm) to manage locally pull requests.
 
 ## Bots
 
-### [Myrmica Lobicornis](https://github.com/containous/lobicornis/)
+### [Myrmica Lobicornis](https://github.com/traefik/lobicornis/)
 
 Update and Merge Pull Request.
 
@@ -67,12 +67,12 @@ This label is used when:
 * Merging branches into the master
 * Preparing the release
 
-### [Myrmica Bibikoffi](https://github.com/containous/bibikoffi/)
+### [Myrmica Bibikoffi](https://github.com/traefik/bibikoffi/)
 
 * closes stale issues [cron]
     * use some criterion as number of days between creation, last update, labels, ...
 
-### [Myrmica Aloba](https://github.com/containous/aloba)
+### [Myrmica Aloba](https://github.com/traefik/aloba)
 
 Manage GitHub labels.
 

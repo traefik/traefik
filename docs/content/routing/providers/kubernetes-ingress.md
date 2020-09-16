@@ -167,7 +167,7 @@ which in turn will create the resulting routers, services, handlers, etc.
             task: whoami
         spec:
           containers:
-            - name: containouswhoami
+            - name: whoami
               image: traefik/whoami
               ports:
                 - containerPort: 80

@@ -176,7 +176,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
             task: whoami
         spec:
           containers:
-            - name: containouswhoami
+            - name: whoami
               image: traefik/whoami
               ports:
                 - containerPort: 80
@@ -219,7 +219,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
             task: whoamitcp
         spec:
           containers:
-            - name: containouswhoamitcp
+            - name: whoamitcp
               image: traefik/whoamitcp
               ports:
                 - containerPort: 8080
@@ -262,7 +262,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
             task: whoamiudp
         spec:
           containers:
-            - name: containouswhoamiudp
+            - name: whoamiudp
               image: traefik/whoamiudp:dev
               ports:
                 - containerPort: 8080
