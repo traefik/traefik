@@ -3,9 +3,9 @@
 <img src="docs/content/assets/img/traefik.logo.png" alt="Traefik" title="Traefik" />
 </p>
 
-[![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
+[![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/traefik/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/traefik/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
-[![Go Report Card](https://goreportcard.com/badge/containous/traefik)](https://goreportcard.com/report/containous/traefik)
+[![Go Report Card](https://goreportcard.com/badge/traefik/traefik)](https://goreportcard.com/report/traefik/traefik)
 [![](https://images.microbadger.com/badges/image/traefik.svg)](https://microbadger.com/images/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/traefik/traefik/blob/master/LICENSE.md)
 [![Join the community support forum at https://community.containo.us/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.containo.us/)
@@ -102,13 +102,13 @@ If you need commercial support, please contact [Containo.us](https://containo.us
 
 ## Download
 
-- Grab the latest binary from the [releases](https://github.com/traefik/traefik/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
+- Grab the latest binary from the [releases](https://github.com/traefik/traefik/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/traefik/traefik/master/traefik.sample.toml):
 
 ```shell
 ./traefik --configFile=traefik.toml
 ```
 
-- Or use the official tiny Docker image and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
+- Or use the official tiny Docker image and run it with the [sample configuration file](https://raw.githubusercontent.com/traefik/traefik/master/traefik.sample.toml):
 
 ```shell
 docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik
