@@ -1,3 +1,19 @@
+## [v2.3.0-rc6](https://github.com/traefik/traefik/tree/v2.3.0-rc6) (2020-09-16)
+[All Commits](https://github.com/traefik/traefik/compare/v2.3.0-rc5...v2.3.0-rc6)
+
+**Enhancements:**
+- **[pilot]** Moves pilot outside the experimental section. ([#7287](https://github.com/traefik/traefik/pull/7287) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[metrics]** fix: uint64 alignment in go-kit. ([#7289](https://github.com/traefik/traefik/pull/7289) by [ldez](https://github.com/ldez))
+- **[pilot,webui]** Avoid Traefik Pilot iframe code in Traefik webui regarding notifications ([#7272](https://github.com/traefik/traefik/pull/7272) by [matthieuh](https://github.com/matthieuh))
+
+**Documentation:**
+- **[k8s]** Add the ingressclass resource in the ingress RBAC documentation ([#7290](https://github.com/traefik/traefik/pull/7290) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
+**Misc:**
+- **[middleware]** Merge current v2.2 branch into v2.3 ([#7288](https://github.com/traefik/traefik/pull/7288) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.3.0-rc5](https://github.com/traefik/traefik/tree/v2.3.0-rc5) (2020-09-07)
 [All Commits](https://github.com/traefik/traefik/compare/v2.3.0-rc4...v2.3.0-rc5)
 
