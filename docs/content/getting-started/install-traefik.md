@@ -32,7 +32,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
     The Traefik Chart from 
     [Helm's default charts repository](https://github.com/helm/charts/tree/master/stable/traefik) is still using [Traefik v1.7](https://docs.traefik.io/v1.7).
 
-Traefik can be installed in Kubernetes using the Helm chart from <https://github.com/containous/traefik-helm-chart>.
+Traefik can be installed in Kubernetes using the Helm chart from <https://github.com/traefik/traefik-helm-chart>.
 
 Ensure that the following requirements are met:
 
@@ -76,7 +76,7 @@ helm install traefik traefik/traefik
     {: #helm-custom-values }
     
     The values are not (yet) documented, but are self-explanatory:
-    you can look at the [default `values.yaml`](https://github.com/containous/traefik-helm-chart/blob/master/traefik/values.yaml) file to explore possibilities.
+    you can look at the [default `values.yaml`](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml) file to explore possibilities.
     
     You can also set Traefik command line flags using `additionalArguments`.
     Example of installation with logging set to `DEBUG`:
