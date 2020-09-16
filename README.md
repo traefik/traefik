@@ -3,7 +3,7 @@
 <img src="docs/content/assets/img/traefik.logo.png" alt="Traefik" title="Traefik" />
 </p>
 
-[![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/traefik/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/traefik/traefik)
+[![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
 [![Go Report Card](https://goreportcard.com/badge/traefik/traefik)](https://goreportcard.com/report/traefik/traefik)
 [![](https://images.microbadger.com/badges/image/traefik.svg)](https://microbadger.com/images/traefik)
