@@ -101,8 +101,6 @@ require (
 // Docker v19.03.6
 replace github.com/docker/docker => github.com/docker/engine v1.4.2-0.20200204220554-5f6d6f3f2203
 
-replace github.com/traefik/yaegi => github.com/containous/yaegi v0.8.14
-
 // Containous forks
 replace (
 	github.com/abbot/go-http-auth => github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e
