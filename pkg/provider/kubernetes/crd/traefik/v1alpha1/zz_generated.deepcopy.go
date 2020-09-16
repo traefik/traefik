@@ -171,6 +171,11 @@ func (in *ForwardAuth) DeepCopyInto(out *ForwardAuth) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.AuthRequestHeaders != nil {
+		in, out := &in.AuthRequestHeaders, &out.AuthRequestHeaders
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.TLS != nil {
 		in, out := &in.TLS, &out.TLS
 		*out = new(ClientTLS)
