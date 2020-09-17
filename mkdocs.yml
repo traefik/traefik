@@ -5,7 +5,7 @@ site_url: https://docs.traefik.io
 dev_addr: 0.0.0.0:8000
 
 repo_name: 'GitHub'
-repo_url: 'https://github.com/containous/traefik'
+repo_url: 'https://github.com/traefik/traefik'
 edit_uri: 'edit/v1.7/docs/'
 
 docs_dir: 'docs'
@@ -26,7 +26,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: "Copyright &copy; 2016-2019 Containous"
+copyright: "Copyright &copy; 2016-2019 Containous; 2020 Traefik Labs"
 
 # only to force the use of the analytics partials
 google_analytics:
@@ -38,7 +38,7 @@ google_analytics:
 #extra:
 #  social:
 #    - type: 'github'
-#      link: 'https://github.com/containous/traefik'
+#      link: 'https://github.com/traefik/traefik'
 #    - type: 'stack-overflow'
 #      link: 'https://stackoverflow.com/questions/tagged/traefik'
 #    - type: 'slack'

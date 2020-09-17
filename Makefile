@@ -14,12 +14,12 @@ TRAEFIK_ENVS := \
 SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/')
 
 BIND_DIR := "dist"
-TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/containous/traefik/$(BIND_DIR)"
+TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/traefik/traefik/$(BIND_DIR)"
 
 GIT_BRANCH := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
 TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(subst /,-,$(GIT_BRANCH)))
 REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
-TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"containous/traefik")
+TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"traefik/traefik")
 INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock")
 TRAEFIK_DOC_IMAGE := traefik-docs
 TRAEFIK_DOC_VERIFY_IMAGE := $(TRAEFIK_DOC_IMAGE)-verify
