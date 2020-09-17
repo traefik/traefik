@@ -10,7 +10,7 @@ feature by feature, of how the configuration looked like in v1, and how it now l
 
 !!! info "Migration Helper"
 
-    We created a tool to help during the migration: [traefik-migration-tool](https://github.com/containous/traefik-migration-tool)
+    We created a tool to help during the migration: [traefik-migration-tool](https://github.com/traefik/traefik-migration-tool)
 
     This tool allows to:
 

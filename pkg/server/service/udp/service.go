@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/server/provider"
-	"github.com/containous/traefik/v2/pkg/udp"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/server/provider"
+	"github.com/traefik/traefik/v2/pkg/udp"
 )
 
 // Manager handles UDP services creation.

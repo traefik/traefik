@@ -4,11 +4,11 @@ import (
 	"io"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/opentracing/opentracing-go"
 	zipkinot "github.com/openzipkin-contrib/zipkin-go-opentracing"
 	"github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/reporter/http"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // Name sets the name of this tracer.

@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
 func TestGetBestCertificate(t *testing.T) {
@@ -96,8 +96,8 @@ func loadTestCert(certName string, uppercase bool) (*tls.Certificate, error) {
 	}
 
 	staticCert, err := tls.LoadX509KeyPair(
-		fmt.Sprintf("../../integration/fixtures/https/%s.cert", strings.Replace(certName, "*", replacement, -1)),
-		fmt.Sprintf("../../integration/fixtures/https/%s.key", strings.Replace(certName, "*", replacement, -1)),
+		fmt.Sprintf("../../integration/fixtures/https/%s.cert", strings.ReplaceAll(certName, "*", replacement)),
+		fmt.Sprintf("../../integration/fixtures/https/%s.key", strings.ReplaceAll(certName, "*", replacement)),
 	)
 	if err != nil {
 		return nil, err

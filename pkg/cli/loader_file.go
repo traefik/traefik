@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/traefik/paerser/cli"
 	"github.com/traefik/paerser/file"
 	"github.com/traefik/paerser/flag"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // FileLoader loads a configuration from a file.

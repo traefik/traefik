@@ -2,8 +2,8 @@ package zk
 
 import (
 	"github.com/abronan/valkeyrie/store"
-	"github.com/containous/traefik/v2/pkg/provider"
-	"github.com/containous/traefik/v2/pkg/provider/kv"
+	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/provider/kv"
 )
 
 var _ provider.Provider = (*Provider)(nil)

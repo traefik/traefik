@@ -3,9 +3,9 @@ package instana
 import (
 	"io"
 
-	"github.com/containous/traefik/v2/pkg/log"
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // Name sets the name of this tracer.

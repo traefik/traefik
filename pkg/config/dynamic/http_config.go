@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/tls"
-	"github.com/containous/traefik/v2/pkg/types"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true

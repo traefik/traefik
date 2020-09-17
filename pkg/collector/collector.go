@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/anonymize"
-	"github.com/containous/traefik/v2/pkg/config/static"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/version"
 	"github.com/mitchellh/hashstructure"
+	"github.com/traefik/traefik/v2/pkg/anonymize"
+	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/version"
 )
 
 // collectorURL URL where the stats are send.

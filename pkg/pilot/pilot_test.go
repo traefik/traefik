@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/metrics"
-	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/metrics"
+	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
 func TestTick(t *testing.T) {

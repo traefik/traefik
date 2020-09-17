@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/opentracing/opentracing-go"
+	"github.com/traefik/traefik/v2/pkg/log"
 	jaegercli "github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/zipkin"

@@ -5,15 +5,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/config/static"
-	"github.com/containous/traefik/v2/pkg/metrics"
-	"github.com/containous/traefik/v2/pkg/server/middleware"
-	"github.com/containous/traefik/v2/pkg/server/service"
-	th "github.com/containous/traefik/v2/pkg/testhelpers"
-	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/pkg/metrics"
+	"github.com/traefik/traefik/v2/pkg/server/middleware"
+	"github.com/traefik/traefik/v2/pkg/server/service"
+	th "github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
 func TestReuseService(t *testing.T) {

@@ -7,7 +7,7 @@ Don't Waste Time Calling Unhealthy Services
 
 The circuit breaker protects your system from stacking requests to unhealthy services (resulting in cascading failures).
 
-When your system is healthy, the circuit is close (normal operations). 
+When your system is healthy, the circuit is closed (normal operations).
 When your system becomes unhealthy, the circuit becomes open and the requests are no longer forwarded (but handled by a fallback mechanism).
 
 To assess if your system is healthy, the circuit breaker constantly monitors the services. 
@@ -82,13 +82,13 @@ http:
 
 There are three possible states for your circuit breaker:
 
-- Close (your service operates normally)
+- Closed (your service operates normally)
 - Open (the fallback mechanism takes over your service)
 - Recovering (the circuit breaker tries to resume normal operations by progressively sending requests to your service)
 
-### Close
+### Closed
 
-While close, the circuit breaker only collects metrics to analyze the behavior of the requests.
+While the circuit is closed, the circuit breaker only collects metrics to analyze the behavior of the requests.
 
 At specified intervals (`checkPeriod`), it will evaluate `expression` to decide if its state must change. 
 

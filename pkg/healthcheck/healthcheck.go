@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/go-kit/kit/metrics"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/vulcand/oxy/roundrobin"
 )
 

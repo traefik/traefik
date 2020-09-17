@@ -32,8 +32,10 @@ which in turn will create the resulting routers, services, handlers, etc.
           - watch
       - apiGroups:
           - extensions
+          - networking.k8s.io
         resources:
           - ingresses
+          - ingressclasses
         verbs:
           - get
           - list
@@ -149,24 +151,24 @@ which in turn will create the resulting routers, services, handlers, etc.
     metadata:
       name: whoami
       labels:
-        app: containous
+        app: traefiklabs
         name: whoami
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: containous
+          app: traefiklabs
           task: whoami
       template:
         metadata:
           labels:
-            app: containous
+            app: traefiklabs
             task: whoami
         spec:
           containers:
-            - name: containouswhoami
-              image: containous/whoami
+            - name: whoami
+              image: traefik/whoami
               ports:
                 - containerPort: 80
     
@@ -181,7 +183,7 @@ which in turn will create the resulting routers, services, handlers, etc.
         - name: http
           port: 80
       selector:
-        app: containous
+        app: traefiklabs
         task: whoami
     ```
 

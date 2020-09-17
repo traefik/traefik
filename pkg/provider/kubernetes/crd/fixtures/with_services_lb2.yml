@@ -39,7 +39,7 @@ spec:
     - name: web
       port: 8080
   selector:
-    app: containous
+    app: traefiklabs
     task: whoami5
 
 ---

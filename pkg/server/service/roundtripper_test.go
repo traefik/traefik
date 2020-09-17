@@ -9,10 +9,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	traefiktls "github.com/containous/traefik/v2/pkg/tls"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
 func Int32(i int32) *int32 {

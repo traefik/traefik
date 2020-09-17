@@ -8,9 +8,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/containous/yaegi/interp"
-	"github.com/containous/yaegi/stdlib"
 	"github.com/mitchellh/mapstructure"
+	"github.com/traefik/yaegi/interp"
+	"github.com/traefik/yaegi/stdlib"
 )
 
 const devPluginName = "dev"

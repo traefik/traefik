@@ -6,35 +6,35 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/ping"
-	acmeprovider "github.com/containous/traefik/v2/pkg/provider/acme"
-	"github.com/containous/traefik/v2/pkg/provider/consulcatalog"
-	"github.com/containous/traefik/v2/pkg/provider/docker"
-	"github.com/containous/traefik/v2/pkg/provider/ecs"
-	"github.com/containous/traefik/v2/pkg/provider/file"
-	"github.com/containous/traefik/v2/pkg/provider/http"
-	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd"
-	"github.com/containous/traefik/v2/pkg/provider/kubernetes/ingress"
-	"github.com/containous/traefik/v2/pkg/provider/kv/consul"
-	"github.com/containous/traefik/v2/pkg/provider/kv/etcd"
-	"github.com/containous/traefik/v2/pkg/provider/kv/redis"
-	"github.com/containous/traefik/v2/pkg/provider/kv/zk"
-	"github.com/containous/traefik/v2/pkg/provider/marathon"
-	"github.com/containous/traefik/v2/pkg/provider/rancher"
-	"github.com/containous/traefik/v2/pkg/provider/rest"
-	"github.com/containous/traefik/v2/pkg/tls"
-	"github.com/containous/traefik/v2/pkg/tracing/datadog"
-	"github.com/containous/traefik/v2/pkg/tracing/elastic"
-	"github.com/containous/traefik/v2/pkg/tracing/haystack"
-	"github.com/containous/traefik/v2/pkg/tracing/instana"
-	"github.com/containous/traefik/v2/pkg/tracing/jaeger"
-	"github.com/containous/traefik/v2/pkg/tracing/zipkin"
-	"github.com/containous/traefik/v2/pkg/types"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	legolog "github.com/go-acme/lego/v4/log"
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/ping"
+	acmeprovider "github.com/traefik/traefik/v2/pkg/provider/acme"
+	"github.com/traefik/traefik/v2/pkg/provider/consulcatalog"
+	"github.com/traefik/traefik/v2/pkg/provider/docker"
+	"github.com/traefik/traefik/v2/pkg/provider/ecs"
+	"github.com/traefik/traefik/v2/pkg/provider/file"
+	"github.com/traefik/traefik/v2/pkg/provider/http"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
+	"github.com/traefik/traefik/v2/pkg/provider/kv/consul"
+	"github.com/traefik/traefik/v2/pkg/provider/kv/etcd"
+	"github.com/traefik/traefik/v2/pkg/provider/kv/redis"
+	"github.com/traefik/traefik/v2/pkg/provider/kv/zk"
+	"github.com/traefik/traefik/v2/pkg/provider/marathon"
+	"github.com/traefik/traefik/v2/pkg/provider/rancher"
+	"github.com/traefik/traefik/v2/pkg/provider/rest"
+	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/tracing/datadog"
+	"github.com/traefik/traefik/v2/pkg/tracing/elastic"
+	"github.com/traefik/traefik/v2/pkg/tracing/haystack"
+	"github.com/traefik/traefik/v2/pkg/tracing/instana"
+	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
+	"github.com/traefik/traefik/v2/pkg/tracing/zipkin"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 const (
@@ -71,6 +71,8 @@ type Configuration struct {
 	HostResolver *types.HostResolverConfig `description:"Enable CNAME Flattening." json:"hostResolver,omitempty" toml:"hostResolver,omitempty" yaml:"hostResolver,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	CertificatesResolvers map[string]CertificateResolver `description:"Certificates resolvers configuration." json:"certificatesResolvers,omitempty" toml:"certificatesResolvers,omitempty" yaml:"certificatesResolvers,omitempty" export:"true"`
+
+	Pilot *Pilot `description:"Traefik Pilot configuration." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty"`
 
 	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty"`
 }

@@ -3,7 +3,7 @@ package middlewares
 import (
 	"context"
 
-	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // GetLoggerCtx creates a logger context with the middleware fields.

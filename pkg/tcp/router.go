@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 // Router is a TCP router.

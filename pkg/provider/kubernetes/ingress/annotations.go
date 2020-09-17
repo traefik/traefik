@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/config/label"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/config/label"
 )
 
 const (

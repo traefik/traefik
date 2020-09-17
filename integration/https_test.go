@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/containous/traefik/v2/integration/try"
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	traefiktls "github.com/containous/traefik/v2/pkg/tls"
 	"github.com/go-check/check"
+	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	checker "github.com/vdemeester/shakers"
 )
 

@@ -10,12 +10,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/middlewares/emptybackendhandler"
-	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/middlewares/emptybackendhandler"
+	"github.com/traefik/traefik/v2/pkg/testhelpers"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/roundrobin"
 )

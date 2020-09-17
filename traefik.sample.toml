@@ -2,7 +2,7 @@
 #
 # Configuration sample for Traefik v2.
 #
-# For Traefik v1: https://github.com/containous/traefik/blob/v1.7/traefik.sample.toml
+# For Traefik v1: https://github.com/traefik/traefik/blob/v1.7/traefik.sample.toml
 #
 ################################################################
 

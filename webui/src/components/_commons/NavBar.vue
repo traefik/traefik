@@ -5,7 +5,7 @@
         <q-toolbar class="row no-wrap items-center">
           <div class="q-pr-md logo">
             <img alt="logo" src="~assets/logo.svg">
-            <q-btn v-if="version" type="a" href="https://github.com/containous/traefik/" target="_blank" stretch flat no-caps :label="version" class="btn-menu version" />
+            <q-btn v-if="version" type="a" href="https://github.com/traefik/traefik/" target="_blank" stretch flat no-caps :label="version" class="btn-menu version" />
           </div>
           <q-tabs align="left" inline-label indicator-color="transparent" active-color="white" stretch>
             <q-route-tab to="/" icon="eva-home-outline" no-caps label="Dashboard" />
@@ -23,7 +23,7 @@
                   </q-item>
                   <q-separator />
                   <q-item>
-                    <q-btn type="a" href="https://github.com/containous/traefik/" target="_blank" flat color="accent" align="left" icon="eva-github-outline" no-caps label="Github repository" class="btn-submenu full-width"/>
+                    <q-btn type="a" href="https://github.com/traefik/traefik/" target="_blank" flat color="accent" align="left" icon="eva-github-outline" no-caps label="Github repository" class="btn-submenu full-width"/>
                   </q-item>
                 </q-menu>
               </q-btn>
@@ -46,6 +46,7 @@
 import config from '../../../package'
 import PlatformAuthState from '../platform/PlatformAuthState'
 import { mapActions, mapGetters } from 'vuex'
+import semverRegex from 'semver-regex'
 
 export default {
   name: 'NavBar',
@@ -53,7 +54,10 @@ export default {
   computed: {
     ...mapGetters('core', { coreVersion: 'version' }),
     version () {
-      return this.coreVersion.Version
+      if (!this.coreVersion.Version) return null
+      return semverRegex().test(this.coreVersion.Version)
+        ? this.coreVersion.Version
+        : this.coreVersion.Version.substring(0, 7)
     },
     parsedVersion () {
       if (this.version === undefined) {

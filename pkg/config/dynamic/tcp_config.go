@@ -3,7 +3,7 @@ package dynamic
 import (
 	"reflect"
 
-	"github.com/containous/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true

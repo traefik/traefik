@@ -12,10 +12,10 @@ import (
 	"github.com/abronan/valkeyrie"
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/consul"
-	"github.com/containous/traefik/v2/integration/try"
-	"github.com/containous/traefik/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/api"
 	checker "github.com/vdemeester/shakers"
 )
 

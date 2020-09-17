@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/config/label"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/provider"
-	"github.com/containous/traefik/v2/pkg/provider/constraints"
 	"github.com/gambol99/go-marathon"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/config/label"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/provider/constraints"
 )
 
 func (p *Provider) buildConfiguration(ctx context.Context, applications *marathon.Applications) *dynamic.Configuration {
@@ -104,7 +104,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 }
 
 func getServiceName(app marathon.Application) string {
-	return strings.Replace(strings.TrimPrefix(app.ID, "/"), "/", "_", -1)
+	return strings.ReplaceAll(strings.TrimPrefix(app.ID, "/"), "/", "_")
 }
 
 func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *dynamic.HTTPConfiguration) error {

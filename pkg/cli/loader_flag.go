@@ -3,9 +3,9 @@ package cli
 import (
 	"fmt"
 
-	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/traefik/paerser/cli"
 	"github.com/traefik/paerser/flag"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // FlagLoader loads configuration from flags.

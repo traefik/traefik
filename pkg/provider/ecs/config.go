@@ -9,12 +9,12 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/config/label"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/provider"
-	"github.com/containous/traefik/v2/pkg/provider/constraints"
 	"github.com/docker/go-connections/nat"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/config/label"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/provider/constraints"
 )
 
 func (p *Provider) buildConfiguration(ctx context.Context, instances []ecsInstance) *dynamic.Configuration {

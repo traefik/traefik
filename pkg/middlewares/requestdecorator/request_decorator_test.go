@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/containous/traefik/v2/pkg/testhelpers"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 func TestRequestHost(t *testing.T) {

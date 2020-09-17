@@ -11,13 +11,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/middlewares"
-	"github.com/containous/traefik/v2/pkg/tracing"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/sirupsen/logrus"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -98,7 +98,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			var query string
 			if len(c.backendQuery) > 0 {
 				query = "/" + strings.TrimPrefix(c.backendQuery, "/")
-				query = strings.Replace(query, "{status}", strconv.Itoa(code), -1)
+				query = strings.ReplaceAll(query, "{status}", strconv.Itoa(code))
 			}
 
 			pageReq, err := newRequest(backendURL + query)

@@ -68,7 +68,7 @@ spec:
     spec:
       containers:
         - name: whoami
-          image: containous/whoami
+          image: traefik/whoami
           ports:
             - name: web
               containerPort: 80

@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/ip"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/ip"
 )
 
 // +k8s:deepcopy-gen=true

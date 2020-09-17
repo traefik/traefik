@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS
+Copyright (c) 2016-2020 Containous SAS; 2020-2020 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,8 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
-	v1alpha1 "github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
+	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	rest "k8s.io/client-go/rest"
 )
 

@@ -3,8 +3,8 @@ package marathon
 import (
 	"math"
 
-	"github.com/containous/traefik/v2/pkg/config/label"
 	"github.com/gambol99/go-marathon"
+	"github.com/traefik/traefik/v2/pkg/config/label"
 )
 
 type configuration struct {

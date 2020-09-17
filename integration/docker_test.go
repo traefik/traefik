@@ -9,19 +9,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/v2/integration/try"
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/go-check/check"
 	d "github.com/libkermit/docker"
 	"github.com/libkermit/docker-check"
+	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
 
 // Images to have or pull before the build in order to make it work.
 // FIXME handle this offline but loading them before build.
 var RequiredImages = map[string]string{
-	"swarm":             "1.0.0",
-	"containous/whoami": "latest",
+	"swarm":          "1.0.0",
+	"traefik/whoami": "latest",
 }
 
 // Docker tests suite.
@@ -129,7 +129,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
-	req.Host = fmt.Sprintf("%s.docker.localhost", strings.Replace(name, "_", "-", -1))
+	req.Host = fmt.Sprintf("%s.docker.localhost", strings.ReplaceAll(name, "_", "-"))
 
 	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
@@ -163,7 +163,7 @@ func (s *DockerSuite) TestDockerContainersWithTCPLabels(c *check.C) {
 		"traefik.tcp.Services.Super.Loadbalancer.server.port": "8080",
 	}
 
-	s.startContainerWithLabels(c, "containous/whoamitcp", labels, "-name", "my.super.host")
+	s.startContainerWithLabels(c, "traefik/whoamitcp", labels, "-name", "my.super.host")
 
 	// Start traefik
 	cmd, display := s.traefikCmd(withConfigFile(file))

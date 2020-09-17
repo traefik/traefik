@@ -168,9 +168,6 @@ plugin's GOPATH.
 `TRAEFIK_EXPERIMENTAL_DEVPLUGIN_MODULENAME`:  
 plugin's module name.
 
-`TRAEFIK_EXPERIMENTAL_PILOT_TOKEN`:  
-Traefik Pilot token.
-
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_MODULENAME`:  
 plugin's module name.
 
@@ -287,6 +284,9 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 
 `TRAEFIK_METRICS_STATSD_PUSHINTERVAL`:  
 StatsD push interval. (Default: ```10```)
+
+`TRAEFIK_PILOT_TOKEN`:  
+Traefik Pilot token.
 
 `TRAEFIK_PING`:  
 Enable ping. (Default: ```false```)
