@@ -4,7 +4,7 @@ if [ -z "${VALIDATE_UPSTREAM:-}" ]; then
 	# this is kind of an expensive check, so let's not do this twice if we
 	# are running more than one validate bundlescript
 
-	VALIDATE_REPO='https://github.com/containous/traefik.git'
+	VALIDATE_REPO='https://github.com/traefik/traefik.git'
 	VALIDATE_BRANCH='v1.7'
 
         # Should not be needed for now O:)
