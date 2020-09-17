@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/safe"
 	"github.com/patrickmn/go-cache"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/safe"
 )
 
 // CertificateStore store for dynamic and static certificates

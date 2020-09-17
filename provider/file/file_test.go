@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
 )
 
 // createRandomFile Helper

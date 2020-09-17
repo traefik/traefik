@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/containous/traefik/provider/label"
+	"github.com/traefik/traefik/provider/label"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"

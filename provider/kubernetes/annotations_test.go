@@ -3,8 +3,8 @@ package kubernetes
 import (
 	"testing"
 
-	"github.com/containous/traefik/provider/label"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/provider/label"
 )
 
 func TestGetAnnotationName(t *testing.T) {

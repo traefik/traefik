@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/types"
 	"github.com/unrolled/secure"
 )
 

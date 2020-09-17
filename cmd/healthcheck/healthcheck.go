@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/cmd"
-	"github.com/containous/traefik/configuration"
+	"github.com/traefik/traefik/cmd"
+	"github.com/traefik/traefik/configuration"
 )
 
 // NewCmd builds a new HealthCheck command

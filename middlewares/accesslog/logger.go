@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/types"
 	"github.com/sirupsen/logrus"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/types"
 )
 
 type key string

@@ -3,8 +3,8 @@ package jaeger
 import (
 	"io"
 
-	"github.com/containous/traefik/log"
 	"github.com/opentracing/opentracing-go"
+	"github.com/traefik/traefik/log"
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	jaegermet "github.com/uber/jaeger-lib/metrics"

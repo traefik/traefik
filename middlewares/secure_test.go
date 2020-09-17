@@ -5,9 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/testhelpers"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/testhelpers"
+	"github.com/traefik/traefik/types"
 	"github.com/unrolled/secure"
 )
 

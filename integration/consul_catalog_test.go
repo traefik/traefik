@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/provider/label"
 	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
+	"github.com/traefik/traefik/integration/try"
+	"github.com/traefik/traefik/provider/label"
 	checker "github.com/vdemeester/shakers"
 )
 

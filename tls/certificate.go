@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/tls/generate"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/tls/generate"
 )
 
 var (

@@ -7,11 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/middlewares/tracing"
-	"github.com/containous/traefik/testhelpers"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/middlewares/tracing"
+	"github.com/traefik/traefik/testhelpers"
+	"github.com/traefik/traefik/types"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/forward"
 )

@@ -14,10 +14,10 @@ import (
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/consul"
 	"github.com/containous/staert"
-	"github.com/containous/traefik/cluster"
-	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/types"
 	"github.com/go-check/check"
+	"github.com/traefik/traefik/cluster"
+	"github.com/traefik/traefik/integration/try"
+	"github.com/traefik/traefik/types"
 	checker "github.com/vdemeester/shakers"
 )
 

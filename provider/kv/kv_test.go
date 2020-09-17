@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/abronan/valkeyrie/store"
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/types"
 )
 
 func TestKvWatchTree(t *testing.T) {

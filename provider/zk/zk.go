@@ -5,10 +5,10 @@ import (
 
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/zookeeper"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/provider/kv"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/provider/kv"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
 )
 
 var _ provider.Provider = (*Provider)(nil)

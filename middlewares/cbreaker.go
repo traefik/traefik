@@ -3,7 +3,7 @@ package middlewares
 import (
 	"net/http"
 
-	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/traefik/traefik/middlewares/tracing"
 	"github.com/vulcand/oxy/cbreaker"
 )
 

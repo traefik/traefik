@@ -8,9 +8,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/types"
 )
 
 func TestBuildConfiguration(t *testing.T) {

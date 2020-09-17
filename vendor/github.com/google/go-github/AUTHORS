@@ -1,0 +1,137 @@
+# This is the official list of go-github authors for copyright purposes.
+#
+# This does not necessarily list everyone who has contributed code, since in
+# some cases, their employer may be the copyright holder. To see the full list
+# of contributors, see the revision history in source control or
+# https://github.com/google/go-github/graphs/contributors.
+#
+# Authors who wish to be recognized in this file should add themselves (or
+# their employer, as appropriate).
+
+Abhinav Gupta <mail@abhinavg.net>
+Ainsley Chong <ainsley.chong@gmail.com>
+Akeda Bagus <akeda@x-team.com>
+Alec Thomas <alec@swapoff.org>
+Alex Bramley <a.bramley@gmail.com>
+Alexander Harkness <me@bearbin.net>
+Amey Sakhadeo <me@ameyms.com>
+Andreas Garnæs <https://github.com/andreas>
+Andrew Ryabchun <aryabchun@mail.ua>
+Andy Hume <andyhume@gmail.com>
+Andy Lindeman <andy@lindeman.io>
+Anshuman Bhartiya <anshuman.bhartiya@gmail.com>
+Arıl Bozoluk <arilbozoluk@hotmail.com>
+Austin Dizzy <dizzy@wow.com>
+Beshr Kayali <beshrkayali@gmail.com>
+Beyang Liu <beyang.liu@gmail.com>
+Billy Lynch <wlynch92@gmail.com>
+Björn Häuser <b.haeuser@rebuy.de>
+Brad Harris <bmharris@gmail.com>
+Bradley Falzon <brad@teambrad.net>
+Brian Egizi <brian@mojotech.com>
+Bryan Boreham <bryan@weave.works>
+Cami Diez <diezcami@gmail.com>
+Carlos Alexandro Becker <caarlos0@gmail.com>
+chandresh-pancholi <chandreshpancholi007@gmail.com>
+Charlie Yan <charlieyan08@gmail.com>
+Chris Roche <chris@vsco.co>
+Chris Schaefer <chris@dtzq.com>
+Colin Misare <github.com/cmisare>
+Craig Peterson <cpeterson@stackoverflow.com>
+Cristian Maglie <c.maglie@bug.st>
+Daehyeok Mun <daehyeok@gmail.com>
+Daniel Leavitt <daniel.leavitt@gmail.com>
+Dave Du Cros <davidducros@gmail.com>
+Dave Henderson <dhenderson@gmail.com>
+David Deng <daviddengcn@gmail.com>
+Diego Lapiduz <diego.lapiduz@cfpb.gov>
+Dmitri Shuralyov <shurcooL@gmail.com>
+dmnlk <seikima2demon@gmail.com>
+Don Petersen <don@donpetersen.net>
+Doug Turner <doug.turner@gmail.com>
+erwinvaneyk <erwinvaneyk@gmail.com>
+Fabrice <fabrice.vaillant@student.ecp.fr>
+Filippo Valsorda <hi@filippo.io>
+Florian Forster <ff@octo.it>
+Francis <hello@francismakes.com>
+Fredrik Jönsson <fredrik.jonsson@izettle.com>
+Garrett Squire <garrettsquire@gmail.com>
+Georgy Buranov <gburanov@gmail.com>
+Gnahz <p@oath.pl>
+Google Inc.
+griffin_stewie <panterathefamilyguy@gmail.com>
+Guz Alexander <kalimatas@gmail.com>
+Hanno Hecker <hanno.hecker@zalando.de>
+Hari haran <hariharan.uno@gmail.com>
+Huy Tr <kingbazoka@gmail.com>
+huydx <doxuanhuy@gmail.com>
+i2bskn <i2bskn@gmail.com>
+Isao Jonas <isao.jonas@gmail.com>
+isqua <isqua@isqua.ru>
+Jameel Haffejee <RC1140@republiccommandos.co.za>
+Jihoon Chung <j.c@navercorp.com>
+Joe Tsai <joetsai@digital-static.net>
+John Engelman <john.r.engelman@gmail.com>
+Juan Basso <jrbasso@gmail.com>
+Julien Rostand <jrostand@users.noreply.github.com>
+Justin Abrahms <justin@abrah.ms>
+jzhoucliqr <jzhou@cliqr.com>
+Keita Urashima <ursm@ursm.jp>
+Kevin Burke <kev@inburke.com>
+Konrad Malawski <konrad.malawski@project13.pl>
+Kookheon Kwon <kucuny@gmail.com>
+Krzysztof Kowalczyk <kkowalczyk@gmail.com>
+kyokomi <kyoko1220adword@gmail.com>
+Lucas Alcantara <lucasalcantaraf@gmail.com>
+Luke Evers <me@lukevers.com>
+Luke Roberts <email@luke-roberts.co.uk>
+Luke Young <luke@hydrantlabs.org>
+Maksim Zhylinski <uzzable@gmail.com>
+Martin-Louis Bright <mlbright@gmail.com>
+Mat Geist <matgeist@gmail.com>
+Matt Brender <mjbrender@gmail.com>
+Matt Landis <landis.matt@gmail.com>
+Maxime Bury <maxime.bury@gmail.com>
+Michael Tiller <michael.tiller@gmail.com>
+Michał Glapa <michal.glapa@gmail.com>
+Nathan VanBenschoten <nvanbenschoten@gmail.com>
+Neil O'Toole <neilotoole@apache.org>
+Nick Miyake <nmiyake@palantir.com>
+Nick Spragg <nick.spragg@bbc.co.uk>
+Ondřej Kupka <ondra.cap@gmail.com>
+Panagiotis Moustafellos <pmoust@gmail.com>
+Parker Moore <parkrmoore@gmail.com>
+Pierre Carrier <pierre@meteor.com>
+Piotr Zurek <p.zurek@gmail.com>
+Quinn Slack <qslack@qslack.com>
+Rackspace US, Inc.
+rc1140 <jameel@republiccommandos.co.za>
+Red Hat, Inc.
+Rob Figueiredo <robfig@yext.com>
+Ronak Jain <ronakjain@outlook.in>
+Ruben Vereecken <rubenvereecken@gmail.com>
+Ryan Lower <rpjlower@gmail.com>
+Sahil Dua <sahildua2305@gmail.com>
+saisi <saisi@users.noreply.github.com>
+Sander van Harmelen <svanharmelen@schubergphilis.com>
+Sean Wang <sean@decrypted.org>
+Sevki <s@sevki.org>
+Shawn Catanzarite <me@shawncatz.com>
+Shawn Smith <shawnpsmith@gmail.com>
+sona-tar <sona.zip@gmail.com>
+SoundCloud, Ltd.
+Stian Eikeland <stian@eikeland.se>
+Thomas Bruyelle <thomas.bruyelle@gmail.com>
+Timothée Peignier <timothee.peignier@tryphon.org>
+Trey Tacon <ttacon@gmail.com>
+ttacon <ttacon@gmail.com>
+Varadarajan Aravamudhan <varadaraajan@gmail.com>
+Victor Castell <victor@victorcastell.com>
+Victor Vrantchan <vrancean+github@gmail.com>
+Will Maier <wcmaier@gmail.com>
+William Bailey <mail@williambailey.org.uk>
+Yann Malet <yann.malet@gmail.com>
+Yannick Utard <yannickutard@gmail.com>
+Yicheng Qin <qycqycqycqycqyc@gmail.com>
+Yumikiyo Osanai <yumios.art@gmail.com>
+Zach Latta <zach@zachlatta.com>

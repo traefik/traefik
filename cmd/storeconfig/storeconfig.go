@@ -10,10 +10,10 @@ import (
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
-	"github.com/containous/traefik/acme"
-	"github.com/containous/traefik/cluster"
-	"github.com/containous/traefik/cmd"
-	"github.com/containous/traefik/log"
+	"github.com/traefik/traefik/acme"
+	"github.com/traefik/traefik/cluster"
+	"github.com/traefik/traefik/cmd"
+	"github.com/traefik/traefik/log"
 )
 
 // NewCmd builds a new StoreConfig command

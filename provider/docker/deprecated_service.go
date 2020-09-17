@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/provider/label"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/provider/label"
 )
 
 // Specific functions

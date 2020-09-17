@@ -1,8 +1,8 @@
 package testhelpers
 
 import (
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/types"
 )
 
 // BuildConfiguration is a helper to create a configuration.

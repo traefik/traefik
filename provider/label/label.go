@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/log"
+	"github.com/traefik/traefik/log"
 )
 
 const (

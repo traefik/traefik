@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/types"
 	"github.com/mesosphere/mesos-dns/records/state"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/types"
 )
 
 func TestBuildConfiguration(t *testing.T) {

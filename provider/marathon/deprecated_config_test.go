@@ -3,10 +3,10 @@ package marathon
 import (
 	"testing"
 
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/types"
 )
 
 func TestGetConfigurationAPIErrorsV1(t *testing.T) {

@@ -12,10 +12,10 @@ import (
 	"github.com/BurntSushi/ty/fun"
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/tls"
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/tls"
+	"github.com/traefik/traefik/types"
 )
 
 func (p *Provider) buildConfiguration() (*types.Configuration, error) {

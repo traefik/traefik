@@ -20,12 +20,6 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/mux"
 	"github.com/containous/staert"
-	"github.com/containous/traefik/cluster"
-	"github.com/containous/traefik/log"
-	acmeprovider "github.com/containous/traefik/provider/acme"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
-	"github.com/containous/traefik/version"
 	"github.com/eapache/channels"
 	"github.com/go-acme/lego/certificate"
 	"github.com/go-acme/lego/challenge"
@@ -36,6 +30,12 @@ import (
 	"github.com/go-acme/lego/providers/dns"
 	"github.com/go-acme/lego/registration"
 	"github.com/sirupsen/logrus"
+	"github.com/traefik/traefik/cluster"
+	"github.com/traefik/traefik/log"
+	acmeprovider "github.com/traefik/traefik/provider/acme"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
+	"github.com/traefik/traefik/version"
 )
 
 var (

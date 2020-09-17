@@ -4,13 +4,13 @@ import (
 	"net/http"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
-	"github.com/containous/traefik/version"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	thoas_stats "github.com/thoas/stats"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/middlewares"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
+	"github.com/traefik/traefik/version"
 	"github.com/unrolled/render"
 )
 

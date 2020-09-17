@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares/tracing"
-	"github.com/containous/traefik/whitelist"
 	"github.com/pkg/errors"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/middlewares/tracing"
+	"github.com/traefik/traefik/whitelist"
 	"github.com/urfave/negroni"
 )
 

@@ -3,8 +3,8 @@ package server
 import (
 	"testing"
 
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/types"
 )
 
 func TestConfigureBackends(t *testing.T) {

@@ -10,12 +10,6 @@ import (
 	"time"
 
 	"github.com/cenk/backoff"
-	"github.com/containous/traefik/job"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
-	"github.com/containous/traefik/version"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainertypes "github.com/docker/docker/api/types/container"
 	eventtypes "github.com/docker/docker/api/types/events"
@@ -25,6 +19,12 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
+	"github.com/traefik/traefik/job"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
+	"github.com/traefik/traefik/version"
 )
 
 const (

@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/types"
 )
 
 func TestBuildConfigurationSegments(t *testing.T) {

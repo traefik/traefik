@@ -6,9 +6,9 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 
-	"github.com/containous/traefik/log"
 	"github.com/go-acme/lego/certcrypto"
 	"github.com/go-acme/lego/registration"
+	"github.com/traefik/traefik/log"
 )
 
 // Account is used to store lets encrypt registration info

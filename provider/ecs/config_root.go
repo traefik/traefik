@@ -1,7 +1,7 @@
 package ecs
 
 import (
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/types"
 )
 
 func (p *Provider) buildConfiguration(instances []ecsInstance) (*types.Configuration, error) {

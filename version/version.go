@@ -6,9 +6,9 @@ import (
 	"net/url"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/log"
 	"github.com/google/go-github/github"
 	goversion "github.com/hashicorp/go-version"
+	"github.com/traefik/traefik/log"
 	"github.com/unrolled/render"
 )
 

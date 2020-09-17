@@ -6,10 +6,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/provider/label"
 	"github.com/gambol99/go-marathon"
 	"github.com/go-check/check"
+	"github.com/traefik/traefik/integration/try"
+	"github.com/traefik/traefik/provider/label"
 	checker "github.com/vdemeester/shakers"
 )
 

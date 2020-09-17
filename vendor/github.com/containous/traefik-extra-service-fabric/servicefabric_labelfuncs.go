@@ -3,7 +3,7 @@ package servicefabric
 import (
 	"strings"
 
-	"github.com/containous/traefik/provider/label"
+	"github.com/traefik/traefik/provider/label"
 )
 
 // SF Specific Traefik Labels

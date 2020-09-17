@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/go-check/check"
+	"github.com/traefik/traefik/integration/try"
+	"github.com/traefik/traefik/middlewares/accesslog"
 	checker "github.com/vdemeester/shakers"
 )
 

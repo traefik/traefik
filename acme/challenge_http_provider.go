@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/cenk/backoff"
-	"github.com/containous/traefik/cluster"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/safe"
 	"github.com/go-acme/lego/challenge"
+	"github.com/traefik/traefik/cluster"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/safe"
 )
 
 var _ challenge.ProviderTimeout = (*challengeHTTPProvider)(nil)

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
+	"github.com/traefik/traefik/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
 

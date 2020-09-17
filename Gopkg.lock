@@ -410,12 +410,12 @@
   version = "v3.1.2"
 
 [[projects]]
-  digest = "1:02cd7cf98a158c2388f0d26615be0c5d400fc13fad4448f2ecdb61f49b926c74"
+  branch = "temp"
+  digest = "1:9b26357809c7871d856b558859d3f3caabbc26842955c87a71e2c84ba6074199"
   name = "github.com/containous/traefik-extra-service-fabric"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "f9f49c0a6d51a8205faf34dd3cb7d628611257e5"
-  version = "v1.5.0"
+  revision = "da47120d90b10b8411691598dc0720064ff1e768"
 
 [[projects]]
   digest = "1:4e9c9d51ef5c98f2a71d6fa56a22f0bb8a4463656f9591ba24ebff2c21bcbd1f"
@@ -1288,12 +1288,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
   digest = "1:ad2a63b2d6dfe7d66bf14c01f1171a3951abef6e0fb136170359c3f7c4f51615"
   name = "github.com/labbsr0x/goh"
   packages = ["gohclient"]
   pruneopts = "NUT"
-  revision = "94bcf1cb07b70b26b72ad54b2b050bcd0a66a9c8"
+  revision = "b1072e96a179ebd4e11c1a64123a43213099be81"
+  version = "v1.0.1"
 
 [[projects]]
   branch = "master"

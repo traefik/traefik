@@ -9,9 +9,9 @@ import (
 	"text/template"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/anonymize"
-	"github.com/containous/traefik/cmd"
-	"github.com/containous/traefik/cmd/version"
+	"github.com/traefik/traefik/anonymize"
+	"github.com/traefik/traefik/cmd"
+	"github.com/traefik/traefik/cmd/version"
 )
 
 const (

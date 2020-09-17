@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/containous/traefik/log"
+	"github.com/traefik/traefik/log"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"

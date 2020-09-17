@@ -5,8 +5,8 @@ import (
 	"net/url"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/log"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
+	"github.com/traefik/traefik/log"
 )
 
 // DashboardHandler expose dashboard routes

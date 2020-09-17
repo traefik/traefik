@@ -3,11 +3,11 @@ package metrics
 import (
 	"time"
 
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/statsd"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
 )
 
 var statsdClient = statsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...interface{}) error {

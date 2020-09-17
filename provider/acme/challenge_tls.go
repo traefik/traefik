@@ -3,10 +3,10 @@ package acme
 import (
 	"crypto/tls"
 
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/types"
 	"github.com/go-acme/lego/challenge"
 	"github.com/go-acme/lego/challenge/tlsalpn01"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/types"
 )
 
 var _ challenge.Provider = (*challengeTLSALPN)(nil)

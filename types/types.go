@@ -14,10 +14,10 @@ import (
 	"github.com/abronan/valkeyrie/store"
 	"github.com/containous/flaeg"
 	"github.com/containous/mux"
-	"github.com/containous/traefik/log"
-	traefiktls "github.com/containous/traefik/tls"
 	"github.com/mitchellh/hashstructure"
 	"github.com/ryanuber/go-glob"
+	"github.com/traefik/traefik/log"
+	traefiktls "github.com/traefik/traefik/tls"
 )
 
 // Backend holds backend configuration.

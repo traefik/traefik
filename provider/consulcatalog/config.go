@@ -11,11 +11,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/types"
 )
 
 func (p *Provider) buildConfigurationV2(catalog []catalogUpdate) *types.Configuration {

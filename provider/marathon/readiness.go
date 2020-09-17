@@ -3,8 +3,8 @@ package marathon
 import (
 	"time"
 
-	"github.com/containous/traefik/log"
 	"github.com/gambol99/go-marathon"
+	"github.com/traefik/traefik/log"
 )
 
 const (

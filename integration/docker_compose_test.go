@@ -7,10 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/testhelpers"
-	"github.com/containous/traefik/types"
 	"github.com/go-check/check"
+	"github.com/traefik/traefik/integration/try"
+	"github.com/traefik/traefik/testhelpers"
+	"github.com/traefik/traefik/types"
 	checker "github.com/vdemeester/shakers"
 )
 

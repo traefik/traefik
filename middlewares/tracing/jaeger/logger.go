@@ -1,6 +1,6 @@
 package jaeger
 
-import "github.com/containous/traefik/log"
+import "github.com/traefik/traefik/log"
 
 // jaegerLogger is an implementation of the Logger interface that delegates to traefik log
 type jaegerLogger struct{}

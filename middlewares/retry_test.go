@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/testhelpers"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/testhelpers"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/roundrobin"
 )

@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/types"
 	"github.com/stvp/go-udp-testing"
+	"github.com/traefik/traefik/types"
 )
 
 func TestInfluxDB(t *testing.T) {

@@ -4,10 +4,10 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/types"
 )
 
 func TestProviderBuildConfigurationV1(t *testing.T) {

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/provider/label"
 	"github.com/mesosphere/mesos-dns/records/state"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/provider/label"
 )
 
 // test helpers

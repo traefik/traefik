@@ -10,8 +10,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/containous/traefik/configuration"
-	"github.com/containous/traefik/middlewares"
+	"github.com/traefik/traefik/configuration"
+	"github.com/traefik/traefik/middlewares"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/utils"
 )

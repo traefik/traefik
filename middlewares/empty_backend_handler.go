@@ -3,7 +3,7 @@ package middlewares
 import (
 	"net/http"
 
-	"github.com/containous/traefik/healthcheck"
+	"github.com/traefik/traefik/healthcheck"
 )
 
 // EmptyBackendHandler is a middlware that checks whether the current Backend

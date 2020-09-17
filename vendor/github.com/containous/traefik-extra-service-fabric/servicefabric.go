@@ -9,14 +9,14 @@ import (
 
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/job"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
 	appinsights "github.com/jjcollinge/logrus-appinsights"
 	sf "github.com/jjcollinge/servicefabric"
+	"github.com/traefik/traefik/job"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
 )
 
 var _ provider.Provider = (*Provider)(nil)
