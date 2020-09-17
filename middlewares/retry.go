@@ -32,7 +32,7 @@ func NewRetry(attempts int, next http.Handler, listener RetryListener) *Retry {
 
 func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// if we might make multiple attempts, swap the body for an ioutil.NopCloser
-	// cf https://github.com/containous/traefik/issues/1008
+	// cf https://github.com/traefik/traefik/issues/1008
 	if retry.attempts > 1 {
 		body := r.Body
 		if body == nil {

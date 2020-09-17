@@ -27,8 +27,8 @@ type appData struct {
 
 func (p *Provider) buildConfigurationV2(applications *marathon.Applications) *types.Configuration {
 	var MarathonFuncMap = template.FuncMap{
-		"getDomain":      label.GetFuncString(label.TraefikDomain, p.Domain), // see https://github.com/containous/traefik/pull/1693
-		"getSubDomain":   p.getSubDomain,                                     // see https://github.com/containous/traefik/pull/1693
+		"getDomain":      label.GetFuncString(label.TraefikDomain, p.Domain), // see https://github.com/traefik/traefik/pull/1693
+		"getSubDomain":   p.getSubDomain,                                     // see https://github.com/traefik/traefik/pull/1693
 		"getBackendName": p.getBackendName,
 
 		// Backend functions

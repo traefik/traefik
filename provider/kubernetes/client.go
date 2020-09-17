@@ -146,7 +146,7 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-
 
 	// Do not wait for the Secrets store to get synced since we cannot rely on
 	// users having granted RBAC permissions for this object.
-	// https://github.com/containous/traefik/issues/1784 should improve the
+	// https://github.com/traefik/traefik/issues/1784 should improve the
 	// situation here in the future.
 	for _, ns := range namespaces {
 		c.factories[ns].Core().V1().Secrets().Informer().AddEventHandler(eventHandler)

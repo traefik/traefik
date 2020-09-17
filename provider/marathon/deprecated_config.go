@@ -19,8 +19,8 @@ import (
 func (p *Provider) buildConfigurationV1(applications *marathon.Applications) *types.Configuration {
 	var MarathonFuncMap = template.FuncMap{
 		"getBackend":   p.getBackendNameV1,
-		"getDomain":    getFuncStringServiceV1(label.SuffixDomain, p.Domain), // see https://github.com/containous/traefik/pull/1693
-		"getSubDomain": p.getSubDomain,                                       // see https://github.com/containous/traefik/pull/1693
+		"getDomain":    getFuncStringServiceV1(label.SuffixDomain, p.Domain), // see https://github.com/traefik/traefik/pull/1693
+		"getSubDomain": p.getSubDomain,                                       // see https://github.com/traefik/traefik/pull/1693
 
 		// Backend functions
 		"getBackendServer": p.getBackendServerV1,

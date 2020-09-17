@@ -282,7 +282,7 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 	if err != nil {
 		log.Warnf("Failed to inspect container %s, error: %s", containerID, err)
 	} else {
-		// This condition is here to avoid to have empty IP https://github.com/containous/traefik/issues/2459
+		// This condition is here to avoid to have empty IP https://github.com/traefik/traefik/issues/2459
 		// We register only container which are running
 		if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
 			dData = parseContainer(containerInspected)

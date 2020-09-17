@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	bugTracker  = "https://github.com/containous/traefik/issues/new"
+	bugTracker  = "https://github.com/traefik/traefik/issues/new"
 	bugTemplate = `<!--
 DO NOT FILE ISSUES FOR GENERAL SUPPORT QUESTIONS.
 
