@@ -371,7 +371,7 @@ home:
 
 Something more tricky using `regex`.
 
-In this case a slash is added to `siteexample.io/portainer` and redirect to `siteexample.io/portainer/`. For more details: https://github.com/containous/traefik/issues/563
+In this case a slash is added to `siteexample.io/portainer` and redirect to `siteexample.io/portainer/`. For more details: https://github.com/traefik/traefik/issues/563
 
 The double sign `$$` are variables managed by the docker compose file ([documentation](https://docs.docker.com/compose/compose-file/#variable-substitution)). 
 
@@ -408,7 +408,7 @@ portainer:
       - "traefik.frontend.entryPoints=http"
       - "traefik.backend.loadbalancer.swarm=true"
       - "traefik.backend.loadbalancer.method=drr"
-      # https://github.com/containous/traefik/issues/563#issuecomment-421360934
+      # https://github.com/traefik/traefik/issues/563#issuecomment-421360934
       - "traefik.frontend.redirect.regex=^(.*)/portainer$$"
       - "traefik.frontend.redirect.replacement=$$1/portainer/"
       - "traefik.frontend.rule=PathPrefix:/portainer;ReplacePathRegex: ^/portainer/(.*) /$$1"
