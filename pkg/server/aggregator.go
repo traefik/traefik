@@ -10,10 +10,11 @@ import (
 func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoints []string) dynamic.Configuration {
 	conf := dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
-			Routers:     make(map[string]*dynamic.Router),
-			Middlewares: make(map[string]*dynamic.Middleware),
-			Services:    make(map[string]*dynamic.Service),
-			Models:      make(map[string]*dynamic.Model),
+			Routers:           make(map[string]*dynamic.Router),
+			Middlewares:       make(map[string]*dynamic.Middleware),
+			Services:          make(map[string]*dynamic.Service),
+			Models:            make(map[string]*dynamic.Model),
+			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
 			Routers:  make(map[string]*dynamic.TCPRouter),
@@ -51,6 +52,9 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 			}
 			for modelName, model := range configuration.HTTP.Models {
 				conf.HTTP.Models[provider.MakeQualifiedName(pvd, modelName)] = model
+			}
+			for serversTransportName, serversTransport := range configuration.HTTP.ServersTransports {
+				conf.HTTP.ServersTransports[provider.MakeQualifiedName(pvd, serversTransportName)] = serversTransport
 			}
 		}
 

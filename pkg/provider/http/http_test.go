@@ -134,9 +134,10 @@ func TestProvider_decodeConfiguration(t *testing.T) {
 			configData: []byte("{\"tcp\":{\"routers\":{\"foo\":{}}}}"),
 			expConfig: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     make(map[string]*dynamic.Router),
-					Middlewares: make(map[string]*dynamic.Middleware),
-					Services:    make(map[string]*dynamic.Service),
+					Routers:           make(map[string]*dynamic.Router),
+					Middlewares:       make(map[string]*dynamic.Middleware),
+					Services:          make(map[string]*dynamic.Service),
+					ServersTransports: make(map[string]*dynamic.ServersTransport),
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -192,9 +193,10 @@ func TestProvider_Provide(t *testing.T) {
 
 	expConfiguration := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
-			Routers:     make(map[string]*dynamic.Router),
-			Middlewares: make(map[string]*dynamic.Middleware),
-			Services:    make(map[string]*dynamic.Service),
+			Routers:           make(map[string]*dynamic.Router),
+			Middlewares:       make(map[string]*dynamic.Middleware),
+			Services:          make(map[string]*dynamic.Service),
+			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
 			Routers:  make(map[string]*dynamic.TCPRouter),

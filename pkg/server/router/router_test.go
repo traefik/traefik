@@ -287,7 +287,9 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			})
 
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
+			roundTripperManager := service.NewRoundTripperManager()
+			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
@@ -391,7 +393,9 @@ func TestAccessLog(t *testing.T) {
 				},
 			})
 
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
+			roundTripperManager := service.NewRoundTripperManager()
+			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
@@ -678,7 +682,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 			})
 
-			serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
+			roundTripperManager := service.NewRoundTripperManager()
+			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
@@ -759,7 +765,9 @@ func TestProviderOnMiddlewares(t *testing.T) {
 		},
 	})
 
-	serviceManager := service.NewManager(rtConf.Services, http.DefaultTransport, nil, nil)
+	roundTripperManager := service.NewRoundTripperManager()
+	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	chainBuilder := middleware.NewChainBuilder(staticCfg, nil, nil)
 
@@ -771,6 +779,14 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	assert.Equal(t, []string{"m1@file", "m2@file", "m1@file"}, rtConf.Middlewares["chain@file"].Chain.Middlewares)
 	assert.Equal(t, []string{"chain@docker", "m1@file"}, rtConf.Routers["router@docker"].Middlewares)
 	assert.Equal(t, []string{"m1@docker", "m2@docker", "m1@file"}, rtConf.Middlewares["chain@docker"].Chain.Middlewares)
+}
+
+type staticRoundTripperGetter struct {
+	res *http.Response
+}
+
+func (s staticRoundTripperGetter) Get(name string) (http.RoundTripper, error) {
+	return &staticTransport{res: s.res}, nil
 }
 
 type staticTransport struct {
@@ -819,7 +835,7 @@ func BenchmarkRouterServe(b *testing.B) {
 		},
 	})
 
-	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil)
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticRoundTripperGetter{res})
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
@@ -861,7 +877,7 @@ func BenchmarkService(b *testing.B) {
 		},
 	})
 
-	serviceManager := service.NewManager(rtConf.Services, &staticTransport{res}, nil, nil)
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticRoundTripperGetter{res})
 	w := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 

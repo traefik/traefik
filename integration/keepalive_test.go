@@ -97,6 +97,10 @@ func (s *KeepAliveSuite) TestShouldRespectConfiguredBackendHttpKeepAliveTime(c *
 	c.Check(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
+	// Wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Duration(1)*time.Second, try.StatusCodeIs(200), try.BodyContains("PathPrefix(`/keepalive`)"))
+	c.Check(err, checker.IsNil)
+
 	err = try.GetRequest("http://127.0.0.1:8000/keepalive", time.Duration(1)*time.Second, try.StatusCodeIs(200))
 	c.Check(err, checker.IsNil)
 

@@ -405,6 +405,9 @@ Docker server endpoint. Can be a tcp or a unix socket endpoint. (Default: ```uni
 `--providers.docker.exposedbydefault`:  
 Expose containers by default. (Default: ```true```)
 
+`--providers.docker.httpclienttimeout`:  
+Client timeout for HTTP connections. (Default: ```32```)
+
 `--providers.docker.network`:  
 Default Docker network used.
 

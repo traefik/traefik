@@ -1488,9 +1488,9 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
         secretName: mySecret                      # [1]
     ```
 
-| Ref | Attribute                   | Purpose                                                                                                                                                                    |
-|-----|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1] | `secretName`                | The name of the referenced Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) that holds the default certificate for the store.                                                                             |
+| Ref | Attribute    | Purpose                                                                                                                                                     |
+|-----|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1] | `secretName` | The name of the referenced Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) that holds the default certificate for the store. |
 
 ??? example "Declaring and referencing a TLSStore"
    
@@ -1535,6 +1535,84 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
     data:
       tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+    ```
+
+### Kind: `ServersTransport`
+
+`ServersTransport` is the CRD implementation of a [ServersTransport](../services/index.md#serverstransport).
+
+!!! important "Default serversTransport"
+    If no `serversTransport` is specified, the `default@internal` will be used. 
+    The `default@internal` serversTransport is created from the [static configuration](../overview.md#transport-configuration). 
+
+!!! info "ServersTransport Attributes"
+   
+    ```yaml tab="TLSStore"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: ServersTransport
+    metadata:
+      name: mytransport
+      namespace: default
+    
+    spec:
+      serverName: foobar               # [1]
+      insecureSkipVerify: true         # [2]
+      rootCAsSecrets:                  # [3]
+        - foobar
+        - foobar
+      certificatesSecrets:             # [4]
+        - foobar
+        - foobar
+      maxIdleConnsPerHost: 1           # [5]
+      forwardingTimeouts:              # [6]
+        dialTimeout: 42s               # [7]
+        responseHeaderTimeout: 42s     # [8]
+        idleConnTimeout: 42s           # [9]
+    ```
+
+| Ref | Attribute               | Purpose                                                                                                                                              |
+|-----|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1] | `serverName`            | ServerName used to contact the server.                                                                                                               |
+| [2] | `insecureSkipVerify`    | Disable SSL certificate verification.                                                                                                                |
+| [3] | `rootCAsSecrets`        | Add cert file for self-signed certificate.                                                                                                           |
+| [4] | `certificatesSecrets`   | Certificates for mTLS.                                                                                                                               |
+| [5] | `maxIdleConnsPerHost`   | If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                 |
+| [6] | `forwardingTimeouts`    | Timeouts for requests forwarded to the backend servers.                                                                                              |
+| [7] | `dialTimeout`           | The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists.                                    |
+| [8] | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists. |
+| [9] | `idleConnTimeout`       | The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself.                                              |
+
+??? example "Declaring and referencing a ServersTransport"
+   
+    ```yaml tab="ServersTransport"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: ServersTransport
+    metadata:
+      name: mytransport
+      namespace: default
+    
+    spec:
+      serverName: example.org
+      insecureSkipVerify: true
+    ```
+    
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: testroute
+      namespace: default
+    
+    spec:
+      entryPoints:
+        - web
+      routes:
+      - match: Host(`example.com`)
+        kind: Rule
+        services:
+        - name: whoami
+          port: 80
+          serversTransport: mytransport
     ```
 
 ## Further

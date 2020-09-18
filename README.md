@@ -137,7 +137,7 @@ By participating in this project, you agree to abide by its terms.
 
 ## Release Cycle
 
-- We release a new version (e.g. 1.1.0, 1.2.0, 1.3.0) every other month.
+- We usually release 3/4 new versions (e.g. 1.1.0, 1.2.0, 1.3.0) per year.
 - Release Candidates are available before the release (e.g. 1.1.0-rc1, 1.1.0-rc2, 1.1.0-rc3, 1.1.0-rc4, before 1.1.0).
 - Bug-fixes (e.g. 1.1.1, 1.1.2, 1.2.1, 1.2.3) are released as needed (no additional features are delivered in those versions, bug-fixes only).
 

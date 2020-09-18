@@ -186,3 +186,25 @@ spec:
     clientAuthType: foobar
   sniStrict: true
   preferServerCipherSuites: true
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  serverName: foobar
+  insecureSkipVerify: true
+  rootCAsSecrets:
+    - foobar
+    - foobar
+  certificatesSecrets:
+    - foobar
+    - foobar
+  maxIdleConnsPerHost: 1
+  forwardingTimeouts:
+    dialTimeout: 42s
+    responseHeaderTimeout: 42s
+    idleConnTimeout: 42s

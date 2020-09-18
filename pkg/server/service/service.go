@@ -35,13 +35,18 @@ const (
 
 const defaultMaxBodySize int64 = -1
 
+// RoundTripperGetter is a roundtripper getter interface.
+type RoundTripperGetter interface {
+	Get(name string) (http.RoundTripper, error)
+}
+
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, defaultRoundTripper http.RoundTripper, metricsRegistry metrics.Registry, routinePool *safe.Pool) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, roundTripperManager RoundTripperGetter) *Manager {
 	return &Manager{
 		routinePool:         routinePool,
 		metricsRegistry:     metricsRegistry,
 		bufferPool:          newBufferPool(),
-		defaultRoundTripper: defaultRoundTripper,
+		roundTripperManager: roundTripperManager,
 		balancers:           make(map[string]healthcheck.Balancers),
 		configs:             configs,
 	}
@@ -52,7 +57,7 @@ type Manager struct {
 	routinePool         *safe.Pool
 	metricsRegistry     metrics.Registry
 	bufferPool          httputil.BufferPool
-	defaultRoundTripper http.RoundTripper
+	roundTripperManager RoundTripperGetter
 	// balancers is the map of all Balancers, keyed by service name.
 	// There is one Balancer per service handler, and there is one service handler per reference to a service
 	// (e.g. if 2 routers refer to the same service name, 2 service handlers are created),
@@ -168,7 +173,16 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		service.PassHostHeader = &defaultPassHostHeader
 	}
 
-	fwd, err := buildProxy(service.PassHostHeader, service.ResponseForwarding, m.defaultRoundTripper, m.bufferPool)
+	if len(service.ServersTransport) > 0 {
+		service.ServersTransport = provider.GetQualifiedName(ctx, service.ServersTransport)
+	}
+
+	roundTripper, err := m.roundTripperManager.Get(service.ServersTransport)
+	if err != nil {
+		return nil, err
+	}
+
+	fwd, err := buildProxy(service.PassHostHeader, service.ResponseForwarding, roundTripper, m.bufferPool)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +227,7 @@ func (m *Manager) LaunchHealthCheck() {
 		if hcOpts := buildHealthCheckOptions(ctx, balancers, serviceName, service.HealthCheck); hcOpts != nil {
 			log.FromContext(ctx).Debugf("Setting up healthcheck for service %s with %s", serviceName, *hcOpts)
 
-			hcOpts.Transport = m.defaultRoundTripper
+			hcOpts.Transport, _ = m.roundTripperManager.Get(service.ServersTransport)
 			backendHealthCheck = healthcheck.NewBackendConfig(*hcOpts, serviceName)
 		}
 

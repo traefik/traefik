@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rootCas1
+  namespace: foo
+
+data:
+  tls.ca: VEVTVFJPT1RDQVM=
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rootCas2
+  namespace: foo
+
+data:
+  tls.ca: VEVTVFJPT1RDQVMy
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mtls1
+  namespace: foo
+
+data:
+  tls.crt: VEVTVENFUlQx
+  tls.key: VEVTVEtFWTE=
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mtls2
+  namespace: foo
+
+data:
+  tls.crt: VEVTVENFUlQy
+  tls.key: VEVTVEtFWTI=
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: test
+  namespace: foo
+
+spec:
+  serverName: "test"
+  insecureSkipVerify: true
+  maxIdleConnsPerHost: 42
+  rootCAsSecrets:
+  - rootCas1
+  - rootCas2
+  certificatesSecrets:
+  - mtls1
+  - mtls2
+  forwardingTimeouts:
+    dialTimeout: 42
+    responseHeaderTimeout: 42s
+    idleConnTimeout: 42ms

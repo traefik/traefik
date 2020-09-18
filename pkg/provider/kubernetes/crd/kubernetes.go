@@ -237,12 +237,77 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	cb := configBuilder{client}
+
 	for _, service := range client.GetTraefikServices() {
 		err := cb.buildTraefikService(ctx, service, conf.HTTP.Services)
 		if err != nil {
 			log.FromContext(ctx).WithField(log.ServiceName, service.Name).
 				Errorf("Error while building TraefikService: %v", err)
 			continue
+		}
+	}
+
+	for _, serversTransport := range client.GetServersTransports() {
+		logger := log.FromContext(ctx).WithField(log.ServersTransportName, serversTransport.Name)
+
+		var rootCAs []tls.FileOrContent
+		for _, secret := range serversTransport.Spec.RootCAsSecrets {
+			caSecret, err := loadCASecret(serversTransport.Namespace, secret, client)
+			if err != nil {
+				logger.Errorf("Error while loading rootCAs %s: %v", secret, err)
+				continue
+			}
+
+			rootCAs = append(rootCAs, tls.FileOrContent(caSecret))
+		}
+
+		var certs tls.Certificates
+		for _, secret := range serversTransport.Spec.CertificatesSecrets {
+			tlsSecret, tlsKey, err := loadAuthTLSSecret(serversTransport.Namespace, secret, client)
+			if err != nil {
+				logger.Errorf("Error while loading certificates %s: %v", secret, err)
+				continue
+			}
+
+			certs = append(certs, tls.Certificate{
+				CertFile: tls.FileOrContent(tlsSecret),
+				KeyFile:  tls.FileOrContent(tlsKey),
+			})
+		}
+
+		forwardingTimeout := &dynamic.ForwardingTimeouts{}
+		forwardingTimeout.SetDefaults()
+
+		if serversTransport.Spec.ForwardingTimeouts != nil {
+			if serversTransport.Spec.ForwardingTimeouts.DialTimeout != nil {
+				err := forwardingTimeout.DialTimeout.Set(serversTransport.Spec.ForwardingTimeouts.DialTimeout.String())
+				if err != nil {
+					logger.Errorf("Error while reading DialTimeout: %v", err)
+				}
+			}
+
+			if serversTransport.Spec.ForwardingTimeouts.ResponseHeaderTimeout != nil {
+				err := forwardingTimeout.ResponseHeaderTimeout.Set(serversTransport.Spec.ForwardingTimeouts.ResponseHeaderTimeout.String())
+				if err != nil {
+					logger.Errorf("Error while reading ResponseHeaderTimeout: %v", err)
+				}
+			}
+
+			if serversTransport.Spec.ForwardingTimeouts.IdleConnTimeout != nil {
+				err := forwardingTimeout.IdleConnTimeout.Set(serversTransport.Spec.ForwardingTimeouts.IdleConnTimeout.String())
+				if err != nil {
+					logger.Errorf("Error while reading IdleConnTimeout: %v", err)
+				}
+			}
+		}
+
+		conf.HTTP.ServersTransports[serversTransport.Name] = &dynamic.ServersTransport{
+			ServerName:          serversTransport.Spec.ServerName,
+			InsecureSkipVerify:  serversTransport.Spec.InsecureSkipVerify,
+			RootCAs:             rootCAs,
+			Certificates:        certs,
+			MaxIdleConnsPerHost: serversTransport.Spec.MaxIdleConnsPerHost,
+			ForwardingTimeouts:  forwardingTimeout,
 		}
 	}
 

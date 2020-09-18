@@ -205,9 +205,10 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 	if configuration == nil {
 		configuration = &dynamic.Configuration{
 			HTTP: &dynamic.HTTPConfiguration{
-				Routers:     make(map[string]*dynamic.Router),
-				Middlewares: make(map[string]*dynamic.Middleware),
-				Services:    make(map[string]*dynamic.Service),
+				Routers:           make(map[string]*dynamic.Router),
+				Middlewares:       make(map[string]*dynamic.Middleware),
+				Services:          make(map[string]*dynamic.Service),
+				ServersTransports: make(map[string]*dynamic.ServersTransport),
 			},
 			TCP: &dynamic.TCPConfiguration{
 				Routers:  make(map[string]*dynamic.TCPRouter),
@@ -271,6 +272,14 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				logger.WithField(log.ServiceName, name).Warn("HTTP service already configured, skipping")
 			} else {
 				configuration.HTTP.Services[name] = conf
+			}
+		}
+
+		for name, conf := range c.HTTP.ServersTransports {
+			if _, exists := configuration.HTTP.ServersTransports[name]; exists {
+				logger.WithField(log.ServersTransportName, name).Warn("HTTP servers transport already configured, skipping")
+			} else {
+				configuration.HTTP.ServersTransports[name] = conf
 			}
 		}
 
@@ -398,9 +407,10 @@ func (p *Provider) DecodeConfiguration(filename string) (*dynamic.Configuration,
 func (p *Provider) decodeConfiguration(filePath, content string) (*dynamic.Configuration, error) {
 	configuration := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
-			Routers:     make(map[string]*dynamic.Router),
-			Middlewares: make(map[string]*dynamic.Middleware),
-			Services:    make(map[string]*dynamic.Service),
+			Routers:           make(map[string]*dynamic.Router),
+			Middlewares:       make(map[string]*dynamic.Middleware),
+			Services:          make(map[string]*dynamic.Service),
+			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
 			Routers:  make(map[string]*dynamic.TCPRouter),

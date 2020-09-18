@@ -18,10 +18,11 @@ func Test_mergeConfiguration(t *testing.T) {
 			desc:  "Nil returns an empty configuration",
 			given: nil,
 			expected: &dynamic.HTTPConfiguration{
-				Routers:     make(map[string]*dynamic.Router),
-				Middlewares: make(map[string]*dynamic.Middleware),
-				Services:    make(map[string]*dynamic.Service),
-				Models:      make(map[string]*dynamic.Model),
+				Routers:           make(map[string]*dynamic.Router),
+				Middlewares:       make(map[string]*dynamic.Middleware),
+				Services:          make(map[string]*dynamic.Service),
+				Models:            make(map[string]*dynamic.Model),
+				ServersTransports: make(map[string]*dynamic.ServersTransport),
 			},
 		},
 		{
@@ -53,7 +54,8 @@ func Test_mergeConfiguration(t *testing.T) {
 				Services: map[string]*dynamic.Service{
 					"service-1@provider-1": {},
 				},
-				Models: make(map[string]*dynamic.Model),
+				Models:            make(map[string]*dynamic.Model),
+				ServersTransports: make(map[string]*dynamic.ServersTransport),
 			},
 		},
 		{
@@ -103,7 +105,8 @@ func Test_mergeConfiguration(t *testing.T) {
 					"service-1@provider-1": {},
 					"service-1@provider-2": {},
 				},
-				Models: make(map[string]*dynamic.Model),
+				Models:            make(map[string]*dynamic.Model),
+				ServersTransports: make(map[string]*dynamic.ServersTransport),
 			},
 		},
 	}
