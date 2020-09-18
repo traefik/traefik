@@ -1,3 +1,10 @@
+## [v2.3.0-rc7](https://github.com/traefik/traefik/tree/v2.3.0-rc7) (2020-09-18)
+[All Commits](https://github.com/traefik/traefik/compare/v2.3.0-rc6...v2.3.0-rc7)
+
+**Bug fixes:**
+- **[pilot]** fix: pilot metrics unit for req duration. ([#7309](https://github.com/traefik/traefik/pull/7309) by [ldez](https://github.com/ldez))
+- **[pilot]** fix: start of Traefik Pilot ([#7304](https://github.com/traefik/traefik/pull/7304) by [ldez](https://github.com/ldez))
+
 ## [v2.3.0-rc6](https://github.com/traefik/traefik/tree/v2.3.0-rc6) (2020-09-16)
 [All Commits](https://github.com/traefik/traefik/compare/v2.3.0-rc5...v2.3.0-rc6)
 
