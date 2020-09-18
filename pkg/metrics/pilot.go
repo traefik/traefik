@@ -57,12 +57,12 @@ func RegisterPilot() *PilotRegistry {
 
 	standardRegistry.entryPointReqsCounter = pr.newCounter(pilotEntryPointReqsTotalName)
 	standardRegistry.entryPointReqsTLSCounter = pr.newCounter(pilotEntryPointReqsTLSTotalName)
-	standardRegistry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(pr.newHistogram(pilotEntryPointReqDurationName), time.Second)
+	standardRegistry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(pr.newHistogram(pilotEntryPointReqDurationName), time.Millisecond)
 	standardRegistry.entryPointOpenConnsGauge = pr.newGauge(pilotEntryPointOpenConnsName)
 
 	standardRegistry.serviceReqsCounter = pr.newCounter(pilotServiceReqsTotalName)
 	standardRegistry.serviceReqsTLSCounter = pr.newCounter(pilotServiceReqsTLSTotalName)
-	standardRegistry.serviceReqDurationHistogram, _ = NewHistogramWithScale(pr.newHistogram(pilotServiceReqDurationName), time.Second)
+	standardRegistry.serviceReqDurationHistogram, _ = NewHistogramWithScale(pr.newHistogram(pilotServiceReqDurationName), time.Millisecond)
 	standardRegistry.serviceOpenConnsGauge = pr.newGauge(pilotServiceOpenConnsName)
 	standardRegistry.serviceRetriesCounter = pr.newCounter(pilotServiceRetriesTotalName)
 	standardRegistry.serviceServerUpGauge = pr.newGauge(pilotServiceServerUpName)
