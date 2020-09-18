@@ -17,10 +17,20 @@ func newResponseRecorder(rw http.ResponseWriter) recorder {
 		ResponseWriter: rw,
 		statusCode:     http.StatusOK,
 	}
-	if _, ok := rw.(http.CloseNotifier); !ok {
-		return rec
+	_, isPusher := rw.(http.Pusher)
+	_, isCloseNotifier := rw.(http.CloseNotifier)
+
+	if isPusher && isCloseNotifier {
+		return &responseRecorderWithCloseNotifyAndH2push{rec, &responseRecorderWithCloseNotify{rec}, &responseRecorderWithH2push{rec}}
 	}
-	return &responseRecorderWithCloseNotify{rec}
+	if isPusher {
+		return &responseRecorderWithH2push{rec}
+	}
+	if isCloseNotifier {
+		return &responseRecorderWithCloseNotify{rec}
+	}
+
+	return rec
 }
 
 // responseRecorder captures information from the response and preserves it for
@@ -34,10 +44,25 @@ type responseRecorderWithCloseNotify struct {
 	*responseRecorder
 }
 
+type responseRecorderWithH2push struct {
+	*responseRecorder
+}
+
+type responseRecorderWithCloseNotifyAndH2push struct {
+	*responseRecorder
+	*responseRecorderWithCloseNotify
+	*responseRecorderWithH2push
+}
+
 // CloseNotify returns a channel that receives at most a
 // single value (true) when the client connection has gone away.
 func (r *responseRecorderWithCloseNotify) CloseNotify() <-chan bool {
 	return r.ResponseWriter.(http.CloseNotifier).CloseNotify()
+}
+
+// Push initiates an HTTP/2 server push.
+func (r *responseRecorderWithH2push) Push(target string, opts *http.PushOptions) error {
+	return r.ResponseWriter.(http.Pusher).Push(target, opts)
 }
 
 func (r *responseRecorder) getCode() int {
