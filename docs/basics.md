@@ -72,7 +72,7 @@ And here is another example with client certificate authentication:
 
 - We enable SSL on `https` by giving a certificate and a key.
 - One or several files containing Certificate Authorities in PEM format are added.
-- It is possible to have multiple CA:s in the same file or keep them in separate files.
+- It is possible to have multiple CA's in the same file or keep them in separate files.
 
 ### Frontends
 
