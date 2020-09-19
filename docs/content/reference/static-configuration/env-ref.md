@@ -462,6 +462,9 @@ Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 `TRAEFIK_PROVIDERS_ECS_EXPOSEDBYDEFAULT`:  
 Expose services by default (Default: ```true```)
 
+`TRAEFIK_PROVIDERS_ECS_HTTPCLIENTTIMEOUT`:  
+Client timeout for HTTP connections. (Default: ```10```)
+
 `TRAEFIK_PROVIDERS_ECS_REFRESHSECONDS`:  
 Polling interval (in seconds) (Default: ```15```)
 
@@ -470,6 +473,9 @@ The AWS region to use for requests
 
 `TRAEFIK_PROVIDERS_ECS_SECRETACCESSKEY`:  
 The AWS credentials access key to use for making requests
+
+`TRAEFIK_PROVIDERS_ECS_USETASKMETADATA`:  
+Load configuration from ECS Task metadata (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ETCD`:  
 Enable Etcd backend with default settings. (Default: ```false```)

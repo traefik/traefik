@@ -462,6 +462,9 @@ Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 `--providers.ecs.exposedbydefault`:  
 Expose services by default (Default: ```true```)
 
+`--providers.ecs.httpclienttimeout`:  
+Client timeout for HTTP connections. (Default: ```10```)
+
 `--providers.ecs.refreshseconds`:  
 Polling interval (in seconds) (Default: ```15```)
 
@@ -470,6 +473,9 @@ The AWS region to use for requests
 
 `--providers.ecs.secretaccesskey`:  
 The AWS credentials access key to use for making requests
+
+`--providers.ecs.usetaskmetadata`:  
+Load configuration from ECS Task metadata (Default: ```false```)
 
 `--providers.etcd`:  
 Enable Etcd backend with default settings. (Default: ```false```)

@@ -3,6 +3,7 @@ package ecs
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"text/template"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/patrickmn/go-cache"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -31,11 +33,13 @@ type Provider struct {
 	DefaultRule      string `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 
 	// Provider lookup parameters.
-	Clusters             []string `description:"ECS Clusters name" json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
-	AutoDiscoverClusters bool     `description:"Auto discover cluster" json:"autoDiscoverClusters,omitempty" toml:"autoDiscoverClusters,omitempty" yaml:"autoDiscoverClusters,omitempty" export:"true"`
-	Region               string   `description:"The AWS region to use for requests"  json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty" export:"true"`
-	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests" json:"accessKeyID,omitempty" toml:"accessKeyID,omitempty" yaml:"accessKeyID,omitempty"`
-	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests" json:"secretAccessKey,omitempty" toml:"secretAccessKey,omitempty" yaml:"secretAccessKey,omitempty"`
+	Clusters             []string        `description:"ECS Clusters name" json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
+	AutoDiscoverClusters bool            `description:"Auto discover cluster" json:"autoDiscoverClusters,omitempty" toml:"autoDiscoverClusters,omitempty" yaml:"autoDiscoverClusters,omitempty" export:"true"`
+	UseTaskMetadata      bool            `description:"Load configuration from ECS Task metadata" json:"useTaskMetadata,omitempty" toml:"useTaskMetadata,omitempty" yaml:"useTaskMetadata,omitempty" export:"true"`
+	HTTPClientTimeout    ptypes.Duration `description:"Client timeout for HTTP connections." json:"httpClientTimeout,omitempty" toml:"httpClientTimeout,omitempty" yaml:"httpClientTimeout,omitempty" export:"true"`
+	Region               string          `description:"The AWS region to use for requests"  json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty" export:"true"`
+	AccessKeyID          string          `description:"The AWS credentials access key to use for making requests" json:"accessKeyID,omitempty" toml:"accessKeyID,omitempty" yaml:"accessKeyID,omitempty"`
+	SecretAccessKey      string          `description:"The AWS credentials access key to use for making requests" json:"secretAccessKey,omitempty" toml:"secretAccessKey,omitempty" yaml:"secretAccessKey,omitempty"`
 	defaultRuleTpl       *template.Template
 }
 
@@ -81,6 +85,7 @@ func (p *Provider) SetDefaults() {
 	p.ExposedByDefault = true
 	p.RefreshSeconds = 15
 	p.DefaultRule = DefaultTemplateRule
+	p.HTTPClientTimeout = ptypes.Duration(10 * time.Second)
 }
 
 // Init the provider.
@@ -142,6 +147,12 @@ func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 	}, nil
 }
 
+func (p *Provider) createHTTPClient() *http.Client {
+	return &http.Client{
+		Timeout: time.Duration(p.HTTPClientTimeout),
+	}
+}
+
 // Provide configuration to traefik from ECS.
 func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
@@ -149,6 +160,16 @@ func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.P
 		logger := log.FromContext(ctxLog)
 
 		operation := func() error {
+			if p.UseTaskMetadata {
+				// ECS Task metadata are immutable
+				httpClient := p.createHTTPClient()
+				err := p.loadECSConfigurationFromECSMetadata(ctxLog, httpClient, configurationChan)
+				if err != nil {
+					return fmt.Errorf("failed to get ECS configuration from metadata: %w", err)
+				}
+				return nil
+			}
+
 			awsClient, err := p.createClient(logger)
 			if err != nil {
 				return fmt.Errorf("unable to create AWS client: %w", err)
@@ -369,6 +390,25 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	return instances, nil
 }
 
+func (p *Provider) loadECSConfigurationFromECSMetadata(ctx context.Context, client *http.Client, configurationChan chan<- dynamic.Message) error {
+	meta, err := fetchECSTaskMetadata(ctx, client)
+	if err != nil {
+		return err
+	}
+
+	instances, err := p.loadECSInstanceFromTaskMetadata(ctx, meta)
+	if err != nil {
+		return err
+	}
+
+	configurationChan <- dynamic.Message{
+		ProviderName:  "ecs",
+		Configuration: p.buildConfiguration(ctx, instances),
+	}
+
+	return nil
+}
+
 func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, clusterName *string, ecsDatas map[string]*ecs.Task) (map[string]*ec2.Instance, error) {
 	logger := log.FromContext(ctx)
 	instanceIds := make(map[string]string)
@@ -465,4 +505,50 @@ func (p *Provider) chunkIDs(ids []*string) [][]*string {
 		chuncked = append(chuncked, ids[i:sliceEnd])
 	}
 	return chuncked
+}
+
+func (p *Provider) loadECSInstanceFromTaskMetadata(ctx context.Context, meta *taskMetadata) (instances []ecsInstance, err error) {
+	for _, container := range meta.Containers {
+		var containerDefinition *ecs.ContainerDefinition
+		var mach *machine
+
+		var ports []portMapping
+		for _, mapping := range container.Ports {
+			protocol := "TCP"
+			if mapping.Protocol == "udp" {
+				protocol = "UDP"
+			}
+
+			ports = append(ports, portMapping{
+				hostPort:      mapping.HostPort,
+				containerPort: mapping.ContainerPort,
+				protocol:      protocol,
+			})
+		}
+
+		mach = &machine{
+			privateIP:    container.Networks[0].IPv4Addresses[0],
+			ports:        ports,
+			state:        container.DesiredStatus,
+			healthStatus: container.KnownStatus,
+		}
+
+		instance := ecsInstance{
+			Name:                fmt.Sprintf("%s-%s", meta.Family, container.Name),
+			ID:                  meta.TaskARN[len(meta.TaskARN)-12:],
+			containerDefinition: containerDefinition,
+			machine:             mach,
+			Labels:              container.Labels,
+		}
+
+		extraConf, err := p.getConfiguration(instance)
+		if err != nil {
+			log.FromContext(ctx).Errorf("Skip container %s: %w", getServiceName(instance), err)
+			continue
+		}
+		instance.ExtraConf = extraConf
+
+		instances = append(instances, instance)
+	}
+	return instances, nil
 }

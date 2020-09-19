@@ -81,6 +81,35 @@ Search for services in clusters list.
 - If set to `true` the configured clusters will be ignored and the clusters will be discovered.
 - If set to `false` the services will be discovered only in configured clusters.
 
+### `useTaskMetadata`
+
+_Optional, Default=false_
+
+```toml tab="File (TOML)"
+[providers.ecs]
+  useTaskMetadata = true
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  ecs:
+    useTaskMetadata: true
+    # ...
+```
+
+```bash tab="CLI"
+--providers.ecs.useTaskMetadata=true
+# ...
+```
+
+Search for services from ECS Task metadata.
+
+If set to true, the configured clusters will be ignored and not used AWS ECS APIs.
+So don't need ECS information read policy.
+
+This option available under the ECS environment.
+
 ### `clusters`
 
 _Optional, Default=["default"]_
