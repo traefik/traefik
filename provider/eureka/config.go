@@ -5,10 +5,10 @@ import (
 	"text/template"
 
 	"github.com/ArthurHlt/go-eureka-client/eureka"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/types"
 )
 
 // Build the configuration from Provider server

@@ -3,10 +3,10 @@ package marathon
 import (
 	"testing"
 
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/types"
 )
 
 func TestGetConfigurationAPIErrorsV1(t *testing.T) {
@@ -344,25 +344,25 @@ func TestBuildConfigurationServicesV1(t *testing.T) {
 				withLabel(label.TraefikBackendMaxConnAmount, "666"),
 				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
 
-				withSegmentLabel(label.TraefikPort, "80", "containous"),
-				withSegmentLabel(label.TraefikProtocol, "https", "containous"),
-				withSegmentLabel(label.TraefikWeight, "12", "containous"),
+				withSegmentLabel(label.TraefikPort, "80", "traefiklabs"),
+				withSegmentLabel(label.TraefikProtocol, "https", "traefiklabs"),
+				withSegmentLabel(label.TraefikWeight, "12", "traefiklabs"),
 
-				withSegmentLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
-				withSegmentLabel(label.TraefikFrontendEntryPoints, "http,https", "containous"),
-				withSegmentLabel(label.TraefikFrontendPassHostHeader, "true", "containous"),
-				withSegmentLabel(label.TraefikFrontendPriority, "666", "containous"),
-				withSegmentLabel(label.TraefikFrontendRule, "Host:traefik.io", "containous"),
+				withSegmentLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "traefiklabs"),
+				withSegmentLabel(label.TraefikFrontendEntryPoints, "http,https", "traefiklabs"),
+				withSegmentLabel(label.TraefikFrontendPassHostHeader, "true", "traefiklabs"),
+				withSegmentLabel(label.TraefikFrontendPriority, "666", "traefiklabs"),
+				withSegmentLabel(label.TraefikFrontendRule, "Host:traefik.io", "traefiklabs"),
 			),
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-app-service-containous": {
+				"frontend-app-service-traefiklabs": {
 					EntryPoints: []string{
 						"http",
 						"https",
 					},
-					Backend: "backend-app-service-containous",
+					Backend: "backend-app-service-traefiklabs",
 					Routes: map[string]types.Route{
-						"route-host-app-service-containous": {
+						"route-host-app-service-traefiklabs": {
 							Rule: "Host:traefik.io",
 						},
 					},
@@ -375,9 +375,9 @@ func TestBuildConfigurationServicesV1(t *testing.T) {
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
-				"backend-app-service-containous": {
+				"backend-app-service-traefiklabs": {
 					Servers: map[string]types.Server{
-						"server-task-service-containous": {
+						"server-task-service-traefiklabs": {
 							URL:    "https://localhost:80",
 							Weight: 12,
 						},

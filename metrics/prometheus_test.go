@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	th "github.com/containous/traefik/testhelpers"
-	"github.com/containous/traefik/types"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	th "github.com/traefik/traefik/testhelpers"
+	"github.com/traefik/traefik/types"
 )
 
 func TestRegisterPromState(t *testing.T) {

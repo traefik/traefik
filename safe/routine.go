@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/cenk/backoff"
-	"github.com/containous/traefik/log"
+	"github.com/traefik/traefik/log"
 )
 
 type routine struct {

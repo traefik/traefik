@@ -119,7 +119,7 @@ services:
   storeconfig:
     build:
       context: ../..
-    image: containous/traefik
+    image: traefik/traefik
     volumes:
       - "./traefik.toml:/traefik.toml:ro"
     command: storeconfig --debug
@@ -129,7 +129,7 @@ services:
   traefik01:
     build:
       context: ../..
-    image: containous/traefik
+    image: traefik/traefik
     command: ${TRAEFIK_CMD}
     extra_hosts:
       - traefik.boulder.com:172.17.0.1
@@ -152,7 +152,7 @@ services:
   traefik02:
     build:
       context: ../..
-    image: containous/traefik
+    image: traefik/traefik
     command: ${TRAEFIK_CMD}
     extra_hosts:
       - traefik.boulder.com:172.17.0.1

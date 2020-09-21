@@ -6,12 +6,12 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares/tracing/datadog"
-	"github.com/containous/traefik/middlewares/tracing/jaeger"
-	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/middlewares/tracing/datadog"
+	"github.com/traefik/traefik/middlewares/tracing/jaeger"
+	"github.com/traefik/traefik/middlewares/tracing/zipkin"
 )
 
 // ForwardMaxLengthNumber defines the number of static characters in the Forwarding Span Trace name : 8 chars for 'forward ' + 8 chars for hash + 2 chars for '_'.

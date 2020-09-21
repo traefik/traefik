@@ -6,10 +6,10 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/containous/flaeg/parse"
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/types"
 )
 
 func TestSegmentBuildConfiguration(t *testing.T) {

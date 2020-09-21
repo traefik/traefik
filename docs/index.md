@@ -4,8 +4,8 @@
 
 [![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](/)
-[![Go Report Card](https://goreportcard.com/badge/github.com/containous/traefik)](https://goreportcard.com/report/github.com/containous/traefik)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
+[![Go Report Card](https://goreportcard.com/badge/github.com/traefik/traefik)](https://goreportcard.com/report/github.com/traefik/traefik)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/traefik/traefik/blob/master/LICENSE.md)
 [![Join the community support forum at https://community.containo.us/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.containo.us/)
 [![Twitter](https://img.shields.io/twitter/follow/traefik.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefik)
 
@@ -66,7 +66,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 In this quickstart, we'll use [Docker compose](https://docs.docker.com/compose) to create our demo infrastructure.
 
-To save some time, you can clone [Traefik's repository](https://github.com/containous/traefik) and use the quickstart files located in the [examples/quickstart](https://github.com/containous/traefik/tree/v1.7/examples/quickstart/) directory.
+To save some time, you can clone [Traefik's repository](https://github.com/traefik/traefik) and use the quickstart files located in the [examples/quickstart](https://github.com/traefik/traefik/tree/v1.7/examples/quickstart/) directory.
 
 ### 1 — Launch Traefik — Tell It to Listen to Docker
 
@@ -109,7 +109,7 @@ Edit your `docker-compose.yml` file and add the following at the end of your fil
 ```yaml
 # ...
   whoami:
-    image: containous/whoami # A container that exposes an API to show its IP address
+    image: traefik/whoami # A container that exposes an API to show its IP address
     labels:
       - "traefik.frontend.rule=Host:whoami.docker.localhost"
 ```
@@ -190,7 +190,7 @@ You will learn fundamental Traefik features and see some demos with Kubernetes.
 
 ### The Official Binary File
 
-You can grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/v1.7/traefik.sample.toml):
+You can grab the latest binary from the [releases](https://github.com/traefik/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/traefik/traefik/v1.7/traefik.sample.toml):
 
 ```shell
 ./traefik -c traefik.toml

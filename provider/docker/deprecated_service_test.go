@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/types"
 )
 
 func TestDockerServiceBuildConfigurationV1(t *testing.T) {

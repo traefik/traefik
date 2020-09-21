@@ -2,7 +2,7 @@
 
 In this quickstart, we'll use [Docker compose](https://docs.docker.com/compose) to create our demo infrastructure.
 
-To save some time, you can clone [Traefik's repository](https://github.com/containous/traefik) and use the quickstart files located in the [examples/quickstart](https://github.com/containous/traefik/tree/v1.7/examples/quickstart/) directory.
+To save some time, you can clone [Traefik's repository](https://github.com/traefik/traefik) and use the quickstart files located in the [examples/quickstart](https://github.com/traefik/traefik/tree/v1.7/examples/quickstart/) directory.
 
 ### 1 — Launch Traefik — Tell It to Listen to Docker
 

@@ -7,10 +7,10 @@ import (
 
 	"github.com/cenk/backoff"
 	"github.com/containous/mux"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
 	"github.com/docker/leadership"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
 	"github.com/unrolled/render"
 )
 

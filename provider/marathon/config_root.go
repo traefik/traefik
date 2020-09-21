@@ -1,8 +1,8 @@
 package marathon
 
 import (
-	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
+	"github.com/traefik/traefik/types"
 )
 
 func (p *Provider) buildConfiguration(applications *marathon.Applications) *types.Configuration {

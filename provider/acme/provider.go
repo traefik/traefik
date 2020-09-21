@@ -14,12 +14,6 @@ import (
 
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/rules"
-	"github.com/containous/traefik/safe"
-	traefiktls "github.com/containous/traefik/tls"
-	"github.com/containous/traefik/types"
-	"github.com/containous/traefik/version"
 	"github.com/go-acme/lego/certificate"
 	"github.com/go-acme/lego/challenge"
 	"github.com/go-acme/lego/challenge/dns01"
@@ -29,6 +23,12 @@ import (
 	"github.com/go-acme/lego/registration"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/rules"
+	"github.com/traefik/traefik/safe"
+	traefiktls "github.com/traefik/traefik/tls"
+	"github.com/traefik/traefik/types"
+	"github.com/traefik/traefik/version"
 )
 
 var (

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/ArthurHlt/go-eureka-client/eureka"
-	"github.com/containous/traefik/provider/label"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/provider/label"
 )
 
 func TestGetPort(t *testing.T) {

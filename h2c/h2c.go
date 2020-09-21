@@ -22,7 +22,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containous/traefik/log"
+	"github.com/traefik/traefik/log"
 
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2"

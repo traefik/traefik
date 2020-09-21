@@ -1,7 +1,7 @@
 package docker
 
 import (
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/types"
 )
 
 func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.Configuration {

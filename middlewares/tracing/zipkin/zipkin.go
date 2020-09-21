@@ -3,9 +3,9 @@ package zipkin
 import (
 	"io"
 
-	"github.com/containous/traefik/log"
 	"github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin-contrib/zipkin-go-opentracing"
+	"github.com/traefik/traefik/log"
 )
 
 // Name sets the name of this tracer

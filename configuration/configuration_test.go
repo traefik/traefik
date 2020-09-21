@@ -5,15 +5,15 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/acme"
-	"github.com/containous/traefik/middlewares/tracing"
-	"github.com/containous/traefik/middlewares/tracing/jaeger"
-	"github.com/containous/traefik/middlewares/tracing/zipkin"
-	"github.com/containous/traefik/provider"
-	acmeprovider "github.com/containous/traefik/provider/acme"
-	"github.com/containous/traefik/provider/file"
-	"github.com/containous/traefik/tls"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/acme"
+	"github.com/traefik/traefik/middlewares/tracing"
+	"github.com/traefik/traefik/middlewares/tracing/jaeger"
+	"github.com/traefik/traefik/middlewares/tracing/zipkin"
+	"github.com/traefik/traefik/provider"
+	acmeprovider "github.com/traefik/traefik/provider/acme"
+	"github.com/traefik/traefik/provider/file"
+	"github.com/traefik/traefik/tls"
 )
 
 const defaultConfigFile = "traefik.toml"

@@ -9,12 +9,12 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/tls"
-	"github.com/containous/traefik/types"
 	"github.com/pkg/errors"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/tls"
+	"github.com/traefik/traefik/types"
 	"gopkg.in/fsnotify.v1"
 )
 

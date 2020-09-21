@@ -4,11 +4,11 @@ import (
 	"crypto/tls"
 	"testing"
 
-	"github.com/containous/traefik/safe"
-	traefiktls "github.com/containous/traefik/tls"
-	"github.com/containous/traefik/types"
 	"github.com/go-acme/lego/certcrypto"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/safe"
+	traefiktls "github.com/traefik/traefik/tls"
+	"github.com/traefik/traefik/types"
 )
 
 func TestGetUncheckedCertificates(t *testing.T) {

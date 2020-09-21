@@ -14,12 +14,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/cenk/backoff"
-	"github.com/containous/traefik/job"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
 	"github.com/patrickmn/go-cache"
+	"github.com/traefik/traefik/job"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
 )
 
 var _ provider.Provider = (*Provider)(nil)

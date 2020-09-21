@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/types"
 )
 
 // GetWhiteList Create white list from labels

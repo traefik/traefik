@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/provider/label"
 	"github.com/docker/go-connections/nat"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/provider/label"
 )
 
 // Specific functions

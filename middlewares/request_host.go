@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/types"
 )
 
 var requestHostKey struct{}

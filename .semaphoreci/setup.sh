@@ -5,7 +5,7 @@ export DOCKER_VERSION=18.09.7
 
 source .semaphoreci/vars
 
-if [ -z "${PULL_REQUEST_NUMBER}" ]; then SHOULD_TEST="-*-"; else TEMP_STORAGE=$(curl --silent https://patch-diff.githubusercontent.com/raw/containous/traefik/pull/${PULL_REQUEST_NUMBER}.diff | patch --dry-run -p1 -R); fi
+if [ -z "${PULL_REQUEST_NUMBER}" ]; then SHOULD_TEST="-*-"; else TEMP_STORAGE=$(curl --silent https://patch-diff.githubusercontent.com/raw/traefik/traefik/pull/${PULL_REQUEST_NUMBER}.diff | patch --dry-run -p1 -R); fi
 
 if [ -n "$TEMP_STORAGE" ]; then SHOULD_TEST=$(echo "$TEMP_STORAGE" | grep -Ev '(.md|.yaml|.yml)' || :); fi
 

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/provider/label"
 	"github.com/gambol99/go-marathon"
+	"github.com/traefik/traefik/provider/label"
 )
 
 const testTaskName = "taskID"

@@ -1,6 +1,6 @@
 package consulcatalog
 
-import "github.com/containous/traefik/types"
+import "github.com/traefik/traefik/types"
 
 func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configuration {
 	if p.TemplateVersion == 1 {

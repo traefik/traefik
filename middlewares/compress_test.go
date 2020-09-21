@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/NYTimes/gziphandler"
-	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/testhelpers"
 	"github.com/urfave/negroni"
 )
 

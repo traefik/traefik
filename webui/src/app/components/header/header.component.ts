@@ -18,7 +18,7 @@ export class HeaderComponent implements OnInit {
       .subscribe(data => {
         this.version = data.Version;
         this.codename = data.Codename;
-        this.releaseLink = 'https://github.com/containous/traefik/tree/' + data.Version;
+        this.releaseLink = 'https://github.com/traefik/traefik/tree/' + data.Version;
       });
   }
 }

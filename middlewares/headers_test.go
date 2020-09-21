@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/testhelpers"
 )
 
 var myHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

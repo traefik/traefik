@@ -11,9 +11,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/integration/helloworld"
-	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
+	"github.com/traefik/traefik/integration/helloworld"
+	"github.com/traefik/traefik/integration/try"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/containous/traefik/log"
+	"github.com/traefik/traefik/log"
 )
 
 func (s *Server) configureSignals() {

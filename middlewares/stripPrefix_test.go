@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/testhelpers"
 )
 
 func TestStripPrefix(t *testing.T) {

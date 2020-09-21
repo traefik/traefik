@@ -236,7 +236,7 @@ It allows different implementation levels of the [AAA (Authentication, Authoriza
 
 Use the following ressources to get started:
 
-- [Traefik issue GH-4174 about security with Docker socket](https://github.com/containous/traefik/issues/4174)
+- [Traefik issue GH-4174 about security with Docker socket](https://github.com/traefik/traefik/issues/4174)
 - [Inspecting Docker Activity with Socat](https://developers.redhat.com/blog/2015/02/25/inspecting-docker-activity-with-socat/)
 - [Letting Traefik run on Worker Nodes](https://blog.mikesir87.io/2018/07/letting-traefik-run-on-worker-nodes/)
 - [Docker Socket Proxy from Tecnativa](https://github.com/Tecnativa/docker-socket-proxy)

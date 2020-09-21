@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/types"
 )
 
 func parserBasicUsers(basic *types.Basic) (map[string]string, error) {

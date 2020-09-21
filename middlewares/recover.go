@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/containous/traefik/log"
+	"github.com/traefik/traefik/log"
 	"github.com/urfave/negroni"
 )
 

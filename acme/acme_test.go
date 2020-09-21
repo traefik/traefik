@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	acmeprovider "github.com/containous/traefik/provider/acme"
-	"github.com/containous/traefik/tls/generate"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	acmeprovider "github.com/traefik/traefik/provider/acme"
+	"github.com/traefik/traefik/tls/generate"
+	"github.com/traefik/traefik/types"
 )
 
 func TestDomainsSet(t *testing.T) {

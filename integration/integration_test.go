@@ -13,9 +13,9 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/containous/traefik/log"
 	"github.com/go-check/check"
 	compose "github.com/libkermit/compose/check"
+	"github.com/traefik/traefik/log"
 	checker "github.com/vdemeester/shakers"
 )
 

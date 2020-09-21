@@ -11,9 +11,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
 	gorillawebsocket "github.com/gorilla/websocket"
+	"github.com/traefik/traefik/integration/try"
 	checker "github.com/vdemeester/shakers"
 	"golang.org/x/net/websocket"
 )

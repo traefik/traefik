@@ -3,9 +3,9 @@ package marathon
 import (
 	"errors"
 
-	"github.com/containous/traefik/provider/marathon/mocks"
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/mock"
+	"github.com/traefik/traefik/provider/marathon/mocks"
 )
 
 type fakeClient struct {

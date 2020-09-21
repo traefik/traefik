@@ -5,8 +5,8 @@ import (
 	"net"
 	"os"
 
-	"github.com/containous/traefik/log"
 	"github.com/miekg/dns"
+	"github.com/traefik/traefik/log"
 )
 
 type handler struct{}

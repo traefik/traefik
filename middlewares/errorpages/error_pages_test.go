@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/containous/traefik/testhelpers"
-	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/testhelpers"
+	"github.com/traefik/traefik/types"
 	"github.com/urfave/negroni"
 )
 

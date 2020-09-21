@@ -9,10 +9,10 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/sprig"
-	"github.com/containous/traefik/autogen/gentemplates"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/autogen/gentemplates"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
 )
 
 // Provider defines methods of a provider.

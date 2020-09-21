@@ -107,7 +107,7 @@ Let's explain this command:
 
 ## Deploy your apps
 
-We can now deploy our app on the cluster, here [whoami](https://github.com/containous/whoami), a simple web server in Go.
+We can now deploy our app on the cluster, here [whoami](https://github.com/traefik/whoami), a simple web server in Go.
 We start 2 services, on the `traefik-net` network.
 
 ```shell
@@ -115,14 +115,14 @@ docker-machine ssh manager "docker service create \
 	--name whoami0 \
 	--label traefik.port=80 \
 	--network traefik-net \
-	containous/whoami"
+	traefik/whoami"
 
 docker-machine ssh manager "docker service create \
 	--name whoami1 \
 	--label traefik.port=80 \
 	--network traefik-net \
 	--label traefik.backend.loadbalancer.sticky=true \
-	containous/whoami"
+	traefik/whoami"
 ```
 
 !!! note
@@ -130,7 +130,7 @@ docker-machine ssh manager "docker service create \
     We'll demonstrate that later.
 
 !!! note
-    If using `docker stack deploy`, there is [a specific way that the labels must be defined in the docker-compose file](https://github.com/containous/traefik/issues/994#issuecomment-269095109).
+    If using `docker stack deploy`, there is [a specific way that the labels must be defined in the docker-compose file](https://github.com/traefik/traefik/issues/994#issuecomment-269095109).
 
 Check that everything is scheduled and started:
 
@@ -140,8 +140,8 @@ docker-machine ssh manager "docker service ls"
 ```
 ID            NAME     MODE        REPLICAS  IMAGE                     PORTS
 moq3dq4xqv6t  traefik  replicated  1/1       traefik:latest            *:80->80/tcp,*:8080->8080/tcp
-ysil6oto1wim  whoami0  replicated  1/1       containous/whoami:latest
-z9re2mnl34k4  whoami1  replicated  1/1       containous/whoami:latest
+ysil6oto1wim  whoami0  replicated  1/1       traefik/whoami:latest
+z9re2mnl34k4  whoami1  replicated  1/1       traefik/whoami:latest
 ```
 
 
@@ -243,8 +243,8 @@ docker-machine ssh manager "docker service ls"
 ```
 ID            NAME     MODE        REPLICAS  IMAGE                     PORTS
 moq3dq4xqv6t  traefik  replicated  1/1       traefik:latest            *:80->80/tcp,*:8080->8080/tcp
-ysil6oto1wim  whoami0  replicated  5/5       containous/whoami:latest
-z9re2mnl34k4  whoami1  replicated  5/5       containous/whoami:latest
+ysil6oto1wim  whoami0  replicated  5/5       traefik/whoami:latest
+z9re2mnl34k4  whoami1  replicated  5/5       traefik/whoami:latest
 ```
 
 ## Access to your `whoami0` through Traefik multiple times.

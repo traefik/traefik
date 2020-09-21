@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"strconv"
 
-	"github.com/containous/traefik/provider/label"
+	"github.com/traefik/traefik/provider/label"
 )
 
 const (

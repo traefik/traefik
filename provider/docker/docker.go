@@ -10,12 +10,6 @@ import (
 	"time"
 
 	"github.com/cenk/backoff"
-	"github.com/containous/traefik/job"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
-	"github.com/containous/traefik/version"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainertypes "github.com/docker/docker/api/types/container"
 	eventtypes "github.com/docker/docker/api/types/events"
@@ -25,6 +19,12 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
+	"github.com/traefik/traefik/job"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
+	"github.com/traefik/traefik/version"
 )
 
 const (
@@ -282,7 +282,7 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 	if err != nil {
 		log.Warnf("Failed to inspect container %s, error: %s", containerID, err)
 	} else {
-		// This condition is here to avoid to have empty IP https://github.com/containous/traefik/issues/2459
+		// This condition is here to avoid to have empty IP https://github.com/traefik/traefik/issues/2459
 		// We register only container which are running
 		if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
 			dData = parseContainer(containerInspected)

@@ -356,7 +356,7 @@ version: '3'
 
 services:
   traefik:
-    image: containous/traefik:[latest stable version]
+    image: traefik/traefik:[latest stable version]
     ports:
       - "80:80"
     environment:

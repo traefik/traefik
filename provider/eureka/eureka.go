@@ -7,11 +7,11 @@ import (
 	"github.com/ArthurHlt/go-eureka-client/eureka"
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/job"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/job"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
 )
 
 // Provider holds configuration of the Provider provider.

@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/containous/traefik/log"
+	"github.com/traefik/traefik/log"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
@@ -146,7 +146,7 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, stopCh <-chan struct{}) (<-
 
 	// Do not wait for the Secrets store to get synced since we cannot rely on
 	// users having granted RBAC permissions for this object.
-	// https://github.com/containous/traefik/issues/1784 should improve the
+	// https://github.com/traefik/traefik/issues/1784 should improve the
 	// situation here in the future.
 	for _, ns := range namespaces {
 		c.factories[ns].Core().V1().Secrets().Informer().AddEventHandler(eventHandler)

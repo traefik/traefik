@@ -23,11 +23,11 @@ RUN mkdir -p /usr/local/bin \
     && curl -fsSL -o /usr/local/bin/go-bindata https://github.com/containous/go-bindata/releases/download/v1.0.0/go-bindata \
     && chmod +x /usr/local/bin/go-bindata
 
-WORKDIR /go/src/github.com/containous/traefik
-COPY . /go/src/github.com/containous/traefik
+WORKDIR /go/src/github.com/traefik/traefik
+COPY . /go/src/github.com/traefik/traefik
 
-RUN rm -rf /go/src/github.com/containous/traefik/static/
-COPY --from=webui /src/static/ /go/src/github.com/containous/traefik/static/
+RUN rm -rf /go/src/github.com/traefik/traefik/static/
+COPY --from=webui /src/static/ /go/src/github.com/traefik/traefik/static/
 
 RUN ./script/make.sh generate binary
 
@@ -36,7 +36,7 @@ FROM scratch
 
 COPY --from=gobuild /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=gobuild /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=gobuild /go/src/github.com/containous/traefik/dist/traefik /
+COPY --from=gobuild /go/src/github.com/traefik/traefik/dist/traefik /
 
 EXPOSE 80
 VOLUME ["/tmp"]

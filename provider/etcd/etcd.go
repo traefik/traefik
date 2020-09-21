@@ -6,11 +6,11 @@ import (
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/etcd/v2"
 	etcdv3 "github.com/abronan/valkeyrie/store/etcd/v3"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/provider/kv"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/log"
+	"github.com/traefik/traefik/provider"
+	"github.com/traefik/traefik/provider/kv"
+	"github.com/traefik/traefik/safe"
+	"github.com/traefik/traefik/types"
 )
 
 var _ provider.Provider = (*Provider)(nil)

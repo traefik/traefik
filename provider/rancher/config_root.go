@@ -1,7 +1,7 @@
 package rancher
 
 import (
-	"github.com/containous/traefik/types"
+	"github.com/traefik/traefik/types"
 )
 
 func (p *Provider) buildConfiguration(containersInspected []rancherData) *types.Configuration {

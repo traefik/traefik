@@ -4,8 +4,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/containous/traefik/log"
 	"github.com/opentracing/opentracing-go"
+	"github.com/traefik/traefik/log"
 	ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer"
 	datadog "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )

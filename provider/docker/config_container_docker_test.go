@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
-	"github.com/containous/traefik/provider/label"
-	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/provider/label"
+	"github.com/traefik/traefik/types"
 )
 
 func TestDockerBuildConfiguration(t *testing.T) {
