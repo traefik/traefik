@@ -35,7 +35,7 @@ Step 1/10 : FROM golang:1.14-alpine
 [...]
 Successfully built 5c3c1a911277
 Successfully tagged traefik-dev:4475--feature-documentation
-docker run  -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -e VERBOSE -e VERSION -e CODENAME -e TESTDIRS -e CI -e CONTAINER=DOCKER		 -v "/home/ldez/sources/go/src/github.com/traefik/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:4475--feature-documentation" ./script/make.sh generate binary
+docker run  -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -e VERBOSE -e VERSION -e CODENAME -e TESTDIRS -e CI -e CONTAINER=DOCKER		 -v "/home/ldez/sources/go/src/github.com/traefik/traefik/"dist":/go/src/github.com/traefik/traefik/"dist"" "traefik-dev:4475--feature-documentation" ./script/make.sh generate binary
 ---> Making bundle: generate (in .)
 removed 'autogen/genstatic/gen.go'
 
@@ -138,7 +138,7 @@ Run all tests (unit and integration) using the `test` target.
 $ make test-unit
 docker build -t "traefik-dev:your-feature-branch" -f build.Dockerfile .
 # […]
-docker run --rm -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/user/go/src/github/traefik/traefik/dist:/go/src/github.com/containous/traefik/dist" "traefik-dev:your-feature-branch" ./script/make.sh generate test-unit
+docker run --rm -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/user/go/src/github/traefik/traefik/dist:/go/src/github.com/traefik/traefik/dist" "traefik-dev:your-feature-branch" ./script/make.sh generate test-unit
 ---> Making bundle: generate (in .)
 removed 'gen.go'
 

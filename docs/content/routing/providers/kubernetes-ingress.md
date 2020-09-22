@@ -149,23 +149,23 @@ which in turn will create the resulting routers, services, handlers, etc.
     metadata:
       name: whoami
       labels:
-        app: containous
+        app: myapp
         name: whoami
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: containous
+          app: myapp
           task: whoami
       template:
         metadata:
           labels:
-            app: containous
+            app: myapp
             task: whoami
         spec:
           containers:
-            - name: containouswhoami
+            - name: whoami
               image: traefik/whoami
               ports:
                 - containerPort: 80
@@ -181,7 +181,7 @@ which in turn will create the resulting routers, services, handlers, etc.
         - name: http
           port: 80
       selector:
-        app: containous
+        app: myapp
         task: whoami
     ```
 
