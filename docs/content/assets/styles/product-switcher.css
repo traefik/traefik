@@ -6,10 +6,19 @@
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
+.product-switcher .menu-item-wrapper {
+  padding-left: 15px;
+}
+
 .product-switcher img {
   margin-right: 10px;
 }
 
+.product-switcher img.gopher {
+  margin: 0 2px 0 16px;
+}
+
 .product-switcher .nav-dropdown-menu--products .nav-dropdown-menu-wrapper {
+  width: auto;
   height: auto;
 }

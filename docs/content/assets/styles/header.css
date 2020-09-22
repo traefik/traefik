@@ -274,12 +274,6 @@
   transform: scale(1.1);
 }
 
-.nav-dropdown-menu--solutions .dm-item .dmi-image {
-  width: 65px;
-  padding: 10px;
-  background: white;
-  height: auto;
-}
 .nav-dropdown-menu--solutions .dm-item .dmi-details {
   padding: 5px 0 0 80px;
 }
@@ -287,7 +281,7 @@
   margin-bottom: 10px;
 }
 
-/* Dropdown menu: Learn */
+/* Dropdown menu: Learn and Company */
 .nav-dropdown-menu--learn {
   width: 250px;
 }
@@ -432,7 +426,7 @@
   display: none;
 }
 
-@media (max-width: 1060px) {
+@media (max-width: 1219px) {
   .site-header__nav .menu-item-wrapper {
     padding-left: 20px;
   }
@@ -465,8 +459,8 @@
 }
 
 .md-header .md-search {
-  margin-left: 12.1rem;
-} 
+  margin-right: 12.1rem;
+}
 
 .site-header__main {
   display: flex;
