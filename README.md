@@ -109,7 +109,7 @@ To get community support, you can:
 - join the Traefik community Slack channel: [![Join the chat at https://slack.traefik.io](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://slack.traefik.io)
 - use [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
 
-If you need commercial support, please contact [Containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
+If you need commercial support, please contact [Traefik.io](https://traefik.io) by mail: <mailto:support@traefik.io>.
 
 ## Download
 
