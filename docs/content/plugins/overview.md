@@ -6,7 +6,7 @@ Overview
 Traefik Pilot is a software-as-a-service (SaaS) platform that connects to Traefik to extend its capabilities.
 It does this through *plugins*, which are dynamically loaded components that enable new features.
 
-For example, Traefik plugins can add features to modify requests or headers, issue redirects, add authentication, and so on, providing similar functionality to Traefik [middlewares](https://docs.traefik.io/middlewares/overview/).
+For example, Traefik plugins can add features to modify requests or headers, issue redirects, add authentication, and so on, providing similar functionality to Traefik [middlewares](https://doc.traefik.io/traefik/middlewares/overview/).
 
 Traefik Pilot can also monitor connected Traefik instances and issue alerts when one is not responding, or when it is subject to security vulnerabilities.
 
