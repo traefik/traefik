@@ -50,11 +50,3 @@ deploy:
     on:
       repo: traefik/traefik
       tags: true
-  - provider: pages
-    edge: false
-    github_token: ${GITHUB_TOKEN}
-    local_dir: site
-    skip_cleanup: true
-    on:
-      repo: traefik/traefik
-      all_branches: true
