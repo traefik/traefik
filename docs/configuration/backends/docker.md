@@ -217,7 +217,7 @@ More information about Docker's security:
 
 !!! note "Improved Security"
 
-    [TraefikEE](https://traefik.io/traefik-enterprise/) solves this problem by separating the control plane (connected to Docker) and the data plane (handling the requests).
+    [Traefik Enterprise](https://traefik.io/traefik-enterprise/) solves this problem by separating the control plane (connected to Docker) and the data plane (handling the requests).
 
 Another possible workaround is to expose the Docker socket over TCP, instead of the default Unix socket file.
 It allows different implementation levels of the [AAA (Authentication, Authorization, Accounting) concepts](https://en.wikipedia.org/wiki/AAA_(computer_security)), depending on your security assessment:

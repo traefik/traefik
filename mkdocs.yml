@@ -31,7 +31,7 @@ copyright: "Copyright &copy; 2016-2019 Containous; 2020 Traefik Labs"
 # only to force the use of the analytics partials
 google_analytics:
   - 'UA-51880359-3'
-  - 'docs.traefik.io'
+  - 'doc.traefik.io'
 
 # Options
 # Comment because the call of the CDN is very slow.
