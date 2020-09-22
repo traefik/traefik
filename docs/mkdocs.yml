@@ -15,8 +15,8 @@ theme:
   custom_dir: 'theme'
   language: en
   include_sidebar: true
-  favicon: assets/img/traefik.icon.png
-  logo: assets/img/traefik.logo.png
+  favicon: assets/img/traefikproxy-icon-color.png
+  logo: assets/img/traefikproxy-vertical-logo-color.svg
   feature:
     tabs: false
   palette:

@@ -219,7 +219,7 @@
   width: 118px;
   height: 92px;
   position: absolute;
-  background: #f4f4f4;
+  /*background: #f4f4f4;*/
   display: flex;
   align-items: center;
   justify-content: center;
@@ -459,4 +459,20 @@
 .site-header__main {
   display: flex;
   align-items: center;
+}
+
+.product-logo img {
+  height: 48px;
+}
+
+.product-logo.proxy {
+  background-color: #24a1c1;
+}
+
+.product-logo.mesh {
+  background-color: #9d0fb0;
+}
+
+.product-logo.enterprise {
+  background-color: #0060e0;
 }
