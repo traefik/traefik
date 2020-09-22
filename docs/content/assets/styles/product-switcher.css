@@ -9,3 +9,7 @@
 .product-switcher img {
   margin-right: 10px;
 }
+
+.product-switcher .nav-dropdown-menu--products .nav-dropdown-menu-wrapper {
+  height: 335px;
+}
