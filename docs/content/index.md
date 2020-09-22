@@ -3,7 +3,7 @@
 
 ![Architecture](assets/img/traefik-architecture.png)
 
-Traefik is an [open-source](https://github.com/containous/traefik) *Edge Router* that makes publishing your services a fun and easy experience. 
+Traefik is an [open-source](https://github.com/traefik/traefik) *Edge Router* that makes publishing your services a fun and easy experience. 
 It receives requests on behalf of your system and finds out which components are responsible for handling them. 
 
 What sets Traefik apart, besides its many features, is that it automatically discovers the right configuration for your services. 

@@ -166,7 +166,7 @@ which in turn will create the resulting routers, services, handlers, etc.
         spec:
           containers:
             - name: containouswhoami
-              image: containous/whoami
+              image: traefik/whoami
               ports:
                 - containerPort: 80
     

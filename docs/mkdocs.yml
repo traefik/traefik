@@ -1,11 +1,11 @@
 site_name: Traefik
 site_description: Traefik Documentation
 site_author: traefik.io
-site_url: https://docs.traefik.io
+site_url: https://doc.traefik.io/traefik
 dev_addr: 0.0.0.0:8000
 
 repo_name: 'GitHub'
-repo_url: 'https://github.com/containous/traefik'
+repo_url: 'https://github.com/traefik/traefik'
 
 docs_dir: 'content'
 
@@ -26,7 +26,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: "Copyright &copy; 2016-2020 Containous"
+copyright: "Copyright &copy; 2016-2020 Containous; 2020 Traefik Labs"
 
 extra_css:
   - assets/styles/root.css

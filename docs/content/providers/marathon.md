@@ -32,7 +32,7 @@ See also [Marathon user guide](../user-guides/marathon.md).
 		"container": {
 			"type": "DOCKER",
 			"docker": {
-				"image": "containous/whoami",
+				"image": "traefik/whoami",
 				"network": "BRIDGE",
 				"portMappings": [
 					{

@@ -35,7 +35,7 @@ Step 1/10 : FROM golang:1.14-alpine
 [...]
 Successfully built 5c3c1a911277
 Successfully tagged traefik-dev:4475--feature-documentation
-docker run  -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -e VERBOSE -e VERSION -e CODENAME -e TESTDIRS -e CI -e CONTAINER=DOCKER		 -v "/home/ldez/sources/go/src/github.com/containous/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:4475--feature-documentation" ./script/make.sh generate binary
+docker run  -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -e VERBOSE -e VERSION -e CODENAME -e TESTDIRS -e CI -e CONTAINER=DOCKER		 -v "/home/ldez/sources/go/src/github.com/traefik/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:4475--feature-documentation" ./script/make.sh generate binary
 ---> Making bundle: generate (in .)
 removed 'autogen/genstatic/gen.go'
 
@@ -68,7 +68,7 @@ Requirements:
 
 !!! tip "Source Directory"
 
-    It is recommended that you clone Traefik into the `~/go/src/github.com/containous/traefik` directory.
+    It is recommended that you clone Traefik into the `~/go/src/github.com/traefik/traefik` directory.
     This is the official golang workspace hierarchy that will allow dependencies to be properly resolved.
 
 !!! note "Environment"
@@ -104,7 +104,7 @@ Once you've set up your go environment and cloned the source repository, you can
 Beforehand, you need to get [go-bindata](https://github.com/containous/go-bindata) (the first time) in order to be able to use the `go generate` command (which is part of the build process).
 
 ```bash
-cd ~/go/src/github.com/containous/traefik
+cd ~/go/src/github.com/traefik/traefik
 
 # Get go-bindata. (Important: the ellipses are required.)
 GO111MODULE=off go get github.com/containous/go-bindata/...
@@ -124,7 +124,7 @@ go generate
 go build ./cmd/traefik
 ```
 
-You will find the Traefik executable (`traefik`) in the `~/go/src/github.com/containous/traefik` directory.
+You will find the Traefik executable (`traefik`) in the `~/go/src/github.com/traefik/traefik` directory.
 
 ## Testing
 
@@ -138,13 +138,13 @@ Run all tests (unit and integration) using the `test` target.
 $ make test-unit
 docker build -t "traefik-dev:your-feature-branch" -f build.Dockerfile .
 # […]
-docker run --rm -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/user/go/src/github/containous/traefik/dist:/go/src/github.com/containous/traefik/dist" "traefik-dev:your-feature-branch" ./script/make.sh generate test-unit
+docker run --rm -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/user/go/src/github/traefik/traefik/dist:/go/src/github.com/containous/traefik/dist" "traefik-dev:your-feature-branch" ./script/make.sh generate test-unit
 ---> Making bundle: generate (in .)
 removed 'gen.go'
 
 ---> Making bundle: test-unit (in .)
 + go test -cover -coverprofile=cover.out .
-ok      github.com/containous/traefik   0.005s  coverage: 4.1% of statements
+ok      github.com/traefik/traefik   0.005s  coverage: 4.1% of statements
 
 Test success
 ```
@@ -172,7 +172,7 @@ More: https://labix.org/gocheck
 Unit tests can be run from the cloned directory using `$ go test ./...` which should return `ok`, similar to:
 
 ```test
-ok      _/home/user/go/src/github/containous/traefik    0.004s
+ok      _/home/user/go/src/github/traefik/traefik    0.004s
 ```
 
 Integration tests must be run from the `integration/` directory and require the `-integration` switch: `$ cd integration && go test -integration ./...`.
