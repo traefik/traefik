@@ -14,13 +14,27 @@
       <div class="nav-dropdown-menu-wrapper">
         <div class="dm-header">Product Documentations</div>
         <div class="dm-items">
-          <div class="dm-item dm-item--traefikee">
-            <div class="dmi-image product-logo enterprise">
-              <img alt="traefik-enterprise" src="{{ 'assets/images/traefik-enterprise-logo.svg' | url }}" />
+
+          <div class="dm-item">
+            <div class="dmi-image mesh">
+              <img src="{{ 'assets/images/traefik-mesh-logo.svg' | url }}" alt="Traefik Mesh Documentation" />
             </div>
-            <a class="dmi-details" href="https://doc.traefik.io/">
+            <a class="dmi-details" href="https://doc.traefik.io/traefik-mesh/">
+              <div class="dmi-title">Traefik Mesh</div>
+              <div class="dmi-description">
+                Route and Monitor communications inside your
+                Kubernetes cluster
+              </div>
+            </a>
+          </div>
+
+          <div class="dm-item dm-item--traefikee">
+            <div class="dmi-image enterprise">
+              <img src="{{ 'assets/images/traefik-enterprise-logo.svg' | url }}" alt="Traefik Enterprise Documentation" />
+            </div>
+            <a class="dmi-details" href="https://doc.traefik.io/traefik-enterprise/">
               <div class="dmi-title">
-                Traefik Enterprise Documentation
+                Traefik Enterprise
               </div>
               <div class="dmi-description">
                 Ensure high availability, scalability, and security
@@ -29,18 +43,6 @@
             </a>
           </div>
 
-          <div class="dm-item">
-            <div class="dmi-image product-logo mesh">
-              <img alt="traefik-mesh" src="{{ 'assets/images/traefik-mesh-logo.svg' | url }}" />
-            </div>
-            <a class="dmi-details" href="https://doc.traefik.io/traefik-mesh/">
-              <div class="dmi-title">Traefik Mesh Documentation</div>
-              <div class="dmi-description">
-                Route and Monitor communications inside your
-                Kubernetes cluster
-              </div>
-            </a>
-          </div>
         </div>
       </div>
     </div>
