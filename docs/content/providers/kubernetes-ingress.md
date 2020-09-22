@@ -69,7 +69,7 @@ Previous versions of Traefik used a [KV store](https://doc.traefik.io/traefik/v1
 but due to sub-optimal performance was dropped as a feature in 2.0.
 
 If you require LetsEncrypt with HA in a kubernetes environment,
-we recommend using [TraefikEE](https://containo.us/traefikee/) where distributed LetsEncrypt is a supported feature.
+we recommend using [Traefik Enterprise](https://traefik.io/traefik-enterprise/) where distributed LetsEncrypt is a supported feature.
 
 If you are wanting to continue to run Traefik Community Edition,
 LetsEncrypt HA can be achieved by using a Certificate Controller such as [Cert-Manager](https://docs.cert-manager.io/en/latest/index.html).

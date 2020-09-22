@@ -8,7 +8,7 @@
 [![Go Report Card](https://goreportcard.com/badge/containous/traefik)](https://goreportcard.com/report/containous/traefik)
 [![](https://images.microbadger.com/badges/image/traefik.svg)](https://microbadger.com/images/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
-[![Join the community support forum at https://community.containo.us/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.containo.us/)
+[![Join the community support forum at https://community.traefik.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.traefik.io/)
 [![Twitter](https://img.shields.io/twitter/follow/traefik.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefik)
 
 
@@ -96,9 +96,9 @@ A collection of contributions around Traefik can be found at [https://awesome.tr
 ## Support
 
 To get community support, you can:
-- join the Traefik community forum: [![Join the chat at https://community.containo.us/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.containo.us/)
+- join the Traefik community forum: [![Join the chat at https://community.traefik.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.traefik.io/)
 
-If you need commercial support, please contact [Containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
+If you need commercial support, please contact [Traefik.io](https://traefik.io) by mail: <mailto:support@traefik.io>.
 
 ## Download
 
@@ -122,7 +122,7 @@ git clone https://github.com/containous/traefik
 
 ## Introductory Videos
 
-You can find high level and deep dive videos on [videos.containo.us](https://videos.containo.us).
+You can find high level and deep dive videos on [videos.traefik.io](https://videos.traefik.io).
 
 ## Maintainers
 

@@ -1145,4 +1145,4 @@ Supported [providers](../providers/overview.md), for now:
 - Now, configuration elements can be referenced between different providers by using the provider namespace notation: `@<provider>`.
   For instance, a router named `myrouter` in a File Provider can refer to a service named `myservice` defined in Docker Provider with the following notation: `myservice@docker`.
 - Middlewares are applied in the same order as their declaration in router.
-- If you have any questions feel free to join our [community forum](https://community.containo.us).
+- If you have any questions feel free to join our [community forum](https://community.traefik.io).
