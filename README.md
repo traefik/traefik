@@ -33,7 +33,7 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
-:warning: Please be aware that the old configurations for Traefik v1.x are NOT compatible with the v2.x config as of now. If you're running v2, please ensure you are using a [v2 configuration](https://docs.traefik.io/).
+:warning: Please be aware that the old configurations for Traefik v1.x are NOT compatible with the v2.x config as of now. If you're running v2, please ensure you are using a [v2 configuration](https://doc.traefik.io/traefik/).
 
 ## Overview
 
@@ -69,15 +69,15 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 ## Supported Backends
 
-- [Docker](https://docs.traefik.io/providers/docker/) / [Swarm mode](https://docs.traefik.io/providers/docker/)
-- [Kubernetes](https://docs.traefik.io/providers/kubernetes-crd/)
-- [Marathon](https://docs.traefik.io/providers/marathon/)
-- [Rancher](https://docs.traefik.io/providers/rancher/) (Metadata)
-- [File](https://docs.traefik.io/providers/file/)
+- [Docker](https://doc.traefik.io/traefik/providers/docker/) / [Swarm mode](https://doc.traefik.io/traefik/providers/docker/)
+- [Kubernetes](https://doc.traefik.io/traefik/providers/kubernetes-crd/)
+- [Marathon](https://doc.traefik.io/traefik/providers/marathon/)
+- [Rancher](https://doc.traefik.io/traefik/providers/rancher/) (Metadata)
+- [File](https://doc.traefik.io/traefik/providers/file/)
 
 ## Quickstart
 
-To get your hands on Traefik, you can use the [5-Minute Quickstart](https://docs.traefik.io/getting-started/quick-start/) in our documentation (you will need Docker).
+To get your hands on Traefik, you can use the [5-Minute Quickstart](https://doc.traefik.io/traefik/getting-started/quick-start/) in our documentation (you will need Docker).
 
 ## Web UI
 
@@ -89,7 +89,7 @@ You can access the simple HTML frontend of Traefik.
 
 You can find the complete documentation of Traefik v2 at [https://docs.traefik.io](https://docs.traefik.io).
 
-If you are using Traefik v1, you can find the complete documentation at [https://docs.traefik.io/v1.7/](https://docs.traefik.io/v1.7/).
+If you are using Traefik v1, you can find the complete documentation at [https://doc.traefik.io/traefik/v1.7/](https://doc.traefik.io/traefik/v1.7/).
 
 A collection of contributions around Traefik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
 

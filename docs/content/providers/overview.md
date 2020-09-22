@@ -42,7 +42,7 @@ Below is the list of the currently supported providers in Traefik.
 !!! info "More Providers"
 
     The current version of Traefik doesn't support (yet) every provider.
-    See the [previous version (v1.7)](https://docs.traefik.io/v1.7/) for more providers.
+    See the [previous version (v1.7)](https://doc.traefik.io/traefik/v1.7/) for more providers.
 
 ### Configuration reload frequency
 

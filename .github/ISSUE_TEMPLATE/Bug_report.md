@@ -22,7 +22,7 @@ Bug
 <!--
 
 The configurations between 1.X and 2.X are NOT compatible.
-Please have a look here https://docs.traefik.io/v2.0/getting-started/configuration-overview/.
+Please have a look here https://doc.traefik.io/traefik/v2.0/getting-started/configuration-overview/.
 
 -->
 

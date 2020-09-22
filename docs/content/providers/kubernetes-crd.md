@@ -53,7 +53,7 @@ For this reason, users can run multiple instances of Traefik at the same time to
 
 When using a single instance of Traefik with LetsEncrypt, no issues should be encountered, however this could be a single point of failure.
 Unfortunately, it is not possible to run multiple instances of Traefik 2.0 with LetsEncrypt enabled, because there is no way to ensure that the correct instance of Traefik will receive the challenge request, and subsequent responses.
-Previous versions of Traefik used a [KV store](https://docs.traefik.io/v1.7/configuration/acme/#storage) to attempt to achieve this, but due to sub-optimal performance was dropped as a feature in 2.0.
+Previous versions of Traefik used a [KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) to attempt to achieve this, but due to sub-optimal performance was dropped as a feature in 2.0.
 
 If you require LetsEncrypt with HA in a kubernetes environment, we recommend using [TraefikEE](https://containo.us/traefikee/) where distributed LetsEncrypt is a supported feature.
 
