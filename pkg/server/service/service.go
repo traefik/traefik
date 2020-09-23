@@ -237,7 +237,7 @@ func (m *Manager) LaunchHealthCheck() {
 	}
 
 	// FIXME metrics and context
-	healthcheck.GetHealthCheck().SetBackendsConfiguration(context.Background(), backendConfigs)
+	healthcheck.GetHealthCheck().SetBackendsConfiguration(context.Background(), backendConfigs, m.metricsRegistry)
 }
 
 func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backend string, hc *dynamic.HealthCheck) *healthcheck.Options {

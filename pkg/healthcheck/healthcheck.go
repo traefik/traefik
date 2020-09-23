@@ -44,7 +44,7 @@ type BalancerHandler interface {
 // exposing only the required metrics necessary for the health check package.
 // This makes it easier for the tests.
 type metricsRegistry interface {
-	BackendServerUpGauge() metrics.Gauge
+	ServiceServerUpGauge() metrics.Gauge
 }
 
 // Options are the public health check options.
@@ -114,8 +114,9 @@ type HealthCheck struct {
 }
 
 // SetBackendsConfiguration set backends configuration.
-func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backends map[string]*BackendConfig) {
+func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backends map[string]*BackendConfig, metricsRegistry metricsRegistry) {
 	hc.Backends = backends
+	hc.metrics = metricsRegistry
 	if hc.cancel != nil {
 		hc.cancel()
 	}
@@ -155,9 +156,11 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 	enabledURLs := backend.LB.Servers()
 	var newDisabledURLs []backendURL
 	for _, disabledURL := range backend.disabledURLs {
+		serverUpMetricValue := float64(0)
 		if err := checkHealth(disabledURL.url, backend); err == nil {
 			logger.Warnf("Health check up: Returning to server list. Backend: %q URL: %q Weight: %d",
 				backend.name, disabledURL.url.String(), disabledURL.weight)
+			serverUpMetricValue = 1
 			if err = backend.LB.UpsertServer(disabledURL.url, roundrobin.Weight(disabledURL.weight)); err != nil {
 				logger.Error(err)
 			}
@@ -165,10 +168,13 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 			logger.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disabledURL.url.String(), err)
 			newDisabledURLs = append(newDisabledURLs, disabledURL)
 		}
+		labelValues := []string{"service", backend.name, "url", disabledURL.url.String()}
+		hc.metrics.ServiceServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 	backend.disabledURLs = newDisabledURLs
 
 	for _, enableURL := range enabledURLs {
+		serverUpMetricValue := float64(1)
 		if err := checkHealth(enableURL, backend); err != nil {
 			weight := 1
 			rr, ok := backend.LB.(*roundrobin.RoundRobin)
@@ -184,7 +190,10 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 				logger.Error(err)
 			}
 			backend.disabledURLs = append(backend.disabledURLs, backendURL{enableURL, weight})
+			serverUpMetricValue = 0
 		}
+		labelValues := []string{"service", backend.name, "url", enableURL.String()}
+		hc.metrics.ServiceServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 }
 

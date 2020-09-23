@@ -46,8 +46,8 @@ type CollectingHealthCheckMetrics struct {
 	Gauge *CollectingGauge
 }
 
-// BackendServerUpGauge is there to satisfy the healthcheck.metricsRegistry interface.
-func (m *CollectingHealthCheckMetrics) BackendServerUpGauge() metrics.Gauge {
+// ServiceServerUpGauge is there to satisfy the healthcheck.metricsRegistry interface.
+func (m *CollectingHealthCheckMetrics) ServiceServerUpGauge() metrics.Gauge {
 	return m.Gauge
 }
 
