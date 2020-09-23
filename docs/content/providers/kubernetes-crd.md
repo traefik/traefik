@@ -78,7 +78,7 @@ _Optional, Default=empty_
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
-    endpoint = "http://localhost:8080"
+    endpoint: "http://localhost:8080"
     # ...
 ```
 
@@ -112,7 +112,7 @@ _Optional, Default=empty_
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
-    token = "mytoken"
+    token: "mytoken"
     # ...
 ```
 
