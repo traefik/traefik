@@ -34,7 +34,6 @@ before_deploy:
       curl -sfL https://raw.githubusercontent.com/traefik/structor/master/godownloader.sh | bash -s -- -b "${GOPATH}/bin" ${STRUCTOR_VERSION}
       curl -sSfL https://raw.githubusercontent.com/traefik/mixtus/master/godownloader.sh | sh -s -- -b "${GOPATH}/bin" ${MIXTUS_VERSION}
       structor -o traefik -r traefik --dockerfile-url="https://raw.githubusercontent.com/traefik/traefik/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/traefik/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/traefik/structor/master/requirements-override.txt" --exp-branch=master --force-edit-url --debug;
-      mixtus --dst-doc-path="./traefik" --dst-owner=traefik --dst-repo-name=doc --git-user-email="30906710+traefiker@users.noreply.github.com" --git-user-name=traefiker --src-doc-path="./site" --src-owner=traefik --src-repo-name=traefik;
     fi
 deploy:
   - provider: releases
@@ -51,3 +50,9 @@ deploy:
     on:
       repo: traefik/traefik
       tags: true
+  - provider: script
+    script: mixtus --dst-doc-path="./traefik" --dst-owner=traefik --dst-repo-name=doc --git-user-email="30906710+traefiker@users.noreply.github.com" --git-user-name=traefiker --src-doc-path="./site" --src-owner=containous --src-repo-name=traefik
+    skip_cleanup: true
+    on:
+      repo: traefik/traefik
+      all_branches: true
