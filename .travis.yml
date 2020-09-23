@@ -50,10 +50,8 @@ deploy:
     on:
       repo: traefik/traefik
       tags: true
-  - provider: pages
-    edge: false
-    github_token: ${GITHUB_TOKEN}
-    local_dir: site
+  - provider: script
+    script: mixtus --dst-doc-path="./traefik" --dst-owner=traefik --dst-repo-name=doc --git-user-email="30906710+traefiker@users.noreply.github.com" --git-user-name=traefiker --src-doc-path="./site" --src-owner=containous --src-repo-name=traefik
     skip_cleanup: true
     on:
       repo: traefik/traefik

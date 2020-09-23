@@ -1,7 +1,7 @@
 site_name: Traefik
 site_description: Traefik Documentation
-site_author: containo.us
-site_url: https://docs.traefik.io
+site_author: traefik.io
+site_url: https://doc.traefik.io/traefik
 dev_addr: 0.0.0.0:8000
 
 repo_name: 'GitHub'
@@ -15,8 +15,8 @@ theme:
   custom_dir: 'theme'
   language: en
   include_sidebar: true
-  favicon: assets/img/traefik.icon.png
-  logo: assets/img/traefik.logo.png
+  favicon: assets/img/traefikproxy-icon-color.png
+  logo: assets/img/traefikproxy-vertical-logo-color.svg
   feature:
     tabs: false
   palette:

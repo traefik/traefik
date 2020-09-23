@@ -256,7 +256,7 @@ http:
     Middleware14:
       plugin:
         PluginConf:
-          foo = "bar"
+          foo: bar
     Middleware15:
       rateLimit:
         average: 42
