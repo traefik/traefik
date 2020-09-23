@@ -91,7 +91,7 @@ _Optional, Default=empty_
 ```yaml tab="File (YAML)"
 providers:
   kubernetesIngress:
-    endpoint = "http://localhost:8080"
+    endpoint: "http://localhost:8080"
     # ...
 ```
 
@@ -124,7 +124,7 @@ _Optional, Default=empty_
 ```yaml tab="File (YAML)"
 providers:
   kubernetesIngress:
-    token = "mytoken"
+    token: "mytoken"
     # ...
 ```
 
