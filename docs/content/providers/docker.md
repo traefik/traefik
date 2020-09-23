@@ -60,14 +60,17 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
     providers:
       docker:
         # swarm classic (1.12-)
-        # endpoint = "tcp://127.0.0.1:2375"
+        # endpoint: "tcp://127.0.0.1:2375"
         # docker swarm mode (1.12+)
-        endpoint: "tcp://127.0.0.1:2375"
+        endpoint: "tcp://127.0.0.1:2377"
         swarmMode: true
     ```
     
     ```bash tab="CLI"
-    --providers.docker.endpoint=tcp://127.0.0.1:2375
+    # swarm classic (1.12-)
+    # --providers.docker.endpoint=tcp://127.0.0.1:2375
+    # docker swarm mode (1.12+)
+    --providers.docker.endpoint=tcp://127.0.0.1:2377
     --providers.docker.swarmMode=true
     ```
 
