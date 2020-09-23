@@ -36,5 +36,5 @@ func isPilotEnabled(staticCfg *static.Configuration) bool {
 
 func hasPlugins(staticCfg *static.Configuration) bool {
 	return staticCfg.Experimental != nil &&
-		len(staticCfg.Experimental.Plugins) > 0 || staticCfg.Experimental.DevPlugin != nil
+		(len(staticCfg.Experimental.Plugins) > 0 || staticCfg.Experimental.DevPlugin != nil)
 }

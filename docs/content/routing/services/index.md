@@ -914,7 +914,7 @@ http:
         # maxBodySize is the maximum size allowed for the body of the request.
         # If the body is larger, the request is not mirrored.
         # Default value is -1, which means unlimited size.
-        maxBodySize = 1024
+        maxBodySize: 1024
         mirrors:
         - name: appv2
           percent: 10
