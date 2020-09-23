@@ -42,12 +42,18 @@ deploy:
     skip_cleanup: true
     file_glob: true
     on:
-      repo: containous/traefik
+      repo: traefik/traefik
       tags: true
   - provider: script
     script: sh script/deploy.sh
     skip_cleanup: true
     on:
-      repo: containous/traefik
+      repo: traefik/traefik
       tags: true
+  - provider: script
+    script: mixtus --dst-doc-path="./traefik" --dst-owner=traefik --dst-repo-name=doc --git-user-email="30906710+traefiker@users.noreply.github.com" --git-user-name=traefiker --src-doc-path="./site" --src-owner=containous --src-repo-name=traefik
+    skip_cleanup: true
+    on:
+      repo: traefik/traefik
+      all_branches: true
 
