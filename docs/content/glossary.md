@@ -12,7 +12,7 @@ Where Every Technical Word finds its Definition`
 - [ ] [Static configuration](getting-started/configuration-overview.md#the-static-configuration)
 - [ ] [Dynamic configuration](getting-started/configuration-overview.md#the-dynamic-configuration)
 - [ ] ACME
-- [ ] TraefikEE
+- [ ] Traefik Enterprise
 - [ ] Tracing
 - [ ] Metrics
 - [ ] Orchestrator

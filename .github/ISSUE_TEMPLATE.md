@@ -8,7 +8,7 @@ DO NOT FILE ISSUES FOR GENERAL SUPPORT QUESTIONS.
 The issue tracker is for reporting bugs and feature requests only.
 For end-user related support questions, please refer to one of the following:
 
-- the Traefik community forum: https://community.containo.us/
+- the Traefik community forum: https://community.traefik.io/
 
 -->
 
@@ -17,7 +17,7 @@ Bug
 <!--
 
 The configurations between 1.X and 2.X are NOT compatible.
-Please have a look here https://docs.traefik.io/v2.0/getting-started/configuration-overview/.
+Please have a look here https://doc.traefik.io/traefik/getting-started/configuration-overview/.
 
 -->
 

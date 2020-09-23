@@ -3,7 +3,7 @@
 Help Us Help You!
 {: .subtitle }
 
-We use the [GitHub issue tracker](https://github.com/containous/traefik/issues) to keep track of issues in Traefik. 
+We use the [GitHub issue tracker](https://github.com/traefik/traefik/issues) to keep track of issues in Traefik. 
 
 The process of sorting and checking the issues is a daunting task, and requires a lot of work (more than an hour a day ... just for sorting).
 To save us some time and get quicker feedback, be sure to follow the guide lines below.
@@ -14,7 +14,7 @@ To save us some time and get quicker feedback, be sure to follow the guide lines
 
     For end-user related support questions, try using first:
 
-    - the Traefik community forum: [![Join the chat at https://community.containo.us/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.containo.us/)
+    - the Traefik community forum: [![Join the chat at https://community.traefik.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.traefik.io/)
 
 ## Issue Title
 
@@ -22,7 +22,7 @@ The title must be short and descriptive. (~60 characters)
 
 ## Description
 
-Follow the [issue template](https://github.com/containous/traefik/blob/master/.github/ISSUE_TEMPLATE.md) as much as possible.
+Follow the [issue template](https://github.com/traefik/traefik/blob/master/.github/ISSUE_TEMPLATE.md) as much as possible.
 
 Explain us in which conditions you encountered the issue, what is your context.
 

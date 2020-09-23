@@ -9,7 +9,7 @@ You can install Traefik with the following flavors:
 
 ## Use the Official Docker Image
 
-Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/v2.2/traefik.sample.toml):
+Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and run it with the [sample configuration file](https://raw.githubusercontent.com/traefik/traefik/v2.2/traefik.sample.toml):
 
 ```bash
 docker run -d -p 8080:8080 -p 80:80 \
@@ -30,9 +30,9 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 !!! warning
     
     The Traefik Chart from 
-    [Helm's default charts repository](https://github.com/helm/charts/tree/master/stable/traefik) is still using [Traefik v1.7](https://docs.traefik.io/v1.7).
+    [Helm's default charts repository](https://github.com/helm/charts/tree/master/stable/traefik) is still using [Traefik v1.7](https://doc.traefik.io/traefik/v1.7/).
 
-Traefik can be installed in Kubernetes using the Helm chart from <https://github.com/containous/traefik-helm-chart>.
+Traefik can be installed in Kubernetes using the Helm chart from <https://github.com/traefik/traefik-helm-chart>.
 
 Ensure that the following requirements are met:
 
@@ -42,7 +42,7 @@ Ensure that the following requirements are met:
 Add Traefik's chart repository to Helm:
 
 ```bash
-helm repo add traefik https://containous.github.io/traefik-helm-chart
+helm repo add traefik https://traefik.github.io/traefik-helm-chart
 ```
 
 You can update the chart repository by running:
@@ -76,7 +76,7 @@ helm install traefik traefik/traefik
     {: #helm-custom-values }
     
     The values are not (yet) documented, but are self-explanatory:
-    you can look at the [default `values.yaml`](https://github.com/containous/traefik-helm-chart/blob/master/traefik/values.yaml) file to explore possibilities.
+    you can look at the [default `values.yaml`](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml) file to explore possibilities.
     
     You can also set Traefik command line flags using `additionalArguments`.
     Example of installation with logging set to `DEBUG`:
@@ -128,7 +128,7 @@ spec:
 
 ## Use the Binary Distribution
 
-Grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page.
+Grab the latest binary from the [releases](https://github.com/traefik/traefik/releases) page.
 
 ??? info "Check the integrity of the downloaded file"
 

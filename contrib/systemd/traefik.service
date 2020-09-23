@@ -1,6 +1,6 @@
 [Unit]
 Description=Traefik
-Documentation=https://docs.traefik.io
+Documentation=https://doc.traefik.io
 #After=network-online.target
 #AssertFileIsExecutable=/usr/bin/traefik
 #AssertPathExists=/etc/traefik/traefik.toml

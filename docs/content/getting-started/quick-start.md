@@ -48,7 +48,7 @@ Edit your `docker-compose.yml` file and add the following at the end of your fil
 # ...
   whoami:
     # A container that exposes an API to show its IP address
-    image: containous/whoami
+    image: traefik/whoami
     labels:
       - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
 ```

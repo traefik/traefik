@@ -20,7 +20,7 @@
 
 ## Contributions Daily Meeting
 
-* 3 Maintainers should attend to a Contributions Daily Meeting where we sort and label new issues ([is:issue label:status/0-needs-triage](https://github.com/containous/traefik/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3Astatus%2F0-needs-triage+)), and review every Pull Requests
+* 3 Maintainers should attend to a Contributions Daily Meeting where we sort and label new issues ([is:issue label:status/0-needs-triage](https://github.com/traefik/traefik/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3Astatus%2F0-needs-triage+)), and review every Pull Requests
 * Every pull request should be checked during the Contributions Daily Meeting
     * Even if it’s already assigned
     * Even PR labelled with `contributor/waiting-for-corrections` or `contributor/waiting-for-feedback`
@@ -43,7 +43,7 @@ We use [PRM](https://github.com/ldez/prm) to manage locally pull requests.
 
 ## Bots
 
-### [Myrmica Lobicornis](https://github.com/containous/lobicornis/)
+### [Myrmica Lobicornis](https://github.com/traefik/lobicornis/)
 
 Update and Merge Pull Request.
 
@@ -67,12 +67,12 @@ This label is used when:
 * Merging branches into the master
 * Preparing the release
 
-### [Myrmica Bibikoffi](https://github.com/containous/bibikoffi/)
+### [Myrmica Bibikoffi](https://github.com/traefik/bibikoffi/)
 
 * closes stale issues [cron]
     * use some criterion as number of days between creation, last update, labels, ...
 
-### [Myrmica Aloba](https://github.com/containous/aloba)
+### [Myrmica Aloba](https://github.com/traefik/aloba)
 
 Manage GitHub labels.
 
