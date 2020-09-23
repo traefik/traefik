@@ -14,7 +14,7 @@
           </q-tabs>
           <q-space />
           <q-btn @click="$q.dark.toggle()" stretch flat no-caps icon="invert_colors" :label="`${$q.dark.isActive ? 'Light' : 'Dark'} theme`" class="btn-menu" />
-          <q-btn type="a" :href="`https://docs.traefik.io/${parsedVersion}`" target="_blank" stretch flat no-caps label="Documentation" class="btn-menu" />
+          <q-btn type="a" :href="`https://doc.traefik.io/traefik/${parsedVersion}`" target="_blank" stretch flat no-caps label="Documentation" class="btn-menu" />
           <q-btn v-if="version" type="a" href="https://github.com/containous/traefik/" target="_blank" stretch flat no-caps :label="`${name} ${version}`" class="btn-menu" />
         </q-toolbar>
       </div>

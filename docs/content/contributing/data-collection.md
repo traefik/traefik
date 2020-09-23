@@ -29,7 +29,7 @@ For this very reason, the sendAnonymousUsage option is mandatory: we want you to
 
 ## Collected Data
 
-This feature comes from the public proposal [here](https://github.com/containous/traefik/issues/2369).
+This feature comes from the public proposal [here](https://github.com/traefik/traefik/issues/2369).
 
 In order to help us learn more about how Traefik is being used and improve it, we collect anonymous usage statistics from running instances.
 Those data help us prioritize our developments and focus on what's important for our users (for example, which provider is popular, and which is not).
@@ -90,6 +90,6 @@ Once a day (the first call begins 10 minutes after the start of Traefik), we col
 
 ## The Code for Data Collection
 
-If you want to dig into more details, here is the source code of the collecting system: [collector.go](https://github.com/containous/traefik/blob/master/pkg/collector/collector.go)
+If you want to dig into more details, here is the source code of the collecting system: [collector.go](https://github.com/traefik/traefik/blob/master/pkg/collector/collector.go)
 
 By default we anonymize all configuration fields, except fields tagged with `export=true`.

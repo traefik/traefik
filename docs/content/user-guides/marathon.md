@@ -105,7 +105,7 @@ As such, there is no way to handle this situation deterministically.
 
 Finally, Marathon health checks are not mandatory (the default is to use the task state as reported by Mesos), so requiring them for Traefik would raise the entry barrier for Marathon users.
 
-Traefik used to use the health check results as a strict requirement but moved away from it as [users reported the dramatic consequences](https://github.com/containous/traefik/issues/653).
+Traefik used to use the health check results as a strict requirement but moved away from it as [users reported the dramatic consequences](https://github.com/traefik/traefik/issues/653).
 
 #### Draining
 
@@ -117,4 +117,4 @@ However, implementing this fully within Traefik seems like a non-trivial underta
 
 Additionally, the approach is less flexible compared to a custom termination handler since only the latter allows for the implementation of custom termination sequences that go beyond simple request draining (e.g., persisting a snapshot state to disk prior to terminating).
 
-The feature is currently not implemented; a request for draining in general is at [issue 41](https://github.com/containous/traefik/issues/41).
+The feature is currently not implemented; a request for draining in general is at [issue 41](https://github.com/traefik/traefik/issues/41).

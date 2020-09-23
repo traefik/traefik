@@ -160,24 +160,24 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: whoami
       namespace: default
       labels:
-        app: containous
+        app: myapp
         name: whoami
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: containous
+          app: myapp
           task: whoami
       template:
         metadata:
           labels:
-            app: containous
+            app: myapp
             task: whoami
         spec:
           containers:
-            - name: containouswhoami
-              image: containous/whoami
+            - name: whoami
+              image: traefik/whoami
               ports:
                 - containerPort: 80
     
@@ -193,7 +193,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         - name: http
           port: 80
       selector:
-        app: containous
+        app: myapp
         task: whoami
     
     ---
@@ -203,24 +203,24 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: whoamitcp
       namespace: default
       labels:
-        app: containous
+        app: myapp
         name: whoamitcp
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: containous
+          app: myapp
           task: whoamitcp
       template:
         metadata:
           labels:
-            app: containous
+            app: myapp
             task: whoamitcp
         spec:
           containers:
-            - name: containouswhoamitcp
-              image: containous/whoamitcp
+            - name: whoamitcp
+              image: traefik/whoamitcp
               ports:
                 - containerPort: 8080
     
@@ -236,7 +236,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         - protocol: TCP
           port: 8080
       selector:
-        app: containous
+        app: myapp
         task: whoamitcp
     
     ---
@@ -246,24 +246,24 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: whoamiudp
       namespace: default
       labels:
-        app: containous
+        app: myapp
         name: whoamiudp
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: containous
+          app: myapp
           task: whoamiudp
       template:
         metadata:
           labels:
-            app: containous
+            app: myapp
             task: whoamiudp
         spec:
           containers:
-            - name: containouswhoamiudp
-              image: containous/whoamiudp:dev
+            - name: whoamiudp
+              image: traefik/whoamiudp
               ports:
                 - containerPort: 8080
     
@@ -278,7 +278,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       ports:
         - port: 8080
       selector:
-        app: containous
+        app: myapp
         task: whoamiudp
     ```
 
@@ -687,7 +687,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
         - name: http
           port: 80
       selector:
-        app: containous
+        app: myapp
         task: app1
     ---
     apiVersion: v1
@@ -701,7 +701,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
         - name: http
           port: 80
       selector:
-        app: containous
+        app: myapp
         task: app2
     ```
 
@@ -780,7 +780,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
         - name: http
           port: 80
       selector:
-        app: containous
+        app: myapp
         task: app1
     ---
     apiVersion: v1
@@ -794,7 +794,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
         - name: http
           port: 80
       selector:
-        app: containous
+        app: myapp
         task: app2
     ---
     apiVersion: v1
@@ -808,7 +808,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
         - name: http
           port: 80
       selector:
-        app: containous
+        app: myapp
         task: app3
     ```
 
@@ -891,7 +891,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
         - name: http
           port: 80
       selector:
-        app: containous
+        app: myapp
         task: app1
     ---
     apiVersion: v1
@@ -905,7 +905,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
         - name: http
           port: 80
       selector:
-        app: containous
+        app: myapp
         task: app2
     ```
 
@@ -1026,7 +1026,7 @@ and there is a second level because each whoami service is a `replicaset` and is
         spec:
           containers:
             - name: whoami1
-              image: containous/whoami
+              image: traefik/whoami
               ports:
                 - name: web
                   containerPort: 80
@@ -1052,7 +1052,7 @@ and there is a second level because each whoami service is a `replicaset` and is
         spec:
           containers:
             - name: whoami2
-              image: containous/whoami
+              image: traefik/whoami
               ports:
                 - name: web
                   containerPort: 80

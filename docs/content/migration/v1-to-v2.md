@@ -10,7 +10,7 @@ feature by feature, of how the configuration looked like in v1, and how it now l
 
 !!! info "Migration Helper"
 
-    We created a tool to help during the migration: [traefik-migration-tool](https://github.com/containous/traefik-migration-tool)
+    We created a tool to help during the migration: [traefik-migration-tool](https://github.com/traefik/traefik-migration-tool)
 
     This tool allows to:
 
@@ -104,7 +104,7 @@ Then any router can refer to an instance of the wanted middleware.
 
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the Middleware and IngressRoute kinds.
-    # https://docs.traefik.io/v2.2/reference/dynamic-configuration/kubernetes-crd/#definitions
+    # https://doc.traefik.io/traefik/v2.2/reference/dynamic-configuration/kubernetes-crd/#definitions
     apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
     metadata:
@@ -275,7 +275,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
 
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the TLSOption and IngressRoute kinds.
-    # https://docs.traefik.io/v2.2/reference/dynamic-configuration/kubernetes-crd/#definitions
+    # https://doc.traefik.io/traefik/v2.2/reference/dynamic-configuration/kubernetes-crd/#definitions
     apiVersion: traefik.containo.us/v1alpha1
     kind: TLSOption
     metadata:
@@ -1145,4 +1145,4 @@ Supported [providers](../providers/overview.md), for now:
 - Now, configuration elements can be referenced between different providers by using the provider namespace notation: `@<provider>`.
   For instance, a router named `myrouter` in a File Provider can refer to a service named `myservice` defined in Docker Provider with the following notation: `myservice@docker`.
 - Middlewares are applied in the same order as their declaration in router.
-- If you have any questions feel free to join our [community forum](https://community.containo.us).
+- If you have any questions feel free to join our [community forum](https://community.traefik.io).
