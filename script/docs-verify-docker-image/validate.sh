@@ -19,9 +19,9 @@ find "${PATH_TO_SITE}" -type f -not -path "/app/site/theme/*" \
   htmlproofer \
   --check-html \
   --check_external_hash \
-  --alt_ignore="/traefik.logo.png/" \
+  --alt_ignore="/traefikproxy-vertical-logo-color.svg/" \
   --http_status_ignore="0,500,501,503" \
-  --url-ignore "/https://groups.google.com/a/traefik.io/forum/#!forum/security/,/localhost:/,/127.0.0.1:/,/fonts.gstatic.com/,/.minikube/,/github.com\/containous\/traefik\/*edit*/,/github.com\/containous\/traefik\/,/github.com\/traefik\/traefik\/*edit*/,/github.com\/traefik\/traefik\/$/" \
+  --url-ignore "/https://groups.google.com/a/traefik.io/forum/#!forum/security/,/localhost:/,/127.0.0.1:/,/fonts.gstatic.com/,/.minikube/,/doc.traefik.io\/traefik/,/traefik.io/,/github.com\/traefik\/traefik\/*edit*/,/github.com\/traefik\/traefik\/$/" \
   '{}'
 ## HTML-proofer options at https://github.com/gjtorikian/html-proofer#configuration
 

@@ -4,7 +4,7 @@
 </p>
 
 [![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
-[![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io/v1.7)
+[![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://doc.traefik.io/traefik/v1.7)
 [![Go Report Card](https://goreportcard.com/badge/traefik/traefik)](http://goreportcard.com/report/traefik/traefik)
 [![](https://images.microbadger.com/badges/image/traefik.svg)](https://microbadger.com/images/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/traefik/traefik/blob/master/LICENSE.md)
@@ -70,22 +70,22 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 ## Supported Backends
 
-- [Docker](https://docs.traefik.io/v1.7/configuration/backends/docker) / [Swarm mode](https://docs.traefik.io/v1.7/configuration/backends/docker#docker-swarm-mode)
-- [Kubernetes](https://docs.traefik.io/v1.7/configuration/backends/kubernetes)
-- [Mesos](https://docs.traefik.io/v1.7/configuration/backends/mesos) / [Marathon](https://docs.traefik.io/v1.7/configuration/backends/marathon)
-- [Rancher](https://docs.traefik.io/v1.7/configuration/backends/rancher) (API, Metadata)
-- [Azure Service Fabric](https://docs.traefik.io/v1.7/configuration/backends/servicefabric)
-- [Consul Catalog](https://docs.traefik.io/v1.7/configuration/backends/consulcatalog)
-- [Consul](https://docs.traefik.io/v1.7/configuration/backends/consul) / [Etcd](https://docs.traefik.io/v1.7/configuration/backends/etcd) / [Zookeeper](https://docs.traefik.io/v1.7/configuration/backends/zookeeper) / [BoltDB](https://docs.traefik.io/v1.7/configuration/backends/boltdb)
-- [Eureka](https://docs.traefik.io/v1.7/configuration/backends/eureka)
-- [Amazon ECS](https://docs.traefik.io/v1.7/configuration/backends/ecs)
-- [Amazon DynamoDB](https://docs.traefik.io/v1.7/configuration/backends/dynamodb)
-- [File](https://docs.traefik.io/v1.7/configuration/backends/file)
-- [Rest](https://docs.traefik.io/v1.7/configuration/backends/rest)
+- [Docker](https://doc.traefik.io/traefik/v1.7/configuration/backends/docker) / [Swarm mode](https://doc.traefik.io/traefik/v1.7/configuration/backends/docker#docker-swarm-mode)
+- [Kubernetes](https://doc.traefik.io/traefik/v1.7/configuration/backends/kubernetes)
+- [Mesos](https://doc.traefik.io/traefik/v1.7/configuration/backends/mesos) / [Marathon](https://doc.traefik.io/traefik/v1.7/configuration/backends/marathon)
+- [Rancher](https://doc.traefik.io/traefik/v1.7/configuration/backends/rancher) (API, Metadata)
+- [Azure Service Fabric](https://doc.traefik.io/traefik/v1.7/configuration/backends/servicefabric)
+- [Consul Catalog](https://doc.traefik.io/traefik/v1.7/configuration/backends/consulcatalog)
+- [Consul](https://doc.traefik.io/traefik/v1.7/configuration/backends/consul) / [Etcd](https://doc.traefik.io/traefik/v1.7/configuration/backends/etcd) / [Zookeeper](https://doc.traefik.io/traefik/v1.7/configuration/backends/zookeeper) / [BoltDB](https://doc.traefik.io/traefik/v1.7/configuration/backends/boltdb)
+- [Eureka](https://doc.traefik.io/traefik/v1.7/configuration/backends/eureka)
+- [Amazon ECS](https://doc.traefik.io/traefik/v1.7/configuration/backends/ecs)
+- [Amazon DynamoDB](https://doc.traefik.io/traefik/v1.7/configuration/backends/dynamodb)
+- [File](https://doc.traefik.io/traefik/v1.7/configuration/backends/file)
+- [Rest](https://doc.traefik.io/traefik/v1.7/configuration/backends/rest)
 
 ## Quickstart
 
-To get your hands on Traefik, you can use the [5-Minute Quickstart](http://docs.traefik.io/v1.7/#the-traefik-quickstart-using-docker) in our documentation (you will need Docker).
+To get your hands on Traefik, you can use the [5-Minute Quickstart](http://doc.traefik.io/traefik/v1.7/#the-traefik-quickstart-using-docker) in our documentation (you will need Docker).
 
 Alternatively, if you don't want to install anything on your computer, you can try Traefik online in this great [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers. 
 
@@ -100,7 +100,7 @@ You can access the simple HTML frontend of Traefik.
 
 ## Documentation
 
-You can find the complete documentation at [https://docs.traefik.io/v1.7](https://docs.traefik.io/v1.7).
+You can find the complete documentation at [https://doc.traefik.io/traefik/v1.7](https://doc.traefik.io/traefik/v1.7).
 A collection of contributions around Traefik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
 
 ## Support
@@ -109,7 +109,7 @@ To get community support, you can:
 - join the Traefik community Slack channel: [![Join the chat at https://slack.traefik.io](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://slack.traefik.io)
 - use [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
 
-If you need commercial support, please contact [Containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
+If you need commercial support, please contact [Traefik.io](https://traefik.io) by mail: <mailto:support@traefik.io>.
 
 ## Download
 
