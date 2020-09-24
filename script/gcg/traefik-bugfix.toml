@@ -1,0 +1,27 @@
+Owner = "traefik"
+RepositoryName = "traefik"
+
+OutputType = "file"
+FileName = "traefik_changelog.md"
+
+# example new bugfix v2.3.1
+CurrentRef = "v2.3"
+PreviousRef = "v2.3.0"
+BaseBranch = "v2.3"
+FutureCurrentRefName = "v2.3.1"
+
+ThresholdPreviousRef = 10
+ThresholdCurrentRef = 10
+
+Debug = true
+DisplayLabel = true
+
+LabelExcludes = ["area/infrastructure"]
+LabelEnhancement = "kind/enhancement"
+LabelDocumentation = "area/documentation"
+LabelBug = "kind/bug/fix"
+
+[DisplayLabelOptions]
+  FilteredPrefixes = ["area/", "platform/"]
+  ExcludedSuffixes = ["documentation"]
+  TrimmedPrefixes = ["area/provider/", "area/middleware/", "area/", "platform/"]
