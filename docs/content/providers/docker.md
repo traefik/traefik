@@ -496,7 +496,7 @@ Defines the polling interval (in seconds) in Swarm Mode.
 
 ### `httpClientTimeout`
 
-_Optional, Default=32_
+_Optional, Default=0_
 
 ```toml tab="File (TOML)"
 [providers.docker]
@@ -516,7 +516,7 @@ providers:
 # ...
 ```
 
-Client timeout for HTTP connections (in seconds).
+Defines the client timeout (in seconds) for HTTP connections. If zero, no timeout is set.
 
 ### `watch`
 
