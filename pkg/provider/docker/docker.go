@@ -68,7 +68,6 @@ func (p *Provider) SetDefaults() {
 	p.Endpoint = "unix:///var/run/docker.sock"
 	p.SwarmMode = false
 	p.SwarmModeRefreshSeconds = ptypes.Duration(15 * time.Second)
-	p.HTTPClientTimeout = ptypes.Duration(32 * time.Second)
 	p.DefaultRule = DefaultTemplateRule
 }
 
