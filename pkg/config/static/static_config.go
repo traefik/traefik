@@ -213,8 +213,8 @@ func (c *Configuration) SetEffectiveConfiguration() {
 			c.Providers.Docker.SwarmModeRefreshSeconds = ptypes.Duration(15 * time.Second)
 		}
 
-		if c.Providers.Docker.HTTPClientTimeout <= 0 {
-			c.Providers.Docker.HTTPClientTimeout = ptypes.Duration(32 * time.Second)
+		if c.Providers.Docker.HTTPClientTimeout < 0 {
+			c.Providers.Docker.HTTPClientTimeout = 0
 		}
 	}
 
