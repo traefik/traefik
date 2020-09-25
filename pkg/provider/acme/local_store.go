@@ -31,10 +31,16 @@ func NewLocalStore(filename string) *LocalStore {
 
 func (s *LocalStore) save(resolverName string, storedData *StoredData) {
 	s.lock.Lock()
-	defer s.lock.Unlock()
-
 	s.storedData[resolverName] = storedData
-	s.saveDataChan <- s.storedData
+	s.lock.Unlock()
+
+	s.lock.RLock()
+	storedDataCopy := s.unSafeCopyOfStoredData(s.storedData)
+	s.lock.RUnlock()
+
+	// we cannot pass s.storedData directly, map is reference type and as result
+	// we can face with race condition, so we need to work with objects copy
+	s.saveDataChan <- storedDataCopy
 }
 
 func (s *LocalStore) get(resolverName string) (*StoredData, error) {
@@ -81,7 +87,10 @@ func (s *LocalStore) get(resolverName string) (*StoredData, error) {
 				}
 				if len(certificates) < len(storedData.Certificates) {
 					storedData.Certificates = certificates
-					s.saveDataChan <- s.storedData
+
+					// we cannot pass s.storedData directly, map is reference type and as result
+					// we can face with race condition, so we need to work with objects copy
+					s.saveDataChan <- s.unSafeCopyOfStoredData(s.storedData)
 				}
 			}
 		}
@@ -109,6 +118,15 @@ func (s *LocalStore) listenSaveAction() {
 			}
 		}
 	})
+}
+
+// unSafeCopyOfStoredData creates maps copy of source. Is not thread safe, you should use `s.lock`.
+func (s *LocalStore) unSafeCopyOfStoredData(source map[string]*StoredData) map[string]*StoredData {
+	result := map[string]*StoredData{}
+	for k, v := range source {
+		result[k] = v
+	}
+	return result
 }
 
 // GetAccount returns ACME Account.
