@@ -47,7 +47,7 @@ func TestLocalStoreGetAccountReadFromFile(t *testing.T) {
 	filePayload := `{
   "traefik.wtf": {
     "Account": {
-      "Email": "`+email+`"
+      "Email": "` + email + `"
     }
   }
 }`
