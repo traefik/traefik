@@ -151,27 +151,33 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 	logger := log.FromContext(ctx)
 
 	enabledURLs := backend.LB.Servers()
+
 	var newDisabledURLs []backendURL
 	for _, disabledURL := range backend.disabledURLs {
 		serverUpMetricValue := float64(0)
+
 		if err := checkHealth(disabledURL.url, backend); err == nil {
 			logger.Warnf("Health check up: Returning to server list. Backend: %q URL: %q Weight: %d",
 				backend.name, disabledURL.url.String(), disabledURL.weight)
 			if err = backend.LB.UpsertServer(disabledURL.url, roundrobin.Weight(disabledURL.weight)); err != nil {
 				logger.Error(err)
 			}
+
 			serverUpMetricValue = 1
 		} else {
 			logger.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disabledURL.url.String(), err)
 			newDisabledURLs = append(newDisabledURLs, disabledURL)
 		}
+
 		labelValues := []string{"service", backend.name, "url", disabledURL.url.String()}
 		hc.metrics.serverUpGauge.With(labelValues...).Set(serverUpMetricValue)
 	}
+
 	backend.disabledURLs = newDisabledURLs
 
 	for _, enableURL := range enabledURLs {
 		serverUpMetricValue := float64(1)
+
 		if err := checkHealth(enableURL, backend); err != nil {
 			weight := 1
 			rr, ok := backend.LB.(*roundrobin.RoundRobin)
@@ -182,13 +188,17 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 					weight = 1
 				}
 			}
-			logger.Warnf("Health check failed, removing from server list. Backend: %q URL: %q Weight: %d Reason: %s", backend.name, enableURL.String(), weight, err)
+
+			logger.Warnf("Health check failed, removing from server list. Backend: %q URL: %q Weight: %d Reason: %s",
+				backend.name, enableURL.String(), weight, err)
 			if err := backend.LB.RemoveServer(enableURL); err != nil {
 				logger.Error(err)
 			}
+
 			backend.disabledURLs = append(backend.disabledURLs, backendURL{enableURL, weight})
 			serverUpMetricValue = 0
 		}
+
 		labelValues := []string{"service", backend.name, "url", enableURL.String()}
 		hc.metrics.serverUpGauge.With(labelValues...).Set(serverUpMetricValue)
 	}
