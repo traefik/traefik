@@ -17,10 +17,19 @@ Traefik tries to detect the configured mode and route traffic to the right IP ad
 Traefik also attempts to determine the right port (which is a [non-trivial matter in Marathon](https://mesosphere.github.io/marathon/docs/ports.html)).
 Following is the order by which Traefik tries to identify the port (the first one that yields a positive result will be used):
 
-1. A arbitrary port specified through the `traefik.http.services.serviceName.loadbalancer.server.port=8080`
-1. The task port (possibly indexed through the `traefik.http.services.serviceName.loadbalancer.server.port=index:0` label, otherwise the first one).
-1. The port from the application's `portDefinitions` field (possibly indexed through the `traefik.http.services.serviceName.loadbalancer.server.port=index:0` label, otherwise the first one).
-1. The port from the application's `ipAddressPerTask` field (possibly indexed through the `traefik.http.services.serviceName.loadbalancer.server.port=index:0` label, otherwise the first one).
+1. A arbitrary port specified through label `traefik.http.services.serviceName.loadbalancer.server.port=8080`
+1. The task port.
+1. The port from the application's `portDefinitions` field.
+1. The port from the application's `ipAddressPerTask` field.
+
+### Port label syntax
+
+To select a port, you can either
+
+- specify the port directly: `traefik.http.services.serviceName.loadbalancer.server.port=8080`
+- specify a port index: `traefik.http.services.serviceName.loadbalancer.server.port=index:0`
+- specify a port name: `traefik.http.services.serviceName.loadbalancer.server.port=name:http`
+- otherwise the first one is selected.
 
 ## Achieving high availability
 
