@@ -373,7 +373,7 @@ func getPort(task marathon.Task, app marathon.Application, serverPort string) (s
 // one of the available port. The first such found port is returned unless an
 // optional index is provided.
 func processPorts(app marathon.Application, task marathon.Task, serverPort string) (int, error) {
-	if len(serverPort) > 0 && !strings.HasPrefix(serverPort, "index:") {
+	if len(serverPort) > 0 && !(strings.HasPrefix(serverPort, "index:") || strings.HasPrefix(serverPort, "name:")) {
 		port, err := strconv.Atoi(serverPort)
 		if err != nil {
 			return 0, err
@@ -393,8 +393,8 @@ func processPorts(app marathon.Application, task marathon.Task, serverPort strin
 
 	portIndex := 0
 	if strings.HasPrefix(serverPort, "index:") {
-		split := strings.SplitN(serverPort, ":", 2)
-		index, err := strconv.Atoi(split[1])
+		indexString := strings.TrimPrefix(serverPort, "index:")
+		index, err := strconv.Atoi(indexString)
 		if err != nil {
 			return 0, err
 		}
@@ -402,36 +402,54 @@ func processPorts(app marathon.Application, task marathon.Task, serverPort strin
 		if index < 0 || index > len(ports)-1 {
 			return 0, fmt.Errorf("index %d must be within range (0, %d)", index, len(ports)-1)
 		}
+
 		portIndex = index
+	} else if strings.HasPrefix(serverPort, "name:") {
+		name := strings.TrimPrefix(serverPort, "name:")
+		for index, def := range ports {
+			if def.Name == name {
+				portIndex = index
+				break
+			}
+		}
 	}
-	return ports[portIndex], nil
+
+	return ports[portIndex].Port, nil
 }
 
-func retrieveAvailablePorts(app marathon.Application, task marathon.Task) []int {
+type portWithName struct {
+	Port int
+	Name string
+}
+
+func retrieveAvailablePorts(app marathon.Application, task marathon.Task) []portWithName {
 	// Using default port configuration
+	var ports []portWithName
 	if len(task.Ports) > 0 {
-		return task.Ports
+		for _, port := range task.Ports {
+			ports = append(ports, portWithName{port, ""})
+		}
+		return ports
 	}
 
 	// Using port definition if available
 	if app.PortDefinitions != nil && len(*app.PortDefinitions) > 0 {
-		var ports []int
 		for _, def := range *app.PortDefinitions {
 			if def.Port != nil {
-				ports = append(ports, *def.Port)
+				ports = append(ports, portWithName{*def.Port, def.Name})
 			}
 		}
+
 		return ports
 	}
 
 	// If using IP-per-task using this port definition
 	if app.IPAddressPerTask != nil && app.IPAddressPerTask.Discovery != nil && len(*(app.IPAddressPerTask.Discovery.Ports)) > 0 {
-		var ports []int
 		for _, def := range *(app.IPAddressPerTask.Discovery.Ports) {
-			ports = append(ports, def.Number)
+			ports = append(ports, portWithName{def.Number, def.Name})
 		}
 		return ports
 	}
 
-	return []int{}
+	return []portWithName{}
 }
