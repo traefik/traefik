@@ -30,7 +30,7 @@ spec:
 ```
 
 ```yaml tab="Kubernetes"
-# Pass the escaped pems of the client certificate chain
+# Pass the escaped pem of only the client certificate ignoring any addition certificates.
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
@@ -38,7 +38,7 @@ metadata:
 spec:
   passTLSClientCert:
     pem: true
-    chain: true
+    chain: false
 ```
 
 ```yaml tab="Consul Catalog"
@@ -63,7 +63,6 @@ labels:
 [http.middlewares]
   [http.middlewares.test-passtlsclientcert.passTLSClientCert]
     pem = true
-    chain = false
 ```
 
 ```yaml tab="File (YAML)"
@@ -73,7 +72,6 @@ http:
     test-passtlsclientcert:
       passTLSClientCert:
         pem: true
-        chain: false
 ```
 
 ??? example "Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header"
@@ -430,7 +428,7 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
 
 ### `chain`
 
-The `chain` option sets the pem option to include the chain of certificates (if available) in the `X-Forwarded-Tls-Client-Cert` header. The certificates will be seperated by a ','.
+The `chain` option sets the pem option to include the chain of certificates (if available) in the `X-Forwarded-Tls-Client-Cert` header. The certificates will be seperated by a ','. This option is enabled by default.
 
 ### `info`
 
