@@ -653,8 +653,8 @@ func getCleanCertContents(certContents []string, chain bool) string {
 		cleanedCertContent = append(cleanedCertContent, cert)
 	}
 
-	 if !chain {
-    	return cleanedCertContent[0]
+	if !chain {
+		return cleanedCertContent[0]
 	}
 	return strings.Join(cleanedCertContent, certSeparator)
 }
