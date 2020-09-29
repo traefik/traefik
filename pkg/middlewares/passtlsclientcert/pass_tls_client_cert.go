@@ -267,9 +267,8 @@ func getCertificates(ctx context.Context, certs []*x509.Certificate, chain bool)
 
 	 if !chain {
     	return headerValues[0]
-	} else{
-		return strings.Join(headerValues, certSeparator)
 	}
+	return strings.Join(headerValues, certSeparator)
 }
 
 // extractCertificate extract the certificate from the request.

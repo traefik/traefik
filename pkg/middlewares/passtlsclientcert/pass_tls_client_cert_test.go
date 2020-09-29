@@ -655,9 +655,8 @@ func getCleanCertContents(certContents []string, chain bool) string {
 
 	 if !chain {
     	return cleanedCertContent[0]
-	} else{
-		return strings.Join(cleanedCertContent, certSeparator)
 	}
+	return strings.Join(cleanedCertContent, certSeparator)
 }
 
 func buildTLSWith(certContents []string) *tls.ConnectionState {
