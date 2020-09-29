@@ -63,6 +63,7 @@ labels:
 [http.middlewares]
   [http.middlewares.test-passtlsclientcert.passTLSClientCert]
     pem = true
+    chain = false
 ```
 
 ```yaml tab="File (YAML)"
@@ -72,6 +73,7 @@ http:
     test-passtlsclientcert:
       passTLSClientCert:
         pem: true
+        chain: false
 ```
 
 ??? example "Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header"
@@ -415,7 +417,7 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
     ML9n/4zmm1PMhzZHcEA72ZAq0tKCxpz10djg5v2qL5V+Oaz8TtTOZbPsxpiKMQ==
     -----END CERTIFICATE-----
     ```
-    
+       
 !!! info "Extracted data"
     
     The delimiters and `\n` will be removed.  
@@ -425,6 +427,11 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
 
     The header size limit of web servers is commonly between 4kb and 8kb.  
     You could change the server configuration to allow bigger header or use the `info` option with the needed field(s).
+
+### `chain`
+
+The `chain` option sets the pem option to include the chain of certificates (if available) in the `X-Forwarded-Tls-Client-Cert` header. The certificates will be seperated by a ','.
+
 
 ### `info`
 
