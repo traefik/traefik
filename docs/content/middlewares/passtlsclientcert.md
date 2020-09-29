@@ -428,7 +428,7 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
 
 ### `chain`
 
-The `chain` option sets the pem option to include the chain of certificates (if available) in the `X-Forwarded-Tls-Client-Cert` header. The certificates will be seperated by a ','. This option is enabled by default.
+The `chain` option sets the pem option to include the chain of certificates (if available) in the `X-Forwarded-Tls-Client-Cert` header. The certificates will be separated by a ','. This option is enabled by default.
 
 ### `info`
 
