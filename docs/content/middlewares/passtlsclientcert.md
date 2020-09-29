@@ -415,7 +415,6 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
     ML9n/4zmm1PMhzZHcEA72ZAq0tKCxpz10djg5v2qL5V+Oaz8TtTOZbPsxpiKMQ==
     -----END CERTIFICATE-----
     ```
-       
 !!! info "Extracted data"
     
     The delimiters and `\n` will be removed.  
