@@ -466,7 +466,7 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				"Middleware12": {
 					PassTLSClientCert: &dynamic.PassTLSClientCert{
-						PEM: true,
+						PEM:   true,
 						Chain: true,
 						Info: &dynamic.TLSClientCertificateInfo{
 							NotAfter:  true,

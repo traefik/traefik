@@ -89,11 +89,11 @@ func newTLSClientCertificateInfo(info *dynamic.TLSClientCertificateInfo) *tlsCli
 
 // passTLSClientCert is a middleware that helps setup a few tls info features.
 type passTLSClientCert struct {
-	next http.Handler
-	name string
-	pem  bool                      // pass the sanitized pem to the backend in a specific header
-	info *tlsClientCertificateInfo // pass selected information from the client certificate
-	chain bool                     //pass the chain of escaped certificates 
+	next  http.Handler
+	name  string
+	pem   bool                      // pass the sanitized pem to the backend in a specific header
+	info  *tlsClientCertificateInfo // pass selected information from the client certificate
+	chain bool                      // pass the chain of escaped certificates
 }
 
 // New constructs a new PassTLSClientCert instance from supplied frontend header struct.
@@ -101,10 +101,10 @@ func New(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCer
 	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
 
 	return &passTLSClientCert{
-		next: next,
-		name: name,
-		pem:  config.PEM,
-		info: newTLSClientCertificateInfo(config.Info),
+		next:  next,
+		name:  name,
+		pem:   config.PEM,
+		info:  newTLSClientCertificateInfo(config.Info),
 		chain: config.Chain,
 	}, nil
 }
@@ -265,8 +265,8 @@ func getCertificates(ctx context.Context, certs []*x509.Certificate, chain bool)
 		headerValues = append(headerValues, extractCertificate(ctx, peerCert))
 	}
 
-	 if !chain {
-    	return headerValues[0]
+	if !chain {
+		return headerValues[0]
 	}
 	return strings.Join(headerValues, certSeparator)
 }

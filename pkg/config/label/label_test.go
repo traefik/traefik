@@ -346,7 +346,7 @@ func TestDecodeConfiguration(t *testing.T) {
 				},
 				"Middleware11": {
 					PassTLSClientCert: &dynamic.PassTLSClientCert{
-						PEM: true,
+						PEM:   true,
 						Chain: true,
 						Info: &dynamic.TLSClientCertificateInfo{
 							NotAfter:     true,
@@ -808,7 +808,7 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 				"Middleware11": {
 					PassTLSClientCert: &dynamic.PassTLSClientCert{
-						PEM: true,
+						PEM:   true,
 						Chain: true,
 						Info: &dynamic.TLSClientCertificateInfo{
 							NotAfter:     true,
