@@ -29,6 +29,18 @@ spec:
     pem: true
 ```
 
+```yaml tab="Kubernetes"
+# Pass the escaped pems of the client certificate chain
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: addprefix
+spec:
+  passTLSClientCert:
+    pem: true
+    chain: true
+```
+
 ```yaml tab="Consul Catalog"
 # Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header
 - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
@@ -407,7 +419,7 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
 !!! info "Extracted data"
     
     The delimiters and `\n` will be removed.  
-    If there are more than one certificate, they are separated by a "`,`".
+    If 'chain: true' and there are more than one certificate, they are separated by a "`,`".
 
 !!! warning "`X-Forwarded-Tls-Client-Cert` value could exceed the web server header size limit"
 

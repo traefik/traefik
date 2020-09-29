@@ -233,6 +233,7 @@ http:
     Middleware13:
       passTLSClientCert:
         pem: true
+        chain: true
         info:
           notAfter: true
           notBefore: true

@@ -293,19 +293,25 @@ func TestPassTLSClientCert_PEM(t *testing.T) {
 			desc:           "TLS with simple certificate, with pem option true",
 			certContents:   []string{minimalCheeseCrt},
 			config:         dynamic.PassTLSClientCert{PEM: true},
-			expectedHeader: getCleanCertContents([]string{minimalCert}),
+			expectedHeader: getCleanCertContents([]string{minimalCheeseCrt}, false),
 		},
 		{
 			desc:           "TLS with complete certificate, with pem option true",
 			certContents:   []string{minimalCheeseCrt},
 			config:         dynamic.PassTLSClientCert{PEM: true},
-			expectedHeader: getCleanCertContents([]string{minimalCheeseCrt}),
+			expectedHeader: getCleanCertContents([]string{minimalCheeseCrt}, false),
 		},
 		{
-			desc:           "TLS with two certificate, with pem option true",
+			desc:           "TLS with two certificate, with pem option true and chain option false",
 			certContents:   []string{minimalCert, minimalCheeseCrt},
-			config:         dynamic.PassTLSClientCert{PEM: true},
-			expectedHeader: getCleanCertContents([]string{minimalCert, minimalCheeseCrt}),
+			config:         dynamic.PassTLSClientCert{PEM: true, Chain: false},
+			expectedHeader: getCleanCertContents([]string{minimalCert, minimalCheeseCrt}, false),
+		},
+		{
+			desc:           "TLS with two certificate, with pem option true & chain option true",
+			certContents:   []string{minimalCert, minimalCheeseCrt},
+			config:         dynamic.PassTLSClientCert{PEM: true, Chain: true},
+			expectedHeader: getCleanCertContents([]string{minimalCert, minimalCheeseCrt}, true),
 		},
 	}
 
@@ -330,7 +336,7 @@ func TestPassTLSClientCert_PEM(t *testing.T) {
 			assert.Equal(t, "bar", res.Body.String(), "Should be the expected body")
 
 			if test.expectedHeader != "" {
-				expected := getCleanCertContents(test.certContents)
+				expected := test.expectedHeader
 				assert.Equal(t, expected, req.Header.Get(xForwardedTLSClientCert), "The request header should contain the cleaned certificate")
 			} else {
 				assert.Empty(t, req.Header.Get(xForwardedTLSClientCert))
@@ -638,7 +644,7 @@ func Test_getSANs(t *testing.T) {
 	}
 }
 
-func getCleanCertContents(certContents []string) string {
+func getCleanCertContents(certContents []string, chain bool) string {
 	exp := regexp.MustCompile("-----BEGIN CERTIFICATE-----(?s)(.*)")
 
 	var cleanedCertContent []string
@@ -647,7 +653,11 @@ func getCleanCertContents(certContents []string) string {
 		cleanedCertContent = append(cleanedCertContent, cert)
 	}
 
-	return strings.Join(cleanedCertContent, certSeparator)
+	 if !chain {
+    	return cleanedCertContent[0]
+	} else{
+		return strings.Join(cleanedCertContent, certSeparator)
+	}
 }
 
 func buildTLSWith(certContents []string) *tls.ConnectionState {

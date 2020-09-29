@@ -93,6 +93,7 @@ type passTLSClientCert struct {
 	name string
 	pem  bool                      // pass the sanitized pem to the backend in a specific header
 	info *tlsClientCertificateInfo // pass selected information from the client certificate
+	chain bool                     //pass the chain of escaped certificates 
 }
 
 // New constructs a new PassTLSClientCert instance from supplied frontend header struct.
@@ -104,6 +105,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCer
 		name: name,
 		pem:  config.PEM,
 		info: newTLSClientCertificateInfo(config.Info),
+		chain: config.Chain,
 	}, nil
 }
 
@@ -117,7 +119,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	if p.pem {
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
-			req.Header.Set(xForwardedTLSClientCert, getCertificates(ctx, req.TLS.PeerCertificates))
+			req.Header.Set(xForwardedTLSClientCert, getCertificates(ctx, req.TLS.PeerCertificates, p.chain))
 		} else {
 			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
 		}
@@ -256,14 +258,18 @@ func sanitize(cert []byte) string {
 }
 
 // getCertificates Build a string with the client certificates.
-func getCertificates(ctx context.Context, certs []*x509.Certificate) string {
+func getCertificates(ctx context.Context, certs []*x509.Certificate, chain bool) string {
 	var headerValues []string
 
 	for _, peerCert := range certs {
 		headerValues = append(headerValues, extractCertificate(ctx, peerCert))
 	}
 
-	return strings.Join(headerValues, certSeparator)
+	 if !chain {
+    	return headerValues[0]
+	} else{
+		return strings.Join(headerValues, certSeparator)
+	}
 }
 
 // extractCertificate extract the certificate from the request.

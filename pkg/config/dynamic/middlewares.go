@@ -293,6 +293,7 @@ type InFlightReq struct {
 // PassTLSClientCert holds the TLS client cert headers configuration.
 type PassTLSClientCert struct {
 	PEM  bool                      `json:"pem,omitempty" toml:"pem,omitempty" yaml:"pem,omitempty"`
+	Chain  bool                      `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty"`
 	Info *TLSClientCertificateInfo `json:"info,omitempty" toml:"info,omitempty" yaml:"info,omitempty"`
 }
 
