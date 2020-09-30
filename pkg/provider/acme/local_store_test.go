@@ -1,65 +1,87 @@
 package acme
 
 import (
+	"fmt"
 	"io/ioutil"
-	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-const localStorageFileName = "local_storage_test.json"
-
-func TestLocalStoreGetAccountWithEmptyFile(t *testing.T) {
-	defer os.Remove(localStorageFileName)
-
-	s := NewLocalStore(localStorageFileName)
-	r, err := s.GetAccount("traefik.wtf")
-
-	assert.Nil(t, err)
-	assert.Nil(t, r)
-}
-
-func TestLocalStoreSaveAndGetAccount(t *testing.T) {
-	defer os.Remove(localStorageFileName)
-
-	email := "some@email.com"
-	s := NewLocalStore(localStorageFileName)
-	err := s.SaveAccount("traefik.wtf", &Account{
-		Email: email,
-	})
-	assert.Nil(t, err)
-
-	r, err := s.GetAccount("traefik.wtf")
-	assert.Nil(t, err)
-	assert.Equal(t, r.Email, email)
-}
-
-func TestLocalStoreGetAccountReadFromFile(t *testing.T) {
-	// give some time for `listenSaveAction` goroutine from prev tests
-	time.Sleep(time.Millisecond * 100)
-	os.Remove(localStorageFileName)
-
-	defer os.Remove(localStorageFileName)
+func TestLocalStore_GetAccount(t *testing.T) {
+	acmeFile := filepath.Join(t.TempDir(), "acme.json")
 
 	email := "some42@email.com"
-	filePayload := `{
-  "traefik.wtf": {
+	filePayload := fmt.Sprintf(`{
+  "test": {
     "Account": {
-      "Email": "` + email + `"
+      "Email": "%s"
     }
   }
-}`
-	err := ioutil.WriteFile(localStorageFileName, []byte(filePayload), 0o600)
-	assert.Nil(t, err)
+}`, email)
 
-	s := NewLocalStore(localStorageFileName)
+	err := ioutil.WriteFile(acmeFile, []byte(filePayload), 0o600)
+	require.NoError(t, err)
 
-	r, err := s.GetAccount("traefik.wtf")
-	if r == nil {
-		t.Fatal("should not be nil")
+	testCases := []struct {
+		desc     string
+		filename string
+		expected *Account
+	}{
+		{
+			desc:     "empty file",
+			filename: filepath.Join(t.TempDir(), "acme-empty.json"),
+			expected: nil,
+		},
+		{
+			desc:     "file with data",
+			filename: acmeFile,
+			expected: &Account{Email: "some42@email.com"},
+		},
 	}
-	assert.Nil(t, err)
-	assert.Equal(t, email, r.Email)
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			s := NewLocalStore(test.filename)
+
+			account, err := s.GetAccount("test")
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, account)
+		})
+	}
+}
+
+func TestLocalStore_SaveAccount(t *testing.T) {
+	acmeFile := filepath.Join(t.TempDir(), "acme.json")
+
+	s := NewLocalStore(acmeFile)
+
+	email := "some@email.com"
+
+	err := s.SaveAccount("test", &Account{Email: email})
+	require.NoError(t, err)
+
+	time.Sleep(100 * time.Millisecond)
+
+	file, err := ioutil.ReadFile(acmeFile)
+	require.NoError(t, err)
+
+	expected := `{
+  "test": {
+    "Account": {
+      "Email": "some@email.com",
+      "Registration": null,
+      "PrivateKey": null,
+      "KeyType": ""
+    },
+    "Certificates": null
+  }
+}`
+
+	assert.Equal(t, expected, string(file))
 }
