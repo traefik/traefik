@@ -802,12 +802,12 @@
             </div>
           </div>
         </q-card-section>
-        <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - chain -->
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - ignoreChain -->
         <q-card-section v-if="middleware.passTLSClientCert">
           <div class="row items-start no-wrap">
             <div class="col">
-              <div class="text-subtitle2">chain</div>
-              <boolean-state :value="!!exData(middleware).chain"/>
+              <div class="text-subtitle2">IgnoreChain</div>
+              <boolean-state :value="!!exData(middleware).ignorechain"/>
             </div>
           </div>
         </q-card-section>

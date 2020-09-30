@@ -103,7 +103,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.province":             "true",
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.info.issuer.serialnumber":         "true",
 		"traefik.http.middlewares.Middleware11.passtlsclientcert.pem":                              "true",
-		"traefik.http.middlewares.Middleware11.passtlsclientcert.chain":                            "true",
+		"traefik.http.middlewares.Middleware11.passtlsclientcert.ignorechain":                      "true",
 		"traefik.http.middlewares.Middleware12.ratelimit.average":                                  "42",
 		"traefik.http.middlewares.Middleware12.ratelimit.period":                                   "1s",
 		"traefik.http.middlewares.Middleware12.ratelimit.burst":                                    "42",
@@ -346,8 +346,8 @@ func TestDecodeConfiguration(t *testing.T) {
 				},
 				"Middleware11": {
 					PassTLSClientCert: &dynamic.PassTLSClientCert{
-						PEM:   true,
-						Chain: true,
+						PEM:         true,
+						IgnoreChain: true,
 						Info: &dynamic.TLSClientCertificateInfo{
 							NotAfter:     true,
 							NotBefore:    true,
@@ -808,8 +808,8 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 				"Middleware11": {
 					PassTLSClientCert: &dynamic.PassTLSClientCert{
-						PEM:   true,
-						Chain: true,
+						PEM:         true,
+						IgnoreChain: true,
 						Info: &dynamic.TLSClientCertificateInfo{
 							NotAfter:     true,
 							NotBefore:    true,
@@ -1204,7 +1204,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.SerialNumber":         "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Info.Issuer.DomainComponent":      "true",
 		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.PEM":                              "true",
-		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.Chain":                            "true",
+		"traefik.HTTP.Middlewares.Middleware11.PassTLSClientCert.IgnoreChain":                      "true",
 		"traefik.HTTP.Middlewares.Middleware12.RateLimit.Average":                                  "42",
 		"traefik.HTTP.Middlewares.Middleware12.RateLimit.Period":                                   "1000000000",
 		"traefik.HTTP.Middlewares.Middleware12.RateLimit.Burst":                                    "42",

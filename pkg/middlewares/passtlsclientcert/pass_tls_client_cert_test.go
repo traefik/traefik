@@ -302,15 +302,15 @@ func TestPassTLSClientCert_PEM(t *testing.T) {
 			expectedHeader: getCleanCertContents([]string{minimalCheeseCrt}, false),
 		},
 		{
-			desc:           "TLS with two certificate, with pem option true and chain option false",
+			desc:           "TLS with two certificate, with pem option true and ignoreChain option false",
 			certContents:   []string{minimalCert, minimalCheeseCrt},
-			config:         dynamic.PassTLSClientCert{PEM: true, Chain: false},
+			config:         dynamic.PassTLSClientCert{PEM: true, IgnoreChain: false},
 			expectedHeader: getCleanCertContents([]string{minimalCert, minimalCheeseCrt}, false),
 		},
 		{
-			desc:           "TLS with two certificate, with pem option true & chain option true",
+			desc:           "TLS with two certificate, with pem option true & ignoreChain option true",
 			certContents:   []string{minimalCert, minimalCheeseCrt},
-			config:         dynamic.PassTLSClientCert{PEM: true, Chain: true},
+			config:         dynamic.PassTLSClientCert{PEM: true, IgnoreChain: true},
 			expectedHeader: getCleanCertContents([]string{minimalCert, minimalCheeseCrt}, true),
 		},
 	}
@@ -644,7 +644,7 @@ func Test_getSANs(t *testing.T) {
 	}
 }
 
-func getCleanCertContents(certContents []string, chain bool) string {
+func getCleanCertContents(certContents []string, ignorechain bool) string {
 	exp := regexp.MustCompile("-----BEGIN CERTIFICATE-----(?s)(.*)")
 
 	var cleanedCertContent []string
@@ -653,7 +653,7 @@ func getCleanCertContents(certContents []string, chain bool) string {
 		cleanedCertContent = append(cleanedCertContent, cert)
 	}
 
-	if !chain {
+	if ignorechain {
 		return cleanedCertContent[0]
 	}
 	return strings.Join(cleanedCertContent, certSeparator)

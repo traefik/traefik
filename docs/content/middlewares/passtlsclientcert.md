@@ -1,4 +1,4 @@
-# PassTLSClientCert
+# ClientCert
 
 Adding Client Certificates in a Header
 {: .subtitle }
@@ -38,7 +38,7 @@ metadata:
 spec:
   passTLSClientCert:
     pem: true
-    chain: false
+    ignoreChain: true
 ```
 
 ```yaml tab="Consul Catalog"
@@ -419,16 +419,16 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
 !!! info "Extracted data"
     
     The delimiters and `\n` will be removed.  
-    If 'chain: true' and there are more than one certificate, they are separated by a "`,`".
+    If 'ignoreChain: false' and there are more than one certificate, they are separated by a "`,`".
 
 !!! warning "`X-Forwarded-Tls-Client-Cert` value could exceed the web server header size limit"
 
     The header size limit of web servers is commonly between 4kb and 8kb.  
     You could change the server configuration to allow bigger header or use the `info` option with the needed field(s).
 
-### `chain`
+### `ignoreChain`
 
-The `chain` option sets the pem option to include the chain of certificates (if available) in the `X-Forwarded-Tls-Client-Cert` header. The certificates will be separated by a ','. This option is enabled by default.
+The `ignoreChain` option sets the pem option to ignore the chain of certificates and only forward the client certificate in the `X-Forwarded-Tls-Client-Cert` header.
 
 ### `info`
 

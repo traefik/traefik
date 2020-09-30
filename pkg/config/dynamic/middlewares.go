@@ -292,14 +292,9 @@ type InFlightReq struct {
 
 // PassTLSClientCert holds the TLS client cert headers configuration.
 type PassTLSClientCert struct {
-	PEM   bool                      `json:"pem,omitempty" toml:"pem,omitempty" yaml:"pem,omitempty"`
-	Chain bool                      `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty"`
-	Info  *TLSClientCertificateInfo `json:"info,omitempty" toml:"info,omitempty" yaml:"info,omitempty"`
-}
-
-// SetDefaults sets the default values on a PassTLSClientCert.
-func (pc *PassTLSClientCert) SetDefaults() {
-	pc.Chain = true
+	PEM         bool                      `json:"pem,omitempty" toml:"pem,omitempty" yaml:"pem,omitempty"`
+	IgnoreChain bool                      `json:"ignoreChain,omitempty" toml:"ignoreChain,omitempty" yaml:"ignoreChain,omitempty"`
+	Info        *TLSClientCertificateInfo `json:"info,omitempty" toml:"info,omitempty" yaml:"info,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

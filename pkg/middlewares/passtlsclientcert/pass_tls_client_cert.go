@@ -89,11 +89,11 @@ func newTLSClientCertificateInfo(info *dynamic.TLSClientCertificateInfo) *tlsCli
 
 // passTLSClientCert is a middleware that helps setup a few tls info features.
 type passTLSClientCert struct {
-	next  http.Handler
-	name  string
-	pem   bool                      // pass the sanitized pem to the backend in a specific header
-	info  *tlsClientCertificateInfo // pass selected information from the client certificate
-	chain bool                      // pass the chain of escaped certificates
+	next        http.Handler
+	name        string
+	pem         bool                      // pass the sanitized pem to the backend in a specific header
+	info        *tlsClientCertificateInfo // pass selected information from the client certificate
+	ignorechain bool                      // pass the chain of escaped certificates
 }
 
 // New constructs a new PassTLSClientCert instance from supplied frontend header struct.
@@ -101,11 +101,11 @@ func New(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCer
 	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
 
 	return &passTLSClientCert{
-		next:  next,
-		name:  name,
-		pem:   config.PEM,
-		info:  newTLSClientCertificateInfo(config.Info),
-		chain: config.Chain,
+		next:        next,
+		name:        name,
+		pem:         config.PEM,
+		info:        newTLSClientCertificateInfo(config.Info),
+		ignorechain: config.IgnoreChain,
 	}, nil
 }
 
@@ -119,7 +119,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	if p.pem {
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
-			req.Header.Set(xForwardedTLSClientCert, getCertificates(ctx, req.TLS.PeerCertificates, p.chain))
+			req.Header.Set(xForwardedTLSClientCert, getCertificates(ctx, req.TLS.PeerCertificates, p.ignorechain))
 		} else {
 			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
 		}
@@ -258,14 +258,14 @@ func sanitize(cert []byte) string {
 }
 
 // getCertificates Build a string with the client certificates.
-func getCertificates(ctx context.Context, certs []*x509.Certificate, chain bool) string {
+func getCertificates(ctx context.Context, certs []*x509.Certificate, ignorechain bool) string {
 	var headerValues []string
 
 	for _, peerCert := range certs {
 		headerValues = append(headerValues, extractCertificate(ctx, peerCert))
 	}
 
-	if !chain {
+	if ignorechain {
 		return headerValues[0]
 	}
 	return strings.Join(headerValues, certSeparator)

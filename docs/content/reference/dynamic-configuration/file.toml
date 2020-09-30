@@ -202,7 +202,7 @@
     [http.middlewares.Middleware13]
       [http.middlewares.Middleware13.passTLSClientCert]
         pem = true
-        chain = true
+        ignoreChain = true
         [http.middlewares.Middleware13.passTLSClientCert.info]
           notAfter = true
           notBefore = true

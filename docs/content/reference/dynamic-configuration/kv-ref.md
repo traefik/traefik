@@ -105,7 +105,7 @@
 | `traefik/http/middlewares/Middleware13/passTLSClientCert/info/subject/province` | `true` |
 | `traefik/http/middlewares/Middleware13/passTLSClientCert/info/subject/serialNumber` | `true` |
 | `traefik/http/middlewares/Middleware13/passTLSClientCert/pem` | `true` |
-| `traefik/http/middlewares/Middleware13/passTLSClientCert/chain` | `true` |
+| `traefik/http/middlewares/Middleware13/passTLSClientCert/ignoreChain` | `true` |
 | `traefik/http/middlewares/Middleware14/plugin/PluginConf/foo` | `bar` |
 | `traefik/http/middlewares/Middleware15/rateLimit/average` | `42` |
 | `traefik/http/middlewares/Middleware15/rateLimit/burst` | `42` |

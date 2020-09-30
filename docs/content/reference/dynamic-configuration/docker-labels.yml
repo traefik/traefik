@@ -91,7 +91,7 @@
 - "traefik.http.middlewares.middleware13.passtlsclientcert.info.subject.province=true"
 - "traefik.http.middlewares.middleware13.passtlsclientcert.info.subject.serialnumber=true"
 - "traefik.http.middlewares.middleware13.passtlsclientcert.pem=true"
-- "traefik.http.middlewares.middleware13.passtlsclientcert.chain=true"
+- "traefik.http.middlewares.middleware13.passtlsclientcert.ignorechain=true"
 - "traefik.http.middlewares.middleware14.plugin.foobar.foo=bar"
 - "traefik.http.middlewares.middleware15.ratelimit.average=42"
 - "traefik.http.middlewares.middleware15.ratelimit.burst=42"
