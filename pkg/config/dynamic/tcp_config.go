@@ -33,8 +33,9 @@ type TCPWeightedRoundRobin struct {
 
 // TCPWRRService is a reference to a tcp service load-balanced with weighted round robin.
 type TCPWRRService struct {
-	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
-	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty"`
+	Name                 string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+	Weight               *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty"`
+	ProxyProtocolVersion *int   `json:"proxyProtocolVersion,omitempty" toml:"proxyProtocolVersion,omitempty" yaml:"proxyProtocolVersion,omitempty"`
 }
 
 // SetDefaults Default values for a TCPWRRService.
@@ -72,8 +73,9 @@ type TCPServersLoadBalancer struct {
 	// connection, to close the reading capability as well, hence fully terminating the
 	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
 	// means an infinite deadline (i.e. the reading capability is never closed).
-	TerminationDelay *int        `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty"`
-	Servers          []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
+	TerminationDelay     *int        `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty"`
+	ProxyProtocolVersion *int        `json:"proxyProtocolVersion,omitempty" toml:"proxyProtocolVersion,omitempty" yaml:"proxyProtocolVersion,omitempty"`
+	Servers              []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
 }
 
 // SetDefaults Default values for a TCPServersLoadBalancer.

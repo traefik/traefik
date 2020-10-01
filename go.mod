@@ -63,6 +63,7 @@ require (
 	github.com/openzipkin/zipkin-go v0.2.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/philhofer/fwd v1.0.0 // indirect
+	github.com/pires/go-proxyproto v0.1.4-0.20200920145405-ed8215b93919
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.3.0
 	github.com/prometheus/client_model v0.1.0

@@ -991,6 +991,32 @@ The `address` option (IP:Port) point to a specific instance.
               - address: "xx.xx.xx.xx:xx"
     ```
 
+#### ProxyProtocol
+
+Traefik supports [ProxyProtocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 to TCP Services.
+It can be enabled by setting proxyProtocolVersion to 1 or 2, default is 0 which means disabled.
+
+??? example "A Service with One Server with Proxy Protocol v2-- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [tcp.services]
+      [tcp.services.my-service.loadBalancer]
+        [[tcp.services.my-service.loadBalancer]]
+          proxyProtocolVersion = 2
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    tcp:
+      services:
+        my-service:
+          loadBalancer:
+            proxyProtocolVersion: 2
+            servers:
+              - address: "xx.xx.xx.xx:xx"
+    ```
+
 #### Termination Delay
 
 As a proxy between a client and a server, it can happen that either side (e.g. client side) decides to terminate its writing capability on the connection (i.e. issuance of a FIN packet).
