@@ -33,7 +33,7 @@ type Provider struct {
 	// Provider lookup parameters.
 	Clusters             []string `description:"ECS Clusters name" json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
 	AutoDiscoverClusters bool     `description:"Auto discover cluster" json:"autoDiscoverClusters,omitempty" toml:"autoDiscoverClusters,omitempty" yaml:"autoDiscoverClusters,omitempty" export:"true"`
-	Region               string   `description:"The AWS region to use for requests"  json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty" export:"true"`
+	Regions              []string `description:"AWS regions to use for requests" json:"regions,omitempty" toml:"regions,omitempty" yaml:"regions,omitempty" export:"true"`
 	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests" json:"accessKeyID,omitempty" toml:"accessKeyID,omitempty" yaml:"accessKeyID,omitempty"`
 	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests" json:"secretAccessKey,omitempty" toml:"secretAccessKey,omitempty" yaml:"secretAccessKey,omitempty"`
 	defaultRuleTpl       *template.Template
@@ -94,7 +94,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
+func (p *Provider) createClients(logger log.Logger) ([]awsClient, error) {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	})
@@ -103,13 +103,13 @@ func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 	}
 
 	ec2meta := ec2metadata.New(sess)
-	if p.Region == "" && ec2meta.Available() {
-		logger.Infoln("No region provided, querying instance metadata endpoint...")
+	if len(p.Regions) == 0 && ec2meta.Available() {
+		logger.Infoln("No regions provided, querying instance metadata endpoint...")
 		identity, err := ec2meta.GetInstanceIdentityDocument()
 		if err != nil {
 			return nil, err
 		}
-		p.Region = identity.Region
+		p.Regions = append(p.Regions, identity.Region)
 	}
 
 	cfg := &aws.Config{
@@ -127,19 +127,29 @@ func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 			}),
 	}
 
-	// Set the region if it is defined by the user or resolved from the EC2 metadata.
-	if p.Region != "" {
-		cfg.Region = &p.Region
-	}
-
 	cfg.WithLogger(aws.LoggerFunc(func(args ...interface{}) {
 		logger.Debug(args...)
 	}))
 
-	return &awsClient{
-		ecs.New(sess, cfg),
-		ec2.New(sess, cfg),
-	}, nil
+	// Build regions based configs if they are defined by the user or if one is resolved from the EC2 metadata.
+	clients := make([]awsClient, len(p.Regions))
+
+	for i, region := range p.Regions {
+		cfg.Region = &region
+		clients[i] = awsClient{
+			ecs.New(sess, cfg),
+			ec2.New(sess, cfg),
+		}
+	}
+
+	if len(clients) == 0 {
+		clients = append(clients, awsClient{
+			ecs.New(sess, cfg),
+			ec2.New(sess, cfg),
+		})
+	}
+
+	return clients, nil
 }
 
 // Provide configuration to traefik from ECS.
@@ -149,12 +159,12 @@ func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.P
 		logger := log.FromContext(ctxLog)
 
 		operation := func() error {
-			awsClient, err := p.createClient(logger)
+			awsClients, err := p.createClients(logger)
 			if err != nil {
 				return err
 			}
 
-			configuration, err := p.loadECSConfig(ctxLog, awsClient)
+			configuration, err := p.loadECSConfig(ctxLog, awsClients)
 			if err != nil {
 				return err
 			}
@@ -170,7 +180,7 @@ func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.P
 			for {
 				select {
 				case <-reload.C:
-					configuration, err := p.loadECSConfig(ctxLog, awsClient)
+					configuration, err := p.loadECSConfig(ctxLog, awsClients)
 					if err != nil {
 						logger.Errorf("Failed to load ECS configuration, error %s", err)
 						return err
@@ -365,10 +375,16 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	return instances, nil
 }
 
-func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*dynamic.Configuration, error) {
-	instances, err := p.listInstances(ctx, client)
-	if err != nil {
-		return nil, err
+func (p *Provider) loadECSConfig(ctx context.Context, clients []awsClient) (*dynamic.Configuration, error) {
+	var instances []ecsInstance
+
+	for _, client := range clients {
+		clientInstances, err := p.listInstances(ctx, &client)
+		if err != nil {
+			return nil, err
+		}
+
+		instances = append(instances, clientInstances...)
 	}
 
 	return p.buildConfiguration(ctx, instances), nil
