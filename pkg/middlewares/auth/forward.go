@@ -160,21 +160,6 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	fa.next.ServeHTTP(rw, req)
 }
 
-func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeaders []string) http.Header {
-	if len(allowedHeaders) == 0 {
-		return forwardRequestHeaders
-	}
-
-	filteredHeaders := http.Header{}
-	for _, headerName := range allowedHeaders {
-		headerKey := http.CanonicalHeaderKey(headerName)
-		if len(forwardRequestHeaders[headerKey]) > 0 {
-			filteredHeaders[headerKey] = append([]string(nil), forwardRequestHeaders[headerKey]...)
-		}
-	}
-	return filteredHeaders
-}
-
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
 	utils.RemoveHeaders(forwardReq.Header, forward.HopHeaders...)
@@ -233,4 +218,20 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowed
 	default:
 		forwardReq.Header.Del(xForwardedURI)
 	}
+}
+
+func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeaders []string) http.Header {
+	if len(allowedHeaders) == 0 {
+		return forwardRequestHeaders
+	}
+
+	filteredHeaders := http.Header{}
+	for _, headerName := range allowedHeaders {
+		values := forwardRequestHeaders.Values(headerName)
+		if len(values) > 0 {
+			filteredHeaders[http.CanonicalHeaderKey(headerName)] = append([]string(nil), values...)
+		}
+	}
+
+	return filteredHeaders
 }

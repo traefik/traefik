@@ -246,7 +246,6 @@ func Test_writeHeader(t *testing.T) {
 		trustForwardHeader        bool
 		emptyHost                 bool
 		expectedHeaders           map[string]string
-		expectedMissingHeaders    []string
 		checkForUnexpectedHeaders bool
 	}{
 		{
@@ -381,14 +380,11 @@ func Test_writeHeader(t *testing.T) {
 			},
 			trustForwardHeader: false,
 			expectedHeaders: map[string]string{
-				"X-CustomHeader":     "CustomHeader",
+				"x-customHeader":     "CustomHeader",
 				"X-Forwarded-Proto":  "http",
 				"X-Forwarded-Host":   "foo.bar",
 				"X-Forwarded-Uri":    "/path?q=1",
 				"X-Forwarded-Method": "GET",
-			},
-			expectedMissingHeaders: []string{
-				"Content-Type",
 			},
 			checkForUnexpectedHeaders: true,
 		},
@@ -410,11 +406,6 @@ func Test_writeHeader(t *testing.T) {
 				"X-Forwarded-Uri":    "/path?q=1",
 				"X-Forwarded-Method": "GET",
 			},
-			expectedMissingHeaders: []string{
-				"Content-Type",
-				// We don't have this header in the request, here we check that we don't add it unintentionally
-				"X-Non-Exists-Header",
-			},
 			checkForUnexpectedHeaders: true,
 		},
 	}
@@ -435,10 +426,6 @@ func Test_writeHeader(t *testing.T) {
 			writeHeader(req, forwardReq, test.trustForwardHeader, test.authRequestHeaders)
 
 			actualHeaders := forwardReq.Header
-
-			for _, header := range test.expectedMissingHeaders {
-				assert.Empty(t, actualHeaders.Get(header))
-			}
 
 			expectedHeaders := test.expectedHeaders
 			for key, value := range expectedHeaders {
