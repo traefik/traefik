@@ -145,7 +145,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware11/inFlightReq/sourceCriterion/ipStrategy/excludedIPs/1": "foobar",
 		"traefik/http/middlewares/Middleware11/inFlightReq/sourceCriterion/requestHeaderName":        "foobar",
 		"traefik/http/middlewares/Middleware12/passTLSClientCert/pem":                                "true",
-		"traefik/http/middlewares/Middleware12/passTLSClientCert/ignorechain":                        "true",
+		"traefik/http/middlewares/Middleware12/passTLSClientCert/ignoreChain":                        "true",
 		"traefik/http/middlewares/Middleware12/passTLSClientCert/info/notAfter":                      "true",
 		"traefik/http/middlewares/Middleware12/passTLSClientCert/info/notBefore":                     "true",
 		"traefik/http/middlewares/Middleware12/passTLSClientCert/info/sans":                          "true",
