@@ -29,18 +29,6 @@ spec:
     pem: true
 ```
 
-```yaml tab="Kubernetes"
-# Pass the escaped pem of only the client certificate ignoring any addition certificates.
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: addprefix
-spec:
-  passTLSClientCert:
-    pem: true
-    ignoreChain: true
-```
-
 ```yaml tab="Consul Catalog"
 # Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header
 - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
