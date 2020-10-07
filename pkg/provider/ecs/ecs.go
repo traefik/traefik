@@ -72,6 +72,7 @@ const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 var (
 	_                    provider.Provider = (*Provider)(nil)
 	existingTaskDefCache                   = cache.New(30*time.Minute, 5*time.Minute)
+	existingTagsCache                      = cache.New(30*time.Minute, 5*time.Minute)
 )
 
 // SetDefaults sets the default values.
@@ -283,9 +284,12 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			return nil, err
 		}
 
+		taskTags := p.lookupTaskTags(ctx, client, tasks)
+
 		for key, task := range tasks {
 			containerInstance := ec2Instances[aws.StringValue(task.ContainerInstanceArn)]
 			taskDef := taskDefinitions[key]
+			tags := taskTags[key]
 
 			for _, container := range task.Containers {
 				var containerDefinition *ecs.ContainerDefinition
@@ -346,8 +350,17 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					}
 				}
 
+				name := fmt.Sprintf("%s-%s", strings.Replace(aws.StringValue(task.Group), ":", "-", 1), *container.Name)
+
+				// Use service name from the task's tag if it exists
+				for _, t := range tags {
+					if aws.StringValue(t.Key) == "traefik.ecs.service" {
+						name = aws.StringValue(t.Value) + "-" + *container.Name
+					}
+				}
+
 				instance := ecsInstance{
-					Name:                fmt.Sprintf("%s-%s", strings.Replace(aws.StringValue(task.Group), ":", "-", 1), *container.Name),
+					Name:                name,
 					ID:                  key[len(key)-12:],
 					containerDefinition: containerDefinition,
 					machine:             mach,
@@ -449,6 +462,30 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 		}
 	}
 	return taskDef, nil
+}
+
+func (p *Provider) lookupTaskTags(ctx context.Context, client *awsClient, tasks map[string]*ecs.Task) map[string][]*ecs.Tag {
+	logger := log.FromContext(ctx)
+	taskTags := make(map[string][]*ecs.Tag)
+
+	for arn := range tasks {
+		if tags, ok := existingTagsCache.Get(arn); ok {
+			taskTags[arn] = tags.([]*ecs.Tag)
+			logger.Debugf("Found cached tags for %s. Skipping the call", arn)
+		} else {
+			resp, err := client.ecs.ListTagsForResourceWithContext(ctx, &ecs.ListTagsForResourceInput{
+				ResourceArn: aws.String(arn),
+			})
+			if err != nil {
+				logger.Errorf("Unable to list tags for %s: %v", arn, err)
+				continue
+			}
+
+			taskTags[arn] = resp.Tags
+			existingTagsCache.Set(arn, resp.Tags, cache.DefaultExpiration)
+		}
+	}
+	return taskTags
 }
 
 // chunkIDs ECS expects no more than 100 parameters be passed to a API call;
