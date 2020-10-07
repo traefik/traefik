@@ -158,6 +158,9 @@ http:
         authResponseHeaders:
         - foobar
         - foobar
+        authRequestHeaders:
+        - foobar
+        - foobar
     Middleware10:
       headers:
         customRequestHeaders:

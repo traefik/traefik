@@ -217,6 +217,63 @@ http:
           - "X-Secret"
 ```
 
+### `authRequestHeaders`
+
+The `authRequestHeaders` option is the list of the headers to copy from the request to the authentication server.
+It allows to prevent passing headers that have not to be passed to the authentication server.
+If not set or empty then all request headers will be passed.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.authRequestHeaders=Accept,X-CustomHeader"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: https://example.com/auth
+    authRequestHeaders:
+      - "Accept"
+      - "X-CustomHeader"
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.authRequestHeaders=Accept,X-CustomHeader"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-auth.forwardauth.authRequestHeaders": "Accept,X-CustomHeader"
+}
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.authRequestHeaders=Accept,X-CustomHeader"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "https://example.com/auth"
+    authRequestHeaders = "Accept,X-CustomHeader"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
+        authRequestHeaders:
+          - "Accept"
+          - "X-CustomHeader"
+```
+
 ### `tls`
 
 The `tls` option is the TLS configuration from Traefik to the authentication server.

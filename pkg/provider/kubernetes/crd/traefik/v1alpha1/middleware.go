@@ -88,6 +88,7 @@ type ForwardAuth struct {
 	Address             string     `json:"address,omitempty"`
 	TrustForwardHeader  bool       `json:"trustForwardHeader,omitempty"`
 	AuthResponseHeaders []string   `json:"authResponseHeaders,omitempty"`
+	AuthRequestHeaders  []string   `json:"authRequestHeaders,omitempty"`
 	TLS                 *ClientTLS `json:"tls,omitempty"`
 }
 

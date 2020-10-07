@@ -305,6 +305,20 @@
             </div>
           </div>
         </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [forwardAuth] - authRequestHeaders -->
+        <q-card-section v-if="middleware.forwardAuth">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Auth Request Headers</div>
+              <q-chip
+                v-for="(reqHeader, key) in exData(middleware).authRequestHeaders" :key="key"
+                dense
+                class="app-chip app-chip-green">
+                {{ reqHeader }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
 
         <!-- EXTRA FIELDS FROM MIDDLEWARES - [headers] - customRequestHeaders -->
         <q-card-section v-if="middleware.headers">
