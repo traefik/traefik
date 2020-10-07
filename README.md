@@ -152,7 +152,7 @@ We use [Semantic Versioning](https://semver.org/).
 
 ## Credits
 
-Kudos to [Peka](http://peka.byethost11.com/photoblog/) for his awesome work on the logo ![logo](docs/content/assets/img/traefik.icon.png).
+Kudos to [Peka](http://peka.byethost11.com/photoblog/) for his awesome work on the logo ![logo](docs/content/assets/img/traefik.logo.png).
 
 Traefik's logo is licensed under the Creative Commons 3.0 Attributions license.
 
