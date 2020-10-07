@@ -13,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -64,8 +65,11 @@ type clientWrapper struct {
 	csCrd  *versioned.Clientset
 	csKube *kubernetes.Clientset
 
-	factoriesCrd  map[string]externalversions.SharedInformerFactory
-	factoriesKube map[string]informers.SharedInformerFactory
+	factoriesCrd              map[string]externalversions.SharedInformerFactory
+	factoriesKube             map[string]informers.SharedInformerFactory
+	factoriesKubeIngress      map[string]informers.SharedInformerFactory
+	factoriesKubeSecretTLS    map[string]informers.SharedInformerFactory
+	factoriesKubeSecretOpaque map[string]informers.SharedInformerFactory
 
 	labelSelector labels.Selector
 
@@ -89,10 +93,13 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 
 func newClientImpl(csKube *kubernetes.Clientset, csCrd *versioned.Clientset) *clientWrapper {
 	return &clientWrapper{
-		csCrd:         csCrd,
-		csKube:        csKube,
-		factoriesCrd:  make(map[string]externalversions.SharedInformerFactory),
-		factoriesKube: make(map[string]informers.SharedInformerFactory),
+		csCrd:                     csCrd,
+		csKube:                    csKube,
+		factoriesCrd:              make(map[string]externalversions.SharedInformerFactory),
+		factoriesKube:             make(map[string]informers.SharedInformerFactory),
+		factoriesKubeIngress:      make(map[string]informers.SharedInformerFactory),
+		factoriesKubeSecretTLS:    make(map[string]informers.SharedInformerFactory),
+		factoriesKubeSecretOpaque: make(map[string]informers.SharedInformerFactory),
 	}
 }
 
@@ -153,10 +160,29 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		namespaces = []string{metav1.NamespaceAll}
 		c.isNamespaceAll = true
 	}
+
 	c.watchedNamespaces = namespaces
 
+	labelsTweakListOptionsFunc := func(options *metav1.ListOptions) {
+		options.LabelSelector = c.labelSelector.String()
+	}
+
+	secretTLSTweakListOptionsFunc := func(options *metav1.ListOptions) {
+		options.FieldSelector = fields.OneTermEqualSelector("type", "kubernetes.io/tls").String()
+	}
+
+	secretOpaqueTweakListOptionsFunc := func(options *metav1.ListOptions) {
+		options.FieldSelector = fields.OneTermEqualSelector("type", "Opaque").String()
+	}
+
 	for _, ns := range namespaces {
-		factoryCrd := externalversions.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod, externalversions.WithNamespace(ns))
+		// Traefik's CRD
+		factoryCrd := externalversions.NewSharedInformerFactoryWithOptions(
+			c.csCrd,
+			resyncPeriod,
+			externalversions.WithNamespace(ns),
+		)
+
 		factoryCrd.Traefik().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().Middlewares().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().IngressRouteTCPs().Informer().AddEventHandler(eventHandler)
@@ -165,19 +191,68 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryCrd.Traefik().V1alpha1().TLSStores().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TraefikServices().Informer().AddEventHandler(eventHandler)
 
-		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, informers.WithNamespace(ns))
-		factoryKube.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
+		// Kube
+		factoryKube := informers.NewSharedInformerFactoryWithOptions(
+			c.csKube,
+			resyncPeriod,
+			informers.WithNamespace(ns),
+		)
+
 		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
-		factoryKube.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+
+		// Kube Ingress
+		factoryKubeIngress := informers.NewSharedInformerFactoryWithOptions(
+			c.csKube,
+			resyncPeriod,
+			informers.WithNamespace(ns),
+			informers.WithTweakListOptions(labelsTweakListOptionsFunc),
+		)
+
+		factoryKubeIngress.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
+
+		// Kube Secrets
+		// In order to avoid retrieving too much data from the api-server we use
+		// custom factories for secrets that use a field sector which only selects
+		// the type of secret traefik can use. This avoids, for example, to retrieve
+		// secrets created by Helm v3 for its internal use.
+		factoryKubeSecretTLS := informers.NewSharedInformerFactoryWithOptions(
+			c.csKube,
+			resyncPeriod,
+			informers.WithNamespace(ns),
+			informers.WithTweakListOptions(secretTLSTweakListOptionsFunc),
+		)
+
+		factoryKubeSecretOpaque := informers.NewSharedInformerFactoryWithOptions(
+			c.csKube,
+			resyncPeriod,
+			informers.WithNamespace(ns),
+			informers.WithTweakListOptions(secretOpaqueTweakListOptionsFunc),
+		)
+
+		factoryKubeSecretTLS.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		factoryKubeSecretOpaque.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 
 		c.factoriesCrd[ns] = factoryCrd
 		c.factoriesKube[ns] = factoryKube
+		c.factoriesKubeIngress[ns] = factoryKubeIngress
+		c.factoriesKubeSecretTLS[ns] = factoryKubeSecretTLS
+		c.factoriesKubeSecretOpaque[ns] = factoryKubeSecretOpaque
 	}
 
 	for _, ns := range namespaces {
 		c.factoriesCrd[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
+		c.factoriesKubeIngress[ns].Start(stopCh)
+		c.factoriesKubeSecretTLS[ns].Start(stopCh)
+		c.factoriesKubeSecretOpaque[ns].Start(stopCh)
+	}
+
+	factories := []map[string]informers.SharedInformerFactory{
+		c.factoriesKube,
+		c.factoriesKubeIngress,
+		c.factoriesKubeSecretTLS,
+		c.factoriesKubeSecretOpaque,
 	}
 
 	for _, ns := range namespaces {
@@ -187,9 +262,11 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			}
 		}
 
-		for t, ok := range c.factoriesKube[ns].WaitForCacheSync(stopCh) {
-			if !ok {
-				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
+		for _, factory := range factories {
+			for t, ok := range factory[ns].WaitForCacheSync(stopCh) {
+				if !ok {
+					return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
+				}
 			}
 		}
 	}
@@ -337,8 +414,16 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 		return nil, false, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 
-	secret, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
+	secret, err := c.factoriesKubeSecretTLS[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
+
+	if exist {
+		return secret, exist, err
+	}
+
+	secret, err = c.factoriesKubeSecretOpaque[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
+	exist, err = translateNotFoundError(err)
+
 	return secret, exist, err
 }
 
