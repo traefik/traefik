@@ -34,8 +34,10 @@ import (
 )
 
 // TraefikServiceLister helps list TraefikServices.
+// All objects returned here must be treated as read-only.
 type TraefikServiceLister interface {
 	// List lists all TraefikServices in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.TraefikService, err error)
 	// TraefikServices returns an object that can list and get TraefikServices.
 	TraefikServices(namespace string) TraefikServiceNamespaceLister
@@ -66,10 +68,13 @@ func (s *traefikServiceLister) TraefikServices(namespace string) TraefikServiceN
 }
 
 // TraefikServiceNamespaceLister helps list and get TraefikServices.
+// All objects returned here must be treated as read-only.
 type TraefikServiceNamespaceLister interface {
 	// List lists all TraefikServices in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.TraefikService, err error)
 	// Get retrieves the TraefikService from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.TraefikService, error)
 	TraefikServiceNamespaceListerExpansion
 }

@@ -34,8 +34,10 @@ import (
 )
 
 // IngressRouteUDPLister helps list IngressRouteUDPs.
+// All objects returned here must be treated as read-only.
 type IngressRouteUDPLister interface {
 	// List lists all IngressRouteUDPs in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.IngressRouteUDP, err error)
 	// IngressRouteUDPs returns an object that can list and get IngressRouteUDPs.
 	IngressRouteUDPs(namespace string) IngressRouteUDPNamespaceLister
@@ -66,10 +68,13 @@ func (s *ingressRouteUDPLister) IngressRouteUDPs(namespace string) IngressRouteU
 }
 
 // IngressRouteUDPNamespaceLister helps list and get IngressRouteUDPs.
+// All objects returned here must be treated as read-only.
 type IngressRouteUDPNamespaceLister interface {
 	// List lists all IngressRouteUDPs in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.IngressRouteUDP, err error)
 	// Get retrieves the IngressRouteUDP from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.IngressRouteUDP, error)
 	IngressRouteUDPNamespaceListerExpansion
 }
