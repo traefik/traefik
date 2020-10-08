@@ -1,3 +1,14 @@
+## [v2.3.1](https://github.com/traefik/traefik/tree/v2.3.1) (2020-09-28)
+[All Commits](https://github.com/traefik/traefik/compare/v2.3.0...v2.3.1)
+
+**Bug fixes:**
+- **[webui]** Fix blank webui on some browsers ([#7364](https://github.com/traefik/traefik/pull/7364) by [matthieuh](https://github.com/matthieuh))
+
+**Documentation:**
+- **[k8s/helm]** Update of the helm repo localisation ([#7352](https://github.com/traefik/traefik/pull/7352) by [dgoujard](https://github.com/dgoujard))
+- restore traefik logo ([#7344](https://github.com/traefik/traefik/pull/7344) by [notsureifkevin](https://github.com/notsureifkevin))
+- Removes invalid items in the changelog. ([#7339](https://github.com/traefik/traefik/pull/7339) by [ldez](https://github.com/ldez))
+
 ## [v2.3.0](https://github.com/traefik/traefik/tree/v2.3.0) (2020-09-23)
 [All Commits](https://github.com/traefik/traefik/compare/v2.2.0-rc1...v2.3.0)
 

@@ -46,7 +46,6 @@
 import config from '../../../package'
 import PlatformAuthState from '../platform/PlatformAuthState'
 import { mapActions, mapGetters } from 'vuex'
-import semverRegex from 'semver-regex'
 
 export default {
   name: 'NavBar',
@@ -55,7 +54,7 @@ export default {
     ...mapGetters('core', { coreVersion: 'version' }),
     version () {
       if (!this.coreVersion.Version) return null
-      return semverRegex().test(this.coreVersion.Version)
+      return /^(v?\d+\.\d+)/.test(this.coreVersion.Version)
         ? this.coreVersion.Version
         : this.coreVersion.Version.substring(0, 7)
     },
