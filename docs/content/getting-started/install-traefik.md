@@ -9,7 +9,10 @@ You can install Traefik with the following flavors:
 
 ## Use the Official Docker Image
 
-Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and run it with the [sample configuration file](https://raw.githubusercontent.com/traefik/traefik/v2.3/traefik.sample.toml):
+Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and run it with one sample configuration file:
+
+* [TOML](https://raw.githubusercontent.com/traefik/traefik/v2.3/traefik.sample.toml)
+* [YAML](https://raw.githubusercontent.com/traefik/traefik/v2.3/traefik.sample.yml)
 
 ```bash
 docker run -d -p 8080:8080 -p 80:80 \
