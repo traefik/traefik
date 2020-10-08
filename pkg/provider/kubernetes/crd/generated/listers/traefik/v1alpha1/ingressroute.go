@@ -34,8 +34,10 @@ import (
 )
 
 // IngressRouteLister helps list IngressRoutes.
+// All objects returned here must be treated as read-only.
 type IngressRouteLister interface {
 	// List lists all IngressRoutes in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.IngressRoute, err error)
 	// IngressRoutes returns an object that can list and get IngressRoutes.
 	IngressRoutes(namespace string) IngressRouteNamespaceLister
@@ -66,10 +68,13 @@ func (s *ingressRouteLister) IngressRoutes(namespace string) IngressRouteNamespa
 }
 
 // IngressRouteNamespaceLister helps list and get IngressRoutes.
+// All objects returned here must be treated as read-only.
 type IngressRouteNamespaceLister interface {
 	// List lists all IngressRoutes in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.IngressRoute, err error)
 	// Get retrieves the IngressRoute from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.IngressRoute, error)
 	IngressRouteNamespaceListerExpansion
 }

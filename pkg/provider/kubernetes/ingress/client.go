@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/hashicorp/go-version"
 	"github.com/traefik/traefik/v2/pkg/log"
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +26,10 @@ const (
 	resyncPeriod   = 10 * time.Minute
 	defaultTimeout = 5 * time.Second
 )
+
+type marshaler interface {
+	Marshal() ([]byte, error)
+}
 
 type resourceEventHandler struct {
 	ev chan<- interface{}
@@ -214,7 +217,7 @@ func (c *clientWrapper) GetIngresses() []*networkingv1beta1.Ingress {
 	return results
 }
 
-func extensionsToNetworking(ing proto.Marshaler) (*networkingv1beta1.Ingress, error) {
+func extensionsToNetworking(ing marshaler) (*networkingv1beta1.Ingress, error) {
 	data, err := ing.Marshal()
 	if err != nil {
 		return nil, err
