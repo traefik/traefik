@@ -36,7 +36,7 @@ func (s *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080", nil)
 	c.Assert(err, checker.IsNil)
@@ -58,7 +58,7 @@ func (s *ErrorPagesSuite) TestErrorPage(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080", nil)
 	c.Assert(err, checker.IsNil)

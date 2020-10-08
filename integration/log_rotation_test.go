@@ -34,7 +34,7 @@ func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	defer os.Remove(traefikTestAccessLogFile)
 
@@ -93,7 +93,7 @@ func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	defer os.Remove(traefikTestAccessLogFile)
 

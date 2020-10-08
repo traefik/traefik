@@ -32,7 +32,7 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://"+haproxyIP+"/whoami", 500*time.Millisecond,
 		try.StatusCodeIs(http.StatusOK),
@@ -55,7 +55,7 @@ func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://"+haproxyIP+":81/whoami", 500*time.Millisecond,
 		try.StatusCodeIs(http.StatusOK),
@@ -77,7 +77,7 @@ func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://"+haproxyIP+"/whoami", 500*time.Millisecond,
 		try.StatusCodeIs(http.StatusOK),
@@ -99,7 +99,7 @@ func (s *ProxyProtocolSuite) TestProxyProtocolV2NotTrusted(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://"+haproxyIP+":81/whoami", 500*time.Millisecond,
 		try.StatusCodeIs(http.StatusOK),
