@@ -81,6 +81,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 
 	for storeName, certs := range storesCertificates {
 		m.getStore(storeName).DynamicCerts.Set(certs)
+		m.updateMetrics(&certs)
 	}
 }
 
@@ -123,16 +124,12 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 				return nil, fmt.Errorf("no certificate for TLSALPN challenge: %s", domainToCheck)
 			}
 
-			m.updateMetrics(certificate)
-
 			return certificate, nil
 		}
 
 		bestCertificate := store.GetBestCertificate(clientHello)
 
 		if bestCertificate != nil {
-			m.updateMetrics(bestCertificate)
-
 			return bestCertificate, nil
 		}
 
@@ -147,29 +144,31 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	return tlsConfig, err
 }
 
-// updateMetrics produce metrics for a given *tls.Certificate which must not be nil.
-func (m *Manager) updateMetrics(cert *tls.Certificate) {
+// updateMetrics produce metrics for a given *map[string]*tls.Certificate which must not be nil.
+func (m *Manager) updateMetrics(certs *map[string]*tls.Certificate) {
 	if m.tlsCertsNotAfterTimestampGauge != nil {
-		// We iterate over all the certificates, even the ones for the CA chain
-		for i := range cert.Certificate {
-			x509Cert, err := x509.ParseCertificate(cert.Certificate[i])
+		for _, cert := range *certs {
+			// We iterate over all the certificates, even the ones for the CA chain
+			for i := range cert.Certificate {
+				x509Cert, err := x509.ParseCertificate(cert.Certificate[i])
 
-			if err != nil {
-				continue
+				if err != nil {
+					continue
+				}
+
+				DNSNames := make([]string, 0, len(x509Cert.DNSNames))
+				DNSNames = append(DNSNames, x509Cert.DNSNames...)
+				sort.Strings(DNSNames)
+				SANs := strings.Join(DNSNames, ",")
+
+				labels := []string{
+					"cn", x509Cert.Subject.CommonName,
+					"serial", x509Cert.SerialNumber.String(),
+					"sans", SANs,
+				}
+
+				m.tlsCertsNotAfterTimestampGauge.With(labels...).Set(float64(x509Cert.NotAfter.Unix()))
 			}
-
-			DNSNames := make([]string, 0, len(x509Cert.DNSNames))
-			DNSNames = append(DNSNames, x509Cert.DNSNames...)
-			sort.Strings(DNSNames)
-			SANs := strings.Join(DNSNames, ",")
-
-			labels := []string{
-				"cn", x509Cert.Subject.CommonName,
-				"serial", x509Cert.SerialNumber.String(),
-				"sans", SANs,
-			}
-
-			m.tlsCertsNotAfterTimestampGauge.With(labels...).Set(float64(x509Cert.NotAfter.Unix()))
 		}
 	}
 }
