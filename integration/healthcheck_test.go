@@ -37,7 +37,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
@@ -105,7 +105,7 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// Wait for traefik
 	err = try.GetRequest("http://localhost:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
@@ -181,7 +181,7 @@ func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("Host(`test.localhost`)"))
@@ -217,7 +217,7 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))

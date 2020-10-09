@@ -164,7 +164,7 @@ func (s *GRPCSuite) TestGRPC(c *check.C) {
 
 	err = cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
@@ -202,7 +202,7 @@ func (s *GRPCSuite) TestGRPCh2c(c *check.C) {
 
 	err = cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
@@ -244,7 +244,7 @@ func (s *GRPCSuite) TestGRPCh2cTermination(c *check.C) {
 
 	err = cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
@@ -286,7 +286,7 @@ func (s *GRPCSuite) TestGRPCInsecure(c *check.C) {
 
 	err = cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
@@ -333,7 +333,7 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 
 	err = cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
@@ -392,7 +392,7 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval(c *check.C) {
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
@@ -450,7 +450,7 @@ func (s *GRPCSuite) TestGRPCWithRetry(c *check.C) {
 
 	err = cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))

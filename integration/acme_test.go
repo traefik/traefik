@@ -410,7 +410,7 @@ func (s *AcmeSuite) TestNoValidLetsEncryptServer(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// Expected traefik works
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -440,7 +440,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase acmeTestCase) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 	// A real file is needed to have the right mode on acme.json file
 	defer os.Remove("/tmp/acme.json")
 

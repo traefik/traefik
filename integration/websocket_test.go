@@ -54,7 +54,7 @@ func (s *WebsocketSuite) TestBase(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
@@ -104,7 +104,7 @@ func (s *WebsocketSuite) TestWrongOrigin(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
@@ -154,7 +154,7 @@ func (s *WebsocketSuite) TestOrigin(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
@@ -214,7 +214,7 @@ func (s *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
@@ -271,7 +271,7 @@ func (s *WebsocketSuite) TestSSLTermination(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
@@ -333,7 +333,7 @@ func (s *WebsocketSuite) TestBasicAuth(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
@@ -377,7 +377,7 @@ func (s *WebsocketSuite) TestSpecificResponseFromBackend(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
@@ -422,7 +422,7 @@ func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
@@ -477,7 +477,7 @@ func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
@@ -536,7 +536,7 @@ func (s *WebsocketSuite) TestHeaderAreForwared(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
