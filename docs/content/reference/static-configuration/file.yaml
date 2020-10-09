@@ -270,6 +270,8 @@ metrics:
     password: foobar
     addEntryPointsLabels: true
     addServicesLabels: true
+pilot:
+  token: foobar
 ping:
   entryPoint: foobar
   manualRouting: true
@@ -384,8 +386,6 @@ certificatesResolvers:
         entryPoint: foobar
       tlsChallenge: {}
 experimental:
-  pilot:
-    token: foobar
   plugins:
     Descriptor0:
       moduleName: foobar

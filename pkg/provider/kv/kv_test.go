@@ -71,6 +71,8 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service03/weighted/services/1/weight":                                 "42",
 		"traefik/http/middlewares/Middleware08/forwardAuth/authResponseHeaders/0":                    "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/authResponseHeaders/1":                    "foobar",
+		"traefik/http/middlewares/Middleware08/forwardAuth/authRequestHeaders/0":                     "foobar",
+		"traefik/http/middlewares/Middleware08/forwardAuth/authRequestHeaders/1":                     "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/tls/key":                                  "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/tls/insecureSkipVerify":                   "true",
 		"traefik/http/middlewares/Middleware08/forwardAuth/tls/ca":                                   "foobar",
@@ -405,6 +407,10 @@ func Test_buildConfiguration(t *testing.T) {
 						},
 						TrustForwardHeader: true,
 						AuthResponseHeaders: []string{
+							"foobar",
+							"foobar",
+						},
+						AuthRequestHeaders: []string{
 							"foobar",
 							"foobar",
 						},

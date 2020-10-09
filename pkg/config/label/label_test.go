@@ -36,6 +36,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware6.errors.status":                                       "foobar, fiibar",
 		"traefik.http.middlewares.Middleware7.forwardauth.address":                                 "foobar",
 		"traefik.http.middlewares.Middleware7.forwardauth.authresponseheaders":                     "foobar, fiibar",
+		"traefik.http.middlewares.Middleware7.forwardauth.authrequestheaders":                      "foobar, fiibar",
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.ca":                                  "foobar",
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.caoptional":                          "true",
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.cert":                                "foobar",
@@ -495,6 +496,10 @@ func TestDecodeConfiguration(t *testing.T) {
 						},
 						TrustForwardHeader: true,
 						AuthResponseHeaders: []string{
+							"foobar",
+							"fiibar",
+						},
+						AuthRequestHeaders: []string{
 							"foobar",
 							"fiibar",
 						},
@@ -967,6 +972,10 @@ func TestEncodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
+						AuthRequestHeaders: []string{
+							"foobar",
+							"fiibar",
+						},
 					},
 				},
 				"Middleware8": {
@@ -1137,6 +1146,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware6.Errors.Status":                                       "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.Address":                                 "foobar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.AuthResponseHeaders":                     "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.AuthRequestHeaders":                      "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.CA":                                  "foobar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.CAOptional":                          "true",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.Cert":                                "foobar",

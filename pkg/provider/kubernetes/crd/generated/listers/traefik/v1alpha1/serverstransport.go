@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS
+Copyright (c) 2016-2020 Containous SAS; 2020-2020 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -34,8 +34,10 @@ import (
 )
 
 // ServersTransportLister helps list ServersTransports.
+// All objects returned here must be treated as read-only.
 type ServersTransportLister interface {
 	// List lists all ServersTransports in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.ServersTransport, err error)
 	// ServersTransports returns an object that can list and get ServersTransports.
 	ServersTransports(namespace string) ServersTransportNamespaceLister
@@ -66,10 +68,13 @@ func (s *serversTransportLister) ServersTransports(namespace string) ServersTran
 }
 
 // ServersTransportNamespaceLister helps list and get ServersTransports.
+// All objects returned here must be treated as read-only.
 type ServersTransportNamespaceLister interface {
 	// List lists all ServersTransports in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.ServersTransport, err error)
 	// Get retrieves the ServersTransport from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.ServersTransport, error)
 	ServersTransportNamespaceListerExpansion
 }

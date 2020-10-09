@@ -220,7 +220,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 	config := lego.NewConfig(account)
 	config.CADirURL = caServer
-	config.Certificate.KeyType = account.KeyType
+	config.Certificate.KeyType = GetKeyType(ctx, p.KeyType)
 	config.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
 
 	client, err := lego.NewClient(config)

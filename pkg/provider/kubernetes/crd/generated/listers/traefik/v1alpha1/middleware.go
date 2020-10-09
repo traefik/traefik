@@ -34,8 +34,10 @@ import (
 )
 
 // MiddlewareLister helps list Middlewares.
+// All objects returned here must be treated as read-only.
 type MiddlewareLister interface {
 	// List lists all Middlewares in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.Middleware, err error)
 	// Middlewares returns an object that can list and get Middlewares.
 	Middlewares(namespace string) MiddlewareNamespaceLister
@@ -66,10 +68,13 @@ func (s *middlewareLister) Middlewares(namespace string) MiddlewareNamespaceList
 }
 
 // MiddlewareNamespaceLister helps list and get Middlewares.
+// All objects returned here must be treated as read-only.
 type MiddlewareNamespaceLister interface {
 	// List lists all Middlewares in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.Middleware, err error)
 	// Get retrieves the Middleware from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.Middleware, error)
 	MiddlewareNamespaceListerExpansion
 }

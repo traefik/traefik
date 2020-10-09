@@ -242,6 +242,7 @@ func Test_writeHeader(t *testing.T) {
 	testCases := []struct {
 		name                      string
 		headers                   map[string]string
+		authRequestHeaders        []string
 		trustForwardHeader        bool
 		emptyHost                 bool
 		expectedHeaders           map[string]string
@@ -368,6 +369,45 @@ func Test_writeHeader(t *testing.T) {
 			},
 			checkForUnexpectedHeaders: true,
 		},
+		{
+			name: "filter forward request headers",
+			headers: map[string]string{
+				"X-CustomHeader": "CustomHeader",
+				"Content-Type":   "multipart/form-data; boundary=---123456",
+			},
+			authRequestHeaders: []string{
+				"X-CustomHeader",
+			},
+			trustForwardHeader: false,
+			expectedHeaders: map[string]string{
+				"x-customHeader":     "CustomHeader",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+			},
+			checkForUnexpectedHeaders: true,
+		},
+		{
+			name: "filter forward request headers doesn't add new headers",
+			headers: map[string]string{
+				"X-CustomHeader": "CustomHeader",
+				"Content-Type":   "multipart/form-data; boundary=---123456",
+			},
+			authRequestHeaders: []string{
+				"X-CustomHeader",
+				"X-Non-Exists-Header",
+			},
+			trustForwardHeader: false,
+			expectedHeaders: map[string]string{
+				"X-CustomHeader":     "CustomHeader",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+			},
+			checkForUnexpectedHeaders: true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -383,9 +423,10 @@ func Test_writeHeader(t *testing.T) {
 
 			forwardReq := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/path?q=1", nil)
 
-			writeHeader(req, forwardReq, test.trustForwardHeader)
+			writeHeader(req, forwardReq, test.trustForwardHeader, test.authRequestHeaders)
 
 			actualHeaders := forwardReq.Header
+
 			expectedHeaders := test.expectedHeaders
 			for key, value := range expectedHeaders {
 				assert.Equal(t, value, actualHeaders.Get(key))

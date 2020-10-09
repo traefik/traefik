@@ -251,6 +251,9 @@
     addEntryPointsLabels = true
     addServicesLabels = true
 
+[pilot]
+  token = "foobar"
+
 [ping]
   entryPoint = "foobar"
   manualRouting = true
@@ -365,8 +368,6 @@
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
 
 [experimental]
-  [experimental.pilot]
-    token = "foobar"
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"

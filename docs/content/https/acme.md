@@ -516,6 +516,34 @@ certificatesResolvers:
 # ...
 ```
 
+### `keyType`
+
+_Optional, Default="RSA4096"_
+
+KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'.
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  keyType = "RSA4096"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      keyType: 'RSA4096'
+      # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.keyType="RSA4096"
+# ...
+```
+
 ## Fallback
 
 If Let's Encrypt is not reachable, the following certificates will apply:
