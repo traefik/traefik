@@ -22,7 +22,7 @@ func (s *HTTPSuite) TestSimpleConfiguration(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// Expect a 404 as we configured nothing.
 	err = try.GetRequest("http://127.0.0.1:8000/", time.Second, try.StatusCodeIs(http.StatusNotFound))
