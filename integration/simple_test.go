@@ -892,8 +892,8 @@ func (s *SimpleSuite) TestMirrorWithBody(c *check.C) {
 	atomic.StoreInt32(&countMirror2, 0)
 
 	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoamiWithMaxBody", bytes.NewBuffer(body5))
-	req.Header.Set("Size", "5")
 	c.Assert(err, checker.IsNil)
+	req.Header.Set("Size", "5")
 	for i := 0; i < 10; i++ {
 		response, err := http.DefaultClient.Do(req)
 		c.Assert(err, checker.IsNil)
@@ -913,8 +913,8 @@ func (s *SimpleSuite) TestMirrorWithBody(c *check.C) {
 	atomic.StoreInt32(&countMirror2, 0)
 
 	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoamiWithMaxBody", bytes.NewBuffer(body20))
-	req.Header.Set("Size", "20")
 	c.Assert(err, checker.IsNil)
+	req.Header.Set("Size", "20")
 	for i := 0; i < 10; i++ {
 		response, err := http.DefaultClient.Do(req)
 		c.Assert(err, checker.IsNil)
@@ -1030,10 +1030,10 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect(c *check.C) {
 
 			rw.WriteHeader(http.StatusOK)
 
-			bytes, err := ioutil.ReadFile("fixtures/test.pdf")
+			data, err := ioutil.ReadFile("fixtures/test.pdf")
 			c.Assert(err, checker.IsNil)
 
-			_, err = rw.Write(bytes)
+			_, err = rw.Write(data)
 			c.Assert(err, checker.IsNil)
 		}
 	}))
