@@ -30,7 +30,7 @@ func (s *TCPSuite) TestMixed(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("Path(`/test`)"))
 	c.Assert(err, checker.IsNil)
@@ -80,7 +80,7 @@ func (s *TCPSuite) TestTLSOptions(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-c.test`)"))
 	c.Assert(err, checker.IsNil)
@@ -110,7 +110,7 @@ func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	c.Assert(err, checker.IsNil)
@@ -144,7 +144,7 @@ func (s *TCPSuite) TestNonTlsTcp(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	c.Assert(err, checker.IsNil)
@@ -164,7 +164,7 @@ func (s *TCPSuite) TestCatchAllNoTLS(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	c.Assert(err, checker.IsNil)
@@ -184,7 +184,7 @@ func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	c.Assert(err, checker.IsNil)
@@ -276,7 +276,7 @@ func (s *TCPSuite) TestWRR(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI"))
 	c.Assert(err, checker.IsNil)

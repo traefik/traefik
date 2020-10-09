@@ -24,7 +24,7 @@ func (s *HostResolverSuite) TestSimpleConfig(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	testCase := []struct {
 		desc   string

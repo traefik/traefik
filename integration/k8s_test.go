@@ -69,7 +69,7 @@ func (s *K8sSuite) TestIngressConfiguration(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	testConfiguration(c, "testdata/rawdata-ingress.json", "8080")
 }
@@ -80,7 +80,7 @@ func (s *K8sSuite) TestCRDConfiguration(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	testConfiguration(c, "testdata/rawdata-crd.json", "8000")
 }

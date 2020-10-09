@@ -18,7 +18,7 @@ func (s *HeadersSuite) TestSimpleConfiguration(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// Expected a 404 as we did not configure anything
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
@@ -33,7 +33,7 @@ func (s *HeadersSuite) TestCorsResponses(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	backend := startTestServer("9000", http.StatusOK, "")
 	defer backend.Close()
@@ -122,7 +122,7 @@ func (s *HeadersSuite) TestSecureHeadersResponses(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	backend := startTestServer("9000", http.StatusOK, "")
 	defer backend.Close()
@@ -171,7 +171,7 @@ func (s *HeadersSuite) TestMultipleSecureHeadersResponses(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	backend := startTestServer("9000", http.StatusOK, "")
 	defer backend.Close()
