@@ -2,11 +2,13 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	stdlog "log"
 	"net"
 	"net/http"
 	"sync"
+	"syscall"
 	"time"
 
 	proxyprotocol "github.com/c0va23/go-proxyprotocol"
@@ -340,7 +342,11 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	}
 
 	if err = tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
-		return nil, err
+		// Some systems, such as OpenBSD, have no user-settable per-socket TCP
+		// keepalive options.
+		if !errors.Is(err, syscall.ENOPROTOOPT) {
+			return nil, err
+		}
 	}
 
 	return tc, nil
