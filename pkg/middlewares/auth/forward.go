@@ -187,7 +187,6 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
-	utils.RemoveHeaders(forwardReq.Header, forward.HopHeaders...)
 
 	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
 
@@ -247,6 +246,7 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowed
 
 func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeaders []string) http.Header {
 	if len(allowedHeaders) == 0 {
+		utils.RemoveHeaders(forwardRequestHeaders, keepProxyAuthHeader(forward.HopHeaders)...)
 		return forwardRequestHeaders
 	}
 
@@ -259,4 +259,14 @@ func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeade
 	}
 
 	return filteredHeaders
+}
+
+func keepProxyAuthHeader(hopHeaders []string) []string {
+	var headers []string
+	for _, h := range hopHeaders {
+		if h != forward.ProxyAuthorization {
+			headers = append(headers, h)
+		}
+	}
+	return headers
 }
