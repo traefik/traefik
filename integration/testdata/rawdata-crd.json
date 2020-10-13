@@ -197,6 +197,7 @@
 		"default-test3.route-673acf455cb2dab0b43a-externalname-svc-9090@kubernetescrd": {
 			"loadBalancer": {
 				"terminationDelay": 100,
+				"addrLookupCache": 0,
 				"servers": [
 					{
 						"address": "domain.com:9090"
@@ -208,6 +209,7 @@
 		"default-test3.route-673acf455cb2dab0b43a-whoamitcp-8080@kubernetescrd": {
 			"loadBalancer": {
 				"terminationDelay": 100,
+				"addrLookupCache": 0,
 				"servers": [
 					{
 						"address": "10.42.0.3:8080"

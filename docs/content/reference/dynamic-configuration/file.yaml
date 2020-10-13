@@ -345,6 +345,7 @@ tcp:
     TCPService01:
       loadBalancer:
         terminationDelay: 42
+        addrLookupCache: 10
         servers:
         - address: foobar
         - address: foobar

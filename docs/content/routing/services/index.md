@@ -702,6 +702,35 @@ A negative value means an infinite deadline (i.e. the connection is never fully 
             terminationDelay: 200
     ```
 
+#### Address Lookup Cache
+
+When using a hostname or dns record as the service name it is required that the name be translated to an actual TCP address at some point. This is handled by the proxy when establishing the connection, to make sure it uses an updated address when connecting to the server.
+
+However, doing a new address lookup on each request may slightly increase latency. To avoid that the results are cached for a short amount of time, allowing bursts of requests to go unhindered.
+
+The address lookup cache controls for how long the proxy should keep the results between requests.
+It is a duration in seconds, defaulting to 5.
+A negative value means no cache (i.e. every request will trigger an address lookup).
+
+??? example "A Service with a custom address lookup cache -- Using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [tcp.services]
+      [tcp.services.my-service.loadBalancer]
+        [[tcp.services.my-service.loadBalancer]]
+          addrLookupCache = 10
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    tcp:
+      services:
+        my-service:
+          loadBalancer:
+            addrLookupCache: 10
+    ```
+
 ### Weighted Round Robin
 
 The Weighted Round Robin (alias `WRR`) load-balancer of services is in charge of balancing the requests between multiple services based on provided weights.

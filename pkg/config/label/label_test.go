@@ -179,8 +179,10 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.tcp.routers.Router1.tls.passthrough":                                  "false",
 		"traefik.tcp.services.Service0.loadbalancer.server.Port":                       "42",
 		"traefik.tcp.services.Service0.loadbalancer.TerminationDelay":                  "42",
+		"traefik.tcp.services.Service0.loadbalancer.addrLookupCache":                   "10",
 		"traefik.tcp.services.Service1.loadbalancer.server.Port":                       "42",
 		"traefik.tcp.services.Service1.loadbalancer.TerminationDelay":                  "42",
+		"traefik.tcp.services.Service1.loadbalancer.addrLookupCache":                   "10",
 
 		"traefik.udp.routers.Router0.entrypoints":                "foobar, fiibar",
 		"traefik.udp.routers.Router0.service":                    "foobar",
@@ -230,6 +232,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
+						AddrLookupCache:  func(i int) *int { return &i }(10),
 					},
 				},
 				"Service1": {
@@ -240,6 +243,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
+						AddrLookupCache:  func(i int) *int { return &i }(10),
 					},
 				},
 			},

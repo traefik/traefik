@@ -424,6 +424,14 @@ You can declare TCP Routers and/or Services using labels.
     - "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100"
     ```
 
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.addrlookupcache`"
+
+    See [address lookup cache](../services/index.md#address-lookup-cache) for more information.
+
+    ```yaml
+    - "traefik.tcp.services.mytcpservice.loadbalancer.addrlookupcache=100"
+    ```
+
 ### UDP
 
 You can declare UDP Routers and/or Services using labels.

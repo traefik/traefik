@@ -385,6 +385,14 @@ You can declare TCP Routers and/or Services using KV.
     |-------------------------------------------------------------------|-------|
     | `traefik/tcp/services/mytcpservice/loadbalancer/terminationdelay` | `100` |
 
+??? info "`traefik/tcp/services/<service_name>/loadbalancer/addrlookupcache`"
+
+    See [address lookup cache](../services/index.md#address-lookup-cache) for more information.
+
+    | Key (Path)                                                        | Value |
+    |-------------------------------------------------------------------|-------|
+    | `traefik/tcp/services/mytcpservice/loadbalancer/addrlookupcache` | `10` |
+
 ??? info "`traefik/tcp/services/<service_name>/weighted/services/<n>/name`"
 
     | Key (Path)                                                          | Value    |

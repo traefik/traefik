@@ -1090,18 +1090,19 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
           port: 8080                # [6]
           weight: 10                # [7]
           terminationDelay: 400     # [8]
-      tls:                          # [9]
-        secretName: supersecret     # [10]
-        options:                    # [11]
-          name: opt                 # [12]
-          namespace: default        # [13]
-        certResolver: foo           # [14]
-        domains:                    # [15]
-        - main: example.net         # [16]
-          sans:                     # [17]
+          addrLookupCache: 10       # [9]
+      tls:                          # [10]
+        secretName: supersecret     # [11]
+        options:                    # [12]
+          name: opt                 # [13]
+          namespace: default        # [14]
+        certResolver: foo           # [15]
+        domains:                    # [16]
+        - main: example.net         # [17]
+          sans:                     # [18]
           - a.example.net
           - b.example.net
-        passthrough: false          # [18]
+        passthrough: false          # [19]
     ```
 
 | Ref  | Attribute                      | Purpose                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -1113,17 +1114,20 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 | [5]  | `services[n].name`             | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                             |
 | [6]  | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                             |
 | [7]  | `services[n].weight`           | Defines the weight to apply to the server load balancing                                                                                                                                                                                                                                                                                                                                 |
-| [8]  | `services[n].terminationDelay` | corresponds to the deadline that the proxy sets, after one of its connected peers indicates it has closed the writing capability of its connection, to close the reading capability as well, hence fully terminating the connection.<br/>It is a duration in milliseconds, defaulting to 100. A negative value means an infinite deadline (i.e. the reading capability is never closed). |
-| [9]  | `tls`                          | Defines [TLS](../routers/index.md#tls_1) certificate configuration                                                                                                                                                                                                                                                                                                                       |
-| [10] | `tls.secretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                                                                                                                     |
-| [11] | `tls.options`                  | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                                                                                                                  |
-| [12] | `options.name`                 | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                                                                                                                                                                                            |
-| [13] | `options.namespace`            | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                                                                                                                                                                                       |
-| [14] | `tls.certResolver`             | Defines the reference to a [CertResolver](../routers/index.md#certresolver_1)                                                                                                                                                                                                                                                                                                            |
-| [15] | `tls.domains`                  | List of [domains](../routers/index.md#domains_1)                                                                                                                                                                                                                                                                                                                                         |
-| [16] | `domains[n].main`              | Defines the main domain name                                                                                                                                                                                                                                                                                                                                                             |
-| [17] | `domains[n].sans`              | List of SANs (alternative domains)                                                                                                                                                                                                                                                                                                                                                       |
-| [18] | `tls.passthrough`              | If `true`, delegates the TLS termination to the backend                                                                                                                                                                                                                                                                                                                                  |
+| [8]  | `services[n].terminationDelay` | corresponds to the deadline that the proxy sets, after one of its connected peers indicates it has closed the writing capability of its connection, to close the reading capability as well, hence fully terminating the connection.<br/>It is a duration in milliseconds, defaulting to 100. A negative value means an infinite deadline (i.e. the reading capability is never closed). 
+                                                                                                                                             |
+| [9]  | `services[n].addrLookupCache` | corresponds to the amount of time the proxy should cache the service name resolved TCP address. It is a duration in seconds, defaulting to 5. A negative value means no cache, making each request trigger an address lookup. 
+                                                                                                                                             |
+| [10]  | `tls`                          | Defines [TLS](../routers/index.md#tls_1) certificate configuration                                                                                                                                                                                                                                                                                                                       |
+| [11] | `tls.secretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                                                                                                                     |
+| [12] | `tls.options`                  | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                                                                                                                  |
+| [13] | `options.name`                 | Defines the [TLSOption](#kind-tlsoption) name                                                                                                                                                                                                                                                                                                                                            |
+| [14] | `options.namespace`            | Defines the [TLSOption](#kind-tlsoption) namespace                                                                                                                                                                                                                                                                                                                                       |
+| [15] | `tls.certResolver`             | Defines the reference to a [CertResolver](../routers/index.md#certresolver_1)                                                                                                                                                                                                                                                                                                            |
+| [16] | `tls.domains`                  | List of [domains](../routers/index.md#domains_1)                                                                                                                                                                                                                                                                                                                                         |
+| [17] | `domains[n].main`              | Defines the main domain name                                                                                                                                                                                                                                                                                                                                                             |
+| [18] | `domains[n].sans`              | List of SANs (alternative domains)                                                                                                                                                                                                                                                                                                                                                       |
+| [19] | `tls.passthrough`              | If `true`, delegates the TLS termination to the backend                                                                                                                                                                                                                                                                                                                                  |
 
 ??? example "Declaring an IngressRouteTCP"
 
@@ -1143,10 +1147,12 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         - name: foo
           port: 8080
           terminationDelay: 400
+          addrLookupCache: 10
           weight: 10
         - name: bar
           port: 8081
           terminationDelay: 500
+          addrLookupCache: 5
           weight: 10
       tls:
         certResolver: foo

@@ -67,6 +67,19 @@
         </div>
       </q-card-section>
 
+      <q-card-section v-if="data.loadBalancer && data.loadBalancer.addrLookupCache">
+        <div class="row items-start no-wrap">
+          <div class="col">
+            <div class="text-subtitle2">Address Lookup Cache</div>
+            <q-chip
+              dense
+              class="app-chip app-chip-name">
+              {{ data.loadBalancer.addrLookupCache }} ms
+            </q-chip>
+          </div>
+        </div>
+      </q-card-section>
+
       <q-separator v-if="sticky" />
       <StickyServiceDetails v-if="sticky" :sticky="sticky" :dense="dense"/>
     </q-scroll-area>
