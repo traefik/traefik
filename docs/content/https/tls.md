@@ -134,14 +134,23 @@ If no default certificate is provided, Traefik generates and uses a self-signed 
 
 The TLS options allow one to configure some parameters of the TLS connection.
 
+!!! important "'default' TLS Option"
+
+    The `default` option is special.
+    When no tls options are specified in a tls router, the `default` option is used.  
+    When specifying the `default` option explicitly, make sure not to specify provider namespace as the `default` option does not have one.  
+    Conversely, for cross-provider references, for example, when referencing the file provider from a docker label,
+    you must specify the provider namespace, for example:  
+    `traefik.http.routers.myrouter.tls.options=myoptions@file`
+
 !!! important "TLSOptions in Kubernetes"
 
     When using the TLSOptions-CRD in Kubernetes, one might setup a default set of options that,
-    if not explicitly overwritten, should apply to all ingresses. To achieve that, you'll have to
-    create a TLSOptions CR with the name `default`. There may exist only one TLSOption with the 
-    name `default` (across all namespaces) - otherwise they will be dropped.  
-    To explicitly use a different TLSOption (and using the Kubernetes Ingress resources) you'll 
-    have to add an annotation to the Ingress in the following form:
+    if not explicitly overwritten, should apply to all ingresses.  
+    To achieve that, you'll have to create a TLSOptions CR with the name `default`.
+    There may exist only one TLSOption with the name `default` (across all namespaces) - otherwise they will be dropped.  
+    To explicitly use a different TLSOption (and using the Kubernetes Ingress resources)
+    you'll have to add an annotation to the Ingress in the following form:
     `traefik.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
 
 ### Minimum TLS Version
