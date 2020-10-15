@@ -13,7 +13,7 @@ Pieces of middleware can be combined in chains to fit every scenario.
 
 !!! important "Provider Namespace"
 
-    Be aware of the concept of Providers Namespace described in the [Configuration Discovery](../providers/overview.md) section. 
+    Be aware of the concept of Providers Namespace described in the [Configuration Discovery](../providers/overview.md#provider-namespace) section. 
     It also applies to Middlewares.
 
 ## Configuration Example
