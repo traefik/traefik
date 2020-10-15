@@ -11,7 +11,7 @@ There are several available middleware in Traefik, some can modify the request, 
 
 Pieces of middleware can be combined in chains to fit every scenario.
 
-!!! important "Provider Namespace"
+!!! warning "Provider Namespace"
 
     Be aware of the concept of Providers Namespace described in the [Configuration Discovery](../providers/overview.md#provider-namespace) section. 
     It also applies to Middlewares.
