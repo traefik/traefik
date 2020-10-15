@@ -214,7 +214,16 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
 	roundTripperManager := service.NewRoundTripperManager()
-	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager)
+
+	var acmeHTTPHandler http.Handler
+	for _, p := range acmeProviders {
+		if p != nil && p.HTTPChallenge != nil {
+			acmeHTTPHandler = p
+			break
+		}
+	}
+
+	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
 
 	client, plgs, devPlugin, err := initPlugins(staticConfiguration)
 	if err != nil {
@@ -264,7 +273,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		roundTripperManager.Update(conf.HTTP.ServersTransports)
 	})
 
-	watcher.AddListener(switchRouter(routerFactory, acmeProviders, serverEntryPointsTCP, serverEntryPointsUDP, aviator))
+	watcher.AddListener(switchRouter(routerFactory, serverEntryPointsTCP, serverEntryPointsUDP, aviator))
 
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		if metricsRegistry.IsEpEnabled() || metricsRegistry.IsSvcEnabled() {
@@ -298,20 +307,11 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, chainBuilder, accessLog), nil
 }
 
-func switchRouter(routerFactory *server.RouterFactory, acmeProviders []*acme.Provider, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints, aviator *pilot.Pilot) func(conf dynamic.Configuration) {
+func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints, aviator *pilot.Pilot) func(conf dynamic.Configuration) {
 	return func(conf dynamic.Configuration) {
 		rtConf := runtime.NewConfig(conf)
 
 		routers, udpRouters := routerFactory.CreateRouters(rtConf)
-
-		for entryPointName, rt := range routers {
-			for _, p := range acmeProviders {
-				if p != nil && p.HTTPChallenge != nil && p.HTTPChallenge.EntryPoint == entryPointName {
-					rt.HTTPHandler(p.CreateHandler(rt.GetHTTPHandler()))
-					break
-				}
-			}
-		}
 
 		if aviator != nil {
 			aviator.SetRuntimeConfiguration(rtConf)

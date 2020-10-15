@@ -21,16 +21,18 @@ type ManagerFactory struct {
 	dashboardHandler http.Handler
 	metricsHandler   http.Handler
 	pingHandler      http.Handler
+	acmeHTTPHandler  http.Handler
 
 	routinesPool *safe.Pool
 }
 
 // NewManagerFactory creates a new ManagerFactory.
-func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, metricsRegistry metrics.Registry, roundTripperManager *RoundTripperManager) *ManagerFactory {
+func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, metricsRegistry metrics.Registry, roundTripperManager *RoundTripperManager, acmeHTTPHandler http.Handler) *ManagerFactory {
 	factory := &ManagerFactory{
 		metricsRegistry:     metricsRegistry,
 		routinesPool:        routinesPool,
 		roundTripperManager: roundTripperManager,
+		acmeHTTPHandler:     acmeHTTPHandler,
 	}
 
 	if staticConfiguration.API != nil {
@@ -62,5 +64,11 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 // Build creates a service manager.
 func (f *ManagerFactory) Build(configuration *runtime.Configuration) *InternalHandlers {
 	svcManager := NewManager(configuration.Services, f.metricsRegistry, f.routinesPool, f.roundTripperManager)
-	return NewInternalHandlers(f.api, configuration, f.restHandler, f.metricsHandler, f.pingHandler, f.dashboardHandler, svcManager)
+
+	var apiHandler http.Handler
+	if f.api != nil {
+		apiHandler = f.api(configuration)
+	}
+
+	return NewInternalHandlers(svcManager, apiHandler, f.restHandler, f.metricsHandler, f.pingHandler, f.dashboardHandler, f.acmeHTTPHandler)
 }
