@@ -9,13 +9,13 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-var _ challenge.Provider = (*challengeTLSALPN)(nil)
+var _ challenge.Provider = (*ChallengeTLSALPN)(nil)
 
-type challengeTLSALPN struct {
+type ChallengeTLSALPN struct {
 	Store ChallengeStore
 }
 
-func (c *challengeTLSALPN) Present(domain, token, keyAuth string) error {
+func (c *ChallengeTLSALPN) Present(domain, token, keyAuth string) error {
 	log.WithoutContext().WithField(log.ProviderName, "acme").
 		Debugf("TLS Challenge Present temp certificate for %s", domain)
 
@@ -28,7 +28,7 @@ func (c *challengeTLSALPN) Present(domain, token, keyAuth string) error {
 	return c.Store.AddTLSChallenge(domain, cert)
 }
 
-func (c *challengeTLSALPN) CleanUp(domain, token, keyAuth string) error {
+func (c *ChallengeTLSALPN) CleanUp(domain, token, keyAuth string) error {
 	log.WithoutContext().WithField(log.ProviderName, "acme").
 		Debugf("TLS Challenge CleanUp temp certificate for %s", domain)
 
@@ -36,8 +36,8 @@ func (c *challengeTLSALPN) CleanUp(domain, token, keyAuth string) error {
 }
 
 // GetTLSALPNCertificate Get the temp certificate for ACME TLS-ALPN-O1 challenge.
-func (p *Provider) GetTLSALPNCertificate(domain string) (*tls.Certificate, error) {
-	cert, err := p.ChallengeStore.GetTLSChallenge(domain)
+func (c *ChallengeTLSALPN) GetTLSALPNCertificate(domain string) (*tls.Certificate, error) {
+	cert, err := c.Store.GetTLSChallenge(domain)
 	if err != nil {
 		return nil, err
 	}

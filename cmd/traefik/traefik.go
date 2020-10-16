@@ -13,6 +13,7 @@ import (
 
 	"github.com/coreos/go-systemd/daemon"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
+	"github.com/go-acme/lego/v4/challenge"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/paerser/cli"
 	"github.com/traefik/traefik/v2/autogen/genstatic"
@@ -181,7 +182,14 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	tlsManager := traefiktls.NewManager()
 
-	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager)
+	challengeStore := acme.NewLocalChallengeStore()
+
+	httpChallengeProvider := &acme.ChallengeHTTP{Store: challengeStore}
+
+	tlsChallengeProvider := &acme.ChallengeTLSALPN{Store: challengeStore}
+	tlsManager.TLSAlpnGetter = tlsChallengeProvider.GetTLSALPNCertificate
+
+	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager, httpChallengeProvider, tlsChallengeProvider)
 
 	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints)
 	if err != nil {
@@ -218,7 +226,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	var acmeHTTPHandler http.Handler
 	for _, p := range acmeProviders {
 		if p != nil && p.HTTPChallenge != nil {
-			acmeHTTPHandler = p
+			acmeHTTPHandler = httpChallengeProvider
 			break
 		}
 	}
@@ -323,8 +331,7 @@ func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP serv
 }
 
 // initACMEProvider creates an acme provider from the ACME part of globalConfiguration.
-func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager) []*acme.Provider {
-	challengeStore := acme.NewLocalChallengeStore()
+func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager, httpChallengeProvider, tlsChallengeProvider challenge.Provider) []*acme.Provider {
 	localStores := map[string]*acme.LocalStore{}
 
 	var resolvers []*acme.Provider
@@ -335,10 +342,11 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 			}
 
 			p := &acme.Provider{
-				Configuration:  resolver.ACME,
-				Store:          localStores[resolver.ACME.Storage],
-				ChallengeStore: challengeStore,
-				ResolverName:   name,
+				Configuration:         resolver.ACME,
+				Store:                 localStores[resolver.ACME.Storage],
+				ResolverName:          name,
+				HTTPChallengeProvider: httpChallengeProvider,
+				TLSChallengeProvider:  tlsChallengeProvider,
 			}
 
 			if err := providerAggregator.AddProvider(p); err != nil {
@@ -348,15 +356,12 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 
 			p.SetTLSManager(tlsManager)
 
-			if p.TLSChallenge != nil {
-				tlsManager.TLSAlpnGetter = p.GetTLSALPNCertificate
-			}
-
 			p.SetConfigListenerChan(make(chan dynamic.Configuration))
 
 			resolvers = append(resolvers, p)
 		}
 	}
+
 	return resolvers
 }
 

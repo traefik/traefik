@@ -106,7 +106,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 		domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
-		if m.TLSAlpnGetter != nil && isACMETLS(clientHello) {
+		if isACMETLS(clientHello) {
 			cert, err := m.TLSAlpnGetter(domainToCheck)
 			if err != nil {
 				return nil, err

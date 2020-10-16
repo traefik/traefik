@@ -17,29 +17,29 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
-var _ challenge.ProviderTimeout = (*challengeHTTP)(nil)
+var _ challenge.ProviderTimeout = (*ChallengeHTTP)(nil)
 
-type challengeHTTP struct {
+type ChallengeHTTP struct {
 	Store ChallengeStore
 }
 
 // Present presents a challenge to obtain new ACME certificate.
-func (c *challengeHTTP) Present(domain, token, keyAuth string) error {
+func (c *ChallengeHTTP) Present(domain, token, keyAuth string) error {
 	return c.Store.SetHTTPChallengeToken(token, domain, []byte(keyAuth))
 }
 
 // CleanUp cleans the challenges when certificate is obtained.
-func (c *challengeHTTP) CleanUp(domain, token, keyAuth string) error {
+func (c *ChallengeHTTP) CleanUp(domain, token, keyAuth string) error {
 	return c.Store.RemoveHTTPChallengeToken(token, domain)
 }
 
 // Timeout calculates the maximum of time allowed to resolved an ACME challenge.
-func (c *challengeHTTP) Timeout() (timeout, interval time.Duration) {
+func (c *ChallengeHTTP) Timeout() (timeout, interval time.Duration) {
 	return 60 * time.Second, 5 * time.Second
 }
 
-func (p *Provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.ResolverName+".acme"))
+func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	ctx := log.With(context.Background(), log.Str(log.ProviderName, "acme"))
 	logger := log.FromContext(ctx)
 
 	token, err := getPathParam(req.URL)
@@ -56,7 +56,7 @@ func (p *Provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			domain = req.Host
 		}
 
-		tokenValue := getTokenValue(ctx, token, domain, p.ChallengeStore)
+		tokenValue := getTokenValue(ctx, token, domain, c.Store)
 		if len(tokenValue) > 0 {
 			rw.WriteHeader(http.StatusOK)
 			_, err = rw.Write(tokenValue)
