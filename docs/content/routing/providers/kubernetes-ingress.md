@@ -725,7 +725,7 @@ For more options, please refer to the available [annotations](#on-ingress).
             backend:
               serviceName: service1
               servicePort: 80
-      # Only loading certificates from Secrets, that will be used to terminate TLS traffic.
+      # Only selects which certificate(s) should be loaded from the secret, in order to terminate TLS.
       # Doesn't enable TLS for that ingress (hence for the underlying router).
       # Please see the TLS annotations on ingress made for that purpose.
       tls:
