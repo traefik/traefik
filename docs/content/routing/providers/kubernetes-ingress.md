@@ -331,7 +331,204 @@ Please see [this documentation](https://kubernetes.io/docs/concepts/services-net
 
 ## TLS
 
-### Enabling TLS
+### Enabling TLS via HTTP Options on Entrypoint
+
+TLS can be enabled through the [HTTP options](../entrypoints.md#tls) of an Entrypoint:
+
+```bash tab="CLI"
+# Static configuration
+-- entrypoints.websecure.address=:443
+-- entrypoints.websecure.http.tls
+```
+
+```toml tab="File (TOML)"
+# Static configuration
+[entryPoints.websecure]
+  address = ":443"
+
+    [entryPoints.websecure.http.tls]
+```
+
+```yaml tab="File (YAML)"
+# Static configuration
+entryPoints:
+  websecure:
+    address: ':443'
+    http:
+      tls: {}
+```
+
+This way, any Ingress attached to this Entrypoint will have TLS termination by default.
+
+??? example "Configuring Kubernetes Ingress Controller with TLS on Entrypoint"
+    
+    ```yaml tab="RBAC"
+    ---
+    kind: ClusterRole
+    apiVersion: rbac.authorization.k8s.io/v1beta1
+    metadata:
+      name: traefik-ingress-controller
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - services
+          - endpoints
+          - secrets
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - extensions
+          - networking.k8s.io
+        resources:
+          - ingresses
+          - ingressclasses
+        verbs:
+          - get
+          - list
+          - watch
+      - apiGroups:
+          - extensions
+        resources:
+          - ingresses/status
+        verbs:
+          - update
+    
+    ---
+    kind: ClusterRoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1beta1
+    metadata:
+      name: traefik-ingress-controller
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: traefik-ingress-controller
+    subjects:
+      - kind: ServiceAccount
+        name: traefik-ingress-controller
+        namespace: default
+    ```
+    
+    ```yaml tab="Ingress"
+    kind: Ingress
+    apiVersion: networking.k8s.io/v1beta1
+    metadata:
+      name: myingress
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    
+    spec:
+      rules:
+        - host: example.com
+          http:
+            paths:
+              - path: /bar
+                backend:
+                  serviceName: whoami
+                  servicePort: 80
+              - path: /foo
+                backend:
+                  serviceName: whoami
+                  servicePort: 80
+    ```
+    
+    ```yaml tab="Traefik"
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: traefik-ingress-controller
+    
+    ---
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: traefik
+      labels:
+        app: traefik
+    
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: traefik
+      template:
+        metadata:
+          labels:
+            app: traefik
+        spec:
+          serviceAccountName: traefik-ingress-controller
+          containers:
+            - name: traefik
+              image: traefik:v2.3
+              args:
+                - --entrypoints.websecure.address=:443
+                - --entrypoints.websecure.http.tls
+                - --providers.kubernetesingress
+              ports:
+                - name: websecure
+                  containerPort: 443
+    
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: traefik
+    spec:
+      type: LoadBalancer
+      selector:
+        app: traefik
+      ports:
+        - protocol: TCP
+          port: 443
+          name: websecure
+          targetPort: 443
+    ```
+    
+    ```yaml tab="Whoami"
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: whoami
+      labels:
+        app: traefiklabs
+        name: whoami
+    
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: traefiklabs
+          task: whoami
+      template:
+        metadata:
+          labels:
+            app: traefiklabs
+            task: whoami
+        spec:
+          containers:
+            - name: whoami
+              image: traefik/whoami
+              ports:
+                - containerPort: 80
+    
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: whoami
+    
+    spec:
+      ports:
+        - name: http
+          port: 80
+      selector:
+        app: traefiklabs
+        task: whoami
+    ```
+
+### Enabling TLS via Annotations
 
 To enable TLS on the underlying router created from an Ingress, one should configure it through annotations:
 ```yaml
