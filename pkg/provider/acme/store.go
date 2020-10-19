@@ -9,7 +9,6 @@ type StoredData struct {
 // StoredChallengeData represents the data managed by ChallengeStore.
 type StoredChallengeData struct {
 	HTTPChallenges map[string]map[string][]byte
-	TLSChallenges  map[string]*Certificate
 }
 
 // Store is a generic interface that represents a storage.
@@ -25,8 +24,4 @@ type ChallengeStore interface {
 	GetHTTPChallengeToken(token, domain string) ([]byte, error)
 	SetHTTPChallengeToken(token, domain string, keyAuth []byte) error
 	RemoveHTTPChallengeToken(token, domain string) error
-
-	AddTLSChallenge(domain string, cert *Certificate) error
-	GetTLSChallenge(domain string) (*Certificate, error)
-	RemoveTLSChallenge(domain string) error
 }

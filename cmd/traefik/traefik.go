@@ -186,8 +186,12 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	httpChallengeProvider := &acme.ChallengeHTTP{Store: challengeStore}
 
-	tlsChallengeProvider := &acme.ChallengeTLSALPN{Store: challengeStore}
-	tlsManager.TLSAlpnGetter = tlsChallengeProvider.GetTLSALPNCertificate
+	tlsChallengeProvider := acme.NewChallengeTLSALPN(time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration))
+
+	err = providerAggregator.AddProvider(tlsChallengeProvider)
+	if err != nil {
+		return nil, err
+	}
 
 	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager, httpChallengeProvider, tlsChallengeProvider)
 
@@ -293,6 +297,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 			metrics.OnConfigurationUpdate(conf, eps)
 		}
 	})
+
+	watcher.AddListener(tlsChallengeProvider.ListenConfiguration)
 
 	resolverNames := map[string]struct{}{}
 	for _, p := range acmeProviders {
