@@ -337,8 +337,8 @@ TLS can be enabled through the [HTTP options](../entrypoints.md#tls) of an Entry
 
 ```bash tab="CLI"
 # Static configuration
--- entrypoints.websecure.address=:443
--- entrypoints.websecure.http.tls
+--entrypoints.websecure.address=:443
+--entrypoints.websecure.http.tls
 ```
 
 ```toml tab="File (TOML)"
