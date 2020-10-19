@@ -18,68 +18,13 @@
 * Mathieu Lonjaret [@mpl](https://github.com/mpl)
 * Romain Tribotté [@rtribotte](https://github.com/rtribotte)
 
-## Contributions Daily Meeting
+## Issue Triage
 
-* 3 Maintainers should attend to a Contributions Daily Meeting where we sort and label new issues ([is:issue label:status/0-needs-triage](https://github.com/traefik/traefik/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3Astatus%2F0-needs-triage+)), and review every Pull Requests
-* Every pull request should be checked during the Contributions Daily Meeting
-    * Even if it’s already assigned
-    * Even PR labelled with `contributor/waiting-for-corrections` or `contributor/waiting-for-feedback`
-* Issues labeled with `priority/P0` and `priority/P1` should be assigned.
-* Modifying an issue or a pull request (labels, assignees, milestone) is only possible:
-    * During the Contributions Daily Meeting
-    * By an assigned maintainer
-    * In case of emergency, if a change proposal is approved by 2 other maintainers (on Slack, Discord, Discourse, etc)
+Issues and PRs are triaged daily and the process for triaging may be found under [triaging issues](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md) in our [contributors guide repository](https://github.com/traefik/contributors-guide).
 
 ## PR review process:
 
-* The status `needs-design-review` is only used in complex/heavy/tricky PRs.
-* From `1` to `2`: 1 comment that says “design LGTM” (by a senior maintainer).
-* From `2` to `3`: 3 LGTM approvals by any maintainer.
-* If needed, a specific maintainer familiar with a particular domain can be requested for the review.
-* If a PR has been implemented in pair programming, one peer's LGTM goes into the review for free
-* Amending someone else's pull request is authorized only in emergency, if a rebase is needed, or if the initial contributor is silent
-
-We use [PRM](https://github.com/ldez/prm) to manage locally pull requests.
-
-## Bots
-
-### [Myrmica Lobicornis](https://github.com/traefik/lobicornis/)
-
-Update and Merge Pull Request.
-
-The maintainer giving the final LGTM must add the `status/3-needs-merge` label to trigger the merge bot.
-
-By default, a squash-rebase merge will be carried out.
-To preserve commits, add `bot/merge-method-rebase` before `status/3-needs-merge`.
-
-The status `status/4-merge-in-progress` is only used by the bot.
-
-If the bot is not able to perform the merge, the label `bot/need-human-merge` is added.  
-In such a situation, solve the conflicts/CI/... and then remove the label `bot/need-human-merge`.
-
-To prevent the bot from automatically merging a PR, add the label `bot/no-merge`.
-
-The label `bot/light-review` decreases the number of required LGTM from 3 to 1.
-
-This label is used when:
-
-* Updating the vendors from previously reviewed PRs
-* Merging branches into the master
-* Preparing the release
-
-### [Myrmica Bibikoffi](https://github.com/traefik/bibikoffi/)
-
-* closes stale issues [cron]
-    * use some criterion as number of days between creation, last update, labels, ...
-
-### [Myrmica Aloba](https://github.com/traefik/aloba)
-
-Manage GitHub labels.
-
-* Add labels on new PR [GitHub WebHook]
-* Add milestone to a new PR based on a branch version (1.4, 1.3, ...) [GitHub WebHook]
-* Add and remove `contributor/waiting-for-corrections` label when a review request changes [GitHub WebHook]
-* Weekly report of PR status on Slack (CaptainPR) [cron]
+PRs are reviewed during the same daily meeting as our Triage, and the process for reviewing PRs may be found under [review guidelines](https://github.com/traefik/contributors-guide/blob/master/review_guidelines.md) in our contributors guide repository.
 
 ## Labels
 
