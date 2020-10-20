@@ -46,7 +46,7 @@ followed by the provider name to the object name.
     On the other hand, if you, say, declare a middleware as a Custom Resource in Kubernetes and use the non-crd Ingress objects,
     you'll have to add the Kubernetes namespace of the middleware to the annotation like this `<middleware-namespace>-<middleware-name>@kubernetescrd`.
 
-!!! abstract "Referencing a Traedik dynamic configuration object from Another Provider"
+!!! abstract "Referencing a Traefik dynamic configuration object from Another Provider"
 
     Declaring the add-foo-prefix in the file provider.
 
