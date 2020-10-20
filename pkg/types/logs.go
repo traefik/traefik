@@ -24,6 +24,7 @@ type TraefikLog struct {
 	Level    string `description:"Log level set to traefik logs." json:"level,omitempty" toml:"level,omitempty" yaml:"level,omitempty" export:"true"`
 	FilePath string `description:"Traefik log file path. Stdout is used when omitted or empty." json:"filePath,omitempty" toml:"filePath,omitempty" yaml:"filePath,omitempty"`
 	Format   string `description:"Traefik log format: json | common" json:"format,omitempty" toml:"format,omitempty" yaml:"format,omitempty"`
+	Fluent   string `description:"Fluent endpoint (format: http(s)://host:port)" json:"fluent,omitempty" toml:"fluent,omitempty" yaml:"fluent,omitempty"`
 }
 
 // SetDefaults sets the default values.

@@ -198,6 +198,9 @@ Traefik log settings. (Default: ```false```)
 `TRAEFIK_LOG_FILEPATH`:  
 Traefik log file path. Stdout is used when omitted or empty.
 
+`TRAEFIK_LOG_FLUENT`:  
+Fluentd endpoint (format: http(s)://host:port)
+
 `TRAEFIK_LOG_FORMAT`:  
 Traefik log format: json | common (Default: ```common```)
 
