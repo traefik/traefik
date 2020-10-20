@@ -144,8 +144,8 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
     Accessing the Docker API without any restriction is a security concern:
     If Traefik is attacked, then the attacker might get access to the underlying host.
     {: #security-note }
-    
-    As explained in the Docker documentation: ([Docker Daemon Attack Surface page](https://docs.docker.com/engine/security/security/#docker-daemon-attack-surface)):
+
+    As explained in the Docker documentation: ([Docker Daemon Attack Surface page](https://docs.docker.com/engine/security/#docker-daemon-attack-surface)):
 
     !!! quote
         [...] only **trusted** users should be allowed to control your Docker daemon [...]
