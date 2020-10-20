@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	stdlog "log"
 	"net/http"
 	"os"
@@ -467,16 +466,16 @@ func configureLogging(staticConfiguration *static.Configuration) {
 		}
 	}
 
-	// TODO: add hook only if requested in config file
-	hook, err := log.NewFluentHook(level)
-	if err != nil {
-		log.WithoutContext().Errorf("Error setting up fluentd logrus hook : %v", err)
-	}
+	if staticConfiguration.Log.Fluent != "" {
+		hook, err := log.NewFluentHook(level, staticConfiguration.Log.Fluent)
+		if err != nil {
+			log.WithoutContext().Errorf("Error setting up fluent logrus hook : %v", err)
+		}
 
-	if hook != nil {
-		log.AddHook(hook)
-		fmt.Println("hook setup")
-		log.WithoutContext().Info("hook setup")
+		if hook != nil {
+			log.AddHook(hook)
+			log.WithoutContext().Info("Fluent hook setup")
+		}
 	}
 
 }
