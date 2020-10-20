@@ -182,9 +182,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	tlsManager := traefiktls.NewManager()
 
-	challengeStore := acme.NewLocalChallengeStore()
-
-	httpChallengeProvider := &acme.ChallengeHTTP{Store: challengeStore}
+	httpChallengeProvider := acme.NewChallengeHTTP()
 
 	tlsChallengeProvider := acme.NewChallengeTLSALPN(time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration))
 

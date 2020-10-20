@@ -8,29 +8,61 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/http01"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
-var _ challenge.ProviderTimeout = (*ChallengeHTTP)(nil)
-
+// ChallengeHTTP HTTP challenge provider implements challenge.Provider.
 type ChallengeHTTP struct {
-	Store ChallengeStore
+	httpChallenges map[string]map[string][]byte
+	lock           sync.RWMutex
+}
+
+// NewChallengeHTTP creates a new ChallengeHTTP.
+func NewChallengeHTTP() *ChallengeHTTP {
+	return &ChallengeHTTP{
+		httpChallenges: make(map[string]map[string][]byte),
+	}
 }
 
 // Present presents a challenge to obtain new ACME certificate.
 func (c *ChallengeHTTP) Present(domain, token, keyAuth string) error {
-	return c.Store.SetHTTPChallengeToken(token, domain, []byte(keyAuth))
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	if _, ok := c.httpChallenges[token]; !ok {
+		c.httpChallenges[token] = map[string][]byte{}
+	}
+
+	c.httpChallenges[token][domain] = []byte(keyAuth)
+
+	return nil
 }
 
 // CleanUp cleans the challenges when certificate is obtained.
 func (c *ChallengeHTTP) CleanUp(domain, token, keyAuth string) error {
-	return c.Store.RemoveHTTPChallengeToken(token, domain)
+	if c.httpChallenges == nil && len(c.httpChallenges) == 0 {
+		return nil
+	}
+
+	c.lock.Lock()
+
+	if _, ok := c.httpChallenges[token]; ok {
+		delete(c.httpChallenges[token], domain)
+
+		if len(c.httpChallenges[token]) == 0 {
+			delete(c.httpChallenges, token)
+		}
+	}
+
+	c.lock.Unlock()
+
+	return nil
 }
 
 // Timeout calculates the maximum of time allowed to resolved an ACME challenge.
@@ -56,7 +88,7 @@ func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			domain = req.Host
 		}
 
-		tokenValue := getTokenValue(ctx, token, domain, c.Store)
+		tokenValue := c.getTokenValue(ctx, token, domain)
 		if len(tokenValue) > 0 {
 			rw.WriteHeader(http.StatusOK)
 			_, err = rw.Write(tokenValue)
@@ -70,27 +102,27 @@ func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusNotFound)
 }
 
-func getPathParam(uri *url.URL) (string, error) {
-	exp := regexp.MustCompile(fmt.Sprintf(`^%s([^/]+)/?$`, http01.ChallengePath("")))
-	parts := exp.FindStringSubmatch(uri.Path)
-
-	if len(parts) != 2 {
-		return "", errors.New("missing token")
-	}
-
-	return parts[1], nil
-}
-
-func getTokenValue(ctx context.Context, token, domain string, store ChallengeStore) []byte {
+func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string) []byte {
 	logger := log.FromContext(ctx)
 	logger.Debugf("Retrieving the ACME challenge for token %v...", token)
 
 	var result []byte
 
 	operation := func() error {
-		var err error
-		result, err = store.GetHTTPChallengeToken(token, domain)
-		return err
+		c.lock.RLock()
+		defer c.lock.RUnlock()
+
+		if _, ok := c.httpChallenges[token]; !ok {
+			return fmt.Errorf("cannot find challenge for token %v", token)
+		}
+
+		var ok bool
+		result, ok = c.httpChallenges[token][domain]
+		if !ok {
+			return fmt.Errorf("cannot find challenge for token %v", token)
+		}
+
+		return nil
 	}
 
 	notify := func(err error, time time.Duration) {
@@ -106,4 +138,15 @@ func getTokenValue(ctx context.Context, token, domain string, store ChallengeSto
 	}
 
 	return result
+}
+
+func getPathParam(uri *url.URL) (string, error) {
+	exp := regexp.MustCompile(fmt.Sprintf(`^%s([^/]+)/?$`, http01.ChallengePath("")))
+	parts := exp.FindStringSubmatch(uri.Path)
+
+	if len(parts) != 2 {
+		return "", errors.New("missing token")
+	}
+
+	return parts[1], nil
 }

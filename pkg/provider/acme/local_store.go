@@ -2,7 +2,6 @@ package acme
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -169,75 +168,5 @@ func (s *LocalStore) SaveCertificates(resolverName string, certificates []*CertA
 	storedData.Certificates = certificates
 	s.save(resolverName, storedData)
 
-	return nil
-}
-
-// LocalChallengeStore is an implementation of the ChallengeStore in memory.
-type LocalChallengeStore struct {
-	storedData *StoredChallengeData
-	lock       sync.RWMutex
-}
-
-// NewLocalChallengeStore initializes a new LocalChallengeStore.
-func NewLocalChallengeStore() *LocalChallengeStore {
-	return &LocalChallengeStore{
-		storedData: &StoredChallengeData{
-			HTTPChallenges: make(map[string]map[string][]byte),
-		},
-	}
-}
-
-// GetHTTPChallengeToken Get the http challenge token from the store.
-func (s *LocalChallengeStore) GetHTTPChallengeToken(token, domain string) ([]byte, error) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-
-	if s.storedData.HTTPChallenges == nil {
-		s.storedData.HTTPChallenges = map[string]map[string][]byte{}
-	}
-
-	if _, ok := s.storedData.HTTPChallenges[token]; !ok {
-		return nil, fmt.Errorf("cannot find challenge for token %v", token)
-	}
-
-	result, ok := s.storedData.HTTPChallenges[token][domain]
-	if !ok {
-		return nil, fmt.Errorf("cannot find challenge for token %v", token)
-	}
-	return result, nil
-}
-
-// SetHTTPChallengeToken Set the http challenge token in the store.
-func (s *LocalChallengeStore) SetHTTPChallengeToken(token, domain string, keyAuth []byte) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	if s.storedData.HTTPChallenges == nil {
-		s.storedData.HTTPChallenges = map[string]map[string][]byte{}
-	}
-
-	if _, ok := s.storedData.HTTPChallenges[token]; !ok {
-		s.storedData.HTTPChallenges[token] = map[string][]byte{}
-	}
-
-	s.storedData.HTTPChallenges[token][domain] = keyAuth
-	return nil
-}
-
-// RemoveHTTPChallengeToken Remove the http challenge token in the store.
-func (s *LocalChallengeStore) RemoveHTTPChallengeToken(token, domain string) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	if s.storedData.HTTPChallenges == nil {
-		return nil
-	}
-
-	if _, ok := s.storedData.HTTPChallenges[token]; ok {
-		delete(s.storedData.HTTPChallenges[token], domain)
-		if len(s.storedData.HTTPChallenges[token]) == 0 {
-			delete(s.storedData.HTTPChallenges, token)
-		}
-	}
 	return nil
 }
