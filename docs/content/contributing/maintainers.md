@@ -24,7 +24,7 @@ Issues and PRs are triaged daily and the process for triaging may be found under
 
 ## PR review process:
 
-PRs are reviewed during the same daily meeting as our Triage, and the process for reviewing PRs may be found under [review guidelines](https://github.com/traefik/contributors-guide/blob/master/review_guidelines.md) in our contributors guide repository.
+The process for reviewing PRs may be found under [review guidelines](https://github.com/traefik/contributors-guide/blob/master/review_guidelines.md) in our contributors guide repository.
 
 ## Labels
 
