@@ -74,7 +74,7 @@ The available filters are:
 
 - `statusCodes`, to limit the access logs to requests with a status codes in the specified range
 - `retryAttempts`, to keep the access logs when at least one retry has happened
-- `minDuration`, to keep access logs when requests take longer than the specified duration
+- `minDuration`, to keep access logs when requests take longer than the specified duration (to be given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).  eg. "ns", "us", "ms", "s", "m", "h". Taken in seconds if no units are specified.)
 
 ```toml tab="File (TOML)"
 # Configuring Multiple Filters
@@ -198,7 +198,7 @@ accessLog:
     | `RequestScheme`         | The HTTP scheme requested `http` or `https`.                                                                                                                        |
     | `RequestLine`           | `RequestMethod` + `RequestPath` + `RequestProtocol`                                                                                                                 |
     | `RequestContentSize`    | The number of bytes in the request entity (a.k.a. body) sent by the client.                                                                                         |
-    | `OriginDuration`        | The time taken by the origin server ('upstream') to return its response.                                                                                            |
+    | `OriginDuration`        | The time taken (in nanoseconds) by the origin server ('upstream') to return its response.                                                                                            |
     | `OriginContentSize`     | The content length specified by the origin server, or 0 if unspecified.                                                                                             |
     | `OriginStatus`          | The HTTP status code returned by the origin server. If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent.     |
     | `OriginStatusLine`      | `OriginStatus` + Status code explanation                                                                                                                            |
@@ -207,7 +207,7 @@ accessLog:
     | `DownstreamContentSize` | The number of bytes in the response entity returned to the client. This is in addition to the "Content-Length" header, which may be present in the origin response. |
     | `RequestCount`          | The number of requests received since the Traefik instance started.                                                                                                 |
     | `GzipRatio`             | The response body compression ratio achieved.                                                                                                                       |
-    | `Overhead`              | The processing time overhead caused by Traefik.                                                                                                                     |
+    | `Overhead`              | The processing time overhead (in nanoseconds) caused by Traefik.                                                                                                                     |
     | `RetryAttempts`         | The amount of attempts the request was retried.                                                                                                                     |
 
 ## Log Rotation
