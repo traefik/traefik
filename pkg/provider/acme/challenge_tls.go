@@ -13,6 +13,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
+const providerNameALPN = "tlsalpn.acme"
+
 // ChallengeTLSALPN TLSALPN challenge provider implements challenge.Provider.
 type ChallengeTLSALPN struct {
 	Timeout time.Duration
@@ -37,7 +39,7 @@ func NewChallengeTLSALPN(timeout time.Duration) *ChallengeTLSALPN {
 
 // Present presents a challenge to obtain new ACME certificate.
 func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
-	log.WithoutContext().WithField(log.ProviderName, "tlsalpn.acme").
+	log.WithoutContext().WithField(log.ProviderName, providerNameALPN).
 		Debugf("TLS Challenge Present temp certificate for %s", domain)
 
 	certPEMBlock, keyPEMBlock, err := tlsalpn01.ChallengeBlocks(domain, keyAuth)
@@ -80,7 +82,7 @@ func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
 
 // CleanUp cleans the challenges when certificate is obtained.
 func (c *ChallengeTLSALPN) CleanUp(domain, _, keyAuth string) error {
-	log.WithoutContext().WithField(log.ProviderName, "tlsalpn.acme").
+	log.WithoutContext().WithField(log.ProviderName, providerNameALPN).
 		Debugf("TLS Challenge CleanUp temp certificate for %s", domain)
 
 	c.muCerts.Lock()
@@ -122,7 +124,7 @@ func (c *ChallengeTLSALPN) ListenConfiguration(conf dynamic.Configuration) {
 
 func createMessage(certs map[string]*Certificate) dynamic.Message {
 	conf := dynamic.Message{
-		ProviderName: "tlsalpn.acme",
+		ProviderName: providerNameALPN,
 		Configuration: &dynamic.Configuration{
 			HTTP: &dynamic.HTTPConfiguration{
 				Routers:     map[string]*dynamic.Router{},
