@@ -74,7 +74,7 @@ The available filters are:
 
 - `statusCodes`, to limit the access logs to requests with a status codes in the specified range
 - `retryAttempts`, to keep the access logs when at least one retry has happened
-- `minDuration`, to keep access logs when requests take longer than the specified duration (to be given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).  eg. "ns", "us", "ms", "s", "m", "h". Taken in seconds if no units are specified.)
+- `minDuration`, to keep access logs when requests take longer than the specified duration (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration))
 
 ```toml tab="File (TOML)"
 # Configuring Multiple Filters
