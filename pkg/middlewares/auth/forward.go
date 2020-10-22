@@ -11,12 +11,13 @@ import (
 	"time"
 
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/vulcand/oxy/forward"
+	"github.com/vulcand/oxy/utils"
+
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tracing"
-	"github.com/vulcand/oxy/forward"
-	"github.com/vulcand/oxy/utils"
 )
 
 const (
@@ -71,7 +72,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	if config.AuthResponseHeadersRegex != "" {
 		re, err := regexp.Compile(config.AuthResponseHeadersRegex)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to compile 'forwardAuth.AuthResponseHeadersRegex' value '%s': %w", config.AuthResponseHeadersRegex, err)
 		}
 		fa.authResponseHeadersRegex = re
 	}
