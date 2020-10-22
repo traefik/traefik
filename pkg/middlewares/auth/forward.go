@@ -72,7 +72,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	if config.AuthResponseHeadersRegex != "" {
 		re, err := regexp.Compile(config.AuthResponseHeadersRegex)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compile 'forwardAuth.AuthResponseHeadersRegex' value '%s': %w", config.AuthResponseHeadersRegex, err)
+			return nil, fmt.Errorf("error compiling regular expression %s: %w", config.AuthResponseHeadersRegex, err)
 		}
 		fa.authResponseHeadersRegex = re
 	}
