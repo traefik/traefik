@@ -99,7 +99,11 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 		newCtx := httptrace.WithClientTrace(req.Context(), trace)
 
-		if backoff := calculateRetryBackoff(r.firstBackoff, r.maxBackoff, r.backoffFactor, attempts); backoff > 0 {
+		// TODO https://pkg.go.dev/github.com/cenkalti/backoff/v4
+		// TODO make sure context isn't canceled between retries
+		if backoff := calculateRetryBackoff(r.firstBackoff, r.maxBackoff, r.backoffFactor, attempts); attempts >= 2 && backoff > 0 {
+			log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
+				Debugf("sleeping %v seconds before attempt #%d", backoff, attempts)
 			time.Sleep(backoff)
 		}
 
@@ -121,7 +125,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 // TODO: figure if we keep function separated from retry object for easier testing.  We have to pass in "attempts" so might as well pass in all?
 func calculateRetryBackoff(first, max time.Duration, factor float64, attempts int) time.Duration {
 	firstNs := first.Nanoseconds()
-	backoffNs := int64(float64(firstNs) * math.Pow(factor, float64(attempts-1))) // attempts starts at 1
+	backoffNs := int64(float64(firstNs) * math.Pow(factor, float64(attempts-2))) // gets called first on attempt #2
 	backoff := time.Duration(backoffNs)
 	if backoff > max {
 		return max
