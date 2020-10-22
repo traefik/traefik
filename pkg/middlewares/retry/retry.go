@@ -39,8 +39,8 @@ type Listeners []Listener
 // retry is a middleware that retries requests.
 type retry struct {
 	attempts      int
-	firstBackoff  time.Duration
-	maxBackoff    time.Duration
+	backoffFirst  time.Duration
+	backoffMax    time.Duration
 	backoffFactor float64
 	next          http.Handler
 	listener      Listener
@@ -55,19 +55,32 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
 	}
 
-	if config.Backoff != nil {
-		config.Backoff.SetDefaults()
+	// required attributes
+	retry := &retry{
+		attempts: config.Attempts,
+		next:     next,
+		listener: listener,
+		name:     name,
 	}
 
-	return &retry{
-		attempts:      config.Attempts,
-		firstBackoff:  time.Duration(config.Backoff.First),
-		maxBackoff:    time.Duration(config.Backoff.Max),
-		backoffFactor: config.Backoff.Factor,
-		next:          next,
-		listener:      listener,
-		name:          name,
-	}, nil
+	// optional backoff
+	if config.Backoff != nil {
+		first, max, factor := time.Duration(config.Backoff.First), time.Duration(config.Backoff.Max), config.Backoff.Factor
+		if first <= 0 {
+			return nil, fmt.Errorf("retry.backoff.first must be a positive time period, got %v", first)
+		}
+		if max <= 0 {
+			return nil, fmt.Errorf("retry.backoff.max must be a positive time period, got %v", first)
+		}
+		if factor <= 0 {
+			return nil, fmt.Errorf("retry.backoff.factor must be a positive number, got %d", first)
+		}
+		retry.backoffFirst = first
+		retry.backoffMax = max
+		retry.backoffFactor = factor
+	}
+
+	return retry, nil
 }
 
 func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
@@ -101,7 +114,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		// TODO https://pkg.go.dev/github.com/cenkalti/backoff/v4
 		// TODO make sure context isn't canceled between retries
-		if backoff := calculateRetryBackoff(r.firstBackoff, r.maxBackoff, r.backoffFactor, attempts); attempts >= 2 && backoff > 0 {
+		if backoff := calculateRetryBackoff(r.backoffFirst, r.backoffMax, r.backoffFactor, attempts); attempts >= 2 && backoff > 0 {
 			log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
 				Debugf("sleeping %v seconds before attempt #%d", backoff, attempts)
 			time.Sleep(backoff)

@@ -389,11 +389,6 @@ type RetryBackoff struct {
 	Factor float64         `json:"factor,omitempty" toml:"factor,omitempty" yaml:"factor,omitempty"`
 }
 
-// SetDefaults Default values for a RetryBackoff.
-func (rb *RetryBackoff) SetDefaults() {
-	rb.Factor = 2
-}
-
 // +k8s:deepcopy-gen=true
 
 // StripPrefix holds the StripPrefix configuration.
