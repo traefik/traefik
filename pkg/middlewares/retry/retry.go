@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net"
 	"net/http"
 	"net/http/httptrace"
@@ -98,6 +99,10 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 		newCtx := httptrace.WithClientTrace(req.Context(), trace)
 
+		if backoff := calculateRetryBackoff(r.firstBackoff, r.maxBackoff, r.backoffFactor, attempts); backoff > 0 {
+			time.Sleep(backoff)
+		}
+
 		r.next.ServeHTTP(retryResponseWriter, req.WithContext(newCtx))
 
 		if !retryResponseWriter.ShouldRetry() {
@@ -111,6 +116,17 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		r.listener.Retried(req, attempts)
 	}
+}
+
+// TODO: figure if we keep function separated from retry object for easier testing.  We have to pass in "attempts" so might as well pass in all?
+func calculateRetryBackoff(first, max time.Duration, factor float64, attempts int) time.Duration {
+	firstNs := first.Nanoseconds()
+	backoffNs := int64(float64(firstNs) * math.Pow(factor, float64(attempts-1))) // attempts starts at 1
+	backoff := time.Duration(backoffNs)
+	if backoff > max {
+		return max
+	}
+	return backoff
 }
 
 // Retried exists to implement the Listener interface. It calls Retried on each of its slice entries.
