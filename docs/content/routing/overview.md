@@ -228,6 +228,7 @@ http:
             to-whoami-tcp:
               service: whoami-tcp
               rule: HostSNI(`whoami-tcp.example.com`)
+              tls: {}
 
           services:
             whoami-tcp:
