@@ -376,7 +376,22 @@ type ReplacePathRegex struct {
 
 // Retry holds the retry configuration.
 type Retry struct {
-	Attempts int `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty" export:"true"`
+	Attempts int           `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty"`
+	Backoff  *RetryBackoff `json:"backoff,omitempty" toml:"backoff,omitempty" yaml:"backoff,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RetryBackoff holds exponential backoff timing configuration.
+type RetryBackoff struct {
+	FirstBackoff ptypes.Duration `json:"firstBackoff,omitempty" toml:"firstBackoff,omitempty" yaml:"firstBackoff,omitempty"`
+	MaxBackoff   ptypes.Duration `json:"maxBackoff,omitempty" toml:"maxBackoff,omitempty" yaml:"maxBackoff,omitempty"`
+	Factor       float64         `json:"factor,omitempty" toml:"factor,omitempty" yaml:"factor,omitempty"`
+}
+
+// SetDefaults Default values for a RetryBackoff.
+func (rb *RetryBackoff) SetDefaults() {
+	rb.Factor = 2
 }
 
 // +k8s:deepcopy-gen=true
