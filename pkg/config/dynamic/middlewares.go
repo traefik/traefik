@@ -384,9 +384,9 @@ type Retry struct {
 
 // RetryBackoff holds exponential backoff timing configuration.
 type RetryBackoff struct {
-	FirstBackoff ptypes.Duration `json:"firstBackoff,omitempty" toml:"firstBackoff,omitempty" yaml:"firstBackoff,omitempty"`
-	MaxBackoff   ptypes.Duration `json:"maxBackoff,omitempty" toml:"maxBackoff,omitempty" yaml:"maxBackoff,omitempty"`
-	Factor       float64         `json:"factor,omitempty" toml:"factor,omitempty" yaml:"factor,omitempty"`
+	First  ptypes.Duration `json:"first,omitempty" toml:"first,omitempty" yaml:"first,omitempty"`
+	Max    ptypes.Duration `json:"max,omitempty" toml:"max,omitempty" yaml:"max,omitempty"`
+	Factor float64         `json:"factor,omitempty" toml:"factor,omitempty" yaml:"factor,omitempty"`
 }
 
 // SetDefaults Default values for a RetryBackoff.

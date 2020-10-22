@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"time"
 
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -36,10 +37,13 @@ type Listeners []Listener
 
 // retry is a middleware that retries requests.
 type retry struct {
-	attempts int
-	next     http.Handler
-	listener Listener
-	name     string
+	attempts      int
+	firstBackoff  time.Duration
+	maxBackoff    time.Duration
+	backoffFactor float64
+	next          http.Handler
+	listener      Listener
+	name          string
 }
 
 // New returns a new retry middleware.
@@ -51,10 +55,13 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 	}
 
 	return &retry{
-		attempts: config.Attempts,
-		next:     next,
-		listener: listener,
-		name:     name,
+		attempts:      config.Attempts,
+		firstBackoff:  time.Duration(config.Backoff.First),
+		maxBackoff:    time.Duration(config.Backoff.Max),
+		backoffFactor: config.Backoff.Factor,
+		next:          next,
+		listener:      listener,
+		name:          name,
 	}, nil
 }
 
