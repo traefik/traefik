@@ -164,7 +164,7 @@ http:
 
 ### `authResponseHeaders`
 
-The `authResponseHeaders` option is the list of the headers to copy from the authentication server to the request. All incoming request's headers from this list will be omitted.
+The `authResponseHeaders` option is the list of the headers to copy from the authentication server to the request. All incoming request's headers in this list are deleted from the request before any copy happens.
 
 ```yaml tab="Docker"
 labels:
@@ -219,7 +219,7 @@ http:
 
 ### `authResponseHeadersRegex`
 
-The `authResponseHeadersRegex` option is the regex to match the headers that should be copied from the authentication server to the request. All incoming request's headers matching this regex will be omitted. 
+The `authResponseHeadersRegex` option is the regex to match the headers that should be copied from the authentication server to the request. All incoming request's headers matching this regex are deleted from the request before any copy happens. 
 
 ```yaml tab="Docker"
 labels:
