@@ -54,6 +54,10 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
 	}
 
+	if config.Backoff != nil {
+		config.Backoff.SetDefaults()
+	}
+
 	return &retry{
 		attempts:      config.Attempts,
 		firstBackoff:  time.Duration(config.Backoff.First),
