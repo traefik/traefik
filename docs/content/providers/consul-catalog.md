@@ -164,12 +164,12 @@ Defines the Consul server endpoint.
 
 #### `address`
 
-_Optional, Default="http://127.0.0.1:8500"_
+_Optional, Default="127.0.0.1:8500"_
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
   [providers.consulCatalog.endpoint]
-    address = "http://127.0.0.1:8500"
+    address = "127.0.0.1:8500"
     # ...
 ```
 
@@ -177,12 +177,12 @@ _Optional, Default="http://127.0.0.1:8500"_
 providers:
   consulCatalog:
     endpoint:
-      address: http://127.0.0.1:8500
+      address: 127.0.0.1:8500
     # ...
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.endpoint.address=http://127.0.0.1:8500
+--providers.consulcatalog.endpoint.address=127.0.0.1:8500
 # ...
 ```
 
