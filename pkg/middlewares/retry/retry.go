@@ -5,12 +5,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"net"
 	"net/http"
 	"net/http/httptrace"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -38,13 +38,11 @@ type Listeners []Listener
 
 // retry is a middleware that retries requests.
 type retry struct {
-	attempts      int
-	backoffFirst  time.Duration
-	backoffMax    time.Duration
-	backoffFactor float64
-	next          http.Handler
-	listener      Listener
-	name          string
+	attempts int
+	backOff  *backoff.ExponentialBackOff
+	next     http.Handler
+	listener Listener
+	name     string
 }
 
 // New returns a new retry middleware.
@@ -65,19 +63,22 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 
 	// optional backoff
 	if config.Backoff != nil {
+		// use default values and then set anything that is no a zero value
+		backOff := backoff.NewExponentialBackOff()
 		first, max, factor := time.Duration(config.Backoff.First), time.Duration(config.Backoff.Max), config.Backoff.Factor
-		if first <= 0 {
-			return nil, fmt.Errorf("retry.backoff.first must be a positive time period, got %v", first)
+		if first > 0 {
+			backOff.InitialInterval = first
 		}
-		if max <= 0 {
-			return nil, fmt.Errorf("retry.backoff.max must be a positive time period, got %v", first)
+		if max > 0 {
+			backOff.MaxInterval = max
 		}
-		if factor <= 0 {
-			return nil, fmt.Errorf("retry.backoff.factor must be a positive number, got %d", first)
+		if factor > 0 {
+			backOff.Multiplier = factor
 		}
-		retry.backoffFirst = first
-		retry.backoffMax = max
-		retry.backoffFactor = factor
+		// TODO new config attribute, for now just getting structure of ServeHttp adjusted
+		if factor > 0 {
+			backOff.RandomizationFactor = factor
+		}
 	}
 
 	return retry, nil
@@ -112,12 +113,12 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 		newCtx := httptrace.WithClientTrace(req.Context(), trace)
 
-		// TODO https://pkg.go.dev/github.com/cenkalti/backoff/v4
 		// TODO make sure context isn't canceled between retries
-		if backoff := calculateRetryBackoff(r.backoffFirst, r.backoffMax, r.backoffFactor, attempts); attempts >= 2 && backoff > 0 {
+		if r.backOff != nil && attempts >= 2 {
+			nextBackOff := r.backOff.NextBackOff()
 			log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
-				Debugf("sleeping %v seconds before attempt #%d", backoff, attempts)
-			time.Sleep(backoff)
+				Debugf("sleeping %v seconds before attempt #%d", nextBackOff, attempts)
+			time.Sleep(nextBackOff)
 		}
 
 		r.next.ServeHTTP(retryResponseWriter, req.WithContext(newCtx))
@@ -133,17 +134,6 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		r.listener.Retried(req, attempts)
 	}
-}
-
-// TODO: figure if we keep function separated from retry object for easier testing.  We have to pass in "attempts" so might as well pass in all?
-func calculateRetryBackoff(first, max time.Duration, factor float64, attempts int) time.Duration {
-	firstNs := first.Nanoseconds()
-	backoffNs := int64(float64(firstNs) * math.Pow(factor, float64(attempts-2))) // gets called first on attempt #2
-	backoff := time.Duration(backoffNs)
-	if backoff > max {
-		return max
-	}
-	return backoff
 }
 
 // Retried exists to implement the Listener interface. It calls Retried on each of its slice entries.
