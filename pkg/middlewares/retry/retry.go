@@ -38,11 +38,11 @@ type Listeners []Listener
 
 // retry is a middleware that retries requests.
 type retry struct {
-	attempts int
-	backOff  *backoff.ExponentialBackOff
-	next     http.Handler
-	listener Listener
-	name     string
+	attempts   int
+	newBackOff func() *backoff.ExponentialBackOff
+	next       http.Handler
+	listener   Listener
+	name       string
 }
 
 // New returns a new retry middleware.
@@ -62,22 +62,31 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 	}
 
 	// optional backoff using defaults but updating to provided values
+	// backoff needs to be constructured for each individual request so make it a factory?
 	if config.Backoff != nil {
-		backOff := backoff.NewExponentialBackOff()
-		InitialInterval, MaxInterval := time.Duration(config.Backoff.InitialInterval), time.Duration(config.Backoff.MaxInterval)
-		if InitialInterval > 0 {
-			backOff.InitialInterval = InitialInterval
+		// InitialInterval, MaxInterval := time.Duration(config.Backoff.InitialInterval), time.Duration(config.Backoff.MaxInterval)
+		enabled, InitialInterval, MaxInterval, Multiplier, RandomizationFactor := config.Backoff != nil, time.Duration(config.Backoff.InitialInterval), time.Duration(config.Backoff.MaxInterval), config.Backoff.Multiplier, config.Backoff.RandomizationFactor
+
+		retry.newBackOff = func() *backoff.ExponentialBackOff {
+			if !enabled {
+				return nil
+			}
+
+			backOff := backoff.NewExponentialBackOff()
+			if InitialInterval > 0 {
+				backOff.InitialInterval = InitialInterval
+			}
+			if MaxInterval > 0 {
+				backOff.MaxInterval = MaxInterval
+			}
+			if Multiplier > 0 {
+				backOff.Multiplier = Multiplier
+			}
+			// can't only set this if >0 since someone might want no randomization.
+			// Therefore its default value is 0 despite upstream library being 0.5
+			backOff.RandomizationFactor = RandomizationFactor
+			return backOff
 		}
-		if MaxInterval > 0 {
-			backOff.MaxInterval = MaxInterval
-		}
-		if config.Backoff.Multiplier > 0 {
-			backOff.Multiplier = config.Backoff.Multiplier
-		}
-		if config.Backoff.RandomizationFactor > 0 {
-			backOff.RandomizationFactor = config.Backoff.RandomizationFactor
-		}
-		retry.backOff = backOff
 	}
 
 	return retry, nil
@@ -90,10 +99,12 @@ func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// if we might make multiple attempts, swap the body for an ioutil.NopCloser
 	// cf https://github.com/traefik/traefik/issues/1008
+	var backOff *backoff.ExponentialBackOff
 	if r.attempts > 1 {
 		body := req.Body
 		defer body.Close()
 		req.Body = ioutil.NopCloser(body)
+		backOff = r.newBackOff()
 	}
 
 	attempts := 1
@@ -113,10 +124,10 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		newCtx := httptrace.WithClientTrace(req.Context(), trace)
 
 		// TODO make sure context isn't canceled between retries
-		if r.backOff != nil && attempts >= 2 {
-			nextBackOff := r.backOff.NextBackOff()
+		if backOff != nil && attempts >= 2 {
+			nextBackOff := backOff.NextBackOff()
 			log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
-				Debugf("sleeping %v seconds before attempt #%d", nextBackOff, attempts)
+				Debugf("sleeping %v seconds before attempt %d", nextBackOff, attempts)
 			time.Sleep(nextBackOff)
 		}
 
