@@ -201,7 +201,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		)
 
 		factoryKubeSecretTLS.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
-		factoryKubeSecretOpaque.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		factoryKubeSecretOpaque.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 
 		c.factoriesKube[ns] = factoryKube
 		c.factoriesKubeIngress[ns] = factoryKubeIngress
