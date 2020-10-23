@@ -21,13 +21,15 @@ import (
 )
 
 func TestRetry(t *testing.T) {
-	testCases := []struct {
+	type testCase struct {
 		desc                  string
 		config                dynamic.Retry
 		wantRetryAttempts     int
 		wantResponseStatus    int
 		amountFaultyEndpoints int
-	}{
+	}
+
+	testCases := []testCase{
 		{
 			desc:                  "no retry on success",
 			config:                dynamic.Retry{Attempts: 1},
@@ -63,6 +65,21 @@ func TestRetry(t *testing.T) {
 			wantResponseStatus:    http.StatusBadGateway,
 			amountFaultyEndpoints: 3,
 		},
+	}
+
+	// construct same cases with 10ns backoff to hit those code paths without adding much unit test time
+	for _, v := range testCases {
+		withBackoff := testCase{
+			desc: v.desc + " with backoff",
+			config: dynamic.Retry{
+				Attempts: v.config.Attempts,
+				Backoff:  &dynamic.RetryBackoff{InitialInterval: 10},
+			},
+			wantRetryAttempts:     v.wantRetryAttempts,
+			wantResponseStatus:    v.wantResponseStatus,
+			amountFaultyEndpoints: v.amountFaultyEndpoints,
+		}
+		testCases = append(testCases, withBackoff)
 	}
 
 	backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
