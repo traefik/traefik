@@ -61,24 +61,23 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		name:     name,
 	}
 
-	// optional backoff
+	// optional backoff using defaults but updating to provided values
 	if config.Backoff != nil {
-		// use default values and then set anything that is no a zero value
 		backOff := backoff.NewExponentialBackOff()
-		first, max, factor := time.Duration(config.Backoff.First), time.Duration(config.Backoff.Max), config.Backoff.Factor
-		if first > 0 {
-			backOff.InitialInterval = first
+		InitialInterval, MaxInterval := time.Duration(config.Backoff.InitialInterval), time.Duration(config.Backoff.MaxInterval)
+		if InitialInterval > 0 {
+			backOff.InitialInterval = InitialInterval
 		}
-		if max > 0 {
-			backOff.MaxInterval = max
+		if MaxInterval > 0 {
+			backOff.MaxInterval = MaxInterval
 		}
-		if factor > 0 {
-			backOff.Multiplier = factor
+		if config.Backoff.Multiplier > 0 {
+			backOff.Multiplier = config.Backoff.Multiplier
 		}
-		// TODO new config attribute, for now just getting structure of ServeHttp adjusted
-		if factor > 0 {
-			backOff.RandomizationFactor = factor
+		if config.Backoff.RandomizationFactor > 0 {
+			backOff.RandomizationFactor = config.Backoff.RandomizationFactor
 		}
+		retry.backOff = backOff
 	}
 
 	return retry, nil
