@@ -1,3 +1,23 @@
+## [v2.3.2](https://github.com/traefik/traefik/tree/v2.3.2) (2020-10-19)
+[All Commits](https://github.com/traefik/traefik/compare/v2.3.1...v2.3.2)
+
+**Bug fixes:**
+- **[acme]** fix: restrict protocol for TLS Challenge. ([#7400](https://github.com/traefik/traefik/pull/7400) by [ldez](https://github.com/ldez))
+- **[acme]** fix: use provider keytype instead of account keytype. ([#7387](https://github.com/traefik/traefik/pull/7387) by [mmatur](https://github.com/mmatur))
+- **[acme]** acme: Fix race condition in LocalStore during saving. ([#7355](https://github.com/traefik/traefik/pull/7355) by [walkline](https://github.com/walkline))
+- **[plugins]** fix: update Yaegi to v0.9.4 ([#7426](https://github.com/traefik/traefik/pull/7426) by [ldez](https://github.com/ldez))
+- **[udp]** fix: udp json struct tag ([#7375](https://github.com/traefik/traefik/pull/7375) by [mschneider82](https://github.com/mschneider82))
+
+**Documentation:**
+- **[consulcatalog]** fix: Consul Catalog address documentation. ([#7429](https://github.com/traefik/traefik/pull/7429) by [ldez](https://github.com/ldez))
+- **[middleware]** Moving Provider Namespace documentation topic to Configuration Discovery section ([#7423](https://github.com/traefik/traefik/pull/7423) by [AndrewSav](https://github.com/AndrewSav))
+- **[pilot]** fix: pilot static configuration documentation ([#7399](https://github.com/traefik/traefik/pull/7399) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[plugins]** Revise Traefik Pilot documentation section ([#7427](https://github.com/traefik/traefik/pull/7427) by [PCM2](https://github.com/PCM2))
+- **[tls]** Adding details about the default TLS options to the documentation ([#7422](https://github.com/traefik/traefik/pull/7422) by [AndrewSav](https://github.com/AndrewSav))
+- doc: add YAML sample. ([#7397](https://github.com/traefik/traefik/pull/7397) by [ldez](https://github.com/ldez))
+- Fix containous links in readme ([#7394](https://github.com/traefik/traefik/pull/7394) by [kevinpollet](https://github.com/kevinpollet))
+- Fix broken logo ([#7390](https://github.com/traefik/traefik/pull/7390) by [Bencey](https://github.com/Bencey))
+
 ## [v2.3.1](https://github.com/traefik/traefik/tree/v2.3.1) (2020-09-28)
 [All Commits](https://github.com/traefik/traefik/compare/v2.3.0...v2.3.1)
 

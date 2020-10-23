@@ -66,7 +66,7 @@ type EndpointConfig struct {
 
 // SetDefaults sets the default values.
 func (c *EndpointConfig) SetDefaults() {
-	c.Address = "http://127.0.0.1:8500"
+	c.Address = "127.0.0.1:8500"
 }
 
 // EndpointHTTPAuthConfig holds configurations of the authentication.
