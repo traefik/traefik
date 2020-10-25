@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"math"
 	"net/http"
 	"os"
 	"time"
@@ -66,7 +65,8 @@ func (s *RetrySuite) TestRetryBackoff(c *check.C) {
 
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
-	c.Assert(time.Duration(math.Abs(float64(duration-expected))), checker.LessThan, allowedVariance)
+	c.Assert(duration, checker.LessThan, expected+allowedVariance)
+	c.Assert(duration, checker.GreaterThan, expected-allowedVariance)
 }
 
 func (s *RetrySuite) TestRetryWebsocket(c *check.C) {

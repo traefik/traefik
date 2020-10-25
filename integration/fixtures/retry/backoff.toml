@@ -24,9 +24,9 @@
     rule = "PathPrefix(`/`)"
 
 [http.middlewares.retry.retry]
-  attempts = 3
+  attempts = 4
   [http.middlewares.retry.retry.backoff]
-    # 500 + 1000 + 1500 == 3000 ms
+    # 500 + 1000 + 1500 + success == 3000 ms
     initialInterval = "500ms"
     maxInterval = "1500ms"
     multiplier = 2
@@ -35,6 +35,9 @@
 [http.services]
   [http.services.service1]
     [http.services.service1.loadBalancer]
+
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{.WhoamiEndpoint}}:8080"
 
       [[http.services.service1.loadBalancer.servers]]
         url = "http://{{.WhoamiEndpoint}}:8080"
