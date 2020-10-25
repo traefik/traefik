@@ -3,17 +3,19 @@ package retry
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httptrace"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/cenkalti/backoff/v4"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/middlewares/emptybackendhandler"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
@@ -133,18 +135,63 @@ func TestRetry(t *testing.T) {
 }
 
 func TestBackoff(t *testing.T) {
+	backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+		_, err := rw.Write([]byte("OK"))
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	}))
 
-	b := backoff.NewExponentialBackOff()
-	b.InitialInterval = 500
-	b.MaxInterval = 1500
-	b.Multiplier = 2
-	b.RandomizationFactor = 0
-	b.Reset()
-	t.Log(b)
+	forwarder, err := forward.New()
+	require.NoError(t, err)
 
-	for i := 1; i <= 3; i++ {
-		t.Logf("backoff %d: %v", i, b.NextBackOff())
+	loadBalancer, err := roundrobin.New(forwarder)
+	require.NoError(t, err)
+
+	// out of range port
+	basePort := 1133444
+	amountFaultyEndpoints := 3
+	for i := 0; i < amountFaultyEndpoints; i++ {
+		// 192.0.2.0 is a non-routable IP for testing purposes.
+		// See: https://stackoverflow.com/questions/528538/non-routable-ip-address/18436928#18436928
+		// We only use the port specification here because the URL is used as identifier
+		// in the load balancer and using the exact same URL would not add a new server.
+		err = loadBalancer.UpsertServer(testhelpers.MustParseURL("http://192.0.2.0:" + strconv.Itoa(basePort+i)))
+		require.NoError(t, err)
 	}
+
+	// add the functioning server to the end of the load balancer list
+	err = loadBalancer.UpsertServer(testhelpers.MustParseURL(backendServer.URL))
+	require.NoError(t, err)
+
+	config := dynamic.Retry{
+		Attempts: 4,
+		Backoff: &dynamic.RetryBackoff{
+			InitialInterval:     types.Duration(time.Millisecond * 500),
+			MaxInterval:         types.Duration(time.Millisecond * 1500),
+			Multiplier:          2,
+			RandomizationFactor: 0,
+		},
+	}
+
+	retryListener := &countingRetryListener{}
+	retry, err := New(context.Background(), loadBalancer, config, retryListener, "traefikTest")
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "http://localhost:3000/ok", nil)
+
+	start := time.Now()
+	retry.ServeHTTP(recorder, req)
+	d := time.Since(start)
+
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, 3, retryListener.timesCalled)
+
+	t.Logf("duration %v", d)
+	expected, allowedVariance := time.Second*3, time.Millisecond*250
+	assert.Less(t, math.Abs(float64(d-expected)), float64(allowedVariance), fmt.Sprintf("got %v, wanted less than %v", d, expected))
 }
 
 func TestRetryEmptyServerList(t *testing.T) {
