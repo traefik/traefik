@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/paerser/types"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/middlewares/emptybackendhandler"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
@@ -70,13 +70,37 @@ func TestRetry(t *testing.T) {
 		},
 	}
 
-	// construct same cases with 10ns backoff to hit those code paths without adding much unit test time
-	for _, v := range testCases {
+	// should be able to merge with above tests in any order as they are all valid
+	backoffOptions := []dynamic.RetryBackoff{
+		{},
+		{InitialInterval: ptypes.Duration(time.Microsecond * 50)},
+		{
+			InitialInterval: ptypes.Duration(time.Microsecond * 50),
+			MaxInterval:     ptypes.Duration(time.Microsecond * 150),
+		},
+		{
+			InitialInterval: ptypes.Duration(time.Microsecond * 50),
+			MaxInterval:     ptypes.Duration(time.Microsecond * 150),
+			Multiplier:      2,
+		},
+		{
+			InitialInterval:     ptypes.Duration(time.Microsecond * 50),
+			MaxInterval:         ptypes.Duration(time.Microsecond * 150),
+			RandomizationFactor: 5,
+		},
+		{
+			InitialInterval:     ptypes.Duration(time.Microsecond * 50),
+			MaxInterval:         ptypes.Duration(time.Microsecond * 150),
+			Multiplier:          2,
+			RandomizationFactor: 5,
+		},
+	}
+	for i, v := range testCases {
 		withBackoff := testCase{
 			desc: v.desc + " with backoff",
 			config: dynamic.Retry{
 				Attempts: v.config.Attempts,
-				Backoff:  &dynamic.RetryBackoff{InitialInterval: 10},
+				Backoff:  &backoffOptions[i%len(backoffOptions)],
 			},
 			wantRetryAttempts:     v.wantRetryAttempts,
 			wantResponseStatus:    v.wantResponseStatus,
@@ -168,8 +192,8 @@ func TestBackoff(t *testing.T) {
 	config := dynamic.Retry{
 		Attempts: 4,
 		Backoff: &dynamic.RetryBackoff{
-			InitialInterval:     types.Duration(time.Millisecond * 500),
-			MaxInterval:         types.Duration(time.Millisecond * 1500),
+			InitialInterval:     ptypes.Duration(time.Millisecond * 500),
+			MaxInterval:         ptypes.Duration(time.Millisecond * 1500),
 			Multiplier:          2,
 			RandomizationFactor: 0,
 		},
