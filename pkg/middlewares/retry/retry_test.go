@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -128,6 +129,21 @@ func TestRetry(t *testing.T) {
 			assert.Equal(t, test.wantResponseStatus, recorder.Code)
 			assert.Equal(t, test.wantRetryAttempts, retryListener.timesCalled)
 		})
+	}
+}
+
+func TestBackoff(t *testing.T) {
+
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = 500
+	b.MaxInterval = 1500
+	b.Multiplier = 2
+	b.RandomizationFactor = 0
+	b.Reset()
+	t.Log(b)
+
+	for i := 1; i <= 3; i++ {
+		t.Logf("backoff %d: %v", i, b.NextBackOff())
 	}
 }
 

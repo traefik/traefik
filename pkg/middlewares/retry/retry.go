@@ -53,28 +53,30 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
 	}
 
-	// optional backoff using defaults but updating to provided values
-	// backoff needs to be constructured for each individual request so make it a factory?
+	// newBackOff is used to create an ExponentialBackoff for each incoming request
 	newBackOff := func() *backoff.ExponentialBackOff {
 		if config.Backoff == nil {
 			return nil
 		}
 
-		backOff := backoff.NewExponentialBackOff()
+		b := backoff.NewExponentialBackOff()
 		InitialInterval, MaxInterval := time.Duration(config.Backoff.InitialInterval), time.Duration(config.Backoff.MaxInterval)
 		if InitialInterval > 0 {
-			backOff.InitialInterval = InitialInterval
+			b.InitialInterval = InitialInterval
 		}
 		if MaxInterval > 0 {
-			backOff.MaxInterval = MaxInterval
+			b.MaxInterval = MaxInterval
 		}
 		if config.Backoff.Multiplier > 0 {
-			backOff.Multiplier = config.Backoff.Multiplier
+			b.Multiplier = config.Backoff.Multiplier
 		}
-		// can't only set this if >0 since someone might want no randomization.
-		// Therefore its default value is 0 despite upstream library being 0.5
-		backOff.RandomizationFactor = config.Backoff.RandomizationFactor
-		return backOff
+		// RandomizationFactor can't only set if >0 since someone might want no randomization.
+		// Therefore its default value is 0 despite upstream library being 0.5.
+		b.RandomizationFactor = config.Backoff.RandomizationFactor
+
+		// according to docs, b.Reset() must be called before using
+		b.Reset()
+		return b
 	}
 
 	return &retry{
