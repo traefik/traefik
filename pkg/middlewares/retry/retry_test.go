@@ -61,51 +61,19 @@ func TestRetry(t *testing.T) {
 			amountFaultyEndpoints: 2,
 		},
 		{
+			desc:                  "two retries when two servers are faulty with explicit backoff",
+			config:                dynamic.Retry{Attempts: 3, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
+			wantRetryAttempts:     2,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 2,
+		},
+		{
 			desc:                  "max attempts exhausted delivers the 5xx response",
 			config:                dynamic.Retry{Attempts: 3},
 			wantRetryAttempts:     2,
 			wantResponseStatus:    http.StatusBadGateway,
 			amountFaultyEndpoints: 3,
 		},
-	}
-
-	// should be able to merge with above tests in any order as they are all valid
-	backoffOptions := []dynamic.RetryBackoff{
-		{},
-		{InitialInterval: ptypes.Duration(time.Microsecond * 50)},
-		{
-			InitialInterval: ptypes.Duration(time.Microsecond * 50),
-			MaxInterval:     ptypes.Duration(time.Microsecond * 150),
-		},
-		{
-			InitialInterval: ptypes.Duration(time.Microsecond * 50),
-			MaxInterval:     ptypes.Duration(time.Microsecond * 150),
-			Multiplier:      2,
-		},
-		{
-			InitialInterval:     ptypes.Duration(time.Microsecond * 50),
-			MaxInterval:         ptypes.Duration(time.Microsecond * 150),
-			RandomizationFactor: 5,
-		},
-		{
-			InitialInterval:     ptypes.Duration(time.Microsecond * 50),
-			MaxInterval:         ptypes.Duration(time.Microsecond * 150),
-			Multiplier:          2,
-			RandomizationFactor: 5,
-		},
-	}
-	for i, v := range testCases {
-		withBackoff := testCase{
-			desc: v.desc + " with backoff",
-			config: dynamic.Retry{
-				Attempts: v.config.Attempts,
-				Backoff:  &backoffOptions[i%len(backoffOptions)],
-			},
-			wantRetryAttempts:     v.wantRetryAttempts,
-			wantResponseStatus:    v.wantResponseStatus,
-			amountFaultyEndpoints: v.amountFaultyEndpoints,
-		}
-		testCases = append(testCases, withBackoff)
 	}
 
 	backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
