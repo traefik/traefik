@@ -40,10 +40,10 @@
         url = "http://{{.WhoamiEndpoint}}:8080"
 
       [[http.services.service1.loadBalancer.servers]]
-        url = "http://{{.WhoamiEndpoint}}:8080"
+        url = "http://{{.WhoamiEndpoint}}:8081"
 
       [[http.services.service1.loadBalancer.servers]]
-        url = "http://{{.WhoamiEndpoint}}:8080"
+        url = "http://{{.WhoamiEndpoint}}:8082"
 
       [[http.services.service1.loadBalancer.servers]]
         url = "http://{{.WhoamiEndpoint}}:80"

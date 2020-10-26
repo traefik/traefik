@@ -34,10 +34,13 @@ func (s *RetrySuite) TestRetry(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
 	c.Assert(err, checker.IsNil)
 
+	start := time.Now()
 	// This simulates a DialTimeout when connecting to the backend server.
 	response, err := http.Get("http://127.0.0.1:8000/")
+	duration, allowed := time.Since(start), time.Millisecond*250
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+	c.Assert(int64(duration), checker.LessThan, int64(allowed))
 }
 
 func (s *RetrySuite) TestRetryBackoff(c *check.C) {
@@ -56,8 +59,8 @@ func (s *RetrySuite) TestRetryBackoff(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
 	c.Assert(err, checker.IsNil)
 
-	// This simulates a DialTimeout when connecting to the backend server.
 	start := time.Now()
+	// This simulates a DialTimeout when connecting to the backend server.
 	response, err := http.Get("http://127.0.0.1:8000/")
 	duration := time.Since(start)
 	// test case delays: 500 + 1000 + 1500 == 3000 ms
@@ -65,8 +68,8 @@ func (s *RetrySuite) TestRetryBackoff(c *check.C) {
 
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
-	c.Assert(duration, checker.LessThan, expected+allowedVariance)
-	c.Assert(duration, checker.GreaterThan, expected-allowedVariance)
+	c.Assert(int64(duration), checker.LessThan, int64(expected+allowedVariance))
+	c.Assert(int64(duration), checker.GreaterThan, int64(expected-allowedVariance))
 }
 
 func (s *RetrySuite) TestRetryWebsocket(c *check.C) {
