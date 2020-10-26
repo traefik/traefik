@@ -298,6 +298,11 @@ http:
     Middleware20:
       retry:
         attempts: 42
+        backoff:
+          initialInterval: 42
+          maxInterval: 42
+          multiplier: 42
+          randomizationFactor: 42
     Middleware21:
       stripPrefix:
         prefixes:

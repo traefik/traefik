@@ -129,6 +129,10 @@
 | `traefik/http/middlewares/Middleware19/replacePathRegex/regex` | `foobar` |
 | `traefik/http/middlewares/Middleware19/replacePathRegex/replacement` | `foobar` |
 | `traefik/http/middlewares/Middleware20/retry/attempts` | `42` |
+| `traefik/http/middlewares/Middleware20/retry/backoff/initialInterval` | `42` |
+| `traefik/http/middlewares/Middleware20/retry/backoff/maxInterval` | `42` |
+| `traefik/http/middlewares/Middleware20/retry/backoff/multiplier` | `42` |
+| `traefik/http/middlewares/Middleware20/retry/backoff/randomizationFactor` | `42` |
 | `traefik/http/middlewares/Middleware21/stripPrefix/forceSlash` | `true` |
 | `traefik/http/middlewares/Middleware21/stripPrefix/prefixes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware21/stripPrefix/prefixes/1` | `foobar` |

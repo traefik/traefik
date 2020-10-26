@@ -261,6 +261,10 @@
     [http.middlewares.Middleware20]
       [http.middlewares.Middleware20.retry]
         attempts = 42
+        [http.middlewares.Middleware20.retry.backoff]
+          initialInterval = 42
+          maxInterval = 42
+          multiplier = 42
     [http.middlewares.Middleware21]
       [http.middlewares.Middleware21.stripPrefix]
         prefixes = ["foobar", "foobar"]
