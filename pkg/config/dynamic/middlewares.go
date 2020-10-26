@@ -376,18 +376,8 @@ type ReplacePathRegex struct {
 
 // Retry holds the retry configuration.
 type Retry struct {
-	Attempts int           `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty"`
-	Backoff  *RetryBackoff `json:"backoff,omitempty" toml:"backoff,omitempty" yaml:"backoff,omitempty"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// RetryBackoff holds exponential backoff timing configuration.
-type RetryBackoff struct {
-	InitialInterval     ptypes.Duration `json:"initialInterval,omitempty" toml:"initialInterval,omitempty" yaml:"initialInterval,omitempty"`
-	MaxInterval         ptypes.Duration `json:"maxInterval,omitempty" toml:"maxInterval,omitempty" yaml:"maxInterval,omitempty"`
-	Multiplier          float64         `json:"multiplier,omitempty" toml:"multiplier,omitempty" yaml:"multiplier,omitempty"`
-	RandomizationFactor float64         `json:"randomizationFactor,omitempty" toml:"randomizationFactor,omitempty" yaml:"randomizationFactor,omitempty"`
+	Attempts        int             `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty"`
+	InitialInterval ptypes.Duration `json:"initialInterval,omitempty" toml:"initialInterval,omitempty" yaml:"initialInterval,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

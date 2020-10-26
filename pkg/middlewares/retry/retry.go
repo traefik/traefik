@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net"
 	"net/http"
 	"net/http/httptrace"
@@ -55,24 +56,16 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 
 	// newBackOff is used to create an ExponentialBackoff for each incoming request
 	newBackOff := func() *backoff.ExponentialBackOff {
-		if config.Backoff == nil {
-			return nil
-		}
-
 		b := backoff.NewExponentialBackOff()
-		InitialInterval, MaxInterval := time.Duration(config.Backoff.InitialInterval), time.Duration(config.Backoff.MaxInterval)
-		if InitialInterval > 0 {
-			b.InitialInterval = InitialInterval
+
+		initialInterval := time.Duration(config.InitialInterval)
+		if initialInterval <= 0 {
+			initialInterval = time.Millisecond * 100
 		}
-		if MaxInterval > 0 {
-			b.MaxInterval = MaxInterval
-		}
-		if config.Backoff.Multiplier > 0 {
-			b.Multiplier = config.Backoff.Multiplier
-		}
-		// RandomizationFactor can't only set if >0 since someone might want no randomization.
-		// Therefore its default value is 0 despite upstream library being 0.5.
-		b.RandomizationFactor = config.Backoff.RandomizationFactor
+		b.InitialInterval = initialInterval
+
+		// take the (attempts-1)th root of 2 (since max is double initial)
+		b.Multiplier = math.Pow(2, 1/float64(config.Attempts-1))
 
 		// according to docs, b.Reset() must be called before using
 		b.Reset()
