@@ -17,10 +17,7 @@ The Retry middleware has an optional configuration for exponential backoff.
 # Retry to send request 4 times with exponential backoff
 labels:
   - "traefik.http.middlewares.test-retry.retry.attempts=4"
-  - "traefik.http.middlewares.test-retry.retry.backoff.initialInterval=500ms"
-  - "traefik.http.middlewares.test-retry.retry.backoff.maxInterval=2s"
-  - "traefik.http.middlewares.test-retry.retry.backoff.multiplier=1.5"
-  - "traefik.http.middlewares.test-retry.retry.backoff.randomizationFactor=0.5"
+  - "traefik.http.middlewares.test-retry.retry.initialInterval=100ms"
 ```
 
 ```yaml tab="Kubernetes"
@@ -32,29 +29,19 @@ metadata:
 spec:
   retry:
     attempts: 4
-    backoff:
-      initialInterval: 500ms
-      maxInterval: 2s
-      multiplier: 1.5
-      randomizationFactor: 0.5
+    initialInterval: 100ms
 ```
 
 ```yaml tab="Consul Catalog"
 # Retry to send request 4 times with exponential backoff
 - "traefik.http.middlewares.test-retry.retry.attempts=4"
-- "traefik.http.middlewares.test-retry.retry.backoff.initialInterval=500ms"
-- "traefik.http.middlewares.test-retry.retry.backoff.maxInterval=2s"
-- "traefik.http.middlewares.test-retry.retry.backoff.multiplier=1.5"
-- "traefik.http.middlewares.test-retry.retry.backoff.randomizationFactor=0.5"
+- "traefik.http.middlewares.test-retry.retry.initialInterval=100ms"
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.test-retry.retry.attempts": "4",
-  "traefik.http.middlewares.test-retry.retry.backoff.initialInterval": "500ms",
-  "traefik.http.middlewares.test-retry.retry.backoff.maxInterval": "2s",
-  "traefik.http.middlewares.test-retry.retry.backoff.multiplier": "1.5",
-  "traefik.http.middlewares.test-retry.retry.backoff.randomizationFactor": "0.5"
+  "traefik.http.middlewares.test-retry.retry.initialInterval": "100ms",
 }
 ```
 
@@ -62,10 +49,7 @@ spec:
 # Retry to send request 4 times with exponential backoff
 labels:
   - "traefik.http.middlewares.test-retry.retry.attempts=4"
-  - "traefik.http.middlewares.test-retry.retry.backoff.initialInterval=500ms"
-  - "traefik.http.middlewares.test-retry.retry.backoff.maxInterval=2s"
-  - "traefik.http.middlewares.test-retry.retry.backoff.multiplier=1.5"
-  - "traefik.http.middlewares.test-retry.retry.backoff.randomizationFactor=0.5"
+  - "traefik.http.middlewares.test-retry.retry.initialInterval=100ms"
 ```
 
 ```toml tab="File (TOML)"
@@ -73,10 +57,7 @@ labels:
 [http.middlewares]
   [http.middlewares.test-retry.retry]
      attempts = 4
-    [http.middlewares.test-retry.retry.backoff]
-      initialInterval = "500ms"
-      maxInterval = "1500ms"
-      multiplier = 2
+    initialInterval = "100ms"
 ```
 
 ```yaml tab="File (YAML)"
@@ -86,11 +67,7 @@ http:
     test-retry:
       retry:
         attempts: 4
-        backoff:
-          initialInterval: 500ms
-          maxInterval: 2s
-          multiplier: 1.5
-          randomizationFactor: 0.5
+        initialInterval: 100ms
 ```
 
 ## Configuration Options
@@ -101,24 +78,8 @@ _mandatory_
 
 The `attempts` option defines how many times the request should be retried.
 
-(provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration))
+### `initialInterval`
 
-### _backoff section_
+_default: 100ms_
 
-The backoff functionality of the Retry middleware is activated if any one or more of the below options are set.
-
-### `backoff.initialInterval`
-
-The `backoff.initialInterval` option defines how long to wait before the first retry attempt (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)).
-
-### `backoff.maxInterval`
-
-The `backoff.maxInterval` option defines the limit for low long to wait between any two retry attempts (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)).
-
-### `backoff.multiplier`
-
-The `backoff.multiplier` option defines the factor to multiply by for calculating the next retry's waiting period from the current.
-
-### `backoff.randomizationFactor`
-
-The `backoff.randomizationFactor` option sets a random value in range [1 - RandomizationFactor, 1 + RandomizationFactor] to multiply the backoff duration by. This provides jitter to prevent overloading from coordinated retry.
+The `initialInterval` option defines the first wait time in the exponential backoff series (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)).
