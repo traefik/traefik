@@ -619,7 +619,7 @@ Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernete
 !!! important "Cross-provider namespace"
 
     As Kubernetes also has its own notion of namespace, one should not confuse the kubernetes namespace of a resource
-    (in the reference to the middleware) with the [provider namespace](../../middlewares/overview.md#provider-namespace),
+    (in the reference to the middleware) with the [provider namespace](../../providers/overview.md#provider-namespace),
     when the definition of the middleware comes from another provider.
     In this context, specifying a namespace when referring to the resource does not make any sense, and will be ignored.
     Additionally, when you want to reference a Middleware from the CRD Provider,
@@ -1456,8 +1456,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
     If the optional `namespace` attribute is not set, the configuration will be applied with the namespace of the IngressRoute.
 
 	Additionally, when the definition of the TLS option is from another provider,
-	the cross-provider syntax (`middlewarename@provider`) should be used to refer to the TLS option,
-	just as in the [middleware case](../../middlewares/overview.md#provider-namespace).
+	the cross-provider [syntax](../../providers/overview.md#provider-namespace) (`middlewarename@provider`) should be used to refer to the TLS option.
 	Specifying a namespace attribute in this case would not make any sense, and will be ignored.
 
 ### Kind: `TLSStore`
