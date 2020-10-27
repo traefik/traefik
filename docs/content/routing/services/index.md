@@ -182,7 +182,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
 
     The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
 
-!!! info "Secure & HTTPOnly & SameSite flags"
+!!! info "Secure & HTTPOnly & SameSite & Domain flags"
 
     By default, the affinity cookie is created without those flags.
     One however can change that through configuration.
@@ -219,6 +219,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
           secure = true
           httpOnly = true
           sameSite = "none"
+          domain = "example.com"
     ```
 
     ```yaml tab="YAML"
@@ -232,6 +233,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
                 name: my_sticky_cookie_name
                 secure: true
                 httpOnly: true
+                domain: example.com
     ```
 
 ??? example "Setting Stickiness on all the required levels -- Using the [File Provider](../../providers/file.md)"
