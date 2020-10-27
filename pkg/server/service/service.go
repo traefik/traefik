@@ -308,6 +308,7 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 			HTTPOnly: service.Sticky.Cookie.HTTPOnly,
 			Secure:   service.Sticky.Cookie.Secure,
 			SameSite: convertSameSite(service.Sticky.Cookie.SameSite),
+			Domain: service.Sticky.Cookie.Domain,
 		}
 
 		options = append(options, roundrobin.EnableStickySession(roundrobin.NewStickySessionWithOptions(cookieName, opts)))
