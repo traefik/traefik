@@ -139,6 +139,7 @@
         address = "foobar"
         trustForwardHeader = true
         authResponseHeaders = ["foobar", "foobar"]
+        authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]
         [http.middlewares.Middleware09.forwardAuth.tls]
           ca = "foobar"
