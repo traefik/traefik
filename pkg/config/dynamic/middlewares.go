@@ -164,6 +164,8 @@ type Headers struct {
 	AccessControlAllowOrigin string `json:"accessControlAllowOrigin,omitempty" toml:"accessControlAllowOrigin,omitempty" yaml:"accessControlAllowOrigin,omitempty"` // Deprecated
 	// AccessControlAllowOriginList is a list of allowable origins. Can also be a wildcard origin "*".
 	AccessControlAllowOriginList []string `json:"accessControlAllowOriginList,omitempty" toml:"accessControlAllowOriginList,omitempty" yaml:"accessControlAllowOriginList,omitempty"`
+	// AccessControlAllowOriginListRegex is a list of allowable origins written following the Regular Expression syntax (https://golang.org/pkg/regexp/).
+	AccessControlAllowOriginListRegex []string `json:"accessControlAllowOriginListRegex,omitempty" toml:"accessControlAllowOriginListRegex,omitempty" yaml:"accessControlAllowOriginListRegex,omitempty"`
 	// AccessControlExposeHeaders sets valid headers for the response.
 	AccessControlExposeHeaders []string `json:"accessControlExposeHeaders,omitempty" toml:"accessControlExposeHeaders,omitempty" yaml:"accessControlExposeHeaders,omitempty"`
 	// AccessControlMaxAge sets the time that a preflight request may be cached.
@@ -206,6 +208,7 @@ func (h *Headers) HasCorsHeadersDefined() bool {
 		len(h.AccessControlAllowHeaders) != 0 ||
 		len(h.AccessControlAllowMethods) != 0 ||
 		len(h.AccessControlAllowOriginList) != 0 ||
+		len(h.AccessControlAllowOriginListRegex) != 0 ||
 		len(h.AccessControlExposeHeaders) != 0 ||
 		h.AccessControlMaxAge != 0 ||
 		h.AddVaryHeader)

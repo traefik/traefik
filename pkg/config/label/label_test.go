@@ -49,6 +49,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowmethods":                   "GET, PUT",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolalloworigin":                    "foobar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolalloworiginList":                "foobar, fiibar",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolalloworiginListRegex":           "foobar, fiibar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolexposeheaders":                  "X-foobar, X-fiibar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolmaxage":                         "200",
 		"traefik.http.middlewares.Middleware8.headers.addvaryheader":                               "true",
@@ -527,6 +528,10 @@ func TestDecodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
+						AccessControlAllowOriginListRegex: []string{
+							"foobar",
+							"fiibar",
+						},
 						AccessControlExposeHeaders: []string{
 							"X-foobar",
 							"X-fiibar",
@@ -999,6 +1004,10 @@ func TestEncodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
+						AccessControlAllowOriginListRegex: []string{
+							"foobar",
+							"fiibar",
+						},
 						AccessControlExposeHeaders: []string{
 							"X-foobar",
 							"X-fiibar",
@@ -1155,6 +1164,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowMethods":                   "GET, PUT",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowOrigin":                    "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowOriginList":                "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowOriginListRegex":           "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlExposeHeaders":                  "X-foobar, X-fiibar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlMaxAge":                         "200",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AddVaryHeader":                               "true",

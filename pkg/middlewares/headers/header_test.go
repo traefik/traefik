@@ -268,6 +268,30 @@ func TestNewHeader_CORSResponses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Regexp Origin Request",
+			next: emptyHandler,
+			cfg: dynamic.Headers{
+				AccessControlAllowOriginListRegex: []string{"([a-z]+).bar.org"},
+			},
+			requestHeaders: map[string][]string{
+				"Origin": {"https://foo.bar.org"},
+			},
+			expected: map[string][]string{
+				"Access-Control-Allow-Origin": {"https://foo.bar.org"},
+			},
+		},
+		{
+			desc: "Regexp Malformed Origin Request",
+			next: emptyHandler,
+			cfg: dynamic.Headers{
+				AccessControlAllowOriginListRegex: []string{"a(b"},
+			},
+			requestHeaders: map[string][]string{
+				"Origin": {"https://foo.bar.org"},
+			},
+			expected: map[string][]string{},
+		},
+		{
 			desc: "Empty origin Request",
 			next: emptyHandler,
 			cfg: dynamic.Headers{
@@ -281,30 +305,6 @@ func TestNewHeader_CORSResponses(t *testing.T) {
 			next:           emptyHandler,
 			requestHeaders: map[string][]string{},
 			expected:       map[string][]string{},
-		},
-		{
-			desc: "Regexp Origin Request",
-			next: emptyHandler,
-			cfg: dynamic.Headers{
-				AccessControlAllowOriginList: []string{"([a-z]+).bar.org"},
-			},
-			requestHeaders: map[string][]string{
-				"Origin": {"https://foo.bar.org"},
-			},
-			expected: map[string][]string{
-				"Access-Control-Allow-Origin": {"https://foo.bar.org"},
-			},
-		},
-		{
-			desc: "Regexp Malformed Origin Request",
-			next: emptyHandler,
-			cfg: dynamic.Headers{
-				AccessControlAllowOriginList: []string{"a(b"},
-			},
-			requestHeaders: map[string][]string{
-				"Origin": {"https://foo.bar.org"},
-			},
-			expected: map[string][]string{},
 		},
 		{
 			desc: "Allow Credentials Request",

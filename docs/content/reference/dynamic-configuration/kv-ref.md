@@ -45,6 +45,8 @@
 | `traefik/http/middlewares/Middleware10/headers/accessControlAllowOrigin` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlAllowOriginList/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlAllowOriginList/1` | `foobar` |
+| `traefik/http/middlewares/Middleware10/headers/accessControlAllowOriginListRegex/0` | `foobar` |
+| `traefik/http/middlewares/Middleware10/headers/accessControlAllowOriginListRegex/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlExposeHeaders/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlExposeHeaders/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlMaxAge` | `42` |

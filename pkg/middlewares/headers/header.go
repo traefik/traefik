@@ -165,8 +165,15 @@ func (s *Header) isOriginAllowed(origin string) (bool, string) {
 		if item == "*" || item == origin {
 			return true, item
 		}
+	}
 
-		if match, _ := regexp.MatchString(item, origin); match {
+	for _, item := range s.headers.AccessControlAllowOriginListRegex {
+		matched, err := regexp.MatchString(item, origin)
+		if err != nil {
+			log.WithoutContext().Debugf("an error occurred during origin parsing: %v", err)
+			continue
+		}
+		if matched {
 			return true, origin
 		}
 	}
