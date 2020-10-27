@@ -43,11 +43,96 @@ func (reh *resourceEventHandler) OnAdd(obj interface{}) {
 }
 
 func (reh *resourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
+	if !detectChanges(oldObj, newObj) {
+		return
+	}
 	eventHandlerFunc(reh.ev, newObj)
 }
 
 func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 	eventHandlerFunc(reh.ev, obj)
+}
+
+func detectChanges(oldObj, newObj interface{}) bool {
+	// If both objects have the same resource version, they are identical.
+	if newObj != nil && oldObj != nil && (oldObj.(metav1.Object).GetResourceVersion() == newObj.(metav1.Object).GetResourceVersion()) {
+		return false
+	}
+	obj := newObj
+	if obj == nil {
+		obj = oldObj
+	}
+
+	switch obj.(type) {
+	case *corev1.Endpoints:
+		if endpointsEquivalent(oldObj.(*corev1.Endpoints), newObj.(*corev1.Endpoints)) {
+			log.Debugf("endpoint %s has no changes, ignoring", newObj.(*corev1.Endpoints).Name)
+			return false
+		}
+	}
+	return true
+}
+
+// endpointsEquivalent checks if the update to an endpoint is something
+// that matters to us or if they are effectively equivalent.
+func endpointsEquivalent(a, b *corev1.Endpoints) bool {
+	if a == nil || b == nil {
+		return false
+	}
+
+	if len(a.Subsets) != len(b.Subsets) {
+		return false
+	}
+
+	// we should be able to rely on
+	// these being sorted and able to be compared
+	// they are supposed to be in a canonical format
+	for i, sa := range a.Subsets {
+		sb := b.Subsets[i]
+		if !subsetsEquivalent(sa, sb) {
+			return false
+		}
+	}
+	return true
+}
+
+// subsetsEquivalent checks if two endpoint subsets are significantly equivalent
+// I.e. that they have the same ready addresses, host names, ports (including protocol
+// and service names for SRV)
+func subsetsEquivalent(sa, sb corev1.EndpointSubset) bool {
+	if len(sa.Addresses) != len(sb.Addresses) {
+		return false
+	}
+	if len(sa.Ports) != len(sb.Ports) {
+		return false
+	}
+
+	// in Addresses and Ports, we should be able to rely on
+	// these being sorted and able to be compared
+	// they are supposed to be in a canonical format
+	for addr, aaddr := range sa.Addresses {
+		baddr := sb.Addresses[addr]
+		if aaddr.IP != baddr.IP {
+			return false
+		}
+		if aaddr.Hostname != baddr.Hostname {
+			return false
+		}
+	}
+
+	for port, aport := range sa.Ports {
+		bport := sb.Ports[port]
+		if aport.Name != bport.Name {
+			return false
+		}
+		if aport.Port != bport.Port {
+			return false
+		}
+		if aport.Protocol != bport.Protocol {
+			return false
+		}
+	}
+	return true
 }
 
 // Client is a client for the Provider master.
