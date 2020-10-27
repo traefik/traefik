@@ -35,6 +35,7 @@ COPY . /go/src/github.com/traefik/traefik
 RUN rm -rf /go/src/github.com/traefik/traefik/static/
 COPY --from=webui /src/static/ /go/src/github.com/traefik/traefik/static/
 
+RUN find . -type f -print0 | xargs -0 dos2unix
 RUN ./script/make.sh generate binary
 
 ## IMAGE
