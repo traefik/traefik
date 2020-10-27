@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -32,107 +33,6 @@ const (
 
 type marshaler interface {
 	Marshal() ([]byte, error)
-}
-
-type resourceEventHandler struct {
-	ev chan<- interface{}
-}
-
-func (reh *resourceEventHandler) OnAdd(obj interface{}) {
-	eventHandlerFunc(reh.ev, obj)
-}
-
-func (reh *resourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
-	if !detectChanges(oldObj, newObj) {
-		return
-	}
-	eventHandlerFunc(reh.ev, newObj)
-}
-
-func (reh *resourceEventHandler) OnDelete(obj interface{}) {
-	eventHandlerFunc(reh.ev, obj)
-}
-
-func detectChanges(oldObj, newObj interface{}) bool {
-	// If both objects have the same resource version, they are identical.
-	if newObj != nil && oldObj != nil && (oldObj.(metav1.Object).GetResourceVersion() == newObj.(metav1.Object).GetResourceVersion()) {
-		return false
-	}
-	obj := newObj
-	if obj == nil {
-		obj = oldObj
-	}
-
-	switch obj.(type) {
-	case *corev1.Endpoints:
-		if endpointsEquivalent(oldObj.(*corev1.Endpoints), newObj.(*corev1.Endpoints)) {
-			log.Debugf("endpoint %s has no changes, ignoring", newObj.(*corev1.Endpoints).Name)
-			return false
-		}
-	}
-	return true
-}
-
-// endpointsEquivalent checks if the update to an endpoint is something
-// that matters to us or if they are effectively equivalent.
-func endpointsEquivalent(a, b *corev1.Endpoints) bool {
-	if a == nil || b == nil {
-		return false
-	}
-
-	if len(a.Subsets) != len(b.Subsets) {
-		return false
-	}
-
-	// we should be able to rely on
-	// these being sorted and able to be compared
-	// they are supposed to be in a canonical format
-	for i, sa := range a.Subsets {
-		sb := b.Subsets[i]
-		if !subsetsEquivalent(sa, sb) {
-			return false
-		}
-	}
-	return true
-}
-
-// subsetsEquivalent checks if two endpoint subsets are significantly equivalent
-// I.e. that they have the same ready addresses, host names, ports (including protocol
-// and service names for SRV)
-func subsetsEquivalent(sa, sb corev1.EndpointSubset) bool {
-	if len(sa.Addresses) != len(sb.Addresses) {
-		return false
-	}
-	if len(sa.Ports) != len(sb.Ports) {
-		return false
-	}
-
-	// in Addresses and Ports, we should be able to rely on
-	// these being sorted and able to be compared
-	// they are supposed to be in a canonical format
-	for addr, aaddr := range sa.Addresses {
-		baddr := sb.Addresses[addr]
-		if aaddr.IP != baddr.IP {
-			return false
-		}
-		if aaddr.Hostname != baddr.Hostname {
-			return false
-		}
-	}
-
-	for port, aport := range sa.Ports {
-		bport := sb.Ports[port]
-		if aport.Name != bport.Name {
-			return false
-		}
-		if aport.Port != bport.Port {
-			return false
-		}
-		if aport.Protocol != bport.Protocol {
-			return false
-		}
-	}
-	return true
 }
 
 // Client is a client for the Provider master.
@@ -236,7 +136,7 @@ func newClientImpl(clientset kubernetes.Interface) *clientWrapper {
 // WatchAll starts namespace-specific controllers for all relevant kinds.
 func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
-	eventHandler := &resourceEventHandler{eventCh}
+	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
 	if len(namespaces) == 0 {
 		namespaces = []string{metav1.NamespaceAll}
@@ -518,16 +418,6 @@ func (c *clientWrapper) GetServerVersion() (*version.Version, error) {
 	}
 
 	return version.NewVersion(serverVersion.GitVersion)
-}
-
-// eventHandlerFunc will pass the obj on to the events channel or drop it.
-// This is so passing the events along won't block in the case of high volume.
-// The events are only used for signaling anyway so dropping a few is ok.
-func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
-	select {
-	case events <- obj:
-	default:
-	}
 }
 
 // translateNotFoundError will translate a "not found" error to a boolean return
