@@ -126,7 +126,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if b.stickyCookie != nil {
-		cookie := &http.Cookie{Name: b.stickyCookie.name, Value: server.name, Path: "/", HttpOnly: b.stickyCookie.httpOnly, Secure: b.stickyCookie.secure}
+		cookie := &http.Cookie{Name: b.stickyCookie.name, Value: server.name, Path: "/", HttpOnly: b.stickyCookie.httpOnly, Secure: b.stickyCookie.secure, Domain: b.stickyCookie.domain}
 		http.SetCookie(w, cookie)
 	}
 
