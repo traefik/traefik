@@ -19,9 +19,7 @@ RUN apk --update upgrade \
     && update-ca-certificates \
     && rm -rf /var/cache/apk/*
 
-RUN mkdir -p /usr/local/bin \
-    && curl -fsSL -o /usr/local/bin/go-bindata https://github.com/containous/go-bindata/releases/download/v1.0.0/go-bindata \
-    && chmod +x /usr/local/bin/go-bindata
+RUN go get -u github.com/containous/go-bindata/go-bindata && cp /go/bin/go-bindata /usr/local/bin
 
 WORKDIR /go/src/github.com/traefik/traefik
 

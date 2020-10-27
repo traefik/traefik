@@ -1,5 +1,6 @@
-sudo: required
-dist: trusty
+arch:
+  - amd64
+  - ppc64le
 
 git:
   depth: false
