@@ -355,6 +355,8 @@ func TestLoggerJSON(t *testing.T) {
 				Duration:                  assertFloat64NotZero(),
 				Overhead:                  assertFloat64NotZero(),
 				RetryAttempts:             assertFloat64(float64(testRetryAttempts)),
+				"TLSVersion":              assertString("TLS13"),
+				"TLSCipher":               assertString("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"),
 				"time":                    assertNotEmpty(),
 				"StartLocal":              assertNotEmpty(),
 				"StartUTC":                assertNotEmpty(),
@@ -772,7 +774,10 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 		},
 	}
 	if enableTLS {
-		req.TLS = &tls.ConnectionState{}
+		req.TLS = &tls.ConnectionState{
+			Version: tls.VersionTLS13,
+			CipherSuite: tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		}
 	}
 
 	logger.ServeHTTP(httptest.NewRecorder(), req, http.HandlerFunc(logWriterTestHandlerFunc))
