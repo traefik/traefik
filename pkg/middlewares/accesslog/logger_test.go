@@ -775,7 +775,7 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 	}
 	if enableTLS {
 		req.TLS = &tls.ConnectionState{
-			Version: tls.VersionTLS13,
+			Version:     tls.VersionTLS13,
 			CipherSuite: tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 		}
 	}
