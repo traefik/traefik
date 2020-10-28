@@ -102,39 +102,42 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	attempts := 1
 	backOff := r.newBackOff()
+	currentInterval := 0 * time.Millisecond
 	for {
-		shouldRetry := attempts < r.attempts
-		retryResponseWriter := newResponseWriter(rw, shouldRetry)
+		select {
+		case <-time.After(currentInterval):
 
-		// Disable retries when the backend already received request data
-		trace := &httptrace.ClientTrace{
-			WroteHeaders: func() {
-				retryResponseWriter.DisableRetries()
-			},
-			WroteRequest: func(httptrace.WroteRequestInfo) {
-				retryResponseWriter.DisableRetries()
-			},
-		}
-		newCtx := httptrace.WithClientTrace(req.Context(), trace)
+			shouldRetry := attempts < r.attempts
+			retryResponseWriter := newResponseWriter(rw, shouldRetry)
 
-		r.next.ServeHTTP(retryResponseWriter, req.WithContext(newCtx))
+			// Disable retries when the backend already received request data
+			trace := &httptrace.ClientTrace{
+				WroteHeaders: func() {
+					retryResponseWriter.DisableRetries()
+				},
+				WroteRequest: func(httptrace.WroteRequestInfo) {
+					retryResponseWriter.DisableRetries()
+				},
+			}
+			newCtx := httptrace.WithClientTrace(req.Context(), trace)
 
-		if !retryResponseWriter.ShouldRetry() {
-			break
-		}
+			r.next.ServeHTTP(retryResponseWriter, req.WithContext(newCtx))
 
-		attempts++
+			if !retryResponseWriter.ShouldRetry() {
+				return
+			}
 
-		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
-			Debugf("New attempt %d for request: %v", attempts, req.URL)
+			currentInterval = backOff.NextBackOff()
 
-		r.listener.Retried(req, attempts)
+			attempts++
 
-		// TODO make sure context isn't canceled between retries
-		if d := backOff.NextBackOff(); d > 0 {
 			log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
-				Debugf("sleeping %v seconds before attempt %d", d, attempts)
-			time.Sleep(d)
+				Debugf("New attempt %d for request: %v", attempts, req.URL)
+
+			r.listener.Retried(req, attempts)
+
+		case <-req.Context().Done():
+			return
 		}
 	}
 }
