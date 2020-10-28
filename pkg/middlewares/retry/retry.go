@@ -11,7 +11,7 @@ import (
 	"net/http/httptrace"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	bo "github.com/cenkalti/backoff/v4"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -37,8 +37,8 @@ type Listener interface {
 // each of them about a retry attempt.
 type Listeners []Listener
 
-// copy interface from cenkalti/backoff
-type Backoff interface {
+// copied interface from cenkalti/backoff
+type backoff interface {
 	NextBackOff() time.Duration
 	Reset()
 }
@@ -46,7 +46,7 @@ type Backoff interface {
 // retry is a middleware that retries requests.
 type retry struct {
 	attempts   int
-	newBackOff func() Backoff
+	newBackOff func() backoff
 	next       http.Handler
 	listener   Listener
 	name       string
@@ -61,13 +61,13 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 	}
 
 	// a new backoff instance should be created for every request
-	newBackOff := func() Backoff {
+	newBackOff := func() backoff {
 		if config.Attempts < 2 || config.InitialInterval == 0 {
-			b := new(backoff.ZeroBackOff)
+			b := new(bo.ZeroBackOff)
 			return b
 		}
 
-		b := backoff.NewExponentialBackOff()
+		b := bo.NewExponentialBackOff()
 		b.InitialInterval = time.Duration(config.InitialInterval)
 
 		// calculate the multiplier that will set MaxInterval = 2*InitialInterval
@@ -117,14 +117,6 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 		newCtx := httptrace.WithClientTrace(req.Context(), trace)
 
-		// TODO make sure context isn't canceled between retries
-		if backOff != nil && attempts >= 2 {
-			nextBackOff := backOff.NextBackOff()
-			log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
-				Debugf("sleeping %v seconds before attempt %d", nextBackOff, attempts)
-			time.Sleep(nextBackOff)
-		}
-
 		r.next.ServeHTTP(retryResponseWriter, req.WithContext(newCtx))
 
 		if !retryResponseWriter.ShouldRetry() {
@@ -137,6 +129,13 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			Debugf("New attempt %d for request: %v", attempts, req.URL)
 
 		r.listener.Retried(req, attempts)
+
+		// TODO make sure context isn't canceled between retries
+		if d := backOff.NextBackOff(); d > 0 {
+			log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
+				Debugf("sleeping %v seconds before attempt %d", d, attempts)
+			time.Sleep(d)
+		}
 	}
 }
 
