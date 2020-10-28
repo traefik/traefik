@@ -25,11 +25,7 @@
 
 [http.middlewares.retry.retry]
   attempts = 4
-  [http.middlewares.retry.retry.backoff]
-    # 500 + 1000 + 1500 + success == 3000 ms
-    initialInterval = "500ms"
-    maxInterval = "1500ms"
-    multiplier = 2
+  initialInterval = "500ms"
 
 
 [http.services]

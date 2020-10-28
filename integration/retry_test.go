@@ -63,13 +63,12 @@ func (s *RetrySuite) TestRetryBackoff(c *check.C) {
 	// This simulates a DialTimeout when connecting to the backend server.
 	response, err := http.Get("http://127.0.0.1:8000/")
 	duration := time.Since(start)
-	// test case delays: 500 + 1000 + 1500 == 3000 ms
-	expected, allowedVariance := time.Millisecond*3000, time.Millisecond*250
+	// test case delays: 500 + 700 + 1000ms with randomization.  It should be safely > 1500ms
+	minAllowed := time.Millisecond * 1500
 
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
-	c.Assert(int64(duration), checker.LessThan, int64(expected+allowedVariance))
-	c.Assert(int64(duration), checker.GreaterThan, int64(expected-allowedVariance))
+	c.Assert(int64(duration), checker.GreaterThan, int64(minAllowed))
 }
 
 func (s *RetrySuite) TestRetryWebsocket(c *check.C) {
