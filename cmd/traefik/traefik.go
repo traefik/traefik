@@ -488,6 +488,11 @@ func checkNewVersion() {
 func stats(staticConfiguration *static.Configuration) {
 	logger := log.WithoutContext()
 
+	if isPilotEnabled(staticConfiguration) {
+		staticConfiguration.Global.SendAnonymousUsage = true
+		logger.Info(`We activate stats collection when using Pilot to better understand the community's need, and also to get information about plug-ins popularity.`)
+	}
+
 	if staticConfiguration.Global.SendAnonymousUsage {
 		logger.Info(`Stats collection is enabled.`)
 		logger.Info(`Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.`)
