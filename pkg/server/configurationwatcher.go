@@ -122,6 +122,7 @@ func (c *ConfigurationWatcher) listenProviders(ctx context.Context) {
 				for _, listener := range c.configurationLoadErrorListeners {
 					listener()
 				}
+				return
 			}
 
 			if configMsg.Configuration == nil {
