@@ -57,14 +57,9 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 	// newBackOff is used to create an ExponentialBackoff for each incoming request
 	newBackOff := func() *backoff.ExponentialBackOff {
 		b := backoff.NewExponentialBackOff()
+		b.InitialInterval = time.Duration(config.InitialInterval)
 
-		initialInterval := time.Duration(config.InitialInterval)
-		if initialInterval <= 0 {
-			initialInterval = time.Millisecond * 100
-		}
-		b.InitialInterval = initialInterval
-
-		// take the (attempts-1)th root of 2 (since max is double initial)
+		// calculate the multiplier that will set MaxInterval = 2*InitialInterval
 		b.Multiplier = math.Pow(2, 1/float64(config.Attempts-1))
 
 		// according to docs, b.Reset() must be called before using
