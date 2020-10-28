@@ -37,10 +37,16 @@ type Listener interface {
 // each of them about a retry attempt.
 type Listeners []Listener
 
+// copy interface from cenkalti/backoff
+type Backoff interface {
+	NextBackOff() time.Duration
+	Reset()
+}
+
 // retry is a middleware that retries requests.
 type retry struct {
 	attempts   int
-	newBackOff func() *backoff.ExponentialBackOff
+	newBackOff func() Backoff
 	next       http.Handler
 	listener   Listener
 	name       string
@@ -54,8 +60,13 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
 	}
 
-	// newBackOff is used to create an ExponentialBackoff for each incoming request
-	newBackOff := func() *backoff.ExponentialBackOff {
+	// a new backoff instance should be created for every request
+	newBackOff := func() Backoff {
+		if config.Attempts < 2 || config.InitialInterval == 0 {
+			b := new(backoff.ZeroBackOff)
+			return b
+		}
+
 		b := backoff.NewExponentialBackOff()
 		b.InitialInterval = time.Duration(config.InitialInterval)
 
