@@ -72,9 +72,9 @@ type Configuration struct {
 
 	CertificatesResolvers map[string]CertificateResolver `description:"Certificates resolvers configuration." json:"certificatesResolvers,omitempty" toml:"certificatesResolvers,omitempty" yaml:"certificatesResolvers,omitempty" export:"true"`
 
-	Pilot *Pilot `description:"Traefik Pilot configuration." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty"`
+	Pilot *Pilot `description:"Traefik Pilot configuration." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" export:"true"`
 
-	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty"`
+	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
 }
 
 // CertificateResolver contains the configuration for the different types of certificates resolver.
@@ -176,14 +176,14 @@ type Providers struct {
 	KubernetesCRD     *crd.Provider           `description:"Enable Kubernetes backend with default settings." json:"kubernetesCRD,omitempty" toml:"kubernetesCRD,omitempty" yaml:"kubernetesCRD,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Rest              *rest.Provider          `description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Rancher           *rancher.Provider       `description:"Enable Rancher backend with default settings." json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	ConsulCatalog     *consulcatalog.Provider `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty"`
-	Ecs               *ecs.Provider           `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty"`
+	ConsulCatalog     *consulcatalog.Provider `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" export:"true"`
+	Ecs               *ecs.Provider           `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty" export:"true"`
 
-	Consul    *consul.Provider `description:"Enable Consul backend with default settings." json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Etcd      *etcd.Provider   `description:"Enable Etcd backend with default settings." json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	ZooKeeper *zk.Provider     `description:"Enable ZooKeeper backend with default settings." json:"zooKeeper,omitempty" toml:"zooKeeper,omitempty" yaml:"zooKeeper,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Redis     *redis.Provider  `description:"Enable Redis backend with default settings." json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	HTTP      *http.Provider   `description:"Enable HTTP backend with default settings." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
+	Consul    *consul.Provider `description:"Enable Consul backend with default settings." json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty" label:"allowEmpty" file:"allowEmpty"  export:"true"`
+	Etcd      *etcd.Provider   `description:"Enable Etcd backend with default settings." json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	ZooKeeper *zk.Provider     `description:"Enable ZooKeeper backend with default settings." json:"zooKeeper,omitempty" toml:"zooKeeper,omitempty" yaml:"zooKeeper,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Redis     *redis.Provider  `description:"Enable Redis backend with default settings." json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	HTTP      *http.Provider   `description:"Enable HTTP backend with default settings." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.

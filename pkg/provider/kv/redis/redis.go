@@ -10,7 +10,7 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	kv.Provider
+	kv.Provider `export:"true"`
 }
 
 // SetDefaults sets the default values.

@@ -130,7 +130,7 @@ func isExported(f reflect.StructField) bool {
 
 func marshal(anomConfig interface{}, indent bool) ([]byte, error) {
 	if indent {
-		return json.MarshalIndent(anomConfig, "", " ")
+		return json.MarshalIndent(anomConfig, "", "  ")
 	}
 	return json.Marshal(anomConfig)
 }
