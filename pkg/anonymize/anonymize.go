@@ -80,6 +80,7 @@ func doOnStruct(field reflect.Value) error {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -107,7 +108,16 @@ func reset(field reflect.Value, name string) error {
 		}
 	case reflect.Slice:
 		if field.Len() > 0 {
-			field.Set(reflect.MakeSlice(field.Type(), 0, 0))
+			switch field.Type().Elem().Kind() {
+			case reflect.String:
+				slice := reflect.MakeSlice(field.Type(), field.Len(), field.Len())
+				for j := 0; j < field.Len(); j++ {
+					slice.Index(j).SetString(maskShort)
+				}
+				field.Set(slice)
+			default:
+				field.Set(reflect.MakeSlice(field.Type(), 0, 0))
+			}
 		}
 	case reflect.Interface:
 		if !field.IsNil() {

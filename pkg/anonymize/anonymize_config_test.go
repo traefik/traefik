@@ -1,6 +1,7 @@
 package anonymize
 
 import (
+	"flag"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -39,6 +40,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tracing/zipkin"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
+
+var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
 
 func TestDo_globalConfiguration(t *testing.T) {
 	config := &static.Configuration{}
@@ -521,11 +524,15 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 	}
 
-	expectedConfiguration, err := ioutil.ReadFile("testdata/anonymized-static-config.json")
+	expectedConfiguration, err := ioutil.ReadFile("./testdata/anonymized-static-config.json")
 	require.NoError(t, err)
 
 	cleanJSON, err := Do(config, true)
 	require.NoError(t, err)
+
+	if *updateExpected {
+		require.NoError(t, ioutil.WriteFile("testdata/anonymized-static-config.json", []byte(cleanJSON), 0666))
+	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
 	assert.Equal(t, expected, cleanJSON)

@@ -5,6 +5,11 @@
   },
   "serversTransport": {
     "insecureSkipVerify": true,
+    "rootCAs": [
+      "xxxx",
+      "xxxx",
+      "xxxx"
+    ],
     "maxIdleConnsPerHost": 111,
     "forwardingTimeouts": {
       "dialTimeout": 111000000000,
@@ -27,10 +32,18 @@
         }
       },
       "proxyProtocol": {
-        "insecure": true
+        "insecure": true,
+        "trustedIPs": [
+          "xxxx",
+          "xxxx"
+        ]
       },
       "forwardedHeaders": {
-        "insecure": true
+        "insecure": true,
+        "trustedIPs": [
+          "xxxx",
+          "xxxx"
+        ]
       },
       "http": {
         "redirections": {
@@ -50,7 +63,11 @@
           "certResolver": "foobar",
           "domains": [
             {
-              "main": "xxxx"
+              "main": "xxxx",
+              "sans": [
+                "xxxx",
+                "xxxx"
+              ]
             }
           ]
         }
@@ -402,6 +419,10 @@
         "dnsChallenge": {
           "provider": "DNSProvider",
           "delayBeforeCheck": 42,
+          "resolvers": [
+            "xxxx",
+            "xxxx"
+          ],
           "disablePropagationCheck": true
         },
         "httpChallenge": {
