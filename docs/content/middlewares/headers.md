@@ -321,7 +321,6 @@ Traefik no longer supports the null value, as it is [no longer recommended as a 
 The `accessControlAllowOriginListRegex` option is the counterpart of the `accessControlAllowOriginList` option with regular expressions instead of origin values.
 
 !!! tip
-
     Regular expressions can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
 
 ### `accessControlExposeHeaders`

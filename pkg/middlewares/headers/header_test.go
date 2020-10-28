@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
@@ -52,7 +53,8 @@ func TestNewHeader_customRequestHeader(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			mid := NewHeader(emptyHandler, test.cfg)
+			mid, err := NewHeader(emptyHandler, test.cfg)
+			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
 			req.Header.Set("Foo", "bar")
@@ -94,7 +96,8 @@ func TestNewHeader_customRequestHeader_Host(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			mid := NewHeader(emptyHandler, dynamic.Headers{CustomRequestHeaders: test.customHeaders})
+			mid, err := NewHeader(emptyHandler, dynamic.Headers{CustomRequestHeaders: test.customHeaders})
+			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "http://example.org/foo", nil)
 
@@ -217,7 +220,8 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			mid := NewHeader(emptyHandler, test.cfg)
+			mid, err := NewHeader(emptyHandler, test.cfg)
+			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodOptions, "/foo", nil)
 			req.Header = test.requestHeaders
@@ -240,6 +244,7 @@ func TestNewHeader_CORSResponses(t *testing.T) {
 		cfg            dynamic.Headers
 		requestHeaders http.Header
 		expected       http.Header
+		expectedError  bool
 	}{
 		{
 			desc: "Test Simple Request",
@@ -271,7 +276,7 @@ func TestNewHeader_CORSResponses(t *testing.T) {
 			desc: "Regexp Origin Request",
 			next: emptyHandler,
 			cfg: dynamic.Headers{
-				AccessControlAllowOriginListRegex: []string{"([a-z]+).bar.org"},
+				AccessControlAllowOriginListRegex: []string{"([a-z]+)\\.bar\\.org"},
 			},
 			requestHeaders: map[string][]string{
 				"Origin": {"https://foo.bar.org"},
@@ -288,6 +293,17 @@ func TestNewHeader_CORSResponses(t *testing.T) {
 			},
 			requestHeaders: map[string][]string{
 				"Origin": {"https://foo.bar.org"},
+			},
+			expectedError: true,
+		},
+		{
+			desc: "Regexp Origin Request without matching",
+			next: emptyHandler,
+			cfg: dynamic.Headers{
+				AccessControlAllowOriginListRegex: []string{"([a-z]+)\\.bar\\.org"},
+			},
+			requestHeaders: map[string][]string{
+				"Origin": {"https://bar.org"},
 			},
 			expected: map[string][]string{},
 		},
@@ -440,7 +456,12 @@ func TestNewHeader_CORSResponses(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			mid := NewHeader(test.next, test.cfg)
+			mid, err := NewHeader(test.next, test.cfg)
+			if test.expectedError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
 			req.Header = test.requestHeaders
@@ -502,7 +523,8 @@ func TestNewHeader_customResponseHeaders(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			mid := NewHeader(emptyHandler, dynamic.Headers{CustomResponseHeaders: test.config})
+			mid, err := NewHeader(emptyHandler, dynamic.Headers{CustomResponseHeaders: test.config})
+			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
 

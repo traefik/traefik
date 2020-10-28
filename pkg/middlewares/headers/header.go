@@ -2,6 +2,7 @@ package headers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -15,26 +16,37 @@ import (
 // A single headerOptions struct can be provided to configure which features should be enabled,
 // and the ability to override a few of the default values.
 type Header struct {
-	next             http.Handler
-	hasCustomHeaders bool
-	hasCorsHeaders   bool
-	headers          *dynamic.Headers
+	next               http.Handler
+	hasCustomHeaders   bool
+	hasCorsHeaders     bool
+	headers            *dynamic.Headers
+	allowOriginRegexes []*regexp.Regexp
 }
 
 // NewHeader constructs a new header instance from supplied frontend header struct.
-func NewHeader(next http.Handler, cfg dynamic.Headers) *Header {
+func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
 	hasCustomHeaders := cfg.HasCustomHeadersDefined()
 	hasCorsHeaders := cfg.HasCorsHeadersDefined()
 
 	ctx := log.With(context.Background(), log.Str(log.MiddlewareType, typeName))
 	handleDeprecation(ctx, &cfg)
 
-	return &Header{
-		next:             next,
-		headers:          &cfg,
-		hasCustomHeaders: hasCustomHeaders,
-		hasCorsHeaders:   hasCorsHeaders,
+	regexes := make([]*regexp.Regexp, len(cfg.AccessControlAllowOriginListRegex))
+	for i, str := range cfg.AccessControlAllowOriginListRegex {
+		reg, err := regexp.Compile(str)
+		if err != nil {
+			return nil, fmt.Errorf("error occurred during origin parsing: %w", err)
+		}
+		regexes[i] = reg
 	}
+
+	return &Header{
+		next:               next,
+		headers:            &cfg,
+		hasCustomHeaders:   hasCustomHeaders,
+		hasCorsHeaders:     hasCorsHeaders,
+		allowOriginRegexes: regexes,
+	}, nil
 }
 
 func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -167,13 +179,8 @@ func (s *Header) isOriginAllowed(origin string) (bool, string) {
 		}
 	}
 
-	for _, item := range s.headers.AccessControlAllowOriginListRegex {
-		matched, err := regexp.MatchString(item, origin)
-		if err != nil {
-			log.WithoutContext().Debugf("an error occurred during origin parsing: %v", err)
-			continue
-		}
-		if matched {
+	for _, regex := range s.allowOriginRegexes {
+		if regex.MatchString(origin) {
 			return true, origin
 		}
 	}
