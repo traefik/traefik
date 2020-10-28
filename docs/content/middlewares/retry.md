@@ -56,7 +56,7 @@ labels:
 # Retry to send request 4 times
 [http.middlewares]
   [http.middlewares.test-retry.retry]
-     attempts = 4
+    attempts = 4
     initialInterval = "100ms"
 ```
 
@@ -80,6 +80,4 @@ The `attempts` option defines how many times the request should be retried.
 
 ### `initialInterval`
 
-_default: 100ms_
-
-The `initialInterval` option defines the first wait time in the exponential backoff series (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)).
+The `initialInterval` option defines the first wait time in the exponential backoff series (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)). The maximum interval is calculated as twice the `initialInterval`. If unspecified, requests will be retried immediately.
