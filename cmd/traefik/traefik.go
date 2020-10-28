@@ -295,6 +295,11 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	})
 
+	watcher.AddConfigLoadErrorListener(func() {
+		metricsRegistry.ConfigReloadsFailureCounter().Add(1)
+		metricsRegistry.LastConfigReloadFailureGauge().Set(float64(time.Now().Unix()))
+	})
+
 	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, chainBuilder, accessLog), nil
 }
 
