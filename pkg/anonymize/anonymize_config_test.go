@@ -525,9 +525,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	require.NoError(t, err)
 
 	cleanJSON, err := Do(config, true)
-	if err != nil {
-		t.Fatal(err, cleanJSON)
-	}
+	require.NoError(t, err)
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
 	assert.Equal(t, expected, cleanJSON)

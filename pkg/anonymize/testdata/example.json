@@ -1,0 +1,82 @@
+{
+  "GraceTimeOut": 10000000000,
+  "Debug": false,
+  "CheckNewVersion": true,
+  "AccessLogsFile": "",
+  "TraefikLogsFile": "",
+  "Level": "ERROR",
+  "EntryPoints": {
+    "http": {
+      "Network": "",
+      "Address": ":80",
+      "TLS": null,
+      "Auth": null,
+      "Compress": false
+    },
+    "https": {
+      "Address": ":443",
+      "TLS": {
+        "MinVersion": "",
+        "CipherSuites": null,
+        "Certificates": null,
+        "ClientCAFiles": null
+      },
+      "Auth": null,
+      "Compress": false
+    }
+  },
+  "Cluster": null,
+  "Constraints": [],
+  "ACME": {
+    "Email": "foo@bar.com",
+    "Domains": [
+      {
+        "Main": "foo@bar.com",
+        "SANs": null
+      },
+      {
+        "Main": "foo@bar.com",
+        "SANs": null
+      }
+    ],
+    "Storage": "",
+    "StorageFile": "/acme/acme.json",
+    "OnDemand": true,
+    "OnHostRule": true,
+    "CAServer": "",
+    "EntryPoint": "https",
+    "DNSProvider": "",
+    "DelayDontCheckDNS": 0,
+    "ACMELogging": false,
+    "Options": null
+  },
+  "DefaultEntryPoints": [
+    "https",
+    "http"
+  ],
+  "ProvidersThrottleDuration": 2000000000,
+  "MaxIdleConnsPerHost": 200,
+  "IdleTimeout": 180000000000,
+  "InsecureSkipVerify": false,
+  "Retry": null,
+  "HealthCheck": {
+    "Interval": 30000000000
+  },
+  "Docker": null,
+  "File": null,
+  "Web": null,
+  "Marathon": null,
+  "Consul": null,
+  "ConsulCatalog": null,
+  "Etcd": null,
+  "Zookeeper": null,
+  "Boltdb": null,
+  "KubernetesIngress": null,
+  "KubernetesCRD": null,
+  "Mesos": null,
+  "Eureka": null,
+  "ECS": null,
+  "Rancher": null,
+  "DynamoDB": null,
+  "ConfigFile": "/etc/traefik/traefik.toml"
+}
