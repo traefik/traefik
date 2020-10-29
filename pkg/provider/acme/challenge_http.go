@@ -46,11 +46,12 @@ func (c *ChallengeHTTP) Present(domain, token, keyAuth string) error {
 
 // CleanUp cleans the challenges when certificate is obtained.
 func (c *ChallengeHTTP) CleanUp(domain, token, _ string) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
 	if c.httpChallenges == nil && len(c.httpChallenges) == 0 {
 		return nil
 	}
-
-	c.lock.Lock()
 
 	if _, ok := c.httpChallenges[token]; ok {
 		delete(c.httpChallenges[token], domain)
@@ -59,8 +60,6 @@ func (c *ChallengeHTTP) CleanUp(domain, token, _ string) error {
 			delete(c.httpChallenges, token)
 		}
 	}
-
-	c.lock.Unlock()
 
 	return nil
 }
@@ -104,7 +103,7 @@ func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string) []byte {
 	logger := log.FromContext(ctx)
-	logger.Debugf("Retrieving the ACME challenge for token %v...", token)
+	logger.Debugf("Retrieving the ACME challenge for token %s...", token)
 
 	var result []byte
 
