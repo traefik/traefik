@@ -219,7 +219,7 @@
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/0/address` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/1/address` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/terminationDelay` | `42` |
-| `traefik/tcp/services/TCPService01/loadBalancer/addrLookupCache` | `10` |
+| `traefik/tcp/services/TCPService01/loadBalancer/addrLookupCache` | `10s` |
 | `traefik/tcp/services/TCPService02/weighted/services/0/name` | `foobar` |
 | `traefik/tcp/services/TCPService02/weighted/services/0/weight` | `42` |
 | `traefik/tcp/services/TCPService02/weighted/services/1/name` | `foobar` |

@@ -709,8 +709,7 @@ When using a hostname or dns record as the service name it is required that the 
 However, doing a new address lookup on each request may slightly increase latency. To avoid that the results are cached for a short amount of time, allowing bursts of requests to go unhindered.
 
 The address lookup cache controls for how long the proxy should keep the results between requests.
-It is a duration in seconds, defaulting to 5.
-A negative value means no cache (i.e. every request will trigger an address lookup).
+It is a duration, defaulting to 0 which means no cache (i.e. every request will trigger an address lookup).
 
 ??? example "A Service with a custom address lookup cache -- Using the [File Provider](../../providers/file.md)"
 
@@ -719,7 +718,7 @@ A negative value means no cache (i.e. every request will trigger an address look
     [tcp.services]
       [tcp.services.my-service.loadBalancer]
         [[tcp.services.my-service.loadBalancer]]
-          addrLookupCache = 10
+          addrLookupCache = 10s
     ```
 
     ```yaml tab="YAML"
@@ -728,7 +727,7 @@ A negative value means no cache (i.e. every request will trigger an address look
       services:
         my-service:
           loadBalancer:
-            addrLookupCache: 10
+            addrLookupCache: 10s
     ```
 
 ### Weighted Round Robin

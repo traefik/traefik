@@ -3,6 +3,7 @@ package dynamic
 import (
 	"reflect"
 
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
@@ -75,18 +76,15 @@ type TCPServersLoadBalancer struct {
 	TerminationDelay *int `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty"`
 	// AddrLookupCache, corresponds to the amount of time the proxy should cache the
 	// service name address as it was last resolved to a TCP address. It is a duration
-	// in seconds, defaulting to 5. A negative value means no cache making each request
-	// trigger an address lookup.
-	AddrLookupCache *int        `json:"addrLookupCache,omitempty" toml:"addrLookupCache,omitempty" yaml:"addrLookupCache,omitempty"`
-	Servers         []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
+	// defaulting to 0s, meaning no cache and thus triggering an address lookup on each request.
+	AddrLookupCache ptypes.Duration `json:"addrLookupCache,omitempty" toml:"addrLookupCache,omitempty" yaml:"addrLookupCache,omitempty"`
+	Servers         []TCPServer     `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
 }
 
 // SetDefaults Default values for a TCPServersLoadBalancer.
 func (l *TCPServersLoadBalancer) SetDefaults() {
 	defaultTerminationDelay := 100 // in milliseconds
-	addrLookupCache := 5           // in seconds
 	l.TerminationDelay = &defaultTerminationDelay
-	l.AddrLookupCache = &addrLookupCache
 }
 
 // Mergeable tells if the given service is mergeable.

@@ -391,7 +391,7 @@ You can declare TCP Routers and/or Services using KV.
 
     | Key (Path)                                                        | Value |
     |-------------------------------------------------------------------|-------|
-    | `traefik/tcp/services/mytcpservice/loadbalancer/addrlookupcache` | `10` |
+    | `traefik/tcp/services/mytcpservice/loadbalancer/addrlookupcache` | `10s` |
 
 ??? info "`traefik/tcp/services/<service_name>/weighted/services/<n>/name`"
 

@@ -13,4 +13,4 @@ spec:
     services:
     - name: whoamitcp
       port: 8000
-      addrLookupCache: 50
+      addrLookupCache: 50s

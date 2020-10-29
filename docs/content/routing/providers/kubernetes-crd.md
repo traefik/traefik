@@ -1090,7 +1090,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
           port: 8080                # [6]
           weight: 10                # [7]
           terminationDelay: 400     # [8]
-          addrLookupCache: 10       # [9]
+          addrLookupCache: 10s      # [9]
       tls:                          # [10]
         secretName: supersecret     # [11]
         options:                    # [12]
@@ -1116,7 +1116,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 | [7]  | `services[n].weight`           | Defines the weight to apply to the server load balancing                                                                                                                                                                                                                                                                                                                                 |
 | [8]  | `services[n].terminationDelay` | corresponds to the deadline that the proxy sets, after one of its connected peers indicates it has closed the writing capability of its connection, to close the reading capability as well, hence fully terminating the connection.<br/>It is a duration in milliseconds, defaulting to 100. A negative value means an infinite deadline (i.e. the reading capability is never closed). 
                                                                                                                                              |
-| [9]  | `services[n].addrLookupCache` | corresponds to the amount of time the proxy should cache the service name resolved TCP address. It is a duration in seconds, defaulting to 5. A negative value means no cache, making each request trigger an address lookup. 
+| [9]  | `services[n].addrLookupCache` | corresponds to the amount of time the proxy should cache the resolved TCP address for its service name. It is a duration, defaulting to 0 which means no cache, making each request trigger an address lookup.
                                                                                                                                              |
 | [10]  | `tls`                          | Defines [TLS](../routers/index.md#tls_1) certificate configuration                                                                                                                                                                                                                                                                                                                       |
 | [11] | `tls.secretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                                                                                                                     |
@@ -1147,12 +1147,12 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         - name: foo
           port: 8080
           terminationDelay: 400
-          addrLookupCache: 10
+          addrLookupCache: 10s
           weight: 10
         - name: bar
           port: 8081
           terminationDelay: 500
-          addrLookupCache: 5
+          addrLookupCache: 5s
           weight: 10
       tls:
         certResolver: foo

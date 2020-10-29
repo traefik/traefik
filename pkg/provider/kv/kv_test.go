@@ -740,7 +740,7 @@ func Test_buildConfiguration(t *testing.T) {
 				"TCPService01": {
 					LoadBalancer: &dynamic.TCPServersLoadBalancer{
 						TerminationDelay: func(v int) *int { return &v }(42),
-						AddrLookupCache:  func(v int) *int { return &v }(24),
+						AddrLookupCache:  ptypes.Duration(24 * time.Second),
 						Servers: []dynamic.TCPServer{
 							{Address: "foobar"},
 							{Address: "foobar"},

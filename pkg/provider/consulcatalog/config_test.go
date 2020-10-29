@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/consul/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
@@ -1818,7 +1820,7 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  Int(5),
+								AddrLookupCache:  0,
 							},
 						},
 					},
@@ -1905,7 +1907,7 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  Int(5),
+								AddrLookupCache:  0,
 							},
 						},
 					},
@@ -1957,7 +1959,7 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  Int(5),
+								AddrLookupCache:  0,
 							},
 						},
 					},
@@ -2070,7 +2072,7 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  Int(5),
+								AddrLookupCache:  0,
 							},
 						},
 					},
@@ -2212,7 +2214,7 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  Int(5),
+								AddrLookupCache:  0,
 							},
 						},
 					},
@@ -2277,7 +2279,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Labels: map[string]string{
 						"traefik.tcp.services.foo.loadbalancer.server.port":      "80",
 						"traefik.tcp.services.foo.loadbalancer.terminationdelay": "200",
-						"traefik.tcp.services.foo.loadbalancer.addrlookupcache":  "20",
+						"traefik.tcp.services.foo.loadbalancer.addrlookupcache":  "20s",
 					},
 					Address: "127.0.0.1",
 					Port:    "80",
@@ -2296,7 +2298,7 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(200),
-								AddrLookupCache:  Int(20),
+								AddrLookupCache:  ptypes.Duration(20 * time.Second),
 							},
 						},
 					},

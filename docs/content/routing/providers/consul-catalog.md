@@ -386,7 +386,7 @@ You can declare TCP Routers and/or Services using tags.
     See [address lookup cache](../services/index.md#address-lookup-cache) for more information.
 
     ```yaml
-    traefik.tcp.services.mytcpservice.loadbalancer.addrlookupcache=10
+    traefik.tcp.services.mytcpservice.loadbalancer.addrlookupcache=10s
     ```
 
 ### UDP

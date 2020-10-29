@@ -74,7 +74,7 @@
             <q-chip
               dense
               class="app-chip app-chip-name">
-              {{ data.loadBalancer.addrLookupCache }} ms
+              {{ data.loadBalancer.addrLookupCache }}
             </q-chip>
           </div>
         </div>
