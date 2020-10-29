@@ -220,6 +220,8 @@ accessLog:
     | `GzipRatio`             | The response body compression ratio achieved.                                                                                                                       |
     | `Overhead`              | The processing time overhead (in nanoseconds) caused by Traefik.                                                                                                                     |
     | `RetryAttempts`         | The amount of attempts the request was retried.                                                                                                                     |
+    | `TLSVersion`            | The TLS version used by the connection (e.g. `TLS12`) (if connection is TLS).                                                                                       |
+    | `TLSCipher`             | The TLS cipher used by the connection (e.g. `TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA`) (if connection is TLS)                                                              |
 
 ## Log Rotation
 

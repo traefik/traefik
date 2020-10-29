@@ -116,6 +116,8 @@ func init() {
 	allCoreKeys[StartLocal] = struct{}{}
 	allCoreKeys[Overhead] = struct{}{}
 	allCoreKeys[RetryAttempts] = struct{}{}
+	allCoreKeys[TLSVersion] = struct{}{}
+	allCoreKeys[TLSCipher] = struct{}{}
 }
 
 // CoreLogData holds the fields computed from the request/response.
