@@ -37,7 +37,7 @@ type Listener interface {
 // each of them about a retry attempt.
 type Listeners []Listener
 
-// copied interface from cenkalti/backoff
+// backoff is copied from cenkalti/backoff to accommodate both ExponentialBackoff and ZeroBackoff.
 type backoff interface {
 	NextBackOff() time.Duration
 	Reset()
