@@ -224,6 +224,11 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
+	// Enable anonymous usage when pilot is enabled.
+	if c.Pilot != nil && c.Pilot.Token != "" {
+		c.Global.SendAnonymousUsage = true
+	}
+
 	c.initACMEProvider()
 }
 
