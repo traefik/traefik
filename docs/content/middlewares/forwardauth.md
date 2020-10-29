@@ -219,7 +219,9 @@ http:
 
 ### `authResponseHeadersRegex`
 
-The `authResponseHeadersRegex` option is the regex to match the headers that should be copied from the authentication server to the request. All incoming request's headers matching this regex are deleted from the request before any copy happens. 
+The `authResponseHeadersRegex` option is the regex to match the headers that should be copied from the authentication server to the request. All incoming request's headers matching this regex are deleted from the request before any copy happens.
+It allows partial matching of the regular expression against the header's key.
+You should use start of string (`^`) and end of string (`$`) anchors to ensure a full match against the header's key.
 
 ```yaml tab="Docker"
 labels:
