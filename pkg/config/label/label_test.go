@@ -122,6 +122,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware15.replacepathregex.regex":                             "foobar",
 		"traefik.http.middlewares.Middleware15.replacepathregex.replacement":                       "foobar",
 		"traefik.http.middlewares.Middleware16.retry.attempts":                                     "42",
+		"traefik.http.middlewares.Middleware16.retry.initialInterval":                              "1s",
 		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":                               "foobar, fiibar",
 		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":                             "foobar, fiibar",
 		"traefik.http.middlewares.Middleware19.compress":                                           "true",
@@ -416,7 +417,8 @@ func TestDecodeConfiguration(t *testing.T) {
 				},
 				"Middleware16": {
 					Retry: &dynamic.Retry{
-						Attempts: 42,
+						Attempts:        42,
+						InitialInterval: ptypes.Duration(time.Second),
 					},
 				},
 				"Middleware17": {
@@ -884,7 +886,8 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 				"Middleware16": {
 					Retry: &dynamic.Retry{
-						Attempts: 42,
+						Attempts:        42,
+						InitialInterval: ptypes.Duration(time.Second),
 					},
 				},
 				"Middleware17": {
@@ -1238,6 +1241,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Regex":                             "foobar",
 		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Replacement":                       "foobar",
 		"traefik.HTTP.Middlewares.Middleware16.Retry.Attempts":                                     "42",
+		"traefik.HTTP.Middlewares.Middleware16.Retry.InitialInterval":                              "1000000000",
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":                               "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.ForceSlash":                             "true",
 		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":                             "foobar, fiibar",
