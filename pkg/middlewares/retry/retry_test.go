@@ -40,22 +40,8 @@ func TestRetry(t *testing.T) {
 			amountFaultyEndpoints: 0,
 		},
 		{
-			desc:                  "no retry on success with backoff",
-			config:                dynamic.Retry{Attempts: 1, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
-			wantRetryAttempts:     0,
-			wantResponseStatus:    http.StatusOK,
-			amountFaultyEndpoints: 0,
-		},
-		{
 			desc:                  "no retry when max request attempts is one",
 			config:                dynamic.Retry{Attempts: 1},
-			wantRetryAttempts:     0,
-			wantResponseStatus:    http.StatusBadGateway,
-			amountFaultyEndpoints: 1,
-		},
-		{
-			desc:                  "no retry when max request attempts is one with backoff",
-			config:                dynamic.Retry{Attempts: 1, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
 			wantRetryAttempts:     0,
 			wantResponseStatus:    http.StatusBadGateway,
 			amountFaultyEndpoints: 1,
@@ -68,22 +54,8 @@ func TestRetry(t *testing.T) {
 			amountFaultyEndpoints: 1,
 		},
 		{
-			desc:                  "one retry when one server is faulty with backoff",
-			config:                dynamic.Retry{Attempts: 2, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
-			wantRetryAttempts:     1,
-			wantResponseStatus:    http.StatusOK,
-			amountFaultyEndpoints: 1,
-		},
-		{
 			desc:                  "two retries when two servers are faulty",
 			config:                dynamic.Retry{Attempts: 3},
-			wantRetryAttempts:     2,
-			wantResponseStatus:    http.StatusOK,
-			amountFaultyEndpoints: 2,
-		},
-		{
-			desc:                  "two retries when two servers are faulty with backoff",
-			config:                dynamic.Retry{Attempts: 3, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
 			wantRetryAttempts:     2,
 			wantResponseStatus:    http.StatusOK,
 			amountFaultyEndpoints: 2,
@@ -95,13 +67,16 @@ func TestRetry(t *testing.T) {
 			wantResponseStatus:    http.StatusBadGateway,
 			amountFaultyEndpoints: 3,
 		},
-		{
-			desc:                  "max attempts exhausted delivers the 5xx response with backoff",
-			config:                dynamic.Retry{Attempts: 3, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
-			wantRetryAttempts:     2,
-			wantResponseStatus:    http.StatusBadGateway,
-			amountFaultyEndpoints: 3,
-		},
+	}
+	for _, v := range testCases {
+		withBackoff := testCase{
+			desc:                  v.desc + " with backoff",
+			config:                dynamic.Retry{Attempts: v.config.Attempts, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
+			wantRetryAttempts:     v.wantRetryAttempts,
+			wantResponseStatus:    v.wantResponseStatus,
+			amountFaultyEndpoints: v.amountFaultyEndpoints,
+		}
+		testCases = append(testCases, withBackoff)
 	}
 
 	backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
