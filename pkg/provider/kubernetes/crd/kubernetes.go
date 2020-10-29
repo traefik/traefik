@@ -373,11 +373,11 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 	}
 
 	forwardAuth := &dynamic.ForwardAuth{
-		Address:             			auth.Address,
-		TrustForwardHeader:  			auth.TrustForwardHeader,
-		AuthResponseHeaders: 			auth.AuthResponseHeaders,
+		Address:                  auth.Address,
+		TrustForwardHeader:       auth.TrustForwardHeader,
+		AuthResponseHeaders:      auth.AuthResponseHeaders,
 		AuthResponseHeadersRegex: auth.AuthResponseHeadersRegex,
-		AuthRequestHeaders:  			auth.AuthRequestHeaders,
+		AuthRequestHeaders:       auth.AuthRequestHeaders,
 	}
 
 	if auth.TLS == nil {
