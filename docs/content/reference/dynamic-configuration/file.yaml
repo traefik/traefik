@@ -180,6 +180,9 @@ http:
         accessControlAllowOriginList:
         - foobar
         - foobar
+        accessControlAllowOriginListRegex:
+        - foobar
+        - foobar
         accessControlExposeHeaders:
         - foobar
         - foobar
