@@ -24,6 +24,7 @@
 "traefik.http.middlewares.middleware08.errors.status": "foobar, foobar",
 "traefik.http.middlewares.middleware09.forwardauth.address": "foobar",
 "traefik.http.middlewares.middleware09.forwardauth.authresponseheaders": "foobar, foobar",
+"traefik.http.middlewares.middleware09.forwardauth.authresponseheadersregex": "foobar",
 "traefik.http.middlewares.middleware09.forwardauth.authrequestheaders": "foobar, foobar",
 "traefik.http.middlewares.middleware09.forwardauth.tls.ca": "foobar",
 "traefik.http.middlewares.middleware09.forwardauth.tls.caoptional": "true",

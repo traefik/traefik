@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -25,13 +26,14 @@ const (
 )
 
 type forwardAuth struct {
-	address             string
-	authResponseHeaders []string
-	next                http.Handler
-	name                string
-	client              http.Client
-	trustForwardHeader  bool
-	authRequestHeaders  []string
+	address                  string
+	authResponseHeaders      []string
+	authResponseHeadersRegex *regexp.Regexp
+	next                     http.Handler
+	name                     string
+	client                   http.Client
+	trustForwardHeader       bool
+	authRequestHeaders       []string
 }
 
 // NewForward creates a forward auth middleware.
@@ -64,6 +66,14 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		tr := http.DefaultTransport.(*http.Transport).Clone()
 		tr.TLSClientConfig = tlsConfig
 		fa.client.Transport = tr
+	}
+
+	if config.AuthResponseHeadersRegex != "" {
+		re, err := regexp.Compile(config.AuthResponseHeadersRegex)
+		if err != nil {
+			return nil, fmt.Errorf("error compiling regular expression %s: %w", config.AuthResponseHeadersRegex, err)
+		}
+		fa.authResponseHeadersRegex = re
 	}
 
 	return fa, nil
@@ -153,6 +163,20 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		req.Header.Del(headerKey)
 		if len(forwardResponse.Header[headerKey]) > 0 {
 			req.Header[headerKey] = append([]string(nil), forwardResponse.Header[headerKey]...)
+		}
+	}
+
+	if fa.authResponseHeadersRegex != nil {
+		for headerKey := range req.Header {
+			if fa.authResponseHeadersRegex.MatchString(headerKey) {
+				req.Header.Del(headerKey)
+			}
+		}
+
+		for headerKey, headerValues := range forwardResponse.Header {
+			if fa.authResponseHeadersRegex.MatchString(headerKey) {
+				req.Header[headerKey] = append([]string(nil), headerValues...)
+			}
 		}
 	}
 

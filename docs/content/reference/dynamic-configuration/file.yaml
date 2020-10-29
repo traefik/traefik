@@ -158,6 +158,7 @@ http:
         authResponseHeaders:
         - foobar
         - foobar
+        authResponseHeadersRegex: foobar
         authRequestHeaders:
         - foobar
         - foobar
