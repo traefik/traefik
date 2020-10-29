@@ -13,6 +13,7 @@ import (
 
 	"github.com/coreos/go-systemd/daemon"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
+	"github.com/go-acme/lego/v4/challenge"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/paerser/cli"
 	"github.com/traefik/traefik/v2/autogen/genstatic"
@@ -181,7 +182,16 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	tlsManager := traefiktls.NewManager()
 
-	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager)
+	httpChallengeProvider := acme.NewChallengeHTTP()
+
+	tlsChallengeProvider := acme.NewChallengeTLSALPN(time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration))
+
+	err = providerAggregator.AddProvider(tlsChallengeProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager, httpChallengeProvider, tlsChallengeProvider)
 
 	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints)
 	if err != nil {
@@ -214,7 +224,16 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
 	roundTripperManager := service.NewRoundTripperManager()
-	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager)
+
+	var acmeHTTPHandler http.Handler
+	for _, p := range acmeProviders {
+		if p != nil && p.HTTPChallenge != nil {
+			acmeHTTPHandler = httpChallengeProvider
+			break
+		}
+	}
+
+	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
 
 	client, plgs, devPlugin, err := initPlugins(staticConfiguration)
 	if err != nil {
@@ -264,7 +283,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		roundTripperManager.Update(conf.HTTP.ServersTransports)
 	})
 
-	watcher.AddListener(switchRouter(routerFactory, acmeProviders, serverEntryPointsTCP, serverEntryPointsUDP, aviator))
+	watcher.AddListener(switchRouter(routerFactory, serverEntryPointsTCP, serverEntryPointsUDP, aviator))
 
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		if metricsRegistry.IsEpEnabled() || metricsRegistry.IsSvcEnabled() {
@@ -276,6 +295,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 			metrics.OnConfigurationUpdate(conf, eps)
 		}
 	})
+
+	watcher.AddListener(tlsChallengeProvider.ListenConfiguration)
 
 	resolverNames := map[string]struct{}{}
 	for _, p := range acmeProviders {
@@ -298,20 +319,11 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, chainBuilder, accessLog), nil
 }
 
-func switchRouter(routerFactory *server.RouterFactory, acmeProviders []*acme.Provider, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints, aviator *pilot.Pilot) func(conf dynamic.Configuration) {
+func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints, aviator *pilot.Pilot) func(conf dynamic.Configuration) {
 	return func(conf dynamic.Configuration) {
 		rtConf := runtime.NewConfig(conf)
 
 		routers, udpRouters := routerFactory.CreateRouters(rtConf)
-
-		for entryPointName, rt := range routers {
-			for _, p := range acmeProviders {
-				if p != nil && p.HTTPChallenge != nil && p.HTTPChallenge.EntryPoint == entryPointName {
-					rt.HTTPHandler(p.CreateHandler(rt.GetHTTPHandler()))
-					break
-				}
-			}
-		}
 
 		if aviator != nil {
 			aviator.SetRuntimeConfiguration(rtConf)
@@ -323,8 +335,7 @@ func switchRouter(routerFactory *server.RouterFactory, acmeProviders []*acme.Pro
 }
 
 // initACMEProvider creates an acme provider from the ACME part of globalConfiguration.
-func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager) []*acme.Provider {
-	challengeStore := acme.NewLocalChallengeStore()
+func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager, httpChallengeProvider, tlsChallengeProvider challenge.Provider) []*acme.Provider {
 	localStores := map[string]*acme.LocalStore{}
 
 	var resolvers []*acme.Provider
@@ -335,10 +346,11 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 			}
 
 			p := &acme.Provider{
-				Configuration:  resolver.ACME,
-				Store:          localStores[resolver.ACME.Storage],
-				ChallengeStore: challengeStore,
-				ResolverName:   name,
+				Configuration:         resolver.ACME,
+				Store:                 localStores[resolver.ACME.Storage],
+				ResolverName:          name,
+				HTTPChallengeProvider: httpChallengeProvider,
+				TLSChallengeProvider:  tlsChallengeProvider,
 			}
 
 			if err := providerAggregator.AddProvider(p); err != nil {
@@ -348,15 +360,12 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 
 			p.SetTLSManager(tlsManager)
 
-			if p.TLSChallenge != nil {
-				tlsManager.TLSAlpnGetter = p.GetTLSALPNCertificate
-			}
-
 			p.SetConfigListenerChan(make(chan dynamic.Configuration))
 
 			resolvers = append(resolvers, p)
 		}
 	}
+
 	return resolvers
 }
 

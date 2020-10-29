@@ -73,9 +73,37 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 	i.redirection(ctx, cfg)
 	i.serverTransport(cfg)
 
+	i.acme(cfg)
+
 	cfg.HTTP.Services["noop"] = &dynamic.Service{}
 
 	return cfg
+}
+
+func (i *Provider) acme(cfg *dynamic.Configuration) {
+	var eps []string
+
+	uniq := map[string]struct{}{}
+	for _, resolver := range i.staticCfg.CertificatesResolvers {
+		if resolver.ACME != nil && resolver.ACME.HTTPChallenge != nil && resolver.ACME.HTTPChallenge.EntryPoint != "" {
+			if _, ok := uniq[resolver.ACME.HTTPChallenge.EntryPoint]; !ok {
+				eps = append(eps, resolver.ACME.HTTPChallenge.EntryPoint)
+				uniq[resolver.ACME.HTTPChallenge.EntryPoint] = struct{}{}
+			}
+		}
+	}
+
+	if len(eps) > 0 {
+		rt := &dynamic.Router{
+			Rule:        "PathPrefix(`/.well-known/acme-challenge/`)",
+			EntryPoints: eps,
+			Service:     "acme-http@internal",
+			Priority:    math.MaxInt32,
+		}
+
+		cfg.HTTP.Routers["acme-http"] = rt
+		cfg.HTTP.Services["acme-http"] = &dynamic.Service{}
+	}
 }
 
 func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) {

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
 )
 
 type serviceManager interface {
@@ -22,22 +20,19 @@ type InternalHandlers struct {
 	rest       http.Handler
 	prometheus http.Handler
 	ping       http.Handler
+	acmeHTTP   http.Handler
 	serviceManager
 }
 
 // NewInternalHandlers creates a new InternalHandlers.
-func NewInternalHandlers(api func(configuration *runtime.Configuration) http.Handler, configuration *runtime.Configuration, rest, metricsHandler, pingHandler, dashboard http.Handler, next serviceManager) *InternalHandlers {
-	var apiHandler http.Handler
-	if api != nil {
-		apiHandler = api(configuration)
-	}
-
+func NewInternalHandlers(next serviceManager, apiHandler, rest, metricsHandler, pingHandler, dashboard, acmeHTTP http.Handler) *InternalHandlers {
 	return &InternalHandlers{
 		api:            apiHandler,
 		dashboard:      dashboard,
 		rest:           rest,
 		prometheus:     metricsHandler,
 		ping:           pingHandler,
+		acmeHTTP:       acmeHTTP,
 		serviceManager: next,
 	}
 }
@@ -62,6 +57,12 @@ func (m *InternalHandlers) get(serviceName string) (http.Handler, error) {
 		return http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 			rw.WriteHeader(http.StatusTeapot)
 		}), nil
+
+	case "acme-http@internal":
+		if m.acmeHTTP == nil {
+			return nil, errors.New("HTTP challenge is not enabled")
+		}
+		return m.acmeHTTP, nil
 
 	case "api@internal":
 		if m.api == nil {

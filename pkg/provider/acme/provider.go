@@ -82,9 +82,12 @@ type TLSChallenge struct{}
 // Provider holds configurations of the provider.
 type Provider struct {
 	*Configuration
-	ResolverName           string
-	Store                  Store `json:"store,omitempty" toml:"store,omitempty" yaml:"store,omitempty"`
-	ChallengeStore         ChallengeStore
+	ResolverName string
+	Store        Store `json:"store,omitempty" toml:"store,omitempty" yaml:"store,omitempty"`
+
+	TLSChallengeProvider  challenge.Provider
+	HTTPChallengeProvider challenge.Provider
+
 	certificates           []*CertAndStore
 	account                *Account
 	client                 *lego.Client
@@ -285,7 +288,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
 		logger.Debug("Using HTTP Challenge provider.")
 
-		err = client.Challenge.SetHTTP01Provider(&challengeHTTP{Store: p.ChallengeStore})
+		err = client.Challenge.SetHTTP01Provider(p.HTTPChallengeProvider)
 		if err != nil {
 			return nil, err
 		}
@@ -294,7 +297,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	if p.TLSChallenge != nil {
 		logger.Debug("Using TLS Challenge provider.")
 
-		err = client.Challenge.SetTLSALPN01Provider(&challengeTLSALPN{Store: p.ChallengeStore})
+		err = client.Challenge.SetTLSALPN01Provider(p.TLSChallengeProvider)
 		if err != nil {
 			return nil, err
 		}
