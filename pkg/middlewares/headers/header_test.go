@@ -276,7 +276,20 @@ func TestNewHeader_CORSResponses(t *testing.T) {
 			desc: "Regexp Origin Request",
 			next: emptyHandler,
 			cfg: dynamic.Headers{
-				AccessControlAllowOriginListRegex: []string{"([a-z]+)\\.bar\\.org"},
+				AccessControlAllowOriginListRegex: []string{"^https?://([a-z]+)\\.bar\\.org$"},
+			},
+			requestHeaders: map[string][]string{
+				"Origin": {"https://foo.bar.org"},
+			},
+			expected: map[string][]string{
+				"Access-Control-Allow-Origin": {"https://foo.bar.org"},
+			},
+		},
+		{
+			desc: "Partial Regexp Origin Request",
+			next: emptyHandler,
+			cfg: dynamic.Headers{
+				AccessControlAllowOriginListRegex: []string{"([a-z]+)\\.bar"},
 			},
 			requestHeaders: map[string][]string{
 				"Origin": {"https://foo.bar.org"},
