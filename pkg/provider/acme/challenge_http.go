@@ -45,7 +45,7 @@ func (c *ChallengeHTTP) Present(domain, token, keyAuth string) error {
 }
 
 // CleanUp cleans the challenges when certificate is obtained.
-func (c *ChallengeHTTP) CleanUp(domain, token, keyAuth string) error {
+func (c *ChallengeHTTP) CleanUp(domain, token, _ string) error {
 	if c.httpChallenges == nil && len(c.httpChallenges) == 0 {
 		return nil
 	}
@@ -71,7 +71,7 @@ func (c *ChallengeHTTP) Timeout() (timeout, interval time.Duration) {
 }
 
 func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, "acme"))
+	ctx := log.With(req.Context(), log.Str(log.ProviderName, "acme"))
 	logger := log.FromContext(ctx)
 
 	token, err := getPathParam(req.URL)
@@ -113,13 +113,13 @@ func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string)
 		defer c.lock.RUnlock()
 
 		if _, ok := c.httpChallenges[token]; !ok {
-			return fmt.Errorf("cannot find challenge for token %v", token)
+			return fmt.Errorf("cannot find challenge for token %s", token)
 		}
 
 		var ok bool
 		result, ok = c.httpChallenges[token][domain]
 		if !ok {
-			return fmt.Errorf("cannot find challenge for token %v", token)
+			return fmt.Errorf("cannot find challenge for domain %s", domain)
 		}
 
 		return nil
