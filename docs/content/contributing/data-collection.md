@@ -31,6 +31,8 @@ For this very reason, the sendAnonymousUsage option is mandatory: we want you to
 
 This feature comes from the public proposal [here](https://github.com/traefik/traefik/issues/2369).
 
+This feature is activated when using Traefik Pilot to better understand the community's need, and also to get information about plug-ins popularity.
+
 In order to help us learn more about how Traefik is being used and improve it, we collect anonymous usage statistics from running instances.
 Those data help us prioritize our developments and focus on what's important for our users (for example, which provider is popular, and which is not).
 
