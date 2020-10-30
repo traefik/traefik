@@ -227,3 +227,38 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 		t.Error("Timeout while read")
 	}
 }
+
+func TestPostgresStartTLS(t *testing.T) {
+	epConfig := &static.EntryPointsTransport{}
+	epConfig.SetDefaults()
+	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(20 * time.Second)
+
+	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+		Address:          ":0",
+		Transport:        epConfig,
+		ForwardedHeaders: &static.ForwardedHeaders{},
+	})
+	require.NoError(t, err)
+
+	router := &tcp.Router{}
+
+	router.PreRoutingHook("postgres", tcp.StartTLSServerFuncs["postgres"])
+
+	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	conn, err := startEntrypoint(entryPoint, router)
+	require.NoError(t, err)
+
+	_, err = conn.Write(tcp.PostgresStartTLSMsg)
+	require.NoError(t, err)
+
+	buf := make([]byte, 1)
+	_, err = conn.Read(buf)
+	require.NoError(t, err)
+
+	if buf[0] != tcp.PostgresStartTLSReply[0] {
+		t.Fatalf("Expected StartTLS reply but got %v: ", buf[0])
+	}
+}
