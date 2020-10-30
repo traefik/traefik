@@ -20,6 +20,8 @@ type Tomate struct {
 type Carotte struct {
 	Name        string
 	Value       int
+	List        []string
+	EList       []string `export:"true"`
 	Courgette   Courgette
 	ECourgette  Courgette `export:"true"`
 	Pourgette   *Courgette
@@ -44,9 +46,13 @@ func Test_doOnStruct(t *testing.T) {
 			base: &Carotte{
 				Name:  "koko",
 				Value: 666,
+				List:  []string{"test"},
+				EList: []string{"test"},
 			},
 			expected: &Carotte{
-				Name: "xxxx",
+				Name:  "xxxx",
+				List:  []string{"xxxx"},
+				EList: []string{"test"},
 			},
 		},
 		{

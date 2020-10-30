@@ -49,10 +49,10 @@ type Provider struct {
 	Constraints            string           `description:"Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
 	Trace                  bool             `description:"Display additional provider logs." json:"trace,omitempty" toml:"trace,omitempty" yaml:"trace,omitempty" export:"true"`
 	Watch                  bool             `description:"Watch provider." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
-	Endpoint               string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
+	Endpoint               string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
 	DefaultRule            string           `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	ExposedByDefault       bool             `description:"Expose Marathon apps by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
-	DCOSToken              string           `description:"DCOSToken for DCOS environment, This will override the Authorization header." json:"dcosToken,omitempty" toml:"dcosToken,omitempty" yaml:"dcosToken,omitempty" export:"true"`
+	DCOSToken              string           `description:"DCOSToken for DCOS environment, This will override the Authorization header." json:"dcosToken,omitempty" toml:"dcosToken,omitempty" yaml:"dcosToken,omitempty"`
 	TLS                    *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	DialerTimeout          ptypes.Duration  `description:"Set a dialer timeout for Marathon." json:"dialerTimeout,omitempty" toml:"dialerTimeout,omitempty" yaml:"dialerTimeout,omitempty" export:"true"`
 	ResponseHeaderTimeout  ptypes.Duration  `description:"Set a response header timeout for Marathon." json:"responseHeaderTimeout,omitempty" toml:"responseHeaderTimeout,omitempty" yaml:"responseHeaderTimeout,omitempty" export:"true"`
