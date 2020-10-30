@@ -41,6 +41,8 @@ type Router struct {
 	// TLS configs.
 	httpsTLSConfig    *tls.Config            // default TLS config
 	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
+
+	preRoutingHook map[string]func(tcp.WriteCloser) (tcp.WriteCloser, error)
 }
 
 // NewRouter returns a new TCP router.
@@ -104,6 +106,18 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		// 1) we could be in the case where we have HTTP routers.
 		// 2) if it is an HTTPS request, even though we do not have any TLS routers,
 		// we still need to reply with a 404.
+	}
+
+	// this peeks into the connection and tries to perform the
+	// StartTLS handshake (postgres). It works in both cases,
+	// no matter if the client sends StartTLS header.
+	for _, filterFunc := range r.preRoutingHook {
+		var err error
+		conn, err = filterFunc(conn)
+		if err != nil {
+			conn.Close()
+			return
+		}
 	}
 
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
@@ -253,6 +267,17 @@ func (r *Router) SetHTTPHandler(handler http.Handler) {
 func (r *Router) SetHTTPSHandler(handler http.Handler, config *tls.Config) {
 	r.httpsHandler = handler
 	r.httpsTLSConfig = config
+}
+
+// PreRoutingHook allows to add a filter func to prefilter incoming connections.
+// This can be used for example to peek into the connection and perform a StartTLS handshake.
+// The filter func is registered by a given name. Successive calls with the same name will
+// overwrite existing entries.
+func (r *Router) PreRoutingHook(name string, filterFunc func(tcp.WriteCloser) (tcp.WriteCloser, error)) {
+	if r.preRoutingHook == nil {
+		r.preRoutingHook = make(map[string]func(tcp.WriteCloser) (tcp.WriteCloser, error))
+	}
+	r.preRoutingHook[name] = filterFunc
 }
 
 // Conn is a connection proxy that handles Peeked bytes.

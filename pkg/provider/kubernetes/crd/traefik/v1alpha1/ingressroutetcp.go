@@ -52,6 +52,7 @@ type ServiceTCP struct {
 	Weight           *int                   `json:"weight,omitempty"`
 	TerminationDelay *int                   `json:"terminationDelay,omitempty"`
 	ProxyProtocol    *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
+	StartTLS         string                 `json:"startTLS,omitempty"`
 }
 
 // +genclient
