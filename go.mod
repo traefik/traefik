@@ -14,7 +14,6 @@ require (
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
 	github.com/abronan/valkeyrie v0.0.0-20200127174252-ef4277a138cd
 	github.com/aws/aws-sdk-go v1.30.20
-	github.com/c0va23/go-proxyprotocol v0.9.1
 	github.com/cenkalti/backoff/v4 v4.0.2
 	github.com/containerd/containerd v1.3.2 // indirect
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
@@ -63,7 +62,7 @@ require (
 	github.com/openzipkin/zipkin-go v0.2.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/philhofer/fwd v1.0.0 // indirect
-	github.com/pires/go-proxyproto v0.1.4-0.20200920145405-ed8215b93919
+	github.com/pires/go-proxyproto v0.3.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.3.0
 	github.com/prometheus/client_model v0.1.0
