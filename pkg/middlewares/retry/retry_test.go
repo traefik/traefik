@@ -23,15 +23,13 @@ import (
 )
 
 func TestRetry(t *testing.T) {
-	type testCase struct {
+	testCases := []struct {
 		desc                  string
 		config                dynamic.Retry
 		wantRetryAttempts     int
 		wantResponseStatus    int
 		amountFaultyEndpoints int
-	}
-
-	testCases := []testCase{
+	}{
 		{
 			desc:                  "no retry on success",
 			config:                dynamic.Retry{Attempts: 1},
