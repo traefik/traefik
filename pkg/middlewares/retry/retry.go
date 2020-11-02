@@ -45,11 +45,11 @@ type backoff interface {
 
 // retry is a middleware that retries requests.
 type retry struct {
-	attempts   int
-	newBackOff func() backoff
-	next       http.Handler
-	listener   Listener
-	name       string
+	attempts        int
+	initialInterval time.Duration
+	next            http.Handler
+	listener        Listener
+	name            string
 }
 
 // New returns a new retry middleware.
@@ -60,35 +60,33 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
 	}
 
-	// a new backoff instance should be created for every request
-	newBackOff := func() backoff {
-		if config.Attempts < 2 || config.InitialInterval == 0 {
-			b := new(bo.ZeroBackOff)
-			return b
-		}
-
-		b := bo.NewExponentialBackOff()
-		b.InitialInterval = time.Duration(config.InitialInterval)
-
-		// calculate the multiplier that will set MaxInterval = 2*InitialInterval
-		b.Multiplier = math.Pow(2, 1/float64(config.Attempts-1))
-
-		// according to docs, b.Reset() must be called before using
-		b.Reset()
-		return b
-	}
-
 	return &retry{
-		attempts:   config.Attempts,
-		newBackOff: newBackOff,
-		next:       next,
-		listener:   listener,
-		name:       name,
+		attempts:        config.Attempts,
+		initialInterval: time.Duration(config.InitialInterval),
+		next:            next,
+		listener:        listener,
+		name:            name,
 	}, nil
 }
 
 func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
 	return r.name, tracing.SpanKindNoneEnum
+}
+
+func (r *retry) newBackOff() backoff {
+	if r.attempts < 2 || r.initialInterval <= 0 {
+		return &bo.ZeroBackOff{}
+	}
+
+	b := bo.NewExponentialBackOff()
+	b.InitialInterval = r.initialInterval
+
+	// calculate the multiplier that will set MaxInterval = 2*InitialInterval
+	b.Multiplier = math.Pow(2, 1/float64(r.attempts-1))
+
+	// according to docs, b.Reset() must be called before using
+	b.Reset()
+	return b
 }
 
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
