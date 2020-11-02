@@ -2908,7 +2908,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										Port:    "",
 									},
 								},
-								ProxyProtocolVersion: func(i int) *int { return &i }(2),
+								ProxyProtocolVersion: func(s string) *string { return &s }("2"),
 							},
 						},
 					},

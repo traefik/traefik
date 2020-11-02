@@ -235,7 +235,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay:     func(i int) *int { return &i }(42),
-						ProxyProtocolVersion: func(i int) *int { return &i }(1),
+						ProxyProtocolVersion: func(s string) *string { return &s }("1"),
 					},
 				},
 				"Service1": {
@@ -246,7 +246,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay:     func(i int) *int { return &i }(42),
-						ProxyProtocolVersion: func(i int) *int { return &i }(2),
+						ProxyProtocolVersion: func(s string) *string { return &s }("2"),
 					},
 				},
 			},

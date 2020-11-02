@@ -1003,7 +1003,7 @@ It can be enabled by setting proxyProtocolVersion to 1 or 2, default is 0 which 
     [tcp.services]
       [tcp.services.my-service.loadBalancer]
         [[tcp.services.my-service.loadBalancer]]
-          proxyProtocolVersion = 2
+          proxyProtocolVersion = "2"
     ```
 
     ```yaml tab="YAML"
@@ -1012,7 +1012,7 @@ It can be enabled by setting proxyProtocolVersion to 1 or 2, default is 0 which 
       services:
         my-service:
           loadBalancer:
-            proxyProtocolVersion: 2
+            proxyProtocolVersion: "2"
             servers:
               - address: "xx.xx.xx.xx:xx"
     ```
