@@ -10,7 +10,7 @@ Attach labels to your containers and let Traefik do the rest!
 !!! info "labels"
     
     - labels are case insensitive.
-    - The complete list of labels can be found [the reference page](../../reference/dynamic-configuration/ecs.md)
+    - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/ecs.md).
 
 ### General
 
