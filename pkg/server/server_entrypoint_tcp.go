@@ -319,7 +319,7 @@ func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 	case *proxyproto.Conn:
 		underlying, ok := typedConn.TCPConn()
 		if !ok {
-			return nil, fmt.Errorf("underlying connection is no tcp connection")
+			return nil, fmt.Errorf("underlying connection is not a tcp connection")
 		}
 		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
 	case *net.TCPConn:
