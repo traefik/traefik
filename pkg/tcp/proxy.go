@@ -48,8 +48,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	case "1", "2":
 		version, _ := strconv.Atoi(p.proxyProtocolVersion)
 		header := proxyproto.HeaderProxyFromAddrs(byte(version), conn.RemoteAddr(), conn.LocalAddr())
-		_, err := header.WriteTo(connBackend)
-		if err != nil {
+		if _, err := header.WriteTo(connBackend); err != nil {
 			log.Errorf("Error while writing proxy protocol headers to backend connection: %v", err)
 			return
 		}
