@@ -11,7 +11,7 @@ import (
 	"net/http/httptrace"
 	"time"
 
-	bo "github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -37,10 +37,9 @@ type Listener interface {
 // each of them about a retry attempt.
 type Listeners []Listener
 
-// backoff is copied from cenkalti/backoff to accommodate both ExponentialBackoff and ZeroBackoff.
-type backoff interface {
+// nexter returns the duration to wait before retrying the operation.
+type nexter interface {
 	NextBackOff() time.Duration
-	Reset()
 }
 
 // retry is a middleware that retries requests.
@@ -71,22 +70,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 
 func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
 	return r.name, tracing.SpanKindNoneEnum
-}
-
-func (r *retry) newBackOff() backoff {
-	if r.attempts < 2 || r.initialInterval <= 0 {
-		return &bo.ZeroBackOff{}
-	}
-
-	b := bo.NewExponentialBackOff()
-	b.InitialInterval = r.initialInterval
-
-	// calculate the multiplier that will set MaxInterval = 2*InitialInterval
-	b.Multiplier = math.Pow(2, 1/float64(r.attempts-1))
-
-	// according to docs, b.Reset() must be called before using
-	b.Reset()
-	return b
 }
 
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -138,6 +121,22 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
+}
+
+func (r *retry) newBackOff() nexter {
+	if r.attempts < 2 || r.initialInterval <= 0 {
+		return &backoff.ZeroBackOff{}
+	}
+
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = r.initialInterval
+
+	// calculate the multiplier that will set MaxInterval = 2*InitialInterval
+	b.Multiplier = math.Pow(2, 1/float64(r.attempts-1))
+
+	// according to docs, b.Reset() must be called before using
+	b.Reset()
+	return b
 }
 
 // Retried exists to implement the Listener interface. It calls Retried on each of its slice entries.
