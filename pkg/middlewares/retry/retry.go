@@ -131,7 +131,9 @@ func (r *retry) newBackOff() nexter {
 	b := backoff.NewExponentialBackOff()
 	b.InitialInterval = r.initialInterval
 
-	// calculate the multiplier that will set MaxInterval = 2*InitialInterval
+	// calculate the multiplier for the given number of attempts
+	// so that applying the multiplier for the given number of attempts will not exceed 2 times the initial interval
+	// it allows to control the progression along the attempts
 	b.Multiplier = math.Pow(2, 1/float64(r.attempts-1))
 
 	// according to docs, b.Reset() must be called before using
