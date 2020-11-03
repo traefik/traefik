@@ -3,6 +3,7 @@ package tcp
 import (
 	"io"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/pires/go-proxyproto"
@@ -13,11 +14,11 @@ import (
 type Proxy struct {
 	target               *net.TCPAddr
 	terminationDelay     time.Duration
-	proxyProtocolVersion *string
+	proxyProtocolVersion string
 }
 
 // NewProxy creates a new Proxy.
-func NewProxy(address string, terminationDelay time.Duration, proxyProtocolVersion *string) (*Proxy, error) {
+func NewProxy(address string, terminationDelay time.Duration, proxyProtocolVersion string) (*Proxy, error) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
 		return nil, err
@@ -43,20 +44,13 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	defer connBackend.Close()
 	errChan := make(chan error)
 
-	if p.proxyProtocolVersion != nil {
-		version := byte(0)
-		switch *p.proxyProtocolVersion {
-		case "1":
-			version = byte(1)
-		case "2":
-			version = byte(2)
-		}
-		if version != 0 {
-			header := proxyproto.HeaderProxyFromAddrs(version, conn.RemoteAddr(), conn.LocalAddr())
-			_, err := header.WriteTo(connBackend)
-			if err != nil {
-				errChan <- err
-			}
+	switch p.proxyProtocolVersion {
+	case "1", "2":
+		version, _ := strconv.Atoi(p.proxyProtocolVersion)
+		header := proxyproto.HeaderProxyFromAddrs(byte(version), conn.RemoteAddr(), conn.LocalAddr())
+		_, err := header.WriteTo(connBackend)
+		if err != nil {
+			errChan <- err
 		}
 	}
 	go p.connCopy(conn, connBackend, errChan)

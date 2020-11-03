@@ -78,9 +78,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					srv.Weight = service.Weight
 				}
 
-				if service.ProxyProtocolVersion != nil {
-					srv.ProxyProtocolVersion = service.ProxyProtocolVersion
-				}
+				srv.ProxyProtocolVersion = service.ProxyProtocolVersion
 
 				if conf.Services[serviceName] == nil {
 					conf.Services[serviceName] = &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
@@ -148,9 +146,7 @@ func createLoadBalancerServerTCP(client Client, namespace string, service v1alph
 		tcpService.LoadBalancer.TerminationDelay = service.TerminationDelay
 	}
 
-	if service.ProxyProtocolVersion != nil {
-		tcpService.LoadBalancer.ProxyProtocolVersion = service.ProxyProtocolVersion
-	}
+	tcpService.LoadBalancer.ProxyProtocolVersion = service.ProxyProtocolVersion
 
 	return tcpService, nil
 }

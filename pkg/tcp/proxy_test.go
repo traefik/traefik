@@ -12,8 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func String(s string) *string { return &s }
-
 func fakeRedis(t *testing.T, listener net.Listener) {
 	for {
 		conn, err := listener.Accept()
@@ -49,7 +47,7 @@ func TestCloseWrite(t *testing.T) {
 	_, port, err := net.SplitHostPort(backendListener.Addr().String())
 	require.NoError(t, err)
 
-	proxy, err := NewProxy(":"+port, 10*time.Millisecond, String("0"))
+	proxy, err := NewProxy(":"+port, 10*time.Millisecond, "0")
 	require.NoError(t, err)
 
 	proxyListener, err := net.Listen("tcp", ":0")
@@ -95,7 +93,7 @@ func TestProxyProtocol(t *testing.T) {
 	_, port, err := net.SplitHostPort(proxybackendListener.Addr().String())
 	require.NoError(t, err)
 
-	proxy, err := NewProxy(":"+port, 10*time.Millisecond, String("2"))
+	proxy, err := NewProxy(":"+port, 10*time.Millisecond, "2")
 	require.NoError(t, err)
 
 	proxyListener, err := net.Listen("tcp", ":0")
