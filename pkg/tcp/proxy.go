@@ -50,7 +50,8 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 		header := proxyproto.HeaderProxyFromAddrs(byte(version), conn.RemoteAddr(), conn.LocalAddr())
 		_, err := header.WriteTo(connBackend)
 		if err != nil {
-			errChan <- err
+			log.Errorf("Error while writing proxy protocol headers to backend connection: %v", err)
+			return
 		}
 	}
 	go p.connCopy(conn, connBackend, errChan)
