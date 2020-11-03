@@ -53,19 +53,13 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		}
 		duration := time.Duration(*conf.LoadBalancer.TerminationDelay) * time.Millisecond
 
-		if conf.LoadBalancer.AddrLookupCache == nil {
-			defaultAddrResolveCache := 0
-			conf.LoadBalancer.AddrLookupCache = &defaultAddrResolveCache
-		}
-		addrResolveCache := time.Duration(*conf.LoadBalancer.AddrLookupCache) * time.Second
-
 		for name, server := range conf.LoadBalancer.Servers {
 			if _, _, err := net.SplitHostPort(server.Address); err != nil {
 				logger.Errorf("In service %q: %v", serviceQualifiedName, err)
 				continue
 			}
 
-			handler, err := tcp.NewProxy(server.Address, duration, addrResolveCache)
+			handler, err := tcp.NewProxy(server.Address, duration)
 			if err != nil {
 				logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
 				continue
