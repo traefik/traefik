@@ -993,10 +993,10 @@ The `address` option (IP:Port) point to a specific instance.
 
 #### ProxyProtocol
 
-Traefik supports [ProxyProtocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 to TCP Services.
-It can be enabled by setting proxyProtocolVersion to 1 or 2, default is 0 which means disabled.
+Traefik supports [ProxyProtocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services.
+It can be enabled by setting `proxyProtocolVersion` to "1" or "2".
 
-??? example "A Service with One Server with Proxy Protocol v2-- Using the [File Provider](../../providers/file.md)"
+??? example "A Service with Proxy Protocol v2 -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
     ## Dynamic configuration
@@ -1013,8 +1013,6 @@ It can be enabled by setting proxyProtocolVersion to 1 or 2, default is 0 which 
         my-service:
           loadBalancer:
             proxyProtocolVersion: "2"
-            servers:
-              - address: "xx.xx.xx.xx:xx"
     ```
 
 #### Termination Delay
