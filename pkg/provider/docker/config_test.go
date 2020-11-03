@@ -2400,7 +2400,6 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  Int(5),
 							},
 						},
 					},
@@ -2503,7 +2502,6 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  Int(5),
 							},
 						},
 					},
@@ -2563,7 +2561,6 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  Int(5),
 							},
 						},
 					},
@@ -2788,7 +2785,6 @@ func Test_buildConfiguration(t *testing.T) {
 					Labels: map[string]string{
 						"traefik.tcp.services.foo.loadbalancer.server.port":      "8080",
 						"traefik.tcp.services.foo.loadbalancer.terminationdelay": "200",
-						"traefik.tcp.services.foo.loadbalancer.addrlookupcache":  "20",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -2815,7 +2811,6 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(200),
-								AddrLookupCache:  Int(20),
 							},
 						},
 					},

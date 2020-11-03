@@ -58,7 +58,6 @@ type ServiceTCP struct {
 	Port             int32  `json:"port"`
 	Weight           *int   `json:"weight,omitempty"`
 	TerminationDelay *int   `json:"terminationDelay,omitempty"`
-	AddrLookupCache  *int   `json:"addrLookupCache,omitempty"`
 }
 
 // +genclient

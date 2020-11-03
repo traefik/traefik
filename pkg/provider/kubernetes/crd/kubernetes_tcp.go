@@ -144,10 +144,6 @@ func createLoadBalancerServerTCP(client Client, namespace string, service v1alph
 		tcpService.LoadBalancer.TerminationDelay = service.TerminationDelay
 	}
 
-	if service.AddrLookupCache != nil {
-		tcpService.LoadBalancer.AddrLookupCache = service.AddrLookupCache
-	}
-
 	return tcpService, nil
 }
 

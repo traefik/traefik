@@ -303,7 +303,6 @@
     [tcp.services.TCPService01]
       [tcp.services.TCPService01.loadBalancer]
         terminationDelay = 42
-        addrLookupCache = 10
 
         [[tcp.services.TCPService01.loadBalancer.servers]]
           address = "foobar"
