@@ -4,12 +4,10 @@ import (
 	"context"
 	"math"
 	"testing"
-	"time"
 
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
@@ -1367,7 +1365,7 @@ func TestBuildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  0,
+								AddrLookupCache:  Int(5),
 							},
 						},
 					},
@@ -1444,7 +1442,7 @@ func TestBuildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  0,
+								AddrLookupCache:  Int(5),
 							},
 						},
 					},
@@ -1489,7 +1487,7 @@ func TestBuildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  0,
+								AddrLookupCache:  Int(5),
 							},
 						},
 					},
@@ -1557,7 +1555,7 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.tcp.routers.foo.tls", "true"),
 					withLabel("traefik.tcp.services.foo.loadbalancer.server.port", "8080"),
 					withLabel("traefik.tcp.services.foo.loadbalancer.terminationdelay", "200"),
-					withLabel("traefik.tcp.services.foo.loadbalancer.addrlookupcache", "20s"),
+					withLabel("traefik.tcp.services.foo.loadbalancer.addrlookupcache", "20"),
 				)),
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -1577,7 +1575,7 @@ func TestBuildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(200),
-								AddrLookupCache:  ptypes.Duration(20 * time.Second),
+								AddrLookupCache:  Int(20),
 							},
 						},
 					},
@@ -1623,7 +1621,7 @@ func TestBuildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  0,
+								AddrLookupCache:  Int(5),
 							},
 						},
 					},

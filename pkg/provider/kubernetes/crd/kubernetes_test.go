@@ -3,10 +3,8 @@ package crd
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
-	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/tls"
@@ -868,7 +866,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 										Port:    "",
 									},
 								},
-								AddrLookupCache: ptypes.Duration(50 * time.Second),
+								AddrLookupCache: Int(50),
 							},
 						},
 					},

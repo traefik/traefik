@@ -53,7 +53,11 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		}
 		duration := time.Duration(*conf.LoadBalancer.TerminationDelay) * time.Millisecond
 
-		addrLookupCache := time.Duration(conf.LoadBalancer.AddrLookupCache)
+		if conf.LoadBalancer.AddrLookupCache == nil {
+			defaultAddrLookupCache := 0
+			conf.LoadBalancer.AddrLookupCache = &defaultAddrLookupCache
+		}
+		addrLookupCache := time.Duration(*conf.LoadBalancer.AddrLookupCache) * time.Second
 
 		for name, server := range conf.LoadBalancer.Servers {
 			if _, _, err := net.SplitHostPort(server.Address); err != nil {

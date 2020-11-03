@@ -532,7 +532,7 @@ You can declare TCP Routers and/or Services using labels.
     See [address lookup cache](../services/index.md#address-lookup-cache) for more information.
 
     ```yaml
-    - "traefik.tcp.services.mytcpservice.loadbalancer.addrlookupcache=10s"
+    - "traefik.tcp.services.mytcpservice.loadbalancer.addrlookupcache=10"
     ```
 
 ### UDP

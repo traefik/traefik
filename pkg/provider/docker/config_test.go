@@ -4,14 +4,12 @@ import (
 	"context"
 	"strconv"
 	"testing"
-	"time"
 
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
@@ -2402,7 +2400,7 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  0,
+								AddrLookupCache:  Int(5),
 							},
 						},
 					},
@@ -2505,7 +2503,7 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  0,
+								AddrLookupCache:  Int(5),
 							},
 						},
 					},
@@ -2565,7 +2563,7 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
-								AddrLookupCache:  0,
+								AddrLookupCache:  Int(5),
 							},
 						},
 					},
@@ -2790,7 +2788,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Labels: map[string]string{
 						"traefik.tcp.services.foo.loadbalancer.server.port":      "8080",
 						"traefik.tcp.services.foo.loadbalancer.terminationdelay": "200",
-						"traefik.tcp.services.foo.loadbalancer.addrlookupcache":  "20s",
+						"traefik.tcp.services.foo.loadbalancer.addrlookupcache":  "20",
 					},
 					NetworkSettings: networkSettings{
 						Ports: nat.PortMap{
@@ -2817,7 +2815,7 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(200),
-								AddrLookupCache:  ptypes.Duration(20 * time.Second),
+								AddrLookupCache:  Int(20),
 							},
 						},
 					},
