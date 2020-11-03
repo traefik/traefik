@@ -191,6 +191,7 @@ nav:
         - 'Docker': 'reference/dynamic-configuration/docker.md'
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
         - 'Consul Catalog': 'reference/dynamic-configuration/consul-catalog.md'
+        - 'ECS': 'reference/dynamic-configuration/ecs.md'
+        - 'KV': 'reference/dynamic-configuration/kv.md'
         - 'Marathon': 'reference/dynamic-configuration/marathon.md'
         - 'Rancher': 'reference/dynamic-configuration/rancher.md'
-        - 'KV': 'reference/dynamic-configuration/kv.md'
