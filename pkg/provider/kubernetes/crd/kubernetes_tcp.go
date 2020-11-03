@@ -78,8 +78,6 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					srv.Weight = service.Weight
 				}
 
-				srv.ProxyProtocolVersion = service.ProxyProtocolVersion
-
 				if conf.Services[serviceName] == nil {
 					conf.Services[serviceName] = &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
 				}
