@@ -116,7 +116,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	notify := func(err error, d time.Duration) {
 		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
-			Debugf("New attempt %d for request: %v", attempts, req.URL)
+			Debugf("New attempt %d for request: %v after waiting %v", attempts, req.URL, d)
 	}
 
 	// can throw away final error since that is effectively what happens today?
