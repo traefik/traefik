@@ -51,7 +51,7 @@ func TestReuseService(t *testing.T) {
 	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
 	tlsManager := tls.NewManager()
 
-	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil), nil)
+	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil), nil, metrics.NewVoidRegistry())
 
 	entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs}))
 
@@ -185,7 +185,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
 			tlsManager := tls.NewManager()
 
-			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil), nil)
+			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil), nil, metrics.NewVoidRegistry())
 
 			entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: test.config(testServer.URL)}))
 
@@ -224,7 +224,9 @@ func TestInternalServices(t *testing.T) {
 	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry())
 	tlsManager := tls.NewManager()
 
-	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, metrics.NewVoidRegistry(), nil), nil)
+	voidRegistry := metrics.NewVoidRegistry()
+
+	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(staticConfig, voidRegistry, nil), nil, voidRegistry)
 
 	entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs}))
 

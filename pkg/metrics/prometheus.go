@@ -29,6 +29,13 @@ const (
 	configLastReloadFailureName    = metricConfigPrefix + "last_reload_failure"
 
 	// entry point.
+	metricRouterPrefix     = MetricNamePrefix + "router_"
+	routerReqsTotalName    = metricRouterPrefix + "requests_total"
+	routerReqsTLSTotalName = metricRouterPrefix + "requests_tls_total"
+	routerReqDurationName  = metricRouterPrefix + "request_duration_seconds"
+	routerOpenConnsName    = metricRouterPrefix + "open_connections"
+
+	// entry point.
 	metricEntryPointPrefix     = MetricNamePrefix + "entrypoint_"
 	entryPointReqsTotalName    = metricEntryPointPrefix + "requests_total"
 	entryPointReqsTLSTotalName = metricEntryPointPrefix + "requests_tls_total"
@@ -163,6 +170,36 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		reg.entryPointReqsTLSCounter = entryPointReqsTLS
 		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(entryPointReqDurations, time.Second)
 		reg.entryPointOpenConnsGauge = entryPointOpenConns
+	}
+	if config.AddRouterLabels {
+		routerReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: routerReqsTotalName,
+			Help: "How many HTTP requests processed on an router, partitioned by status code, protocol, and method.",
+		}, []string{"code", "method", "protocol", "router", "service"})
+		routerReqsTLS := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: routerReqsTLSTotalName,
+			Help: "How many HTTP requests with TLS processed on an router, partitioned by TLS Version and TLS cipher Used.",
+		}, []string{"tls_version", "tls_cipher", "router", "service"})
+		routerReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
+			Name:    routerReqDurationName,
+			Help:    "How long it took to process the request on an router, partitioned by status code, protocol, and method.",
+			Buckets: buckets,
+		}, []string{"code", "method", "protocol", "router", "service"})
+		routerOpenConns := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
+			Name: routerOpenConnsName,
+			Help: "How many open connections exist on an router, partitioned by method and protocol.",
+		}, []string{"method", "protocol", "router", "service"})
+
+		promState.describers = append(promState.describers, []func(chan<- *stdprometheus.Desc){
+			routerReqs.cv.Describe,
+			routerReqsTLS.cv.Describe,
+			routerReqDurations.hv.Describe,
+			routerOpenConns.gv.Describe,
+		}...)
+		reg.routerReqsCounter = routerReqs
+		reg.routerReqsTLSCounter = routerReqsTLS
+		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(routerReqDurations, time.Second)
+		reg.routerOpenConnsGauge = routerOpenConns
 	}
 	if config.AddServicesLabels {
 		serviceReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{

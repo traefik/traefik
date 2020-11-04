@@ -13,6 +13,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
@@ -291,7 +292,7 @@ func TestRouterManager_Get(t *testing.T) {
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -395,7 +396,7 @@ func TestAccessLog(t *testing.T) {
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -682,7 +683,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -763,7 +764,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	chainBuilder := middleware.NewChainBuilder(staticCfg, nil, nil)
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
 
 	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -823,7 +824,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
 
 	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
 

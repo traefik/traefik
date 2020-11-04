@@ -6,6 +6,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/router"
 	routertcp "github.com/traefik/traefik/v2/pkg/server/router/tcp"
@@ -23,7 +24,8 @@ type RouterFactory struct {
 	entryPointsTCP []string
 	entryPointsUDP []string
 
-	managerFactory *service.ManagerFactory
+	managerFactory  *service.ManagerFactory
+	metricsRegistry metrics.Registry
 
 	pluginBuilder middleware.PluginsBuilder
 
@@ -32,7 +34,8 @@ type RouterFactory struct {
 }
 
 // NewRouterFactory creates a new RouterFactory.
-func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager, chainBuilder *middleware.ChainBuilder, pluginBuilder middleware.PluginsBuilder) *RouterFactory {
+func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager,
+	chainBuilder *middleware.ChainBuilder, pluginBuilder middleware.PluginsBuilder, metricsRegistry metrics.Registry) *RouterFactory {
 	var entryPointsTCP, entryPointsUDP []string
 	for name, cfg := range staticConfiguration.EntryPoints {
 		protocol, err := cfg.GetProtocol()
@@ -49,12 +52,13 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	}
 
 	return &RouterFactory{
-		entryPointsTCP: entryPointsTCP,
-		entryPointsUDP: entryPointsUDP,
-		managerFactory: managerFactory,
-		tlsManager:     tlsManager,
-		chainBuilder:   chainBuilder,
-		pluginBuilder:  pluginBuilder,
+		entryPointsTCP:  entryPointsTCP,
+		entryPointsUDP:  entryPointsUDP,
+		managerFactory:  managerFactory,
+		metricsRegistry: metricsRegistry,
+		tlsManager:      tlsManager,
+		chainBuilder:    chainBuilder,
+		pluginBuilder:   pluginBuilder,
 	}
 }
 
@@ -67,7 +71,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, f.pluginBuilder)
 
-	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.chainBuilder)
+	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.chainBuilder, f.metricsRegistry)
 
 	handlersNonTLS := routerManager.BuildHandlers(ctx, f.entryPointsTCP, false)
 	handlersTLS := routerManager.BuildHandlers(ctx, f.entryPointsTCP, true)
