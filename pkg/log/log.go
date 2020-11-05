@@ -137,7 +137,7 @@ func RotateFile() error {
 	}
 
 	if err := OpenFile(logFilePath); err != nil {
-		return fmt.Errorf("error opening log file: %s", err)
+		return fmt.Errorf("error opening log file: %w", err)
 	}
 
 	return nil

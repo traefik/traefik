@@ -174,11 +174,15 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 		conn, err := e.listener.Accept()
 		if err != nil {
 			logger.Error(err)
-			if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
+
+			var netErr net.Error
+			if errors.As(err, &netErr) && netErr.Temporary() {
 				continue
 			}
+
 			e.httpServer.Forwarder.errChan <- err
 			e.httpsServer.Forwarder.errChan <- err
+
 			return
 		}
 
@@ -232,7 +236,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 		if err == nil {
 			return
 		}
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			logger.Debugf("Server failed to shutdown within deadline because: %s", err)
 			if err = server.Close(); err != nil {
 				logger.Error(err)
@@ -263,7 +267,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 			if err == nil {
 				return
 			}
-			if ctx.Err() == context.DeadlineExceeded {
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 				logger.Debugf("Server failed to shutdown before deadline because: %s", err)
 			}
 			e.tracker.Close()

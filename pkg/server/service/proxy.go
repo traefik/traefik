@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -83,13 +84,14 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 			statusCode := http.StatusInternalServerError
 
 			switch {
-			case err == io.EOF:
+			case errors.Is(err, io.EOF):
 				statusCode = http.StatusBadGateway
-			case err == context.Canceled:
+			case errors.Is(err, context.Canceled):
 				statusCode = StatusClientClosedRequest
 			default:
-				if e, ok := err.(net.Error); ok {
-					if e.Timeout() {
+				var netErr net.Error
+				if errors.As(err, &netErr) {
+					if netErr.Timeout() {
 						statusCode = http.StatusGatewayTimeout
 					} else {
 						statusCode = http.StatusBadGateway
