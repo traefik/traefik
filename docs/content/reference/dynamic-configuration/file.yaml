@@ -298,6 +298,7 @@ http:
     Middleware20:
       retry:
         attempts: 42
+        initialInterval: 42
     Middleware21:
       stripPrefix:
         prefixes:

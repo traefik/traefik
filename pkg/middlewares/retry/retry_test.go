@@ -9,10 +9,12 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/middlewares/emptybackendhandler"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
@@ -36,8 +38,22 @@ func TestRetry(t *testing.T) {
 			amountFaultyEndpoints: 0,
 		},
 		{
+			desc:                  "no retry on success with backoff",
+			config:                dynamic.Retry{Attempts: 1, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
+			wantRetryAttempts:     0,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 0,
+		},
+		{
 			desc:                  "no retry when max request attempts is one",
 			config:                dynamic.Retry{Attempts: 1},
+			wantRetryAttempts:     0,
+			wantResponseStatus:    http.StatusBadGateway,
+			amountFaultyEndpoints: 1,
+		},
+		{
+			desc:                  "no retry when max request attempts is one with backoff",
+			config:                dynamic.Retry{Attempts: 1, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
 			wantRetryAttempts:     0,
 			wantResponseStatus:    http.StatusBadGateway,
 			amountFaultyEndpoints: 1,
@@ -50,6 +66,13 @@ func TestRetry(t *testing.T) {
 			amountFaultyEndpoints: 1,
 		},
 		{
+			desc:                  "one retry when one server is faulty with backoff",
+			config:                dynamic.Retry{Attempts: 2, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
+			wantRetryAttempts:     1,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 1,
+		},
+		{
 			desc:                  "two retries when two servers are faulty",
 			config:                dynamic.Retry{Attempts: 3},
 			wantRetryAttempts:     2,
@@ -57,8 +80,22 @@ func TestRetry(t *testing.T) {
 			amountFaultyEndpoints: 2,
 		},
 		{
+			desc:                  "two retries when two servers are faulty with backoff",
+			config:                dynamic.Retry{Attempts: 3, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
+			wantRetryAttempts:     2,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 2,
+		},
+		{
 			desc:                  "max attempts exhausted delivers the 5xx response",
 			config:                dynamic.Retry{Attempts: 3},
+			wantRetryAttempts:     2,
+			wantResponseStatus:    http.StatusBadGateway,
+			amountFaultyEndpoints: 3,
+		},
+		{
+			desc:                  "max attempts exhausted delivers the 5xx response with backoff",
+			config:                dynamic.Retry{Attempts: 3, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
 			wantRetryAttempts:     2,
 			wantResponseStatus:    http.StatusBadGateway,
 			amountFaultyEndpoints: 3,

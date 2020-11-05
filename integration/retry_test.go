@@ -34,10 +34,41 @@ func (s *RetrySuite) TestRetry(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
 	c.Assert(err, checker.IsNil)
 
+	start := time.Now()
 	// This simulates a DialTimeout when connecting to the backend server.
 	response, err := http.Get("http://127.0.0.1:8000/")
+	duration, allowed := time.Since(start), time.Millisecond*250
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+	c.Assert(int64(duration), checker.LessThan, int64(allowed))
+}
+
+func (s *RetrySuite) TestRetryBackoff(c *check.C) {
+	whoamiEndpoint := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	file := s.adaptFile(c, "fixtures/retry/backoff.toml", struct {
+		WhoamiEndpoint string
+	}{whoamiEndpoint})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("PathPrefix(`/`)"))
+	c.Assert(err, checker.IsNil)
+
+	start := time.Now()
+	// This simulates a DialTimeout when connecting to the backend server.
+	response, err := http.Get("http://127.0.0.1:8000/")
+	duration := time.Since(start)
+	// test case delays: 500 + 700 + 1000ms with randomization.  It should be safely > 1500ms
+	minAllowed := time.Millisecond * 1500
+
+	c.Assert(err, checker.IsNil)
+	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+	c.Assert(int64(duration), checker.GreaterThan, int64(minAllowed))
 }
 
 func (s *RetrySuite) TestRetryWebsocket(c *check.C) {
