@@ -122,7 +122,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware15.replacepathregex.regex":                             "foobar",
 		"traefik.http.middlewares.Middleware15.replacepathregex.replacement":                       "foobar",
 		"traefik.http.middlewares.Middleware16.retry.attempts":                                     "42",
-		"traefik.http.middlewares.Middleware16.retry.initialInterval":                              "1s",
+		"traefik.http.middlewares.Middleware16.retry.initialinterval":                              "1s",
 		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":                               "foobar, fiibar",
 		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":                             "foobar, fiibar",
 		"traefik.http.middlewares.Middleware19.compress":                                           "true",
