@@ -11,9 +11,9 @@ import (
 	"sync"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
-	"github.com/go-kit/kit/metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/metrics/registry"
 	"github.com/traefik/traefik/v2/pkg/tls/generate"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -29,16 +29,17 @@ type Manager struct {
 	certs        []*CertAndStores
 	lock         sync.RWMutex
 
-	tlsCertsNotAfterTimestampGauge metrics.Gauge
+	metricsRegistry registry.Registry
 }
 
 // NewManager creates a new Manager.
-func NewManager() *Manager {
+func NewManager(metricsRegistry registry.Registry) *Manager {
 	return &Manager{
 		stores: map[string]*CertificateStore{},
 		configs: map[string]Options{
 			"default": DefaultTLSOptions,
 		},
+		metricsRegistry: metricsRegistry,
 	}
 }
 
@@ -83,12 +84,6 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		m.getStore(storeName).DynamicCerts.Set(certs)
 		m.updateMetrics(&certs)
 	}
-}
-
-// SetTLSCertsNotAfterTimestampGauge is used to provide a Gauge that will holds
-// certs NotAfter timestamps.
-func (m *Manager) SetTLSCertsNotAfterTimestampGauge(gauge metrics.Gauge) {
-	m.tlsCertsNotAfterTimestampGauge = gauge
 }
 
 // Get gets the TLS configuration to use for a given store / configuration.
@@ -146,7 +141,8 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 
 // updateMetrics produce metrics for a given *map[string]*tls.Certificate which must not be nil.
 func (m *Manager) updateMetrics(certs *map[string]*tls.Certificate) {
-	if m.tlsCertsNotAfterTimestampGauge != nil {
+	tlsNotAfter := m.metricsRegistry.TLSCertsNotAfterTimestampGauge()
+	if tlsNotAfter != nil {
 		for _, cert := range *certs {
 			// We iterate over all the certificates, even the ones for the CA chain
 			for i := range cert.Certificate {
@@ -167,7 +163,7 @@ func (m *Manager) updateMetrics(certs *map[string]*tls.Certificate) {
 					"sans", SANs,
 				}
 
-				m.tlsCertsNotAfterTimestampGauge.With(labels...).Set(float64(x509Cert.NotAfter.Unix()))
+				tlsNotAfter.With(labels...).Set(float64(x509Cert.NotAfter.Unix()))
 			}
 		}
 	}

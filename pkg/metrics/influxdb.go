@@ -14,6 +14,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v2/pkg/metrics/registry"
 )
 
 var influxDBClient *influx.Influx
@@ -46,7 +47,7 @@ const (
 )
 
 // RegisterInfluxDB registers the metrics pusher if this didn't happen yet and creates a InfluxDB Registry instance.
-func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
+func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) registry.Registry {
 	if influxDBClient == nil {
 		influxDBClient = initInfluxDBClient(ctx, config)
 	}

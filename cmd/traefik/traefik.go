@@ -27,6 +27,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
+	"github.com/traefik/traefik/v2/pkg/metrics/registry"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/pilot"
 	"github.com/traefik/traefik/v2/pkg/provider/acme"
@@ -234,7 +235,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		metricRegistries = append(metricRegistries, pilotRegistry)
 	}
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
-	tlsManager.SetTLSCertsNotAfterTimestampGauge(metricsRegistry.TLSCertsNotAfterTimestampGauge())
 
 	// Service manager factory
 
@@ -393,12 +393,12 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 	return resolvers
 }
 
-func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
+func registerMetricClients(metricsConfig *types.Metrics) []registry.Registry {
 	if metricsConfig == nil {
 		return nil
 	}
 
-	var registries []metrics.Registry
+	var registries []registry.Registry
 
 	if metricsConfig.Prometheus != nil {
 		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "prometheus"))

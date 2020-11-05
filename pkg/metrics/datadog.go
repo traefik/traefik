@@ -9,6 +9,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v2/pkg/metrics/registry"
 )
 
 var datadogClient = dogstatsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
@@ -35,7 +36,7 @@ const (
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
-func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
+func RegisterDatadog(ctx context.Context, config *types.Datadog) registry.Registry {
 	if datadogTicker == nil {
 		datadogTicker = initDatadogClient(ctx, config)
 	}
