@@ -7,6 +7,7 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"path/filepath"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/traefik/yaegi/interp"
@@ -52,8 +53,13 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, devPlugin *DevPlu
 
 		i := interp.New(interp.Options{GoPath: client.GoPath()})
 		i.Use(stdlib.Symbols)
-
-		_, err = i.Eval(fmt.Sprintf(`import "%s"`, manifest.Import))
+		var importPath string
+		if client.private == true {
+		    importPath = filepath.Base(manifest.Import)
+		} else {
+		    importPath = manifest.Import
+		}
+	        _, err = i.Eval(fmt.Sprintf(`import "%s"`, importPath))
 		if err != nil {
 			return nil, fmt.Errorf("%s: failed to import plugin code %q: %w", desc.ModuleName, manifest.Import, err)
 		}

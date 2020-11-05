@@ -41,6 +41,8 @@ const (
 type ClientOptions struct {
 	Output string
 	Token  string
+	RepoUrl string
+	Private bool
 }
 
 // Client a Traefik Pilot client.
@@ -53,11 +55,12 @@ type Client struct {
 	stateFile string
 	goPath    string
 	sources   string
+	private   bool
 }
 
 // NewClient creates a new Traefik Pilot client.
 func NewClient(opts ClientOptions) (*Client, error) {
-	baseURL, err := url.Parse(pilotURL)
+	baseURL, err := url.Parse(opts.RepoUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -90,6 +93,7 @@ func NewClient(opts ClientOptions) (*Client, error) {
 		sources: filepath.Join(goPath, goPathSrc),
 
 		token: opts.Token,
+		private: opts.Private,
 	}, nil
 }
 
@@ -139,8 +143,13 @@ func (c *Client) Download(ctx context.Context, pName, pVersion string) (string, 
 			return "", fmt.Errorf("failed to compute hash: %w", err)
 		}
 	}
-
-	endpoint, err := c.baseURL.Parse(path.Join(c.baseURL.Path, "download", pName, pVersion))
+	var pluginUrl string
+	if c.private == true {
+	    pluginUrl = path.Join(c.baseURL.Path, pName, pVersion)
+	} else {
+	    pluginUrl = path.Join(c.baseURL.Path, "download", pName, pVersion)
+	}
+        endpoint, err := c.baseURL.Parse(pluginUrl)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse endpoint URL: %w", err)
 	}
@@ -203,6 +212,9 @@ func (c *Client) Download(ctx context.Context, pName, pVersion string) (string, 
 
 // Check checks the plugin archive integrity.
 func (c *Client) Check(ctx context.Context, pName, pVersion, hash string) error {
+	if c.private == true {
+	    return nil
+	}
 	endpoint, err := c.baseURL.Parse(path.Join(c.baseURL.Path, "validate", pName, pVersion))
 	if err != nil {
 		return fmt.Errorf("failed to parse endpoint URL: %w", err)
