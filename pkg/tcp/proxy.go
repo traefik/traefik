@@ -11,28 +11,35 @@ import (
 // Proxy forwards a TCP request to a TCP service.
 type Proxy struct {
 	address          string
+	target           *net.TCPAddr
 	terminationDelay time.Duration
 }
 
 // NewProxy creates a new Proxy.
 func NewProxy(address string, terminationDelay time.Duration) (*Proxy, error) {
-	return &Proxy{address: address, terminationDelay: terminationDelay}, nil
+	return &Proxy{
+		address:          address,
+		terminationDelay: terminationDelay,
+	}, nil
 }
 
 // ServeTCP forwards the connection to a service.
 func (p *Proxy) ServeTCP(conn WriteCloser) {
 	log.Debugf("Handling connection from %s", conn.RemoteAddr())
 
-	tcpAddr, err := net.ResolveTCPAddr("tcp", p.address)
-	if err != nil {
-		log.Errorf("Error resolving tcp address: %v", err)
-		return
-	}
-
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
 
-	connBackend, err := net.DialTCP("tcp", nil, tcpAddr)
+	if p.target == nil || p.targetIsHostname() {
+		tcpAddr, err := net.ResolveTCPAddr("tcp", p.address)
+		if err != nil {
+			log.Errorf("Error resolving tcp address: %v", err)
+			return
+		}
+		p.target = tcpAddr
+	}
+
+	connBackend, err := net.DialTCP("tcp", nil, p.target)
 	if err != nil {
 		log.Errorf("Error while connection to backend: %v", err)
 		return
@@ -51,6 +58,13 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	}
 
 	<-errChan
+}
+
+func (p Proxy) targetIsHostname() bool {
+	if host, _, err := net.SplitHostPort(p.address); err == nil {
+		return net.ParseIP(host) == nil
+	}
+	return false
 }
 
 func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
