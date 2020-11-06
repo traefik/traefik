@@ -1,6 +1,7 @@
 package udp
 
 import (
+	"errors"
 	"io"
 	"net"
 	"testing"
@@ -24,7 +25,7 @@ func TestConsecutiveWrites(t *testing.T) {
 	go func() {
 		for {
 			conn, err := ln.Accept()
-			if err == errClosedListener {
+			if errors.Is(err, errClosedListener) {
 				return
 			}
 			require.NoError(t, err)
@@ -86,7 +87,7 @@ func TestListenNotBlocking(t *testing.T) {
 	go func() {
 		for {
 			conn, err := ln.Accept()
-			if err == errClosedListener {
+			if errors.Is(err, errClosedListener) {
 				return
 			}
 			require.NoError(t, err)
@@ -183,7 +184,7 @@ func testTimeout(t *testing.T, withRead bool) {
 	go func() {
 		for {
 			conn, err := ln.Accept()
-			if err == errClosedListener {
+			if errors.Is(err, errClosedListener) {
 				return
 			}
 			require.NoError(t, err)

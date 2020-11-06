@@ -3,6 +3,7 @@ package service
 import (
 	"bufio"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -49,12 +50,13 @@ func TestWebSocketTCPClose(t *testing.T) {
 		withPath("/ws"),
 	).open()
 	require.NoError(t, err)
+
 	conn.Close()
 
 	serverErr := <-errChan
 
-	wsErr, ok := serverErr.(*gorillawebsocket.CloseError)
-	assert.Equal(t, true, ok)
+	var wsErr *gorillawebsocket.CloseError
+	require.True(t, errors.As(serverErr, &wsErr))
 	assert.Equal(t, 1006, wsErr.Code)
 }
 
@@ -119,7 +121,7 @@ func TestWebSocketPingPong(t *testing.T) {
 
 	_, _, err = conn.ReadMessage()
 
-	if err != goodErr {
+	if !errors.Is(err, goodErr) {
 		require.NoError(t, err)
 	}
 }

@@ -54,7 +54,10 @@
     "nestif", # Too many false-positive.
     "noctx", # Too strict
     "exhaustive", # Too strict
-    "nlreturn", # Too strict
+    "nlreturn", # Not relevant
+    "wrapcheck", # Too strict
+    "tparallel", # Not relevant
+    "exhaustivestruct", # Not relevant
   ]
 
 [issues]

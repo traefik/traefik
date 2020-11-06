@@ -81,13 +81,13 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	logger := log.FromContext(req.Context())
 	rr, bytesRead, err := newReusableRequest(req, m.maxBodySize)
-	if err != nil && err != errBodyTooLarge {
+	if err != nil && !errors.Is(err, errBodyTooLarge) {
 		http.Error(rw, http.StatusText(http.StatusInternalServerError)+
 			fmt.Sprintf("error creating reusable request: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	if err == errBodyTooLarge {
+	if errors.Is(err, errBodyTooLarge) {
 		req.Body = ioutil.NopCloser(io.MultiReader(bytes.NewReader(bytesRead), req.Body))
 		m.handler.ServeHTTP(rw, req)
 		logger.Debugf("no mirroring, request body larger than allowed size")
@@ -196,13 +196,13 @@ func newReusableRequest(req *http.Request, maxBodySize int64) (*reusableRequest,
 	// the request body is larger than what we allow for the mirrors.
 	body := make([]byte, maxBodySize+1)
 	n, err := io.ReadFull(req.Body, body)
-	if err != nil && err != io.ErrUnexpectedEOF {
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
 		return nil, nil, err
 	}
 
 	// we got an ErrUnexpectedEOF, which means there was less than maxBodySize data to read,
 	// which permits us sending also to all the mirrors later.
-	if err == io.ErrUnexpectedEOF {
+	if errors.Is(err, io.ErrUnexpectedEOF) {
 		return &reusableRequest{
 			req:  req,
 			body: body[:n],
