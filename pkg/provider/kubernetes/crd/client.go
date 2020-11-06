@@ -17,7 +17,6 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -149,20 +148,27 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrappe
 // WatchAll starts namespace-specific controllers for all relevant kinds.
 func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
-	eventHandler := c.newResourceEventHandler(eventCh)
+	eventHandler := &resourceEventHandler{ev: eventCh}
 
 	if len(namespaces) == 0 {
 		namespaces = []string{metav1.NamespaceAll}
 		c.isNamespaceAll = true
 	}
+
 	c.watchedNamespaces = namespaces
 
 	notOwnedByHelm := func(opts *metav1.ListOptions) {
 		opts.LabelSelector = "owner!=helm"
 	}
 
+	listOptions := func(options *metav1.ListOptions) {
+		if len(namespaces) != 0 {
+			options.LabelSelector = c.labelSelector.String()
+		}
+	}
+
 	for _, ns := range namespaces {
-		factoryCrd := externalversions.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod, externalversions.WithNamespace(ns))
+		factoryCrd := externalversions.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod, externalversions.WithNamespace(ns), externalversions.WithTweakListOptions(listOptions))
 		factoryCrd.Traefik().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().Middlewares().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().IngressRouteTCPs().Informer().AddEventHandler(eventHandler)
@@ -172,7 +178,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryCrd.Traefik().V1alpha1().TraefikServices().Informer().AddEventHandler(eventHandler)
 
 		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, informers.WithNamespace(ns))
-		factoryKube.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
 
@@ -217,7 +222,7 @@ func (c *clientWrapper) GetIngressRoutes() []*v1alpha1.IngressRoute {
 	var result []*v1alpha1.IngressRoute
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().IngressRoutes().Lister().List(c.labelSelector)
+		ings, err := factory.Traefik().V1alpha1().IngressRoutes().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list ingress routes in namespace %s: %v", ns, err)
 		}
@@ -231,7 +236,7 @@ func (c *clientWrapper) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
 	var result []*v1alpha1.IngressRouteTCP
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().IngressRouteTCPs().Lister().List(c.labelSelector)
+		ings, err := factory.Traefik().V1alpha1().IngressRouteTCPs().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list tcp ingress routes in namespace %s: %v", ns, err)
 		}
@@ -245,7 +250,7 @@ func (c *clientWrapper) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
 	var result []*v1alpha1.IngressRouteUDP
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().IngressRouteUDPs().Lister().List(c.labelSelector)
+		ings, err := factory.Traefik().V1alpha1().IngressRouteUDPs().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list udp ingress routes in namespace %s: %v", ns, err)
 		}
@@ -259,7 +264,7 @@ func (c *clientWrapper) GetMiddlewares() []*v1alpha1.Middleware {
 	var result []*v1alpha1.Middleware
 
 	for ns, factory := range c.factoriesCrd {
-		middlewares, err := factory.Traefik().V1alpha1().Middlewares().Lister().List(c.labelSelector)
+		middlewares, err := factory.Traefik().V1alpha1().Middlewares().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list middlewares in namespace %s: %v", ns, err)
 		}
@@ -285,7 +290,7 @@ func (c *clientWrapper) GetTraefikServices() []*v1alpha1.TraefikService {
 	var result []*v1alpha1.TraefikService
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().TraefikServices().Lister().List(c.labelSelector)
+		ings, err := factory.Traefik().V1alpha1().TraefikServices().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list Traefik services in namespace %s: %v", ns, err)
 		}
@@ -300,7 +305,7 @@ func (c *clientWrapper) GetTLSOptions() []*v1alpha1.TLSOption {
 	var result []*v1alpha1.TLSOption
 
 	for ns, factory := range c.factoriesCrd {
-		options, err := factory.Traefik().V1alpha1().TLSOptions().Lister().List(c.labelSelector)
+		options, err := factory.Traefik().V1alpha1().TLSOptions().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list tls options in namespace %s: %v", ns, err)
 		}
@@ -315,7 +320,7 @@ func (c *clientWrapper) GetTLSStores() []*v1alpha1.TLSStore {
 	var result []*v1alpha1.TLSStore
 
 	for ns, factory := range c.factoriesCrd {
-		stores, err := factory.Traefik().V1alpha1().TLSStores().Lister().List(c.labelSelector)
+		stores, err := factory.Traefik().V1alpha1().TLSStores().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list tls stores in namespace %s: %v", ns, err)
 		}
@@ -369,31 +374,6 @@ func (c *clientWrapper) lookupNamespace(ns string) string {
 		return metav1.NamespaceAll
 	}
 	return ns
-}
-
-func (c *clientWrapper) newResourceEventHandler(events chan<- interface{}) cache.ResourceEventHandler {
-	return &cache.FilteringResourceEventHandler{
-		FilterFunc: func(obj interface{}) bool {
-			// Ignore Ingresses that do not match our custom label selector.
-			switch v := obj.(type) {
-			case *v1alpha1.IngressRoute:
-				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
-			case *v1alpha1.IngressRouteTCP:
-				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
-			case *v1alpha1.TraefikService:
-				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
-			case *v1alpha1.TLSOption:
-				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
-			case *v1alpha1.TLSStore:
-				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
-			case *v1alpha1.Middleware:
-				return c.labelSelector.Matches(labels.Set(v.GetLabels()))
-			default:
-				return true
-			}
-		},
-		Handler: &resourceEventHandler{ev: events},
-	}
 }
 
 // eventHandlerFunc will pass the obj on to the events channel or drop it.

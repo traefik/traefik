@@ -1,0 +1,19 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[api]
+
+[entryPoints]
+  [entryPoints.footcp]
+    address = ":8093"
+  [entryPoints.fooudp]
+    address = ":8090/udp"
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.kubernetesCRD]
+  labelSelector = "app=traefik"
