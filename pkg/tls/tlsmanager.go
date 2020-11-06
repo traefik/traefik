@@ -11,9 +11,9 @@ import (
 	"sync"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/go-kit/kit/metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/metrics/registry"
 	"github.com/traefik/traefik/v2/pkg/tls/generate"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -29,11 +29,16 @@ type Manager struct {
 	certs        []*CertAndStores
 	lock         sync.RWMutex
 
-	metricsRegistry registry.Registry
+	metricsRegistry Registry
+}
+
+// Registry interface which defines the subset of methods needed in this package
+type Registry interface {
+	TLSCertsNotAfterTimestampGauge() metrics.Gauge
 }
 
 // NewManager creates a new Manager.
-func NewManager(metricsRegistry registry.Registry) *Manager {
+func NewManager(metricsRegistry Registry) *Manager {
 	return &Manager{
 		stores: map[string]*CertificateStore{},
 		configs: map[string]Options{

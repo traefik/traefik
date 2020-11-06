@@ -10,8 +10,6 @@ import (
 	"github.com/go-kit/kit/metrics/generic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/traefik/traefik/v2/pkg/metrics/registry"
 )
 
 func TestScalableHistogram(t *testing.T) {
@@ -36,7 +34,7 @@ func TestScalableHistogram(t *testing.T) {
 }
 
 func TestNewMultiRegistry(t *testing.T) {
-	registries := []registry.Registry{newCollectingRetryMetrics(), newCollectingRetryMetrics()}
+	registries := []Registry{newCollectingRetryMetrics(), newCollectingRetryMetrics()}
 	registry := NewMultiRegistry(registries)
 
 	registry.ServiceReqsCounter().With("key", "requests").Add(1)
@@ -67,7 +65,7 @@ func TestNewMultiRegistry(t *testing.T) {
 	}
 }
 
-func newCollectingRetryMetrics() registry.Registry {
+func newCollectingRetryMetrics() Registry {
 	return &standardRegistry{
 		serviceReqsCounter:          &counterMock{},
 		serviceReqDurationHistogram: &histogramMock{},
@@ -94,7 +92,7 @@ type histogramMock struct {
 	lastLabelValues    []string
 }
 
-func (c *histogramMock) With(labelValues ...string) registry.ScalableHistogram {
+func (c *histogramMock) With(labelValues ...string) ScalableHistogram {
 	c.lastLabelValues = labelValues
 	return c
 }

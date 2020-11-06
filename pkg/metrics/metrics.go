@@ -6,20 +6,49 @@ import (
 
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/multi"
-
-	"github.com/traefik/traefik/v2/pkg/metrics/registry"
 )
+
+// Registry has to implemented by any system that wants to monitor and expose metrics.
+type Registry interface {
+	// IsEpEnabled shows whether metrics instrumentation is enabled on entry points.
+	IsEpEnabled() bool
+	// IsSvcEnabled shows whether metrics instrumentation is enabled on services.
+	IsSvcEnabled() bool
+
+	// server metrics
+	ConfigReloadsCounter() metrics.Counter
+	ConfigReloadsFailureCounter() metrics.Counter
+	LastConfigReloadSuccessGauge() metrics.Gauge
+	LastConfigReloadFailureGauge() metrics.Gauge
+
+	// TLS
+	TLSCertsNotAfterTimestampGauge() metrics.Gauge
+
+	// entry point metrics
+	EntryPointReqsCounter() metrics.Counter
+	EntryPointReqsTLSCounter() metrics.Counter
+	EntryPointReqDurationHistogram() ScalableHistogram
+	EntryPointOpenConnsGauge() metrics.Gauge
+
+	// service metrics
+	ServiceReqsCounter() metrics.Counter
+	ServiceReqsTLSCounter() metrics.Counter
+	ServiceReqDurationHistogram() ScalableHistogram
+	ServiceOpenConnsGauge() metrics.Gauge
+	ServiceRetriesCounter() metrics.Counter
+	ServiceServerUpGauge() metrics.Gauge
+}
 
 // NewVoidRegistry is a noop implementation of metrics.Registry.
 // It is used to avoid nil checking in components that do metric collections.
-func NewVoidRegistry() registry.Registry {
-	return NewMultiRegistry([]registry.Registry{})
+func NewVoidRegistry() Registry {
+	return NewMultiRegistry([]Registry{})
 }
 
-// NewMultiRegistry is an implementation of registry.Registry that wraps multiple registries.
+// NewMultiRegistry is an implementation of metrics.Registry that wraps multiple registries.
 // It handles the case when a registry hasn't registered some metric and returns nil.
 // This allows for feature imparity between the different metric implementations.
-func NewMultiRegistry(registries []registry.Registry) registry.Registry {
+func NewMultiRegistry(registries []Registry) Registry {
 	var configReloadsCounter []metrics.Counter
 	var configReloadsFailureCounter []metrics.Counter
 	var lastConfigReloadSuccessGauge []metrics.Gauge
@@ -27,11 +56,11 @@ func NewMultiRegistry(registries []registry.Registry) registry.Registry {
 	var tlsCertsNotAfterTimestampGauge []metrics.Gauge
 	var entryPointReqsCounter []metrics.Counter
 	var entryPointReqsTLSCounter []metrics.Counter
-	var entryPointReqDurationHistogram []registry.ScalableHistogram
+	var entryPointReqDurationHistogram []ScalableHistogram
 	var entryPointOpenConnsGauge []metrics.Gauge
 	var serviceReqsCounter []metrics.Counter
 	var serviceReqsTLSCounter []metrics.Counter
-	var serviceReqDurationHistogram []registry.ScalableHistogram
+	var serviceReqDurationHistogram []ScalableHistogram
 	var serviceOpenConnsGauge []metrics.Gauge
 	var serviceRetriesCounter []metrics.Counter
 	var serviceServerUpGauge []metrics.Gauge
@@ -115,11 +144,11 @@ type standardRegistry struct {
 	tlsCertsNotAfterTimestampGauge metrics.Gauge
 	entryPointReqsCounter          metrics.Counter
 	entryPointReqsTLSCounter       metrics.Counter
-	entryPointReqDurationHistogram registry.ScalableHistogram
+	entryPointReqDurationHistogram ScalableHistogram
 	entryPointOpenConnsGauge       metrics.Gauge
 	serviceReqsCounter             metrics.Counter
 	serviceReqsTLSCounter          metrics.Counter
-	serviceReqDurationHistogram    registry.ScalableHistogram
+	serviceReqDurationHistogram    ScalableHistogram
 	serviceOpenConnsGauge          metrics.Gauge
 	serviceRetriesCounter          metrics.Counter
 	serviceServerUpGauge           metrics.Gauge
@@ -161,7 +190,7 @@ func (r *standardRegistry) EntryPointReqsTLSCounter() metrics.Counter {
 	return r.entryPointReqsTLSCounter
 }
 
-func (r *standardRegistry) EntryPointReqDurationHistogram() registry.ScalableHistogram {
+func (r *standardRegistry) EntryPointReqDurationHistogram() ScalableHistogram {
 	return r.entryPointReqDurationHistogram
 }
 
@@ -177,7 +206,7 @@ func (r *standardRegistry) ServiceReqsTLSCounter() metrics.Counter {
 	return r.serviceReqsTLSCounter
 }
 
-func (r *standardRegistry) ServiceReqDurationHistogram() registry.ScalableHistogram {
+func (r *standardRegistry) ServiceReqDurationHistogram() ScalableHistogram {
 	return r.serviceReqDurationHistogram
 }
 
@@ -193,19 +222,27 @@ func (r *standardRegistry) ServiceServerUpGauge() metrics.Gauge {
 	return r.serviceServerUpGauge
 }
 
+// ScalableHistogram is a Histogram with a predefined time unit,
+// used when producing observations without explicitly setting the observed value.
+type ScalableHistogram interface {
+	With(labelValues ...string) ScalableHistogram
+	Observe(v float64)
+	ObserveFromStart(start time.Time)
+}
+
 // HistogramWithScale is a histogram that will convert its observed value to the specified unit.
 type HistogramWithScale struct {
 	histogram metrics.Histogram
 	unit      time.Duration
 }
 
-// With implements registry.ScalableHistogram.
-func (s *HistogramWithScale) With(labelValues ...string) registry.ScalableHistogram {
+// With implements ScalableHistogram.
+func (s *HistogramWithScale) With(labelValues ...string) ScalableHistogram {
 	h, _ := NewHistogramWithScale(s.histogram.With(labelValues...), s.unit)
 	return h
 }
 
-// ObserveFromStart implements registry.ScalableHistogram.
+// ObserveFromStart implements ScalableHistogram.
 func (s *HistogramWithScale) ObserveFromStart(start time.Time) {
 	if s.unit <= 0 {
 		return
@@ -218,13 +255,13 @@ func (s *HistogramWithScale) ObserveFromStart(start time.Time) {
 	s.histogram.Observe(d)
 }
 
-// Observe implements registry.ScalableHistogram.
+// Observe implements ScalableHistogram.
 func (s *HistogramWithScale) Observe(v float64) {
 	s.histogram.Observe(v)
 }
 
-// NewHistogramWithScale returns a registry.ScalableHistogram. It returns an error if the given unit is <= 0.
-func NewHistogramWithScale(histogram metrics.Histogram, unit time.Duration) (registry.ScalableHistogram, error) {
+// NewHistogramWithScale returns a ScalableHistogram. It returns an error if the given unit is <= 0.
+func NewHistogramWithScale(histogram metrics.Histogram, unit time.Duration) (ScalableHistogram, error) {
 	if unit <= 0 {
 		return nil, errors.New("invalid time unit")
 	}
@@ -235,29 +272,29 @@ func NewHistogramWithScale(histogram metrics.Histogram, unit time.Duration) (reg
 }
 
 // MultiHistogram collects multiple individual histograms and treats them as a unit.
-type MultiHistogram []registry.ScalableHistogram
+type MultiHistogram []ScalableHistogram
 
 // NewMultiHistogram returns a multi-histogram, wrapping the passed histograms.
-func NewMultiHistogram(h ...registry.ScalableHistogram) MultiHistogram {
+func NewMultiHistogram(h ...ScalableHistogram) MultiHistogram {
 	return MultiHistogram(h)
 }
 
-// ObserveFromStart implements registry.ScalableHistogram.
+// ObserveFromStart implements ScalableHistogram.
 func (h MultiHistogram) ObserveFromStart(start time.Time) {
 	for _, histogram := range h {
 		histogram.ObserveFromStart(start)
 	}
 }
 
-// Observe implements registry.ScalableHistogram.
+// Observe implements ScalableHistogram.
 func (h MultiHistogram) Observe(v float64) {
 	for _, histogram := range h {
 		histogram.Observe(v)
 	}
 }
 
-// With implements registry.ScalableHistogram.
-func (h MultiHistogram) With(labelValues ...string) registry.ScalableHistogram {
+// With implements ScalableHistogram.
+func (h MultiHistogram) With(labelValues ...string) ScalableHistogram {
 	next := make(MultiHistogram, len(h))
 	for i := range h {
 		next[i] = h[i].With(labelValues...)

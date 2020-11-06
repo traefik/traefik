@@ -14,7 +14,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/metrics/registry"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -76,7 +75,7 @@ func PrometheusHandler() http.Handler {
 
 // RegisterPrometheus registers all Prometheus metrics.
 // It must be called only once and failing to register the metrics will lead to a panic.
-func RegisterPrometheus(ctx context.Context, config *types.Prometheus) registry.Registry {
+func RegisterPrometheus(ctx context.Context, config *types.Prometheus) Registry {
 	standardRegistry := initStandardRegistry(config)
 
 	if err := promRegistry.Register(stdprometheus.NewProcessCollector(stdprometheus.ProcessCollectorOpts{})); err != nil {
@@ -100,7 +99,7 @@ func RegisterPrometheus(ctx context.Context, config *types.Prometheus) registry.
 	return standardRegistry
 }
 
-func initStandardRegistry(config *types.Prometheus) registry.Registry {
+func initStandardRegistry(config *types.Prometheus) Registry {
 	buckets := []float64{0.1, 0.3, 1.2, 5.0}
 	if config.Buckets != nil {
 		buckets = config.Buckets

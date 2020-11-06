@@ -7,7 +7,6 @@ import (
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/statsd"
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/metrics/registry"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -34,7 +33,7 @@ const (
 )
 
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
-func RegisterStatsd(ctx context.Context, config *types.Statsd) registry.Registry {
+func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 	// just to be sure there is a prefix defined
 	if config.Prefix == "" {
 		config.Prefix = "traefik"
