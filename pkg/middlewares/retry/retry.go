@@ -41,7 +41,7 @@ type Listeners []Listener
 // nexter returns the duration to wait before retrying the operation.
 type nexter interface {
 	NextBackOff() time.Duration
-	Reset() // note for PR: needed for passing it in as a backoff.Backoff to backoff.RetryNotify()
+	Reset()
 }
 
 // retry is a middleware that retries requests.
@@ -119,7 +119,6 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		r.listener.Retried(req, attempts)
 	}
 
-	// can throw away final error since that is effectively what happens today?
 	backoff.RetryNotify(safe.OperationWithRecover(operation), backOff, notify)
 }
 
