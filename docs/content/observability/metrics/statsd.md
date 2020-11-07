@@ -60,6 +60,28 @@ metrics:
 --metrics.statsd.addEntryPointsLabels=true
 ```
 
+#### `AddRoutersLabels`
+
+_Optional, Default=false_
+
+Enable metrics on entry points.
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.statsD]
+    AddRoutersLabels = true
+```
+
+```yaml tab="File (YAML)"
+metrics:
+  statsD:
+    AddRoutersLabels: true
+```
+
+```bash tab="CLI"
+--metrics.statsd.AddRoutersLabels=true
+```
+
 #### `addServicesLabels`
 
 _Optional, Default=true_

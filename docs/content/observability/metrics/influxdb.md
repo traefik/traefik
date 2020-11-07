@@ -170,6 +170,28 @@ metrics:
 --metrics.influxdb.addEntryPointsLabels=true
 ```
 
+#### `AddRoutersLabels`
+
+_Optional, Default=false_
+
+Enable metrics on routers.
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.influxDB]
+    AddRoutersLabels = true
+```
+
+```yaml tab="File (YAML)"
+metrics:
+  influxDB:
+    AddRoutersLabels: true
+```
+
+```bash tab="CLI"
+--metrics.influxdb.AddRoutersLabels=true
+```
+
 #### `addServicesLabels`
 
 _Optional, Default=true_
