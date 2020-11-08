@@ -109,7 +109,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		attempts++
 
-		return fmt.Errorf("retrying")
+		return fmt.Errorf("attempt %d failed", attempts-1)
 	}
 
 	notify := func(err error, d time.Duration) {
@@ -119,7 +119,11 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		r.listener.Retried(req, attempts)
 	}
 
-	backoff.RetryNotify(safe.OperationWithRecover(operation), backOff, notify)
+	err := backoff.RetryNotify(safe.OperationWithRecover(operation), backOff, notify)
+	if err != nil {
+		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
+			Debugf("Final retry attempt failed: %v", err.Error())
+	}
 }
 
 func (r *retry) newBackOff() nexter {
