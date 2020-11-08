@@ -24,9 +24,9 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that queries an HTTP(s) endpoint for a configuration.
 type Provider struct {
-	Endpoint              string           `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint" export:"true"`
-	PollInterval          ptypes.Duration  `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty"`
-	PollTimeout           ptypes.Duration  `description:"Polling timeout for endpoint." json:"pollTimeout,omitempty" toml:"pollTimeout,omitempty" yaml:"pollTimeout,omitempty"`
+	Endpoint              string           `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint"`
+	PollInterval          ptypes.Duration  `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty" export:"true"`
+	PollTimeout           ptypes.Duration  `description:"Polling timeout for endpoint." json:"pollTimeout,omitempty" toml:"pollTimeout,omitempty" yaml:"pollTimeout,omitempty" export:"true"`
 	TLS                   *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	httpClient            *http.Client
 	lastConfigurationHash uint64

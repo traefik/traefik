@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"time"
@@ -85,9 +86,9 @@ func (s *Server) Close() {
 
 	go func(ctx context.Context) {
 		<-ctx.Done()
-		if ctx.Err() == context.Canceled {
+		if errors.Is(ctx.Err(), context.Canceled) {
 			return
-		} else if ctx.Err() == context.DeadlineExceeded {
+		} else if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			panic("Timeout while stopping traefik, killing instance ✝")
 		}
 	}(ctx)

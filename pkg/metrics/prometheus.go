@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sort"
 	"strings"
@@ -74,12 +75,15 @@ func RegisterPrometheus(ctx context.Context, config *types.Prometheus) Registry 
 	standardRegistry := initStandardRegistry(config)
 
 	if err := promRegistry.Register(stdprometheus.NewProcessCollector(stdprometheus.ProcessCollectorOpts{})); err != nil {
-		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
+		var arErr stdprometheus.AlreadyRegisteredError
+		if !errors.As(err, &arErr) {
 			log.FromContext(ctx).Warn("ProcessCollector is already registered")
 		}
 	}
+
 	if err := promRegistry.Register(stdprometheus.NewGoCollector()); err != nil {
-		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
+		var arErr stdprometheus.AlreadyRegisteredError
+		if !errors.As(err, &arErr) {
 			log.FromContext(ctx).Warn("GoCollector is already registered")
 		}
 	}
@@ -212,15 +216,21 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 }
 
 func registerPromState(ctx context.Context) bool {
-	if err := promRegistry.Register(promState); err != nil {
-		logger := log.FromContext(ctx)
-		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
-			logger.Errorf("Unable to register Traefik to Prometheus: %v", err)
-			return false
-		}
-		logger.Debug("Prometheus collector already registered.")
+	err := promRegistry.Register(promState)
+	if err == nil {
+		return true
 	}
-	return true
+
+	logger := log.FromContext(ctx)
+
+	var arErr stdprometheus.AlreadyRegisteredError
+	if errors.As(err, &arErr) {
+		logger.Debug("Prometheus collector already registered.")
+		return true
+	}
+
+	logger.Errorf("Unable to register Traefik to Prometheus: %v", err)
+	return false
 }
 
 // OnConfigurationUpdate receives the current configuration from Traefik.

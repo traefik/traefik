@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -136,7 +137,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		redirectURL, err := forwardResponse.Location()
 
 		if err != nil {
-			if err != http.ErrNoLocation {
+			if !errors.Is(err, http.ErrNoLocation) {
 				logMessage := fmt.Sprintf("Error reading response location header %s. Cause: %s", fa.address, err)
 				logger.Debug(logMessage)
 				tracing.SetErrorWithEvent(req, logMessage)
