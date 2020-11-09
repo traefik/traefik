@@ -994,7 +994,15 @@ The `address` option (IP:Port) point to a specific instance.
 #### PROXY Protocol
 
 Traefik supports [PROXY Protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services.
-It can be enabled by setting `version` to "1" or "2".
+It can be enabled by setting `proxyProtocol` on the load balancer.
+
+Below are the available options for the PROXY protocol:
+
+- `version` specifies the version of the protocol to be used. Either `"1"` or `"2"`.
+
+!!! info "Version"
+
+   Specifying a version is optional. By default the version 2 will be used. 
 
 ??? example "A Service with Proxy Protocol v2 -- Using the [File Provider](../../providers/file.md)"
 
