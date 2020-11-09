@@ -1896,7 +1896,7 @@ func Test_buildConfiguration(t *testing.T) {
 						mState(ec2.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(8080, 80, "tcp"),
+							mPort(0, 80, "tcp"),
 						),
 					),
 				),
@@ -1928,7 +1928,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:8080",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -2495,14 +2495,14 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					labels(map[string]string{
 						"traefik.udp.routers.foo.entrypoints":                        "mydns",
-						"traefik.udp.services.foo.loadbalancer.server.port":          "80",
+						"traefik.udp.services.foo.loadbalancer.server.port":          "8080",
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(80, 8080, "tcp"),
+							mPort(0, 80, "tcp"),
 						),
 					),
 				),
@@ -2511,14 +2511,14 @@ func Test_buildConfiguration(t *testing.T) {
 					id("2"),
 					labels(map[string]string{
 						"traefik.udp.routers.foo.entrypoints":                        "mydns",
-						"traefik.udp.services.foo.loadbalancer.server.port":          "80",
+						"traefik.udp.services.foo.loadbalancer.server.port":          "8080",
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.2"),
 						mPorts(
-							mPort(80, 443, "tcp"),
+							mPort(0, 80, "tcp"),
 						),
 					),
 				),
@@ -2539,7 +2539,7 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:8080",
 									},
 									{
-										Address: "127.0.0.2:443",
+										Address: "127.0.0.2:8080",
 									},
 								},
 							},
@@ -2563,10 +2563,10 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:8080",
+										URL: "http://127.0.0.1:80",
 									},
 									{
-										URL: "http://127.0.0.2:443",
+										URL: "http://127.0.0.2:80",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -2588,7 +2588,7 @@ func Test_buildConfiguration(t *testing.T) {
 						mState(ec2.InstanceStateNameRunning),
 						mPrivateIP("127.0.0.1"),
 						mPorts(
-							mPort(8080, 80, "tcp"),
+							mPort(0, 80, "tcp"),
 						),
 					),
 				),
@@ -2601,7 +2601,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
-										Address: "127.0.0.1:80",
+										Address: "127.0.0.1:8080",
 									},
 								},
 							},
