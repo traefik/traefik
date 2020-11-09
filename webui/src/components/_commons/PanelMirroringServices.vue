@@ -21,7 +21,7 @@
             <div class="col-6">
               <q-chip
                 dense
-                class="app-chip app-chip-rule">
+                class="app-chip app-chip-rule app-chip-overflow">
                 {{ service.name }}
               </q-chip>
             </div>
