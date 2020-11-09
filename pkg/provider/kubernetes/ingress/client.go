@@ -63,7 +63,7 @@ type clientWrapper struct {
 	factoriesSecret      map[string]informers.SharedInformerFactory
 	factoriesIngress     map[string]informers.SharedInformerFactory
 	clusterFactory       informers.SharedInformerFactory
-	ingressLabelSelector labels.Selector
+	ingressLabelSelector string
 	isNamespaceAll       bool
 	watchedNamespaces    []string
 }
@@ -150,15 +150,12 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	listOptions := func(options *metav1.ListOptions) {
-		if len(namespaces) != 0 {
-			options.LabelSelector = c.ingressLabelSelector.String()
-		}
+		options.LabelSelector = c.ingressLabelSelector
 	}
 
 	for _, ns := range namespaces {
 		factoryIngress := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(listOptions))
 		factoryIngress.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
-		factoryIngress.Networking().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		c.factoriesIngress[ns] = factoryIngress
 
 		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns))
@@ -225,7 +222,7 @@ func (c *clientWrapper) GetIngresses() []*networkingv1beta1.Ingress {
 
 	for ns, factory := range c.factoriesIngress {
 		// extensions
-		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
+		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
 		}
@@ -240,7 +237,7 @@ func (c *clientWrapper) GetIngresses() []*networkingv1beta1.Ingress {
 		}
 
 		// networking
-		list, err := factory.Networking().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
+		list, err := factory.Networking().V1beta1().Ingresses().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
 		}

@@ -67,7 +67,7 @@ type clientWrapper struct {
 	factoriesKube   map[string]informers.SharedInformerFactory
 	factoriesSecret map[string]informers.SharedInformerFactory
 
-	labelSelector labels.Selector
+	labelSelector string
 
 	isNamespaceAll    bool
 	watchedNamespaces []string
@@ -162,9 +162,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	listOptions := func(options *metav1.ListOptions) {
-		if len(namespaces) != 0 {
-			options.LabelSelector = c.labelSelector.String()
-		}
+		options.LabelSelector = c.labelSelector
 	}
 
 	for _, ns := range namespaces {

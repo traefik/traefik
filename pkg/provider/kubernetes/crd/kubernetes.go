@@ -49,12 +49,12 @@ type Provider struct {
 	lastConfiguration      safe.Safe
 }
 
-func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*clientWrapper, error) {
-	labelSel, err := labels.Parse(labelSelector)
+func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
+	_, err := labels.Parse(p.LabelSelector)
 	if err != nil {
-		return nil, fmt.Errorf("invalid label selector: %q", labelSelector)
+		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
 	}
-	log.FromContext(ctx).Infof("label selector is: %q", labelSel)
+	log.FromContext(ctx).Infof("label selector is: %q", p.LabelSelector)
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
@@ -74,11 +74,12 @@ func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*cli
 		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
 
-	if err == nil {
-		client.labelSelector = labelSel
+	if err != nil {
+		return nil, err
 	}
 
-	return client, err
+	client.labelSelector = p.LabelSelector
+	return client, nil
 }
 
 // Init the provider.
@@ -92,8 +93,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, providerName))
 	logger := log.FromContext(ctxLog)
 
-	logger.Debugf("Using label selector: %q", p.LabelSelector)
-	k8sClient, err := p.newK8sClient(ctxLog, p.LabelSelector)
+	k8sClient, err := p.newK8sClient(ctxLog)
 	if err != nil {
 		return err
 	}
