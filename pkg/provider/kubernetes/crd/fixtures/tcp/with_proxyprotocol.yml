@@ -13,4 +13,5 @@ spec:
     services:
     - name: whoamitcp
       port: 8000
-      proxyProtocolVersion: "2"
+      proxyProtocol:
+        version: "2"

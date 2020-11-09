@@ -53,10 +53,12 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		}
 		duration := time.Duration(*conf.LoadBalancer.TerminationDelay) * time.Millisecond
 
-		switch conf.LoadBalancer.ProxyProtocolVersion {
-		case "", "1", "2":
-		default:
-			logger.Errorf("ProxyProtocol disabled: unknown ProxyProtocolVersion value: %s", conf.LoadBalancer.ProxyProtocolVersion)
+		if conf.LoadBalancer.ProxyProtocol != nil {
+			switch conf.LoadBalancer.ProxyProtocol.Version {
+			case "", "1", "2":
+			default:
+				logger.Errorf("ProxyProtocol disabled: unknown proxyProtocol.version value: %s", conf.LoadBalancer.ProxyProtocol.Version)
+			}
 		}
 
 		for name, server := range conf.LoadBalancer.Servers {
@@ -65,7 +67,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
-			handler, err := tcp.NewProxy(server.Address, duration, conf.LoadBalancer.ProxyProtocolVersion)
+			handler, err := tcp.NewProxy(server.Address, duration, conf.LoadBalancer.ProxyProtocol)
 			if err != nil {
 				logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
 				continue

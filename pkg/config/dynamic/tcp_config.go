@@ -65,6 +65,16 @@ type RouterTCPTLSConfig struct {
 
 // +k8s:deepcopy-gen=true
 
+// ProxyProtocol holds the ProxyProtocol configuration.
+type ProxyProtocol struct {
+	Version string `json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty"`
+}
+
+// SetDefaults Default values for a ProxyProtocol.
+func (p *ProxyProtocol) SetDefaults() {
+	p.Version = "2"
+}
+
 // TCPServersLoadBalancer holds the LoadBalancerService configuration.
 type TCPServersLoadBalancer struct {
 	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
@@ -72,9 +82,9 @@ type TCPServersLoadBalancer struct {
 	// connection, to close the reading capability as well, hence fully terminating the
 	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
 	// means an infinite deadline (i.e. the reading capability is never closed).
-	TerminationDelay     *int        `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty"`
-	ProxyProtocolVersion string      `json:"proxyProtocolVersion,omitempty" toml:"proxyProtocolVersion,omitempty" yaml:"proxyProtocolVersion,omitempty"`
-	Servers              []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
+	TerminationDelay *int           `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty"`
+	ProxyProtocol    *ProxyProtocol `json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty"`
+	Servers          []TCPServer    `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server"`
 }
 
 // SetDefaults Default values for a TCPServersLoadBalancer.

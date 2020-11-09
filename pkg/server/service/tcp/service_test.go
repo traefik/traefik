@@ -183,7 +183,7 @@ func TestManager_BuildTCP(t *testing.T) {
 									Address: "192.168.0.12:80",
 								},
 							},
-							ProxyProtocolVersion: "unknown",
+							ProxyProtocol: &dynamic.ProxyProtocol{Version: "unknown"},
 						},
 					},
 				},

@@ -387,7 +387,8 @@ tcp:
     TCPService01:
       loadBalancer:
         terminationDelay: 42
-        proxyProtocolVersion: foobar
+        proxyProtocol:
+          version: foobar
         servers:
         - address: foobar
         - address: foobar

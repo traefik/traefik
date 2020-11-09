@@ -2879,7 +2879,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "TCP with proxyProtocolVersion",
+			desc:  "TCP with proxyProtocol Version",
 			paths: []string{"tcp/services.yml", "tcp/with_proxyprotocol.yml"},
 			expected: &dynamic.Configuration{
 				TLS: &dynamic.TLSConfiguration{},
@@ -2908,7 +2908,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										Port:    "",
 									},
 								},
-								ProxyProtocolVersion: "2",
+								ProxyProtocol: &dynamic.ProxyProtocol{Version: "2"},
 							},
 						},
 					},

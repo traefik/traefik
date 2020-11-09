@@ -11,6 +11,7 @@ import (
 
 	"github.com/pires/go-proxyproto"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
 func fakeRedis(t *testing.T, listener net.Listener) {
@@ -48,7 +49,7 @@ func TestCloseWrite(t *testing.T) {
 	_, port, err := net.SplitHostPort(backendListener.Addr().String())
 	require.NoError(t, err)
 
-	proxy, err := NewProxy(":"+port, 10*time.Millisecond, "")
+	proxy, err := NewProxy(":"+port, 10*time.Millisecond, &dynamic.ProxyProtocol{Version: ""})
 	require.NoError(t, err)
 
 	proxyListener, err := net.Listen("tcp", ":0")
@@ -115,7 +116,7 @@ func TestProxyProtocol(t *testing.T) {
 			_, port, err := net.SplitHostPort(proxybackendListener.Addr().String())
 			require.NoError(t, err)
 
-			proxy, err := NewProxy(":"+port, 10*time.Millisecond, proxyprotocolversion)
+			proxy, err := NewProxy(":"+port, 10*time.Millisecond, &dynamic.ProxyProtocol{Version: proxyprotocolversion})
 			require.NoError(t, err)
 
 			proxyListener, err := net.Listen("tcp", ":0")

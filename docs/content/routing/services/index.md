@@ -994,7 +994,7 @@ The `address` option (IP:Port) point to a specific instance.
 #### ProxyProtocol
 
 Traefik supports [ProxyProtocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services.
-It can be enabled by setting `proxyProtocolVersion` to "1" or "2".
+It can be enabled by setting `version` to "1" or "2".
 
 ??? example "A Service with Proxy Protocol v2 -- Using the [File Provider](../../providers/file.md)"
 
@@ -1003,7 +1003,8 @@ It can be enabled by setting `proxyProtocolVersion` to "1" or "2".
     [tcp.services]
       [tcp.services.my-service.loadBalancer]
         [[tcp.services.my-service.loadBalancer]]
-          proxyProtocolVersion = "2"
+          [tcp.services.TCPService01.loadBalancer.proxyProtocol]
+            version = "2"
     ```
 
     ```yaml tab="YAML"
@@ -1012,7 +1013,8 @@ It can be enabled by setting `proxyProtocolVersion` to "1" or "2".
       services:
         my-service:
           loadBalancer:
-            proxyProtocolVersion: "2"
+            proxyProtocol:
+              version: "2"
     ```
 
 #### Termination Delay

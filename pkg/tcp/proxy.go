@@ -7,24 +7,25 @@ import (
 	"time"
 
 	"github.com/pires/go-proxyproto"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // Proxy forwards a TCP request to a TCP service.
 type Proxy struct {
-	target               *net.TCPAddr
-	terminationDelay     time.Duration
-	proxyProtocolVersion string
+	target           *net.TCPAddr
+	terminationDelay time.Duration
+	proxyProtocol    *dynamic.ProxyProtocol
 }
 
 // NewProxy creates a new Proxy.
-func NewProxy(address string, terminationDelay time.Duration, proxyProtocolVersion string) (*Proxy, error) {
+func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dynamic.ProxyProtocol) (*Proxy, error) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Proxy{target: tcpAddr, terminationDelay: terminationDelay, proxyProtocolVersion: proxyProtocolVersion}, nil
+	return &Proxy{target: tcpAddr, terminationDelay: terminationDelay, proxyProtocol: proxyProtocol}, nil
 }
 
 // ServeTCP forwards the connection to a service.
@@ -44,13 +45,15 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	defer connBackend.Close()
 	errChan := make(chan error)
 
-	switch p.proxyProtocolVersion {
-	case "1", "2":
-		version, _ := strconv.Atoi(p.proxyProtocolVersion)
-		header := proxyproto.HeaderProxyFromAddrs(byte(version), conn.RemoteAddr(), conn.LocalAddr())
-		if _, err := header.WriteTo(connBackend); err != nil {
-			log.Errorf("Error while writing proxy protocol headers to backend connection: %v", err)
-			return
+	if p.proxyProtocol != nil {
+		switch p.proxyProtocol.Version {
+		case "1", "2":
+			version, _ := strconv.Atoi(p.proxyProtocol.Version)
+			header := proxyproto.HeaderProxyFromAddrs(byte(version), conn.RemoteAddr(), conn.LocalAddr())
+			if _, err := header.WriteTo(connBackend); err != nil {
+				log.Errorf("Error while writing proxy protocol headers to backend connection: %v", err)
+				return
+			}
 		}
 	}
 	go p.connCopy(conn, connBackend, errChan)
