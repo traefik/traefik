@@ -991,9 +991,9 @@ The `address` option (IP:Port) point to a specific instance.
               - address: "xx.xx.xx.xx:xx"
     ```
 
-#### ProxyProtocol
+#### PROXY Protocol
 
-Traefik supports [ProxyProtocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services.
+Traefik supports [PROXY Protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services.
 It can be enabled by setting `version` to "1" or "2".
 
 ??? example "A Service with Proxy Protocol v2 -- Using the [File Provider](../../providers/file.md)"

@@ -172,7 +172,7 @@ func TestManager_BuildTCP(t *testing.T) {
 			providerName: "provider-1",
 		},
 		{
-			desc:        "Server with unknown ProxyProtocol Value",
+			desc:        "Server with unknown ProxyProtocol version",
 			serviceName: "serviceName",
 			configs: map[string]*runtime.TCPServiceInfo{
 				"serviceName@provider-1": {
