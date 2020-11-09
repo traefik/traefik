@@ -307,6 +307,13 @@ func (p Provider) getIPAddress(instance ecsInstance) string {
 
 func getPort(instance ecsInstance, serverPort string) string {
 	if len(serverPort) > 0 {
+		for _, port := range instance.machine.ports {
+			containerPort := strconv.FormatInt(port.containerPort, 10)
+			if serverPort == containerPort {
+				return strconv.FormatInt(port.hostPort, 10)
+			}
+		}
+
 		return serverPort
 	}
 
