@@ -23,6 +23,7 @@
                 dense
                 class="app-chip app-chip-rule app-chip-overflow">
                 {{ service.name }}
+                <q-tooltip>{{service.name}}</q-tooltip>
               </q-chip>
             </div>
             <div class="col-3 text-right">

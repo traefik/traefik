@@ -133,9 +133,13 @@ body {
   }
   &-overflow {
     max-width: 90%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+
+    .q-chip__content{
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
   &-accent, &-rule {
     color: $accent;
