@@ -31,7 +31,7 @@ const (
 
 	// TLS.
 	metricsTLSPrefix          = MetricNamePrefix + "tls_"
-	tlsCertsNotAfterTimestamp = metricsTLSPrefix + "cert_not_after"
+	tlsCertsNotAfterTimestamp = metricsTLSPrefix + "certs_not_after"
 
 	// entry point.
 	metricEntryPointPrefix     = MetricNamePrefix + "entrypoint_"
