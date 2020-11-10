@@ -75,6 +75,8 @@ func (p *ProxyProtocol) SetDefaults() {
 	p.Version = "2"
 }
 
+// +k8s:deepcopy-gen=true
+
 // TCPServersLoadBalancer holds the LoadBalancerService configuration.
 type TCPServersLoadBalancer struct {
 	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
