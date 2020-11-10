@@ -1011,6 +1011,11 @@ func (in *ServiceTCP) DeepCopyInto(out *ServiceTCP) {
 		*out = new(int)
 		**out = **in
 	}
+	if in.ProxyProtocol != nil {
+		in, out := &in.ProxyProtocol, &out.ProxyProtocol
+		*out = new(dynamic.ProxyProtocol)
+		**out = **in
+	}
 	return
 }
 
