@@ -111,7 +111,7 @@ func TestLookupAddress(t *testing.T) {
 		}
 	}(&wg)
 
-	require.Nil(t, proxy.target)
+	require.NotNil(t, proxy.target)
 
 	var lastTarget *net.TCPAddr
 

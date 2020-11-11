@@ -13,12 +13,25 @@ type Proxy struct {
 	address          string
 	target           *net.TCPAddr
 	terminationDelay time.Duration
+	refreshTarget    bool
 }
 
 // NewProxy creates a new Proxy.
 func NewProxy(address string, terminationDelay time.Duration) (*Proxy, error) {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", address)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshTarget := false
+	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) == nil {
+		refreshTarget = true
+	}
+
 	return &Proxy{
 		address:          address,
+		target:           tcpAddr,
+		refreshTarget:    refreshTarget,
 		terminationDelay: terminationDelay,
 	}, nil
 }
@@ -30,7 +43,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
 
-	if p.target == nil || p.targetIsHostname() {
+	if p.refreshTarget {
 		tcpAddr, err := net.ResolveTCPAddr("tcp", p.address)
 		if err != nil {
 			log.Errorf("Error resolving tcp address: %v", err)
@@ -58,13 +71,6 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	}
 
 	<-errChan
-}
-
-func (p Proxy) targetIsHostname() bool {
-	if host, _, err := net.SplitHostPort(p.address); err == nil {
-		return net.ParseIP(host) == nil
-	}
-	return false
 }
 
 func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
