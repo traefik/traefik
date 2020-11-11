@@ -11,6 +11,8 @@ import (
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/version"
+	fakediscovery "k8s.io/client-go/discovery/fake"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 )
 
@@ -148,6 +150,11 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	}
 
 	kubeClient := kubefake.NewSimpleClientset(helmSecret, secret)
+
+	discovery, _ := kubeClient.Discovery().(*fakediscovery.FakeDiscovery)
+	discovery.FakedServerVersion = &version.Info{
+		GitVersion: "v1.19",
+	}
 
 	client := newClientImpl(kubeClient)
 
