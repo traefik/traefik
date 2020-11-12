@@ -95,41 +95,70 @@ func mustHaveExternalNetwork(t *testing.T) {
 func TestLookupAddress(t *testing.T) {
 	mustHaveExternalNetwork(t)
 
-	proxy, err := NewProxy("dns.google:53", 10*time.Millisecond)
-	require.NoError(t, err)
+	testCases := []struct {
+		desc       string
+		address    string
+		expectSame bool
+	}{
+		{
+			desc:       "IP don't need refresh",
+			address:    "8.8.4.4:53",
+			expectSame: true,
+		},
+		{
+			desc:       "Hostname needs refresh",
+			address:    "dns.google:53",
+			expectSame: false,
+		},
+	}
 
-	proxyListener, err := net.Listen("tcp", ":0")
-	require.NoError(t, err)
-
-	var wg sync.WaitGroup
-	go func(wg *sync.WaitGroup) {
-		for {
-			conn, err := proxyListener.Accept()
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			proxy, err := NewProxy(test.address, 10*time.Millisecond)
 			require.NoError(t, err)
-			proxy.ServeTCP(conn.(*net.TCPConn))
-			wg.Done()
-		}
-	}(&wg)
 
-	require.NotNil(t, proxy.target)
+			proxyListener, err := net.Listen("tcp", ":0")
+			require.NoError(t, err)
 
-	var lastTarget *net.TCPAddr
+			var wg sync.WaitGroup
+			go func(wg *sync.WaitGroup) {
+				for {
+					conn, err := proxyListener.Accept()
+					require.NoError(t, err)
+					proxy.ServeTCP(conn.(*net.TCPConn))
+					wg.Done()
+				}
+			}(&wg)
 
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		conn, err := net.Dial("tcp", proxyListener.Addr().String())
-		require.NoError(t, err)
+			require.NotNil(t, proxy.target)
 
-		_, err = conn.Write([]byte("ping\n"))
-		require.NoError(t, err)
+			var lastTarget *net.TCPAddr
 
-		err = conn.Close()
-		require.NoError(t, err)
-		wg.Wait()
+			for i := 0; i < 3; i++ {
+				wg.Add(1)
+				conn, err := net.Dial("tcp", proxyListener.Addr().String())
+				require.NoError(t, err)
 
-		assert.NotNil(t, proxy.target)
-		assert.NotSame(t, lastTarget, proxy.target)
+				_, err = conn.Write([]byte("ping\n"))
+				require.NoError(t, err)
 
-		lastTarget = proxy.target
+				err = conn.Close()
+				require.NoError(t, err)
+				wg.Wait()
+
+				assert.NotNil(t, proxy.target)
+				if lastTarget != nil {
+					if test.expectSame {
+						assert.Same(t, lastTarget, proxy.target)
+					} else {
+						assert.NotSame(t, lastTarget, proxy.target)
+					}
+				}
+
+				lastTarget = proxy.target
+			}
+		})
 	}
 }
