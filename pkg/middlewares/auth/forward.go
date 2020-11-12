@@ -2,11 +2,11 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -26,12 +26,14 @@ const (
 )
 
 type forwardAuth struct {
-	address             string
-	authResponseHeaders []string
-	next                http.Handler
-	name                string
-	client              http.Client
-	trustForwardHeader  bool
+	address                  string
+	authResponseHeaders      []string
+	authResponseHeadersRegex *regexp.Regexp
+	next                     http.Handler
+	name                     string
+	client                   http.Client
+	trustForwardHeader       bool
+	authRequestHeaders       []string
 }
 
 // NewForward creates a forward auth middleware.
@@ -44,6 +46,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		next:                next,
 		name:                name,
 		trustForwardHeader:  config.TrustForwardHeader,
+		authRequestHeaders:  config.AuthRequestHeaders,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -63,6 +66,14 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		tr := http.DefaultTransport.(*http.Transport).Clone()
 		tr.TLSClientConfig = tlsConfig
 		fa.client.Transport = tr
+	}
+
+	if config.AuthResponseHeadersRegex != "" {
+		re, err := regexp.Compile(config.AuthResponseHeadersRegex)
+		if err != nil {
+			return nil, fmt.Errorf("error compiling regular expression %s: %w", config.AuthResponseHeadersRegex, err)
+		}
+		fa.authResponseHeadersRegex = re
 	}
 
 	return fa, nil
@@ -90,7 +101,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// forwardReq.
 	tracing.InjectRequestHeaders(req)
 
-	writeHeader(req, forwardReq, fa.trustForwardHeader)
+	writeHeader(req, forwardReq, fa.trustForwardHeader, fa.authRequestHeaders)
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
@@ -102,16 +113,22 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body, readError := ioutil.ReadAll(forwardResponse.Body)
-	if readError != nil {
-		logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
-		logger.Debug(logMessage)
-		tracing.SetErrorWithEvent(req, logMessage)
+	var body []byte
+	if req.Method != http.MethodHead {
 
-		rw.WriteHeader(http.StatusInternalServerError)
-		return
+		var readError error
+		body, readError = ioutil.ReadAll(forwardResponse.Body)
+		if readError != nil {
+			logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
+			logger.Debug(logMessage)
+			tracing.SetErrorWithEvent(req, logMessage)
+
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer forwardResponse.Body.Close()
+
 	}
-	defer forwardResponse.Body.Close()
 
 	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
@@ -125,7 +142,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		redirectURL, err := forwardResponse.Location()
 
 		if err != nil {
-			if !errors.Is(err, http.ErrNoLocation) {
+			if err != http.ErrNoLocation {
 				logMessage := fmt.Sprintf("Error reading response location header %s. Cause: %s", fa.address, err)
 				logger.Debug(logMessage)
 				tracing.SetErrorWithEvent(req, logMessage)
@@ -155,13 +172,29 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	if fa.authResponseHeadersRegex != nil {
+		for headerKey := range req.Header {
+			if fa.authResponseHeadersRegex.MatchString(headerKey) {
+				req.Header.Del(headerKey)
+			}
+		}
+
+		for headerKey, headerValues := range forwardResponse.Header {
+			if fa.authResponseHeadersRegex.MatchString(headerKey) {
+				req.Header[headerKey] = append([]string(nil), headerValues...)
+			}
+		}
+	}
+
 	req.RequestURI = req.URL.RequestURI()
 	fa.next.ServeHTTP(rw, req)
 }
 
-func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool) {
+func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
 	utils.RemoveHeaders(forwardReq.Header, forward.HopHeaders...)
+
+	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
 
 	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
 		if trustForwardHeader {
@@ -215,4 +248,20 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool) {
 	default:
 		forwardReq.Header.Del(xForwardedURI)
 	}
+}
+
+func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeaders []string) http.Header {
+	if len(allowedHeaders) == 0 {
+		return forwardRequestHeaders
+	}
+
+	filteredHeaders := http.Header{}
+	for _, headerName := range allowedHeaders {
+		values := forwardRequestHeaders.Values(headerName)
+		if len(values) > 0 {
+			filteredHeaders[http.CanonicalHeaderKey(headerName)] = append([]string(nil), values...)
+		}
+	}
+
+	return filteredHeaders
 }
