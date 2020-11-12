@@ -105,21 +105,18 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// head-requests have no body && Content-Length is >0
 	var body []byte
 	if req.Method != http.MethodHead {
-
 		var readError error
 		body, readError = ioutil.ReadAll(forwardResponse.Body)
 		if readError != nil {
 			logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
 			logger.Debug(logMessage)
 			tracing.SetErrorWithEvent(req, logMessage)
-
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		defer forwardResponse.Body.Close()
+	}
 
-	}	
-	
 	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
