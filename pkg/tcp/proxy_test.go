@@ -89,7 +89,7 @@ func TestLookupAddress(t *testing.T) {
 		expectSame bool
 	}{
 		{
-			desc:       "IP don't need refresh",
+			desc:       "IP doesn't need refresh",
 			address:    "8.8.4.4:53",
 			expectSame: true,
 		},
