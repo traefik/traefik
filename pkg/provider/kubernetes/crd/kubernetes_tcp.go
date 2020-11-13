@@ -136,7 +136,7 @@ func createLoadBalancerServerTCP(client Client, namespace string, service v1alph
 
 	tcpService := &dynamic.TCPService{
 		LoadBalancer: &dynamic.TCPServersLoadBalancer{
-			Servers:       servers,
+			Servers: servers,
 		},
 	}
 
