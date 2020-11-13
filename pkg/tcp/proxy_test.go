@@ -86,17 +86,17 @@ func TestLookupAddress(t *testing.T) {
 	testCases := []struct {
 		desc       string
 		address    string
-		expectSame bool
+		expectSame assert.ComparisonAssertionFunc
 	}{
 		{
 			desc:       "IP doesn't need refresh",
 			address:    "8.8.4.4:53",
-			expectSame: true,
+			expectSame: assert.Same,
 		},
 		{
 			desc:       "Hostname needs refresh",
 			address:    "dns.google:53",
-			expectSame: false,
+			expectSame: assert.NotSame,
 		},
 	}
 
@@ -104,8 +104,11 @@ func TestLookupAddress(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			proxy, err := NewProxy(test.address, 10*time.Millisecond)
 			require.NoError(t, err)
+
+			require.NotNil(t, proxy.target)
 
 			proxyListener, err := net.Listen("tcp", ":0")
 			require.NoError(t, err)
@@ -115,17 +118,18 @@ func TestLookupAddress(t *testing.T) {
 				for {
 					conn, err := proxyListener.Accept()
 					require.NoError(t, err)
+
 					proxy.ServeTCP(conn.(*net.TCPConn))
+
 					wg.Done()
 				}
 			}(&wg)
-
-			require.NotNil(t, proxy.target)
 
 			var lastTarget *net.TCPAddr
 
 			for i := 0; i < 3; i++ {
 				wg.Add(1)
+
 				conn, err := net.Dial("tcp", proxyListener.Addr().String())
 				require.NoError(t, err)
 
@@ -134,15 +138,13 @@ func TestLookupAddress(t *testing.T) {
 
 				err = conn.Close()
 				require.NoError(t, err)
+
 				wg.Wait()
 
 				assert.NotNil(t, proxy.target)
+
 				if lastTarget != nil {
-					if test.expectSame {
-						assert.Same(t, lastTarget, proxy.target)
-					} else {
-						assert.NotSame(t, lastTarget, proxy.target)
-					}
+					test.expectSame(t, lastTarget, proxy.target)
 				}
 
 				lastTarget = proxy.target
