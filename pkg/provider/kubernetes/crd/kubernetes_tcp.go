@@ -137,8 +137,16 @@ func createLoadBalancerServerTCP(client Client, namespace string, service v1alph
 	tcpService := &dynamic.TCPService{
 		LoadBalancer: &dynamic.TCPServersLoadBalancer{
 			Servers:       servers,
-			ProxyProtocol: service.ProxyProtocol,
 		},
+	}
+
+	if service.ProxyProtocol != nil {
+		tcpService.LoadBalancer.ProxyProtocol = &dynamic.ProxyProtocol{}
+		tcpService.LoadBalancer.ProxyProtocol.SetDefaults()
+
+		if service.ProxyProtocol.Version != "" {
+			tcpService.LoadBalancer.ProxyProtocol.Version = service.ProxyProtocol.Version
+		}
 	}
 
 	if service.TerminationDelay != nil {
