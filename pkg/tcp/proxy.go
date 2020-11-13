@@ -23,6 +23,7 @@ func NewProxy(address string, terminationDelay time.Duration) (*Proxy, error) {
 		return nil, err
 	}
 
+	// enable the refresh of the target only if the address in an IP
 	refreshTarget := false
 	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) == nil {
 		refreshTarget = true
