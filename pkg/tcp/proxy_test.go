@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -83,18 +82,7 @@ func TestCloseWrite(t *testing.T) {
 	require.Equal(t, "PONG", buffer.String())
 }
 
-func mustHaveExternalNetwork(t *testing.T) {
-	if runtime.GOOS == "js" {
-		t.Skipf("skipping test: no external network on %s", runtime.GOOS)
-	}
-	if testing.Short() {
-		t.Skipf("skipping test: no external network in -short mode")
-	}
-}
-
 func TestLookupAddress(t *testing.T) {
-	mustHaveExternalNetwork(t)
-
 	testCases := []struct {
 		desc       string
 		address    string
