@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	knative "github.com/containous/traefik/v2/pkg/provider/knative/crd"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	legolog "github.com/go-acme/lego/v4/log"
 	"github.com/sirupsen/logrus"
@@ -19,6 +18,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/ecs"
 	"github.com/traefik/traefik/v2/pkg/provider/file"
 	"github.com/traefik/traefik/v2/pkg/provider/http"
+	knative "github.com/traefik/traefik/v2/pkg/provider/knative/crd"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
 	"github.com/traefik/traefik/v2/pkg/provider/kv/consul"

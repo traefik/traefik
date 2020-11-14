@@ -7,9 +7,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	knativenetworkingclientset "github.com/containous/traefik/v2/pkg/provider/knative/crd/generated/networking/client/clientset/versioned"
-	knativenetworkinginformers "github.com/containous/traefik/v2/pkg/provider/knative/crd/generated/networking/client/informers/externalversions"
+	"github.com/traefik/traefik/v2/pkg/log"
 	corev1 "k8s.io/api/core/v1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +18,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
+	knativenetworkingclientset "knative.dev/networking/pkg/client/clientset/versioned"
+	knativenetworkinginformers "knative.dev/networking/pkg/client/informers/externalversions"
 )
 
 const resyncPeriod = 10 * time.Minute

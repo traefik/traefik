@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
-	"github.com/containous/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	knativenetworking "knative.dev/networking/pkg/apis/networking"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
@@ -57,18 +57,6 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 					conf.Middlewares[middlewareID] = &dynamic.Middleware{
 						Headers: &dynamic.Headers{
 							CustomRequestHeaders: pathroute.AppendHeaders,
-						},
-					}
-					mdsPrepare = append(mdsPrepare, middlewareID)
-				}
-
-				// Retry Middleware
-				if pathroute.Retries != nil {
-					middlewareID := makeID(ingressName, "Retry")
-					conf.Middlewares[middlewareID] = &dynamic.Middleware{
-						Retry: &dynamic.Retry{
-							Attempts: pathroute.Retries.Attempts,
-							// Timeout:  pathroute.Retries.PerTryTimeout,
 						},
 					}
 					mdsPrepare = append(mdsPrepare, middlewareID)
@@ -141,12 +129,6 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 			!ingressRoute.GetStatus().GetCondition(knativenetworkingv1alpha1.IngressConditionNetworkConfigured).IsTrue() ||
 			ingressRoute.GetGeneration() != ingressRoute.GetStatus().ObservedGeneration {
 			ingressRoute.Status.MarkLoadBalancerReady(
-				// lbs
-				[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
-					Domain:         p.LoadBalancerDomain,
-					DomainInternal: p.LoadBalancerDomainInternal,
-					IP:             p.LoadBalancerIP,
-				}},
 				// public lbs
 				[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
 					Domain:         p.LoadBalancerDomain,
