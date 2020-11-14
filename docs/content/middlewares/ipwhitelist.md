@@ -76,6 +76,10 @@ The `ipStrategy` option defines two parameters that sets how Traefik will determ
 
 The `depth` option tells Traefik to use the `X-Forwarded-For` header and take the IP located at the `depth` position (starting from the right).
 
+To make IP whitelist work, you must register the ipwhitelist middleware in the router definition.
+like ` traefik.http.routers.myroute.middlewares=testIPwhitelist`
+See https://github.com/traefik/traefik/blob/master/integration/resources/compose/whitelist.yml for more  details.
+
 !!! example "Examples of Depth & X-Forwarded-For"
 
     ```yaml tab="Docker"
